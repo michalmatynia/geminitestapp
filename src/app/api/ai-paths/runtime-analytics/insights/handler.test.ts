@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   requireAiPathsAccessMock,
+  resolveAiInsightsContextRegistryEnvelopeMock,
   startAiInsightsQueueMock,
   listAiInsightsMock,
   generateRuntimeAnalyticsInsightMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
+  resolveAiInsightsContextRegistryEnvelopeMock: vi.fn(),
   startAiInsightsQueueMock: vi.fn(),
   listAiInsightsMock: vi.fn(),
   generateRuntimeAnalyticsInsightMock: vi.fn(),
@@ -21,6 +23,10 @@ vi.mock('@/features/jobs/server', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
+vi.mock('@/features/ai/insights/context-registry/server', () => ({
+  resolveAiInsightsContextRegistryEnvelope: resolveAiInsightsContextRegistryEnvelopeMock,
+}));
+
 vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
   generateRuntimeAnalyticsInsight: generateRuntimeAnalyticsInsightMock,
@@ -32,6 +38,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     startAiInsightsQueueMock.mockReset();
     listAiInsightsMock.mockReset();
     generateRuntimeAnalyticsInsightMock.mockReset();
+    resolveAiInsightsContextRegistryEnvelopeMock.mockReset().mockResolvedValue(null);
   });
 
   it('lists runtime insights with ai-paths access guard', async () => {
@@ -67,6 +74,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     expect(generateRuntimeAnalyticsInsightMock).toHaveBeenCalledWith({
       source: 'user_triggered',
       range: '7d',
+      contextRegistry: null,
     });
     expect(payload.insight).toEqual({ id: 'insight-runtime-1' });
   });
@@ -85,6 +93,54 @@ describe('ai-paths runtime analytics insights handler', () => {
     expect(generateRuntimeAnalyticsInsightMock).toHaveBeenCalledWith({
       source: 'user_triggered',
       range: '24h',
+      contextRegistry: null,
     });
+  });
+
+  it('resolves registry context from the request body before generating runtime insights', async () => {
+    const { POST_handler } = await import('./handler');
+    resolveAiInsightsContextRegistryEnvelopeMock.mockResolvedValue({
+      refs: [
+        { id: 'page:ai-insights', kind: 'static_node' },
+        {
+          id: 'runtime:ai-insights:workspace',
+          kind: 'runtime_document',
+          providerId: 'ai-insights-page-local',
+          entityType: 'ai_insights_workspace_state',
+        },
+      ],
+      engineVersion: 'registry:test',
+    });
+    generateRuntimeAnalyticsInsightMock.mockResolvedValue({ id: 'insight-runtime-3' });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/ai-paths/runtime-analytics/insights?range=7d', {
+        method: 'POST',
+        body: JSON.stringify({
+          contextRegistry: {
+            refs: [{ id: 'page:ai-insights', kind: 'static_node' }],
+            engineVersion: 'page-context:v1',
+          },
+        }),
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+    const payload = (await response.json()) as { insight?: { id: string } };
+
+    expect(resolveAiInsightsContextRegistryEnvelopeMock).toHaveBeenCalledWith({
+      refs: [{ id: 'page:ai-insights', kind: 'static_node' }],
+      engineVersion: 'page-context:v1',
+    });
+    expect(generateRuntimeAnalyticsInsightMock).toHaveBeenCalledWith({
+      source: 'user_triggered',
+      range: '7d',
+      contextRegistry: expect.objectContaining({
+        refs: [
+          expect.objectContaining({ id: 'page:ai-insights' }),
+          expect.objectContaining({ id: 'runtime:ai-insights:workspace' }),
+        ],
+      }),
+    });
+    expect(payload.insight).toEqual({ id: 'insight-runtime-3' });
   });
 });

@@ -90,7 +90,7 @@ describe('AdminFrontManagePage', () => {
 
     expect(
       screen.getByRole('button', {
-        name: /Kangur Open the Kangur application on the home page/i,
+        name: /Kangur Mount Kangur at \/ and let it own the full public frontend/i,
       })
     ).toBeInTheDocument();
   });
@@ -131,7 +131,7 @@ describe('AdminFrontManagePage', () => {
     renderPage();
 
     const kangurButton = screen.getByRole('button', {
-      name: /Kangur Open the Kangur application on the home page/i,
+      name: /Kangur Mount Kangur at \/ and let it own the full public frontend/i,
     });
     fireEvent.click(kangurButton);
 

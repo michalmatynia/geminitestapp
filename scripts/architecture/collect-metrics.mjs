@@ -1,37 +1,105 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execFile as execFileCallback } from 'node:child_process';
-import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 import { collectMetrics, formatCompactSummary } from './lib-metrics.mjs';
-import { parseScanSummary } from './lib/scan-output.mjs';
+import { collectNumericSummaryMetrics } from './lib/scan-summary-metrics.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
-const execFile = promisify(execFileCallback);
+const scanPropDrillingScriptPath = fileURLToPath(new URL('./scan-prop-drilling.mjs', import.meta.url));
+const { noWrite, shouldWriteHistory, summaryJson } = parseCommonCheckArgs();
 
 const collectPropDrillingSummary = async () => {
-  const { stdout } = await execFile(
-    'node',
-    ['scripts/architecture/scan-prop-drilling.mjs', '--ci', '--no-history', '--no-write', '--summary-json'],
-    {
-      cwd: root,
-    }
-  );
-
-  const summary = parseScanSummary(stdout, 'scan-prop-drilling');
-
-  return {
-    candidateChains: Number(summary.candidateChainCount ?? 0),
-    depthGte4Chains: Number(summary.highPriorityChainCount ?? 0),
-    forwardingComponents: Number(summary.componentsWithForwarding ?? 0),
-  };
+  return collectNumericSummaryMetrics({
+    cwd: root,
+    commandArgs: [
+      scanPropDrillingScriptPath,
+      '--ci',
+      '--no-history',
+      '--no-write',
+      '--summary-json',
+    ],
+    sourceName: 'scan-prop-drilling',
+    fields: {
+      candidateChains: 'candidateChainCount',
+      depthGte4Chains: 'highPriorityChainCount',
+      forwardingComponents: 'componentsWithForwarding',
+    },
+  });
 };
 
 const writeJson = async (targetPath, value) => {
   await fs.writeFile(targetPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+};
+
+const buildMetricsSummary = (metrics) => ({
+  sourceFileCount: metrics.source.totalFiles,
+  sourceLineCount: metrics.source.totalLines,
+  useClientFileCount: metrics.source.useClientFiles,
+  filesOver800: metrics.source.filesOver800,
+  filesOver1000: metrics.source.filesOver1000,
+  filesOver1500: metrics.source.filesOver1500,
+  apiRouteCount: metrics.api.totalRoutes,
+  delegatedApiRouteCount: metrics.api.delegatedServerRoutes,
+  apiRoutesWithoutHandlerCount: metrics.api.routesWithoutApiHandler,
+  apiRoutesWithoutExplicitCachePolicyCount: metrics.api.routesWithoutExplicitCachePolicy,
+  crossFeatureEdgePairCount: metrics.architecture.crossFeatureEdgePairs,
+  sharedToFeaturesTotalImportCount: metrics.imports.sharedToFeaturesTotalImports,
+  setIntervalOccurrenceCount: metrics.runtime.setIntervalOccurrences,
+  deepRelativeImportCount: metrics.codeHealth.deepRelativeImportCount,
+  circularFeatureDependencyCount: metrics.codeHealth.circularFeatureDeps.length,
+  trackedHookComplexityCount: metrics.codeHealth.hookComplexity.length,
+  propDrillingCandidateChainCount: metrics.propDrilling?.candidateChains ?? 0,
+  propDrillingDepthGte4ChainCount: metrics.propDrilling?.depthGte4Chains ?? 0,
+  propDrillingForwardingComponentCount: metrics.propDrilling?.forwardingComponents ?? 0,
+});
+
+const buildMetricsDetails = (metrics) => ({
+  source: metrics.source,
+  api: metrics.api,
+  imports: metrics.imports,
+  architecture: metrics.architecture,
+  runtime: metrics.runtime,
+  codeHealth: metrics.codeHealth,
+  hotspots: metrics.hotspots,
+  propDrilling: metrics.propDrilling ?? null,
+});
+
+const buildMetricsFilters = () => ({
+  ci: args.has('--ci'),
+  historyDisabled: !shouldWriteHistory,
+  noWrite,
+  rawJson: args.has('--json'),
+});
+
+const writeMetricsArtifacts = async (metrics) => {
+  await fs.mkdir(outDir, { recursive: true });
+
+  const stamp = metrics.generatedAt.replace(/[:.]/g, '-');
+  const latestJsonPath = path.join(outDir, 'baseline-latest.json');
+  const latestMdPath = path.join(outDir, 'baseline-latest.md');
+  const historicalJsonPath = path.join(outDir, `baseline-${stamp}.json`);
+
+  await writeJson(latestJsonPath, metrics);
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: generateMarkdown(metrics),
+  });
+
+  if (shouldWriteHistory) {
+    await writeJson(historicalJsonPath, metrics);
+  }
+
+  return {
+    latestJson: path.relative(root, latestJsonPath),
+    latestMarkdown: path.relative(root, latestMdPath),
+    historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+  };
 };
 
 const generateMarkdown = (metrics) => {
@@ -105,30 +173,31 @@ const run = async () => {
     ...metricsCore,
     propDrilling,
   };
-  await fs.mkdir(outDir, { recursive: true });
+  const writtenPaths = noWrite ? null : await writeMetricsArtifacts(metrics);
 
-  const stamp = metrics.generatedAt.replace(/[:.]/g, '-');
-  const latestJsonPath = path.join(outDir, 'baseline-latest.json');
-  const latestMdPath = path.join(outDir, 'baseline-latest.md');
-  const historicalJsonPath = path.join(outDir, `baseline-${stamp}.json`);
-  const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
-
-  await writeJson(latestJsonPath, metrics);
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: generateMarkdown(metrics),
-  });
-
-  if (shouldWriteHistory) {
-    await writeJson(historicalJsonPath, metrics);
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'architecture-metrics-collect',
+      generatedAt: metrics.generatedAt,
+      status: 'ok',
+      summary: buildMetricsSummary(metrics),
+      details: buildMetricsDetails(metrics),
+      paths: writtenPaths,
+      filters: buildMetricsFilters(),
+      notes: ['architecture baseline metrics collection result'],
+    });
+    return;
   }
 
   console.log(formatCompactSummary(metrics));
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
+  if (writtenPaths) {
+    console.log(`Wrote ${writtenPaths.latestJson}`);
+    console.log(`Wrote ${writtenPaths.latestMarkdown}`);
+    if (writtenPaths.historicalJson) {
+      console.log(`Wrote ${writtenPaths.historicalJson}`);
+    }
+  } else {
+    console.log('Skipped writing metrics artifacts (--no-write).');
   }
 
   if (args.has('--json')) {

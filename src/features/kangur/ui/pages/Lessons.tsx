@@ -34,6 +34,7 @@ import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageI
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -182,28 +183,47 @@ export default function Lessons() {
   const routeTransition = useOptionalKangurRouteTransition();
   const auth = useKangurAuth();
   const { user, navigateToLogin, logout } = auth;
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const prefersReducedMotion = useReducedMotion();
   const settingsStore = useSettingsStore();
+  const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
-    enabled: canAccessParentAssignments,
+    enabled: isDeferredContentReady && canAccessParentAssignments,
     query: {
       includeArchived: false,
     },
   });
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsDeferredContentReady(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, []);
+
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
   const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
   const lessons = useMemo(
-    (): KangurLesson[] => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
-    [rawLessons]
+    (): KangurLesson[] =>
+      isDeferredContentReady
+        ? parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled)
+        : [],
+    [isDeferredContentReady, rawLessons]
   );
   const lessonDocuments = useMemo(
-    () => parseKangurLessonDocumentStore(rawLessonDocuments),
-    [rawLessonDocuments]
+    () => parseKangurLessonDocumentStore(isDeferredContentReady ? rawLessonDocuments : undefined),
+    [isDeferredContentReady, rawLessonDocuments]
   );
   const lessonAssignmentsByComponent = useMemo(
     () => buildActiveKangurLessonAssignmentsByComponent(assignments),
@@ -339,12 +359,14 @@ export default function Lessons() {
       canManageLearners: Boolean(user?.canManageLearners),
       contentClassName: 'justify-center',
       currentPage: 'Lessons' as const,
+      guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
       onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
-    [basePath, logout, navigateToLogin, user]
+    [basePath, guestPlayerName, logout, navigateToLogin, setGuestPlayerName, user]
   );
   const lessonPageMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
@@ -368,8 +390,34 @@ export default function Lessons() {
         <KangurTopNavigationController navigation={navigation} />
 
         <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
-          <AnimatePresence mode='wait'>
-            {!activeLesson ? (
+          <AnimatePresence initial={false} mode='wait'>
+            {!isDeferredContentReady ? (
+              <motion.div
+                key='loading'
+                {...lessonPageMotionProps}
+                className='flex w-full max-w-md flex-col items-center gap-4'
+                data-testid='lessons-shell-transition'
+              >
+                <KangurPageIntroCard
+                  description='Wczytujemy lekcje i przygotowujemy liste tematow.'
+                  headingAs='h1'
+                  headingTestId='kangur-lessons-list-heading'
+                  onBack={handleGoBack}
+                  title='Lekcje'
+                  visualTitle={
+                    <KangurLessonsWordmark
+                      className='mx-auto'
+                      data-testid='kangur-lessons-heading-art'
+                    />
+                  }
+                />
+                <div className='flex w-full flex-col gap-3'>
+                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/75' />
+                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/70' />
+                  <div className='h-28 w-full animate-pulse rounded-[30px] bg-white/65' />
+                </div>
+              </motion.div>
+            ) : !activeLesson ? (
               <motion.div
                 key='list'
                 {...lessonPageMotionProps}

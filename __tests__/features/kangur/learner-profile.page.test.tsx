@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import React from 'react';
+
+import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const {
   useKangurProgressStateMock,
@@ -57,7 +60,65 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
 
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 
-describe('LearnerProfile page placeholder', () => {
+const renderLearnerProfilePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <LearnerProfile />
+    </KangurGuestPlayerProvider>
+  );
+
+const baseProgress: KangurProgressState = {
+  totalXp: 620,
+  gamesPlayed: 22,
+  perfectGames: 6,
+  lessonsCompleted: 9,
+  clockPerfect: 2,
+  calendarPerfect: 1,
+  geometryPerfect: 1,
+  badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
+  operationsPlayed: ['addition', 'multiplication', 'division'],
+  lessonMastery: {
+    division: {
+      attempts: 2,
+      completions: 2,
+      masteryPercent: 45,
+      bestScorePercent: 60,
+      lastScorePercent: 40,
+      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+    },
+    clock: {
+      attempts: 4,
+      completions: 4,
+      masteryPercent: 92,
+      bestScorePercent: 100,
+      lastScorePercent: 90,
+      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+    },
+  },
+};
+
+const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
+  id: 'score-1',
+  player_name: 'Jan',
+  score: 8,
+  operation: 'addition',
+  total_questions: 10,
+  correct_answers: 8,
+  time_taken: 42,
+  created_date: '2026-03-06T12:00:00.000Z',
+  created_by: 'jan@example.com',
+  ...overrides,
+});
+
+const createUser = (overrides: Partial<KangurUser> = {}): KangurUser => ({
+  id: 'user-jan',
+  full_name: 'Jan',
+  email: 'jan@example.com',
+  role: 'user',
+  ...overrides,
+});
+
+describe('LearnerProfile page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -92,7 +153,7 @@ describe('LearnerProfile page placeholder', () => {
       }
     );
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
     expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
@@ -201,7 +262,7 @@ describe('LearnerProfile page placeholder', () => {
       logout: logoutMock,
     });
 
-    render(<LearnerProfile />);
+    renderLearnerProfilePage();
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
     expect(
@@ -226,8 +287,22 @@ describe('LearnerProfile page placeholder', () => {
     });
   });
 
-  it('renders without crashing', () => {
-    render(<LearnerProfile />);
-    expect(screen.getByTestId('hero')).toBeInTheDocument();
+  it('shows scores loading error when score provider fails', async () => {
+    scoreFilterMock.mockRejectedValue(new Error('Network unavailable'));
+
+    renderLearnerProfilePage();
+
+    expect(await screen.findByText('Nie udalo sie pobrac historii wynikow.')).toBeInTheDocument();
+    expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats score authorization errors as expected local-mode fallback', async () => {
+    scoreFilterMock.mockRejectedValue({ status: 403 });
+
+    renderLearnerProfilePage();
+
+    expect(await screen.findByText('Brak rozegranych sesji.')).toBeInTheDocument();
+    expect(screen.queryByText('Nie udalo sie pobrac historii wynikow.')).not.toBeInTheDocument();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 });

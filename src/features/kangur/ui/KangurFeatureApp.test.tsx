@@ -134,7 +134,7 @@ describe('KangurFeatureApp', () => {
     });
   });
 
-  it('keeps fast Kangur route transitions on the page surface without showing the blocking navigation skeleton', () => {
+  it('shows the navigation skeleton while a Kangur route transition is pending', () => {
     routeTransitionStateMock.mockReturnValue({
       isRoutePending: true,
       pendingPageKey: 'Game',
@@ -143,12 +143,9 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
-    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
-      'data-route-transition-key',
-      '/kangur/lessons'
-    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons');
+    expect(screen.queryByTestId('kangur-page-lessons')).toBeNull();
+    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
   });
 
   it('still renders the boot skeleton while the Kangur app is loading', () => {

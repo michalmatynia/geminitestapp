@@ -10,9 +10,16 @@ module.exports = tseslint.config(
   },
   {
     files: [
-      'scripts/architecture/scan-prop-drilling.mjs',
-      'scripts/architecture/scan-ui-consolidation.mjs',
-      'scripts/observability/check-observability.mjs',
+      'scripts/ai-paths/**/*.mjs',
+      'scripts/architecture/**/*.mjs',
+      'scripts/canonical/**/*.mjs',
+      'scripts/docs/**/*.mjs',
+      'scripts/lib/**/*.mjs',
+      'scripts/observability/**/*.mjs',
+      'scripts/quality/**/*.mjs',
+    ],
+    ignores: [
+      'scripts/architecture/debug-edges.mjs',
     ],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -30,7 +37,14 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: ['scripts/architecture/scan-summary-json-envelope.test.ts'],
+    files: [
+      'scripts/ai-paths/**/*.ts',
+      'scripts/architecture/**/*.test.ts',
+      'scripts/canonical/**/*.test.ts',
+      'scripts/docs/**/*.ts',
+      'scripts/observability/**/*.test.ts',
+      'scripts/quality/**/*.test.ts',
+    ],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

@@ -6,6 +6,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+
 const {
   useKangurRoutingMock,
   useKangurAuthMock,
@@ -64,6 +66,13 @@ vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
 
 import ParentDashboard from '@/features/kangur/ui/pages/ParentDashboard';
 
+const renderParentDashboardPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <ParentDashboard />
+    </KangurGuestPlayerProvider>
+  );
+
 const baseProgress = {
   totalXp: 340,
   gamesPlayed: 14,
@@ -96,7 +105,7 @@ describe('ParentDashboard page', () => {
   });
 
   it('shows an authentication gate instead of a local PIN for anonymous users', async () => {
-    render(<ParentDashboard />);
+    renderParentDashboardPage();
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass(
       'glass-panel',
@@ -163,7 +172,7 @@ describe('ParentDashboard page', () => {
       checkAppState: checkAppStateMock,
     });
 
-    render(<ParentDashboard />);
+    renderParentDashboardPage();
 
     expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toBeInTheDocument();
     expect(screen.getAllByText('Rodzic').length).toBeGreaterThan(0);

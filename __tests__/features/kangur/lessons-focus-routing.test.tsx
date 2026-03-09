@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/__tests__/test-utils';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 const {
   useKangurRoutingMock,
   settingsStoreGetMock,
@@ -52,6 +53,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 }));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
+
+const renderLessonsPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Lessons />
+    </KangurGuestPlayerProvider>
+  );
 
 const lessonsSettingsValue = JSON.stringify([
   {
@@ -132,7 +140,7 @@ describe('Lessons page focus query support', () => {
   it('auto-opens the focused lesson when focus query maps to operation', async () => {
     window.history.replaceState({}, '', '/kangur/lessons?focus=division');
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     expect(await screen.findByTestId('active-lesson-header')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
@@ -145,7 +153,7 @@ describe('Lessons page focus query support', () => {
   it('keeps lessons list view when focus query does not map to a lesson', async () => {
     window.history.replaceState({}, '', '/kangur/lessons?focus=unknown');
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     expect(screen.queryByText('Co to dzielenie?')).not.toBeInTheDocument();

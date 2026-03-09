@@ -15,8 +15,10 @@ const countLines = (content) => {
 
 const countMatches = (content, pattern) => {
   let total = 0;
-  for (const _match of content.matchAll(pattern)) {
-    total += 1;
+  for (const match of content.matchAll(pattern)) {
+    if (match[0] !== undefined) {
+      total += 1;
+    }
   }
   return total;
 };

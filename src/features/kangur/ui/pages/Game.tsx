@@ -179,7 +179,7 @@ function GameContent(): React.JSX.Element {
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
-          <AnimatePresence mode='wait'>
+          <AnimatePresence initial={false} mode='wait'>
             {screen === 'home' ? (
               renderScreen(
                 'home',

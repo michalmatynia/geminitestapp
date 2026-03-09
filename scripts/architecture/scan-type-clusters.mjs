@@ -43,7 +43,7 @@ const readNumberOption = (flagName, fallbackValue) => {
   return parsed;
 };
 
-const HISTORY_DISABLED = args.has('--ci') || args.has('--no-history');
+const HISTORY_DISABLED = !args.has('--write-history') || args.has('--ci') || args.has('--no-history');
 const SUMMARY_JSON_ONLY = args.has('--summary-json');
 const INIT_ONLY = args.has('--init');
 const DOMAIN_FILTERS = collectOptionValues('--domain');

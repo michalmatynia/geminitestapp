@@ -116,10 +116,15 @@ When an AI adds or rewrites docs, it should:
     registration stay aligned with the generated metrics policy.
 17. Treat `docs/metrics/**/README.md`, `docs/metrics/**/-latest.md`, and
     `docs/metrics/route-hotspots.md` as the canonical generated metrics surface;
-    timestamped history snapshots are generated records, not canonical docs.
+    timestamped history snapshots are optional generated records, not canonical
+    docs, and should be written only when a task explicitly needs them.
 18. If a repo script owns markdown generation for a canonical docs surface,
     keep frontmatter in the generator itself through the shared helpers in
     `scripts/docs/` so regeneration does not strip metadata.
 19. Managed generated-doc surfaces should match their shared-helper metadata
     contract under `npm run docs:structure:check`; change the helper first, not
     the generated file by hand.
+20. If a historical docs folder no longer has live repo consumers, remove it
+    instead of treating it as a permanent archive by default.
+21. When a later dated plan or decision becomes the enforced baseline, delete
+    older superseded variants after updating hubs, manifests, and tooling.

@@ -75,14 +75,13 @@ Future platform-wide docs should land under [`docs/platform/`](./platform/README
 Generated docs should be refreshed by scripts when possible instead of edited
 manually.
 
-## Historical Program Hubs
+## Residual Program Surfaces
 
-These folders are discoverable and maintained, but they are not the default
-home for new cross-feature docs:
+These folders still exist only when they expose an active cross-feature docs or
+artifact surface. Completed historical archives should be removed instead of
+kept as passive shelfware.
 
-- Application improvements: [`docs/application-improvements/README.md`](./application-improvements/README.md)
 - UI consolidation: [`docs/ui-consolidation/README.md`](./ui-consolidation/README.md)
-- Temporary TODO backlogs: [`docs/todo/README.md`](./todo/README.md)
 
 ## Structural Rules
 

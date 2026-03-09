@@ -33,17 +33,17 @@ describe('analyzeQueueRuntime', () => {
     writeSource(
       root,
       'src/features/jobs/queue-init.ts',
-      "const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import('@/features/example/workers/exampleQueue')]); };\n"
+      'const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import(\'@/features/example/workers/exampleQueue\')]); };\n'
     );
     writeSource(
       root,
       'src/features/example/workers/exampleQueue.ts',
-      "import { startWrappedQueue } from './wrappedQueue';\nexport const startExampleQueue = startWrappedQueue;\n"
+      'import { startWrappedQueue } from \'./wrappedQueue\';\nexport const startExampleQueue = startWrappedQueue;\n'
     );
     writeSource(
       root,
       'src/features/example/workers/wrappedQueue.ts',
-      "import { createManagedQueue } from '@/shared/lib/queue';\nconst QUEUE_NAME = 'example';\nexport const queue = createManagedQueue({ name: QUEUE_NAME, concurrency: 1, processor: async () => null });\nexport const startWrappedQueue = (): void => { queue.startWorker(); };\n"
+      'import { createManagedQueue } from \'@/shared/lib/queue\';\nconst QUEUE_NAME = \'example\';\nexport const queue = createManagedQueue({ name: QUEUE_NAME, concurrency: 1, processor: async () => null });\nexport const startWrappedQueue = (): void => { queue.startWorker(); };\n'
     );
 
     const report = analyzeQueueRuntime({ root });
@@ -57,12 +57,12 @@ describe('analyzeQueueRuntime', () => {
     writeSource(
       root,
       'src/features/jobs/queue-init.ts',
-      "const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => {};\n"
+      'const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => {};\n'
     );
     writeSource(
       root,
       'src/features/example/workers/exampleQueue.ts',
-      "import { createManagedQueue } from '@/shared/lib/queue';\nexport const queue = createManagedQueue({ name: 'orphaned', concurrency: 1, processor: async () => null });\n"
+      'import { createManagedQueue } from \'@/shared/lib/queue\';\nexport const queue = createManagedQueue({ name: \'orphaned\', concurrency: 1, processor: async () => null });\n'
     );
 
     const report = analyzeQueueRuntime({ root });
@@ -82,12 +82,12 @@ describe('analyzeQueueRuntime', () => {
     writeSource(
       root,
       'src/features/jobs/queue-init.ts',
-      "const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import('@/features/example/workers/exampleQueue')]); };\n"
+      'const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import(\'@/features/example/workers/exampleQueue\')]); };\n'
     );
     writeSource(
       root,
       'src/features/example/workers/exampleQueue.ts',
-      "import { createManagedQueue } from '@/shared/lib/queue';\nconst queue = createManagedQueue({ name: 'repeat-queue', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => {\n  queue.startWorker();\n  void queue.enqueue({ type: 'tick' }, { repeat: { every: 60_000 }, jobId: 'repeat-tick' });\n};\n"
+      'import { createManagedQueue } from \'@/shared/lib/queue\';\nconst queue = createManagedQueue({ name: \'repeat-queue\', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => {\n  queue.startWorker();\n  void queue.enqueue({ type: \'tick\' }, { repeat: { every: 60_000 }, jobId: \'repeat-tick\' });\n};\n'
     );
 
     const report = analyzeQueueRuntime({ root });
@@ -106,12 +106,12 @@ describe('analyzeQueueRuntime', () => {
     writeSource(
       root,
       'src/features/jobs/queue-init.ts',
-      "const STARTUP_GATED_QUEUE_NAMES = ['gated-queue'] as const;\nexport const initializeQueues = (): void => { void Promise.all([import('@/features/example/workers/exampleQueue')]); };\n"
+      'const STARTUP_GATED_QUEUE_NAMES = [\'gated-queue\'] as const;\nexport const initializeQueues = (): void => { void Promise.all([import(\'@/features/example/workers/exampleQueue\')]); };\n'
     );
     writeSource(
       root,
       'src/features/example/workers/exampleQueue.ts',
-      "import { createManagedQueue } from '@/shared/lib/queue';\nconst queue = createManagedQueue({ name: 'gated-queue', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => { queue.startWorker(); };\n"
+      'import { createManagedQueue } from \'@/shared/lib/queue\';\nconst queue = createManagedQueue({ name: \'gated-queue\', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => { queue.startWorker(); };\n'
     );
 
     const report = analyzeQueueRuntime({ root });
@@ -130,12 +130,12 @@ describe('analyzeQueueRuntime', () => {
     writeSource(
       root,
       'src/features/jobs/queue-init.ts',
-      "const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import('@/features/example/workers/exampleQueue')]); };\n"
+      'const STARTUP_GATED_QUEUE_NAMES = [] as const;\nexport const initializeQueues = (): void => { void Promise.all([import(\'@/features/example/workers/exampleQueue\')]); };\n'
     );
     writeSource(
       root,
       'src/features/example/workers/exampleQueue.ts',
-      "import { createManagedQueue } from '@/shared/lib/queue';\nconst queue = createManagedQueue({ name: 'repeat-queue', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => {\n  queue.startWorker();\n  void queue.enqueue({ type: 'tick' }, { repeat: { every: 60_000 } });\n};\n"
+      'import { createManagedQueue } from \'@/shared/lib/queue\';\nconst queue = createManagedQueue({ name: \'repeat-queue\', concurrency: 1, processor: async () => null });\nexport const startExampleQueue = (): void => {\n  queue.startWorker();\n  void queue.enqueue({ type: \'tick\' }, { repeat: { every: 60_000 } });\n};\n'
     );
 
     const report = analyzeQueueRuntime({ root });

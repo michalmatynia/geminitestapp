@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const {
   useKangurRoutingMock,
@@ -117,6 +118,13 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
 
 import Game from '@/features/kangur/ui/pages/Game';
 
+const renderGamePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Game />
+    </KangurGuestPlayerProvider>
+  );
+
 const baseProgress: KangurProgressState = {
   totalXp: 0,
   gamesPlayed: 0,
@@ -166,7 +174,7 @@ describe('Game branding', () => {
   });
 
   it('renders the Sprycio brand hero on the home screen', () => {
-    render(<Game />);
+    renderGamePage();
 
     expect(screen.getByRole('heading', { name: 'Sprycio' })).toBeInTheDocument();
     expect(screen.queryByText('Fajny sposób na naukę matematyki!')).not.toBeInTheDocument();
@@ -174,7 +182,7 @@ describe('Game branding', () => {
   });
 
   it('renders every home action as a featured glass CTA without pre-hovering any of them', () => {
-    render(<Game />);
+    renderGamePage();
 
     expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
       'border-white/78',
@@ -202,7 +210,7 @@ describe('Game branding', () => {
   });
 
   it('keeps the Lekcje-style top section on every primary game entry screen', async () => {
-    render(<Game />);
+    renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
@@ -226,7 +234,7 @@ describe('Game branding', () => {
   });
 
   it('keeps the same back-navigation pattern for quick-practice screens inside Grajmy', async () => {
-    render(<Game />);
+    renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();

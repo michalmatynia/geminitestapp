@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/server';
-import { kangurLessonTtsStatusRequestSchema } from '@/features/kangur/tts/contracts';
 import { resolveKangurTtsContextRegistryEnvelope } from '@/features/kangur/tts/context-registry/server';
+import { kangurLessonTtsStatusRequestSchema } from '@/features/kangur/tts/contracts';
 import { inspectKangurLessonNarrationAudio } from '@/features/kangur/tts/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

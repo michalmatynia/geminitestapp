@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-03-09T08:17:03.147Z",
+    "generatedAt": "2026-03-09T08:45:26.624Z",
     "scannedFileCount": 1335,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -145,8 +145,8 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/ui/PageLayout",
-        "@/shared/ui/card"
+        "@/shared/ui/card",
+        "@/shared/ui/PageLayout"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 2,
@@ -302,8 +302,8 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/ui/PageLayout",
-        "@/shared/ui/card"
+        "@/shared/ui/card",
+        "@/shared/ui/PageLayout"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 2,
@@ -1268,8 +1268,8 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui/button"
+        "@/shared/ui/button",
+        "@/shared/utils/observability/client-error-logger"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -1924,11 +1924,11 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 8,
+      "lines": 9,
       "useClient": false,
       "imports": [
-        "react",
-        "@/features/kangur/admin/AdminKangurBuilderPage"
+        "@/features/kangur/admin/AdminKangurBuilderPage",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2091,8 +2091,8 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui/button"
+        "@/shared/ui/button",
+        "@/shared/utils/observability/client-error-logger"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -2782,11 +2782,11 @@
         "next/link",
         "next/navigation",
         "react",
+        "@/features/admin/pages/validator-scope",
         "@/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage",
         "@/shared/hooks/use-settings",
         "@/shared/lib/product-validator-admin",
-        "@/shared/ui",
-        "@/features/admin/pages/validator-scope"
+        "@/shared/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2914,8 +2914,8 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui/button"
+        "@/shared/ui/button",
+        "@/shared/utils/observability/client-error-logger"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -2988,11 +2988,11 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 12,
+      "lines": 13,
       "useClient": false,
       "imports": [
-        "react",
-        "@/features/kangur/ui/KangurFeatureRouteShell"
+        "@/features/kangur/ui/KangurFeatureRouteShell",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3023,11 +3023,11 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 12,
+      "lines": 13,
       "useClient": false,
       "imports": [
-        "react",
-        "@/features/kangur/ui/KangurSurfaceClassSync"
+        "@/features/kangur/ui/KangurSurfaceClassSync",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3044,8 +3044,8 @@
       "lines": 32,
       "useClient": false,
       "imports": [
-        "react",
         "next/navigation",
+        "react",
         "@/features/kangur/config/routing",
         "@/features/kangur/ui/KangurFeatureRouteShell",
         "@/shared/lib/front-page-app",
@@ -3109,9 +3109,9 @@
         "@/features/cms/server",
         "@/features/kangur/ui/KangurPublicApp",
         "@/shared/lib/front-page-app",
-        "./HomeContent",
         "./home-helpers",
-        "./home-timing"
+        "./home-timing",
+        "./HomeContent"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3154,8 +3154,8 @@
       "imports": [
         "react",
         "@/features/foldertree/v2",
-        "@/shared/utils/master-folder-tree-contract",
-        "@/shared/hooks/use-interval"
+        "@/shared/hooks/use-interval",
+        "@/shared/utils/master-folder-tree-contract"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3246,8 +3246,8 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui/button"
+        "@/shared/ui/button",
+        "@/shared/utils/observability/client-error-logger"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -3284,8 +3284,8 @@
       "imports": [
         "next-auth/react",
         "react",
-        "@/shared/lib/analytics/components/PageAnalyticsTracker",
         "@/features/observability/components/ClientErrorReporter",
+        "@/shared/lib/analytics/components/PageAnalyticsTracker",
         "@/shared/providers/AppFontProvider",
         "@/shared/providers/BackgroundSyncProvider",
         "@/shared/providers/CsrfProvider",
@@ -3482,7 +3482,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 71,
       "useClient": false,
       "imports": [
         "react",
@@ -3519,7 +3519,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 207,
+      "lines": 223,
       "useClient": false,
       "imports": [
         "react",
@@ -17557,13 +17557,16 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Panel",
-      "lines": 394,
+      "lines": 436,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
-        "@/features/kangur/tts/contracts",
+        "@/features/ai/ai-context-registry/context/page-context",
+        "@/features/ai/ai-context-registry/context/page-context-shared",
         "@/features/kangur/tts/captions",
+        "@/features/kangur/tts/context-registry/instructions",
+        "@/features/kangur/tts/contracts",
         "@/features/kangur/tts/script",
         "@/shared/lib/api-client",
         "@/shared/utils",
@@ -19203,7 +19206,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 51,
+      "lines": 48,
       "useClient": true,
       "imports": [
         "react",
@@ -19722,12 +19725,13 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 240,
+      "lines": 256,
       "useClient": false,
       "imports": [
         "react",
         "@testing-library/react",
         "vitest",
+        "@/features/ai/ai-context-registry/context/page-context",
         "@/features/kangur/settings",
         "@/features/kangur/ui/components/KangurLessonNarrator"
       ],
@@ -19743,14 +19747,17 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 514,
+      "lines": 554,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/features/ai/ai-context-registry/context/page-context",
+        "@/features/ai/ai-context-registry/context/page-context-shared",
         "@/features/kangur/settings",
-        "@/features/kangur/tts/contracts",
         "@/features/kangur/tts/captions",
+        "@/features/kangur/tts/context-registry/instructions",
+        "@/features/kangur/tts/contracts",
         "@/features/kangur/tts/script",
         "@/features/kangur/ui/design/primitives",
         "@/shared/contracts/kangur",
@@ -20195,7 +20202,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 289,
+      "lines": 316,
       "useClient": false,
       "imports": [
         "react",
@@ -20215,9 +20222,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 277,
+      "lines": 320,
       "useClient": true,
       "imports": [
+        "react",
         "lucide-react",
         "@/features/kangur/config/routing",
         "@/features/kangur/ui/components/KangurHomeLogo",
@@ -20229,7 +20237,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "basePath|canManageLearners|className|contentClassName|currentPage|guestPlayerName|guestPlayerNamePlaceholder|homeActive|isAuthenticated|navLabel|onCreateAccount|onGuestPlayerNameChange|onGuestPlayerNameSubmit|onHomeClick|onLogin|onLogout|rightAccessory|showParentDashboard|showTests",
+      "propsSignature": "basePath|canManageLearners|className|contentClassName|currentPage|guestPlayerName|guestPlayerNamePlaceholder|homeActive|isAuthenticated|navLabel|onCreateAccount|onGuestPlayerNameChange|onHomeClick|onLogin|onLogout|rightAccessory|showParentDashboard|showTests",
       "thinReExportWrapper": false
     },
     {
@@ -26382,7 +26390,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 86,
+      "lines": 87,
       "useClient": true,
       "imports": [
         "react",

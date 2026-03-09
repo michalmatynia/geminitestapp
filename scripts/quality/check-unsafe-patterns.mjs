@@ -17,8 +17,8 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Trend Counters');
   lines.push('');
-  lines.push(`| Metric | Count |`);
-  lines.push(`| --- | ---: |`);
+  lines.push('| Metric | Count |');
+  lines.push('| --- | ---: |');
   for (const [key, value] of Object.entries(payload.trendCounters)) {
     lines.push(`| ${key} | ${value} |`);
   }

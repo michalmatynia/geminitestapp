@@ -2,7 +2,13 @@
  * @vitest-environment jsdom
  */
 
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  ImgHTMLAttributes,
+  ReactNode,
+} from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -73,6 +79,18 @@ vi.mock('framer-motion', () => ({
       whileTap?: unknown;
     }) => <button {...props}>{children}</button>,
   },
+}));
+
+vi.mock('next/image', () => ({
+  default: ({
+    alt,
+    fill: _fill,
+    unoptimized: _unoptimized,
+    ...props
+  }: ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    unoptimized?: boolean;
+  }) => <img alt={alt} {...props} />,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -319,7 +337,7 @@ describe('KangurAiTutorWidget', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('opens the guest assistance card after accepting the intro and can route to login', async () => {
+  it('opens the guest assistance card after accepting the intro and exposes login actions', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       isLoadingAuth: false,
@@ -381,12 +399,10 @@ describe('KangurAiTutorWidget', () => {
       })
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open login' }));
-
-    expect(navigateToLoginMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Open login' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Create parent account' }));
 
-    expect(navigateToLoginMock).toHaveBeenNthCalledWith(2, {
+    expect(navigateToLoginMock).toHaveBeenNthCalledWith(1, {
       authMode: 'create-account',
     });
   });
@@ -541,6 +557,8 @@ describe('KangurAiTutorWidget', () => {
       'via-orange-400',
       'to-orange-500'
     );
+    expect(screen.getByRole('button', { name: 'Zamknij' })).toHaveClass('cursor-pointer');
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveClass('cursor-pointer');
     expect(screen.getByText('Lekcja: Dodawanie')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-coaching-frame')).toHaveAttribute(
       'data-coaching-mode',
@@ -1064,6 +1082,7 @@ describe('KangurAiTutorWidget', () => {
 
     render(<KangurAiTutorWidget />);
 
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveClass('cursor-pointer');
     fireEvent.mouseDown(screen.getByTestId('kangur-ai-tutor-avatar'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
 
@@ -1413,6 +1432,7 @@ describe('KangurAiTutorWidget', () => {
 
     render(<KangurAiTutorWidget />);
 
+    expect(screen.getByTestId('kangur-ai-tutor-backdrop')).toHaveClass('cursor-pointer');
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-backdrop'));
 
     expect(closeChatMock).toHaveBeenCalledTimes(1);

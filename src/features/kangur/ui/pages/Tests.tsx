@@ -19,6 +19,7 @@ import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageI
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
@@ -38,6 +39,7 @@ export default function Tests(): React.JSX.Element {
   const router = useRouter();
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
   const settingsStore = useSettingsStore();
 
@@ -65,13 +67,15 @@ export default function Tests(): React.JSX.Element {
       canManageLearners: Boolean(user?.canManageLearners),
       contentClassName: 'justify-center',
       currentPage: 'Tests' as const,
+      guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
       onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
       showParentDashboard: false,
     }),
-    [basePath, logout, navigateToLogin, user]
+    [basePath, guestPlayerName, logout, navigateToLogin, setGuestPlayerName, user]
   );
 
   return (

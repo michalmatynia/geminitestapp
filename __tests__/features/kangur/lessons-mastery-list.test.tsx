@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/__tests__/test-utils';
 import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const {
   useKangurRoutingMock,
@@ -54,6 +55,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 }));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
+
+const renderLessonsPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Lessons />
+    </KangurGuestPlayerProvider>
+  );
 
 const lessonsSettingsValue = JSON.stringify([
   {
@@ -187,7 +195,7 @@ describe('Lessons page mastery list', () => {
   });
 
   it('shows mastery badges and summaries for each lesson card', async () => {
-    render(<Lessons />);
+    renderLessonsPage();
 
     expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
@@ -225,7 +233,7 @@ describe('Lessons page mastery list', () => {
   it('sticks the header flush to the top inside the admin shell too', async () => {
     useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur' });
 
-    render(<Lessons />);
+    renderLessonsPage();
 
     await screen.findByRole('heading', { name: 'Lekcje' });
     const link = screen.getByRole('link', { name: 'Strona glowna' });

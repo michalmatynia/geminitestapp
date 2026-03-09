@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -22,6 +23,7 @@ type KangurTopNavigationRegistration = {
 
 type KangurTopNavigationStateContextValue = {
   registration: KangurTopNavigationRegistration | null;
+  visibleRegistration: KangurTopNavigationRegistration | null;
 };
 
 type KangurTopNavigationActionsContextValue = {
@@ -34,25 +36,70 @@ const KangurTopNavigationStateContext =
 const KangurTopNavigationActionsContext =
   createContext<KangurTopNavigationActionsContextValue | null>(null);
 
+const TOP_NAVIGATION_CLEAR_DELAY_MS = 1_200;
+
 export function KangurTopNavigationProvider({
   children,
 }: {
   children: ReactNode;
 }): React.JSX.Element {
   const [registration, setRegistration] = useState<KangurTopNavigationRegistration | null>(null);
+  const [visibleRegistration, setVisibleRegistration] =
+    useState<KangurTopNavigationRegistration | null>(null);
+  const clearTimeoutRef = useRef<number | null>(null);
 
   const clearNavigation = useCallback((ownerId: string): void => {
-    setRegistration((current) => {
-      if (current?.ownerId !== ownerId) {
-        return current;
-      }
-      return null;
-    });
+    if (typeof window === 'undefined') {
+      setRegistration((current) => {
+        if (current?.ownerId !== ownerId) {
+          return current;
+        }
+        return null;
+      });
+      return;
+    }
+
+    if (clearTimeoutRef.current !== null) {
+      window.clearTimeout(clearTimeoutRef.current);
+    }
+
+    clearTimeoutRef.current = window.setTimeout(() => {
+      clearTimeoutRef.current = null;
+      setRegistration((current) => {
+        if (current?.ownerId !== ownerId) {
+          return current;
+        }
+        return null;
+      });
+      setVisibleRegistration((current) => {
+        if (current?.ownerId !== ownerId) {
+          return current;
+        }
+        return null;
+      });
+    }, TOP_NAVIGATION_CLEAR_DELAY_MS);
   }, []);
 
   const setNavigation = useCallback(
     (ownerId: string, navigation: KangurPrimaryNavigationProps): void => {
+      if (clearTimeoutRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(clearTimeoutRef.current);
+        clearTimeoutRef.current = null;
+      }
+
       setRegistration((current) => {
+        const nextRegistration = {
+          ownerId,
+          navigation,
+        };
+
+        if (current?.ownerId === ownerId && current.navigation === navigation) {
+          return current;
+        }
+
+        return nextRegistration;
+      });
+      setVisibleRegistration((current) => {
         if (current?.ownerId === ownerId && current.navigation === navigation) {
           return current;
         }
@@ -69,8 +116,9 @@ export function KangurTopNavigationProvider({
   const stateValue = useMemo<KangurTopNavigationStateContextValue>(
     () => ({
       registration,
+      visibleRegistration,
     }),
-    [registration]
+    [registration, visibleRegistration]
   );
   const actionsValue = useMemo<KangurTopNavigationActionsContextValue>(
     () => ({
@@ -97,11 +145,11 @@ export function KangurTopNavigationHost(): React.JSX.Element | null {
     );
   }
 
-  if (!state.registration) {
+  if (!state.visibleRegistration) {
     return null;
   }
 
-  return <KangurPrimaryNavigation {...state.registration.navigation} />;
+  return <KangurPrimaryNavigation {...state.visibleRegistration.navigation} />;
 }
 
 export const useOptionalKangurTopNavigation = (): KangurTopNavigationActionsContextValue | null => {

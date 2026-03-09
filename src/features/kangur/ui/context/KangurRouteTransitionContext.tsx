@@ -22,13 +22,15 @@ type KangurRouteTransitionState = {
 
 type KangurRouteTransitionContextValue = {
   isRoutePending: boolean;
+  isRouteRevealing: boolean;
+  activeTransitionPageKey: string | null;
   pendingPageKey: string | null;
   startRouteTransition: (input?: { href?: string | null; pageKey?: string | null }) => void;
 };
 
 type KangurRouteTransitionStateContextValue = Pick<
   KangurRouteTransitionContextValue,
-  'isRoutePending' | 'pendingPageKey'
+  'isRoutePending' | 'isRouteRevealing' | 'activeTransitionPageKey' | 'pendingPageKey'
 >;
 
 type KangurRouteTransitionActionsContextValue = Pick<
@@ -37,7 +39,6 @@ type KangurRouteTransitionActionsContextValue = Pick<
 >;
 
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
-const ROUTE_TRANSITION_MIN_VISIBLE_MS = 260;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
 
 const KangurRouteTransitionStateContext =
@@ -86,17 +87,7 @@ export function KangurRouteTransitionProvider({
       previousRequestedPath !== undefined &&
       requestedPath !== previousRequestedPath
     ) {
-      const elapsedMs = Date.now() - transitionState.startedAt;
-      const remainingVisibleMs = Math.max(0, ROUTE_TRANSITION_MIN_VISIBLE_MS - elapsedMs);
-
-      if (remainingVisibleMs > 0 && typeof window !== 'undefined') {
-        clearTransitionTimeoutId = window.setTimeout(() => {
-          clearTransitionTimeoutId = null;
-          commitTransition();
-        }, remainingVisibleMs);
-      } else {
-        commitTransition();
-      }
+      commitTransition();
     }
 
     previousRequestedPathRef.current = requestedPath;
@@ -155,6 +146,8 @@ export function KangurRouteTransitionProvider({
   const stateValue = useMemo<KangurRouteTransitionStateContextValue>(
     () => ({
       isRoutePending: transitionState !== null,
+      isRouteRevealing: false,
+      activeTransitionPageKey: transitionState?.pageKey ?? null,
       pendingPageKey: transitionState?.pageKey ?? null,
     }),
     [transitionState]

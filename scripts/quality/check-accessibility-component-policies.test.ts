@@ -33,7 +33,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleDialog.tsx',
-      "import { DialogContent } from '@/shared/ui/dialog';\nexport function ExampleDialog() {\n  return <DialogContent><div>Content</div></DialogContent>;\n}\n"
+      'import { DialogContent } from \'@/shared/ui/dialog\';\nexport function ExampleDialog() {\n  return <DialogContent><div>Content</div></DialogContent>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -53,7 +53,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleDialog.tsx',
-      "import { DialogContent, DialogTitle } from '@/shared/ui/dialog';\nexport function ExampleDialog() {\n  return <DialogContent><DialogTitle className='sr-only'>Example</DialogTitle><div>Content</div></DialogContent>;\n}\n"
+      'import { DialogContent, DialogTitle } from \'@/shared/ui/dialog\';\nexport function ExampleDialog() {\n  return <DialogContent><DialogTitle className=\'sr-only\'>Example</DialogTitle><div>Content</div></DialogContent>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -67,7 +67,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleTabs.tsx',
-      "import { TabsList } from '@/shared/ui/tabs';\nexport function ExampleTabs() {\n  return <TabsList className='w-full' />;\n}\n"
+      'import { TabsList } from \'@/shared/ui/tabs\';\nexport function ExampleTabs() {\n  return <TabsList className=\'w-full\' />;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -87,7 +87,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleAlert.tsx',
-      "import { AlertDialogContent } from '@/shared/ui/alert-dialog';\nexport function ExampleAlert() {\n  return <AlertDialogContent aria-label='Delete item'><div>Danger</div></AlertDialogContent>;\n}\n"
+      'import { AlertDialogContent } from \'@/shared/ui/alert-dialog\';\nexport function ExampleAlert() {\n  return <AlertDialogContent aria-label=\'Delete item\'><div>Danger</div></AlertDialogContent>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -100,7 +100,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleTooltip.tsx',
-      "import { Tooltip } from '@/shared/ui/tooltip';\nexport function ExampleTooltip() {\n  return <Tooltip content='Info'><div>Hover me</div></Tooltip>;\n}\n"
+      'import { Tooltip } from \'@/shared/ui/tooltip\';\nexport function ExampleTooltip() {\n  return <Tooltip content=\'Info\'><div>Hover me</div></Tooltip>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -119,7 +119,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleTooltip.tsx',
-      "import { Tooltip } from '@/shared/ui/tooltip';\nexport function ExampleTooltip() {\n  return <Tooltip content='Info'><button type='button'>Hover me</button></Tooltip>;\n}\n"
+      'import { Tooltip } from \'@/shared/ui/tooltip\';\nexport function ExampleTooltip() {\n  return <Tooltip content=\'Info\'><button type=\'button\'>Hover me</button></Tooltip>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });
@@ -132,7 +132,7 @@ describe('analyzeAccessibilityComponentPolicies', () => {
     writeSource(
       root,
       'src/features/example/ExampleTooltip.tsx',
-      "import { Tooltip } from '@/shared/ui/tooltip';\nexport function ExampleTooltip() {\n  return <Tooltip content='Info'><span><button type='button'>Hover me</button></span></Tooltip>;\n}\n"
+      'import { Tooltip } from \'@/shared/ui/tooltip\';\nexport function ExampleTooltip() {\n  return <Tooltip content=\'Info\'><span><button type=\'button\'>Hover me</button></span></Tooltip>;\n}\n'
     );
 
     const report = analyzeAccessibilityComponentPolicies({ root });

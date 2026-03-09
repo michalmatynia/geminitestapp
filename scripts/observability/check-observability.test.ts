@@ -44,7 +44,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('missing service');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'missing service\');\n'
     );
 
     const report = runObservabilityCheck({
@@ -67,7 +67,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-event-source.ts',
-      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', message: 'startup complete' });\n"
+      'import { logSystemEvent } from \'@/shared/lib/observability/system-logger\';\nvoid logSystemEvent({ level: \'info\', message: \'startup complete\' });\n'
     );
 
     const report = runObservabilityCheck({
@@ -90,7 +90,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-event-legacy-prefix.ts',
-      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', message: '[chatbot.sessions] listed' });\n"
+      'import { logSystemEvent } from \'@/shared/lib/observability/system-logger\';\nvoid logSystemEvent({ level: \'info\', message: \'[chatbot.sessions] listed\' });\n'
     );
 
     const report = runObservabilityCheck({
@@ -110,7 +110,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-event-source-format.ts',
-      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', source: 'chatbot sessions', message: '[chatbot] listed' });\n"
+      'import { logSystemEvent } from \'@/shared/lib/observability/system-logger\';\nvoid logSystemEvent({ level: \'info\', source: \'chatbot sessions\', message: \'[chatbot] listed\' });\n'
     );
 
     const report = runObservabilityCheck({
@@ -133,7 +133,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-import.ts',
-      "import { logClientError } from '@/features/observability';\nvoid logClientError;\n"
+      'import { logClientError } from \'@/features/observability\';\nvoid logClientError;\n'
     );
 
     const report = runObservabilityCheck({
@@ -156,7 +156,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-ai-path-shim-import.ts',
-      "import { buildAiPathRunStaticContext } from '@/shared/lib/observability/ai-path-run-static-context';\nvoid buildAiPathRunStaticContext;\n"
+      'import { buildAiPathRunStaticContext } from \'@/shared/lib/observability/ai-path-run-static-context\';\nvoid buildAiPathRunStaticContext;\n'
     );
 
     const report = runObservabilityCheck({
@@ -181,7 +181,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/features/observability/public.ts',
-      "export const legacyObservabilityPublic = 'do-not-use';\n"
+      'export const legacyObservabilityPublic = \'do-not-use\';\n'
     );
 
     const report = runObservabilityCheck({
@@ -210,7 +210,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] passed');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] passed\');\n'
     );
 
     const report = runObservabilityCheck({
@@ -230,7 +230,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] startup complete\');\n'
     );
 
     const previousEnv = {
@@ -287,7 +287,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] startup complete\');\n'
     );
     writeSource(
       root,
@@ -334,7 +334,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] startup complete\');\n'
     );
     writeSource(root, 'logs/app.log', '[2026-03-04T01:00:00.000Z] [INFO] Service booted\n');
 
@@ -361,7 +361,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/good-log.ts',
-      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+      'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] startup complete\');\n'
     );
 
     const prefilledCheckLog = path.join(root, 'logs/quality-check.log');

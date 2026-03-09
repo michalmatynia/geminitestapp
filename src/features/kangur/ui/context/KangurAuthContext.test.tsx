@@ -149,7 +149,9 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
-    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href);
+    expect(openLoginModalMock).toHaveBeenCalledWith(window.location.href, {
+      authMode: undefined,
+    });
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
     expect(routerPushMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();

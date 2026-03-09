@@ -8,6 +8,7 @@ import {
   createEmailVerificationChallenge,
   findAuthUserByEmail,
   findAuthUserById,
+  findActiveEmailVerificationChallengeByEmail,
   getAuthSecurityPolicy,
   getAuthSecurityProfile,
   markAuthUserEmailVerified,
@@ -22,6 +23,7 @@ import {
   KANGUR_BASE_PATH,
   resolveKangurPublicBasePathFromHref,
 } from '@/features/kangur/config/routing';
+import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
 import { conflictError, forbiddenError, internalError, validationError } from '@/shared/errors/app-error';
 
 type KangurParentAccountCreateResult = {
@@ -142,6 +144,34 @@ const buildVerificationEmailContent = (input: {
   };
 };
 
+const sendKangurParentVerificationEmail = async (input: {
+  email: string;
+  callbackUrl: string | null;
+  created: boolean;
+  hasPassword: boolean;
+  verificationUrl: string;
+}): Promise<void> => {
+  const emailContent = buildVerificationEmailContent({
+    email: input.email,
+    verificationUrl: input.verificationUrl,
+  });
+
+  await sendAuthEmail({
+    to: input.email,
+    subject: emailContent.subject,
+    text: emailContent.text,
+    html: emailContent.html,
+    purpose: 'email_verification',
+    metadata: {
+      callbackUrl: input.callbackUrl,
+      created: input.created,
+      hasPassword: input.hasPassword,
+      activationMode: input.created ? 'create_on_verify' : 'verify_existing_unverified_user',
+      emailVerified: false,
+    },
+  });
+};
+
 export const createKangurParentAccount = async (input: {
   email: string;
   password: string;
@@ -152,24 +182,30 @@ export const createKangurParentAccount = async (input: {
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
   const existingUser = await findAuthUserByEmail(email);
   let created = false;
-  let user = existingUser;
+  let hasPassword = false;
+  let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
 
-  if (!user) {
+  if (!existingUser) {
     await assertValidParentPassword(input.password);
     const passwordHash = await hash(input.password, 12);
-    user = await createAuthUserWithEmail({
+    verificationToken = await createEmailVerificationChallenge({
       email,
-      name: buildParentDisplayName(email),
-      passwordHash,
-      emailVerified: null,
+      callbackUrl,
+      pendingRegistration: {
+        source: 'kangur_parent',
+        name: buildParentDisplayName(email),
+        passwordHash,
+      },
     });
     created = true;
+    hasPassword = true;
   } else {
-    await assertUserLoginAllowed(user.id);
-    if (user.emailVerified) {
+    await assertUserLoginAllowed(existingUser.id);
+    if (existingUser.emailVerified) {
       throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
     }
 
+    let user = existingUser;
     if (!(typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0)) {
       await assertValidParentPassword(input.password);
       const updatedUser = await setAuthUserPassword(user.id, input.password);
@@ -178,13 +214,14 @@ export const createKangurParentAccount = async (input: {
       }
       user = updatedUser;
     }
-  }
 
-  const verificationToken = await createEmailVerificationChallenge({
-    userId: user.id,
-    email,
-    callbackUrl,
-  });
+    verificationToken = await createEmailVerificationChallenge({
+      userId: user.id,
+      email,
+      callbackUrl,
+    });
+    hasPassword = Boolean(user.passwordHash);
+  }
 
   const origin = resolveAppOrigin(input.request);
   const verificationUrl = buildAbsoluteKangurLoginUrl({
@@ -192,29 +229,82 @@ export const createKangurParentAccount = async (input: {
     callbackUrl,
     verifyEmailToken: verificationToken.id,
   });
-  const emailContent = buildVerificationEmailContent({
+  await sendKangurParentVerificationEmail({
     email,
+    callbackUrl,
+    created,
+    hasPassword,
     verificationUrl,
-  });
-
-  await sendAuthEmail({
-    to: email,
-    subject: emailContent.subject,
-    text: emailContent.text,
-    html: emailContent.html,
-    purpose: 'email_verification',
-    metadata: {
-      callbackUrl,
-      created,
-      emailVerified: false,
-    },
   });
 
   return {
     email,
     created,
     emailVerified: false,
-    hasPassword: Boolean(user.passwordHash),
+    hasPassword,
+    verificationUrl,
+  };
+};
+
+export const resendKangurParentVerificationEmail = async (input: {
+  email: string;
+  callbackUrl?: string | null;
+  request?: Request | null;
+}): Promise<KangurParentAccountCreateResult> => {
+  const email = normalizeAuthEmail(input.email);
+  const callbackUrl = normalizeOptionalString(input.callbackUrl);
+  const existingUser = await findAuthUserByEmail(email);
+  let hasPassword = false;
+  let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
+
+  if (existingUser) {
+    await assertUserLoginAllowed(existingUser.id);
+    if (existingUser.emailVerified) {
+      throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
+    }
+
+    verificationToken = await createEmailVerificationChallenge({
+      userId: existingUser.id,
+      email,
+      callbackUrl,
+    });
+    hasPassword = Boolean(existingUser.passwordHash);
+  } else {
+    const pendingVerification = await findActiveEmailVerificationChallengeByEmail(email);
+    if (pendingVerification?.pendingRegistration?.source !== 'kangur_parent') {
+      throw forbiddenError(
+        'Nie znalezlismy oczekujacego konta rodzica dla tego emaila. Utworz konto ponownie.'
+      );
+    }
+
+    verificationToken = await createEmailVerificationChallenge({
+      email,
+      callbackUrl,
+      pendingRegistration: pendingVerification.pendingRegistration,
+    });
+    hasPassword = true;
+  }
+
+  const origin = resolveAppOrigin(input.request);
+  const verificationUrl = buildAbsoluteKangurLoginUrl({
+    origin,
+    callbackUrl,
+    verifyEmailToken: verificationToken.id,
+  });
+
+  await sendKangurParentVerificationEmail({
+    email,
+    callbackUrl,
+    created: false,
+    hasPassword,
+    verificationUrl,
+  });
+
+  return {
+    email,
+    created: false,
+    emailVerified: false,
+    hasPassword,
     verificationUrl,
   };
 };
@@ -229,8 +319,37 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
     throw forbiddenError('This email verification link is no longer valid.');
   }
 
-  const updated = await markAuthUserEmailVerified(token.userId);
-  const email = updated?.email ?? token.email;
+  const pendingRegistration = token.pendingRegistration;
+  let user =
+    pendingRegistration?.source === 'kangur_parent' ? await findAuthUserByEmail(token.email) : null;
+
+  if (user) {
+    await assertUserLoginAllowed(user.id);
+  }
+
+  if (pendingRegistration?.source === 'kangur_parent' && !user) {
+    user = await createAuthUserWithEmail({
+      email: token.email,
+      name: pendingRegistration.name ?? buildParentDisplayName(token.email),
+      passwordHash: pendingRegistration.passwordHash,
+      emailVerified: new Date(),
+    });
+  } else if (user && !user.emailVerified) {
+    user = await markAuthUserEmailVerified(user.id);
+  } else if (!pendingRegistration) {
+    user = await markAuthUserEmailVerified(token.userId);
+  }
+
+  const email = user?.email ?? token.email;
+  const ownerUserId = user?.id;
+  if (ownerUserId) {
+    await ensureDefaultKangurLearnerForOwner({
+      ownerUserId,
+      displayName: user?.name ?? buildParentDisplayName(email),
+      preferredLoginName: email.split('@')[0] ?? ownerUserId.slice(0, 12),
+      legacyUserKey: email,
+    });
+  }
 
   return {
     email,

@@ -1,19 +1,29 @@
 import 'server-only';
 
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import { createHash } from 'crypto';
 
 import OpenAI from 'openai';
 
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { readBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { uploadsRoot } from '@/shared/lib/files/server-constants';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import { uploadToConfiguredStorage } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils';
+
+import {
+  buildKangurLessonTtsContextInstructions,
+  buildKangurLessonTtsContextSignature,
+} from './context-registry/instructions';
+import {
+  kangurLessonAudioCacheSchema,
+  KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY,
+  KANGUR_TTS_DEFAULT_MODEL,
+} from './contracts';
 
 import type {
   KangurLessonAudioSegment,
@@ -25,15 +35,6 @@ import type {
   KangurLessonTtsStatusResponse,
   KangurLessonTtsVoice,
 } from './contracts';
-import {
-  kangurLessonAudioCacheSchema,
-  KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY,
-  KANGUR_TTS_DEFAULT_MODEL,
-} from './contracts';
-import {
-  buildKangurLessonTtsContextInstructions,
-  buildKangurLessonTtsContextSignature,
-} from './context-registry/instructions';
 
 const resolveLocaleInstruction = (locale: string): string => {
   const normalizedLocale = locale.trim().toLowerCase();
@@ -442,14 +443,14 @@ export const ensureKangurLessonNarrationAudio = async (input: {
       const audioUrl = canReuseEntry
         ? existingEntry.audioUrl
         : await synthesizeSegmentAudio({
-            client,
-            lessonId: input.script.lessonId,
-            locale: input.script.locale,
-            voice: input.voice,
-            text: segment.text,
-            cacheKey,
-            contextRegistry: input.contextRegistry,
-          });
+          client,
+          lessonId: input.script.lessonId,
+          locale: input.script.locale,
+          voice: input.voice,
+          text: segment.text,
+          cacheKey,
+          contextRegistry: input.contextRegistry,
+        });
 
       if (!canReuseEntry) {
         const createdAt = new Date().toISOString();

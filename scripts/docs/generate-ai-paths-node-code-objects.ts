@@ -163,7 +163,7 @@ const parseDefaultValue = (value: unknown): unknown => {
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
   ) {
     return trimmed.slice(1, -1);
   }

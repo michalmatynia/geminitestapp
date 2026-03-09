@@ -4,7 +4,7 @@ import path from 'node:path';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const args = new Set(process.argv.slice(2));
-const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 
 const root = process.cwd();
 const metricsDir = path.join(root, 'docs', 'metrics');

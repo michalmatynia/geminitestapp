@@ -8,7 +8,7 @@ const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const includeTestProbes = args.has('--include-test-probes');
 const includeTestTree = args.has('--include-test-tree');
-const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');

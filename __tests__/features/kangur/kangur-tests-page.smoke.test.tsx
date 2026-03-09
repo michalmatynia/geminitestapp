@@ -6,6 +6,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+
 const { useKangurRoutingMock, useKangurAuthMock, settingsStoreGetMock } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -58,6 +60,13 @@ vi.mock('@/features/kangur/ui/components/KangurTestSuitePlayer', () => ({
 }));
 
 import Tests from '@/features/kangur/ui/pages/Tests';
+
+const renderTestsPage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Tests />
+    </KangurGuestPlayerProvider>
+  );
 import { KANGUR_TEST_SUITES_SETTING_KEY } from '@/shared/contracts/kangur-tests';
 
 const twoSuitesRaw = JSON.stringify([
@@ -96,18 +105,17 @@ describe('Tests page smoke', () => {
   });
 
   it('renders the page heading', () => {
-    render(<Tests />);
+    renderTestsPage();
     const heading = screen.getByTestId('kangur-tests-list-heading');
-    expect(heading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
-    expect(within(heading).getByRole('heading', { name: 'Testy Kangur' })).toHaveClass(
-      'text-2xl',
+    expect(heading).toHaveClass(
+      'font-extrabold',
+      'text-3xl',
       'text-indigo-700'
     );
-    expect(within(heading).getByText('🦘')).toHaveClass('bg-indigo-100', 'text-indigo-700');
   });
 
   it('shows the empty state when no suites are configured', () => {
-    render(<Tests />);
+    renderTestsPage();
     expect(screen.getByText(/Brak aktywnych zestawów testowych/)).toBeInTheDocument();
     expect(screen.getByText('Brak aktywnych zestawów testowych.').parentElement).toHaveClass(
       'soft-card',
@@ -120,7 +128,7 @@ describe('Tests page smoke', () => {
     settingsStoreGetMock.mockImplementation((key: string) =>
       key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
     );
-    render(<Tests />);
+    renderTestsPage();
     expect(screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i })).toHaveClass('soft-card');
     expect(screen.getByTestId('tests-suite-icon-suite-math-2024')).toHaveClass(
       'bg-indigo-100',
@@ -130,7 +138,7 @@ describe('Tests page smoke', () => {
   });
 
   it('renders nav links to Game and Lessons pages', () => {
-    render(<Tests />);
+    renderTestsPage();
     expect(screen.getByRole('link', { name: /Strona glowna/i })).toHaveAttribute(
       'href',
       '/kangur'
@@ -145,7 +153,7 @@ describe('Tests page smoke', () => {
     settingsStoreGetMock.mockImplementation((key: string) =>
       key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
     );
-    render(<Tests />);
+    renderTestsPage();
 
     const suiteButton = screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i });
     await userEvent.click(suiteButton);
@@ -173,7 +181,7 @@ describe('Tests page smoke', () => {
       logout: vi.fn(),
     });
 
-    render(<Tests />);
+    renderTestsPage();
     await userEvent.click(screen.getByRole('button', { name: /Kangur 2024 — 3 pkt/i }));
 
     expect(await screen.findByTestId('suite-player')).toHaveAttribute('data-learner-id', 'learner-77');
@@ -183,7 +191,7 @@ describe('Tests page smoke', () => {
     settingsStoreGetMock.mockImplementation((key: string) =>
       key === KANGUR_TEST_SUITES_SETTING_KEY ? twoSuitesRaw : null
     );
-    render(<Tests />);
+    renderTestsPage();
     expect(screen.getByText('2024')).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(screen.getByText(/III–IV/)).toHaveClass('border-slate-200', 'bg-slate-100');
     expect(screen.getByText('0 pytań')).toHaveClass('border-indigo-200', 'bg-indigo-100');
@@ -191,7 +199,7 @@ describe('Tests page smoke', () => {
 
   it('uses admin basePath for nav links when mounted inside admin shell', () => {
     useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur' });
-    render(<Tests />);
+    renderTestsPage();
     expect(screen.getByRole('link', { name: /Strona glowna/i })).toHaveAttribute(
       'href',
       '/admin/kangur'

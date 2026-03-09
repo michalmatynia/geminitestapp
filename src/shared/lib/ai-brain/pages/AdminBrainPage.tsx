@@ -2,8 +2,16 @@
 
 import { Activity, Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
+import {
+  AI_BRAIN_CONTEXT_ROOT_IDS,
+  buildAiBrainWorkspaceContextBundle,
+} from '@/shared/lib/ai-brain/context-registry/workspace';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BrainSettingsHeader } from '@/shared/lib/ai-brain/components/BrainSettingsHeader';
@@ -21,6 +29,105 @@ const BRAIN_TABS: BrainTab[] = ['operations', 'routing', 'providers', 'reports',
 
 const isBrainTab = (value: string | null | undefined): value is BrainTab =>
   Boolean(value && BRAIN_TABS.includes(value as BrainTab));
+
+function BrainContextRegistrySource(): React.JSX.Element {
+  const {
+    activeTab,
+    analyticsPromptSystem,
+    analyticsScheduleEnabled,
+    analyticsScheduleMinutes,
+    analyticsSummaryQuery,
+    effectiveAssignments,
+    effectiveCapabilityAssignments,
+    insightsQuery,
+    liveOllamaModels,
+    logMetricsQuery,
+    logsAutoOnError,
+    logsPromptSystem,
+    logsScheduleEnabled,
+    logsScheduleMinutes,
+    modelQuickPicks,
+    agentQuickPicks,
+    operationsOverviewQuery,
+    operationsRange,
+    overridesEnabled,
+    runtimeAnalyticsLiveEnabled,
+    runtimeAnalyticsPromptSystem,
+    runtimeAnalyticsQuery,
+    runtimeAnalyticsScheduleEnabled,
+    runtimeAnalyticsScheduleMinutes,
+    saving,
+    settings,
+  } = useBrain();
+
+  const registrySource = useMemo(
+    () => ({
+      label: 'AI Brain workspace state',
+      resolved: buildAiBrainWorkspaceContextBundle({
+        activeTab,
+        operationsRange,
+        saving,
+        analyticsScheduleEnabled,
+        analyticsScheduleMinutes,
+        runtimeAnalyticsScheduleEnabled,
+        runtimeAnalyticsScheduleMinutes,
+        logsScheduleEnabled,
+        logsScheduleMinutes,
+        logsAutoOnError,
+        analyticsPromptSystem,
+        runtimeAnalyticsPromptSystem,
+        logsPromptSystem,
+        runtimeAnalyticsLiveEnabled,
+        liveOllamaModels,
+        modelQuickPickCount: modelQuickPicks.length,
+        agentQuickPickCount: agentQuickPicks.length,
+        overridesEnabled,
+        featureOverrides: settings.assignments,
+        capabilityOverrides: settings.capabilities,
+        effectiveAssignments,
+        effectiveCapabilityAssignments,
+        analyticsSummary: analyticsSummaryQuery.data,
+        logMetrics: logMetricsQuery.data,
+        insights: insightsQuery.data,
+        runtimeAnalytics: runtimeAnalyticsQuery.data,
+        operationsOverview: operationsOverviewQuery.data,
+      }),
+    }),
+    [
+      activeTab,
+      agentQuickPicks.length,
+      analyticsPromptSystem,
+      analyticsScheduleEnabled,
+      analyticsScheduleMinutes,
+      analyticsSummaryQuery.data,
+      effectiveAssignments,
+      effectiveCapabilityAssignments,
+      insightsQuery.data,
+      liveOllamaModels,
+      logMetricsQuery.data,
+      logsAutoOnError,
+      logsPromptSystem,
+      logsScheduleEnabled,
+      logsScheduleMinutes,
+      modelQuickPicks.length,
+      operationsOverviewQuery.data,
+      operationsRange,
+      overridesEnabled,
+      runtimeAnalyticsLiveEnabled,
+      runtimeAnalyticsPromptSystem,
+      runtimeAnalyticsQuery.data,
+      runtimeAnalyticsScheduleEnabled,
+      runtimeAnalyticsScheduleMinutes,
+      saving,
+      settings.assignments,
+      settings.capabilities,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('brain-workspace-state', registrySource);
+
+  return <></>;
+}
 
 function AdminBrainPageContent(): React.JSX.Element {
   const { activeTab, setActiveTab } = useBrain();
@@ -53,6 +160,7 @@ function AdminBrainPageContent(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
+      <BrainContextRegistrySource />
       <BrainSettingsHeader />
       <BrainStateOverview />
 
@@ -109,8 +217,14 @@ function AdminBrainPageContent(): React.JSX.Element {
 
 export function AdminBrainPage(): React.JSX.Element {
   return (
-    <BrainProvider>
-      <AdminBrainPageContent />
-    </BrainProvider>
+    <ContextRegistryPageProvider
+      pageId='admin:brain'
+      title='AI Brain'
+      rootNodeIds={[...AI_BRAIN_CONTEXT_ROOT_IDS]}
+    >
+      <BrainProvider>
+        <AdminBrainPageContent />
+      </BrainProvider>
+    </ContextRegistryPageProvider>
   );
 }

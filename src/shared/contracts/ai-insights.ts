@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
+import { aiPathRuntimeAnalyticsRangeSchema } from './ai-paths';
 import { namedDtoSchema } from './base';
 
 /**
@@ -127,3 +129,18 @@ export const DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT =
 export const DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT =
   'You are a runtime performance analyst reviewing AI execution telemetry. ' +
   'Identify bottlenecks, queue pressure, node instability, and concrete optimization actions.';
+
+export const analyticsInsightRunRequestSchema = z.object({
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type AnalyticsInsightRunRequest = z.infer<typeof analyticsInsightRunRequestSchema>;
+
+export const runtimeAnalyticsInsightRunRequestSchema = z.object({
+  range: aiPathRuntimeAnalyticsRangeSchema.optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+
+export type RuntimeAnalyticsInsightRunRequest = z.infer<
+  typeof runtimeAnalyticsInsightRunRequestSchema
+>;

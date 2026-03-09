@@ -33,7 +33,7 @@ describe('analyzeRoutePolicies', () => {
     writeSource(
       root,
       'src/app/api/products/route.ts',
-      "import { apiHandler } from '@/shared/lib/api/api-handler';\nconst GET_handler = async () => new Response(null, { status: 200 });\nexport const GET = apiHandler(GET_handler, { source: 'wrong.source.GET' });\n"
+      'import { apiHandler } from \'@/shared/lib/api/api-handler\';\nconst GET_handler = async () => new Response(null, { status: 200 });\nexport const GET = apiHandler(GET_handler, { source: \'wrong.source.GET\' });\n'
     );
 
     const report = analyzeRoutePolicies({ root });
@@ -52,7 +52,7 @@ describe('analyzeRoutePolicies', () => {
     writeSource(
       root,
       'src/app/api/products/route.ts',
-      "import { apiHandler } from '@/shared/lib/api/api-handler';\nconst POST_handler = async () => new Response(null, { status: 200 });\nexport const POST = apiHandler(POST_handler, { source: 'products.POST', requireCsrf: false });\n"
+      'import { apiHandler } from \'@/shared/lib/api/api-handler\';\nconst POST_handler = async () => new Response(null, { status: 200 });\nexport const POST = apiHandler(POST_handler, { source: \'products.POST\', requireCsrf: false });\n'
     );
 
     const report = analyzeRoutePolicies({ root });
@@ -71,7 +71,7 @@ describe('analyzeRoutePolicies', () => {
     writeSource(
       root,
       'src/app/api/products/route.ts',
-      "import { apiHandler } from '@/shared/lib/api/api-handler';\nconst POST_handler = async () => new Response(null, { status: 200 });\nexport const POST = apiHandler(POST_handler, { source: 'products.POST', parseJsonBody: true });\n"
+      'import { apiHandler } from \'@/shared/lib/api/api-handler\';\nconst POST_handler = async () => new Response(null, { status: 200 });\nexport const POST = apiHandler(POST_handler, { source: \'products.POST\', parseJsonBody: true });\n'
     );
 
     const report = analyzeRoutePolicies({ root });
@@ -88,7 +88,7 @@ describe('analyzeRoutePolicies', () => {
     writeSource(
       root,
       'src/app/api/agentcreator/agent/route.ts',
-      "import { GET as getAgentRuns } from '@/features/ai/agentcreator/api/agent/route';\nexport const GET = getAgentRuns;\n"
+      'import { GET as getAgentRuns } from \'@/features/ai/agentcreator/api/agent/route\';\nexport const GET = getAgentRuns;\n'
     );
 
     const report = analyzeRoutePolicies({ root });

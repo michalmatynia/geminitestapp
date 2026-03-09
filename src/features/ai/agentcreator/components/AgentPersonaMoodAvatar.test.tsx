@@ -4,7 +4,23 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next/image', () => ({
+  default: ({
+    alt,
+    src,
+    fill: _fill,
+    unoptimized: _unoptimized,
+    sizes: _sizes,
+    ...rest
+  }: React.ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    src: string;
+    unoptimized?: boolean;
+    sizes?: string;
+  }) => <img alt={alt} src={src} {...rest} />,
+}));
 
 import { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
 

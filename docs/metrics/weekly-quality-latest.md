@@ -8,14 +8,14 @@ canonical: true
 ---
 # Weekly Quality Report
 
-Generated at: 2026-03-09T07:50:55.873Z
+Generated at: 2026-03-09T09:07:34.294Z
 Node: v24.3.0
 
 ## Quality Check Summary
 
 - Total checks: 18
-- Passed: 12
-- Failed: 3
+- Passed: 15
+- Failed: 0
 - Timed out: 0
 - Skipped: 3
 
@@ -24,7 +24,7 @@ Node: v24.3.0
 - Build pass rate: 100%
 - Build preflight: removed (Removed .next/standalone before build to reclaim disk space. Removed stale .next/trace-build before running build check.)
 - Lint pass rate: n/a%
-- Lint-domain pass rate: 0%
+- Lint-domain pass rate: 100%
 - Typecheck pass rate: 100%
 - Critical-flow gate pass rate: 100%
 - Security smoke gate pass rate: 100%
@@ -43,30 +43,30 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 | Check | Status | Duration | Exit | Command |
 | --- | --- | ---: | ---: | --- |
-| Build | PASS | 2.6m | 0 | `npm run build` |
+| Build | PASS | 3.1m | 0 | `npm run build` |
 | Lint | SKIPPED | 0ms | - | `npm run lint` |
-| Lint Domain Gate | FAIL | 3.1s | 1 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
-| Typecheck | PASS | 34.3s | 0 | `npm run typecheck` |
-| Critical Flow Gate | PASS | 21.7s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
-| Security Smoke Gate | PASS | 8.3s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
-| Unit Domain Gate | PASS | 4.4m | 0 | `npm run test:unit:domains:strict -- --ci --no-history` |
+| Lint Domain Gate | PASS | 2.2m | 0 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
+| Typecheck | PASS | 35.2s | 0 | `npm run typecheck` |
+| Critical Flow Gate | PASS | 26.0s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
+| Security Smoke Gate | PASS | 8.9s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
+| Unit Domain Gate | PASS | 4.6m | 0 | `npm run test:unit:domains:strict -- --ci --no-history` |
 | Full Unit Tests | SKIPPED | 0ms | - | `npm run test:unit` |
 | E2E Tests | SKIPPED | 0ms | - | `npm run test:e2e` |
-| Architecture Guardrails | FAIL | 3.7s | 1 | `node scripts/architecture/check-guardrails.mjs` |
-| UI Consolidation Guardrail | FAIL | 2.7s | 1 | `node scripts/architecture/check-ui-consolidation.mjs` |
+| Architecture Guardrails | PASS | 3.6s | 0 | `node scripts/architecture/check-guardrails.mjs` |
+| UI Consolidation Guardrail | PASS | 2.5s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
 | Observability Check | PASS | 1.3s | 0 | `npm run observability:check` |
-| Unsafe Patterns | PASS | 957ms | 0 | `node scripts/quality/check-unsafe-patterns.mjs --ci --no-history` |
-| Import Boundaries | PASS | 448ms | 0 | `node scripts/quality/check-import-boundaries.mjs --ci --no-history` |
-| API Input Validation | PASS | 212ms | 0 | `node scripts/quality/check-api-input-validation.mjs --ci --no-history` |
-| Context Health | PASS | 551ms | 0 | `node scripts/quality/check-context-health.mjs --ci --no-history` |
-| Timer Cleanup | PASS | 281ms | 0 | `node scripts/quality/check-timer-cleanup.mjs --ci --no-history` |
-| Test Distribution | PASS | 303ms | 0 | `node scripts/quality/check-test-distribution.mjs --ci --no-history` |
+| Unsafe Patterns | PASS | 980ms | 0 | `node scripts/quality/check-unsafe-patterns.mjs --ci --no-history` |
+| Import Boundaries | PASS | 386ms | 0 | `node scripts/quality/check-import-boundaries.mjs --ci --no-history` |
+| API Input Validation | PASS | 210ms | 0 | `node scripts/quality/check-api-input-validation.mjs --ci --no-history` |
+| Context Health | PASS | 553ms | 0 | `node scripts/quality/check-context-health.mjs --ci --no-history` |
+| Timer Cleanup | PASS | 284ms | 0 | `node scripts/quality/check-timer-cleanup.mjs --ci --no-history` |
+| Test Distribution | PASS | 269ms | 0 | `node scripts/quality/check-test-distribution.mjs --ci --no-history` |
 
 ## Guardrail Snapshot
 
 ## Trend Snapshot
 
-- Weekly lane trend: runs=1, window=2026-03-05T00:31:37.152Z -> 2026-03-05T00:31:37.152Z, delta=n/a
+- Weekly lane trend: runs=10, window=2026-03-08T19:02:29.014Z -> 2026-03-09T07:50:55.873Z, delta=-3.1m
 - Unit-domain trend: runs=2, window=2026-03-05T03:33:16.314Z -> 2026-03-05T03:49:28.650Z, delta=+5.3s
 - Lint-domain trend: runs=4, window=2026-03-05T04:00:57.270Z -> 2026-03-05T04:36:38.577Z, delta=+31.5s
 
@@ -82,13 +82,13 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 ## Architecture and Performance Snapshot
 
-- Source files: 5223
-- Source lines: 850220
+- Source files: 5243
+- Source lines: 853779
 - API routes: 341
-- Cross-feature edge pairs: 26
+- Cross-feature edge pairs: 28
 - Shared->features imports: 76
 - Largest file: `src/features/kangur/ui/components/KangurAiTutorWidget.tsx` (3075 LOC)
-- use client files: 1496
+- use client files: 1497
 - setInterval occurrences: 22
 
 ## Top 5 Critical User Flows (Priority Order)

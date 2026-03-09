@@ -1,9 +1,10 @@
 'use client';
 
-import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
+import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
@@ -64,8 +65,13 @@ export function useAnalyticsInsights(
 }
 
 export function useRunAnalyticsInsight(): MutationResult<{ insight: AiInsightRecord }, void> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+
   return createCreateMutationV2({
-    mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/analytics/insights'),
+    mutationFn: () =>
+      api.post<{ insight: AiInsightRecord }>('/api/analytics/insights', {
+        ...(contextRegistry ? { contextRegistry } : {}),
+      }),
     mutationKey: analyticsKeys.all,
     meta: {
       source: 'analytics.hooks.useRunAnalyticsInsight',

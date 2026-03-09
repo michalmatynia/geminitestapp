@@ -18,8 +18,8 @@ agents.
 The docs tree has grown large and mixed:
 
 - `5` markdown files directly under `docs/`
-- `1564` total files under `docs/`
-- `1078` files under `docs/metrics/` alone
+- `1076` total files under `docs/`
+- `759` files under `docs/metrics/` alone
 
 The main problem is not volume by itself. The problem is mixed document classes
 at the same level: entrypoints, policies, feature docs, dated plans, runbooks,
@@ -145,7 +145,9 @@ frontmatter and be registered as canonical docs. Generated latest reports can be
 tracked through the frontmatter audit until their generators are upgraded.
 Generated metrics markdown under `docs/metrics/` should be normalized with
 `npm run docs:metrics:normalize-frontmatter`, which keeps frontmatter and the
-canonical metrics manifest entries aligned in one pass.
+canonical metrics manifest entries aligned in one pass. Default metrics runs
+should refresh the latest aliases only; write timestamped markdown history only
+when a task explicitly asks for archival snapshots.
 If a script owns a canonical generated markdown surface, update the generator to
 preserve frontmatter at write time through the shared helpers in `scripts/docs/`
 instead of depending on a later cleanup pass.
@@ -162,6 +164,22 @@ CSV, or screenshots, it may remain hubless only when:
 - an owning markdown doc links to it or to its canonical artifacts
 
 Silent artifact buckets are documentation debt.
+
+### 5d. Completed historical surfaces should be pruned
+
+If a historical program folder or dated execution surface no longer has live
+repo consumers and its remaining value is only archival, remove it instead of
+keeping it as an always-on docs surface.
+
+Keep historical material only when at least one of these is true:
+
+- an active script or check still reads it
+- a current plan, runbook, or decision still depends on it
+- it remains the nearest discoverable record for a still-active program
+
+If a later dated plan, decision, or closeout fully supersedes an earlier one,
+prefer deleting the older document and updating hubs/manifests in the same
+patch instead of keeping parallel dated variants indefinitely.
 
 ### 6. Remove root aliases after migration
 
@@ -201,8 +219,7 @@ For non-markdown artifacts such as JSON manifests or exception registers:
 | Migration execution | `docs/migrations/` | wave execution, verification, reports | keep execution artifacts together |
 | Generated metrics | `docs/metrics/` | scans, baselines, trend outputs | generated only |
 | Artifact-only generated buckets | nested under the owning docs area | JSON schemas, reports, CSV exports, screenshots, and other non-markdown outputs | either add a local hub or declare the bucket in the manifest with an owning markdown reference |
-| Historical program folders | `docs/<program>/` | legacy or ongoing cross-feature program histories such as application-improvements or ui-consolidation | still require a hub page; not the default location for new shared docs |
-| Temporary TODO backlogs | `docs/todo/` | short-lived debt queues and work-in-progress checklists | promote durable work into canonical folders |
+| Historical program folders | `docs/<program>/` | rare residual cross-feature program surfaces that still have live consumers, such as ui-consolidation | remove them once the active surface is gone |
 | Feature-generated references | feature-specific generated folders | semantic grammars, manifests, catalogs | keep near the feature that owns them |
 
 ## Placement Decision Tree

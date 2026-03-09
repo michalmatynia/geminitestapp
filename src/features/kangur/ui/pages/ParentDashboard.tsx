@@ -16,6 +16,7 @@ import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import {
   KangurParentDashboardRuntimeBoundary,
   type KangurParentDashboardTabId,
@@ -32,6 +33,7 @@ function ParentDashboardContent(): React.JSX.Element {
     logout,
     navigateToLogin,
   } = useKangurParentDashboardRuntime();
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);
   const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
@@ -170,12 +172,22 @@ function ParentDashboardContent(): React.JSX.Element {
       basePath,
       canManageLearners,
       currentPage: 'ParentDashboard' as const,
+      guestPlayerName: isAuthenticated ? undefined : guestPlayerName,
       isAuthenticated,
       onCreateAccount: () => navigateToLogin({ authMode: 'create-account' }),
+      onGuestPlayerNameChange: isAuthenticated ? undefined : setGuestPlayerName,
       onLogin: navigateToLogin,
       onLogout: () => logout(false),
     }),
-    [basePath, canManageLearners, isAuthenticated, logout, navigateToLogin]
+    [
+      basePath,
+      canManageLearners,
+      guestPlayerName,
+      isAuthenticated,
+      logout,
+      navigateToLogin,
+      setGuestPlayerName,
+    ]
   );
 
   if (!canAccessDashboard) {

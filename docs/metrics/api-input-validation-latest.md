@@ -8,7 +8,7 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-09T07:50:51.076Z
+Generated at: 2026-03-09T09:07:29.693Z
 
 ## Summary
 
@@ -30,17 +30,17 @@ Generated at: 2026-03-09T07:50:51.076Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:11 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:31 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:31 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:12 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:32 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:32 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:57 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:65 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:33 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:58 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:66 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:24 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:45 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:67 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:25 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:46 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:47 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:48 | searchParams.get() used without Zod schema validation. |
 
 ## Notes
 

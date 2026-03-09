@@ -36,8 +36,8 @@ describe('analyzeTestDistribution', () => {
       root,
       'src/features/products/products.test.ts',
       [
-        "describe.only('products', () => {",
-        "  it.skip('covers products', () => {",
+        'describe.only(\'products\', () => {',
+        '  it.skip(\'covers products\', () => {',
         '    expect(true).toBe(true);',
         '  });',
         '});',

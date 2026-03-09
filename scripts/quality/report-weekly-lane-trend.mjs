@@ -4,7 +4,7 @@ import path from 'node:path';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 
 const args = new Set(process.argv.slice(2));
-const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
 const maxRunsArg = [...args].find((arg) => arg.startsWith('--max-runs='));
 const maxRuns = Number.parseInt(maxRunsArg?.split('=')[1] ?? '10', 10);
 

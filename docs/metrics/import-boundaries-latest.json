@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-09T07:50:50.862Z",
+  "generatedAt": "2026-03-09T09:07:29.483Z",
   "status": "failed",
   "summary": {
-    "total": 9,
-    "errorCount": 9,
+    "total": 29,
+    "errorCount": 29,
     "warningCount": 0,
     "infoCount": 0,
     "status": "failed",
-    "fileCount": 4483,
-    "featureCount": 9,
-    "circularDependencyCount": 1
+    "fileCount": 4494,
+    "featureCount": 10,
+    "circularDependencyCount": 2
   },
   "scope": {
     "root": "src",
@@ -28,6 +28,7 @@
     ],
     "ai": [
       "foldertree",
+      "observability",
       "products",
       "viewer3d"
     ],
@@ -59,6 +60,9 @@
       "document-editor",
       "foldertree"
     ],
+    "observability": [
+      "ai"
+    ],
     "products": [
       "ai",
       "foldertree",
@@ -73,6 +77,11 @@
       "ai",
       "products",
       "ai"
+    ],
+    [
+      "ai",
+      "observability",
+      "ai"
     ]
   ],
   "issues": [
@@ -82,6 +91,26 @@
       "message": "Circular dependency between features: ai -> products -> ai",
       "file": null,
       "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: ai -> observability -> ai",
+      "file": null,
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"observability\": @/features/observability/context-registry/system-prompt. Use the barrel export instead.",
+      "file": "src/features/ai/insights/generator.ts",
+      "line": 8,
       "column": null,
       "snippet": null,
       "context": null
@@ -140,6 +169,86 @@
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
       "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/kangur/admin/context-registry/lessons-manager.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/kangur/admin/KangurLessonNarrationPanel.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/kangur/admin/KangurLessonNarrationPanel.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/kangur/tts/context-registry/server.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/server. Use the barrel export instead.",
+      "file": "src/features/kangur/tts/context-registry/server.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/kangur/ui/components/KangurLessonNarrator.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/kangur/ui/components/KangurLessonNarrator.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
       "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
       "line": 47,
       "column": null,
@@ -159,6 +268,106 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/observability/context-registry/server.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/server. Use the barrel export instead.",
+      "file": "src/features/observability/context-registry/server.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/observability/context-registry/workspace.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/observability/hooks/useLogMutations.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/observability/pages/SystemLogsPage.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/products/components/form/ProductFormStudio.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductForm.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context-shared. Use the barrel export instead.",
+      "file": "src/features/products/context-registry/workspace.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/products/context/ProductStudioContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-context-registry/context/page-context. Use the barrel export instead.",
+      "file": "src/features/products/hooks/useProductStudioMutations.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
       "message": "Imports internal path from feature \"ai\": @/features/ai/ai-paths/context-registry/system-prompt. Use the barrel export instead.",
       "file": "src/features/products/workers/product-ai-processors.ts",
       "line": 9,
@@ -170,16 +379,16 @@
   "rules": [
     {
       "ruleId": "cross-feature-internal-import",
-      "errorCount": 8,
+      "errorCount": 27,
       "warningCount": 0,
       "infoCount": 0
     },
     {
       "ruleId": "circular-feature-dep",
-      "errorCount": 1,
+      "errorCount": 2,
       "warningCount": 0,
       "infoCount": 0
     }
   ],
-  "durationMs": 270
+  "durationMs": 239
 }

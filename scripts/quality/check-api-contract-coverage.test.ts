@@ -34,11 +34,11 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'app', 'api', 'settings', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
-        "import { POST_handler, payloadSchema } from './handler';",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+        'import { POST_handler, payloadSchema } from \'./handler\';',
         '',
         'export const POST = apiHandler(POST_handler, {',
-        "  source: 'settings.POST',",
+        '  source: \'settings.POST\',',
         '  parseJsonBody: true,',
         '  bodySchema: payloadSchema,',
         '});',
@@ -72,9 +72,9 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'app', 'api', 'chatbot', 'jobs', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
-        "import { POST_handler } from './handler';",
-        "export const POST = apiHandler(POST_handler, { source: 'chatbot.jobs.POST' });",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+        'import { POST_handler } from \'./handler\';',
+        'export const POST = apiHandler(POST_handler, { source: \'chatbot.jobs.POST\' });',
       ].join('\n')
     );
     writeFile(
@@ -111,9 +111,9 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'app', 'api', 'analytics', 'summary', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
-        "import { GET_handler } from './handler';",
-        "export const GET = apiHandler(GET_handler, { source: 'analytics.summary.GET' });",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+        'import { GET_handler } from \'./handler\';',
+        'export const GET = apiHandler(GET_handler, { source: \'analytics.summary.GET\' });',
       ].join('\n')
     );
     writeFile(
@@ -121,7 +121,7 @@ describe('analyzeApiContractCoverage', () => {
       path.join('src', 'app', 'api', 'analytics', 'summary', 'handler.ts'),
       [
         'export async function GET_handler(req) {',
-        "  const range = req.nextUrl.searchParams.get('range');",
+        '  const range = req.nextUrl.searchParams.get(\'range\');',
         '  return Response.json({ range });',
         '}',
       ].join('\n')
@@ -150,9 +150,9 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'app', 'api', 'system', 'logs', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
-        "import { POST_handler } from './handler';",
-        "export const POST = apiHandler(POST_handler, { source: 'system.logs.POST' });",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
+        'import { POST_handler } from \'./handler\';',
+        'export const POST = apiHandler(POST_handler, { source: \'system.logs.POST\' });',
       ].join('\n')
     );
     writeFile(
@@ -183,7 +183,7 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'app', 'api', 'agentcreator', 'agent', 'route.ts'),
       [
-        "import { GET as getAgentRuns } from '@/features/ai/agentcreator/api/agent/route';",
+        'import { GET as getAgentRuns } from \'@/features/ai/agentcreator/api/agent/route\';',
         'export const GET = getAgentRuns;',
       ].join('\n')
     );
@@ -191,13 +191,13 @@ describe('analyzeApiContractCoverage', () => {
       root,
       path.join('src', 'features', 'ai', 'agentcreator', 'api', 'agent', 'route.ts'),
       [
-        "import { apiHandler } from '@/shared/lib/api/api-handler';",
+        'import { apiHandler } from \'@/shared/lib/api/api-handler\';',
         '',
         'async function GET_handler() {',
         '  return Response.json({ ok: true });',
         '}',
         '',
-        "export const GET = apiHandler(GET_handler, { source: 'agentcreator.agent.GET' });",
+        'export const GET = apiHandler(GET_handler, { source: \'agentcreator.agent.GET\' });',
       ].join('\n')
     );
     writeFile(

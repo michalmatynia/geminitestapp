@@ -33,7 +33,7 @@ describe('analyzeSecurityStatic', () => {
     writeSource(
       root,
       'src/app.tsx',
-      "export function App() { return <a href='https://example.com' target='_blank'>Open</a>; }\n"
+      'export function App() { return <a href=\'https://example.com\' target=\'_blank\'>Open</a>; }\n'
     );
 
     const report = analyzeSecurityStatic({ root });
@@ -52,7 +52,7 @@ describe('analyzeSecurityStatic', () => {
     writeSource(
       root,
       'src/shared/lib/security/csrf-client.ts',
-      "export const readCookie = () => document.cookie;\n"
+      'export const readCookie = () => document.cookie;\n'
     );
 
     const report = analyzeSecurityStatic({ root });
@@ -65,7 +65,7 @@ describe('analyzeSecurityStatic', () => {
     writeSource(
       root,
       'src/ui.tsx',
-      "export function Html({ value }: { value: string }) { return <div dangerouslySetInnerHTML={{ __html: value }} />; }\n"
+      'export function Html({ value }: { value: string }) { return <div dangerouslySetInnerHTML={{ __html: value }} />; }\n'
     );
 
     const report = analyzeSecurityStatic({ root });

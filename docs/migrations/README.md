@@ -31,9 +31,6 @@ already underway. It is the operational companion to
 - [`wave-execution-status-2026-03-05.md`](./wave-execution-status-2026-03-05.md)
 - [`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md)
 - [`script-lifecycle-register-2026-04-17.md`](./script-lifecycle-register-2026-04-17.md)
-- [`wave1-apply-summary-2026-03-04.md`](./wave1-apply-summary-2026-03-04.md)
-- [`wave1-dry-run-verification-2026-03-04.md`](./wave1-dry-run-verification-2026-03-04.md)
-- [`wave1-verification-summary-2026-03-04.md`](./wave1-verification-summary-2026-03-04.md)
 
 ## Placement Rule
 
@@ -42,3 +39,5 @@ already underway. It is the operational companion to
 - Keep machine-readable migration evidence under `docs/migrations/reports/`.
 - This hub should enumerate direct markdown files in the folder; add new direct
   docs here when migration execution expands.
+- Remove one-off markdown summaries when later wave-status docs or retained
+  machine-readable reports already preserve the needed evidence.

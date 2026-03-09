@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const {
   useKangurRoutingMock,
@@ -107,6 +108,13 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
 
 import Game from '@/features/kangur/ui/pages/Game';
 
+const renderGamePage = () =>
+  render(
+    <KangurGuestPlayerProvider>
+      <Game />
+    </KangurGuestPlayerProvider>
+  );
+
 const baseProgress: KangurProgressState = {
   totalXp: 0,
   gamesPlayed: 0,
@@ -151,7 +159,7 @@ describe('Game delegated quick starts', () => {
       '/kangur/game?quickStart=training&categories=addition,division,decimals&count=10&difficulty=medium'
     );
 
-    render(<Game />);
+    renderGamePage();
 
     expect(await screen.findByTestId('question-card')).toBeInTheDocument();
     expect(screen.queryByTestId('training-setup')).not.toBeInTheDocument();
@@ -165,7 +173,7 @@ describe('Game delegated quick starts', () => {
   it('opens the training setup from a bare training quick-start url and clears query params', async () => {
     window.history.replaceState({}, '', '/kangur/game?quickStart=training');
 
-    render(<Game />);
+    renderGamePage();
 
     expect(await screen.findByTestId('kangur-game-training-top-section')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
@@ -187,7 +195,7 @@ describe('Game delegated quick starts', () => {
   it('opens the operation setup from a bare operation quick-start url and clears query params', async () => {
     window.history.replaceState({}, '', '/kangur/game?quickStart=operation');
 
-    render(<Game />);
+    renderGamePage();
 
     expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();

@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import {
   createEmbeddingDocument,
   getEmbeddingCollectionById,
   listEmbeddingDocuments,
 } from '@/features/ai/agentcreator/server';
+import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import type {
   AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingSourceType,
 } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 
 const createDocumentSchema = z.object({
   text: z.string().trim().min(1),

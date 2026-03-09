@@ -5,11 +5,11 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/server';
 import { removePathRunQueueEntries } from '@/features/ai/server';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 

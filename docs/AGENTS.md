@@ -36,8 +36,7 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 
 Use the nearest-owner rule first, then the document-type rule.
 
-- Root `docs/`: entrypoints, governance, agent overlays, and legacy docs pending
-  migration only
+- Root `docs/`: entrypoints, governance, and agent overlays only
 - `docs/platform/`: new cross-cutting architecture, handbook, API policy,
   shared patterns, and platform references
 - `docs/<feature>/`: feature-owned overviews, architecture, APIs, examples,
@@ -69,12 +68,12 @@ Hard rules:
 - every artifact-only docs directory must either have a local hub or be declared
   in the structure manifest and linked from an owning markdown doc
 - never silently replace a canonical doc with a second doc covering the same role
-- when migrating legacy root docs, prefer canonical relocation plus a short
-  compatibility stub over silent hard cuts
-- compatibility stubs must stay short, declare `status: superseded`,
-  `canonical: false`, and point at `superseded_by`
-- canonical docs and repo reference guides must not use root compatibility stubs
-  as ongoing reference targets
+- update repo-internal consumers to canonical doc paths in the same patch when
+  removing obsolete root aliases
+- root compatibility stubs are an exceptional escape hatch, not the default
+  migration model; do not keep them once repo-internal consumers are updated
+- canonical docs and repo reference guides must use canonical destinations as
+  their steady-state paths
 - compatibility mirrors for machine-readable artifacts must stay byte-identical
   to their canonical source until they are removed
 - when a manifest-defined mirror changes, prefer `npm run docs:structure:sync-mirrors`
@@ -104,28 +103,29 @@ When a task changes docs:
    old doc for follow-up migration or archival.
 10. Run `npm run docs:structure:check` when the change affects documentation
    placement, metadata, or hub pages.
-11. If the change keeps a root compatibility stub or mirror, keep it minimal and
-   structurally aligned with the canonical source in the same patch.
-12. If the docs structure manifest declares a compatibility mirror pair, sync it
-   with `npm run docs:structure:sync-mirrors`.
-13. When linking to documentation, use the canonical destination rather than a
-    root compatibility stub unless the doc is explicitly tracking migration.
-14. If the folder uses a curated hub model, update the stable entry-point list
+11. If the docs structure manifest declares a compatibility mirror pair, sync it
+    with `npm run docs:structure:sync-mirrors`.
+12. When linking to documentation, use the canonical destination rather than an
+    obsolete root alias.
+13. If the folder uses a curated hub model, update the stable entry-point list
     when the active documentation surface changes.
-15. If the change introduces a non-markdown artifact bucket, add its manifest
+14. If the change introduces a non-markdown artifact bucket, add its manifest
     policy and owning markdown reference in the same patch.
-16. If the task is frontmatter normalization rather than a targeted doc edit,
+15. If the task is frontmatter normalization rather than a targeted doc edit,
     run `npm run docs:structure:audit:frontmatter` first and work one folder or
     policy slice at a time.
-17. If the task touches generated markdown under `docs/metrics/`, run
+16. If the task touches generated markdown under `docs/metrics/`, run
     `npm run docs:metrics:normalize-frontmatter` instead of manually editing the
     generated snapshots one by one.
-18. Stable generated metrics entry points are the `README.md` hubs,
+17. Stable generated metrics entry points are the `README.md` hubs,
     `route-hotspots.md`, and `*-latest.md` aliases; timestamped metrics history
     files should remain generated, non-canonical artifacts.
-19. If a docs generator writes markdown into a managed canonical surface, keep
+18. If a docs generator writes markdown into a managed canonical surface, keep
     frontmatter in the generator itself through the shared helpers under
     `scripts/docs/` instead of relying on a later cleanup pass.
+19. Do not hand-tune metadata on managed generated-doc outputs after generation;
+    if the metadata contract needs to change, update the shared helper and let
+    `npm run docs:structure:check` enforce it.
 
 ## Scanner JSON Contract
 

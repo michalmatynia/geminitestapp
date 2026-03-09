@@ -5,9 +5,9 @@ import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
 } from '@/features/kangur/server/parent-email-auth';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const kangurParentAccountCreateSchema = z.object({
   email: z.string().trim().email(),

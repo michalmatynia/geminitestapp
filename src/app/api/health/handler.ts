@@ -7,8 +7,8 @@ import { getAppDbProvider, type AppDbProvider } from '@/shared/lib/db/app-db-pro
 import prisma from '@/shared/lib/db/prisma';
 import { getNodeOtelRuntimeStatus } from '@/shared/lib/observability/otel-node';
 import { getCentralLoggingRuntimeStats } from '@/shared/lib/observability/system-logger';
-import { getQueueHealth } from '@/shared/lib/queue/registry';
 import { getSystemLogAlertsQueueStatus } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
+import { getQueueHealth } from '@/shared/lib/queue/registry';
 
 const pingMongo = async (uri: string): Promise<void> => {
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });

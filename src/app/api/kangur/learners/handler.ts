@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { createKangurLearner, resolveKangurActor } from '@/features/kangur/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { parseKangurLearnerCreatePayload } from '@/shared/validations/kangur';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import { readKangurAuthJsonBody } from '../auth/shared';
 

@@ -1,9 +1,5 @@
-import type { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
-
 import {
   GET_handler as getActiveTemplateHandler,
   POST_handler as postActiveTemplateHandler,
@@ -28,6 +24,10 @@ import {
   GET_handler as getStockFallbackHandler,
   POST_handler as postStockFallbackHandler,
 } from '@/app/api/v2/integrations/exports/base/stock-fallback/handler';
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
+
+import type { NextRequest } from 'next/server';
 
 export type { SettingParams };
 

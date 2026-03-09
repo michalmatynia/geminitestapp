@@ -1,8 +1,8 @@
+import type { AuthUserRecord } from '@/shared/contracts/auth';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AuthUserRecord } from '@/shared/contracts/auth';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 type MongoUserDoc = {
   email?: string | null;

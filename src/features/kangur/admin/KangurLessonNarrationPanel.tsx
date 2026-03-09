@@ -4,6 +4,10 @@ import { RefreshCw, Sparkles, Volume2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import {
   KANGUR_TTS_DEFAULT_VOICE,
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsResponse,
@@ -46,11 +50,24 @@ const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): stri
 
 export function KangurLessonNarrationPanel(): React.JSX.Element {
   const { lesson, document, onChange } = useLessonContentEditorContext();
+  const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
+  const narrationPanelSource = useMemo(
+    () =>
+      lesson
+        ? {
+            label: 'Kangur lesson narration panel',
+            rootNodeIds: ['component:kangur-lesson-narration-panel', 'action:kangur-lesson-tts'],
+          }
+        : null,
+    [lesson]
+  );
   const [status, setStatus] = useState<RequestStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<KangurLessonTtsResponse | null>(null);
   const [cacheStatus, setCacheStatus] = useState<KangurLessonTtsStatusResponse | null>(null);
   const [isCheckingCache, setIsCheckingCache] = useState(false);
+
+  useRegisterContextRegistryPageSource('kangur-lesson-narration-panel', narrationPanelSource);
 
   if (!lesson) {
     return <></>;
@@ -104,6 +121,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
         {
           script,
           voice,
+          ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
         },
         { logError: false }
       )
@@ -130,7 +148,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [hasScriptContent, script, voice]);
+  }, [hasScriptContent, pageContextRegistry, script, voice]);
 
   const handleVoiceChange = (nextVoice: string): void => {
     const normalizedVoice = KANGUR_TTS_VOICE_OPTIONS.find(
@@ -168,6 +186,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
         script,
         voice,
         forceRegenerate,
+        ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
       });
       setResponse(nextResponse);
       if (nextResponse.mode === 'audio') {

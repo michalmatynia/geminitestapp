@@ -708,4 +708,34 @@ writeManagedGeneratedDocSync({
   reviewDate: generatedAt.slice(0, 10),
 });
 
+const nodesReadmeLines = [
+  '# AI Paths Node Sheets',
+  '',
+  'This folder contains the per-node migration sheets for `code_object_v3` node migration readiness.',
+  '',
+  '- One generated sheet per node type: `<nodeType>.md`',
+  '- Use `../MIGRATION_GUIDE.md` for the aggregate rollout view',
+  '- Use each node sheet to track node-specific parity gaps, rollout notes, and rollout guardrails',
+  '',
+  '## Node Sheets',
+  '',
+  ...rows.map(
+    (row) => `- [\`${row.nodeType}.md\`](./${row.nodeType}.md)`
+  ),
+  '',
+  'Regenerate with:',
+  '',
+  '```bash',
+  'npm run docs:ai-paths:node-migration:generate',
+  '```',
+  '',
+];
+
+writeManagedGeneratedDocSync({
+  root: workspaceRoot,
+  targetPath: path.join(perNodeDocsDir, 'README.md'),
+  content: `${nodesReadmeLines.join('\n')}\n`,
+  reviewDate: generatedAt.slice(0, 10),
+});
+
 console.log(`Generated AI-Paths node migration docs for ${rows.length} node types.`);

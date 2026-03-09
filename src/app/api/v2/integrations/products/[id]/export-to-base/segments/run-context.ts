@@ -1,4 +1,3 @@
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
 import {
   getIntegrationRepository,
@@ -6,6 +5,8 @@ import {
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+
 import { BASE_EXPORT_RUN_PATH_ID, BASE_EXPORT_RUN_PATH_NAME } from '../helpers';
 
 export async function loadExportResources(productId: string, connectionId: string) {

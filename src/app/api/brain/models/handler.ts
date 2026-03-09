@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import {
   brainModelFamilySchema,
   brainModelModalitySchema,
 } from '@/shared/contracts/ai-brain';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import {
   optionalBooleanQuerySchema,
   normalizeOptionalQueryString,

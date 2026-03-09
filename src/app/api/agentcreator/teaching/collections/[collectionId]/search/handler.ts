@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import { getEmbeddingCollectionById } from '@/features/ai/agentcreator/server';
+import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import { retrieveTopContext } from '@/features/ai/agentcreator/teaching/server/retrieval';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -1,13 +1,5 @@
-import path from 'node:path';
-
 import { analyzeTestDistribution } from './lib/check-test-distribution.mjs';
-import {
-  formatDuration,
-  parseCommonCheckArgs,
-  renderIssueTable,
-  renderRuleTable,
-  writeCheckArtifacts,
-} from './lib/check-runner.mjs';
+import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -66,41 +58,11 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const run = async () => {
-  const root = process.cwd();
-  const startedAt = Date.now();
-  const { strictMode, failOnWarnings, shouldWriteHistory } = parseCommonCheckArgs();
-  const payload = analyzeTestDistribution({ root });
-  payload.durationMs = Date.now() - startedAt;
-  const markdown = toMarkdown(payload);
-  const outputs = await writeCheckArtifacts({
-    root,
-    slug: 'test-distribution',
-    payload,
-    markdown,
-    shouldWriteHistory,
-  });
-
-  console.log(
-    `[test-distribution] status=${payload.status} features=${payload.summary.featureCount} with-tests=${payload.summary.featuresWithTestCount} without-tests=${payload.summary.featuresWithoutTestCount} test-files=${payload.summary.totalTestFiles} .only=${payload.summary.onlyCount} .skip=${payload.summary.skipCount} duration=${formatDuration(payload.durationMs)}`
-  );
-  console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
-  }
-
-  if (strictMode && payload.summary.errorCount > 0) {
-    process.exit(1);
-  }
-  if (strictMode && failOnWarnings && payload.summary.warningCount > 0) {
-    process.exit(1);
-  }
-};
-
-run().catch((error) => {
-  console.error('[test-distribution] failed');
-  console.error(error instanceof Error ? error.stack : error);
-  process.exit(1);
+await runQualityCheckCli({
+  id: 'test-distribution',
+  analyze: analyzeTestDistribution,
+  toMarkdown,
+  buildLogLines: ({ payload, formatDuration }) => [
+    `[test-distribution] status=${payload.status} features=${payload.summary.featureCount} with-tests=${payload.summary.featuresWithTestCount} without-tests=${payload.summary.featuresWithoutTestCount} test-files=${payload.summary.totalTestFiles} .only=${payload.summary.onlyCount} .skip=${payload.summary.skipCount} duration=${formatDuration(payload.durationMs)}`,
+  ],
 });

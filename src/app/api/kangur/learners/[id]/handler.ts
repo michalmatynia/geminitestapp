@@ -6,10 +6,10 @@ import {
   resolveKangurActor,
   updateKangurLearner,
 } from '@/features/kangur/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { parseKangurLearnerUpdatePayload } from '@/shared/validations/kangur';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import { readKangurAuthJsonBody } from '../../auth/shared';
 

@@ -3,11 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { ensureKangurLessonNarrationAudioMock, resolveKangurActorMock, logKangurServerEventMock } =
-  vi.hoisted(() => ({
+const {
+  ensureKangurLessonNarrationAudioMock,
+  resolveKangurActorMock,
+  logKangurServerEventMock,
+  resolveKangurTtsContextRegistryEnvelopeMock,
+} = vi.hoisted(() => ({
     ensureKangurLessonNarrationAudioMock: vi.fn(),
     resolveKangurActorMock: vi.fn(),
     logKangurServerEventMock: vi.fn(),
+    resolveKangurTtsContextRegistryEnvelopeMock: vi.fn(),
   }));
 
 vi.mock('@/features/kangur/server', () => ({
@@ -16,6 +21,10 @@ vi.mock('@/features/kangur/server', () => ({
 
 vi.mock('@/features/kangur/tts/server', () => ({
   ensureKangurLessonNarrationAudio: ensureKangurLessonNarrationAudioMock,
+}));
+
+vi.mock('@/features/kangur/tts/context-registry/server', () => ({
+  resolveKangurTtsContextRegistryEnvelope: resolveKangurTtsContextRegistryEnvelopeMock,
 }));
 
 vi.mock('@/features/kangur/observability/server', () => ({
@@ -77,6 +86,10 @@ describe('kangur tts handler', () => {
         },
       ],
     });
+    resolveKangurTtsContextRegistryEnvelopeMock.mockResolvedValue({
+      refs: [{ id: 'page:kangur-lessons', kind: 'static_node' }],
+      engineVersion: 'page-context:v1',
+    });
   });
 
   it('generates or reuses audio for an authenticated learner', async () => {
@@ -91,6 +104,10 @@ describe('kangur tts handler', () => {
             segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
           },
           voice: 'coral',
+          contextRegistry: {
+            refs: [{ id: 'page:kangur-lessons', kind: 'static_node' }],
+            engineVersion: 'page-context:v1',
+          },
         })
       ),
       createRequestContext()
@@ -107,6 +124,10 @@ describe('kangur tts handler', () => {
       },
       voice: 'coral',
       forceRegenerate: false,
+      contextRegistry: {
+        refs: [{ id: 'page:kangur-lessons', kind: 'static_node' }],
+        engineVersion: 'page-context:v1',
+      },
     });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({

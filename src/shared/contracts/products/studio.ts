@@ -107,14 +107,14 @@ export type ProductStudioSequenceStepType =
   | 'regenerate'
   | 'upscale';
 
-export type ProductStudioSequenceStepPlanEntry = {
+export interface ProductStudioSequenceStepPlanEntry {
   index: number;
   stepId: string;
   stepType: ProductStudioSequenceStepType;
   inputSource: 'previous' | 'source';
   resolvedInput: 'previous' | 'source';
   producesOutput: boolean;
-};
+}
 
 export function normalizeProductStudioSequenceGenerationMode(
   value: unknown

@@ -4,12 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
-import {
-  FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
-  FILE_STORAGE_SOURCE_SETTING_KEY,
-} from '@/shared/lib/files/constants';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
-import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
+import {
+  type MongoPersistedStringSettingRecord,
+  upsertSettingSchema as settingSchema,
+} from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -32,12 +31,29 @@ import {
 } from '@/shared/lib/db/database-engine-constants';
 import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import prisma from '@/shared/lib/db/prisma';
 import {
-  type MongoPersistedStringSettingRecord,
-  upsertSettingSchema as settingSchema,
-} from '@/shared/contracts/settings';
+  FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
+  FILE_STORAGE_SOURCE_SETTING_KEY,
+} from '@/shared/lib/files/constants';
+import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
+import {
+  AI_PATHS_CONFIG_PREFIX,
+  AI_PATHS_KEY_PREFIX,
+  AI_PATHS_PREFIX_REGEX,
+  CASE_RESOLVER_WORKSPACE_KEY,
+  HEAVY_PREFIX_REGEX,
+  applyScopeFilter,
+  isAiPathsSettingKey,
+  isRuntimeOnlyPathConfigPayload,
+  isSettingsTimeoutError,
+  mergeRuntimeOnlyPathConfigWrite,
+  parseCaseResolverWorkspaceMetadata,
+  parseUpdatedAtMsFromPathConfig,
+  withSettingsScopeTimeout,
+} from '@/shared/lib/settings/settings-logic';
 import {
   SettingRecord,
   getCachedSettings,
@@ -55,22 +71,6 @@ import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
-import {
-  AI_PATHS_CONFIG_PREFIX,
-  AI_PATHS_KEY_PREFIX,
-  AI_PATHS_PREFIX_REGEX,
-  CASE_RESOLVER_WORKSPACE_KEY,
-  HEAVY_PREFIX_REGEX,
-  applyScopeFilter,
-  isAiPathsSettingKey,
-  isRuntimeOnlyPathConfigPayload,
-  isSettingsTimeoutError,
-  mergeRuntimeOnlyPathConfigWrite,
-  parseCaseResolverWorkspaceMetadata,
-  parseUpdatedAtMsFromPathConfig,
-  withSettingsScopeTimeout,
-} from '@/shared/lib/settings/settings-logic';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';

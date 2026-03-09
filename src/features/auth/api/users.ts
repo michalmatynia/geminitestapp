@@ -4,9 +4,9 @@ import type {
   AuthUser as AuthUserSummary,
 } from '@/shared/contracts/auth';
 
-export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };
-
 import { api } from '@/shared/lib/api-client';
+
+export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };
 
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
   return api.get<AuthUsersResponse>('/api/auth/users');

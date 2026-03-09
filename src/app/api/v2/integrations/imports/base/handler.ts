@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import type { BaseProductRecord } from '@/features/integrations/server';
 import {
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
@@ -14,7 +15,6 @@ import {
   mapBaseProduct,
   extractBaseImageUrls,
 } from '@/features/integrations/server';
-import type { BaseProductRecord } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   getCatalogRepository,

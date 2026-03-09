@@ -1,45 +1,21 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { listMarkdownDocsRecursive } from './docs-tree-utils.mjs';
+import {
+  hasFrontmatter,
+} from './markdown-frontmatter-utils.mjs';
+
 const root = process.cwd();
-const frontmatterPattern = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
-
-function hasMarkdownExtension(fileName) {
-  return fileName.endsWith('.md') || fileName.endsWith('.mdx');
-}
-
-function normalizePath(value) {
-  return value.replace(/\\/g, '/');
-}
-
-async function listMarkdownDocs(relativePath = 'docs') {
-  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
-  const files = [];
-
-  for (const entry of entries) {
-    const childRelativePath = path.join(relativePath, entry.name);
-
-    if (entry.isDirectory()) {
-      files.push(...(await listMarkdownDocs(childRelativePath)));
-      continue;
-    }
-
-    if (entry.isFile() && hasMarkdownExtension(entry.name)) {
-      files.push(normalizePath(childRelativePath));
-    }
-  }
-
-  return files.sort((a, b) => a.localeCompare(b));
-}
 
 async function run() {
-  const markdownDocs = await listMarkdownDocs();
+  const markdownDocs = await listMarkdownDocsRecursive();
   const missingFrontmatter = [];
   const missingByDirectory = new Map();
 
   for (const relativePath of markdownDocs) {
     const content = await fs.readFile(path.join(root, relativePath), 'utf8');
-    if (frontmatterPattern.test(content)) {
+    if (hasFrontmatter(content)) {
       continue;
     }
 

@@ -4,11 +4,6 @@ import { z } from 'zod';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import {
-  normalizeOptionalQueryString,
-  optionalIntegerQuerySchema,
-  optionalTrimmedQueryString,
-} from '@/shared/lib/api/query-schema';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import {
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
@@ -27,6 +22,11 @@ import type {
   PortablePathAuditSinkAutoRemediationNotificationChannel,
   PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
 } from '@/shared/lib/ai-paths/portable-engine/server';
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
 const DEFAULT_DEAD_LETTER_LIMIT = 50;
 const MAX_DEAD_LETTER_LIMIT = 500;

@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useGraphStateMock,
   usePersistenceActionsMock,
+  useRunHistoryActionsMock,
   useRuntimeStateMock,
   useRuntimeActionsMock,
   usePresetsStateMock,
@@ -13,9 +14,11 @@ const {
   useSelectionActionsMock,
   usePaletteWithTriggerButtonsMock,
   useCanvasSidebarActionsMock,
+  handoffRunMock,
 } = vi.hoisted(() => ({
   useGraphStateMock: vi.fn(),
   usePersistenceActionsMock: vi.fn(),
+  useRunHistoryActionsMock: vi.fn(),
   useRuntimeStateMock: vi.fn(),
   useRuntimeActionsMock: vi.fn(),
   usePresetsStateMock: vi.fn(),
@@ -24,11 +27,13 @@ const {
   useSelectionActionsMock: vi.fn(),
   usePaletteWithTriggerButtonsMock: vi.fn(),
   useCanvasSidebarActionsMock: vi.fn(),
+  handoffRunMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphState: useGraphStateMock,
   usePersistenceActions: usePersistenceActionsMock,
+  useRunHistoryActions: useRunHistoryActionsMock,
   usePresetsState: usePresetsStateMock,
   usePresetsActions: usePresetsActionsMock,
   useSelectionState: useSelectionStateMock,
@@ -70,6 +75,10 @@ describe('CanvasSidebar run control coordination states', () => {
     usePersistenceActionsMock.mockReset().mockReturnValue({
       savePathConfig: vi.fn(),
     });
+    handoffRunMock.mockReset().mockResolvedValue(true);
+    useRunHistoryActionsMock.mockReset().mockReturnValue({
+      handoffRun: handoffRunMock,
+    });
     useRuntimeActionsMock.mockReset().mockReturnValue(buildRuntimeActions());
     usePresetsStateMock.mockReset().mockReturnValue({
       paletteCollapsed: false,
@@ -98,10 +107,14 @@ describe('CanvasSidebar run control coordination states', () => {
     });
   });
 
-  it('renders blocked-on-lease guidance and suppresses active-run controls', () => {
+  it('renders blocked-on-lease guidance and suppresses active-run controls', async () => {
     useRuntimeStateMock.mockReset().mockReturnValue({
       runtimeRunStatus: 'blocked_on_lease',
-      runtimeState: {},
+      runtimeState: {
+        currentRun: {
+          id: 'run-1',
+        },
+      },
     });
 
     render(<CanvasSidebar />);
@@ -112,6 +125,12 @@ describe('CanvasSidebar run control coordination states', () => {
         'This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
       )
     ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Mark handoff-ready' }));
+
+    expect(handoffRunMock).toHaveBeenCalledWith('run-1');
+    await waitFor(() => {
+      expect(screen.getByText('Handoff requested. Refreshing run status...')).toBeTruthy();
+    });
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Step Run' })).toBeNull();

@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-03-09T07:59:23.146Z",
+    "generatedAt": "2026-03-09T08:17:03.147Z",
     "scannedFileCount": 1335,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -4514,7 +4514,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 883,
+      "lines": 919,
       "useClient": false,
       "imports": [
         "react",
@@ -4663,7 +4663,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 655,
+      "lines": 685,
       "useClient": false,
       "imports": [
         "react",
@@ -19128,7 +19128,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 124,
+      "lines": 99,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -19147,11 +19147,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 114,
+      "lines": 28,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/components/KangurAssignmentSpotlight",
-        "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/context/KangurGameRuntimeContext"
       ],
       "templateImports": 0,
@@ -19204,7 +19203,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 28,
+      "lines": 51,
       "useClient": true,
       "imports": [
         "react",
@@ -20196,7 +20195,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 276,
+      "lines": 289,
       "useClient": false,
       "imports": [
         "react",
@@ -20216,7 +20215,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 240,
+      "lines": 277,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20230,7 +20229,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "basePath|canManageLearners|className|contentClassName|currentPage|homeActive|isAuthenticated|navLabel|onCreateAccount|onHomeClick|onLogin|onLogout|rightAccessory|showParentDashboard|showTests",
+      "propsSignature": "basePath|canManageLearners|className|contentClassName|currentPage|guestPlayerName|guestPlayerNamePlaceholder|homeActive|isAuthenticated|navLabel|onCreateAccount|onGuestPlayerNameChange|onGuestPlayerNameSubmit|onHomeClick|onLogin|onLogout|rightAccessory|showParentDashboard|showTests",
       "thinReExportWrapper": false
     },
     {
@@ -22762,19 +22761,21 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 66,
+      "lines": 129,
       "useClient": true,
       "imports": [
         "react",
-        "@/shared/ui",
+        "@/features/ai/ai-context-registry/context/page-context",
         "@/features/products/context/ProductFormCoreContext",
-        "../../context/ProductStudioContext",
-        "./studio/StudioProjectField",
+        "@/features/products/context-registry/workspace",
+        "@/shared/ui",
         "./studio/StudioActionsBar",
+        "./studio/StudioAuditHistory",
+        "./studio/StudioPreviewCanvas",
+        "./studio/StudioProjectField",
         "./studio/StudioSourceImageSelector",
         "./studio/StudioVariantsGrid",
-        "./studio/StudioPreviewCanvas",
-        "./studio/StudioAuditHistory"
+        "../../context/ProductStudioContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,

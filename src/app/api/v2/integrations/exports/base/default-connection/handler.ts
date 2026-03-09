@@ -6,8 +6,8 @@ import {
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const postSchema = z.object({
   connectionId: z.string().nullable(),

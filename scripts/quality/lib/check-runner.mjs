@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { parseCommonCheckArgs, writeSummaryJson } from '../../lib/check-cli.mjs';
 import { writeMetricsMarkdownFile } from '../../docs/metrics-frontmatter.mjs';
 
 const SEVERITY_ORDER = {
@@ -9,14 +10,7 @@ const SEVERITY_ORDER = {
   info: 2,
 };
 
-export const parseCommonCheckArgs = (argv = process.argv.slice(2)) => {
-  const args = new Set(argv);
-  return {
-    strictMode: args.has('--strict'),
-    failOnWarnings: args.has('--fail-on-warnings'),
-    shouldWriteHistory: !args.has('--ci') && !args.has('--no-history'),
-  };
-};
+export { parseCommonCheckArgs };
 
 export const formatDuration = (ms) => {
   if (!Number.isFinite(ms) || ms <= 0) return '0ms';
@@ -162,4 +156,95 @@ export const writeCheckArtifacts = async ({
     historicalJsonPath,
     historicalMdPath,
   };
+};
+
+export const runQualityCheckCli = async ({
+  id,
+  slug = id,
+  analyze,
+  toMarkdown,
+  buildLogLines = () => [],
+}) => {
+  try {
+    const root = process.cwd();
+    const startedAt = Date.now();
+    const { strictMode, failOnWarnings, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs();
+    const payload = await analyze({ root, env: process.env });
+    payload.durationMs = Date.now() - startedAt;
+
+    const shouldWriteArtifacts = !noWrite;
+    const outputs = shouldWriteArtifacts
+      ? await writeCheckArtifacts({
+          root,
+          slug,
+          payload,
+          markdown: toMarkdown(payload),
+          shouldWriteHistory,
+        })
+      : null;
+
+    if (summaryJson) {
+      const details = Object.fromEntries(
+        Object.entries(payload).filter(([key]) => !['generatedAt', 'status', 'summary'].includes(key))
+      );
+      writeSummaryJson({
+        scannerName: id,
+        generatedAt: payload.generatedAt,
+        status: payload.status,
+        summary: payload.summary,
+        details,
+        paths: outputs
+          ? {
+              latestJson: toRepoRelativePath(root, outputs.latestJsonPath),
+              latestMarkdown: toRepoRelativePath(root, outputs.latestMdPath),
+              historicalJson: shouldWriteHistory
+                ? toRepoRelativePath(root, outputs.historicalJsonPath)
+                : null,
+              historicalMarkdown: shouldWriteHistory
+                ? toRepoRelativePath(root, outputs.historicalMdPath)
+                : null,
+            }
+          : null,
+        filters: {
+          strictMode,
+          failOnWarnings,
+          historyDisabled: !shouldWriteHistory,
+          noWrite,
+        },
+        notes: [`${id} quality check result`],
+      });
+    } else {
+      const logLines = buildLogLines({
+        root,
+        payload,
+        outputs,
+        formatDuration,
+      });
+      for (const line of Array.isArray(logLines) ? logLines : []) {
+        if (typeof line === 'string' && line.length > 0) {
+          console.log(line);
+        }
+      }
+
+      if (outputs) {
+        console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
+        console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
+        if (shouldWriteHistory) {
+          console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
+          console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
+        }
+      }
+    }
+
+    if (strictMode && Number(payload.summary?.errorCount ?? 0) > 0) {
+      process.exit(1);
+    }
+    if (strictMode && failOnWarnings && Number(payload.summary?.warningCount ?? 0) > 0) {
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error(`[${id}] failed`);
+    console.error(error instanceof Error ? error.stack : error);
+    process.exit(1);
+  }
 };

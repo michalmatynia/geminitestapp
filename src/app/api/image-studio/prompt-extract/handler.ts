@@ -1,38 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import {
-  runBrainChatCompletion,
-  supportsBrainJsonMode,
-} from '@/shared/lib/ai-brain/server-runtime-client';
-import {
-  imageStudioPromptExtractRequestSchema,
-  type ImageStudioPromptExtractResponse,
-  type ImageStudioPromptExtractSource,
-} from '@/shared/contracts/image-studio';
+import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import {
-  parsePromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-} from '@/shared/lib/prompt-engine/settings';
+  imageStudioPromptExtractRequestSchema,
+  type ImageStudioPromptExtractResponse,
+  type ImageStudioPromptExtractSource,
+} from '@/shared/contracts/image-studio';
 import type {
   PromptValidationIssue,
   PromptValidationSettings,
 } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
-import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import {
+  parsePromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+} from '@/shared/lib/prompt-engine/settings';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 const responseSchema = z.object({
   params: z.record(z.string(), z.unknown()),

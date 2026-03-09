@@ -28,10 +28,10 @@ import {
 import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;

@@ -1,9 +1,26 @@
-run npx tsc 
-npm run lint:fix
+npm run typecheck
+npm run lint:fix:app
 run npm build and address the issues one by one
 run vitest and address the issues ony by one
 npm audit fix
 npm run test:e2e 
+
+run:
+
+npm run lint:fix:app
+
+Then:
+
+npm run lint:fix:features
+
+Then:
+
+npm run lint:fix:shared
+
+If you want to watch what ESLint is doing live, use:
+
+npm run lint:fix:debug
+
 
 PRISMA
 npx prisma generate

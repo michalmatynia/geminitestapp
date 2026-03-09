@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   getProductStudioConfig,
   setProductStudioConfig,
 } from '@/shared/lib/products/services/product-studio-config';
 import { productService } from '@/shared/lib/products/services/productService';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
 
 const putSchema = z.object({
   projectId: z.string().trim().nullable().optional(),

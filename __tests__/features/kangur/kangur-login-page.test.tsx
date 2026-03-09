@@ -38,6 +38,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
+vi.mock('next-auth/react', () => ({
+  signOut: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
 }));
@@ -46,12 +50,18 @@ vi.mock('@/features/kangur/services/kangur-active-learner', () => ({
   setStoredActiveLearnerId: setStoredActiveLearnerIdMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: () => null,
+}));
+
 vi.mock('@/shared/lib/security/csrf-client', () => ({
   withCsrfHeaders: (headers?: HeadersInit) => new Headers(headers),
 }));
 
-import KangurLoginPage from '@/app/(frontend)/kangur/login/page';
-import { resolveKangurLoginCallbackNavigation } from '@/app/(frontend)/kangur/login/page';
+import {
+  KangurLoginPage,
+  resolveKangurLoginCallbackNavigation,
+} from '@/features/kangur/ui/KangurLoginPage';
 
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;
@@ -83,32 +93,43 @@ describe('KangurLoginPage', () => {
     });
   });
 
-  it('uses the shared Kangur surface and preserves the callback in the parent sign-in link', () => {
-    render(<KangurLoginPage />);
+  it('uses the shared Kangur surface and keeps the parent auth controls visible by default', () => {
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByTestId('kangur-login-shell')).toHaveClass(
-      'kangur-premium-bg',
-      'min-h-screen'
+      'overflow-hidden',
+      'rounded-[2rem]'
     );
-    expect(screen.getByRole('link', { name: 'Przejdz do logowania rodzica' })).toHaveAttribute(
-      'href',
-      '/auth/signin?callbackUrl=%2Fkangur%2Fprofile'
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
+    expect(screen.getByRole('button', { name: 'Mam konto rodzica' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
-    expect(screen.getByRole('link', { name: 'Wroc do Kangura' })).toHaveAttribute(
-      'href',
-      '/kangur'
+    expect(screen.getByRole('button', { name: 'Tworze konto rodzica' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
     );
   });
 
-  it('falls back to the default Kangur callback when none is provided', () => {
+  it('falls back to the default Kangur callback when none is provided', async () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ learnerId: 'learner-1' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage />);
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    expect(screen.getByRole('link', { name: 'Przejdz do logowania rodzica' })).toHaveAttribute(
-      'href',
-      '/auth/signin?callbackUrl=%2Fkangur'
-    );
+    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'adachild');
+    await user.type(screen.getByPlaceholderText('Haslo'), 'secret');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
+
+    await waitFor(() => {
+      expect(setStoredActiveLearnerIdMock).toHaveBeenCalledWith('learner-1');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
+    });
   });
 
   it('routes learner sign-in back through the Next router for same-origin absolute callbacks', async () => {
@@ -121,11 +142,11 @@ describe('KangurLoginPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     useSearchParamsMock.mockReturnValue(new URLSearchParams({ callbackUrl }));
 
-    render(<KangurLoginPage />);
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
-    await user.type(screen.getByPlaceholderText('Login ucznia'), 'ada-child');
-    await user.type(screen.getByPlaceholderText('Haslo ucznia'), 'secret');
-    await user.click(screen.getByRole('button', { name: 'Zaloguj ucznia' }));
+    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'adachild');
+    await user.type(screen.getByPlaceholderText('Haslo'), 'secret');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -138,7 +159,9 @@ describe('KangurLoginPage', () => {
     });
     await waitFor(() => {
       expect(setStoredActiveLearnerIdMock).toHaveBeenCalledWith('learner-1');
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/profile?tab=summary#hero');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur/profile?tab=summary#hero', {
+        scroll: false,
+      });
     });
     expect(window.location.assign).not.toHaveBeenCalled();
   });

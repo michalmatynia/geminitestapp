@@ -6,6 +6,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
+
 const { apiPostMock } = vi.hoisted(() => ({
   apiPostMock: vi.fn(),
 }));
@@ -30,9 +32,19 @@ function StatefulNarrationPanelHarness({
   const [value, setValue] = React.useState(document);
 
   return (
-    <LessonContentEditorProvider lesson={lesson as KangurLesson} document={value} onChange={setValue}>
-      <KangurLessonNarrationPanel />
-    </LessonContentEditorProvider>
+    <ContextRegistryPageProvider
+      pageId='admin:kangur-lessons-manager'
+      title='Kangur Lessons Manager'
+      rootNodeIds={['page:kangur-admin-lessons-manager']}
+    >
+      <LessonContentEditorProvider
+        lesson={lesson as KangurLesson}
+        document={value}
+        onChange={setValue}
+      >
+        <KangurLessonNarrationPanel />
+      </LessonContentEditorProvider>
+    </ContextRegistryPageProvider>
   );
 }
 
@@ -141,6 +153,29 @@ describe('KangurLessonNarrationPanel', () => {
     );
     expect(payload.script.segments.map((segment) => segment.text).join(' ')).toContain(
       'To jest opis narracyjny ilustracji.'
+    );
+    expect(payload.contextRegistry?.refs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'page:kangur-admin-lessons-manager', kind: 'static_node' }),
+        expect.objectContaining({
+          id: 'component:kangur-lesson-narration-panel',
+          kind: 'static_node',
+        }),
+        expect.objectContaining({ id: 'action:kangur-lesson-tts', kind: 'static_node' }),
+      ])
+    );
+
+    const statusCall = apiPostMock.mock.calls.find((call) => call[0] === '/api/kangur/tts/status');
+    expect(statusCall?.[1]).toEqual(
+      expect.objectContaining({
+        contextRegistry: expect.objectContaining({
+          refs: expect.arrayContaining([
+            expect.objectContaining({ id: 'page:kangur-admin-lessons-manager' }),
+            expect.objectContaining({ id: 'component:kangur-lesson-narration-panel' }),
+            expect.objectContaining({ id: 'action:kangur-lesson-tts' }),
+          ]),
+        }),
+      })
     );
 
     await waitFor(() =>

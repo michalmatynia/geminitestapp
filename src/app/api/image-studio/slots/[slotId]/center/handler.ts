@@ -14,22 +14,13 @@ import {
   type ImageStudioObjectDetectionUsed,
   type ImageStudioDetectionDetails,
 } from '@/features/ai/image-studio/contracts/center';
+import { processCenterPayload } from '@/features/ai/image-studio/server/center-service';
 import {
   buildCenterFingerprint,
   buildCenterFingerprintRelationType,
   buildCenterLayoutSignature,
   buildCenterRequestRelationType,
 } from '@/features/ai/image-studio/server/center-utils';
-import {
-  getImageStudioSlotLinkBySourceAndRelation,
-  upsertImageStudioSlotLink,
-} from '@/features/ai/server';
-import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
-import { getImageFileRepository } from '@/features/files/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { notFoundError } from '@/shared/errors/app-error';
-
 import {
   centerBadRequest,
   guessExtension,
@@ -38,7 +29,16 @@ import {
   sanitizeFilename,
   sanitizeSegment,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-import { processCenterPayload } from '@/features/ai/image-studio/server/center-service';
+import {
+  getImageStudioSlotLinkBySourceAndRelation,
+  upsertImageStudioSlotLink,
+} from '@/features/ai/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
+import { getImageFileRepository } from '@/features/files/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
 import {
   parseCenterRequestPayload,
   normalizeCenterRequestBody,

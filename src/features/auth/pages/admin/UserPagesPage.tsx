@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { type AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast, FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {

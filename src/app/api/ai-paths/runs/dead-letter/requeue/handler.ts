@@ -6,11 +6,11 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { resumePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),

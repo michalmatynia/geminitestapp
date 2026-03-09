@@ -31,6 +31,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useOptionalKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -97,9 +98,9 @@ describe('ParentDashboard page', () => {
   it('shows an authentication gate instead of a local PIN for anonymous users', async () => {
     render(<ParentDashboard />);
 
-    expect(screen.getByTestId('parent-dashboard-auth-icon')).toHaveClass(
-      'bg-indigo-100',
-      'text-indigo-700'
+    expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass(
+      'glass-panel',
+      'border-white/78'
     );
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
     expect(
@@ -115,7 +116,7 @@ describe('ParentDashboard page', () => {
     expect(navigateToLoginMock).toHaveBeenLastCalledWith({
       authMode: 'create-account',
     });
-    expect(screen.getByRole('link', { name: /Wroc do gry/i })).toHaveAttribute('href', '/kangur');
+    expect(screen.getByRole('button', { name: /Wróć do poprzedniej strony/i })).toBeInTheDocument();
   });
 
   it('renders the authenticated dashboard and supports tab switching and logout', async () => {
@@ -165,7 +166,7 @@ describe('ParentDashboard page', () => {
     render(<ParentDashboard />);
 
     expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toBeInTheDocument();
-    expect(screen.getByText('Rodzic')).toBeInTheDocument();
+    expect(screen.getAllByText('Rodzic').length).toBeGreaterThan(0);
     expect(screen.getByText('anna@example.com')).toBeInTheDocument();
     expect(screen.getAllByText('Jan').length).toBeGreaterThan(0);
     expect(screen.getByText('Ola')).toBeInTheDocument();

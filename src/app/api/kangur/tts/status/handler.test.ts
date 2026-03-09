@@ -3,9 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { inspectKangurLessonNarrationAudioMock, resolveKangurActorMock } = vi.hoisted(() => ({
+const {
+  inspectKangurLessonNarrationAudioMock,
+  resolveKangurActorMock,
+  resolveKangurTtsContextRegistryEnvelopeMock,
+} = vi.hoisted(() => ({
   inspectKangurLessonNarrationAudioMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
+  resolveKangurTtsContextRegistryEnvelopeMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
@@ -14,6 +19,10 @@ vi.mock('@/features/kangur/server', () => ({
 
 vi.mock('@/features/kangur/tts/server', () => ({
   inspectKangurLessonNarrationAudio: inspectKangurLessonNarrationAudioMock,
+}));
+
+vi.mock('@/features/kangur/tts/context-registry/server', () => ({
+  resolveKangurTtsContextRegistryEnvelope: resolveKangurTtsContextRegistryEnvelopeMock,
 }));
 
 import { postKangurTtsStatusHandler } from './handler';
@@ -73,6 +82,10 @@ describe('kangur tts status handler', () => {
         },
       ],
     });
+    resolveKangurTtsContextRegistryEnvelopeMock.mockResolvedValue({
+      refs: [{ id: 'page:kangur-admin-lessons-manager', kind: 'static_node' }],
+      engineVersion: 'page-context:v1',
+    });
   });
 
   it('returns cached narration status for an authenticated learner', async () => {
@@ -87,6 +100,10 @@ describe('kangur tts status handler', () => {
             segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
           },
           voice: 'coral',
+          contextRegistry: {
+            refs: [{ id: 'page:kangur-admin-lessons-manager', kind: 'static_node' }],
+            engineVersion: 'page-context:v1',
+          },
         })
       ),
       createRequestContext()
@@ -102,6 +119,10 @@ describe('kangur tts status handler', () => {
         segments: [{ id: 'clock-segment-1', text: 'Nauka zegara.' }],
       },
       voice: 'coral',
+      contextRegistry: {
+        refs: [{ id: 'page:kangur-admin-lessons-manager', kind: 'static_node' }],
+        engineVersion: 'page-context:v1',
+      },
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({

@@ -3,20 +3,16 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import {
   buildPersonaChatMemoryContext,
   persistAgentPersonaExchangeMemory,
 } from '@/features/ai/agentcreator/server/persona-memory';
+import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { buildChatbotContextRegistrySystemPrompt } from '@/features/ai/chatbot/context-registry/system-prompt';
-import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
-import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
-import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type {
   ChatMessageDto as ChatMessage,
   ChatbotChatRequest,
@@ -24,7 +20,11 @@ import type {
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
+import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

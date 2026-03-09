@@ -3,11 +3,11 @@ import { z } from 'zod';
 
 import { generateLogInterpretation } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { getSystemLogById } from '@/shared/lib/observability/system-logger';
-import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+import { getSystemLogById } from '@/shared/lib/observability/system-logger';
 
 const schema = z.object({
   logId: z.string().trim().min(1),

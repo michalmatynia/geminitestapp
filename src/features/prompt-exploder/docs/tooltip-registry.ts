@@ -21,7 +21,7 @@ export const resolvePromptExploderTooltipDoc = (
     summary: entry.content,
     section: 'General',
     aliases: entry.keywords,
-    docPath: entry.relatedLinks?.[0] ?? '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: entry.relatedLinks?.[0] ?? '/docs/prompt-exploder/overview.md',
   };
 };
 

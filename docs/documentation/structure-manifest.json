@@ -1,41 +1,10 @@
 {
   "rootAllowlist": [
     "AGENTS.md",
-    "AI_PATHS.md",
-    "AI_PATHS_EXTENDED_REFERENCE.md",
-    "API_CACHING.md",
-    "ARCHITECTURE_GUARDRAILS.md",
-    "BEST_PRACTICES.md",
     "CLAUDE.md",
-    "COMPONENT_PATTERNS.md",
     "COPILOT.md",
-    "DATA_FETCHING_CACHING.md",
-    "DEVELOPER_HANDBOOK.md",
-    "IMAGE_STUDIO_OBJECT_LAYOUT_IMPROVEMENT_PLAN.md",
-    "MIGRATION_CHECKLIST.md",
     "OWNERS.md",
-    "PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md",
-    "PROMPT_EXPLODER_MASTER_PLAN.md",
-    "PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md",
-    "PROMPT_EXPLODER_TOOLTIP_GUIDE.md",
-    "README.md",
-    "TOOLTIP_DOCUMENTATION_PLATFORM.md",
-    "application-performance-operations.md",
-    "canonical-closeout-2026-04-17.md",
-    "canonical-contract-matrix-2026-03-04.md",
-    "canonical-contract-matrix-2026-03-05.md",
-    "canonical-migration-inventory-2026-03-04.md",
-    "case-resolver-performance-stability-runbook.md",
-    "fastcomet-storage-plan.md",
-    "legacy-compatibility-exception-register-2026-03-04.md",
-    "legacy-compatibility-exception-register-2026-03-05.md",
-    "master-folder-tree-migration-plan-2026-03-04.md",
-    "master-folder-tree-shell-phase1-parity-2026-03-05.md",
-    "master-folder-tree-shell-phase2-runtime-lifecycle-2026-03-05.md",
-    "master-folder-tree-shell-phase3-browser-lifecycle-2026-03-05.md",
-    "prompt-exploder-migration-plan-2026-03-04.md",
-    "site-wide-canonical-migration-plan-2026-03-04.md",
-    "site-wide-canonical-migration-plan-2026-03-05.md"
+    "README.md"
   ],
   "requiredFrontmatterFields": [
     "owner",
@@ -264,9 +233,7 @@
       ]
     }
   ],
-  "rootStubReferenceExemptions": [
-    "docs/documentation/root-doc-migration-backlog.md"
-  ],
+  "rootStubReferenceExemptions": [],
   "additionalReferenceCheckTargets": [
     "GEMINI.md"
   ],
@@ -278,7 +245,6 @@
     "docs/CLAUDE.md",
     "docs/COPILOT.md",
     "docs/documentation/README.md",
-    "docs/documentation/root-doc-migration-backlog.md",
     "docs/platform/README.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",

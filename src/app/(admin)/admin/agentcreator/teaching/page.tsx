@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { JSX } from 'react';
 
-import { PageLayout } from '@/shared/ui/PageLayout';
 import { Card, CardHeader, CardDescription } from '@/shared/ui/card';
+import { PageLayout } from '@/shared/ui/PageLayout';
 
 export default function AgentTeachingLandingPage(): JSX.Element {
   const cards = [

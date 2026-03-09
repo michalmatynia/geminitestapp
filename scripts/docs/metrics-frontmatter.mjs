@@ -1,14 +1,13 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const frontmatterPattern = /^---\r?\n[\s\S]*?\r?\n---\r?\n*/;
+import {
+  normalizeDocPath,
+  withStructuredMarkdownFrontmatter,
+  writeStructuredMarkdownDoc,
+} from './markdown-frontmatter-utils.mjs';
 
 function hasMarkdownExtension(fileName) {
   return fileName.endsWith('.md') || fileName.endsWith('.mdx');
-}
-
-export function normalizeDocPath(value) {
-  return value.replace(/\\/g, '/');
 }
 
 export function isMetricsMarkdownDoc(relativePath) {
@@ -28,10 +27,6 @@ export function isMetricsCanonicalMarkdownDoc(relativePath) {
   );
 }
 
-export function stripFrontmatter(content) {
-  return content.replace(frontmatterPattern, '').replace(/^\r?\n+/, '');
-}
-
 export function getMetricsMarkdownMeta(relativePath, reviewDate) {
   const normalizedPath = normalizeDocPath(relativePath);
   const isReadme = path.posix.basename(normalizedPath) === 'README.md';
@@ -48,22 +43,10 @@ export function getMetricsMarkdownMeta(relativePath, reviewDate) {
 }
 
 export function withMetricsMarkdownFrontmatter(relativePath, content, reviewDate) {
-  const metadata = getMetricsMarkdownMeta(relativePath, reviewDate);
-  const body = stripFrontmatter(content);
-  const normalizedBody = body.endsWith('\n') ? body : `${body}\n`;
-  const frontmatter = [
-    '---',
-    `owner: '${metadata.owner}'`,
-    `last_reviewed: '${metadata.last_reviewed}'`,
-    `status: '${metadata.status}'`,
-    `doc_type: '${metadata.doc_type}'`,
-    `scope: '${metadata.scope}'`,
-    `canonical: ${metadata.canonical ? 'true' : 'false'}`,
-    '---',
-    '',
-  ].join('\n');
-
-  return `${frontmatter}${normalizedBody}`;
+  return withStructuredMarkdownFrontmatter(
+    content,
+    getMetricsMarkdownMeta(relativePath, reviewDate)
+  );
 }
 
 export async function writeMetricsMarkdownFile({
@@ -78,10 +61,11 @@ export async function writeMetricsMarkdownFile({
     throw new Error(`Metrics markdown helper expected docs/metrics markdown path, received ${relativePath}`);
   }
 
-  await fs.mkdir(path.dirname(targetPath), { recursive: true });
-  await fs.writeFile(
+  await writeStructuredMarkdownDoc({
+    root,
     targetPath,
-    withMetricsMarkdownFrontmatter(relativePath, content, reviewDate),
-    'utf8'
-  );
+    content,
+    reviewDate,
+    getMeta: getMetricsMarkdownMeta,
+  });
 }

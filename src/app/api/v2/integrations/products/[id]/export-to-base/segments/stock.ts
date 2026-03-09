@@ -1,5 +1,6 @@
 import { fetchBaseWarehouses, normalizeStockKey } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import { type BaseFieldMapping } from './common';
 
 const inferTypedWarehouseId = (value: string): { typed: string; numeric: string } | null => {

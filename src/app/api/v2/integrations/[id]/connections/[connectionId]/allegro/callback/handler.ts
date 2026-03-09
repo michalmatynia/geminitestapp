@@ -3,10 +3,10 @@ import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =

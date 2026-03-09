@@ -1,3 +1,10 @@
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import type {
+  ProductImageSlotPreview,
+  ProductStudioAuditEntry,
+  ProductStudioRunStatus,
+  ProductStudioVariantsResponse,
+} from '@/features/products/context/ProductStudioContext.types';
 import type {
   ContextRegistryRef,
   ContextRegistryResolutionBundle,
@@ -5,13 +12,6 @@ import type {
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import type {
-  ProductImageSlotPreview,
-  ProductStudioAuditEntry,
-  ProductStudioRunStatus,
-  ProductStudioVariantsResponse,
-} from '@/features/products/context/ProductStudioContext.types';
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',
@@ -29,7 +29,7 @@ export const PRODUCT_EDITOR_CONTEXT_RUNTIME_PROVIDER_ID = 'product-editor-local'
 export const PRODUCT_EDITOR_CONTEXT_RUNTIME_ENTITY_TYPE = 'product_editor_studio_state';
 export const PRODUCT_EDITOR_CONTEXT_RUNTIME_REF_PREFIX = 'runtime:product-editor:studio:';
 
-type BuildProductStudioWorkspaceContextBundleInput = {
+interface BuildProductStudioWorkspaceContextBundleInput {
   product: ProductWithImages;
   studioProjectId: string | null;
   selectedImageIndex: number | null;
@@ -41,14 +41,18 @@ type BuildProductStudioWorkspaceContextBundleInput = {
   pendingVariantPlaceholderCount: number;
   sequenceReadinessMessage: string | null;
   auditEntries: ProductStudioAuditEntry[];
-};
+}
 
 const encodeSegment = (value: string): string => encodeURIComponent(value.trim());
 
 const trimText = (value: string | null | undefined, maxLength: number): string | null => {
-  if (typeof value !== 'string') return null;
+  if (typeof value !== 'string') {
+    return null;
+  }
   const normalized = value.trim();
-  if (!normalized) return null;
+  if (!normalized) {
+    return null;
+  }
   if (normalized.length <= maxLength) {
     return normalized;
   }
@@ -81,7 +85,6 @@ const summarizeVariant = (
   id: variant.id,
   name: variant.name,
   folderPath: variant.folderPath ?? null,
-  parentId: variant.parentId ?? null,
   createdAt: variant.createdAt ?? null,
   imagePath: variant.imageFile?.filepath ?? variant.imageUrl ?? null,
 });

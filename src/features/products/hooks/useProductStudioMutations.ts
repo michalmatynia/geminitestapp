@@ -1,11 +1,15 @@
 'use client';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import type { ProductStudioSendRequest, ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+
 import { invalidateProductsAndCounts, invalidateImageStudioSlots } from './productCache';
-import type { ProductStudioSendRequest, ProductWithImages } from '@/shared/contracts/products';
 
 export function useSendToStudioMutation() {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+
   return createCreateMutationV2<
     {
       runId: string;
@@ -20,11 +24,13 @@ export function useSendToStudioMutation() {
       contextRegistry?: ProductStudioSendRequest['contextRegistry'];
     }
   >({
-    mutationFn: ({ productId, imageSlotIndex, projectId, contextRegistry }) =>
+    mutationFn: ({ productId, imageSlotIndex, projectId, contextRegistry: payloadContextRegistry }) =>
       api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
         imageSlotIndex,
         projectId,
-        ...(contextRegistry ? { contextRegistry } : {}),
+        ...(payloadContextRegistry ?? contextRegistry
+          ? { contextRegistry: payloadContextRegistry ?? contextRegistry }
+          : {}),
       }),
     meta: {
       source: 'products.hooks.useSendToStudioMutation',
@@ -33,7 +39,7 @@ export function useSendToStudioMutation() {
       domain: 'products',
       tags: ['products', 'studio', 'send'],
       description: 'Creates products studio send.'},
-    invalidate: async (queryClient, _data, { projectId }) => {
+    invalidate: (queryClient, _data, { projectId }) => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
@@ -57,7 +63,7 @@ export function useAcceptVariantMutation() {
       domain: 'products',
       tags: ['products', 'studio', 'accept'],
       description: 'Updates products studio accept.'},
-    invalidate: async (queryClient) => {
+    invalidate: (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },
   });
@@ -80,7 +86,7 @@ export function useRotateImageSlotMutation() {
       domain: 'products',
       tags: ['products', 'studio', 'rotate'],
       description: 'Updates products studio rotate.'},
-    invalidate: async (queryClient) => {
+    invalidate: (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },
   });

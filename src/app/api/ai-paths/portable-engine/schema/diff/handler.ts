@@ -5,13 +5,13 @@ import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
   buildPortablePathJsonSchemaDiffReport,
   getPortableNodeCodeObjectContractsHash,
 } from '@/shared/lib/ai-paths/portable-engine';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const SCHEMA_DIFF_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaDiffKindQueryValue = (typeof SCHEMA_DIFF_KIND_VALUES)[number];

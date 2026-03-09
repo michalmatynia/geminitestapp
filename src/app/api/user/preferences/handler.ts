@@ -8,11 +8,11 @@ import {
   warmUserPreferencesCache,
 } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
-import { normalizeProductPageSize } from '@/shared/lib/products/constants';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { UpdateUserPreferencesInput as UserPreferencesData } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 // For now, we'll use a hardcoded user ID

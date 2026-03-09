@@ -10,7 +10,6 @@ import Google from 'next-auth/providers/google';
 
 import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
 import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
-import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import {
   checkLoginAllowed,
   extractClientIp,
@@ -23,13 +22,14 @@ import {
 } from '@/features/auth/services/auth-security-profile';
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
-import { decryptAuthSecret } from '@/shared/lib/security/encryption';
-import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { configurationError } from '@/shared/errors/app-error';
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { decryptAuthSecret } from '@/shared/lib/security/encryption';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { authConfig } from './auth.config';
 import { findAuthUserByEmail, findAuthUserById } from './services/auth-user-service';

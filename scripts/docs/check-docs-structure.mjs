@@ -2,41 +2,31 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import {
+  directoryContainsMarkdown,
+  directoryHasHub,
+  getDirectoryHubPath,
+  listMarkdownDocsRecursive,
+  listDirectMarkdownFiles,
+  listDirectNonMarkdownFiles,
+  listDocDirectoriesRecursive,
+} from './docs-tree-utils.mjs';
+import {
+  getManagedGeneratedDocMeta,
+  isManagedGeneratedDoc,
+} from './generated-doc-frontmatter.mjs';
+import {
+  getFrontmatterField,
+  readFrontmatter,
+} from './markdown-frontmatter-utils.mjs';
+import {
   getMetricsMarkdownMeta,
-  isMetricsCanonicalMarkdownDoc,
   isMetricsMarkdownDoc,
 } from './metrics-frontmatter.mjs';
 
 const root = process.cwd();
 const manifestPath = path.join(root, 'docs', 'documentation', 'structure-manifest.json');
-
-const frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
-
-function hasMarkdownExtension(fileName) {
-  return fileName.endsWith('.md') || fileName.endsWith('.mdx');
-}
-
-function readFrontmatter(content) {
-  const match = content.match(frontmatterPattern);
-  return match ? match[1] : null;
-}
-
-function getFrontmatterField(frontmatter, field) {
-  const match = frontmatter.match(new RegExp(`^${field}:\\s*(.+)$`, 'm'));
-  if (!match) {
-    return null;
-  }
-
-  const rawValue = match[1].trim();
-  if (
-    (rawValue.startsWith("'") && rawValue.endsWith("'")) ||
-    (rawValue.startsWith('"') && rawValue.endsWith('"'))
-  ) {
-    return rawValue.slice(1, -1);
-  }
-
-  return rawValue;
-}
+const textFileCache = new Map();
+const markdownDocStateCache = new Map();
 
 function countLines(content) {
   return content.split(/\r?\n/).length;
@@ -51,39 +41,33 @@ async function loadManifest() {
   return JSON.parse(raw);
 }
 
-async function listRootDocs() {
-  const docsRoot = path.join(root, 'docs');
-  const entries = await fs.readdir(docsRoot, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && hasMarkdownExtension(entry.name))
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
-}
-
-async function listTopLevelDocDirectories() {
-  const docsRoot = path.join(root, 'docs');
-  const entries = await fs.readdir(docsRoot, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
-}
-
-async function listDocDirectoriesRecursive(relativePath) {
-  const directories = [];
-  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) {
-      continue;
-    }
-
-    const childRelativePath = path.join(relativePath, entry.name);
-    directories.push(childRelativePath);
-    directories.push(...(await listDocDirectoriesRecursive(childRelativePath)));
+async function readTextFile(relativePath) {
+  if (!textFileCache.has(relativePath)) {
+    textFileCache.set(relativePath, fs.readFile(path.join(root, relativePath), 'utf8'));
   }
 
-  return directories.sort((a, b) => a.localeCompare(b));
+  return textFileCache.get(relativePath);
+}
+
+async function readMarkdownDocState(relativePath) {
+  if (!markdownDocStateCache.has(relativePath)) {
+    markdownDocStateCache.set(
+      relativePath,
+      (async () => {
+        const content = await readTextFile(relativePath);
+        return {
+          content,
+          frontmatter: readFrontmatter(content),
+        };
+      })()
+    );
+  }
+
+  return markdownDocStateCache.get(relativePath);
+}
+
+async function listRootDocs() {
+  return listDirectMarkdownFiles('docs');
 }
 
 async function fileExists(relativePath) {
@@ -93,42 +77,6 @@ async function fileExists(relativePath) {
   } catch {
     return false;
   }
-}
-
-async function directoryContainsMarkdown(relativePath) {
-  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
-
-  for (const entry of entries) {
-    const childRelativePath = path.join(relativePath, entry.name);
-
-    if (entry.isFile() && hasMarkdownExtension(entry.name)) {
-      return true;
-    }
-
-    if (entry.isDirectory() && (await directoryContainsMarkdown(childRelativePath))) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-async function directoryHasHub(relativePath) {
-  return (
-    (await fileExists(path.join(relativePath, 'README.md'))) ||
-    (await fileExists(path.join(relativePath, 'index.md')))
-  );
-}
-
-async function getDirectoryHubPath(relativePath) {
-  for (const candidate of ['README.md', 'index.md']) {
-    const candidatePath = path.join(relativePath, candidate);
-    if (await fileExists(candidatePath)) {
-      return candidatePath;
-    }
-  }
-
-  return null;
 }
 
 function getDirectoryParent(relativePath) {
@@ -166,8 +114,7 @@ async function listSupersededRootDocs(rootDocs) {
 
   for (const fileName of rootDocs) {
     const relativePath = path.join('docs', fileName);
-    const content = await fs.readFile(path.join(root, relativePath), 'utf8');
-    const frontmatter = readFrontmatter(content);
+    const { frontmatter } = await readMarkdownDocState(relativePath);
 
     if (frontmatter && /^status:\s*'?(superseded)'?$/m.test(frontmatter)) {
       supersededDocs.push(relativePath);
@@ -207,9 +154,7 @@ function resolveDocReference(fromPath, referenceToken) {
 }
 
 async function checkCanonicalFrontmatter(relativePath, requiredFields) {
-  const fullPath = path.join(root, relativePath);
-  const content = await fs.readFile(fullPath, 'utf8');
-  const frontmatter = readFrontmatter(content);
+  const { frontmatter } = await readMarkdownDocState(relativePath);
 
   if (!frontmatter) {
     return [`${relativePath}: missing YAML frontmatter`];
@@ -230,19 +175,47 @@ async function checkCanonicalFrontmatter(relativePath, requiredFields) {
   return issues;
 }
 
-async function checkMetricsMarkdownDoc(relativePath, requiredCanonicalDocSet, requiredFields) {
-  if (!isMetricsMarkdownDoc(relativePath)) {
+function getGeneratedDocContract(relativePath) {
+  if (isMetricsMarkdownDoc(relativePath)) {
+    return {
+      expected: getMetricsMarkdownMeta(relativePath, '1970-01-01'),
+      missingFrontmatterMessage: 'metrics markdown docs must declare YAML frontmatter',
+      fieldLabel: 'metrics doc',
+      canonicalMembershipLabels: {
+        canonical: 'canonical generated metrics doc',
+        nonCanonical: 'historical generated metrics doc',
+      },
+    };
+  }
+
+  if (isManagedGeneratedDoc(relativePath)) {
+    return {
+      expected: getManagedGeneratedDocMeta(relativePath, '1970-01-01'),
+      missingFrontmatterMessage: 'managed generated docs must declare YAML frontmatter',
+      fieldLabel: 'managed generated doc',
+      canonicalMembershipLabels: {
+        canonical: 'managed generated canonical doc',
+        nonCanonical: 'managed generated non-canonical doc',
+      },
+    };
+  }
+
+  return null;
+}
+
+async function checkGeneratedDocContract(relativePath, requiredCanonicalDocSet, requiredFields) {
+  const contract = getGeneratedDocContract(relativePath);
+
+  if (!contract) {
     return [];
   }
 
-  const fullPath = path.join(root, relativePath);
-  const content = await fs.readFile(fullPath, 'utf8');
-  const frontmatter = readFrontmatter(content);
+  const { frontmatter } = await readMarkdownDocState(relativePath);
   const issues = [];
-  const expected = getMetricsMarkdownMeta(relativePath, '1970-01-01');
+  const expected = contract.expected;
 
   if (!frontmatter) {
-    issues.push(`${relativePath}: metrics markdown docs must declare YAML frontmatter`);
+    issues.push(`${relativePath}: ${contract.missingFrontmatterMessage}`);
   } else {
     for (const field of requiredFields) {
       if (getFrontmatterField(frontmatter, field) === null) {
@@ -267,21 +240,21 @@ async function checkMetricsMarkdownDoc(relativePath, requiredCanonicalDocSet, re
       const actualValue = getFrontmatterField(frontmatter, field);
       if (actualValue !== null && actualValue !== expectedValue) {
         issues.push(
-          `${relativePath}: metrics doc field "${field}" must be ${expectedValue}`
+          `${relativePath}: ${contract.fieldLabel} field "${field}" must be ${expectedValue}`
         );
       }
     }
   }
 
-  if (isMetricsCanonicalMarkdownDoc(relativePath)) {
+  if (expected.canonical) {
     if (!requiredCanonicalDocSet.has(relativePath)) {
       issues.push(
-        `${relativePath}: canonical generated metrics doc must be listed in requiredCanonicalDocs`
+        `${relativePath}: ${contract.canonicalMembershipLabels.canonical} must be listed in requiredCanonicalDocs`
       );
     }
   } else if (requiredCanonicalDocSet.has(relativePath)) {
     issues.push(
-      `${relativePath}: historical generated metrics doc must not be listed in requiredCanonicalDocs`
+      `${relativePath}: ${contract.canonicalMembershipLabels.nonCanonical} must not be listed in requiredCanonicalDocs`
     );
   }
 
@@ -289,9 +262,7 @@ async function checkMetricsMarkdownDoc(relativePath, requiredCanonicalDocSet, re
 }
 
 async function checkSupersededRootDoc(relativePath, maxLines) {
-  const fullPath = path.join(root, relativePath);
-  const content = await fs.readFile(fullPath, 'utf8');
-  const frontmatter = readFrontmatter(content);
+  const { content, frontmatter } = await readMarkdownDocState(relativePath);
 
   if (!frontmatter || !/^status:\s*'?(superseded)'?$/m.test(frontmatter)) {
     return [];
@@ -332,8 +303,8 @@ async function checkCompatibilityMirrorPair(pair) {
   }
 
   const [canonicalContent, mirrorContent] = await Promise.all([
-    fs.readFile(path.join(root, pair.canonical), 'utf8'),
-    fs.readFile(path.join(root, pair.mirror), 'utf8'),
+    readTextFile(pair.canonical),
+    readTextFile(pair.mirror),
   ]);
 
   if (canonicalContent !== mirrorContent) {
@@ -343,22 +314,6 @@ async function checkCompatibilityMirrorPair(pair) {
   }
 
   return issues;
-}
-
-async function listDirectMarkdownFiles(relativePath) {
-  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && hasMarkdownExtension(entry.name))
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
-}
-
-async function listDirectNonMarkdownFiles(relativePath) {
-  const entries = await fs.readdir(path.join(root, relativePath), { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && !hasMarkdownExtension(entry.name))
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
 }
 
 async function checkDirectoryIndexPolicy(policy) {
@@ -371,7 +326,7 @@ async function checkDirectoryIndexPolicy(policy) {
   }
 
   const hubFileName = path.basename(hubPath);
-  const hubContent = await fs.readFile(path.join(root, hubPath), 'utf8');
+  const hubContent = await readTextFile(hubPath);
 
   if (policy.mode === 'complete_direct_files') {
     const directMarkdownFiles = await listDirectMarkdownFiles(policy.path);
@@ -447,7 +402,7 @@ async function checkArtifactDirectoryPolicy(policy) {
     return issues;
   }
 
-  const parentHubContent = await fs.readFile(path.join(root, policy.parentHub), 'utf8');
+  const parentHubContent = await readTextFile(policy.parentHub);
   for (const reference of policy.requiredReferences) {
     if (!parentHubContent.includes(reference)) {
       issues.push(
@@ -472,16 +427,13 @@ async function checkDirectoryDiscoverability(relativePath) {
     return issues;
   }
 
-  const parentHubPath =
-    parentDirectory === 'docs'
-      ? 'docs/README.md'
-      : await getDirectoryHubPath(parentDirectory);
+  const parentHubPath = await getDirectoryHubPath(parentDirectory);
 
   if (!parentHubPath) {
     return issues;
   }
 
-  const parentHubContent = await fs.readFile(path.join(root, parentHubPath), 'utf8');
+  const parentHubContent = await readTextFile(parentHubPath);
   const referenceTokens = buildDirectoryReferenceTokens(relativePath, parentHubPath);
 
   if (!referenceTokens.some((token) => parentHubContent.includes(token))) {
@@ -494,7 +446,7 @@ async function checkDirectoryDiscoverability(relativePath) {
 }
 
 async function checkReferenceTargetForRootStubReferences(relativePath, rootStubPaths) {
-  const content = await fs.readFile(path.join(root, relativePath), 'utf8');
+  const content = await readTextFile(relativePath);
   const issues = [];
   const rootStubSet = new Set(rootStubPaths.map((value) => value.replace(/\\/g, '/')));
 
@@ -516,7 +468,7 @@ async function run() {
   const issues = [];
 
   const rootDocs = await listRootDocs();
-  const docsDirectories = await listDocDirectoriesRecursive('docs');
+  const docsDirectories = await listDocDirectoriesRecursive();
   const allowlist = new Set(manifest.rootAllowlist);
   const supersededRootDocs = await listSupersededRootDocs(rootDocs);
   const markdownDirectoryHubExemptions = new Set(
@@ -548,19 +500,12 @@ async function run() {
     }
   }
 
-  const allMarkdownDocs = rootDocs.map((fileName) => path.join('docs', fileName));
-  for (const relativePath of docsDirectories) {
-    const directMarkdownFiles = await listDirectMarkdownFiles(relativePath);
-    allMarkdownDocs.push(
-      ...directMarkdownFiles.map((fileName) => path.join(relativePath, fileName))
-    );
-  }
+  const allMarkdownDocs = await listMarkdownDocsRecursive();
 
   for (const relativePath of allMarkdownDocs) {
-    const content = await fs.readFile(path.join(root, relativePath), 'utf8');
-    const frontmatter = readFrontmatter(content);
+    const { frontmatter } = await readMarkdownDocState(relativePath);
 
-    if (isMetricsMarkdownDoc(relativePath)) {
+    if (getGeneratedDocContract(relativePath)) {
       continue;
     }
 
@@ -660,12 +605,12 @@ async function run() {
   }
 
   for (const relativePath of allMarkdownDocs) {
-    const metricsIssues = await checkMetricsMarkdownDoc(
+    const generatedDocIssues = await checkGeneratedDocContract(
       relativePath,
       requiredCanonicalDocSet,
       manifest.requiredFrontmatterFields
     );
-    issues.push(...metricsIssues);
+    issues.push(...generatedDocIssues);
   }
 
   for (const relativePath of requiredCanonicalDocs) {
@@ -675,7 +620,7 @@ async function run() {
       continue;
     }
 
-    if (isMetricsMarkdownDoc(relativePath)) {
+    if (getGeneratedDocContract(relativePath)) {
       continue;
     }
 
@@ -692,7 +637,7 @@ async function run() {
   }
 
   const referenceTargets = [
-      ...new Set([
+    ...new Set([
       ...requiredCanonicalDocs,
       ...(manifest.additionalReferenceCheckTargets ?? []),
     ]),

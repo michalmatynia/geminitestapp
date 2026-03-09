@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 
 const levelSchema = z.enum(['info', 'warn', 'error']);
 

@@ -2,7 +2,6 @@ import { ProductAiJobStatus as PrismaJobStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
@@ -12,16 +11,17 @@ import {
   startAiInsightsQueue,
   startAiPathRunQueue,
 } from '@/features/jobs/server';
+import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
+import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';
 import {
   getProductAiJobProvider,
   getProductAiJobRepository,
 } from '@/shared/lib/products/services/product-ai-job-repository';
-import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';
-import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
-import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',

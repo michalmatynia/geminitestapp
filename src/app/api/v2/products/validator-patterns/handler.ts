@@ -1,7 +1,12 @@
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
+import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products';
+export { createPatternSchema };
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   invalidateValidationPatternRuntimeCache,
   listValidationPatternsCached,
@@ -14,13 +19,8 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
-import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products';
-export { createPatternSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
   const safety = validateRegexSafety(regexSource, flags);

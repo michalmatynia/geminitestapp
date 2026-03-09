@@ -15,7 +15,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
       'Load prompt text, explode into segments, refine structure, validate warnings and metrics, then reassemble and apply.',
     section: 'Overview',
     aliases: ['workflow', 'overview', 'prompt exploder'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'docs_tooltips_toggle',
@@ -24,7 +24,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
       'Toggles docs-driven tooltips for all Prompt Exploder interactive controls in the current route.',
     section: 'Header Actions',
     aliases: ['docs tooltips', 'enable docs tooltips', 'prompt-exploder-docs-tooltips'],
-    docPath: '/docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md',
+    docPath: '/docs/prompt-exploder/tooltip-guide.md',
   },
   {
     id: 'reload_incoming_draft',
@@ -32,7 +32,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Re-reads the latest bridged prompt payload from Image Studio or Case Resolver.',
     section: 'Header Actions',
     aliases: ['reload incoming draft', 'reload draft'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'open_settings',
@@ -40,7 +40,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Opens Prompt Exploder settings for runtime, learning, and AI configuration.',
     section: 'Header Actions',
     aliases: ['settings', 'open settings'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'back_to_source',
@@ -48,7 +48,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Navigates back to the caller page (Image Studio or Case Resolver).',
     section: 'Header Actions',
     aliases: ['back to case resolver', 'back to image studio'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'source_prompt_text',
@@ -56,7 +56,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Raw prompt text that is parsed into typed segments.',
     section: 'Source Prompt',
     aliases: ['paste prompt text', 'source prompt'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'explode_prompt',
@@ -64,7 +64,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Runs segmentation and refreshes segments, metrics, warnings, and bindings.',
     section: 'Source Prompt',
     aliases: ['explode prompt'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'apply_to_target',
@@ -72,7 +72,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Sends the currently reassembled prompt back to Image Studio or Case Resolver.',
     section: 'Source Prompt/Reassembled Prompt',
     aliases: ['apply to image studio', 'apply to case resolver'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'segment_selector',
@@ -80,7 +80,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Chooses the active segment for editing.',
     section: 'Segments',
     aliases: ['select a segment to edit'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'segment_drag',
@@ -88,7 +88,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Drag to reorder segments; reassembly follows this order.',
     section: 'Segments',
     aliases: ['drag to reorder segment'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'segment_type',
@@ -96,7 +96,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Sets semantic type used for rendering, editing behavior, and validation.',
     section: 'Segments',
     aliases: ['type'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'segment_include_output',
@@ -104,7 +104,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Toggles whether the segment is included when rebuilding the final prompt.',
     section: 'Segments',
     aliases: ['include in output', 'metadata mode'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'segment_title',
@@ -112,7 +112,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Human-readable segment title used across panels and references.',
     section: 'Segments',
     aliases: ['title'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parameter_selector',
@@ -121,7 +121,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
       'Controls how a parameter is rendered and edited (auto, slider, select, json, rgb, etc).',
     section: 'Parameter Block',
     aliases: ['selector'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parameter_comment',
@@ -129,7 +129,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Inline comment metadata stored with the parameter definition.',
     section: 'Parameter Block',
     aliases: ['inline comment', 'comment'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parameter_description',
@@ -137,7 +137,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Long-form metadata shown above the parameter in generated parameter text.',
     section: 'Parameter Block',
     aliases: ['description above this parameter', 'description'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'add_list_item',
@@ -145,7 +145,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Adds a new list row in list-like segment types.',
     section: 'Segments',
     aliases: ['add item', 'add list item'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'list_item_drag',
@@ -153,7 +153,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Drag to reorder list items inside the selected segment.',
     section: 'Segments',
     aliases: ['drag to reorder list item'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'bindings_type',
@@ -161,7 +161,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Defines relation kind between two endpoints (depends_on, references, uses_param).',
     section: 'Bindings',
     aliases: ['depends on', 'references', 'uses param'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'bindings_add_manual',
@@ -169,7 +169,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Creates a binding from the current draft endpoint selections.',
     section: 'Bindings',
     aliases: ['add manual binding'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'bindings_remove_manual',
@@ -177,7 +177,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Deletes a manually created binding entry.',
     section: 'Bindings',
     aliases: ['remove manual binding'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'projects_save',
@@ -185,7 +185,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Stores prompt text and exploded document state to Prompt Exploder library.',
     section: 'Projects',
     aliases: ['save project'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'projects_new',
@@ -193,7 +193,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Creates a new project draft in the Prompt Exploder library.',
     section: 'Projects',
     aliases: ['new project'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'projects_delete',
@@ -201,7 +201,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Deletes the selected Prompt Exploder project entry.',
     section: 'Projects',
     aliases: ['delete project'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'projects_name',
@@ -209,7 +209,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Project label used in library lists and tables.',
     section: 'Projects',
     aliases: ['project name'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'projects_open',
@@ -217,7 +217,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Opens selected project in the main Prompt Exploder workspace.',
     section: 'Projects',
     aliases: ['open project', 'open'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'runtime_validation_stack',
@@ -225,7 +225,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Chooses which validator scope/stack provides runtime rules for explosion.',
     section: 'Pattern Runtime',
     aliases: ['validation stack'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_rule_profile',
@@ -233,7 +233,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Filters runtime rules to all, pattern pack only, or learned only.',
     section: 'Pattern Runtime',
     aliases: ['runtime rule profile'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_learning_enabled',
@@ -241,7 +241,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Enables or disables template/rule learning workflows.',
     section: 'Pattern Runtime',
     aliases: ['learning'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_capture_snapshot',
@@ -249,7 +249,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Saves a snapshot of runtime learning/pattern state for rollback and comparison.',
     section: 'Pattern Runtime',
     aliases: ['capture snapshot'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_restore_snapshot',
@@ -257,7 +257,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Restores selected snapshot into current runtime validation settings.',
     section: 'Pattern Runtime',
     aliases: ['restore snapshot'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_delete_snapshot',
@@ -265,7 +265,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Removes selected runtime snapshot.',
     section: 'Pattern Runtime',
     aliases: ['delete snapshot'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'runtime_save_learning_settings',
@@ -273,7 +273,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Persists runtime/learning draft values to Prompt Exploder settings.',
     section: 'Pattern Runtime',
     aliases: ['save learning settings'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'parser_tuning_expand',
@@ -281,7 +281,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Opens or hides parser tuning controls for structure and subsection parsing.',
     section: 'Parser Tuning',
     aliases: ['expand', 'collapse'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parser_tuning_save',
@@ -289,7 +289,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Persists parser tuning rules to validation patterns.',
     section: 'Parser Tuning',
     aliases: ['save parser tuning'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parser_tuning_reset',
@@ -297,7 +297,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Reverts parser tuning draft to defaults/current persisted state.',
     section: 'Parser Tuning',
     aliases: ['reset parser tuning'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'parser_tuning_open_patterns',
@@ -305,7 +305,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Navigates to global validator pattern list for advanced rule management.',
     section: 'Parser Tuning',
     aliases: ['open validation patterns'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'benchmark_run',
@@ -313,7 +313,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Runs suite-level benchmark and generates precision/recall/F1 plus suggestions.',
     section: 'Benchmark Report',
     aliases: ['run benchmark'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_suite',
@@ -321,7 +321,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Switches between default, extended, and custom JSON benchmark case sets.',
     section: 'Benchmark Report',
     aliases: ['benchmark suite'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_add_current',
@@ -329,7 +329,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Adds current prompt into custom benchmark cases.',
     section: 'Benchmark Report',
     aliases: ['add current prompt'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_use_default',
@@ -337,7 +337,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Replaces custom benchmark JSON with default template cases.',
     section: 'Benchmark Report',
     aliases: ['use default'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_use_extended',
@@ -345,7 +345,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Replaces custom benchmark JSON with extended template cases.',
     section: 'Benchmark Report',
     aliases: ['use extended'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_append_extended',
@@ -353,7 +353,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Appends extended template cases to existing custom benchmark JSON.',
     section: 'Benchmark Report',
     aliases: ['append extended'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_clear_custom',
@@ -361,7 +361,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Clears the custom benchmark JSON editor content.',
     section: 'Benchmark Report',
     aliases: ['clear'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_apply_suggestion',
@@ -369,7 +369,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Applies a suggested low-confidence rule/template improvement to runtime settings.',
     section: 'Benchmark Report',
     aliases: ['apply suggestion', 'apply'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_dismiss_suggestion',
@@ -377,7 +377,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Hides a suggestion from current benchmark suggestion view.',
     section: 'Benchmark Report',
     aliases: ['dismiss'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'benchmark_apply_visible_suggestions',
@@ -385,7 +385,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Applies all currently visible benchmark suggestions in one action.',
     section: 'Benchmark Report',
     aliases: ['apply visible', 'apply all'],
-    docPath: '/docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md',
+    docPath: '/docs/prompt-exploder/operations-runbook.md',
   },
   {
     id: 'settings_refresh',
@@ -393,7 +393,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Reloads Prompt Exploder settings and model discovery sources.',
     section: 'Settings Page',
     aliases: ['refresh'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'settings_save',
@@ -401,7 +401,7 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Persists AI/runtime/learning defaults under Prompt Exploder settings key.',
     section: 'Settings Page',
     aliases: ['save prompt exploder settings', 'save settings'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
   {
     id: 'settings_reset_unsaved',
@@ -409,6 +409,6 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
     summary: 'Reverts the draft settings UI state back to persisted settings values.',
     section: 'Settings Page',
     aliases: ['reset unsaved changes'],
-    docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    docPath: '/docs/prompt-exploder/overview.md',
   },
 ];

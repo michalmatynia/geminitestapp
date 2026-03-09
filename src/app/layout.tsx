@@ -1,8 +1,8 @@
 import { SessionProvider } from 'next-auth/react';
 import { Suspense } from 'react';
 
-import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
+import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
 import { BackgroundSyncProvider } from '@/shared/providers/BackgroundSyncProvider';
 import { CsrfProvider } from '@/shared/providers/CsrfProvider';

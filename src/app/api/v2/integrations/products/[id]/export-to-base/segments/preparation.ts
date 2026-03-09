@@ -13,9 +13,10 @@ import {
   getTagRepository,
   type ProducerRepository,
 } from '@/features/products/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { badRequestError } from '@/shared/errors/app-error';
 import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import { badRequestError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import {
   type BaseExportRequestData,
   type BaseFieldMapping,

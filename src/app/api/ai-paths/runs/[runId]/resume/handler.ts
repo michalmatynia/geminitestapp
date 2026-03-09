@@ -6,12 +6,12 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { resumePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const resumeSchema = z.object({
   mode: z.enum(['resume', 'replay']).optional(),

@@ -1,17 +1,13 @@
 import 'server-only';
 
-import {
-  imageStudioRunRequestSchema,
-  resolveExpectedOutputCount,
-  type ImageStudioRunRequest,
-} from '@/features/ai/image-studio/server/run-executor';
+import { z } from 'zod';
+
 import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
 } from '@/features/ai/image-studio/server';
-import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
 import {
   createImageStudioSlots,
   type ImageStudioSlotRecord,
@@ -21,14 +17,17 @@ import {
   resolveImageStudioSequenceActiveSteps,
 } from '@/features/ai/image-studio/server';
 import {
+  imageStudioRunRequestSchema,
+  resolveExpectedOutputCount,
+  type ImageStudioRunRequest,
+} from '@/features/ai/image-studio/server/run-executor';
+import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
+import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
   type ImageStudioRunDispatchMode,
 } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
-import {
-  setProductStudioSourceSlot,
-  type ProductStudioConfig,
-} from '@/shared/lib/products/services/product-studio-config';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioExecutionRoute,
@@ -39,8 +38,11 @@ import {
   type ProductStudioSequenceReadiness,
   type ProductWithImages,
 } from '@/shared/contracts/products';
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
+import {
+  setProductStudioSourceSlot,
+  type ProductStudioConfig,
+} from '@/shared/lib/products/services/product-studio-config';
 
 import {
   buildAuditSettingsContext,
@@ -52,11 +54,11 @@ import {
   sanitizeSkuSegment,
   trimString,
 } from './product-studio-service.helpers';
-import { importSourceProductImageToStudio } from './product-studio-service.io';
 import {
   toProductImageFileSource,
   type ProductImageFileSource,
 } from './product-studio-service.images';
+import { importSourceProductImageToStudio } from './product-studio-service.io';
 import {
   buildGenerationPrompt,
   buildModelNativeSequencePrompt,
@@ -74,14 +76,14 @@ import {
 } from './product-studio-service.sequencing';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
 
-export type ProductStudioLinkResult = {
+export interface ProductStudioLinkResult {
   config: ProductStudioConfig;
   projectId: string;
   imageSlotIndex: number;
   sourceSlot: ImageStudioSlotRecord;
-};
+}
 
-export type ProductStudioSendResult = {
+export interface ProductStudioSendResult {
   config: ProductStudioConfig;
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
@@ -100,9 +102,9 @@ export type ProductStudioSendResult = {
   resolvedSequenceMode: ProductStudioSequenceGenerationMode;
   executionRoute: ProductStudioExecutionRoute;
   warnings?: string[];
-};
+}
 
-type UpsertProductStudioSourceSlotResult = {
+interface UpsertProductStudioSourceSlotResult {
   sourceSlot: ImageStudioSlotRecord;
   config: ProductStudioConfig;
   sourceImageSize: {
@@ -111,7 +113,7 @@ type UpsertProductStudioSourceSlotResult = {
   } | null;
   importMs: number;
   sourceSlotUpsertMs: number;
-};
+}
 
 const buildSourceSlotMetadata = (params: {
   productId: string;
@@ -147,7 +149,7 @@ const upsertProductStudioSourceSlot = async (params: {
   });
   const importMs = Date.now() - importStartedAt;
 
-  const slotName = `${pickProductName(params.product)} • Slot ${params.imageSlotIndex + 1}`;
+  const slotName = `${pickProductName(params.product)} • Slot ${String(params.imageSlotIndex + 1)}`;
   const folderPath = `products/${params.productFolderSegment}`;
 
   const sourceSlotUpsertStartedAt = Date.now();
@@ -237,7 +239,6 @@ export async function sendProductImageToStudio(params: {
   const startedAtMs = Date.now();
   let importMs = 0;
   let sourceSlotUpsertMs = 0;
-  let routeDecisionMs: number;
   let dispatchMs = 0;
   const resolved = await resolveProductAndStudioTarget(params);
   const {
@@ -275,7 +276,7 @@ export async function sendProductImageToStudio(params: {
   ).filter((step) => step.enabled);
   const sequenceStepPlan = buildProductStudioSequenceStepPlan(resolvedActiveSteps);
   const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
-  routeDecisionMs = Date.now() - routeDecisionStartMs;
+  const routeDecisionMs = Date.now() - routeDecisionStartMs;
   const sequenceSnapshot = buildImageStudioSequenceSnapshot(parsedStudioSettings, { modelId });
   const auditSettingsContext = buildAuditSettingsContext(sequencingDiagnostics);
   const sequenceReadiness = resolveSequenceReadiness({
@@ -497,7 +498,7 @@ export async function sendProductImageToStudio(params: {
       dispatchMode: sequenceRun.dispatchMode,
       runKind: 'sequence',
       sequenceRunId: sequenceRun.runId,
-      requestedSequenceMode: requestedSequenceMode,
+      requestedSequenceMode,
       resolvedSequenceMode: routeDecision.resolvedMode,
       executionRoute: routeDecision.executionRoute,
       ...(warnings.length > 0 ? { warnings } : {}),
@@ -534,7 +535,7 @@ export async function sendProductImageToStudio(params: {
   const parsedRequest = imageStudioRunRequestSchema.safeParse(runRequestCandidate);
   if (!parsedRequest.success) {
     throw badRequestError('Invalid Image Studio run request payload.', {
-      errors: parsedRequest.error.format(),
+      errors: z.treeifyError(parsedRequest.error),
     });
   }
 
@@ -654,7 +655,7 @@ export async function sendProductImageToStudio(params: {
     dispatchMode,
     runKind: 'generation',
     sequenceRunId: null,
-    requestedSequenceMode: requestedSequenceMode,
+    requestedSequenceMode,
     resolvedSequenceMode: routeDecision.resolvedMode,
     executionRoute: routeDecision.executionRoute,
     ...(warnings.length > 0 ? { warnings } : {}),

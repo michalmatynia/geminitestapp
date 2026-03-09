@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Db } from 'mongodb';
+
 
 import {
   findAuthUserByEmail,
@@ -7,6 +7,8 @@ import {
   normalizeAuthEmail,
 } from '@/features/auth/services/auth-user-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+import type { Db } from 'mongodb';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),

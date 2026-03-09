@@ -3,10 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
-import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
-import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
-import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/shared/lib/products/constants';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   AppProviderValue as ProviderValue,
   AppProviderSource as ProviderSource,
@@ -14,6 +10,7 @@ import type {
   AppProviderDiagnostics as ProviderDiagnosticsResponse,
 } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
@@ -21,6 +18,9 @@ import {
 } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
+import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/shared/lib/products/constants';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;

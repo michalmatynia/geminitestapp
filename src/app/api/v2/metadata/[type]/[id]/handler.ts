@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { CountryCode, Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 import {
   getCurrencyRepository,
@@ -15,6 +15,7 @@ import type {
   MongoLanguageDoc,
   MongoCatalogDoc,
 } from '@/shared/lib/db/services/database-sync-types';
+
 import type { UpdateFilter } from 'mongodb';
 
 const readString = (record: Record<string, unknown>, key: string): string | undefined => {

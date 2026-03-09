@@ -9,13 +9,13 @@ import {
   cleanupStaleRunningProductAiJobs,
 } from '@/features/jobs/server';
 import { startProductAiJobQueue, getQueueStatus } from '@/features/jobs/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export const listQuerySchema = z.object({
   status: optionalBooleanQuerySchema().default(false),

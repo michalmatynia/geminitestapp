@@ -1,5 +1,6 @@
-import { apiHandler } from '@/shared/lib/api/api-handler';
 import { NextResponse } from 'next/server';
+
+import { apiHandler } from '@/shared/lib/api/api-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

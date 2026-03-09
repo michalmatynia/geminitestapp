@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
 import {
   getCatalogRepository,
   getProductDataProvider,
 } from '@/features/products/server';
-import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
 import { updateCatalogSchema } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

@@ -5,8 +5,8 @@ import {
   categoryMappingUpdateInputSchema,
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { notFoundError } from '@/shared/errors/app-error';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 type Params = { id: string };
 

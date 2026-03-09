@@ -10,8 +10,8 @@ import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
-import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
 
+import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
 import type { Session } from 'next-auth';
 
 export type { PreviewRenderData };

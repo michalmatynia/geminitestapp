@@ -112,7 +112,7 @@ describe('KangurAssignmentSpotlight', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurAssignmentSpotlight basePath='/kangur' />);
+    render(<KangurAssignmentSpotlight basePath='/kangur' enabled />);
 
     expect(screen.getByText('Zadanie od rodzica')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();

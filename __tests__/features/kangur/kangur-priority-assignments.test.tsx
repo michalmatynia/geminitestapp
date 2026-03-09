@@ -30,7 +30,7 @@ describe('KangurPriorityAssignments', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurPriorityAssignments basePath='/kangur' />);
+    render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('kangur-priority-assignments-loading')).toHaveClass(
       'glass-panel',
@@ -104,7 +104,7 @@ describe('KangurPriorityAssignments', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurPriorityAssignments basePath='/kangur' />);
+    render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByText('Priorytetowe zadania')).toBeInTheDocument();
     expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('KangurPriorityAssignments', () => {
       refresh: vi.fn(),
     });
 
-    render(<KangurPriorityAssignments basePath='/kangur' />);
+    render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveClass(
       'glass-panel',

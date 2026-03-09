@@ -56,6 +56,7 @@ describe('Kangur error boundary', () => {
       source: 'kangur-error-boundary',
       action: 'render',
       digest: 'digest-123',
+      homeHref: '/kangur',
     });
   });
 });

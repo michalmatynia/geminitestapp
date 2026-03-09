@@ -1,6 +1,6 @@
 import { checkBaseSkuExists } from '@/features/integrations/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { conflictError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export async function verifySkuUniqueness(args: {
   allowDuplicateSku: boolean;

@@ -1,13 +1,5 @@
-import path from 'node:path';
-
 import { analyzeAccessibilityComponentPolicies } from './lib/check-accessibility-component-policies.mjs';
-import {
-  formatDuration,
-  parseCommonCheckArgs,
-  renderIssueTable,
-  renderRuleTable,
-  writeCheckArtifacts,
-} from './lib/check-runner.mjs';
+import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
 const toMarkdown = (payload) => {
   const lines = [];
@@ -46,41 +38,11 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const run = async () => {
-  const root = process.cwd();
-  const startedAt = Date.now();
-  const { strictMode, failOnWarnings, shouldWriteHistory } = parseCommonCheckArgs();
-  const payload = analyzeAccessibilityComponentPolicies({ root });
-  payload.durationMs = Date.now() - startedAt;
-  const markdown = toMarkdown(payload);
-  const outputs = await writeCheckArtifacts({
-    root,
-    slug: 'accessibility-component-policies',
-    payload,
-    markdown,
-    shouldWriteHistory,
-  });
-
-  console.log(
-    `[accessibility-component-policies] status=${payload.status} files=${payload.summary.fileCount} dialogs=${payload.summary.dialogCount} tablists=${payload.summary.tabsListCount} tooltips=${payload.summary.tooltipCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} duration=${formatDuration(payload.durationMs)}`
-  );
-  console.log(`Wrote ${path.relative(root, outputs.latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, outputs.latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, outputs.historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, outputs.historicalMdPath)}`);
-  }
-
-  if (strictMode && payload.summary.errorCount > 0) {
-    process.exit(1);
-  }
-  if (strictMode && failOnWarnings && payload.summary.warningCount > 0) {
-    process.exit(1);
-  }
-};
-
-run().catch((error) => {
-  console.error('[accessibility-component-policies] failed');
-  console.error(error instanceof Error ? error.stack : error);
-  process.exit(1);
+await runQualityCheckCli({
+  id: 'accessibility-component-policies',
+  analyze: analyzeAccessibilityComponentPolicies,
+  toMarkdown,
+  buildLogLines: ({ payload, formatDuration }) => [
+    `[accessibility-component-policies] status=${payload.status} files=${payload.summary.fileCount} dialogs=${payload.summary.dialogCount} tablists=${payload.summary.tabsListCount} tooltips=${payload.summary.tooltipCount} errors=${payload.summary.errorCount} warnings=${payload.summary.warningCount} duration=${formatDuration(payload.durationMs)}`,
+  ],
 });

@@ -10,37 +10,36 @@ import {
   type ImageStudioUpscaleRequest,
 } from '@/features/ai/image-studio/contracts/upscale';
 import {
-  getImageStudioSlotLinkBySourceAndRelation,
-  upsertImageStudioSlotLink,
-} from '@/features/ai/server';
-import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
-import {
-  buildUpscaleFingerprint,
-  buildUpscaleFingerprintRelationType,
-  buildUpscaleRequestRelationType,
-} from '@/features/ai/image-studio/server/upscale-utils';
-import { getImageFileRepository } from '@/features/files/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { isAppError, notFoundError } from '@/shared/errors/app-error';
-
-import {
-  upscaleBadRequest,
-  parseUpscaleRequestPayload,
-  resolveUpscaleRequest,
-} from '@/features/ai/image-studio/server/upscale/upscale-request-parser';
-import {
   readIdempotencyKey,
   readUpscaleMetadataFromSlot,
   buildClientPayloadSignature,
 } from '@/features/ai/image-studio/server/upscale/upscale-idempotency';
 import { processUpscalePayload } from '@/features/ai/image-studio/server/upscale/upscale-processor';
 import {
+  upscaleBadRequest,
+  parseUpscaleRequestPayload,
+  resolveUpscaleRequest,
+} from '@/features/ai/image-studio/server/upscale/upscale-request-parser';
+import {
   formatScaleLabel,
   guessExtension,
   sanitizeFilename,
   sanitizeSegment,
 } from '@/features/ai/image-studio/server/upscale/upscale-utils';
+import {
+  buildUpscaleFingerprint,
+  buildUpscaleFingerprintRelationType,
+  buildUpscaleRequestRelationType,
+} from '@/features/ai/image-studio/server/upscale-utils';
+import {
+  getImageStudioSlotLinkBySourceAndRelation,
+  upsertImageStudioSlotLink,
+} from '@/features/ai/server';
+import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
+import { getImageFileRepository } from '@/features/files/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { isAppError, notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
 const UPSCALE_PIPELINE_VERSION =

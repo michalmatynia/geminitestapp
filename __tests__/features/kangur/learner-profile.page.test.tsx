@@ -36,6 +36,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useOptionalKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -177,7 +178,9 @@ describe('LearnerProfile page', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
 
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
-    expect(screen.getByText('Statystyki ucznia: Jan.')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, node) => node?.textContent === 'Statystyki ucznia: Jan.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveClass(
       'soft-card',

@@ -6,8 +6,6 @@ import { signIn } from 'next-auth/react';
 import { useState, Suspense } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   Button,
   Input,
@@ -20,6 +18,8 @@ import {
   CardFooter,
   FormField,
 } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const resolveSignInCallbackNavigation = (
   callbackUrl: string,

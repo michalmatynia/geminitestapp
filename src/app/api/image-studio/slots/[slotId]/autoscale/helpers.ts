@@ -1,5 +1,7 @@
 import { createHash } from 'crypto';
+
 import { NextRequest } from 'next/server';
+
 import {
   type ImageStudioAutoScalerRequest,
   type ImageStudioAutoScalerResponse,

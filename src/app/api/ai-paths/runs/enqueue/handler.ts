@@ -7,6 +7,26 @@ import {
 } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import {
+  enforceAiPathsRunRateLimit,
+  getAiPathsSetting,
+  requireAiPathsRunAccess,
+} from '@/features/ai/ai-paths/server';
+import { enqueuePathRun } from '@/features/ai/ai-paths/server';
+import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
+import { parseJsonBody } from '@/features/products/server';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import {
+  aiNodeSchema,
+  aiPathRunEnqueueResponseSchema,
+  edgeSchema,
+  pathConfigSchema,
+  type AiNode,
+  type Edge,
+  type PathConfig,
+} from '@/shared/contracts/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
+import {
   compileGraph,
   evaluateAiPathsValidationPreflight,
   normalizeNodes,
@@ -17,28 +37,8 @@ import {
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
-import {
-  enforceAiPathsRunRateLimit,
-  getAiPathsSetting,
-  requireAiPathsRunAccess,
-} from '@/features/ai/ai-paths/server';
-import { enqueuePathRun } from '@/features/ai/ai-paths/server';
-import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
-import { parseJsonBody } from '@/features/products/server';
-import {
-  aiNodeSchema,
-  aiPathRunEnqueueResponseSchema,
-  edgeSchema,
-  pathConfigSchema,
-  type AiNode,
-  type Edge,
-  type PathConfig,
-} from '@/shared/contracts/ai-paths';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),

@@ -1,20 +1,77 @@
 'use client';
 
 import React from 'react';
-import { FormSection } from '@/shared/ui';
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { ProductStudioProvider, useProductStudioContext } from '../../context/ProductStudioContext';
 
-import { StudioProjectField } from './studio/StudioProjectField';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/features/ai/ai-context-registry/context/page-context';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import {
+  buildProductStudioWorkspaceContextBundle,
+  PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
+} from '@/features/products/context-registry/workspace';
+import { FormSection } from '@/shared/ui';
+
 import { StudioActionsBar } from './studio/StudioActionsBar';
+import { StudioAuditHistory } from './studio/StudioAuditHistory';
+import { StudioPreviewCanvas } from './studio/StudioPreviewCanvas';
+import { StudioProjectField } from './studio/StudioProjectField';
 import { StudioSourceImageSelector } from './studio/StudioSourceImageSelector';
 import { StudioVariantsGrid } from './studio/StudioVariantsGrid';
-import { StudioPreviewCanvas } from './studio/StudioPreviewCanvas';
-import { StudioAuditHistory } from './studio/StudioAuditHistory';
+import { ProductStudioProvider, useProductStudioContext } from '../../context/ProductStudioContext';
 
 function ProductFormStudioInner(): React.JSX.Element {
-  const { studioProjectId, studioActionError: _studioActionError } = useProductStudioContext();
+  const {
+    activeRunId,
+    auditEntries,
+    imageSlotPreviews,
+    pendingVariantPlaceholderCount,
+    runStatus,
+    selectedImageIndex,
+    selectedVariantSlotId,
+    sequenceReadinessMessage,
+    studioProjectId,
+    studioActionError: _studioActionError,
+    variantsData,
+  } = useProductStudioContext();
   const { product } = useProductFormCore();
+  const registrySource = React.useMemo(
+    () =>
+      product?.id
+        ? {
+          label: 'Product Studio workspace state',
+          resolved: buildProductStudioWorkspaceContextBundle({
+            product,
+            studioProjectId,
+            selectedImageIndex,
+            imageSlotPreviews,
+            selectedVariantSlotId,
+            variantsData,
+            activeRunId,
+            runStatus,
+            pendingVariantPlaceholderCount,
+            sequenceReadinessMessage,
+            auditEntries,
+          }),
+        }
+        : null,
+    [
+      activeRunId,
+      auditEntries,
+      imageSlotPreviews,
+      pendingVariantPlaceholderCount,
+      product,
+      runStatus,
+      selectedImageIndex,
+      selectedVariantSlotId,
+      sequenceReadinessMessage,
+      studioProjectId,
+      variantsData,
+    ]
+  );
+
+  useRegisterContextRegistryPageSource('product-studio-workspace-state', registrySource);
 
   if (!studioProjectId) {
     return (
@@ -58,8 +115,14 @@ function ProductFormStudioInner(): React.JSX.Element {
 
 export default function ProductFormStudio(): React.JSX.Element {
   return (
-    <ProductStudioProvider>
-      <ProductFormStudioInner />
-    </ProductStudioProvider>
+    <ContextRegistryPageProvider
+      pageId='admin:product-editor'
+      title='Product Editor'
+      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
+    >
+      <ProductStudioProvider>
+        <ProductFormStudioInner />
+      </ProductStudioProvider>
+    </ContextRegistryPageProvider>
   );
 }

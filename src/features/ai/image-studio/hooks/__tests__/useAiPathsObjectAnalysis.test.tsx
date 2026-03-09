@@ -43,7 +43,7 @@ vi.mock('@/features/ai/image-studio/utils/analysis-bridge', () => ({
 vi.mock('@/features/ai/image-studio/utils/ai-paths-object-analysis', async () => {
   const actual = await vi.importActual<
     typeof import('@/features/ai/image-studio/utils/ai-paths-object-analysis')
-  >('@/features/ai/image-studio/utils/ai-paths-object-analysis');
+      >('@/features/ai/image-studio/utils/ai-paths-object-analysis');
 
   return {
     ...actual,

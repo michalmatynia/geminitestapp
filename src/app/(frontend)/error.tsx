@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React, { useEffect } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button } from '@/shared/ui/button';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const FrontendErrorResetContext = React.createContext<(() => void) | null>(null);
 

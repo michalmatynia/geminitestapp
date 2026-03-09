@@ -37,6 +37,7 @@ export type AuthEmailVerificationChallengeRecord = {
   callbackUrl: string | null;
   pendingRegistration: PendingRegistrationRecord | null;
   expiresAt: Date;
+  createdAt: Date;
 };
 
 const CHALLENGES_COLLECTION = 'auth_login_challenges';
@@ -474,5 +475,6 @@ export const findActiveEmailVerificationChallengeByEmail = async (
     callbackUrl: match.callbackUrl,
     pendingRegistration: match.pendingRegistration,
     expiresAt: match.expiresAt,
+    createdAt: match.createdAt,
   };
 };

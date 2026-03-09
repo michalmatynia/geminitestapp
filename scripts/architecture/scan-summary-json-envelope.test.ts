@@ -1,13 +1,20 @@
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { parseScanOutput } from './lib/scan-output.mjs';
+import { accessibilityRouteCrawlRoutes } from '../testing/config/accessibility-route-crawl.config.mjs';
+import {
+  buildAccessibilityRouteCrawlTitle,
+  normalizeAccessibilityRouteEntries,
+} from '../testing/lib/accessibility-route-crawl.mjs';
 
 const tempRoots: string[] = [];
+const tempServers: http.Server[] = [];
 
 const repoRoot = process.cwd();
 const propDrillingScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'scan-prop-drilling.mjs');
@@ -18,6 +25,49 @@ const uiConsolidationScriptPath = path.join(
   'scan-ui-consolidation.mjs'
 );
 const collectMetricsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'collect-metrics.mjs');
+const criticalPathPerformanceScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'perf',
+  'check-critical-path-performance.mjs'
+);
+const routeHotspotsScriptPath = path.join(repoRoot, 'scripts', 'perf', 'route-hotspots.mjs');
+const unitDomainTimingsScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-unit-domain-timings.mjs'
+);
+const accessibilitySmokeScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-accessibility-smoke-tests.mjs'
+);
+const accessibilityRouteCrawlScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-accessibility-route-crawl.mjs'
+);
+const playwrightSuiteScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-playwright-suite.mjs'
+);
+const criticalFlowTestsScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-critical-flow-tests.mjs'
+);
+const securitySmokeScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'testing',
+  'run-security-smoke-tests.mjs'
+);
 const observabilityScriptPath = path.join(
   repoRoot,
   'scripts',
@@ -74,6 +124,13 @@ const writeFile = (root: string, relativePath: string, contents: string): void =
   fs.writeFileSync(absolutePath, contents, 'utf8');
 };
 
+const writeExecutable = (root: string, relativePath: string, contents: string): void => {
+  const absolutePath = path.join(root, relativePath);
+  fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+  fs.writeFileSync(absolutePath, contents, 'utf8');
+  fs.chmodSync(absolutePath, 0o755);
+};
+
 const seedArchitectureSources = (root: string): void => {
   writeFile(
     root,
@@ -128,6 +185,229 @@ const seedQualitySources = (root: string): void => {
       '',
     ].join('\n')
   );
+};
+
+const seedCriticalPathPerformanceSources = (root: string): void => {
+  const uiFixtures = [
+    'src/features/auth/pages/public/SignInPage.tsx',
+    'src/features/products/pages/AdminProductsPage.tsx',
+    'src/features/ai/image-studio/pages/AdminImageStudioPage.tsx',
+    'src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx',
+    'src/features/case-resolver/pages/AdminCaseResolverPage.tsx',
+  ];
+
+  for (const relativePath of uiFixtures) {
+    writeFile(
+      root,
+      relativePath,
+      [
+        'export function Page(): JSX.Element {',
+        '  return <div>fixture</div>;',
+        '}',
+        '',
+      ].join('\n')
+    );
+  }
+
+  const apiFixtures = [
+    'src/app/api/auth/verify-credentials/handler.ts',
+    'src/app/api/v2/products/handler.ts',
+    'src/app/api/image-studio/projects/[projectId]/handler.ts',
+    'src/app/api/ai-paths/runs/handler.ts',
+    'src/app/api/case-resolver/ocr/jobs/handler.ts',
+  ];
+
+  for (const relativePath of apiFixtures) {
+    writeFile(
+      root,
+      relativePath,
+      [
+        'export async function GET_handler(): Promise<Response> {',
+        '  return Response.json({ ok: true });',
+        '}',
+        '',
+      ].join('\n')
+    );
+  }
+};
+
+const seedRouteHotspotSources = (root: string): void => {
+  writeFile(
+    root,
+    'src/app/reports/page.tsx',
+    [
+      'export default function ReportsPage(): JSX.Element {',
+      '  return <main>reports</main>;',
+      '}',
+      '',
+    ].join('\n')
+  );
+  writeFile(
+    root,
+    'src/app/api/reports/route.ts',
+    [
+      'export async function GET(): Promise<Response> {',
+      '  return Response.json({ ok: true });',
+      '}',
+      '',
+    ].join('\n')
+  );
+  writeFile(
+    root,
+    'src/features/reports/ReportPanel.tsx',
+    [
+      'export function ReportPanel(): JSX.Element {',
+      '  return <section>report</section>;',
+      '}',
+      '',
+    ].join('\n')
+  );
+};
+
+const seedUnitDomainTimingHarness = (root: string): Record<string, string> => {
+  writeExecutable(
+    root,
+    'bin/npx',
+    [
+      '#!/bin/sh',
+      'if [ "$1" = "vitest" ]; then',
+      '  exit 0',
+      'fi',
+      'echo "unexpected npx invocation: $*" >&2',
+      'exit 1',
+      '',
+    ].join('\n')
+  );
+
+  return {
+    ...process.env,
+    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+  };
+};
+
+const seedAccessibilityCommandHarness = (
+  root: string,
+  {
+    baseUrl,
+    routeCrawlReportPath = null,
+  }: {
+    baseUrl: string;
+    routeCrawlReportPath?: string | null;
+  }
+): Record<string, string> => {
+  writeExecutable(
+    root,
+    'bin/node',
+    [
+      '#!/bin/sh',
+      `exec "${process.execPath}" "$@"`,
+      '',
+    ].join('\n')
+  );
+  writeExecutable(
+    root,
+    'bin/npx',
+    [
+      '#!/bin/sh',
+      'if [ "$1" = "vitest" ]; then',
+      '  echo "RUN  v4.0.18 fixture"',
+      '  echo ""',
+      '  echo " Test Files  1 passed (1)"',
+      '  echo "      Tests  1 passed (1)"',
+      '  exit 0',
+      'fi',
+      'if [ "$1" = "playwright" ]; then',
+      '  if [ -n "$SCAN_ENVELOPE_ROUTE_CRAWL_REPORT" ] && printf "%s\\n" "$*" | grep -q "accessibility-route-crawl.spec.ts"; then',
+      '    cat "$SCAN_ENVELOPE_ROUTE_CRAWL_REPORT"',
+      '    exit 0',
+      '  fi',
+      '  echo "Running 1 test using 1 worker"',
+      '  echo ""',
+      '  echo "  1 passed (250ms)"',
+      '  exit 0',
+      'fi',
+      'echo "unexpected npx invocation: $*" >&2',
+      'exit 1',
+      '',
+    ].join('\n')
+  );
+
+  const env: Record<string, string> = {
+    ...process.env,
+    A11Y_SMOKE_BROWSER_NODE_BIN: path.join(root, 'bin'),
+    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+    PLAYWRIGHT_BASE_URL: baseUrl,
+    PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
+  };
+
+  if (routeCrawlReportPath) {
+    env.SCAN_ENVELOPE_ROUTE_CRAWL_REPORT = routeCrawlReportPath;
+  }
+
+  return env;
+};
+
+const startFixtureServer = async (): Promise<string> =>
+  await new Promise((resolve, reject) => {
+    const server = http.createServer((request, response) => {
+      if (request.url === '/api/health') {
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      response.end('<html><body>ok</body></html>');
+    });
+
+    server.on('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      tempServers.push(server);
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        reject(new Error('Could not resolve fixture server address.'));
+        return;
+      }
+
+      resolve(`http://127.0.0.1:${address.port}`);
+    });
+  });
+
+const seedAccessibilityRouteCrawlReport = (root: string): string => {
+  const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+  const reportPath = path.join(root, 'tmp', 'accessibility-route-crawl-report.json');
+  writeFile(
+    root,
+    'tmp/accessibility-route-crawl-report.json',
+    `${JSON.stringify(
+      {
+        suites: [
+          {
+            title: 'accessibility-route-crawl.spec.ts',
+            specs: routeEntries.map((routeEntry) => ({
+              title: buildAccessibilityRouteCrawlTitle(routeEntry),
+              tests: [
+                {
+                  results: [{ status: 'passed', duration: 25, errors: [] }],
+                },
+              ],
+            })),
+          },
+        ],
+        stats: {
+          duration: 1_250,
+          unexpected: 0,
+          flaky: 0,
+          skipped: 0,
+        },
+        errors: [],
+      },
+      null,
+      2
+    )}\n`
+  );
+
+  return reportPath;
 };
 
 const seedAiPathsCanonicalSources = (root: string): void => {
@@ -201,18 +481,60 @@ const runSummaryJson = (
   root: string,
   scriptPath: string,
   args: string[],
-  nodeArgs: string[] = []
+  nodeArgs: string[] = [],
+  env?: Record<string, string | undefined>
 ) => parseScanOutput(
   execFileSync('node', [...nodeArgs, scriptPath, ...args], {
     cwd: root,
     encoding: 'utf8',
+    env,
     maxBuffer: 20 * 1024 * 1024,
   }),
   path.basename(scriptPath)
 );
 
+const runSummaryJsonAsync = async (
+  root: string,
+  scriptPath: string,
+  args: string[],
+  nodeArgs: string[] = [],
+  env?: Record<string, string | undefined>
+) =>
+  parseScanOutput(
+    await new Promise<string>((resolve, reject) => {
+      execFile(
+        'node',
+        [...nodeArgs, scriptPath, ...args],
+        {
+          cwd: root,
+          encoding: 'utf8',
+          env,
+          maxBuffer: 20 * 1024 * 1024,
+        },
+        (error, stdout) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve(stdout);
+        }
+      );
+    }),
+    path.basename(scriptPath)
+  );
+
 describe('scanner summary-json envelope', () => {
-  afterEach(() => {
+  afterEach(async () => {
+    while (tempServers.length > 0) {
+      const server = tempServers.pop();
+      if (server) {
+        await new Promise((resolve) => {
+          server.close(() => resolve(undefined));
+        });
+      }
+    }
+
     while (tempRoots.length > 0) {
       const root = tempRoots.pop();
       if (root) {
@@ -319,6 +641,415 @@ describe('scanner summary-json envelope', () => {
     });
     expect(metricsCollection.notes).toContain('architecture baseline metrics collection result');
     expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'baseline-latest.json'))).toBe(false);
+  });
+
+  it('wraps critical path performance checks in the shared scan envelope', () => {
+    const root = createTempRoot();
+    seedCriticalPathPerformanceSources(root);
+
+    const criticalPathPerformance = runSummaryJson(root, criticalPathPerformanceScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+
+    expect(criticalPathPerformance.scanner).toMatchObject({
+      name: 'critical-path-performance',
+      version: '1.0.0',
+    });
+    expect(criticalPathPerformance.status).toBe('ok');
+    expect(criticalPathPerformance.summary).toMatchObject({
+      totalPathsChecked: 10,
+      passedPathCount: 10,
+      failedPathCount: 0,
+      uiPathsChecked: 5,
+      uiPathsPassed: 5,
+      uiPathsFailed: 0,
+      apiPathsChecked: 5,
+      apiPathsPassed: 5,
+      apiPathsFailed: 0,
+    });
+    expect(criticalPathPerformance.details).toMatchObject({
+      results: expect.any(Array),
+      uiResults: expect.any(Array),
+      apiResults: expect.any(Array),
+      metrics: expect.any(Object),
+    });
+    expect(criticalPathPerformance.paths).toBeNull();
+    expect(criticalPathPerformance.filters).toMatchObject({
+      strictMode: false,
+      historyDisabled: true,
+      noWrite: true,
+    });
+    expect(criticalPathPerformance.notes).toContain('critical path performance check result');
+    expect(
+      fs.existsSync(path.join(root, 'docs', 'metrics', 'critical-path-performance-latest.json'))
+    ).toBe(false);
+  });
+
+  it('wraps route hotspots reporting in the shared scan envelope', () => {
+    const root = createTempRoot();
+    seedRouteHotspotSources(root);
+
+    const routeHotspots = runSummaryJson(root, routeHotspotsScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+
+    expect(routeHotspots.scanner).toMatchObject({
+      name: 'route-hotspots',
+      version: '1.0.0',
+    });
+    expect(routeHotspots.status).toBe('ok');
+    expect(routeHotspots.summary).toMatchObject({
+      topApiRouteCount: 1,
+      topPageCount: 1,
+      recommendedTargetCount: 1,
+      hottestApiRouteLines: expect.any(Number),
+      hottestPageLines: expect.any(Number),
+    });
+    expect(routeHotspots.details).toMatchObject({
+      topApiRoutes: [
+        expect.objectContaining({
+          path: 'src/app/api/reports/route.ts',
+        }),
+      ],
+      topPages: [
+        expect.objectContaining({
+          path: 'src/app/reports/page.tsx',
+        }),
+      ],
+      recommendedProfilingTargets: [
+        expect.objectContaining({
+          path: 'src/app/api/reports/route.ts',
+        }),
+      ],
+      metricsGeneratedAt: expect.any(String),
+    });
+    expect(routeHotspots.paths).toBeNull();
+    expect(routeHotspots.filters).toMatchObject({
+      ci: false,
+      historyDisabled: true,
+      noWrite: true,
+    });
+    expect(routeHotspots.notes).toContain('route hotspots report result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'route-hotspots.md'))).toBe(false);
+  });
+
+  it('wraps unit domain timings in the shared scan envelope', () => {
+    const root = createTempRoot();
+    const env = seedUnitDomainTimingHarness(root);
+
+    const unitDomainTimings = runSummaryJson(
+      root,
+      unitDomainTimingsScriptPath,
+      ['--summary-json', '--no-write', '--no-history'],
+      [],
+      env
+    );
+
+    expect(unitDomainTimings.scanner).toMatchObject({
+      name: 'unit-domain-timings',
+      version: '1.0.0',
+    });
+    expect(unitDomainTimings.status).toBe('ok');
+    expect(unitDomainTimings.summary).toMatchObject({
+      totalDomains: 5,
+      passedDomains: 5,
+      failedDomains: 0,
+      totalDurationMs: expect.any(Number),
+    });
+    expect(unitDomainTimings.details).toMatchObject({
+      results: expect.any(Array),
+    });
+    expect(unitDomainTimings.paths).toBeNull();
+    expect(unitDomainTimings.filters).toMatchObject({
+      strictMode: false,
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+    });
+    expect(unitDomainTimings.notes).toContain('unit domain timings report result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'unit-domain-timings-latest.json'))).toBe(
+      false
+    );
+  });
+
+  it('wraps accessibility smoke tests in the shared scan envelope', async () => {
+    const root = createTempRoot();
+    const baseUrl = await startFixtureServer();
+    const env = seedAccessibilityCommandHarness(root, { baseUrl });
+
+    const accessibilitySmoke = await runSummaryJsonAsync(
+      root,
+      accessibilitySmokeScriptPath,
+      ['--summary-json', '--no-write', '--no-history'],
+      [],
+      env
+    );
+
+    expect(accessibilitySmoke.scanner).toMatchObject({
+      name: 'accessibility-smoke',
+      version: '1.0.0',
+    });
+    expect(accessibilitySmoke.status).toBe('ok');
+    expect(accessibilitySmoke.summary).toMatchObject({
+      totalSuites: 14,
+      passedSuites: 14,
+      failedSuites: 0,
+      actWarnings: 0,
+      warningBudget: 10,
+      warningBudgetStatus: 'ok',
+      warningBudgetEnforcement: 'telemetry-only',
+      totalDurationMs: expect.any(Number),
+    });
+    expect(accessibilitySmoke.details).toMatchObject({
+      runtime: expect.objectContaining({
+        source: 'explicit',
+        reused: true,
+        baseUrl,
+      }),
+      results: expect.any(Array),
+    });
+    expect(accessibilitySmoke.paths).toBeNull();
+    expect(accessibilitySmoke.filters).toMatchObject({
+      strictMode: false,
+      failOnWarningBudgetExceed: false,
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+      warningBudget: 10,
+    });
+    expect(accessibilitySmoke.notes).toContain('accessibility smoke report result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'accessibility-smoke-latest.json'))).toBe(
+      false
+    );
+  });
+
+  it('wraps accessibility route crawl in the shared scan envelope', async () => {
+    const root = createTempRoot();
+    const baseUrl = await startFixtureServer();
+    const reportPath = seedAccessibilityRouteCrawlReport(root);
+    const env = seedAccessibilityCommandHarness(root, { baseUrl, routeCrawlReportPath: reportPath });
+
+    const accessibilityRouteCrawl = await runSummaryJsonAsync(
+      root,
+      accessibilityRouteCrawlScriptPath,
+      ['--summary-json', '--no-write', '--no-history'],
+      [],
+      env
+    );
+
+    expect(accessibilityRouteCrawl.scanner).toMatchObject({
+      name: 'accessibility-route-crawl',
+      version: '1.0.0',
+    });
+    expect(accessibilityRouteCrawl.status).toBe('ok');
+    expect(accessibilityRouteCrawl.summary).toMatchObject({
+      totalRoutes: 18,
+      passedRoutes: 18,
+      failedRoutes: 0,
+      playwrightDurationMs: 1250,
+      totalDurationMs: expect.any(Number),
+      unexpectedResults: 0,
+      flakyResults: 0,
+      skippedResults: 0,
+      errorCount: 0,
+    });
+    expect(accessibilityRouteCrawl.details).toMatchObject({
+      runtime: expect.objectContaining({
+        source: 'explicit',
+        reused: true,
+        baseUrl,
+      }),
+      command: expect.stringContaining('playwright test'),
+      externalErrors: [],
+      results: expect.any(Array),
+      stderr: '',
+      exitCode: 0,
+    });
+    expect(accessibilityRouteCrawl.paths).toBeNull();
+    expect(accessibilityRouteCrawl.filters).toMatchObject({
+      strictMode: false,
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+    });
+    expect(accessibilityRouteCrawl.notes).toContain('accessibility route crawl result');
+    expect(
+      fs.existsSync(path.join(root, 'docs', 'metrics', 'accessibility-route-crawl-latest.json'))
+    ).toBe(false);
+  });
+
+  it('wraps playwright suite runs in the shared scan envelope', async () => {
+    const root = createTempRoot();
+    const baseUrl = await startFixtureServer();
+    const env = seedAccessibilityCommandHarness(root, { baseUrl });
+
+    const playwrightSuite = await runSummaryJsonAsync(
+      root,
+      playwrightSuiteScriptPath,
+      ['--summary-json', '--no-write', 'playwright', 'test', '--help'],
+      [],
+      env
+    );
+
+    expect(playwrightSuite.scanner).toMatchObject({
+      name: 'playwright-suite',
+      version: '1.0.0',
+    });
+    expect(playwrightSuite.status).toBe('ok');
+    expect(playwrightSuite.summary).toMatchObject({
+      command: 'test',
+      argumentCount: 2,
+      exitCode: 0,
+      signal: null,
+      runtimeSource: 'explicit',
+      runtimeReused: true,
+      brokerEnabled: true,
+      artifactsRetained: false,
+    });
+    expect(playwrightSuite.details).toMatchObject({
+      runtime: expect.objectContaining({
+        source: 'explicit',
+        reused: true,
+        baseUrl,
+      }),
+      command: expect.stringContaining('playwright test --help'),
+      playwrightArgs: ['test', '--help'],
+      runId: expect.any(String),
+      stdout: expect.stringContaining('1 passed'),
+      stderr: '',
+    });
+    expect(playwrightSuite.paths).toBeNull();
+    expect(playwrightSuite.filters).toMatchObject({
+      cleanup: false,
+      noWrite: true,
+      ci: false,
+      runtimeApp: 'web',
+      runtimeMode: 'dev',
+      runtimeHost: '127.0.0.1',
+      runtimeStopAfter: false,
+      runtimeBrokerDisabled: false,
+    });
+    expect(playwrightSuite.notes).toContain('playwright suite run result');
+  });
+
+  it('wraps playwright runtime cleanup in the shared scan envelope', () => {
+    const root = createTempRoot();
+
+    const playwrightCleanup = runSummaryJson(root, playwrightSuiteScriptPath, [
+      '--runtime-cleanup',
+      '--summary-json',
+      '--no-write',
+    ]);
+
+    expect(playwrightCleanup.scanner).toMatchObject({
+      name: 'playwright-suite',
+      version: '1.0.0',
+    });
+    expect(playwrightCleanup.status).toBe('ok');
+    expect(playwrightCleanup.summary).toMatchObject({
+      mode: 'runtime-cleanup',
+      inspectedLeases: 0,
+      stoppedLeases: 0,
+      removedLeaseRecords: 0,
+    });
+    expect(playwrightCleanup.details).toMatchObject({
+      appId: 'web',
+      agentId: expect.any(String),
+    });
+    expect(playwrightCleanup.paths).toBeNull();
+    expect(playwrightCleanup.filters).toMatchObject({
+      cleanup: true,
+      noWrite: true,
+      ci: false,
+      runtimeApp: 'web',
+      runtimeMode: 'dev',
+      runtimeHost: '127.0.0.1',
+      runtimeStopAfter: false,
+      runtimeBrokerDisabled: false,
+    });
+    expect(playwrightCleanup.notes).toContain('playwright suite runtime cleanup result');
+  });
+
+  it('wraps critical flow tests in the shared scan envelope', () => {
+    const root = createTempRoot();
+    const env = seedUnitDomainTimingHarness(root);
+
+    const criticalFlowTests = runSummaryJson(
+      root,
+      criticalFlowTestsScriptPath,
+      ['--summary-json', '--no-write', '--no-history'],
+      [],
+      env
+    );
+
+    expect(criticalFlowTests.scanner).toMatchObject({
+      name: 'critical-flow-tests',
+      version: '1.0.0',
+    });
+    expect(criticalFlowTests.status).toBe('ok');
+    expect(criticalFlowTests.summary).toMatchObject({
+      totalFlows: 6,
+      passedFlows: 6,
+      failedFlows: 0,
+      totalDurationMs: expect.any(Number),
+    });
+    expect(criticalFlowTests.details).toMatchObject({
+      results: expect.any(Array),
+    });
+    expect(criticalFlowTests.paths).toBeNull();
+    expect(criticalFlowTests.filters).toMatchObject({
+      strictMode: false,
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+    });
+    expect(criticalFlowTests.notes).toContain('critical flow regression report result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'critical-flow-tests-latest.json'))).toBe(
+      false
+    );
+  });
+
+  it('wraps security smoke tests in the shared scan envelope', () => {
+    const root = createTempRoot();
+    const env = seedUnitDomainTimingHarness(root);
+
+    const securitySmoke = runSummaryJson(
+      root,
+      securitySmokeScriptPath,
+      ['--summary-json', '--no-write', '--no-history'],
+      [],
+      env
+    );
+
+    expect(securitySmoke.scanner).toMatchObject({
+      name: 'security-smoke',
+      version: '1.0.0',
+    });
+    expect(securitySmoke.status).toBe('ok');
+    expect(securitySmoke.summary).toMatchObject({
+      totalSuites: 5,
+      passedSuites: 5,
+      failedSuites: 0,
+      totalDurationMs: expect.any(Number),
+    });
+    expect(securitySmoke.details).toMatchObject({
+      results: expect.any(Array),
+    });
+    expect(securitySmoke.paths).toBeNull();
+    expect(securitySmoke.filters).toMatchObject({
+      strictMode: false,
+      historyDisabled: true,
+      noWrite: true,
+      ci: false,
+    });
+    expect(securitySmoke.notes).toContain('security smoke report result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'security-smoke-latest.json'))).toBe(
+      false
+    );
   });
 
   it('wraps observability summary-json output in the shared scan envelope', () => {

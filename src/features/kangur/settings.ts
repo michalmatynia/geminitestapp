@@ -19,8 +19,13 @@ export * from './help-settings';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
+export const KANGUR_PARENT_VERIFICATION_SETTINGS_KEY = 'kangur_parent_verification_email_settings_v1';
+export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
 
 export type KangurNarratorEngine = 'server' | 'client';
+export type KangurParentVerificationEmailSettings = {
+  resendCooldownSeconds: number;
+};
 
 export type KangurNarratorSettings = {
   engine: KangurNarratorEngine;
@@ -43,6 +48,11 @@ export const KANGUR_NARRATOR_ENGINE_OPTIONS: ReadonlyArray<{
     description: 'Use the browser speech engine on each learner device.',
   },
 ] as const;
+
+const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
+const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
+const KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS =
+  KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS;
 
 type KangurLessonTemplate = {
   componentId: KangurLessonComponentId;
@@ -270,6 +280,24 @@ const normalizeSortOrder = (value: unknown, fallback: number): number => {
   return Math.max(0, Math.floor(value));
 };
 
+const resolveKangurParentVerificationResendCooldownSeconds = (
+  value: unknown,
+  fallback: number
+): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  const rounded = Math.floor(value);
+  if (!Number.isFinite(rounded)) {
+    return fallback;
+  }
+
+  return Math.min(
+    Math.max(rounded, KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN),
+    KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX
+  );
+};
+
 const resolveKangurLessonComponentId = (value: unknown): KangurLessonComponentId | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -379,6 +407,25 @@ export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorS
   };
 };
 
+export const createDefaultKangurParentVerificationEmailSettings = (): KangurParentVerificationEmailSettings => ({
+  resendCooldownSeconds: KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS,
+});
+
+export const normalizeKangurParentVerificationEmailSettings = (
+  value: unknown
+): KangurParentVerificationEmailSettings => {
+  if (!isRecord(value)) {
+    return createDefaultKangurParentVerificationEmailSettings();
+  }
+
+  return {
+    resendCooldownSeconds: resolveKangurParentVerificationResendCooldownSeconds(
+      value['resendCooldownSeconds'],
+      KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS
+    ),
+  };
+};
+
 export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
   if (!Array.isArray(value)) {
     return createDefaultKangurLessons();
@@ -443,6 +490,13 @@ export const parseKangurNarratorSettings = (
 ): KangurNarratorSettings =>
   normalizeKangurNarratorSettings(
     parseJsonSetting<unknown>(raw, createDefaultKangurNarratorSettings())
+  );
+
+export const parseKangurParentVerificationEmailSettings = (
+  raw: string | null | undefined
+): KangurParentVerificationEmailSettings =>
+  normalizeKangurParentVerificationEmailSettings(
+    parseJsonSetting<unknown>(raw, createDefaultKangurParentVerificationEmailSettings())
   );
 
 const ensureUniqueAppendedLessonId = (baseId: string, usedIds: Set<string>): string => {

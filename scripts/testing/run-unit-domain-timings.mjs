@@ -3,10 +3,10 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
 const args = new Set(process.argv.slice(2));
-const strictMode = args.has('--strict');
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs();
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
@@ -165,31 +165,7 @@ const toMarkdown = (payload) => {
   return `${lines.join('\n')}\n`;
 };
 
-const run = async () => {
-  const results = [];
-
-  for (const domain of domains) {
-    const result = await runDomainSuite(domain);
-    results.push(result);
-    console.log(
-      `[unit-domains] ${domain.name.padEnd(15, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
-    );
-  }
-
-  const summary = {
-    total: results.length,
-    passed: results.filter((result) => result.status === 'pass').length,
-    failed: results.filter((result) => result.status === 'fail').length,
-    totalDurationMs: results.reduce((acc, result) => acc + result.durationMs, 0),
-  };
-
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    strictMode,
-    summary,
-    results,
-  };
-
+const writeArtifacts = async (payload) => {
   await fs.mkdir(outDir, { recursive: true });
   const stamp = payload.generatedAt.replace(/[:.]/g, '-');
 
@@ -214,14 +190,86 @@ const run = async () => {
     });
   }
 
+  return {
+    latestJson: path.relative(root, latestJsonPath),
+    latestMarkdown: path.relative(root, latestMdPath),
+    historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+    historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+  };
+};
+
+const buildSummaryJsonSummary = (payload) => ({
+  totalDomains: payload.summary.total,
+  passedDomains: payload.summary.passed,
+  failedDomains: payload.summary.failed,
+  totalDurationMs: payload.summary.totalDurationMs,
+});
+
+const run = async () => {
+  const results = [];
+
+  for (const domain of domains) {
+    const result = await runDomainSuite(domain);
+    results.push(result);
+    if (!summaryJson) {
+      console.log(
+        `[unit-domains] ${domain.name.padEnd(15, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
+      );
+    }
+  }
+
+  const summary = {
+    total: results.length,
+    passed: results.filter((result) => result.status === 'pass').length,
+    failed: results.filter((result) => result.status === 'fail').length,
+    totalDurationMs: results.reduce((acc, result) => acc + result.durationMs, 0),
+  };
+
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    strictMode,
+    summary,
+    results,
+  };
+  const paths = noWrite ? null : await writeArtifacts(payload);
+
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'unit-domain-timings',
+      generatedAt: payload.generatedAt,
+      status: payload.summary.failed > 0 ? 'failed' : 'ok',
+      summary: buildSummaryJsonSummary(payload),
+      details: {
+        results: payload.results,
+      },
+      paths,
+      filters: {
+        strictMode,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+        ci: args.has('--ci'),
+      },
+      notes: ['unit domain timings report result'],
+    });
+
+    if (strictMode && summary.failed > 0) {
+      process.exit(1);
+    }
+    return;
+  }
+
   console.log(
     `[unit-domains] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} duration=${formatDuration(summary.totalDurationMs)}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing unit-domain timing artifacts (--no-write).');
   }
 
   if (strictMode && summary.failed > 0) {

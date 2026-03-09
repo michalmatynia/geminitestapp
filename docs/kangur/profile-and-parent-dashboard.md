@@ -32,6 +32,24 @@ The parent dashboard is the management surface for:
 - reviewing score history
 - assigning lessons and practice goals
 
+## Parent account onboarding
+
+Parent access to Kangur starts on the shared login screen.
+
+The current onboarding flow is:
+
+- the parent chooses `Tworze konto rodzica`
+- the parent enters email and password
+- Kangur sends a confirmation email with a single-use verification link
+- the real auth account is created only after that verification link is consumed
+- after verification, the parent can sign in with the same email and password
+
+Important behavior:
+
+- `AI Tutor` remains locked until the parent email is verified
+- the login screen exposes `Wyslij email ponownie` whenever the parent is still waiting on verification
+- an attempted parent sign-in with an unverified email routes the user back into the confirmation/resend flow
+
 ## Tabs
 
 The parent dashboard exposes separate tabs for:

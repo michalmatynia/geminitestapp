@@ -3,10 +3,9 @@ import path from 'node:path';
 
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 
-const args = new Set(process.argv.slice(2));
-const strictMode = args.has('--strict');
-const shouldWriteHistory = args.has('--write-history') && !args.has('--ci') && !args.has('--no-history');
+const { strictMode, shouldWriteHistory, noWrite, summaryJson } = parseCommonCheckArgs();
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
@@ -148,13 +147,60 @@ const evaluateBudgetGroup = async (entries, kind) => {
 
     results.push(result);
 
-    console.log(
-      `[critical-paths] ${budget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${budget.maxLines} LOC${hasBranchBudget ? ` | branch ${totalBranchPoints}/${budget.maxBranchPoints}` : ''}`
-    );
+    if (!summaryJson) {
+      console.log(
+        `[critical-paths] ${budget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${budget.maxLines} LOC${hasBranchBudget ? ` | branch ${totalBranchPoints}/${budget.maxBranchPoints}` : ''}`
+      );
+    }
   }
 
   return results;
 };
+
+const writeArtifacts = async (payload) => {
+  await fs.mkdir(outDir, { recursive: true });
+  const stamp = payload.generatedAt.replace(/[:.]/g, '-');
+
+  const latestJsonPath = path.join(outDir, 'critical-path-performance-latest.json');
+  const latestMdPath = path.join(outDir, 'critical-path-performance-latest.md');
+  const historicalJsonPath = path.join(outDir, `critical-path-performance-${stamp}.json`);
+  const historicalMdPath = path.join(outDir, `critical-path-performance-${stamp}.md`);
+
+  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  await writeMetricsMarkdownFile({
+    root,
+    targetPath: latestMdPath,
+    content: toMarkdown(payload),
+  });
+
+  if (shouldWriteHistory) {
+    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: historicalMdPath,
+      content: toMarkdown(payload),
+    });
+  }
+
+  return {
+    latestJson: path.relative(root, latestJsonPath),
+    latestMarkdown: path.relative(root, latestMdPath),
+    historicalJson: shouldWriteHistory ? path.relative(root, historicalJsonPath) : null,
+    historicalMarkdown: shouldWriteHistory ? path.relative(root, historicalMdPath) : null,
+  };
+};
+
+const buildSummaryJsonSummary = (payload) => ({
+  totalPathsChecked: payload.summary.total,
+  passedPathCount: payload.summary.passed,
+  failedPathCount: payload.summary.failed,
+  uiPathsChecked: payload.summary.ui.total,
+  uiPathsPassed: payload.summary.ui.passed,
+  uiPathsFailed: payload.summary.ui.failed,
+  apiPathsChecked: payload.summary.api.total,
+  apiPathsPassed: payload.summary.api.passed,
+  apiPathsFailed: payload.summary.api.failed,
+});
 
 const renderBudgetTable = (lines, title, results) => {
   lines.push(`## ${title}`);
@@ -297,39 +343,47 @@ const run = async () => {
       },
     },
   };
+  const paths = noWrite ? null : await writeArtifacts(payload);
 
-  await fs.mkdir(outDir, { recursive: true });
-  const stamp = payload.generatedAt.replace(/[:.]/g, '-');
-
-  const latestJsonPath = path.join(outDir, 'critical-path-performance-latest.json');
-  const latestMdPath = path.join(outDir, 'critical-path-performance-latest.md');
-  const historicalJsonPath = path.join(outDir, `critical-path-performance-${stamp}.json`);
-  const historicalMdPath = path.join(outDir, `critical-path-performance-${stamp}.md`);
-
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: toMarkdown(payload),
-  });
-
-  if (shouldWriteHistory) {
-    await fs.writeFile(historicalJsonPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-    await writeMetricsMarkdownFile({
-      root,
-      targetPath: historicalMdPath,
-      content: toMarkdown(payload),
+  if (summaryJson) {
+    writeSummaryJson({
+      scannerName: 'critical-path-performance',
+      generatedAt: payload.generatedAt,
+      status: payload.summary.failed > 0 ? 'failed' : 'ok',
+      summary: buildSummaryJsonSummary(payload),
+      details: {
+        results: payload.results,
+        uiResults: payload.uiResults,
+        apiResults: payload.apiResults,
+        metrics: payload.metrics,
+      },
+      paths,
+      filters: {
+        strictMode,
+        historyDisabled: !shouldWriteHistory,
+        noWrite,
+      },
+      notes: ['critical path performance check result'],
     });
+
+    if (strictMode && summary.failed > 0) {
+      process.exit(1);
+    }
+    return;
   }
 
   console.log(
     `[critical-paths] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total}`
   );
-  console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
-  console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (shouldWriteHistory) {
-    console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
-    console.log(`Wrote ${path.relative(root, historicalMdPath)}`);
+  if (paths) {
+    console.log(`Wrote ${paths.latestJson}`);
+    console.log(`Wrote ${paths.latestMarkdown}`);
+    if (paths.historicalJson) {
+      console.log(`Wrote ${paths.historicalJson}`);
+      console.log(`Wrote ${paths.historicalMarkdown}`);
+    }
+  } else {
+    console.log('Skipped writing critical-path artifacts (--no-write).');
   }
 
   if (strictMode && summary.failed > 0) {

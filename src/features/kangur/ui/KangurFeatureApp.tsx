@@ -36,6 +36,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
+  const canRenderRouteWhileLoading = pageKey === 'Lessons';
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
@@ -46,7 +47,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
   }, [authErrorType, navigateToLogin]);
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if ((isLoadingPublicSettings || isLoadingAuth) && !canRenderRouteWhileLoading) {
     return <KangurPageTransitionSkeleton pageKey={pageKey ?? KANGUR_MAIN_PAGE} reason='boot' />;
   }
 

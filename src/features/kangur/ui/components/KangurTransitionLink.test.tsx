@@ -6,10 +6,16 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { nextLinkPropsMock, startRouteTransitionMock, routerPushMock } = vi.hoisted(() => ({
+const {
+  nextLinkPropsMock,
+  startRouteTransitionMock,
+  routerPushMock,
+  routerPrefetchMock,
+} = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
   routerPushMock: vi.fn(),
+  routerPrefetchMock: vi.fn(),
 }));
 
 vi.mock('next/link', () => ({
@@ -31,6 +37,7 @@ vi.mock('next/link', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
+    prefetch: routerPrefetchMock,
   }),
 }));
 
@@ -95,5 +102,31 @@ describe('KangurTransitionLink', () => {
       pageKey: 'Game',
     });
     expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
+  });
+
+  it('starts the shared transition with targetPageKey when navigating to Lessons', () => {
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lekcje' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+  });
+
+  it('prefetches managed local links while mounted', () => {
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
   });
 });

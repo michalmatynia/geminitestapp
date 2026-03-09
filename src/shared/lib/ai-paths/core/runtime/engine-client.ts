@@ -5,21 +5,14 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-
-import { evaluateGraphInternal } from './engine-core';
-import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
-import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
-import {
-  createNodeCodeObjectV3ContractResolver,
-  resolveNodeCodeObjectV3ContractByCodeObjectId,
-} from './node-code-object-v3-legacy-bridge';
-import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
-import { buildPromptOutput } from './utils';
 import { aiGenerationApi, aiJobsApi } from '@/shared/lib/ai-paths/api';
 
-import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
-
+import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
+import { evaluateGraphInternal } from './engine-core';
+import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
+import { handleAgent, handleLearnerAgent } from './handlers/agent';
+import { handleAudioOscillator, handleAudioSpeaker } from './handlers/audio';
 import {
   handleConstant,
   handleMath,
@@ -31,8 +24,16 @@ import {
   handleDelay,
   handleViewer,
 } from './handlers/common';
-import { handleAudioOscillator, handleAudioSpeaker } from './handlers/audio';
-
+import { handleAdvancedApi as handleIntegrationAdvancedApi } from './handlers/integration-api-advanced-handler';
+import { handleDatabase as handleIntegrationDatabase } from './handlers/integration-database-handler';
+import { handleFetcher as handleIntegrationFetcher } from './handlers/integration-fetcher-handler';
+import { handleHttp as handleIntegrationHttp } from './handlers/integration-http-handler';
+import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
+import { handlePlaywright as handleIntegrationPlaywright } from './handlers/integration-playwright-handler';
+import { handlePoll as handleIntegrationPoll } from './handlers/integration-poll-handler';
+import { handleDbSchema as handleIntegrationDbSchema } from './handlers/integration-schema-handler';
+import { handleSimulation as handleIntegrationSimulation } from './handlers/integration-simulation-handler';
+import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
 import {
   handleBoundsNormalizer,
   handleCanvasOutput,
@@ -46,17 +47,13 @@ import {
   handleIterator,
   handleContext,
 } from './handlers/transform';
-import { handleAgent, handleLearnerAgent } from './handlers/agent';
-import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
-import { handleFetcher as handleIntegrationFetcher } from './handlers/integration-fetcher-handler';
-import { handleDbSchema as handleIntegrationDbSchema } from './handlers/integration-schema-handler';
-import { handleAdvancedApi as handleIntegrationAdvancedApi } from './handlers/integration-api-advanced-handler';
-import { handleDatabase as handleIntegrationDatabase } from './handlers/integration-database-handler';
-import { handleHttp as handleIntegrationHttp } from './handlers/integration-http-handler';
-import { handlePoll as handleIntegrationPoll } from './handlers/integration-poll-handler';
-import { handlePlaywright as handleIntegrationPlaywright } from './handlers/integration-playwright-handler';
-import { handleSimulation as handleIntegrationSimulation } from './handlers/integration-simulation-handler';
-import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
+import {
+  createNodeCodeObjectV3ContractResolver,
+  resolveNodeCodeObjectV3ContractByCodeObjectId,
+} from './node-code-object-v3-legacy-bridge';
+import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
+import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
+import { buildPromptOutput } from './utils';
 
 // Re-export types from core
 export * from './engine-core';
@@ -112,6 +109,7 @@ const handleModel: NodeHandler = async ({
   toast,
   runId,
   activePathId,
+  contextRegistry,
   simulationEntityId,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (skipAiJobs) {
@@ -164,6 +162,7 @@ const handleModel: NodeHandler = async ({
       nodeTitle: node.title,
       runId,
     },
+    ...(contextRegistry ? { contextRegistry } : {}),
   };
 
   const productIdInput =

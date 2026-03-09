@@ -4,7 +4,6 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
@@ -27,9 +26,10 @@ import {
   launchBrowser,
   createBrowserContext,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AgentDecision, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Browser, BrowserContext } from 'playwright';
 
@@ -149,7 +149,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
               summaryCheckpoint,
               settings,
               preferences,
-            }),
+              contextRegistry: context.contextRegistry,
+            }) as Prisma.InputJsonValue,
             checkpointedAt: new Date(),
             logLines: {
               push: `[${new Date().toISOString()}] Waiting for human input.`,
@@ -406,7 +407,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             summaryCheckpoint,
             settings,
             preferences,
-          }),
+            contextRegistry: context.contextRegistry,
+          }) as Prisma.InputJsonValue,
           checkpointedAt: new Date(),
           logLines: {
             push: `[${new Date().toISOString()}] Agent responded (scaffold).`,
@@ -432,7 +434,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           summaryCheckpoint,
           settings,
           preferences,
-        }),
+          contextRegistry: context.contextRegistry,
+        }) as Prisma.InputJsonValue,
         checkpointedAt: new Date(),
         logLines: {
           push: `[${new Date().toISOString()}] Waiting for human input.`,

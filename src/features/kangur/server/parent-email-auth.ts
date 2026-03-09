@@ -18,13 +18,24 @@ import {
   shouldExposeAuthEmailDebug,
   validatePasswordStrength,
 } from '@/server/auth';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import {
   getKangurLoginHref,
   KANGUR_BASE_PATH,
   resolveKangurPublicBasePathFromHref,
 } from '@/features/kangur/config/routing';
+import {
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurParentVerificationEmailSettings,
+} from '@/features/kangur/settings';
 import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
-import { conflictError, forbiddenError, internalError, validationError } from '@/shared/errors/app-error';
+import {
+  conflictError,
+  forbiddenError,
+  internalError,
+  rateLimitedError,
+  validationError,
+} from '@/shared/errors/app-error';
 
 type KangurParentAccountCreateResult = {
   email: string;
@@ -32,9 +43,13 @@ type KangurParentAccountCreateResult = {
   emailVerified: boolean;
   hasPassword: boolean;
   verificationUrl: string;
+  retryAfterMs: number;
 };
 
 const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
+type ActiveEmailVerificationChallenge = Awaited<
+  ReturnType<typeof findActiveEmailVerificationChallengeByEmail>
+>;
 
 const normalizeOptionalString = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') {
@@ -48,6 +63,52 @@ const normalizeOptionalString = (value: string | null | undefined): string | nul
 const buildParentDisplayName = (email: string): string => {
   const localPart = email.split('@')[0]?.trim() || 'Rodzic';
   return localPart.slice(0, 120);
+};
+
+const formatRetryAfterLabel = (retryAfterMs: number): string => {
+  const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  if (seconds < 60) {
+    return `${seconds} s`;
+  }
+
+  const minutes = Math.ceil(seconds / 60);
+  return `${minutes} min`;
+};
+
+const readParentVerificationResendCooldownMs = async (): Promise<number> => {
+  const raw = await readStoredSettingValue(KANGUR_PARENT_VERIFICATION_SETTINGS_KEY);
+  return (
+    parseKangurParentVerificationEmailSettings(raw).resendCooldownSeconds *
+    1000
+  );
+};
+
+const getKangurParentVerificationRetryAfterMs = (
+  activeChallenge: ActiveEmailVerificationChallenge,
+  resendCooldownMs: number
+): number | null => {
+  if (!activeChallenge?.createdAt) {
+    return null;
+  }
+
+  const retryAfterMs =
+    activeChallenge.createdAt.getTime() + resendCooldownMs - Date.now();
+  return retryAfterMs > 0 ? retryAfterMs : null;
+};
+
+const assertKangurParentVerificationSendAllowed = (
+  activeChallenge: ActiveEmailVerificationChallenge,
+  resendCooldownMs: number
+): void => {
+  const retryAfterMs = getKangurParentVerificationRetryAfterMs(activeChallenge, resendCooldownMs);
+  if (!retryAfterMs) {
+    return;
+  }
+
+  throw rateLimitedError(
+    `Email potwierdzajacy zostal juz wyslany. Poczekaj ${formatRetryAfterLabel(retryAfterMs)} i sprobuj ponownie.`,
+    retryAfterMs
+  );
 };
 
 const resolveAppOrigin = (request: Request | null | undefined): string => {
@@ -180,12 +241,15 @@ export const createKangurParentAccount = async (input: {
 }): Promise<KangurParentAccountCreateResult> => {
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
+  const resendCooldownMs = await readParentVerificationResendCooldownMs();
   const existingUser = await findAuthUserByEmail(email);
   let created = false;
   let hasPassword = false;
   let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
 
   if (!existingUser) {
+    const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
     await assertValidParentPassword(input.password);
     const passwordHash = await hash(input.password, 12);
     verificationToken = await createEmailVerificationChallenge({
@@ -204,6 +268,8 @@ export const createKangurParentAccount = async (input: {
     if (existingUser.emailVerified) {
       throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
     }
+    const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
 
     let user = existingUser;
     if (!(typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0)) {
@@ -242,6 +308,7 @@ export const createKangurParentAccount = async (input: {
     created,
     emailVerified: false,
     hasPassword,
+    retryAfterMs: resendCooldownMs,
     verificationUrl,
   };
 };
@@ -253,6 +320,7 @@ export const resendKangurParentVerificationEmail = async (input: {
 }): Promise<KangurParentAccountCreateResult> => {
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
+  const resendCooldownMs = await readParentVerificationResendCooldownMs();
   const existingUser = await findAuthUserByEmail(email);
   let hasPassword = false;
   let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
@@ -262,6 +330,8 @@ export const resendKangurParentVerificationEmail = async (input: {
     if (existingUser.emailVerified) {
       throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
     }
+    const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
 
     verificationToken = await createEmailVerificationChallenge({
       userId: existingUser.id,
@@ -276,6 +346,7 @@ export const resendKangurParentVerificationEmail = async (input: {
         'Nie znalezlismy oczekujacego konta rodzica dla tego emaila. Utworz konto ponownie.'
       );
     }
+    assertKangurParentVerificationSendAllowed(pendingVerification, resendCooldownMs);
 
     verificationToken = await createEmailVerificationChallenge({
       email,
@@ -305,6 +376,7 @@ export const resendKangurParentVerificationEmail = async (input: {
     created: false,
     emailVerified: false,
     hasPassword,
+    retryAfterMs: resendCooldownMs,
     verificationUrl,
   };
 };

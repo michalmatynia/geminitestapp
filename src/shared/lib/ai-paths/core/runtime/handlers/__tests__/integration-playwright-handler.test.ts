@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePlaywright } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-playwright-handler';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
@@ -55,7 +56,13 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
     ...(patch as Record<string, unknown>),
   }) as AiNode;
 
-const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerContext =>
+const buildContext = (
+  node: AiNode,
+  nodeInputs: RuntimePortValues,
+  options: {
+    contextRegistry?: ContextRegistryConsumerEnvelope | null;
+  } = {}
+): NodeHandlerContext =>
   ({
     node,
     nodeInputs,
@@ -66,6 +73,7 @@ const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerC
     runId: 'run-1',
     runStartedAt: new Date().toISOString(),
     activePathId: 'path-1',
+    contextRegistry: options.contextRegistry ?? null,
     triggerNodeId: undefined,
     triggerEvent: undefined,
     triggerContext: undefined,
@@ -202,6 +210,47 @@ describe('handlePlaywright', () => {
     expect(context.toast).toHaveBeenCalledWith('Playwright run queued.', {
       variant: 'success',
     });
+  });
+
+  it('includes contextRegistry in the queued Playwright payload when available', async () => {
+    enqueueMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        run: {
+          runId: 'run-ctx-1',
+          status: 'queued',
+          artifacts: [],
+          logs: [],
+        },
+      },
+    });
+    const contextRegistry: ContextRegistryConsumerEnvelope = {
+      refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+      resolved: {
+        refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+        nodes: [],
+        documents: [
+          {
+            id: 'runtime:ai-paths:workspace',
+            kind: 'runtime_document',
+            entityType: 'ai_paths_workspace_state',
+            title: 'AI Paths workspace',
+            summary: 'Current AI Paths workspace state.',
+            tags: ['ai-paths'],
+            relatedNodeIds: ['page:ai-paths'],
+            sections: [],
+          },
+        ],
+      },
+    };
+
+    await handlePlaywright(buildContext(buildNode(), { prompt: 'https://example.com' }, { contextRegistry }));
+
+    expect(enqueueMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextRegistry,
+      })
+    );
   });
 
   it('polls queued run and maps final outputs', async () => {

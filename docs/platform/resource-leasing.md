@@ -40,6 +40,9 @@ Examples:
 - Entry points:
   - `scripts/testing/lib/runtime-broker.mjs`
   - `scripts/testing/run-playwright-suite.mjs`
+- Machine-readable commands:
+  - `node scripts/testing/run-playwright-suite.mjs --summary-json --no-write playwright test --help`
+  - `node scripts/testing/run-playwright-suite.mjs --runtime-cleanup --summary-json --no-write`
   - `src/app/api/agent/leases/route.ts`
 
 ### Base import run execution

@@ -37,6 +37,7 @@ export async function postKangurParentAccountCreateHandler(
     created: result.created,
     emailVerified: result.emailVerified,
     hasPassword: result.hasPassword,
+    retryAfterMs: result.retryAfterMs,
     message: result.created
       ? 'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.'
       : 'To konto rodzica czeka na potwierdzenie emaila. Wyslalismy nowy email potwierdzajacy. Konto uaktywni sie po weryfikacji adresu.',

@@ -9,7 +9,7 @@ async function checkTables() {
   try {
     await client.connect();
     const res = await client.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+      'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\''
     );
     console.log('Tables in public schema:');
     res.rows.forEach((row) => console.log(` - ${row.table_name}`));

@@ -213,14 +213,14 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
 
     fireEvent.click(getFeaturedHomeAction('Trening mieszany'));
-    expect(await screen.findByRole('heading', { name: 'Trening mieszany' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Konfiguracja treningu' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -228,7 +228,7 @@ describe('Game branding', () => {
 
     fireEvent.click(getFeaturedHomeAction('Kangur Matematyczny'));
     expect(
-      await screen.findByRole('heading', { name: 'Kangur Matematyczny' })
+      await screen.findByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
   });
@@ -237,7 +237,7 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
     expect(
@@ -246,7 +246,7 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z figurami/i }));
     expect(
@@ -255,6 +255,6 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
   });
 });

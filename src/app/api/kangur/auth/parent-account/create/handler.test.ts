@@ -45,6 +45,7 @@ describe('kangur parent account create handler', () => {
       created: true,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: 60000,
       verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-1',
     });
     buildKangurParentAccountCreateDebugPayloadMock.mockReturnValue({
@@ -72,6 +73,7 @@ describe('kangur parent account create handler', () => {
       created: true,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: 60000,
       message:
         'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
       debug: {

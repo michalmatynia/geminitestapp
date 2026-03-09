@@ -124,4 +124,40 @@ describe('apiHandler observability propagation', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(mockedLogSystemEvent).not.toHaveBeenCalled();
   });
+
+  it('includes retry metadata for rate-limited failures', async () => {
+    const { apiHandler } = await loadApiHandler();
+    const handler = apiHandler(async () => {
+      const error = new Error('Too many verification emails sent.') as Error & {
+        status: number;
+        retryAfterMs: number;
+      };
+      error.status = 429;
+      error.retryAfterMs = 45_000;
+      throw error;
+    }, {
+      source: 'kangur.auth.parent-account.resend.POST',
+    });
+
+    const response = await handler(
+      new NextRequest('http://localhost/api/kangur/auth/parent-account/resend', {
+        method: 'GET',
+        headers: new Headers({
+          'x-request-id': 'req-rate-limited',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('45');
+    expect(response.headers.get('x-request-id')).toBe('req-rate-limited');
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(payload).toMatchObject({
+      error: 'Too many verification emails sent.',
+      code: 'RATE_LIMITED',
+      retryable: true,
+      retryAfterMs: 45_000,
+    });
+    expect(payload['fingerprint']).toBe(response.headers.get('x-error-fingerprint'));
+  });
 });

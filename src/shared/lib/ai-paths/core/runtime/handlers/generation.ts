@@ -4,10 +4,9 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import { aiJobsApi, aiGenerationApi } from '@/shared/lib/ai-paths/api';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
-import { aiJobsApi, aiGenerationApi } from '@/shared/lib/ai-paths/api';
-import { generateProductAiDescription } from '../server/description-generator';
 import {
   coerceInput,
   coerceInputArray,
@@ -15,6 +14,7 @@ import {
   hashRuntimeValue,
   renderTemplate,
 } from '../../utils';
+import { generateProductAiDescription } from '../server/description-generator';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
 
 export const handleTemplate: NodeHandler = ({
@@ -202,6 +202,7 @@ export const handleModel: NodeHandler = async ({
   runId,
   runStartedAt,
   activePathId,
+  contextRegistry,
   simulationEntityType,
   simulationEntityId,
   skipAiJobs,
@@ -473,6 +474,7 @@ export const handleModel: NodeHandler = async ({
       // do not silently reuse completed jobs from older runs.
       runId,
     },
+    ...(contextRegistry ? { contextRegistry } : {}),
   };
   const productId = resolveJobProductId(
     nodeInputs,

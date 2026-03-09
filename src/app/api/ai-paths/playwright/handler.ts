@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { resolveAiPathsContextRegistryEnvelope } from '@/features/ai/ai-paths/context-registry/server';
 import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccessOrInternal,
@@ -10,6 +11,7 @@ import {
   type PlaywrightNodeRunRecord,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { parseJsonBody } from '@/features/products/server';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const captureSchema = z.object({
@@ -35,6 +37,7 @@ const enqueueSchema = z.object({
   settingsOverrides: z.record(z.string(), z.unknown()).optional(),
   launchOptions: z.record(z.string(), z.unknown()).optional(),
   contextOptions: z.record(z.string(), z.unknown()).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
   capture: captureSchema.optional(),
 });
 
@@ -79,6 +82,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const startUrl = payload.startUrl?.trim();
   const personaId = payload.personaId?.trim();
   const capture = normalizeCaptureConfig(payload.capture);
+  const contextRegistry = await resolveAiPathsContextRegistryEnvelope(payload.contextRegistry);
   const run = await enqueuePlaywrightNodeRun({
     request: {
       script: payload.script,
@@ -90,6 +94,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ...(payload.settingsOverrides ? { settingsOverrides: payload.settingsOverrides } : {}),
       ...(payload.launchOptions ? { launchOptions: payload.launchOptions } : {}),
       ...(payload.contextOptions ? { contextOptions: payload.contextOptions } : {}),
+      ...(contextRegistry ? { contextRegistry } : {}),
       ...(capture ? { capture } : {}),
     },
     waitForResult: payload.waitForResult ?? true,

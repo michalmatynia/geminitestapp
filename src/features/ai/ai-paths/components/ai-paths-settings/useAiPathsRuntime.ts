@@ -3,17 +3,17 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/context/RuntimeContext';
 
+import { pruneSingleCardinalityIncomingEdges } from './edge-cardinality-repair';
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
 import { useAiPathsServerExecution } from './runtime/useAiPathsServerExecution';
 import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
 import { createRunId } from './runtime/utils';
-import { pruneSingleCardinalityIncomingEdges } from './edge-cardinality-repair';
 
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 
@@ -112,6 +112,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     ...args,
     ...state,
     ...server,
+    contextRegistry,
     parserSamples,
     updaterSamples,
     setRuntimeState,

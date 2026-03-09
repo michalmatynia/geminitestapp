@@ -52,7 +52,7 @@ export function KangurTransitionLink({
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
 
   useEffect(() => {
-    if (!managedLocalHref) {
+    if (!managedLocalHref || typeof router.prefetch !== 'function') {
       return;
     }
 

@@ -74,6 +74,7 @@ import { KANGUR_HELP_SETTINGS_KEY, KANGUR_NARRATOR_SETTINGS_KEY } from '@/featur
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
@@ -143,7 +144,11 @@ describe('AdminKangurSettingsPage', () => {
           agentPersonaId: 'persona-1',
           motionPresetId: 'tablet',
           dailyMessageLimit: 12,
+          guestIntroMode: 'first_visit',
         });
+      }
+      if (key === KANGUR_PARENT_VERIFICATION_SETTINGS_KEY) {
+        return JSON.stringify({ resendCooldownSeconds: 90 });
       }
       return undefined;
     });
@@ -208,10 +213,15 @@ describe('AdminKangurSettingsPage', () => {
     expect(screen.getByLabelText(/persona \(charakter tutora\)/i)).toHaveTextContent('Mila');
     expect(screen.getByLabelText(/preset ruchu tutora/i)).toHaveTextContent('Tablet');
     expect(screen.getByLabelText(/dzienny limit wiadomości/i)).toHaveValue(12);
+    expect(screen.getByLabelText(/anonimowy onboarding ai tutora/i)).toHaveTextContent(
+      'Pierwsza wizyta'
+    );
 
     fireEvent.change(screen.getByLabelText(/dzienny limit wiadomości/i), {
       target: { value: '20' },
     });
+    fireEvent.click(screen.getByLabelText(/anonimowy onboarding ai tutora/i));
+    fireEvent.click(screen.getByRole('option', { name: /Każde wejście/i }));
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
     await waitFor(() =>
@@ -221,6 +231,7 @@ describe('AdminKangurSettingsPage', () => {
           agentPersonaId: 'persona-1',
           motionPresetId: 'tablet',
           dailyMessageLimit: 20,
+          guestIntroMode: 'every_visit',
         }),
       })
     );

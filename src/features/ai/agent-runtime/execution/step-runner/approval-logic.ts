@@ -7,6 +7,7 @@ import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/c
 import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
 import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export async function evaluateApproval(args: {
   step: PlanStep;
@@ -38,7 +39,7 @@ export async function evaluateApproval(args: {
     summaryCheckpoint,
   } = args;
 
-  const { preferences, approvalGateModel, run, settings } = context;
+  const { preferences, approvalGateModel, run, settings, contextRegistry } = context;
 
   let requiresApproval = false;
   let approvalReason: string | null = null;
@@ -94,7 +95,8 @@ export async function evaluateApproval(args: {
           summaryCheckpoint,
           settings,
           preferences,
-        }),
+          contextRegistry,
+        }) as Prisma.InputJsonValue,
         checkpointedAt: new Date(),
         logLines: {
           push: `[${new Date().toISOString()}] Approval required for step.`,

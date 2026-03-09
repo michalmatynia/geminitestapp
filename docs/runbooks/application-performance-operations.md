@@ -36,6 +36,18 @@ the app.
   - `npm run perf:ops:baseline`
   - Runs architecture metrics, route hotspots, observability,
     critical-path budgets, critical flows, and unit domain timings.
+- Machine-readable critical-path snapshot:
+  - `node scripts/perf/check-critical-path-performance.mjs --summary-json --no-write --no-history`
+  - Emits the shared scan envelope without writing `docs/metrics/*`.
+- Machine-readable route hotspot snapshot:
+  - `node scripts/perf/route-hotspots.mjs --summary-json --no-write --no-history`
+  - Emits the shared scan envelope without writing `docs/metrics/route-hotspots.md`.
+- Machine-readable unit-domain timing snapshot:
+  - `node scripts/testing/run-unit-domain-timings.mjs --summary-json --no-write --no-history`
+  - Emits the shared scan envelope without writing `docs/metrics/unit-domain-timings-*`.
+- Machine-readable critical-flow snapshot:
+  - `node scripts/testing/run-critical-flow-tests.mjs --summary-json --no-write --no-history`
+  - Emits the shared scan envelope without writing `docs/metrics/critical-flow-tests-*`.
 - Weekly trend run:
   - `npm run perf:ops:weekly`
   - Matches the scheduled weekly workflow and writes trend artifacts under

@@ -6,7 +6,9 @@ import type {
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
   if (!payload || typeof payload !== 'object') return null;
@@ -34,6 +36,7 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
     summaryCheckpoint: typeof raw.summaryCheckpoint === 'number' ? raw.summaryCheckpoint : null,
     settings: raw.settings ?? null,
     preferences: raw.preferences ?? null,
+    contextRegistry: raw.contextRegistry ?? null,
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
   };
 }
@@ -55,6 +58,7 @@ export function buildCheckpointState(payload: {
   summaryCheckpoint?: number | null;
   settings?: AgentPlanSettings | null;
   preferences?: AgentPlanPreferences | null;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): AgentCheckpoint {
   return {
     steps: payload.steps,
@@ -73,6 +77,7 @@ export function buildCheckpointState(payload: {
     summaryCheckpoint: payload.summaryCheckpoint ?? null,
     settings: payload.settings ?? null,
     preferences: payload.preferences ?? null,
+    contextRegistry: payload.contextRegistry ?? null,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -95,11 +100,12 @@ export async function persistCheckpoint(payload: {
   summaryCheckpoint?: number | null;
   settings?: AgentPlanSettings | null;
   preferences?: AgentPlanPreferences | null;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<void> {
   await prisma.chatbotAgentRun.update({
     where: { id: payload.runId },
     data: {
-      planState: buildCheckpointState(payload),
+      planState: buildCheckpointState(payload) as Prisma.InputJsonValue,
       activeStepId: payload.activeStepId,
       checkpointedAt: new Date(),
     },

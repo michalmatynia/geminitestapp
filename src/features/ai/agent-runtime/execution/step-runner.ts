@@ -1,5 +1,6 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
+import { applyAgentRuntimeContextMemory } from '@/features/ai/agent-runtime/context-registry/shared';
 import { sleep } from '@/features/ai/agent-runtime/core/utils';
 import {
   buildLoopGuardReview,
@@ -15,15 +16,23 @@ import {
 import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
-import { StepLoopInput, StepLoopResult } from './step-runner/types';
-import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
 import { evaluateApproval } from './step-runner/approval-logic';
+import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
 import { executeTool } from './step-runner/tool-logic';
+import { StepLoopInput, StepLoopResult } from './step-runner/types';
 
 export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopResult> {
   const { context, sharedBrowser, sharedContext } = input;
-  const { run, settings, preferences, memorySummarizationModel, plannerModel, loopGuardModel } =
-    context;
+  const {
+    run,
+    settings,
+    preferences,
+    contextRegistry,
+    contextRegistryPrompt,
+    memorySummarizationModel,
+    plannerModel,
+    loopGuardModel,
+  } = context;
   let { planSteps, stepIndex, taskType, summaryCheckpoint } = input;
   let { memoryContext } = context;
 
@@ -131,6 +140,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       summaryCheckpoint,
       settings,
       preferences,
+      contextRegistry,
     });
 
     if (step.tool === 'none') {
@@ -192,7 +202,10 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
                   content: summary,
                   metadata: { type: 'planner-summary', completedCount },
                 });
-                memoryContext = [...memoryContext, summary].slice(-10);
+                memoryContext = applyAgentRuntimeContextMemory(
+                  [...memoryContext, summary],
+                  contextRegistryPrompt
+                );
                 summaryCheckpoint = completedCount;
                 await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
                   type: 'planner-summary',
@@ -325,7 +338,10 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
                 content: summary,
                 metadata: { type: 'planner-summary', completedCount },
               });
-              memoryContext = [...memoryContext, summary].slice(-10);
+              memoryContext = applyAgentRuntimeContextMemory(
+                [...memoryContext, summary],
+                contextRegistryPrompt
+              );
               summaryCheckpoint = completedCount;
               await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
                 type: 'planner-summary',
@@ -436,6 +452,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
           summaryCheckpoint,
           settings,
           preferences,
+          contextRegistry,
         });
         stepIndex = nextIndex;
         overallOk = true;
@@ -501,6 +518,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
           summaryCheckpoint,
           settings,
           preferences,
+          contextRegistry,
         });
         stepIndex = nextIndex;
         overallOk = true;

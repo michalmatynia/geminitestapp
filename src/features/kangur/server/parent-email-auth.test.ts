@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS } from '@/features/kangur/config/auth';
+
 const {
   createAuthUserWithEmailMock,
   findAuthUserByEmailMock,
@@ -130,6 +132,7 @@ describe('parent email auth service', () => {
       created: true,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
       verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
     expect(buildKangurParentAccountCreateDebugPayload(result)).toEqual({
@@ -162,6 +165,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Fgame&verifyEmailToken=verify-link-2',
     });
@@ -267,6 +271,7 @@ describe('parent email auth service', () => {
         name: 'Parent',
         passwordHash: 'hashed-password',
       },
+      createdAt: new Date('2026-03-09T07:58:00.000Z'),
       expiresAt: new Date('2026-03-15T21:00:00.000Z'),
     });
     createEmailVerificationChallengeMock.mockResolvedValue({
@@ -285,6 +290,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-1',
     });
@@ -323,6 +329,7 @@ describe('parent email auth service', () => {
       created: false,
       emailVerified: false,
       hasPassword: true,
+      retryAfterMs: KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_MS,
       verificationUrl:
         'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-resend-2',
     });
@@ -332,6 +339,81 @@ describe('parent email auth service', () => {
       email: 'parent@example.com',
       callbackUrl: '/kangur/tests?focus=division',
     });
+  });
+
+  it('rate limits repeated parent account creation while a verification email is still fresh', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-03-09T08:00:00.000Z'));
+      findAuthUserByEmailMock.mockResolvedValue(null);
+      findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
+        userId: 'pending:kangur_parent:parent%40example.com',
+        email: 'parent@example.com',
+        callbackUrl: '/kangur/tests',
+        pendingRegistration: {
+          source: 'kangur_parent',
+          name: 'Parent',
+          passwordHash: 'hashed-password',
+        },
+        createdAt: new Date('2026-03-09T07:59:30.000Z'),
+        expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+      });
+
+      await expect(
+        createKangurParentAccount({
+          email: 'parent@example.com',
+          password: 'Strong123!',
+          callbackUrl: '/kangur/tests',
+        })
+      ).rejects.toMatchObject({
+        httpStatus: 429,
+        message: 'Email potwierdzajacy zostal juz wyslany. Poczekaj 30 s i sprobuj ponownie.',
+        retryAfterMs: 30_000,
+      });
+
+      expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
+      expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rate limits resend requests while the last verification email is cooling down', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-03-09T08:00:00.000Z'));
+      findAuthUserByEmailMock.mockResolvedValue({
+        id: 'parent-1',
+        email: 'parent@example.com',
+        name: 'Parent',
+        passwordHash: 'stored-password-hash',
+        emailVerified: null,
+      });
+      findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue({
+        userId: 'parent-1',
+        email: 'parent@example.com',
+        callbackUrl: '/kangur/tests',
+        pendingRegistration: null,
+        createdAt: new Date('2026-03-09T07:59:45.000Z'),
+        expiresAt: new Date('2026-03-15T21:00:00.000Z'),
+      });
+
+      await expect(
+        resendKangurParentVerificationEmail({
+          email: 'parent@example.com',
+          callbackUrl: '/kangur/tests',
+        })
+      ).rejects.toMatchObject({
+        httpStatus: 429,
+        message: 'Email potwierdzajacy zostal juz wyslany. Poczekaj 45 s i sprobuj ponownie.',
+        retryAfterMs: 45_000,
+      });
+
+      expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
+      expect(sendAuthEmailMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('rejects parent account creation when the email already belongs to a verified account', async () => {

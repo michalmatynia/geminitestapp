@@ -1,3 +1,4 @@
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
@@ -11,7 +12,6 @@ import type {
   PathMeta,
   RuntimeState,
 } from '@/shared/lib/ai-paths';
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 
 export const AI_PATHS_CONTEXT_ROOT_IDS = [
   'page:ai-paths',
@@ -21,7 +21,9 @@ export const AI_PATHS_CONTEXT_ROOT_IDS = [
   'component:ai-paths-node-config-dialog',
   'action:run-ai-path',
   'action:ai-paths-preview-model',
+  'action:ai-paths-playwright-run',
   'collection:ai-path-runs',
+  'collection:ai-path-playwright-runs',
 ] as const;
 
 export const AI_PATHS_CONTEXT_RUNTIME_REF = {

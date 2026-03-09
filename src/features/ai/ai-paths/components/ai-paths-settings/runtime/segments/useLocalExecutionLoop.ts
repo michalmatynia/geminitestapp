@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
+
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import {
   evaluateGraphClient as evaluateGraph,
@@ -12,6 +13,7 @@ import {
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
+import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
 import {
   createRunId,
   mergeRuntimeNodeOutputsForStatus,
@@ -19,7 +21,6 @@ import {
 } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
-import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -135,6 +136,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             edges: args.sanitizedEdges,
             activePathId: args.activePathId,
             activePathName: args.pathName,
+            contextRegistry: args.contextRegistry,
             runId,
             runStartedAt,
             triggerNodeId: args.lastTriggerNodeIdRef.current ?? undefined,

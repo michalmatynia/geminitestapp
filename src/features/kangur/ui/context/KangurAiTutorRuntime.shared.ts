@@ -60,6 +60,7 @@ import {
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAppSettings,
   resolveKangurAiTutorAvailability,
+  type KangurAiTutorAppSettings,
   type KangurAiTutorLearnerSettings,
 } from '@/features/kangur/settings-ai-tutor';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -97,6 +98,7 @@ export type KangurAiTutorSessionRegistrationSetter =
 
 export type KangurAiTutorContextValue = {
   enabled: boolean;
+  appSettings: KangurAiTutorAppSettings;
   tutorSettings: KangurAiTutorLearnerSettings | null;
   tutorPersona: AgentPersona | null;
   tutorName: string;
@@ -1294,6 +1296,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const value = useMemo<KangurAiTutorContextValue>(
     () => ({
       enabled,
+      appSettings,
       tutorSettings,
       tutorPersona,
       tutorName,
@@ -1317,6 +1320,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     }),
     [
       activeSessionContext,
+      appSettings,
       closeChat,
       enabled,
       highlightedText,

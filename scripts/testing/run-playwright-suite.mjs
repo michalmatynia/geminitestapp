@@ -1,7 +1,9 @@
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
+import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
   acquireRuntimeLease,
   buildBrokeredPlaywrightEnv,
@@ -23,8 +25,19 @@ const PLAYWRIGHT_COMMANDS = new Set([
   'screenshot',
   'pdf',
 ]);
+const MAX_CAPTURE_OUTPUT_BYTES = 160_000;
+const SHARED_WRAPPER_FLAGS = new Set([
+  '--ci',
+  '--fail-on-warnings',
+  '--no-history',
+  '--no-write',
+  '--strict',
+  '--summary-json',
+  '--write-history',
+]);
 
 const parseArgs = (argv) => {
+  const commonOptions = parseCommonCheckArgs(argv);
   const runtimeOptions = {
     appId: process.env['PLAYWRIGHT_APP_ID'] || 'web',
     mode: process.env['PLAYWRIGHT_RUNTIME_MODE'] || 'dev',
@@ -37,6 +50,9 @@ const parseArgs = (argv) => {
   const playwrightArgs = [];
 
   for (const arg of argv) {
+    if (SHARED_WRAPPER_FLAGS.has(arg)) {
+      continue;
+    }
     if (arg === '--runtime-cleanup') {
       runtimeOptions.cleanup = true;
       continue;
@@ -70,6 +86,7 @@ const parseArgs = (argv) => {
   }
 
   return {
+    commonOptions,
     runtimeOptions,
     playwrightArgs,
   };
@@ -115,29 +132,120 @@ const writeRunMetadata = async ({ artifacts, runtime, playwrightArgs }) => {
   await fsPromises.writeFile(artifacts.metadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
 };
 
-const runPlaywright = async ({ args, env, preferredBrowserNodeBinDir }) =>
-  await new Promise((resolve, reject) => {
-    const child = spawn(
-      resolveNpxExecutable({ preferredBrowserNodeBinDir }),
-      ['playwright', ...args],
-      {
-        cwd: root,
-        env,
-        stdio: 'inherit',
-      }
-    );
+const createTransientArtifacts = async ({ appId, agentId, runId }) => {
+  const tempRoot = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'playwright-suite-'));
+  const transientEnv = {
+    ...process.env,
+    PLAYWRIGHT_RUN_ARTIFACTS_ROOT: path.join(tempRoot, 'artifacts'),
+  };
 
-    child.on('error', reject);
+  return {
+    tempRoot,
+    artifacts: resolvePlaywrightRunArtifacts({
+      rootDir: tempRoot,
+      appId,
+      agentId,
+      runId,
+      env: transientEnv,
+    }),
+  };
+};
+
+const buildSummaryJsonPaths = ({ artifacts, noWrite }) =>
+  noWrite
+    ? null
+    : {
+        runRoot: path.relative(root, artifacts.runRoot),
+        outputDir: path.relative(root, artifacts.outputDir),
+        htmlReportDir: path.relative(root, artifacts.htmlReportDir),
+        junitOutputFile: path.relative(root, artifacts.junitOutputFile),
+        metadataFile: path.relative(root, artifacts.metadataFile),
+      };
+
+const buildRunSummaryJsonSummary = ({
+  runtime,
+  runtimeOptions,
+  normalizedPlaywrightArgs,
+  result,
+  noWrite,
+}) => ({
+  command: normalizedPlaywrightArgs[0] ?? 'test',
+  argumentCount: normalizedPlaywrightArgs.length,
+  exitCode: typeof result.code === 'number' ? result.code : null,
+  signal: result.signal ?? null,
+  runtimeSource: runtime?.source ?? 'unknown',
+  runtimeReused: Boolean(runtime?.reused),
+  brokerEnabled: !runtimeOptions.disableBroker,
+  artifactsRetained: !noWrite,
+});
+
+const buildSummaryJsonFilters = ({ runtimeOptions, noWrite, cleanup = false }) => ({
+  cleanup,
+  noWrite,
+  ci: process.argv.includes('--ci'),
+  runtimeApp: runtimeOptions.appId,
+  runtimeMode: runtimeOptions.mode,
+  runtimeHost: runtimeOptions.host,
+  runtimeStopAfter: runtimeOptions.stopAfter,
+  runtimeBrokerDisabled: runtimeOptions.disableBroker,
+});
+
+const appendCapturedOutput = (value, chunk) => {
+  const next = `${value}${chunk.toString()}`;
+  if (next.length <= MAX_CAPTURE_OUTPUT_BYTES) {
+    return next;
+  }
+  return next.slice(-MAX_CAPTURE_OUTPUT_BYTES);
+};
+
+const runPlaywright = async ({ args, env, preferredBrowserNodeBinDir, captureOutput = false }) =>
+  await new Promise((resolve) => {
+    const command = resolveNpxExecutable({ preferredBrowserNodeBinDir });
+    const child = spawn(command, ['playwright', ...args], {
+      cwd: root,
+      env,
+      stdio: captureOutput ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    if (captureOutput) {
+      child.stdout?.on('data', (chunk) => {
+        stdout = appendCapturedOutput(stdout, chunk);
+      });
+      child.stderr?.on('data', (chunk) => {
+        stderr = appendCapturedOutput(stderr, chunk);
+      });
+    }
+
+    child.on('error', (error) => {
+      const resolvedStderr = captureOutput
+        ? `${stderr}\n${error.stack ?? String(error)}`.trim()
+        : error.stack ?? String(error);
+      resolve({
+        code: null,
+        signal: null,
+        command: [command, 'playwright', ...args].join(' '),
+        stdout: captureOutput ? stdout.trim() : null,
+        stderr: resolvedStderr,
+      });
+    });
+
     child.on('close', (code, signal) => {
       resolve({
         code,
         signal,
+        command: [command, 'playwright', ...args].join(' '),
+        stdout: captureOutput ? stdout.trim() : null,
+        stderr: captureOutput ? stderr.trim() : null,
       });
     });
   });
 
 const main = async () => {
-  const { runtimeOptions, playwrightArgs } = parseArgs(process.argv.slice(2));
+  const { commonOptions, runtimeOptions, playwrightArgs } = parseArgs(process.argv.slice(2));
+  const { summaryJson, noWrite } = commonOptions;
   const resolvedAgentId = runtimeOptions.agentId || resolveRuntimeAgentId({ env: process.env });
 
   if (runtimeOptions.cleanup) {
@@ -147,6 +255,33 @@ const main = async () => {
       agentId: resolvedAgentId,
       env: process.env,
     });
+
+    if (summaryJson) {
+      writeSummaryJson({
+        scannerName: 'playwright-suite',
+        generatedAt: new Date().toISOString(),
+        status: 'ok',
+        summary: {
+          mode: 'runtime-cleanup',
+          inspectedLeases: summary.inspected,
+          stoppedLeases: summary.stopped,
+          removedLeaseRecords: summary.removed,
+        },
+        details: {
+          appId: runtimeOptions.appId,
+          agentId: resolvedAgentId,
+        },
+        paths: null,
+        filters: buildSummaryJsonFilters({
+          runtimeOptions,
+          noWrite,
+          cleanup: true,
+        }),
+        notes: ['playwright suite runtime cleanup result'],
+      });
+      return;
+    }
+
     console.log(
       `[playwright-suite] cleaned leases app=${runtimeOptions.appId} agent=${resolvedAgentId} inspected=${summary.inspected} stopped=${summary.stopped} removed=${summary.removed}`
     );
@@ -154,13 +289,22 @@ const main = async () => {
   }
 
   const normalizedPlaywrightArgs = normalizePlaywrightArgs(playwrightArgs);
-  const artifacts = resolvePlaywrightRunArtifacts({
-    rootDir: root,
-    appId: runtimeOptions.appId,
-    agentId: resolvedAgentId,
-    runId: process.env['TEST_RUN_ID'],
-    env: process.env,
-  });
+  const transientArtifacts = noWrite
+    ? await createTransientArtifacts({
+        appId: runtimeOptions.appId,
+        agentId: resolvedAgentId,
+        runId: process.env['TEST_RUN_ID'],
+      })
+    : null;
+  const artifacts =
+    transientArtifacts?.artifacts ??
+    resolvePlaywrightRunArtifacts({
+      rootDir: root,
+      appId: runtimeOptions.appId,
+      agentId: resolvedAgentId,
+      runId: process.env['TEST_RUN_ID'],
+      env: process.env,
+    });
 
   let runtime = null;
 
@@ -191,14 +335,16 @@ const main = async () => {
         agentId: resolvedAgentId,
         host: runtimeOptions.host,
         env: process.env,
-      });
+        });
     }
 
-    await writeRunMetadata({
-      artifacts,
-      runtime,
-      playwrightArgs: normalizedPlaywrightArgs,
-    });
+    if (!noWrite) {
+      await writeRunMetadata({
+        artifacts,
+        runtime,
+        playwrightArgs: normalizedPlaywrightArgs,
+      });
+    }
 
     const env = runtimeOptions.disableBroker
       ? {
@@ -220,16 +366,50 @@ const main = async () => {
           distDir: runtime.distDir,
         });
 
-    const relativeRunRoot = path.relative(root, artifacts.runRoot) || artifacts.runRoot;
-    console.log(
-      `[playwright-suite] app=${runtimeOptions.appId} agent=${resolvedAgentId} runtime=${formatRuntimeLabel(runtime)} baseUrl=${runtime.baseUrl} artifacts=${relativeRunRoot}`
-    );
+    if (!summaryJson) {
+      const relativeRunRoot = noWrite ? 'transient' : path.relative(root, artifacts.runRoot) || artifacts.runRoot;
+      console.log(
+        `[playwright-suite] app=${runtimeOptions.appId} agent=${resolvedAgentId} runtime=${formatRuntimeLabel(runtime)} baseUrl=${runtime.baseUrl} artifacts=${relativeRunRoot}`
+      );
+    }
 
     const result = await runPlaywright({
       args: normalizedPlaywrightArgs,
       env,
       preferredBrowserNodeBinDir: runtime.preferredBrowserNodeBinDir,
+      captureOutput: summaryJson,
     });
+
+    if (summaryJson) {
+      writeSummaryJson({
+        scannerName: 'playwright-suite',
+        generatedAt: new Date().toISOString(),
+        status: result.code === 0 ? 'ok' : 'failed',
+        summary: buildRunSummaryJsonSummary({
+          runtime,
+          runtimeOptions,
+          normalizedPlaywrightArgs,
+          result,
+          noWrite,
+        }),
+        details: {
+          runtime,
+          command: result.command,
+          playwrightArgs: normalizedPlaywrightArgs,
+          runId: artifacts.runId,
+          stdout: result.stdout,
+          stderr: result.stderr,
+        },
+        paths: buildSummaryJsonPaths({ artifacts, noWrite }),
+        filters: buildSummaryJsonFilters({
+          runtimeOptions,
+          noWrite,
+        }),
+        notes: ['playwright suite run result'],
+      });
+    } else if (noWrite) {
+      console.log('Skipped retaining Playwright run artifacts (--no-write).');
+    }
 
     process.exitCode = typeof result.code === 'number' ? result.code : 1;
   } finally {
@@ -240,6 +420,10 @@ const main = async () => {
         agentId: resolvedAgentId,
         env: process.env,
       });
+    }
+
+    if (transientArtifacts?.tempRoot) {
+      await fsPromises.rm(transientArtifacts.tempRoot, { recursive: true, force: true });
     }
   }
 };

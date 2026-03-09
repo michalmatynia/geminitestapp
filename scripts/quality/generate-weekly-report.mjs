@@ -7,6 +7,11 @@ import { runStabilizationGates } from '../canonical/lib/stabilization-gate-runne
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
 import { execScanOutput } from '../architecture/lib/exec-scan-output.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
+import {
+  createWeeklyCheckResult,
+  runStructuredCommandCheck,
+  truncateWeeklyCheckOutput,
+} from './lib/weekly-report-checks.mjs';
 
 const execFile = promisify(execFileCallback);
 
@@ -108,16 +113,6 @@ const formatDelta = (deltaMs) => {
   return `${deltaMs > 0 ? '+' : '-'}${formatDuration(Math.abs(deltaMs))}`;
 };
 
-const truncateOutput = (value) => {
-  if (!value) {
-    return '';
-  }
-  if (value.length <= MAX_OUTPUT_BYTES) {
-    return value;
-  }
-  return value.slice(-MAX_OUTPUT_BYTES);
-};
-
 const readJsonIfExists = async (relativePath) => {
   const absolutePath = path.join(root, relativePath);
   try {
@@ -180,23 +175,6 @@ const findActiveRepoBuildProcesses = (processLines) =>
     if (!line.includes(root)) return false;
     return true;
   });
-
-const createCheckResult = ({
-  id,
-  label,
-  command,
-  status,
-  output,
-}) => ({
-  id,
-  label,
-  command,
-  status,
-  exitCode: null,
-  signal: null,
-  durationMs: 0,
-  output,
-});
 
 const pathExists = async (absolutePath) => {
   try {
@@ -309,7 +287,7 @@ const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs }) =>
         exitCode: null,
         signal: null,
         durationMs: Date.now() - startedAt,
-        output: truncateOutput(`${output}\n${error.stack ?? String(error)}`.trim()),
+        output: truncateWeeklyCheckOutput(`${output}\n${error.stack ?? String(error)}`.trim()),
       });
     });
 
@@ -321,7 +299,7 @@ const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs }) =>
         exitCode,
         signal,
         durationMs: Date.now() - startedAt,
-        output: truncateOutput(output.trim()),
+        output: output.length <= MAX_OUTPUT_BYTES ? output.trim() : output.slice(-MAX_OUTPUT_BYTES).trim(),
       });
     });
   });
@@ -372,7 +350,10 @@ const runCommandCheck = async ({
         exitCode: result.exitCode,
         signal: result.signal,
         durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
-        output: truncateOutput([outputPrefix, result.output].filter(Boolean).join('\n')),
+        output:
+          [outputPrefix, result.output].filter(Boolean).join('\n').length <= MAX_OUTPUT_BYTES
+            ? [outputPrefix, result.output].filter(Boolean).join('\n')
+            : [outputPrefix, result.output].filter(Boolean).join('\n').slice(-MAX_OUTPUT_BYTES),
       };
     }
   }
@@ -386,13 +367,14 @@ const runCommandCheck = async ({
     exitCode: finalResult.exitCode,
     signal: finalResult.signal,
     durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
-    output: truncateOutput(
-      attempts
+    output: (() => {
+      const output = attempts
         .map((attempt, index) =>
           [`[attempt ${index + 1}/${attempts.length}]`, attempt.output].filter(Boolean).join('\n')
         )
-        .join('\n\n')
-    ),
+        .join('\n\n');
+      return output.length <= MAX_OUTPUT_BYTES ? output : output.slice(-MAX_OUTPUT_BYTES);
+    })(),
   };
 };
 
@@ -676,23 +658,47 @@ const run = async () => {
     {
       id: 'criticalFlows',
       label: 'Critical Flow Gate',
-      command: 'npm',
-      commandArgs: ['run', 'test:critical-flows:strict', '--', '--ci', '--no-history'],
+      command: 'node',
+      commandArgs: [
+        'scripts/testing/run-critical-flow-tests.mjs',
+        '--strict',
+        '--ci',
+        '--no-history',
+        '--summary-json',
+      ],
+      sourceName: 'scripts/testing/run-critical-flow-tests.mjs',
       timeoutMs: 20 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'securitySmoke',
       label: 'Security Smoke Gate',
-      command: 'npm',
-      commandArgs: ['run', 'test:security-smoke:strict', '--', '--ci', '--no-history'],
+      command: 'node',
+      commandArgs: [
+        'scripts/testing/run-security-smoke-tests.mjs',
+        '--strict',
+        '--ci',
+        '--no-history',
+        '--summary-json',
+      ],
+      sourceName: 'scripts/testing/run-security-smoke-tests.mjs',
       timeoutMs: 20 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'unitDomains',
       label: 'Unit Domain Gate',
-      command: 'npm',
-      commandArgs: ['run', 'test:unit:domains:strict', '--', '--ci', '--no-history'],
+      command: 'node',
+      commandArgs: [
+        'scripts/testing/run-unit-domain-timings.mjs',
+        '--strict',
+        '--ci',
+        '--no-history',
+        '--summary-json',
+      ],
+      sourceName: 'scripts/testing/run-unit-domain-timings.mjs',
       timeoutMs: 25 * 60 * 1000,
+      structured: true,
     },
     {
       id: 'fullUnit',
@@ -705,10 +711,17 @@ const run = async () => {
     {
       id: 'e2e',
       label: 'E2E Tests',
-      command: 'npm',
-      commandArgs: ['run', 'test:e2e'],
+      command: 'node',
+      commandArgs: [
+        'scripts/testing/run-playwright-suite.mjs',
+        '--summary-json',
+        '--no-write',
+        '--ci',
+      ],
+      sourceName: 'scripts/testing/run-playwright-suite.mjs',
       timeoutMs: 40 * 60 * 1000,
       enabled: includeE2E,
+      structured: true,
     },
     {
       id: 'guardrails',
@@ -778,7 +791,7 @@ const run = async () => {
   const checkResults = [];
   for (const check of checks) {
     if (check.id === 'build' && buildPreflight.action === 'skip') {
-      const result = createCheckResult({
+      const result = createWeeklyCheckResult({
         id: check.id,
         label: check.label,
         command: [check.command, ...check.commandArgs].join(' '),
@@ -792,16 +805,34 @@ const run = async () => {
       continue;
     }
 
-    const result = await runCommandCheck(check);
+    const result = check.structured
+      ? await runStructuredCommandCheck({
+          id: check.id,
+          label: check.label,
+          command: check.command,
+          commandArgs: check.commandArgs,
+          timeoutMs: check.timeoutMs,
+          enabled: check.enabled ?? true,
+          cwd: root,
+          env: {
+            ...process.env,
+            FORCE_COLOR: '0',
+          },
+          sourceName: check.sourceName ?? check.commandArgs[0] ?? check.id,
+          maxOutputBytes: MAX_OUTPUT_BYTES,
+        })
+      : await runCommandCheck(check);
     if (check.id === 'build' && buildPreflight.action === 'removed') {
-      result.output = truncateOutput(
-        [`[build-preflight] ${buildPreflight.message}`, result.output].filter(Boolean).join('\n')
-      );
+      const output = [`[build-preflight] ${buildPreflight.message}`, result.output]
+        .filter(Boolean)
+        .join('\n');
+      result.output = output.length <= MAX_OUTPUT_BYTES ? output : output.slice(-MAX_OUTPUT_BYTES);
     }
     if (check.id === 'build' && buildPreflight.action === 'error') {
-      result.output = truncateOutput(
-        [`[build-preflight] ${buildPreflight.message}`, result.output].filter(Boolean).join('\n')
-      );
+      const output = [`[build-preflight] ${buildPreflight.message}`, result.output]
+        .filter(Boolean)
+        .join('\n');
+      result.output = output.length <= MAX_OUTPUT_BYTES ? output : output.slice(-MAX_OUTPUT_BYTES);
     }
     checkResults.push(result);
     const statusLabel = result.status.toUpperCase();

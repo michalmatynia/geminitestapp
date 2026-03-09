@@ -1,4 +1,5 @@
-import type * as React from 'react';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   AiNode,
   AiPathRuntimeEvent,
@@ -20,7 +21,7 @@ import type {
 export type { QueuedRun } from '@/shared/lib/ai-paths';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import type { Toast } from '@/shared/contracts/ui';
+import type * as React from 'react';
 
 /**
  * The actual UI toast function type used in runtime hooks.
@@ -81,6 +82,7 @@ export interface LocalExecutionArgs {
   activePathId: string | null;
   activeTab: string;
   activeTrigger: string;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode: boolean;

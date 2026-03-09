@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import * as builders from './client-native-code-object-registry-contract-subset.builders';
 import {
   CLIENT_LEGACY_HANDLER_NODE_TYPES,
@@ -96,6 +97,45 @@ describe('client native code-object registry contract subset', () => {
     expect(mockAiJobsPoll).not.toHaveBeenCalled();
     expect(result.outputs?.['node-model']?.['status']).toBe('queued');
     expect(result.outputs?.['node-model']?.['jobId']).toBe('job-model-1');
+  });
+
+  it('forwards contextRegistry into queued client model jobs', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const contextRegistry: ContextRegistryConsumerEnvelope = {
+      refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
+      engineVersion: 'test-engine',
+    };
+
+    const result = await evaluateGraphClient({
+      nodes: [builders.buildPromptNode(), builders.buildModelNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model-context',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      contextRegistry,
+      runtimeKernelNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'graph_model',
+        payload: expect.objectContaining({
+          contextRegistry,
+        }),
+      })
+    );
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-model']?.['status']).toBe('queued');
   });
 
   it('blocks model nodes when prompt input is missing', async () => {

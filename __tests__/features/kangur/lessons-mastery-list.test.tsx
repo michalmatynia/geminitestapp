@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { render, screen } from '@/__tests__/test-utils';
+import { act, render, screen } from '@/__tests__/test-utils';
 import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
@@ -102,9 +102,20 @@ const lessonsSettingsValue = JSON.stringify([
 describe('Lessons page mastery list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurAuthMock.mockReturnValue({
-      user: null,
+      user: {
+        id: 'parent-ada',
+        activeLearner: {
+          id: 'learner-ada',
+        },
+      },
+      canAccessParentAssignments: true,
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     });
@@ -198,6 +209,7 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
@@ -242,5 +254,75 @@ describe('Lessons page mastery list', () => {
     expect(topBar).toBeInTheDocument();
     expect(topBar?.className).toContain('sticky');
     expect(topBar?.className).toContain('top-0');
+  });
+
+  it('renders top section instantly and then reveals lesson list after deferred content is ready', async () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
+      frameCallbacks.push(callback);
+      return 1;
+    });
+
+    window.history.replaceState({}, '', '/kangur/lessons');
+    renderLessonsPage();
+
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /nauka zegara/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Ladowanie lekcji...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-loading-fallback')).not.toBeInTheDocument();
+
+    expect(frameCallbacks).toHaveLength(1);
+    act(() => {
+      frameCallbacks[0](0);
+    });
+
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz beda gotowe.')).not.toBeInTheDocument();
+  });
+
+  it('keeps loading copy visible until deferred content resolves', async () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
+      frameCallbacks.push(callback);
+      return 1;
+    });
+
+    renderLessonsPage();
+
+    const section = screen.getByTestId('lessons-shell-transition');
+    expect(section).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-list-transition')).not.toBeInTheDocument();
+
+    act(() => {
+      frameCallbacks[0](0);
+    });
+
+    const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
+    expect(contentTransitionSection).toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz beda gotowe.')).not.toBeInTheDocument();
+    expect(screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')).toBeInTheDocument();
+  });
+
+  it('keeps a stable top section copy between initial and fully rendered states', async () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
+      frameCallbacks.push(callback);
+      return 1;
+    });
+
+    renderLessonsPage();
+
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /strona glowna/i })).toHaveLength(1);
+
+    act(() => {
+      frameCallbacks[0](0);
+    });
+
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
   });
 });

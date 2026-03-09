@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
 
 /**
@@ -142,6 +143,7 @@ export const agentCheckpointSchema = z.object({
   summaryCheckpoint: z.number().nullable().optional(),
   settings: agentPlanSettingsSchema.nullable().optional(),
   preferences: agentPlanPreferencesSchema.nullable().optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.nullable().optional(),
   updatedAt: z.string(),
 });
 
@@ -404,6 +406,8 @@ export const agentExecutionContextSchema = z.object({
   }),
   memoryKey: z.string().nullable(),
   memoryContext: z.array(z.string()),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.nullable().optional(),
+  contextRegistryPrompt: z.string().nullable().optional(),
   settings: agentPlanSettingsSchema,
   preferences: agentRuntimeExecutionPreferencesSchema,
   resolvedModel: z.string(),

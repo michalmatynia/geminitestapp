@@ -1,10 +1,10 @@
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiNode,
   AiPathsValidationStage,
   Edge,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
-import type { ToastOptions } from '@/shared/contracts/ui';
 import type {
   AiPathRuntimeProfileEvent,
   NodeRuntimeResolutionSource,
@@ -19,6 +19,7 @@ import type {
   RuntimeTraceCacheDecision,
   NodeHandler,
 } from '@/shared/contracts/ai-paths-runtime';
+import type { ToastOptions } from '@/shared/contracts/ui';
 import type { Toast } from '@/shared/contracts/ui';
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEvent;
@@ -163,6 +164,7 @@ export type EvaluateGraphOptions = {
   pathId?: string | undefined;
   pathName?: string | undefined;
   userId?: string | null | undefined;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   triggerEvent?: string | null | undefined;
   triggerNodeId?: string | null | undefined;
   triggerContext?: Record<string, unknown> | null | undefined;

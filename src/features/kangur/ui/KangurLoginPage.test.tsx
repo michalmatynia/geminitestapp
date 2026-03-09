@@ -13,6 +13,7 @@ const {
   routerRefreshMock,
   signOutMock,
   trackKangurClientEventMock,
+  useOptionalKangurAuthMock,
   useRouterMock,
   useSearchParamsMock,
 } = vi.hoisted(() => ({
@@ -22,6 +23,7 @@ const {
   routerRefreshMock: vi.fn(),
   signOutMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
+  useOptionalKangurAuthMock: vi.fn(),
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
@@ -40,9 +42,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: () => ({
-    checkAppState: checkAppStateMock,
-  }),
+  useOptionalKangurAuth: useOptionalKangurAuthMock,
 }));
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
@@ -74,6 +74,10 @@ describe('KangurLoginPage', () => {
     );
     signOutMock.mockResolvedValue(undefined);
     checkAppStateMock.mockResolvedValue(undefined);
+    useOptionalKangurAuthMock.mockReturnValue({
+      checkAppState: checkAppStateMock,
+      isAuthenticated: false,
+    });
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
@@ -94,6 +98,18 @@ describe('KangurLoginPage', () => {
           };
         }
 
+        if (url === '/api/auth/verify-credentials') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              challengeId: 'challenge-1',
+              mfaRequired: false,
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+
         if (url === '/api/auth/callback/credentials') {
           return {
             json: vi.fn().mockResolvedValue({ url: '/kangur/tests?focus=division' }),
@@ -102,11 +118,30 @@ describe('KangurLoginPage', () => {
           };
         }
 
-        if (url === '/api/kangur/auth/parent-magic-link/request') {
+        if (url === '/api/kangur/auth/parent-account/create') {
           return {
             json: vi.fn().mockResolvedValue({
               ok: true,
-              message: 'Wyslalismy link do logowania. Sprawdz skrzynke email.',
+              created: true,
+              emailVerified: false,
+              hasPassword: true,
+              message:
+                'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.',
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
+
+        if (url === '/api/kangur/auth/parent-email/verify') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              email: 'parent@example.com',
+              callbackUrl: '/kangur/tests?focus=division',
+              emailVerified: true,
+              message:
+                'Email zostal zweryfikowany. AI Tutor jest odblokowany. Mozesz zalogowac sie emailem i haslem.',
             }),
             ok: true,
             status: 200,
@@ -143,6 +178,7 @@ describe('KangurLoginPage', () => {
     expect(screen.getByLabelText('Haslo')).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Uczen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /magiczny link/i })).not.toBeInTheDocument();
   });
 
   it('submits parent email credentials through the shared login form', async () => {
@@ -165,6 +201,18 @@ describe('KangurLoginPage', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf', {
       credentials: 'same-origin',
     });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/verify-credentials',
+      expect.objectContaining({
+        body: JSON.stringify({
+          authFlow: 'kangur_parent',
+          email: 'parent@example.com',
+          password: 'secret123',
+        }),
+        credentials: 'same-origin',
+        method: 'POST',
+      })
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/auth/callback/credentials',
       expect.objectContaining({
@@ -220,6 +268,17 @@ describe('KangurLoginPage', () => {
             status: 200,
           };
         }
+        if (url === '/api/auth/verify-credentials') {
+          return {
+            json: vi.fn().mockResolvedValue({
+              ok: true,
+              challengeId: 'challenge-1',
+              mfaRequired: false,
+            }),
+            ok: true,
+            status: 200,
+          };
+        }
         if (url === '/api/auth/callback/credentials') {
           return {
             json: vi.fn().mockResolvedValue({ url: '/kangur/lessons' }),
@@ -246,118 +305,114 @@ describe('KangurLoginPage', () => {
     expect(locationAssignMock).not.toHaveBeenCalled();
   });
 
-  it('requests a parent magic link and shows confirmation in the shared form', async () => {
+  it('requests parent account creation email and shows confirmation in the shared form', async () => {
     const user = userEvent.setup();
+    const fetchMock = vi.mocked(fetch);
 
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
-    await user.click(screen.getByRole('button', { name: 'Wyslij magiczny link' }));
+    await user.type(screen.getByLabelText('Haslo'), 'Strong123!');
+    await user.click(screen.getByRole('button', { name: 'Utworz konto' }));
 
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/kangur/auth/parent-magic-link/request',
-      expect.objectContaining({
-        credentials: 'same-origin',
-        method: 'POST',
-      })
-    );
-    expect(
-      await screen.findByText('Wyslalismy link do logowania. Sprawdz skrzynke email.')
-    ).toBeVisible();
-  });
-
-  it('requires a one-time parent password setup after magic-link account creation', async () => {
-    const user = userEvent.setup();
-
-    useSearchParamsMock.mockReturnValue(
-      new URLSearchParams(
-        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1'
-      )
-    );
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        if (url === '/api/kangur/auth/learner-signout') {
-          return {
-            json: vi.fn().mockResolvedValue({ ok: true }),
-            ok: true,
-            status: 200,
-          };
-        }
-        if (url === '/api/kangur/auth/parent-magic-link/exchange') {
-          return {
-            json: vi.fn().mockResolvedValue({
-              ok: true,
-              email: 'parent@example.com',
-              challengeId: 'challenge-1',
-              callbackUrl: '/kangur/tests?focus=division',
-              emailVerified: false,
-              hasPassword: false,
-            }),
-            ok: true,
-            status: 200,
-          };
-        }
-        if (url === '/api/auth/csrf') {
-          return {
-            json: vi.fn().mockResolvedValue({ csrfToken: 'kangur-parent-csrf' }),
-            ok: true,
-            status: 200,
-          };
-        }
-        if (url === '/api/auth/callback/credentials') {
-          return {
-            json: vi.fn().mockResolvedValue({ url: '/kangur/tests?focus=division' }),
-            ok: true,
-            status: 200,
-          };
-        }
-        if (url === '/api/kangur/auth/parent-password') {
-          return {
-            json: vi.fn().mockResolvedValue({
-              ok: true,
-              email: 'parent@example.com',
-              hasPassword: true,
-              message:
-                'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
-            }),
-            ok: true,
-            status: 200,
-          };
-        }
-
-        throw new Error(`Unexpected fetch: ${url}`);
-      })
-    );
-
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
-
-    expect(await screen.findByText('Ustaw haslo rodzica')).toBeVisible();
-    expect(screen.getByText('parent@example.com')).toBeVisible();
-    expect(screen.getByText(/jest juz zalogowane magicznym linkiem\./)).toBeVisible();
-    expect(checkAppStateMock).toHaveBeenCalledTimes(1);
-
-    await user.type(screen.getByLabelText('Nowe haslo'), 'Magic123!');
-    await user.type(screen.getByLabelText('Powtorz haslo'), 'Magic123!');
-    await user.click(screen.getByRole('button', { name: 'Ustaw haslo i przejdz dalej' }));
-
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/kangur/auth/parent-password',
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/parent-account/create',
       expect.objectContaining({
         body: JSON.stringify({
-          password: 'Magic123!',
+          email: 'parent@example.com',
+          password: 'Strong123!',
+          callbackUrl: '/kangur/tests?focus=division',
         }),
         credentials: 'same-origin',
         method: 'POST',
       })
     );
-    await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
-        scroll: false,
-      });
+    expect(
+      await screen.findByText(
+        'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.'
+      )
+    ).toBeVisible();
+  });
+
+  it('blocks parent login until the email is verified', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url === '/api/kangur/auth/learner-signout') {
+        return {
+          json: vi.fn().mockResolvedValue({ ok: true }),
+          ok: true,
+          status: 200,
+        };
+      }
+      if (url === '/api/auth/verify-credentials') {
+        return {
+          json: vi.fn().mockResolvedValue({
+            ok: false,
+            code: 'EMAIL_UNVERIFIED',
+            message: 'Email verification is required.',
+          }),
+          ok: true,
+          status: 200,
+        };
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
     });
-    expect(checkAppStateMock).toHaveBeenCalledTimes(2);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    await user.type(screen.getByLabelText('Email rodzica lub nick ucznia'), 'parent@example.com');
+    await user.type(screen.getByLabelText('Haslo'), 'secret123');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj haslem' }));
+
+    expect(
+      await screen.findByText(
+        'Potwierdz email rodzica, zanim sie zalogujesz. Sprawdz skrzynke i kliknij link potwierdzajacy.'
+      )
+    ).toBeVisible();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/auth/callback/credentials',
+      expect.anything()
+    );
+    expect(routerPushMock).not.toHaveBeenCalled();
+  });
+
+  it('verifies parent email from the confirmation link and prefills the parent email', async () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1'
+      )
+    );
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    await waitFor(() => {
+      expect(checkAppStateMock).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByDisplayValue('parent@example.com')).toBeVisible();
+    expect(
+      screen.getByText(
+        'Email zostal zweryfikowany. AI Tutor jest odblokowany. Mozesz zalogowac sie emailem i haslem.'
+      )
+    ).toBeVisible();
+    expect(routerPushMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a deprecation error when an old parent magic link is opened', async () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams(
+        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1'
+      )
+    );
+
+    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    expect(
+      await screen.findByText(
+        'Logowanie linkiem z emaila nie jest juz dostepne. Zaloguj sie emailem i haslem albo utworz konto.'
+      )
+    ).toBeVisible();
   });
 
   it('submits student nick credentials after clearing any parent session', async () => {

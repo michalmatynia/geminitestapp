@@ -1,16 +1,17 @@
+import { NextResponse } from 'next/server';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
-
-import {
-  kangurParentMagicLinkRequestSchema,
-  postKangurParentMagicLinkRequestHandler,
-} from './handler';
-
-export const POST = apiHandler(postKangurParentMagicLinkRequestHandler, {
-  source: 'kangur.auth.parent-magic-link.request.POST',
-  service: 'kangur.api',
-  successLogging: 'all',
-  bodySchema: kangurParentMagicLinkRequestSchema,
-});
+export async function POST(): Promise<Response> {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: {
+        message:
+          'Logowanie linkiem z emaila nie jest juz dostepne. Utworz konto albo zaloguj sie emailem i haslem.',
+      },
+    },
+    { status: 410 }
+  );
+}

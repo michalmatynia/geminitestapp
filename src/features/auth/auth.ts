@@ -56,7 +56,6 @@ const credentialsProvider = Credentials({
       const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
       const challengeId = credentials?.['challengeId']?.toString() ?? '';
       const authFlow = credentials?.['authFlow']?.toString().trim() ?? '';
-      const allowUnverifiedEmail = authFlow === 'kangur_parent';
 
       if (!email || (!password && !challengeId)) {
         // Log non-critical info without awaiting
@@ -66,15 +65,20 @@ const credentialsProvider = Credentials({
 
       const ip = extractClientIp(request);
 
-      // Parallelize initial security checks and user lookup
-      const [allowed, user] = await Promise.all([
+      const [allowed, challengeResult] = await Promise.all([
         checkLoginAllowed({ email, ip }),
         challengeId
-          ? consumeLoginChallenge({ id: challengeId, email, ip }).then((c) =>
-            c ? findAuthUserById(c.userId) : null
-          )
-          : findAuthUserByEmail(email),
+          ? consumeLoginChallenge({ id: challengeId, email, ip }).then(async (challenge) => ({
+              challenge,
+              user: challenge ? await findAuthUserById(challenge.userId) : null,
+            }))
+          : findAuthUserByEmail(email).then((user) => ({
+              challenge: null,
+              user,
+            })),
       ]);
+      const user = challengeResult.user;
+      const challenge = challengeResult.challenge;
 
       if (!allowed.allowed) {
         void ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
@@ -100,12 +104,13 @@ const credentialsProvider = Credentials({
         getAuthSecurityProfile(user.id),
         getAuthUserPageSettings(),
       ]);
+      const requiresVerifiedEmail = settings.requireEmailVerification || authFlow === 'kangur_parent';
 
       if (security.bannedAt || security.disabledAt) {
         void recordLoginFailure({ email, ip, request });
         return null;
       }
-      if (settings.requireEmailVerification && !user.emailVerified && !allowUnverifiedEmail) {
+      if (requiresVerifiedEmail && !user.emailVerified) {
         void recordLoginFailure({ email, ip, request });
         return null;
       }
@@ -165,7 +170,7 @@ const credentialsProvider = Credentials({
 
       void recordLoginSuccess({ email, ip, request, userId: user.id });
 
-      const loginMethod = challengeId ? 'magic_link' : 'password';
+      const loginMethod = challenge?.purpose === 'magic_login' ? 'magic_link' : 'password';
       const activitySurface = authFlow === 'kangur_parent' ? 'kangur' : null;
 
       return {

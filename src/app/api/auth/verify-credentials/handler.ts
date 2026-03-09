@@ -14,6 +14,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 export const payloadSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
+  authFlow: z.string().trim().optional(),
 });
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -22,6 +23,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
   const email = data.email;
   const password = data.password;
+  const authFlow = data.authFlow?.trim() ?? '';
   const ip = extractClientIp(req);
   await logAuthEvent({
     req,
@@ -71,6 +73,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
   const security = await getAuthSecurityProfile(user.id);
   const settings = await getAuthUserPageSettings();
+  const requiresVerifiedEmail = settings.requireEmailVerification || authFlow === 'kangur_parent';
 
   if (security.bannedAt) {
     await recordLoginFailure({ email, ip, request: req });
@@ -104,7 +107,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       message: 'This account is disabled.',
     });
   }
-  if (settings.requireEmailVerification && !user.emailVerified) {
+  if (requiresVerifiedEmail && !user.emailVerified) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,

@@ -1,33 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  createAuthUserWithEmailMock,
+  findAuthUserByEmailMock,
+  findAuthUserByIdMock,
   getAuthSecurityProfileMock,
   sendAuthEmailMock,
   shouldExposeAuthEmailDebugMock,
   consumeEmailVerificationChallengeMock,
-  consumeMagicEmailLinkChallengeMock,
   createEmailVerificationChallengeMock,
-  createMagicEmailLinkChallengeMock,
-  createMagicLoginChallengeMock,
-  ensureAuthUserWithEmailMock,
   getAuthSecurityPolicyMock,
   markAuthUserEmailVerifiedMock,
-  findAuthUserByIdMock,
   setAuthUserPasswordMock,
   validatePasswordStrengthMock,
 } = vi.hoisted(() => ({
+  createAuthUserWithEmailMock: vi.fn(),
+  findAuthUserByEmailMock: vi.fn(),
+  findAuthUserByIdMock: vi.fn(),
   getAuthSecurityProfileMock: vi.fn(),
   sendAuthEmailMock: vi.fn(),
   shouldExposeAuthEmailDebugMock: vi.fn(),
   consumeEmailVerificationChallengeMock: vi.fn(),
-  consumeMagicEmailLinkChallengeMock: vi.fn(),
   createEmailVerificationChallengeMock: vi.fn(),
-  createMagicEmailLinkChallengeMock: vi.fn(),
-  createMagicLoginChallengeMock: vi.fn(),
-  ensureAuthUserWithEmailMock: vi.fn(),
   getAuthSecurityPolicyMock: vi.fn(),
   markAuthUserEmailVerifiedMock: vi.fn(),
-  findAuthUserByIdMock: vi.fn(),
   setAuthUserPasswordMock: vi.fn(),
   validatePasswordStrengthMock: vi.fn(),
 }));
@@ -43,19 +39,17 @@ vi.mock('@/features/auth/services/auth-email-delivery', () => ({
 
 vi.mock('@/features/auth/services/auth-login-challenge', () => ({
   consumeEmailVerificationChallenge: consumeEmailVerificationChallengeMock,
-  consumeMagicEmailLinkChallenge: consumeMagicEmailLinkChallengeMock,
   createEmailVerificationChallenge: createEmailVerificationChallengeMock,
-  createMagicEmailLinkChallenge: createMagicEmailLinkChallengeMock,
-  createMagicLoginChallenge: createMagicLoginChallengeMock,
 }));
 
 vi.mock('@/features/auth/services/auth-user-write-service', () => ({
-  ensureAuthUserWithEmail: ensureAuthUserWithEmailMock,
+  createAuthUserWithEmail: createAuthUserWithEmailMock,
   markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
   setAuthUserPassword: setAuthUserPasswordMock,
 }));
 
 vi.mock('@/features/auth/server', () => ({
+  findAuthUserByEmail: findAuthUserByEmailMock,
   findAuthUserById: findAuthUserByIdMock,
   getAuthSecurityPolicy: getAuthSecurityPolicyMock,
   normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
@@ -63,9 +57,8 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 import {
-  buildKangurParentMagicLinkDebugPayload,
-  exchangeKangurParentMagicLink,
-  requestKangurParentMagicLink,
+  buildKangurParentAccountCreateDebugPayload,
+  createKangurParentAccount,
   setKangurParentPassword,
   verifyKangurParentEmail,
 } from './parent-email-auth';
@@ -92,20 +85,14 @@ describe('parent email auth service', () => {
     });
   });
 
-  it('creates magic login and verification links for an unverified parent account', async () => {
-    ensureAuthUserWithEmailMock.mockResolvedValue({
-      created: true,
-      user: {
-        id: 'parent-1',
-        email: 'parent@example.com',
-        name: 'Parent',
-        passwordHash: null,
-        emailVerified: null,
-      },
-    });
-    createMagicEmailLinkChallengeMock.mockResolvedValue({
-      id: 'magic-link-1',
-      expiresAt: new Date('2026-03-08T21:00:00.000Z'),
+  it('creates a new unverified parent account with a password and verification email', async () => {
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    createAuthUserWithEmailMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      name: 'parent',
+      passwordHash: 'stored-password-hash',
+      emailVerified: null,
     });
     createEmailVerificationChallengeMock.mockResolvedValue({
       id: 'verify-link-1',
@@ -118,21 +105,21 @@ describe('parent email auth service', () => {
       process.env['PLAYWRIGHT_BASE_URL']?.trim() ||
       'http://localhost:3000';
 
-    const result = await requestKangurParentMagicLink({
+    const result = await createKangurParentAccount({
       email: 'Parent@example.com',
+      password: 'Strong123!',
       callbackUrl: '/kangur/tests?focus=division',
-      request: new Request('https://example.com/api/kangur/auth/parent-magic-link/request'),
+      request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
     });
 
-    expect(ensureAuthUserWithEmailMock).toHaveBeenCalledWith({
+    expect(findAuthUserByEmailMock).toHaveBeenCalledWith('parent@example.com');
+    expect(createAuthUserWithEmailMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
       name: 'parent',
+      passwordHash: expect.any(String),
+      emailVerified: null,
     });
-    expect(createMagicEmailLinkChallengeMock).toHaveBeenCalledWith({
-      userId: 'parent-1',
-      email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
-    });
+    expect(createAuthUserWithEmailMock.mock.calls[0]?.[0]?.passwordHash).not.toBe('Strong123!');
     expect(createEmailVerificationChallengeMock).toHaveBeenCalledWith({
       userId: 'parent-1',
       email: 'parent@example.com',
@@ -141,52 +128,52 @@ describe('parent email auth service', () => {
     expect(sendAuthEmailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'parent@example.com',
-        purpose: 'magic_login',
-        text: expect.stringContaining('magicLinkToken=magic-link-1'),
+        purpose: 'email_verification',
+        text: expect.stringContaining('verifyEmailToken=verify-link-1'),
       })
     );
     expect(result).toEqual({
       email: 'parent@example.com',
       created: true,
       emailVerified: false,
-      hasPassword: false,
-      magicLinkUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1`,
+      hasPassword: true,
       verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
-    expect(buildKangurParentMagicLinkDebugPayload(result)).toEqual({
-      magicLinkUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1`,
+    expect(buildKangurParentAccountCreateDebugPayload(result)).toEqual({
       verificationUrl: `${expectedOrigin}/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1`,
     });
   });
 
-  it('exchanges a magic email link token for a sign-in challenge', async () => {
-    consumeMagicEmailLinkChallengeMock.mockResolvedValue({
-      userId: 'parent-1',
-      email: 'parent@example.com',
-      callbackUrl: '/kangur/game',
-    });
-    findAuthUserByIdMock.mockResolvedValue({
+  it('resends verification email for an existing unverified parent account', async () => {
+    findAuthUserByEmailMock.mockResolvedValue({
       id: 'parent-1',
       email: 'parent@example.com',
+      name: 'Parent',
+      passwordHash: 'existing-password-hash',
       emailVerified: null,
     });
-    createMagicLoginChallengeMock.mockResolvedValue({
-      id: 'challenge-1',
-      expiresAt: new Date('2026-03-08T21:05:00.000Z'),
+    createEmailVerificationChallengeMock.mockResolvedValue({
+      id: 'verify-link-2',
+      expiresAt: new Date('2026-03-15T21:00:00.000Z'),
     });
 
-    await expect(exchangeKangurParentMagicLink('magic-link-1')).resolves.toEqual({
+    await expect(
+      createKangurParentAccount({
+        email: 'parent@example.com',
+        password: 'Different123!',
+        callbackUrl: '/kangur/game',
+        request: new Request('https://example.com/api/kangur/auth/parent-account/create'),
+      })
+    ).resolves.toEqual({
       email: 'parent@example.com',
-      challengeId: 'challenge-1',
-      callbackUrl: '/kangur/game',
+      created: false,
       emailVerified: false,
-      hasPassword: false,
+      hasPassword: true,
+      verificationUrl:
+        'http://localhost:3000/kangur/login?callbackUrl=%2Fkangur%2Fgame&verifyEmailToken=verify-link-2',
     });
-    expect(createMagicLoginChallengeMock).toHaveBeenCalledWith({
-      userId: 'parent-1',
-      email: 'parent@example.com',
-      callbackUrl: '/kangur/game',
-    });
+    expect(createAuthUserWithEmailMock).not.toHaveBeenCalled();
+    expect(setAuthUserPasswordMock).not.toHaveBeenCalled();
   });
 
   it('marks a parent email as verified from the verification token', async () => {
@@ -209,7 +196,28 @@ describe('parent email auth service', () => {
     expect(markAuthUserEmailVerifiedMock).toHaveBeenCalledWith('parent-1');
   });
 
-  it('stores a password for a parent account that was created with magic-link-only login', async () => {
+  it('rejects parent account creation when the email already belongs to a verified account', async () => {
+    findAuthUserByEmailMock.mockResolvedValue({
+      id: 'parent-1',
+      email: 'parent@example.com',
+      passwordHash: 'existing-password-hash',
+      emailVerified: new Date('2026-03-08T21:10:00.000Z'),
+    });
+
+    await expect(
+      createKangurParentAccount({
+        email: 'parent@example.com',
+        password: 'Strong123!',
+        callbackUrl: '/kangur',
+      })
+    ).rejects.toMatchObject({
+      message: 'Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.',
+    });
+    expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
+    expect(sendAuthEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('stores a password for a legacy parent account without one', async () => {
     findAuthUserByIdMock.mockResolvedValue({
       id: 'parent-1',
       email: 'parent@example.com',

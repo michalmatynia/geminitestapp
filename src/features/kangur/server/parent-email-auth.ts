@@ -1,21 +1,20 @@
 import 'server-only';
 
+import { hash } from 'bcryptjs';
+
 import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
 import { getAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
-import { shouldExposeAuthEmailDebug, sendAuthEmail } from '@/features/auth/services/auth-email-delivery';
+import { sendAuthEmail, shouldExposeAuthEmailDebug } from '@/features/auth/services/auth-email-delivery';
 import {
   consumeEmailVerificationChallenge,
-  consumeMagicEmailLinkChallenge,
   createEmailVerificationChallenge,
-  createMagicLoginChallenge,
-  createMagicEmailLinkChallenge,
 } from '@/features/auth/services/auth-login-challenge';
 import {
-  ensureAuthUserWithEmail,
+  createAuthUserWithEmail,
   markAuthUserEmailVerified,
   setAuthUserPassword,
 } from '@/features/auth/services/auth-user-write-service';
-import { findAuthUserById, normalizeAuthEmail } from '@/features/auth/server';
+import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from '@/features/auth/server';
 import {
   getKangurLoginHref,
   KANGUR_BASE_PATH,
@@ -23,13 +22,12 @@ import {
 } from '@/features/kangur/config/routing';
 import { conflictError, forbiddenError, internalError, validationError } from '@/shared/errors/app-error';
 
-type KangurParentEmailRequestResult = {
+type KangurParentAccountCreateResult = {
   email: string;
   created: boolean;
   emailVerified: boolean;
   hasPassword: boolean;
-  magicLinkUrl: string;
-  verificationUrl: string | null;
+  verificationUrl: string;
 };
 
 const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
@@ -71,7 +69,6 @@ const resolveAppOrigin = (request: Request | null | undefined): string => {
 const buildAbsoluteKangurLoginUrl = (input: {
   origin: string;
   callbackUrl?: string | null;
-  magicLinkToken?: string | null;
   verifyEmailToken?: string | null;
 }): string => {
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
@@ -81,9 +78,6 @@ const buildAbsoluteKangurLoginUrl = (input: {
   const href = getKangurLoginHref(basePath, callbackUrl);
   const resolved = new URL(href, input.origin);
 
-  if (input.magicLinkToken) {
-    resolved.searchParams.set('magicLinkToken', input.magicLinkToken);
-  }
   if (input.verifyEmailToken) {
     resolved.searchParams.set('verifyEmailToken', input.verifyEmailToken);
   }
@@ -101,92 +95,103 @@ const assertUserLoginAllowed = async (userId: string): Promise<void> => {
   }
 };
 
-const buildMagicLinkEmailContent = (input: {
-  email: string;
-  magicLinkUrl: string;
-  verificationUrl: string | null;
-}): { subject: string; text: string; html: string } => {
-  const verificationSection = input.verificationUrl
-    ? [
-      '',
-      'Aby odblokowac AI Tutora, zweryfikuj email tutaj:',
-      input.verificationUrl,
-    ].join('\n')
-    : '';
+const assertValidParentPassword = async (password: string): Promise<void> => {
+  const policy = await getAuthSecurityPolicy();
+  const passwordCheck = validatePasswordStrength(password, policy);
+  if (!passwordCheck.ok) {
+    throw validationError(
+      passwordCheck.errors[0] ?? 'Haslo nie spelnia wymagan bezpieczenstwa.',
+      {
+        issues: passwordCheck.errors,
+      }
+    );
+  }
+};
 
+const buildVerificationEmailContent = (input: {
+  email: string;
+  verificationUrl: string;
+}): { subject: string; text: string; html: string } => {
   const text = [
     `Czesc ${buildParentDisplayName(input.email)},`,
     '',
-    'Kliknij link ponizej, aby zalogowac sie do Kangura:',
-    input.magicLinkUrl,
-    verificationSection,
+    'Konto rodzica w Kangurze jest prawie gotowe.',
+    'Kliknij link ponizej, aby potwierdzic email:',
+    input.verificationUrl,
     '',
-    'Jesli to nie Ty prosiles(-as) o logowanie, zignoruj ta wiadomosc.',
+    'Po potwierdzeniu emaila AI Tutor zostanie odblokowany.',
+    '',
+    'Jesli to nie Ty tworzysz konto, zignoruj ta wiadomosc.',
   ].join('\n');
 
   const html = [
     `<p>Czesc ${buildParentDisplayName(input.email)},</p>`,
-    '<p>Kliknij link ponizej, aby zalogowac sie do Kangura:</p>',
-    `<p><a href="${input.magicLinkUrl}">${input.magicLinkUrl}</a></p>`,
-    input.verificationUrl
-      ? [
-        '<p>Aby odblokowac AI Tutora, zweryfikuj email tutaj:</p>',
-        `<p><a href="${input.verificationUrl}">${input.verificationUrl}</a></p>`,
-      ].join('')
-      : '',
-    '<p>Jesli to nie Ty prosiles(-as) o logowanie, zignoruj ta wiadomosc.</p>',
+    '<p>Konto rodzica w Kangurze jest prawie gotowe.</p>',
+    '<p>Kliknij link ponizej, aby potwierdzic email:</p>',
+    `<p><a href="${input.verificationUrl}">${input.verificationUrl}</a></p>`,
+    '<p>Po potwierdzeniu emaila AI Tutor zostanie odblokowany.</p>',
+    '<p>Jesli to nie Ty tworzysz konto, zignoruj ta wiadomosc.</p>',
   ].join('');
 
   return {
-    subject: 'Kangur: link do logowania',
+    subject: 'Kangur: potwierdz email rodzica',
     text,
     html,
   };
 };
 
-export const requestKangurParentMagicLink = async (input: {
+export const createKangurParentAccount = async (input: {
   email: string;
+  password: string;
   callbackUrl?: string | null;
   request?: Request | null;
-}): Promise<KangurParentEmailRequestResult> => {
+}): Promise<KangurParentAccountCreateResult> => {
   const email = normalizeAuthEmail(input.email);
-  const { user, created } = await ensureAuthUserWithEmail({
-    email,
-    name: buildParentDisplayName(email),
-  });
-
-  await assertUserLoginAllowed(user.id);
-
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
-  const magicLinkToken = await createMagicEmailLinkChallenge({
+  const existingUser = await findAuthUserByEmail(email);
+  let created = false;
+  let user = existingUser;
+
+  if (!user) {
+    await assertValidParentPassword(input.password);
+    const passwordHash = await hash(input.password, 12);
+    user = await createAuthUserWithEmail({
+      email,
+      name: buildParentDisplayName(email),
+      passwordHash,
+      emailVerified: null,
+    });
+    created = true;
+  } else {
+    await assertUserLoginAllowed(user.id);
+    if (user.emailVerified) {
+      throw conflictError('Konto z tym emailem juz istnieje. Zaloguj sie emailem i haslem.');
+    }
+
+    if (!(typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0)) {
+      await assertValidParentPassword(input.password);
+      const updatedUser = await setAuthUserPassword(user.id, input.password);
+      if (!updatedUser?.email) {
+        throw internalError('Nie udalo sie zapisac hasla rodzica.');
+      }
+      user = updatedUser;
+    }
+  }
+
+  const verificationToken = await createEmailVerificationChallenge({
     userId: user.id,
     email,
     callbackUrl,
   });
-  const verificationToken = user.emailVerified
-    ? null
-    : await createEmailVerificationChallenge({
-      userId: user.id,
-      email,
-      callbackUrl,
-    });
 
   const origin = resolveAppOrigin(input.request);
-  const magicLinkUrl = buildAbsoluteKangurLoginUrl({
+  const verificationUrl = buildAbsoluteKangurLoginUrl({
     origin,
     callbackUrl,
-    magicLinkToken: magicLinkToken.id,
+    verifyEmailToken: verificationToken.id,
   });
-  const verificationUrl = verificationToken
-    ? buildAbsoluteKangurLoginUrl({
-      origin,
-      callbackUrl,
-      verifyEmailToken: verificationToken.id,
-    })
-    : null;
-  const emailContent = buildMagicLinkEmailContent({
+  const emailContent = buildVerificationEmailContent({
     email,
-    magicLinkUrl,
     verificationUrl,
   });
 
@@ -195,55 +200,20 @@ export const requestKangurParentMagicLink = async (input: {
     subject: emailContent.subject,
     text: emailContent.text,
     html: emailContent.html,
-    purpose: 'magic_login',
+    purpose: 'email_verification',
     metadata: {
       callbackUrl,
       created,
-      emailVerified: Boolean(user.emailVerified),
+      emailVerified: false,
     },
   });
 
   return {
     email,
     created,
-    emailVerified: Boolean(user.emailVerified),
+    emailVerified: false,
     hasPassword: Boolean(user.passwordHash),
-    magicLinkUrl,
     verificationUrl,
-  };
-};
-
-export const exchangeKangurParentMagicLink = async (tokenId: string): Promise<{
-  email: string;
-  challengeId: string;
-  callbackUrl: string | null;
-  emailVerified: boolean;
-  hasPassword: boolean;
-}> => {
-  const token = await consumeMagicEmailLinkChallenge(tokenId);
-  if (!token) {
-    throw forbiddenError('This magic login link is no longer valid.');
-  }
-
-  await assertUserLoginAllowed(token.userId);
-
-  const user = await findAuthUserById(token.userId);
-  if (!user?.email) {
-    throw forbiddenError('This magic login link is no longer valid.');
-  }
-
-  const challenge = await createMagicLoginChallenge({
-    userId: user.id,
-    email: user.email,
-    callbackUrl: token.callbackUrl,
-  });
-
-  return {
-    email: user.email,
-    challengeId: challenge.id,
-    callbackUrl: token.callbackUrl,
-    emailVerified: Boolean(user.emailVerified),
-    hasPassword: Boolean(user.passwordHash),
   };
 };
 
@@ -307,15 +277,13 @@ export const setKangurParentPassword = async (input: {
   };
 };
 
-export const buildKangurParentMagicLinkDebugPayload = (
-  result: KangurParentEmailRequestResult
+export const buildKangurParentAccountCreateDebugPayload = (
+  result: KangurParentAccountCreateResult
 ): {
-  magicLinkUrl: string;
-  verificationUrl: string | null;
+  verificationUrl: string;
 } | null =>
   shouldExposeAuthEmailDebug()
     ? {
-      magicLinkUrl: result.magicLinkUrl,
-      verificationUrl: result.verificationUrl,
-    }
+        verificationUrl: result.verificationUrl,
+      }
     : null;

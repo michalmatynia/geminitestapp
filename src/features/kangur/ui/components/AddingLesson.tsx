@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
-  KangurFeatureHeader,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 
@@ -179,24 +177,34 @@ export default function AddingLesson(): React.JSX.Element {
 
   if (activeSection === 'synthesis') {
     return (
-      <div className='flex w-full flex-col items-center gap-4'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
+      <LessonActivityStage
+        accent='amber'
+        headerTestId='adding-lesson-synthesis-header'
+        icon='🎼'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='adding-lesson-synthesis-shell'
+        title='Synteza dodawania'
+      >
         <AddingSynthesisGame onFinish={() => setActiveSection(null)} />
-      </div>
+      </LessonActivityStage>
     );
   }
 
   if (activeSection === 'game') {
     return (
-      <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurFeatureHeader accent='amber' icon='🎮' title='Gra z piłkami!' />
+      <LessonActivityStage
+        accent='amber'
+        headerTestId='adding-lesson-game-header'
+        icon='🎮'
+        maxWidthClassName='max-w-sm'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='adding-lesson-game-shell'
+        title='Gra z piłkami!'
+      >
         <AddingBallGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
-      </div>
+      </LessonActivityStage>
     );
   }
 
@@ -204,6 +212,7 @@ export default function AddingLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-orange-400'

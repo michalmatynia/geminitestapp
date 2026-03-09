@@ -24,6 +24,7 @@ import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -236,12 +237,14 @@ export function useAiPathsPersistence(
         const activeConfigKey = `${PATH_CONFIG_PREFIX}${resolvedActivePathId}`;
         const stageBStartedAt = Date.now();
         let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
+        let activeConfigValue: string | null = null;
         try {
           const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
             timeoutMs: 10_000,
           });
           const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
           if (configItem?.value) {
+            activeConfigValue = configItem.value;
             try {
               const fallbackName = loadedPaths.find(
                 (path: PathMeta): boolean => path.id === resolvedActivePathId
@@ -273,6 +276,15 @@ export function useAiPathsPersistence(
         }
         const stageBDurationMs = Date.now() - stageBStartedAt;
         config = sanitizePathConfig(config);
+        if (activeConfigValue) {
+          void persistLegacyTriggerContextModeRepair({
+            pathId: resolvedActivePathId,
+            rawPayload: activeConfigValue,
+            repairedConfig: config,
+            source: 'useAiPathsPersistence',
+            action: 'persistActivePathLegacyTriggerContextModeRepair',
+          });
+        }
 
         setActivePathId(resolvedActivePathId);
         setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
@@ -473,6 +485,13 @@ export function useAiPathsPersistence(
               const parsed = resolveLoadedPathConfig(item.value, pathId, fallbackName);
               const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
               if (!sanitized) return;
+              void persistLegacyTriggerContextModeRepair({
+                pathId,
+                rawPayload: item.value,
+                repairedConfig: sanitized,
+                source: 'useAiPathsPersistence',
+                action: 'persistPrefetchedLegacyTriggerContextModeRepair',
+              });
               hydratedConfigs[pathId] = sanitized;
             } catch (error) {
               logClientError(error, {

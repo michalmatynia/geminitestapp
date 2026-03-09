@@ -41,13 +41,13 @@ describe('GeometryDrawingGame', () => {
     const difficultyShell = screen.getByTestId('geometry-difficulty-shell');
 
     expect(screen.getByRole('group', { name: 'Poziom trudnosci figur' })).toBeInTheDocument();
-    expect(screen.getByText('1/4')).toBeInTheDocument();
+    expect(screen.getByTestId('geometry-drawing-progress-label')).toHaveTextContent('1/4');
     expect(screen.getByTestId('geometry-drawing-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('geometry-drawing-progress-bar')).toHaveAttribute(
       'aria-valuetext',
       'Runda 1 z 4'
     );
-    expect(difficultyShell).toHaveClass('glass-panel', 'border-white/75', 'bg-white/86');
+    expect(difficultyShell).toHaveClass('glass-panel', 'border-white/88', 'bg-white/94');
     expect(screen.getByTestId('geometry-drawing-round-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',
@@ -64,7 +64,7 @@ describe('GeometryDrawingGame', () => {
 
     fireEvent.click(proButton);
 
-    expect(screen.getByText('1/6')).toBeInTheDocument();
+    expect(screen.getByTestId('geometry-drawing-progress-label')).toHaveTextContent('1/6');
     expect(starterButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(proButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(starterButton).toHaveAttribute('aria-pressed', 'false');

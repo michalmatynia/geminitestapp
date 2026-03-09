@@ -4,10 +4,12 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { internalError } from '@/shared/errors/app-error';
+import type { KangurQuestionsManagerInitialView } from '../question-manager-view';
 
 type KangurQuestionsManagerRuntimeContextValue = {
   suite: KangurTestSuite;
   onClose: () => void;
+  initialView?: KangurQuestionsManagerInitialView;
 };
 
 const KangurQuestionsManagerRuntimeContext =
@@ -20,14 +22,16 @@ type KangurQuestionsManagerRuntimeProviderProps = KangurQuestionsManagerRuntimeC
 export function KangurQuestionsManagerRuntimeProvider({
   suite,
   onClose,
+  initialView,
   children,
 }: KangurQuestionsManagerRuntimeProviderProps): React.JSX.Element {
   const value = useMemo(
     () => ({
       suite,
       onClose,
+      initialView,
     }),
-    [onClose, suite]
+    [initialView, onClose, suite]
   );
 
   return (

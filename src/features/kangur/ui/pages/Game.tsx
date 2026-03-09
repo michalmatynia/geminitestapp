@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 
-import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
+import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
 import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
@@ -16,22 +16,29 @@ import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/Kangur
 import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
 import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
-import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
-import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
+import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
+import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 
 const GAME_BRAND_NAME = 'Sprycio';
 const GAME_MAIN_ID = 'kangur-game-main';
 const GAME_TITLE_ID = 'kangur-game-page-title';
 const GAME_SCREEN_TITLE_ID = 'kangur-game-screen-title';
+const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
+  'training',
+  'kangur_setup',
+  'operation',
+  'calendar_quiz',
+  'geometry_quiz',
+]);
 
 const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
   home: 'Ekran startowy',
@@ -55,6 +62,18 @@ const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
   operation: 'Wybierz rodzaj matematycznej gry i poziom trudnosci.',
   playing: 'Rozwiaz aktualne pytanie bez podpowiedzi z gotowa odpowiedzia.',
   result: 'Sprawdz wynik gry i zdecyduj, co cwiczyc dalej.',
+};
+
+const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
+  if (!heading) {
+    return;
+  }
+
+  try {
+    heading.focus({ preventScroll: true });
+  } catch {
+    heading.focus();
+  }
 };
 
 function GameContent(): React.JSX.Element {
@@ -135,7 +154,11 @@ function GameContent(): React.JSX.Element {
     }
 
     const frameId = window.requestAnimationFrame(() => {
-      screenHeadingRef.current?.focus();
+      if (GAME_TOP_RESET_SCREENS.has(screen)) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
+
+      focusGameScreenHeading(screenHeadingRef.current);
     });
 
     previousScreenRef.current = screen;
@@ -252,7 +275,7 @@ function GameContent(): React.JSX.Element {
             {screen === 'calendar_quiz' ? (
               renderScreen(
                 'calendar_quiz',
-                'w-full max-w-lg flex flex-col items-center gap-4',
+                'w-full flex flex-col items-center',
                 <KangurGameCalendarTrainingWidget />
               )
             ) : null}
@@ -260,7 +283,7 @@ function GameContent(): React.JSX.Element {
             {screen === 'geometry_quiz' ? (
               renderScreen(
                 'geometry_quiz',
-                'w-full max-w-lg flex flex-col items-center gap-4',
+                'w-full flex flex-col items-center',
                 <KangurGameGeometryTrainingWidget />
               )
             ) : null}

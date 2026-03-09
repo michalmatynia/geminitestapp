@@ -58,6 +58,7 @@ import {
   parseKangurLessons,
 } from '../settings';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
@@ -82,9 +83,9 @@ import {
   toLessonFormData,
   upsertLesson,
 } from './utils';
+import { clearLessonContentEditorDraft } from './lesson-content-editor-drafts';
 
 import type { LessonFormData, LessonTreeMode } from './types';
-
 
 function AdminKangurLessonsManagerRegistrySource({
   registrySource,
@@ -355,7 +356,8 @@ export function AdminKangurLessonsManagerPage({
         openContentModal(nextLesson);
       }
 
-      setEditingLesson(null);    } catch (error) {
+      setEditingLesson(null);
+    } catch (error) {
       logClientError(error, {
         context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLesson' },
       });
@@ -381,6 +383,7 @@ export function AdminKangurLessonsManagerPage({
           value: serializeSetting(nextLessonDocuments),
         });
       }
+      clearLessonContentEditorDraft(lessonToDelete.id);
 
       toast('Lesson deleted.', { variant: 'success' });
       setLessonToDelete(null);
@@ -411,6 +414,7 @@ export function AdminKangurLessonsManagerPage({
         key: KANGUR_LESSONS_SETTING_KEY,
         value: serializeSetting(nextLessons),
       });
+      clearLessonContentEditorDraft(editingContentLesson.id);
 
       toast('Lesson content saved.', { variant: 'success' });
       setShowContentModal(false);
@@ -439,6 +443,7 @@ export function AdminKangurLessonsManagerPage({
         key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
         value: serializeSetting(nextStore),
       });
+      clearLessonContentEditorDraft(editingContentLesson.id);
 
       toast('Custom content cleared.', { variant: 'success' });
       setContentDraft(createDefaultKangurLessonDocument());
@@ -536,6 +541,13 @@ export function AdminKangurLessonsManagerPage({
 
   const isSaveDisabled = !formData.title.trim() || updateSetting.isPending;
   const lessonsNeedingLegacyImport = countLessonsRequiringLegacyImport(lessons, lessonDocuments);
+  const toolbarButtonClassName =
+    'h-8 rounded-xl border-border/60 bg-background/60 px-3 text-xs font-semibold text-foreground shadow-sm hover:bg-card/80';
+  const activeSegmentClassName = 'border-primary/30 bg-primary/15 text-foreground shadow-sm';
+  const inactiveSegmentClassName =
+    'border-border/60 bg-background/40 text-muted-foreground hover:bg-card/70 hover:text-foreground';
+  const filterSectionLabelClassName =
+    'text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground';
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
@@ -555,25 +567,73 @@ export function AdminKangurLessonsManagerPage({
 
   const content = (
     <div className='flex h-full flex-col gap-4 overflow-hidden'>
+      {standalone ? (
+        <KangurAdminWorkspaceIntroCard
+          title='Lessons workspace'
+          description='Manage the Kangur lesson library, focus the tree by editorial state, and open lesson editing from the same surface used across the rest of Kangur admin.'
+          badge='Library surface'
+        />
+      ) : null}
+
       <FolderTreePanel
-        className='min-h-0 flex-1'
+        className='min-h-0 flex-1 rounded-2xl border border-border/60 bg-card/35 shadow-sm'
+        bodyClassName='min-h-0 overflow-hidden'
         header={
-          <div className='flex flex-col gap-3'>
-            <div className='flex flex-wrap items-center justify-between gap-2'>
-              <div>
-                <div className='text-sm font-semibold text-white'>Lesson Library</div>
-                <div className='text-xs text-muted-foreground'>
-                  Lessons are automatically synced to the mobile app.
+          <div className='border-b border-border/60 p-4'>
+            <div className='space-y-4'>
+              <div className='flex flex-wrap items-start justify-between gap-3'>
+                <div>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <div className='text-sm font-semibold text-foreground'>Lesson library</div>
+                    <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                      {isCatalogMode ? 'Catalog view' : 'Ordered view'}
+                    </span>
+                  </div>
+                  <div className='mt-1 text-sm text-muted-foreground'>
+                    Lessons stay synced to the learner app, while this workspace keeps authoring,
+                    filtering, and ordering in one place.
+                  </div>
+                </div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className={cn(
+                      'h-8 rounded-lg px-3 text-xs font-semibold',
+                      !isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
+                    )}
+                    onClick={(): void => setTreeMode('ordered')}
+                    disabled={updateSetting.isPending}
+                  >
+                    <ListOrdered className='mr-1 size-3.5' />
+                    Ordered
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className={cn(
+                      'h-8 rounded-lg px-3 text-xs font-semibold',
+                      isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
+                    )}
+                    onClick={(): void => setTreeMode('catalog')}
+                    disabled={updateSetting.isPending}
+                  >
+                    <Folders className='mr-1 size-3.5' />
+                    Catalog
+                  </Button>
                 </div>
               </div>
-              <div className='flex items-center gap-1'>
+
+              <div className='flex flex-wrap items-center gap-2'>
                 <Button
                   onClick={() => {
                     void handleAddGeometryPack();
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30'
+                  className={toolbarButtonClassName}
                   disabled={updateSetting.isPending || geometryPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
@@ -585,7 +645,7 @@ export function AdminKangurLessonsManagerPage({
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-violet-200 hover:bg-violet-900/30'
+                  className={toolbarButtonClassName}
                   disabled={updateSetting.isPending || logicPackAddedCount === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
@@ -597,7 +657,7 @@ export function AdminKangurLessonsManagerPage({
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
+                  className={toolbarButtonClassName}
                   disabled={updateSetting.isPending || lessons.length === 0}
                 >
                   <Sparkles className='mr-1 size-3.5' />
@@ -608,95 +668,68 @@ export function AdminKangurLessonsManagerPage({
                   onClick={openCreateModal}
                   size='sm'
                   variant='outline'
-                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
+                  className={toolbarButtonClassName}
                   disabled={updateSetting.isPending}
                 >
                   <Plus className='mr-1 size-3.5' />
                   Add lesson
                 </Button>
               </div>
+
+              <div className='space-y-2'>
+                <div className={filterSectionLabelClassName}>Editorial filters</div>
+                <div className='flex flex-wrap items-center gap-1.5'>
+                  {filterCounts.map((filter) => (
+                    <Button
+                      key={filter.id}
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      className={cn(
+                        'h-8 rounded-xl px-3 text-xs font-semibold',
+                        authoringFilter === filter.id ? activeSegmentClassName : inactiveSegmentClassName
+                      )}
+                      onClick={(): void => setAuthoringFilter(filter.id)}
+                      disabled={updateSetting.isPending}
+                    >
+                      {filter.label}
+                      <span className='ml-1 text-[10px] text-current/75'>{filter.count}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className='flex flex-wrap items-center gap-2'>
+                <span className='text-xs text-muted-foreground'>
+                  {isCatalogMode
+                    ? 'Catalog mode groups lessons by visibility and lesson type.'
+                    : 'Ordered mode supports drag-and-drop reordering.'}
+                  {authoringFilter !== 'all'
+                    ? ` Showing ${filteredLessons.length} matching lessons.`
+                    : ''}
+                </span>
+              </div>
+
+              {capabilities.search.enabled ? (
+                <div className='space-y-2'>
+                  <div className={filterSectionLabelClassName}>Search</div>
+                  <FolderTreeSearchBar
+                    value={treeSearchQuery}
+                    onChange={handleTreeSearchChange}
+                    placeholder={
+                      isCatalogMode
+                        ? 'Search catalog groups and lessons...'
+                        : 'Search lessons, ids, or component types...'
+                    }
+                  />
+                  {searchState.isActive ? (
+                    <div className='text-[11px] text-muted-foreground/80'>
+                      {searchState.matchNodeIds.size} results
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
-            <div className='flex flex-wrap items-center gap-1'>
-              {filterCounts.map((filter) => (
-                <Button
-                  key={filter.id}
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className={cn(
-                    'h-7 border px-2 text-[11px] font-semibold tracking-wide',
-                    authoringFilter === filter.id
-                      ? 'border-emerald-300/60 bg-emerald-500/15 text-emerald-100'
-                      : 'text-gray-300 hover:bg-muted/40'
-                  )}
-                  onClick={(): void => setAuthoringFilter(filter.id)}
-                  disabled={updateSetting.isPending}
-                >
-                  {filter.label}
-                  <span className='ml-1 text-[10px] text-current/75'>{filter.count}</span>
-                </Button>
-              ))}
-            </div>
-            <div className='flex flex-wrap items-center gap-1'>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 border px-2 text-[11px] font-semibold tracking-wide',
-                  !isCatalogMode
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300 hover:bg-muted/40'
-                )}
-                onClick={(): void => setTreeMode('ordered')}
-                disabled={updateSetting.isPending}
-              >
-                <ListOrdered className='mr-1 size-3.5' />
-                Ordered
-              </Button>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 border px-2 text-[11px] font-semibold tracking-wide',
-                  isCatalogMode
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300 hover:bg-muted/40'
-                )}
-                onClick={(): void => setTreeMode('catalog')}
-                disabled={updateSetting.isPending}
-              >
-                <Folders className='mr-1 size-3.5' />
-                Catalog
-              </Button>
-              <span className='text-[11px] text-muted-foreground/80'>
-                {isCatalogMode
-                  ? 'Catalog mode groups lessons by visibility and type.'
-                  : 'Ordered mode supports drag-and-drop reordering.'}
-                {authoringFilter !== 'all'
-                  ? ` Showing ${filteredLessons.length} matching lessons.`
-                  : ''}
-              </span>
-            </div>
-            {capabilities.search.enabled ? (
-              <>
-                <FolderTreeSearchBar
-                  value={treeSearchQuery}
-                  onChange={handleTreeSearchChange}
-                  placeholder={
-                    isCatalogMode
-                      ? 'Search catalog groups and lessons...'
-                      : 'Search lessons, ids, or component types...'
-                  }
-                />
-                {searchState.isActive ? (
-                  <div className='text-[11px] text-muted-foreground/80'>
-                    {searchState.matchNodeIds.size} results
-                  </div>
-                ) : null}
-              </>
-            ) : null}
           </div>
         }
       >

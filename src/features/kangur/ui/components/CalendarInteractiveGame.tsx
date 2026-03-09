@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   KangurButton,
@@ -10,6 +10,7 @@ import {
   KangurOptionCardButton,
   KangurProgressBar,
   KangurResultBadge,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -19,6 +20,7 @@ import { cn } from '@/shared/utils';
 
 type CalendarInteractiveGameProps = {
   onFinish: () => void;
+  section?: CalendarInteractiveTaskPoolId;
 };
 
 type Feedback = 'correct' | 'wrong' | null;
@@ -58,6 +60,8 @@ const SEASON_ACCENTS: Record<Season, KangurAccent> = {
 
 type DayLabel = (typeof DAY_LABELS)[number];
 type Season = (typeof SEASONS)[number];
+export type CalendarInteractiveSectionId = 'dni' | 'miesiace' | 'data';
+export type CalendarInteractiveTaskPoolId = CalendarInteractiveSectionId | 'mixed';
 
 type ClickWeekdayNameTask = {
   type: 'click_weekday_name';
@@ -101,6 +105,107 @@ type Task =
   | FlipMonthTask
   | ClickAllWeekendsTask;
 
+type TaskType = Task['type'];
+
+type CalendarInteractiveSectionContent = {
+  accent: KangurAccent;
+  guidance: string;
+  guidanceTitle: string;
+  promptLabel: string;
+  summaryPerfect: string;
+  summaryRetry: string;
+};
+
+export const CALENDAR_INTERACTIVE_TASK_TYPE_POOLS: Record<
+  CalendarInteractiveTaskPoolId,
+  readonly TaskType[]
+> = {
+  mixed: [
+    'click_weekday_name',
+    'click_date',
+    'drag_season',
+    'flip_month',
+    'click_all_weekends',
+  ],
+  dni: ['click_weekday_name', 'click_all_weekends'],
+  miesiace: ['drag_season', 'flip_month'],
+  data: ['click_date'],
+};
+
+export function getCalendarInteractiveSectionLabel(
+  section: CalendarInteractiveTaskPoolId
+): string {
+  switch (section) {
+    case 'dni':
+      return 'Dni tygodnia';
+    case 'miesiace':
+      return 'Miesiące i pory roku';
+    case 'data':
+      return 'Odczytywanie dat';
+    default:
+      return 'Mieszany kalendarz';
+  }
+}
+
+export function getCalendarInteractiveSectionContent(
+  section: CalendarInteractiveTaskPoolId
+): CalendarInteractiveSectionContent {
+  switch (section) {
+    case 'dni':
+      return {
+        accent: 'emerald',
+        guidance: 'Ćwiczysz nazwy dni tygodnia i rozpoznawanie weekendu w układzie kalendarza.',
+        guidanceTitle: 'Trening dni tygodnia',
+        promptLabel: 'Znajdź właściwy dzień tygodnia',
+        summaryPerfect: 'Świetnie! Dni tygodnia i weekend rozpoznajesz bez wahania.',
+        summaryRetry: 'Poćwicz jeszcze dni tygodnia i weekendowe kolumny.',
+      };
+    case 'miesiace':
+      return {
+        accent: 'amber',
+        guidance: 'Ćwiczysz miesiące, ich kolejność oraz dopasowanie do odpowiedniej pory roku.',
+        guidanceTitle: 'Trening miesięcy',
+        promptLabel: 'Pracuj na miesiącach i porach roku',
+        summaryPerfect: 'Świetnie! Miesiące i pory roku masz już dobrze uporządkowane.',
+        summaryRetry: 'Poćwicz jeszcze kolejność miesięcy i ich pory roku.',
+      };
+    case 'data':
+      return {
+        accent: 'indigo',
+        guidance: 'Ćwiczysz odczytywanie dat i wskazywanie konkretnego dnia w siatce kalendarza.',
+        guidanceTitle: 'Trening dat',
+        promptLabel: 'Odszukaj właściwą datę w kalendarzu',
+        summaryPerfect: 'Świetnie! Sprawnie odczytujesz daty z kalendarza.',
+        summaryRetry: 'Poćwicz jeszcze wyszukiwanie konkretnych dat w siatce kalendarza.',
+      };
+    default:
+      return {
+        accent: 'emerald',
+        guidance: 'Raz ćwiczysz dni tygodnia, raz miesiące i pory roku, a raz konkretne daty.',
+        guidanceTitle: 'Mieszany trening kalendarza',
+        promptLabel: 'Rozwiązuj różne zadania kalendarzowe',
+        summaryPerfect: 'Idealnie! Znasz kalendarz na wylot!',
+        summaryRetry: 'Świetnie! Ćwicz dalej!',
+      };
+  }
+}
+
+export function getCalendarInteractiveSummaryMessage(
+  section: CalendarInteractiveTaskPoolId,
+  percent: number
+): string {
+  const content = getCalendarInteractiveSectionContent(section);
+  if (percent === 100) {
+    return content.summaryPerfect;
+  }
+  if (percent >= 60) {
+    return content.summaryRetry;
+  }
+  return section === 'mixed'
+    ? 'Nie poddawaj się!'
+    : 'Nie poddawaj się. Jeszcze kilka prób i ta sekcja będzie prostsza.';
+}
+
 function getCalendarCells(month: number, year: number): Array<number | null> {
   const firstDay = new Date(year, month, 1).getDay();
   const offset = (firstDay + 6) % 7; // Monday = 0
@@ -122,12 +227,19 @@ function getDayOfWeek(year: number, month: number, day: number): number {
   return (jsDay + 6) % 7;
 }
 
-function generateTask(month: number, year: number): Task {
-  const type = Math.floor(Math.random() * 5);
+function generateTask(
+  month: number,
+  year: number,
+  section: CalendarInteractiveTaskPoolId = 'mixed'
+): Task {
+  const taskTypes = CALENDAR_INTERACTIVE_TASK_TYPE_POOLS[section];
+  const type =
+    taskTypes[Math.floor(Math.random() * taskTypes.length)] ??
+    CALENDAR_INTERACTIVE_TASK_TYPE_POOLS.mixed[0];
   const cells = getCalendarCells(month, year);
   const validDays = cells.filter((day): day is number => day !== null);
 
-  if (type === 0) {
+  if (type === 'click_weekday_name') {
     const targetIdx = Math.floor(Math.random() * 7);
     const dayLabel = DAY_LABELS[targetIdx] ?? DAY_LABELS[0];
     return {
@@ -137,11 +249,11 @@ function generateTask(month: number, year: number): Task {
     };
   }
 
-  if (type === 1) {
+  if (type === 'click_date') {
     const dayIdx = Math.floor(Math.random() * 7);
     const matches = validDays.filter((day) => getDayOfWeek(year, month, day) === dayIdx);
     if (matches.length === 0) {
-      return generateTask(month, year);
+      return generateTask(month, year, section);
     }
     const target = matches[Math.floor(Math.random() * matches.length)] ?? matches[0] ?? 1;
 
@@ -155,7 +267,7 @@ function generateTask(month: number, year: number): Task {
     };
   }
 
-  if (type === 2) {
+  if (type === 'drag_season') {
     const monthIndex = Math.floor(Math.random() * 12);
     const monthData = MONTHS_DATA[monthIndex] ?? MONTHS_DATA[0];
     return {
@@ -166,7 +278,7 @@ function generateTask(month: number, year: number): Task {
     };
   }
 
-  if (type === 3) {
+  if (type === 'flip_month') {
     const targetMonth = Math.floor(Math.random() * 12);
     const monthData = MONTHS_DATA[targetMonth] ?? MONTHS_DATA[0];
     return {
@@ -190,12 +302,13 @@ function generateTask(month: number, year: number): Task {
 
 export default function CalendarInteractiveGame({
   onFinish,
+  section = 'mixed',
 }: CalendarInteractiveGameProps): React.JSX.Element {
   const YEAR = 2025;
   const TOTAL = 6;
 
   const [month, setMonth] = useState(0);
-  const [task, setTask] = useState<Task>(() => generateTask(0, YEAR));
+  const [task, setTask] = useState<Task>(() => generateTask(0, YEAR, section));
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
@@ -203,6 +316,8 @@ export default function CalendarInteractiveGame({
   const [dragOver, setDragOver] = useState<Season | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
+  const trainingSectionLabel = getCalendarInteractiveSectionLabel(section);
+  const trainingSectionContent = getCalendarInteractiveSectionContent(section);
 
   const nextRound = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
@@ -220,7 +335,7 @@ export default function CalendarInteractiveGame({
 
       const nextMonth = Math.floor(Math.random() * 12);
       setMonth(nextMonth);
-      setTask(generateTask(nextMonth, YEAR));
+      setTask(generateTask(nextMonth, YEAR, section));
       setRound((currentRound) => currentRound + 1);
     }, 1300);
   };
@@ -284,7 +399,7 @@ export default function CalendarInteractiveGame({
     setSelectedSeason(null);
     setDragOver(null);
     setMonth(startMonth);
-    setTask(generateTask(startMonth, YEAR));
+    setTask(generateTask(startMonth, YEAR, section));
   };
 
   const cells = getCalendarCells(month, YEAR);
@@ -315,6 +430,14 @@ export default function CalendarInteractiveGame({
           <h2 className='text-2xl font-extrabold text-slate-800'>
             Wynik: {score}/{TOTAL}
           </h2>
+          {section !== 'mixed' ? (
+            <p
+              data-testid='calendar-interactive-summary-section'
+              className='text-xs font-semibold text-slate-500'
+            >
+              Sekcja: {trainingSectionLabel}
+            </p>
+          ) : null}
           <KangurProgressBar
             accent='emerald'
             animated
@@ -323,11 +446,7 @@ export default function CalendarInteractiveGame({
             value={percent}
           />
           <p className='text-slate-500'>
-            {percent === 100
-              ? 'Idealnie! Znasz kalendarz na wylot!'
-              : percent >= 60
-                ? 'Świetnie! Ćwicz dalej!'
-                : 'Nie poddawaj się!'}
+            {getCalendarInteractiveSummaryMessage(section, percent)}
           </p>
           <div className='flex gap-3 w-full'>
             <KangurButton
@@ -356,6 +475,34 @@ export default function CalendarInteractiveGame({
 
   return (
     <div className='flex flex-col items-center gap-3 w-full max-w-sm'>
+      {section !== 'mixed' ? (
+        <KangurStatusChip
+          accent='indigo'
+          className='text-xs font-semibold'
+          data-testid='calendar-interactive-section-badge'
+        >
+          Sekcja: {trainingSectionLabel}
+        </KangurStatusChip>
+      ) : null}
+      {section !== 'mixed' ? (
+        <KangurInfoCard
+          accent={trainingSectionContent.accent}
+          className='w-full rounded-[24px]'
+          data-testid='calendar-interactive-guidance'
+          padding='sm'
+          tone='accent'
+        >
+          <p
+            className='text-sm font-extrabold'
+            data-testid='calendar-interactive-guidance-title'
+          >
+            {trainingSectionContent.guidanceTitle}
+          </p>
+          <p className='mt-2 text-sm font-semibold leading-relaxed'>
+            {trainingSectionContent.guidance}
+          </p>
+        </KangurInfoCard>
+      ) : null}
       <div className='flex items-center gap-2 w-full'>
         <KangurProgressBar
           accent='emerald'
@@ -382,6 +529,11 @@ export default function CalendarInteractiveGame({
           padding='sm'
           tone='accent'
         >
+          {section !== 'mixed' ? (
+            <p className='text-xs font-extrabold uppercase tracking-[0.12em] text-green-800/75'>
+              {trainingSectionContent.promptLabel}
+            </p>
+          ) : null}
           <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>
         </KangurInfoCard>
       </motion.div>

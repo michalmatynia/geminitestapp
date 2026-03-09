@@ -86,7 +86,7 @@ describe('useAgentPersonas hooks', () => {
     expect(result.current.data).toEqual(personas);
   });
 
-  it('saves personas and invalidates persona list query', async () => {
+  it('saves personas and invalidates persona queries', async () => {
     const personas = createPersonasFixture();
     const canonicalPersonas = normalizeAgentPersonas(personas);
     vi.mocked(api.post).mockResolvedValue({ ok: true } as never);
@@ -103,7 +103,7 @@ describe('useAgentPersonas hooks', () => {
     expect(invalidateSettingsCache).toHaveBeenCalledTimes(1);
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: QUERY_KEYS.agentPersonas.lists(),
+        queryKey: QUERY_KEYS.agentPersonas.all,
       })
     );
   });

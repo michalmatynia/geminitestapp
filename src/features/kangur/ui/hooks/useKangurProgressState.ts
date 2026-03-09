@@ -2,11 +2,16 @@
 
 import { useSyncExternalStore } from 'react';
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
-import { loadProgress, subscribeToProgress } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurProgressServerSnapshot,
+  KANGUR_PROGRESS_EVENT_NAME,
+  KANGUR_PROGRESS_STORAGE_KEY,
+  loadProgress,
+  subscribeToProgress,
+} from '@/features/kangur/ui/services/progress';
 
 const subscribe = (onStoreChange: () => void): (() => void) =>
   subscribeToProgress(() => onStoreChange());
 
 export const useKangurProgressState = () =>
-  useSyncExternalStore(subscribe, loadProgress, createDefaultKangurProgressState);
+  useSyncExternalStore(subscribe, loadProgress, getKangurProgressServerSnapshot);

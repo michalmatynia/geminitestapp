@@ -73,7 +73,7 @@ describe('KangurLoginPage', () => {
       refresh: routerRefreshMock,
     });
     useSearchParamsMock.mockReturnValue(
-      new URLSearchParams('callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision')
+      new URLSearchParams('callbackUrl=%2Ftests%3Ffocus%3Ddivision')
     );
     signOutMock.mockResolvedValue(undefined);
     checkAppStateMock.mockResolvedValue(undefined);
@@ -115,7 +115,7 @@ describe('KangurLoginPage', () => {
 
         if (url === '/api/auth/callback/credentials') {
           return {
-            json: vi.fn().mockResolvedValue({ url: '/kangur/tests?focus=division' }),
+            json: vi.fn().mockResolvedValue({ url: '/tests?focus=division' }),
             ok: true,
             status: 200,
           };
@@ -132,7 +132,7 @@ describe('KangurLoginPage', () => {
               retryAfterMs: 60_000,
               debug: {
                 verificationUrl:
-                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
+                  'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1',
               },
               message:
                 'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
@@ -153,7 +153,7 @@ describe('KangurLoginPage', () => {
               retryAfterMs: 60_000,
               debug: {
                 verificationUrl:
-                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2',
+                  'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2',
               },
               message:
                 'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
@@ -168,7 +168,7 @@ describe('KangurLoginPage', () => {
             json: vi.fn().mockResolvedValue({
               ok: true,
               email: 'parent@example.com',
-              callbackUrl: '/kangur/tests?focus=division',
+              callbackUrl: '/tests?focus=division',
               emailVerified: true,
               message:
                 'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
@@ -254,7 +254,7 @@ describe('KangurLoginPage', () => {
   it('starts in create-account mode when the route requests it explicitly', () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
-        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&authMode=create-account'
+        'callbackUrl=%2Ftests%3Ffocus%3Ddivision&authMode=create-account'
       )
     );
 
@@ -314,7 +314,7 @@ describe('KangurLoginPage', () => {
     );
 
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
+      expect(routerPushMock).toHaveBeenCalledWith('/tests?focus=division', {
         scroll: false,
       });
     });
@@ -416,7 +416,7 @@ describe('KangurLoginPage', () => {
         body: JSON.stringify({
           email: 'parent@example.com',
           password: 'Strong123!',
-          callbackUrl: '/kangur/tests?focus=division',
+          callbackUrl: '/tests?focus=division',
         }),
         credentials: 'same-origin',
         method: 'POST',
@@ -434,7 +434,7 @@ describe('KangurLoginPage', () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
       'href',
-      'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1'
+      'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1'
     );
     expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveClass(
       'cursor-pointer'
@@ -460,7 +460,7 @@ describe('KangurLoginPage', () => {
             retryAfterMs: 20_000,
             debug: {
               verificationUrl:
-                'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-custom',
+                'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-custom',
             },
             message:
               'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
@@ -536,7 +536,7 @@ describe('KangurLoginPage', () => {
               retryAfterMs: 12_000,
               debug: {
                 verificationUrl:
-                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-create-custom',
+                  'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-create-custom',
               },
               message:
                 'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
@@ -557,7 +557,7 @@ describe('KangurLoginPage', () => {
               retryAfterMs: 7_000,
               debug: {
                 verificationUrl:
-                  'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom',
+                  'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom',
               },
               message:
                 'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
@@ -600,14 +600,14 @@ describe('KangurLoginPage', () => {
       expect(screen.getByRole('button', { name: 'Wyslij email ponownie za 7 s' })).toBeDisabled();
       expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
         'href',
-        'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom'
+        'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom'
       );
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/kangur/auth/parent-account/resend',
         expect.objectContaining({
           body: JSON.stringify({
             email: 'parent@example.com',
-            callbackUrl: '/kangur/tests?focus=division',
+            callbackUrl: '/tests?focus=division',
           }),
           credentials: 'same-origin',
           method: 'POST',
@@ -729,7 +729,7 @@ describe('KangurLoginPage', () => {
         expect.objectContaining({
           body: JSON.stringify({
             email: 'parent@example.com',
-            callbackUrl: '/kangur/tests?focus=division',
+            callbackUrl: '/tests?focus=division',
           }),
           credentials: 'same-origin',
           method: 'POST',
@@ -742,7 +742,7 @@ describe('KangurLoginPage', () => {
       ).toBeVisible();
       expect(screen.getByRole('link', { name: 'Potwierdz email teraz' })).toHaveAttribute(
         'href',
-        'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2'
+        'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-2'
       );
       expect(
         screen.getByRole('button', { name: 'Wyslij email ponownie za 1 min' })
@@ -927,7 +927,7 @@ describe('KangurLoginPage', () => {
             retryAfterMs: 60_000,
             debug: {
               verificationUrl:
-                'https://example.com/kangur/login?callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-signin-resend',
+                'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-signin-resend',
             },
             message:
               'Wyslalismy nowy email potwierdzajacy. Konto rodzica uaktywni sie po weryfikacji adresu.',
@@ -967,7 +967,7 @@ describe('KangurLoginPage', () => {
       expect.objectContaining({
         body: JSON.stringify({
           email: 'parent@example.com',
-          callbackUrl: '/kangur/tests?focus=division',
+          callbackUrl: '/tests?focus=division',
         }),
         credentials: 'same-origin',
         method: 'POST',
@@ -1035,7 +1035,7 @@ describe('KangurLoginPage', () => {
   it('verifies parent email from the confirmation link and prefills the parent email', async () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
-        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1'
+        'callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-link-1'
       )
     );
 
@@ -1056,7 +1056,7 @@ describe('KangurLoginPage', () => {
   it('shows a deprecation error when an old parent magic link is opened', async () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
-        'callbackUrl=%2Fkangur%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1'
+        'callbackUrl=%2Ftests%3Ffocus%3Ddivision&magicLinkToken=magic-link-1'
       )
     );
 
@@ -1111,7 +1111,7 @@ describe('KangurLoginPage', () => {
       })
     );
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur/tests?focus=division', {
+      expect(routerPushMock).toHaveBeenCalledWith('/tests?focus=division', {
         scroll: false,
       });
     });

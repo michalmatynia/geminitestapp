@@ -5,6 +5,10 @@
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
+  KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
+}));
+
 import { render, screen } from '@/__tests__/test-utils';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
@@ -27,13 +31,15 @@ const questions: KangurTestQuestion[] = [
     sortOrder: 1000,
     prompt: 'Ile to jest 2 + 2?',
     choices: [
-      { label: 'A', text: '4' },
-      { label: 'B', text: '5' },
+      { label: 'A', text: '4', svgContent: '' },
+      { label: 'B', text: '5', svgContent: '' },
     ],
     correctChoiceLabel: 'A',
     pointValue: 3,
     explanation: '2 + 2 = 4.',
     illustration: { type: 'none' },
+    presentation: { layout: 'classic', choiceStyle: 'list' },
+    editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
   },
 ];
 

@@ -309,6 +309,54 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.pages?.[1]?.blocks[1]?.type).toBe('grid');
   });
 
+  it('shows page-level narration review status in the page picker and active page panel', () => {
+    render(
+      <StatefulEditorHarness
+        lesson={arithmeticLesson}
+        onChange={vi.fn()}
+        value={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-1',
+              title: 'Explainer',
+              blocks: [
+                {
+                  id: 'svg-1',
+                  type: 'svg',
+                  title: '',
+                  markup: '<svg viewBox="0 0 100 100"></svg>',
+                  viewBox: '0 0 100 100',
+                  align: 'center',
+                  fit: 'contain',
+                  maxWidth: 420,
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'svg-1',
+              type: 'svg',
+              title: '',
+              markup: '<svg viewBox="0 0 100 100"></svg>',
+              viewBox: '0 0 100 100',
+              align: 'center',
+              fit: 'contain',
+              maxWidth: 420,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getAllByText('1 narration issue').length).toBeGreaterThan(0);
+    expect(screen.getByText('Narration on this page')).toBeInTheDocument();
+    expect(
+      screen.getByText('Add a spoken description for 1 visual block on this page.')
+    ).toBeInTheDocument();
+  });
+
   it('switches preview from the current page to the full lesson', () => {
     const handleChange = vi.fn();
 

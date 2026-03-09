@@ -23,12 +23,15 @@ import {
 } from '@/features/kangur/test-questions';
 import { KANGUR_TEST_SUITES_SETTING_KEY, parseKangurTestSuites } from '@/features/kangur/test-suites';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Badge, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { summarizeKangurContentCreator } from './content-creator-insights';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
+import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 
 type ContentTab = 'lessons' | 'tests';
 
@@ -48,6 +51,28 @@ const TABS: Array<{ id: ContentTab; label: string; Icon: LucideIcon }> = [
   { id: 'lessons', label: 'Lessons', Icon: BookOpen },
   { id: 'tests', label: 'Tests', Icon: Trophy },
 ];
+
+const ACTIVE_WORKSPACE_COPY: Record<
+  ContentTab,
+  {
+    title: string;
+    description: string;
+    badge: string;
+  }
+> = {
+  lessons: {
+    title: 'Lessons workspace',
+    description:
+      'Organize the lesson library, focus by authoring state, and open the active lesson editor without leaving the Kangur admin flow.',
+    badge: 'Authoring surface',
+  },
+  tests: {
+    title: 'Tests workspace',
+    description:
+      'Manage assessment content in the same admin rhythm as lessons, with one shared content shell instead of a separate tool surface.',
+    badge: 'Assessment surface',
+  },
+};
 
 export function AdminKangurContentManagerPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -76,6 +101,7 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
     [lessonDocuments, lessons, questionStore, testSuites.length]
   );
   const [activeTab, setActiveTab] = useState<ContentTab>(() => readPersistedTab());
+  const activeWorkspace = ACTIVE_WORKSPACE_COPY[activeTab];
 
   const handleTabChange = (tab: ContentTab): void => {
     setActiveTab(tab);
@@ -100,107 +126,123 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
       contentClassName='flex min-h-0 flex-1 flex-col'
     >
       <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-hidden'>
+        <KangurAdminWorkspaceIntroCard
+          title='Content workspace'
+          description='Manage Kangur lessons and tests from one shared admin surface, with the same page structure, spacing, and support tools used across the rest of Kangur admin.'
+          badge='Shared surface'
+        />
+
         <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7'>
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Lessons'
             value={dashboardStats.lessonCount}
             detail='Tracked in the Kangur lesson library'
             Icon={BookOpen}
+            tone='info'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Custom content'
             value={dashboardStats.customContentCount}
             detail='Lessons already using the document editor'
             Icon={FileText}
+            tone='success'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Needs import'
             value={dashboardStats.legacyLessonCount}
             detail='Lessons still relying on legacy component content'
             Icon={ScrollText}
+            tone='warning'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Needs fixes'
             value={dashboardStats.needsFixesCount}
             detail='Document lessons with structural issues that need editorial cleanup'
             Icon={AlertTriangle}
+            tone='warning'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Missing narration'
             value={dashboardStats.missingNarrationCount}
             detail='Document lessons without a usable narration script'
             Icon={Volume2}
+            tone='warning'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Hidden lessons'
             value={dashboardStats.hiddenLessonCount}
             detail='Disabled lessons not visible to learners'
             Icon={EyeOff}
+            tone='neutral'
           />
-          <ContentSummaryCard
+          <KangurAdminMetricCard
             label='Tests'
             value={dashboardStats.testSuiteCount}
             detail={`${dashboardStats.questionCount} questions across all test suites`}
             Icon={Trophy}
+            tone='info'
           />
         </div>
 
-        <div className='flex shrink-0 items-center gap-1 self-start rounded-xl border border-border/50 bg-card/30 p-1'>
-          {TABS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type='button'
-              onClick={() => handleTabChange(id)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                activeTab === id
-                  ? 'bg-sky-500/20 text-sky-100 shadow-sm'
-                  : 'text-gray-400 hover:bg-muted/40 hover:text-gray-200'
-              )}
-            >
-              <Icon className='size-3.5' />
-              {label}
-            </button>
-          ))}
-        </div>
+        <Card
+          variant='subtle'
+          padding='md'
+          className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+        >
+          <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+            <div>
+              <div className='text-sm font-semibold text-foreground'>Choose workspace</div>
+              <div className='mt-1 text-sm text-muted-foreground'>
+                Keep lessons and tests inside one consistent content-management flow.
+              </div>
+            </div>
+            <div className='flex shrink-0 items-center gap-1 self-start rounded-xl border border-border/60 bg-background/60 p-1'>
+              {TABS.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type='button'
+                  onClick={() => handleTabChange(id)}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
+                    activeTab === id
+                      ? 'bg-primary/15 text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                  )}
+                >
+                  <Icon className='size-3.5' />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
 
-        <div className='min-h-0 flex-1 overflow-hidden'>
-          {activeTab === 'lessons' ? (
-            <AdminKangurLessonsManagerPage standalone={false} />
-          ) : (
-            <AdminKangurTestSuitesManagerPage standalone={false} />
-          )}
-        </div>
+        <Card
+          variant='subtle'
+          padding='md'
+          className='flex min-h-0 flex-1 flex-col rounded-2xl border-border/60 bg-card/35 shadow-sm'
+        >
+          <div className='flex flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-4'>
+            <div className='min-w-0 flex-1'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <h2 className='text-base font-semibold text-foreground'>{activeWorkspace.title}</h2>
+                <Badge variant='outline'>{activeWorkspace.badge}</Badge>
+              </div>
+              <p className='mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground'>
+                {activeWorkspace.description}
+              </p>
+            </div>
+          </div>
+
+          <div className='mt-4 min-h-0 flex-1 overflow-hidden'>
+            {activeTab === 'lessons' ? (
+              <AdminKangurLessonsManagerPage standalone={false} />
+            ) : (
+              <AdminKangurTestSuitesManagerPage standalone={false} />
+            )}
+          </div>
+        </Card>
       </div>
     </KangurAdminContentShell>
-  );
-}
-
-function ContentSummaryCard({
-  label,
-  value,
-  detail,
-  Icon,
-}: {
-  label: string;
-  value: number;
-  detail: string;
-  Icon: LucideIcon;
-}): React.JSX.Element {
-  return (
-    <div className='rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 px-4 py-3 shadow-[0_18px_60px_-32px_rgba(14,165,233,0.45)]'>
-      <div className='flex items-start justify-between gap-3'>
-        <div>
-          <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400'>
-            {label}
-          </div>
-          <div className='mt-2 text-2xl font-semibold text-white'>{value}</div>
-        </div>
-        <div className='rounded-xl border border-sky-400/20 bg-sky-500/10 p-2 text-sky-200'>
-          <Icon className='size-4' />
-        </div>
-      </div>
-      <div className='mt-3 text-xs leading-relaxed text-slate-400'>{detail}</div>
-    </div>
   );
 }

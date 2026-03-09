@@ -37,7 +37,7 @@ describe('kangur parent account create handler', () => {
     requestContext.body = {
       email: 'parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     };
 
     createKangurParentAccountMock.mockResolvedValue({
@@ -64,7 +64,7 @@ describe('kangur parent account create handler', () => {
     expect(createKangurParentAccountMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       request: expect.any(NextRequest),
     });
     await expect(response.json()).resolves.toEqual({
@@ -87,7 +87,7 @@ describe('kangur parent account create handler', () => {
     requestContext.body = {
       email: 'parent@example.com',
       password: 'Strong123!',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     };
 
     createKangurParentAccountMock.mockResolvedValue({

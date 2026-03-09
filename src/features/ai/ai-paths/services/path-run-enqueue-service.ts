@@ -38,8 +38,7 @@ import {
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import {
-  findRemovedLegacyTriggerContextModes,
-  formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
@@ -211,20 +210,6 @@ const assertCanonicalRunGraph = ({
       removedNodes: removedLegacyNodes,
     });
   }
-  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModes(rawNodes);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw validationError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
-        surface: 'run graph',
-      }),
-      {
-        source: 'ai_paths.run',
-        reason: 'removed_legacy_trigger_context_mode',
-        pathId: input.pathId,
-        removedTriggerContextModes: removedLegacyTriggerContextModes,
-      }
-    );
-  }
   const identityIssues = validateCanonicalPathNodeIdentities(
     buildRunGraphValidationConfig(input, nodes, edges),
     {
@@ -275,11 +260,12 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
 
     const rawNodes = (input.nodes ?? []) as AiNode[];
     const rawEdges = input.edges ?? [];
-    const normalizedNodes = normalizeNodes(rawNodes);
+    const remediatedNodes = remediateRemovedLegacyTriggerContextModes(rawNodes).value as AiNode[];
+    const normalizedNodes = normalizeNodes(remediatedNodes);
     const nodes = normalizedNodes;
     const edges = assertCanonicalRunGraph({
       input,
-      rawNodes,
+      rawNodes: remediatedNodes,
       nodes,
       edges: rawEdges,
     });

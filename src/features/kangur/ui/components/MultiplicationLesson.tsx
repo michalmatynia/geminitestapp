@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
-import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
-import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
+import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
-  KangurFeatureHeader,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'tabela23' | 'tabela45' | 'triki' | 'game_array' | 'game_quiz';
 
@@ -176,31 +174,41 @@ export default function MultiplicationLesson(): React.JSX.Element {
 
   if (activeSection === 'game_array') {
     return (
-      <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurFeatureHeader accent='violet' icon='✨' title='Gra z grupami!' />
+      <LessonActivityStage
+        accent='violet'
+        headerTestId='multiplication-lesson-game-array-header'
+        icon='✨'
+        maxWidthClassName='max-w-sm'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='multiplication-lesson-game-array-shell'
+        title='Gra z grupami!'
+      >
         <MultiplicationArrayGame
           finishLabel='Wróć do tematów'
           onFinish={() => setActiveSection(null)}
         />
-      </div>
+      </LessonActivityStage>
     );
   }
 
   if (activeSection === 'game_quiz') {
     return (
-      <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurFeatureHeader accent='violet' icon='📝' title='Quiz mnozenia!' />
+      <LessonActivityStage
+        accent='violet'
+        headerTestId='multiplication-lesson-game-quiz-header'
+        icon='📝'
+        maxWidthClassName='max-w-sm'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='multiplication-lesson-game-quiz-shell'
+        title='Quiz mnozenia!'
+      >
         <MultiplicationGame
           finishLabel='Wróć do tematów'
           onFinish={() => setActiveSection(null)}
         />
-      </div>
+      </LessonActivityStage>
     );
   }
 
@@ -208,6 +216,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-purple-500'

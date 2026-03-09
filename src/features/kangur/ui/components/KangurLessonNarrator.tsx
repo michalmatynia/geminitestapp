@@ -1,6 +1,7 @@
 'use client';
 
-import { Pause, Play, Volume2 } from 'lucide-react';
+import { Loader2, Pause, Play, Volume2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -53,6 +54,7 @@ type KangurLessonNarratorProps = {
 const DEFAULT_PLAYBACK_RATE = 1;
 const SERVER_MODE_FALLBACK_HINT =
   'Switch Kangur narrator settings to Client narrator if you want browser speech instead.';
+const GENERIC_SERVER_MODE_FAILURE_MESSAGE = 'Narration is not available right now.';
 
 const extractNarrationTextFromElement = (element: HTMLElement | null): string => {
   if (!element) return '';
@@ -75,8 +77,8 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     readLabel = 'Read',
     pauseLabel = 'Pause',
     resumeLabel = 'Resume',
-    loadingLabel = 'Preparing...',
   } = props;
+  const { data: session } = useSession();
   const settingsStore = useSettingsStore();
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
   const narratorSettings = useMemo(
@@ -84,6 +86,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     [rawNarratorSettings]
   );
   const defaultVoice = narratorSettings.voice ?? KANGUR_TTS_DEFAULT_VOICE;
+  const isNarratorDiagnosticsVisible = session?.user?.role === 'super_admin';
   const voice =
     lesson.contentMode === 'document'
       ? (lessonDocument?.narration?.voice ?? defaultVoice)
@@ -304,11 +307,13 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       };
       utterance.onerror = () => {
         setStatus('error');
-        setErrorMessage('Client narration failed to start.');
+        setErrorMessage(
+          isNarratorDiagnosticsVisible ? 'Client narration failed to start.' : null
+        );
       };
       window.speechSynthesis.speak(utterance);
     },
-    [script.locale]
+    [isNarratorDiagnosticsVisible, script.locale]
   );
 
   const playAudioSegments = useCallback(
@@ -399,10 +404,12 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         setManifest(null);
         const canUseBrowserFallback =
           typeof window !== 'undefined' && Boolean(window.speechSynthesis);
-        const combinedMessage = `${response.message} ${SERVER_MODE_FALLBACK_HINT}`;
+        const combinedMessage = isNarratorDiagnosticsVisible
+          ? `${response.message} ${SERVER_MODE_FALLBACK_HINT}`
+          : GENERIC_SERVER_MODE_FAILURE_MESSAGE;
 
         if (canUseBrowserFallback && response.segments.length > 0) {
-          setFallbackMessage(combinedMessage);
+          setFallbackMessage(isNarratorDiagnosticsVisible ? combinedMessage : null);
           speakClientSegments(response.segments, 0, 'client-fallback');
           return 'client-fallback';
         }
@@ -425,7 +432,14 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       );
       return null;
     }
-  }, [requestContextRegistry, script, scriptCacheKey, speakClientSegments, voice]);
+  }, [
+    isNarratorDiagnosticsVisible,
+    requestContextRegistry,
+    script,
+    scriptCacheKey,
+    speakClientSegments,
+    voice,
+  ]);
 
   const handlePlay = useCallback(async () => {
     if (status === 'paused') {
@@ -487,15 +501,24 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
 
   const activeSegmentText =
     manifest?.segments[currentIndex]?.text ?? script.segments[currentIndex]?.text ?? lesson.title;
+  const controlButtonMinWidth = useMemo(
+    () => `calc(${Math.max(readLabel.length, pauseLabel.length, resumeLabel.length, 6)}ch + 2.75rem)`,
+    [pauseLabel, readLabel, resumeLabel]
+  );
   const controlLabel =
-    status === 'loading'
-      ? loadingLabel
-      : status === 'playing'
-        ? pauseLabel
+    status === 'playing'
+      ? pauseLabel
         : status === 'paused'
           ? resumeLabel
           : readLabel;
-  const ControlIcon = status === 'playing' ? Pause : status === 'paused' ? Play : Volume2;
+  const ControlIcon =
+    status === 'loading'
+      ? Loader2
+      : status === 'playing'
+        ? Pause
+        : status === 'paused'
+          ? Play
+          : Volume2;
   const handlePrimaryAction = status === 'playing' ? handlePause : () => void handlePlay();
 
   if (!hasKangurLessonNarrationContent(script)) {
@@ -522,11 +545,14 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
           type='button'
           onClick={handlePrimaryAction}
           disabled={status === 'loading'}
+          className='justify-center'
           size='sm'
-          variant={status === 'idle' ? 'ghost' : 'surface'}
+          style={{ minWidth: controlButtonMinWidth }}
+          variant='surface'
           data-doc-id='lessons_narrator'
         >
-          <ControlIcon className='size-4' /> {controlLabel}
+          <ControlIcon className={cn('size-4', status === 'loading' ? 'animate-spin' : undefined)} />{' '}
+          {controlLabel}
         </KangurButton>
       </div>
 

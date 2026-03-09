@@ -141,9 +141,13 @@ export const normalizeDocumentNarration = (
   value: unknown
 ): NonNullable<KangurLessonDocumentNarration> => {
   const raw = isRecord(value) ? value : {};
+  const previewSourceSignature = normalizeText(raw['previewSourceSignature'], '', 128);
+  const lastPreviewedAt = normalizeText(raw['lastPreviewedAt'], '', 64);
 
   return {
     voice: normalizeNarrationVoice(raw['voice']),
     locale: normalizeText(raw['locale'], KANGUR_TTS_DEFAULT_LOCALE, 16),
+    previewSourceSignature: previewSourceSignature || undefined,
+    lastPreviewedAt: lastPreviewedAt || undefined,
   };
 };

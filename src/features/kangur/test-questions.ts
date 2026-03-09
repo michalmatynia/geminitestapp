@@ -1,15 +1,28 @@
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
+  type KangurTestQuestionEditorial,
+  type KangurTestQuestionPresentation,
   kangurTestQuestionSchema,
   kangurTestQuestionStoreSchema,
+  type KangurTestQuestionReviewStatus,
   type KangurIllustrationPanel,
-  type KangurQuestionIllustration,
   type KangurTestChoice,
+  type KangurQuestionIllustration,
   type KangurTestQuestion,
   type KangurTestQuestionStore,
 } from '@/shared/contracts/kangur-tests';
 import { sanitizeSvg } from '@/shared/utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import type { KangurLessonDocument, KangurLessonRootBlock } from '@/shared/contracts/kangur';
+import {
+  canonicalizeKangurLessonDocument,
+  createKangurLessonPage,
+  createKangurLessonTextBlock,
+  createLessonDocument,
+  resolveKangurLessonDocumentPages,
+  escapeHtmlText,
+  stripHtmlToText,
+} from './lesson-documents';
 
 export { KANGUR_TEST_QUESTIONS_SETTING_KEY };
 
@@ -34,6 +47,96 @@ export const createDefaultIllustration = (): KangurQuestionIllustration => ({ ty
 
 const sanitizeOptionalSvgMarkup = (markup: string): string =>
   markup.trim().length > 0 ? sanitizeSvg(markup) : '';
+
+const sanitizeQuestionChoice = (choice: KangurTestChoice): KangurTestChoice => ({
+  ...choice,
+  label: choice.label.trim().slice(0, 16),
+  text: choice.text.trim().slice(0, 2_000),
+  description: choice.description?.trim() ? choice.description.trim().slice(0, 1_000) : undefined,
+  svgContent: sanitizeOptionalSvgMarkup(choice.svgContent ?? ''),
+});
+
+const buildQuestionTextDocument = (value: string): KangurLessonDocument | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const block = createKangurLessonTextBlock();
+  return createLessonDocument([
+    createKangurLessonPage('', [
+      {
+        ...block,
+        html: `<p>${escapeHtmlText(trimmed)}</p>`,
+        ttsText: trimmed,
+      },
+    ]),
+  ]);
+};
+
+const canonicalizeQuestionDocument = (
+  document: KangurLessonDocument | undefined,
+  fallbackText: string
+): KangurLessonDocument | undefined =>
+  document ? canonicalizeKangurLessonDocument(document) : buildQuestionTextDocument(fallbackText);
+
+const extractPlainTextFromQuestionDocument = (document: KangurLessonDocument | undefined): string => {
+  if (!document) {
+    return '';
+  }
+
+  return resolveKangurLessonDocumentPages(document)
+    .flatMap((page) => page.blocks)
+    .map((block: KangurLessonRootBlock) => {
+      if (block.type === 'text') {
+        return stripHtmlToText(block.html);
+      }
+
+      if (block.type === 'callout') {
+        return [block.title, stripHtmlToText(block.html)].filter(Boolean).join(' ');
+      }
+
+      if (block.type === 'quiz') {
+        return [
+          stripHtmlToText(block.question),
+          ...block.choices.map((choice) => choice.text),
+          block.explanation ? stripHtmlToText(block.explanation) : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+      }
+
+      if (block.type === 'svg' || block.type === 'image' || block.type === 'activity') {
+        return [
+          block.title,
+          'ttsDescription' in block ? (block.ttsDescription ?? '') : '',
+          'caption' in block ? (block.caption ?? '') : '',
+          'description' in block ? (block.description ?? '') : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+      }
+
+      return block.items
+        .map((item) => {
+          if (item.block.type === 'text') {
+            return stripHtmlToText(item.block.html);
+          }
+
+          return [
+            item.block.title,
+            'caption' in item.block ? (item.block.caption ?? '') : '',
+            'ttsDescription' in item.block ? (item.block.ttsDescription ?? '') : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+        })
+        .filter(Boolean)
+        .join(' ');
+    })
+    .filter(Boolean)
+    .join(' ');
+};
 
 export const sanitizeQuestionIllustration = (
   illustration: KangurQuestionIllustration
@@ -60,7 +163,16 @@ export const sanitizeQuestionIllustration = (
 
 const sanitizeQuestion = (question: KangurTestQuestion): KangurTestQuestion => ({
   ...question,
+  choices: question.choices.map(sanitizeQuestionChoice),
   illustration: sanitizeQuestionIllustration(question.illustration),
+  stemDocument: canonicalizeQuestionDocument(question.stemDocument, question.prompt),
+  explanationDocument: canonicalizeQuestionDocument(
+    question.explanationDocument,
+    question.explanation ?? ''
+  ),
+  hintDocument: question.hintDocument
+    ? canonicalizeKangurLessonDocument(question.hintDocument)
+    : undefined,
 });
 
 export const createPanelIllustration = (
@@ -83,6 +195,47 @@ export const hasIllustration = (q: KangurTestQuestion): boolean =>
     ? Boolean(q.illustration.svgContent?.trim())
     : q.illustration.panels.some((p) => p.svgContent.trim()));
 
+export const hasRichChoiceContent = (q: KangurTestQuestion): boolean =>
+  q.choices.some(
+    (choice) =>
+      Boolean(choice.description?.trim().length) || Boolean(choice.svgContent?.trim().length)
+  );
+
+export const usesRichQuestionPresentation = (q: KangurTestQuestion): boolean =>
+  q.presentation.layout !== 'classic' || q.presentation.choiceStyle !== 'list';
+
+export const getQuestionReviewStatus = (
+  q: Pick<KangurTestQuestion, 'editorial'>
+): KangurTestQuestionReviewStatus => q.editorial.reviewStatus;
+
+export const questionDocumentNeedsRichRenderer = (
+  document: KangurLessonDocument | undefined,
+  fallbackText: string
+): boolean => {
+  if (!document) {
+    return false;
+  }
+
+  const pages = resolveKangurLessonDocumentPages(document);
+  const blocks = pages.flatMap((page) => page.blocks);
+  if (blocks.length !== 1) {
+    return true;
+  }
+
+  const [block] = blocks;
+  if (!block || block.type !== 'text') {
+    return true;
+  }
+
+  return stripHtmlToText(block.html) !== fallbackText.trim();
+};
+
+export const getQuestionStemNarrationText = (question: KangurTestQuestion): string =>
+  extractPlainTextFromQuestionDocument(question.stemDocument) || question.prompt;
+
+export const getQuestionExplanationNarrationText = (question: KangurTestQuestion): string =>
+  extractPlainTextFromQuestionDocument(question.explanationDocument) || question.explanation || '';
+
 // ─── Question ID / creation ───────────────────────────────────────────────────
 
 export const createKangurTestQuestionId = (): string =>
@@ -95,11 +248,17 @@ export const createKangurTestQuestion = (suiteId: string, sortOrder = 0): Kangur
       suiteId,
       sortOrder,
       prompt: '',
-      choices: DEFAULT_CHOICE_LABELS.slice(0, 5).map((label) => ({ label, text: '' })),
+      choices: DEFAULT_CHOICE_LABELS.slice(0, 5).map((label) => ({
+        label,
+        text: '',
+        svgContent: '',
+      })),
       correctChoiceLabel: 'A',
       pointValue: 3,
       explanation: '',
       illustration: createDefaultIllustration(),
+      presentation: { layout: 'classic', choiceStyle: 'list' },
+      editorial: { source: 'manual', reviewStatus: 'ready', auditFlags: [] },
     })
   );
 
@@ -175,6 +334,11 @@ export type QuestionFormData = {
   pointValue: number;
   explanation: string;
   illustration: KangurQuestionIllustration;
+  stemDocument: KangurLessonDocument | null;
+  explanationDocument: KangurLessonDocument | null;
+  hintDocument: KangurLessonDocument | null;
+  presentation: KangurTestQuestionPresentation;
+  editorial: KangurTestQuestionEditorial;
 };
 
 export const createInitialQuestionFormData = (suiteId: string): QuestionFormData => {
@@ -186,6 +350,11 @@ export const createInitialQuestionFormData = (suiteId: string): QuestionFormData
     pointValue: q.pointValue,
     explanation: q.explanation ?? '',
     illustration: q.illustration,
+    stemDocument: q.stemDocument ?? null,
+    explanationDocument: q.explanationDocument ?? null,
+    hintDocument: q.hintDocument ?? null,
+    presentation: q.presentation,
+    editorial: q.editorial,
   };
 };
 
@@ -196,6 +365,11 @@ export const toQuestionFormData = (q: KangurTestQuestion): QuestionFormData => (
   pointValue: q.pointValue,
   explanation: q.explanation ?? '',
   illustration: q.illustration,
+  stemDocument: q.stemDocument ?? null,
+  explanationDocument: q.explanationDocument ?? null,
+  hintDocument: q.hintDocument ?? null,
+  presentation: q.presentation,
+  editorial: q.editorial,
 });
 
 export const formDataToQuestion = (
@@ -211,9 +385,15 @@ export const formDataToQuestion = (
       sortOrder,
       prompt: formData.prompt.trim(),
       choices: formData.choices,
-      correctChoiceLabel: formData.correctChoiceLabel,
-      pointValue: formData.pointValue,
-      explanation: formData.explanation.trim() || undefined,
-      illustration: formData.illustration,
-    })
+    correctChoiceLabel: formData.correctChoiceLabel,
+    pointValue: formData.pointValue,
+    explanation: formData.explanation.trim() || undefined,
+    illustration: formData.illustration,
+    stemDocument: formData.stemDocument ?? buildQuestionTextDocument(formData.prompt),
+    explanationDocument:
+      formData.explanationDocument ?? buildQuestionTextDocument(formData.explanation),
+    hintDocument: formData.hintDocument ?? undefined,
+    presentation: formData.presentation,
+    editorial: formData.editorial,
+  })
   );

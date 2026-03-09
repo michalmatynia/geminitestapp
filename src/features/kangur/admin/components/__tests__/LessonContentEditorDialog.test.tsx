@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useLessonContentEditorContext } from '../../context/LessonContentEditorContext';
 
@@ -68,6 +68,7 @@ vi.mock('@/shared/ui/templates/modals', () => ({
 
 import { LessonContentEditorDialog } from '../LessonContentEditorDialog';
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/tts/script';
 
 const lesson: KangurLesson = {
   id: 'lesson-1',
@@ -124,6 +125,10 @@ function TestDialog({
 }
 
 describe('LessonContentEditorDialog', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('renders content actions and delegates toolbar callbacks', () => {
     const handleClose = vi.fn();
     const handleSave = vi.fn();
@@ -143,6 +148,10 @@ describe('LessonContentEditorDialog', () => {
     expect(screen.getByTestId('lesson-narration-panel')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Lesson One')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Intro lesson')).toBeInTheDocument();
+    expect(screen.getByText('Next recommended action: This draft is ready for a final preview and save.')).toBeInTheDocument();
+    expect(screen.getAllByText('Lesson setup').length).toBeGreaterThan(0);
+    expect(screen.getByText('Learner content')).toBeInTheDocument();
+    expect(screen.getByText('Narration')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save content/i })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /import legacy/i }));
@@ -185,6 +194,98 @@ describe('LessonContentEditorDialog', () => {
     });
 
     expect(screen.getByText('Lesson title is required before saving.')).toBeInTheDocument();
+    expect(screen.getByText('Next recommended action: Finish the lesson title in Lesson setup.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save content/i })).toBeDisabled();
+  });
+
+  it('offers local draft recovery when a newer autosaved draft exists', async () => {
+    window.localStorage.setItem(
+      'kangur-lesson-editor-draft:v1:lesson-1',
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-03-09T12:30:00.000Z',
+        lesson: {
+          ...lesson,
+          title: 'Recovered draft title',
+        },
+        document: {
+          ...documentValue,
+          blocks: [
+            {
+              id: 'text-2',
+              type: 'text',
+              html: '<p>Recovered content</p>',
+              align: 'left',
+            },
+          ],
+        },
+      })
+    );
+
+    render(<TestDialog />);
+
+    expect(screen.getByText('Recovered local draft')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /restore draft/i }));
+
+    await waitFor(() =>
+      expect(screen.getByDisplayValue('Recovered draft title')).toBeInTheDocument()
+    );
+  });
+
+  it('shows publish blockers when narration preview is stale', () => {
+    const signature = buildKangurLessonDocumentNarrationSignature({
+      lessonId: lesson.id,
+      title: lesson.title,
+      description: lesson.description,
+      document: {
+        ...documentValue,
+        narration: {
+          voice: 'coral',
+          locale: 'pl-PL',
+        },
+      },
+      voice: 'coral',
+      locale: 'pl-PL',
+    });
+
+    function StaleNarrationDialog(): React.JSX.Element {
+      const [lessonState, setLessonState] = React.useState(lesson);
+      const [documentState, setDocumentState] = React.useState<KangurLessonDocument>({
+        ...documentValue,
+        narration: {
+          voice: 'coral',
+          locale: 'pl-PL',
+          previewSourceSignature: `${signature}-stale`,
+          lastPreviewedAt: '2026-03-09T12:00:00.000Z',
+        },
+      });
+
+      return (
+        <LessonContentEditorDialog
+          lesson={lessonState}
+          document={documentState}
+          isOpen={true}
+          isSaving={false}
+          onClose={vi.fn()}
+          onLessonChange={setLessonState}
+          onChange={setDocumentState}
+          onSave={vi.fn()}
+          onImportLegacy={vi.fn()}
+          onClearContent={vi.fn()}
+        />
+      );
+    }
+
+    render(<StaleNarrationDialog />);
+
+    expect(screen.getByText('Publish blockers')).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes('Refresh narration preview before publishing this lesson.')
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Next recommended action: Refresh narration preview so it matches the latest content edits.')
+    ).toBeInTheDocument();
   });
 });

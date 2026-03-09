@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
 
-import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
   KangurButton,
   KangurEmptyState,
@@ -12,9 +13,10 @@ import {
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
-import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 
 type Props = {
@@ -97,6 +99,8 @@ export function KangurTestSuitePlayer({
   learnerId,
   onFinish,
 }: Props): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
@@ -263,10 +267,7 @@ export function KangurTestSuitePlayer({
               ref={questionAnchorRef}
               key={currentIndex}
               data-testid='kangur-test-question-anchor'
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+              {...questionMotionProps}
             >
               {currentQuestion ? (
                 <KangurTestQuestionRenderer

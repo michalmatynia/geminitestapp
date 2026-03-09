@@ -1,19 +1,17 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
 import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
-  KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
-  KangurFeatureHeader,
 } from '@/features/kangur/ui/design/primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
 
@@ -144,13 +142,18 @@ export default function DivisionLesson(): React.JSX.Element {
 
   if (activeSection === 'game') {
     return (
-      <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <KangurButton onClick={() => setActiveSection(null)} size='sm' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurFeatureHeader accent='sky' icon='🎮' title='Gra z dzieleniem!' />
+      <LessonActivityStage
+        accent='sky'
+        headerTestId='division-lesson-game-header'
+        icon='🎮'
+        maxWidthClassName='max-w-sm'
+        onBack={() => setActiveSection(null)}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        shellTestId='division-lesson-game-shell'
+        title='Gra z dzieleniem!'
+      >
         <DivisionGame finishLabel='Wróć do tematów' onFinish={() => setActiveSection(null)} />
-      </div>
+      </LessonActivityStage>
     );
   }
 
@@ -158,6 +161,7 @@ export default function DivisionLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         dotActiveClass='bg-blue-500'

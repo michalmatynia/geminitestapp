@@ -74,18 +74,21 @@ describe('KangurTransitionLink', () => {
 
   it('preserves an explicit scroll override from the caller', () => {
     render(
-      <KangurTransitionLink href='/kangur/tests' scroll targetPageKey='Tests'>
-        Testy
+      <KangurTransitionLink href='/kangur/lessons?focus=division' scroll targetPageKey='Lessons'>
+        Lekcje z fokusem
       </KangurTransitionLink>
     );
 
     expect(nextLinkPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        href: '/kangur/tests',
+        href: '/kangur/lessons?focus=division',
         scroll: true,
       })
     );
-    expect(screen.getByRole('link', { name: 'Testy' })).toHaveAttribute('data-scroll', 'true');
+    expect(screen.getByRole('link', { name: 'Lekcje z fokusem' })).toHaveAttribute(
+      'data-scroll',
+      'true'
+    );
   });
 
   it('starts the shared Kangur route transition when an internal link is clicked', () => {

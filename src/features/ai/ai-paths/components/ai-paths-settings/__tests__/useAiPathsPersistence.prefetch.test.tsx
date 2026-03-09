@@ -8,7 +8,10 @@ import {
   type RuntimeState,
 } from '@/shared/lib/ai-paths';
 import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
-import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  fetchAiPathsSettingsByKeysCached,
+  updateAiPathsSetting,
+} from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { UseAiPathsPersistenceArgs } from '../useAiPathsPersistence.types';
 import { useAiPathsPersistence } from '../useAiPathsPersistence';
@@ -71,6 +74,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
     updateAiPathsSettingsBulk: vi.fn(async () => []),
+    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
   };
 });
 
@@ -132,6 +136,7 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 }));
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
+const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
 
 const emptyRuntimeState = (): RuntimeState => ({
   status: 'idle',
@@ -181,6 +186,10 @@ const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedUpdateAiPathsSetting.mockImplementation(async (key: string, value: string) => ({
+      key,
+      value,
+    }));
     selectNodeMock.mockReset();
     setConfigOpenSelectionMock.mockReset();
     setNodesGraphMock.mockReset();
@@ -355,7 +364,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
-  it('skips prefetched configs with removed legacy trigger context modes', async () => {
+  it('remediates prefetched configs with removed legacy trigger context modes', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary_legacy_trigger';
     const activeConfig = createDefaultPathConfig(activePathId);
@@ -434,7 +443,21 @@ describe('useAiPathsPersistence idle prefetch', () => {
       );
     });
 
-    expect(setPathConfigsGraphMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
+    });
+    const updatePathConfigs = setPathConfigsGraphMock.mock.calls[0]?.[0] as
+      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
+      | undefined;
+    expect(updatePathConfigs).toBeTypeOf('function');
+    const nextPathConfigs = updatePathConfigs?.(pathConfigsState);
+    expect(nextPathConfigs?.[secondaryPathId]?.nodes[0]?.config?.trigger?.contextMode).toBe(
+      'trigger_only'
+    );
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
+      expect.any(String)
+    );
   });
 
   it('skips prefetch hydration for configs with legacy runtime identity payloads', async () => {

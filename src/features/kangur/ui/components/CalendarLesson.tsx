@@ -1,33 +1,52 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 
-import CalendarInteractiveGame from './CalendarInteractiveGame';
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import LessonSlideSection, {
+  type LessonSlide as LessonSlideSectionSlide,
+} from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
+import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   addXp,
   buildLessonMasteryUpdate,
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurButton,
-  KangurDisplayEmoji,
-  KangurFeatureHeader,
-  KangurGlassPanel,
-  KangurHeadline,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_PENDING_STEP_PILL_CLASSNAME,
-  KANGUR_STEP_PILL_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
-import { cn } from '@/shared/utils';
 
-type SectionId = 'intro' | 'dni' | 'miesiace' | 'data' | 'game';
+import CalendarInteractiveGame, {
+  type CalendarInteractiveSectionId,
+} from './CalendarInteractiveGame';
 
-type Slide = { title: string; tts: string; content: React.JSX.Element };
+type LessonSectionId = 'intro' | 'dni' | 'miesiace' | 'data';
+type TrainingCardId = 'game_days' | 'game_months' | 'game_dates';
+type CalendarHubId = LessonSectionId | TrainingCardId;
+
+type LessonSlide = LessonSlideSectionSlide & {
+  tts: string;
+};
+
+type LegacyCalendarHubSection = {
+  id: LessonSectionId | 'game';
+  emoji: string;
+  title: string;
+  description: string;
+  isGame?: boolean;
+};
+
+type CalendarLiveHubSection = {
+  id: CalendarHubId;
+  emoji: string;
+  title: string;
+  description: string;
+  isGame?: boolean;
+};
+
+type CalendarLessonView =
+  | { kind: 'hub' }
+  | { kind: 'lesson'; sectionId: LessonSectionId }
+  | { kind: 'training'; sectionId: CalendarInteractiveSectionId };
 
 const MONTHS = [
   { name: 'Styczen', days: 31, num: 1 },
@@ -59,25 +78,42 @@ function MiniCalendar({
   const monthData = MONTHS[month - 1] ?? MONTHS[0];
   const startOffset = (firstDay + 6) % 7;
   const cells: Array<number | null> = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= monthData.days; d++) cells.push(d);
+
+  for (let i = 0; i < startOffset; i += 1) {
+    cells.push(null);
+  }
+  for (let day = 1; day <= monthData.days; day += 1) {
+    cells.push(day);
+  }
+
   return (
     <KangurLessonCallout accent='slate' className='mx-auto max-w-xs' padding='sm'>
-      <p className='text-center font-extrabold text-indigo-700 mb-2'>
+      <p className='mb-2 text-center font-extrabold text-indigo-700'>
         {monthData.name} {year}
       </p>
-      <div className='grid grid-cols-7 gap-0.5 text-xs text-center'>
-        {DAYS.map((d, i) => (
-          <div key={d} className={`font-bold py-1 ${i >= 5 ? 'text-red-500' : 'text-slate-500'}`}>
-            {d}
+      <div className='grid grid-cols-7 gap-0.5 text-center text-xs'>
+        {DAYS.map((dayLabel, index) => (
+          <div
+            key={dayLabel}
+            className={`py-1 font-bold ${index >= 5 ? 'text-red-500' : 'text-slate-500'}`}
+          >
+            {dayLabel}
           </div>
         ))}
-        {cells.map((d, i) => (
+        {cells.map((day, index) => (
           <div
-            key={i}
-            className={`py-1 rounded-full text-sm font-semibold ${d === highlightDay ? 'bg-indigo-500 text-white' : d !== null && i % 7 >= 5 ? 'text-red-400' : d !== null ? 'text-slate-700' : ''}`}
+            key={`${index}-${day ?? 'empty'}`}
+            className={`rounded-full py-1 text-sm font-semibold ${
+              day === highlightDay
+                ? 'bg-indigo-500 text-white'
+                : day !== null && index % 7 >= 5
+                  ? 'text-red-400'
+                  : day !== null
+                    ? 'text-slate-700'
+                    : ''
+            }`}
           >
-            {d || ''}
+            {day ?? ''}
           </div>
         ))}
       </div>
@@ -85,7 +121,7 @@ function MiniCalendar({
   );
 }
 
-export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
+export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Czym jest kalendarz?',
@@ -99,7 +135,8 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
             Kalendarz to sposob organizowania czasu.
             <br />
             <br />
-            📆 Rok ma <strong>12 miesiecy</strong> i <strong>365 dni</strong>.<br />
+            📆 Rok ma <strong>12 miesiecy</strong> i <strong>365 dni</strong>.
+            <br />
             🗓️ Tydzien ma <strong>7 dni</strong>.
           </p>
         </div>
@@ -111,33 +148,31 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       title: 'Dni tygodnia',
       tts: 'Tydzien ma 7 dni: Poniedzialek, Wtorek, Sroda, Czwartek, Piatek, Sobota, Niedziela.',
       content: (
-        <div className='flex flex-col items-center gap-4 text-center'>
-          <div className='flex flex-col gap-2 w-full max-w-xs'>
-            {['Poniedzialek', 'Wtorek', 'Sroda', 'Czwartek', 'Piatek'].map((d, i) => (
-              <KangurLessonCallout
-                key={d}
-                accent='indigo'
-                className='flex items-center gap-3'
-                padding='sm'
-              >
-                <span className='text-indigo-500 font-bold w-5'>{i + 1}.</span>
-                <span className='font-semibold text-slate-700'>{d}</span>
-                <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
-              </KangurLessonCallout>
-            ))}
-            {['Sobota', 'Niedziela'].map((d, i) => (
-              <KangurLessonCallout
-                key={d}
-                accent='rose'
-                className='flex items-center gap-3'
-                padding='sm'
-              >
-                <span className='text-pink-500 font-bold w-5'>{i + 6}.</span>
-                <span className='font-semibold text-slate-700'>{d}</span>
-                <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
-              </KangurLessonCallout>
-            ))}
-          </div>
+        <div className='flex w-full max-w-xs flex-col gap-2 text-center'>
+          {['Poniedzialek', 'Wtorek', 'Sroda', 'Czwartek', 'Piatek'].map((dayLabel, index) => (
+            <KangurLessonCallout
+              key={dayLabel}
+              accent='indigo'
+              className='flex items-center gap-3'
+              padding='sm'
+            >
+              <span className='w-5 font-bold text-indigo-500'>{index + 1}.</span>
+              <span className='font-semibold text-slate-700'>{dayLabel}</span>
+              <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
+            </KangurLessonCallout>
+          ))}
+          {['Sobota', 'Niedziela'].map((dayLabel, index) => (
+            <KangurLessonCallout
+              key={dayLabel}
+              accent='rose'
+              className='flex items-center gap-3'
+              padding='sm'
+            >
+              <span className='w-5 font-bold text-pink-500'>{index + 6}.</span>
+              <span className='font-semibold text-slate-700'>{dayLabel}</span>
+              <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
+            </KangurLessonCallout>
+          ))}
         </div>
       ),
     },
@@ -147,8 +182,8 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       title: '12 miesiecy roku',
       tts: 'Rok ma 12 miesiecy podzielonych na cztery pory roku.',
       content: (
-        <div className='flex flex-col items-center gap-3 text-center'>
-          <div className='grid grid-cols-2 gap-3 w-full max-w-sm'>
+        <div className='flex w-full max-w-sm flex-col items-center gap-3 text-center'>
+          <div className='grid w-full grid-cols-2 gap-3'>
             {[
               {
                 season: '🌸 Wiosna',
@@ -170,13 +205,13 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
                 months: [MONTHS[11], MONTHS[0], MONTHS[1]],
                 accent: 'sky' as const,
               },
-            ].map((g) => (
-              <KangurLessonCallout key={g.season} accent={g.accent} padding='sm'>
-                <p className='mb-1 text-sm font-bold text-slate-600'>{g.season}</p>
-                {g.months.map((m) => (
-                  <p key={m.name} className='text-sm text-slate-700'>
-                    <span className='font-bold'>{m.num}.</span> {m.name}{' '}
-                    <span className='text-slate-400'>({m.days}d)</span>
+            ].map((group) => (
+              <KangurLessonCallout key={group.season} accent={group.accent} padding='sm'>
+                <p className='mb-1 text-sm font-bold text-slate-600'>{group.season}</p>
+                {group.months.map((month) => (
+                  <p key={month.name} className='text-sm text-slate-700'>
+                    <span className='font-bold'>{month.num}.</span> {month.name}{' '}
+                    <span className='text-slate-400'>({month.days}d)</span>
                   </p>
                 ))}
               </KangurLessonCallout>
@@ -190,16 +225,16 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       tts: 'Wiekszosc miesiecy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
       content: (
         <div className='flex flex-col items-center gap-4 text-center'>
-          <div className='grid grid-cols-3 gap-2 w-full max-w-sm'>
-            {MONTHS.map((m) => (
+          <div className='grid w-full max-w-sm grid-cols-3 gap-2'>
+            {MONTHS.map((month) => (
               <KangurLessonCallout
-                key={m.name}
-                accent={m.days === 31 ? 'indigo' : m.days === 30 ? 'teal' : 'rose'}
+                key={month.name}
+                accent={month.days === 31 ? 'indigo' : month.days === 30 ? 'teal' : 'rose'}
                 className='rounded-xl text-center text-sm font-semibold'
                 padding='sm'
               >
-                <div className='font-bold'>{m.name}</div>
-                <div className='text-xs'>{m.days} dni</div>
+                <div className='font-bold'>{month.name}</div>
+                <div className='text-xs'>{month.days} dni</div>
               </KangurLessonCallout>
             ))}
           </div>
@@ -214,7 +249,7 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4 text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
-          <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
+          <KangurLessonCallout accent='indigo' className='max-w-xs space-y-2 text-left'>
             <p className='font-semibold text-slate-700'>Jak zapisac date?</p>
             <p className='text-slate-600'>
               📅 <strong>15 marca 2025</strong>
@@ -222,7 +257,7 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
             <p className='text-slate-600'>
               📝 Lub: <strong>15/03/2025</strong>
             </p>
-            <p className='text-indigo-700 font-bold mt-1'>Dzien / Miesiac / Rok</p>
+            <p className='mt-1 font-bold text-indigo-700'>Dzien / Miesiac / Rok</p>
           </KangurLessonCallout>
         </div>
       ),
@@ -230,95 +265,14 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
   ],
 };
 
-function SectionView({
-  sectionId,
-  onBack,
-  onProgressChange,
-}: {
-  sectionId: Exclude<SectionId, 'game'>;
-  onBack: () => void;
-  onProgressChange?: (viewedCount: number, totalCount: number) => void;
-}): React.JSX.Element {
-  const slides = SECTION_SLIDES[sectionId];
-  const [slide, setSlide] = useState(0);
-  const activeSlide = slides[slide];
-
-  if (!activeSlide) return <div />;
-
-  useEffect(() => {
-    onProgressChange?.(slide + 1, slides.length);
-  }, [onProgressChange, slide, slides.length]);
-
-  return (
-    <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <div className='flex w-full flex-wrap items-center justify-between gap-3'>
-        <KangurButton onClick={onBack} size='sm' type='button' variant='surface'>
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        {slides.length > 1 ? (
-          <div className='flex gap-2'>
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setSlide(i)}
-                type='button'
-                aria-label={`Przejdz do slajdu ${i + 1}`}
-                aria-current={i === slide ? 'step' : undefined}
-                className={cn(
-                  KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[14px] cursor-pointer',
-                  i === slide
-                    ? 'w-8 scale-[1.04] bg-emerald-500'
-                    : i < slide
-                      ? 'w-6 bg-emerald-200'
-                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
-                )}
-                data-testid={`calendar-lesson-slide-${sectionId}-${i}`}
-              />
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <KangurGlassPanel
-        className='flex w-full flex-col items-center gap-5'
-        data-testid={`calendar-lesson-section-shell-${sectionId}`}
-        padding='xl'
-        surface='solid'
-      >
-        <KangurHeadline
-          accent='slate'
-          as='h2'
-          className='text-center'
-          data-testid={`calendar-lesson-slide-title-${sectionId}`}
-          size='sm'
-        >
-          {activeSlide.title}
-        </KangurHeadline>
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={slide}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            className='w-full flex flex-col items-center'
-          >
-            {activeSlide.content}
-          </motion.div>
-        </AnimatePresence>
-      </KangurGlassPanel>
-    </div>
-  );
-}
-
-export const HUB_SECTIONS = [
+export const HUB_SECTIONS: LegacyCalendarHubSection[] = [
   { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiace i dni' },
   { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
   {
     id: 'miesiace',
     emoji: '🌸',
     title: 'Miesiace i pory roku',
-    description: '12 miesiecy — ile dni maja?',
+    description: '12 miesiecy i ich pory roku',
   },
   { id: 'data', emoji: '📝', title: 'Jak czytac date?', description: 'Dzien / miesiac / rok' },
   {
@@ -330,58 +284,115 @@ export const HUB_SECTIONS = [
   },
 ];
 
+const LIVE_HUB_SECTIONS: CalendarLiveHubSection[] = [
+  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiace i dni' },
+  { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
+  {
+    id: 'miesiace',
+    emoji: '🌸',
+    title: 'Miesiace i pory roku',
+    description: '12 miesiecy i ich pory roku',
+  },
+  { id: 'data', emoji: '📝', title: 'Jak czytac date?', description: 'Dzien / miesiac / rok' },
+  {
+    id: 'game_days',
+    emoji: '🗓️',
+    title: 'Ćwiczenie: Dni tygodnia',
+    description: 'Weekend, dni tygodnia i układ kolumn',
+    isGame: true,
+  },
+  {
+    id: 'game_months',
+    emoji: '🌸',
+    title: 'Ćwiczenie: Miesiące',
+    description: 'Miesiące, kolejność i pory roku',
+    isGame: true,
+  },
+  {
+    id: 'game_dates',
+    emoji: '📝',
+    title: 'Ćwiczenie: Daty',
+    description: 'Wyszukuj właściwe daty w kalendarzu',
+    isGame: true,
+  },
+];
+
+const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = LIVE_HUB_SECTIONS.filter(
+  (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
+);
+
 export default function CalendarLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const [view, setView] = useState<CalendarLessonView>({ kind: 'hub' });
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(SECTION_SLIDES);
+  const lessonCompletionAwardedRef = useRef(false);
 
-  const handleGameStart = (): void => {
-    const prog = loadProgress();
-    addXp(XP_REWARDS.lesson_completed, {
-      lessonsCompleted: prog.lessonsCompleted + 1,
-      lessonMastery: buildLessonMasteryUpdate(prog, 'calendar', 60),
-    });
-    setActiveSection('game');
-  };
+  const lessonHubSections = LIVE_HUB_SECTIONS.map((section) =>
+    section.isGame
+      ? section
+      : {
+        ...section,
+        progress: sectionProgress[section.id as LessonSectionId],
+      }
+  );
 
-  if (activeSection === 'game') {
+  const handleStartTraining = useCallback((sectionId: CalendarInteractiveSectionId) => {
+    if (!lessonCompletionAwardedRef.current) {
+      const progress = loadProgress();
+      addXp(XP_REWARDS.lesson_completed, {
+        lessonsCompleted: progress.lessonsCompleted + 1,
+        lessonMastery: buildLessonMasteryUpdate(progress, 'calendar', 60),
+      });
+      lessonCompletionAwardedRef.current = true;
+    }
+    setView({ kind: 'training', sectionId });
+  }, []);
+
+  if (view.kind === 'training') {
+    const currentTrainingSection =
+      TRAINING_SECTIONS.find((section) => section.id === view.sectionId) ?? TRAINING_SECTIONS[0];
+    if (!currentTrainingSection) {
+      return <></>;
+    }
+
     return (
-      <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <KangurButton
-          onClick={() => setActiveSection(null)}
-          className='self-start'
-          size='sm'
-          type='button'
-          variant='surface'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurGlassPanel
-          className='flex w-full flex-col items-center gap-5'
-          data-testid='calendar-lesson-game-shell'
-          padding='xl'
-          surface='solid'
-        >
-          <KangurFeatureHeader
-            accent='emerald'
-            badgeSize='md'
-            data-testid='calendar-lesson-game-header'
-            headingSize='sm'
-            icon='📅'
-            title='Ćwiczenia z Kalendarzem'
-          />
-          <CalendarInteractiveGame onFinish={() => setActiveSection(null)} />
-        </KangurGlassPanel>
-      </div>
+      <LessonActivityStage
+        accent='emerald'
+        description={currentTrainingSection.description}
+        headerTestId='calendar-lesson-game-header'
+        icon='📅'
+        maxWidthClassName='max-w-lg'
+        onBack={() => setView({ kind: 'hub' })}
+        sectionHeader={{
+          description: currentTrainingSection.description,
+          emoji: currentTrainingSection.emoji,
+          isGame: true,
+          title: currentTrainingSection.title,
+        }}
+        shellTestId='calendar-lesson-game-shell'
+        title={currentTrainingSection.title}
+      >
+        <CalendarInteractiveGame
+          key={view.sectionId}
+          onFinish={() => setView({ kind: 'hub' })}
+          section={view.sectionId}
+        />
+      </LessonActivityStage>
     );
   }
 
-  if (activeSection) {
+  if (view.kind === 'lesson') {
     return (
-      <SectionView
-        sectionId={activeSection}
-        onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+      <LessonSlideSection
+        slides={SECTION_SLIDES[view.sectionId]}
+        sectionHeader={
+          LIVE_HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null
+        }
+        onBack={() => setView({ kind: 'hub' })}
+        onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
+        dotActiveClass='bg-emerald-500'
+        dotDoneClass='bg-emerald-200'
+        gradientClass='from-green-400 to-teal-500'
       />
     );
   }
@@ -392,21 +403,22 @@ export default function CalendarLesson(): React.JSX.Element {
       lessonTitle='Nauka kalendarza'
       gradientClass='from-green-400 to-teal-500'
       progressDotClassName='bg-emerald-200'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as keyof typeof SECTION_SLIDES],
-          }
-      )}
-      onSelect={(id) => {
-        if (id === 'game') {
-          handleGameStart();
-        } else {
-          markSectionOpened(id as keyof typeof SECTION_SLIDES);
-          setActiveSection(id as SectionId);
+      sections={lessonHubSections}
+      onSelect={(sectionId) => {
+        if (sectionId === 'game_days') {
+          handleStartTraining('dni');
+          return;
         }
+        if (sectionId === 'game_months') {
+          handleStartTraining('miesiace');
+          return;
+        }
+        if (sectionId === 'game_dates') {
+          handleStartTraining('data');
+          return;
+        }
+        markSectionOpened(sectionId as LessonSectionId);
+        setView({ kind: 'lesson', sectionId: sectionId as LessonSectionId });
       }}
     />
   );

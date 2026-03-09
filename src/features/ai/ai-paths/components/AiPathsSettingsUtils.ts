@@ -39,8 +39,7 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  findRemovedLegacyTriggerContextModesInPathConfig,
-  formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModesInPathConfig,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
@@ -359,35 +358,23 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: unknown[]):
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const removedLegacyTriggerContextModes =
-    findRemovedLegacyTriggerContextModesInPathConfig(config);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw validationError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes),
-      {
-        source: 'ai_paths.path_config',
-        reason: 'removed_legacy_trigger_context_mode',
-        pathId: config.id,
-        removedTriggerContextModes: removedLegacyTriggerContextModes,
-      }
-    );
-  }
-  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
+  const remediatedConfig = remediateRemovedLegacyTriggerContextModesInPathConfig(config).value;
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {
       source: 'ai_paths.path_config',
       reason: 'unsupported_collection_aliases',
-      pathId: config.id,
+      pathId: remediatedConfig.id,
       issues: collectionAliasIssues,
     });
   }
-  const contractBackfilled = backfillPathConfigNodeContracts(config).config;
+  const contractBackfilled = backfillPathConfigNodeContracts(remediatedConfig).config;
   const removedLegacyNodes = findRemovedLegacyAiPathNodesInPathConfig(contractBackfilled);
   if (removedLegacyNodes.length > 0) {
     throw validationError(formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes), {
       source: 'ai_paths.path_config',
       reason: 'removed_legacy_node_type',
-      pathId: config.id,
+      pathId: remediatedConfig.id,
       removedNodes: removedLegacyNodes,
     });
   }

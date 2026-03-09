@@ -26,7 +26,9 @@ export function AgentPersonaMoodAvatar({
   fallbackIconClassName,
   'data-testid': dataTestId,
 }: AgentPersonaMoodAvatarProps): React.JSX.Element {
-  const hasImage = typeof avatarImageUrl === 'string' && avatarImageUrl.trim().length > 0;
+  const normalizedImageUrl = typeof avatarImageUrl === 'string' ? avatarImageUrl.trim() : '';
+  const hasImage = normalizedImageUrl.length > 0;
+  const isInlineImageDataUrl = normalizedImageUrl.startsWith('data:image/');
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -36,9 +38,16 @@ export function AgentPersonaMoodAvatar({
       data-testid={dataTestId}
       role='img'
     >
-      {hasImage ? (
+      {hasImage && isInlineImageDataUrl ? (
+        <img
+          src={normalizedImageUrl}
+          alt={label}
+          className={cn('h-full w-full object-cover', imgClassName)}
+          loading='eager'
+        />
+      ) : hasImage ? (
         <NextImage
-          src={avatarImageUrl}
+          src={normalizedImageUrl}
           alt={label}
           fill
           sizes='100%'

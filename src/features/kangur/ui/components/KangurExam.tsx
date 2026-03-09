@@ -1,6 +1,6 @@
-import { useId, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
+import { useId, useMemo, useRef, useState } from 'react';
 
 import {
   Q1Illustration,
@@ -17,6 +17,7 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
+import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
@@ -29,10 +30,10 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
-import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
-import type { KangurLesson } from '@/shared/contracts/kangur';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import type { KangurLesson } from '@/shared/contracts/kangur';
 import { cn } from '@/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
@@ -523,6 +524,8 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
 }
 
 export default function KangurExam(): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const { mode } = useKangurGameContext();
   const questions = getKangurQuestions(mode);
   const [current, setCurrent] = useState(0);
@@ -565,9 +568,7 @@ export default function KangurExam(): React.JSX.Element {
     <AnimatePresence mode='wait'>
       <motion.div
         key={current}
-        initial={{ opacity: 0, x: 30 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -30 }}
+        {...questionMotionProps}
         className='w-full flex flex-col gap-4'
       >
         <ExamQuestion

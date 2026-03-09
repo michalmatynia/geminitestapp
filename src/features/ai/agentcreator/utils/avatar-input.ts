@@ -29,11 +29,23 @@ export const dataUrlToFile = (dataUrl: string, filename: string): File => {
 export const base64ToFile = (base64: string, mimeType: string, filename: string): File =>
   dataUrlToFile(`data:${mimeType};base64,${base64.trim()}`, filename);
 
+export type PersonaAvatarUploadResult = ImageFileRecord & {
+  originalName: string;
+  folder: string;
+  thumbnail: {
+    ref: string;
+    mimeType: string;
+    bytes: number;
+    width: number;
+    height: number;
+  } | null;
+};
+
 export async function uploadPersonaAvatar(input: {
   file: File;
   personaId?: string | null;
   moodId: string;
-}): Promise<ImageFileRecord> {
+}): Promise<PersonaAvatarUploadResult> {
   const formData = new FormData();
   formData.set('file', input.file);
   formData.set('moodId', input.moodId);
@@ -41,11 +53,19 @@ export async function uploadPersonaAvatar(input: {
     formData.set('personaId', input.personaId.trim());
   }
 
-  return api.post<ImageFileRecord>('/api/agentcreator/personas/avatar', formData);
+  return api.post<PersonaAvatarUploadResult>('/api/agentcreator/personas/avatar', formData);
 }
 
 export async function deletePersonaAvatar(fileId: string): Promise<void> {
   const normalized = fileId.trim();
   if (!normalized) return;
   await api.delete(`/api/files/${encodeURIComponent(normalized)}`);
+}
+
+export async function deletePersonaAvatarThumbnail(thumbnailRef: string): Promise<void> {
+  const normalized = thumbnailRef.trim();
+  if (!normalized) return;
+  await api.delete(
+    `/api/agentcreator/personas/avatar?thumbnailRef=${encodeURIComponent(normalized)}`
+  );
 }

@@ -9,8 +9,9 @@ import {
 import {
   findRemovedLegacyTriggerContextModesInDocument,
   formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModesInDocument,
+  remediateRemovedLegacyTriggerContextModesInPathConfig,
 } from '../legacy-trigger-context-mode';
-import { remediateRemovedLegacyTriggerContextModesInDocument } from '../legacy-trigger-context-mode-remediation';
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
   const pathConfig = createDefaultPathConfig(pathId);
@@ -72,12 +73,11 @@ describe('legacy-trigger-context-mode', () => {
 
   it('remediates removed legacy trigger context modes in plain path config payloads', () => {
     const legacyConfig = buildLegacyTriggerConfig('path_remains_legacy');
+    const remediated = remediateRemovedLegacyTriggerContextModesInPathConfig(legacyConfig);
 
-    expect(findRemovedLegacyTriggerContextModesInDocument(legacyConfig)).toHaveLength(1);
-    const remediated = remediateRemovedLegacyTriggerContextModesInDocument(legacyConfig);
-
-    expect(remediated.usages).toHaveLength(1);
-    expect(remediated.value.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(remediated.changed).toBe(true);
+    expect(remediated.value?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(findRemovedLegacyTriggerContextModesInDocument(remediated.value)).toHaveLength(0);
     expect(legacyConfig.nodes[0]?.config?.trigger?.contextMode).toBe('simulation_preferred');
   });
 
@@ -88,13 +88,9 @@ describe('legacy-trigger-context-mode', () => {
         exporterVersion: 'test.legacy-trigger',
       }
     );
-
     const remediated = remediateRemovedLegacyTriggerContextModesInDocument(portablePayload);
 
-    expect(remediated.usages).toHaveLength(1);
-    const remediatedDocument =
-      (remediated.value as { package?: { document?: { nodes?: Array<{ config?: { trigger?: { contextMode?: string } } }> } } })
-        .package?.document;
-    expect(remediatedDocument?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(remediated.changed).toBe(true);
+    expect(findRemovedLegacyTriggerContextModesInDocument(remediated.value)).toHaveLength(0);
   });
 });

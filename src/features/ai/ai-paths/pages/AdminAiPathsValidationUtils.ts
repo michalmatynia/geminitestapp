@@ -12,14 +12,14 @@ import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
-  findRemovedLegacyTriggerContextModesInDocument,
-  formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type ParsedAiPathsSettings = {
   pathMetas: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
+  repairedPathSettings: AiPathsSettingRecordDto[];
 };
 
 export type RuleParseResult =
@@ -129,7 +129,13 @@ export const getSourceHashFromRule = (rule: AiPathsValidationRule): string | nul
 export const getCandidateTags = (rule: AiPathsValidationRule): string[] =>
   uniqueStringList(rule.inference?.tags ?? []);
 
-export const parsePathConfig = (pathId: string, raw: unknown): PathConfig => {
+export const parsePathConfig = (
+  pathId: string,
+  raw: unknown
+): {
+  config: PathConfig;
+  repairedSetting: AiPathsSettingRecordDto | null;
+} => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw validationError('Invalid AI Paths validation path config payload.', {
       source: 'ai_paths.validation',
@@ -137,21 +143,8 @@ export const parsePathConfig = (pathId: string, raw: unknown): PathConfig => {
       pathId,
     });
   }
-  const removedLegacyTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(raw);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw validationError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
-        surface: 'validation payload',
-      }),
-      {
-        source: 'ai_paths.validation',
-        reason: 'removed_legacy_trigger_context_mode',
-        pathId,
-        removedTriggerContextModes: removedLegacyTriggerContextModes,
-      }
-    );
-  }
-  const result = pathConfigSchema.safeParse(raw);
+  const remediated = remediateRemovedLegacyTriggerContextModesInDocument(raw);
+  const result = pathConfigSchema.safeParse(remediated.value);
   if (!result.success) {
     throw validationError('Invalid AI Paths validation path config payload.', {
       source: 'ai_paths.validation',
@@ -171,9 +164,19 @@ export const parsePathConfig = (pathId: string, raw: unknown): PathConfig => {
     });
   }
 
-  return {
+  const normalizedConfig: PathConfig = {
     ...config,
     aiPathsValidation: normalizeAiPathsValidationConfig(config.aiPathsValidation),
+  };
+
+  return {
+    config: normalizedConfig,
+    repairedSetting: remediated.changed
+      ? {
+          key: `${PATH_CONFIG_PREFIX}${pathId}`,
+          value: JSON.stringify(normalizedConfig),
+        }
+      : null,
   };
 };
 
@@ -208,6 +211,7 @@ export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): Parsed
   );
 
   const parsedConfigById = new Map<string, PathConfig>();
+  const repairedPathSettings: AiPathsSettingRecordDto[] = [];
   configEntries.forEach(([key, value]: [string, string]) => {
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
@@ -219,8 +223,11 @@ export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): Parsed
         pathId,
       });
     }
-    const config = parsePathConfig(pathId, parsed);
-    parsedConfigById.set(pathId, config);
+    const parsedConfig = parsePathConfig(pathId, parsed);
+    parsedConfigById.set(pathId, parsedConfig.config);
+    if (parsedConfig.repairedSetting) {
+      repairedPathSettings.push(parsedConfig.repairedSetting);
+    }
   });
 
   const indexMetas = parsePathIndex(settingsMap.get(PATH_INDEX_KEY));
@@ -242,5 +249,6 @@ export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): Parsed
   return {
     pathMetas,
     pathConfigs,
+    repairedPathSettings,
   };
 };

@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
-import type { DropResult } from '@hello-pangea/dnd';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   KangurButton,
@@ -16,12 +15,15 @@ import {
   KANGUR_ACCENT_STYLES,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/shared/utils';
+
+import type { DropResult } from '@hello-pangea/dnd';
 
 type AddingBallGameProps = {
   finishLabel?: string;
@@ -754,6 +756,8 @@ export default function AddingBallGame({
   finishLabel = 'Wróć do lekcji',
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -871,9 +875,7 @@ export default function AddingBallGame({
         <AnimatePresence mode='wait'>
           <motion.div
             key={roundIdx}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            {...roundMotionProps}
           >
             {round.mode === 'complete_equation' && (
               <CompleteEquation round={round} onResult={handleResult} />

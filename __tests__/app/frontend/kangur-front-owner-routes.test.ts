@@ -148,11 +148,11 @@ describe('kangur public-owner frontend routes', () => {
 
     await expect(
       KangurAliasLoginPage({
-        searchParams: Promise.resolve({ callbackUrl: '/kangur/tests' }),
+        searchParams: Promise.resolve({ callbackUrl: '/tests' }),
       })
-    ).rejects.toThrow('redirect:/login?callbackUrl=%2Fkangur%2Ftests');
+    ).rejects.toThrow('redirect:/login?callbackUrl=%2Ftests');
 
-    expect(redirectMock).toHaveBeenCalledWith('/login?callbackUrl=%2Fkangur%2Ftests');
+    expect(redirectMock).toHaveBeenCalledWith('/login?callbackUrl=%2Ftests');
   });
 
   it('keeps legacy /kangur/login rendering when CMS owns the frontend', async () => {

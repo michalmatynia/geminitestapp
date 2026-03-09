@@ -36,7 +36,7 @@ describe('kangur parent account resend handler', () => {
     const requestContext = createRequestContext();
     requestContext.body = {
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     };
 
     resendKangurParentVerificationEmailMock.mockResolvedValue({
@@ -62,7 +62,7 @@ describe('kangur parent account resend handler', () => {
 
     expect(resendKangurParentVerificationEmailMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
       request: expect.any(NextRequest),
     });
     await expect(response.json()).resolves.toEqual({
@@ -84,7 +84,7 @@ describe('kangur parent account resend handler', () => {
     const requestContext = createRequestContext();
     requestContext.body = {
       email: 'parent@example.com',
-      callbackUrl: '/kangur/tests?focus=division',
+      callbackUrl: '/tests?focus=division',
     };
 
     resendKangurParentVerificationEmailMock.mockResolvedValue({

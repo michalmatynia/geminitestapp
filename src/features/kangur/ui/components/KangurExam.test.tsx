@@ -6,9 +6,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-const { useKangurGameContextMock, getKangurQuestionsMock } = vi.hoisted(() => ({
+const { useKangurGameContextMock, getKangurQuestionsMock, useSessionMock } = vi.hoisted(() => ({
   useKangurGameContextMock: vi.fn(),
   getKangurQuestionsMock: vi.fn(),
+  useSessionMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameContext', () => ({
@@ -19,10 +20,18 @@ vi.mock('@/features/kangur/ui/services/kangur-questions', () => ({
   getKangurQuestions: getKangurQuestionsMock,
 }));
 
+vi.mock('next-auth/react', () => ({
+  useSession: useSessionMock,
+}));
+
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 
 describe('KangurExam', () => {
   it('uses shared light utility actions and glass summary surfaces', async () => {
+    useSessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     useKangurGameContextMock.mockReturnValue({ mode: 'junior' });
     getKangurQuestionsMock.mockReturnValue([
       {

@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: {
     div: ({
       animate: _animate,
@@ -100,15 +101,20 @@ describe('Arithmetic lessons shared surfaces', () => {
     renderLesson(<AddingLesson />);
     fireEvent.click(screen.getByRole('button', { name: /gra z piłkami/i }));
 
+    expect(screen.getByTestId('adding-lesson-game-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
     expect(screen.getByRole('heading', { name: /gra z piłkami!/i })).toHaveClass(
-      'text-2xl',
+      'text-xl',
       'text-amber-700'
     );
-    expect(screen.getByText('🎮')).toHaveClass('h-16', 'w-16', 'bg-amber-100', 'text-amber-700');
+    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-amber-100', 'text-amber-700');
   });
 
   it('uses shared equation and game header surfaces in the subtracting lesson', () => {
@@ -128,15 +134,20 @@ describe('Arithmetic lessons shared surfaces', () => {
     renderLesson(<SubtractingLesson />);
     fireEvent.click(screen.getByRole('button', { name: /gra z odejmowaniem/i }));
 
+    expect(screen.getByTestId('subtracting-lesson-game-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
     expect(screen.getByRole('heading', { name: /gra z odejmowaniem!/i })).toHaveClass(
-      'text-2xl',
+      'text-xl',
       'text-rose-700'
     );
-    expect(screen.getByText('🎮')).toHaveClass('h-16', 'w-16', 'bg-rose-100', 'text-rose-700');
+    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-rose-100', 'text-rose-700');
   });
 
   it('uses shared equation and game header surfaces in the division lesson', () => {
@@ -155,15 +166,20 @@ describe('Arithmetic lessons shared surfaces', () => {
     renderLesson(<DivisionLesson />);
     fireEvent.click(screen.getByRole('button', { name: /gra z dzieleniem/i }));
 
+    expect(screen.getByTestId('division-lesson-game-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
     expect(screen.getByRole('heading', { name: /gra z dzieleniem!/i })).toHaveClass(
-      'text-2xl',
+      'text-xl',
       'text-sky-700'
     );
-    expect(screen.getByText('🎮')).toHaveClass('h-16', 'w-16', 'bg-sky-100', 'text-sky-700');
+    expect(screen.getByText('🎮')).toHaveClass('h-12', 'w-12', 'bg-sky-100', 'text-sky-700');
   });
 
   it('uses shared equation, chip, and game header surfaces in the multiplication lesson', () => {
@@ -187,17 +203,22 @@ describe('Arithmetic lessons shared surfaces', () => {
     renderLesson(<MultiplicationLesson />);
     fireEvent.click(screen.getByRole('button', { name: /gra z grupami/i }));
 
+    expect(screen.getByTestId('multiplication-lesson-game-array-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
     expect(screen.getByRole('heading', { name: /gra z grupami!/i })).toHaveClass(
-      'text-2xl',
+      'text-xl',
       'text-violet-700'
     );
     expect(screen.getByText('✨')).toHaveClass(
-      'h-16',
-      'w-16',
+      'h-12',
+      'w-12',
       'bg-violet-100',
       'text-violet-700'
     );

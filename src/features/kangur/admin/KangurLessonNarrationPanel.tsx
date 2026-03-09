@@ -18,19 +18,16 @@ import {
 } from '@/features/kangur/tts/contracts';
 import {
   buildKangurLessonDocumentNarrationScript,
+  buildKangurLessonDocumentNarrationSignature,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { api } from '@/shared/lib/api-client';
-import type {
-  KangurLessonDocument,
-  KangurLessonInlineBlock,
-  KangurLessonRootBlock,
-} from '@/shared/contracts/kangur';
+import { Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
-
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const KANGUR_LESSON_NARRATION_PANEL_CONTEXT_ROOT_IDS = [
@@ -60,89 +57,6 @@ const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): stri
     (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
     null
   );
-};
-
-type NarrationCoverageSummary = {
-  explicitOverrideCount: number;
-  visualBlockCount: number;
-  activityBlockCount: number;
-  visualBlocksNeedingDescriptions: number;
-  activityBlocksUsingDefaultNarration: number;
-};
-
-const collectInlineBlocks = (block: KangurLessonRootBlock): KangurLessonInlineBlock[] => {
-  if (block.type === 'grid') {
-    return block.items.map((item) => item.block);
-  }
-  if (block.type === 'text' || block.type === 'svg' || block.type === 'image') {
-    return [block];
-  }
-  return [];
-};
-
-const summarizeNarrationCoverage = (
-  document: KangurLessonDocument
-): NarrationCoverageSummary => {
-  let explicitOverrideCount = 0;
-  let visualBlockCount = 0;
-  let activityBlockCount = 0;
-  let visualBlocksNeedingDescriptions = 0;
-  let activityBlocksUsingDefaultNarration = 0;
-
-  for (const page of resolveKangurLessonDocumentPages(document)) {
-    for (const block of page.blocks) {
-      if (block.type === 'activity') {
-        activityBlockCount += 1;
-        if (block.ttsDescription?.trim()) {
-          explicitOverrideCount += 1;
-        } else {
-          activityBlocksUsingDefaultNarration += 1;
-        }
-      } else if (block.type === 'callout' || block.type === 'quiz') {
-        if (block.ttsText?.trim()) {
-          explicitOverrideCount += 1;
-        }
-      }
-
-      for (const inlineBlock of collectInlineBlocks(block)) {
-        if (inlineBlock.type === 'text') {
-          if (inlineBlock.ttsText?.trim()) {
-            explicitOverrideCount += 1;
-          }
-          continue;
-        }
-
-        if (inlineBlock.type === 'svg') {
-          visualBlockCount += 1;
-          if (inlineBlock.ttsDescription?.trim()) {
-            explicitOverrideCount += 1;
-          } else if (inlineBlock.title.trim().length === 0) {
-            visualBlocksNeedingDescriptions += 1;
-          }
-          continue;
-        }
-
-        visualBlockCount += 1;
-        if (inlineBlock.ttsDescription?.trim()) {
-          explicitOverrideCount += 1;
-        } else if (
-          (inlineBlock.caption?.trim().length ?? 0) === 0 &&
-          (inlineBlock.altText?.trim().length ?? 0) === 0 &&
-          inlineBlock.title.trim().length === 0
-        ) {
-          visualBlocksNeedingDescriptions += 1;
-        }
-      }
-    }
-  }
-
-  return {
-    explicitOverrideCount,
-    visualBlockCount,
-    activityBlockCount,
-    visualBlocksNeedingDescriptions,
-    activityBlocksUsingDefaultNarration,
-  };
 };
 
 export function KangurLessonNarrationPanel(): React.JSX.Element {
@@ -198,7 +112,42 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
   );
 
   const hasScriptContent = hasKangurLessonNarrationContent(script);
-  const coverage = useMemo(() => summarizeNarrationCoverage(document), [document]);
+  const pageNarrationReviews = useMemo(
+    () =>
+      resolveKangurLessonDocumentPages(document).map((page, index) => ({
+        page,
+        index,
+        review: validateKangurLessonPageDraft(page),
+      })),
+    [document]
+  );
+  const coverage = useMemo(
+    () =>
+      pageNarrationReviews.reduce(
+        (summary, item) => ({
+          explicitOverrideCount:
+            summary.explicitOverrideCount + item.review.narrationCoverage.explicitOverrideCount,
+          visualBlockCount:
+            summary.visualBlockCount + item.review.narrationCoverage.visualBlockCount,
+          activityBlockCount:
+            summary.activityBlockCount + item.review.narrationCoverage.activityBlockCount,
+          visualBlocksNeedingDescriptions:
+            summary.visualBlocksNeedingDescriptions +
+            item.review.narrationCoverage.visualBlocksNeedingDescriptions,
+          activityBlocksUsingDefaultNarration:
+            summary.activityBlocksUsingDefaultNarration +
+            item.review.narrationCoverage.activityBlocksUsingDefaultNarration,
+        }),
+        {
+          explicitOverrideCount: 0,
+          visualBlockCount: 0,
+          activityBlockCount: 0,
+          visualBlocksNeedingDescriptions: 0,
+          activityBlocksUsingDefaultNarration: 0,
+        }
+      ),
+    [pageNarrationReviews]
+  );
   const coverageRecommendations = useMemo(() => {
     const recommendations: string[] = [];
 
@@ -222,6 +171,22 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
 
     return recommendations;
   }, [coverage, hasScriptContent]);
+  const narrationPreviewSignature = useMemo(
+    () =>
+      buildKangurLessonDocumentNarrationSignature({
+        lessonId: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        document,
+        voice,
+        locale: document.narration?.locale,
+      }),
+    [document, lesson.description, lesson.id, lesson.title, voice]
+  );
+  const narrationPreviewIsFresh =
+    !hasScriptContent ||
+    !document.narration?.previewSourceSignature ||
+    document.narration.previewSourceSignature === narrationPreviewSignature;
   const scriptKey = useMemo(
     () =>
       JSON.stringify({
@@ -232,6 +197,29 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
         segments: script.segments.map((segment) => segment.text),
       }),
     [contextRegistrySignature, script, voice]
+  );
+  const stampNarrationPreviewMetadata = React.useCallback(
+    (previewedAt: string | null | undefined): void => {
+      const nextPreviewedAt = previewedAt ?? document.narration?.lastPreviewedAt ?? new Date().toISOString();
+      if (
+        document.narration?.previewSourceSignature === narrationPreviewSignature &&
+        document.narration?.lastPreviewedAt === nextPreviewedAt
+      ) {
+        return;
+      }
+
+      onChange({
+        ...document,
+        narration: {
+          ...(document.narration ?? {}),
+          voice,
+          locale: document.narration?.locale ?? script.locale,
+          previewSourceSignature: narrationPreviewSignature,
+          lastPreviewedAt: nextPreviewedAt,
+        },
+      });
+    },
+    [document, narrationPreviewSignature, onChange, script.locale, voice]
   );
 
   useEffect(() => {
@@ -286,6 +274,14 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
     };
   }, [hasScriptContent, requestContextRegistry, script, voice]);
 
+  useEffect(() => {
+    if (cacheStatus?.state !== 'ready' || !hasScriptContent) {
+      return;
+    }
+
+    stampNarrationPreviewMetadata(cacheStatus.latestCreatedAt);
+  }, [cacheStatus, hasScriptContent, stampNarrationPreviewMetadata]);
+
   const handleVoiceChange = (nextVoice: string): void => {
     const normalizedVoice = KANGUR_TTS_VOICE_OPTIONS.find(
       (option) => option.value === nextVoice
@@ -337,6 +333,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
           message: 'Cached audio is available for this lesson draft.',
           segments: nextResponse.segments,
         });
+        stampNarrationPreviewMetadata(latestCreatedAt);
       }
       setStatus('ready');
     } catch (error) {
@@ -348,6 +345,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
   };
 
   const latestAudioCreatedAt = formatDateTime(getLatestAudioCreatedAt(response));
+  const lastPreviewedAt = formatDateTime(document.narration?.lastPreviewedAt ?? null);
   const totalCharacters = script.segments.reduce((sum, segment) => sum + segment.text.length, 0);
   const statusLabel =
     status === 'loading'
@@ -356,6 +354,8 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
         ? 'Checking cached narration...'
         : status === 'error'
           ? 'Narration preview failed.'
+          : hasScriptContent && !narrationPreviewIsFresh
+            ? 'Narration preview needs refresh after recent lesson or voice changes.'
           : response?.mode === 'audio'
             ? 'Neural preview ready.'
             : cacheStatus?.state === 'tts_unavailable'
@@ -367,44 +367,57 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                   : 'Review the narration script and generate audio when ready.';
 
   return (
-    <section
-      className={cn(
-        'rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 shadow-sm'
-      )}
-    >
+    <section className={cn('rounded-2xl border border-border/60 bg-card/40 p-5 shadow-sm')}>
       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
         <div className='min-w-0'>
-          <div className='inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700'>
+          <div className='inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-foreground'>
             <Volume2 className='size-3.5' />
             Narration Preview
           </div>
-          <h3 className='mt-3 text-lg font-semibold text-slate-900'>Lesson voice script</h3>
-          <p className='mt-1 text-sm text-slate-600'>{statusLabel}</p>
-          <div className='mt-3 flex flex-wrap gap-2 text-xs text-slate-500'>
-            <span className='rounded-full bg-white/80 px-2.5 py-1'>
+          <h3 className='mt-3 text-lg font-semibold text-foreground'>Lesson voice script</h3>
+          <p className='mt-1 text-sm text-muted-foreground'>{statusLabel}</p>
+          <div className='mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground'>
+            <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1'>
               {script.segments.length} segment{script.segments.length === 1 ? '' : 's'}
             </span>
-            <span className='rounded-full bg-white/80 px-2.5 py-1'>
+            <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1'>
               {totalCharacters} characters
             </span>
-            <span className='rounded-full bg-white/80 px-2.5 py-1'>Locale: {script.locale}</span>
+            <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1'>
+              Locale: {script.locale}
+            </span>
             {latestAudioCreatedAt ? (
-              <span className='rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700'>
+              <span className='rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-300'>
                 Last built: {latestAudioCreatedAt}
+              </span>
+            ) : null}
+            <span
+              className={cn(
+                'rounded-full border px-2.5 py-1',
+                narrationPreviewIsFresh
+                  ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300'
+                  : 'border-amber-400/20 bg-amber-500/10 text-amber-200'
+              )}
+            >
+              {narrationPreviewIsFresh ? 'Preview up to date' : 'Refresh needed'}
+            </span>
+            {lastPreviewedAt ? (
+              <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1'>
+                Previewed: {lastPreviewedAt}
               </span>
             ) : null}
           </div>
         </div>
 
-        <div className='flex w-full flex-col gap-3 rounded-2xl border border-white/80 bg-white/80 p-4 lg:max-w-sm'>
+        <div className='flex w-full flex-col gap-3 rounded-2xl border border-border/60 bg-background/60 p-4 lg:max-w-sm'>
           <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
-            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground'>
               Voice
               <select
                 aria-label='Narration voice'
                 value={voice}
                 onChange={(event): void => handleVoiceChange(event.target.value)}
-                className='mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal tracking-normal text-slate-900 outline-none ring-0'
+                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none ring-0'
               >
                 {KANGUR_TTS_VOICE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -414,14 +427,14 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
               </select>
             </label>
 
-            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground'>
               Locale
               <input
                 aria-label='Narration locale'
                 value={document.narration?.locale ?? ''}
                 onChange={(event): void => handleLocaleChange(event.target.value)}
                 placeholder='pl-PL'
-                className='mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal tracking-normal text-slate-900 outline-none ring-0'
+                className='mt-2 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm font-normal tracking-normal text-foreground outline-none ring-0'
               />
             </label>
           </div>
@@ -433,7 +446,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 void handlePreparePreview(false);
               }}
               disabled={!hasScriptContent || status === 'loading'}
-              className='inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60'
+              className='inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
             >
               <Sparkles className='size-4' />
               {response?.mode === 'audio' ? 'Refresh preview' : 'Generate audio preview'}
@@ -444,7 +457,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 void handlePreparePreview(true);
               }}
               disabled={!hasScriptContent || status === 'loading'}
-              className='inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60'
+              className='inline-flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-60'
             >
               <RefreshCw className={cn('size-4', status === 'loading' && 'animate-spin')} />
               Regenerate audio
@@ -452,50 +465,50 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
           </div>
 
           {!hasScriptContent ? (
-            <div className='rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+            <div className='rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200'>
               Add lesson text or narration overrides to generate a preview.
             </div>
           ) : null}
-          <div className='rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3'>
-            <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          <div className='rounded-2xl border border-border/60 bg-card/30 px-3 py-3'>
+            <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'>
               Narration coverage
             </div>
-            <div className='mt-2 flex flex-wrap gap-2 text-xs text-slate-600'>
-              <span className='rounded-full bg-white px-2.5 py-1'>
+            <div className='mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground'>
+              <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
                 {coverage.explicitOverrideCount} explicit override
                 {coverage.explicitOverrideCount === 1 ? '' : 's'}
               </span>
-              <span className='rounded-full bg-white px-2.5 py-1'>
+              <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
                 {coverage.visualBlockCount} visual block{coverage.visualBlockCount === 1 ? '' : 's'}
               </span>
-              <span className='rounded-full bg-white px-2.5 py-1'>
+              <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
                 {coverage.activityBlockCount} activit{coverage.activityBlockCount === 1 ? 'y' : 'ies'}
               </span>
             </div>
             {coverageRecommendations.length > 0 ? (
-              <ul className='mt-3 space-y-1 text-xs leading-relaxed text-slate-600'>
+              <ul className='mt-3 space-y-1 text-xs leading-relaxed text-muted-foreground'>
                 {coverageRecommendations.map((recommendation) => (
                   <li key={recommendation}>• {recommendation}</li>
                 ))}
               </ul>
             ) : (
-              <div className='mt-3 text-xs leading-relaxed text-emerald-700'>
+              <div className='mt-3 text-xs leading-relaxed text-emerald-300'>
                 Narration overrides and descriptive content are in good shape for this draft.
               </div>
             )}
           </div>
           {errorMessage ? (
-            <div className='rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'>
+            <div className='rounded-2xl border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-200'>
               {errorMessage}
             </div>
           ) : null}
           {!errorMessage && cacheStatus && cacheStatus.state !== 'ready' ? (
-            <div className='rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600'>
+            <div className='rounded-2xl border border-border/60 bg-card/30 px-3 py-2 text-sm text-muted-foreground'>
               {cacheStatus.message}
             </div>
           ) : null}
           {response?.mode === 'fallback' ? (
-            <div className='rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+            <div className='rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200'>
               {response.message}
             </div>
           ) : null}
@@ -503,9 +516,76 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
       </div>
 
       <div className='mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
-        <div className='rounded-2xl border border-white/80 bg-white/85 p-4'>
-          <div className='text-sm font-semibold text-slate-900'>Narration script</div>
-          <div className='mt-1 text-xs text-slate-500'>
+        <div className='rounded-2xl border border-border/60 bg-background/60 p-4 xl:col-span-2'>
+          <div className='text-sm font-semibold text-foreground'>Page-by-page narration review</div>
+          <div className='mt-1 text-xs text-muted-foreground'>
+            Scan which lesson pages are ready for narration and which still need descriptions or better activity guidance.
+          </div>
+          <div className='mt-4 grid gap-3 md:grid-cols-2'>
+            {pageNarrationReviews.map(({ page, index, review }) => {
+              const pageLabel = page.title?.trim() || `Page ${index + 1}`;
+              const sectionLabel = page.sectionTitle?.trim();
+              const coverageState = review.narrationCoverage.state;
+
+              return (
+                <article
+                  key={page.id}
+                  className='rounded-2xl border border-border/60 bg-card/30 p-3'
+                >
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <div>
+                      {sectionLabel ? (
+                        <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'>
+                          {sectionLabel}
+                        </div>
+                      ) : null}
+                      <div className='text-sm font-semibold text-foreground'>{pageLabel}</div>
+                    </div>
+                    <Badge
+                      variant='outline'
+                      className={cn(
+                        'text-[10px] uppercase tracking-wide',
+                        coverageState === 'ready'
+                          ? 'border-sky-400/40 text-sky-300'
+                          : coverageState === 'needs-review'
+                            ? 'border-amber-400/40 text-amber-300'
+                            : 'border-slate-500/40 text-slate-300'
+                      )}
+                    >
+                      {review.narrationCoverage.summaryLabel}
+                    </Badge>
+                  </div>
+                  <div className='mt-2 text-xs leading-relaxed text-muted-foreground'>
+                    {review.narrationCoverage.detail}
+                  </div>
+                  <div className='mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground'>
+                    <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
+                      {review.blockCount} block{review.blockCount === 1 ? '' : 's'}
+                    </span>
+                    <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
+                      {review.narrationCoverage.explicitOverrideCount} override
+                      {review.narrationCoverage.explicitOverrideCount === 1 ? '' : 's'}
+                    </span>
+                    {review.narrationCoverage.visualBlockCount > 0 ? (
+                      <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
+                        {review.narrationCoverage.visualBlockCount} visual
+                      </span>
+                    ) : null}
+                    {review.narrationCoverage.activityBlockCount > 0 ? (
+                      <span className='rounded-full border border-border/60 bg-background/80 px-2.5 py-1'>
+                        {review.narrationCoverage.activityBlockCount} activit
+                        {review.narrationCoverage.activityBlockCount === 1 ? 'y' : 'ies'}
+                      </span>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+        <div className='rounded-2xl border border-border/60 bg-background/60 p-4'>
+          <div className='text-sm font-semibold text-foreground'>Narration script</div>
+          <div className='mt-1 text-xs text-muted-foreground'>
             This is the exact spoken text generated from the current lesson draft.
           </div>
           <div className='mt-4 space-y-3'>
@@ -513,27 +593,27 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
               script.segments.map((segment, index) => (
                 <article
                   key={segment.id}
-                  className='rounded-2xl border border-slate-200 bg-slate-50/70 p-3'
+                  className='rounded-2xl border border-border/60 bg-card/30 p-3'
                 >
-                  <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                  <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'>
                     Segment {index + 1}
                   </div>
-                  <div className='mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700'>
+                  <div className='mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground'>
                     {segment.text}
                   </div>
                 </article>
               ))
             ) : (
-              <div className='rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500'>
+              <div className='rounded-2xl border border-dashed border-border/60 bg-card/30 p-4 text-sm text-muted-foreground'>
                 No readable lesson text detected yet.
               </div>
             )}
           </div>
         </div>
 
-        <div className='rounded-2xl border border-white/80 bg-white/85 p-4'>
-          <div className='text-sm font-semibold text-slate-900'>Audio preview</div>
-          <div className='mt-1 text-xs text-slate-500'>
+        <div className='rounded-2xl border border-border/60 bg-background/60 p-4'>
+          <div className='text-sm font-semibold text-foreground'>Audio preview</div>
+          <div className='mt-1 text-xs text-muted-foreground'>
             Generated audio uses the current draft and selected voice.
           </div>
           <div className='mt-4 space-y-3'>
@@ -541,17 +621,17 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
               response.segments.map((segment, index) => (
                 <article
                   key={segment.id}
-                  className='rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3'
+                  className='rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3'
                 >
                   <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700'>
+                    <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300'>
                       Audio segment {index + 1}
                     </div>
-                    <div className='text-[11px] text-emerald-700/80'>
+                    <div className='text-[11px] text-emerald-300/80'>
                       Built: {formatDateTime(segment.createdAt) ?? segment.createdAt}
                     </div>
                   </div>
-                  <div className='mt-2 text-sm leading-6 text-slate-700'>{segment.text}</div>
+                  <div className='mt-2 text-sm leading-6 text-foreground'>{segment.text}</div>
                   <audio controls preload='none' src={segment.audioUrl} className='mt-3 w-full'>
                     <track
                       default
@@ -564,7 +644,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
                 </article>
               ))
             ) : (
-              <div className='rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500'>
+              <div className='rounded-2xl border border-dashed border-border/60 bg-card/30 p-4 text-sm text-muted-foreground'>
                 Generate audio preview to inspect the realistic narration output.
               </div>
             )}

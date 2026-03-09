@@ -92,6 +92,35 @@ export const buildAgentPersonaMood = (
     typeof overrides?.avatarImageUrl === 'string' ? overrides.avatarImageUrl.trim() : '';
   const avatarImageFileId =
     typeof overrides?.avatarImageFileId === 'string' ? overrides.avatarImageFileId.trim() : '';
+  const avatarThumbnailRef =
+    typeof overrides?.avatarThumbnailRef === 'string' ? overrides.avatarThumbnailRef.trim() : '';
+  const avatarThumbnailDataUrl =
+    typeof overrides?.avatarThumbnailDataUrl === 'string'
+      ? overrides.avatarThumbnailDataUrl.trim()
+      : '';
+  const avatarThumbnailMimeType =
+    typeof overrides?.avatarThumbnailMimeType === 'string'
+      ? overrides.avatarThumbnailMimeType.trim()
+      : '';
+  const avatarThumbnailBytes =
+    typeof overrides?.avatarThumbnailBytes === 'number' &&
+    Number.isFinite(overrides.avatarThumbnailBytes) &&
+    overrides.avatarThumbnailBytes >= 0
+      ? Math.floor(overrides.avatarThumbnailBytes)
+      : null;
+  const avatarThumbnailWidth =
+    typeof overrides?.avatarThumbnailWidth === 'number' &&
+    Number.isFinite(overrides.avatarThumbnailWidth) &&
+    overrides.avatarThumbnailWidth > 0
+      ? Math.floor(overrides.avatarThumbnailWidth)
+      : null;
+  const avatarThumbnailHeight =
+    typeof overrides?.avatarThumbnailHeight === 'number' &&
+    Number.isFinite(overrides.avatarThumbnailHeight) &&
+    overrides.avatarThumbnailHeight > 0
+      ? Math.floor(overrides.avatarThumbnailHeight)
+      : null;
+  const useEmbeddedThumbnail = overrides?.useEmbeddedThumbnail === true;
 
   return {
     id: moodId,
@@ -103,6 +132,13 @@ export const buildAgentPersonaMood = (
     ),
     avatarImageUrl: avatarImageUrl || null,
     avatarImageFileId: avatarImageFileId || null,
+    avatarThumbnailRef: avatarThumbnailRef || null,
+    avatarThumbnailDataUrl: avatarThumbnailDataUrl || null,
+    avatarThumbnailMimeType: avatarThumbnailMimeType || null,
+    avatarThumbnailBytes,
+    avatarThumbnailWidth,
+    avatarThumbnailHeight,
+    useEmbeddedThumbnail,
   };
 };
 
@@ -272,6 +308,31 @@ const toCanonicalAgentPersonaMoods = (value: unknown, index: number): AgentPerso
           typeof rawMood['avatarImageUrl'] === 'string' ? rawMood['avatarImageUrl'] : null,
         avatarImageFileId:
           typeof rawMood['avatarImageFileId'] === 'string' ? rawMood['avatarImageFileId'] : null,
+        avatarThumbnailRef:
+          typeof rawMood['avatarThumbnailRef'] === 'string'
+            ? rawMood['avatarThumbnailRef']
+            : null,
+        avatarThumbnailDataUrl:
+          typeof rawMood['avatarThumbnailDataUrl'] === 'string'
+            ? rawMood['avatarThumbnailDataUrl']
+            : null,
+        avatarThumbnailMimeType:
+          typeof rawMood['avatarThumbnailMimeType'] === 'string'
+            ? rawMood['avatarThumbnailMimeType']
+            : null,
+        avatarThumbnailBytes:
+          typeof rawMood['avatarThumbnailBytes'] === 'number'
+            ? rawMood['avatarThumbnailBytes']
+            : null,
+        avatarThumbnailWidth:
+          typeof rawMood['avatarThumbnailWidth'] === 'number'
+            ? rawMood['avatarThumbnailWidth']
+            : null,
+        avatarThumbnailHeight:
+          typeof rawMood['avatarThumbnailHeight'] === 'number'
+            ? rawMood['avatarThumbnailHeight']
+            : null,
+        useEmbeddedThumbnail: rawMood['useEmbeddedThumbnail'] === true,
       })
     );
   });
@@ -427,9 +488,28 @@ const collectAgentPersonaMoodAvatarFileIds = (
   );
 };
 
+const collectAgentPersonaMoodAvatarThumbnailRefs = (
+  moods: AgentPersonaMood[] | null | undefined
+): string[] => {
+  if (!Array.isArray(moods) || moods.length === 0) return [];
+  return Array.from(
+    new Set(
+      moods
+        .map((mood) =>
+          typeof mood.avatarThumbnailRef === 'string' ? mood.avatarThumbnailRef.trim() : ''
+        )
+        .filter(Boolean)
+    )
+  );
+};
+
 export const collectAgentPersonaAvatarFileIds = (
   persona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
 ): string[] => collectAgentPersonaMoodAvatarFileIds(persona?.moods);
+
+export const collectAgentPersonaAvatarThumbnailRefs = (
+  persona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
+): string[] => collectAgentPersonaMoodAvatarThumbnailRefs(persona?.moods);
 
 export const diffRemovedAgentPersonaAvatarFileIds = (
   previousPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined,
@@ -439,4 +519,14 @@ export const diffRemovedAgentPersonaAvatarFileIds = (
   const nextIds = new Set(collectAgentPersonaAvatarFileIds(nextPersona));
 
   return Array.from(previousIds).filter((fileId) => !nextIds.has(fileId));
+};
+
+export const diffRemovedAgentPersonaAvatarThumbnailRefs = (
+  previousPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined,
+  nextPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
+): string[] => {
+  const previousIds = new Set(collectAgentPersonaAvatarThumbnailRefs(previousPersona));
+  const nextIds = new Set(collectAgentPersonaAvatarThumbnailRefs(nextPersona));
+
+  return Array.from(previousIds).filter((ref) => !nextIds.has(ref));
 };

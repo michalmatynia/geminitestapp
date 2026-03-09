@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock } =
@@ -86,7 +86,60 @@ describe('AdminKangurTestSuitesManagerPage', () => {
         ]);
       }
       if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
-        return JSON.stringify({});
+        return JSON.stringify({
+          'question-ready': {
+            id: 'question-ready',
+            suiteId: 'suite-1',
+            sortOrder: 1000,
+            prompt: 'Gotowe pytanie',
+            choices: [
+              { label: 'A', text: '3' },
+              { label: 'B', text: '4' },
+            ],
+            correctChoiceLabel: 'B',
+            pointValue: 3,
+            explanation: 'Bo 2+2=4',
+            illustration: { type: 'none' },
+          },
+          'question-review': {
+            id: 'question-review',
+            suiteId: 'suite-1',
+            sortOrder: 2000,
+            prompt: 'Pytanie do review',
+            choices: [
+              { label: 'A', text: 'A', description: 'Wizualna wskazowka' },
+              { label: 'B', text: 'B' },
+            ],
+            correctChoiceLabel: 'A',
+            pointValue: 4,
+            explanation: 'Sprawdz wizual',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'legacy-import',
+              reviewStatus: 'needs-review',
+              auditFlags: ['legacy_choice_descriptions'],
+            },
+          },
+          'question-fix': {
+            id: 'question-fix',
+            suiteId: 'suite-1',
+            sortOrder: 3000,
+            prompt: 'Pytanie do naprawy',
+            choices: [
+              { label: 'A', text: '14' },
+              { label: 'B', text: '12' },
+            ],
+            correctChoiceLabel: 'A',
+            pointValue: 5,
+            explanation: 'Wyjasnienie jest niespojne',
+            illustration: { type: 'none' },
+            editorial: {
+              source: 'legacy-import',
+              reviewStatus: 'needs-fix',
+              auditFlags: ['explanation_answer_mismatch'],
+            },
+          },
+        });
       }
       return undefined;
     });
@@ -114,8 +167,25 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
       'Admin/Kangur/Tests'
     );
+    expect(screen.getByText('Question bank')).toBeInTheDocument();
+    expect(screen.getByText('Suites')).toBeInTheDocument();
+    expect(screen.getByText('Ready suites')).toBeInTheDocument();
+    expect(screen.getByText('Needs review')).toBeInTheDocument();
+    expect(screen.getByText('Question queue')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open review queue' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open first fix' })).toBeInTheDocument();
     expect(screen.getByText('Test Suite Library')).toBeInTheDocument();
     expect(screen.getByText('Search suites...')).toBeInTheDocument();
     expect(screen.getByTestId('folder-tree-viewport')).toBeInTheDocument();
+  });
+
+  it('can launch directly into the first fix-needed question', () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open first fix' }));
+
+    expect(screen.getByText('Kangur Questions')).toBeInTheDocument();
+    expect(screen.getByText('Question review')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save Question' })).toBeDisabled();
   });
 });

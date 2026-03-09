@@ -1,11 +1,7 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-import {
-  KANGUR_ACCENT_STYLES,
-  type KangurAccent,
-} from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -15,6 +11,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_ACCENT_STYLES,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
   createLessonPracticeReward,
@@ -70,6 +71,8 @@ export default function MultiplicationArrayGame({
   finishLabel = 'Gotowe!',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [[a, b], setProblem] = useState<[number, number]>(() => pickProblem());
   const [collected, setCollected] = useState<Set<number>>(new Set());
   const [roundIndex, setRoundIndex] = useState(0);
@@ -198,9 +201,7 @@ export default function MultiplicationArrayGame({
       <AnimatePresence mode='wait'>
         <motion.div
           key={`${roundIndex}-${a}-${b}`}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -30 }}
+          {...roundMotionProps}
           className='w-full'
         >
           <KangurGlassPanel

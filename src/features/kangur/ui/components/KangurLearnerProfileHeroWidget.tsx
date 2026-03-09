@@ -1,15 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   getKangurLearnerProfileDisplayName,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const router = useRouter();

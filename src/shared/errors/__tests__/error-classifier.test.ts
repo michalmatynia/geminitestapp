@@ -53,4 +53,15 @@ describe('error-classifier', () => {
     expect(actions[0]?.label).toBe('Update Persona Settings');
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
+
+  it('treats legacy trigger remediation errors as validation, not network fetch failures', () => {
+    const error = new Error(
+      'AI Paths trigger payload contains removed legacy Trigger context modes: "Trigger" <trigger> uses `simulation_preferred`. Keep Trigger in `trigger_only` mode and resolve entity context through downstream Fetcher or Simulation nodes.'
+    );
+    const actions = getSuggestedActions(classifyError(error), error);
+
+    expect(classifyError(error)).toBe(ERROR_CATEGORY.VALIDATION);
+    expect(actions[0]?.label).toBe('Repair AI Path');
+    expect(actions.some((action) => action.label === 'Retry')).toBe(false);
+  });
 });

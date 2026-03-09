@@ -144,6 +144,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}

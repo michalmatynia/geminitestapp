@@ -1,0 +1,34 @@
+'use client';
+
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+
+import type { AgentPersona } from '@/shared/contracts/agents';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+export function useAgentPersonaVisuals(
+  personaId?: string | null
+): UseQueryResult<AgentPersona[], Error> {
+  const normalizedPersonaId =
+    typeof personaId === 'string' && personaId.trim().length > 0 ? personaId.trim() : null;
+
+  return useQuery<AgentPersona[], Error>({
+    queryKey: normalizedPersonaId
+      ? [...QUERY_KEYS.agentPersonas.detail(normalizedPersonaId), 'visuals']
+      : [...QUERY_KEYS.agentPersonas.details(), 'visuals', 'none'],
+    queryFn: async (): Promise<AgentPersona[]> => {
+      if (!normalizedPersonaId) {
+        return [];
+      }
+      const persona = await api.get<AgentPersona>(
+        `/api/agentcreator/personas/${encodeURIComponent(normalizedPersonaId)}/visuals`
+      );
+      return [persona];
+    },
+    enabled: normalizedPersonaId !== null,
+    staleTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+}

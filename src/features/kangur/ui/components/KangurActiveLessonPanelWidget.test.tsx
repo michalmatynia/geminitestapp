@@ -92,7 +92,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       'border-white/78',
       'bg-white/68'
     );
-    expect(headerActions.firstElementChild).toBe(
+    expect(headerActions).toContainElement(
       screen.getByTestId('active-lesson-widget-icon-adding-lesson')
     );
     expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));

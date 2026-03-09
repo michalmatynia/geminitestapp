@@ -116,10 +116,14 @@ describe('AdminKangurLessonsManagerPage', () => {
     render(<AdminKangurLessonsManagerPage />);
 
     expect(screen.getByText('Kangur Lessons')).toBeInTheDocument();
+    expect(screen.getByText('Lessons workspace')).toBeInTheDocument();
+    expect(screen.getByText('Library surface')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
       'Admin/Kangur/Lessons'
     );
-    expect(screen.getByText('Lesson Library')).toBeInTheDocument();
+    expect(screen.getByText('Lesson library')).toBeInTheDocument();
+    expect(screen.getByText('Editorial filters')).toBeInTheDocument();
+    expect(screen.getByText('Ordered view')).toBeInTheDocument();
     expect(screen.getByText('Search lessons, ids, or component types...')).toBeInTheDocument();
     expect(screen.getByTestId('folder-tree-viewport')).toBeInTheDocument();
   });

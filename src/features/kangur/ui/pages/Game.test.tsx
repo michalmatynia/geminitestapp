@@ -12,26 +12,46 @@ const { useKangurGameRuntimeMock, homeHeroPropsMock, homeActionsPropsMock } = vi
   homeActionsPropsMock: vi.fn(),
 }));
 
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: {
-    div: ({
+vi.mock('framer-motion', () => {
+  const serializeMotionValue = (value: unknown): string | undefined =>
+    value === undefined ? undefined : JSON.stringify(value);
+
+  const createMotionTag = (tag: keyof React.JSX.IntrinsicElements) =>
+    function MotionTag({
       children,
-      initial: _initial,
-      animate: _animate,
-      exit: _exit,
-      transition: _transition,
+      initial,
+      animate,
+      exit,
+      transition,
       ...props
-    }: React.HTMLAttributes<HTMLDivElement> & {
+    }: React.HTMLAttributes<HTMLElement> & {
       children?: React.ReactNode;
       initial?: unknown;
       animate?: unknown;
       exit?: unknown;
       transition?: unknown;
-    }) => <div {...props}>{children}</div>,
-  },
-  useReducedMotion: () => false,
-}));
+    }): React.JSX.Element {
+      return React.createElement(
+        tag,
+        {
+          ...props,
+          'data-motion-initial': serializeMotionValue(initial),
+          'data-motion-animate': serializeMotionValue(animate),
+          'data-motion-exit': serializeMotionValue(exit),
+          'data-motion-transition': serializeMotionValue(transition),
+        },
+        children
+      );
+    };
+
+  return {
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    motion: {
+      div: createMotionTag('div'),
+    },
+    useReducedMotion: () => false,
+  };
+});
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   KangurGameRuntimeBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -109,19 +129,21 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
+  const buildRuntime = (screenKey: string) => ({
+    basePath: '/kangur',
+    canAccessParentAssignments: false,
+    progress: {},
+    screen: screenKey,
+    user: null,
+    xpToast: {
+      xpGained: 0,
+      newBadges: [],
+      visible: false,
+    },
+  });
+
   it('pins home hero and action widgets during the home-screen exit transition', () => {
-    useKangurGameRuntimeMock.mockReturnValue({
-      basePath: '/kangur',
-      canAccessParentAssignments: false,
-      progress: {},
-      screen: 'home',
-      user: null,
-      xpToast: {
-        xpGained: 0,
-        newBadges: [],
-        visible: false,
-      },
-    });
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('home'));
 
     render(<Game />);
 
@@ -132,6 +154,67 @@ describe('Game page', () => {
     );
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
+    );
+  });
+
+  it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {
+    const scrollToMock = vi.fn();
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback): number => {
+        callback(0);
+        return 1;
+      });
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined);
+
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: scrollToMock,
+      writable: true,
+    });
+
+    let runtime = buildRuntime('home');
+    useKangurGameRuntimeMock.mockImplementation(() => runtime);
+
+    const { rerender } = render(<Game />);
+
+    runtime = buildRuntime('calendar_quiz');
+    rerender(<Game />);
+
+    expect(scrollToMock).toHaveBeenCalledWith({ behavior: 'auto', left: 0, top: 0 });
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+
+    focusSpy.mockRestore();
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
+  });
+
+  it('uses the canonical Lekcje transition preset for Gra screens', () => {
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('calendar_quiz'));
+
+    render(<Game />);
+
+    const transitionShell = screen.getByTestId('kangur-calendar-training-widget').parentElement;
+
+    expect(transitionShell).not.toBeNull();
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 0.92, y: 12 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-animate',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-exit',
+      JSON.stringify({ opacity: 0.98, y: -4 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
     );
   });
 });

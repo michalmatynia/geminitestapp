@@ -2,17 +2,25 @@ import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 import {
+  getQuestionExplanationNarrationText,
+  getQuestionStemNarrationText,
+  questionDocumentNeedsRichRenderer,
+  hasIllustration,
+  hasRichChoiceContent,
+} from '@/features/kangur/test-questions';
+import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
+import {
   KangurInfoCard,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/shared/utils';
+import { cn, sanitizeSvg } from '@/shared/utils';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
+import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
 
 type Props = {
   question: KangurTestQuestion;
@@ -34,6 +42,7 @@ export function KangurTestQuestionRenderer({
   showReadControl = true,
 }: Props): React.JSX.Element {
   const runtime = useOptionalKangurTestSuiteRuntime();
+  const presentation = question.presentation ?? { layout: 'classic', choiceStyle: 'list' };
   const resolvedTotalQuestions = totalQuestions ?? runtime?.totalQuestions;
   const isAnswered = selectedLabel !== null;
   const isCorrect = selectedLabel === question.correctChoiceLabel;
@@ -54,10 +63,14 @@ export function KangurTestQuestionRenderer({
       questionIndex !== undefined && resolvedTotalQuestions !== undefined
         ? `Question ${questionIndex + 1} of ${resolvedTotalQuestions}.`
         : null,
-      question.prompt,
-      ...question.choices.map((choice) => `${choice.label}. ${choice.text}.`),
+      getQuestionStemNarrationText(question),
+      ...question.choices.map((choice) =>
+        [choice.label, choice.text, choice.description].filter(Boolean).join('. ') + '.'
+      ),
       showAnswer ? `Correct answer: ${question.correctChoiceLabel}.` : null,
-      showAnswer && question.explanation ? `Explanation. ${question.explanation}` : null,
+      showAnswer && question.explanation
+        ? `Explanation. ${getQuestionExplanationNarrationText(question)}`
+        : null,
     ];
 
     return parts.filter(Boolean).join(' ');
@@ -70,6 +83,42 @@ export function KangurTestQuestionRenderer({
     resolvedTotalQuestions,
     showAnswer,
   ]);
+  const renderRichStem = questionDocumentNeedsRichRenderer(question.stemDocument, question.prompt);
+  const renderRichExplanation = questionDocumentNeedsRichRenderer(
+    question.explanationDocument,
+    question.explanation ?? ''
+  );
+  const choiceGrid = presentation.choiceStyle === 'grid' || hasRichChoiceContent(question);
+
+  const stemContent = renderRichStem && question.stemDocument ? (
+    <KangurLessonDocumentRenderer document={question.stemDocument} renderMode='lesson' />
+  ) : (
+    <p className='text-sm font-medium leading-relaxed text-slate-800'>{question.prompt}</p>
+  );
+
+  const illustrationContent = hasIllustration(question) ? (
+    <KangurQuestionIllustrationRenderer illustration={question.illustration} className='my-2' />
+  ) : null;
+
+  const promptContent =
+    illustrationContent &&
+    (presentation.layout === 'split-illustration-left' ||
+      presentation.layout === 'split-illustration-right') ? (
+      <div
+        className={cn(
+          'grid gap-4 rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4 lg:grid-cols-2',
+          presentation.layout === 'split-illustration-left' && 'lg:[&>*:first-child]:order-2'
+        )}
+      >
+        <div className='min-w-0'>{stemContent}</div>
+        <div className='min-w-0'>{illustrationContent}</div>
+      </div>
+    ) : (
+      <>
+        {stemContent}
+        {illustrationContent}
+      </>
+    );
 
   return (
     <div className='space-y-4'>
@@ -99,15 +148,10 @@ export function KangurTestQuestionRenderer({
       ) : null}
 
       {/* Prompt */}
-      <p className='text-sm font-medium leading-relaxed text-slate-800'>{question.prompt}</p>
-
-      {/* Illustration */}
-      {question.illustration.type !== 'none' ? (
-        <KangurQuestionIllustrationRenderer illustration={question.illustration} className='my-2' />
-      ) : null}
+      {promptContent}
 
       {/* Choices */}
-      <div className='space-y-2'>
+      <div className={cn(choiceGrid ? 'grid gap-3 sm:grid-cols-2' : 'space-y-2')}>
         {question.choices.map((choice, index) => {
           const isSelected = selectedLabel === choice.label;
           const isChoiceCorrect = choice.label === question.correctChoiceLabel;
@@ -144,8 +188,9 @@ export function KangurTestQuestionRenderer({
               }}
               data-testid={`kangur-test-question-choice-${index}`}
               className={cn(
-                'flex items-center gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
+                'flex items-start gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
                 cardClassName,
+                choiceGrid && 'h-full min-h-[112px]',
                 showAnswer ? 'cursor-default' : 'cursor-pointer'
               )}
               emphasis={emphasis}
@@ -158,7 +203,22 @@ export function KangurTestQuestionRenderer({
               >
                 {choice.label}
               </span>
-              <span className='flex-1 text-slate-700'>{choice.text}</span>
+              <span className='flex flex-1 flex-col gap-2 text-slate-700'>
+                {choice.svgContent?.trim() ? (
+                  <span className='flex items-center justify-center rounded-[18px] border border-slate-200 bg-white p-2'>
+                    <span
+                      className='block max-h-24 max-w-full'
+                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(choice.svgContent) }}
+                    />
+                  </span>
+                ) : null}
+                <span>{choice.text}</span>
+                {choice.description?.trim() ? (
+                  <span className='text-xs font-medium leading-5 text-slate-500'>
+                    {choice.description.trim()}
+                  </span>
+                ) : null}
+              </span>
               {showAnswer && isChoiceCorrect ? (
                 <CheckCircle className='size-4 shrink-0 text-emerald-500' />
               ) : null}
@@ -171,7 +231,15 @@ export function KangurTestQuestionRenderer({
       </div>
 
       {/* Explanation */}
-      {showAnswer && question.explanation ? (
+      {showAnswer && renderRichExplanation && question.explanationDocument ? (
+        <div className='space-y-2'>
+          <div className='text-xs font-bold uppercase tracking-wide text-indigo-600'>
+            Explanation
+          </div>
+          <KangurLessonDocumentRenderer document={question.explanationDocument} renderMode='lesson' />
+        </div>
+      ) : null}
+      {showAnswer && !renderRichExplanation && question.explanation ? (
         <KangurInfoCard accent='indigo' className='rounded-[22px]' padding='md' tone='accent'>
           <div className='mb-1 text-xs font-bold uppercase tracking-wide text-indigo-600'>
             Explanation

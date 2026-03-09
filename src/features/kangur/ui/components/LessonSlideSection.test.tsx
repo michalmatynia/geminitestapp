@@ -2,8 +2,50 @@
  * @vitest-environment jsdom
  */
 
+import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('framer-motion', () => {
+  const serializeMotionValue = (value: unknown): string | undefined =>
+    value === undefined ? undefined : JSON.stringify(value);
+
+  const createMotionTag = (tag: keyof React.JSX.IntrinsicElements) =>
+    function MotionTag({
+      children,
+      initial,
+      animate,
+      exit,
+      transition,
+      ...props
+    }: React.HTMLAttributes<HTMLElement> & {
+      children?: React.ReactNode;
+      initial?: unknown;
+      animate?: unknown;
+      exit?: unknown;
+      transition?: unknown;
+    }): React.JSX.Element {
+      return React.createElement(
+        tag,
+        {
+          ...props,
+          'data-motion-initial': serializeMotionValue(initial),
+          'data-motion-animate': serializeMotionValue(animate),
+          'data-motion-exit': serializeMotionValue(exit),
+          'data-motion-transition': serializeMotionValue(transition),
+        },
+        children
+      );
+    };
+
+  return {
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    motion: {
+      div: createMotionTag('div'),
+    },
+    useReducedMotion: () => false,
+  };
+});
 
 import LessonSlideSection from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
@@ -62,9 +104,11 @@ describe('LessonSlideSection', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.queryByRole('button', { name: /nastepny/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /poprzedni/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /gotowe!/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-slide-prev-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-next-button')).toHaveAttribute(
+      'aria-label',
+      'Nastepny panel'
+    );
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',
       'kangur-step-pill-pending',
@@ -81,6 +125,11 @@ describe('LessonSlideSection', () => {
     expect(onProgressChange).toHaveBeenLastCalledWith(2, 2);
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('Drugi')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).toHaveAttribute(
+      'aria-label',
+      'Poprzedni panel'
+    );
+    expect(screen.queryByTestId('lesson-slide-next-button')).not.toBeInTheDocument();
   });
 
   it('uses the lesson navigation context for the top back action', () => {
@@ -104,5 +153,92 @@ describe('LessonSlideSection', () => {
       'surface-cta'
     );
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses bottom panel navigation to move within the active subsection', async () => {
+    render(
+      <LessonSlideSection
+        slides={[
+          { title: 'Slajd 1', content: <div>Pierwszy</div> },
+          { title: 'Slajd 2', content: <div>Drugi</div> },
+          { title: 'Slajd 3', content: <div>Trzeci</div> },
+        ]}
+        onBack={vi.fn()}
+        dotActiveClass='bg-orange-400'
+        dotDoneClass='bg-orange-200'
+        gradientClass='from-orange-400 to-yellow-400'
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+    expect(await screen.findByText('Drugi')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-next-button')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+    expect(await screen.findByText('Trzeci')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-slide-prev-button')).toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-slide-next-button')).not.toBeInTheDocument();
+  });
+
+  it('renders the unlocked secret pill and routes it through the shared lesson navigation context', () => {
+    const onOpen = vi.fn();
+
+    render(
+      <KangurLessonNavigationProvider
+        onBack={vi.fn()}
+        secretLessonPill={{ isUnlocked: true, onOpen }}
+      >
+        <LessonSlideSection
+          slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
+          dotActiveClass='bg-orange-400'
+          dotDoneClass='bg-orange-200'
+          gradientClass='from-orange-400 to-yellow-400'
+        />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-slide-secret-indicator'));
+
+    expect(screen.getByTestId('lesson-slide-secret-indicator')).toHaveAttribute(
+      'aria-label',
+      'Otworz sekretny panel'
+    );
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the canonical Lekcje transition preset for subsection slides', () => {
+    render(
+      <LessonSlideSection
+        slides={[
+          { title: 'Slajd 1', content: <div>Pierwszy</div> },
+          { title: 'Slajd 2', content: <div>Drugi</div> },
+        ]}
+        onBack={vi.fn()}
+        dotActiveClass='bg-orange-400'
+        dotDoneClass='bg-orange-200'
+        gradientClass='from-orange-400 to-yellow-400'
+      />
+    );
+
+    const transitionShell = screen.getByTestId('lesson-slide-shell').parentElement;
+
+    expect(transitionShell).not.toBeNull();
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 0.92, y: 12 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-animate',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-exit',
+      JSON.stringify({ opacity: 0.98, y: -4 })
+    );
+    expect(transitionShell).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
+    );
   });
 });

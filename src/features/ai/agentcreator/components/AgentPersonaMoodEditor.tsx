@@ -7,6 +7,7 @@ import {
   base64ToFile,
   dataUrlToFile,
   deletePersonaAvatar,
+  deletePersonaAvatarThumbnail,
   isImageDataUrl,
   isInlineSvgMarkup,
   uploadPersonaAvatar,
@@ -16,6 +17,7 @@ import {
   buildAgentPersonaMood,
   buildDefaultAgentPersonaMoods,
   collectAgentPersonaAvatarFileIds,
+  collectAgentPersonaAvatarThumbnailRefs,
 } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersonaMood, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import { DEFAULT_AGENT_PERSONA_MOOD_ID } from '@/shared/contracts/agents';
@@ -84,6 +86,10 @@ export function AgentPersonaMoodEditor({
     () => new Set(collectAgentPersonaAvatarFileIds({ moods: originalMoods ?? [] })),
     [originalMoods]
   );
+  const originalAvatarThumbnailRefs = useMemo(
+    () => new Set(collectAgentPersonaAvatarThumbnailRefs({ moods: originalMoods ?? [] })),
+    [originalMoods]
+  );
   const missingMoodPresets = useMemo(
     () =>
       AGENT_PERSONA_MOOD_PRESETS.filter(
@@ -140,6 +146,27 @@ export function AgentPersonaMoodEditor({
     }
   };
 
+  const deleteDraftAvatarThumbnail = async (
+    thumbnailRef: string | null | undefined
+  ): Promise<void> => {
+    const normalizedRef = typeof thumbnailRef === 'string' ? thumbnailRef.trim() : '';
+    if (!normalizedRef || originalAvatarThumbnailRefs.has(normalizedRef)) {
+      return;
+    }
+
+    try {
+      await deletePersonaAvatarThumbnail(normalizedRef);
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          source: 'AgentPersonaMoodEditor',
+          action: 'deleteDraftAvatarThumbnail',
+          thumbnailRef: normalizedRef,
+        },
+      });
+    }
+  };
+
   const replaceMoodWithUpload = async (
     moodId: AgentPersonaMoodId,
     file: File
@@ -160,8 +187,16 @@ export function AgentPersonaMoodEditor({
       svgContent: '',
       avatarImageFileId: uploaded.id,
       avatarImageUrl: uploaded.filepath,
+      avatarThumbnailRef: uploaded.thumbnail?.ref ?? null,
+      avatarThumbnailDataUrl: null,
+      avatarThumbnailMimeType: uploaded.thumbnail?.mimeType ?? null,
+      avatarThumbnailBytes: uploaded.thumbnail?.bytes ?? null,
+      avatarThumbnailWidth: uploaded.thumbnail?.width ?? null,
+      avatarThumbnailHeight: uploaded.thumbnail?.height ?? null,
+      useEmbeddedThumbnail: Boolean(uploaded.thumbnail?.ref),
     }));
     await deleteDraftAvatarFile(currentMood.avatarImageFileId);
+    await deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
   };
 
   const clearMoodImage = (moodId: AgentPersonaMoodId): void => {
@@ -174,8 +209,16 @@ export function AgentPersonaMoodEditor({
       ...mood,
       avatarImageFileId: null,
       avatarImageUrl: null,
+      avatarThumbnailRef: null,
+      avatarThumbnailDataUrl: null,
+      avatarThumbnailMimeType: null,
+      avatarThumbnailBytes: null,
+      avatarThumbnailWidth: null,
+      avatarThumbnailHeight: null,
+      useEmbeddedThumbnail: false,
     }));
     void deleteDraftAvatarFile(currentMood.avatarImageFileId);
+    void deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
   };
 
   const setMoodSvgContent = (moodId: AgentPersonaMoodId, svgContent: string): void => {
@@ -189,8 +232,23 @@ export function AgentPersonaMoodEditor({
       svgContent,
       avatarImageFileId: null,
       avatarImageUrl: null,
+      avatarThumbnailRef: null,
+      avatarThumbnailDataUrl: null,
+      avatarThumbnailMimeType: null,
+      avatarThumbnailBytes: null,
+      avatarThumbnailWidth: null,
+      avatarThumbnailHeight: null,
+      useEmbeddedThumbnail: false,
     }));
     void deleteDraftAvatarFile(currentMood.avatarImageFileId);
+    void deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
+  };
+
+  const toggleEmbeddedThumbnail = (moodId: AgentPersonaMoodId): void => {
+    updateMood(moodId, (mood) => ({
+      ...mood,
+      useEmbeddedThumbnail: !mood.useEmbeddedThumbnail,
+    }));
   };
 
   const handleMoodAssetUpload = async (
@@ -250,6 +308,7 @@ export function AgentPersonaMoodEditor({
     const currentMood = effectiveMoods.find((candidate) => candidate.id === moodId) ?? null;
     emitMoods(effectiveMoods.filter((candidate) => candidate.id !== moodId));
     void deleteDraftAvatarFile(currentMood?.avatarImageFileId);
+    void deleteDraftAvatarThumbnail(currentMood?.avatarThumbnailRef);
   };
 
   return (
@@ -261,7 +320,8 @@ export function AgentPersonaMoodEditor({
         <div className='space-y-4'>
           <div className='rounded-md border border-border/60 bg-card/35 px-3 py-2 text-xs text-gray-400'>
             Uploaded and pasted images are stored as files. Inline SVG markup is still supported
-            for advanced avatar editing and is sanitized on save and at render time.
+            for advanced avatar editing and is sanitized on save and at render time. Raster uploads
+            can also expose a tiny embedded thumbnail for Kangur&apos;s always-visible tutor avatar.
           </div>
 
           {effectiveMoods.map((mood) => {
@@ -322,6 +382,19 @@ export function AgentPersonaMoodEditor({
                         onClick={() => clearMoodImage(mood.id)}
                       >
                         Clear image
+                      </Button>
+                    ) : null}
+                    {mood.avatarThumbnailRef ? (
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        aria-pressed={mood.useEmbeddedThumbnail === true}
+                        onClick={() => toggleEmbeddedThumbnail(mood.id)}
+                      >
+                        {mood.useEmbeddedThumbnail
+                          ? 'Use file URL in Kangur'
+                          : 'Use embedded thumbnail in Kangur'}
                       </Button>
                     ) : null}
                     {mood.id !== DEFAULT_AGENT_PERSONA_MOOD_ID ? (

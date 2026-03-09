@@ -28,6 +28,7 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 
 import {
   normalizeParserSamples,
@@ -154,14 +155,112 @@ export function useAiPathsSettingsPathActions({
     []
   );
 
+  const resolveStoredPayloadWithRuntimeFallback = useCallback(
+    (payload: string, pathId: string) => {
+      const resolvePayload = (value: unknown) =>
+        resolvePortablePathInput(value, {
+          repairIdentities: true,
+          includeConnections: false,
+          signingPolicyTelemetrySurface: 'canvas',
+          nodeCodeObjectHashVerificationMode: 'warn',
+        });
+      const replaceRuntimeState = (
+        record: Record<string, unknown>
+      ): { value: Record<string, unknown>; changed: boolean } => {
+        let nextRecord = record;
+        let changed = false;
+
+        if ('runtimeState' in record && record['runtimeState'] !== '') {
+          nextRecord = {
+            ...nextRecord,
+            runtimeState: '',
+          };
+          changed = true;
+        }
+
+        const execution = nextRecord['execution'];
+        if (
+          execution &&
+          typeof execution === 'object' &&
+          !Array.isArray(execution) &&
+          'runtimeState' in execution &&
+          execution['runtimeState'] !== ''
+        ) {
+          nextRecord = {
+            ...nextRecord,
+            execution: {
+              ...execution,
+              runtimeState: '',
+            },
+          };
+          changed = true;
+        }
+
+        return { value: nextRecord, changed };
+      };
+
+      const replaceNestedRuntimeState = (
+        parent: Record<string, unknown>,
+        key: 'document' | 'package'
+      ): { value: Record<string, unknown>; changed: boolean } => {
+        const nested = parent[key];
+        if (!nested || typeof nested !== 'object' || Array.isArray(nested)) {
+          return { value: parent, changed: false };
+        }
+        const replaced = replaceRuntimeState(nested as Record<string, unknown>);
+        if (!replaced.changed) {
+          return { value: parent, changed: false };
+        }
+        return {
+          value: {
+            ...parent,
+            [key]: replaced.value,
+          },
+          changed: true,
+        };
+      };
+
+      let resolved = resolvePayload(payload);
+      if (resolved.ok) {
+        return resolved;
+      }
+
+      let parsedPayload: unknown;
+      try {
+        parsedPayload = JSON.parse(payload);
+      } catch {
+        return resolved;
+      }
+
+      if (!parsedPayload || typeof parsedPayload !== 'object' || Array.isArray(parsedPayload)) {
+        return resolved;
+      }
+
+      const direct = replaceRuntimeState(parsedPayload as Record<string, unknown>);
+      const document = replaceNestedRuntimeState(direct.value, 'document');
+      const portableEnvelope = replaceNestedRuntimeState(document.value, 'package');
+      if (!direct.changed && !document.changed && !portableEnvelope.changed) {
+        return resolved;
+      }
+
+      const recovered = resolvePayload(portableEnvelope.value);
+      if (!recovered.ok) {
+        return resolved;
+      }
+
+      console.warn('[AI Paths] Recovering selected path from invalid runtime state.', {
+        pathId,
+        error: resolved.error,
+      });
+      resolved = recovered;
+      return resolved;
+    },
+    []
+  );
+
   const parseLoadedPathConfigPayload = useCallback(
     (payload: string, pathId: string): PathConfig => {
-      const resolved = resolvePortablePathInput(payload, {
-        repairIdentities: true,
-        includeConnections: false,
-        signingPolicyTelemetrySurface: 'canvas',
-        nodeCodeObjectHashVerificationMode: 'warn',
-      });
+      const resolved = resolveStoredPayloadWithRuntimeFallback(payload, pathId);
       if (!resolved.ok) {
         throw new Error(resolved.error);
       }
@@ -179,7 +278,7 @@ export function useAiPathsSettingsPathActions({
         name: resolvedName,
       };
     },
-    [paths]
+    [paths, resolveStoredPayloadWithRuntimeFallback]
   );
 
   const resolveDuplicatePathName = useCallback(
@@ -585,6 +684,15 @@ export function useAiPathsSettingsPathActions({
           }
 
           config = sanitizePathConfigWithRuntimeFallback(config, value);
+          if (configItem?.value) {
+            void persistLegacyTriggerContextModeRepair({
+              pathId: value,
+              rawPayload: configItem.value,
+              repairedConfig: config,
+              source: 'useAiPathsSettingsPathActions',
+              action: 'persistSwitchPathLegacyTriggerContextModeRepair',
+            });
+          }
 
           setPathConfigs(
             (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
@@ -613,6 +721,13 @@ export function useAiPathsSettingsPathActions({
                 throw parseError;
               }
               recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
+              void persistLegacyTriggerContextModeRepair({
+                pathId: value,
+                rawPayload: configItem.value,
+                repairedConfig: recoveredConfig,
+                source: 'useAiPathsSettingsPathActions',
+                action: 'persistFallbackSwitchPathLegacyTriggerContextModeRepair',
+              });
               setPathConfigs(
                 (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
                   ...prev,

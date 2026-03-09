@@ -74,6 +74,23 @@ const writeMongoSettingValue = async (key: string, value: string): Promise<boole
   return true;
 };
 
+const deletePrismaSettingValue = async (key: string): Promise<boolean> => {
+  if (!canUsePrismaSettings()) return false;
+  await prisma.setting.deleteMany({
+    where: { key },
+  });
+  return true;
+};
+
+const deleteMongoSettingValue = async (key: string): Promise<boolean> => {
+  if (!process.env['MONGODB_URI']) return false;
+  const mongo = await getMongoDb();
+  await mongo.collection<MongoStringSettingRecord>('settings').deleteOne({
+    $or: [{ _id: key }, { key }],
+  });
+  return true;
+};
+
 let cachedBrainSettingsValue: string | null = null;
 let lastBrainSettingsFetchAt = 0;
 const BRAIN_SETTINGS_TTL_MS = 30000; // 30 seconds
@@ -154,6 +171,41 @@ export const upsertStoredSettingValue = async (key: string, value: string): Prom
   }
 
   return persisted;
+};
+
+export const deleteStoredSettingValue = async (key: string): Promise<boolean> => {
+  const provider =
+    typeof getAppDbProvider === 'function'
+      ? await Promise.resolve(getAppDbProvider()).catch(() => null)
+      : null;
+
+  const tryPrisma = async (): Promise<boolean> => {
+    try {
+      return await deletePrismaSettingValue(key);
+    } catch {
+      return false;
+    }
+  };
+
+  const tryMongo = async (): Promise<boolean> => {
+    try {
+      return await deleteMongoSettingValue(key);
+    } catch {
+      return false;
+    }
+  };
+
+  const deleted =
+    provider === 'mongodb'
+      ? (await tryMongo()) || (await tryPrisma())
+      : (await tryPrisma()) || (await tryMongo());
+
+  if (deleted && key === AI_BRAIN_SETTINGS_KEY) {
+    cachedBrainSettingsValue = null;
+    lastBrainSettingsFetchAt = 0;
+  }
+
+  return deleted;
 };
 
 const readBrainSettingValue = readStoredSettingValue;

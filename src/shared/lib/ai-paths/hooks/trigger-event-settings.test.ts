@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
   coerceSampleStateMap,
@@ -10,6 +11,16 @@ import {
   resolvePreferredPathId,
   resolveRuntimeStateHint,
 } from './trigger-event-settings';
+
+vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/shared/lib/ai-paths/settings-store-client')
+  >('@/shared/lib/ai-paths/settings-store-client');
+  return {
+    ...actual,
+    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
+  };
+});
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -30,6 +41,12 @@ const settingsFor = (
     value: makeConfig(p.id, p.name, p.extra),
   })),
 ];
+
+const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
+
+beforeEach(() => {
+  mockedUpdateAiPathsSetting.mockClear();
+});
 
 // ── resolvePreferredPathId ────────────────────────────────────────────────────
 
@@ -175,7 +192,46 @@ describe('loadPathConfigsFromSettings', () => {
     await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/config id does not match/i);
   });
 
-  it('rejects removed legacy trigger context modes in stored settings payloads', async () => {
+  it('loads partial stored configs without inheriting stale default node references', async () => {
+    const pathId = 'path-partial-stored-trigger';
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Partial Trigger Path' }]) },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: JSON.stringify({
+          id: pathId,
+          name: 'Partial Trigger Path',
+          isActive: true,
+          strictFlowMode: true,
+          aiPathsValidation: { enabled: false },
+          nodes: [
+            {
+              id: 'node-111111111111111111111111',
+              instanceId: 'node-111111111111111111111111',
+              nodeTypeId: 'nt-111111111111111111111111',
+              type: 'trigger',
+              title: 'Trigger',
+              description: 'Partial trigger payload',
+              position: { x: 120, y: 120 },
+              inputs: [],
+              outputs: ['trigger'],
+              createdAt: TS,
+              updatedAt: TS,
+            },
+          ],
+          edges: [],
+          updatedAt: TS,
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    expect(loaded.configs[pathId]?.nodes).toHaveLength(1);
+    expect(loaded.configs[pathId]?.uiState?.selectedNodeId ?? null).toBeNull();
+    expect(loaded.configs[pathId]?.nodes[0]?.config?.trigger?.event).toBe('manual');
+  });
+
+  it('remediates removed legacy trigger context modes in stored settings payloads', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-context');
     const seedNode = config.nodes[0] as AiNode | undefined;
     if (!seedNode) {
@@ -203,8 +259,11 @@ describe('loadPathConfigsFromSettings', () => {
       { key: `${PATH_CONFIG_PREFIX}${config.id}`, value: JSON.stringify(config) },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /removed legacy trigger context/i
+    const loaded = await loadPathConfigsFromSettings(data);
+    expect(loaded.configs[config.id]?.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${config.id}`,
+      expect.any(String)
     );
   });
 

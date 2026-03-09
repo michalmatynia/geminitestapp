@@ -6,10 +6,19 @@ import {
   XP_REWARDS,
   buildLessonMasteryUpdate,
   createLessonPracticeReward,
+  getKangurProgressServerSnapshot,
   mergeProgressStates,
 } from './progress';
 
 describe('kangur progress mastery helpers', () => {
+  it('reuses a stable server snapshot for sync external store hydration', () => {
+    const firstSnapshot = getKangurProgressServerSnapshot();
+    const secondSnapshot = getKangurProgressServerSnapshot();
+
+    expect(firstSnapshot).toBe(secondSnapshot);
+    expect(firstSnapshot).toEqual(createDefaultKangurProgressState());
+  });
+
   it('builds a lesson mastery entry from a completed lesson attempt', () => {
     const progress = createDefaultKangurProgressState();
 

@@ -43,7 +43,8 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveClass(
       'glass-panel',
       'border-white/78',
-      'bg-white/68'
+      'bg-white/68',
+      'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toHaveClass('text-3xl');
     expect(
@@ -80,6 +81,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
 
     render(<KangurLearnerProfileHeroWidget />);
 
+    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveClass('text-center');
     expect(screen.getByText('Ala')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })

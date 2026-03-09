@@ -134,6 +134,7 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
     open ? <div data-testid='mock-dialog'>{children}</div> : null,
   DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (

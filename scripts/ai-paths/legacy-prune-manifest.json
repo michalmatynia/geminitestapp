@@ -1,5 +1,5 @@
 {
-  "version": "phase2-2026-03-05",
+  "version": "phase2-2026-03-09",
   "description": "Seed manifest for bulk AI-Paths legacy compatibility pruning; used by check-canonical and bulk-prune scanner.",
   "rules": [
     {
@@ -1708,6 +1708,68 @@
             "const resolvedFromPort = resolveEdgePort(edge, 'fromPort');",
             "const resolvedToPort = resolveEdgePort(edge, 'toPort');"
           ]
+        }
+      ]
+    },
+    {
+      "id": "legacy_trigger_context_mode_remediation_module_removed",
+      "description": "Removed trigger-context remediation module must stay deleted after the strict hard cut.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode-remediation.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "legacy_trigger_context_mode_upgrade_tokens_runtime_source_scan",
+      "description": "Runtime source must not reintroduce removed trigger-context remediation helpers or upgrade-warning channels.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "remediateRemovedLegacyTriggerContextModesInDocument",
+            "remediateRemovedLegacyTriggerContextModesInPathConfig",
+            "legacy_trigger_context_mode_upgraded",
+            "upgraded to trigger_only while loading this payload"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "legacy_products_trigger_hooks_removed",
+      "description": "Removed product-side AI Paths trigger hooks must stay deleted after migrating to shared trigger-button hooks.",
+      "targets": [
+        {
+          "file": "src/features/products/hooks/useAiPathTrigger.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "legacy_trigger_button_binding_repair_tokens_runtime_source_scan",
+      "description": "Runtime source must not reintroduce trigger-button binding repair compatibility or single-active fallback tokens.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "repair_trigger_button_bindings",
+            "usedSingleActiveFallback"
+          ],
+          "requiredSnippets": []
         }
       ]
     }

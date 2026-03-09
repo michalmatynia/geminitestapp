@@ -20,8 +20,7 @@ import {
 import { findPathConfigCollectionAliasIssues } from '../utils/collection-names';
 import { sanitizeEdges } from '../utils/graph.edges';
 import {
-  findRemovedLegacyTriggerContextModesInPathConfig,
-  formatRemovedLegacyTriggerContextModesMessage,
+  remediateRemovedLegacyTriggerContextModesInPathConfig,
 } from '../utils/legacy-trigger-context-mode';
 import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
 import { stableStringify } from '../utils/runtime';
@@ -198,32 +197,18 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: Edge[]): vo
 };
 
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const removedLegacyTriggerContextModes =
-    findRemovedLegacyTriggerContextModesInPathConfig(config);
-  if (removedLegacyTriggerContextModes.length > 0) {
-    throw validationError(
-      formatRemovedLegacyTriggerContextModesMessage(removedLegacyTriggerContextModes, {
-        surface: 'trigger payload',
-      }),
-      {
-        source: 'ai_paths.trigger_payload',
-        reason: 'removed_legacy_trigger_context_mode',
-        pathId: config.id,
-        removedTriggerContextModes: removedLegacyTriggerContextModes,
-      }
-    );
-  }
-  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
+  const remediatedConfig = remediateRemovedLegacyTriggerContextModesInPathConfig(config).value;
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {
       source: 'ai_paths.trigger_payload',
       reason: 'unsupported_collection_aliases',
-      pathId: config.id,
+      pathId: remediatedConfig.id,
       issues: collectionAliasIssues,
     });
   }
 
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(remediatedConfig).config;
   const graphNodes = (
     Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []
   ).map((node: AiNode, index: number): AiNode => {

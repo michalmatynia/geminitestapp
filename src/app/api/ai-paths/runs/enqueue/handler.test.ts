@@ -205,7 +205,7 @@ describe('ai-paths runs enqueue handler', () => {
     expect(enqueueArgs?.meta).not.toHaveProperty('identityRepair');
   });
 
-  it('rejects removed legacy trigger context modes when loading stored path configs by pathId', async () => {
+  it('remediates removed legacy trigger context modes when loading stored path configs by pathId', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-mode');
     const seedNode = config.nodes[0];
     expect(seedNode).toBeDefined();
@@ -228,15 +228,17 @@ describe('ai-paths runs enqueue handler', () => {
     config.edges = [];
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    await expect(
-      POST_handler(
-        makeRequest({
-          pathId: config.id,
-        }),
-        {} as Parameters<typeof POST_handler>[1]
-      )
-    ).rejects.toThrow(/removed legacy trigger context/i);
-    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+    expect(response.status).toBe(200);
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | { nodes?: Array<{ config?: { trigger?: { contextMode?: string } } }> }
+      | undefined;
+    expect(enqueueArgs?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
   });
 
   it('normalizes context registry payloads into enqueue metadata', async () => {

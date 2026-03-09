@@ -100,7 +100,7 @@ describe('sanitizeTriggerPathConfig', () => {
   });
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'rejects removed legacy trigger context mode %s in trigger payloads',
+    'remediates removed legacy trigger context mode %s in trigger payloads',
     (contextMode) => {
       const config = createDefaultPathConfig(`path_trigger_context_${contextMode}`);
       const seedNode = config.nodes[0] as AiNode | undefined;
@@ -124,9 +124,8 @@ describe('sanitizeTriggerPathConfig', () => {
       ];
       config.edges = [];
 
-      expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
-        /removed legacy trigger context/i
-      );
+      const sanitized = sanitizeTriggerPathConfig(config);
+      expect(sanitized.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
     }
   );
 
@@ -313,7 +312,7 @@ describe('buildTriggerContext', () => {
         },
       },
     });
-    expect(context['entityJson']).toBeUndefined();
+    expect(context['entityJson']).toEqual(context['entity']);
     expect(context['product']).toBeUndefined();
   });
 });

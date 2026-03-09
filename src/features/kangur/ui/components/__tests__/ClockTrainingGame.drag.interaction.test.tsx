@@ -188,8 +188,6 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
     const coarseSnapButton = screen.getByTestId('clock-snap-mode-5');
     const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
-    const activeProgress = screen.getByTestId('clock-training-progress-0');
-    const pendingProgress = screen.getByTestId('clock-training-progress-1');
     const taskLabel = screen.getByText('Ustaw zegar na godzinę');
     const clockDisplay = screen.getByTestId('clock-time-display');
     const snapModeSwitch = screen.getByTestId('clock-snap-mode-switch');
@@ -197,8 +195,6 @@ describe('ClockTrainingGame drag interactions', () => {
 
     expect(coarseSnapButton).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
     expect(exactSnapButton).toHaveClass('rounded-[18px]', 'text-slate-500');
-    expect(activeProgress).toHaveClass('rounded-full', 'bg-indigo-500');
-    expect(pendingProgress).toHaveClass('soft-cta');
     expect(clockDisplay).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(snapModeSwitch).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
     expect(modeSwitch).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');

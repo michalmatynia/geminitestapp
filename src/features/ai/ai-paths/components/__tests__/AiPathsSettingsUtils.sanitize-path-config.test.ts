@@ -276,7 +276,7 @@ describe('sanitizePathConfig', () => {
   );
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'rejects removed legacy trigger context mode %s',
+    'remediates removed legacy trigger context mode %s',
     (contextMode) => {
       const config = createDefaultPathConfig(`path-legacy-trigger-context-${contextMode}`);
       const seedNode = config.nodes[0] as AiNode | undefined;
@@ -300,7 +300,8 @@ describe('sanitizePathConfig', () => {
       ];
       config.edges = [];
 
-      expect(() => sanitizePathConfig(config)).toThrowError(/removed legacy trigger context/i);
+      const sanitized = sanitizePathConfig(config);
+      expect(sanitized.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
     }
   );
 

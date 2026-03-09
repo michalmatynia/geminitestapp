@@ -12,12 +12,14 @@ const {
   useKangurProgressStateMock,
   useKangurAuthMock,
   useKangurAssignmentsMock,
+  useSessionMock,
 } = vi.hoisted(() => ({
     useKangurRoutingMock: vi.fn(),
     settingsStoreGetMock: vi.fn(),
     useKangurProgressStateMock: vi.fn(),
     useKangurAuthMock: vi.fn(),
     useKangurAssignmentsMock: vi.fn(),
+    useSessionMock: vi.fn(),
   }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -50,6 +52,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: () => undefined,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: useSessionMock,
 }));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
@@ -94,6 +100,10 @@ describe('Lessons page focus query support', () => {
       user: null,
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
+    });
+    useSessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
     });
     settingsStoreGetMock.mockReturnValue(lessonsSettingsValue);
     useKangurAssignmentsMock.mockReturnValue({

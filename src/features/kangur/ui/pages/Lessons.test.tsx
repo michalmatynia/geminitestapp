@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
@@ -35,19 +35,32 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('next/dynamic', () => ({
-  default: () =>
-    function MockLegacyLesson({ onBack }: { onBack: () => void }): React.JSX.Element {
-      return (
-        <div data-testid='legacy-lesson'>
-          <div>Legacy lesson renderer</div>
-          <button type='button' onClick={onBack}>
-            Back
-          </button>
-        </div>
-      );
-    },
-}));
+vi.mock('next/dynamic', async () => {
+  const lessonNavigation = await import(
+    '@/features/kangur/ui/context/KangurLessonNavigationContext'
+  );
+
+  return {
+    default: () =>
+      function MockLegacyLesson({ onBack }: { onBack: () => void }): React.JSX.Element {
+        const secretLessonPill = lessonNavigation.useKangurLessonSecretPill();
+
+        return (
+          <div data-testid='legacy-lesson'>
+            <div>Legacy lesson renderer</div>
+            {secretLessonPill?.isUnlocked ? (
+              <button type='button' onClick={secretLessonPill.onOpen}>
+                Open secret lesson
+              </button>
+            ) : null}
+            <button type='button' onClick={onBack}>
+              Back
+            </button>
+          </div>
+        );
+      },
+  };
+});
 
 vi.mock('next/link', () => ({
   default: ({
@@ -272,6 +285,74 @@ describe('Lessons', () => {
     );
   });
 
+  it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson(),
+        createLesson({
+          id: 'kangur-lesson-calendar',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 2000,
+        }),
+      ],
+    });
+    progressState.value = {
+      lessonMastery: {
+        clock: { completions: 1 },
+      },
+    };
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.queryByRole('button', { name: 'Open secret lesson' })).toBeNull();
+  });
+
+  it('redirects the unlocked secret lesson pill to the final lesson in the queue', async () => {
+    setSettingsStore({
+      lessons: [
+        createLesson(),
+        createLesson({
+          id: 'kangur-lesson-calendar',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 2000,
+        }),
+      ],
+    });
+    progressState.value = {
+      lessonMastery: {
+        clock: { completions: 1 },
+        calendar: { completions: 1 },
+      },
+    };
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open secret lesson' }));
+
+    await waitFor(() => expect(screen.getByTestId('lessons-secret-panel')).toBeInTheDocument());
+
+    expect(screen.queryByTestId('legacy-lesson')).toBeNull();
+    expect(screen.getByTestId('lessons-secret-pill-chip')).toHaveTextContent(
+      'Sekret odblokowany'
+    );
+    expect(screen.getByTestId('lessons-secret-host-label')).toHaveTextContent(
+      'Nauka kalendarza'
+    );
+  });
+
   it('applies documentation-backed titles to lesson navigation controls when tooltips are enabled', async () => {
     setSettingsStore({
       lessons: [createLesson()],
@@ -369,7 +450,10 @@ describe('Lessons', () => {
       'border-white/78',
       'bg-white/68'
     );
-    expect(headerActions.firstElementChild).toBe(screen.getByTestId('active-lesson-icon-clock-component'));
+    expect(headerActions.firstElementChild).toBe(
+      screen.getByRole('button', { name: 'Wróć do listy lekcji' })
+    );
+    expect(headerActions).toContainElement(screen.getByTestId('active-lesson-icon-clock-component'));
     expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
@@ -420,6 +504,23 @@ describe('Lessons', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 0.92, y: 12 })
+    );
+    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
+      'data-motion-animate',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
+      'data-motion-exit',
+      JSON.stringify({ opacity: 0.98, y: -4 })
+    );
+    expect(screen.getByTestId('lessons-active-transition')).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0.32, ease: [0.22, 1, 0.36, 1] })
+    );
   });
 
   it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
@@ -697,4 +798,20 @@ describe('Lessons', () => {
       'border-slate-200/80'
     );
   });
+});
+it('renders the lessons wordmark without a duplicate visible text heading', () => {
+  setSettingsStore({
+    lessons: [createLesson()],
+  });
+
+  renderLessonsPage();
+
+  const heading = screen.getByTestId('kangur-lessons-list-heading');
+  const introCard = screen.getByTestId('lessons-list-intro-card');
+
+  expect(screen.getByTestId('kangur-lessons-heading-art')).toBeInTheDocument();
+  expect(introCard).toHaveClass('text-center');
+  expect(heading).toHaveClass('flex', 'justify-center');
+  expect(screen.getByRole('heading', { name: 'Lekcje' })).toBe(heading);
+  expect(within(heading).getByText('Lekcje', { selector: 'span' })).toHaveClass('sr-only');
 });

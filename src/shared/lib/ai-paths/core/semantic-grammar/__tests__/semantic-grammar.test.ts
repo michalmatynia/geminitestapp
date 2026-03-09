@@ -45,29 +45,33 @@ describe('semantic grammar canvas serialization', () => {
     }
   });
 
-  it('rejects removed legacy trigger context modes in semantic canvas payloads', () => {
+  it('remediates removed legacy trigger context modes in semantic canvas payloads', () => {
     const config = createDefaultPathConfig('path_semantic_removed_trigger_context');
-    const semantic = serializePathConfigToSemanticCanvas(config);
-    const triggerNodeIndex = semantic.nodes.findIndex((node) => node.type === 'trigger');
-    expect(triggerNodeIndex).toBeGreaterThanOrEqual(0);
-    const triggerNode = triggerNodeIndex >= 0 ? semantic.nodes[triggerNodeIndex] : undefined;
-    expect(triggerNode).toBeDefined();
-    if (!triggerNode || triggerNodeIndex < 0) return;
-    semantic.nodes[triggerNodeIndex] = {
-      ...triggerNode,
-      config: {
-        ...(triggerNode.config ?? {}),
-        trigger: {
-          ...((triggerNode.config?.trigger as Record<string, unknown> | undefined) ?? {}),
-          contextMode: 'simulation_preferred',
+    const seedNode = config.nodes[0];
+    expect(seedNode).toBeDefined();
+    if (!seedNode) return;
+    config.nodes = [
+      {
+        ...seedNode,
+        type: 'trigger',
+        title: 'Trigger: Semantic',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_preferred',
+          },
         },
       },
-    };
+    ];
+    config.edges = [];
+    const semantic = serializePathConfigToSemanticCanvas(config);
 
     const parsed = parseAndDeserializeSemanticCanvas(semantic);
-    expect(parsed.ok).toBe(false);
-    if (parsed.ok) return;
-    expect(parsed.error).toMatch(/removed legacy trigger context/i);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
   });
 
   it('does not upgrade alias-only edge fields during semantic serialization', () => {

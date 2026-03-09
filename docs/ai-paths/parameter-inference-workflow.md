@@ -70,5 +70,5 @@ canonical: true
 
 ## Operational Notes
 
-- This path is auto-seeded and auto-repaired from AI Paths settings store.
-- If settings are missing/corrupt, the workflow and trigger button are re-created automatically.
+- This path is auto-seeded from the AI Paths settings store starter registry.
+- If settings are missing or invalid, the starter workflow and its trigger button are re-seeded from the semantic starter registry.

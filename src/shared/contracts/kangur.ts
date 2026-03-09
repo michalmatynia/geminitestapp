@@ -233,6 +233,8 @@ export const kangurLessonDocumentNarrationSchema = z
   .object({
     voice: kangurLessonNarrationVoiceSchema.optional(),
     locale: z.string().trim().min(2).max(16).optional(),
+    previewSourceSignature: z.string().trim().min(1).max(128).optional(),
+    lastPreviewedAt: z.string().datetime({ offset: true }).optional(),
   })
   .optional();
 export type KangurLessonDocumentNarration = z.infer<typeof kangurLessonDocumentNarrationSchema>;

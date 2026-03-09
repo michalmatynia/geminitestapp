@@ -1,21 +1,28 @@
+import type {
+  KangurAddXpResult,
+  KangurProgressState,
+  KangurXpRewards,
+} from '@/features/kangur/ui/types';
 import {
+  createDefaultKangurProgressState,
   normalizeKangurProgressState,
   type KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
-import {
-  KANGUR_BADGES,
-  KANGUR_LEVELS,
-  KANGUR_XP_REWARDS,
-  checkKangurNewBadges,
-  createKangurProgressStore,
-  getCurrentKangurLevel,
-  getNextKangurLevel,
-  type KangurBadge,
-  type KangurProgressLevel,
-} from '@kangur/core';
 
-import type { KangurAddXpResult, KangurProgressState, KangurXpRewards } from '@/features/kangur/ui/types';
-import { getKangurClientStorage } from '@/features/kangur/services/kangur-client-storage';
+type KangurProgressLevel = {
+  level: number;
+  minXp: number;
+  title: string;
+  color: string;
+};
+
+type KangurBadge = {
+  id: string;
+  emoji: string;
+  name: string;
+  desc: string;
+  condition: (progress: KangurProgressState) => boolean;
+};
 
 type KangurLessonPracticeReward = {
   xp: number;
@@ -27,7 +34,24 @@ export const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
 export const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'sprycio_progress_owner';
 export const KANGUR_PROGRESS_EVENT_NAME = 'kangur-progress-changed';
 
-let kangurProgressStore: ReturnType<typeof createKangurProgressStore> | null = null;
+const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();
+const progressListeners = new Set<(progress: KangurProgressState) => void>();
+let cachedProgressSnapshot: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
+const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = cachedProgressSnapshot;
+const DEFAULT_PROGRESS_RAW = JSON.stringify(cachedProgressSnapshot);
+let cachedProgressRaw: string | null = DEFAULT_PROGRESS_RAW;
+
+export const XP_REWARDS: KangurXpRewards = {
+  correct_answer: 10,
+  perfect_game: 50,
+  great_game: 25,
+  good_game: 10,
+  lesson_completed: 40,
+  clock_training_perfect: 60,
+  clock_training_good: 30,
+  geometry_training_perfect: 70,
+  geometry_training_good: 40,
+};
 
 export const XP_REWARDS: KangurXpRewards = KANGUR_XP_REWARDS;
 export const LEVELS: KangurProgressLevel[] = KANGUR_LEVELS;
@@ -69,6 +93,10 @@ const getProgressStore = () => {
 
 export function loadProgress(): KangurProgressState {
   return getProgressStore().loadProgress();
+}
+
+export function getKangurProgressServerSnapshot(): KangurProgressState {
+  return SERVER_PROGRESS_SNAPSHOT;
 }
 
 export function saveProgress(progress: KangurProgressState): void {

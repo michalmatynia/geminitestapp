@@ -1,16 +1,17 @@
-import { ArrowLeft } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
-  KangurButton,
-  KangurFeatureHeader,
-  KangurGlassPanel,
-} from '@/features/kangur/ui/design/primitives';
+  KANGUR_PENDING_STEP_PILL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   addXp,
@@ -18,6 +19,7 @@ import {
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { cn } from '@/shared/utils';
 
 import ClockTrainingGame, { type ClockTrainingSectionId } from './ClockTrainingGame';
 
@@ -358,7 +360,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
     tts: 'Teraz potrafisz czytać godziny i minuty razem. Przejdź do ćwiczenia.',
     content: (
       <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='text-7xl'>🏆</div>
+        <div className='text-7xl'>✨</div>
         <p className='max-w-xs leading-relaxed text-slate-600'>
           Brawo! Umiesz:
           <br />
@@ -442,72 +444,185 @@ export const HUB_SECTIONS: ClockHubSection[] = [
   },
 ];
 
+const TRAINING_SECTIONS: Array<ClockHubSection & { isGame: true }> = HUB_SECTIONS.filter(
+  (section): section is ClockHubSection & { isGame: true } => section.isGame === true
+);
+
+const TRAINING_SECTION_ORDER: ClockTrainingSectionId[] = ['hours', 'minutes', 'combined'];
+
 export default function ClockLesson(): React.JSX.Element {
   const [view, setView] = useState<ClockLessonView>({ kind: 'hub' });
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(SLIDES);
   const lessonCompletionAwardedRef = useRef(false);
+  const isHoursComplete =
+    (sectionProgress.hours?.totalCount ?? 0) > 0 &&
+    (sectionProgress.hours?.viewedCount ?? 0) >= (sectionProgress.hours?.totalCount ?? 0);
+  const isMinutesComplete =
+    (sectionProgress.minutes?.totalCount ?? 0) > 0 &&
+    (sectionProgress.minutes?.viewedCount ?? 0) >= (sectionProgress.minutes?.totalCount ?? 0);
+  const isCombinedComplete =
+    (sectionProgress.combined?.totalCount ?? 0) > 0 &&
+    (sectionProgress.combined?.viewedCount ?? 0) >= (sectionProgress.combined?.totalCount ?? 0);
+  const isCombinedUnlocked = isHoursComplete && isMinutesComplete;
+  const isClockLessonComplete = isHoursComplete && isMinutesComplete && isCombinedComplete;
   const lessonHubSections = HUB_SECTIONS.map((section) =>
     section.isGame
       ? section
-      : {
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }
+      : section.id === 'combined' && !isCombinedUnlocked
+        ? {
+            ...section,
+            description: 'Odblokuj po ukończeniu Godzin i Minut.',
+            locked: true,
+            lockedLabel: 'Zablokowane',
+            progress: sectionProgress[section.id as SectionId],
+          }
+        : {
+            ...section,
+            progress: sectionProgress[section.id as SectionId],
+          }
   );
 
-  const handleStartTraining = useCallback((sectionId: ClockTrainingSectionId) => {
-    if (!lessonCompletionAwardedRef.current) {
-      const progress = loadProgress();
-      addXp(XP_REWARDS.lesson_completed, {
-        lessonsCompleted: progress.lessonsCompleted + 1,
-        lessonMastery: buildLessonMasteryUpdate(progress, 'clock', 60),
-      });
-      lessonCompletionAwardedRef.current = true;
+  useEffect(() => {
+    if (!isClockLessonComplete || lessonCompletionAwardedRef.current) {
+      return;
     }
+
+    const progress = loadProgress();
+    addXp(XP_REWARDS.lesson_completed, {
+      lessonsCompleted: progress.lessonsCompleted + 1,
+      lessonMastery: buildLessonMasteryUpdate(progress, 'clock', 100),
+    });
+    lessonCompletionAwardedRef.current = true;
+  }, [isClockLessonComplete]);
+
+  const handleStartTraining = useCallback((sectionId: ClockTrainingSectionId) => {
     setView({ kind: 'training', sectionId });
   }, []);
 
   if (view.kind === 'training') {
-    const trainingTitle =
-      view.sectionId === 'hours'
-        ? 'Ćwiczenie: Godziny'
-        : view.sectionId === 'minutes'
-          ? 'Ćwiczenie: Minuty'
-          : 'Ćwiczenie: Pełny czas';
+    const currentTrainingIndex = TRAINING_SECTION_ORDER.indexOf(view.sectionId);
+    const currentTrainingSection =
+      TRAINING_SECTIONS[currentTrainingIndex] ??
+      TRAINING_SECTIONS.find((section) => section.id === `game_${view.sectionId}`) ??
+      TRAINING_SECTIONS[0];
+    if (!currentTrainingSection) {
+      return <></>;
+    }
+    const canGoToPreviousTraining = currentTrainingIndex > 0;
+    const canGoToNextTraining = currentTrainingIndex < TRAINING_SECTION_ORDER.length - 1;
+
+    const goToTrainingSection = (sectionId: ClockTrainingSectionId): void => {
+      setView({ kind: 'training', sectionId });
+    };
+
+    const trainingPills = (
+      <div className='flex gap-2'>
+        {TRAINING_SECTIONS.map((section, index) => {
+          const isActive = index === currentTrainingIndex;
+          const isCompleted = index < currentTrainingIndex;
+
+          return (
+            <button
+              key={section.id}
+              type='button'
+              onClick={() => goToTrainingSection(TRAINING_SECTION_ORDER[index] ?? 'hours')}
+              aria-label={`Przejdź do gry ${index + 1}`}
+              aria-current={isActive ? 'step' : undefined}
+              className={cn(
+                KANGUR_STEP_PILL_CLASSNAME,
+                'h-[14px] min-w-[14px] cursor-pointer',
+                isActive
+                  ? ['w-8 scale-[1.04]', 'bg-indigo-500']
+                  : isCompleted
+                    ? ['w-6', 'bg-indigo-200']
+                    : KANGUR_PENDING_STEP_PILL_CLASSNAME
+              )}
+              data-testid={`clock-lesson-training-indicator-${index}`}
+            />
+          );
+        })}
+      </div>
+    );
+
+    const trainingFooterNavigation = (
+      <div className='flex w-full items-center justify-between gap-3'>
+        {canGoToPreviousTraining ? (
+          <KangurButton
+            onClick={() =>
+              goToTrainingSection(TRAINING_SECTION_ORDER[currentTrainingIndex - 1] ?? 'hours')
+            }
+            aria-label='Poprzednia gra'
+            className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+            data-testid='clock-lesson-training-prev-button'
+            size='sm'
+            type='button'
+            title='Poprzednia gra'
+            variant='surface'
+          >
+            <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+          </KangurButton>
+        ) : (
+          <div className='min-w-[72px]' />
+        )}
+
+        {canGoToNextTraining ? (
+          <KangurButton
+            onClick={() =>
+              goToTrainingSection(TRAINING_SECTION_ORDER[currentTrainingIndex + 1] ?? 'combined')
+            }
+            aria-label='Następna gra'
+            className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+            data-testid='clock-lesson-training-next-button'
+            size='sm'
+            type='button'
+            title='Następna gra'
+            variant='surface'
+          >
+            <ChevronRight className='h-4 w-4 flex-shrink-0' />
+          </KangurButton>
+        ) : (
+          <div className='min-w-[72px]' />
+        )}
+      </div>
+    );
+
+    const currentTrainingHeader =
+      HUB_SECTIONS.find(
+        (section) =>
+          section.id ===
+          (view.sectionId === 'hours'
+            ? 'game_hours'
+            : view.sectionId === 'minutes'
+              ? 'game_minutes'
+              : 'game_combined')
+      ) ?? {
+        description: currentTrainingSection.description,
+        emoji: currentTrainingSection.emoji,
+        isGame: true,
+        title: currentTrainingSection.title,
+      };
 
     return (
-      <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <KangurButton
-          onClick={() => setView({ kind: 'hub' })}
-          className='self-start'
-          size='sm'
-          type='button'
-          variant='surface'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurGlassPanel
-          className='flex w-full flex-col items-center gap-5'
-          data-testid='clock-lesson-training-shell'
-          padding='xl'
-          surface='solid'
-        >
-          <KangurFeatureHeader
-            accent='indigo'
-            badgeSize='md'
-            data-testid='clock-lesson-training-header'
-            headingSize='sm'
-            icon='🕐'
-            title={trainingTitle}
-          />
-          <ClockTrainingGame
-            key={view.sectionId}
-            onFinish={() => setView({ kind: 'hub' })}
-            section={view.sectionId}
-          />
-        </KangurGlassPanel>
-      </div>
+      <LessonActivityStage
+        accent='indigo'
+        description={currentTrainingSection.description}
+        footerNavigation={trainingFooterNavigation}
+        headerTestId='clock-lesson-training-header'
+        icon='🕐'
+        maxWidthClassName='max-w-lg'
+        navigationPills={trainingPills}
+        onBack={() => setView({ kind: 'hub' })}
+        sectionHeader={currentTrainingHeader}
+        shellTestId='clock-lesson-training-shell'
+        title={currentTrainingSection.title}
+      >
+        <ClockTrainingGame
+          key={view.sectionId}
+          onFinish={() => setView({ kind: 'hub' })}
+          section={view.sectionId}
+        />
+      </LessonActivityStage>
     );
   }
 
@@ -515,6 +630,7 @@ export default function ClockLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[view.sectionId]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null}
         onBack={() => setView({ kind: 'hub' })}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         dotActiveClass='bg-indigo-500'

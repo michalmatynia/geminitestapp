@@ -596,7 +596,7 @@ export const invalidateAgentRuns = (queryClient: QueryClient) => {
 };
 
 export const invalidateAgentPersonas = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentPersonas.lists() });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentPersonas.all });
 };
 
 // --- Image Studio ---

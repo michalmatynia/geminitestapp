@@ -153,6 +153,7 @@
     "node_modules",
     ".next",
     ".next-dev",
+    ".next-dev-*",
     "tmp",
     "**/__tests__/**",
     "**/*.test.ts",

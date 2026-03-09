@@ -1,86 +1,25 @@
 import {
-  type FilemakerAddress,
   type FilemakerAddressLink,
   type FilemakerAddressOwnerKind,
   type FilemakerEmail,
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
-  type FilemakerOrganization,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
-  type FilemakerPerson,
 } from './types';
-import type { FilemakerAddressFields } from '@/shared/contracts/filemaker';
-import { normalizePhoneNumbers, normalizeString } from './filemaker-settings.helpers';
+import {
+  normalizeAddressFields,
+} from '@/shared/lib/filemaker/entity-builders';
+import { normalizeString } from './filemaker-settings.helpers';
 
-export const normalizeAddressFields = (value: {
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-}): FilemakerAddressFields => {
-  return {
-    street: normalizeString(value.street),
-    streetNumber: normalizeString(value.streetNumber),
-    city: normalizeString(value.city),
-    postalCode: normalizeString(value.postalCode),
-    country: normalizeString(value.country),
-    countryId: normalizeString(value.countryId),
-  };
-};
-
-export const formatFilemakerAddress = (
-  value: Pick<FilemakerAddressFields, 'street' | 'streetNumber' | 'city' | 'postalCode' | 'country'>
-): string =>
-  [
-    [value.street, value.streetNumber]
-      .map((entry: string) => normalizeString(entry))
-      .filter(Boolean)
-      .join(' '),
-    value.city,
-    value.postalCode,
-    value.country,
-  ]
-    .map((entry: string) => normalizeString(entry))
-    .filter(Boolean)
-    .join(', ');
-
-export const createFilemakerAddress = (input: {
-  id: string;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerAddress => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
+export {
+  createFilemakerAddress,
+  createFilemakerOrganization,
+  createFilemakerPerson,
+  formatFilemakerAddress,
+} from '@/shared/lib/filemaker/entity-builders';
 
 export const createFilemakerAddressLink = (input: {
   id: string;
@@ -103,88 +42,6 @@ export const createFilemakerAddressLink = (input: {
     ownerId: normalizeString(input.ownerId),
     addressId: normalizeString(input.addressId),
     isDefault: Boolean(input.isDefault),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerPerson = (input: {
-  id: string;
-  firstName: unknown;
-  lastName: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  nip?: unknown;
-  regon?: unknown;
-  phoneNumbers?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerPerson => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    firstName: normalizeString(input.firstName),
-    lastName: normalizeString(input.lastName),
-    addressId: normalizeString(input.addressId),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    nip: normalizeString(input.nip),
-    regon: normalizeString(input.regon),
-    phoneNumbers: normalizePhoneNumbers(input.phoneNumbers),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerOrganization = (input: {
-  id: string;
-  name: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerOrganization => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    name: normalizeString(input.name),
-    addressId: normalizeString(input.addressId),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

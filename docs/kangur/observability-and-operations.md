@@ -142,9 +142,14 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `kangur_ai_tutor_context_switched`
   - `kangur_ai_tutor_quick_action_clicked`
   - `kangur_ai_tutor_follow_up_clicked`
+  - `kangur_ai_tutor_follow_up_completed`
+  - `kangur_ai_tutor_feedback_submitted`
+  - `kangur_ai_tutor_repeat_question_detected`
+  - `kangur_ai_tutor_recovery_after_hint`
   - `kangur_ai_tutor_message_sent`
   - `kangur_ai_tutor_message_succeeded`
   - `kangur_ai_tutor_message_failed`
+  - `kangur_ai_tutor_quota_exhausted`
 - Server sources:
   - `kangur.ai-tutor.chat.completed`
   - `kangur.ai-tutor.chat.failed`

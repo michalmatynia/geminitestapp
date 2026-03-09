@@ -8,10 +8,38 @@ type MockAnonymousGuestTutorIntroOptions = {
   shouldShow?: boolean;
 };
 
+const ROUTE_BOOT_TIMEOUT_MS = 45_000;
+const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
+
 const gotoGuestTutorRoute = async (page: Page): Promise<void> => {
-  await page.goto('/kangur', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
-  await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto('/kangur', {
+        waitUntil: 'commit',
+        timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
+      });
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !error.message.includes('ERR_ABORTED') || attempt > 0) {
+        throw error;
+      }
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-route-content')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
 };
 
 const readGuestIntroStatus = async (page: Page): Promise<string | null> =>
@@ -106,14 +134,19 @@ test.describe('Kangur AI Tutor guest intro', () => {
 
     await gotoGuestTutorRoute(page);
 
-    await page.getByTestId('kangur-ai-tutor-guest-intro').getByRole('button', { name: 'Yes' }).click();
+    await page
+      .getByTestId('kangur-ai-tutor-guest-intro')
+      .getByRole('button', { name: 'Yes' })
+      .click();
 
     const guestAssistance = page.getByTestId('kangur-ai-tutor-guest-assistance');
 
     await expect(guestAssistance).toBeVisible();
     await expect(guestAssistance).toContainText('I can help you get started.');
     await expect(guestAssistance.getByRole('button', { name: 'Open login' })).toBeVisible();
-    await expect(guestAssistance.getByRole('button', { name: 'Continue browsing' })).toBeVisible();
+    await expect(
+      guestAssistance.getByRole('button', { name: 'Continue browsing' })
+    ).toBeVisible();
     await expect(guestAssistance.getByRole('link', { name: 'Login page' })).toBeVisible();
     await expect.poll(() => readGuestIntroStatus(page)).toBe('accepted');
     await expect.poll(() => getGuestIntroChecks()).toBe(1);

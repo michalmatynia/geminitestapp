@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
-import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
+import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   ValidatorDocsTooltipsProvider,
@@ -17,11 +17,8 @@ import {
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_DESCRIPTIONS,
   type ValidatorScope,
-} from './validator-scope';
+} from '@/features/admin/pages/validator-scope';
 
-/**
- * Validator docs: see docs/validator/function-reference.md#ui.adminglobalvalidatorpage
- */
 export function AdminGlobalValidatorPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const settingsQuery = useSettingsMap({ scope: 'light' });
@@ -191,4 +188,8 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       </ClientOnly>
     </div>
   );
+}
+
+export default function Page(): React.JSX.Element {
+  return <AdminGlobalValidatorPage />;
 }

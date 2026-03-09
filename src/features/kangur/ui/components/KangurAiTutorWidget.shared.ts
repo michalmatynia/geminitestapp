@@ -1,6 +1,7 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
 import type {
   KangurAiTutorFollowUpAction,
+  KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 
@@ -56,10 +57,8 @@ export type TutorQuickAction = {
   interactionIntent?: 'hint' | 'explain' | 'review' | 'next_step';
 };
 
-export type TutorMotionPresetKind = 'default' | 'desktop' | 'tablet' | 'mobile';
-
 export type TutorMotionProfile = {
-  kind: TutorMotionPresetKind;
+  kind: KangurAiTutorMotionPresetKind;
   sheetBreakpoint: number;
   avatarTransition: {
     type: 'spring';

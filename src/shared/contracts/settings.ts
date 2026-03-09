@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MongoSettingRecordDto } from './base';
 
 /**
  * Setting Record Contract
@@ -10,11 +11,9 @@ export const settingRecordSchema = z.object({
 
 export type SettingRecord = z.infer<typeof settingRecordSchema>;
 export type { SettingRecord as SystemSetting };
-export type MongoSettingLookupRecord<TId = string, TValue = string> = {
-  _id?: TId;
-  key?: string;
-  value?: TValue;
-};
+export type MongoSettingLookupRecord<TId = string, TValue = string> = Partial<
+  MongoSettingRecordDto<TId, TValue>
+>;
 export type MongoStringSettingRecord<TId = string> = MongoSettingLookupRecord<TId, string>;
 export type MongoTimestampedSettingRecord<
   TId = string,
@@ -32,10 +31,7 @@ export type MongoPersistedSettingRecord<
   TId = string,
   TValue = string,
   TTimestamp = string | Date,
-> = {
-  _id?: TId;
-  key: string;
-  value: TValue;
+> = MongoSettingRecordDto<TId, TValue> & {
   createdAt: TTimestamp;
   updatedAt: TTimestamp;
 };

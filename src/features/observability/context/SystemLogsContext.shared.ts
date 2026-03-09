@@ -8,6 +8,7 @@ import type {
   SystemLogMetricsDto as SystemLogMetrics,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import type { FilterField } from '@/shared/ui';
 
 const levelOptions: Array<{ value: SystemLogLevel | 'all'; label: string }> = [
@@ -61,11 +62,6 @@ export const parseMinDurationInput = (value: string): number | null => {
   if (!Number.isFinite(parsed) || parsed < 0) return null;
   return parsed;
 };
-
-export type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
 
 export type SystemLogsContextValue = {
   level: SystemLogLevel | 'all';

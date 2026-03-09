@@ -1,7 +1,11 @@
+import type {
+  KangurAssignmentPriority,
+  KangurProgressState,
+  KangurRouteAction,
+} from '@/shared/contracts/kangur';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
-import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   addition: { label: 'Dodawanie', emoji: '➕' },
@@ -68,20 +72,12 @@ export type KangurWeeklyActivityPoint = {
   averageAccuracy: number;
 };
 
-export type KangurLearnerRecommendationPriority = 'high' | 'medium' | 'low';
-
-export type KangurLearnerRecommendationAction = {
-  label: string;
-  page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-  query?: Record<string, string>;
-};
-
 export type KangurLearnerRecommendation = {
   id: string;
   title: string;
   description: string;
-  priority: KangurLearnerRecommendationPriority;
-  action: KangurLearnerRecommendationAction;
+  priority: KangurAssignmentPriority;
+  action: KangurRouteAction;
 };
 
 export type KangurLessonMasteryInsight = {

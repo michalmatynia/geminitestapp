@@ -319,6 +319,27 @@ export const kangurProgressStateSchema = z.object({
 });
 export type KangurProgressState = z.infer<typeof kangurProgressStateSchema>;
 
+export const kangurRoutePageSchema = z.enum([
+  'Game',
+  'Lessons',
+  'ParentDashboard',
+  'LearnerProfile',
+]);
+export type KangurRoutePage = z.infer<typeof kangurRoutePageSchema>;
+
+export const kangurRouteActionQuerySchema = z.record(
+  z.string().trim().min(1).max(80),
+  z.string().trim().max(240)
+);
+export type KangurRouteActionQuery = z.infer<typeof kangurRouteActionQuerySchema>;
+
+export const kangurRouteActionSchema = z.object({
+  label: nonEmptyTrimmedString.max(80),
+  page: kangurRoutePageSchema,
+  query: kangurRouteActionQuerySchema.optional(),
+});
+export type KangurRouteAction = z.infer<typeof kangurRouteActionSchema>;
+
 export const kangurLearnerStatusSchema = z.enum(['active', 'disabled']);
 export type KangurLearnerStatus = z.infer<typeof kangurLearnerStatusSchema>;
 

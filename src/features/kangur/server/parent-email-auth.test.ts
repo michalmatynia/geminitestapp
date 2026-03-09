@@ -28,31 +28,20 @@ const {
   validatePasswordStrengthMock: vi.fn(),
 }));
 
-vi.mock('@/features/auth/services/auth-security-profile', () => ({
-  getAuthSecurityProfile: getAuthSecurityProfileMock,
-}));
-
-vi.mock('@/features/auth/services/auth-email-delivery', () => ({
-  sendAuthEmail: sendAuthEmailMock,
-  shouldExposeAuthEmailDebug: shouldExposeAuthEmailDebugMock,
-}));
-
-vi.mock('@/features/auth/services/auth-login-challenge', () => ({
-  consumeEmailVerificationChallenge: consumeEmailVerificationChallengeMock,
-  createEmailVerificationChallenge: createEmailVerificationChallengeMock,
-}));
-
-vi.mock('@/features/auth/services/auth-user-write-service', () => ({
-  createAuthUserWithEmail: createAuthUserWithEmailMock,
-  markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
-  setAuthUserPassword: setAuthUserPasswordMock,
-}));
-
-vi.mock('@/features/auth/server', () => ({
+vi.mock('@/server/auth', () => ({
+  auth: vi.fn(),
   findAuthUserByEmail: findAuthUserByEmailMock,
   findAuthUserById: findAuthUserByIdMock,
   getAuthSecurityPolicy: getAuthSecurityPolicyMock,
+  getAuthSecurityProfile: getAuthSecurityProfileMock,
   normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
+  sendAuthEmail: sendAuthEmailMock,
+  shouldExposeAuthEmailDebug: shouldExposeAuthEmailDebugMock,
+  consumeEmailVerificationChallenge: consumeEmailVerificationChallengeMock,
+  createEmailVerificationChallenge: createEmailVerificationChallengeMock,
+  createAuthUserWithEmail: createAuthUserWithEmailMock,
+  markAuthUserEmailVerified: markAuthUserEmailVerifiedMock,
+  setAuthUserPassword: setAuthUserPasswordMock,
   validatePasswordStrength: validatePasswordStrengthMock,
 }));
 

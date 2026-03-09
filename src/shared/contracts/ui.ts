@@ -76,6 +76,14 @@ export type LabeledOption<TValue = string> = LabeledOptionDto<TValue>;
 export type LabelValueOptionDto = LabeledOptionDto<string>;
 export type { LabelValueOptionDto as LabelValueOption };
 
+export type PanelRuntimeSlotsDto = {
+  header?: ReactNode;
+  alerts?: ReactNode;
+  filters?: ReactNode;
+  footer?: ReactNode;
+};
+export type PanelRuntimeSlots = PanelRuntimeSlotsDto;
+
 export type ExtractEntityType<T extends EntityModalProps<unknown, unknown>> =
   T extends EntityModalProps<infer E, unknown> ? E : never;
 export type ExtractListItemType<T extends EntityModalProps<unknown, unknown>> =

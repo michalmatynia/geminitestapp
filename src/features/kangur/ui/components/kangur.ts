@@ -5,7 +5,7 @@ import KangurSetupView from '@/features/kangur/ui/components/KangurSetup';
 import { KangurGameProvider as KangurGameProviderLegacy } from '@/features/kangur/ui/context/KangurGameContext';
 import type { KangurMode } from '@/features/kangur/ui/types';
 
-export type KangurSetupProps = {
+type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;
 };
 

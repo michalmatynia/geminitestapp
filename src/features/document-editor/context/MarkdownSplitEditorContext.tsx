@@ -3,7 +3,7 @@
 import React, { createContext, useContext } from 'react';
 import { internalError } from '@/shared/errors/app-error';
 
-export interface MarkdownSplitEditorContextValue {
+interface MarkdownSplitEditorContextValue {
   value: string;
   onChange: (nextValue: string) => void;
   readOnly?: boolean;

@@ -4,7 +4,7 @@ import { Button, SelectSimple, Switch } from '@/shared/ui';
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
 import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 
-export interface CaseListSortingProps {
+interface CaseListSortingProps {
   className?: string;
 }
 

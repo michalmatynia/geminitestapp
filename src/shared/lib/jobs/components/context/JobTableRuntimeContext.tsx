@@ -2,15 +2,11 @@
 
 import React from 'react';
 
+import type { PanelRuntimeSlots } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
-export type JobTablePanelRuntimeValue = {
-  header?: React.ReactNode;
-  alerts?: React.ReactNode;
-  filters?: React.ReactNode;
-  footer?: React.ReactNode;
-};
+type JobTablePanelRuntimeValue = PanelRuntimeSlots;
 
 export type JobTableActionsRuntimeValue = {
   onViewDetails: (id: string) => void;

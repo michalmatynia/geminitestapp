@@ -1,9 +1,13 @@
 import 'server-only';
 
-export type PortablePathSigningPolicyProfile = 'dev' | 'staging' | 'prod';
+import type {
+  PortablePathSigningPolicyProfile as PortableEngineSigningPolicyProfile,
+} from './portable-engine-resolution-types';
+
+export type PortablePathSigningPolicyProfile = PortableEngineSigningPolicyProfile;
 export type PortablePathSigningPolicySurface = 'canvas' | 'product' | 'api';
 
-export type PortablePathEnvelopeVerificationAuditSinkProfile = 'dev' | 'staging' | 'prod';
+export type PortablePathEnvelopeVerificationAuditSinkProfile = PortablePathSigningPolicyProfile;
 export type PortablePathEnvelopeVerificationAuditSinkHealthPolicy = 'off' | 'warn' | 'error';
 
 export type PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus =

@@ -1,3 +1,4 @@
+import type { CodeMessageIssueDto } from '@/shared/contracts/base';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import {
   PROMPT_EXPLODER_SETTINGS_KEY,
@@ -54,10 +55,8 @@ export const PROMPT_EXPLODER_STORAGE_KEYS = [
 
 export type PromptExploderSettingsValidationErrorCode = 'invalid_settings_json' | 'invalid_shape';
 
-export type PromptExploderSettingsValidationError = {
-  code: PromptExploderSettingsValidationErrorCode;
-  message: string;
-};
+export type PromptExploderSettingsValidationError =
+  CodeMessageIssueDto<PromptExploderSettingsValidationErrorCode>;
 
 type PersistedPayloadParseResult =
   | { hasPayload: false; payload: null; error: null }

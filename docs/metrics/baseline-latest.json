@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-09T03:41:59.339Z",
+  "generatedAt": "2026-03-09T04:05:08.925Z",
   "source": {
-    "totalFiles": 5159,
-    "totalLines": 839324,
+    "totalFiles": 5167,
+    "totalLines": 839569,
     "useClientFiles": 1494,
     "filesOver800": 70,
     "filesOver1000": 10,
@@ -114,7 +114,7 @@
     "sharedToFeaturesTotalImports": 75
   },
   "architecture": {
-    "crossFeatureEdgePairs": 35,
+    "crossFeatureEdgePairs": 30,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
@@ -138,10 +138,6 @@
       },
       {
         "edge": "case-resolver -> document-editor",
-        "references": 12
-      },
-      {
-        "edge": "jobs -> ai",
         "references": 12
       },
       {
@@ -173,10 +169,6 @@
         "references": 7
       },
       {
-        "edge": "kangur -> auth",
-        "references": 7
-      },
-      {
         "edge": "products -> foldertree",
         "references": 7
       },
@@ -205,28 +197,36 @@
         "references": 5
       },
       {
-        "edge": "ai -> auth",
-        "references": 4
-      },
-      {
         "edge": "kangur -> document-editor",
         "references": 4
       },
       {
-        "edge": "product-sync -> integrations",
-        "references": 4
+        "edge": "ai -> files",
+        "references": 3
+      },
+      {
+        "edge": "cms -> admin",
+        "references": 3
+      },
+      {
+        "edge": "products -> files",
+        "references": 3
+      },
+      {
+        "edge": "admin -> auth",
+        "references": 2
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "ai",
         "files": 961,
-        "lines": 194136
+        "lines": 194131
       },
       {
         "feature": "kangur",
         "files": 433,
-        "lines": 91363
+        "lines": 91349
       },
       {
         "feature": "case-resolver",
@@ -236,7 +236,7 @@
       {
         "feature": "cms",
         "files": 297,
-        "lines": 48259
+        "lines": 48260
       },
       {
         "feature": "products",
@@ -246,7 +246,7 @@
       {
         "feature": "integrations",
         "files": 198,
-        "lines": 29774
+        "lines": 29705
       },
       {
         "feature": "prompt-exploder",
@@ -311,12 +311,12 @@
       {
         "feature": "product-sync",
         "files": 10,
-        "lines": 2864
+        "lines": 2862
       },
       {
         "feature": "observability",
         "files": 18,
-        "lines": 2789
+        "lines": 2785
       },
       {
         "feature": "document-editor",
@@ -336,7 +336,7 @@
       {
         "feature": "playwright",
         "files": 8,
-        "lines": 799
+        "lines": 612
       },
       {
         "feature": "jobs",
@@ -623,12 +623,12 @@
         "lines": 945
       },
       {
-        "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
-        "lines": 929
+        "path": "src/features/kangur/services/local-kangur-platform.ts",
+        "lines": 930
       },
       {
-        "path": "src/features/kangur/services/local-kangur-platform.ts",
-        "lines": 928
+        "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
+        "lines": 929
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",

@@ -28,6 +28,9 @@ import type {
   PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode,
   PortablePathEnvelopeVerificationAuditSinkProfile,
 } from './sinks-contracts.server';
+import type { PortablePathAuditSinkAutoRemediationStrategy } from './types';
+
+export type { PortablePathAuditSinkAutoRemediationStrategy } from './types';
 
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_THRESHOLD = 3;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS = 300;
@@ -38,11 +41,6 @@ const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES 
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_LIMIT = 20;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS =
   7 * 24 * 60 * 60;
-
-export type PortablePathAuditSinkAutoRemediationStrategy =
-  | 'none'
-  | 'unregister_all'
-  | 'degrade_to_log_only';
 
 export const resolvePortablePathAuditSinkAutoRemediationThreshold = (
   value: number | null | undefined

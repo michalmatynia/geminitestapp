@@ -28,25 +28,7 @@ export interface ToggleRowProps {
   controlWrapper?: (control: ReactNode) => ReactNode;
 }
 
-export interface ToggleRowContextValue {
-  label: string;
-  description?: string | ReactNode;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean;
-  variant?: 'checkbox' | 'switch';
-  className?: string;
-  labelClassName?: string;
-  descriptionClassName?: string;
-  id?: string;
-  icon?: ReactNode;
-  loading?: boolean;
-  error?: string;
-  title?: string;
-  children?: ReactNode;
-  showBorder?: boolean;
-  controlWrapper?: (control: ReactNode) => ReactNode;
-}
+type ToggleRowContextValue = ToggleRowProps;
 
 const ToggleRowContext = createContext<ToggleRowContextValue | null>(null);
 

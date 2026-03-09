@@ -14,7 +14,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));
 
-vi.mock('@/features/auth/server', () => ({
+vi.mock('@/server/auth', () => ({
   auth: vi.fn(),
 }));
 

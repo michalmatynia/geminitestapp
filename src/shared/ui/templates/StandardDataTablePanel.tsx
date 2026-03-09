@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { PanelRuntimeSlots } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { cn } from '@/shared/utils';
@@ -74,12 +75,7 @@ export interface StandardDataTablePanelProps<TData> {
   children?: React.ReactNode | undefined;
 }
 
-export type StandardDataTablePanelRuntimeValue = {
-  header?: React.ReactNode | undefined;
-  alerts?: React.ReactNode | undefined;
-  filters?: React.ReactNode | undefined;
-  footer?: React.ReactNode | undefined;
-};
+type StandardDataTablePanelRuntimeValue = PanelRuntimeSlots;
 
 type StandardDataTablePanelHeaderRuntimeValue = {
   title?: string | undefined;

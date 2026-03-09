@@ -25,9 +25,9 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
-  useUpdateUserPreferencesMutation,
   useUserPreferences,
-} from '@/features/auth';
+  useUpdateUserPreferences,
+} from '@/shared/hooks/useUserPreferences';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -84,7 +84,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   const projectsQuery = useStudioProjects();
   const userPreferencesQuery = useUserPreferences();
-  const updateUserPreferences = useUpdateUserPreferencesMutation();
+  const updateUserPreferences = useUpdateUserPreferences();
   const createProjectMutation = useCreateStudioProject();
   const renameProjectMutation = useRenameStudioProject();
   const deleteProjectMutation = useDeleteStudioProject();

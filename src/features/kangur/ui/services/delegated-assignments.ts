@@ -8,11 +8,11 @@ import type {
   KangurLesson,
   KangurLessonComponentId,
   KangurPracticeAssignmentOperation,
+  KangurProgressState,
 } from '@/shared/contracts/kangur';
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentSnapshot,
-  KangurProgressState,
 } from '@/features/kangur/services/ports';
 import type {
   KangurDifficulty,

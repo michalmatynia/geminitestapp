@@ -20,21 +20,9 @@ import {
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY,
   PORTABLE_PATH_AUDIT_SINK_STARTUP_HEALTH_STATE_SETTINGS_KEY,
 } from './sinks-constants.server';
-import type { PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus } from './sinks-contracts.server';
+import type { PortablePathAuditSinkStartupHealthState } from './types';
 
-export type PortablePathAuditSinkStartupHealthState = {
-  consecutiveFailureCount: number;
-  lastFailureAt: string | null;
-  lastRecoveredAt: string | null;
-  lastFailedSinkIds: string[];
-  remediationCount: number;
-  lastRemediatedAt: string | null;
-  remediationWindowStartedAt: string | null;
-  remediationWindowActionCount: number;
-  lastRemediationSkippedAt: string | null;
-  lastRemediationSkippedReason: 'cooldown' | 'rate_limited' | null;
-  lastStatus: PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus | null;
-};
+export type { PortablePathAuditSinkStartupHealthState } from './types';
 
 type PortablePathAuditSinkStartupHealthStateEnvelope = {
   version: 1;

@@ -6,16 +6,14 @@ import { createRequire } from 'module';
 import path from 'path';
 import vm from 'vm';
 
-import {
-  defaultPlaywrightSettings,
-  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-} from '@/features/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
+  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   playwrightSettingsSchema,
   type PlaywrightPersona,
   type PlaywrightSettings,
 } from '@/shared/contracts/playwright';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

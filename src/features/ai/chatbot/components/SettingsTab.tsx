@@ -11,6 +11,7 @@ import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/componen
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {
   Button,
   SelectSimple,
@@ -55,7 +56,6 @@ export function SettingsTab(): React.JSX.Element {
     let active: boolean = true;
     const loadPersonas = async (): Promise<void> => {
       try {
-        const { fetchPlaywrightPersonas } = await import('@/features/playwright');
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPlaywrightPersonas(stored);

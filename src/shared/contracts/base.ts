@@ -19,6 +19,8 @@ export type Status = StatusDto;
 export const localizedSchema = z.record(z.string(), z.string().nullable());
 export type LocalizedDto = z.infer<typeof localizedSchema>;
 export type Localized<T = string> = Record<string, T | null>;
+export type UnknownRecordDto = Record<string, unknown>;
+export type UnknownRecord = UnknownRecordDto;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
@@ -184,6 +186,12 @@ export type ListResponseDto<T> = {
 };
 export type ListResponse<T> = ListResponseDto<T>;
 
+export type CodeMessageIssueDto<TCode extends string = string> = {
+  code: TCode;
+  message: string;
+};
+export type CodeMessageIssue<TCode extends string = string> = CodeMessageIssueDto<TCode>;
+
 /**
  * Utility type for creating a new entity (omits base fields)
  */
@@ -235,5 +243,10 @@ export interface NamedEntity extends BaseEntity, NamedFields {}
 /**
  * MongoDB and Core Data Access Types
  */
-export type MongoSettingRecord = { _id: string; key: string; value: string };
+export type MongoSettingRecordDto<TId = string, TValue = string> = {
+  _id: TId;
+  key: string;
+  value: TValue;
+};
+export type MongoSettingRecord = MongoSettingRecordDto;
 export type MongoDocument<T> = T & { _id: string };

@@ -5,8 +5,8 @@ export {
   startAgentQueue,
   stopAgentQueue,
   enqueueAgentRun,
-} from '@/features/ai/server';
-export { startAiInsightsQueue } from '@/features/ai/server';
+} from '@/server/queues/ai';
+export { startAiInsightsQueue } from '@/server/queues/ai';
 export {
   startAiPathRunQueue,
   assertAiPathRunQueueReady,
@@ -15,21 +15,21 @@ export {
   getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
   removePathRunQueueEntries,
-} from '@/features/ai/server';
+} from '@/server/queues/ai';
 export {
   startChatbotJobQueue,
   stopChatbotJobQueue,
   enqueueChatbotJob,
-} from '@/features/ai/server';
+} from '@/server/queues/ai';
 export { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 export {
   startImageStudioRunQueue,
   enqueueImageStudioRunJob,
-} from '@/features/ai/server';
+} from '@/server/queues/ai';
 export {
   startImageStudioSequenceQueue,
   enqueueImageStudioSequenceJob,
-} from '@/features/ai/server';
+} from '@/server/queues/ai';
 export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,

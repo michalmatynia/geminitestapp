@@ -1,13 +1,9 @@
 import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
-import type { KangurProgressState } from '@/features/kangur/ui/types';
-
-export type KangurAssignmentPriority = 'high' | 'medium' | 'low';
-
-export type KangurAssignmentAction = {
-  label: string;
-  page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-  query?: Record<string, string>;
-};
+import type {
+  KangurAssignmentPriority,
+  KangurProgressState,
+  KangurRouteAction,
+} from '@/shared/contracts/kangur';
 
 export type KangurAssignmentPlan = {
   id: string;
@@ -15,7 +11,7 @@ export type KangurAssignmentPlan = {
   description: string;
   target: string;
   priority: KangurAssignmentPriority;
-  action: KangurAssignmentAction;
+  action: KangurRouteAction;
 };
 
 export const buildKangurAssignments = (

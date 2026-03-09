@@ -6,4 +6,3 @@ export { default as TrainingSetup } from '@/features/kangur/ui/components/Traini
 export type { OperationSelectorProps } from '@/features/kangur/ui/components/OperationSelector';
 export type { QuestionCardProps } from '@/features/kangur/ui/components/QuestionCard';
 export type { ResultScreenProps } from '@/features/kangur/ui/components/ResultScreen';
-export type { TrainingSetupProps } from '@/features/kangur/ui/components/TrainingSetup';

@@ -5,18 +5,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
-import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
+import type {
+  KangurDifficulty,
+  KangurDifficultyOption,
+  KangurOperation,
+} from '@/features/kangur/ui/types';
 
 type KangurPracticeAssignment = KangurAssignmentSnapshot & { target: { type: 'practice' } };
-
-export type KangurOperationSelectorDifficultyOption = {
-  displayLabel: string;
-  id: KangurDifficulty;
-  label: string;
-  metaLabel: string;
-  selected: boolean;
-  select: () => void;
-};
 
 export type KangurOperationSelectorItem = {
   accent: KangurAccent;
@@ -86,7 +81,7 @@ export const useKangurOperationSelectorState = (
     previousActiveRef.current = active;
   }, [active]);
 
-  const difficultyOptions = useMemo<KangurOperationSelectorDifficultyOption[]>(
+  const difficultyOptions = useMemo<KangurDifficultyOption[]>(
     () =>
       (Object.keys(DIFFICULTY_CONFIG) as KangurDifficulty[]).map((id) => {
         const config = DIFFICULTY_CONFIG[id];

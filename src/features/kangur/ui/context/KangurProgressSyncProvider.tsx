@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import {
+  createDefaultKangurProgressState,
+  type KangurProgressState,
+} from '@/shared/contracts/kangur';
 import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurProgressRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
@@ -33,7 +36,7 @@ const resolveUserProgressKey = (user: KangurUser | null): string | null => {
   return id && id.length > 0 ? id : null;
 };
 
-const serializeProgress = (progress: KangurProgressRecord): string => JSON.stringify(progress);
+const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);
 
 export function KangurProgressSyncProvider({
   children,

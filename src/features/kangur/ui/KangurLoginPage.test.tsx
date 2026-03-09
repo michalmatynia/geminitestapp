@@ -6,6 +6,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
+
 const {
   checkAppStateMock,
   locationAssignMock,
@@ -171,14 +173,23 @@ describe('KangurLoginPage', () => {
   it('renders a single unified login form without parent-student tabs', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
+    expect(screen.getByRole('heading', { name: 'Logowanie Kangur' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByLabelText('Email rodzica lub nick ucznia')).toBeInTheDocument();
     expect(screen.getByLabelText('Haslo')).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Uczen' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /magiczny link/i })).not.toBeInTheDocument();
+  });
+
+  it('has no obvious accessibility violations in the login shell', async () => {
+    const { container } = render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    await screen.findByRole('heading', { name: 'Logowanie Kangur' });
+    await expectNoAxeViolations(container);
   });
 
   it('submits parent email credentials through the shared login form', async () => {
@@ -332,6 +343,7 @@ describe('KangurLoginPage', () => {
         'Konto rodzica zostalo utworzone. Wyslalismy email potwierdzajacy. Zalogujesz sie po weryfikacji emaila, a AI Tutor odblokuje sie po potwierdzeniu adresu.'
       )
     ).toBeVisible();
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
   });
 
   it('blocks parent login until the email is verified', async () => {
@@ -371,6 +383,7 @@ describe('KangurLoginPage', () => {
         'Potwierdz email rodzica, zanim sie zalogujesz. Sprawdz skrzynke i kliknij link potwierdzajacy.'
       )
     ).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'assertive');
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/auth/callback/credentials',
       expect.anything()

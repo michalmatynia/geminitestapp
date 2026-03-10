@@ -167,6 +167,21 @@ describe('KangurQuestionsManagerPanel', () => {
     expect(screen.getByText('Order 3')).toBeInTheDocument();
   });
 
+  it('renders the question workspace chrome and triage controls', () => {
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    expect(screen.getByText('Suite question workspace')).toBeInTheDocument();
+    expect(screen.getByText('Filter and triage')).toBeInTheDocument();
+    expect(screen.getByText('Sort')).toBeInTheDocument();
+    expect(screen.getByText('Filter')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back to suites/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add question' })).toBeInTheDocument();
+  });
+
   it('searches across audit flags and other question content', () => {
     render(
       <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>

@@ -3,8 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { bulkAiJobRequestSchema as bulkJobSchema } from '@/shared/contracts/jobs';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  bulkAiJobRequestSchema as bulkJobSchema,
+  graphModelJobPayloadSchema,
+} from '@/shared/contracts/jobs';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -16,6 +19,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return parsed.response;
   }
   const { type, config } = parsed.data;
+  let normalizedConfig = config;
+  if (type === 'graph_model' && config !== undefined) {
+    const parsedGraphPayload = graphModelJobPayloadSchema.safeParse(config);
+    if (!parsedGraphPayload.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid graph_model payload.',
+          issues: parsedGraphPayload.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+    normalizedConfig = parsedGraphPayload.data;
+  }
 
   // Get all product IDs using repository
   const productRepository = await getProductRepository();
@@ -33,7 +51,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const jobs = await Promise.all(
     products.map((p: ProductWithImages) =>
       enqueueProductAiJob(p.id, type, {
-        ...(config as Record<string, unknown>),
+        ...(normalizedConfig as Record<string, unknown>),
         // We don't include full product data here,
         // the worker will fetch it to ensure it's fresh
       })

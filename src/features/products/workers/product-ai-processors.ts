@@ -104,7 +104,7 @@ export type Job = ProductAiJobRecord & {
 
 const readTrimmedGraphPayloadString = (
   payload: JobPayload,
-  key: 'modelId' | 'nodeId' | 'requestedModelId' | 'runId'
+  key: 'modelId' | 'nodeId' | 'nodeTitle' | 'requestedModelId' | 'runId'
 ): string => {
   const graph =
     payload.graph && typeof payload.graph === 'object' && !Array.isArray(payload.graph)
@@ -112,6 +112,30 @@ const readTrimmedGraphPayloadString = (
       : null;
   const value = graph?.[key];
   return typeof value === 'string' ? value.trim() : '';
+};
+
+const enrichAiPathsConfigError = (error: unknown, payload: JobPayload, requestedModelId: string): never => {
+  if (!(error instanceof Error)) throw error;
+
+  const nodeId = readTrimmedGraphPayloadString(payload, 'nodeId');
+  const nodeTitle = readTrimmedGraphPayloadString(payload, 'nodeTitle');
+  const runId = readTrimmedGraphPayloadString(payload, 'runId');
+  const failingNodeLabel = nodeTitle
+    ? nodeId
+      ? `Failing AI Paths node "${nodeTitle}" <${nodeId}>`
+      : `Failing AI Paths node "${nodeTitle}"`
+    : nodeId
+      ? `Failing AI Paths node <${nodeId}>`
+      : '';
+  const detailParts = [
+    failingNodeLabel,
+    runId ? `run ${runId}` : '',
+    `requested node model: ${requestedModelId || 'none'}`,
+  ].filter(Boolean);
+  if (detailParts.length > 0) {
+    error.message = `${error.message} ${detailParts.join(', ')}.`;
+  }
+  throw error;
 };
 
 const resolveRequestedAiPathsModelId = async (payload: JobPayload): Promise<string> => {
@@ -258,7 +282,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
       defaultMaxTokens: 800,
       defaultSystemPrompt: 'You are an AI assistant.',
       runtimeKind: payload.vision ? 'vision' : 'chat',
-    });
+    }).catch((error: unknown) => enrichAiPathsConfigError(error, payload, requestedModelId));
     modelId = brainConfig.modelId;
     temperature = brainConfig.temperature;
     maxTokens = brainConfig.maxTokens;

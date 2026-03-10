@@ -302,8 +302,19 @@ describe('processGraphModel AI Paths model selection', () => {
       configurationError('AI Paths Model has no model assigned in AI Brain.')
     );
 
-    await expect(processGraphModel(buildJob({ modelId: '' }))).rejects.toThrow(
-      'AI Paths Model has no model assigned'
+    await expect(
+      processGraphModel(
+        buildJob({
+          modelId: '',
+          graph: {
+            runId: 'run-ctx-1',
+            nodeId: 'node-model-ctx',
+            nodeTitle: 'Opis i Tytuł',
+          },
+        })
+      )
+    ).rejects.toThrow(
+      'AI Paths Model has no model assigned in AI Brain. Failing AI Paths node "Opis i Tytuł" <node-model-ctx>, run run-ctx-1, requested node model: none.'
     );
     expect(runBrainChatCompletion).not.toHaveBeenCalled();
   });

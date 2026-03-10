@@ -281,6 +281,8 @@ export function useKangurAiTutorPanelShellState(input: {
   motionProfile: TutorMotionProfile;
   prefersReducedMotion: boolean;
   reducedMotionTransitions: ReducedMotionTransitions;
+  showSectionGuidanceCallout: boolean;
+  showSelectionGuidanceCallout: boolean;
   viewport: { width: number; height: number };
 }): PanelShellState {
   const {
@@ -304,20 +306,30 @@ export function useKangurAiTutorPanelShellState(input: {
     motionProfile,
     prefersReducedMotion,
     reducedMotionTransitions,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
     viewport,
   } = input;
 
+  const shouldPreserveInlineGuidanceAvatar =
+    showSelectionGuidanceCallout || showSectionGuidanceCallout;
   const showAttachedAvatarShell =
     !isTutorHidden &&
     isOpen &&
     isAnchoredUiMode &&
     isContextualPanelAnchor &&
     !isGuidedTutorMode &&
+    !shouldPreserveInlineGuidanceAvatar &&
     !isAskModalMode;
   const hideFloatingAvatar = isOpen && isStaticUiMode && !isAskModalMode;
   const showFloatingAvatar =
     !isTutorHidden &&
-    (isAskModalMode || isGuidedTutorMode || (!showAttachedAvatarShell && !hideFloatingAvatar));
+    (
+      isAskModalMode ||
+      isGuidedTutorMode ||
+      shouldPreserveInlineGuidanceAvatar ||
+      (!showAttachedAvatarShell && !hideFloatingAvatar)
+    );
   const avatarAttachmentSide = getAttachedAvatarSide({
     rect: displayFocusRect,
     mode: bubblePlacement.mode,
@@ -401,7 +413,7 @@ export function useKangurAiTutorPanelShellState(input: {
       : 'independent';
   const floatingAvatarPlacement = isAskModalMode
     ? 'ask-modal'
-    : isGuidedTutorMode && guidedFocusRect
+    : (isGuidedTutorMode || shouldPreserveInlineGuidanceAvatar) && guidedFocusRect
       ? 'guided'
       : 'floating';
   const panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet' =

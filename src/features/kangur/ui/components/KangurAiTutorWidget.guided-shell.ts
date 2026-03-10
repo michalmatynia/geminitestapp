@@ -224,8 +224,9 @@ export function useKangurAiTutorGuidedShellState(input: {
     viewport,
   } = input;
 
+  const shouldUseSelectionGuidedAvatar = showSelectionGuidanceCallout && guidedFocusRect;
   const guidedAvatarSelectionProtectedRect =
-    guidedMode === 'selection' && guidedFocusRect
+    shouldUseSelectionGuidedAvatar
       ? createRect(
         guidedFocusRect.left - 72,
         guidedFocusRect.top - 56,
@@ -234,7 +235,7 @@ export function useKangurAiTutorGuidedShellState(input: {
       )
       : null;
   const guidedAvatarLayout =
-    guidedMode === 'selection' && guidedAvatarSelectionProtectedRect
+    shouldUseSelectionGuidedAvatar && guidedAvatarSelectionProtectedRect
       ? getGuidedAvatarLayout(guidedAvatarSelectionProtectedRect, viewport)
       : guidedFocusRect
         ? { placement: 'top' as const, style: getAnchorAvatarStyle(guidedFocusRect, viewport) }
@@ -272,11 +273,11 @@ export function useKangurAiTutorGuidedShellState(input: {
       ? guidedAvatarArrowheadDisplayAngle.toFixed(2)
       : undefined;
   const guidedAvatarRect =
-    guidedMode === 'selection' && guidedAvatarPoint
+    shouldUseSelectionGuidedAvatar && guidedAvatarPoint
       ? getAvatarRectFromPoint(guidedAvatarPoint)
       : null;
   const guidedAvatarArrowCorridorRect =
-    guidedMode === 'selection'
+    shouldUseSelectionGuidedAvatar
       ? getFloatingTutorArrowCorridorRect({
         avatarPoint: guidedAvatarPoint,
         arrowhead: guidedAvatarArrowhead,

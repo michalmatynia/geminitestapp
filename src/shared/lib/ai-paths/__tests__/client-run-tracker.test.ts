@@ -155,7 +155,7 @@ describe('client-run-tracker', () => {
       'run-1',
       expect.objectContaining({
         cache: 'no-store',
-        timeoutMs: 15_000,
+        timeoutMs: 60_000,
       })
     );
     expect(snapshots.at(-1)).toMatchObject({
@@ -249,5 +249,136 @@ describe('client-run-tracker', () => {
 
     unsubscribeSecond();
     expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries transient poll timeouts without stopping the tracked run', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Request timeout after 15000ms',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          run: createRunRecord({
+            id: 'run-4',
+            status: 'running',
+            updatedAt: '2026-03-09T12:00:08.000Z',
+          }),
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          run: createRunRecord({
+            id: 'run-4',
+            status: 'completed',
+            updatedAt: '2026-03-09T12:00:10.000Z',
+            finishedAt: '2026-03-09T12:00:10.000Z',
+          }),
+        },
+      });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-4', (snapshot: TrackedAiPathRunSnapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit('error', new Event('error'));
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+    });
+
+    expect(getAiPathRunMock).toHaveBeenCalledTimes(1);
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-4',
+      status: 'queued',
+      trackingState: 'active',
+      errorMessage: null,
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(5_000);
+      await Promise.resolve();
+    });
+
+    expect(getAiPathRunMock).toHaveBeenCalledTimes(2);
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-4',
+      status: 'running',
+      trackingState: 'active',
+      errorMessage: null,
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(2_000);
+      await Promise.resolve();
+    });
+
+    expect(getAiPathRunMock).toHaveBeenCalledTimes(3);
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-4',
+      status: 'completed',
+      trackingState: 'stopped',
+      errorMessage: null,
+    });
+    expect(
+      snapshots.some(
+        (snapshot) =>
+          snapshot.trackingState === 'stopped' &&
+          snapshot.errorMessage?.includes('Request timeout after 15000ms')
+      )
+    ).toBe(false);
+  });
+
+  it('finalizes terminal stream updates without surfacing transient detail timeouts', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock.mockResolvedValue({
+      ok: false,
+      error: 'Request timeout after 15000ms',
+    });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-5', (snapshot: TrackedAiPathRunSnapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit(
+        'run',
+        new MessageEvent('message', {
+          data: JSON.stringify(
+            createRunRecord({
+              id: 'run-5',
+              status: 'completed',
+              updatedAt: '2026-03-09T12:00:12.000Z',
+              finishedAt: '2026-03-09T12:00:12.000Z',
+            })
+          ),
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(getAiPathRunMock).toHaveBeenCalledWith(
+      'run-5',
+      expect.objectContaining({
+        cache: 'no-store',
+        timeoutMs: 60_000,
+      })
+    );
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-5',
+      status: 'completed',
+      trackingState: 'stopped',
+      errorMessage: null,
+      finishedAt: '2026-03-09T12:00:12.000Z',
+    });
   });
 });

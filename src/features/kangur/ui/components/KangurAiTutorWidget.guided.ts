@@ -61,6 +61,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   activeFocusKind: string | null;
   activeSelectedText: string | null;
   isOpen: boolean;
+  panelMotionState: 'animating' | 'settled';
   selectionGuidanceHandoffText: string | null;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setSelectionGuidanceHandoffText: (value: string | null) => void;
@@ -69,6 +70,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     activeFocusKind,
     activeSelectedText,
     isOpen,
+    panelMotionState,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
     setSelectionGuidanceHandoffText,
@@ -79,6 +81,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       !selectionGuidanceHandoffText ||
       !isOpen ||
       activeFocusKind !== 'selection' ||
+      panelMotionState !== 'settled' ||
       activeSelectedText !== selectionGuidanceHandoffText
     ) {
       return;
@@ -94,6 +97,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     activeFocusKind,
     activeSelectedText,
     isOpen,
+    panelMotionState,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
     setSelectionGuidanceHandoffText,

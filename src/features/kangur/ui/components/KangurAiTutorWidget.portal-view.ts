@@ -174,6 +174,10 @@ export function useKangurAiTutorPortalViewModel(
   portalContentValue: KangurAiTutorPortalContextValue;
 } {
   const prefersReducedMotionEnabled = input.prefersReducedMotion ?? false;
+  const isGuidedAvatarMode =
+    input.isGuidedTutorMode ||
+    input.showSelectionGuidanceCallout ||
+    input.showSectionGuidanceCallout;
 
   const guestIntroHeadline = input.guestIntroHelpVisible
     ? input.tutorContent.guestIntro.help.headline
@@ -300,9 +304,13 @@ export function useKangurAiTutorPortalViewModel(
         guidedTargetKind:
           input.guidedMode === 'home_onboarding'
             ? (input.homeOnboardingStep?.kind ?? 'none')
-            : (input.guidedTutorTarget?.kind ?? 'none'),
+            : input.showSelectionGuidanceCallout
+              ? 'selection_excerpt'
+              : input.showSectionGuidanceCallout
+                ? (input.sectionResponsePendingKind ?? input.guidedTutorTarget?.kind ?? 'none')
+                : (input.guidedTutorTarget?.kind ?? 'none'),
         isAskModalMode: input.isAskModalMode,
-        isGuidedTutorMode: input.isGuidedTutorMode,
+        isGuidedTutorMode: isGuidedAvatarMode,
         isOpen: input.isOpen,
         motionProfile: input.motionProfile,
         onClick: input.handleAvatarClick,
@@ -503,6 +511,7 @@ export function useKangurAiTutorPortalViewModel(
       input.tutorContent,
       input.uiMode,
       input.viewport,
+      isGuidedAvatarMode,
       panelBodyContextValue,
       prefersReducedMotionEnabled,
     ]

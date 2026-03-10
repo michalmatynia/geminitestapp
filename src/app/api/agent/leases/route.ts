@@ -9,6 +9,7 @@ import {
   mutateAgentLease,
 } from '@/shared/lib/agent-lease-service';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { AgentLeaseMutationRequestSchema } from '@/shared/contracts/agent-leases';
 
 function statusForLeaseMutation(code: string) {
   switch (code) {
@@ -99,4 +100,5 @@ export const GET = apiHandler(GET_handler, {
 export const POST = apiHandler(POST_handler, {
   source: 'agent.leases.POST',
   parseJsonBody: true,
+  bodySchema: AgentLeaseMutationRequestSchema,
 });

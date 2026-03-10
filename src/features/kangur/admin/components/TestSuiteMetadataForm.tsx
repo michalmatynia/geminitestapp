@@ -50,11 +50,11 @@ export function TestSuiteMetadataForm(props: {
           />
         </FormField>
 
-        <FormField label='Category'>
+        <FormField label='Test group'>
           <Input
             value={formData.category}
             onChange={(e): void => setFormData((f) => ({ ...f, category: e.target.value }))}
-            placeholder='e.g. matematyczny, custom'
+            placeholder='e.g. Olympiad 2024, Geometry drills'
             className='h-9'
           />
         </FormField>

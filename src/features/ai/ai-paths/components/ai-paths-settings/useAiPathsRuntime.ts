@@ -290,6 +290,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           pathId: args.activePathId ?? undefined,
           nodeId: aiNode.id,
           nodeTitle: aiNode.title,
+          ...(selectedModelId ? { requestedModelId: selectedModelId } : {}),
           runId: `preview-${createRunId()}`,
         },
         context: sourceOutputs,

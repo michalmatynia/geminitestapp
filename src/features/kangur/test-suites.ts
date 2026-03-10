@@ -1,7 +1,12 @@
 import {
+  KANGUR_TEST_GROUPS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
+  kangurTestGroupSchema,
+  kangurTestGroupsSchema,
   kangurTestSuiteSchema,
   kangurTestSuitesSchema,
+  type KangurTestGroup,
+  type KangurTestGroups,
   type KangurTestQuestionStore,
   type KangurTestSuite,
   type KangurTestSuites,
@@ -10,9 +15,119 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { hasFullyPublishedQuestionSetForSuite } from './test-questions';
 
-export { KANGUR_TEST_SUITES_SETTING_KEY };
+export { KANGUR_TEST_GROUPS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY };
 
+export const KANGUR_TEST_GROUP_SORT_ORDER_GAP = 1000;
 export const KANGUR_TEST_SUITE_SORT_ORDER_GAP = 1000;
+
+export const normalizeKangurTestGroupTitle = (value: string): string => {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : 'custom';
+};
+
+export const parseKangurTestGroups = (raw: unknown): KangurTestGroup[] => {
+  const parsed = kangurTestGroupsSchema.safeParse(
+    parseJsonSetting(typeof raw === 'string' ? raw : null, [])
+  );
+  return parsed.success ? parsed.data : [];
+};
+
+export const canonicalizeKangurTestGroups = (groups: KangurTestGroup[]): KangurTestGroups =>
+  [...groups]
+    .sort((a, b) => {
+      const orderDelta = a.sortOrder - b.sortOrder;
+      if (orderDelta !== 0) return orderDelta;
+      return a.id.localeCompare(b.id);
+    })
+    .map((group, index) => ({
+      ...group,
+      title: normalizeKangurTestGroupTitle(group.title),
+      sortOrder: (index + 1) * KANGUR_TEST_GROUP_SORT_ORDER_GAP,
+    }));
+
+export const createKangurTestGroupId = (): string =>
+  `ktg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+export const createKangurTestGroup = (
+  overrides: Partial<Pick<KangurTestGroup, 'title' | 'description'>>,
+  sortOrder = 0
+): KangurTestGroup =>
+  kangurTestGroupSchema.parse({
+    id: createKangurTestGroupId(),
+    title: normalizeKangurTestGroupTitle(overrides.title ?? 'custom'),
+    description: overrides.description ?? '',
+    enabled: true,
+    sortOrder,
+  });
+
+export const upsertKangurTestGroup = (
+  groups: KangurTestGroup[],
+  next: KangurTestGroup
+): KangurTestGroup[] => {
+  const existingIndex = groups.findIndex((group) => group.id === next.id);
+  if (existingIndex === -1) return [...groups, next];
+  return groups.map((group) => (group.id === next.id ? next : group));
+};
+
+export const buildResolvedKangurTestGroups = (
+  suites: KangurTestSuite[],
+  groups: KangurTestGroup[]
+): KangurTestGroup[] => {
+  const nextGroups = [...groups];
+  const existingTitles = new Set(
+    nextGroups.map((group) => normalizeKangurTestGroupTitle(group.title).toLowerCase())
+  );
+
+  suites.forEach((suite) => {
+    const fallbackTitle = normalizeKangurTestGroupTitle(suite.category);
+    if (existingTitles.has(fallbackTitle.toLowerCase())) {
+      return;
+    }
+
+    existingTitles.add(fallbackTitle.toLowerCase());
+    nextGroups.push(
+      createKangurTestGroup(
+        { title: fallbackTitle },
+        (nextGroups.length + 1) * KANGUR_TEST_GROUP_SORT_ORDER_GAP
+      )
+    );
+  });
+
+  return canonicalizeKangurTestGroups(nextGroups);
+};
+
+export const resolveKangurTestSuiteGroupTitle = (
+  suite: Pick<KangurTestSuite, 'category' | 'groupId'>,
+  groupById?: Map<string, KangurTestGroup> | undefined
+): string => {
+  const group = suite.groupId ? groupById?.get(suite.groupId) : null;
+  return normalizeKangurTestGroupTitle(group?.title ?? suite.category);
+};
+
+export const ensureKangurTestGroupForTitle = (
+  groups: KangurTestGroup[],
+  rawTitle: string
+): { group: KangurTestGroup; groups: KangurTestGroup[]; created: boolean } => {
+  const normalizedTitle = normalizeKangurTestGroupTitle(rawTitle);
+  const existing = groups.find(
+    (group) =>
+      normalizeKangurTestGroupTitle(group.title).toLowerCase() === normalizedTitle.toLowerCase()
+  );
+
+  if (existing) {
+    return { group: existing, groups, created: false };
+  }
+
+  const createdGroup = createKangurTestGroup(
+    { title: normalizedTitle },
+    (groups.length + 1) * KANGUR_TEST_GROUP_SORT_ORDER_GAP
+  );
+  return {
+    group: createdGroup,
+    groups: canonicalizeKangurTestGroups([...groups, createdGroup]),
+    created: true,
+  };
+};
 
 export const parseKangurTestSuites = (raw: unknown): KangurTestSuite[] => {
   const parsed = kangurTestSuitesSchema.safeParse(
@@ -48,7 +163,7 @@ export const createKangurTestSuite = (
     description: overrides.description ?? '',
     year: overrides.year ?? null,
     gradeLevel: overrides.gradeLevel ?? '',
-    category: overrides.category ?? 'custom',
+    category: normalizeKangurTestGroupTitle(overrides.category ?? 'custom'),
     enabled: true,
     publicationStatus: 'draft',
     sortOrder,
@@ -198,12 +313,15 @@ export const createInitialTestSuiteFormData = (): TestSuiteFormData => ({
   publicationStatus: 'draft',
 });
 
-export const toTestSuiteFormData = (suite: KangurTestSuite): TestSuiteFormData => ({
+export const toTestSuiteFormData = (
+  suite: KangurTestSuite,
+  groupById?: Map<string, KangurTestGroup> | undefined
+): TestSuiteFormData => ({
   title: suite.title,
   description: suite.description,
   year: suite.year !== null ? String(suite.year) : '',
   gradeLevel: suite.gradeLevel,
-  category: suite.category,
+  category: resolveKangurTestSuiteGroupTitle(suite, groupById),
   enabled: suite.enabled,
   publicationStatus: suite.publicationStatus,
   publishedAt: suite.publishedAt,
@@ -212,7 +330,10 @@ export const toTestSuiteFormData = (suite: KangurTestSuite): TestSuiteFormData =
 export const formDataToTestSuite = (
   formData: TestSuiteFormData,
   id: string,
-  sortOrder: number
+  sortOrder: number,
+  options?: {
+    groupId?: string | undefined;
+  }
 ): KangurTestSuite => {
   const year = formData.year.trim() ? parseInt(formData.year.trim(), 10) : null;
   return kangurTestSuiteSchema.parse({
@@ -221,7 +342,8 @@ export const formDataToTestSuite = (
     description: formData.description.trim(),
     year: year !== null && Number.isFinite(year) ? year : null,
     gradeLevel: formData.gradeLevel.trim(),
-    category: formData.category.trim() || 'custom',
+    category: normalizeKangurTestGroupTitle(formData.category),
+    ...(options?.groupId ? { groupId: options.groupId } : {}),
     enabled: formData.enabled,
     publicationStatus: formData.publicationStatus,
     publishedAt: formData.publicationStatus === 'live' ? formData.publishedAt : undefined,

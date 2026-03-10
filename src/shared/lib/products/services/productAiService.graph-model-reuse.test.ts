@@ -169,4 +169,32 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
     expect(result.id).toBe('job-created');
     expect(createJobMock).toHaveBeenCalledTimes(1);
   });
+
+  it('does not reuse a pending graph_model job when requestedModelId differs', async () => {
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        status: 'pending',
+        payload: {
+          cacheKey: 'cache-1',
+          payloadHash: 'hash-1',
+          graph: {
+            requestedModelId: 'model-old',
+          },
+        },
+      }),
+    ]);
+
+    const result = await enqueueProductAiJob('product-1', 'graph_model', {
+      cacheKey: 'cache-1',
+      payloadHash: 'hash-1',
+      graph: {
+        requestedModelId: 'model-new',
+      },
+      prompt: 'Generate a title',
+    });
+
+    expect(result.id).toBe('job-created');
+    expect(createJobMock).toHaveBeenCalledTimes(1);
+  });
 });

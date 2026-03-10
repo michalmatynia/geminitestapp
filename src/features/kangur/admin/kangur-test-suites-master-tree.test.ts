@@ -108,26 +108,32 @@ describe('buildKangurTestSuiteCatalogMasterNodes', () => {
     expect(folders.some((f) => f.name === 'Disabled suites')).toBe(true);
   });
 
-  it('places enabled suites under the "Active suites" folder', () => {
+  it('places enabled suites under a category group inside the "Active suites" folder', () => {
     const suites = [
-      makeSuite({ id: 's-on', enabled: true }),
+      makeSuite({ id: 's-on', enabled: true, category: 'Geometry drills' }),
       makeSuite({ id: 's-off', enabled: false }),
     ];
     const nodes = buildKangurTestSuiteCatalogMasterNodes(suites);
     const activeFolder = nodes.find((n) => n.name === 'Active suites');
+    const categoryFolder = nodes.find(
+      (n) => n.type === 'folder' && n.name === 'Geometry drills'
+    );
     const enabledFile = nodes.find((n) => n.id === toKangurTestSuiteNodeId('s-on'));
-    expect(enabledFile?.parentId).toBe(activeFolder?.id);
+    expect(categoryFolder?.parentId).toBe(activeFolder?.id);
+    expect(enabledFile?.parentId).toBe(categoryFolder?.id);
   });
 
-  it('places disabled suites under the "Disabled suites" folder', () => {
-    const suites = [makeSuite({ id: 's-off', enabled: false })];
+  it('places disabled suites under a category group inside the "Disabled suites" folder', () => {
+    const suites = [makeSuite({ id: 's-off', enabled: false, category: 'Archive' })];
     const nodes = buildKangurTestSuiteCatalogMasterNodes(suites);
     const disabledFolder = nodes.find((n) => n.name === 'Disabled suites');
+    const categoryFolder = nodes.find((n) => n.type === 'folder' && n.name === 'Archive');
     const disabledFile = nodes.find((n) => n.id === toKangurTestSuiteNodeId('s-off'));
-    expect(disabledFile?.parentId).toBe(disabledFolder?.id);
+    expect(categoryFolder?.parentId).toBe(disabledFolder?.id);
+    expect(disabledFile?.parentId).toBe(categoryFolder?.id);
   });
 
-  it('encodes suiteCount in the folder metadata', () => {
+  it('encodes suiteCount in the visibility folder metadata', () => {
     const suites = [
       makeSuite({ id: 's1', enabled: true }),
       makeSuite({ id: 's2', enabled: true }),
@@ -138,6 +144,24 @@ describe('buildKangurTestSuiteCatalogMasterNodes', () => {
     const activeMeta = activeFolder?.metadata as Record<string, unknown>;
     const groupMeta = activeMeta?.['kangurTestSuiteGroup'] as Record<string, unknown>;
     expect(groupMeta?.['suiteCount']).toBe(2);
+  });
+
+  it('creates category folders with suite counts inside each visibility group', () => {
+    const suites = [
+      makeSuite({ id: 's1', enabled: true, category: 'Geometry drills' }),
+      makeSuite({ id: 's2', enabled: true, category: 'Geometry drills' }),
+      makeSuite({ id: 's3', enabled: true, category: 'Olympiad 2024' }),
+    ];
+
+    const nodes = buildKangurTestSuiteCatalogMasterNodes(suites);
+    const geometryFolder = nodes.find(
+      (node) => node.type === 'folder' && node.name === 'Geometry drills'
+    );
+    const geometryMeta = geometryFolder?.metadata as Record<string, unknown>;
+    const categoryMeta = geometryMeta?.['kangurTestSuiteCategoryGroup'] as Record<string, unknown>;
+
+    expect(categoryMeta?.['suiteCount']).toBe(2);
+    expect(categoryMeta?.['category']).toBe('Geometry drills');
   });
 });
 

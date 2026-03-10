@@ -330,6 +330,68 @@ const buildMappingModeLegacyParameterInferencePathConfig = (): PathConfig => {
   } as PathConfig;
 };
 
+const buildCustomModeRandomIdParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_3wejpy',
+    seededDefault: false,
+  });
+
+  const remappedNodeIds = new Map<string, string>();
+  (config.nodes ?? []).forEach((node) => {
+    // Simulate random MongoDB ObjectId-style IDs (24 hex chars)
+    const seed = node.id.split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0);
+    remappedNodeIds.set(node.id, `node-${seed.toString(16).padStart(8, '0')}c527e33afe5155aa8d`);
+  });
+
+  const remappedNodes = (config.nodes ?? []).map((node) => {
+    const remappedId = remappedNodeIds.get(node.id) ?? node.id;
+    if (node.type !== 'database') {
+      return { ...node, id: remappedId };
+    }
+    const databaseConfig = node.config?.database;
+    if (databaseConfig?.operation !== 'update') {
+      return { ...node, id: remappedId };
+    }
+    // Custom mode (not mapping) — the case that was previously NOT triggering full replacement
+    return {
+      ...node,
+      id: remappedId,
+      config: {
+        ...node.config,
+        database: {
+          ...databaseConfig,
+          updatePayloadMode: 'custom',
+          updateTemplate: '{\n  "$set": {\n    "parameters": {{value}}\n  }\n}',
+        },
+      },
+    };
+  });
+
+  return {
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    nodes: remappedNodes,
+    edges: (config.edges ?? []).map((edge, index) => ({
+      ...edge,
+      id: `edge-${index.toString(16).padStart(24, '0')}`,
+      from: remappedNodeIds.get(edge.from) ?? edge.from,
+      to: remappedNodeIds.get(edge.to) ?? edge.to,
+    })),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 14,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
 const buildV14ParameterInferencePathConfig = (): PathConfig => {
   const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
   if (!entry) throw new Error('Missing starter_parameter_inference entry');
@@ -616,7 +678,59 @@ describe('starter workflow registry', () => {
     });
   });
 
-  it('fully replaces stale parameter inference graphs that still use mapping-mode database updates', () => {
+  it('fully replaces a partially-upgraded graph whose provenance is already at the current templateVersion but nodes were never updated', () => {
+    // Simulate a path that was partially upgraded: the overlay bumped provenance to v15
+    // but couldn't update any nodes (zero ID overlap), leaving legacy random-ID nodes.
+    const partiallyUpgraded: PathConfig = {
+      ...buildCustomModeRandomIdParameterInferencePathConfig(),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'parameter_inference',
+          templateId: 'starter_parameter_inference',
+          templateVersion: 15, // already at current — safeToOverlay is false via provenance path
+          seededDefault: false,
+        },
+      },
+    } as PathConfig;
+
+    const upgraded = upgradeStarterWorkflowPathConfig(partiallyUpgraded);
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-model-params')).toBe(true);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('fully replaces custom-mode parameter inference graphs with random node IDs (no canonical overlap)', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(
+      buildCustomModeRandomIdParameterInferencePathConfig()
+    );
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    // After full replacement all nodes use canonical IDs
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-model-params')).toBe(true);
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-regex-params')).toBe(true);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('fully replaces stale parameter inference graphs with zero canonical node overlap', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(
       buildMappingModeLegacyParameterInferencePathConfig()
     );

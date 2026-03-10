@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import { getProductRepository } from '@/features/products/server';
 import { type DatabaseSyncDirection } from '@/shared/contracts';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
+import type { GraphModelJobPayload, ProductAiJobRecord } from '@/shared/contracts/jobs';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
 import {
   markDatabaseBackupJobFailed,
@@ -92,23 +93,54 @@ const resolveGraphModelRetryConfig = (args: {
   ),
 });
 
-export type JobPayload = {
-  isTest?: boolean;
-  imageUrls?: string[];
-  prompt?: string;
-  modelId?: string;
-  temperature?: number;
-  maxTokens?: number;
-  vision?: boolean;
-  source?: string;
-  graph?: Record<string, unknown>;
+export type JobPayload = GraphModelJobPayload & {
   direction?: DatabaseSyncDirection;
   skipAuthCollections?: boolean;
-  [key: string]: unknown;
 };
 
 export type Job = ProductAiJobRecord & {
   payload: JobPayload;
+};
+
+const readTrimmedGraphPayloadString = (
+  payload: JobPayload,
+  key: 'modelId' | 'nodeId' | 'requestedModelId' | 'runId'
+): string => {
+  const graph =
+    payload.graph && typeof payload.graph === 'object' && !Array.isArray(payload.graph)
+      ? payload.graph
+      : null;
+  const value = graph?.[key];
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+const resolveRequestedAiPathsModelId = async (payload: JobPayload): Promise<string> => {
+  const graphRequestedModelId = readTrimmedGraphPayloadString(payload, 'requestedModelId');
+  if (graphRequestedModelId) return graphRequestedModelId;
+
+  const directModelId = typeof payload.modelId === 'string' ? payload.modelId.trim() : '';
+  if (directModelId) return directModelId;
+
+  const graphModelId = readTrimmedGraphPayloadString(payload, 'modelId');
+  if (graphModelId) return graphModelId;
+
+  const runId = readTrimmedGraphPayloadString(payload, 'runId');
+  const nodeId = readTrimmedGraphPayloadString(payload, 'nodeId');
+  if (!runId || !nodeId) return '';
+
+  try {
+    const repository = await getPathRunRepository();
+    const run = await repository.findRunById(runId);
+    const node = run?.graph?.nodes.find((entry): boolean => entry.id === nodeId);
+    const modelConfig =
+      node?.config && typeof node.config === 'object' && !Array.isArray(node.config)
+        ? ((node.config as Record<string, unknown>)['model'] as Record<string, unknown> | undefined)
+        : undefined;
+    const recoveredModelId = modelConfig?.['modelId'];
+    return typeof recoveredModelId === 'string' ? recoveredModelId.trim() : '';
+  } catch {
+    return '';
+  }
 };
 
 const buildImageParts = async (
@@ -186,7 +218,12 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     typeof payload.source === 'string' && payload.source.trim()
       ? payload.source.trim()
       : 'ai_paths';
-  const requestedModelId = typeof payload.modelId === 'string' ? payload.modelId.trim() : '';
+  const requestedModelId =
+    source === 'ai_paths'
+      ? await resolveRequestedAiPathsModelId(payload)
+      : typeof payload.modelId === 'string'
+        ? payload.modelId.trim()
+        : '';
   const requestedTemperature =
     typeof payload.temperature === 'number' ? payload.temperature : undefined;
   const requestedMaxTokens = typeof payload.maxTokens === 'number' ? payload.maxTokens : undefined;

@@ -316,7 +316,7 @@ export function KangurPrimaryNavigation({
     </>
   ) : null;
   const tutorRestoreAction =
-    isTutorHidden && !isTutorExplicitlyDisabled ? (
+    isTutorHidden ? (
       renderNavAction({
         ariaLabel: tutorContent.navigation.restoreTutorLabel,
         className:
@@ -335,7 +335,9 @@ export function KangurPrimaryNavigation({
           }
         },
         testId: 'kangur-ai-tutor-restore',
-        title: tutorContent.navigation.restoreTutorLabel,
+        title: isTutorExplicitlyDisabled
+          ? tutorContent.navigation.restoreTutorLabel
+          : tutorContent.navigation.restoreTutorLabel,
       })
     ) : null;
   const utilityActions =

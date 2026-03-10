@@ -1,19 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  KANGUR_TEST_GROUP_SORT_ORDER_GAP,
   KANGUR_TEST_SUITE_SORT_ORDER_GAP,
+  buildResolvedKangurTestGroups,
   canonicalizeKangurTestSuites,
+  canonicalizeKangurTestGroups,
+  createKangurTestGroup,
   demoteInvalidLiveKangurTestSuites,
   createInitialTestSuiteFormData,
   demoteKangurTestSuitesToDraft,
+  ensureKangurTestGroupForTitle,
   formDataToTestSuite,
   isLiveKangurTestSuite,
+  parseKangurTestGroups,
   parseKangurTestSuites,
   promoteKangurTestSuitesLive,
+  resolveKangurTestSuiteGroupTitle,
   toTestSuiteFormData,
   upsertKangurTestSuite,
 } from '@/features/kangur/test-suites';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import type { KangurTestGroup, KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite => ({
   id: 's1',
@@ -26,6 +33,69 @@ const makeSuite = (overrides: Partial<KangurTestSuite> = {}): KangurTestSuite =>
   publicationStatus: 'draft',
   sortOrder: 1000,
   ...overrides,
+});
+
+const makeGroup = (overrides: Partial<KangurTestGroup> = {}): KangurTestGroup => ({
+  id: 'g1',
+  title: 'Olympiad 2024',
+  description: '',
+  enabled: true,
+  sortOrder: 1000,
+  ...overrides,
+});
+
+describe('test groups', () => {
+  it('parses persisted test groups', () => {
+    const raw = JSON.stringify([makeGroup({ id: 'group-1', title: 'Geometry drills' })]);
+    const result = parseKangurTestGroups(raw);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.title).toBe('Geometry drills');
+  });
+
+  it('canonicalizes test groups by sort order', () => {
+    const groups = [
+      makeGroup({ id: 'g2', title: 'B', sortOrder: 2000 }),
+      makeGroup({ id: 'g1', title: 'A', sortOrder: 1000 }),
+    ];
+
+    const result = canonicalizeKangurTestGroups(groups);
+
+    expect(result[0]?.id).toBe('g1');
+    expect(result[0]?.sortOrder).toBe(KANGUR_TEST_GROUP_SORT_ORDER_GAP);
+  });
+
+  it('creates fallback groups from existing suite categories', () => {
+    const result = buildResolvedKangurTestGroups(
+      [makeSuite({ id: 's1', category: 'Geometry drills' })],
+      []
+    );
+
+    expect(result[0]?.title).toBe('Geometry drills');
+  });
+
+  it('reuses an existing persisted group by title when saving a suite', () => {
+    const result = ensureKangurTestGroupForTitle(
+      [makeGroup({ id: 'group-1', title: 'Olympiad 2024' })],
+      'Olympiad 2024'
+    );
+
+    expect(result.created).toBe(false);
+    expect(result.group.id).toBe('group-1');
+  });
+
+  it('resolves a suite group title from groupId before falling back to category', () => {
+    const groupById = new Map([
+      ['group-1', createKangurTestGroup({ title: 'Geometry drills' }, 1000)],
+    ]);
+
+    expect(
+      resolveKangurTestSuiteGroupTitle(
+        makeSuite({ groupId: 'group-1', category: 'legacy-category' }),
+        groupById
+      )
+    ).toBe('Geometry drills');
+  });
 });
 
 describe('parseKangurTestSuites', () => {
@@ -246,7 +316,7 @@ describe('suite publication helpers', () => {
 });
 
 describe('formDataToTestSuite / toTestSuiteFormData round-trip', () => {
-  it('preserves title, description, year, gradeLevel, category, enabled, and publication state', () => {
+  it('preserves title, description, year, gradeLevel, test group, enabled, and publication state', () => {
     const suite = makeSuite({
       id: 's-rt',
       title: 'Kangur 2024',

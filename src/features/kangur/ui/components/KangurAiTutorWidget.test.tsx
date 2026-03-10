@@ -3059,7 +3059,7 @@ describe('KangurAiTutorWidget', () => {
     vi.useRealTimers();
   });
 
-  it('keeps the local fragment guidance visible while the selected-text explanation is loading and clears it after the handoff completes', async () => {
+  it('keeps stale tutor history hidden while the selected-text explanation is loading and rebinds the panel to the new fragment', async () => {
     vi.useFakeTimers();
     let resolveSendMessage: (() => void) | null = null;
     let tutorState = {
@@ -3083,10 +3083,15 @@ describe('KangurAiTutorWidget', () => {
         title: 'Dodawanie',
       },
       isOpen: false,
-      messages: [],
+      messages: [
+        {
+          role: 'assistant',
+          content: 'W poprzednim wątku omawialiśmy zupełnie inne zadanie.',
+        },
+      ],
       isLoading: false,
       isUsageLoading: false,
-      highlightedText: null,
+      highlightedText: 'Stary fragment',
       usageSummary: null,
       openChat: openChatMock,
       closeChat: closeChatMock,
@@ -3140,13 +3145,19 @@ describe('KangurAiTutorWidget', () => {
       'guided'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeInTheDocument();
+    expect(
+      screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
-      'Czekaj chwilę. Skupiam się teraz tylko na tym fragmencie i przygotowuję wyjaśnienie.'
+      '„2 + 2”'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
     );
-    expect(screen.getByText('Czekaj, wyjaśniam zaznaczony fragment.')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '„2 + 2”'
+    );
     expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('kangur-ai-tutor-quick-action-selected-text')
@@ -3173,6 +3184,7 @@ describe('KangurAiTutorWidget', () => {
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
       'Wyjaśnienie jest już gotowe. Możesz dopytać albo wrócić do zwykłej rozmowy.'
     );
@@ -3278,14 +3290,18 @@ describe('KangurAiTutorWidget', () => {
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
-      '„2 + 2”'
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-refocus')).toBeInTheDocument();
     expect(
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
+      '„2 + 2”'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
     );

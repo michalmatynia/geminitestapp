@@ -129,6 +129,16 @@ function KangurTestQuestionEditorContent({
         ? 'Needs review'
         : 'Ready';
   const workflowLabel = getQuestionWorkflowLabel(formData.editorial.workflowStatus);
+  const workflowBadgeClassName =
+    formData.editorial.workflowStatus === 'published'
+      ? 'border-emerald-400/40 text-[10px] text-emerald-300'
+      : formData.editorial.workflowStatus === 'ready'
+        ? 'border-cyan-400/40 text-[10px] text-cyan-300'
+        : 'border-slate-400/40 text-[10px] text-slate-300';
+  const dirtyStateLabel = isDirty ? 'Unsaved changes' : 'Saved';
+  const draftStateLabel = localDraftSavedAtLabel
+    ? `Autosaved ${localDraftSavedAtLabel}`
+    : 'No local autosave yet';
   const repairActions = React.useMemo(
     () =>
       getQuestionAuthoringRepairActions([
@@ -153,79 +163,111 @@ function KangurTestQuestionEditorContent({
         : 'Wrong answer review';
 
   return (
-    <div className='grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]'>
+    <div className='grid items-start gap-6 2xl:grid-cols-[minmax(0,1.14fr)_minmax(340px,0.86fr)]'>
       {/* ── Editor column ───────────────────────────────────────────────── */}
       <div className='space-y-5'>
-        {/* Metadata strip */}
-        <div className='flex flex-wrap items-center gap-3 rounded-xl border border-border/50 bg-card/30 px-4 py-2'>
-          <div className='flex items-center gap-2'>
-            <span className='text-xs text-muted-foreground'>Points:</span>
-            <div className='w-24'>
-              <SelectSimple
-                size='sm'
-                value={String(formData.pointValue)}
-                onValueChange={(v): void => {
-                  const n = parseInt(v, 10);
-                  if (Number.isFinite(n)) updateFormData({ pointValue: n });
-                }}
-                options={POINT_VALUE_OPTIONS}
-                triggerClassName='h-7'
-              />
+        <div className='overflow-hidden rounded-3xl border border-border/60 bg-[linear-gradient(135deg,rgba(9,16,32,0.97),rgba(12,34,59,0.86))] p-5 shadow-[0_24px_70px_-36px_rgba(8,145,178,0.55)]'>
+          <div className='flex flex-wrap items-start justify-between gap-4'>
+            <div className='max-w-2xl space-y-2'>
+              <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/80'>
+                Question workspace
+              </div>
+              <div className='text-lg font-semibold text-white'>
+                Shape the learner-facing question, keep the review rail visible, and publish from a
+                cleaner workspace.
+              </div>
+              <div className='text-sm leading-6 text-slate-300'>
+                The editor now keeps the suite target, workflow, authoring health, and autosave
+                signal in one control surface so you do not have to scan across the form.
+              </div>
+            </div>
+            <div className='min-w-[148px] rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-cyan-100/80'>
+                Point value
+              </div>
+              <div className='mt-2'>
+                <SelectSimple
+                  size='sm'
+                  value={String(formData.pointValue)}
+                  onValueChange={(v): void => {
+                    const n = parseInt(v, 10);
+                    if (Number.isFinite(n)) updateFormData({ pointValue: n });
+                  }}
+                  options={POINT_VALUE_OPTIONS}
+                  triggerClassName='h-9'
+                />
+              </div>
             </div>
           </div>
-          {suiteTitle ? (
+
+          <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
+            <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
+                Suite target
+              </div>
+              <div className='mt-1 text-sm font-medium text-white'>
+                {suiteTitle ?? 'Ad hoc draft'}
+              </div>
+            </div>
+            <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
+                Workflow
+              </div>
+              <div className='mt-1 text-sm font-medium text-white'>{workflowLabel}</div>
+            </div>
+            <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
+                Authoring status
+              </div>
+              <div className='mt-1 text-sm font-medium text-white'>{statusLabel}</div>
+            </div>
+            <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
+                Local draft
+              </div>
+              <div className='mt-1 text-sm font-medium text-white'>{draftStateLabel}</div>
+            </div>
+          </div>
+
+          <div className='mt-4 flex flex-wrap gap-2'>
             <Badge variant='outline' className='text-[10px]'>
-              {suiteTitle}
+              {dirtyStateLabel}
             </Badge>
-          ) : null}
-          {hasIllustration(previewQuestion) ? (
-            <Badge variant='outline' className='border-violet-400/40 text-[10px] text-violet-300'>
-              Has illustration
+            <Badge variant='outline' className={workflowBadgeClassName}>
+              {workflowLabel}
             </Badge>
-          ) : null}
-          {formData.editorial.reviewStatus !== 'ready' ? (
-            <Badge
-              variant='outline'
-              className={
-                formData.editorial.reviewStatus === 'needs-fix'
-                  ? 'border-rose-400/40 text-[10px] text-rose-300'
-                  : 'border-amber-400/40 text-[10px] text-amber-300'
-              }
-            >
-              {formData.editorial.reviewStatus === 'needs-fix' ? 'Needs fix' : 'Needs review'}
+            <Badge variant='outline' className={statusBadgeClassName}>
+              {statusLabel}
             </Badge>
-          ) : null}
-          {formData.presentation.choiceStyle === 'grid' ? (
-            <Badge variant='outline' className='border-sky-400/40 text-[10px] text-sky-300'>
-              Choice grid
-            </Badge>
-          ) : null}
-          <Badge variant='outline' className='text-[10px]'>
-            {isDirty ? 'Unsaved changes' : 'Saved'}
-          </Badge>
-          <Badge
-            variant='outline'
-            className={
-              formData.editorial.workflowStatus === 'published'
-                ? 'border-emerald-400/40 text-[10px] text-emerald-300'
-                : formData.editorial.workflowStatus === 'ready'
-                  ? 'border-cyan-400/40 text-[10px] text-cyan-300'
-                  : 'border-slate-400/40 text-[10px] text-slate-300'
-            }
-          >
-            {workflowLabel}
-          </Badge>
-          <Badge variant='outline' className={statusBadgeClassName}>
-            {statusLabel}
-          </Badge>
-          {localDraftSavedAtLabel ? (
-            <span className='text-[10px] text-muted-foreground'>
-              Local draft autosaved: {localDraftSavedAtLabel}
-            </span>
-          ) : null}
+            {hasIllustration(previewQuestion) ? (
+              <Badge
+                variant='outline'
+                className='border-violet-400/40 text-[10px] text-violet-300'
+              >
+                Has illustration
+              </Badge>
+            ) : null}
+            {formData.editorial.reviewStatus !== 'ready' ? (
+              <Badge
+                variant='outline'
+                className={
+                  formData.editorial.reviewStatus === 'needs-fix'
+                    ? 'border-rose-400/40 text-[10px] text-rose-300'
+                    : 'border-amber-400/40 text-[10px] text-amber-300'
+                }
+              >
+                {formData.editorial.reviewStatus === 'needs-fix' ? 'Needs fix' : 'Needs review'}
+              </Badge>
+            ) : null}
+            {formData.presentation.choiceStyle === 'grid' ? (
+              <Badge variant='outline' className='border-sky-400/40 text-[10px] text-sky-300'>
+                Choice grid
+              </Badge>
+            ) : null}
+          </div>
         </div>
 
-        <div className='grid gap-4 rounded-2xl border border-border/50 bg-card/20 p-4'>
+        <div className='grid gap-4 rounded-3xl border border-border/50 bg-card/25 p-5'>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-1'>
               <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
@@ -239,7 +281,7 @@ function KangurTestQuestionEditorContent({
             </Badge>
           </div>
           <div className='grid gap-3 md:grid-cols-2'>
-            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+            <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                 Required before save
               </div>
@@ -255,7 +297,7 @@ function KangurTestQuestionEditorContent({
                 </div>
               )}
             </div>
-            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+            <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                 Review before publish
               </div>
@@ -278,7 +320,7 @@ function KangurTestQuestionEditorContent({
             </div>
           ) : null}
           {repairActions.length > 0 ? (
-            <div className='rounded-xl border border-border/40 bg-background/30 p-3'>
+            <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                 Quick repairs
               </div>
@@ -302,7 +344,7 @@ function KangurTestQuestionEditorContent({
           ) : null}
         </div>
 
-        <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4'>
+        <div className='grid gap-3 rounded-3xl border border-border/50 bg-card/25 p-5'>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
               Presentation presets
@@ -330,7 +372,7 @@ function KangurTestQuestionEditorContent({
           </div>
         </div>
 
-        <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4'>
+        <div className='grid gap-3 rounded-3xl border border-border/50 bg-card/25 p-5'>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
               Publishing state

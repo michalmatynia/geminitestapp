@@ -7,8 +7,6 @@ import { X } from 'lucide-react';
 import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
-
 import type { CSSProperties, JSX } from 'react';
 
 type Props = {
@@ -26,14 +24,17 @@ type Props = {
   prefersReducedMotion: boolean;
 };
 
-type KangurAiTutorGuestIntroPanelContextValue = Props & {
-  guestIntroHelpVisible: boolean;
+type KangurAiTutorGuestIntroPanelContextValue = {
+  guestIntroDescription: string;
+  guestIntroHeadline: string;
+  guestTutorLabel: string;
+  isAnonymousVisitor: boolean;
+  onAccept: () => void;
+  onClose: () => void;
+  panelStyle: CSSProperties;
+  prefersReducedMotion: boolean;
   closeAria: string;
-  showLoginLabel: string;
-  showCreateAccountLabel: string;
-  browseLabel: string;
   acceptLabel: string;
-  dismissLabel: string;
 };
 
 const KangurAiTutorGuestIntroPanelContext =
@@ -85,41 +86,12 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
 }
 
 function KangurAiTutorGuestIntroActions(): JSX.Element {
-  const { acceptLabel, dismissLabel, onAccept, onDismiss } =
-    useKangurAiTutorGuestIntroPanelContext();
+  const { acceptLabel, onAccept } = useKangurAiTutorGuestIntroPanelContext();
 
   return (
-    <div className='mt-4 flex flex-wrap gap-2'>
+    <div className='mt-4 flex justify-end'>
       <KangurButton type='button' size='sm' variant='primary' onClick={onAccept}>
         {acceptLabel}
-      </KangurButton>
-      <KangurButton type='button' size='sm' variant='surface' onClick={onDismiss}>
-        {dismissLabel}
-      </KangurButton>
-    </div>
-  );
-}
-
-function KangurAiTutorGuestHelpActions(): JSX.Element {
-  const {
-    browseLabel,
-    onCreateAccount,
-    onHelpClose,
-    onLogin,
-    showCreateAccountLabel,
-    showLoginLabel,
-  } = useKangurAiTutorGuestIntroPanelContext();
-
-  return (
-    <div className='mt-4 flex flex-wrap gap-2'>
-      <KangurButton type='button' size='sm' variant='primary' onClick={onLogin}>
-        {showLoginLabel}
-      </KangurButton>
-      <KangurButton type='button' size='sm' variant='surface' onClick={onCreateAccount}>
-        {showCreateAccountLabel}
-      </KangurButton>
-      <KangurButton type='button' size='sm' variant='surface' onClick={onHelpClose}>
-        {browseLabel}
       </KangurButton>
     </div>
   );
@@ -132,15 +104,10 @@ export function KangurAiTutorGuestIntroPanel({
   isAnonymousVisitor,
   onAccept,
   onClose,
-  onCreateAccount,
-  onDismiss,
-  onHelpClose,
-  onLogin,
   panelStyle,
   prefersReducedMotion,
 }: Props): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
-  const { guestIntroHelpVisible } = useKangurAiTutorWidgetStateContext();
 
   if (!isAnonymousVisitor) {
     return null;
@@ -149,45 +116,24 @@ export function KangurAiTutorGuestIntroPanel({
   return (
     <KangurAiTutorGuestIntroPanelContext.Provider
       value={{
-        browseLabel: tutorContent.guestIntro.browseLabel,
         closeAria: tutorContent.guestIntro.closeAria,
-        dismissLabel: tutorContent.guestIntro.dismissLabel,
         acceptLabel: tutorContent.guestIntro.acceptLabel,
         guestIntroDescription,
         guestIntroHeadline,
-        guestIntroHelpVisible,
         guestTutorLabel,
         isAnonymousVisitor,
         onAccept,
         onClose,
-        onCreateAccount,
-        onDismiss,
-        onHelpClose,
-        onLogin,
         panelStyle,
         prefersReducedMotion,
-        showCreateAccountLabel: tutorContent.guestIntro.showCreateAccountLabel,
-        showLoginLabel: tutorContent.guestIntro.showLoginLabel,
       }}
     >
       <motion.div
-        key={guestIntroHelpVisible ? 'guest-help' : 'guest-intro'}
-        data-testid={
-          guestIntroHelpVisible
-            ? 'kangur-ai-tutor-guest-assistance'
-            : 'kangur-ai-tutor-guest-intro'
-        }
-        initial={
-          prefersReducedMotion
-            ? { opacity: 1, y: 0, scale: 1 }
-            : { opacity: 0, y: 8, scale: 0.98 }
-        }
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={
-          prefersReducedMotion
-            ? { opacity: 1, y: 0, scale: 1 }
-            : { opacity: 0, y: 8, scale: 0.98 }
-        }
+        key='guest-intro'
+        data-testid='kangur-ai-tutor-guest-intro'
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
         transition={prefersReducedMotion ? { duration: 0 } : undefined}
         style={panelStyle}
         className='fixed z-[75]'
@@ -199,11 +145,7 @@ export function KangurAiTutorGuestIntroPanel({
           className='border-amber-200/80 shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)]'
         >
           <KangurAiTutorGuestIntroHeader />
-          {guestIntroHelpVisible ? (
-            <KangurAiTutorGuestHelpActions />
-          ) : (
-            <KangurAiTutorGuestIntroActions />
-          )}
+          <KangurAiTutorGuestIntroActions />
         </KangurGlassPanel>
       </motion.div>
     </KangurAiTutorGuestIntroPanelContext.Provider>

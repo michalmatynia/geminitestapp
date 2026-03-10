@@ -12,7 +12,6 @@ import type { JSX } from 'react';
 export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
   const {
-    canNarrateTutorText,
     canSendMessages,
     canStartHomeOnboardingManually,
     handleQuickAction,
@@ -28,6 +27,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
     usageSummary,
     visibleProactiveNudge,
   } = useKangurAiTutorPanelBodyContext();
+  const shouldRenderNarratorControl = Boolean(tutorNarrationScript);
 
   if (!shouldRenderAuxiliaryPanelControls) {
     return null;
@@ -38,7 +38,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
       className='flex flex-wrap gap-2 border-b border-slate-100 px-3 py-3'
       data-kangur-tts-ignore='true'
     >
-      {canNarrateTutorText ? (
+      {shouldRenderNarratorControl ? (
         <KangurNarratorControl
           className='w-auto'
           contextRegistry={tutorNarratorContextRegistry}

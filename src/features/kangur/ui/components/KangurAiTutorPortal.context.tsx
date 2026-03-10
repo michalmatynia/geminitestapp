@@ -167,6 +167,7 @@ export type KangurAiTutorPortalContextValue = {
     sessionSurfaceLabel: string | null;
     shouldRenderGuestIntroUi: boolean;
     showAttachedAvatarShell: boolean;
+    suppressPanelSurface: boolean;
     uiMode: string;
     onAttachedAvatarClick: () => void;
     onBackdropClose: () => void;

@@ -78,6 +78,7 @@ type Props = {
   sessionSurfaceLabel: string | null;
   shouldRenderGuestIntroUi: boolean;
   showAttachedAvatarShell: boolean;
+  suppressPanelSurface: boolean;
   uiMode: string;
   onAttachedAvatarClick: () => void;
   onBackdropClose: () => void;
@@ -125,6 +126,7 @@ export function KangurAiTutorPanelChrome({
   sessionSurfaceLabel,
   shouldRenderGuestIntroUi,
   showAttachedAvatarShell,
+  suppressPanelSurface,
   uiMode,
   onAttachedAvatarClick,
   onBackdropClose,
@@ -177,7 +179,11 @@ export function KangurAiTutorPanelChrome({
 
   return (
     <AnimatePresence>
-      {isOpen && !isTutorHidden && !isGuidedTutorMode && !shouldRenderGuestIntroUi ? (
+      {isOpen &&
+      !isTutorHidden &&
+      !isGuidedTutorMode &&
+      !shouldRenderGuestIntroUi &&
+      !suppressPanelSurface ? (
         <>
           {isAskModalMode || bubbleMode === 'sheet' ? (
             <motion.button
@@ -221,47 +227,9 @@ export function KangurAiTutorPanelChrome({
             data-ui-mode={uiMode}
             role={isAskModalMode ? 'dialog' : undefined}
             aria-modal={isAskModalMode ? 'true' : undefined}
-            initial={
-              isAskModalMode
-                ? prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, y: 18, scale: 0.98 }
-                : prefersReducedMotion
-                  ? bubbleMode === 'sheet'
-                    ? reducedMotionTransitions.staticSheetState
-                    : reducedMotionTransitions.stableState
-                  : panelOpenAnimation === 'sheet'
-                    ? { opacity: 0, y: 28 }
-                    : panelOpenAnimation === 'fade'
-                      ? { opacity: 0 }
-                      : {
-                        opacity: 0,
-                        x: attachedLaunchOffset.x,
-                        y: attachedLaunchOffset.y,
-                        scale: 0.97,
-                      }
-            }
-            animate={isAskModalMode ? { opacity: 1, y: 0, scale: 1 } : bubbleMotionTarget}
-            exit={
-              isAskModalMode
-                ? prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, y: 18, scale: 0.98 }
-                : prefersReducedMotion
-                  ? bubbleMode === 'sheet'
-                    ? reducedMotionTransitions.staticSheetState
-                    : reducedMotionTransitions.stableState
-                  : panelOpenAnimation === 'sheet'
-                    ? { opacity: 0, y: 28 }
-                    : panelOpenAnimation === 'fade'
-                      ? { opacity: 0 }
-                      : {
-                        opacity: 0,
-                        x: attachedLaunchOffset.x * 0.18,
-                        y: attachedLaunchOffset.y * 0.18,
-                        scale: 0.97,
-                      }
-            }
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            animate={isAskModalMode ? { opacity: 1 } : bubbleMotionTarget}
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             transition={isAskModalMode ? motionProfile.bubbleTransition : panelTransition}
             className={
               isAskModalMode

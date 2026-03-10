@@ -177,6 +177,56 @@ const isValidAvatarPositionRecord = (
   );
 };
 
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+const getAvatarViewportBounds = (): {
+  maxLeft: number;
+  maxTop: number;
+  minLeft: number;
+  minTop: number;
+} | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const viewportWidth = Number.isFinite(window.innerWidth) ? window.innerWidth : 0;
+  const viewportHeight = Number.isFinite(window.innerHeight) ? window.innerHeight : 0;
+
+  if (viewportWidth <= 0 || viewportHeight <= 0) {
+    return null;
+  }
+
+  return {
+    maxLeft: Math.max(EDGE_GAP, viewportWidth - EDGE_GAP - AVATAR_SIZE),
+    maxTop: Math.max(EDGE_GAP, viewportHeight - EDGE_GAP - AVATAR_SIZE),
+    minLeft: EDGE_GAP,
+    minTop: EDGE_GAP,
+  };
+};
+
+const normalizeTutorAvatarPositionRecord = (
+  value: KangurAiTutorAvatarPositionRecord
+): KangurAiTutorAvatarPositionRecord => {
+  const bounds = getAvatarViewportBounds();
+  if (!bounds) {
+    return value;
+  }
+
+  const left = clampNumber(value.left, bounds.minLeft, bounds.maxLeft);
+  const top = clampNumber(value.top, bounds.minTop, bounds.maxTop);
+
+  if (left === value.left && top === value.top) {
+    return value;
+  }
+
+  return {
+    ...value,
+    left,
+    top,
+  };
+};
+
 export const loadPersistedTutorSessionKey = (): string | null => {
   const parsed = loadPersistedTutorWidgetState();
   return typeof parsed?.lastSessionKey === 'string' ? parsed.lastSessionKey : null;
@@ -241,6 +291,7 @@ export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {
   const currentState = loadPersistedTutorWidgetState();
   persistTutorWidgetState({
     ...currentState,
+    avatarPosition: null,
     hidden,
   });
   dispatchTutorVisibilityChange(hidden);
@@ -284,7 +335,19 @@ export const subscribeToTutorVisibilityChanges = (
 export const loadPersistedTutorAvatarPosition =
   (): KangurAiTutorAvatarPositionRecord | null => {
     const parsed = loadPersistedTutorWidgetState();
-    return isValidAvatarPositionRecord(parsed?.avatarPosition) ? parsed.avatarPosition : null;
+    if (!isValidAvatarPositionRecord(parsed?.avatarPosition)) {
+      return null;
+    }
+
+    const normalizedRecord = normalizeTutorAvatarPositionRecord(parsed.avatarPosition);
+    if (normalizedRecord !== parsed.avatarPosition) {
+      persistTutorWidgetState({
+        ...parsed,
+        avatarPosition: normalizedRecord,
+      });
+    }
+
+    return normalizedRecord;
   };
 
 export const persistTutorAvatarPosition = (
@@ -294,12 +357,12 @@ export const persistTutorAvatarPosition = (
     return null;
   }
 
-  const nextRecord: KangurAiTutorAvatarPositionRecord = {
+  const nextRecord = normalizeTutorAvatarPositionRecord({
     version: 1,
     left: position.left,
     top: position.top,
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   const currentState = loadPersistedTutorWidgetState();
   persistTutorWidgetState({

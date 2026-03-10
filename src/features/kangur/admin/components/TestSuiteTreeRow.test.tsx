@@ -151,6 +151,36 @@ describe('TestSuiteTreeRow', () => {
     expect(screen.getByRole('button', { name: 'Take suite offline' })).toBeInTheDocument();
   });
 
+  it('shows the move-to-group action for suite nodes', () => {
+    render(
+      <TestSuiteTreeRow
+        input={{
+          node: {
+            id: toKangurTestSuiteNodeId(suite.id),
+            name: suite.title,
+            metadata: {},
+          },
+          depth: 0,
+          isSelected: false,
+          isExpanded: false,
+          isDragging: false,
+          isSearchMatch: false,
+          hasChildren: false,
+          select: vi.fn(),
+          toggleExpand: vi.fn(),
+        } as any}
+        suiteById={new Map([[suite.id, suite]])}
+        questionCountBySuiteId={new Map([[suite.id, 2]])}
+        onMoveSuiteToGroup={vi.fn()}
+        onEdit={vi.fn()}
+        onManageQuestions={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Move suite to group' })).toBeInTheDocument();
+  });
+
   it('flags unstable live suites that need attention', () => {
     render(
       <TestSuiteTreeRow
@@ -203,5 +233,82 @@ describe('TestSuiteTreeRow', () => {
     );
 
     expect(screen.getByText('Live needs attention')).toBeInTheDocument();
+  });
+
+  it('renders edit and delete actions for test group folder nodes', () => {
+    render(
+      <TestSuiteTreeRow
+        input={{
+          node: {
+            id: 'kangur-test-suite-category-group:enabled:Geometry%20drills',
+            kind: 'kangur-test-suite-category-group',
+            name: 'Geometry drills',
+            metadata: {
+              kangurTestSuiteCategoryGroup: {
+                suiteCount: 0,
+              },
+            },
+          },
+          depth: 0,
+          isSelected: false,
+          isExpanded: false,
+          isDragging: false,
+          isSearchMatch: false,
+          hasChildren: true,
+          select: vi.fn(),
+          toggleExpand: vi.fn(),
+        } as any}
+        suiteById={new Map()}
+        questionCountBySuiteId={new Map()}
+        onEditGroup={vi.fn()}
+        onDeleteGroup={vi.fn()}
+        onEdit={vi.fn()}
+        onManageQuestions={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Edit test group Geometry drills' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Delete test group Geometry drills' })
+    ).toBeEnabled();
+  });
+
+  it('disables deleting a non-empty test group folder', () => {
+    render(
+      <TestSuiteTreeRow
+        input={{
+          node: {
+            id: 'kangur-test-suite-category-group:enabled:Olympiad%202024',
+            kind: 'kangur-test-suite-category-group',
+            name: 'Olympiad 2024',
+            metadata: {
+              kangurTestSuiteCategoryGroup: {
+                suiteCount: 2,
+              },
+            },
+          },
+          depth: 0,
+          isSelected: false,
+          isExpanded: false,
+          isDragging: false,
+          isSearchMatch: false,
+          hasChildren: true,
+          select: vi.fn(),
+          toggleExpand: vi.fn(),
+        } as any}
+        suiteById={new Map()}
+        questionCountBySuiteId={new Map()}
+        onEditGroup={vi.fn()}
+        onDeleteGroup={vi.fn()}
+        onEdit={vi.fn()}
+        onManageQuestions={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Delete test group Olympiad 2024' })
+    ).toBeDisabled();
   });
 });

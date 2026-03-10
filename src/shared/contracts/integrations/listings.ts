@@ -4,8 +4,6 @@ import { dtoBaseSchema, type IdNameDto } from '../base';
 import {
   productCategorySchema,
   productTagSchema,
-  type ProductCategory,
-  type ProductTag,
 } from '../products';
 import { type RecursiveTreeNode } from '../tree';
 
@@ -23,19 +21,7 @@ export const productListingExportEventSchema = z.object({
   requestId: z.string().nullable().optional(),
 });
 
-export interface ProductListingExportEvent {
-  exportedAt: string;
-  status?: string | null;
-  inventoryId?: string | null;
-  templateId?: string | null;
-  warehouseId?: string | null;
-  externalListingId?: string | null;
-  expiresAt?: string | null;
-  failureReason?: string | null;
-  relist?: boolean;
-  fields?: string[] | null;
-  requestId?: string | null;
-}
+export type ProductListingExportEvent = z.infer<typeof productListingExportEventSchema>;
 
 export type ListingAttempt = ProductListingExportEvent;
 
@@ -47,13 +33,7 @@ export const productListingRelistPolicySchema = z.object({
   templateId: z.string().nullable().optional(),
 });
 
-export interface ProductListingRelistPolicy {
-  enabled?: boolean;
-  leadMinutes?: number;
-  maxAttempts?: number;
-  durationHours?: number;
-  templateId?: string | null;
-}
+export type ProductListingRelistPolicy = z.infer<typeof productListingRelistPolicySchema>;
 
 export const productListingSchema = dtoBaseSchema.extend({
   productId: z.string(),
@@ -74,27 +54,7 @@ export const productListingSchema = dtoBaseSchema.extend({
   exportHistory: z.array(productListingExportEventSchema).nullable(),
 });
 
-export interface ProductListing {
-  id: string;
-  productId: string;
-  integrationId: string;
-  connectionId: string;
-  externalListingId: string | null;
-  inventoryId: string | null;
-  status: string;
-  listedAt: string | null;
-  expiresAt: string | null;
-  nextRelistAt: string | null;
-  relistPolicy?: ProductListingRelistPolicy | null;
-  relistAttempts?: number;
-  lastRelistedAt: string | null;
-  lastStatusCheckAt: string | null;
-  marketplaceData: Record<string, unknown> | null;
-  failureReason: string | null;
-  exportHistory: ProductListingExportEvent[] | null;
-  createdAt: string;
-  updatedAt: string | null;
-}
+export type ProductListing = z.infer<typeof productListingSchema>;
 
 export const productListingWithDetailsSchema = productListingSchema.extend({
   integration: z.object({
@@ -108,17 +68,7 @@ export const productListingWithDetailsSchema = productListingSchema.extend({
   }),
 });
 
-export interface ProductListingWithDetails extends ProductListing {
-  integration: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  connection: {
-    id: string;
-    name: string;
-  };
-}
+export type ProductListingWithDetails = z.infer<typeof productListingWithDetailsSchema>;
 
 export const createProductListingSchema = z.object({
   id: z.string().optional(),
@@ -140,6 +90,163 @@ export const createProductListingSchema = z.object({
 });
 
 export type CreateProductListing = z.infer<typeof createProductListingSchema>;
+
+export const productListingActionSchema = z.object({
+  listingId: z.string().trim().min(1),
+});
+
+export type ProductListingAction = z.infer<typeof productListingActionSchema>;
+
+export const productListingCreatePayloadSchema = z.object({
+  integrationId: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+  durationHours: z.number().int().min(1).max(720).optional(),
+  autoRelistEnabled: z.boolean().optional(),
+  autoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
+  templateId: z.string().trim().nullable().optional(),
+});
+
+export type ProductListingCreatePayload = z.infer<typeof productListingCreatePayloadSchema>;
+
+export const productListingCreateVariablesSchema = productListingCreatePayloadSchema.extend({
+  productId: z.string().trim().min(1),
+});
+
+export type ProductListingCreateVariables = z.infer<typeof productListingCreateVariablesSchema>;
+
+export const productListingQueueJobSchema = z.object({
+  name: z.string(),
+  jobId: z.string(),
+  enqueuedAt: z.string(),
+});
+
+export type ProductListingQueueJob = z.infer<typeof productListingQueueJobSchema>;
+
+export const productListingCreateResponseSchema = productListingWithDetailsSchema.extend({
+  queued: z.boolean().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type ProductListingCreateResponse = z.infer<typeof productListingCreateResponseSchema>;
+
+export const productListingInventoryUpdatePayloadSchema = z.object({
+  inventoryId: z.string().trim().min(1).nullable(),
+});
+
+export type ProductListingInventoryUpdatePayload = z.infer<
+  typeof productListingInventoryUpdatePayloadSchema
+>;
+
+export const productListingInventoryUpdateVariablesSchema = productListingActionSchema.extend({
+  inventoryId: z.string().trim().min(1),
+});
+
+export type ProductListingInventoryUpdateVariables = z.infer<
+  typeof productListingInventoryUpdateVariablesSchema
+>;
+
+export const productListingUpdateResponseSchema = z.object({
+  success: z.literal(true),
+});
+
+export type ProductListingUpdateResponse = z.infer<typeof productListingUpdateResponseSchema>;
+
+export const productListingDeleteFromBasePayloadSchema = z.object({
+  inventoryId: z.string().trim().min(1).optional(),
+});
+
+export type ProductListingDeleteFromBasePayload = z.infer<
+  typeof productListingDeleteFromBasePayloadSchema
+>;
+
+export const productListingDeleteFromBaseVariablesSchema = productListingActionSchema.extend({
+  inventoryId: z.string().trim().min(1).optional(),
+});
+
+export type ProductListingDeleteFromBaseVariables = z.infer<
+  typeof productListingDeleteFromBaseVariablesSchema
+>;
+
+export const productListingDeleteFromBaseResponseSchema = z.object({
+  status: z.string(),
+  message: z.string(),
+  runId: z.string().nullable(),
+});
+
+export type ProductListingDeleteFromBaseResponse = z.infer<
+  typeof productListingDeleteFromBaseResponseSchema
+>;
+
+export const productListingSyncBaseImagesPayloadSchema = z.object({
+  inventoryId: z.string().trim().min(1).optional(),
+});
+
+export type ProductListingSyncBaseImagesPayload = z.infer<
+  typeof productListingSyncBaseImagesPayloadSchema
+>;
+
+export const productListingSyncBaseImagesVariablesSchema = productListingActionSchema.extend({
+  inventoryId: z.string().trim().min(1).optional(),
+});
+
+export type ProductListingSyncBaseImagesVariables = z.infer<
+  typeof productListingSyncBaseImagesVariablesSchema
+>;
+
+export const productListingSyncBaseImagesResponseSchema = z.object({
+  status: z.literal('synced'),
+  count: z.number().int().nonnegative(),
+  added: z.number().int().nonnegative(),
+});
+
+export type ProductListingSyncBaseImagesResponse = z.infer<
+  typeof productListingSyncBaseImagesResponseSchema
+>;
+
+export const productListingRelistVariablesSchema = productListingActionSchema;
+
+export type ProductListingRelistVariables = z.infer<typeof productListingRelistVariablesSchema>;
+
+export const productListingRelistResponseSchema = z.object({
+  queued: z.boolean(),
+  alreadyQueued: z.boolean().optional(),
+  listingId: z.string(),
+  status: z.string().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type ProductListingRelistResponse = z.infer<typeof productListingRelistResponseSchema>;
+
+export const baseProductSkuCheckPayloadSchema = z.object({
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+});
+
+export type BaseProductSkuCheckPayload = z.infer<typeof baseProductSkuCheckPayloadSchema>;
+
+export const baseProductSkuCheckResponseSchema = z.object({
+  sku: z.string().optional(),
+  exists: z.boolean().optional(),
+  existingProductId: z.string().nullable().optional(),
+});
+
+export type BaseProductSkuCheckResponse = z.infer<typeof baseProductSkuCheckResponseSchema>;
+
+export const baseProductLinkExistingPayloadSchema = baseProductSkuCheckPayloadSchema.extend({
+  externalListingId: z.string().trim().min(1),
+});
+
+export type BaseProductLinkExistingPayload = z.infer<typeof baseProductLinkExistingPayloadSchema>;
+
+export const baseProductLinkExistingResponseSchema = z.object({
+  linked: z.literal(true),
+  listingId: z.string(),
+  externalListingId: z.string(),
+});
+
+export type BaseProductLinkExistingResponse = z.infer<
+  typeof baseProductLinkExistingResponseSchema
+>;
 
 /**
  * Product Listing Badges DTOs
@@ -164,16 +271,7 @@ export const categoryMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface CategoryMapping {
-  id: string;
-  connectionId: string;
-  externalCategoryId: string;
-  internalCategoryId: string | null;
-  catalogId: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
+export type CategoryMapping = z.infer<typeof categoryMappingSchema>;
 
 export const externalCategorySchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -187,20 +285,7 @@ export const externalCategorySchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export interface ExternalCategory {
-  id: string;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  parentExternalId: string | null;
-  path: string | null;
-  depth: number;
-  isLeaf: boolean;
-  metadata: Record<string, unknown> | null;
-  fetchedAt: string;
-  createdAt?: string;
-  updatedAt?: string | null;
-}
+export type ExternalCategory = z.infer<typeof externalCategorySchema>;
 
 export type ExternalCategoryWithChildren = RecursiveTreeNode<ExternalCategory>;
 
@@ -236,16 +321,7 @@ export const externalCategorySyncInputSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export interface ExternalCategorySyncInput {
-  connectionId: string;
-  externalId: string;
-  name: string;
-  parentExternalId: string | null;
-  path: string | null;
-  depth: number;
-  isLeaf: boolean;
-  metadata?: Record<string, unknown> | null;
-}
+export type ExternalCategorySyncInput = z.infer<typeof externalCategorySyncInputSchema>;
 
 export const categoryMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -254,32 +330,21 @@ export const categoryMappingCreateInputSchema = z.object({
   catalogId: z.string(),
 });
 
-export interface CategoryMappingCreateInput {
-  connectionId: string;
-  externalCategoryId: string;
-  internalCategoryId: string | null;
-  catalogId: string;
-}
+export type CategoryMappingCreateInput = z.infer<typeof categoryMappingCreateInputSchema>;
 
 export const categoryMappingUpdateInputSchema = z.object({
   internalCategoryId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface CategoryMappingUpdateInput {
-  internalCategoryId?: string | null;
-  isActive?: boolean;
-}
+export type CategoryMappingUpdateInput = z.infer<typeof categoryMappingUpdateInputSchema>;
 
 export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
   externalCategory: externalCategorySchema,
   internalCategory: productCategorySchema.nullable(),
 });
 
-export interface CategoryMappingWithDetails extends CategoryMapping {
-  externalCategory: ExternalCategory;
-  internalCategory: ProductCategory | null;
-}
+export type CategoryMappingWithDetails = z.infer<typeof categoryMappingWithDetailsSchema>;
 
 export const externalTagSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -298,34 +363,25 @@ export const tagMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface TagMapping {
-  id: string;
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
+export type TagMapping = z.infer<typeof tagMappingSchema>;
 
 export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
   externalTag: externalTagSchema,
   internalTag: productTagSchema.nullable(),
 });
 
-export interface TagMappingWithDetails extends TagMapping {
-  externalTag: ExternalTag;
-  internalTag: ProductTag | null;
-}
+export type TagMappingWithDetails = z.infer<typeof tagMappingWithDetailsSchema>;
 
 export type { IdNameDto as BaseTag };
 
-export interface ExternalTagSyncInput {
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata?: Record<string, unknown> | null;
-}
+export const externalTagSyncInputSchema = z.object({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type ExternalTagSyncInput = z.infer<typeof externalTagSyncInputSchema>;
 
 export const tagMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -333,32 +389,29 @@ export const tagMappingCreateInputSchema = z.object({
   internalTagId: z.string(),
 });
 
-export interface TagMappingCreateInput {
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-}
+export type TagMappingCreateInput = z.infer<typeof tagMappingCreateInputSchema>;
 
 export const tagMappingUpdateInputSchema = z.object({
   externalTagId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface TagMappingUpdateInput {
-  externalTagId?: string;
-  isActive?: boolean;
-}
+export type TagMappingUpdateInput = z.infer<typeof tagMappingUpdateInputSchema>;
 
-export const bulkTagMappingItemSchema = z.object({
+export const tagMappingAssignmentSchema = z.object({
   internalTagId: z.string().trim().min(1),
   externalTagId: z.string().trim().min(1).nullable(),
 });
 
-export type BulkTagMappingItem = z.infer<typeof bulkTagMappingItemSchema>;
+export type TagMappingAssignment = z.infer<typeof tagMappingAssignmentSchema>;
+
+export const bulkTagMappingItemSchema = tagMappingAssignmentSchema;
+
+export type BulkTagMappingItem = TagMappingAssignment;
 
 export const bulkTagMappingRequestSchema = z.object({
   connectionId: z.string().trim().min(1),
-  mappings: z.array(bulkTagMappingItemSchema).min(1),
+  mappings: z.array(tagMappingAssignmentSchema).min(1),
 });
 
 export type BulkTagMappingRequest = z.infer<typeof bulkTagMappingRequestSchema>;

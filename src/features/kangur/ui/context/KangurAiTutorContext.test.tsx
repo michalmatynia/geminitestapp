@@ -58,6 +58,7 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   KangurAiTutorProvider,
@@ -170,6 +171,18 @@ function SelectedTextHarness(): React.JSX.Element {
       <div data-testid='selected-text-messages'>
         {messages.map((message) => message.content).join(' | ')}
       </div>
+    </div>
+  );
+}
+
+function TutorAvailabilityHarness(): React.JSX.Element {
+  const { enabled, tutorSettings, sessionContext } = useKangurAiTutor();
+
+  return (
+    <div>
+      <div data-testid='availability-enabled'>{String(enabled)}</div>
+      <div data-testid='settings-enabled'>{String(tutorSettings?.enabled ?? false)}</div>
+      <div data-testid='has-session-context'>{String(Boolean(sessionContext))}</div>
     </div>
   );
 }
@@ -471,6 +484,63 @@ describe('KangurAiTutorContext', () => {
     await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
     expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent(
       '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
+    );
+  });
+
+  it('keeps learner tutor settings available without a live tutor session', () => {
+    useOptionalKangurAuthMock.mockReturnValue({
+      user: {
+        ownerEmailVerified: true,
+        activeLearner: {
+          id: 'learner-1',
+          aiTutor: null,
+        },
+        learners: [
+          {
+            id: 'learner-1',
+            aiTutor: null,
+          },
+        ],
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider>
+        <TutorAvailabilityHarness />
+      </KangurAiTutorProvider>
+    );
+
+    expect(screen.getByTestId('settings-enabled')).toHaveTextContent('true');
+    expect(screen.getByTestId('availability-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('has-session-context')).toHaveTextContent('false');
+  });
+
+  it('falls back to the content-backed tutor name when no persona is resolved', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          enabled: true,
+          agentPersonaId: 'persona-missing',
+          guestIntroMode: 'first_visit',
+        });
+      }
+
+      return undefined;
+    });
+    useAgentPersonasMock.mockReturnValue({
+      data: [],
+    });
+
+    render(
+      <KangurAiTutorProvider>
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('tutor-name')).toHaveTextContent(
+        DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
+      )
     );
   });
 

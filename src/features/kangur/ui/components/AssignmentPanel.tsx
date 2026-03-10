@@ -78,6 +78,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
         <div className='mt-4 flex flex-col gap-3'>
           {assignments.map((assignment) => {
             const completed = completedIds.includes(assignment.id);
+            const assignmentHref = buildAssignmentHref(basePath, assignment.action);
             return (
               <KangurInfoCard
                 accent={completed ? 'emerald' : 'indigo'}
@@ -149,7 +150,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       variant={completed ? 'success' : 'surface'}
                     >
                       <Link
-                        href={(() => buildAssignmentHref(basePath, assignment.action))()}
+                        href={assignmentHref}
                         targetPageKey={assignment.action.page}
                       >
                         {assignment.action.label}

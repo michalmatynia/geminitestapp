@@ -256,62 +256,68 @@ export default function KangurSetup({
         ) : null}
 
         <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
-          {selectedEdition.sets.map((setItem) => (
-            <motion.div
-              key={setItem.id}
-              whileHover={setItem.available ? { scale: 1.03 } : {}}
-              whileTap={setItem.available ? { scale: 0.97 } : {}}
-              role='listitem'
-            >
-              <KangurOptionCardButton
-                accent='amber'
-                aria-describedby={`kangur-setup-set-description-${setItem.id}`}
-                aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
-                className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
-                data-testid={`kangur-setup-set-${setItem.id}`}
-                disabled={!setItem.available}
-                emphasis={setItem.available || setItem.id === recommendedMode ? 'accent' : 'neutral'}
-                onClick={() => {
-                  if (setItem.available) {
-                    onStart(setItem.id);
-                  }
-                }}
+          {selectedEdition.sets.map((setItem) => {
+            const isRecommendedSet = setItem.id === recommendedMode;
+            const setCardEmphasis = setItem.available || isRecommendedSet ? 'accent' : 'neutral';
+            const handleSelectSet = (): void => {
+              if (setItem.available) {
+                onStart(setItem.id);
+              }
+            };
+
+            return (
+              <motion.div
+                key={setItem.id}
+                whileHover={setItem.available ? { scale: 1.03 } : {}}
+                whileTap={setItem.available ? { scale: 0.97 } : {}}
+                role='listitem'
               >
-                <span className='flex flex-wrap items-center gap-2'>
-                  <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
-                    {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
-                  </KangurStatusChip>
-                  {!setItem.available ? (
-                    <KangurStatusChip accent='slate' size='sm'>
-                      <Lock className='h-3 w-3' /> Wkrotce dostepna
-                    </KangurStatusChip>
-                  ) : null}
-                  {setItem.id === recommendedMode ? (
-                    <KangurStatusChip
-                      accent='amber'
-                      data-testid={`kangur-setup-recommendation-chip-${setItem.id}`}
-                      size='sm'
-                    >
-                      {recommendedLabel ?? 'Polecamy teraz'}
-                    </KangurStatusChip>
-                  ) : null}
-                </span>
-                <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
-                  {setItem.label}
-                  {!setItem.available && <Lock className='h-3.5 w-3.5' />}
-                </span>
-                <span
-                  id={`kangur-setup-set-description-${setItem.id}`}
-                  className={cn(
-                    'text-xs',
-                    setItem.available ? 'text-slate-500' : 'text-slate-400'
-                  )}
+                <KangurOptionCardButton
+                  accent='amber'
+                  aria-describedby={`kangur-setup-set-description-${setItem.id}`}
+                  aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
+                  className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
+                  data-testid={`kangur-setup-set-${setItem.id}`}
+                  disabled={!setItem.available}
+                  emphasis={setCardEmphasis}
+                  onClick={handleSelectSet}
                 >
-                  {setItem.desc}
-                </span>
-              </KangurOptionCardButton>
-            </motion.div>
-          ))}
+                  <span className='flex flex-wrap items-center gap-2'>
+                    <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
+                      {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
+                    </KangurStatusChip>
+                    {!setItem.available ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        <Lock className='h-3 w-3' /> Wkrotce dostepna
+                      </KangurStatusChip>
+                    ) : null}
+                    {isRecommendedSet ? (
+                      <KangurStatusChip
+                        accent='amber'
+                        data-testid={`kangur-setup-recommendation-chip-${setItem.id}`}
+                        size='sm'
+                      >
+                        {recommendedLabel ?? 'Polecamy teraz'}
+                      </KangurStatusChip>
+                    ) : null}
+                  </span>
+                  <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
+                    {setItem.label}
+                    {!setItem.available && <Lock className='h-3.5 w-3.5' />}
+                  </span>
+                  <span
+                    id={`kangur-setup-set-description-${setItem.id}`}
+                    className={cn(
+                      'text-xs',
+                      setItem.available ? 'text-slate-500' : 'text-slate-400'
+                    )}
+                  >
+                    {setItem.desc}
+                  </span>
+                </KangurOptionCardButton>
+              </motion.div>
+            );
+          })}
         </div>
       </KangurGlassPanel>
     </section>

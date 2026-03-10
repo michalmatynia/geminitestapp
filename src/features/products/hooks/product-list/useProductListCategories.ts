@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import {
-  resolveCategoryLabelByLocale,
+  buildCategoryNameById,
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
@@ -71,18 +71,9 @@ export function useProductListCategories({
   });
 
   const categoryNameById = useMemo((): Map<string, string> => {
-    const map = new Map<string, string>();
     const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
     const grouped = categoryBatchQuery.data ?? {};
-    for (const categories of Object.values(grouped)) {
-      for (const category of categories) {
-        if (!category.id || map.has(category.id)) continue;
-        const label = resolveCategoryLabelByLocale(category, locale);
-        if (!label) continue;
-        map.set(category.id, label);
-      }
-    }
-    return map;
+    return buildCategoryNameById(grouped, locale);
   }, [categoryBatchQuery.data, nameLocale]);
 
   return {

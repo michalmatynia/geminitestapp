@@ -41,6 +41,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'avatarDragStateRef'
     | 'setAskModalDockStyle'
     | 'setAskModalVisible'
+    | 'setDismissedSelectedText'
     | 'setDraggedAvatarPoint'
     | 'setGuestIntroHelpVisible'
     | 'setGuestIntroVisible'
@@ -54,6 +55,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
     | 'setPersistedSelectionRect'
+    | 'setSelectionConversationContext'
     | 'setSelectionResponseComplete'
     | 'setSelectionResponsePending'
     | 'suppressAvatarClickRef'
@@ -85,6 +87,7 @@ export function useKangurAiTutorPanelInteractions({
     avatarDragStateRef,
     setAskModalDockStyle,
     setAskModalVisible,
+    setDismissedSelectedText,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -98,6 +101,7 @@ export function useKangurAiTutorPanelInteractions({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     suppressAvatarClickRef,
@@ -118,7 +122,11 @@ export function useKangurAiTutorPanelInteractions({
         setInputValue(`"${trimmedSelectedText}"\n\n`);
       }
 
+      setDismissedSelectedText(null);
       setHighlightedText(trimmedSelectedText);
+      setSelectionConversationContext({
+        selectedText: trimmedSelectedText,
+      });
       persistSelectionGeometry();
       return trimmedSelectedText;
     },
@@ -126,15 +134,35 @@ export function useKangurAiTutorPanelInteractions({
       allowSelectedTextSupport,
       persistSelectionGeometry,
       selectedText,
+      setDismissedSelectedText,
       setHighlightedText,
       setInputValue,
+      setSelectionConversationContext,
     ]
   );
+
+  const resetAskModalState = useCallback((): void => {
+    setAskModalVisible(false);
+    askModalReturnStateRef.current = null;
+    avatarDragStateRef.current = null;
+    setIsAvatarDragging(false);
+    setAskModalDockStyle(null);
+  }, [
+    askModalReturnStateRef,
+    avatarDragStateRef,
+    setAskModalDockStyle,
+    setAskModalVisible,
+    setIsAvatarDragging,
+  ]);
 
   const handleOpenChat = useCallback(
     (
       reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
     ): void => {
+      if (reason !== 'ask_modal') {
+        resetAskModalState();
+      }
+
       setPanelAnchorMode(reason === 'toggle' ? 'dock' : 'contextual');
       trackKangurClientEvent('kangur_ai_tutor_opened', {
         ...telemetryContext,
@@ -144,7 +172,14 @@ export function useKangurAiTutorPanelInteractions({
       });
       openChat();
     },
-    [activeSelectedText, messageCount, openChat, setPanelAnchorMode, telemetryContext]
+    [
+      activeSelectedText,
+      messageCount,
+      openChat,
+      resetAskModalState,
+      setPanelAnchorMode,
+      telemetryContext,
+    ]
   );
 
   const handleCloseChat = useCallback(
@@ -237,6 +272,7 @@ export function useKangurAiTutorPanelInteractions({
     setHighlightedText(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionContainerRect(null);
+    setSelectionConversationContext(null);
     closeChat();
     persistTutorVisibilityHidden(true);
   }, [
@@ -254,6 +290,7 @@ export function useKangurAiTutorPanelInteractions({
     setHomeOnboardingStepIndex,
     setPersistedSelectionContainerRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     telemetryContext,
   ]);
 
@@ -329,5 +366,6 @@ export function useKangurAiTutorPanelInteractions({
     handlePanelHeaderClose,
     handleSelectionActionMouseDown,
     persistSelectionContext,
+    resetAskModalState,
   };
 }

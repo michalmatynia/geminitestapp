@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
+import type {
+  BaseImportItemStatus,
+  BaseImportRunDetailResponse,
+} from '@/shared/contracts/integrations';
+import { baseImportRunDetailQuerySchema } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const querySchema = z.object({
-  statuses: z.string().trim().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  pageSize: z.coerce.number().int().positive().max(1000).optional(),
-  includeItems: z.enum(['true', 'false']).optional(),
-});
+const querySchema = baseImportRunDetailQuerySchema;
 
 export async function GET_handler(
   req: NextRequest,
@@ -30,10 +29,10 @@ export async function GET_handler(
         value === 'updated' ||
         value === 'skipped' ||
         value === 'failed'
-    ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+    ) as BaseImportItemStatus[];
   const includeItems =
     parsed.success && parsed.data.includeItems ? parsed.data.includeItems === 'true' : undefined;
-  const detail = await getBaseImportRunDetailOrThrow(params.runId, {
+  const detail: BaseImportRunDetailResponse = await getBaseImportRunDetailOrThrow(params.runId, {
     ...(statuses.length > 0 ? { statuses } : {}),
     ...(parsed.success && typeof parsed.data.page === 'number' ? { page: parsed.data.page } : {}),
     ...(parsed.success && typeof parsed.data.pageSize === 'number'

@@ -135,7 +135,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
             : {}),
         });
         if (isTraderaIntegration) {
-          const queue = (response as { queue?: { jobId?: string; name?: string } } | null)?.queue;
+          const queue = response.queue;
           toast(
             queue?.jobId
               ? `Tradera listing queued (job ${queue.jobId}).`

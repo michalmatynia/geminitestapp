@@ -154,6 +154,8 @@ function MetricCard({
   icon: ReactNode;
   alert?: KangurObservabilityAlert | undefined;
 }): JSX.Element {
+  const alertStatus = alert?.status;
+
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
       <div className='flex items-start justify-between gap-3'>
@@ -164,7 +166,7 @@ function MetricCard({
           </div>
           <div className='text-2xl font-semibold text-white'>{value}</div>
         </div>
-        {alert ? <StatusBadge status={alert.status} /> : null}
+        {alertStatus ? <StatusBadge status={alertStatus} /> : null}
       </div>
       <p className='mt-3 text-xs leading-relaxed text-gray-400'>{hint}</p>
     </Card>

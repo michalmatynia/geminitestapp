@@ -1,28 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  baseImportParametersPayloadSchema,
+  type BaseImportParametersClearResponse,
+  type BaseImportParametersResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-const optionalIdSchema = z.preprocess((value) => {
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
-}, z.string().trim().min(1).optional());
-
-const requestSchema = z.object({
-  inventoryId: optionalIdSchema,
-  productId: optionalIdSchema,
-  connectionId: optionalIdSchema,
-  sampleSize: z.coerce.number().int().positive().max(20).optional(),
-  clearOnly: z.boolean().optional(),
-});
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
@@ -405,7 +395,7 @@ export async function postBaseImportParametersHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const parsed = await parseJsonBody(req, requestSchema, {
+  const parsed = await parseJsonBody(req, baseImportParametersPayloadSchema, {
     logPrefix: 'imports.base.parameters.POST',
   });
   if (!parsed.ok) {
@@ -420,7 +410,8 @@ export async function postBaseImportParametersHandler(
       keys: [],
       values: {},
     });
-    return NextResponse.json({ ok: true });
+    const response: BaseImportParametersClearResponse = { ok: true };
+    return NextResponse.json(response);
   }
 
   if (!data.inventoryId) {
@@ -534,12 +525,13 @@ export async function postBaseImportParametersHandler(
     });
   }
 
-  return NextResponse.json({
+  const response: BaseImportParametersResponse = {
     inventoryId: data.inventoryId,
     productId: sampleProductId,
     keys,
     values,
-  });
+  };
+  return NextResponse.json(response);
 }
 
 export async function getBaseImportParametersHandler(
@@ -547,14 +539,13 @@ export async function getBaseImportParametersHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const cache = await getImportParameterCache();
-  return NextResponse.json(
-    cache
-      ? {
-        inventoryId: cache.inventoryId,
-        productId: cache.productId,
-        keys: cache.keys,
-        values: cache.values,
-      }
-      : { keys: [], values: {} }
-  );
+  const response: BaseImportParametersResponse = cache
+    ? {
+      inventoryId: cache.inventoryId,
+      productId: cache.productId,
+      keys: cache.keys,
+      values: cache.values,
+    }
+    : { keys: [], values: {} };
+  return NextResponse.json(response);
 }

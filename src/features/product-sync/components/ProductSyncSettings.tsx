@@ -21,7 +21,11 @@ import type {
   ProductSyncDirection,
   ProductSyncFieldRule,
   ProductSyncProfile,
+  ProductSyncProfileCreatePayload,
+  ProductSyncProfileUpdatePayload,
+  ProductSyncRelinkPayload,
 } from '@/shared/contracts/product-sync';
+import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   useDefaultExportConnection,
@@ -229,7 +233,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       return;
     }
 
-    const payload: Partial<ProductSyncProfile> = {
+    const payload: ProductSyncProfileCreatePayload = {
       name: draft.name.trim() || 'Base Product Sync',
       enabled: draft.enabled,
       connectionId: draft.connectionId.trim(),
@@ -245,7 +249,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       if (selectedProfileId) {
         const updated = await updateProfileMutation.mutateAsync({
           id: selectedProfileId,
-          data: payload,
+          data: payload satisfies ProductSyncProfileUpdatePayload,
         });
         setSelectedProfileId(updated.id);
         setDraft(profileToDraft(updated));
@@ -310,11 +314,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       const connectionId = draft.connectionId.trim();
       const inventoryId = draft.inventoryId.trim();
       const catalogId = draft.catalogId.trim();
-      const payload: {
-        connectionId?: string;
-        inventoryId?: string;
-        catalogId?: string | null;
-      } = {
+      const payload: ProductSyncRelinkPayload = {
         ...(connectionId ? { connectionId } : {}),
         ...(inventoryId ? { inventoryId } : {}),
         ...(catalogId ? { catalogId } : { catalogId: null }),
@@ -347,7 +347,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       onConfirm: async () => {
         setApplyingConnectionDefaults(true);
         try {
-          await api.post<{ connectionId: string | null }>(
+          await api.post<BaseDefaultConnectionPreferenceResponse>(
             '/api/v2/integrations/exports/base/default-connection',
             { connectionId }
           );

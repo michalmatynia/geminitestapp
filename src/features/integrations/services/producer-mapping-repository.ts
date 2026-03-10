@@ -15,6 +15,7 @@ import {
   type MongoProducerMappingDoc,
 } from '@/features/integrations/services/producer-mapping-repository-mongo-utils';
 import type {
+  ProducerMappingAssignment,
   ProducerMapping,
   ProducerMappingCreateInput,
   ProducerMappingUpdateInput,
@@ -43,7 +44,7 @@ export type ProducerMappingRepository = {
   ) => Promise<ProducerMappingWithDetails[]>;
   bulkUpsert: (
     connectionId: string,
-    mappings: { internalProducerId: string; externalProducerId: string | null }[]
+    mappings: ProducerMappingAssignment[]
   ) => Promise<number>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
@@ -695,10 +696,10 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
       return records.map((record: EnrichedProducerMapping) => toDetails(record));
     },
 
-    async bulkUpsert(
-      connectionId: string,
-      mappings: { internalProducerId: string; externalProducerId: string | null }[]
-    ): Promise<number> {
+  async bulkUpsert(
+    connectionId: string,
+    mappings: ProducerMappingAssignment[]
+  ): Promise<number> {
       const provider = await getAppDbProvider();
       if (provider === 'mongodb') {
         await ensureMongoProducerMappingIndexes();

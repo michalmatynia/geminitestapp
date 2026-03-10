@@ -16,6 +16,12 @@ import {
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
+import type {
+  IntegrationAllegroApiMethod,
+  IntegrationAllegroApiResponse,
+  IntegrationBaseApiResponse,
+  IntegrationConnectionTestType,
+} from '@/shared/contracts/integrations';
 import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui';
@@ -63,20 +69,13 @@ export function useIntegrationsActionsImpl(args: {
   setShowSessionModal: (show: boolean) => void;
   baseApiMethod: string;
   baseApiParams: string;
-  setBaseApiResponse: (res: { data: unknown } | null) => void;
+  setBaseApiResponse: (res: IntegrationBaseApiResponse | null) => void;
   setBaseApiError: (err: string | null) => void;
   setBaseApiLoading: (loading: boolean) => void;
-  allegroApiMethod: string;
+  allegroApiMethod: IntegrationAllegroApiMethod;
   allegroApiBody: string;
   allegroApiPath: string;
-  setAllegroApiResponse: (
-    res: {
-      status: number;
-      statusText: string;
-      data?: unknown;
-      refreshed?: boolean;
-    } | null
-  ) => void;
+  setAllegroApiResponse: (res: IntegrationAllegroApiResponse | null) => void;
   setAllegroApiError: (err: string | null) => void;
   setAllegroApiLoading: (loading: boolean) => void;
   integrationsQuery: ListQuery<Integration>;
@@ -244,7 +243,7 @@ export function useIntegrationsActionsImpl(args: {
   const handleConnectionTest = useCallback(
     async (
       connection: IntegrationConnection,
-      type: 'test' | 'base/test' | 'allegro/test',
+      type: IntegrationConnectionTestType,
       title: string,
       options?: {
         body?: Record<string, unknown>;
@@ -491,7 +490,7 @@ export function useIntegrationsActionsImpl(args: {
         method: args.baseApiMethod,
         parameters: params,
       });
-      args.setBaseApiResponse({ data: payload.data });
+      args.setBaseApiResponse(payload);
     } catch (error: unknown) {
       args.setBaseApiError((error as Error)?.message ?? 'Failed to send request.');
     } finally {

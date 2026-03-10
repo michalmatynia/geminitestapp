@@ -33,14 +33,17 @@ export function KangurAiTutorProvider({
   children,
 }: Props): JSX.Element {
   const { value, sessionRegistryValue } = useKangurAiTutorRuntime();
+  const shouldRenderSessionSync = learnerId !== undefined || sessionContext !== undefined;
+  const syncLearnerId = learnerId ?? null;
+  const syncSessionContext = sessionContext ?? null;
 
   return (
     <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
       <KangurAiTutorContext.Provider value={value}>
-        {learnerId !== undefined || sessionContext !== undefined ? (
+        {shouldRenderSessionSync ? (
           <KangurAiTutorSessionSyncInner
-            learnerId={learnerId ?? null}
-            sessionContext={sessionContext ?? null}
+            learnerId={syncLearnerId}
+            sessionContext={syncSessionContext}
           />
         ) : null}
         {children}

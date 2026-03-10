@@ -3,6 +3,7 @@ import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/server';
+import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { readKangurAiTutorDailyUsage } from '@/features/kangur/server/ai-tutor-usage';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
@@ -16,20 +17,12 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
-const AI_TUTOR_AVAILABILITY_ERROR_MESSAGES = {
-  disabled: 'AI tutor is not enabled for this learner.',
-  email_unverified: 'Verify your parent email to unlock AI Tutor.',
-  missing_context: 'AI tutor context is required for Kangur tutoring sessions.',
-  lessons_disabled: 'AI tutor is disabled for lessons for this learner.',
-  tests_disabled: 'AI tutor is disabled for tests for this learner.',
-  review_after_answer_only:
-    'AI tutor is available in tests only after the answer has been revealed.',
-} as const;
-
 export async function getKangurAiTutorUsageHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
+  const tutorContent = await getKangurAiTutorContent('pl');
+  const errorMessages = tutorContent.usageApi.availabilityErrors;
   const actor = await resolveKangurActor(req);
   const learnerId = actor.activeLearner.id;
 
@@ -40,13 +33,13 @@ export async function getKangurAiTutorUsageHandler(
   const tutorSettings = getKangurAiTutorSettingsForLearner(settingsStore, learnerId, appSettings);
 
   if (!tutorSettings.enabled) {
-    throw badRequestError(AI_TUTOR_AVAILABILITY_ERROR_MESSAGES.disabled, {
+    throw badRequestError(errorMessages.disabled, {
       reason: 'disabled',
     });
   }
 
   if (!actor.ownerEmailVerified) {
-    throw badRequestError(AI_TUTOR_AVAILABILITY_ERROR_MESSAGES.email_unverified, {
+    throw badRequestError(errorMessages.emailUnverified, {
       reason: 'email_unverified',
     });
   }

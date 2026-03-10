@@ -46,6 +46,7 @@ export function KangurTestQuestionRenderer({
   const presentation = question.presentation ?? { layout: 'classic', choiceStyle: 'list' };
   const stemDocument = question.stemDocument;
   const explanationDocument = question.explanationDocument;
+  const richExplanationDocument = explanationDocument;
   const resolvedTotalQuestions = totalQuestions ?? runtime?.totalQuestions;
   const isAnswered = selectedLabel !== null;
   const isCorrect = selectedLabel === question.correctChoiceLabel;
@@ -238,12 +239,12 @@ export function KangurTestQuestionRenderer({
       </div>
 
       {/* Explanation */}
-      {showAnswer && renderRichExplanation && question.explanationDocument ? (
+      {showAnswer && renderRichExplanation && richExplanationDocument ? (
         <div className='space-y-2'>
           <div className='text-xs font-bold uppercase tracking-wide text-indigo-600'>
             Explanation
           </div>
-          <KangurLessonDocumentRenderer document={question.explanationDocument} renderMode='lesson' />
+          <KangurLessonDocumentRenderer document={richExplanationDocument} renderMode='lesson' />
         </div>
       ) : null}
       {showAnswer && !renderRichExplanation && question.explanation ? (

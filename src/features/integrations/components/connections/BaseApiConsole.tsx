@@ -59,7 +59,11 @@ export function BaseApiConsole(): React.JSX.Element {
         bodyOrParams: baseApiParams,
         loading: baseApiLoading,
         error: baseApiError,
-        response: baseApiResponse,
+        response: baseApiResponse
+          ? {
+            data: baseApiResponse.data ?? null,
+          }
+          : null,
       }}
       presets={baseApiPresets}
       isConnected={true}

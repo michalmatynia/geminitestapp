@@ -1,4 +1,5 @@
-import {
+import type {
+  CategoryMappingAssignment,
   CategoryMapping,
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
@@ -241,7 +242,7 @@ export const prismaCategoryMappingImpl = {
   async bulkUpsert(
     connectionId: string,
     catalogId: string,
-    mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
+    mappings: CategoryMappingAssignment[]
   ): Promise<number> {
     if (mappings.length === 0) return 0;
 

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  integrationAllegroApiPayloadSchema,
+  type IntegrationAllegroApiResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
@@ -11,12 +14,6 @@ import {
   externalServiceError,
   notFoundError,
 } from '@/shared/errors/app-error';
-
-const requestSchema = z.object({
-  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),
-  path: z.string().trim().min(1),
-  body: z['unknown']().optional(),
-});
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
@@ -39,7 +36,7 @@ export async function POST_handler(
   if (!id || !connectionId) {
     throw badRequestError('Integration id and connection id are required');
   }
-  const parsed = await parseJsonBody(_req, requestSchema, {
+  const parsed = await parseJsonBody(_req, integrationAllegroApiPayloadSchema, {
     logPrefix: 'integrations.allegro.request.POST',
   });
   if (!parsed.ok) {
@@ -164,10 +161,12 @@ export async function POST_handler(
     }
   }
 
-  return NextResponse.json({
+  const payload: IntegrationAllegroApiResponse = {
     status: response.status,
     statusText: response.statusText,
     data: apiResponseData,
     refreshed,
-  });
+  };
+
+  return NextResponse.json(payload);
 }

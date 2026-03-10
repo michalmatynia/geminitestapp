@@ -3,12 +3,14 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
+  createContext,
   Suspense,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
+  useContext,
   type FormEvent,
   type JSX,
 } from 'react';
@@ -57,6 +59,15 @@ type KangurParentAuthMode = 'sign-in' | 'create-account';
 
 const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9]+$/;
 const KANGUR_PARENT_AUTH_MODE_PARAM = 'authMode';
+const KangurLoginPagePropsContext = createContext<KangurLoginPageProps | null>(null);
+
+const useKangurLoginPageProps = (): KangurLoginPageProps => {
+  const value = useContext(KangurLoginPagePropsContext);
+  if (!value) {
+    throw new Error('KangurLoginPage props are unavailable.');
+  }
+  return value;
+};
 
 const resolveKangurParentAuthMode = (
   value: string | null | undefined
@@ -270,12 +281,13 @@ const clearOneTimeAuthParams = (): void => {
   }
 };
 
-function KangurLoginPageContent({
-  callbackUrl: callbackUrlProp,
-  defaultCallbackUrl,
-  onClose,
-  parentAuthMode: parentAuthModeProp,
-}: KangurLoginPageProps): JSX.Element {
+function KangurLoginPageContent(): JSX.Element {
+  const {
+    callbackUrl: callbackUrlProp,
+    defaultCallbackUrl,
+    onClose,
+    parentAuthMode: parentAuthModeProp,
+  } = useKangurLoginPageProps();
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
@@ -1111,9 +1123,13 @@ function KangurLoginPageContent({
 }
 
 export function KangurLoginPage(props: KangurLoginPageProps): JSX.Element {
+  const loginPageProps = props;
+
   return (
     <Suspense fallback={<div className='sr-only'>Ladowanie logowania StudiQ...</div>}>
-      <KangurLoginPageContent {...props} />
+      <KangurLoginPagePropsContext.Provider value={loginPageProps}>
+        <KangurLoginPageContent />
+      </KangurLoginPagePropsContext.Provider>
     </Suspense>
   );
 }

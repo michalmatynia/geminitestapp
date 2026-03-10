@@ -55,11 +55,8 @@ export function useBaseComSettings(
     () => (inventoriesQuery?.data as BaseInventory[]) ?? [],
     [inventoriesQuery?.data]
   );
-  const preferredTemplateId =
-    (activeTemplateQuery?.data as { templateId?: string | null } | undefined)?.templateId ?? null;
-  const preferredInventoryId =
-    (defaultInventoryQuery?.data as { inventoryId?: string | null } | undefined)?.inventoryId ??
-    null;
+  const preferredTemplateId = activeTemplateQuery.data?.templateId ?? null;
+  const preferredInventoryId = defaultInventoryQuery.data?.inventoryId ?? null;
 
   // Auto-select preferred template
   useEffect(() => {
@@ -130,14 +127,13 @@ export function useBaseComSettings(
     if (selectedInventoryId !== preferredInventoryId) {
       void updatePreferredInventoryMutation.mutateAsync({
         inventoryId: selectedInventoryId,
-        connectionId,
       });
     }
   }, [
     isBaseComIntegration,
+    connectionId,
     selectedInventoryId,
     preferredInventoryId,
-    connectionId,
     updatePreferredInventoryMutation,
   ]);
 

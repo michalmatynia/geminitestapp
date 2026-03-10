@@ -3,8 +3,8 @@
 import React from 'react';
 
 import {
-  CmsPageRendererBase,
-  SectionRendererBase,
+  renderCmsPageRenderer,
+  renderSectionRenderer,
   type CmsPageRendererProps,
   type SectionRendererProps,
 } from './CmsPageRendererBase';
@@ -15,11 +15,11 @@ export type { CmsPageRendererProps } from './CmsPageRendererBase';
 export function CmsPageRenderer(props: CmsPageRendererProps): React.ReactNode {
   const runtime = useOptionalCmsRuntime();
 
-  return <CmsPageRendererBase {...props} runtime={runtime} />;
+  return renderCmsPageRenderer({ ...props, runtime });
 }
 
 export function SectionRenderer(props: SectionRendererProps): React.ReactNode {
   const runtime = useOptionalCmsRuntime();
 
-  return <SectionRendererBase {...props} runtime={runtime} />;
+  return renderSectionRenderer({ ...props, runtime });
 }

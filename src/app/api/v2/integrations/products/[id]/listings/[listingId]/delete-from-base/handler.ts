@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  productListingDeleteFromBasePayloadSchema,
+  type ProductListingDeleteFromBaseResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import { resolveDeleteInventoryId } from './helpers';
-
-const deleteSchema = z.object({
-  inventoryId: z.string().min(1).optional(),
-});
 
 const BASE_DELETE_RUN_PATH_ID = 'integration-base-delete';
 const BASE_DELETE_RUN_PATH_NAME = 'Base.com Deletion Jobs';
@@ -37,7 +36,7 @@ export async function POST_handler(
   const repo = resolvedListing.repository;
   const listing = resolvedListing.listing;
 
-  const parsed = await parseJsonBody(_req, deleteSchema, {
+  const parsed = await parseJsonBody(_req, productListingDeleteFromBasePayloadSchema, {
     logPrefix: 'integrations.products.listings.DELETE_FROM_BASE',
     allowEmpty: true,
   });
@@ -162,11 +161,13 @@ export async function POST_handler(
         .catch(() => undefined);
     }
 
-    return NextResponse.json({
+    const response: ProductListingDeleteFromBaseResponse = {
       status: 'deleted',
       message: 'Delete from Base.com finished.',
       runId,
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete from Base.com.';
     await repo.updateListingStatus(listingId, 'failed').catch(() => undefined);

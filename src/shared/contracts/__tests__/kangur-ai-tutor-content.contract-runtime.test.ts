@@ -25,8 +25,23 @@ describe('kangur ai tutor content contract', () => {
     expect(parsed.common.sendFailureFallback).toBe(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.sendFailureFallback
     );
+    expect(parsed.common.defaultTutorName).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
+    );
+    expect(parsed.common.sessionRegistryLabel).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.sessionRegistryLabel
+    );
     expect(parsed.guestIntro.intentPhrases.createAccount).toEqual(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.intentPhrases.createAccount
+    );
+    expect(parsed.narrator.registrySourceLabel).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.narrator.registrySourceLabel
+    );
+    expect(parsed.usageApi.availabilityErrors.emailUnverified).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.usageApi.availabilityErrors.emailUnverified
+    );
+    expect(parsed.parentVerification.verifySuccessMessage).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.verifySuccessMessage
     );
     expect(parsed.profileMoodWidget.title).toBe(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.profileMoodWidget.title

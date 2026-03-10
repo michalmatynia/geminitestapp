@@ -12,6 +12,7 @@ const {
   enforceAiPathsRunRateLimitMock,
   getAiPathsSettingMock,
   enqueuePathRunMock,
+  upsertAiPathsSettingsMock,
   assertAiPathRunQueueReadyForEnqueueMock,
   logSystemEventMock,
   contextRegistryResolveRefsMock,
@@ -20,6 +21,7 @@ const {
   enforceAiPathsRunRateLimitMock: vi.fn(),
   getAiPathsSettingMock: vi.fn(),
   enqueuePathRunMock: vi.fn(),
+  upsertAiPathsSettingsMock: vi.fn(),
   assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
   logSystemEventMock: vi.fn(),
   contextRegistryResolveRefsMock: vi.fn(),
@@ -34,6 +36,10 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 vi.mock('@/features/jobs/server', () => ({
   assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyForEnqueueMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
+  upsertAiPathsSettings: upsertAiPathsSettingsMock,
 }));
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
@@ -127,6 +133,13 @@ const buildLegacyStoredParameterInferenceConfig = () => {
     trigger: 'Product Modal - Infer Parameters',
     extensions: undefined,
     nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'router' && node.id === 'node-router-seed-params') {
+        return {
+          ...node,
+          inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+          outputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        };
+      }
       if (node.type === 'parser') {
         return {
           ...node,
@@ -165,12 +178,92 @@ const buildLegacyStoredParameterInferenceConfig = () => {
   };
 };
 
+const buildProvenanceOnlyStoredParameterInferenceConfig = () => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path-stale-parameter-inference-provenance',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'router' && node.id === 'node-router-seed-params') {
+        return {
+          ...node,
+          inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+          outputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        };
+      }
+      return node;
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 13,
+        seededDefault: false,
+      },
+    },
+  };
+};
+
+const buildMappingModeStoredParameterInferenceConfig = () => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path-stale-parameter-inference-mapping-live',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+            mappings: [
+              {
+                sourcePath: 'parameters',
+                sourcePort: 'value',
+                targetPath: 'parameters',
+              },
+            ],
+          },
+        },
+      };
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 13,
+        seededDefault: false,
+      },
+    },
+  };
+};
+
 describe('ai-paths runs enqueue handler', () => {
   beforeEach(() => {
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
     enforceAiPathsRunRateLimitMock.mockReset().mockResolvedValue(undefined);
     getAiPathsSettingMock.mockReset().mockResolvedValue(null);
     enqueuePathRunMock.mockReset().mockResolvedValue({ id: 'run-1', status: 'queued' });
+    upsertAiPathsSettingsMock.mockReset().mockResolvedValue(undefined);
     assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
     contextRegistryResolveRefsMock.mockReset().mockResolvedValue({
@@ -353,11 +446,6 @@ describe('ai-paths runs enqueue handler', () => {
         pathId: config.id,
         entityId: 'product-1',
         entityType: 'product',
-        meta: {
-          aiPathsValidation: {
-            enabled: false,
-          },
-        },
       }),
       {} as Parameters<typeof POST_handler>[1]
     );
@@ -374,6 +462,72 @@ describe('ai-paths runs enqueue handler', () => {
     const parserNode = enqueueArgs?.nodes?.find((node) => node.type === 'parser');
     expect(parserNode?.config?.parser?.mappings?.['title']).toBe('$.name_en');
     expect(parserNode?.config?.parser?.mappings?.['content_en']).toBe('$.description_en');
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        key: `ai_paths_config_${config.id}`,
+      }),
+    ]);
+  });
+
+  it('repairs stale parameter inference starter provenance on non-default path ids before enqueueing', async () => {
+    const config = buildProvenanceOnlyStoredParameterInferenceConfig();
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        entityId: 'product-1',
+        entityType: 'product',
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        key: `ai_paths_config_${config.id}`,
+      }),
+    ]);
+  });
+
+  it('fully repairs stale parameter inference live configs that still use mapping-mode database updates', async () => {
+    const config = buildMappingModeStoredParameterInferenceConfig();
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        entityId: 'product-1',
+        entityType: 'product',
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        key: `ai_paths_config_${config.id}`,
+      }),
+    ]);
+    const repairedPayload = upsertAiPathsSettingsMock.mock.calls[0]?.[0]?.[0]?.value;
+    expect(typeof repairedPayload).toBe('string');
+    const repairedConfig = JSON.parse(repairedPayload as string) as {
+      extensions?: {
+        aiPathsStarter?: {
+          templateVersion?: number;
+        };
+      };
+      nodes?: Array<{
+        type?: string;
+        inputs?: string[];
+        outputs?: string[];
+      }>;
+    };
+    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(14);
+    const seedRouterNode = repairedConfig.nodes?.find((node) => node.type === 'router');
+    expect(seedRouterNode).toBeDefined();
+    expect(seedRouterNode?.inputs ?? []).not.toContain('prompt');
+    expect(seedRouterNode?.outputs ?? []).not.toContain('prompt');
   });
 
   it('normalizes context registry payloads into enqueue metadata', async () => {

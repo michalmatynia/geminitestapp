@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   getExportDefaultConnectionId,
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  baseDefaultConnectionPreferencePayloadSchema,
+  type BaseDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-const postSchema = z.object({
-  connectionId: z.string().nullable(),
-});
 
 const normalizeOptionalId = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -26,7 +25,10 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const storedConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
-    return NextResponse.json({ connectionId: storedConnectionId });
+    const response: BaseDefaultConnectionPreferenceResponse = {
+      connectionId: storedConnectionId,
+    };
+    return NextResponse.json(response);
   } catch (error) {
     void ErrorSystem.logWarning(
       'Failed to read Base.com default connection setting; returning null.',
@@ -35,7 +37,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         error: error instanceof Error ? error.message : String(error),
       }
     );
-    return NextResponse.json({ connectionId: null });
+    const response: BaseDefaultConnectionPreferenceResponse = { connectionId: null };
+    return NextResponse.json(response);
   }
 }
 
@@ -44,13 +47,15 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * Sets the default Base.com connection ID for exports
  */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, postSchema, {
+  const parsed = await parseJsonBody(req, baseDefaultConnectionPreferencePayloadSchema, {
     logPrefix: 'exports.base.default-connection.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
-  await setExportDefaultConnectionId(data.connectionId);
-  return NextResponse.json({ success: true });
+  const connectionId = normalizeOptionalId(data.connectionId);
+  await setExportDefaultConnectionId(connectionId);
+  const response: BaseDefaultConnectionPreferenceResponse = { connectionId };
+  return NextResponse.json(response);
 }

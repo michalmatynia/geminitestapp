@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
-import type { TestLogEntry } from '@/shared/contracts/integrations';
+import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
@@ -138,28 +138,28 @@ export async function POST_handler(
 
   pushStep('Testing API connection', 'pending', 'Calling Allegro /me');
   let accessToken = decryptSecret(connection.allegroAccessToken);
-  let response = await buildRequest(accessToken);
+  let apiResponse = await buildRequest(accessToken);
   let refreshed = false;
 
-  if (response.status === 401 && refreshToken) {
+  if (apiResponse.status === 401 && refreshToken) {
     pushStep('Refreshing token', 'pending', 'Refreshing Allegro access token');
     try {
       accessToken = await refreshAccessToken();
       refreshed = true;
       pushStep('Refreshing token', 'ok', 'Allegro token refreshed');
-      response = await buildRequest(accessToken);
+      apiResponse = await buildRequest(accessToken);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return await fail('Refreshing token', message);
     }
   }
 
-  const raw = await response.text();
-  if (!response.ok) {
+  const raw = await apiResponse.text();
+  if (!apiResponse.ok) {
     return await fail(
       'Testing API connection',
-      raw || `${response.status} ${response.statusText}`.trim(),
-      response.status
+      raw || `${apiResponse.status} ${apiResponse.statusText}`.trim(),
+      apiResponse.status
     );
   }
 
@@ -180,9 +180,11 @@ export async function POST_handler(
     profile = raw;
   }
 
-  return NextResponse.json({
+  const successResponse: TestConnectionResponse = {
     ok: true,
     steps,
     profile,
-  });
+  };
+
+  return NextResponse.json(successResponse);
 }

@@ -184,6 +184,7 @@ export function KangurActiveLessonHeader({
   backButtonLabel = 'Wróć do listy lekcji',
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
   const subsectionSummary = useKangurLessonSubsectionSummary();
+  const lessonHeaderTestId = headerTestId;
   const displayTitle = subsectionSummary?.title ?? lesson.title;
   const displayDescription = subsectionSummary?.description ?? lesson.description;
   const subsectionTypeLabel = subsectionSummary?.isGame ? 'Gra' : 'Lekcja';
@@ -232,7 +233,7 @@ export function KangurActiveLessonHeader({
       <KangurActiveLessonHeaderContext.Provider value={contextValue}>
         <KangurGlassPanel
           className='w-full'
-          data-testid={(() => headerTestId)()}
+          data-testid={lessonHeaderTestId}
           padding='md'
           surface='mistStrong'
           variant='soft'

@@ -120,6 +120,9 @@ export default function MultiplicationGame({
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const handleFinishGame = (): void => {
+    onFinish();
+  };
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [question, setQuestion] = useState<MultiplicationQuestion>(() => generateQuestion(0));
@@ -232,12 +235,7 @@ export default function MultiplicationGame({
             </KangurButton>
             <KangurButton
               className='flex-1'
-              onClick={(() => {
-                const handleFinishGame = (): void => {
-                  onFinish();
-                };
-                return handleFinishGame;
-              })()}
+              onClick={handleFinishGame}
               size='lg'
               variant='primary'
             >

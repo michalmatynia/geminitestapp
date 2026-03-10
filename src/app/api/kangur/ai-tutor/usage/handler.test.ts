@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
@@ -11,9 +12,11 @@ import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-
 const {
   resolveKangurActorMock,
   readStoredSettingValueMock,
+  getKangurAiTutorContentMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
+  getKangurAiTutorContentMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
@@ -22,6 +25,10 @@ vi.mock('@/features/kangur/server', () => ({
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   readStoredSettingValue: readStoredSettingValueMock,
+}));
+
+vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
+  getKangurAiTutorContent: getKangurAiTutorContentMock,
 }));
 
 import { getKangurAiTutorUsageHandler } from './handler';
@@ -47,6 +54,7 @@ describe('kangur ai tutor usage handler', () => {
       },
       ownerEmailVerified: true,
     });
+    getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
 
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
@@ -123,7 +131,7 @@ describe('kangur ai tutor usage handler', () => {
         createRequestContext()
       )
     ).rejects.toMatchObject({
-      message: 'AI tutor is not enabled for this learner.',
+      message: DEFAULT_KANGUR_AI_TUTOR_CONTENT.usageApi.availabilityErrors.disabled,
       httpStatus: 400,
     });
   });
@@ -142,7 +150,7 @@ describe('kangur ai tutor usage handler', () => {
         createRequestContext()
       )
     ).rejects.toMatchObject({
-      message: 'Verify your parent email to unlock AI Tutor.',
+      message: DEFAULT_KANGUR_AI_TUTOR_CONTENT.usageApi.availabilityErrors.emailUnverified,
       httpStatus: 400,
     });
   });

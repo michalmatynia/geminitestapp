@@ -281,6 +281,8 @@ function CompleteEquation({
   }));
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
+  const slotALabel = `Grupa A (${round.a})`;
+  const slotBLabel = `Grupa B (${round.b})`;
 
   const onDragEnd = (result: DropResult): void => {
     if (checked) return;
@@ -338,7 +340,7 @@ function CompleteEquation({
           <SlotZone
             id='slotA'
             items={state.slotA}
-            label={`Grupa A (${round.a})`}
+            label={slotALabel}
             checked={checked}
             correct={correct}
           />
@@ -346,7 +348,7 @@ function CompleteEquation({
           <SlotZone
             id='slotB'
             items={state.slotB}
-            label={`Grupa B (${round.b})`}
+            label={slotBLabel}
             checked={checked}
             correct={correct}
           />
@@ -407,6 +409,8 @@ function CompleteEquation({
 }
 
 function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.JSX.Element {
+  const slotZoneTestId = `adding-ball-${id}`;
+
   return (
     <Droppable droppableId={id} direction='horizontal'>
       {(provided, snapshot) => {
@@ -423,7 +427,7 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
               ref={provided.innerRef}
               accent={surface.accent}
               className={cn(surface.className, 'min-h-[52px] min-w-[60px]')}
-              data-testid={`adding-ball-${id}`}
+              data-testid={slotZoneTestId}
               padding='sm'
               tone={surface.tone}
               {...provided.droppableProps}
@@ -768,6 +772,9 @@ export default function AddingBallGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [round, setRound] = useState<Round>(() => generateRound(MODES[0] ?? 'complete_equation'));
   const sessionStartedAtRef = useRef(Date.now());
+  const handleFinishGame = (): void => {
+    onFinish();
+  };
 
   const handleResult = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
@@ -856,12 +863,7 @@ export default function AddingBallGame({
             </KangurButton>
             <KangurButton
               className='flex-1'
-              onClick={(() => {
-                const handleFinishGame = (): void => {
-                  onFinish();
-                };
-                return handleFinishGame;
-              })()}
+              onClick={handleFinishGame}
               size='lg'
               variant='primary'
             >

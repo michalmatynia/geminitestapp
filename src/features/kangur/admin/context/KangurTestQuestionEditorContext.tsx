@@ -29,9 +29,9 @@ type KangurTestQuestionEditorActionsContextValue = Pick<
   'onChange' | 'updateFormData' | 'setChoices' | 'setCorrectChoiceLabel' | 'setIllustration'
 >;
 
-const KangurTestQuestionEditorStateContext =
+export const KangurTestQuestionEditorStateContext =
   createContext<KangurTestQuestionEditorStateContextValue | null>(null);
-const KangurTestQuestionEditorActionsContext =
+export const KangurTestQuestionEditorActionsContext =
   createContext<KangurTestQuestionEditorActionsContextValue | null>(null);
 
 type Props = {
@@ -41,12 +41,14 @@ type Props = {
   children: ReactNode;
 };
 
-export function KangurTestQuestionEditorProvider({
+export function useCreateKangurTestQuestionEditorProviderValues({
   formData,
   onChange,
   suiteTitle,
-  children,
-}: Props): React.JSX.Element {
+}: Omit<Props, 'children'>): {
+  actionsValue: KangurTestQuestionEditorActionsContextValue;
+  stateValue: KangurTestQuestionEditorStateContextValue;
+} {
   const correctChoiceLabel = formData.correctChoiceLabel;
 
   const updateFormData = useCallback(
@@ -96,6 +98,21 @@ export function KangurTestQuestionEditorProvider({
     }),
     [onChange, setChoices, setCorrectChoiceLabel, setIllustration, updateFormData]
   );
+
+  return { stateValue, actionsValue };
+}
+
+export function KangurTestQuestionEditorProvider({
+  formData,
+  onChange,
+  suiteTitle,
+  children,
+}: Props): React.JSX.Element {
+  const { stateValue, actionsValue } = useCreateKangurTestQuestionEditorProviderValues({
+    formData,
+    onChange,
+    suiteTitle,
+  });
 
   return (
     <KangurTestQuestionEditorActionsContext.Provider value={actionsValue}>

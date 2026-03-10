@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
@@ -13,18 +12,13 @@ import {
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  productListingCreatePayloadSchema,
+  type ProductListingCreateResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
-
-const createListingSchema = z.object({
-  integrationId: z.string().min(1),
-  connectionId: z.string().min(1),
-  durationHours: z.number().int().min(1).max(720).optional(),
-  autoRelistEnabled: z.boolean().optional(),
-  autoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
-  templateId: z.string().trim().nullable().optional(),
-});
 
 const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -165,7 +159,7 @@ export async function POST_handler(
       throw badRequestError('Product id is required');
     }
 
-    const parsed = await parseJsonBody(req, createListingSchema, {
+    const parsed = await parseJsonBody(req, productListingCreatePayloadSchema, {
       logPrefix: 'integrations.products.listings.POST',
     });
     if (!parsed.ok) {
@@ -242,21 +236,20 @@ export async function POST_handler(
         action: 'list',
         source: 'api',
       });
-      return NextResponse.json(
-        {
-          ...listing,
-          queued: true,
-          queue: {
-            name: 'tradera-listings',
-            jobId,
-            enqueuedAt,
-          },
+      const response: ProductListingCreateResponse = {
+        ...listing,
+        queued: true,
+        queue: {
+          name: 'tradera-listings',
+          jobId,
+          enqueuedAt,
         },
-        { status: 201 }
-      );
+      };
+      return NextResponse.json(response, { status: 201 });
     }
 
-    return NextResponse.json(listing, { status: 201 });
+    const response: ProductListingCreateResponse = listing;
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'An unknown error occurred' },

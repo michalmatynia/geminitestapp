@@ -635,8 +635,8 @@
         "x": 2260,
         "y": 40
       },
-      "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
-      "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+      "inputs": ["context", "bundle", "result", "value", "valid", "errors"],
+      "outputs": ["context", "bundle", "result", "value", "valid", "errors"],
       "config": {
         "router": {
           "mode": "valid",
@@ -747,7 +747,7 @@
           "aiPrompt": "",
           "validationRuleIds": [],
           "writeOutcomePolicy": {
-            "onZeroAffected": "fail"
+            "onZeroAffected": "pass"
           }
         },
         "runtime": {
@@ -899,7 +899,7 @@
             "allowUnknownParameterIds": false
           },
           "writeOutcomePolicy": {
-            "onZeroAffected": "fail"
+            "onZeroAffected": "pass"
           }
         },
         "runtime": {

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { syncBaseImagesForListing } from '@/features/integrations/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  productListingSyncBaseImagesPayloadSchema,
+  type ProductListingSyncBaseImagesResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const syncSchema = z.object({
-  inventoryId: z.string().min(1).optional(),
-});
 
 export async function POST_handler(
   _req: NextRequest,
@@ -20,7 +19,7 @@ export async function POST_handler(
     throw badRequestError('Product id and listing id are required');
   }
 
-  const parsed = await parseJsonBody(_req, syncSchema, {
+  const parsed = await parseJsonBody(_req, productListingSyncBaseImagesPayloadSchema, {
     logPrefix: 'integrations.products.listings.SYNC_BASE_IMAGES',
     allowEmpty: true,
   });
@@ -30,9 +29,11 @@ export async function POST_handler(
   const data = parsed.data;
   const result = await syncBaseImagesForListing(listingId, productId, data.inventoryId ?? null);
 
-  return NextResponse.json({
+  const response: ProductListingSyncBaseImagesResponse = {
     status: 'synced',
     count: result.count,
     added: result.added,
-  });
+  };
+
+  return NextResponse.json(response);
 }

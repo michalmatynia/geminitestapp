@@ -1,6 +1,9 @@
 'use client';
 
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type {
+  BaseImageRetryPresetsResponse,
+  ImageRetryPreset,
+} from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import {
   getDefaultImageRetryPresets,
@@ -16,13 +19,11 @@ export const useImageRetryPresets = (): ImageRetryPreset[] => {
   >({
     queryKey: QUERY_KEYS.integrations.imageRetryPresets(),
     queryFn: async ({ signal }): Promise<ImageRetryPreset[]> => {
-      const payload = await api.get<{ presets?: ImageRetryPreset[] }>(
+      const payload = await api.get<BaseImageRetryPresetsResponse>(
         '/api/v2/integrations/exports/base/image-retry-presets',
         { signal }
       );
-      return payload.presets
-        ? normalizeImageRetryPresets(payload.presets)
-        : getDefaultImageRetryPresets();
+      return normalizeImageRetryPresets(payload.presets);
     },
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchOnMount: false,

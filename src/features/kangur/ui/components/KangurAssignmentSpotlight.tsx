@@ -46,6 +46,7 @@ export function KangurAssignmentSpotlight({
       : assignment.priority === 'medium'
         ? 'Priorytet średni'
         : 'Priorytet niski';
+  const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
 
   return (
     <KangurGlassPanel
@@ -115,7 +116,7 @@ export function KangurAssignmentSpotlight({
           fullWidth
           variant='primary'
         >
-          <Link href={(() => buildKangurAssignmentHref(basePath, assignment))()}>
+          <Link href={assignmentHref}>
             {getKangurAssignmentActionLabel(assignment)}
           </Link>
         </KangurButton>

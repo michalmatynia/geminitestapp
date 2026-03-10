@@ -34,6 +34,7 @@ export default function ProgressOverview({
   progress,
   dailyQuest = null,
 }: ProgressOverviewProps): React.JSX.Element {
+  const overviewProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted, operationsPlayed = [] } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);
@@ -181,7 +182,7 @@ export default function ProgressOverview({
         </KangurGlassPanel>
       ) : null}
 
-      <LessonMasteryInsights progress={progress} />
+      <LessonMasteryInsights progress={overviewProgress} />
 
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
@@ -237,7 +238,7 @@ export default function ProgressOverview({
         <KangurBadgeTrackGrid
           dataTestIdPrefix='progress-overview-badge-track'
           emptyTestId='progress-overview-badges-empty'
-          progress={progress}
+          progress={overviewProgress}
         />
       </KangurGlassPanel>
     </div>

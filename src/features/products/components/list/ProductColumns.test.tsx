@@ -122,4 +122,64 @@ describe('ProductColumns queued badge', () => {
 
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
   });
+
+  it('renders the resolved category label instead of the category id', () => {
+    const product = createProduct({
+      categoryId: '507f1f77bcf86cd799439011',
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['507f1f77bcf86cd799439011', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['507f1f77bcf86cd799439011', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Keychains' })).toBeInTheDocument();
+    expect(screen.queryByText('507f1f77bcf86cd799439011')).not.toBeInTheDocument();
+  });
+
+  it('does not leak opaque category ids when no category label is available', () => {
+    const product = createProduct({
+      categoryId: '507f1f77bcf86cd799439011',
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: '—' })).toBeInTheDocument();
+    expect(screen.queryByText('507f1f77bcf86cd799439011')).not.toBeInTheDocument();
+  });
 });

@@ -163,6 +163,7 @@ vi.mock('@/features/products/hooks/useUserPreferences', () => ({
 
 vi.mock('@/features/products/state/queued-product-ops', () => ({
   useQueuedProductIds: () => new Set<string>(),
+  useQueuedAiRunProductIds: () => new Set<string>(),
 }));
 
 vi.mock('@/shared/hooks/sync/useBackgroundSync', () => ({

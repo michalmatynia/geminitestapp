@@ -1,19 +1,26 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
   buildKangurParentAccountCreateDebugPayloadMock,
   createKangurParentAccountMock,
+  getKangurAiTutorContentMock,
 } = vi.hoisted(() => ({
   buildKangurParentAccountCreateDebugPayloadMock: vi.fn(),
   createKangurParentAccountMock: vi.fn(),
+  getKangurAiTutorContentMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/parent-email-auth', () => ({
   buildKangurParentAccountCreateDebugPayload: buildKangurParentAccountCreateDebugPayloadMock,
   createKangurParentAccount: createKangurParentAccountMock,
+}));
+
+vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
+  getKangurAiTutorContent: getKangurAiTutorContentMock,
 }));
 
 import { postKangurParentAccountCreateHandler } from './handler';
@@ -30,6 +37,7 @@ const createRequestContext = (): ApiHandlerContext =>
 describe('kangur parent account create handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
   });
 
   it('stages parent account creation and returns the verification response', async () => {
@@ -75,7 +83,7 @@ describe('kangur parent account create handler', () => {
       hasPassword: true,
       retryAfterMs: 60000,
       message:
-        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+        DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.createSuccessMessage,
       debug: {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-1',
       },
@@ -119,7 +127,7 @@ describe('kangur parent account create handler', () => {
       hasPassword: true,
       retryAfterMs: 15_000,
       message:
-        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+        DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.createSuccessMessage,
       debug: {
         verificationUrl: 'https://example.com/kangur/login?verifyEmailToken=verify-custom',
       },

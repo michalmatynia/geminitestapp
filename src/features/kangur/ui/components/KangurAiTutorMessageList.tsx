@@ -30,10 +30,13 @@ export function KangurAiTutorMessageList(): JSX.Element {
     tutorSessionKey,
   } = useKangurAiTutorPanelBodyContext();
   const { messageFeedbackByKey, messagesEndRef } = useKangurAiTutorWidgetStateContext();
+  const shouldSuppressConversationHistory =
+    isSelectionExplainPendingMode || isSectionExplainPendingMode;
+  const visibleMessages = shouldSuppressConversationHistory ? [] : messages;
 
   return (
     <div className='flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3'>
-      {messages.length === 0 ? (
+      {visibleMessages.length === 0 ? (
         <p className='py-4 text-center text-xs text-slate-500'>
           {isSelectionExplainPendingMode || isSectionExplainPendingMode
             ? panelEmptyStateMessage
@@ -42,7 +45,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
               : emptyStateMessage}
         </p>
       ) : (
-        messages.map((msg, index) => {
+        visibleMessages.map((msg, index) => {
           if (msg.role === 'user') {
             return (
               <div key={index} className='flex justify-end'>

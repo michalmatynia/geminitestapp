@@ -257,6 +257,10 @@ export default function KangurGameHomeMomentumWidget({
     return null;
   }
 
+  const recommendationAction = recommendation.action;
+  const recommendationHref = buildAssignmentHref(basePath, recommendationAction);
+  const recommendationTargetPageKey = recommendationAction.page;
+
   return (
     <KangurInfoCard
       accent={recommendation.accent}
@@ -290,10 +294,10 @@ export default function KangurGameHomeMomentumWidget({
         </div>
         <KangurButton asChild className='shrink-0' size='sm' variant='primary'>
           <Link
-            href={(() => buildAssignmentHref(basePath, recommendation.action))()}
-            targetPageKey={recommendation.action.page}
+            href={recommendationHref}
+            targetPageKey={recommendationTargetPageKey}
           >
-            {recommendation.action.label}
+            {recommendationAction.label}
           </Link>
         </KangurButton>
       </div>

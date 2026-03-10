@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, type IdNameDto } from '../base';
-import { producerSchema, type Producer } from '../products';
+import { producerSchema } from '../products';
 
 import type { ExternalTagSyncInput as ExternalProducerSyncInput } from './listings';
 
@@ -13,16 +13,7 @@ export const externalProducerSchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export interface ExternalProducer {
-  id: string;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata: Record<string, unknown> | null;
-  fetchedAt: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type ExternalProducer = z.infer<typeof externalProducerSchema>;
 
 export const producerMappingSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -31,25 +22,14 @@ export const producerMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface ProducerMapping {
-  id: string;
-  connectionId: string;
-  externalProducerId: string;
-  internalProducerId: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
+export type ProducerMapping = z.infer<typeof producerMappingSchema>;
 
 export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
   externalProducer: externalProducerSchema,
   internalProducer: producerSchema.nullable(),
 });
 
-export interface ProducerMappingWithDetails extends ProducerMapping {
-  externalProducer: ExternalProducer;
-  internalProducer: Producer | null;
-}
+export type ProducerMappingWithDetails = z.infer<typeof producerMappingWithDetailsSchema>;
 
 export const baseProducerFromApiSchema = z.object({
   manufacturer_id: z.union([z.number(), z.string()]).optional(),
@@ -70,32 +50,29 @@ export const producerMappingCreateInputSchema = z.object({
   internalProducerId: z.string(),
 });
 
-export interface ProducerMappingCreateInput {
-  connectionId: string;
-  externalProducerId: string;
-  internalProducerId: string;
-}
+export type ProducerMappingCreateInput = z.infer<typeof producerMappingCreateInputSchema>;
 
 export const producerMappingUpdateInputSchema = z.object({
   externalProducerId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface ProducerMappingUpdateInput {
-  externalProducerId?: string;
-  isActive?: boolean;
-}
+export type ProducerMappingUpdateInput = z.infer<typeof producerMappingUpdateInputSchema>;
 
-export const bulkProducerMappingItemSchema = z.object({
+export const producerMappingAssignmentSchema = z.object({
   internalProducerId: z.string().trim().min(1),
   externalProducerId: z.string().trim().min(1).nullable(),
 });
 
-export type BulkProducerMappingItem = z.infer<typeof bulkProducerMappingItemSchema>;
+export type ProducerMappingAssignment = z.infer<typeof producerMappingAssignmentSchema>;
+
+export const bulkProducerMappingItemSchema = producerMappingAssignmentSchema;
+
+export type BulkProducerMappingItem = ProducerMappingAssignment;
 
 export const bulkProducerMappingRequestSchema = z.object({
   connectionId: z.string().trim().min(1),
-  mappings: z.array(bulkProducerMappingItemSchema).min(1),
+  mappings: z.array(producerMappingAssignmentSchema).min(1),
 });
 
 export type BulkProducerMappingRequest = z.infer<typeof bulkProducerMappingRequestSchema>;

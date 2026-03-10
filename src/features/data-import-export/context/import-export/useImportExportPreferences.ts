@@ -3,7 +3,16 @@
 import { useEffect, useRef } from 'react';
 
 import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import type { IntegrationConnectionBasic, ImageRetryPreset } from '@/shared/contracts/integrations';
+import type {
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseImageRetryPresetsResponse,
+  BaseSampleProductResponse,
+  BaseStockFallbackPreferenceResponse,
+  IntegrationConnectionBasic,
+  ImageRetryPreset,
+} from '@/shared/contracts/integrations';
 
 export function useImportExportPreferences({
   lastImportTemplatePref,
@@ -20,12 +29,12 @@ export function useImportExportPreferences({
   setImageRetryPresets,
   setInventoryId,
 }: {
-  lastImportTemplatePref: { templateId?: string | null } | undefined | null;
-  defaultExportInventoryPref: { inventoryId?: string | null } | undefined | null;
-  defaultConnectionPref: { connectionId?: string | null } | undefined | null;
-  exportStockFallbackPref: { enabled?: boolean } | undefined | null;
-  imageRetryPresetsPref: { presets?: unknown } | undefined | null;
-  sampleProductPref: { inventoryId?: string | null } | undefined | null;
+  lastImportTemplatePref: BaseActiveTemplatePreferenceResponse | undefined | null;
+  defaultExportInventoryPref: BaseDefaultInventoryPreferenceResponse | undefined | null;
+  defaultConnectionPref: BaseDefaultConnectionPreferenceResponse | undefined | null;
+  exportStockFallbackPref: BaseStockFallbackPreferenceResponse | undefined | null;
+  imageRetryPresetsPref: BaseImageRetryPresetsResponse | undefined | null;
+  sampleProductPref: BaseSampleProductResponse | undefined | null;
   baseConnections: IntegrationConnectionBasic[];
   setImportTemplateId: (id: string) => void;
   setExportInventoryId: (id: string) => void;

@@ -40,6 +40,42 @@ type SectionAnchor = KangurTutorAnchorRegistration & {
   surface: TutorSurface;
 };
 
+const hasUsableRect = (rect: DOMRect | null | undefined): rect is DOMRect =>
+  Boolean(rect && rect.width > 0 && rect.height > 0);
+
+const createRect = (left: number, top: number, width: number, height: number): DOMRect => {
+  if (typeof DOMRect === 'function') {
+    return new DOMRect(left, top, width, height);
+  }
+
+  return {
+    x: left,
+    y: top,
+    width,
+    height,
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    toJSON: () => ({
+      x: left,
+      y: top,
+      width,
+      height,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+    }),
+  } as DOMRect;
+};
+
+const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
+  const overlapWidth = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left));
+  const overlapHeight = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
+  return overlapWidth * overlapHeight;
+};
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
@@ -64,10 +100,30 @@ const rectContainsPoint = (rect: DOMRect | null | undefined, point: TutorPoint):
   );
 };
 
+const getAvatarRect = (point: TutorPoint): DOMRect => createRect(point.x, point.y, AVATAR_SIZE, AVATAR_SIZE);
+
+const getDraggedAvatarPoint = (input: {
+  dragState: TutorAvatarDragState;
+  pointerPoint: TutorPoint;
+  viewport: {
+    width: number;
+    height: number;
+  };
+}): TutorPoint =>
+  clampAvatarPoint(
+    {
+      x: input.dragState.origin.x + (input.pointerPoint.x - input.dragState.startX),
+      y: input.dragState.origin.y + (input.pointerPoint.y - input.dragState.startY),
+    },
+    input.viewport
+  );
+
 const selectTutorSectionDropAnchor = (input: {
   anchors: KangurTutorAnchorRegistration[];
+  avatarPoint?: TutorPoint | null;
   point: TutorPoint;
 }): SectionAnchor | null => {
+  const avatarRect = input.avatarPoint ? getAvatarRect(input.avatarPoint) : null;
   const candidates = input.anchors
     .filter(isSectionExplainableTutorAnchor)
     .map((anchor) => ({
@@ -80,17 +136,37 @@ const selectTutorSectionDropAnchor = (input: {
       ): entry is {
         anchor: SectionAnchor;
         rect: DOMRect;
-      } => Boolean(entry.rect && entry.rect.width >= 0 && entry.rect.height >= 0)
+      } => hasUsableRect(entry.rect)
     )
-    .filter((entry) =>
-      rectContainsPoint(
-        getExpandedRect(entry.rect, SECTION_DROP_TARGET_PADDING_X, SECTION_DROP_TARGET_PADDING_Y),
-        input.point
-      )
+    .map((entry) => ({
+      ...entry,
+      expandedRect: getExpandedRect(
+        entry.rect,
+        SECTION_DROP_TARGET_PADDING_X,
+        SECTION_DROP_TARGET_PADDING_Y
+      ),
+    }))
+    .filter(
+      (
+        entry
+      ): entry is {
+        anchor: SectionAnchor;
+        rect: DOMRect;
+        expandedRect: DOMRect;
+      } => hasUsableRect(entry.expandedRect)
     )
+    .map((entry) => ({
+      ...entry,
+      overlapArea: avatarRect ? getRectOverlapArea(entry.expandedRect, avatarRect) : 0,
+    }))
+    .filter((entry) => entry.overlapArea > 0 || rectContainsPoint(entry.expandedRect, input.point))
     .sort((left, right) => {
       if (right.anchor.priority !== left.anchor.priority) {
         return right.anchor.priority - left.anchor.priority;
+      }
+
+      if (right.overlapArea !== left.overlapArea) {
+        return right.overlapArea - left.overlapArea;
       }
 
       return left.rect.width * left.rect.height - right.rect.width * right.rect.height;
@@ -98,6 +174,49 @@ const selectTutorSectionDropAnchor = (input: {
 
   return candidates[0]?.anchor ?? null;
 };
+
+const getSectionAnchorById = (
+  anchors: KangurTutorAnchorRegistration[],
+  anchorId: string
+): SectionAnchor | null =>
+  anchors.find(
+    (anchor): anchor is SectionAnchor =>
+      anchor.id === anchorId && isSectionExplainableTutorAnchor(anchor)
+  ) ?? null;
+
+const selectTutorSectionDropAnchorFromDom = (input: {
+  anchors: KangurTutorAnchorRegistration[];
+  point: TutorPoint;
+}): SectionAnchor | null => {
+  if (typeof document === 'undefined' || typeof document.elementsFromPoint !== 'function') {
+    return null;
+  }
+
+  const elements = document.elementsFromPoint(input.point.x, input.point.y);
+  for (const element of elements) {
+    const anchorElement = element.closest<HTMLElement>('[data-kangur-tutor-anchor-id]');
+    const anchorId = anchorElement?.dataset['kangurTutorAnchorId'];
+    if (!anchorId) {
+      continue;
+    }
+
+    const anchor = getSectionAnchorById(input.anchors, anchorId);
+    if (!anchor || !hasUsableRect(anchor.getRect())) {
+      continue;
+    }
+
+    return anchor;
+  }
+
+  return null;
+};
+
+const resolveTutorSectionDropAnchor = (input: {
+  anchors: KangurTutorAnchorRegistration[];
+  avatarPoint?: TutorPoint | null;
+  point: TutorPoint;
+}): SectionAnchor | null =>
+  selectTutorSectionDropAnchorFromDom(input) ?? selectTutorSectionDropAnchor(input);
 
 export function useKangurAiTutorAvatarDrag(input: {
   avatarDragStateRef: MutableRefObject<TutorAvatarDragState | null>;
@@ -178,16 +297,18 @@ export function useKangurAiTutorAvatarDrag(input: {
         return;
       }
 
-      const deltaX = event.clientX - dragState.startX;
-      const deltaY = event.clientY - dragState.startY;
+      const pointerPoint = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+      const deltaX = pointerPoint.x - dragState.startX;
+      const deltaY = pointerPoint.y - dragState.startY;
       const hasMovedEnough = Math.hypot(deltaX, deltaY) >= AVATAR_DRAG_THRESHOLD;
-      const nextPoint = clampAvatarPoint(
-        {
-          x: dragState.origin.x + deltaX,
-          y: dragState.origin.y + deltaY,
-        },
-        viewport
-      );
+      const nextPoint = getDraggedAvatarPoint({
+        dragState,
+        pointerPoint,
+        viewport,
+      });
 
       if (hasMovedEnough) {
         dragState.moved = true;
@@ -206,12 +327,10 @@ export function useKangurAiTutorAvatarDrag(input: {
 
       setDraggedAvatarPoint(nextPoint);
       if (hasMovedEnough && tutorAnchorContext) {
-        const dropAnchor = selectTutorSectionDropAnchor({
+        const dropAnchor = resolveTutorSectionDropAnchor({
           anchors: tutorAnchorContext.anchors,
-          point: {
-            x: event.clientX,
-            y: event.clientY,
-          },
+          avatarPoint: nextPoint,
+          point: pointerPoint,
         });
         setHoveredSectionAnchorId(dropAnchor?.id ?? null);
       }
@@ -253,11 +372,33 @@ export function useKangurAiTutorAvatarDrag(input: {
 
   const handleFloatingAvatarPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>): void => {
+      const dragState = avatarDragStateRef.current;
+      const pointerPoint = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+      const releaseAvatarPoint =
+        dragState?.pointerId === event.pointerId
+          ? getDraggedAvatarPoint({
+              dragState,
+              pointerPoint,
+              viewport,
+            })
+          : draggedAvatarPoint;
+      const droppedSectionAnchor =
+        dragState?.pointerId === event.pointerId &&
+        dragState.moved &&
+        tutorAnchorContext
+          ? resolveTutorSectionDropAnchor({
+              anchors: tutorAnchorContext.anchors,
+              avatarPoint: releaseAvatarPoint,
+              point: pointerPoint,
+            }) ?? hoveredSectionAnchor
+          : null;
       const shouldExplainDroppedSection =
-        avatarDragStateRef.current?.pointerId === event.pointerId &&
-        avatarDragStateRef.current?.moved &&
-        Boolean(hoveredSectionAnchor);
-      const droppedSectionAnchor = hoveredSectionAnchor;
+        dragState?.pointerId === event.pointerId &&
+        dragState.moved &&
+        Boolean(droppedSectionAnchor);
 
       finishFloatingAvatarDrag(event.pointerId, {
         persistPosition: !shouldExplainDroppedSection,
@@ -274,6 +415,8 @@ export function useKangurAiTutorAvatarDrag(input: {
       hoveredSectionAnchor,
       setHoveredSectionAnchorId,
       startGuidedSectionExplanation,
+      tutorAnchorContext,
+      viewport,
     ]
   );
 

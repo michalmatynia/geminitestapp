@@ -166,6 +166,56 @@ describe('useTriggerButtons', () => {
     });
   });
 
+  it('derives the queued product identity from the entity snapshot when entityId is missing', async () => {
+    const modalButton = {
+      ...BUTTON,
+      id: 'button-product-modal',
+      locations: ['product_modal'],
+    } satisfies AiTriggerButtonRecord;
+    const onRunQueued = vi.fn();
+    const getEntityJson = vi.fn(() => ({
+      _id: ' product-from-snapshot ',
+      name_en: 'Snapshot product',
+    }));
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        getEntityJson,
+        onRunQueued,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(modalButton, { mode: 'click' });
+    });
+
+    expect(getEntityJson).toHaveBeenCalledTimes(1);
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityId: 'product-from-snapshot',
+      })
+    );
+    expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+      'run-queued-1',
+      expect.any(Function),
+      expect.objectContaining({
+        initialSnapshot: expect.objectContaining({
+          entityId: 'product-from-snapshot',
+          entityType: 'product',
+          status: 'queued',
+        }),
+      })
+    );
+    expect(onRunQueued).toHaveBeenCalledWith({
+      button: modalButton,
+      runId: 'run-queued-1',
+      entityId: 'product-from-snapshot',
+      entityType: 'product',
+    });
+  });
+
   it('filters out buttons that do not match the requested location', () => {
     const otherButton = {
       ...BUTTON,

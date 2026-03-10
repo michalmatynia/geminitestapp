@@ -2,13 +2,25 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as importsBasePost } from '@/app/api/v2/integrations/imports/base/route';
-import { POST as runsPost } from '@/app/api/v2/integrations/imports/base/runs/route';
+import {
+  GET as runsGet,
+  POST as runsPost,
+} from '@/app/api/v2/integrations/imports/base/runs/route';
+import type {
+  BaseImportRunsResponse,
+  BaseImportStartResponse,
+} from '@/shared/contracts/integrations';
 
 const startBaseImportRunResponseMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
+const listBaseImportRunsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/services/imports/base-import-run-starter', () => ({
   startBaseImportRunResponse: startBaseImportRunResponseMock,
+}));
+
+vi.mock('@/features/integrations/services/imports/base-import-run-repository', () => ({
+  listBaseImportRuns: listBaseImportRunsMock,
 }));
 
 vi.mock('@/features/integrations/services/integration-repository', () => ({
@@ -16,18 +28,6 @@ vi.mock('@/features/integrations/services/integration-repository', () => ({
     listIntegrations: listIntegrationsMock,
   })),
 }));
-
-type BaseImportRunResponse = {
-  runId: string;
-  status: string;
-  queueJobId: string;
-  summaryMessage: string | null;
-  preflight: {
-    ok: boolean;
-    issues: string[];
-    checkedAt: string;
-  };
-};
 
 describe('base import route unification', () => {
   beforeEach(() => {
@@ -49,6 +49,30 @@ describe('base import route unification', () => {
         checkedAt: '2026-02-16T12:00:00.000Z',
       },
     });
+    listBaseImportRunsMock.mockResolvedValue([
+      {
+        id: 'run-list-1',
+        status: 'queued',
+        params: {
+          connectionId: 'connection-2',
+          inventoryId: 'inventory-2',
+          catalogId: 'catalog-2',
+          imageMode: 'links',
+          uniqueOnly: true,
+          allowDuplicateSku: false,
+        },
+        stats: {
+          total: 1,
+          processed: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: 0,
+        },
+        createdAt: '2026-02-16T12:00:00.000Z',
+        updatedAt: '2026-02-16T12:00:00.000Z',
+      },
+    ]);
   });
 
   it('rejects legacy action=import on root imports endpoint', async () => {
@@ -105,7 +129,7 @@ describe('base import route unification', () => {
         }),
       })
     );
-    const payload = (await response.json()) as BaseImportRunResponse;
+    const payload = (await response.json()) as BaseImportStartResponse;
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
@@ -147,5 +171,19 @@ describe('base import route unification', () => {
 
     expect(response.status).toBe(400);
     expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
+  });
+
+  it('wraps run list responses in the centralized runs envelope', async () => {
+    const response = await runsGet(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs?limit=10', {
+        method: 'GET',
+      })
+    );
+    const payload = (await response.json()) as BaseImportRunsResponse;
+
+    expect(response.status).toBe(200);
+    expect(listBaseImportRunsMock).toHaveBeenCalledWith(10);
+    expect(payload.runs).toHaveLength(1);
+    expect(payload.runs[0]?.id).toBe('run-list-1');
   });
 });

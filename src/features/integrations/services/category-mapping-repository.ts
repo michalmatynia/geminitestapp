@@ -1,4 +1,5 @@
 import type {
+  CategoryMappingAssignment,
   CategoryMapping,
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
@@ -26,7 +27,7 @@ export type CategoryMappingRepository = {
   bulkUpsert: (
     connectionId: string,
     catalogId: string,
-    mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
+    mappings: CategoryMappingAssignment[]
   ) => Promise<number>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
@@ -88,7 +89,7 @@ export const categoryMappingRepository: CategoryMappingRepository = {
   async bulkUpsert(
     connectionId: string,
     catalogId: string,
-    mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
+    mappings: CategoryMappingAssignment[]
   ): Promise<number> {
     const provider = await getAppDbProvider();
     if (provider === 'mongodb')

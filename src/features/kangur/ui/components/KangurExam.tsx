@@ -257,6 +257,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
   );
   const pct = Math.round((score / questions.length) * 100);
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
+  const reviewQuestionCount = questions.length;
 
   if (reviewing !== null) {
     const question = questions[reviewing];
@@ -271,12 +272,21 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     const userAnswer = answers[question.id];
     const Illustration = ILLUSTRATIONS[question.id];
     const pointLabel = POINT_LABELS[question.id];
+    const handleExitReview = (): void => {
+      setReviewing(null);
+    };
+    const handleReviewPreviousQuestion = (): void => {
+      setReviewing(Math.max(0, reviewing - 1));
+    };
+    const handleReviewNextQuestion = (): void => {
+      setReviewing(Math.min(reviewQuestionCount - 1, reviewing + 1));
+    };
 
     return (
       <div className='w-full flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
           <KangurButton
-            onClick={() => setReviewing(null)}
+            onClick={handleExitReview}
             size='sm'
             type='button'
             variant='surface'
@@ -286,7 +296,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           <div className='flex gap-2'>
             <KangurButton
               aria-label='Poprzednie pytanie w podgladzie'
-              onClick={() => setReviewing(Math.max(0, reviewing - 1))}
+              onClick={handleReviewPreviousQuestion}
               disabled={reviewing === 0}
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
@@ -296,12 +306,12 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               <ChevronLeft className='w-4 h-4 text-slate-500' />
             </KangurButton>
             <span className='self-center text-xs font-bold text-slate-400'>
-              {reviewing + 1}/{questions.length}
+              {reviewing + 1}/{reviewQuestionCount}
             </span>
             <KangurButton
               aria-label='Nastepne pytanie w podgladzie'
-              onClick={() => setReviewing(Math.min(questions.length - 1, reviewing + 1))}
-              disabled={reviewing === questions.length - 1}
+              onClick={handleReviewNextQuestion}
+              disabled={reviewing === reviewQuestionCount - 1}
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
               type='button'

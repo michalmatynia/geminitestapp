@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
+import type {
+  BaseImportItemStatus,
+  BaseImportRunDetailResponse,
+  BaseImportRunReportResponse,
+} from '@/shared/contracts/integrations';
+import { baseImportRunReportQuerySchema } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const querySchema = z.object({
-  format: z.enum(['json', 'csv']).optional(),
-  statuses: z.string().trim().optional(),
-});
+const querySchema = baseImportRunReportQuerySchema;
 const REPORT_PAGE_SIZE = 1000;
 
 const escapeCsv = (value: unknown): string => {
@@ -19,7 +21,7 @@ const escapeCsv = (value: unknown): string => {
   return raw;
 };
 
-const buildCsv = (detail: Awaited<ReturnType<typeof getBaseImportRunDetailOrThrow>>): string => {
+const buildCsv = (detail: BaseImportRunDetailResponse): string => {
   const header = [
     'itemId',
     'status',
@@ -65,9 +67,9 @@ const buildCsv = (detail: Awaited<ReturnType<typeof getBaseImportRunDetailOrThro
 
 const loadReportDetail = async (input: {
   runId: string;
-  statuses: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
-}): Promise<Awaited<ReturnType<typeof getBaseImportRunDetailOrThrow>>> => {
-  const first = await getBaseImportRunDetailOrThrow(input.runId, {
+  statuses: BaseImportItemStatus[];
+}): Promise<BaseImportRunDetailResponse> => {
+  const first: BaseImportRunDetailResponse = await getBaseImportRunDetailOrThrow(input.runId, {
     ...(input.statuses.length > 0 ? { statuses: input.statuses } : {}),
     page: 1,
     pageSize: REPORT_PAGE_SIZE,
@@ -119,7 +121,7 @@ export async function GET_handler(
         value === 'updated' ||
         value === 'skipped' ||
         value === 'failed'
-    ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+    ) as BaseImportItemStatus[];
 
   const detail = await loadReportDetail({
     runId: params.runId,
@@ -137,11 +139,12 @@ export async function GET_handler(
     });
   }
 
+  const response: BaseImportRunReportResponse = {
+    generatedAt: new Date().toISOString(),
+    ...detail,
+  };
   return NextResponse.json(
-    {
-      generatedAt: new Date().toISOString(),
-      ...detail,
-    },
+    response,
     {
       headers: {
         'Cache-Control': 'no-store',

@@ -475,6 +475,11 @@ export function useAiPathTriggerEvent(): {
           runId,
           runRecord,
         });
+        const effectiveQueuedEntityId =
+          typeof queuedRunForCache.entityId === 'string' &&
+          queuedRunForCache.entityId.trim().length > 0
+            ? queuedRunForCache.entityId.trim()
+            : (args.entityId ?? null);
         optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
 
         await handleAiPathTriggerInvalidation({
@@ -482,7 +487,7 @@ export function useAiPathTriggerEvent(): {
           runId,
           run: queuedRunForCache,
           entityType: args.entityType,
-          entityId: args.entityId,
+          entityId: effectiveQueuedEntityId,
         });
 
         if (selectedConfig.id !== preferredActivePathId) {
@@ -535,9 +540,14 @@ export function useAiPathTriggerEvent(): {
             runId,
             runRecord: runningRunCandidate as AiPathRunRecord,
           });
+          const effectiveRunningEntityId =
+            typeof runningRunForCache.entityId === 'string' &&
+            runningRunForCache.entityId.trim().length > 0
+              ? runningRunForCache.entityId.trim()
+              : effectiveQueuedEntityId;
           optimisticallyInsertAiPathRunInQueueCache(queryClient, runningRunForCache);
           notifyAiPathRunEnqueued(runId, {
-            entityId: args.entityId ?? null,
+            entityId: effectiveRunningEntityId,
             entityType: args.entityType,
             run: runningRunForCache,
           });

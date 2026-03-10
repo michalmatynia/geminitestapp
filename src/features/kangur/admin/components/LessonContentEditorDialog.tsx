@@ -100,6 +100,7 @@ function LessonContentEditorDialogContent({
   const { lesson, document, onChange } = useLessonContentEditorContext();
   const { isSaving, onClose, onSave, onImportLegacy, onClearContent } =
     useLessonContentEditorRuntimeContext();
+  const handleLessonMetadataChange = onLessonChange;
   const [discardConfirmOpen, setDiscardConfirmOpen] = React.useState(false);
   const [restorableDraftSavedAt, setRestorableDraftSavedAt] = React.useState<string | null>(null);
   const [localDraftSavedAt, setLocalDraftSavedAt] = React.useState<string | null>(null);
@@ -411,7 +412,10 @@ function LessonContentEditorDialogContent({
                   }
                 />
               ) : null}
-              <LessonMetadataWorkspacePanel lesson={lesson} onLessonChange={onLessonChange} />
+              <LessonMetadataWorkspacePanel
+                lesson={lesson}
+                onLessonChange={handleLessonMetadataChange}
+              />
               <KangurAdminWorkspaceSectionCard
                 title='Draft review'
                 description='Keep lesson setup, learner content, and narration in one editorial checklist before saving.'

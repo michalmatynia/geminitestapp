@@ -138,7 +138,7 @@ const setupDefaultApiMocks = (): void => {
   apiPostMock.mockImplementation((url: string) => {
     if (url === '/api/v2/integrations/imports/base') {
       return Promise.resolve({
-        inventories: [{ inventory_id: 'inv-main' }],
+        inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
       });
     }
     return Promise.reject(new Error(`Unexpected POST ${url}`));
@@ -157,7 +157,9 @@ describe('BaseQuickExportButton', () => {
   it('opens decision modal when SKU already exists in Base.com', async () => {
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
-        return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
       }
       if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
@@ -181,7 +183,9 @@ describe('BaseQuickExportButton', () => {
   it('links existing product and invalidates listing caches', async () => {
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
-        return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
       }
       if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
@@ -230,7 +234,9 @@ describe('BaseQuickExportButton', () => {
 
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
-        return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
       }
       if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
@@ -257,7 +263,9 @@ describe('BaseQuickExportButton', () => {
   it('stops flow and shows error when SKU check fails', async () => {
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
-        return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
       }
       if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.reject(new Error('SKU check failed'));
@@ -281,7 +289,9 @@ describe('BaseQuickExportButton', () => {
   it('continues one-click export when SKU does not exist in Base.com', async () => {
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
-        return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
       }
       if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({

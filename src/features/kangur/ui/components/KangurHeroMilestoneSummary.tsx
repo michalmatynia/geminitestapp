@@ -23,6 +23,7 @@ const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
 export default function KangurHeroMilestoneSummary({
   className,
   dataTestIdPrefix,
+  trackDataTestIdPrefix,
   progress,
 }: KangurHeroMilestoneSummaryProps): React.JSX.Element | null {
   if (!hasMeaningfulProgress(progress)) {
@@ -30,16 +31,19 @@ export default function KangurHeroMilestoneSummary({
   }
 
   const nextBadge = getNextLockedBadge(progress);
+  const summaryTestIdPrefix = dataTestIdPrefix;
+  const badgeTrackTestIdPrefix = trackDataTestIdPrefix;
+  const badgeTrackProgress = progress;
 
   return (
     <div
       className={cn('grid gap-3 text-left', className)}
-      data-testid={`${dataTestIdPrefix}-shell`}
+      data-testid={`${summaryTestIdPrefix}-shell`}
     >
       {nextBadge ? (
         <div
           className='rounded-[28px] border border-amber-200/80 bg-amber-50/80 px-4 py-4'
-          data-testid={`${dataTestIdPrefix}-next-badge`}
+          data-testid={`${summaryTestIdPrefix}-next-badge`}
         >
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
@@ -58,18 +62,19 @@ export default function KangurHeroMilestoneSummary({
           <KangurProgressBar
             accent='amber'
             className='mt-3'
-            data-testid={`${dataTestIdPrefix}-next-badge-bar`}
+            data-testid={`${summaryTestIdPrefix}-next-badge-bar`}
             size='sm'
             value={nextBadge.progressPercent}
           />
         </div>
       ) : null}
 
-      <div data-testid={`${dataTestIdPrefix}-tracks`}>
+      <div data-testid={`${summaryTestIdPrefix}-tracks`}>
         <KangurBadgeTrackHighlights
           className='sm:grid-cols-2'
+          dataTestIdPrefix={badgeTrackTestIdPrefix}
           limit={2}
-          progress={progress}
+          progress={badgeTrackProgress}
         />
       </div>
     </div>

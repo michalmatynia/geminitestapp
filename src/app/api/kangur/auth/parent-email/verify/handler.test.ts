@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { verifyKangurParentEmailMock } = vi.hoisted(() => ({
+const { verifyKangurParentEmailMock, getKangurAiTutorContentMock } = vi.hoisted(() => ({
   verifyKangurParentEmailMock: vi.fn(),
+  getKangurAiTutorContentMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/parent-email-auth', () => ({
   verifyKangurParentEmail: verifyKangurParentEmailMock,
+}));
+
+vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
+  getKangurAiTutorContent: getKangurAiTutorContentMock,
 }));
 
 import { postKangurParentEmailVerifyHandler } from './handler';
@@ -24,6 +30,7 @@ const createRequestContext = (): ApiHandlerContext =>
 describe('kangur parent email verify handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
   });
 
   it('verifies the token and returns the activated parent account response', async () => {
@@ -54,7 +61,7 @@ describe('kangur parent email verify handler', () => {
       callbackUrl: '/tests?focus=division',
       emailVerified: true,
       message:
-        'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
+        DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.verifySuccessMessage,
     });
   });
 });

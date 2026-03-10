@@ -5,10 +5,63 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   kangurFeaturePageMock,
   logKangurClientErrorMock,
-} = vi.hoisted(() => ({
-  kangurFeaturePageMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
-}));
+  kangurFeaturePageState,
+  KangurFeaturePageMock,
+  resolveKangurFeaturePageRouteMock,
+} = vi.hoisted(() => {
+  const kangurFeaturePageMock = vi.fn();
+  const logKangurClientErrorMock = vi.fn();
+  const kangurFeaturePageState = {
+    slug: [] as string[],
+    basePath: '/',
+    embedded: false,
+  };
+
+  const resolveKangurFeaturePageRouteMock = (
+    slug: string[] = [],
+    basePath = '/'
+  ): {
+    normalizedBasePath: string;
+    pageKey: string | null;
+    requestedPath: string;
+  } => {
+    kangurFeaturePageState.slug = slug;
+    kangurFeaturePageState.basePath = basePath;
+    kangurFeaturePageState.embedded = false;
+
+    const activeSlug = slug[0] ?? null;
+    const requestedPath = [basePath, ...(activeSlug ? [activeSlug] : [])]
+      .filter(Boolean)
+      .join('/')
+      .replace(/\/+/, '/');
+
+    return {
+      normalizedBasePath: basePath,
+      pageKey: null,
+      requestedPath: requestedPath || basePath,
+    };
+  };
+
+  const KangurFeaturePageMock = (props: {
+    slug?: string[];
+    basePath?: string;
+    embedded?: boolean;
+  }) => {
+    if (props.slug?.[0] === 'broken') {
+      throw new Error('Kaboom');
+    }
+    kangurFeaturePageMock(props);
+    return <div data-testid='kangur-feature-page' />;
+  };
+
+  return {
+    kangurFeaturePageMock,
+    logKangurClientErrorMock,
+    kangurFeaturePageState,
+    KangurFeaturePageMock,
+    resolveKangurFeaturePageRouteMock,
+  };
+});
 
 vi.mock('next/link', () => ({
   default: ({
@@ -23,14 +76,20 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/config/routing', async () => {
+  const actual = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+
+  return {
+    ...actual,
+    resolveKangurFeaturePageRoute: resolveKangurFeaturePageRouteMock,
+  };
+});
+
 vi.mock('@/features/kangur/ui/KangurFeaturePage', () => ({
-  KangurFeaturePage: (props: { slug?: string[]; basePath?: string; embedded?: boolean }) => {
-    if (props.slug?.[0] === 'broken') {
-      throw new Error('Kaboom');
-    }
-    kangurFeaturePageMock(props);
-    return <div data-testid='kangur-feature-page' />;
-  },
+  KangurFeaturePage: KangurFeaturePageMock,
+  KangurFeaturePageShell: () => <KangurFeaturePageMock {...kangurFeaturePageState} />,
 }));
 
 vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
@@ -48,6 +107,9 @@ import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 describe('KangurPublicApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    kangurFeaturePageState.slug = [];
+    kangurFeaturePageState.basePath = '/';
+    kangurFeaturePageState.embedded = false;
   });
 
   it('renders the Kangur feature shell for the public login slug so the modal can open in place', () => {
@@ -80,7 +142,7 @@ describe('KangurPublicApp', () => {
     expect(kangurFeaturePageMock).toHaveBeenCalledWith({
       slug: ['tests'],
       basePath: '/',
-      embedded: true,
+      embedded: false,
     });
   });
 

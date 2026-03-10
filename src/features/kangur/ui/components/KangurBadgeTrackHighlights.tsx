@@ -40,6 +40,7 @@ export default function KangurBadgeTrackHighlights({
   limit = 3,
   progress,
 }: KangurBadgeTrackHighlightsProps): React.JSX.Element | null {
+  const trackTestIdPrefix = dataTestIdPrefix;
   const tracks = getProgressBadgeTrackSummaries(progress, { maxTracks: 7 })
     .sort((left, right) => {
       const leftPriority = TRACK_PRIORITY[left.key] ?? 99;
@@ -62,7 +63,7 @@ export default function KangurBadgeTrackHighlights({
         return (
           <div
             className='rounded-[24px] border border-slate-200/80 bg-white/80 px-4 py-3 text-left'
-            data-testid={`${dataTestIdPrefix}-${track.key}`}
+            data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
             <div className='flex items-start justify-between gap-2'>
@@ -86,7 +87,7 @@ export default function KangurBadgeTrackHighlights({
             <KangurProgressBar
               accent={accent}
               className='mt-3'
-              data-testid={`${dataTestIdPrefix}-${track.key}-bar`}
+              data-testid={`${trackTestIdPrefix}-${track.key}-bar`}
               size='sm'
               value={track.progressPercent}
             />

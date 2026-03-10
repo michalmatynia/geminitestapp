@@ -85,6 +85,10 @@ export function KangurAiTutorGuidedCallout({
       duration: transitionDuration,
       ease: transitionEase,
     };
+  const handleCloseCallout = (): void => onAction('close');
+  const handleGoBackHomeOnboarding = (): void => onAction('back_home_onboarding');
+  const handleFinishHomeOnboarding = (): void => onAction('finish_home_onboarding');
+  const handleAdvanceHomeOnboarding = (): void => onAction('advance_home_onboarding');
 
   const selectionPreviewHasOverflow = Boolean(
     selectionPreview &&
@@ -137,7 +141,7 @@ export function KangurAiTutorGuidedCallout({
                 <button
                   data-testid='kangur-ai-tutor-guided-callout-close'
                   type='button'
-                  onClick={(): void => onAction('close')}
+                  onClick={handleCloseCallout}
                   className='shrink-0 rounded-full border border-amber-200/80 bg-white/80 p-1 text-amber-900 transition-colors hover:bg-white'
                   aria-label={tutorContent.guidedCallout.closeAria}
                 >
@@ -170,7 +174,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='surface'
-                      onClick={(): void => onAction('back_home_onboarding')}
+                      onClick={handleGoBackHomeOnboarding}
                     >
                       {tutorContent.guidedCallout.buttons.back}
                     </KangurButton>
@@ -179,7 +183,7 @@ export function KangurAiTutorGuidedCallout({
                     type='button'
                     size='sm'
                     variant='surface'
-                    onClick={(): void => onAction('finish_home_onboarding')}
+                    onClick={handleFinishHomeOnboarding}
                   >
                     {tutorContent.guidedCallout.buttons.finish}
                   </KangurButton>
@@ -187,7 +191,7 @@ export function KangurAiTutorGuidedCallout({
                     type='button'
                     size='sm'
                     variant='primary'
-                    onClick={(): void => onAction('advance_home_onboarding')}
+                    onClick={handleAdvanceHomeOnboarding}
                   >
                     {tutorContent.guidedCallout.buttons.understand}
                   </KangurButton>
@@ -201,7 +205,7 @@ export function KangurAiTutorGuidedCallout({
                   type='button'
                   size='sm'
                   variant='surface'
-                  onClick={(): void => onAction('close')}
+                  onClick={handleCloseCallout}
                 >
                   {tutorContent.guidedCallout.buttons.understand}
                 </KangurButton>

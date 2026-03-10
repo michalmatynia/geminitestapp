@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { promises as fs } from 'fs';
-import { createRequire } from 'module';
 import path from 'path';
 
 import prisma from '@/shared/lib/db/prisma';
@@ -38,11 +37,8 @@ const isPlaywrightModule = (value: unknown): value is PlaywrightModule => {
   );
 };
 
-const getPlaywright = (): PlaywrightModule => {
-  // Keep Playwright as a runtime require so server bundles don't try to inline its assets.
-  const requireFn = createRequire(import.meta.url);
-  const loadModule = requireFn as (id: string) => unknown;
-  const playwrightModule = loadModule('playwright');
+const getPlaywright = async (): Promise<PlaywrightModule> => {
+  const playwrightModule = await import('playwright');
   if (!isPlaywrightModule(playwrightModule)) {
     throw new Error('Playwright runtime is unavailable.');
   }
@@ -53,7 +49,7 @@ export const launchBrowser = async (
   browserName: string = 'chromium',
   headless: boolean = true
 ): Promise<Browser> => {
-  const { chromium, firefox, webkit } = getPlaywright();
+  const { chromium, firefox, webkit } = await getPlaywright();
   const browserType =
     browserName === 'firefox' ? firefox : browserName === 'webkit' ? webkit : chromium;
   return browserType.launch({ headless });

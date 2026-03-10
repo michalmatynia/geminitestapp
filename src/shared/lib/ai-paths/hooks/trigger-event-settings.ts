@@ -246,6 +246,7 @@ export const loadPathConfigsFromSettings = async (
               !Array.isArray((parsedConfig as { extensions?: unknown }).extensions)
                 ? {
                     extensions: {
+                      ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
                       ...(
                         resolvedConfig.value.pathConfig.extensions &&
                         typeof resolvedConfig.value.pathConfig.extensions === 'object' &&
@@ -253,7 +254,6 @@ export const loadPathConfigsFromSettings = async (
                           ? resolvedConfig.value.pathConfig.extensions
                           : {}
                       ),
-                      ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
                     },
                   }
                 : {}

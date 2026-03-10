@@ -11,6 +11,7 @@ import {
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
+import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { enqueuePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -139,8 +140,16 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config id mismatch for "${pathId}".`);
   }
   const sanitizedPathConfig = sanitizeTriggerPathConfig(resolvedConfig.value.pathConfig);
-  const upgradedPathConfig = upgradeStarterWorkflowPathConfig(sanitizedPathConfig).config;
-  return sanitizeTriggerPathConfig(upgradedPathConfig);
+  const starterUpgrade = upgradeStarterWorkflowPathConfig(sanitizedPathConfig);
+  const upgradedPathConfig = sanitizeTriggerPathConfig(starterUpgrade.config);
+  if (starterUpgrade.changed) {
+    try {
+      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(upgradedPathConfig) }]);
+    } catch {
+      // Best-effort persistence only. The repaired config is still safe to execute for this request.
+    }
+  }
+  return upgradedPathConfig;
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

@@ -28,12 +28,14 @@ export function KangurPublicErrorBoundary({
   children,
   homeHref,
 }: KangurPublicErrorBoundaryProps): JSX.Element {
+  const errorFallbackHomeHref = homeHref;
+
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }: FallbackProps) => (
         <KangurErrorFallback
           error={normalizeKangurBoundaryError(error)}
-          homeHref={homeHref}
+          homeHref={errorFallbackHomeHref}
           reset={resetErrorBoundary}
           source='kangur-public-error-boundary'
         />

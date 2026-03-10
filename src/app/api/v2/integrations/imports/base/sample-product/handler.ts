@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
@@ -10,16 +9,11 @@ import {
   setImportSampleInventoryId,
   setImportSampleProductId,
 } from '@/features/integrations/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import type { BaseSampleProductResponse } from '@/shared/contracts/integrations';
+import { baseSampleProductPayloadSchema } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-
-const requestSchema = z.object({
-  inventoryId: z.string().trim().optional().nullable(),
-  productId: z.string().trim().min(1).optional(),
-  connectionId: z.string().trim().min(1).optional(),
-  saveOnly: z.boolean().optional(),
-});
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
@@ -71,11 +65,12 @@ const extractFirstProductId = (payload: unknown): string | null => {
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const productId = await getImportSampleProductId();
   const inventoryId = await getImportSampleInventoryId();
-  return NextResponse.json({ productId, inventoryId });
+  const response: BaseSampleProductResponse = { productId, inventoryId };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, requestSchema, {
+  const parsed = await parseJsonBody(req, baseSampleProductPayloadSchema, {
     logPrefix: 'imports.base.sample-product.POST',
   });
   if (!parsed.ok) {
@@ -93,10 +88,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (data.productId) {
       await setImportSampleProductId(data.productId);
     }
-    return NextResponse.json({
+    const response: BaseSampleProductResponse = {
       productId: data.productId ?? null,
       inventoryId: inventoryId || null,
-    });
+    };
+    return NextResponse.json(response);
   }
 
   if (!inventoryId) {
@@ -149,5 +145,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   await setImportSampleProductId(productId);
   await setImportSampleInventoryId(inventoryId);
-  return NextResponse.json({ productId, inventoryId });
+  const response: BaseSampleProductResponse = { productId, inventoryId };
+  return NextResponse.json(response);
 }

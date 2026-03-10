@@ -9,6 +9,8 @@ import {
   useImportRun,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import type {
+  BaseImportListResponse,
+  BaseImportWarehousesResponse,
   InventoryOption,
   ImportListItem,
   ImportRunDetail,
@@ -124,9 +126,7 @@ export function useImportExportData({
       !!normalizedSelectedBaseConnectionId &&
       !!exportInventoryId
   );
-  const warehousesData = warehousesQuery.data as
-    | { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }
-    | undefined;
+  const warehousesData = warehousesQuery.data as BaseImportWarehousesResponse | undefined;
   const isFetchingWarehouses = warehousesQuery.isFetching;
   const refetchWarehouses = warehousesQuery.refetch;
 
@@ -147,19 +147,7 @@ export function useImportExportData({
     },
     importListEnabled && isBaseConnected && !!inventoryId && !!normalizedSelectedBaseConnectionId
   );
-  const importListData = importListQuery.data as
-    | {
-        products?: ImportListItem[];
-        total?: number;
-        filtered?: number;
-        available?: number;
-        existing?: number;
-        skuDuplicates?: number;
-        page?: number;
-        pageSize?: number;
-        totalPages?: number;
-      }
-    | undefined;
+  const importListData = importListQuery.data as BaseImportListResponse | undefined;
   const loadingImportList = importListQuery.isFetching;
   const refetchImportList = importListQuery.refetch;
 

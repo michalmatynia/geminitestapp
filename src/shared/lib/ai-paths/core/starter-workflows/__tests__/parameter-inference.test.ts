@@ -4,6 +4,7 @@ import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
 describe('starter parameter inference workflow', () => {
   it('maps product modal snapshots from canonical product name and description fields', () => {
@@ -21,5 +22,43 @@ describe('starter parameter inference workflow', () => {
     expect(parserConfig).toContain('$.name_en');
     expect(parserConfig).toContain('$.description_en');
     expect(parserConfig).toContain('$.catalogs[0].catalogId');
+  });
+
+  it('uses pass policy for zero-affected rows on both update nodes', () => {
+    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_parameter_inference_policy',
+    });
+    const updateNodes = config.nodes.filter(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(updateNodes.length).toBeGreaterThanOrEqual(2);
+    updateNodes.forEach((node) => {
+      expect(node.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+    });
+  });
+
+  it('materializes a strict-flow runnable graph', () => {
+    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_parameter_inference_runtime',
+    });
+    const report = evaluateRunPreflight({
+      nodes: config.nodes,
+      edges: config.edges,
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(report.shouldBlock).toBe(false);
+    expect(report.blockReason).toBeNull();
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });
 });

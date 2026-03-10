@@ -301,10 +301,16 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       )
       : null;
 
-  const isAskModalState = !isTutorHidden && askModalVisible && isOpen;
-  const isAskModalMode = isAskModalState;
   const isSelectionGuidedTutorMode = isSelectionGuidedTutorTarget(guidedTutorTarget);
   const isSectionGuidedTutorMode = isSectionGuidedTutorTarget(guidedTutorTarget);
+  const hasInlineGuidancePriority =
+    isSelectionGuidedTutorMode ||
+    isSectionGuidedTutorMode ||
+    selectionResponsePending !== null ||
+    sectionResponsePending !== null;
+  const isAskModalState =
+    !hasInlineGuidancePriority && !isTutorHidden && askModalVisible && isOpen;
+  const isAskModalMode = isAskModalState;
   const showSelectionGuidanceCallout =
     isSelectionGuidedTutorMode ||
     (!isTutorHidden && isOpen && !isAskModalState && selectionResponsePending !== null);

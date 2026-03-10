@@ -6,6 +6,7 @@ import {
   getIntegrationRepository,
 } from '@/features/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
+import { type ProductListingRelistResponse } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -38,12 +39,14 @@ export async function POST_handler(
     normalizedStatus === 'queued_relist' ||
     normalizedStatus === 'queued'
   ) {
-    return NextResponse.json({
+    const response: ProductListingRelistResponse = {
       queued: true,
       alreadyQueued: true,
       listingId,
       status: resolved.listing.status,
-    });
+    };
+
+    return NextResponse.json(response);
   }
 
   await resolved.repository.updateListingStatus(listingId, 'queued_relist');
@@ -60,7 +63,7 @@ export async function POST_handler(
     source: 'manual',
   });
 
-  return NextResponse.json({
+  const response: ProductListingRelistResponse = {
     queued: true,
     listingId,
     queue: {
@@ -68,5 +71,7 @@ export async function POST_handler(
       jobId,
       enqueuedAt,
     },
-  });
+  };
+
+  return NextResponse.json(response);
 }

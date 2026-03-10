@@ -46,6 +46,78 @@ const settingsFor = (
   })),
 ];
 
+const makeBrokenLiveParameterInferenceConfig = (pathId: string): string => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId,
+    seededDefault: false,
+  });
+  const remappedNodeIds = new Map<string, string>();
+  (config.nodes ?? []).forEach((node, index) => {
+    remappedNodeIds.set(node.id, `node-${index.toString(16).padStart(24, '0')}`);
+  });
+
+  return JSON.stringify({
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    nodes: (config.nodes ?? []).map((node) => {
+      const remappedId = remappedNodeIds.get(node.id) ?? node.id;
+      if (node.type !== 'database') {
+        return {
+          ...node,
+          id: remappedId,
+          instanceId: remappedId,
+        };
+      }
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') {
+        return {
+          ...node,
+          id: remappedId,
+          instanceId: remappedId,
+        };
+      }
+      return {
+        ...node,
+        id: remappedId,
+        instanceId: remappedId,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+            mappings: [
+              {
+                sourcePath: 'parameters',
+                sourcePort: 'value',
+                targetPath: 'parameters',
+              },
+            ],
+          },
+        },
+      };
+    }),
+    edges: (config.edges ?? []).map((edge, index) => ({
+      ...edge,
+      id: `edge-${index.toString(16).padStart(24, '0')}`,
+      from: remappedNodeIds.get(edge.from) ?? edge.from,
+      to: remappedNodeIds.get(edge.to) ?? edge.to,
+    })),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 13,
+        seededDefault: false,
+      },
+    },
+  });
+};
+
 const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
 
 beforeEach(() => {
@@ -343,6 +415,47 @@ describe('loadPathConfigsFromSettings', () => {
       `${PATH_CONFIG_PREFIX}${config.id}`,
       expect.any(String)
     );
+  });
+
+  it('repairs stale live parameter inference configs with legacy mapping-mode updates before trigger preflight', async () => {
+    const pathId = 'path-live-parameter-inference-broken';
+    const data: Array<{ key: string; value: string }> = [
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: pathId, name: 'Parameter Inference v2 No Param Add' }]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: makeBrokenLiveParameterInferenceConfig(pathId),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
+      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
+    )?.[1];
+
+    const seedRouterNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'router');
+    expect(seedRouterNode).toBeDefined();
+    expect(seedRouterNode?.inputs ?? []).not.toContain('prompt');
+    expect(seedRouterNode?.outputs ?? []).not.toContain('prompt');
+    expect(
+      loaded.configs[pathId]?.nodes.some(
+        (node) =>
+          node.type === 'database' &&
+          node.config?.database?.operation === 'update' &&
+          node.config?.database?.updatePayloadMode === 'mapping'
+      )
+    ).toBe(false);
+    expect(typeof repairedPayload).toBe('string');
+    const repairedConfig = JSON.parse(repairedPayload as string) as {
+      extensions?: {
+        aiPathsStarter?: {
+          templateVersion?: number;
+        };
+      };
+    };
+    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(14);
   });
 
   it('derives a fallback name from the path id when both config and index names are empty', async () => {

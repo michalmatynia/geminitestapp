@@ -1,6 +1,8 @@
 import type {
-  ImportResponse,
   BaseImportMode,
+  ImportResponse,
+  BaseImportRunResumePayload,
+  BaseImportRunStartPayload,
   ImageRetryPreset,
   BaseImportPreflightIssue,
 } from '@/shared/contracts/integrations';
@@ -19,29 +21,12 @@ type RefetchResult<TData = unknown> = {
 
 type RefetchFn<TData = unknown> = () => Promise<RefetchResult<TData>>;
 
-type ImportMutationPayload = {
-  connectionId: string;
-  inventoryId: string;
-  catalogId: string;
-  imageMode: 'download' | 'links';
-  mode: BaseImportMode;
-  dryRun: boolean;
-  uniqueOnly: boolean;
-  allowDuplicateSku: boolean;
-  templateId?: string;
-  limit?: number;
-  selectedIds?: string[];
-  requestId?: string;
-};
-
 type ImportMutationLike = {
-  mutateAsync: (payload: ImportMutationPayload) => Promise<ImportResponse>;
+  mutateAsync: (payload: BaseImportRunStartPayload) => Promise<ImportResponse>;
 };
 
 type ResumeImportMutationLike = {
-  mutateAsync: (payload: {
-    statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
-  }) => Promise<ImportResponse>;
+  mutateAsync: (payload: BaseImportRunResumePayload) => Promise<ImportResponse>;
 };
 
 type CancelImportMutationLike = {
@@ -239,7 +224,7 @@ export const createImportExportRuntimeActions = ({
     }
     try {
       const selectedIds = Array.from(selectedImportIds);
-      const importData: ImportMutationPayload = {
+      const importData: BaseImportRunStartPayload = {
         connectionId: selectedBaseConnectionId,
         inventoryId,
         catalogId,

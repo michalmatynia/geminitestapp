@@ -1,5 +1,6 @@
-import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import { Browser, BrowserContext } from 'playwright';
+
+import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 export type StepLoopInput = {
   context: AgentExecutionContext;

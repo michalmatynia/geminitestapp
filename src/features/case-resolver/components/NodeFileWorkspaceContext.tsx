@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+
 import type {
   AiNode,
   CaseResolverNodeMeta,
@@ -10,13 +11,16 @@ import type {
   CaseResolverCompileResult,
   CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
 } from '@/shared/contracts/case-resolver';
+import { internalError } from '@/shared/errors/app-error';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
 import {
   NodeFileDocumentSearchScope,
   NodeFileDocumentSearchRow,
 } from './CaseResolverNodeFileUtils';
+
 import type { RelationTreeLookup } from '../relation-search/types';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { internalError } from '@/shared/errors/app-error';
+
 
 export type NodeFileWorkspaceContextValue = {
   // State from useNodeFileWorkspaceState

@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseEngineCollectionProviderPreviewItem,
   DatabaseEngineProviderPreview,
@@ -11,6 +10,7 @@ import {
   getCollectionRouteMap,
 } from '@/shared/lib/db/collection-provider-map';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getDatabaseEngineStatus } from './database-engine-status';
 

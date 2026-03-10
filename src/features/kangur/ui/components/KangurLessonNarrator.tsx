@@ -508,9 +508,9 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   const controlLabel =
     status === 'playing'
       ? pauseLabel
-        : status === 'paused'
-          ? resumeLabel
-          : readLabel;
+      : status === 'paused'
+        ? resumeLabel
+        : readLabel;
   const ControlIcon =
     status === 'loading'
       ? Loader2

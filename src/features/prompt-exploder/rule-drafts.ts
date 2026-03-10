@@ -1,5 +1,4 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-
 import type { PromptExploderSegmentType } from '@/shared/contracts/prompt-exploder';
 
 type PromptValidationRegexRule = Extract<PromptValidationRule, { kind: 'regex' }>;

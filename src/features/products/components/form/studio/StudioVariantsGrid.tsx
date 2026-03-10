@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import React from 'react';
+
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/image-studio-adapter';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/image-studio-adapter';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 export function StudioVariantsGrid(): React.JSX.Element {
   const context = useProductStudioContext();

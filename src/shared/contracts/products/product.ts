@@ -1,10 +1,11 @@
 import { z } from 'zod';
+
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
 import { imageFileRecordSchema } from '../files';
 import { catalogSchema } from './catalogs';
-import { productTagSchema } from './tags';
-import { producerSchema } from './producers';
 import { priceGroupSchema } from './catalogs';
+import { producerSchema } from './producers';
+import { productTagSchema } from './tags';
 
 export const productCurrencySchema = namedDtoSchema.extend({
   code: z.string(),

@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+
 import {
   type Browser,
   type BrowserContext,
@@ -22,10 +23,9 @@ import {
   evaluateRobotsRules,
   parseExtractionRequest,
 } from '../utils';
-
-import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
 import { resolveToolContext } from './tool-context';
 import { createToolLogger } from './tool-logging';
+import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
 
 export async function runAgentTool(
   request: AgentToolRequest,

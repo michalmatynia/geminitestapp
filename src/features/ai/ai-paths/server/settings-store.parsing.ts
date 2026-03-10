@@ -1,6 +1,7 @@
-import { type ParsedPathMeta, type ParsedPathConfig } from './settings-store.constants';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { parseAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+
+import { type ParsedPathMeta, type ParsedPathConfig } from './settings-store.constants';
 
 export const parsePathMetas = (raw: string | null | undefined): ParsedPathMeta[] => {
   if (!raw) return [];

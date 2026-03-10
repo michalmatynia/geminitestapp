@@ -210,8 +210,8 @@ describe('LearnerProfile page', () => {
       'bg-indigo-100'
     );
     expect(screen.getByTestId('learner-profile-badge-clock_master')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+      'border-indigo-200',
+      'bg-indigo-100'
     );
     expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();

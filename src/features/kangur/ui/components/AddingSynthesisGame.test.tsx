@@ -7,6 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
+  breakdown: [
+    { kind: 'base', label: 'Ukonczenie rundy', xp: 12 },
+    { kind: 'perfect', label: 'Pelny wynik', xp: 13 },
+  ],
   xp: 25,
   scorePercent: 100,
   progressUpdates: {
@@ -23,6 +27,7 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
     },
   },
 }));
+const persistKangurSessionScoreMock = vi.fn();
 
 vi.mock('@/features/kangur/ui/services/adding-synthesis', async (importOriginal) => {
   const actual =
@@ -67,6 +72,10 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     addXp: (...args: unknown[]) => addXpMock(...args),
   };
 });
+
+vi.mock('@/features/kangur/ui/services/session-score', () => ({
+  persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),
+}));
 
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 
@@ -154,6 +163,12 @@ describe('AddingSynthesisGame', () => {
     expect(screen.getByText('Wynik 1/1')).toBeInTheDocument();
     expect(screen.getByText('Sesja zakonczona')).toHaveClass('border-emerald-200', 'bg-emerald-100');
     expect(screen.getByText('+25 XP')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByTestId('adding-synthesis-summary-breakdown')).toHaveTextContent(
+      'Ukonczenie rundy +12'
+    );
+    expect(screen.getByTestId('adding-synthesis-summary-breakdown-perfect')).toHaveTextContent(
+      'Pelny wynik +13'
+    );
     expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border-emerald-300');
     expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border-violet-300');
     expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
@@ -175,6 +190,14 @@ describe('AddingSynthesisGame', () => {
             masteryPercent: 100,
           }),
         }),
+      })
+    );
+    expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'addition',
+        score: 1,
+        totalQuestions: 1,
+        correctAnswers: 1,
       })
     );
     expect(onFinish).not.toHaveBeenCalled();

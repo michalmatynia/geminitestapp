@@ -1,12 +1,35 @@
 'use client';
 import { useCallback, useEffect, useMemo } from 'react';
 
+import {
+  useGraphActions,
+  usePersistenceActions,
+  usePersistenceState,
+  useRuntimeState,
+  useRuntimeActions,
+  useSelectionActions,
+  useSelectionState,
+} from '@/features/ai/ai-paths/context';
+import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { Edge, PathMeta, PathConfig } from '@/shared/lib/ai-paths';
 import { triggers } from '@/shared/lib/ai-paths';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import {
+  DOCS_OVERVIEW_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
 import { useToast } from '@/shared/ui';
-import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
+import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
+import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
+import { useAiPathsErrorState } from './hooks/useAiPathsErrorState';
+import { useAiPathsNodeConfigActions } from './hooks/useAiPathsNodeConfigActions';
+import { useAiPathsRuntimeManagement } from './hooks/useAiPathsRuntimeManagement';
+import { useAiPathsSettingsDerivedState } from './hooks/useAiPathsSettingsDerivedState';
+import { usePaletteWithTriggerButtons } from './hooks/usePaletteWithTriggerButtons';
 import { useAiPathsCanvasInteractions } from './useAiPathsCanvasInteractions';
 import { useAiPathsNodeSwitchConfirm } from './useAiPathsNodeSwitchConfirm';
 import { useAiPathsPersistence } from './useAiPathsPersistence';
@@ -18,30 +41,7 @@ import { useAiPathsSettingsDocsActions } from './useAiPathsSettingsDocsActions';
 import { useAiPathsSettingsModeActions } from './useAiPathsSettingsModeActions';
 import { useAiPathsSettingsPathActions } from './useAiPathsSettingsPathActions';
 import { useAiPathsSettingsSamples } from './useAiPathsSettingsSamples';
-import {
-  DOCS_OVERVIEW_SNIPPET,
-  DOCS_WIRING_SNIPPET,
-  DOCS_DESCRIPTION_SNIPPET,
-  DOCS_JOBS_SNIPPET,
-} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
-import {
-  useGraphActions,
-  usePersistenceActions,
-  usePersistenceState,
-  useRuntimeState,
-  useRuntimeActions,
-  useSelectionActions,
-  useSelectionState,
-} from '@/features/ai/ai-paths/context';
-import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
-import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
 
-import { useAiPathsNodeConfigActions } from './hooks/useAiPathsNodeConfigActions';
-import { useAiPathsRuntimeManagement } from './hooks/useAiPathsRuntimeManagement';
-import { usePaletteWithTriggerButtons } from './hooks/usePaletteWithTriggerButtons';
-import { useAiPathsSettingsDerivedState } from './hooks/useAiPathsSettingsDerivedState';
-import { useAiPathsErrorState } from './hooks/useAiPathsErrorState';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';

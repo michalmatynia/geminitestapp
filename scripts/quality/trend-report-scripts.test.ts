@@ -49,6 +49,19 @@ const runJsonScript = (root: string, scriptPath: string, args: string[] = []) =>
   return JSON.parse(result.stdout);
 };
 
+const runScript = (root: string, scriptPath: string, args: string[] = []) => {
+  const result = spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout || `script failed: ${scriptPath}`);
+  }
+
+  return result;
+};
+
 describe('trend report scripts summary-json mode', () => {
   afterEach(() => {
     while (tempRoots.length > 0) {
@@ -68,6 +81,137 @@ describe('trend report scripts summary-json mode', () => {
         failed: 0,
         timedOut: 0,
         skipped: 0,
+      },
+      kangurAiTutorBridge: {
+        status: 'warning',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 6,
+          bridgeCompletionRatePercent: 33.3,
+          bridgeQuickActionClickCount: 2,
+          bridgeFollowUpClickCount: 2,
+          bridgeFollowUpCompletionCount: 1,
+          alertStatus: 'warning',
+        },
+      },
+      checks: [
+        {
+          id: 'build',
+          status: 'pass',
+          durationMs: 1_200,
+          exitCode: 0,
+        },
+        {
+          id: 'criticalFlows',
+          status: 'pass',
+          durationMs: 22_478,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'critical-flow-tests', version: '1.0.0' },
+            status: 'ok',
+            summary: {
+              passedFlows: 5,
+              totalFlows: 6,
+              failedFlows: 1,
+              totalDurationMs: 22_478,
+            },
+            filters: { ci: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+        {
+          id: 'guardrails',
+          status: 'fail',
+          durationMs: 5_400,
+          exitCode: 1,
+          scanSummary: {
+            scanner: { name: 'architecture-guardrails', version: '1.0.0' },
+            status: 'failed',
+            summary: {
+              totalMetrics: 14,
+              okMetrics: 10,
+              failedMetrics: 4,
+              hardLimitFailures: 4,
+              warnMetrics: 0,
+              infoMetrics: 0,
+              updatedBaseline: false,
+            },
+            filters: { strict: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+        {
+          id: 'uiConsolidation',
+          status: 'pass',
+          durationMs: 1_300,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'ui-consolidation-guardrail', version: '1.0.0' },
+            status: 'ok',
+            summary: {
+              totalRules: 7,
+              passedRules: 7,
+              failedRules: 0,
+              propForwardingCount: 43,
+              propDepthGte4ChainCount: 0,
+              totalOpportunityCount: 0,
+              highPriorityOpportunityCount: 0,
+              configurationError: false,
+            },
+            filters: { strict: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+        {
+          id: 'observability',
+          status: 'pass',
+          durationMs: 2_100,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'observability-check', version: '2' },
+            status: 'ok',
+            summary: {
+              mode: 'check',
+              totalRoutes: 343,
+              uncoveredRoutes: 0,
+              loggerViolations: 0,
+              eventSourceViolations: 0,
+              coreViolations: 0,
+              consoleLogViolations: 44,
+              emptyCatchBlockViolations: 4,
+              legacyCompatibilityViolations: 0,
+              runtimeErrors: 0,
+              logWriteErrors: 0,
+            },
+            filters: { mode: 'check' },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+      ],
+    });
+    writeJson(root, 'docs/metrics/weekly-quality-latest.json', {
+      generatedAt: '2026-03-09T10:30:00.000Z',
+      summary: {
+        passed: 2,
+        failed: 0,
+        timedOut: 0,
+        skipped: 0,
+      },
+      kangurAiTutorBridge: {
+        status: 'warning',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 6,
+          bridgeCompletionRatePercent: 33.3,
+          bridgeQuickActionClickCount: 2,
+          bridgeFollowUpClickCount: 2,
+          bridgeFollowUpCompletionCount: 1,
+          alertStatus: 'warning',
+        },
       },
       checks: [
         {
@@ -175,9 +319,19 @@ describe('trend report scripts summary-json mode', () => {
     expect(payload.summary).toMatchObject({
       runCount: 1,
       latestTotalDurationMs: 32_478,
+      latestKangurAiTutorBridgeState: 'current',
+      latestKangurAiTutorBridgeAlertStatus: 'warning',
+      latestKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+      latestAvailableKangurAiTutorBridgeState: 'current',
+      latestAvailableKangurAiTutorBridgeAgeMs: 0,
+      latestAvailableKangurAiTutorBridgeAgeRuns: 0,
       structuredCheckCount: 4,
     });
+    expect(payload.details.runs[0].sourceFile).toBe('weekly-quality-latest.json');
     expect(payload.details.runs[0].checks.criticalFlows.structuredSummaryText).toBe('pass=5/6 fail=1');
+    expect(payload.details.runs[0].kangurAiTutorBridgeSummaryText).toBe(
+      'bridge funnel degraded (33.3%)'
+    );
     expect(payload.details.runs[0].checks.guardrails.structuredSummaryText).toBe(
       'pass=10/14 fail=4 hard=4 warn=0 info=0 baseline=no'
     );
@@ -189,6 +343,123 @@ describe('trend report scripts summary-json mode', () => {
     );
     expect(payload.paths).toBeNull();
     expect(fs.existsSync(path.join(root, 'docs/metrics/weekly-quality-trend-latest.json'))).toBe(false);
+  });
+
+  it('writes weekly lane trend markdown with explicit bridge alert and signal lines', () => {
+    const root = createTempRoot();
+    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
+      generatedAt: '2026-03-09T10:30:00.000Z',
+      summary: {
+        passed: 2,
+        failed: 0,
+        timedOut: 0,
+        skipped: 0,
+      },
+      kangurAiTutorBridge: {
+        status: 'warning',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 6,
+          bridgeCompletionRatePercent: 33.3,
+          bridgeQuickActionClickCount: 2,
+          bridgeFollowUpClickCount: 2,
+          bridgeFollowUpCompletionCount: 1,
+          alertStatus: 'warning',
+        },
+      },
+      checks: [
+        {
+          id: 'build',
+          status: 'pass',
+          durationMs: 1_200,
+          exitCode: 0,
+        },
+        {
+          id: 'criticalFlows',
+          status: 'pass',
+          durationMs: 22_478,
+          exitCode: 0,
+          scanSummary: {
+            scanner: { name: 'critical-flow-tests', version: '1.0.0' },
+            status: 'ok',
+            summary: {
+              passedFlows: 5,
+              totalFlows: 6,
+              failedFlows: 1,
+              totalDurationMs: 22_478,
+            },
+            filters: { ci: true },
+            paths: null,
+            notes: ['fixture'],
+          },
+        },
+      ],
+    });
+
+    runScript(root, weeklyTrendScript, ['--no-history', '--max-runs=5']);
+
+    const markdown = fs.readFileSync(
+      path.join(root, 'docs/metrics/weekly-quality-trend-latest.md'),
+      'utf8'
+    );
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge alert: warning');
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge state: current');
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge age: 0 runs');
+    expect(markdown).toContain(
+      'Latest Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%)'
+    );
+    expect(markdown).toContain('## Kangur AI Tutor Bridge Snapshot');
+  });
+
+  it('keeps the most recent bridge-bearing run in weekly trend summary when the latest run has no bridge data', () => {
+    const root = createTempRoot();
+    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
+      generatedAt: '2026-03-09T10:30:00.000Z',
+      summary: {
+        passed: 2,
+        failed: 0,
+        timedOut: 0,
+        skipped: 0,
+      },
+      kangurAiTutorBridge: {
+        status: 'warning',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 6,
+          bridgeCompletionRatePercent: 33.3,
+          bridgeQuickActionClickCount: 2,
+          bridgeFollowUpClickCount: 2,
+          bridgeFollowUpCompletionCount: 1,
+          alertStatus: 'warning',
+        },
+      },
+      checks: [{ id: 'build', status: 'pass', durationMs: 1_200, exitCode: 0 }],
+    });
+    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T11-30-00-000Z.json', {
+      generatedAt: '2026-03-09T11:30:00.000Z',
+      summary: {
+        passed: 3,
+        failed: 0,
+        timedOut: 0,
+        skipped: 0,
+      },
+      checks: [{ id: 'build', status: 'pass', durationMs: 1_300, exitCode: 0 }],
+    });
+
+    const payload = runJsonScript(root, weeklyTrendScript, ['--summary-json', '--no-write', '--max-runs=5']);
+
+    expect(payload.summary).toMatchObject({
+      runCount: 2,
+      latestKangurAiTutorBridgeState: 'absent',
+      latestKangurAiTutorBridgeAlertStatus: null,
+      latestKangurAiTutorBridgeSummaryText: null,
+      latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
+      latestAvailableKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+      latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
+      latestAvailableKangurAiTutorBridgeState: 'stale',
+      latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
+      latestAvailableKangurAiTutorBridgeAgeRuns: 1,
+    });
   });
 
   it('returns domain suite trend envelopes without writing artifacts', () => {
@@ -248,9 +519,16 @@ describe('trend report scripts summary-json mode', () => {
     const root = createTempRoot();
     writeJson(root, 'docs/metrics/weekly-quality-trend-latest.json', {
       generatedAt: '2026-03-09T11:00:00.000Z',
+      summary: {
+        latestAvailableKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+        latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
+        latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
+        latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
+        latestAvailableKangurAiTutorBridgeAgeRuns: 1,
+      },
       runs: [
         {
-          generatedAt: '2026-03-09T10:30:00.000Z',
+          generatedAt: '2026-03-09T11:30:00.000Z',
           totalDurationMs: 23_678,
         },
       ],
@@ -272,14 +550,90 @@ describe('trend report scripts summary-json mode', () => {
       readyCount: 2,
       missingCount: 1,
       totalEntries: 3,
+      entriesWithSignals: 1,
+      currentSignalCount: 0,
+      staleSignalCount: 1,
+      absentSignalCount: 1,
+      missingSignalStateCount: 1,
+      latestWeeklyLaneSignal: 'bridge funnel degraded (33.3%)',
+      latestWeeklyLaneAlertStatus: 'warning',
+      latestWeeklyLaneSignalRun: '2026-03-09T10:30:00.000Z',
+      latestWeeklyLaneSignalState: 'stale',
+      latestWeeklyLaneSignalAgeMs: 3_600_000,
+      latestWeeklyLaneSignalAgeRuns: 1,
+      latestWeeklyLaneSignalIsStale: true,
     });
     expect(payload.details.entries).toEqual([
-      expect.objectContaining({ id: 'weekly-lane', status: 'ready' }),
+      expect.objectContaining({
+        id: 'weekly-lane',
+        status: 'ready',
+        latestRun: '2026-03-09T11:30:00.000Z',
+        latestSignal: 'bridge funnel degraded (33.3%)',
+        latestAlertStatus: 'warning',
+        latestSignalRun: '2026-03-09T10:30:00.000Z',
+        latestSignalState: 'stale',
+        latestSignalAgeMs: 3_600_000,
+        latestSignalAgeRuns: 1,
+      }),
       expect.objectContaining({ id: 'unit-domains', status: 'ready' }),
-      expect.objectContaining({ id: 'lint-domains', status: 'missing' }),
+      expect.objectContaining({
+        id: 'lint-domains',
+        status: 'missing',
+        latestSignalState: 'missing',
+      }),
     ]);
     expect(payload.paths).toBeNull();
     expect(fs.existsSync(path.join(root, 'docs/metrics/trend-index-latest.json'))).toBe(false);
+  });
+
+  it('writes trend index markdown with explicit alert severity when signals are present', () => {
+    const root = createTempRoot();
+    writeJson(root, 'docs/metrics/weekly-quality-trend-latest.json', {
+      generatedAt: '2026-03-09T11:00:00.000Z',
+      runs: [
+        {
+          generatedAt: '2026-03-09T10:30:00.000Z',
+          totalDurationMs: 23_678,
+          kangurAiTutorBridge: {
+            bridgeSuggestionCount: 6,
+            bridgeCompletionRatePercent: 33.3,
+            bridgeQuickActionClickCount: 2,
+            bridgeFollowUpClickCount: 2,
+            bridgeFollowUpCompletionCount: 1,
+            alertStatus: 'warning',
+          },
+        },
+      ],
+    });
+    writeJson(root, 'docs/metrics/unit-domain-timings-trend-latest.json', {
+      generatedAt: '2026-03-09T11:05:00.000Z',
+      runs: [
+        {
+          generatedAt: '2026-03-09T10:35:00.000Z',
+          totalDurationMs: 42_000,
+        },
+      ],
+    });
+
+    runScript(root, trendIndexScript, ['--no-history']);
+
+    const markdown = fs.readFileSync(path.join(root, 'docs/metrics/trend-index-latest.md'), 'utf8');
+    expect(markdown).toContain('Signal states: 1 current / 0 stale / 1 absent / 1 missing');
+    expect(markdown).toContain(
+      '| Trend | Status | Latest Run | Signal Run | Signal State | Signal Age | Runs Analyzed | Delta vs Prev | Alert | Latest Signal | JSON | Markdown |'
+    );
+    expect(markdown).toContain(
+      '| Weekly Lane Trend | READY | 2026-03-09T10:30:00.000Z | 2026-03-09T10:30:00.000Z | current | 0 runs | 1 | - | warning | bridge funnel degraded (33.3%) | `weekly-quality-trend-latest.json` | `weekly-quality-trend-latest.md` |'
+    );
+    expect(markdown).toContain(
+      'Weekly lane entries surface Kangur AI Tutor bridge alert severity when weekly trend artifacts include that signal.'
+    );
+    expect(markdown).toContain(
+      '`Signal State` is `current` when the newest weekly run carries the bridge signal, `stale` when it is reused from an older weekly artifact, and `absent` when no bridge signal exists.'
+    );
+    expect(markdown).toContain(
+      '`Signal Age` quantifies how old a reused bridge signal is when the state is `stale`.'
+    );
   });
 
   it('returns recalibration envelopes without writing artifacts or applying budgets', () => {

@@ -1,181 +1,18 @@
 {
-  "generatedAt": "2026-03-09T07:53:03.185Z",
+  "generatedAt": "2026-03-09T21:26:53.643Z",
   "summary": {
     "runCount": 10,
-    "oldestRun": "2026-03-08T19:02:29.014Z",
-    "newestRun": "2026-03-09T07:50:55.873Z"
+    "oldestRun": "2026-03-09T06:12:30.508Z",
+    "newestRun": "2026-03-09T09:07:34.294Z",
+    "latestKangurAiTutorBridgeState": "absent",
+    "latestAvailableKangurAiTutorBridgeAlertStatus": null,
+    "latestAvailableKangurAiTutorBridgeSummaryText": null,
+    "latestAvailableKangurAiTutorBridgeRun": null,
+    "latestAvailableKangurAiTutorBridgeState": "absent",
+    "latestAvailableKangurAiTutorBridgeAgeMs": null,
+    "latestAvailableKangurAiTutorBridgeAgeRuns": null
   },
   "runs": [
-    {
-      "sourceFile": "weekly-quality-2026-03-08T19-02-29-014Z.json",
-      "generatedAt": "2026-03-08T19:02:29.014Z",
-      "summary": {
-        "totalChecks": 18,
-        "passed": 15,
-        "failed": 0,
-        "timedOut": 0,
-        "skipped": 3
-      },
-      "passRates": {
-        "build": 100,
-        "lint": null,
-        "lintDomains": 100,
-        "typecheck": 100,
-        "criticalFlows": 100,
-        "securitySmoke": 100,
-        "unitDomains": 100,
-        "fullUnit": null,
-        "e2e": null
-      },
-      "totalDurationMs": 781454,
-      "checks": {
-        "build": {
-          "status": "pass",
-          "durationMs": 130409,
-          "exitCode": 0
-        },
-        "lint": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "lintDomains": {
-          "status": "pass",
-          "durationMs": 120349,
-          "exitCode": 0
-        },
-        "typecheck": {
-          "status": "pass",
-          "durationMs": 33387,
-          "exitCode": 0
-        },
-        "criticalFlows": {
-          "status": "pass",
-          "durationMs": 21402,
-          "exitCode": 0
-        },
-        "securitySmoke": {
-          "status": "pass",
-          "durationMs": 7753,
-          "exitCode": 0
-        },
-        "unitDomains": {
-          "status": "pass",
-          "durationMs": 442843,
-          "exitCode": 0
-        },
-        "fullUnit": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "e2e": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "guardrails": {
-          "status": "pass",
-          "durationMs": 8602,
-          "exitCode": 0
-        },
-        "uiConsolidation": {
-          "status": "pass",
-          "durationMs": 6969,
-          "exitCode": 0
-        },
-        "observability": {
-          "status": "pass",
-          "durationMs": 4618,
-          "exitCode": 0
-        }
-      }
-    },
-    {
-      "sourceFile": "weekly-quality-2026-03-09T05-26-11-912Z.json",
-      "generatedAt": "2026-03-09T05:26:11.912Z",
-      "summary": {
-        "totalChecks": 18,
-        "passed": 11,
-        "failed": 4,
-        "timedOut": 0,
-        "skipped": 3
-      },
-      "passRates": {
-        "build": 100,
-        "lint": null,
-        "lintDomains": 0,
-        "typecheck": 0,
-        "criticalFlows": 100,
-        "securitySmoke": 100,
-        "unitDomains": 0,
-        "fullUnit": null,
-        "e2e": null
-      },
-      "totalDurationMs": 692125,
-      "checks": {
-        "build": {
-          "status": "pass",
-          "durationMs": 149959,
-          "exitCode": 0
-        },
-        "lint": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "lintDomains": {
-          "status": "fail",
-          "durationMs": 137235,
-          "exitCode": 1
-        },
-        "typecheck": {
-          "status": "fail",
-          "durationMs": 72514,
-          "exitCode": 2
-        },
-        "criticalFlows": {
-          "status": "pass",
-          "durationMs": 25067,
-          "exitCode": 0
-        },
-        "securitySmoke": {
-          "status": "pass",
-          "durationMs": 8789,
-          "exitCode": 0
-        },
-        "unitDomains": {
-          "status": "fail",
-          "durationMs": 287766,
-          "exitCode": 1
-        },
-        "fullUnit": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "e2e": {
-          "status": "skipped",
-          "durationMs": 0,
-          "exitCode": null
-        },
-        "guardrails": {
-          "status": "fail",
-          "durationMs": 3565,
-          "exitCode": 1
-        },
-        "uiConsolidation": {
-          "status": "pass",
-          "durationMs": 3165,
-          "exitCode": 0
-        },
-        "observability": {
-          "status": "pass",
-          "durationMs": 1360,
-          "exitCode": 0
-        }
-      }
-    },
     {
       "sourceFile": "weekly-quality-2026-03-09T06-12-30-508Z.json",
       "generatedAt": "2026-03-09T06:12:30.508Z",
@@ -198,66 +35,92 @@
         "e2e": null
       },
       "totalDurationMs": 693289,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 163152,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "fail",
           "durationMs": 87394,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "fail",
           "durationMs": 80970,
-          "exitCode": 2
+          "exitCode": 2,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 27478,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 9564,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "pass",
           "durationMs": 309911,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "fail",
           "durationMs": 6007,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 3888,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1635,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -283,66 +146,92 @@
         "e2e": null
       },
       "totalDurationMs": 914760,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "fail",
           "durationMs": 237195,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "pass",
           "durationMs": 176661,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "fail",
           "durationMs": 96999,
-          "exitCode": 2
+          "exitCode": 2,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 39875,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 14842,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "pass",
           "durationMs": 338606,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "fail",
           "durationMs": 3651,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 2813,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1417,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -368,66 +257,92 @@
         "e2e": null
       },
       "totalDurationMs": 661144,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "pass",
           "durationMs": 222357,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "fail",
           "durationMs": 107262,
-          "exitCode": 2
+          "exitCode": 2,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 26694,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 8283,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "pass",
           "durationMs": 287471,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "fail",
           "durationMs": 3405,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 2757,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 968,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -453,66 +368,92 @@
         "e2e": null
       },
       "totalDurationMs": 639887,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 140153,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "fail",
           "durationMs": 120493,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "fail",
           "durationMs": 66337,
-          "exitCode": 2
+          "exitCode": 2,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 21385,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 7980,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "fail",
           "durationMs": 273710,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "fail",
           "durationMs": 3425,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 2623,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1235,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -538,66 +479,92 @@
         "e2e": null
       },
       "totalDurationMs": 585694,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 141696,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "pass",
           "durationMs": 119561,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "pass",
           "durationMs": 32900,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 21895,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 7978,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "fail",
           "durationMs": 250760,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "pass",
           "durationMs": 3844,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 2909,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1374,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -623,66 +590,92 @@
         "e2e": null
       },
       "totalDurationMs": 591562,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 144002,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "pass",
           "durationMs": 116531,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "pass",
           "durationMs": 33726,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 22166,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 7978,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "pass",
           "durationMs": 255072,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "pass",
           "durationMs": 3375,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 2717,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1272,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -708,66 +701,92 @@
         "e2e": null
       },
       "totalDurationMs": 685125,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 174721,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "pass",
           "durationMs": 144773,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "pass",
           "durationMs": 36907,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 24770,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 9139,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "fail",
           "durationMs": 284418,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "pass",
           "durationMs": 3395,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "pass",
           "durationMs": 3057,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1287,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     },
@@ -793,66 +812,314 @@
         "e2e": null
       },
       "totalDurationMs": 496500,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
       "checks": {
         "build": {
           "status": "pass",
           "durationMs": 154555,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lint": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "lintDomains": {
           "status": "fail",
           "durationMs": 3059,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "typecheck": {
           "status": "pass",
           "durationMs": 34331,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
           "durationMs": 21715,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "securitySmoke": {
           "status": "pass",
           "durationMs": 8336,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "unitDomains": {
           "status": "pass",
           "durationMs": 264051,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "fullUnit": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "e2e": {
           "status": "skipped",
           "durationMs": 0,
-          "exitCode": null
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "guardrails": {
           "status": "fail",
           "durationMs": 3689,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "uiConsolidation": {
           "status": "fail",
           "durationMs": 2685,
-          "exitCode": 1
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
         },
         "observability": {
           "status": "pass",
           "durationMs": 1327,
-          "exitCode": 0
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        }
+      }
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T08-55-19-838Z.json",
+      "generatedAt": "2026-03-09T08:55:19.838Z",
+      "summary": {
+        "totalChecks": 18,
+        "passed": 13,
+        "failed": 2,
+        "timedOut": 0,
+        "skipped": 3
+      },
+      "passRates": {
+        "build": 100,
+        "lint": null,
+        "lintDomains": 100,
+        "typecheck": 100,
+        "criticalFlows": 100,
+        "securitySmoke": 100,
+        "unitDomains": 100,
+        "fullUnit": null,
+        "e2e": null
+      },
+      "totalDurationMs": 664457,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
+      "checks": {
+        "build": {
+          "status": "pass",
+          "durationMs": 146234,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "lint": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "lintDomains": {
+          "status": "pass",
+          "durationMs": 153401,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "typecheck": {
+          "status": "pass",
+          "durationMs": 35473,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "criticalFlows": {
+          "status": "pass",
+          "durationMs": 23227,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "securitySmoke": {
+          "status": "pass",
+          "durationMs": 8338,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "unitDomains": {
+          "status": "pass",
+          "durationMs": 287598,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "fullUnit": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "e2e": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "guardrails": {
+          "status": "fail",
+          "durationMs": 3482,
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "uiConsolidation": {
+          "status": "fail",
+          "durationMs": 2781,
+          "exitCode": 1,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "observability": {
+          "status": "pass",
+          "durationMs": 1250,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        }
+      }
+    },
+    {
+      "sourceFile": "weekly-quality-latest.json",
+      "generatedAt": "2026-03-09T09:07:34.294Z",
+      "summary": {
+        "totalChecks": 18,
+        "passed": 15,
+        "failed": 0,
+        "timedOut": 0,
+        "skipped": 3
+      },
+      "passRates": {
+        "build": 100,
+        "lint": null,
+        "lintDomains": 100,
+        "typecheck": 100,
+        "criticalFlows": 100,
+        "securitySmoke": 100,
+        "unitDomains": 100,
+        "fullUnit": null,
+        "e2e": null
+      },
+      "totalDurationMs": 674847,
+      "kangurAiTutorBridge": null,
+      "kangurAiTutorBridgeSummaryText": null,
+      "checks": {
+        "build": {
+          "status": "pass",
+          "durationMs": 184875,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "lint": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "lintDomains": {
+          "status": "pass",
+          "durationMs": 133598,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "typecheck": {
+          "status": "pass",
+          "durationMs": 35192,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "criticalFlows": {
+          "status": "pass",
+          "durationMs": 25991,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "securitySmoke": {
+          "status": "pass",
+          "durationMs": 8863,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "unitDomains": {
+          "status": "pass",
+          "durationMs": 276209,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "fullUnit": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "e2e": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "guardrails": {
+          "status": "pass",
+          "durationMs": 3592,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "uiConsolidation": {
+          "status": "pass",
+          "durationMs": 2548,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
+        },
+        "observability": {
+          "status": "pass",
+          "durationMs": 1297,
+          "exitCode": 0,
+          "scanSummary": null,
+          "structuredSummaryText": null
         }
       }
     }

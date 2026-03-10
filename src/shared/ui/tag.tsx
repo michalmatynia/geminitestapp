@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
+
 import { Badge } from './badge';
 
 interface TagProps {

@@ -3,12 +3,11 @@ import 'server-only';
 import { Queue, Worker } from 'bullmq';
 
 import type { ManagedQueue, QueueConfig, QueueHealthStatus } from '@/shared/contracts/jobs';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getRedisConnection } from './redis-connection';
 import { registerQueue } from './registry';
-
 import { logSystemEvent } from '../observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Job } from 'bullmq';
 

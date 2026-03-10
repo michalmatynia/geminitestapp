@@ -1,14 +1,15 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
   MasterFolderTreeController,
   FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
+import { internalError } from '@/shared/errors/app-error';
 import type { MasterTreeId } from '@/shared/utils';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
-import { internalError } from '@/shared/errors/app-error';
 
 export interface SlotTreeContextValue {
   controller: MasterFolderTreeController;

@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   ImportExportTemplateMapping as ExportTemplateMapping,
   BaseProductRecord,
@@ -9,6 +8,7 @@ import type {
   ImageUrlDiagnostic,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getAllImageUrls, getProductImagesAsBase64 } from './base-exporter-images';
 import {

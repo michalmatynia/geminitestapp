@@ -1,5 +1,6 @@
 'use client';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { EmptyState, Card } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
@@ -7,7 +8,6 @@ import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendTestimonialsSection(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

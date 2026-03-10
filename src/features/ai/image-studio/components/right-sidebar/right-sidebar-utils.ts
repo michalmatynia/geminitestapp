@@ -1,6 +1,11 @@
 import { type CanvasResizeDirection } from '@/features/ai/image-studio/utils/canvas-resize';
-import type { VectorShape, VectorTool } from '@/shared/lib/vector-drawing';
+import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
+import type {
+  ImageStudioSequenceCropStep,
+  ImageStudioSequenceStep,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { VectorShape, VectorTool } from '@/shared/lib/vector-drawing';
 
 import {
   normalizeShapeToPolygons,
@@ -9,11 +14,6 @@ import {
   type MaskShapeForExport,
 } from '../generation-toolbar/GenerationToolbarImageUtils';
 
-import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
-import type {
-  ImageStudioSequenceCropStep,
-  ImageStudioSequenceStep,
-} from '@/features/ai/image-studio/utils/studio-settings';
 
 export const CHARS_PER_TOKEN_ESTIMATE = 4;
 export const ACTION_HISTORY_MAX_STEPS = 50;

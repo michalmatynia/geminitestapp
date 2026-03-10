@@ -1,13 +1,11 @@
 import 'server-only';
 
+import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getProductListingRepository } from '@/features/integrations/server';
 import { integrationService } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   ProductListingExportEvent,
   ProductListingRepository,
@@ -15,9 +13,11 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ProductRepository, ProductRecord } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const LISTINGS_COLLECTION = 'product_listings';
 

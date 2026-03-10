@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useImageStudioRuns } from '@/features/ai/ai-paths/hooks/useImageStudioRuns';
+import type { FilterField } from '@/shared/contracts/ui';
 import {
   Card,
   Badge,
@@ -11,8 +12,8 @@ import {
   Checkbox,
   PanelFilters,
 } from '@/shared/ui';
+
 import type { ColumnDef } from '@tanstack/react-table';
-import type { FilterField } from '@/shared/contracts/ui';
 
 const formatDateTime = (value: string | null | undefined): string => {
   if (!value) return 'n/a';

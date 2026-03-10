@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
 type HomeActionTone = 'neutral' | 'violet' | 'sky' | 'mist' | 'sand';

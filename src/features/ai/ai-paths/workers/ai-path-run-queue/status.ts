@@ -1,4 +1,3 @@
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   getRuntimeAnalyticsAvailability,
   getRuntimeAnalyticsSummary,
@@ -8,19 +7,21 @@ import {
   type AiPathRunQueueBaseStatus,
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+
 import {
   DEFAULT_CONCURRENCY,
   QUEUE_HOT_STATUS_CACHE_TTL_MS,
   QUEUE_STATUS_CACHE_TTL_MS,
 } from './config';
-import { aiPathRunQueueState } from './state';
-import { AiPathRunQueueHotStatus } from './types';
 import { queue } from './queue';
+import { aiPathRunQueueState } from './state';
 import {
   finalizeAiPathRunQueueStatus,
   getAiInsightsQueueStatusSnapshot,
   getQueueStatusScopeKey,
 } from './status-utils';
+import { AiPathRunQueueHotStatus } from './types';
 
 export type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;

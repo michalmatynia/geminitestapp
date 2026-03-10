@@ -3,9 +3,10 @@
 import React, { useMemo } from 'react';
 
 import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
-import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
 import { KANGUR_MAIN_PAGE } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
+import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
+
 import { useKangurRouting } from './KangurRoutingContext';
 
 const KANGUR_PAGE_CONTEXT_ROOTS: Record<string, string[]> = {

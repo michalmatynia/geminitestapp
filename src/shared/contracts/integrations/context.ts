@@ -1,4 +1,3 @@
-import type { UseMutationResult } from '@tanstack/react-query';
 import type {
   Integration,
   IntegrationConnection,
@@ -8,6 +7,7 @@ import type {
 import type { PlaywrightPersona } from '../playwright';
 import type { CatalogRecord, ProductCategory } from '../products';
 import type { LabelValueOptionDto as InternalCategoryOption } from '../ui';
+import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface IntegrationsData {
   integrations: Integration[];

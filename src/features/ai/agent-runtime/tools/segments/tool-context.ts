@@ -1,12 +1,16 @@
-import path from 'path';
 import { promises as fs } from 'fs';
-import type { Browser, BrowserContext } from 'playwright';
-import prisma from '@/shared/lib/db/prisma';
+import path from 'path';
+
+
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import { launchBrowser, createBrowserContext } from '../playwright/browser';
 import { extractTargetUrl, getTargetHostname, resolveIgnoreRobotsTxt } from '../utils';
 import { type AgentToolRequest } from './types';
+
+import type { Browser, BrowserContext } from 'playwright';
 
 export async function resolveToolContext(input: {
   request: AgentToolRequest;

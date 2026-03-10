@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   KangurButton,
   KangurDivider,
@@ -9,6 +8,7 @@ import {
   KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,

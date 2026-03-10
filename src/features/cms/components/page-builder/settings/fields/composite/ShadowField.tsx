@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Input } from '@/shared/ui';
+
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 
 export function ShadowField(): React.ReactNode {

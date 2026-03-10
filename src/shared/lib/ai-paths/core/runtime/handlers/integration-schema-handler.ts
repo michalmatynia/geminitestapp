@@ -5,11 +5,10 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema } from '@/shared/contracts/database';
-
 import { dbApi, type ApiResponse } from '@/shared/lib/ai-paths/api';
+import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 
 // Module-scoped schema cache to avoid redundant API calls across database nodes
 // within the same run. TTL ensures freshness across separate runs.

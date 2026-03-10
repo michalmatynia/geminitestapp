@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { MetadataItem } from '../../metadata-item';
 
 export type GenericMapperStatsProps = {

@@ -1,7 +1,7 @@
 import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-
 import { entityApi } from '@/shared/lib/ai-paths/api';
+
 import { resolveEntityIdFromInputs } from '../utils';
 
 export type HandleDatabaseDeleteOperationInput = {

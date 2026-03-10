@@ -4,7 +4,6 @@ import {
   inferParamSpecs,
 } from '@/shared/utils/prompt-params';
 import type { ParamSpec, ParamSpecKind } from '@/shared/contracts/prompt-engine';
-
 import type {
   PromptExploderParamUiControl,
   PromptExploderParamUiRecommendation,

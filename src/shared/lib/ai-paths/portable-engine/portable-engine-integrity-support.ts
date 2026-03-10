@@ -1,6 +1,7 @@
 import { hashString, stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from './portable-engine-contract';
+
 import type { PortablePathEnvelopeSignatureKeyResolverContext } from './portable-engine-resolution-types';
 
 export const createStableHashHex = (value: string): string =>

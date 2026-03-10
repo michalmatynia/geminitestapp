@@ -1,8 +1,9 @@
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -21,6 +22,8 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -762,7 +765,9 @@ export default function AddingBallGame({
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [round, setRound] = useState<Round>(() => generateRound(MODES[0] ?? 'complete_equation'));
+  const sessionStartedAtRef = useRef(Date.now());
 
   const handleResult = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
@@ -770,7 +775,16 @@ export default function AddingBallGame({
       const progress = loadProgress();
       const reward = createLessonPracticeReward(progress, 'adding', nextScore, TOTAL_ROUNDS);
       addXp(reward.xp, reward.progressUpdates);
+      void persistKangurSessionScore({
+        operation: 'addition',
+        score: nextScore,
+        totalQuestions: TOTAL_ROUNDS,
+        correctAnswers: nextScore,
+        timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+        xpEarned: reward.xp,
+      });
       setXpEarned(reward.xp);
+      setXpBreakdown(reward.breakdown ?? []);
       setScore(nextScore);
       setDone(true);
       return;
@@ -808,6 +822,13 @@ export default function AddingBallGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurRewardBreakdownChips
+            accent='slate'
+            breakdown={xpBreakdown}
+            className='justify-center'
+            dataTestId='adding-ball-summary-breakdown'
+            itemDataTestIdPrefix='adding-ball-summary-breakdown'
+          />
           <KangurProgressBar accent='amber' animated size='md' value={percent} />
           <p className='text-slate-500'>
             {percent === 100
@@ -824,7 +845,9 @@ export default function AddingBallGame({
                 setScore(0);
                 setDone(false);
                 setXpEarned(0);
+                setXpBreakdown([]);
                 setRound(generateRound(MODES[0] ?? 'complete_equation'));
+                sessionStartedAtRef.current = Date.now();
               }}
               size='lg'
               variant='surface'

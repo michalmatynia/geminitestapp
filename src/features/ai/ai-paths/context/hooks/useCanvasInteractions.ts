@@ -3,8 +3,21 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 
+import {
+  useCanvasEventHandlers,
+  type UseCanvasEventHandlersValue,
+} from './canvas/useCanvasEventHandlers';
+import {
+  useCanvasStateHandlers,
+  type UseCanvasStateHandlersValue,
+} from './canvas/useCanvasStateHandlers';
+import {
+  useCanvasTouchHandlers,
+  type UseCanvasTouchHandlersValue,
+} from './canvas/useCanvasTouchHandlers';
 import {
   useCanvasState,
   useCanvasActions,
@@ -13,23 +26,24 @@ import {
   type DragState,
   type ConnectingState,
 } from './useCanvas';
+import {
+  useCanvasInteractionsClipboard,
+  type UseCanvasInteractionsClipboardValue,
+} from './useCanvasInteractions.clipboard';
+import {
+  useCanvasInteractionsConnections,
+  type UseCanvasInteractionsConnectionsValue,
+} from './useCanvasInteractions.connections';
 import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePaths';
 import { useSelectionState, useSelectionActions } from './useSelection';
-
 import { useGraphState, useGraphActions } from '../GraphContext';
 import { useRuntimeActions } from '../RuntimeContext';
-
 import {
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
   type TouchPointSample,
   getMarqueeRect,
 } from './useCanvasInteractions.helpers';
-
-import {
-  useCanvasInteractionsClipboard,
-  type UseCanvasInteractionsClipboardValue,
-} from './useCanvasInteractions.clipboard';
 import {
   useCanvasInteractionsNavigation,
   type UseCanvasInteractionsNavigationValue,
@@ -39,28 +53,11 @@ import {
   type UseCanvasInteractionsNodesValue,
 } from './useCanvasInteractions.nodes';
 import {
-  useCanvasInteractionsConnections,
-  type UseCanvasInteractionsConnectionsValue,
-} from './useCanvasInteractions.connections';
-import {
   useCanvasInteractionsTouch,
   type UseCanvasInteractionsTouchValue,
 } from './useCanvasInteractions.touch';
 
-import {
-  useCanvasStateHandlers,
-  type UseCanvasStateHandlersValue,
-} from './canvas/useCanvasStateHandlers';
-import {
-  useCanvasEventHandlers,
-  type UseCanvasEventHandlersValue,
-} from './canvas/useCanvasEventHandlers';
-import {
-  useCanvasTouchHandlers,
-  type UseCanvasTouchHandlersValue,
-} from './canvas/useCanvasTouchHandlers';
 
-import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)

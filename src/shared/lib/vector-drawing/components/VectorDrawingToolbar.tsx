@@ -17,11 +17,11 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import type { VectorToolMode } from '@/shared/contracts/vector';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { VectorToolMode } from '@/shared/contracts/vector';
 
 import {
   useOptionalVectorDrawingActions,

@@ -10,24 +10,24 @@ import React, {
   useState,
 } from 'react';
 
-import {
-  extractParamsFromPrompt,
-  inferParamSpecs,
-  setDeepValue,
-} from '@/shared/utils/prompt-params';
-import type { ExtractParamsResult, ParamIssue, ParamSpec } from '@/shared/contracts/prompt-engine';
-import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
-import { consumePromptExploderApplyPrompt } from '@/shared/lib/prompt-exploder/bridge';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
-
-import { useProjectsState } from './ProjectsContext';
 import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import {
   getImageStudioProjectSessionKey,
   resolveImageStudioProjectSession,
 } from '@/features/ai/image-studio/utils/project-session';
+import type { ExtractParamsResult, ParamIssue, ParamSpec } from '@/shared/contracts/prompt-engine';
 import { internalError } from '@/shared/errors/app-error';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
+import { consumePromptExploderApplyPrompt } from '@/shared/lib/prompt-exploder/bridge';
+import { useToast } from '@/shared/ui';
+import {
+  extractParamsFromPrompt,
+  inferParamSpecs,
+  setDeepValue,
+} from '@/shared/utils/prompt-params';
+
+import { useProjectsState } from './ProjectsContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,8 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+
 import { type AlertEvidenceQuery, type MongoSystemLogDoc } from './types';
 
 export const escapeRegex = (value: string): string =>

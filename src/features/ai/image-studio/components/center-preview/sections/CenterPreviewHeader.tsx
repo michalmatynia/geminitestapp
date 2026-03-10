@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
 import { Camera } from 'lucide-react';
-import { Button } from '@/shared/ui';
-import { ToggleButtonGroup } from '../../ToggleButtonGroup';
+import React from 'react';
+
 import { useSlotsState, useSlotsActions } from '@/features/ai/image-studio/context/SlotsContext';
+import { Button } from '@/shared/ui';
+
+import { ToggleButtonGroup } from '../../ToggleButtonGroup';
 import { useCenterPreviewContext } from '../CenterPreviewContext';
 import { useCenterPreviewHeaderContext } from './CenterPreviewHeaderContext';
 

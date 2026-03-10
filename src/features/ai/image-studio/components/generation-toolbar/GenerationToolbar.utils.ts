@@ -1,4 +1,5 @@
 import { ApiError } from '@/shared/lib/api-client';
+
 import { type MaskShapeForExport } from './GenerationToolbarImageUtils';
 
 export const UPSCALE_REQUEST_TIMEOUT_MS = 60_000;

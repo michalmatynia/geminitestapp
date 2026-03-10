@@ -1,14 +1,4 @@
 import {
-  AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
-  AI_PATHS_CONFIG_KEY_PREFIX,
-  AI_PATHS_INDEX_KEY,
-  AI_PATHS_MAINTENANCE_ACTION_IDS,
-  type AiPathsMaintenanceActionId,
-  type AiPathsMaintenanceActionReport,
-  type AiPathsMaintenanceReport,
-  type AiPathsSettingRecord,
-} from './settings-store.constants';
-import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
@@ -23,7 +13,18 @@ import {
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
+
 import { compactPathConfigValue } from './settings-store.compaction';
+import {
+  AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
+  AI_PATHS_CONFIG_KEY_PREFIX,
+  AI_PATHS_INDEX_KEY,
+  AI_PATHS_MAINTENANCE_ACTION_IDS,
+  type AiPathsMaintenanceActionId,
+  type AiPathsMaintenanceActionReport,
+  type AiPathsMaintenanceReport,
+  type AiPathsSettingRecord,
+} from './settings-store.constants';
 import { parsePathMetas } from './settings-store.parsing';
 import {
   countPendingStarterWorkflowConfigRefreshes,

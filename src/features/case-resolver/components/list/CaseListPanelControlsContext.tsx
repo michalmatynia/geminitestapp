@@ -1,10 +1,11 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
+import type { Dispatch, SetStateAction } from 'react';
 
 export type CaseListPanelControlsContextValue = {
   caseSortBy: CaseSortKey;

@@ -17,12 +17,14 @@ const {
   useAgentPersonasMock,
   useSaveAgentPersonasMutationMock,
   deletePersonaAvatarMock,
+  deletePersonaAvatarThumbnailMock,
   toastMock,
   logClientErrorMock,
 } = vi.hoisted(() => ({
   useAgentPersonasMock: vi.fn(),
   useSaveAgentPersonasMutationMock: vi.fn(),
   deletePersonaAvatarMock: vi.fn(),
+  deletePersonaAvatarThumbnailMock: vi.fn(),
   toastMock: vi.fn(),
   logClientErrorMock: vi.fn(),
 }));
@@ -36,6 +38,7 @@ vi.mock('@/features/ai/agentcreator/hooks/useAgentPersonas', () => ({
 
 vi.mock('@/features/ai/agentcreator/utils/avatar-input', () => ({
   deletePersonaAvatar: deletePersonaAvatarMock,
+  deletePersonaAvatarThumbnail: deletePersonaAvatarThumbnailMock,
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
@@ -115,6 +118,7 @@ describe('AgentPersonasPage', () => {
       isLoading: false,
     });
     deletePersonaAvatarMock.mockResolvedValue(undefined);
+    deletePersonaAvatarThumbnailMock.mockResolvedValue(undefined);
   });
 
   it('deletes replaced avatar files only after a successful save', async () => {
@@ -147,6 +151,107 @@ describe('AgentPersonasPage', () => {
     expect(deletePersonaAvatarMock).toHaveBeenCalledTimes(1);
     expect(deletePersonaAvatarMock).toHaveBeenCalledWith('file-old');
     expect(toastMock).toHaveBeenCalledWith('Persona updated.', { variant: 'success' });
+  });
+
+  it('keeps existing avatar file refs when saving non-avatar edits', async () => {
+    const savePersonasMock = vi.fn().mockResolvedValue(undefined);
+    useSaveAgentPersonasMutationMock.mockReturnValue({
+      mutateAsync: savePersonasMock,
+      isPending: false,
+    });
+    const existingPersona = buildPersona({
+      name: 'Helpful Tutor',
+      moods: [
+        buildAgentPersonaMood('neutral', {
+          svgContent: '',
+          avatarImageFileId: 'file-old',
+          avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/old.png',
+          avatarThumbnailRef: 'thumbnail-old',
+        }),
+      ],
+    });
+    useAgentPersonasMock.mockReturnValue({
+      data: [existingPersona],
+      isLoading: false,
+    });
+
+    render(<AgentPersonasPage />);
+    const props = getItemLibraryProps();
+
+    await props.onSave({
+      ...existingPersona,
+      name: 'Helpful Tutor updated',
+      description: 'Updated description',
+    });
+
+    expect(savePersonasMock).toHaveBeenCalledTimes(1);
+    expect(savePersonasMock).toHaveBeenCalledWith({
+      personas: [
+        expect.objectContaining({
+          id: 'persona-1',
+          name: 'Helpful Tutor updated',
+          description: 'Updated description',
+          moods: [
+            expect.objectContaining({
+              avatarImageFileId: 'file-old',
+              avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/old.png',
+              avatarThumbnailRef: 'thumbnail-old',
+            }),
+          ],
+        }),
+      ],
+    });
+    expect(deletePersonaAvatarMock).not.toHaveBeenCalled();
+    expect(deletePersonaAvatarThumbnailMock).not.toHaveBeenCalled();
+  });
+
+  it('preserves existing persona settings when the draft omits the settings payload', async () => {
+    const savePersonasMock = vi.fn().mockResolvedValue(undefined);
+    useSaveAgentPersonasMutationMock.mockReturnValue({
+      mutateAsync: savePersonasMock,
+      isPending: false,
+    });
+    const existingPersona = buildPersona({
+      settings: buildAgentPersonaSettings({
+        customInstructions: 'Stay concise',
+        memory: {
+          enabled: false,
+          defaultSearchLimit: 9,
+        },
+      }),
+    });
+    useAgentPersonasMock.mockReturnValue({
+      data: [existingPersona],
+      isLoading: false,
+    });
+
+    render(<AgentPersonasPage />);
+    const props = getItemLibraryProps();
+
+    await props.onSave({
+      id: existingPersona.id,
+      name: 'Helpful Tutor updated',
+      description: 'Updated description',
+    });
+
+    expect(savePersonasMock).toHaveBeenCalledWith({
+      personas: [
+        expect.objectContaining({
+          id: existingPersona.id,
+          name: 'Helpful Tutor updated',
+          description: 'Updated description',
+          settings: {
+            customInstructions: 'Stay concise',
+            memory: {
+              enabled: false,
+              includeChatHistory: true,
+              useMoodSignals: true,
+              defaultSearchLimit: 9,
+            },
+          },
+        }),
+      ],
+    });
   });
 
   it('does not delete saved avatar files when save fails', async () => {

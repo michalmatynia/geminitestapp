@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import React from 'react';
 
+import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   Button,
@@ -18,7 +19,6 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   useImageStudioSettingsActions,
   useImageStudioSettingsState,

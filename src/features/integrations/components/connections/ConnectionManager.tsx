@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { useIntegrationsData } from '@/features/integrations/context/IntegrationsContext';
+
 import { ConnectionForm } from './manager/ConnectionForm';
 import { ConnectionList } from './manager/ConnectionList';
 import { ConnectionTestLog } from './manager/ConnectionTestLog';

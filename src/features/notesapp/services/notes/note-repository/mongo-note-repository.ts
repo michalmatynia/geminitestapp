@@ -18,12 +18,12 @@ import type {
   NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 
-import { mongoThemeImpl } from './mongo/themes';
+import { mongoCategoryImpl } from './mongo/categories';
 import { mongoFileImpl } from './mongo/files';
 import { mongoNotebookImpl } from './mongo/notebooks';
-import { mongoTagImpl } from './mongo/tags';
-import { mongoCategoryImpl } from './mongo/categories';
 import { mongoNoteCrudImpl } from './mongo/notes';
+import { mongoTagImpl } from './mongo/tags';
+import { mongoThemeImpl } from './mongo/themes';
 
 export const mongoNoteRepository: NoteRepository = {
   ...mongoThemeImpl,

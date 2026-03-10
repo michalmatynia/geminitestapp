@@ -4,16 +4,10 @@ import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { createFileUploadEvent } from './services/file-upload-events';
-import { getImageFileRepository } from './services/image-file-repository';
-import {
-  deleteFromConfiguredStorage,
-  getPublicPathFromStoredPath,
-  uploadToConfiguredStorage,
-} from './services/storage/file-storage-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import {
   tempFolderName,
   MAX_IMAGE_BYTES,
@@ -29,6 +23,14 @@ import {
   studioRoot,
   uploadsRoot,
 } from './server-constants';
+import { createFileUploadEvent } from './services/file-upload-events';
+import { getImageFileRepository } from './services/image-file-repository';
+import {
+  deleteFromConfiguredStorage,
+  getPublicPathFromStoredPath,
+  uploadToConfiguredStorage,
+} from './services/storage/file-storage-service';
+
 
 function isAllowedMimeType(mime: string | null | undefined): boolean {
   const normalized = (mime ?? '').trim().toLowerCase();

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsActions,

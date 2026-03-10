@@ -1,3 +1,5 @@
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
+
 import { BLOCK_SECTION_ALLOWED_BLOCK_TYPES } from './block-definitions-layout';
 import {
   WRAP_OPTIONS,
@@ -11,7 +13,6 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = [

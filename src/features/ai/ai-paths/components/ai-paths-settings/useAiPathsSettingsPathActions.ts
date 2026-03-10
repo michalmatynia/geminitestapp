@@ -23,12 +23,12 @@ import {
   sanitizeEdges,
   triggers,
 } from '@/shared/lib/ai-paths';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import {
   deleteAiPathsSettings,
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 
 import {
   normalizeParserSamples,

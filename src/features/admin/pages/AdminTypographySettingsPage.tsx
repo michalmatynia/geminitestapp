@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   APP_FONT_SET_SETTING_KEY,
   APP_FONT_SETS,
@@ -22,6 +21,7 @@ import {
   MetadataItem,
   Hint,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();

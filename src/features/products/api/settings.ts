@@ -14,10 +14,6 @@ export type {
   ReorderValidationPatternUpdatePayload,
 };
 
-import {
-  type ProductValidatorImportRequest,
-  type ProductValidatorImportResult,
-} from '@/shared/contracts/validator-import';
 
 export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
 export type ImportValidationPatternsResult = ProductValidatorImportResult;
@@ -35,8 +31,12 @@ import {
 
 export type { ReorderCategoryPayload };
 
-import { type ProductTag } from '@/shared/contracts/products/tags';
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
+import { type ProductTag } from '@/shared/contracts/products/tags';
+import {
+  type ProductValidatorImportRequest,
+  type ProductValidatorImportResult,
+} from '@/shared/contracts/validator-import';
 import { api } from '@/shared/lib/api-client';
 
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';

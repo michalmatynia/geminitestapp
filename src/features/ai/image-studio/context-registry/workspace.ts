@@ -1,3 +1,5 @@
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
@@ -7,8 +9,6 @@ import type {
   ImageStudioProjectRecord,
   ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
-import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 
 export const IMAGE_STUDIO_CONTEXT_ROOT_IDS = [
   'page:admin-image-studio',

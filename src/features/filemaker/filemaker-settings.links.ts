@@ -1,3 +1,11 @@
+import { normalizeFilemakerDatabase } from './filemaker-settings.database';
+import {
+  createFilemakerAddressLink,
+  createFilemakerEmailLink,
+  createFilemakerEventOrganizationLink,
+  createFilemakerPhoneNumberLink,
+} from './filemaker-settings.entities';
+import { ensureUniqueId, normalizeString, toIdToken } from './filemaker-settings.helpers';
 import {
   type FilemakerDatabase,
   type FilemakerAddressOwnerKind,
@@ -13,14 +21,6 @@ import {
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
 } from './types';
-import { ensureUniqueId, normalizeString, toIdToken } from './filemaker-settings.helpers';
-import {
-  createFilemakerAddressLink,
-  createFilemakerEmailLink,
-  createFilemakerEventOrganizationLink,
-  createFilemakerPhoneNumberLink,
-} from './filemaker-settings.entities';
-import { normalizeFilemakerDatabase } from './filemaker-settings.database';
 
 const defaultAddressLinkIdForValues = (
   ownerKind: FilemakerAddressOwnerKind,

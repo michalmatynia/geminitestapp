@@ -1,11 +1,4 @@
 import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
-} from '@/shared/lib/ai-paths/core/constants';
-import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
-import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
@@ -19,6 +12,13 @@ import {
   type CaseResolverFile,
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  NODE_MIN_HEIGHT,
+  NODE_WIDTH,
+} from '@/shared/lib/ai-paths/core/constants';
+import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
 
 export const buildNode = (
   definition: NodeDefinition,

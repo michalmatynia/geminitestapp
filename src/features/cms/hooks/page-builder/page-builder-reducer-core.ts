@@ -1,9 +1,3 @@
-import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
-import { reducePageActions } from './page-builder-reducer/page-actions';
-import { reduceSectionActions } from './page-builder-reducer/section-actions';
-import { reduceBlockActions } from './page-builder-reducer/block-actions';
-import { reduceGridActions } from './page-builder-reducer/grid-actions';
-import { reduceComplexActions } from './page-builder-reducer/complex-actions';
 import {
   cloneBlock,
   uid,
@@ -11,6 +5,12 @@ import {
   findBlock,
   insertBlockIntoColumnBlocks,
 } from './block-helpers';
+import { reduceBlockActions } from './page-builder-reducer/block-actions';
+import { reduceComplexActions } from './page-builder-reducer/complex-actions';
+import { reduceGridActions } from './page-builder-reducer/grid-actions';
+import { reducePageActions } from './page-builder-reducer/page-actions';
+import { reduceSectionActions } from './page-builder-reducer/section-actions';
+import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
 import {
   buildHierarchyIndexes,
   cloneSectionSubtree,

@@ -1,10 +1,10 @@
-import type { Prisma, ChatbotJobStatus } from '@prisma/client';
 import type {
   MongoChatbotSessionDoc,
   MongoChatbotJobDoc,
   MongoChatbotMessageDoc,
 } from '../database-sync-types';
 import type { SyncHandler } from './types';
+import type { Prisma, ChatbotJobStatus } from '@prisma/client';
 
 export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs: MongoChatbotSessionDoc[] = (await mongo

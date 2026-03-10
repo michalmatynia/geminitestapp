@@ -1,20 +1,22 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useToast } from '@/shared/ui';
-import { ApiError } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { getSectionDefinition } from '../../section-registry';
-import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
 } from '@/features/cms/hooks/usePageBuilderContext';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { ApiError } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import { getSectionDefinition } from '../../section-registry';
 
 export function usePageAiAssistant() {
   const state = usePageBuilderState();

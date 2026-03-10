@@ -2,10 +2,10 @@
 
 import React from 'react';
 
+import type { PanelAction } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { EmptyState, PanelHeader, SearchInput, StandardDataTablePanel } from '@/shared/ui';
 
-import type { PanelAction } from '@/shared/contracts/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export interface FilemakerEntityTablePageProps<TData> {

@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import { useImportValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   ImportValidationPatternsPayload,
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useImportValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { JSONImportModal, useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { VALIDATOR_SAMPLE_IMPORT_JSON } from './validator-documentation-clipboard';
 

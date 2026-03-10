@@ -206,8 +206,8 @@ export const findRemovedLegacyTriggerContextModesInPathConfig = (
 export const normalizeRemovedTriggerContextModesInPathConfig = <
   TPathConfig extends { nodes?: unknown } | null | undefined,
 >(
-  pathConfig: TPathConfig
-): LegacyTriggerContextModeRemediationResult<TPathConfig> => {
+    pathConfig: TPathConfig
+  ): LegacyTriggerContextModeRemediationResult<TPathConfig> => {
   if (!pathConfig || typeof pathConfig !== 'object') {
     return {
       value: pathConfig,

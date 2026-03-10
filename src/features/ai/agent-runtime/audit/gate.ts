@@ -1,7 +1,7 @@
-import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { PlanStep } from '@/shared/contracts/agent-runtime';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const parseJsonObject = (content: string): unknown => {
   try {

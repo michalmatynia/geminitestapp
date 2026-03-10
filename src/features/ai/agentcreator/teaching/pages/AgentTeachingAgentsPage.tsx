@@ -8,12 +8,12 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
+import { LearnerAgentForm, type LearnerAgentLibraryItem } from '../components/LearnerAgentForm';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import {
   useDeleteTeachingAgentMutation,
   useUpsertTeachingAgentMutation,
 } from '../hooks/useAgentTeachingQueries';
-import { LearnerAgentForm, type LearnerAgentLibraryItem } from '../components/LearnerAgentForm';
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();

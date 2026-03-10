@@ -1,12 +1,11 @@
 import 'server-only';
 
-import type { NextRequest } from 'next/server';
-
+import type { KangurActor } from '@/features/kangur/services/kangur-actor';
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
-import type { KangurActor } from '@/features/kangur/services/kangur-actor';
+import type { NextRequest } from 'next/server';
 
 type KangurRequestContext = Pick<ApiHandlerContext, 'requestId' | 'traceId' | 'correlationId'>;
 

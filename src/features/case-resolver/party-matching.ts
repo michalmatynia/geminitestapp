@@ -1,7 +1,7 @@
-import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
-import type { CountryOption } from '@/shared/contracts/internationalization';
-
 import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/types';
+import type { CountryOption } from '@/shared/contracts/internationalization';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
+
 
 export type MatchedCaseResolverPartyReference = {
   kind: 'person' | 'organization';

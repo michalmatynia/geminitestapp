@@ -9,29 +9,30 @@ import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import { useToast } from '@/shared/ui';
 
-import type { ProductListContextType } from '../context/ProductListContext';
-import type { Row } from '@tanstack/react-table';
 
-import { useProductListSelection } from './product-list/useProductListSelection';
-import { useProductListModals } from './product-list/useProductListModals';
-import { useProductListIntegrations } from './product-list/useProductListIntegrations';
-import { useProductListUrlSync } from './product-list/useProductListUrlSync';
-import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
-import { useProductListHighlights } from './product-list/useProductListHighlights';
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListListingStatuses } from './product-list/useProductListListingStatuses';
 import { useProductListQueueStatus } from './product-list/useProductListQueueStatus';
 import { useProductListCategories } from './product-list/useProductListCategories';
 import { useProductListFilters } from './product-list/useProductListFilters';
-import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
+import { useProductListHighlights } from './product-list/useProductListHighlights';
+import { useProductListIntegrations } from './product-list/useProductListIntegrations';
+import { useProductListModals } from './product-list/useProductListModals';
+import { useProductListSelection } from './product-list/useProductListSelection';
+import { useProductListUrlSync } from './product-list/useProductListUrlSync';
 import { useCreateFromDraft } from './useCreateFromDraft';
+import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
+
+import type { ProductListContextType } from '../context/ProductListContext';
+import type { Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 

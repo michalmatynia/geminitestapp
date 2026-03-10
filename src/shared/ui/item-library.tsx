@@ -265,7 +265,12 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
               <Label>Name</Label>
               <Input
                 value={draft.name || ''}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(e) =>
+                  setDraft((current) => ({
+                    ...current,
+                    name: e.target.value,
+                  }))
+                }
                 placeholder={`Enter ${entityName.toLowerCase()} name`}
               />
             </div>
@@ -273,7 +278,12 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
               <Label>Description</Label>
               <Textarea
                 value={draft.description || ''}
-                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                onChange={(e) =>
+                  setDraft((current) => ({
+                    ...current,
+                    description: e.target.value,
+                  }))
+                }
                 placeholder='Optional description'
                 className='min-h-[90px]'
               />
@@ -282,7 +292,11 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
 
           {renderExtraFields?.(
             draft as T,
-            (updates) => setDraft({ ...draft, ...updates }),
+            (updates) =>
+              setDraft((current) => ({
+                ...current,
+                ...updates,
+              })),
             { originalItem: editingItem }
           )}
         </div>

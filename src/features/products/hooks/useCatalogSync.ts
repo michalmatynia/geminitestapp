@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
 import type { LanguageRecord, CurrencyRecord } from '@/shared/contracts/internationalization';
+import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import type { UseProductsOptions } from './useProductsQuery';
 
 type LanguageOption = {

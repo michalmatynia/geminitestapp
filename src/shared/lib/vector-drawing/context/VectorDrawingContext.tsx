@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
 import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

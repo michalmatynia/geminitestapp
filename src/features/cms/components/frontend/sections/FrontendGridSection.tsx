@@ -3,19 +3,13 @@
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer, BlockSettingsContext } from './FrontendBlockRenderer';
-import { useSectionBlockData } from './SectionBlockContext';
-import { SectionDataProvider } from './SectionDataContext';
-import { SectionLayoutProvider } from './SectionLayoutContext';
-import { useCmsPageContext } from '../CmsPageContext';
-import { CssAnimationWrapper } from '../CssAnimationWrapper';
-import { BlockRenderContext } from '../blocks/BlockContext';
-
-import type { BlockInstance } from '@/features/cms/types/page-builder';
-
+import { BackgroundImageLayer } from './grid/BackgroundImageLayer';
+import { ColumnRenderer } from './grid/ColumnRenderer';
 import {
   SECTION_BLOCK_TYPES,
   getBlockMinHeight,
@@ -25,9 +19,15 @@ import {
   resolveJustifyContent,
   resolveAlignItems,
 } from './grid/frontend-grid-utils';
-import { BackgroundImageLayer } from './grid/BackgroundImageLayer';
-import { ColumnRenderer } from './grid/ColumnRenderer';
 import { SectionBlockRenderer } from './grid/SectionBlockRenderer';
+import { useSectionBlockData } from './SectionBlockContext';
+import { SectionDataProvider } from './SectionDataContext';
+import { SectionLayoutProvider } from './SectionLayoutContext';
+import { BlockRenderContext } from '../blocks/BlockContext';
+import { useCmsPageContext } from '../CmsPageContext';
+import { CssAnimationWrapper } from '../CssAnimationWrapper';
+
+
 
 export function FrontendGridSection(): React.ReactNode {
   const { sectionId, settings, blocks } = useSectionBlockData();

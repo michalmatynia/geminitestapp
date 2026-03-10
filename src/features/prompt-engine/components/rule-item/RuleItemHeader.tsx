@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
 import { ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
-import { Button, Tooltip, Badge, StatusBadge } from '@/shared/ui';
+import React from 'react';
+
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { Button, Tooltip, Badge, StatusBadge } from '@/shared/ui';
+
 import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { useRuleItemDragState } from '../context/RuleListDragContext';

@@ -3,8 +3,8 @@
 import { keepPreviousData } from '@tanstack/react-query';
 import React from 'react';
 
-import { dbApi } from '@/shared/lib/ai-paths/api';
 import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from '@/shared/ui';

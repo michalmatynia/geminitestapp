@@ -1,13 +1,14 @@
 'use client';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { type VariantProps } from 'class-variance-authority';
 import { useMemo } from 'react';
 
+import type { ModalStateProps } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { AppModal } from './app-modal';
-import { FormActions } from './FormActions';
 import { buttonVariants } from './button';
+import { FormActions } from './FormActions';
 
 import type { ReactNode } from 'react';
 

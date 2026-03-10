@@ -1,17 +1,19 @@
 'use client';
 
-import React from 'react';
 import { FileText, GitBranch, Lock, Pin, ScanText, ChevronDown, ChevronRight } from 'lucide-react';
-import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import React from 'react';
+
 import {
   decodeCaseResolverCaseContentFileNodeId,
   decodeCaseResolverCaseContentFolderNodeId,
   fromCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import { parseBoolean, formatCaseTimestamp } from '../case-list-utils';
+import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+
+import { parseBoolean, formatCaseTimestamp } from '../case-list-utils';
 import { useCaseListNodeRuntimeContext } from './CaseListNodeRuntimeContext';
 
 export interface CaseListNodeItemProps {

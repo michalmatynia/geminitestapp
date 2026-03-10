@@ -1,22 +1,25 @@
 'use client';
 
 import React from 'react';
+
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
+import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
+import type { BlockInstance } from '@/shared/contracts/cms';
+
+import { BlockRenderContext } from '../../blocks/BlockContext';
 import { CssAnimationWrapper } from '../../CssAnimationWrapper';
-import { FrontendImageWithTextBlock } from '../FrontendImageWithTextBlock';
-import { FrontendHeroBlock } from '../FrontendHeroBlock';
+import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
+import { getSectionStyles, getTextAlign } from '../../theme-styles';
 import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
 import { FrontendCarousel } from '../FrontendCarousel';
+import { FrontendHeroBlock } from '../FrontendHeroBlock';
+import { FrontendImageWithTextBlock } from '../FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from '../FrontendSlideshowSection';
 import { SectionBlockProvider } from '../SectionBlockContext';
-import { BlockRenderContext } from '../../blocks/BlockContext';
-import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
 import { useSectionData } from '../SectionDataContext';
-import { getSectionStyles, getTextAlign } from '../../theme-styles';
-import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
+import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
 import { resolveJustifyContent, resolveAlignItems } from './frontend-grid-utils';
-import type { BlockInstance } from '@/shared/contracts/cms';
+
 
 export function SectionBlockRenderer({ block }: { block: BlockInstance }): React.ReactNode {
   const children = block.blocks ?? [];

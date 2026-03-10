@@ -12,6 +12,7 @@ import {
   useCmsSlugs,
   useUpdatePage,
 } from '@/features/cms/hooks/useCmsQueries';
+import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -28,7 +29,6 @@ import {
   Button,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 
 export default function EditPagePageLoader(): React.JSX.Element {
   const router = useRouter();

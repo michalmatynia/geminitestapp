@@ -27,11 +27,11 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import {
   AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS,
   buildAgentTeachingChatContextBundle,
 } from '../context-registry/chat-page';
-import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 
 function AgentTeachingChatPageContent(): React.JSX.Element {

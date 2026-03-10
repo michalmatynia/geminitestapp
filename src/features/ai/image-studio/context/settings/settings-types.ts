@@ -1,9 +1,10 @@
-import type * as React from 'react';
 import type {
   ImageStudioSettings,
   ImageStudioSequenceOperation,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
+
+import type * as React from 'react';
 
 export type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
 export type { SelectOption };

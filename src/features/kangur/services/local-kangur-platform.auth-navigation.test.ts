@@ -29,6 +29,16 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
 }));
 
+const loadLocalKangurPlatformModule = () =>
+  vi.importActual<typeof import('@/features/kangur/services/local-kangur-platform')>(
+    '@/features/kangur/services/local-kangur-platform'
+  );
+
+const loadActiveLearnerModule = () =>
+  vi.importActual<typeof import('@/features/kangur/services/kangur-active-learner')>(
+    '@/features/kangur/services/kangur-active-learner'
+  );
+
 describe('createLocalKangurPlatform auth navigation', () => {
   const originalLocation = window.location;
 
@@ -58,8 +68,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
   });
 
   it('prepares a relative Kangur login href that preserves the full return URL', async () => {
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     expect(platform.auth.prepareLoginHref(window.location.href)).toBe(
@@ -79,8 +88,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
       writable: true,
     });
 
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     expect(platform.auth.prepareLoginHref(window.location.href)).toBe(
@@ -89,8 +97,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
   });
 
   it('reuses the prepared href when redirecting to the Kangur login page', async () => {
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     platform.auth.redirectToLogin(window.location.href);
@@ -107,17 +114,36 @@ describe('createLocalKangurPlatform auth navigation', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { KANGUR_ACTIVE_LEARNER_STORAGE_KEY } = await import(
-      '@/features/kangur/services/kangur-active-learner'
-    );
+    const { KANGUR_ACTIVE_LEARNER_STORAGE_KEY } = await loadActiveLearnerModule();
     window.localStorage.setItem(KANGUR_ACTIVE_LEARNER_STORAGE_KEY, 'learner-stale');
 
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
     expect(window.localStorage.getItem(KANGUR_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();
+  });
+
+  it('requests auth state with no-store caching so logout cannot reuse a stale session response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/auth/me',
+      expect.objectContaining({
+        cache: 'no-store',
+        method: 'GET',
+        credentials: 'same-origin',
+      })
+    );
   });
 
   it('starts a fresh guest score session on logout', async () => {
@@ -137,8 +163,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     });
     const previousSessionKey = getGuestKangurScoreSessionKey();
 
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     await platform.auth.logout();
@@ -161,8 +186,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { createLocalKangurPlatform } =
-      await import('@/features/kangur/services/local-kangur-platform');
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     await platform.auth.logout(window.location.href);

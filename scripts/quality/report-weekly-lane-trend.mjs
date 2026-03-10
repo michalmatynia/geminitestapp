@@ -4,6 +4,10 @@ import path from 'node:path';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
+  findLatestKangurAiTutorBridgeRun,
+  getKangurAiTutorBridgeAgeMs,
+  getKangurAiTutorBridgeAgeRuns,
+  getKangurAiTutorBridgeSignalState,
   runFromWeeklyReportPayload,
   toWeeklyLaneTrendMarkdown,
 } from './lib/weekly-lane-trend.mjs';
@@ -16,10 +20,42 @@ const maxRuns = Number.parseInt(maxRunsArg?.split('=')[1] ?? '10', 10);
 
 const root = process.cwd();
 const metricsDir = path.join(root, 'docs', 'metrics');
+const latestWeeklyReportPath = path.join(metricsDir, 'weekly-quality-latest.json');
+
+const countStructuredChecks = (run) =>
+  Object.values(run?.checks ?? {}).filter((check) => Boolean(check?.structuredSummaryText)).length;
+
+const isPreferredLatestSource = (run) => run?.sourceFile === 'weekly-quality-latest.json';
+
+const pickPreferredRunSnapshot = (current, candidate) => {
+  if (!current) {
+    return candidate;
+  }
+
+  const currentHasBridge = Boolean(current.kangurAiTutorBridge);
+  const candidateHasBridge = Boolean(candidate.kangurAiTutorBridge);
+  if (candidateHasBridge !== currentHasBridge) {
+    return candidateHasBridge ? candidate : current;
+  }
+
+  const currentStructuredCount = countStructuredChecks(current);
+  const candidateStructuredCount = countStructuredChecks(candidate);
+  if (candidateStructuredCount !== currentStructuredCount) {
+    return candidateStructuredCount > currentStructuredCount ? candidate : current;
+  }
+
+  const currentIsLatestSource = isPreferredLatestSource(current);
+  const candidateIsLatestSource = isPreferredLatestSource(candidate);
+  if (candidateIsLatestSource !== currentIsLatestSource) {
+    return candidateIsLatestSource ? candidate : current;
+  }
+
+  return current;
+};
 
 const collectRunFiles = async () => {
   const files = await fs.readdir(metricsDir);
-  return files
+  const historicalFiles = files
     .filter(
       (file) =>
         file.startsWith('weekly-quality-') &&
@@ -28,10 +64,19 @@ const collectRunFiles = async () => {
         file !== 'weekly-quality-latest.json'
     )
     .map((file) => path.join(metricsDir, file));
+
+  try {
+    await fs.access(latestWeeklyReportPath);
+    historicalFiles.push(latestWeeklyReportPath);
+  } catch {
+    // Ignore missing latest report snapshot and continue with history only.
+  }
+
+  return historicalFiles;
 };
 
 const loadRuns = async (files) => {
-  const runs = [];
+  const runsByGeneratedAt = new Map();
   for (const file of files) {
     try {
       const raw = await fs.readFile(file, 'utf8');
@@ -40,13 +85,14 @@ const loadRuns = async (files) => {
       if (!run) {
         continue;
       }
-      runs.push(run);
+      const existing = runsByGeneratedAt.get(run.generatedAt) ?? null;
+      runsByGeneratedAt.set(run.generatedAt, pickPreferredRunSnapshot(existing, run));
     } catch {
       // Ignore invalid historical files and continue.
     }
   }
 
-  return runs
+  return [...runsByGeneratedAt.values()]
     .sort((a, b) => new Date(a.generatedAt).getTime() - new Date(b.generatedAt).getTime())
     .slice(-Math.max(1, Number.isFinite(maxRuns) ? maxRuns : 10));
 };
@@ -56,10 +102,38 @@ const run = async () => {
   const files = await collectRunFiles();
   const runs = await loadRuns(files);
 
+  const latestBridgeRun = findLatestKangurAiTutorBridgeRun(runs);
+  const latestAvailableKangurAiTutorBridgeAlertStatus =
+    latestBridgeRun?.kangurAiTutorBridge?.alertStatus ?? null;
+  const latestAvailableKangurAiTutorBridgeSummaryText =
+    latestBridgeRun?.kangurAiTutorBridgeSummaryText ?? null;
+  const latestAvailableKangurAiTutorBridgeRun = latestBridgeRun?.generatedAt ?? null;
+  const latestAvailableKangurAiTutorBridgeAgeMs = getKangurAiTutorBridgeAgeMs(
+    runs,
+    latestAvailableKangurAiTutorBridgeRun
+  );
+  const latestAvailableKangurAiTutorBridgeAgeRuns = getKangurAiTutorBridgeAgeRuns(
+    runs,
+    latestAvailableKangurAiTutorBridgeRun
+  );
+  const latestAvailableKangurAiTutorBridgeState = getKangurAiTutorBridgeSignalState(
+    runs,
+    latestAvailableKangurAiTutorBridgeRun
+  );
+  const latestKangurAiTutorBridgeState =
+    runs.length === 0 ? 'missing' : runs[runs.length - 1]?.kangurAiTutorBridge ? 'current' : 'absent';
+
   const summary = {
     runCount: runs.length,
     oldestRun: runs[0]?.generatedAt ?? null,
     newestRun: runs[runs.length - 1]?.generatedAt ?? null,
+    latestKangurAiTutorBridgeState,
+    latestAvailableKangurAiTutorBridgeAlertStatus,
+    latestAvailableKangurAiTutorBridgeSummaryText,
+    latestAvailableKangurAiTutorBridgeRun,
+    latestAvailableKangurAiTutorBridgeState,
+    latestAvailableKangurAiTutorBridgeAgeMs,
+    latestAvailableKangurAiTutorBridgeAgeRuns,
   };
 
   const payload = {
@@ -75,6 +149,10 @@ const run = async () => {
   const historicalMdPath = path.join(metricsDir, `weekly-quality-trend-${stamp}.md`);
 
   const latestTotalDurationMs = runs[runs.length - 1]?.totalDurationMs ?? null;
+  const latestKangurAiTutorBridgeAlertStatus =
+    runs[runs.length - 1]?.kangurAiTutorBridge?.alertStatus ?? null;
+  const latestKangurAiTutorBridgeSummaryText =
+    runs[runs.length - 1]?.kangurAiTutorBridgeSummaryText ?? null;
   const structuredCheckCount = runs.reduce(
     (acc, runSnapshot) =>
       acc +
@@ -117,6 +195,15 @@ const run = async () => {
         oldestRun: summary.oldestRun,
         newestRun: summary.newestRun,
         latestTotalDurationMs,
+        latestKangurAiTutorBridgeState,
+        latestKangurAiTutorBridgeAlertStatus,
+        latestKangurAiTutorBridgeSummaryText,
+        latestAvailableKangurAiTutorBridgeAlertStatus,
+        latestAvailableKangurAiTutorBridgeSummaryText,
+        latestAvailableKangurAiTutorBridgeRun,
+        latestAvailableKangurAiTutorBridgeState,
+        latestAvailableKangurAiTutorBridgeAgeMs,
+        latestAvailableKangurAiTutorBridgeAgeRuns,
         structuredCheckCount,
       },
       details: {

@@ -1,19 +1,20 @@
 'use client';
 
-import type { JSX } from 'react';
 
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
-import {
-  KangurEmptyState,
-  KangurGlassPanel,
-  KangurSummaryPanel,
-} from '@/features/kangur/ui/design/primitives';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   useKangurLessonsRuntimeActions,
   useKangurLessonsRuntimeState,
 } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import {
+  KangurEmptyState,
+  KangurGlassPanel,
+  KangurSummaryPanel,
+} from '@/features/kangur/ui/design/primitives';
+
+import type { JSX } from 'react';
 
 export function KangurActiveLessonPanelWidget(): JSX.Element {
   const {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { AdminImageStudioSettingsView } from '../components/AdminImageStudioSettingsView';
 import { ImageStudioSettingsProvider } from '../context/ImageStudioSettingsContext';
 

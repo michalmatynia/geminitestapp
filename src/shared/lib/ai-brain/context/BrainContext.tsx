@@ -4,12 +4,13 @@ import { createContext, useContext, useMemo, type JSX, type ReactNode } from 're
 
 import { internalError } from '@/shared/errors/app-error';
 
+import { useBrainRuntime } from './useBrainRuntime';
+
 import type {
   BrainActionsContextType,
   BrainContextType,
   BrainStateContextType,
 } from './BrainContext.types';
-import { useBrainRuntime } from './useBrainRuntime';
 
 export type {
   BrainActionsContextType,

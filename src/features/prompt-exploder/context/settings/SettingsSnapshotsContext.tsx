@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext } from 'react';
+
 import type { PromptExploderPatternSnapshot } from '../../types';
 
 export interface SettingsSnapshotsState {

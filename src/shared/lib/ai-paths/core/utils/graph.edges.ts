@@ -1,4 +1,5 @@
 import type { AiNode, Edge, ConnectionValidation } from '@/shared/contracts/ai-paths';
+
 import { isValidConnection, normalizePortName } from './graph.ports';
 import { arePortTypesCompatible, formatPortDataTypes, getPortDataTypes } from './port-types';
 

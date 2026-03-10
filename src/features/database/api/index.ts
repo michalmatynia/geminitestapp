@@ -23,8 +23,8 @@ import type {
   DatabaseType,
   SqlQueryResult,
 } from '@/shared/contracts/database';
-import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { type ApiPayloadResult } from '@/shared/contracts/http';
+import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 

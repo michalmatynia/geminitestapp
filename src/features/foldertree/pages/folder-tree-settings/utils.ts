@@ -1,3 +1,4 @@
+import { ICON_LIBRARY, type IconLibraryItem } from '@/shared/lib/icons';
 import {
   type FolderTreeInstance,
   folderTreeInstanceValues,
@@ -5,7 +6,6 @@ import {
   type FolderTreeProfileV2,
   type FolderTreeNestingRuleV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
-import { ICON_LIBRARY, type IconLibraryItem } from '@/shared/lib/icons';
 
 export const INSTANCE_META: Array<{
   id: FolderTreeInstance;

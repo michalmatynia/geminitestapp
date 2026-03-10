@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
 
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   AiNode,
   Edge,
@@ -14,10 +17,7 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-import type { Toast } from '@/shared/contracts/ui';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 type ConfirmFn = (input: {
   title: string;

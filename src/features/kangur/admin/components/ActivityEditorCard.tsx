@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   KANGUR_LESSON_ACTIVITY_OPTIONS,
   getKangurLessonActivityDefinition,

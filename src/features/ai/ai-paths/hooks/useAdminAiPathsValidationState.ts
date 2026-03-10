@@ -3,7 +3,6 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,
@@ -23,9 +22,10 @@ import {
   normalizeAiPathsValidationConfig,
   rejectInferredAiPathsValidationRule,
 } from '@/shared/lib/ai-paths/core/validation-engine';
+import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   parseAiPathsSettings,

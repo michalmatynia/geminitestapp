@@ -2,16 +2,17 @@
 
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
+  buildKangurOperationPracticeHref,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import {
   KangurActivityColumn,
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
   KangurProgressBar,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  buildKangurOperationPracticeHref,
-  useKangurLearnerProfileRuntime,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
@@ -26,6 +27,17 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
       >
         <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Aktywnosc 7 dni
+        </div>
+        <div className='mb-4 flex flex-wrap gap-2'>
+          <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
+            Dzis: +{snapshot.todayXpEarned} XP
+          </KangurStatusChip>
+          <KangurStatusChip accent='indigo' data-testid='learner-profile-xp-summary-weekly'>
+            7 dni: +{snapshot.weeklyXpEarned} XP
+          </KangurStatusChip>
+          <KangurStatusChip accent='teal' data-testid='learner-profile-xp-summary-average'>
+            Srednio: {snapshot.averageXpPerSession} XP / sesje
+          </KangurStatusChip>
         </div>
         <div className='flex h-32 items-end gap-2'>
           {snapshot.weeklyActivity.map((point) => {
@@ -93,7 +105,8 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   value={item.averageAccuracy}
                 />
                 <div className='mt-1 text-[11px] text-slate-500'>
-                  Proby: {item.attempts} · Najlepsza skutecznosc: {item.bestScore}%
+                  Proby: {item.attempts} · XP / sesje: {item.averageXpPerSession} · Lacznie:{' '}
+                  {item.totalXpEarned} XP · Najlepsza skutecznosc: {item.bestScore}%
                 </div>
               </div>
             ))

@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { TagRepository } from '@/shared/contracts/products';
 import {
   getProductDataProvider,
   type ProductDbProvider,
 } from '@/shared/lib/products/services/product-provider';
-import type { TagRepository } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoTagRepository } from './mongo-tag-repository';
 import { prismaTagRepository } from './prisma-tag-repository';

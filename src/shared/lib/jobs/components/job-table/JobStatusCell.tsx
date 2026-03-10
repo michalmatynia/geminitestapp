@@ -1,5 +1,6 @@
-import React from 'react';
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import React from 'react';
+
 import { Badge, resolveStatusBadgeVariant } from '@/shared/ui';
 
 export const getStatusIcon = (status: string): React.JSX.Element => {

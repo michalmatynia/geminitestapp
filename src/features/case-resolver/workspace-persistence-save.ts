@@ -8,38 +8,34 @@ import {
   getCaseResolverWorkspaceNormalizationDiagnostics,
   normalizeCaseResolverWorkspace,
 } from './settings';
-
 import {
   formatByteCount,
   getCaseResolverWorkspaceRevision,
   readPositiveIntegerEnv,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
-
-import { logCaseResolverWorkspaceEvent } from './workspace-observability';
-
 import {
   CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
   type SettingsRecordLike,
 } from './utils/workspace-settings-persistence-helpers';
-
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import {
-  getCaseResolverWorkspaceMaxPayloadBytes,
-  isCaseResolverWorkspacePayloadTooLarge,
-  readWorkspaceFromSettingRecord,
-} from './workspace-persistence-shared';
+  applyCaseResolverWorkspaceDetachedDocumentsPayload,
+  buildCaseResolverWorkspaceDetachedDocumentsPayload,
+  stripCaseResolverWorkspaceDetachedDocuments,
+} from './workspace-persistence-detached-documents';
 import {
   applyCaseResolverWorkspaceDetachedHistoryPayload,
   buildCaseResolverWorkspaceDetachedHistoryPayload,
   stripCaseResolverWorkspaceDetachedHistory,
 } from './workspace-persistence-detached-history';
 import {
-  applyCaseResolverWorkspaceDetachedDocumentsPayload,
-  buildCaseResolverWorkspaceDetachedDocumentsPayload,
-  stripCaseResolverWorkspaceDetachedDocuments,
-} from './workspace-persistence-detached-documents';
+  getCaseResolverWorkspaceMaxPayloadBytes,
+  isCaseResolverWorkspacePayloadTooLarge,
+  readWorkspaceFromSettingRecord,
+} from './workspace-persistence-shared';
 
 const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT = 12;
 const CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES_DEFAULT = 900_000;

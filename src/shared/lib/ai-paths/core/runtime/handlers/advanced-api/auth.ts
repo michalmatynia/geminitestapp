@@ -1,8 +1,8 @@
 import { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { fetchWithOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
-import { renderTemplate } from '../../utils';
 import { toObject } from './utils';
+import { renderTemplate } from '../../utils';
 
 export const resolveAuthHeaders = async (
   config: AdvancedApiConfig,

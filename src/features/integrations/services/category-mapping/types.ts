@@ -1,4 +1,5 @@
 import { ObjectId, type Filter } from 'mongodb';
+
 import { CategoryMapping, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 
 export type MongoCategoryMappingDoc = {

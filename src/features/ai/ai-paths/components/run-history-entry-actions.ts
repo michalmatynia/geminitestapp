@@ -1,8 +1,8 @@
-import type { RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import type {
   RuntimeTraceResumeDecision,
   RuntimeTraceResumeMode,
 } from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 
 export type RunHistoryActionSource = {
   status?: string | null;

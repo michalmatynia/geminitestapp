@@ -1,7 +1,8 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { RefreshCw } from 'lucide-react';
+import { useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -11,7 +12,6 @@ import {
   KangurInlineFallback,
   KangurOptionCardButton,
   KangurProgressBar,
-  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -24,6 +24,8 @@ import {
   createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type CalendarTrainingGameProps = {
@@ -137,6 +139,8 @@ export default function CalendarTrainingGame({
   const [selected, setSelected] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
+  const sessionStartedAtRef = useRef(Date.now());
 
   const question = questions[current];
   if (!question) {
@@ -171,7 +175,16 @@ export default function CalendarTrainingGame({
       perfectCounterKey: 'calendarPerfect',
     });
     addXp(reward.xp, reward.progressUpdates);
+    void persistKangurSessionScore({
+      operation: 'calendar',
+      score: finalScore,
+      totalQuestions: TOTAL,
+      correctAnswers: finalScore,
+      timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+      xpEarned: reward.xp,
+    });
     setXpEarned(reward.xp);
+    setXpBreakdown(reward.breakdown ?? []);
     setDone(true);
   };
 
@@ -181,6 +194,8 @@ export default function CalendarTrainingGame({
     setSelected(null);
     setDone(false);
     setXpEarned(0);
+    setXpBreakdown([]);
+    sessionStartedAtRef.current = Date.now();
   };
 
   if (done) {
@@ -212,6 +227,13 @@ export default function CalendarTrainingGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurRewardBreakdownChips
+            accent='slate'
+            breakdown={xpBreakdown}
+            className='justify-center'
+            dataTestId='calendar-training-summary-breakdown'
+            itemDataTestIdPrefix='calendar-training-summary-breakdown'
+          />
           <KangurProgressBar
             accent='emerald'
             animated
@@ -352,33 +374,6 @@ export default function CalendarTrainingGame({
         })}
       </div>
 
-      <AnimatePresence>
-        {selected !== null && (
-          <motion.div
-            aria-atomic='true'
-            aria-live='assertive'
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            role='status'
-          >
-            <KangurResultBadge
-              data-testid='calendar-training-feedback'
-              tone={selected === question.answer ? 'success' : 'error'}
-            >
-              {selected === question.answer ? (
-                <>
-                  <CheckCircle className='w-5 h-5' /> Brawo! Dobrze!
-                </>
-              ) : (
-                <>
-                  <XCircle className='w-5 h-5' /> Poprawna odpowiedź: {question.answer}
-                </>
-              )}
-            </KangurResultBadge>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+
 import { Card, Hint, MetadataItem, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { type ContextDocumentDisplay } from '../types';
 import { getStatusVariant } from '../utils/logHelpers';
 

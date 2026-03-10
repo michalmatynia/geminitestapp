@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
-import type { Prisma } from '@prisma/client';
+
 import type { SyncHandler } from './types';
+import type { Prisma } from '@prisma/client';
 
 export const syncCmsSlugs: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('cms_slugs').find({}).toArray();

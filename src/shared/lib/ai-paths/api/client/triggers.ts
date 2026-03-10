@@ -1,9 +1,10 @@
-import { apiPost, apiPatch, apiDelete, apiFetch, ApiResponse } from './base';
 import type {
   AiTriggerButtonRecord,
   AiTriggerButtonCreatePayload,
   AiTriggerButtonUpdatePayload,
 } from '@/shared/contracts/ai-trigger-buttons';
+
+import { apiPost, apiPatch, apiDelete, apiFetch, ApiResponse } from './base';
 
 export async function fetchTriggerButtons(args?: {
   entityType?: string;

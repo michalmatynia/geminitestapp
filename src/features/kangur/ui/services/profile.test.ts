@@ -15,6 +15,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
+  xp_earned: 24,
   created_date: '2026-03-06T12:00:00.000Z',
   created_by: 'jan@example.com',
   ...overrides,
@@ -124,6 +125,9 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.longestStreakDays).toBe(3);
     expect(snapshot.todayGames).toBe(1);
     expect(snapshot.dailyGoalPercent).toBe(50);
+    expect(snapshot.todayXpEarned).toBe(24);
+    expect(snapshot.weeklyXpEarned).toBe(96);
+    expect(snapshot.averageXpPerSession).toBe(28);
     expect(snapshot.unlockedBadges).toBe(8);
     expect(snapshot.unlockedBadgeIds).toEqual(
       expect.arrayContaining([
@@ -144,12 +148,16 @@ describe('buildKangurLearnerProfileSnapshot', () => {
       attempts: 2,
       averageAccuracy: 75,
       bestScore: 80,
+      totalXpEarned: 48,
+      averageXpPerSession: 24,
     });
     expect(snapshot.recentSessions[0]?.id).toBe('s1');
+    expect(snapshot.recentSessions[0]?.xpEarned).toBe(24);
     expect(snapshot.weeklyActivity).toHaveLength(7);
     expect(snapshot.recommendations.length).toBeGreaterThan(0);
     expect(snapshot.recommendations.map((entry) => entry.id)).toContain('daily_goal');
     expect(snapshot.recommendations.find((entry) => entry.id === 'daily_goal')).toMatchObject({
+      description: expect.stringContaining('Dzis masz juz +24 XP.'),
       action: {
         label: 'Zagraj teraz',
         page: 'Game',
@@ -175,6 +183,9 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.longestStreakDays).toBe(0);
     expect(snapshot.lastPlayedAt).toBeNull();
     expect(snapshot.todayGames).toBe(0);
+    expect(snapshot.todayXpEarned).toBe(0);
+    expect(snapshot.weeklyXpEarned).toBe(0);
+    expect(snapshot.averageXpPerSession).toBe(28);
     expect(snapshot.operationPerformance).toEqual([]);
     expect(snapshot.recentSessions).toEqual([]);
     expect(snapshot.weeklyActivity).toHaveLength(7);
@@ -198,6 +209,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
             perfectSessions: 1,
             totalCorrectAnswers: 18,
             totalQuestionsAnswered: 20,
+            totalXpEarned: 112,
             bestScorePercent: 100,
             lastScorePercent: 80,
             currentStreak: 2,
@@ -214,6 +226,14 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.averageAccuracy).toBe(88);
     expect(snapshot.bestAccuracy).toBe(100);
     expect(snapshot.lastPlayedAt).toBe('2026-03-08T10:00:00.000Z');
+    expect(snapshot.operationPerformance).toEqual([
+      expect.objectContaining({
+        operation: 'clock',
+        averageAccuracy: 90,
+        totalXpEarned: 112,
+        averageXpPerSession: 28,
+      }),
+    ]);
   });
 
   it('derives unlocked badges from current progress even when badge ids were not persisted yet', () => {
@@ -233,5 +253,97 @@ describe('buildKangurLearnerProfileSnapshot', () => {
       expect.arrayContaining(['first_game', 'ten_games', 'xp_500'])
     );
     expect(snapshot.unlockedBadges).toBeGreaterThanOrEqual(3);
+  });
+
+  it('uses learner-friendly labels for calendar and geometry sessions in recent history', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress,
+      scores: [
+        createScore({
+          id: 'calendar-session',
+          operation: 'calendar',
+          created_date: '2026-03-06T12:00:00.000Z',
+        }),
+        createScore({
+          id: 'geometry-session',
+          operation: 'geometry',
+          created_date: '2026-03-05T12:00:00.000Z',
+        }),
+      ],
+      dailyGoalGames: 2,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+    });
+
+    expect(snapshot.recentSessions[0]).toMatchObject({
+      id: 'calendar-session',
+      operationLabel: 'Kalendarz',
+      operationEmoji: '📅',
+      xpEarned: 24,
+    });
+    expect(snapshot.recentSessions[1]).toMatchObject({
+      id: 'geometry-session',
+      operationLabel: 'Geometria',
+      operationEmoji: '🔷',
+      xpEarned: 24,
+    });
+  });
+
+  it('adds an xp momentum recommendation when the daily game goal is complete but xp is low', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalXp: 620,
+        gamesPlayed: 22,
+        lessonMastery: {},
+      },
+      scores: [
+        createScore({
+          id: 's1',
+          operation: 'clock',
+          correct_answers: 8,
+          created_date: '2026-03-06T12:00:00.000Z',
+          xp_earned: 5,
+        }),
+        createScore({
+          id: 's2',
+          operation: 'clock',
+          correct_answers: 9,
+          score: 9,
+          created_date: '2026-03-06T11:00:00.000Z',
+          xp_earned: 5,
+        }),
+        createScore({
+          id: 's3',
+          operation: 'clock',
+          correct_answers: 8,
+          score: 8,
+          created_date: '2026-03-06T10:00:00.000Z',
+          xp_earned: 5,
+        }),
+      ],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+    });
+
+    expect(snapshot.todayGames).toBe(3);
+    expect(snapshot.todayXpEarned).toBe(15);
+    expect(snapshot.averageXpPerSession).toBe(28);
+    expect(snapshot.recommendations.map((entry) => entry.id)).toContain('boost_xp_momentum');
+    expect(snapshot.recommendations.find((entry) => entry.id === 'boost_xp_momentum')).toMatchObject(
+      {
+        action: {
+          label: 'Uruchom trening',
+          page: 'Game',
+          query: {
+            quickStart: 'operation',
+            operation: 'clock',
+            difficulty: 'medium',
+          },
+        },
+      }
+    );
+    expect(
+      snapshot.recommendations.find((entry) => entry.id === 'boost_xp_momentum')?.description
+    ).toContain('okolo 5 XP na probe');
   });
 });

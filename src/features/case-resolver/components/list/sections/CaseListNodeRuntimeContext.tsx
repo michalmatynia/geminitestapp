@@ -3,8 +3,9 @@
 import { createContext, useContext } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../../tree-node-icon';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../../tree-node-icon';
 
 export type { FolderIconComponent };
 

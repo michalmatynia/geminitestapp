@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 

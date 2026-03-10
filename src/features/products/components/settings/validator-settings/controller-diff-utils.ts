@@ -1,15 +1,15 @@
-import {
-  normalizeProductValidationPatternLaunchScopes,
-  normalizeProductValidationPatternReplacementScopes,
-  normalizeProductValidationPatternScopes,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
-import type { UpdateProductValidationPatternInput as UpdateValidationPatternPayload } from '@/shared/contracts/products/validation';
 import type {
   PatternFormData,
   ProductValidationLaunchOperator,
   ProductValidationPattern,
   SequenceGroupView,
 } from '@/shared/contracts/products';
+import type { UpdateProductValidationPatternInput as UpdateValidationPatternPayload } from '@/shared/contracts/products/validation';
+import {
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 
 export function parseStrictInt(value: string): number | null {
   const trimmed = value.trim();

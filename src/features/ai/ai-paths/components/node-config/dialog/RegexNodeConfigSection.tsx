@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
   AI_PATHS_REGEX_TEMPLATES_KEY,
   buildRegexTemplatesStore,
@@ -21,6 +22,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { RegexAiPromptSection } from './regex/RegexAiPromptSection';
+import { RegexAiProposalSection } from './regex/RegexAiProposalSection';
 import {
   buildRegexItems,
   buildRegexPreview,
@@ -28,7 +31,6 @@ import {
   normalizeRegexFlags,
   parseRegexCandidate,
 } from './regex-node-config-preview';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
 import {
@@ -37,11 +39,8 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../../AiPathConfigContext';
-
 import { RegexConfigBasicTab } from './regex/RegexConfigBasicTab';
-import { RegexAiProposalSection } from './regex/RegexAiProposalSection';
 import { RegexPreviewSection } from './regex/RegexPreviewSection';
-import { RegexAiPromptSection } from './regex/RegexAiPromptSection';
 
 export function RegexNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

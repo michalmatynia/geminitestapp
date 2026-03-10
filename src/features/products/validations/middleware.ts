@@ -1,6 +1,5 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
 import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
-
 import {
   validateProductCreate,
   validateProductUpdate,

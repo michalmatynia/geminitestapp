@@ -1,11 +1,11 @@
 import type { DatabaseConfig, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import { coerceInput, getValueAtMappingPath, parseJsonSafe, renderJsonTemplate } from '../../utils';
 import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
 } from './integration-database-write-guardrails';
+import { coerceInput, getValueAtMappingPath, parseJsonSafe, renderJsonTemplate } from '../../utils';
 
 export type ResolveDatabaseInsertPayloadInput = {
   node: NodeHandlerContext['node'];

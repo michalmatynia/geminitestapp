@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import type { VectorShape, VectorToolMode } from '@/shared/lib/vector-drawing';
 
@@ -10,7 +11,6 @@ import {
   type StudioActionHistorySnapshot,
 } from './right-sidebar-utils';
 
-import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 
 type BuildActionHistorySnapshotInput = {
   activeMaskId: string | null;

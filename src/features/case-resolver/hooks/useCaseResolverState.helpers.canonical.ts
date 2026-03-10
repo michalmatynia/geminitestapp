@@ -1,3 +1,4 @@
+import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
@@ -8,7 +9,6 @@ import {
   type DocumentContentCanonical,
 } from '@/features/document-editor';
 import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
-import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import { stableStringify } from '@/shared/lib/ai-paths';
 
 export type CaseResolverDraftCanonicalState = {

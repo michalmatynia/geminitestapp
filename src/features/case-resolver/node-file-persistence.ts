@@ -1,10 +1,11 @@
 import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
+
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from './settings';
-import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import {
   buildSettingRecordFetchAttempts,
   resolveSettingRecordFromSettingsPayload,
 } from './utils/workspace-settings-persistence-helpers';
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
 

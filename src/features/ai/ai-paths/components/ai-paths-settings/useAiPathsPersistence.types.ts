@@ -1,3 +1,4 @@
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import type {
   AiPathsSettingRecordDto,
   AiNode,
@@ -13,7 +14,6 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
 
 export type PathSaveOptions = {
   silent?: boolean | undefined;

@@ -3,8 +3,8 @@
 import { Eye } from 'lucide-react';
 import React from 'react';
 
-import type { DbQueryPreset } from '@/shared/lib/ai-paths';
 import type { DatabasePresetOption } from '@/shared/contracts/database';
+import type { DbQueryPreset } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 

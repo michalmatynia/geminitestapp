@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Input, SelectSimple, FormField } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-import { useRuleItemContext } from '../context/RuleItemContext';
-import { PROMPT_EXPLODER_SEGMENT_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+
 import type {
   PromptExploderRuleSegmentType,
   PromptExploderCaptureApplyTo,
   PromptExploderCaptureNormalize,
 } from '@/shared/lib/prompt-engine/settings';
+import { Input, SelectSimple, FormField } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { useRuleItemContext } from '../context/RuleItemContext';
+import { PROMPT_EXPLODER_SEGMENT_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
 
 export function RuleItemExploderSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();

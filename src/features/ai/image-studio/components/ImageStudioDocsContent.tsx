@@ -2,6 +2,14 @@
 
 import React, { useMemo, useState } from 'react';
 
+import {
+  IMAGE_STUDIO_CROP_DOC_KEYS,
+  IMAGE_STUDIO_DOCS,
+  IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
+  IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
+  IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
+} from '@/features/ai/image-studio/utils/studio-docs';
+import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/studio-tree';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useBrainProviderStatus } from '@/shared/lib/ai-brain/hooks/useBrainProviderStatus';
@@ -14,19 +22,10 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import {
-  IMAGE_STUDIO_CROP_DOC_KEYS,
-  IMAGE_STUDIO_DOCS,
-  IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
-  IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
-  IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
-} from '@/features/ai/image-studio/utils/studio-docs';
-import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/studio-tree';
-
-import { useDocsSnapshots } from './docs/useDocsSnapshots';
-import {
   DocsRuntimeStateSection,
   type DocsRuntimeState,
 } from './docs/sections/DocsRuntimeStateSection';
+import { useDocsSnapshots } from './docs/useDocsSnapshots';
 
 type SettingDocRow = {
   path: string;

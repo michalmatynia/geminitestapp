@@ -1,16 +1,15 @@
-import type { Dispatch, SetStateAction } from 'react';
 
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
-import type { SelectSimpleOption } from '@/shared/ui';
-
 import type {
   BrainModelsResponse,
   BrainOperationsOverviewResponse,
   InsightsSnapshot,
 } from '@/shared/lib/ai-brain/hooks/useBrainQueries';
+import type { SelectSimpleOption } from '@/shared/ui';
+
 import type {
   AiBrainAssignment,
   AiBrainCapabilityKey,
@@ -18,6 +17,7 @@ import type {
   AiBrainProviderCatalog,
   AiBrainSettings,
 } from '../settings';
+import type { Dispatch, SetStateAction } from 'react';
 
 export type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 

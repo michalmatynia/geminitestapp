@@ -12,6 +12,7 @@ const createScore = (overrides: Partial<KangurScoreRecord> = {}): KangurScoreRec
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
+  xp_earned: 24,
   created_date: '2026-03-06T12:00:00.000Z',
   created_by: 'jan@example.com',
   ...overrides,
@@ -65,16 +66,20 @@ describe('buildKangurScoreInsights', () => {
     expect(insights.recentGames).toBe(3);
     expect(insights.recentAverageAccuracy).toBe(70);
     expect(insights.recentPerfectGames).toBe(1);
+    expect(insights.recentXpEarned).toBe(72);
+    expect(insights.averageXpPerRecentGame).toBe(24);
     expect(insights.trend.direction).toBe('up');
     expect(insights.trend.deltaAccuracy).toBe(35);
     expect(insights.strongestOperation).toMatchObject({
       operation: 'multiplication',
       averageAccuracy: 100,
+      averageXpEarned: 24,
       attempts: 1,
     });
     expect(insights.weakestOperation).toMatchObject({
       operation: 'division',
       averageAccuracy: 55,
+      averageXpEarned: 24,
       attempts: 2,
     });
   });
@@ -102,6 +107,8 @@ describe('buildKangurScoreInsights', () => {
     );
 
     expect(insights.recentGames).toBe(0);
+    expect(insights.recentXpEarned).toBe(0);
+    expect(insights.averageXpPerRecentGame).toBe(0);
     expect(insights.trend.direction).toBe('insufficient_data');
     expect(insights.strongestOperation?.operation).toBe('clock');
     expect(insights.weakestOperation?.operation).toBe('division');
@@ -112,6 +119,8 @@ describe('buildKangurScoreInsights', () => {
       recentGames: 0,
       recentAverageAccuracy: 0,
       recentPerfectGames: 0,
+      recentXpEarned: 0,
+      averageXpPerRecentGame: 0,
       lastPlayedAt: null,
       trend: {
         direction: 'insufficient_data',

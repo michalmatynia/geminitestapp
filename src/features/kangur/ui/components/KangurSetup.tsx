@@ -1,6 +1,6 @@
-import { useId, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Lock } from 'lucide-react';
+import { useId, useState } from 'react';
 
 import {
   KangurButton,

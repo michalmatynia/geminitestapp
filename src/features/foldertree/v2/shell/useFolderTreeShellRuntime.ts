@@ -1,11 +1,11 @@
 'use client';
 
+import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 import {
   masterFolderTreeRuntimeFallbackBus,
   useMasterFolderTreeRuntime,
   type FolderTreeRuntimeBus,
 } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
-import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 
 export type MasterFolderTreeShellRuntime = FolderTreeRuntimeBus;
 

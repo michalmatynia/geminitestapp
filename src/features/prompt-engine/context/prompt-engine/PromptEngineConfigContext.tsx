@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+
 import { internalError } from '@/shared/errors/app-error';
+import type { PromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 
 export type PatternCollectionTab = 'core' | 'prompt_exploder';
 export type ExploderPatternSubTab =

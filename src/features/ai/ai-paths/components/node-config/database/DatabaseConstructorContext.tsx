@@ -2,6 +2,8 @@
 
 import React, { useMemo } from 'react';
 
+import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
+import { internalError } from '@/shared/errors/app-error';
 import type {
   DatabaseConfig,
   DatabaseOperation,
@@ -9,8 +11,6 @@ import type {
   UpdaterMapping,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
-import { internalError } from '@/shared/errors/app-error';
 
 export type DatabaseConstructorContextValue = {
   pendingAiQuery: string;

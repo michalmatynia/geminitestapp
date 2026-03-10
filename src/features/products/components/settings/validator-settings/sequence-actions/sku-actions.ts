@@ -1,7 +1,9 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { buildUniqueLabel, createSequenceGroupId, getPatternSequence } from '../helpers';
+
 import type { CreatePatternMutation } from './types';
 
 export const handleCreateSkuAutoIncrementSequence = async (args: {

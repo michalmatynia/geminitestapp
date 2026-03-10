@@ -9,6 +9,9 @@ import {
   type ImageStudioRunExecutionResult,
 } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
+
+import { executeCenterOperation } from './handlers/center-handler';
+import { executeGenerationOperation } from './handlers/generation-handler';
 import {
   ensureWithinProject,
   isProjectScopedAssetPath,
@@ -16,8 +19,6 @@ import {
   resolveAssetPath,
   sanitizeImageStudioProjectId,
 } from './run-executor-utils';
-import { executeCenterOperation } from './handlers/center-handler';
-import { executeGenerationOperation } from './handlers/generation-handler';
 
 export {
   imageStudioRunRequestSchema,

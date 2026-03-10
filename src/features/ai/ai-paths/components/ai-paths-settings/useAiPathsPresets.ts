@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useCallback, useEffect } from 'react';
+
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type {
   AiNode,
   ClusterPreset,
@@ -8,6 +12,7 @@ import type {
   DbQueryPreset,
   Edge,
 } from '@/shared/contracts/ai-paths';
+import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import {
   BUNDLE_INPUT_PORTS,
   CLUSTER_PRESETS_KEY,
@@ -18,10 +23,6 @@ import {
   parsePathList,
 } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
-import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
-import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 

@@ -1,7 +1,7 @@
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import type { VersionNode } from '@/features/ai/image-studio/utils/version-graph';
 
 import type { VersionGraphFilterType } from './version-graph-context-types';
-import type { VersionNode } from '@/features/ai/image-studio/utils/version-graph';
 
 export const VERSION_GRAPH_IMAGE_PRELOAD_LIMIT = 120;
 

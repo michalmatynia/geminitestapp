@@ -14,11 +14,11 @@ import {
   SelectSimple,
 } from '@/shared/ui';
 
+import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 import {
   useCaseResolverPageActions,
   useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
-import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 
 const CASE_STATUS_OPTIONS = [
   {

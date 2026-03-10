@@ -4,14 +4,14 @@ import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
 import type { SystemSetting } from '@/shared/contracts/settings';
 import type { MutationResult, Toast } from '@/shared/contracts/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   appendCatalogPoolValues,
   catalogToEntries,
   hasCatalogPoolEntries,
   replaceCatalogPoolValues,
 } from '@/shared/lib/ai-brain/catalog-entries';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
   AI_INSIGHTS_SETTINGS_KEYS,

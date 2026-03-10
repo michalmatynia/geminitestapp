@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
+import { FilterPanel } from '@/shared/ui';
+import type { FilterField } from '@/shared/ui/templates/panels';
+
 import {
   type CaseHierarchyFilter,
   useAdminCaseResolverCasesActionsContext,
@@ -13,8 +17,6 @@ import {
   type CaseStatusFilter,
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
-import { FilterPanel } from '@/shared/ui';
-import type { FilterField } from '@/shared/ui/templates/panels';
 
 export function CaseFilterPanel(): React.JSX.Element {
   const {

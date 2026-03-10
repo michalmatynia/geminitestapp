@@ -1,11 +1,12 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { sanitizeEdges } from '../../utils';
+
+import { resolveScopedNodeIds } from './engine-reachability';
 import {
   resolveEdgeFromNodeId,
   resolveEdgeToNodeId,
   orderNodesByDependencies,
 } from './engine-utils';
-import { resolveScopedNodeIds } from './engine-reachability';
+import { sanitizeEdges } from '../../utils';
 
 export type GraphPreparationResult = {
   sanitizedEdges: Edge[];

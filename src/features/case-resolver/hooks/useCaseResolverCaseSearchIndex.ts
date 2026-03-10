@@ -8,6 +8,7 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+
 import {
   getCachedCaseResolverRuntimeIndexes,
   getCaseSubtreeIds,

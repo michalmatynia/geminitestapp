@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ObjectId, type Filter } from 'mongodb';
 
 import type {
@@ -12,6 +11,7 @@ import type {
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export type ExternalCategoryRepository = {
   syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;

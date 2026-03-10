@@ -15,10 +15,11 @@ import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
 import { Button, Input, SelectSimple } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
+
 import type { GenerationHistoryPanelProps as ShapeListPanelProps } from './GenerationHistoryPanel';
 
 const ROLE_OPTIONS: Array<{ value: VectorShapeRole; label: string }> = [

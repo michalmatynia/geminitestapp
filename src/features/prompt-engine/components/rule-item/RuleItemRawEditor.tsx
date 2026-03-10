@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+
 import { Textarea, CollapsibleSection, Hint } from '@/shared/ui';
-import { useRuleItemContext } from '../context/RuleItemContext';
+
 import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
+import { useRuleItemContext } from '../context/RuleItemContext';
 
 export function RuleItemRawEditor(): React.JSX.Element {
   const { draft } = useRuleItemContext();

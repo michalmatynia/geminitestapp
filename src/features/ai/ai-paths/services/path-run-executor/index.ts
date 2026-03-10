@@ -1,18 +1,12 @@
 import 'server-only';
 
-import { normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
-import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
-import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
-import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeRunBlockedOnLease,
   recordRuntimeRunFinished,
   recordRuntimeRunHandoffReady,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -24,9 +18,14 @@ import type {
   RuntimeProfileSummary,
   RuntimeTraceRecord,
 } from '@/shared/contracts/ai-paths-runtime';
+import { normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
+import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
+import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { fetchEntityByType } from '../path-run-executor.entities';
-import { createCancellationMonitor } from '../path-run-executor.monitoring';
 import {
   buildRuntimeProfileSnapshot,
   buildResumePlan,
@@ -35,12 +34,10 @@ import {
   resolveTriggerNodeId,
   toRuntimeProfileHighlight,
 } from '../path-run-executor.logic';
+import { createCancellationMonitor } from '../path-run-executor.monitoring';
 import { normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead } from '../path-run-runtime-kernel-metadata';
-
-import { createPathRunProfiling } from './profiling';
-import { runExecutorPreflight } from './preflight';
-import { resolveRuntimeKernelConfigForPathRun } from './runtime-kernel-config';
-import { PathRunRuntimeStateManager } from './runtime-state-manager';
+import { createCallbacks } from './callbacks';
+import { createErrorReporting } from './error-reporting';
 import { handleExecutionCompletion } from './execution-completion';
 import {
   UPDATE_ELIGIBLE_RUN_STATUSES,
@@ -49,9 +46,11 @@ import {
   resolveCancellationPollIntervalMs,
   isMissingRunUpdateError,
 } from './helpers';
-import { createErrorReporting } from './error-reporting';
+import { runExecutorPreflight } from './preflight';
+import { createPathRunProfiling } from './profiling';
+import { resolveRuntimeKernelConfigForPathRun } from './runtime-kernel-config';
+import { PathRunRuntimeStateManager } from './runtime-state-manager';
 import { createTracing } from './tracing';
-import { createCallbacks } from './callbacks';
 
 export const executePathRun = async (
   run: AiPathRunRecord,

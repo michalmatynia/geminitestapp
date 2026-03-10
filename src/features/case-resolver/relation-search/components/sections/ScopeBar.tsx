@@ -1,17 +1,19 @@
 'use client';
 
-import React from 'react';
 import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
-import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
-import {
-  useDocumentRelationSearchActionsContext,
-  useDocumentRelationSearchStateContext,
-} from '../../context/DocumentRelationSearchContext';
+import React from 'react';
+
+import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
-import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
+import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
+
+import {
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../../context/DocumentRelationSearchContext';
 import { useDocumentRelationSearchUiContext } from '../DocumentRelationSearchUiContext';
 
 const SORT_OPTIONS: { value: DocumentRelationSortMode; label: string }[] = [

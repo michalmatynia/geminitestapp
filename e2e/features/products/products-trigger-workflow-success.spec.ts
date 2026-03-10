@@ -1,17 +1,28 @@
 import { expect, test } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import {
   createProductWorkflowFixture,
+  fetchProductById,
   filterQueueByRunId,
-  openAdminProductsPage,
   openAdminQueuePage,
+  openAdminProductsPage,
+  readRunFailureMessage,
   searchForProductRow,
   triggerActionAndCaptureRunId,
   waitForProductFieldValue,
   waitForRunToComplete,
+  waitForRunToReachTerminal,
 } from '../../support/ai-paths-product-workflow-fixtures';
 
 const TEST_TIMEOUT_MS = 180_000;
+
+const locateQueueRunCard = (page: Page, runId: string): Locator =>
+  page
+    .getByText(runId)
+    .first()
+    .locator('xpath=ancestor::div[contains(@class, "bg-card/70")]')
+    .first();
 
 test.describe('Products AI Paths workflow success', () => {
   test.describe.configure({ mode: 'serial' });
@@ -38,18 +49,26 @@ test.describe('Products AI Paths workflow success', () => {
     });
 
     try {
-      const row = await searchForProductRow(page, fixture.searchTerm, {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
         rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name });
+      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
       await expect(triggerButton).toBeVisible({ timeout: 15_000 });
 
       const runId = await triggerActionAndCaptureRunId(page, async () => {
         await triggerButton.click();
       });
+      const runFeedback = row.locator(`[data-run-id="${runId}"]`).first();
+      await expect(runFeedback).toBeVisible({ timeout: 15_000 });
+      await expect(runFeedback.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+        'href',
+        new RegExp(`query=${runId}&runId=${runId}$`)
+      );
 
       const detail = await waitForRunToComplete(page, runId);
       expect(detail.run.status).toBe('completed');
+      await expect(runFeedback.getByText(/^completed$/i)).toBeVisible({ timeout: 30_000 });
 
       const updatedProduct = await waitForProductFieldValue(page, {
         productId: fixture.product.id,
@@ -74,8 +93,9 @@ test.describe('Products AI Paths workflow success', () => {
     });
 
     try {
-      const row = await searchForProductRow(page, fixture.searchTerm, {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
         rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
       });
       await row.getByLabel('Open row actions').click();
       await page.getByRole('menuitem', { name: 'Edit' }).click();
@@ -83,7 +103,7 @@ test.describe('Products AI Paths workflow success', () => {
       const modal = page.locator('[role="dialog"]').last();
       await expect(modal).toBeVisible({ timeout: 15_000 });
 
-      const triggerButton = modal.getByRole('button', { name: fixture.triggerButton.name });
+      const triggerButton = modal.getByRole('button', { name: fixture.triggerButton.name }).first();
       await expect(triggerButton).toBeVisible({ timeout: 15_000 });
 
       const runId = await triggerActionAndCaptureRunId(page, async () => {
@@ -114,10 +134,120 @@ test.describe('Products AI Paths workflow success', () => {
     });
 
     try {
-      const row = await searchForProductRow(page, fixture.searchTerm, {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
         rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name });
+      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
+      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
+
+      const runId = await triggerActionAndCaptureRunId(page, async () => {
+        await triggerButton.click();
+      });
+
+      await waitForRunToComplete(page, runId);
+      await waitForProductFieldValue(page, {
+        productId: fixture.product.id,
+        field: 'description_pl',
+        expectedValue: fixture.expectedValue,
+      });
+
+      const runFeedback = row.locator(`[data-run-id="${runId}"]`).first();
+      const queueLink = runFeedback.getByRole('link', { name: 'Job Queue' });
+      await expect(queueLink).toBeVisible({ timeout: 15_000 });
+      await queueLink.click();
+
+      await expect(page).toHaveURL(
+        new RegExp(`/admin/ai-paths/queue\\?tab=paths-all&query=${runId}&runId=${runId}$`)
+      );
+      await expect(
+        page.getByPlaceholder('Run ID, path name, entity, error...')
+      ).toHaveValue(runId, {
+        timeout: 30_000,
+      });
+
+      const runCard = locateQueueRunCard(page, runId);
+
+      await expect(runCard.getByText(runId)).toBeVisible({ timeout: 30_000 });
+      await expect(runCard.getByText(fixture.pathName)).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText('Showing 1 of 1 runs')).toBeVisible({ timeout: 30_000 });
+      await expect(runCard.getByText(/^completed$/i).first()).toBeVisible({ timeout: 30_000 });
+      await expect(runCard.getByRole('button', { name: 'Hide details' })).toBeVisible({
+        timeout: 30_000,
+      });
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('surfaces failed product workflow runs without mutating the product', async ({ page }) => {
+    const fixture = await createProductWorkflowFixture(page, {
+      location: 'product_row',
+      triggerButtonName: 'Fail Product Update',
+      pathName: 'E2E Product Failure Visibility Workflow',
+      updateField: 'description_pl',
+      expectedValue: `Playwright failure workflow ${Date.now()}`,
+      outcome: 'zero_affected_fail',
+    });
+
+    try {
+      const originalProduct = await fetchProductById(page, fixture.product.id);
+      const originalValue = originalProduct.description_pl ?? null;
+
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+        rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
+      });
+      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
+      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
+
+      const runId = await triggerActionAndCaptureRunId(page, async () => {
+        await triggerButton.click();
+      });
+      const runFeedback = row.locator(`[data-run-id="${runId}"]`).first();
+      await expect(runFeedback).toBeVisible({ timeout: 15_000 });
+
+      const detail = await waitForRunToReachTerminal(page, runId);
+      expect(detail.run.status).toBe('failed');
+      const failureMessage = readRunFailureMessage(detail);
+      expect(failureMessage).toBeTruthy();
+      await expect(runFeedback.getByText(/^failed$/i)).toBeVisible({ timeout: 30_000 });
+      await expect(runFeedback).toContainText(failureMessage ?? '');
+
+      const refreshedProduct = await fetchProductById(page, fixture.product.id);
+      expect(refreshedProduct.description_pl ?? null).toBe(originalValue);
+
+      await openAdminQueuePage(page);
+      await filterQueueByRunId(page, runId);
+
+      const runCard = locateQueueRunCard(page, runId);
+
+      await expect(runCard.getByText(runId)).toBeVisible({ timeout: 30_000 });
+      await expect(runCard.getByText(fixture.pathName)).toBeVisible({ timeout: 30_000 });
+      await expect(runCard.getByText(/^failed$/i)).toBeVisible({ timeout: 30_000 });
+      await expect(runCard).toContainText(failureMessage ?? '', { timeout: 30_000 });
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('shows completed node details and outputs in expanded Job Queue run details', async ({
+    page,
+  }) => {
+    const fixture = await createProductWorkflowFixture(page, {
+      location: 'product_row',
+      triggerButtonName: 'Inspect Completed Workflow',
+      pathName: 'E2E Product Run Detail Workflow',
+      updateField: 'description_pl',
+      expectedValue: `Playwright run detail ${Date.now()}`,
+    });
+
+    try {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+        rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
+      });
+      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
       await expect(triggerButton).toBeVisible({ timeout: 15_000 });
 
       const runId = await triggerActionAndCaptureRunId(page, async () => {
@@ -134,10 +264,30 @@ test.describe('Products AI Paths workflow success', () => {
       await openAdminQueuePage(page);
       await filterQueueByRunId(page, runId);
 
-      await expect(page.getByText(runId)).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText(fixture.pathName)).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText('Showing 1 of 1 runs')).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText(/completed/i).first()).toBeVisible({ timeout: 30_000 });
+      const runCard = locateQueueRunCard(page, runId);
+      await expect(runCard.getByText(runId)).toBeVisible({ timeout: 30_000 });
+      await runCard.getByRole('button', { name: 'Details', exact: true }).click();
+
+      await expect(page.getByText('Path ID')).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(fixture.pathId)).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(/Nodes \(3\)/)).toBeVisible({ timeout: 30_000 });
+      await page.getByRole('button', { name: 'Nodes (3)', exact: true }).click();
+      await expect(page.getByText(/Trigger \(trigger\)/)).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(/Expected Update \(constant\)/)).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.getByText(/Update Product \(database\)/)).toBeVisible({
+        timeout: 30_000,
+      });
+      await page.getByRole('button', { name: 'Raw payloads', exact: true }).click();
+
+      const textareaValues = await page
+        .locator('textarea')
+        .evaluateAll((elements) =>
+          elements.map((element) => (element as HTMLTextAreaElement).value)
+        );
+      expect(textareaValues.some((value) => value.includes(fixture.expectedValue))).toBe(true);
+      expect(textareaValues.some((value) => value.includes('description_pl'))).toBe(true);
     } finally {
       await fixture.cleanup();
     }

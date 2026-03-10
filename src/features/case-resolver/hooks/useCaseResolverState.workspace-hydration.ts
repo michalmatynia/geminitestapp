@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
+import { logCaseResolverDurationMetric } from '../runtime/metrics';
 import {
   fetchCaseResolverWorkspaceRecord,
   fetchCaseResolverWorkspaceIfStale,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
-import { logCaseResolverDurationMetric } from '../runtime/metrics';
 import { shouldAdoptIncomingWorkspace } from './useCaseResolverState.helpers.hydration';
 
 export function useCaseResolverStateWorkspaceHydration({

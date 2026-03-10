@@ -9,7 +9,6 @@ import {
   useDeleteCmsDomain,
   useUpdateCmsDomain,
 } from '@/features/cms/hooks/useCmsQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import {
   Button,
@@ -24,6 +23,7 @@ import {
   PanelFilters,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';

@@ -3,11 +3,11 @@
 import { useEffect, useRef } from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import type {
   ResolvedFolderTreeKeyboardConfig,
   ResolvedFolderTreeMultiSelectConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { resolveKeyboardAction } from '../operations/keyboard';

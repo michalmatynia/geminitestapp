@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { ChevronDown, ChevronRight, FilePlus, FolderPlus, Copy, Edit2, Trash2 } from 'lucide-react';
+import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/features/foldertree';
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
@@ -9,11 +9,12 @@ import {
   fromFolderMasterNodeId,
   fromNoteMasterNodeId,
 } from '@/features/notesapp/utils/master-folder-tree';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { Button, Input, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { useNotesAppTreeNodeRuntimeContext } from './NotesAppTreeNodeRuntimeContext';
 
 export type { NotesAppTreeNodeProps };

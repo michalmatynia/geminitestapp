@@ -1,4 +1,5 @@
 import { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+
 import { createRegexRule } from './base';
 
 export const OTHER_RULES: PromptValidationRule[] = [

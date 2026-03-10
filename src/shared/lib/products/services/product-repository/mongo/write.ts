@@ -1,12 +1,15 @@
 import { randomUUID } from 'crypto';
+
 import { Collection, UpdateFilter, WithId } from 'mongodb';
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+
 import {
   ProductCreateInput,
   ProductUpdateInput,
   ProductRecord,
   ProductWithImages,
 } from '@/shared/contracts/products';
+
+import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
   buildProductIdFilter,
   normalizeProductParameterValues,

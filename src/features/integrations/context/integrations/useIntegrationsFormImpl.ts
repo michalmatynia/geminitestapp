@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { IntegrationConnection } from '@/shared/contracts/integrations';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 

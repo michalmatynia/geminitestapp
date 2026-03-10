@@ -9,6 +9,7 @@ import {
 import { mergeContextRegistryRefs } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { summarizeKangurAiTutorFollowUpActions } from '@/features/kangur/ai-tutor/follow-up-reporting';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
@@ -334,7 +335,7 @@ const buildContextInstructions = (input: {
   }
   if ((context.repeatedQuestionCount ?? 0) > 0) {
     lines.push(
-      `Repeat signal: the learner has asked essentially the same question ${context.repeatedQuestionCount + 1} times in this session. Do not repeat the same hint unchanged; change strategy and diagnose the sticking point.`
+      `Repeat signal: the learner has asked essentially the same question ${(context.repeatedQuestionCount ?? 0) + 1} times in this session. Do not repeat the same hint unchanged; change strategy and diagnose the sticking point.`
     );
   }
   if (context.previousCoachingMode) {
@@ -638,6 +639,9 @@ export async function postKangurAiTutorChatHandler(
       registryBundle: contextRegistryBundle,
       memory,
     });
+    const followUpReporting = summarizeKangurAiTutorFollowUpActions(
+      adaptiveGuidance.followUpActions
+    );
     const adaptiveInstructions = adaptiveGuidance.instructions;
     adaptiveCoachingMode = adaptiveGuidance.coachingFrame?.mode ?? null;
     if (adaptiveInstructions) {
@@ -826,6 +830,11 @@ export async function postKangurAiTutorChatHandler(
         contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
         contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
+        primaryFollowUpActionId: followUpReporting.primaryFollowUpActionId,
+        primaryFollowUpPage: followUpReporting.primaryFollowUpPage,
+        hasBridgeFollowUpAction: followUpReporting.hasBridgeFollowUpAction,
+        bridgeFollowUpActionCount: followUpReporting.bridgeFollowUpActionCount,
+        bridgeFollowUpDirection: followUpReporting.bridgeFollowUpDirection,
         coachingMode: adaptiveCoachingMode,
         hasLearnerMemory: Boolean(memory),
         personaId: tutorSettings.agentPersonaId,

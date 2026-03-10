@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
-import { useCenterPreviewCanvasContext } from './sections/CenterPreviewCanvasContext';
 import {
   SPLIT_WHEEL_MAX_DELTA,
   SPLIT_WHEEL_MIN_DELTA,
   SPLIT_WHEEL_ZOOM_SENSITIVITY,
   SPLIT_ZOOM_STEP,
 } from './preview-utils';
+import { useCenterPreviewCanvasContext } from './sections/CenterPreviewCanvasContext';
 
 type Pane = 'left' | 'right';
 

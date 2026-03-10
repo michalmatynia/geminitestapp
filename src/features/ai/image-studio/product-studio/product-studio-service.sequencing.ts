@@ -1,5 +1,5 @@
-import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
 import { type ImageStudioSequenceStep } from '@/features/ai/image-studio/server';
+import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
 import {
   DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
   type ProductStudioExecutionRoute,
@@ -10,6 +10,7 @@ import {
   type ProductStudioSequenceReadiness,
 } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
+
 import { clamp01, trimString } from './product-studio-service.helpers';
 
 export type { ProductStudioSequenceStepPlanEntry };

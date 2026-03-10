@@ -1,7 +1,8 @@
-import React from 'react';
 import { PlusIcon } from 'lucide-react';
+import React from 'react';
 
 import { Button, SearchableSelect } from '@/shared/ui';
+
 import {
   useCrudPanelActionsContext,
   useCrudPanelStateContext,

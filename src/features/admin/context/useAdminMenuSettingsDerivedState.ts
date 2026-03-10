@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import {
-  buildAdminMenuLayoutMasterNodes,
-  readAdminMenuLayoutMetadata,
-} from '@/features/admin/pages/admin-menu-layout-master-tree';
-import type { AdminMenuLayoutNodeEntry as AdminMenuLayoutNodeState } from '@/features/admin/pages/admin-menu-layout-types';
+  adminNavToCustomNav,
+  buildAdminMenuFromCustomNav,
+  flattenAdminNav,
+  getAdminMenuSections,
+  normalizeAdminMenuCustomNav,
+  type NavItem,
+} from '@/features/admin/components/Menu';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
   ADMIN_MENU_CUSTOM_NAV_KEY,
@@ -16,13 +19,10 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import {
-  adminNavToCustomNav,
-  buildAdminMenuFromCustomNav,
-  flattenAdminNav,
-  getAdminMenuSections,
-  normalizeAdminMenuCustomNav,
-  type NavItem,
-} from '@/features/admin/components/Menu';
+  buildAdminMenuLayoutMasterNodes,
+  readAdminMenuLayoutMetadata,
+} from '@/features/admin/pages/admin-menu-layout-master-tree';
+import type { AdminMenuLayoutNodeEntry as AdminMenuLayoutNodeState } from '@/features/admin/pages/admin-menu-layout-types';
 import type {
   AdminMenuCustomNode,
   AdminNavLeaf,

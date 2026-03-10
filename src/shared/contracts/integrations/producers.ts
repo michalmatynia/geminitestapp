@@ -1,6 +1,8 @@
 import { z } from 'zod';
+
 import { dtoBaseSchema, type IdNameDto } from '../base';
 import { producerSchema, type Producer } from '../products';
+
 import type { ExternalTagSyncInput as ExternalProducerSyncInput } from './listings';
 
 export const externalProducerSchema = dtoBaseSchema.extend({

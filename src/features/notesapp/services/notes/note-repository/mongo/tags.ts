@@ -1,10 +1,12 @@
 import { randomUUID } from 'crypto';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { Filter, UpdateFilter } from 'mongodb';
 
-import type { TagDocument, NoteDocument } from '../../types/mongo-note-types';
 import type { TagRecord, TagCreateInput, TagUpdateInput } from '@/shared/contracts/notes';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+import type { TagDocument, NoteDocument } from '../../types/mongo-note-types';
+import type { Filter, UpdateFilter } from 'mongodb';
+
 
 const tagCollectionName = 'tags';
 const noteCollectionName = 'notes';

@@ -2,8 +2,9 @@
 
 import { createContext, useContext } from 'react';
 
-import type { RelationBrowserMode, RelationTreeLookup } from '../types';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { RelationBrowserMode, RelationTreeLookup } from '../types';
 
 export interface RelationTreeNodeRuntimeContextValue {
   mode: RelationBrowserMode;

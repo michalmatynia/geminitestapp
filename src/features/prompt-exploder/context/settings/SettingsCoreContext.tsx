@@ -1,18 +1,20 @@
 'use client';
 
 import { createContext } from 'react';
-import type { ValidatorPatternList } from '@/shared/contracts/validator';
-import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
-import {
-  parsePromptExploderSettings,
-  type PromptExploderSettingsValidationError,
-} from '../../settings';
 
+import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationRuleStack,
   PromptExploderSegmentationLibraryState,
 } from '@/shared/contracts/prompt-exploder';
+import type { ValidatorPatternList } from '@/shared/contracts/validator';
+
+import {
+  parsePromptExploderSettings,
+  type PromptExploderSettingsValidationError,
+} from '../../settings';
+
 
 export interface SettingsCoreState {
   promptSettings: PromptEngineSettings;

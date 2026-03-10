@@ -3,10 +3,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import {
-  createDefaultKangurProgressState,
-  type KangurProgressState,
-} from '@/shared/contracts/kangur';
-import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
@@ -23,6 +19,10 @@ import {
   saveProgressOwnerKey,
   subscribeToProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  createDefaultKangurProgressState,
+  type KangurProgressState,
+} from '@/shared/contracts/kangur';
 
 const kangurPlatform = getKangurPlatform();
 

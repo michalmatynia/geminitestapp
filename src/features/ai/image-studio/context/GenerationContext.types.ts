@@ -1,6 +1,5 @@
 'use client';
 
-import type { UseMutationResult } from '@tanstack/react-query';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
@@ -8,6 +7,8 @@ import type {
   RunStudioEnqueueResult,
   RunStudioPayload,
 } from '@/shared/contracts/image-studio';
+
+import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface GenerationRecord {
   id: string;

@@ -1,17 +1,18 @@
 'use client';
 
-import type { UseMutationResult } from '@tanstack/react-query';
 
-import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
+import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
-import { api } from '@/shared/lib/api-client';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
+import { api } from '@/shared/lib/api-client';
 import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentPersonas } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
+
+import type { UseMutationResult } from '@tanstack/react-query';
 
 export const agentPersonaKeys = QUERY_KEYS.agentPersonas;
 export { useAgentPersonas };

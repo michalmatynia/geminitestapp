@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
+import type { AiNode } from '@/shared/lib/ai-paths';
 
 export type SelectionToolMode = 'pan' | 'select';
 export type SelectionScopeMode = 'portion' | 'wiring';

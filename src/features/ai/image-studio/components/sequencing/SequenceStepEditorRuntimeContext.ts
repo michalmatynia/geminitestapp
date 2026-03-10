@@ -1,8 +1,8 @@
 'use client';
 
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
-import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 
 export type SequenceStepEditorRuntimeValue = {
   activeGenerationModel: string;

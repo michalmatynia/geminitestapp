@@ -1,7 +1,5 @@
 import sharp from 'sharp';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 import type {
   ImageFormat,
   ImageSize,
@@ -9,6 +7,8 @@ import type {
   OptimizationOptions,
   OptimizedImageResult,
 } from '@/shared/contracts/files';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 
 export type { ImageFormat, ImageSize, ImageSizeConfig, OptimizationOptions, OptimizedImageResult };
 

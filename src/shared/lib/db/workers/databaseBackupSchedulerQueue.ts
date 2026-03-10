@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { tickDatabaseBackupScheduler } from '@/shared/lib/db/services/database-backup-scheduler';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
+import { tickDatabaseBackupScheduler } from '@/shared/lib/db/services/database-backup-scheduler';
 import { createManagedQueue } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Queue } from 'bullmq';
 

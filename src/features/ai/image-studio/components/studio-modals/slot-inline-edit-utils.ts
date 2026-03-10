@@ -1,8 +1,7 @@
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { isImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-
-import { isImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import type {
   CompositeTabImageViewModel,

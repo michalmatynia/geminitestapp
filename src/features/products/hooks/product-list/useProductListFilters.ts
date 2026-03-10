@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 export function useProductListFilters({

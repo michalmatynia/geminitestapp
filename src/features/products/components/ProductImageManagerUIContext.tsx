@@ -4,14 +4,16 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 
 import { ProductFormCoreStateContext } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
-import { internalError } from '@/shared/errors/app-error';
+
+
 import type {
   ProductImageManagerUIActionsContextValue,
   ProductImageManagerUIStateContextValue,

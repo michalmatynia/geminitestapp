@@ -1,4 +1,7 @@
 import React from 'react';
+
+import { evaluateRunPreflight, type AiNode, type PathFlowIntensity } from '@/shared/lib/ai-paths';
+
 import {
   useCanvasState,
   useCanvasActions,
@@ -10,7 +13,12 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
-import { evaluateRunPreflight, type AiNode, type PathFlowIntensity } from '@/shared/lib/ai-paths';
+import { buildConnectorInfo, type ConnectorInfo } from './canvas-board-connectors';
+import {
+  type CanvasBoardState,
+  type TriggerPreflightHint,
+  type UseCanvasBoardStateProps,
+} from './CanvasBoard.types';
 import {
   MINIMAP_VISIBILITY_STORAGE_KEY,
   type SvgConnectorTooltipState,
@@ -18,12 +26,6 @@ import {
   SVG_PERF_SAMPLE_WINDOW_MS,
   mergeRuntimePayload,
 } from './CanvasBoard.utils';
-import { buildConnectorInfo, type ConnectorInfo } from './canvas-board-connectors';
-import {
-  type CanvasBoardState,
-  type TriggerPreflightHint,
-  type UseCanvasBoardStateProps,
-} from './CanvasBoard.types';
 
 export function useCanvasBoardState({
   confirmNodeSwitch,

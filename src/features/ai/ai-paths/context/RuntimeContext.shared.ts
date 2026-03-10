@@ -3,6 +3,12 @@
 import { createContext, type MouseEvent, type ReactNode } from 'react';
 
 import type {
+  LastErrorInfo,
+  RuntimeRunStatus,
+  RuntimeControlHandlers,
+  RuntimeNodeConfigHandlers,
+} from '@/shared/contracts/ai-paths';
+import type {
   AiNode,
   RuntimeState,
   RuntimePortValues,
@@ -13,12 +19,6 @@ import type {
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-import type {
-  LastErrorInfo,
-  RuntimeRunStatus,
-  RuntimeControlHandlers,
-  RuntimeNodeConfigHandlers,
-} from '@/shared/contracts/ai-paths';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
 

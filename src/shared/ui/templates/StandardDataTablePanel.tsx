@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import type { PanelRuntimeSlots } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-
 import { cn } from '@/shared/utils';
 
 import { DataTable } from '../data-table';

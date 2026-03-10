@@ -1,7 +1,7 @@
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { noteService } from '@/server/notes/note-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const LOG_SOURCE = 'ai-paths-runtime';
 

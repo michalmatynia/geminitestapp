@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo, type JSX } from 'react';
 import {
   Brush,
   Check,
@@ -13,13 +12,16 @@ import {
   Trash2,
   Unlink,
 } from 'lucide-react';
+import { useMemo, type JSX } from 'react';
+
 import { type VectorPoint, type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
+
 import { Button } from './button';
 import { Tooltip } from './tooltip';
-import { vectorShapeToPath } from './vector-canvas.geometry';
 import { useOptionalVectorCanvasContext } from './vector-canvas/VectorCanvasContext';
+import { vectorShapeToPath } from './vector-canvas.geometry';
 
 export interface VectorToolbarProps {
   tool: VectorToolMode;

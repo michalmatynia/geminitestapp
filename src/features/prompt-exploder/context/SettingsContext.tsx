@@ -2,37 +2,37 @@
 
 import React, { createContext, useMemo } from 'react';
 
+import type { PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
 import {
   useSettingsMap,
   useUpdateSetting,
   useUpdateSettingsBulk,
 } from '@/shared/hooks/use-settings';
 
-import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
 import {
-  SettingsRuntimeContext,
-  type SettingsRuntimeState,
-} from './settings/SettingsRuntimeContext';
+  parsePromptExploderSegmentationLibrary,
+  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
+  sortPromptExploderSegmentationRecordsByCapturedAt,
+} from '../segmentation-library';
+import { SettingsActionsContext, type SettingsActions } from './settings/SettingsActionsContext';
+import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
 import {
   SettingsDraftsContext,
   type SettingsDraftsState,
   type LearningDraft,
 } from './settings/SettingsDraftsContext';
 import {
+  SettingsRuntimeContext,
+  type SettingsRuntimeState,
+} from './settings/SettingsRuntimeContext';
+import {
   SettingsSnapshotsContext,
   type SettingsSnapshotsState,
 } from './settings/SettingsSnapshotsContext';
-import { SettingsActionsContext, type SettingsActions } from './settings/SettingsActionsContext';
-
-import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
-import {
-  parsePromptExploderSegmentationLibrary,
-  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
-  sortPromptExploderSegmentationRecordsByCapturedAt,
-} from '../segmentation-library';
+import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
+
 import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
-import type { PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
 
 export type { LearningDraft, SettingsActions };
 export { SettingsActionsContext };

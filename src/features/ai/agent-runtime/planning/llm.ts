@@ -18,9 +18,11 @@ import {
   normalizePlannerMeta,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AgentDecision, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { runPlannerTask } from './llm/core';
+import { buildAdaptivePlanReview } from './llm/review';
 import { evaluatePlanWithLLM } from './llm-evaluation';
 import {
   dedupePlanStepsWithLLM,
@@ -33,9 +35,7 @@ import {
   normalizePlanStepSpecs,
   type PlanStepSpecInput,
 } from './llm-step-specs';
-import { buildAdaptivePlanReview } from './llm/review';
 
-import { runPlannerTask } from './llm/core';
 
 export { runPlannerTask };
 export { summarizePlannerMemoryWithLLM, buildCheckpointBriefWithLLM } from './llm/summarization';

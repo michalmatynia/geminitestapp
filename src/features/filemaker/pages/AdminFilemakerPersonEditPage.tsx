@@ -2,14 +2,14 @@
 
 import React from 'react';
 
+import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
+import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
+import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerPersonEditPageActionsContext,
   AdminFilemakerPersonEditPageProvider,
   useAdminFilemakerPersonEditPageStateContext,
 } from '../context/AdminFilemakerPersonEditPageContext';
-import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
-import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
-import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 
 function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
   const { person, updateSetting, router } = useAdminFilemakerPersonEditPageStateContext();

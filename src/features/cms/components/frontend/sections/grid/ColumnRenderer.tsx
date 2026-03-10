@@ -1,14 +1,11 @@
 'use client';
 
 import React from 'react';
-import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
-import { CssAnimationWrapper } from '../../CssAnimationWrapper';
-import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
-import { useSectionData } from '../SectionDataContext';
-import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
-import { BlockRenderContext } from '../../blocks/BlockContext';
-import { getSectionStyles, getTextAlign } from '../../theme-styles';
+
 import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
+import type { BlockInstance } from '@/shared/contracts/cms';
+
+import { BackgroundImageLayer } from './BackgroundImageLayer';
 import {
   SECTION_BLOCK_TYPES,
   getBlockMinHeight,
@@ -18,9 +15,17 @@ import {
   resolveJustifyContent,
   resolveAlignItems,
 } from './frontend-grid-utils';
-import { BackgroundImageLayer } from './BackgroundImageLayer';
 import { SectionBlockRenderer } from './SectionBlockRenderer';
-import type { BlockInstance } from '@/shared/contracts/cms';
+import { BlockRenderContext } from '../../blocks/BlockContext';
+import { CssAnimationWrapper } from '../../CssAnimationWrapper';
+import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
+import { getSectionStyles, getTextAlign } from '../../theme-styles';
+import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
+import { useSectionData } from '../SectionDataContext';
+import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
+
+
+
 
 export function ColumnRenderer({ column }: { column: BlockInstance }): React.ReactNode {
   const children = column.blocks ?? [];

@@ -10,19 +10,17 @@ import {
   type MasterTreeDropPositionDto,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
+import { validationError } from '@/shared/errors/app-error';
 import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import { validateMasterTreeNodes } from '@/shared/utils/master-folder-tree-engine';
-import { validationError } from '@/shared/errors/app-error';
 
 import { buildRootsV2, normalizeNodesV2 } from '../core/engine';
-import { createFolderTreeStore, type FolderTreeStore } from '../store/createFolderTreeStore';
-import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
-import type { FolderTreeState, FolderTreeTransaction } from '../types';
 import {
   useFolderTreeShellRuntime,
   type MasterFolderTreeShellRuntime,
 } from '../shell/useFolderTreeShellRuntime';
-
+import { createFolderTreeStore, type FolderTreeStore } from '../store/createFolderTreeStore';
+import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
 import {
   createInitialState,
   toActionOk,
@@ -32,10 +30,12 @@ import {
   createTxId,
   normalizeError,
 } from './folder-tree-instance/folder-tree-utils';
-import { useFolderTreeNavigationActions } from './folder-tree-instance/useFolderTreeNavigationActions';
 import { useFolderTreeDragActions } from './folder-tree-instance/useFolderTreeDragActions';
-import { useFolderTreeTransaction } from './folder-tree-instance/useFolderTreeTransaction';
 import { useFolderTreeEngineActions } from './folder-tree-instance/useFolderTreeEngineActions';
+import { useFolderTreeNavigationActions } from './folder-tree-instance/useFolderTreeNavigationActions';
+import { useFolderTreeTransaction } from './folder-tree-instance/useFolderTreeTransaction';
+
+import type { FolderTreeState, FolderTreeTransaction } from '../types';
 
 export type UseFolderTreeInstanceV2Options = UseMasterFolderTreeOptions & {
   instanceId?: string | undefined;

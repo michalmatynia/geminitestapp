@@ -423,10 +423,10 @@ export const createEmailVerificationChallenge = async (input: {
       callbackUrl: input.callbackUrl,
       pendingRegistration: input.pendingRegistration
         ? {
-            source: 'kangur_parent',
-            name: normalizeCallbackUrl(input.pendingRegistration.name),
-            passwordHash: input.pendingRegistration.passwordHash.trim(),
-          }
+          source: 'kangur_parent',
+          name: normalizeCallbackUrl(input.pendingRegistration.name),
+          passwordHash: input.pendingRegistration.passwordHash.trim(),
+        }
         : null,
     });
   })();

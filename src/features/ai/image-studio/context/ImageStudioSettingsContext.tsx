@@ -9,40 +9,40 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  defaultPromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-  parsePromptEngineSettings,
-  parsePromptValidationRules,
-} from '@/shared/lib/prompt-engine/settings';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-import { internalError } from '@/shared/errors/app-error';
 
-import { useProjectsState } from './ProjectsContext';
-import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import {
   defaultImageStudioSettings,
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { internalError } from '@/shared/errors/app-error';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import {
+  defaultPromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+  parsePromptValidationRules,
+} from '@/shared/lib/prompt-engine/settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { useProjectsState } from './ProjectsContext';
+import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import {
   type StudioSettingsTab,
   type ImageStudioSettingsActionsContextValue,
   type ImageStudioSettingsStateContextValue,
   type ImageStudioSettingsContextValue,
 } from './settings/settings-types';
-import { useSettingsHydration } from './settings/useSettingsHydration';
-import { useModelAwareSettings } from './settings/useModelAwareSettings';
 import { useMaintenanceActions } from './settings/useMaintenanceActions';
+import { useModelAwareSettings } from './settings/useModelAwareSettings';
 import { useProjectSequencingActions } from './settings/useProjectSequencingActions';
+import { useSettingsHydration } from './settings/useSettingsHydration';
 
 const ImageStudioSettingsStateContext = createContext<ImageStudioSettingsStateContextValue | null>(
   null

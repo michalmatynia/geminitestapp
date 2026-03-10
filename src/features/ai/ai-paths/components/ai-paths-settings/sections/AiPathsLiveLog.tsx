@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { StatusBadge, EmptyState } from '@/shared/ui';
+
 import { useRuntimeState } from '@/features/ai/ai-paths/context';
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
+import { StatusBadge, EmptyState } from '@/shared/ui';
 
 export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useRuntimeState();

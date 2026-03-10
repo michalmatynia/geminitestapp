@@ -11,11 +11,11 @@ import {
 } from '@/features/integrations/context/CategoryMapperContext';
 import { StandardDataTablePanel, EmptyState, GenericMapperStats } from '@/shared/ui';
 
-import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
-import { CategoryMapperTableHeaderActions } from './category-table/CategoryMapperTableHeaderActions';
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
+import { CategoryMapperTableHeaderActions } from './category-table/CategoryMapperTableHeaderActions';
 import { type CategoryRow } from './category-table/utils';
+import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
 
 export function CategoryMapperTable(): React.JSX.Element {
   const { connectionName } = useCategoryMapperConfig();

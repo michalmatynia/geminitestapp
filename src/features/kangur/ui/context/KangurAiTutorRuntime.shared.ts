@@ -16,6 +16,7 @@ import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
+import { summarizeKangurAiTutorFollowUpActions } from '@/features/kangur/ai-tutor/follow-up-reporting';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import {
   logKangurClientError,
@@ -110,6 +111,7 @@ export type KangurAiTutorContextValue = {
   tutorAvatarSvg: string | null;
   tutorAvatarImageUrl: string | null;
   sessionContext: KangurAiTutorConversationContext | null;
+  learnerMemory: KangurAiTutorLearnerMemory | null;
   isOpen: boolean;
   messages: ChatMessage[];
   isLoading: boolean;
@@ -955,15 +957,16 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     []
   );
 
-  const { data: agentPersonas = [] } = useAgentPersonaVisuals(tutorSettings?.agentPersonaId);
+  const effectiveTutorPersonaId = tutorSettings?.agentPersonaId ?? appSettings.agentPersonaId;
+  const { data: agentPersonas = [] } = useAgentPersonaVisuals(effectiveTutorPersonaId);
   const tutorPersona = useMemo<AgentPersona | null>(() => {
-    const personaId = tutorSettings?.agentPersonaId;
+    const personaId = effectiveTutorPersonaId;
     if (!personaId) {
       return null;
     }
 
     return agentPersonas.find((persona) => persona.id === personaId) ?? null;
-  }, [agentPersonas, tutorSettings?.agentPersonaId]);
+  }, [agentPersonas, effectiveTutorPersonaId]);
   const tutorName = tutorPersona?.name ?? 'Pomocnik';
   const requestedTutorMoodId = useMemo<AgentPersonaMoodId>(() => {
     if (isLoading) {
@@ -1393,6 +1396,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const followUpActions = Array.isArray(result.followUpActions)
           ? result.followUpActions
           : [];
+        const followUpReporting = summarizeKangurAiTutorFollowUpActions(followUpActions);
         const coachingFrame =
           kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
         trackKangurClientEvent('kangur_ai_tutor_message_succeeded', {
@@ -1400,6 +1404,11 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           sourcesCount: sources.length,
           hasSources: sources.length > 0,
           followUpActionCount: followUpActions.length,
+          primaryFollowUpActionId: followUpReporting.primaryFollowUpActionId,
+          primaryFollowUpPage: followUpReporting.primaryFollowUpPage,
+          hasBridgeFollowUpAction: followUpReporting.hasBridgeFollowUpAction,
+          bridgeFollowUpActionCount: followUpReporting.bridgeFollowUpActionCount,
+          bridgeFollowUpDirection: followUpReporting.bridgeFollowUpDirection,
           coachingMode: coachingFrame?.mode ?? null,
         });
         if (resolvedPromptMode === 'hint') {
@@ -1519,6 +1528,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorAvatarSvg,
       tutorAvatarImageUrl,
       sessionContext: activeSessionContext,
+      learnerMemory: activeLearnerMemory,
       isOpen,
       messages,
       isLoading,
@@ -1554,6 +1564,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorName,
       tutorPersona,
       tutorSettings,
+      activeLearnerMemory,
       usageSummary,
     ]
   );

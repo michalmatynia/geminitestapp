@@ -1,11 +1,5 @@
 import 'server-only';
 
-import type {
-  ContextRegistryRef,
-  ContextRuntimeDocument,
-  RuntimeContextProvider,
-} from '@/shared/contracts/ai-context-registry';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import {
   buildKangurAiTutorContextRegistryRefs,
   KANGUR_RUNTIME_PROVIDER_ID,
@@ -19,6 +13,12 @@ import {
   buildKangurTestContextRuntimeDocument,
   loadKangurRegistryBaseData,
 } from '@/features/kangur/server';
+import type {
+  ContextRegistryRef,
+  ContextRuntimeDocument,
+  RuntimeContextProvider,
+} from '@/shared/contracts/ai-context-registry';
+import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 
 const PROVIDER_VERSION = '1';
 

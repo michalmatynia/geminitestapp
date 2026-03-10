@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { saveObjectLayoutAdvancedDefaults } from '@/features/ai/image-studio/utils/object-layout-presets';
+
 import {
   IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
   clearImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisPlanSnapshot,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
+import { saveObjectLayoutAdvancedDefaults } from '@/features/ai/image-studio/utils/object-layout-presets';
+
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarEffects(

@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 
+import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
   KANGUR_LESSONS_SETTING_KEY,
   createDefaultKangurLessons,
   parseKangurLessons,
 } from '@/features/kangur/settings';
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
-import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurEmptyState,
@@ -20,6 +19,8 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   buildKangurAssignmentHref,
   buildKangurAssignmentCatalog,
@@ -27,7 +28,6 @@ import {
   filterKangurAssignmentCatalog,
   getKangurAssignmentActionLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
-import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 type KangurAssignmentManagerProps = {

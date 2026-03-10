@@ -16,6 +16,7 @@ import {
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
 } from '@/shared/contracts/kangur';
+
 import { applyKangurLessonActivityDefaults } from '../lesson-activities';
 import {
   createRandomId,

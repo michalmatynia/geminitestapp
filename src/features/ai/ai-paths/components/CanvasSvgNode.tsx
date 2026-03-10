@@ -5,19 +5,19 @@ import React from 'react';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH, PORT_SIZE } from '@/shared/lib/ai-paths/core/constants';
 
-import { buildConnectorInfo } from './canvas-board-connectors';
 import {
   resolveNodePalette,
   statusPalette,
   resolveNodeDiagnosticsBadgePalette,
   mergeRuntimePayload,
 } from './canvas/node/canvas-svg-node-utils';
+import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
 import {
   normalizeRuntimeStatus,
   resolveNodeBlockerProcessing,
   resolveNodeRuntimeStatusLabel,
 } from './canvas/signal-flow-visual-state';
-import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
+import { buildConnectorInfo } from './canvas-board-connectors';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
 const EMPTY_TRIGGER_IDS = new Set<string>();

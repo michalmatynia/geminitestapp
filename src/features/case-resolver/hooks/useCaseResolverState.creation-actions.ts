@@ -1,4 +1,6 @@
 import { useCallback, useRef } from 'react';
+
+import { createId, createUniqueFolderPath } from '@/features/case-resolver/utils/caseResolverUtils';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
@@ -6,7 +8,9 @@ import type {
   CaseResolverWorkspace,
   CaseResolverRequestedCaseStatus,
 } from '@/shared/contracts/case-resolver';
-import { createId, createUniqueFolderPath } from '@/features/case-resolver/utils/caseResolverUtils';
+import { type Toast } from '@/shared/contracts/ui';
+import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+
 import {
   appendOwnedFolderRecords,
   createUniqueCaseFileName,
@@ -16,18 +20,16 @@ import {
   resolveCaseResolverActiveCaseId,
 } from './useCaseResolverState.helpers';
 import {
-  fetchCaseResolverWorkspaceSnapshot,
-  getCaseResolverWorkspaceRevision,
-  logCaseResolverWorkspaceEvent,
-} from '../workspace-persistence';
-import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
   normalizeFolderPaths,
 } from '../settings';
+import {
+  fetchCaseResolverWorkspaceSnapshot,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
+} from '../workspace-persistence';
 
-import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import { type Toast } from '@/shared/contracts/ui';
 
 const createUniqueAssetName = ({
   assets,

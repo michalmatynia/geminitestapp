@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { type DocumentationModuleId } from '@/shared/contracts/documentation';
+
 import { getDocumentationTooltipForElement } from './tooltips';
 
 const INTERACTIVE_SELECTOR = 'button,[role="button"],input,textarea,select,a[href]';

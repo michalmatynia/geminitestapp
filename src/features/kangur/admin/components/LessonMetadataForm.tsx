@@ -1,7 +1,10 @@
 import React from 'react';
+
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import { FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
+
 import { LESSON_CONTENT_MODE_OPTIONS } from '../constants';
+
 import type { LessonFormData } from '../types';
 
 export function LessonMetadataForm(props: {

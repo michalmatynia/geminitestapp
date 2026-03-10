@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useCallback } from 'react';
+
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import {
   invalidateImageStudioSlots,
   patchImageStudioSlotsCache,
 } from '@/shared/lib/query-invalidation';
-import type { QueryClient } from '@tanstack/react-query';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
+import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
 import {
   buildAutoScalerRequestId,
   dataUrlToUploadBlob,
@@ -22,7 +24,8 @@ import {
   imageStudioAutoScalerResponseSchema,
   type ImageStudioAutoScalerMode,
 } from '../../contracts/autoscaler';
-import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
+
+import type { QueryClient } from '@tanstack/react-query';
 
 interface UseGenerationToolbarAutoScaleProps {
   workingSlot: ImageStudioSlotRecord | null;

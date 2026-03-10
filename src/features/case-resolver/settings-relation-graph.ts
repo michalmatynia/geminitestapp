@@ -1,4 +1,3 @@
-import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 import {
   CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
@@ -14,6 +13,8 @@ import {
   type CaseResolverRelationGraph,
   type CaseResolverRelationNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
+
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>

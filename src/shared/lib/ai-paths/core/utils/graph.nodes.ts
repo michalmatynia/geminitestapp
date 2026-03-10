@@ -1,4 +1,5 @@
 import type { AiNode, NodePortContract, NodePortValueKind } from '@/shared/contracts/ai-paths';
+
 import { palette } from '../definitions';
 import { normalizePortName } from './graph.ports';
 

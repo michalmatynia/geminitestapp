@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { getKangurAssignmentRepository, getKangurProgressRepository, getKangurScoreRepository } from '@/features/kangur/server';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
+import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
@@ -138,11 +138,7 @@ const buildKangurAiTutorCoachingFrame = (input: {
     };
   }
 
-  if (
-    recentHintRecoverySignal === 'focus_advanced' &&
-    !hasSelectedExcerpt &&
-    context?.interactionIntent !== 'review'
-  ) {
+  if (recentHintRecoverySignal === 'focus_advanced' && !hasSelectedExcerpt) {
     return {
       mode: 'next_best_action',
       label: 'Utrwal postep',
@@ -882,10 +878,15 @@ const resolveLessonFocusFromAdaptiveSnapshot = (input: {
   }
 
   if (input.relevantWeakLesson) {
-    return {
-      componentId: input.relevantWeakLesson.componentId,
-      title: input.relevantWeakLesson.title,
-    };
+    const weakLessonComponentId = normalizeLessonComponentCandidate(
+      input.relevantWeakLesson.componentId
+    );
+    if (weakLessonComponentId) {
+      return {
+        componentId: weakLessonComponentId,
+        title: input.relevantWeakLesson.title,
+      };
+    }
   }
 
   const assignmentFocus = resolveLessonFocusFromAction(
@@ -945,6 +946,8 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
   );
   const averageAccuracy = readNumberFact(learnerSnapshot, 'averageAccuracy') ?? 0;
   const todayGames = readNumberFact(learnerSnapshot, 'todayGames') ?? 0;
+  const todayXpEarned = readNumberFact(learnerSnapshot, 'todayXpEarned') ?? 0;
+  const weeklyXpEarned = readNumberFact(learnerSnapshot, 'weeklyXpEarned') ?? 0;
   const dailyGoalGames = readNumberFact(learnerSnapshot, 'dailyGoalGames') ?? 0;
   const currentStreakDays = readNumberFact(learnerSnapshot, 'currentStreakDays') ?? 0;
   const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
@@ -960,7 +963,7 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
     lines.push(`Adaptive learner snapshot: ${learnerSummary}`);
   } else {
     lines.push(
-      `Adaptive learner snapshot: average accuracy ${averageAccuracy}%, daily goal ${todayGames}/${dailyGoalGames}, streak ${currentStreakDays} days.`
+      `Adaptive learner snapshot: average accuracy ${averageAccuracy}%, daily goal ${todayGames}/${dailyGoalGames}, +${todayXpEarned} XP today, +${weeklyXpEarned} XP in the last 7 days, streak ${currentStreakDays} days.`
     );
   }
 
@@ -999,9 +1002,15 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
       typeof latestSession['operationLabel'] === 'string' ? latestSession['operationLabel'] : '';
     const accuracyPercent =
       typeof latestSession['accuracyPercent'] === 'number' ? latestSession['accuracyPercent'] : null;
+    const xpEarned =
+      typeof latestSession['xpEarned'] === 'number' && Number.isFinite(latestSession['xpEarned'])
+        ? Math.max(0, Math.round(latestSession['xpEarned']))
+        : null;
     if (operationLabel && accuracyPercent !== null) {
       lines.push(
-        `Most recent practice: ${operationLabel} at ${accuracyPercent}% accuracy.`
+        xpEarned !== null
+          ? `Most recent practice: ${operationLabel} at ${accuracyPercent}% accuracy for +${xpEarned} XP.`
+          : `Most recent practice: ${operationLabel} at ${accuracyPercent}% accuracy.`
       );
     }
   }
@@ -1102,10 +1111,10 @@ const buildAdaptiveGuidanceFromRegistry = (input: {
       bridgeAction
         ? 'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
         : relevantAssignment
-        ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${String(relevantAssignment['title'] ?? 'current assignment')}.`
-        : topRecommendation
-          ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
-          : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
+          ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${String(relevantAssignment['title'] ?? 'current assignment')}.`
+          : topRecommendation
+            ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+            : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
     );
   }
 
@@ -1231,7 +1240,7 @@ export async function buildKangurAiTutorAdaptiveGuidance({
     const recentHintRecoverySignal = context?.recentHintRecoverySignal ?? null;
 
     lines.push(
-      `Adaptive learner snapshot: average accuracy ${snapshot.averageAccuracy}%, daily goal ${snapshot.todayGames}/${snapshot.dailyGoalGames}, streak ${snapshot.currentStreakDays} days.`
+      `Adaptive learner snapshot: average accuracy ${snapshot.averageAccuracy}%, daily goal ${snapshot.todayGames}/${snapshot.dailyGoalGames}, +${snapshot.todayXpEarned} XP today, +${snapshot.weeklyXpEarned} XP in the last 7 days, streak ${snapshot.currentStreakDays} days.`
     );
 
     if (relevantWeakLesson) {
@@ -1244,7 +1253,9 @@ export async function buildKangurAiTutorAdaptiveGuidance({
 
     if (latestSession) {
       lines.push(
-        `Most recent practice: ${latestSession.operationLabel} at ${latestSession.accuracyPercent}% accuracy.`
+        latestSession.xpEarned !== null
+          ? `Most recent practice: ${latestSession.operationLabel} at ${latestSession.accuracyPercent}% accuracy for +${latestSession.xpEarned} XP.`
+          : `Most recent practice: ${latestSession.operationLabel} at ${latestSession.accuracyPercent}% accuracy.`
       );
     }
 
@@ -1305,10 +1316,10 @@ export async function buildKangurAiTutorAdaptiveGuidance({
         bridgeAction
           ? 'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
           : relevantAssignment
-          ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${relevantAssignment.title}.`
-          : topRecommendation
-            ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
-            : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
+            ? `When suggesting the next step, anchor it to this assignment and give exactly one concrete Kangur action: ${relevantAssignment.title}.`
+            : topRecommendation
+              ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+              : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
       );
     }
 

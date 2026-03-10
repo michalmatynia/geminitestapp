@@ -1,8 +1,8 @@
+import { agentCapabilityManifest } from './agent-capability-manifest';
 import {
   AgentCapabilityEffectSchema,
   AgentLeaseModeSchema,
 } from '../contracts/agent-capabilities';
-import { agentCapabilityManifest } from './agent-capability-manifest';
 
 type ListAgentResourcesOptions = {
   mode?: string | null;

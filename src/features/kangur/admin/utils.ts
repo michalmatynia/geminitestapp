@@ -1,14 +1,14 @@
 import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
-
 import type { KangurLesson } from '@/shared/contracts/kangur';
+
 import {
   hasKangurLessonDocumentContent,
   parseKangurLessonDocumentStore,
 } from '../lesson-documents';
-
 import { createKangurLessonDraft } from '../settings';
-import type { LessonFormData, LessonTreeMode } from './types';
 import { TREE_MODE_STORAGE_KEY } from './constants';
+
+import type { LessonFormData, LessonTreeMode } from './types';
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

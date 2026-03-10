@@ -5,6 +5,7 @@ import {
   normalizePortableFingerprintInput,
   toHex,
 } from './portable-engine-integrity-support';
+
 import type { AiPathPortablePackage, PortablePathFingerprint } from './portable-engine-contract';
 import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { PortablePathFingerprintVerificationMode } from './portable-engine-resolution-types';

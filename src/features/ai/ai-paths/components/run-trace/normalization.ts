@@ -1,4 +1,3 @@
-import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type {
   RuntimeHistoryEntry,
@@ -9,8 +8,10 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
+import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths';
 
 import { resolveRunHistoryAction } from '../run-history-entry-actions';
+
 import type { 
   RuntimeTraceSnapshot, 
   RuntimeTraceSpanSummary, 

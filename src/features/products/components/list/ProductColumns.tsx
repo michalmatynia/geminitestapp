@@ -1,30 +1,28 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowUpDown, Download } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo } from 'react';
 
-import { ArrowUpDown, Download } from 'lucide-react';
 
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import {
   useProductListRowActionsContext,
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import { useQueryClient } from '@tanstack/react-query';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-
-import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import {
   getProductNameValue,
@@ -32,6 +30,9 @@ import {
   getImageFilepath,
   resolveProductCategoryId,
 } from './columns/product-column-utils';
+
+import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
+
 
 const TriggerButtonBar = dynamic(
   () =>

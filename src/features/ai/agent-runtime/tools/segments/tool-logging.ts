@@ -1,5 +1,6 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+
 import { normalizeExtractionItemsWithLLM } from '../llm';
 
 export function createToolLogger(args: {

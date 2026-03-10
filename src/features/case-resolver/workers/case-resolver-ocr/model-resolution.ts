@@ -1,5 +1,6 @@
 import { detectCaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
 import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver';
+
 import type { CaseResolverResolvedOcrModel } from './types';
 
 export const parseProviderPrefixedModel = (value: string): CaseResolverResolvedOcrModel | null => {

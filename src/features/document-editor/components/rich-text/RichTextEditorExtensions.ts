@@ -1,4 +1,5 @@
 import { Extension, Mark, mergeAttributes } from '@tiptap/core';
+
 import type { TextAlignOption } from '../RichTextEditorTypes';
 
 export const fontFamilyMark = Mark.create({

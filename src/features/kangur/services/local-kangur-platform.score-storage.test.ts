@@ -90,11 +90,13 @@ describe('createLocalKangurPlatform score storage', () => {
       total_questions: 10,
       correct_answers: 7,
       time_taken: 29,
+      xp_earned: 24,
     });
     const rows = await platform.score.list('-created_date', 10);
 
     expect(created.client_mutation_id).toMatch(/^guest-score:/);
     expect(created.created_by).toBeNull();
+    expect(created.xp_earned).toBe(24);
     expect(loadGuestKangurScores()).toEqual([created]);
     expect(rows).toEqual([created]);
   });
@@ -113,6 +115,7 @@ describe('createLocalKangurPlatform score storage', () => {
       total_questions: 10,
       correct_answers: 9,
       time_taken: 34,
+      xp_earned: 37,
     });
     const persistedScore = {
       ...localScore,
@@ -165,6 +168,7 @@ describe('createLocalKangurPlatform score storage', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/kangur/scores',
       expect.objectContaining({
+        body: expect.stringContaining('"xp_earned":37'),
         method: 'POST',
       })
     );

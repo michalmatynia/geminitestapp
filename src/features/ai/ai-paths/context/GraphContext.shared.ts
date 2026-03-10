@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 
 import type {
   AiNode,
@@ -17,6 +16,8 @@ import {
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
 } from '@/shared/lib/ai-paths';
+
+import type { ReactNode } from 'react';
 
 export type GraphMutationReason =
   | 'drop'

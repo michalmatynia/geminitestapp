@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { parseBooleanFromEnvironment } from './sinks-environment.server';
 import {
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS_ENV,
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES_ENV,
@@ -24,6 +23,8 @@ import {
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SIGNATURE_KEY_ID_ENV,
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_URL_ENV,
 } from './sinks-constants.server';
+import { parseBooleanFromEnvironment } from './sinks-environment.server';
+
 import type {
   PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode,
   PortablePathEnvelopeVerificationAuditSinkProfile,

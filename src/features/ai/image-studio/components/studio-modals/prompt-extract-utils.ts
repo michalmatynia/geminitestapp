@@ -7,8 +7,8 @@ import type {
   ImageStudioPromptExtractResponse,
   ImageStudioPromptExtractSource,
 } from '@/shared/contracts/image-studio';
-import { flattenParams } from '@/shared/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
+import { flattenParams } from '@/shared/utils/prompt-params';
 
 export type { ParamUiControl };
 

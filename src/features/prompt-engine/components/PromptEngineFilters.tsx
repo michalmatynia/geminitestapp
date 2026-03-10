@@ -2,6 +2,10 @@
 
 import React from 'react';
 
+import {
+  PROMPT_VALIDATION_SCOPE_LABELS,
+  PROMPT_VALIDATION_SCOPE_VALUES,
+} from '@/shared/lib/prompt-engine/settings';
 import { SegmentedControl } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -14,10 +18,6 @@ import {
   type SeverityFilter,
   usePromptEngineFilters,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
-import {
-  PROMPT_VALIDATION_SCOPE_LABELS,
-  PROMPT_VALIDATION_SCOPE_VALUES,
-} from '@/shared/lib/prompt-engine/settings';
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template

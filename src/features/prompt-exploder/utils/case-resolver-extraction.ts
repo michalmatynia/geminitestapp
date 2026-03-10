@@ -1,5 +1,4 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-
 import type {
   PromptExploderCaseResolverMetadata,
   PromptExploderCaseResolverPartyBundle,
@@ -11,22 +10,21 @@ import type {
   PromptExploderSegment,
 } from '@/shared/contracts/prompt-exploder';
 
-import {
-  ORGANIZATION_HINT_RE,
-  normalizeRawCaptureText,
-  normalizeText,
-} from './case-resolver-extraction-utils';
 
 import {
   buildPartyCandidateFromSegment,
   resolvePartySegment,
   resolvePlaceDateMetadata,
 } from './case-resolver-extraction-heuristics';
-
 import {
   applyCaptureRulesToSegments,
   type CaseResolverPartyDraft,
 } from './case-resolver-extraction-rules-logic';
+import {
+  ORGANIZATION_HINT_RE,
+  normalizeRawCaptureText,
+  normalizeText,
+} from './case-resolver-extraction-utils';
 
 export * from './case-resolver-extraction-utils';
 export * from './case-resolver-extraction-heuristics';

@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from 'react';
 
 import type {
   CaseResolverFile,
@@ -8,6 +7,7 @@ import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type { FolderCaseFileStats } from '../components/CaseResolverFolderTree.helpers';
+import type { Dispatch, SetStateAction } from 'react';
 
 export interface CaseResolverFolderTreeDataContextValue {
   masterNodes: MasterTreeNode[];

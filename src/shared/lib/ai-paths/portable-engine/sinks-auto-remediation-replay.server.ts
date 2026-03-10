@@ -1,16 +1,18 @@
 import 'server-only';
 
+import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
+
 import {
   buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest,
   postPortablePathAuditSinkAutoRemediationNotification,
   toPortablePathAuditSinkAutoRemediationNotificationStatusCode,
   toPortablePathAuditSinkAutoRemediationNotificationTimestamp,
 } from './sinks-auto-remediation-delivery.server';
+
 import type {
   PortablePathAuditSinkAutoRemediationNotificationChannel,
   PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
 } from './sinks-auto-remediation-dead-letters.server';
-import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
 
 export type PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt = {
   replayedAt: string;

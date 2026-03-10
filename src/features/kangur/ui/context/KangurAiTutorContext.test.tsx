@@ -54,7 +54,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
 }));
 
-import { KANGUR_AI_TUTOR_SETTINGS_KEY } from '@/features/kangur/settings-ai-tutor';
+import {
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  KANGUR_AI_TUTOR_SETTINGS_KEY,
+} from '@/features/kangur/settings-ai-tutor';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   KangurAiTutorProvider,
@@ -64,6 +67,7 @@ import {
 
 function Harness(): React.JSX.Element {
   const {
+    appSettings,
     tutorName,
     tutorMoodId,
     tutorBehaviorMoodId,
@@ -95,6 +99,7 @@ function Harness(): React.JSX.Element {
 
   return (
     <div>
+      <div data-testid='guest-intro-mode'>{appSettings.guestIntroMode}</div>
       <div data-testid='tutor-name'>{tutorName}</div>
       <div data-testid='tutor-mood'>{tutorMoodId}</div>
       <div data-testid='tutor-behavior-mood'>{tutorBehaviorMoodId}</div>
@@ -171,7 +176,7 @@ function SelectedTextHarness(): React.JSX.Element {
 
 describe('KangurAiTutorContext', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     window.sessionStorage.clear();
     apiGetMock.mockResolvedValue({
       usage: {
@@ -324,6 +329,7 @@ describe('KangurAiTutorContext', () => {
     );
 
     expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila');
+    expect(screen.getByTestId('guest-intro-mode')).toHaveTextContent('first_visit');
     expect(screen.getByTestId('tutor-mood')).toHaveTextContent('neutral');
     expect(screen.getByTestId('tutor-behavior-mood')).toHaveTextContent('neutral');
     expect(screen.getByTestId('tutor-behavior-mood-label')).toHaveTextContent('Neutralny');
@@ -374,6 +380,11 @@ describe('KangurAiTutorContext', () => {
         hasSources: true,
         sourcesCount: 1,
         followUpActionCount: 1,
+        primaryFollowUpActionId: 'recommendation:strengthen_lesson_mastery',
+        primaryFollowUpPage: 'Lessons',
+        hasBridgeFollowUpAction: false,
+        bridgeFollowUpActionCount: 0,
+        bridgeFollowUpDirection: null,
         coachingMode: 'hint_ladder',
       })
     );
@@ -390,6 +401,77 @@ describe('KangurAiTutorContext', () => {
       'hint_ladder:Jeden trop'
     );
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
+  });
+
+  it('reads global AI tutor app settings from the settings store', () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          guestIntroMode: 'every_visit',
+          dailyMessageLimit: 6,
+        });
+      }
+
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({});
+      }
+
+      return undefined;
+    });
+
+    render(
+      <KangurAiTutorProvider>
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    expect(screen.getByTestId('guest-intro-mode')).toHaveTextContent('every_visit');
+  });
+
+  it('uses the global tutor persona identity when no learner is active', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+        });
+      }
+
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({});
+      }
+
+      return undefined;
+    });
+
+    useAgentPersonasMock.mockReturnValue({
+      data: [
+        {
+          id: 'persona-1',
+          name: 'Mila',
+          defaultMoodId: 'neutral',
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/avatar.png',
+              avatarImageFileId: 'file-1',
+            },
+          ],
+        },
+      ],
+    });
+
+    render(
+      <KangurAiTutorProvider>
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
+    expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent(
+      '/uploads/agentcreator/personas/persona-1/neutral/avatar.png'
+    );
   });
 
   it('tracks repeated tutor questions within the same session before sending again', async () => {

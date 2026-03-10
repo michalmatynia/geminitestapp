@@ -4,8 +4,8 @@ import {
   useIntegrationsActions,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import { PlaywrightSettingsProvider } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import { LoadingState } from '@/shared/ui';
+import { PlaywrightSettingsProvider } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   const { playwrightSettings, setPlaywrightSettings } = useIntegrationsForm();

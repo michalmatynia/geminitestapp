@@ -1,4 +1,5 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import { PARSER_PRESETS, REGEX_INPUT_PORTS, REGEX_OUTPUT_PORTS } from '../../constants';
 import { createParserMappings } from '../../utils/graph.nodes';
 import { ensureUniquePorts, normalizePortName } from '../../utils/graph.ports';

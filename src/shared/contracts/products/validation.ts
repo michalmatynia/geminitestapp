@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { dtoBaseSchema } from '../base';
 export const productValidationTargetSchema = z.enum([
   'name',

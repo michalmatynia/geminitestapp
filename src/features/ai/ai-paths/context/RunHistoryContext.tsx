@@ -10,13 +10,14 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type { AiPathRunRecord, AiPathRunEventRecord } from '@/shared/lib/ai-paths';
+
 import {
   refreshRunDetailErrorSummary,
   type RunDetail as RunDetailData,
   type StreamConnectionStatus as RunStreamStatus,
 } from '../components/job-queue-panel-utils';
-import { internalError } from '@/shared/errors/app-error';
 
 // ---------------------------------------------------------------------------
 // Types

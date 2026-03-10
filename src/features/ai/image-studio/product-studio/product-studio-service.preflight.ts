@@ -13,17 +13,17 @@ import {
 } from '@/shared/contracts/products';
 import type { ProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
 
+import { resolveGenerationVariants } from './product-studio-service.analysis';
+import {
+  resolveProductAndStudioTarget,
+  resolveSourceSlotIdForIndex,
+} from './product-studio-service.resolution';
 import {
   buildProductStudioSequenceStepPlan,
   buildSequenceStepPlanWarnings,
   resolvePostProductionRoute,
   resolveSequenceReadiness,
 } from './product-studio-service.sequencing';
-import { resolveGenerationVariants } from './product-studio-service.analysis';
-import {
-  resolveProductAndStudioTarget,
-  resolveSourceSlotIdForIndex,
-} from './product-studio-service.resolution';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
 
 export type ProductStudioVariantsResult = {

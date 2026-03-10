@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { VariantThumbnailInfo } from './preview-utils';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { VariantThumbnailInfo } from './preview-utils';
 
 export type VariantPanelContextValue = {
   activeRunError: string | null;

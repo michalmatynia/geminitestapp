@@ -8,6 +8,7 @@ import {
   SettingsPanelBuilder,
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
+
 import { useAgentTeachingCollectionsContext } from '../context/AgentTeachingCollectionsContext';
 
 export function AgentTeachingCollectionModal(): React.JSX.Element | null {

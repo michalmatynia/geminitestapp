@@ -10,12 +10,12 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { toSlotName } from './studio-modals/prompt-extract-utils';
 import { slotHasRenderableImage } from './studio-modals/slot-inline-edit-utils';
 import { createUploadHandlers } from './studio-modals/studio-modals-upload-handlers';
-import { StudioImportPanels } from './studio-modals/StudioImportPanels';
 import {
   StudioImportProvider,
   type StudioImportContextValue,
   type StudioUploadMode,
 } from './studio-modals/StudioImportContext';
+import { StudioImportPanels } from './studio-modals/StudioImportPanels';
 import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
 import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
 

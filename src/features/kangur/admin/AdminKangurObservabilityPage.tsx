@@ -3,9 +3,11 @@
 import {
   ArrowUpRightIcon,
   AudioLinesIcon,
+  BotIcon,
   GaugeIcon,
   LogInIcon,
   RefreshCwIcon,
+  Repeat2Icon,
   ShieldAlertIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -423,6 +425,57 @@ function RecentServerLogs({ logs }: { logs: SystemLogRecord[] }): JSX.Element {
   );
 }
 
+function AiTutorBridgeMetrics({
+  summary,
+}: {
+  summary: KangurObservabilitySummary;
+}): JSX.Element {
+  const aiTutor = summary.analytics.aiTutor;
+
+  return (
+    <FormSection title='AI Tutor Bridge Snapshot' variant='subtle'>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <MetricCard
+          title='Tutor Replies'
+          value={formatNumber(aiTutor.messageSucceededCount)}
+          hint='Successful learner-facing AI Tutor replies in the selected window.'
+          icon={<BotIcon className='size-3.5' />}
+        />
+        <MetricCard
+          title='Bridge Suggestions'
+          value={formatNumber(aiTutor.bridgeSuggestionCount)}
+          hint='Replies that suggested a lesson-to-game or game-to-lesson bridge.'
+          icon={<Repeat2Icon className='size-3.5' />}
+        />
+        <MetricCard
+          title='Lekcja -> Grajmy'
+          value={formatNumber(aiTutor.lessonToGameBridgeSuggestionCount)}
+          hint='Bridge suggestions moving the learner from lesson review into practice.'
+          icon={<ArrowUpRightIcon className='size-3.5' />}
+        />
+        <MetricCard
+          title='Grajmy -> Lekcja'
+          value={formatNumber(aiTutor.gameToLessonBridgeSuggestionCount)}
+          hint='Bridge suggestions moving the learner from practice back into a lesson.'
+          icon={<ArrowUpRightIcon className='size-3.5 rotate-180' />}
+        />
+        <MetricCard
+          title='Bridge CTA Clicks'
+          value={formatNumber(aiTutor.bridgeQuickActionClickCount)}
+          hint='Bridge quick actions accepted directly from the tutor widget.'
+          icon={<GaugeIcon className='size-3.5' />}
+        />
+        <MetricCard
+          title='Bridge Completions'
+          value={formatNumber(aiTutor.bridgeFollowUpCompletionCount)}
+          hint={`Opened: ${formatNumber(aiTutor.bridgeFollowUpClickCount)} bridge follow-ups. Completed: ${formatNumber(aiTutor.bridgeFollowUpCompletionCount)}.`}
+          icon={<Repeat2Icon className='size-3.5' />}
+        />
+      </div>
+    </FormSection>
+  );
+}
+
 function PerformanceBaselineCard({
   baseline,
 }: {
@@ -584,6 +637,8 @@ function SummaryContent({
           />
         </div>
       </FormSection>
+
+      <AiTutorBridgeMetrics summary={summary} />
 
       <FormSection title='Alerts' variant='subtle'>
         <div data-doc-id='admin_observability_alerts'>

@@ -1,22 +1,23 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { QueryClient } from '@tanstack/react-query';
 
-import type { Toast } from '@/shared/contracts/ui';
+
 import type {
   NoteRelationWithSource,
   NoteRelationWithTarget,
   NoteUpdateInput,
   NoteWithRelations,
 } from '@/shared/contracts/notes';
+import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import type { UseNoteDataResult } from './useNoteData';
 import type { NotesAppActionsValue, NotesAppStateValue } from './NotesAppContext.types';
+import type { UseNoteDataResult } from './useNoteData';
+import type { QueryClient } from '@tanstack/react-query';
 
 type UpdateNoteInput = NoteUpdateInput & { id: string };
 

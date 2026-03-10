@@ -79,10 +79,17 @@ export type KangurXpRewards = {
   geometry_training_good: number;
 };
 
+export type KangurRewardBreakdownEntry = {
+  kind: string;
+  label: string;
+  xp: number;
+};
+
 export type KangurXpToastState = {
   visible: boolean;
   xpGained: number;
   newBadges: string[];
+  breakdown?: KangurRewardBreakdownEntry[];
 };
 
 export type KangurAddXpResult = {

@@ -1,33 +1,34 @@
 import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
-import { verifyPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 
-import {
-  decodePortablePayload,
-  estimatePayloadByteSize,
-  resolvePayloadLimits,
-  validatePayloadObjectSafety,
-} from './portable-engine-resolution-support';
-import {
-  verifyPortablePackageFingerprint,
-  verifyPortablePackageFingerprintAsync,
-} from './portable-engine-fingerprints';
-import { verifyPortablePathPackageEnvelopeSignatureAsync } from './portable-engine-envelope-verification-async';
-import { verifyPortablePathPackageEnvelopeSignature } from './portable-engine-envelope-verification-sync';
-import { finalizeResolvedPath } from './portable-engine-path-canonicalization';
-import { migratePortablePathInput } from './portable-engine-migration';
-import { resolvePortablePathVerificationModes } from './portable-engine-signing-policy';
+import { verifyPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackageEnvelope,
   type PortablePathInputSource,
   aiPathPortablePackageEnvelopeVersionedSchema,
 } from './portable-engine-contract';
+import { verifyPortablePathPackageEnvelopeSignatureAsync } from './portable-engine-envelope-verification-async';
+import { verifyPortablePathPackageEnvelopeSignature } from './portable-engine-envelope-verification-sync';
+import {
+  verifyPortablePackageFingerprint,
+  verifyPortablePackageFingerprintAsync,
+} from './portable-engine-fingerprints';
+import { migratePortablePathInput } from './portable-engine-migration';
+import { finalizeResolvedPath } from './portable-engine-path-canonicalization';
+import {
+  decodePortablePayload,
+  estimatePayloadByteSize,
+  resolvePayloadLimits,
+  validatePayloadObjectSafety,
+} from './portable-engine-resolution-support';
+import { resolvePortablePathVerificationModes } from './portable-engine-signing-policy';
+
 import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
-import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 import type {
   ResolvePortablePathInputInternalOptions,
   ResolvePortablePathInputOptions,
 } from './portable-engine-resolution-types';
+import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 
 export const resolvePortablePathInput = (
   input: unknown,

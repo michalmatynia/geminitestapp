@@ -4,10 +4,12 @@ import React from 'react';
 
 import type { ClusterPreset } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
-import type { ClusterPresetDraft } from '../context/PresetsContext';
+
 
 import { usePresetsState, usePresetsActions } from '../context';
 import { useClusterPresetsActions } from './hooks/useClusterPresetsActions';
+
+import type { ClusterPresetDraft } from '../context/PresetsContext';
 
 export type { ClusterPresetDraft };
 

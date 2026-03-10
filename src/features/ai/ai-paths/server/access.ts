@@ -1,12 +1,12 @@
 import 'server-only';
 
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { auth } from '@/server/auth';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
-import { getRedisConnection } from '@/shared/lib/queue';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getRedisConnection } from '@/shared/lib/queue';
 
 import type { NextRequest } from 'next/server';
 

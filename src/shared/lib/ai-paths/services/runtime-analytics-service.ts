@@ -18,14 +18,8 @@ import {
   AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getRedisConnection } from '@/shared/lib/queue';
-import {
-  keyRuns,
-  keyDurations,
-  keyNodes,
-  keyBrain,
-  SUMMARY_QUERY_TIMEOUT_MS,
-} from './runtime-analytics/config';
-import { withTimeout, parseDurationMember, clampRate } from './runtime-analytics/utils';
+
+import { getRuntimeAnalyticsAvailability } from './runtime-analytics/availability';
 import {
   buildSummaryCacheKey,
   readCachedSummary,
@@ -33,8 +27,15 @@ import {
   summaryInFlight,
   readStaleSummary,
 } from './runtime-analytics/cache';
+import {
+  keyRuns,
+  keyDurations,
+  keyNodes,
+  keyBrain,
+  SUMMARY_QUERY_TIMEOUT_MS,
+} from './runtime-analytics/config';
 import { emptySummary, loadRuntimeTraceAnalytics } from './runtime-analytics/trace';
-import { getRuntimeAnalyticsAvailability } from './runtime-analytics/availability';
+import { withTimeout, parseDurationMember, clampRate } from './runtime-analytics/utils';
 
 export const getRuntimeAnalyticsSummary = async (
   window: { from: Date; to: Date },

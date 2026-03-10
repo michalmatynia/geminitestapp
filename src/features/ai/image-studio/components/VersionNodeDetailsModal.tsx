@@ -2,12 +2,12 @@
 
 import React, { useMemo } from 'react';
 
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Hint } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import { useOptionalVersionNodeDetailsModalRuntime } from './VersionNodeDetailsModalRuntimeContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';

@@ -1,8 +1,5 @@
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import {
-  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
-  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
-} from './settings-constants';
+
 import {
   DEFAULT_FILEMAKER_EMAIL_PARSER_RULES,
   DEFAULT_FILEMAKER_PHONE_VALIDATION_RULES,
@@ -12,6 +9,10 @@ import {
   type FilemakerPhoneValidationRule,
 } from './filemaker-settings.extraction';
 import { normalizeString, sanitizePhoneCandidate } from './filemaker-settings.helpers';
+import {
+  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
+} from './settings-constants';
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { AlertTriangle, CheckCircle2, Sparkles, X } from 'lucide-react';
+import React from 'react';
 
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
@@ -9,8 +9,6 @@ import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kang
 import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { KangurLessonDocumentEditor } from '../KangurLessonDocumentEditor';
-import { KangurLessonNarrationPanel } from '../KangurLessonNarrationPanel';
 import { validateKangurLessonDocumentDraft } from '../content-creator-insights';
 import {
   LessonContentEditorProvider,
@@ -20,6 +18,8 @@ import {
   LessonContentEditorRuntimeProvider,
   useLessonContentEditorRuntimeContext,
 } from '../context/LessonContentEditorRuntimeContext';
+import { KangurLessonDocumentEditor } from '../KangurLessonDocumentEditor';
+import { KangurLessonNarrationPanel } from '../KangurLessonNarrationPanel';
 import {
   clearLessonContentEditorDraft,
   readLessonContentEditorDraft,
@@ -171,9 +171,9 @@ function LessonContentEditorDialogContent({
             ? 'Narration has usable script coverage.'
             : validation.narrationState === 'stale'
               ? 'Refresh narration preview so it matches the latest lesson draft.'
-            : narrationStatus === 'needs-review'
-              ? 'Review narration coverage before handing the lesson off.'
-              : 'Narration review starts after visible lesson content exists.',
+              : narrationStatus === 'needs-review'
+                ? 'Review narration coverage before handing the lesson off.'
+                : 'Narration review starts after visible lesson content exists.',
       },
     ] as const;
 
@@ -185,12 +185,12 @@ function LessonContentEditorDialogContent({
           : !validation.hasMeaningfulContent
             ? 'Add visible learner content to at least one page.'
             : validation.hasStructuralWarnings
-            ? validation.warnings[0] ?? 'Clean up the remaining lesson issues.'
+              ? validation.warnings[0] ?? 'Clean up the remaining lesson issues.'
               : validation.narrationState === 'stale'
                 ? 'Refresh narration preview so it matches the latest content edits.'
                 : !validation.hasNarrationContent
-                ? 'Review narration coverage and generate an audio preview.'
-                : 'This draft is ready for a final preview and save.';
+                  ? 'Review narration coverage and generate an audio preview.'
+                  : 'This draft is ready for a final preview and save.';
 
     return {
       items,
@@ -436,15 +436,15 @@ function LessonContentEditorDialogContent({
                       {validation.blockers.length > 0
                         ? 'Draft needs required fixes'
                         : validation.warnings.length > 0
-                        ? 'Draft review'
-                        : 'Draft is structurally ready'}
+                          ? 'Draft review'
+                          : 'Draft is structurally ready'}
                     </div>
                     <div className='mt-1 text-xs leading-relaxed text-muted-foreground'>
                       {validation.blockers.length > 0
                         ? 'Resolve the required issue before saving this lesson draft.'
                         : validation.warnings.length > 0
-                        ? 'Review the remaining issues before publishing or handing this lesson off.'
-                        : 'Pages, learner content, and narration all have usable baseline structure.'}
+                          ? 'Review the remaining issues before publishing or handing this lesson off.'
+                          : 'Pages, learner content, and narration all have usable baseline structure.'}
                     </div>
                     <div className='mt-2 text-xs font-medium text-muted-foreground'>
                       {saveStateMessage}

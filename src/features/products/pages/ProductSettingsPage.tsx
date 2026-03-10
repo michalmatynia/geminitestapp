@@ -6,16 +6,14 @@ import {
   InternationalizationSettings,
   InternationalizationProvider,
 } from '@/features/internationalization';
-import { ProductSyncSettings } from '@/features/product-sync';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { CountryModal } from '@/features/internationalization';
+import { CurrencyModal } from '@/features/internationalization';
+import { LanguageModal } from '@/features/internationalization';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
-import { CountryModal } from '@/features/internationalization';
-import { CurrencyModal } from '@/features/internationalization';
-import { LanguageModal } from '@/features/internationalization';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
@@ -34,8 +32,10 @@ import {
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
+import { ProductSyncSettings } from '@/shared/lib/product-sync-adapter';
 import { Button, PageLayout, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { settingSections } from './ProductSettingsConstants';
 

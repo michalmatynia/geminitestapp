@@ -1,10 +1,10 @@
-import type { SystemLog } from '@/shared/lib/db/prisma-client';
-
 import type {
   SystemLogLevelDto as SystemLogLevel,
   SystemLogMetricsDto as SystemLogMetrics,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
+import type { SystemLog } from '@/shared/lib/db/prisma-client';
+
 
 type PrismaSystemLogMetricRow = Pick<
   SystemLog,

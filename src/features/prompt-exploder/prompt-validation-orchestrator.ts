@@ -1,3 +1,9 @@
+import {
+  type PromptValidationRuntimeSelection,
+  type PromptValidationRuntimeIdentity,
+  type PromptExploderValidationRuleStack,
+} from '@/shared/contracts';
+import type { PromptValidationRule, PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/validator';
 import {
   PromptValidationRuntimeError,
@@ -9,12 +15,6 @@ import {
   recordPromptValidationError,
   recordPromptValidationTiming,
 } from '@/shared/lib/prompt-core/runtime-observability';
-import type { PromptValidationRule, PromptEngineSettings } from '@/shared/contracts/prompt-engine';
-import {
-  type PromptValidationRuntimeSelection,
-  type PromptValidationRuntimeIdentity,
-  type PromptExploderValidationRuleStack,
-} from '@/shared/contracts';
 
 import {
   explodePromptText,

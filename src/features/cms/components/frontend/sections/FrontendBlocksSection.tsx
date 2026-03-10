@@ -1,11 +1,10 @@
 'use client';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { cn } from '@/shared/utils';
 
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
-import { cn } from '@/shared/utils';
-
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 

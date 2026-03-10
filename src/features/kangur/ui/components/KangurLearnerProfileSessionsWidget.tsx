@@ -1,6 +1,11 @@
 'use client';
 
 import {
+  formatKangurProfileDateTime,
+  formatKangurProfileDuration,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurIconBadge,
@@ -9,11 +14,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { getProgressBadges } from '@/features/kangur/ui/services/progress';
-import {
-  formatKangurProfileDateTime,
-  formatKangurProfileDuration,
-  useKangurLearnerProfileRuntime,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { cn } from '@/shared/utils';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
@@ -113,6 +113,15 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                     >
                       {session.score}/{session.totalQuestions}
                     </KangurStatusChip>
+                    {session.xpEarned !== null ? (
+                      <KangurStatusChip
+                        accent='indigo'
+                        data-testid={`learner-profile-session-xp-${session.id}`}
+                        size='sm'
+                      >
+                        +{session.xpEarned} XP
+                      </KangurStatusChip>
+                    ) : null}
                     <div className='text-xs text-slate-500'>
                       {formatKangurProfileDuration(session.timeTakenSeconds)}
                     </div>

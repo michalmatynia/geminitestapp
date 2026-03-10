@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Button, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+
 import {
   useDatabaseConstructorActionsContext,
   useDatabaseConstructorStateContext,

@@ -1,12 +1,12 @@
 import 'server-only';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export type ProductStudioConfig = {
   projectId: string | null;

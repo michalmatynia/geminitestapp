@@ -5,11 +5,12 @@ import React, { useMemo } from 'react';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '../../types';
 import {
   CaseResolverEntitySettingsModal,
   CaseResolverEntitySettingsModalProvider,
 } from './CaseResolverEntitySettingsModal';
+
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '../../types';
 
 type CategoryFormData = {
   name: string;

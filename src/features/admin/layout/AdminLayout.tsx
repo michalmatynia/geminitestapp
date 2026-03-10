@@ -14,11 +14,11 @@ import {
   useAdminLayoutState,
 } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { Session } from 'next-auth';
 

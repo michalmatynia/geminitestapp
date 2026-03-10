@@ -1,6 +1,13 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+
+import {
+  DOCS_OVERVIEW_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
 import {
   AI_PATHS_NODE_DOCS,
   buildAiPathsNodeDocJsonSnippet,
@@ -16,15 +23,10 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import {
-  DOCS_OVERVIEW_SNIPPET,
-  DOCS_WIRING_SNIPPET,
-  DOCS_DESCRIPTION_SNIPPET,
-  DOCS_JOBS_SNIPPET,
-} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
-import { useAiPathsSettingsDocsActions } from '../ai-paths-settings/useAiPathsSettingsDocsActions';
-import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
+
 import { buildFullDocumentationClipboardText } from './docs-utils';
+import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
+import { useAiPathsSettingsDocsActions } from '../ai-paths-settings/useAiPathsSettingsDocsActions';
 
 export function DocsTabPanel(): React.JSX.Element {
   const { toast } = useToast();

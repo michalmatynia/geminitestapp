@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
+import * as geometryDrawingService from '@/features/kangur/ui/services/geometry-drawing';
 
 const canvasContextStub = {
   beginPath: vi.fn(),
@@ -72,6 +73,15 @@ describe('GeometryDrawingGame', () => {
   });
 
   it('supports keyboard-only drawing input on the geometry board', () => {
+    const evaluateSpy = vi.spyOn(geometryDrawingService, 'evaluateGeometryDrawing').mockReturnValue({
+      accepted: false,
+      score: 0.12,
+      corners: 2,
+      closureRatio: 0.33,
+      aspectRatio: 1,
+      message: 'Niepoprawna figura.',
+    });
+
     render(<GeometryDrawingGame onFinish={() => undefined} />);
 
     const canvas = screen.getByTestId('geometry-drawing-canvas');
@@ -96,6 +106,8 @@ describe('GeometryDrawingGame', () => {
 
     fireEvent.click(checkButton);
 
-    expect(screen.getByTestId('geometry-drawing-feedback')).toBeInTheDocument();
+    expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-rose-500');
+    expect(evaluateSpy).toHaveBeenCalledTimes(1);
   });
 });

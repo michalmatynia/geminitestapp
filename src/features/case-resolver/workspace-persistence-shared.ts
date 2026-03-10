@@ -1,9 +1,7 @@
 import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import { safeParseCaseResolverWorkspace } from './settings';
-
 import { readPositiveIntegerEnv } from './utils/workspace-persistence-utils';
-
 import { type SettingsRecordLike } from './utils/workspace-settings-persistence-helpers';
 
 export const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;

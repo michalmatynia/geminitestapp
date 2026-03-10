@@ -1,8 +1,10 @@
 import { type QueryClient, type QueryKey, type QueryFunctionContext } from '@tanstack/react-query';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 import { telemetryErrorStage } from '@/shared/lib/observability/tanstack-telemetry';
-import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
+import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
 
 export const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,

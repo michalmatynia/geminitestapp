@@ -1,18 +1,19 @@
 'use client';
 
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Pencil, Plus, Trash2 } from 'lucide-react';
-
-import { cn } from '@/shared/utils';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { Button, SelectSimple } from '@/shared/ui';
 
 import {
   loadCustomTriggerButtons,
   saveCustomTriggerButtons,
   type ImageStudioCustomTriggerButton,
 } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
+import { Button, SelectSimple } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+
+
 import {
   type CustomTriggerButtonsSectionRuntime,
   useOptionalImageStudioAnalysisRuntime,

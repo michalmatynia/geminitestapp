@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { VersionNode } from '../context/VersionGraphContext';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { VersionNode } from '../context/VersionGraphContext';
 
 type VersionGraphContextMenuValue = {
   menu: { nodeId: string; x: number; y: number };

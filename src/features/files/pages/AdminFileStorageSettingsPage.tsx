@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   FormField,
   FormSection,
@@ -24,6 +23,7 @@ import {
   Card,
   Alert,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 const normalizeSource = (value: string | null | undefined): FileStorageSource =>

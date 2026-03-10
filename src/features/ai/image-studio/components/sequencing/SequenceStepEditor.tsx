@@ -1,17 +1,7 @@
 import React from 'react';
 
-import { SelectSimple, Tooltip } from '@/shared/ui';
 
-import {
-  PROJECT_SEQUENCE_OPERATION_LABELS,
-  STEP_INPUT_SOURCE_OPTIONS,
-  STEP_ON_FAILURE_OPTIONS,
-  STEP_RUNTIME_OPTIONS,
-  UPSCALE_SCALE_OPTIONS,
-  UPSCALE_STRATEGY_OPTIONS,
-} from './sequencing-constants';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-
 import type {
   ImageStudioSequenceCropStep,
   ImageStudioSequenceGenerateStep,
@@ -22,7 +12,17 @@ import type {
   ImageStudioSequenceStepRuntime,
   ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { SelectSimple, Tooltip } from '@/shared/ui';
+
 import { useSequenceStepEditorRuntime } from './SequenceStepEditorRuntimeContext';
+import {
+  PROJECT_SEQUENCE_OPERATION_LABELS,
+  STEP_INPUT_SOURCE_OPTIONS,
+  STEP_ON_FAILURE_OPTIONS,
+  STEP_RUNTIME_OPTIONS,
+  UPSCALE_SCALE_OPTIONS,
+  UPSCALE_STRATEGY_OPTIONS,
+} from './sequencing-constants';
 
 type SequenceStepEditorProps = {
   stepId: string;

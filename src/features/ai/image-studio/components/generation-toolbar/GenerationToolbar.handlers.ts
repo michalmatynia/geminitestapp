@@ -1,19 +1,20 @@
 import { useCallback, useMemo } from 'react';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
+
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { api } from '@/shared/lib/api-client';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 import {
   type GenerationToolbarState,
   type GenerationToolbarHandlers,
 } from './GenerationToolbar.types';
 import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { api } from '@/shared/lib/api-client';
-
+import { useAnalysisHandlers } from './handlers/useAnalysisHandlers';
+import { useCenterAndScaleHandlers } from './handlers/useCenterAndScaleHandlers';
 import { useCropHandlers } from './handlers/useCropHandlers';
 import { useUpscaleHandlers } from './handlers/useUpscaleHandlers';
-import { useCenterAndScaleHandlers } from './handlers/useCenterAndScaleHandlers';
-import { useAnalysisHandlers } from './handlers/useAnalysisHandlers';
-import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { studioKeys } from '../../hooks/useImageStudioQueries';
 
 export function useGenerationToolbarHandlers(
   state: GenerationToolbarState

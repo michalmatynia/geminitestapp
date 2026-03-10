@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
 import { Link2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import { useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { Button, Input } from '@/shared/ui';
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
-import { useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 
 export function LinkField(props: {
   value: string;

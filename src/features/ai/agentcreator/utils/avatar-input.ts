@@ -1,5 +1,5 @@
-import { api } from '@/shared/lib/api-client';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import { api } from '@/shared/lib/api-client';
 
 const DATA_URL_PATTERN = /^data:([^;,]+);base64,(.+)$/i;
 

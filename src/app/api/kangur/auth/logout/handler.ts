@@ -100,7 +100,7 @@ const clearSessionTokenCookies = (
   const matchingNames = listRequestCookieNames(request)
     .filter(
       (name) => name === cookie.name || name.startsWith(`${cookie.name}.`)
-    )
+    );
 
   if (matchingNames.length === 0) {
     clearAuthCookie(response, cookie.name, cookie.options);

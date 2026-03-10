@@ -3,39 +3,43 @@
 import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
-import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
 import {
   isCmsNodeVisible,
   resolveCmsConnectedSettings,
   resolveCmsRuntimeValue,
   useOptionalCmsRuntime,
 } from '@/features/cms/components/frontend/CmsRuntimeContext';
-import { getKangurWidgetLabel } from '@/shared/lib/kangur-cms-adapter';
+import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
+import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
+import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
+import { getKangurWidgetLabel } from '@/shared/lib/kangur-cms-adapter';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Card, Input } from '@/shared/ui';
 
+import { useCmsPageContext } from '../frontend/CmsPageContext';
 import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
+import { useMediaStyles } from '../frontend/media-styles-context';
 import {
   getSectionContainerClass,
   getSectionStyles,
   getTextAlign,
   getBlockTypographyStyles,
 } from '../frontend/theme-styles';
-import { useCmsPageContext } from '../frontend/CmsPageContext';
-import { useMediaStyles } from '../frontend/media-styles-context';
 import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
 import {
   usePreviewEditorActions,
   usePreviewEditorState,
 } from './preview/context/PreviewEditorContext';
+import {
+  PreviewSectionProvider,
+  type PreviewSectionContextValue,
+} from './preview/context/PreviewSectionContext';
 import {
   InspectorTooltip,
   InspectorHover,
@@ -57,6 +61,7 @@ import {
   PreviewSlideshowBlock,
   registerCarouselPreviewBlockItem,
 } from './preview/PreviewCarouselBlocks';
+import { PreviewNodeSelectionButton } from './preview/PreviewNodeSelectionButton';
 import {
   PreviewImageWithTextBlock,
   PreviewHeroBlock,
@@ -66,11 +71,6 @@ import {
   PreviewTextAtomBlock,
   registerPreviewBlockItem,
 } from './preview/PreviewSectionBlocks';
-import {
-  PreviewSectionProvider,
-  type PreviewSectionContextValue,
-} from './preview/context/PreviewSectionContext';
-import { PreviewNodeSelectionButton } from './preview/PreviewNodeSelectionButton';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
 import {
   PreviewHeroSection,

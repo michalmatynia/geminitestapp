@@ -156,6 +156,9 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Server sources:
   - `kangur.ai-tutor.chat.completed`
   - `kangur.ai-tutor.chat.failed`
+- Summary surfaces:
+  - `AI Tutor Bridge Snapshot` on `/admin/kangur/observability`
+  - `kangur-ai-tutor-bridge-completion-rate` alert when bridge suggestions stop converting into completed cross-surface follow-ups
 
 ## Mitigation Paths
 
@@ -185,6 +188,14 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 7. Kangur settings now runs a silent narrator probe automatically when the page opens or the server voice changes, and the manual `Test server narrator` action remains available for explicit retests.
 8. Use browser fallback as the short-term mitigation; do not block lesson playback on TTS readiness.
 9. If only one lesson is affected, inspect `POST /api/kangur/tts/status` for that lesson draft.
+
+### AI Tutor bridge conversion degrades
+
+1. Review the `AI Tutor Bridge Snapshot` cards in `/admin/kangur/observability`.
+2. Compare bridge suggestions against bridge completions; low completion with normal suggestion volume usually means the tutor is proposing the right next step but the CTA or destination is not compelling enough.
+3. Inspect recent analytics for `kangur_ai_tutor_message_succeeded`, `kangur_ai_tutor_quick_action_clicked`, `kangur_ai_tutor_follow_up_clicked`, and `kangur_ai_tutor_follow_up_completed`.
+4. Check whether the drop is isolated to `Lekcja -> Grajmy` or `Grajmy -> Lekcja`.
+5. If the issue started after a tutor prompt or widget copy change, review the latest bridge-action wording and adjacent-step ranking in the AI Tutor adaptive layer.
 
 ### Performance artifact degrades
 

@@ -6,13 +6,12 @@ import type {
   CaseResolverWorkspace,
   CaseResolverAssetFile,
 } from '@/shared/contracts/case-resolver';
-
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import type { Toast } from '@/shared/contracts/ui';
+import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
+import { useCaseResolverAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';
 import { useCaseResolverStateOcrActions } from './useCaseResolverState.ocr-actions';
 import { useCaseResolverStateUploadActions } from './useCaseResolverState.upload-actions';
-import { useCaseResolverAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';
 
 type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 

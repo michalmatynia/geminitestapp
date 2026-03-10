@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
-import type { Toast } from '@/shared/ui';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import type { Toast } from '@/shared/ui';
 
 import { useAiPathsValidationActions } from './useAiPathsValidationActions';
 

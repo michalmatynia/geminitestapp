@@ -1,6 +1,7 @@
+import type { CustomCssAiConfig } from '@/shared/contracts/cms';
+
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 
-import type { CustomCssAiConfig } from '@/shared/contracts/cms';
 
 export type InspectorAiContextPreviewTab = 'page' | 'element';
 

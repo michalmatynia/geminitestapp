@@ -1,4 +1,5 @@
 import { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+
 import { createRegexRule, CASE_RESOLVER_PROMPT_EXPLODER_SCOPE } from './base';
 import {
   CASE_RESOLVER_ADDRESSER_LABEL_PATTERN,

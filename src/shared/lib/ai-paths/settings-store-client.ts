@@ -1,6 +1,3 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
-import { ApiError, api } from '@/shared/lib/api-client';
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
   type AiPathsMaintenanceActionId,
@@ -8,6 +5,9 @@ import {
   type AiPathsMaintenanceReport,
   type AiPathsMaintenanceApplyResult,
 } from '@/shared/contracts/ai-paths';
+import type { SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
+import { ApiError, api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { AiPathsSettingRecord };
 export { AI_PATHS_MAINTENANCE_ACTION_IDS };

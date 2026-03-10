@@ -1,3 +1,10 @@
+import type {
+  ProductValidationInstanceScope,
+  ProductValidationPattern,
+  ProductValidationPostAcceptBehavior,
+  ProductValidationTarget,
+  FieldValidatorIssue,
+} from '@/shared/contracts/products';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   isPatternEnabledForValidationScope,
@@ -11,13 +18,6 @@ import {
   evaluateStringCondition,
   parseDynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import type {
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationTarget,
-  FieldValidatorIssue,
-} from '@/shared/contracts/products';
 
 export type { FieldValidatorIssue };
 

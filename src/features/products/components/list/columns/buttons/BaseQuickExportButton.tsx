@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import React, { useRef, useState } from 'react';
 
+import type { ProductWithImages } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
 import {
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations';
-import { useGenericExportToBaseMutation } from '@/features/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
-import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+} from '@/shared/lib/product-integrations-adapter';
+import { useGenericExportToBaseMutation } from '@/shared/lib/product-integrations-adapter';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

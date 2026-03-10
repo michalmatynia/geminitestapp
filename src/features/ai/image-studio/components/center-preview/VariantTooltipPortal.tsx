@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 
 import { Card } from '@/shared/ui';
 
-import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';
 import { useCenterPreviewContext } from './CenterPreviewContext';
+import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';
 
 export type VariantTooltipState = {
   variant: VariantThumbnailInfo;

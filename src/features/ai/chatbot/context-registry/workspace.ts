@@ -1,3 +1,4 @@
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
@@ -7,7 +8,6 @@ import type {
   ChatMessageDto as ChatMessage,
   ChatbotSessionListItem,
 } from '@/shared/contracts/chatbot';
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 
 export const CHATBOT_CONTEXT_ROOT_IDS = [
   'page:admin-chatbot',

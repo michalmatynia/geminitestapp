@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   useSaveTagMutation,
   useDeleteTagMutation,
@@ -20,6 +19,7 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useProductSettingsTagsContext } from './ProductSettingsContext';
 

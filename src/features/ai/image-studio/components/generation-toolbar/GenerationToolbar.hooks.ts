@@ -1,21 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast, type ToastOptions } from '@/shared/ui';
-import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
-import { useProjectsState } from '../../context/ProjectsContext';
-import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
-import { useSlotsState, useSlotsActions } from '../../context/SlotsContext';
-import {
-  useUiActions,
-  useUiState,
-  type PreviewCanvasViewportCrop,
-  type PreviewCanvasImageFrameBinding,
-} from '../../context/UiContext';
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
+
 import {
   buildImageStudioAnalysisSourceSignature,
   type ImageStudioAnalysisSharedLayout,
@@ -27,11 +12,13 @@ import {
   resolveObjectLayoutPresetOptionValue,
 } from '@/features/ai/image-studio/utils/object-layout-presets';
 import {
-  resolveClientProcessingImageSrc,
-  shapeHasUsableCropGeometry,
-  type MaskShapeForExport,
-  type CropRectResolutionDiagnostics,
-} from './GenerationToolbarImageUtils';
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/shared/lib/products/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useToast, type ToastOptions } from '@/shared/ui';
+
+import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {
   CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
@@ -43,9 +30,24 @@ import {
   normalizeCenterThreshold,
   normalizeMaskShapeForExport,
 } from './GenerationToolbar.utils';
+import {
+  resolveClientProcessingImageSrc,
+  shapeHasUsableCropGeometry,
+  type MaskShapeForExport,
+  type CropRectResolutionDiagnostics,
+} from './GenerationToolbarImageUtils';
+import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
+import { useProjectsState } from '../../context/ProjectsContext';
+import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
+import { useSlotsState, useSlotsActions } from '../../context/SlotsContext';
+import {
+  useUiActions,
+  useUiState,
+  type PreviewCanvasViewportCrop,
+  type PreviewCanvasImageFrameBinding,
+} from '../../context/UiContext';
 import { type ImageStudioAnalysisSummaryChipData } from '../ImageStudioAnalysisSummaryChip';
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
-import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarState(): GenerationToolbarState {
   const { maskPreviewEnabled, centerGuidesEnabled, canvasImageOffset } = useUiState();

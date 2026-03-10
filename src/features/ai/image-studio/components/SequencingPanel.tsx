@@ -4,9 +4,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
+import {
+  resolveRenderableSlotById,
+  slotHasRenderableImage,
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
+import {
+  normalizeImageStudioSequenceSteps,
+  resolveImageStudioSequenceActiveSteps,
+  type ImageStudioSequenceStep,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
-import { api } from '@/shared/lib/api-client';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
@@ -28,17 +38,9 @@ import { useSettingsActions, useSettingsState } from '../context/SettingsContext
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions } from '../context/UiContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
-import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
-import {
-  resolveRenderableSlotById,
-  slotHasRenderableImage,
-} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
-import {
-  normalizeImageStudioSequenceSteps,
-  resolveImageStudioSequenceActiveSteps,
-  type ImageStudioSequenceStep,
-} from '@/features/ai/image-studio/utils/studio-settings';
-
+import { SequencePresetsCard } from './sequencing/SequencePresetsCard';
+import { SequenceRunCard } from './sequencing/SequenceRunCard';
+import { SequenceRuntimeCard } from './sequencing/SequenceRuntimeCard';
 import {
   type SequenceRunStatus,
   type SequenceRunRecord,
@@ -47,14 +49,11 @@ import {
   type SequenceRunStartResponse,
   type SequencerDisplayState,
 } from './sequencing/sequencing-types';
-import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
-import { SequenceRuntimeCard } from './sequencing/SequenceRuntimeCard';
-import { SequencePresetsCard } from './sequencing/SequencePresetsCard';
-import { SequenceRunCard } from './sequencing/SequenceRunCard';
 import {
   SequencingPanelProvider,
   type SequencingPanelContextValue,
 } from './sequencing/SequencingPanelContext';
+import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
 
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;

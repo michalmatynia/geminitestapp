@@ -1,8 +1,8 @@
 import 'server-only';
 
-import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { addAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
+import { buildAgentPersonaSettings, fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import {
   AGENT_PERSONA_MOOD_IDS,
   type AgentPersona,
@@ -13,8 +13,8 @@ import type {
   PersonaMemorySearchResponse,
   PersonaMemorySourceType,
 } from '@/shared/contracts/persona-memory';
-import { buildAgentPersonaSettings, fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import prisma from '@/shared/lib/db/prisma';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 const MOOD_ID_SET = new Set<AgentPersonaMoodId>(AGENT_PERSONA_MOOD_IDS);
 const STOP_WORDS = new Set([

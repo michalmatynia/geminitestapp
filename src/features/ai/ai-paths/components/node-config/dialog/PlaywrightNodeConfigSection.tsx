@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
+import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import type { PlaywrightConfig } from '@/shared/lib/ai-paths';
 import {
   createDefaultPlaywrightConfig,
@@ -14,8 +16,6 @@ import {
   findPlaywrightTemplateByScript,
   PLAYWRIGHT_SCRIPT_TEMPLATES,
 } from '@/shared/lib/ai-paths/core/playwright/script-templates';
-import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
-import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { Button, Input, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';

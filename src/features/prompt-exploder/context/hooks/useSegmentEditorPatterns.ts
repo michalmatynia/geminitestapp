@@ -2,18 +2,19 @@
 
 import { useMemo } from 'react';
 
+import type { LabelValueOptionDto } from '@/shared/contracts/ui';
+
 import { promptExploderClampNumber } from '../../helpers/formatting';
 import { promptExploderBuildSegmentSampleText, type ApprovalDraft } from '../../helpers/segment-helpers';
 import { normalizeLearningText, templateSimilarityScore } from '../../template-learning';
-import type { LabelValueOptionDto } from '@/shared/contracts/ui';
 
 import type { DocumentState } from '../DocumentContext';
-import type { SettingsState } from '../SettingsContext';
 import type {
   SegmentEditorMatchedRuleDetail,
   SegmentEditorPatternsState,
   SegmentEditorTemplateCandidate,
 } from '../SegmentEditorContext.types';
+import type { SettingsState } from '../SettingsContext';
 
 type SegmentEditorPatternState = Omit<SegmentEditorPatternsState, 'approvalDraft'>;
 

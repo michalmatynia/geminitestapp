@@ -3,6 +3,9 @@
 import { useSearchParams } from 'next/navigation';
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import {
+  type PromptExploderSegmentationLibraryState,
+} from '@/shared/contracts/prompt-exploder';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -24,14 +27,12 @@ import {
   removePromptExploderSegmentationRecordById,
   sortPromptExploderSegmentationRecordsByCapturedAt,
 } from '../segmentation-library';
-import {
-  type PromptExploderSegmentationLibraryState,
-} from '@/shared/contracts/prompt-exploder';
 import { useBenchmarkActions } from './hooks/useBenchmark';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useLibraryPersistence } from './hooks/useLibraryPersistence';
 import { useSegmentationRecordCapture } from './hooks/useSegmentationRecordCapture';
 import { useSettingsActions, useSettingsState } from './hooks/useSettings';
+
 import type { LibraryActions, LibraryState } from './LibraryContext.types';
 
 // ── Contexts ─────────────────────────────────────────────────────────────────

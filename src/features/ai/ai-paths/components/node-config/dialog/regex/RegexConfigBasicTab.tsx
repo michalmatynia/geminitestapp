@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Button, FormField, Hint, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
+
 import type { RegexConfig } from '@/shared/lib/ai-paths';
+import { Button, FormField, Hint, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
+
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
 
 export type RegexConfigBasicTabProps = {

@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
 import { ListPlus } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/shared/ui';
+
 import {
   useDocumentRelationSearchActionsContext,
   useDocumentRelationSearchStateContext,

@@ -3,9 +3,9 @@
 import { Upload } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import FileManager, { FileManagerRuntimeContext } from '@/shared/ui/files';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Button, FileUploadTrigger } from '@/shared/ui';
+import FileManager, { FileManagerRuntimeContext } from '@/shared/ui/files';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useStudioImportContext } from '../studio-modals/StudioImportContext';

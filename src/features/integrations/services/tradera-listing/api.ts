@@ -1,17 +1,18 @@
-import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { decryptSecret } from '@/features/integrations/server';
+import {
+  addTraderaShopItem,
+  TraderaApiCredentials,
+} from '@/features/integrations/services/tradera-api-client';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+
 import {
   DEFAULT_TRADERA_API_CATEGORY_ID,
   DEFAULT_TRADERA_API_PAYMENT_CONDITION,
   DEFAULT_TRADERA_API_SHIPPING_CONDITION,
 } from './config';
 import { toPositiveInt, toRecord } from './utils';
-import {
-  addTraderaShopItem,
-  TraderaApiCredentials,
-} from '@/features/integrations/services/tradera-api-client';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 export const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord

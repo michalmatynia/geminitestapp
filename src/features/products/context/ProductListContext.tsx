@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+
 import type {
   ProductListActionsContextType,
   ProductListAlertsContextType,

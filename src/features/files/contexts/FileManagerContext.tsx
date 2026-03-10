@@ -2,19 +2,20 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
+import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import {
   useFileQueries,
   useDeleteFile,
   useUpdateFileTags,
 } from '@/features/files/hooks/useFileQueries';
-import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
+import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
-import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import type {
   FileManagerActions,
   FileManagerConfig,

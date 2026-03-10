@@ -1,17 +1,19 @@
 'use client';
 
 import React from 'react';
+
 import { LoadingState, Card } from '@/shared/ui';
+
+import { CentralDocsSyncPanel } from '../components/validation/CentralDocsSyncPanel';
+import { DocsConnectionsPanel } from '../components/validation/DocsConnectionsPanel';
+import { EntityCollectionMapPanel } from '../components/validation/EntityCollectionMapPanel';
+import { ValidationEnginePanel } from '../components/validation/ValidationEnginePanel';
+import { ValidationHeader } from '../components/validation/ValidationHeader';
+import { ValidationRulesEditor } from '../components/validation/ValidationRulesEditor';
 import {
   AdminAiPathsValidationProvider,
   useAdminAiPathsValidationContext,
 } from '../context/AdminAiPathsValidationContext';
-import { ValidationHeader } from '../components/validation/ValidationHeader';
-import { ValidationEnginePanel } from '../components/validation/ValidationEnginePanel';
-import { DocsConnectionsPanel } from '../components/validation/DocsConnectionsPanel';
-import { CentralDocsSyncPanel } from '../components/validation/CentralDocsSyncPanel';
-import { EntityCollectionMapPanel } from '../components/validation/EntityCollectionMapPanel';
-import { ValidationRulesEditor } from '../components/validation/ValidationRulesEditor';
 
 function AdminAiPathsValidationPageInner(): React.JSX.Element {
   const { settingsQuery, settingsParseError, selectedPathConfig } =

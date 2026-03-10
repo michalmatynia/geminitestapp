@@ -3,35 +3,35 @@
 import { MousePointer2, Move } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/shared/lib/products/constants';
 import {
   type VectorDrawingContextValue,
   VectorDrawingProvider,
   type VectorToolMode,
   VectorDrawingToolbar,
 } from '@/shared/lib/vector-drawing';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { useUiActions, useUiState } from '../../context/UiContext';
 import { useAiPathsObjectAnalysis } from '../../hooks/useAiPathsObjectAnalysis';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
   AiPathAnalysisTriggerProvider,
   AiPathAnalysisTriggerSection,
 } from '../analysis/sections/AiPathAnalysisTriggerSection';
 import { GenerationToolbar } from '../GenerationToolbar';
 import { LabeledSlider } from '../LabeledSlider';
-import { StudioCard } from '../StudioCard';
 import { useRightSidebarContext } from '../RightSidebarContext';
+import { StudioCard } from '../StudioCard';
 
 export const RightSidebarControlsTab = React.memo(
   function RightSidebarControlsTab(): React.JSX.Element {

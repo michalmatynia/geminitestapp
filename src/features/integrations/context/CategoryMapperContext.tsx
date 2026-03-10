@@ -11,6 +11,10 @@ import React, {
 } from 'react';
 
 import {
+  useIntegrationCatalogs,
+  useIntegrationProductCategories,
+} from '@/features/integrations/hooks/useIntegrationProductQueries';
+import {
   useFetchExternalCategoriesMutation,
   useSaveMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
@@ -18,20 +22,16 @@ import {
   useExternalCategories,
   useCategoryMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import {
-  useIntegrationCatalogs,
-  useIntegrationProductCategories,
-} from '@/features/integrations/hooks/useIntegrationProductQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
-import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import type {
   InternalCategoryOption,
   CategoryMapperData,
   CategoryMapperActions,
 } from '@/shared/contracts/integrations';
-import { useToast } from '@/shared/ui';
+import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 // --- Granular Contexts ---
 

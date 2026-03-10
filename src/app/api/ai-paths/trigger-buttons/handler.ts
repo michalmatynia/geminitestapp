@@ -14,6 +14,12 @@ import {
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
+import {
+  isPlaywrightAiPathsFixtureTriggerButton,
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME,
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
+  shouldIncludePlaywrightAiPathsFixtureButtons,
+} from '@/shared/lib/ai-paths/playwright-fixture-scope';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import { assertTriggerButtonPathExists } from './path-validation';
@@ -26,7 +32,13 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const readRequestCookie = (req: NextRequest, name: string): string | null => {
+  const cookies = (req as NextRequest & { cookies?: { get?: (key: string) => { value?: string } | undefined } })
+    .cookies;
+  return cookies?.get?.(name)?.value ?? null;
+};
+
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
   } catch (error) {
@@ -47,7 +59,18 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   const raw = await readTriggerButtonsRaw();
   const parsedButtons = parseAiTriggerButtonsRaw(raw);
-  return NextResponse.json(parsedButtons, {
+  const includeFixtureButtons =
+    shouldIncludePlaywrightAiPathsFixtureButtons(
+      readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME)
+    ) ||
+    shouldIncludePlaywrightAiPathsFixtureButtons(
+      req.nextUrl.searchParams.get(PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM)
+    );
+  const visibleButtons = includeFixtureButtons
+    ? parsedButtons
+    : parsedButtons.filter((button) => !isPlaywrightAiPathsFixtureTriggerButton(button));
+
+  return NextResponse.json(visibleButtons, {
     headers: {
       'Cache-Control': 'no-store',
     },

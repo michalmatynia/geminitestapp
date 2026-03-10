@@ -3,8 +3,8 @@
 import React from 'react';
 
 import type { FolderTreeViewportV2Props } from '@/features/foldertree';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { internalError } from '@/shared/errors/app-error';
 
 export interface ValidatorListTreeContextValue {

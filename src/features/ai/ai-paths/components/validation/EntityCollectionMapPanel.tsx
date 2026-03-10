@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Button, Card, Label, Textarea } from '@/shared/ui';
+
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 export function EntityCollectionMapPanel(): React.JSX.Element {

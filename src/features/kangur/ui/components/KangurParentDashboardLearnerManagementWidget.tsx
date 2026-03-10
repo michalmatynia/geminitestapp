@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -9,7 +10,6 @@ import {
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { cn } from '@/shared/utils';
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {

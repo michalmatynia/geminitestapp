@@ -1,4 +1,5 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query';
+
 import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
   AI_PATH_RUN_QUEUE_CHANNEL,
@@ -11,8 +12,8 @@ import {
   rememberOptimisticAiPathRun,
   type OptimisticRunFilters,
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
-
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
+
 import { QUERY_KEYS } from './query-keys';
 
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
@@ -770,9 +771,9 @@ export const notifyAiPathRunEnqueued = (
     parseAiPathRunEnqueuedEventPayload(
       options?.run
         ? {
-            ...basePayload,
-            run: options.run,
-          }
+          ...basePayload,
+          run: options.run,
+        }
         : basePayload
     ) ?? parseAiPathRunEnqueuedEventPayload(basePayload);
   if (!payload) return;

@@ -77,6 +77,9 @@ const PLAYFUL_KEYWORDS = [
 type KangurAiTutorMoodSignalInput = {
   averageAccuracy: number;
   dailyGoalPercent: number;
+  todayXpEarned: number;
+  weeklyXpEarned: number;
+  averageXpPerSession: number;
   perfectGames: number;
   currentStreakDays: number;
   currentLessonMasteryPercent: number | null;
@@ -206,6 +209,20 @@ export const resolveKangurAiTutorMoodFromSignals = (
   if (input.dailyGoalPercent >= 100) {
     addScore(scores, 'proud', 1.5);
     addScore(scores, 'happy', 1.5);
+  }
+  const xpMomentumTarget = Math.max(18, input.averageXpPerSession || 0);
+  const allowXpMomentumToneBoost =
+    input.context?.surface !== 'test' && input.context?.surface !== 'game';
+  if (allowXpMomentumToneBoost && input.todayXpEarned >= xpMomentumTarget) {
+    addScore(scores, 'proud', 4.5);
+    addScore(scores, 'happy', 2.5);
+    addScore(scores, 'celebrating', 2.5);
+    setPrimaryReason('xp_momentum_today', 4.6);
+  }
+  if (allowXpMomentumToneBoost && input.weeklyXpEarned >= Math.max(80, xpMomentumTarget * 4)) {
+    addScore(scores, 'determined', 1.5);
+    addScore(scores, 'motivating', 1.5);
+    addScore(scores, 'confident', 1);
   }
   if (input.perfectGames > 0) {
     addScore(scores, 'celebrating', 1 + Math.min(input.perfectGames, 3) * 0.5);
@@ -355,6 +372,9 @@ export const buildKangurAiTutorLearnerMood = async (
   return resolveKangurAiTutorMoodFromSignals({
     averageAccuracy: snapshot.averageAccuracy,
     dailyGoalPercent: snapshot.dailyGoalPercent,
+    todayXpEarned: snapshot.todayXpEarned,
+    weeklyXpEarned: snapshot.weeklyXpEarned,
+    averageXpPerSession: snapshot.averageXpPerSession,
     perfectGames: progress.perfectGames,
     currentStreakDays: snapshot.currentStreakDays,
     currentLessonMasteryPercent: resolveCurrentLessonMasteryPercent(progress, input.context),

@@ -101,6 +101,7 @@ export function KangurGameRuntimeProvider({
     visible: false,
     xpGained: 0,
     newBadges: [],
+    breakdown: [],
   });
 
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
@@ -128,12 +129,16 @@ export function KangurGameRuntimeProvider({
     setSessionPlayerName(fullName);
   }, [sessionPlayerName, user?.full_name]);
 
-  const showXpToast = (xpGained: number, newBadges: string[]): void => {
+  const showXpToast = (
+    xpGained: number,
+    newBadges: string[],
+    breakdown: KangurXpToastState['breakdown'] = []
+  ): void => {
     if (xpToastTimeoutRef.current) {
       window.clearTimeout(xpToastTimeoutRef.current);
     }
 
-    setXpToast({ visible: true, xpGained, newBadges });
+    setXpToast({ visible: true, xpGained, newBadges, breakdown });
     xpToastTimeoutRef.current = window.setTimeout(() => {
       setXpToast((current) => ({ ...current, visible: false }));
       xpToastTimeoutRef.current = null;
@@ -262,6 +267,14 @@ export function KangurGameRuntimeProvider({
       const greatThreshold = Math.max(1, Math.ceil(totalQuestions * 0.8));
       setTimeTaken(taken);
       setScore(nextScore);
+      const storedProgress = loadProgress();
+      const reward = createGameSessionReward(storedProgress, {
+        operation: selectedOperation,
+        difficulty,
+        correctAnswers: nextScore,
+        totalQuestions,
+        durationSeconds: taken,
+      });
 
       void kangurPlatform.score
         .create({
@@ -271,6 +284,7 @@ export function KangurGameRuntimeProvider({
           total_questions: totalQuestions,
           correct_answers: nextScore,
           time_taken: taken,
+          xp_earned: reward.xp,
         })
         .finally(() => {
           if (canAccessParentAssignments) {
@@ -278,16 +292,8 @@ export function KangurGameRuntimeProvider({
           }
         });
 
-      const storedProgress = loadProgress();
       const isPerfect = nextScore === totalQuestions;
       const isGreat = nextScore >= greatThreshold;
-      const reward = createGameSessionReward(storedProgress, {
-        operation: selectedOperation,
-        difficulty,
-        correctAnswers: nextScore,
-        totalQuestions,
-        durationSeconds: taken,
-      });
       const { newBadges } = addXp(reward.xp, reward.progressUpdates);
       trackKangurClientEvent('kangur_game_completed', {
         operation: selectedOperation,
@@ -302,7 +308,7 @@ export function KangurGameRuntimeProvider({
         xpAwarded: reward.xp,
         playerNamePresent: nextPlayerName.length > 0,
       });
-      showXpToast(reward.xp, newBadges);
+      showXpToast(reward.xp, newBadges, reward.breakdown);
 
       window.setTimeout(() => setScreen('result'), 1000);
       return;

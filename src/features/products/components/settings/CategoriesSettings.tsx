@@ -8,8 +8,6 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
 } from '@/features/foldertree';
-import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
@@ -33,16 +31,18 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { MasterTreeNode } from '@/shared/utils';
+import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { buildMasterNodesFromCategoryTree } from './category-master-tree';
 import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
+import { CategoryTreeNodeRenderer } from './CategoryTreeNodeRenderer';
 import {
   CategoryTreeNodeRuntimeProvider,
   type CategoryTreeNodeRuntimeContextValue,
 } from './CategoryTreeNodeRuntimeContext';
-import { CategoryTreeNodeRenderer } from './CategoryTreeNodeRenderer';
 import { useProductSettingsCategoriesContext } from './ProductSettingsContext';
 
 const cloneCategoryTree = (nodes: ProductCategoryWithChildren[]): ProductCategoryWithChildren[] =>

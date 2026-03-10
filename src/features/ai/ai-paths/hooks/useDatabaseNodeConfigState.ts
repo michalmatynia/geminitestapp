@@ -2,23 +2,23 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { createPresetId, extractJsonPathEntries, dbApi } from '@/shared/lib/ai-paths';
+import type { SchemaData } from '@/shared/contracts/database';
+import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import type {
   DatabaseConfig,
   DbQueryConfig,
   DbQueryPreset,
   DatabaseActionCategory,
 } from '@/shared/lib/ai-paths';
-import type { SchemaData } from '@/shared/contracts/database';
-import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { createPresetId, extractJsonPathEntries, dbApi } from '@/shared/lib/ai-paths';
 import { resolveDbActionProvider } from '@/shared/lib/ai-paths/core/utils/provider-actions';
+import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import {
@@ -28,11 +28,10 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../components/AiPathConfigContext';
-import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
-
-import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
 import { useDatabaseActionConfig } from './database-node/useDatabaseActionConfig';
 import { useDatabaseMappingState } from './database-node/useDatabaseMappingState';
+import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
+import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
 
 const DEFAULT_QUERY: DbQueryConfig = {
   provider: 'auto',

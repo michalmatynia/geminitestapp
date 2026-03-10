@@ -1,12 +1,11 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
+
 import {
-  IntegrationDefinition,
-  SaveConnectionOptions,
-  StepWithResult,
-} from '../integrations-context-types';
+  isTraderaApiIntegrationSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useCreateIntegration,
   useUpsertConnection,
@@ -16,17 +15,20 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
-import { useToast } from '@/shared/ui';
-import {
-  isTraderaApiIntegrationSlug,
-  isTraderaIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { isObjectRecord } from '@/shared/utils/object-utils';
+import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
+import { useToast } from '@/shared/ui';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import {
+  IntegrationDefinition,
+  SaveConnectionOptions,
+  StepWithResult,
+} from '../integrations-context-types';
 
 export function useIntegrationsActionsImpl(args: {
   integrations: Integration[];

@@ -162,6 +162,33 @@ const summarizeTrend = (payload) => {
   };
 };
 
+const loadKangurAiTutorBridgeSnapshot = async () => {
+  const result = await execScanOutput({
+    command: 'node',
+    commandArgs: [
+      '--import',
+      'tsx',
+      'scripts/observability/check-kangur-ai-tutor-bridge.ts',
+      '--summary-json',
+      '--range=7d',
+    ],
+    cwd: root,
+    env: {
+      ...process.env,
+      FORCE_COLOR: '0',
+    },
+    sourceName: 'kangur-ai-tutor-bridge-snapshot',
+    timeoutMs: 30 * 1000,
+  });
+
+  return {
+    status: result.output?.status ?? (result.ok ? 'ok' : 'failed'),
+    summary: result.output?.summary ?? null,
+    details: result.output?.details ?? null,
+    error: result.error ?? null,
+  };
+};
+
 const listProcessCommands = async () => {
   const { stdout } = await execFile('ps', ['-Ao', 'pid,command'], {
     cwd: root,
@@ -611,6 +638,30 @@ const toMarkdown = (report) => {
   }
   lines.push('');
 
+  lines.push('## Kangur AI Tutor Bridge Snapshot');
+  lines.push('');
+  if (report.kangurAiTutorBridge?.summary) {
+    const snapshot = report.kangurAiTutorBridge.summary;
+    const completionRate =
+      snapshot.bridgeCompletionRatePercent === null
+        ? 'n/a'
+        : `${snapshot.bridgeCompletionRatePercent}%`;
+    lines.push(`- Range: ${snapshot.range}`);
+    lines.push(`- Overall status: ${snapshot.overallStatus}`);
+    lines.push(`- Tutor replies: ${snapshot.messageSucceededCount}`);
+    lines.push(`- Bridge suggestions: ${snapshot.bridgeSuggestionCount}`);
+    lines.push(
+      `- Direction split: lesson->game=${snapshot.lessonToGameBridgeSuggestionCount} | game->lesson=${snapshot.gameToLessonBridgeSuggestionCount}`
+    );
+    lines.push(`- Bridge CTA clicks: ${snapshot.bridgeQuickActionClickCount}`);
+    lines.push(`- Bridge follow-up opens: ${snapshot.bridgeFollowUpClickCount}`);
+    lines.push(`- Bridge completions: ${snapshot.bridgeFollowUpCompletionCount}`);
+    lines.push(`- Bridge completion rate: ${completionRate} | alert=${snapshot.alertStatus ?? 'n/a'}`);
+  } else {
+    lines.push('- Kangur AI Tutor bridge snapshot unavailable; inspect JSON payload for error details.');
+  }
+  lines.push('');
+
   lines.push('## Top 5 Critical User Flows (Priority Order)');
   lines.push('');
   lines.push('| Priority | Flow | KPI | Target | Scope |');
@@ -930,6 +981,7 @@ const run = async () => {
     readJsonIfExists('docs/metrics/unit-domain-timings-trend-latest.json'),
     readJsonIfExists('docs/metrics/lint-domain-checks-trend-latest.json'),
   ]);
+  const kangurAiTutorBridge = await loadKangurAiTutorBridgeSnapshot();
 
   const summary = summarizeWeeklyChecks(checkResults, checkSelection);
 
@@ -983,6 +1035,7 @@ const run = async () => {
       unitDomains: summarizeTrend(unitDomainTrendRaw),
       lintDomains: summarizeTrend(lintDomainTrendRaw),
     },
+    kangurAiTutorBridge,
     criticalFlows,
   };
 

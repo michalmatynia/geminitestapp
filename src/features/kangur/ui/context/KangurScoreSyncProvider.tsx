@@ -6,8 +6,8 @@ import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-scores';
+import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 

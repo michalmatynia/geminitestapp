@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   ImageFileRecord,
   ImageFileRepository,
@@ -8,6 +7,7 @@ import type {
   ImageFileListFilters,
   ImageFileUpdateInput,
 } from '@/shared/contracts/files';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getImageFileRepository } from './image-file-repository';
 import { mongoImageFileRepository } from './image-file-repository/mongo-image-file-repository';

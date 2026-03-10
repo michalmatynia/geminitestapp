@@ -1,4 +1,3 @@
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   PlanStep,
   PlannerMeta,
@@ -7,6 +6,9 @@ import {
   adaptivePlanReviewResultSchema,
   selfCheckReviewResultSchema,
 } from '@/shared/contracts/agent-runtime';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+import { normalizePlanStepSpecs } from '../llm-step-specs';
 import {
   parsePlanJson,
   normalizePlannerMeta,
@@ -16,7 +18,6 @@ import {
   buildBranchStepsFromAlternatives,
   normalizeStringList,
 } from '../utils';
-import { normalizePlanStepSpecs } from '../llm-step-specs';
 import { runPlannerTask } from './core';
 
 export async function buildAdaptivePlanReview({

@@ -1,5 +1,6 @@
-import type { CaseResolverRuntimeSnapshot, CaseResolverRuntimeState } from './types';
 import type { SnapshotStateStore } from '@/shared/contracts/state-store';
+
+import type { CaseResolverRuntimeSnapshot, CaseResolverRuntimeState } from './types';
 
 type CaseResolverRuntimeStore = SnapshotStateStore<
   CaseResolverRuntimeState,

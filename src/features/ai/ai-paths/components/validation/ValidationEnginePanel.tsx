@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Button, Card, Input, Label, SelectSimple } from '@/shared/ui';
+
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 const VALIDATION_POLICY_OPTIONS = [

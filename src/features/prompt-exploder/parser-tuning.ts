@@ -4,7 +4,6 @@ import type {
   PromptValidationRule,
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
-
 import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderParserTuningRuleId,

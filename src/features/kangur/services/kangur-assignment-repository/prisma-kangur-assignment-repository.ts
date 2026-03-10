@@ -2,7 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import prisma from '@/shared/lib/db/prisma';
 import {
   kangurAssignmentSchema,
   type KangurAssignment,
@@ -10,6 +9,7 @@ import {
   type KangurAssignmentUpdateInput,
 } from '@/shared/contracts/kangur';
 import { notFoundError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
 

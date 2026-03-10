@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Card } from '@/shared/ui';
+
 import {
   renderNodeDiagnosticsTooltipContent,
   type SvgNodeDiagnosticsTooltipState,

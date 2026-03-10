@@ -10,10 +10,10 @@ import {
 } from '@/features/foldertree';
 import { Button, Card } from '@/shared/ui';
 
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
-import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
 import { PromptExploderTreeNode } from './PromptExploderTreeNode';
 import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
+import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
+import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
 import {
   buildPromptExploderSegmentMasterNodes,
   rebuildPromptExploderSegmentsFromMasterNodes,

@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { RuleDraft } from '../prompt-engine-context-utils';
+
 import { internalError } from '@/shared/errors/app-error';
+
+import type { RuleDraft } from '../prompt-engine-context-utils';
 
 export interface PromptEngineData {
   drafts: RuleDraft[];

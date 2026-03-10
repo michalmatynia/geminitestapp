@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  parsePromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-} from '@/shared/lib/prompt-engine/settings';
+
 import {
   defaultImageStudioSettings,
   parsePersistedImageStudioSettings,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import {
+  parsePromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+} from '@/shared/lib/prompt-engine/settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useSettingsHydration({

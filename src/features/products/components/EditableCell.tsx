@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
 import { Input, useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type EditableCellProps = {
   value: number | null;

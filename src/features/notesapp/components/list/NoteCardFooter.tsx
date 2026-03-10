@@ -5,8 +5,9 @@ import React from 'react';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
-import { buildBreadcrumbPath, darkenColor } from '../../utils';
+
 import { useNoteCardHeaderRuntime } from './NoteCardHeader';
+import { buildBreadcrumbPath, darkenColor } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string };
 

@@ -11,13 +11,15 @@ import {
   ThemeSettingsProvider,
   usePageBuilder,
 } from '@/features/cms/public';
-import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
+import type { SectionInstance } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
+
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
+import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
@@ -29,7 +31,6 @@ import {
   type KangurCmsScreenKey,
 } from './project';
 
-import type { SectionInstance } from '@/shared/contracts/cms';
 
 const commitScreenSections = (
   project: KangurCmsProject,

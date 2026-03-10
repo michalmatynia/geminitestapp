@@ -1,12 +1,12 @@
 'use client';
 
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
   AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingChatSourceDto as AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessageDto as ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import {

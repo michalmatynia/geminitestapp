@@ -279,6 +279,33 @@ export async function fetchSettingsMap(options?: {
   return new Map(data.map((item: SettingRecord) => [item.key, item.value]));
 }
 
+export async function fetchSettingValue(options: {
+  key: string;
+  bypassCache?: boolean;
+  scope?: SettingsScope;
+}): Promise<string | null> {
+  const scope = normalizeScope(options.scope);
+  const params = new URLSearchParams({
+    key: options.key,
+    scope,
+  });
+  if (options.bypassCache === true) {
+    params.set('fresh', '1');
+  }
+
+  const response = await fetchWithRetry(`/api/settings?${params.toString()}`, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch setting "${options.key}" (${response.status})`);
+  }
+
+  const payload = (await response.json()) as SettingRecord[];
+  const record = payload.find((item: SettingRecord) => item.key === options.key) ?? null;
+  return typeof record?.value === 'string' ? record.value : null;
+}
+
 export function invalidateSettingsCache(scope?: SettingsScope): void {
   if (scope) {
     settingsCache.delete(scope);

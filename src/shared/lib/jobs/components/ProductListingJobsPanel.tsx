@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
+import React from 'react';
 
 import { JobsProvider, useJobsActions, useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/shared/lib/jobs/hooks/useProductListingJobsProps';
@@ -20,13 +20,13 @@ import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
-  ProductListingJobsPanelViewProvider,
-  useProductListingJobsPanelView,
-} from './context/ProductListingJobsPanelViewContext';
-import {
   JobTableActionsRuntimeProvider,
   JobTablePanelRuntimeProvider,
 } from './context/JobTableRuntimeContext';
+import {
+  ProductListingJobsPanelViewProvider,
+  useProductListingJobsPanelView,
+} from './context/ProductListingJobsPanelViewContext';
 import { ExportJobDetailModal } from './ExportJobDetailModal';
 import { JobTable } from './JobTable';
 

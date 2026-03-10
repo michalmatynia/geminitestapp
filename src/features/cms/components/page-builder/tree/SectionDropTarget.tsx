@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+
+import { isCmsSectionSamePositionDrop } from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
+import { useDragState } from '@/features/cms/hooks/useDragStateContext';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
+import { readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import type { PageZone } from '@/shared/contracts/cms';
+
 import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
 } from './ComponentTreePanelContext';
-import { useDragState } from '@/features/cms/hooks/useDragStateContext';
-import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
-import { isCmsSectionSamePositionDrop } from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
 
 const PROMOTABLE_BLOCK_TYPES = [
   'ImageElement',

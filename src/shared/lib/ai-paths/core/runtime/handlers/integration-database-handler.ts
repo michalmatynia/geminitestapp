@@ -6,6 +6,12 @@ import type {
   DatabaseOperation,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
+import {
+  extractAiPathsCollectionMapFromRunMeta,
+  withAiPathsCollectionMapInput,
+} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { ParameterInferenceGateError } from './database-parameter-inference';
 import { resolveDatabaseInputs } from './integration-database-input-resolution';
@@ -14,13 +20,7 @@ import { handleDatabaseStandardOperation } from './integration-database-operatio
 import { prepareDatabaseTemplateContext } from './integration-database-template-context';
 import { getCachedSchema } from './integration-schema-handler';
 import { DEFAULT_DB_QUERY } from '../../constants';
-import {
-  extractAiPathsCollectionMapFromRunMeta,
-  withAiPathsCollectionMapInput,
-} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
-import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const WRITE_ACTION_CATEGORIES = new Set<string>(['create', 'update', 'delete']);
 const WRITE_ACTIONS = new Set<string>([

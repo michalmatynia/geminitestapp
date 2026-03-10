@@ -2,15 +2,15 @@
 
 import React, { useMemo, useState } from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { cn } from '@/shared/utils';
-import { Button, Card, SelectSimple } from '@/shared/ui';
-
 import {
   type UseAiPathsObjectAnalysisReturn,
   type AiPathsObjectAnalysisStatus,
 } from '@/features/ai/image-studio/hooks/useAiPathsObjectAnalysis';
 import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { Button, Card, SelectSimple } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
 
 // ---------------------------------------------------------------------------
 // Types

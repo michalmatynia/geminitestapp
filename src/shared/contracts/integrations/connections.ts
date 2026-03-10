@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { namedDtoSchema } from '../base';
 
 export const integrationConnectionSchema = namedDtoSchema.extend({

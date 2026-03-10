@@ -2,6 +2,7 @@ import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import { parseCaseResolverWorkspace } from '../settings';
 import { getCaseResolverWorkspaceRevision } from '../workspace-persistence';
+
 import type { CaseResolverRuntimeState } from './types';
 
 export const createEmptyCaseResolverWorkspace = (): CaseResolverWorkspace => ({

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
+import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
@@ -15,7 +16,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
 
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';

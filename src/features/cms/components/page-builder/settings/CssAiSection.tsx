@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
+import { buildDiffLines } from '@/features/cms/components/page-builder/utils/ai-helpers';
 import {
   Button,
   ToggleRow,
@@ -16,7 +17,6 @@ import {
 } from '@/shared/ui';
 
 import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';
-import { buildDiffLines } from '@/features/cms/components/page-builder/utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
 // CssAiSection component — renders the CSS AI assistant panel

@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Building2, User, X } from 'lucide-react';
+import React from 'react';
 
 import { SelectSimple, SegmentedControl, Button } from '@/shared/ui';
+
 import { useOptionalCaseResolverPartyFieldRuntime } from './CaseResolverPartyFieldRuntimeContext';
 
 type PartyKindFilter = 'all' | 'person' | 'organization';

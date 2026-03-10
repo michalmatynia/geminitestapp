@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 import { ObjectId, type Filter, type OptionalId } from 'mongodb';
 
 import type {
@@ -15,6 +14,7 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 import {
   getPrismaSystemLogMetricsWithMinDuration,
   matchesMinDurationMs,

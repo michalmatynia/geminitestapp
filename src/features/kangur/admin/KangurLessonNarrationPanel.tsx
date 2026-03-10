@@ -8,6 +8,7 @@ import {
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import { buildKangurLessonTtsEnvelopeSignature } from '@/features/kangur/tts/context-registry/instructions';
 import {
@@ -21,7 +22,6 @@ import {
   buildKangurLessonDocumentNarrationSignature,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
-import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { api } from '@/shared/lib/api-client';
 import { Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -356,15 +356,15 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
           ? 'Narration preview failed.'
           : hasScriptContent && !narrationPreviewIsFresh
             ? 'Narration preview needs refresh after recent lesson or voice changes.'
-          : response?.mode === 'audio'
-            ? 'Neural preview ready.'
-            : cacheStatus?.state === 'tts_unavailable'
-              ? 'Neural TTS is not configured for this workspace.'
-              : cacheStatus?.state === 'missing'
-                ? 'Audio has not been generated for this lesson draft yet.'
-                : response?.mode === 'fallback'
-                  ? 'Neural preview unavailable. Browser fallback would be used.'
-                  : 'Review the narration script and generate audio when ready.';
+            : response?.mode === 'audio'
+              ? 'Neural preview ready.'
+              : cacheStatus?.state === 'tts_unavailable'
+                ? 'Neural TTS is not configured for this workspace.'
+                : cacheStatus?.state === 'missing'
+                  ? 'Audio has not been generated for this lesson draft yet.'
+                  : response?.mode === 'fallback'
+                    ? 'Neural preview unavailable. Browser fallback would be used.'
+                    : 'Review the narration script and generate audio when ready.';
 
   return (
     <section className={cn('rounded-2xl border border-border/60 bg-card/40 p-5 shadow-sm')}>

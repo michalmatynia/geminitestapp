@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useMemo } from 'react';
 import { FolderPlus, FilePlus, ChevronRight, Star, Folder } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { Button, TreeHeader } from '@/shared/ui';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { NoteWithRelations } from '@/shared/contracts/notes';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { Button, TreeHeader } from '@/shared/ui';
 
 type NotesTreeHeaderOperations = {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;

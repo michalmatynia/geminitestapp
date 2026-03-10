@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   createContext,
   useCallback,
@@ -8,7 +9,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

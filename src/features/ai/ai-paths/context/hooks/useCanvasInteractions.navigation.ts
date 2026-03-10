@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
+
 import type { AiNode } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
@@ -8,6 +9,7 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
 } from '@/shared/lib/ai-paths';
+
 import {
   ZOOM_ANIMATION_DURATION_MS,
   WHEEL_ZOOM_EASING,

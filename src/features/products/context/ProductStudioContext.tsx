@@ -6,24 +6,28 @@ import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
-import { useToast } from '@/shared/ui';
-import { api } from '@/shared/lib/api-client';
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
+import {
+  getImageStudioSlotImageSrc,
+  useStudioProjects,
+} from '@/shared/lib/image-studio-adapter';
+import { useToast } from '@/shared/ui';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+
 import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   useSendToStudioMutation,
   useAcceptVariantMutation,
   useRotateImageSlotMutation,
 } from '../hooks/useProductStudioMutations';
 
-import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { internalError } from '@/shared/errors/app-error';
+
 import type {
   ProductImageSlotPreview,
   ProductStudioAuditEntry,

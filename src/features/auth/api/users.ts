@@ -3,7 +3,6 @@ import type {
   AuthUserSecurityProfile,
   AuthUser as AuthUserSummary,
 } from '@/shared/contracts/auth';
-
 import { api } from '@/shared/lib/api-client';
 
 export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };

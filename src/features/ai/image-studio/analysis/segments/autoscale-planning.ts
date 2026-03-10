@@ -1,4 +1,7 @@
+import { decideObjectDetectionCandidate } from '@/features/ai/image-studio/analysis/policy';
 import { type ImageStudioCenterObjectBounds } from '@/shared/contracts/image-studio';
+
+import { resolveAlphaObjectBoundsFromRgba } from './alpha-detection';
 import {
   type PixelData,
   type NormalizedImageStudioAnalysisLayoutConfig,
@@ -6,12 +9,10 @@ import {
   type ImageStudioAnalysisResult,
   type ImageStudioAutoScalePlan,
 } from './types';
-import { resolveAlphaObjectBoundsFromRgba } from './alpha-detection';
 import {
   resolveWhiteForegroundObjectDetectionFromRgba,
   resolveWhiteBgSimpleBboxFromRgba,
 } from './white-bg-detection';
-import { decideObjectDetectionCandidate } from '@/features/ai/image-studio/analysis/policy';
 
 export const computeObjectWhitespaceMetrics = (
   bounds: ImageStudioCenterObjectBounds,

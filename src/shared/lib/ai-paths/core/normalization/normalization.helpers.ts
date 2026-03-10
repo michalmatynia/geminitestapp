@@ -4,6 +4,7 @@ import type {
   PathConfig,
   NodePortContract,
 } from '@/shared/contracts/ai-paths';
+
 import { palette as PALETTE_DEFINITIONS } from '../definitions';
 
 export type PortContractRecord = Record<string, NodePortContract>;

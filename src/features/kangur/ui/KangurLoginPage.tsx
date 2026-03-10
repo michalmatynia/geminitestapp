@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   Suspense,
@@ -11,21 +12,21 @@ import {
   type FormEvent,
   type JSX,
 } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
+import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurGradientHeading,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
 import {
   parseKangurParentAccountActionResponse,
@@ -278,6 +279,8 @@ function KangurLoginPageContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
+  const loginFormRef = useRef<HTMLFormElement | null>(null);
+  const identifierInputRef = useRef<HTMLInputElement | null>(null);
   const titleId = useId();
   const identifierInputId = useId();
   const passwordInputId = useId();
@@ -358,6 +361,35 @@ function KangurLoginPageContent({
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
+  const identifierAnchorLabel =
+    isParentFlowVisible && parentAuthMode === 'create-account'
+      ? 'Pole emaila rodzica'
+      : 'Pole emaila rodzica albo nicku ucznia';
+
+  useKangurTutorAnchor({
+    id: 'kangur-auth-login-form',
+    kind: 'login_form',
+    ref: loginFormRef,
+    surface: 'auth',
+    enabled: true,
+    priority: 100,
+    metadata: {
+      label: 'Sekcja logowania',
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: 'kangur-auth-login-identifier-field',
+    kind: 'login_identifier_field',
+    ref: identifierInputRef,
+    surface: 'auth',
+    enabled: true,
+    priority: 120,
+    metadata: {
+      label: identifierAnchorLabel,
+    },
+  });
+
   const startResendCooldown = (retryAfterMs: number): void => {
     const now = Date.now();
     setResendCountdownNowMs(now);
@@ -876,8 +908,10 @@ function KangurLoginPageContent({
         className='flex flex-col gap-4'
         data-hydrated={isHydrated ? 'true' : 'false'}
         data-login-kind={loginKind}
+        data-tutor-anchor='login_form'
         data-testid='kangur-login-form'
         onSubmit={handleSubmit}
+        ref={loginFormRef}
       >
         {isParentFlowVisible ? (
           <div className='rounded-[28px] border border-white/80 bg-white/62 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
@@ -928,6 +962,8 @@ function KangurLoginPageContent({
             autoComplete='username'
             aria-describedby={formDescribedBy || undefined}
             className={inputClassName}
+            data-testid='kangur-login-identifier-input'
+            data-tutor-anchor='login_identifier_field'
             disabled={!isHydrated || isSubmitting}
             id={identifierInputId}
             name='identifier'
@@ -937,6 +973,7 @@ function KangurLoginPageContent({
                 ? 'rodzic@example.com'
                 : 'rodzic@example.com albo janek123'
             }
+            ref={identifierInputRef}
             required
             type='text'
             value={identifier}

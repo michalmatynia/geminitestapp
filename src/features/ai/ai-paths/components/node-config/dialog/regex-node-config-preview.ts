@@ -1,9 +1,9 @@
+import type { RegexConfig } from '@/shared/lib/ai-paths';
 import {
   normalizeJsonIntegrityPolicy,
   normalizeJsonLikeValue,
   type JsonIntegrityPolicy,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/json-integrity';
-import type { RegexConfig } from '@/shared/lib/ai-paths';
 
 export type RegexCandidate = {
   pattern: string;

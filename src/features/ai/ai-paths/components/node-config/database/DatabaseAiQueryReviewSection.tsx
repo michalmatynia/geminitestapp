@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { AiQuery } from '@/shared/contracts/database';
 import { Button } from '@/shared/ui';
+
 import {
   useDatabaseConstructorActionsContext,
   useDatabaseConstructorStateContext,

@@ -7,10 +7,9 @@ import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { getRedisConnection } from '@/shared/lib/queue';
-
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
+import { getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const SETTINGS_COLLECTION = 'settings';
 

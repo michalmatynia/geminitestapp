@@ -14,6 +14,8 @@ import {
   type CaseResolverScanSlot,
   type CreateCaseResolverFileInput,
 } from '@/shared/contracts/case-resolver';
+
+import { sanitizeGraph } from './settings-graph';
 import { DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT } from './settings.constants';
 import {
   normalizeCaseHappeningDate,
@@ -32,7 +34,6 @@ import {
   sanitizeOptionalMimeType,
   sanitizePartyReference,
 } from './settings.helpers';
-import { sanitizeGraph } from './settings-graph';
 
 const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
 

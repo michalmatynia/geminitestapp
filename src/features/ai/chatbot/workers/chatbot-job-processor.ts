@@ -1,10 +1,10 @@
 import { buildChatbotContextRegistrySystemPrompt } from '@/features/ai/chatbot/context-registry/system-prompt';
-import type { ChatMessageRoleDto } from '@/shared/contracts/chatbot';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
-import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import type { ChatMessageRoleDto } from '@/shared/contracts/chatbot';
+import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 
 type ChatPayloadMessage = {
   role: string;

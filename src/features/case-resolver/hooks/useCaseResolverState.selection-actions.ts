@@ -5,6 +5,7 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 type UpdateWorkspaceOptions = {

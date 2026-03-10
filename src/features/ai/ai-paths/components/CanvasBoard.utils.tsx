@@ -1,4 +1,5 @@
 import React from 'react';
+
 import type {
   AiNode,
   DataContractNodeIssueSummary,
@@ -9,6 +10,7 @@ import type {
   SvgDetailLevel,
 } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { type ConnectorInfo } from './canvas-board-connectors';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 export {

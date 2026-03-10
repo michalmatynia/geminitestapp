@@ -1,11 +1,11 @@
 import 'server-only';
 
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import type {
   ContextRegistryConsumerEnvelope,
   ContextRegistryRef,
 } from '@/shared/contracts/ai-context-registry';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>

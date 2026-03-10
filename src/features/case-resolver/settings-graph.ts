@@ -14,6 +14,7 @@ import {
   type CaseResolverPdfExtractionPresetId,
 } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
+
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 
 const sanitizeNodeMeta = (

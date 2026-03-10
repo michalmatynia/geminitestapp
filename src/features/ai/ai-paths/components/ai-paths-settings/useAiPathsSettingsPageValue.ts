@@ -1,15 +1,18 @@
 'use client';
 
 import React from 'react';
+
+import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
+import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import {
   evaluateDataContractPreflight,
   evaluateAiPathsValidationPreflight,
   listAiPathRuns,
   normalizeAiPathsValidationConfig,
 } from '@/shared/lib/ai-paths';
+
 import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-utils';
-import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
-import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
+
 import type { AiPathsSettingsPageContextValue } from './AiPathsSettingsPageContext';
 import type { AiPathsSettingsProps } from '../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from './types';

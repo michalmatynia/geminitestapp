@@ -1,4 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
+
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import { type Toast } from '@/shared/contracts/ui';
+import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+
+import { parseCaseResolverWorkspace } from '../settings';
 import {
   computeCaseResolverConflictRetryDelayMs,
   createCaseResolverWorkspaceMutationId,
@@ -6,8 +12,6 @@ import {
   logCaseResolverWorkspaceEvent,
   persistCaseResolverWorkspaceSnapshot,
 } from '../workspace-persistence';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { parseCaseResolverWorkspace } from '../settings';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
 import {
   beginCaseResolverWorkspacePersistAttempt,
@@ -51,8 +55,6 @@ export interface UseCaseResolverPersistenceValue {
   flushWorkspacePersist: () => void;
 }
 
-import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import { type Toast } from '@/shared/contracts/ui';
 
 export function useCaseResolverPersistence({
   initialWorkspaceState,

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo } from 'react';
 import { type VariantProps } from 'class-variance-authority';
+import React, { useMemo } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
+
 import { badgeVariants } from './badge';
 
 export interface StatusToggleProps {

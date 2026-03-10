@@ -2,11 +2,10 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
-import type { ViewMode } from './view-mode';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useAssets3D,
@@ -15,6 +14,9 @@ import {
   useDeleteAsset3DMutation,
   useReindexAssets3DMutation,
 } from '../hooks/useAsset3dQueries';
+
+import type { ViewMode } from './view-mode';
+
 
 export function useAdmin3DAssetsState() {
   const { toast } = useToast();

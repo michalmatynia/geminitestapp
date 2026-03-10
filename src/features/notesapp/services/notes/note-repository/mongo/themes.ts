@@ -1,9 +1,12 @@
 import { randomUUID } from 'crypto';
-import type { Filter } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import type { ThemeDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import { themeCollectionName } from './common';
+
+import type { Filter } from 'mongodb';
 
 const toThemeRecord = (doc: ThemeDocument): ThemeRecord => ({
   id: doc.id ?? doc._id,

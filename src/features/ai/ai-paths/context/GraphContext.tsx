@@ -9,6 +9,7 @@ import {
   useRef,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type {
   AiNode,
   AiPathsValidationConfig,
@@ -27,7 +28,7 @@ import {
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
-import { internalError } from '@/shared/errors/app-error';
+
 import {
   DEFAULT_AI_PATHS_VALIDATION,
   DEFAULT_BLOCKED_RUN_POLICY,
@@ -41,6 +42,7 @@ import {
   DEFAULT_STRICT_FLOW_MODE,
   DEFAULT_TRIGGER,
 } from './GraphContext.shared';
+
 import type {
   GraphActions,
   GraphMutationMeta,

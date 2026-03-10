@@ -1,12 +1,12 @@
 'use client';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   useUpdateValidatorSettingsMutation,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { FormSection, ValidatorFormatterToggle } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 

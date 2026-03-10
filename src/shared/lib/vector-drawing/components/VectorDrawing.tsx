@@ -2,15 +2,17 @@
 
 import React, { useMemo } from 'react';
 
+import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
+
+import { VectorDrawingCanvas } from './VectorDrawingCanvas';
+import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
 import {
   VectorDrawingProvider,
   type VectorDrawingContextValue,
 } from '../context/VectorDrawingContext';
-import { VectorDrawingCanvas } from './VectorDrawingCanvas';
-import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
 import { useVectorDrawingShortcuts } from '../hooks/useVectorDrawingShortcuts';
 import { useVectorDrawingState, type VectorDrawingOutput } from '../hooks/useVectorDrawingState';
-import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
+
 
 export type { VectorDrawingOutput };
 

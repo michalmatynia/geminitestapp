@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
+
+import type { Toast } from '@/shared/contracts/ui';
 import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
@@ -10,16 +12,18 @@ import {
   palette,
   resolveNodeTypeId,
 } from '@/shared/lib/ai-paths';
+import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
+
+import { computeNodeSelectionDeleteResult } from './canvas/delete-selection-command';
 import {
   getPointerCaptureTarget,
   setPointerCaptureSafe,
   releasePointerCaptureSafe,
   type HandleSelectNodeOptions,
 } from './useCanvasInteractions.helpers';
-import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
-import type { Toast } from '@/shared/contracts/ui';
+
 import type { GraphMutationMeta } from '../GraphContext';
-import { computeNodeSelectionDeleteResult } from './canvas/delete-selection-command';
+
 
 export interface UseCanvasInteractionsNodesValue {
   handlePointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => Promise<void>;

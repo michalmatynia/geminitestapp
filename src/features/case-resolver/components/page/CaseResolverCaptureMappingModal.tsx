@@ -1,15 +1,16 @@
 'use client';
 
 import React from 'react';
+
+import {
+  useCaseResolverViewActionsContext,
+  useCaseResolverViewStateContext,
+} from '../CaseResolverViewContext';
 import { PromptExploderCaptureMappingModal } from '../PromptExploderCaptureMappingModal';
 import {
   PromptExploderCaptureMappingModalRuntimeProvider,
   type PromptExploderCaptureMappingModalRuntimeValue,
 } from '../PromptExploderCaptureMappingModalRuntimeContext';
-import {
-  useCaseResolverViewActionsContext,
-  useCaseResolverViewStateContext,
-} from '../CaseResolverViewContext';
 
 export function CaseResolverCaptureMappingModal(): React.JSX.Element {
   const {

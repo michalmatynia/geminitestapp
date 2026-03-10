@@ -4,8 +4,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { useToast } from '@/shared/ui';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([...BASE_MARKETPLACE_SLUGS, 'tradera']);

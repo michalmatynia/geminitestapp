@@ -1,16 +1,16 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-
-import { benchmarkSuggestionRuleId } from './benchmark-suggestions';
-import { buildBenchmarkLearnedRegexRuleDraft } from './rule-drafts';
-import { mergeRegexLearnedRule } from './rule-learning';
-import { upsertLearnedTemplate } from './template-learning';
-
 import type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderLearnedTemplate,
   ApplyBenchmarkSuggestionsResult,
   PromptExploderSegmentType,
 } from '@/shared/contracts/prompt-exploder';
+
+import { benchmarkSuggestionRuleId } from './benchmark-suggestions';
+import { buildBenchmarkLearnedRegexRuleDraft } from './rule-drafts';
+import { mergeRegexLearnedRule } from './rule-learning';
+import { upsertLearnedTemplate } from './template-learning';
+
 
 const toSlug = (value: string): string =>
   value

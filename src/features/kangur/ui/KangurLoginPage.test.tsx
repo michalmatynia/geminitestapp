@@ -208,12 +208,19 @@ describe('KangurLoginPage', () => {
     expect(screen.getByText('Konto StudiQ')).toBeVisible();
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true');
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
+    expect(screen.getByTestId('kangur-login-form')).toHaveAttribute(
+      'data-tutor-anchor',
+      'login_form'
+    );
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('aria-busy', 'false');
     expect(
       screen.getByText('Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.')
     ).toBeVisible();
     expect(screen.getByText('Rodzic lub uczen')).toBeVisible();
-    expect(screen.getByLabelText('Email rodzica albo nick ucznia')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email rodzica albo nick ucznia')).toHaveAttribute(
+      'data-tutor-anchor',
+      'login_identifier_field'
+    );
     expect(screen.getByLabelText('Hasło')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mam konto' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toBeInTheDocument();

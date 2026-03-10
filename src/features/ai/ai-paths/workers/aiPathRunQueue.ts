@@ -1,5 +1,14 @@
 import 'server-only';
 
+import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
+import { serviceUnavailableError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+import {
+  getAiPathsEnabledCached,
+  assertAiPathsEnabled,
+  clearAiPathsEnabledCache as resetAiPathsEnabledCache,
+} from './ai-path-run-queue/brain-gate';
 import {
   AI_PATH_RUN_QUEUE_NAME,
   LOG_SOURCE,
@@ -8,25 +17,16 @@ import {
   QUEUE_HOT_WAITING_LIMIT,
   QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
 } from './ai-path-run-queue/config';
+import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
 import { aiPathRunQueueState, localFallbackTimers } from './ai-path-run-queue/state';
 import {
   getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
   clearAiPathRunQueueStatusCache,
 } from './ai-path-run-queue/status';
-import {
-  getAiPathsEnabledCached,
-  assertAiPathsEnabled,
-  clearAiPathsEnabledCache as resetAiPathsEnabledCache,
-} from './ai-path-run-queue/brain-gate';
-import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
-
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { serviceUnavailableError } from '@/shared/errors/app-error';
+import { type AiPathRunQueueHotStatus } from './ai-path-run-queue/types';
 import { createDebugQueueLogger } from './ai-path-run-queue-utils';
 
-import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
-import { type AiPathRunQueueHotStatus } from './ai-path-run-queue/types';
 
 export {
   getAiPathRunQueueStatus,

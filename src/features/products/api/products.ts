@@ -1,5 +1,5 @@
-import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
 import { type ProductFilter } from '@/shared/contracts/products/filters';
+import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;

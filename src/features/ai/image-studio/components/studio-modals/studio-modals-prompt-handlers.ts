@@ -1,6 +1,9 @@
+import { isParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import { type ParamSpec, type PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
+import { flattenParams, inferParamSpecs } from '@/shared/utils/prompt-params';
 
 import {
   buildHeuristicControls,
@@ -9,9 +12,6 @@ import {
   type PromptExtractHistoryEntry,
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
-import { isParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
-import { flattenParams, inferParamSpecs } from '@/shared/utils/prompt-params';
-import { type ParamSpec, type PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 
 import type { Dispatch, SetStateAction } from 'react';
 

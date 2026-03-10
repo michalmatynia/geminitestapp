@@ -2,8 +2,8 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import type { UploadedImageBinaryDto as ParsedImageDataUrl } from '@/shared/contracts/image-studio';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 type SourceSlotLike = {
   imageBase64?: string | null;

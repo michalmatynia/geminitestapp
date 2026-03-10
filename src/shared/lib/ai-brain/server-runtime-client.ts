@@ -1,18 +1,20 @@
 import 'server-only';
 
 import OpenAI from 'openai';
-import type {
-  ChatCompletionContentPart,
-  ChatCompletionMessageParam,
-} from 'openai/resources/chat/completions';
 
+
+import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
 import { inferBrainModelVendor, normalizeBrainModelId } from './model-vendor';
-import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { resolveBrainProviderCredential } from './provider-credentials';
+
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionMessageParam,
+} from 'openai/resources/chat/completions';
 
 export type BrainRuntimeVendor = BrainModelVendor;
 

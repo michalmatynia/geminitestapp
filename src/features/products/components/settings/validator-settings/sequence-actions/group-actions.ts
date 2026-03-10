@@ -1,5 +1,6 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   createSequenceGroupId,
   getPatternSequence,
@@ -8,6 +9,7 @@ import {
   sortRuleDraftsBySequence,
   DEFAULT_SEQUENCE_STEP,
 } from '../helpers';
+
 import type { UpdatePatternMutation } from './types';
 
 export const handleSaveSequenceGroup = async (args: {

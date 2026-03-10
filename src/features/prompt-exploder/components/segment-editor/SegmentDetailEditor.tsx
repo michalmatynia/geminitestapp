@@ -1,16 +1,19 @@
 'use client';
 
 import React from 'react';
+
 import { Card, Button, FormField, SelectSimple, StatusToggle, Textarea } from '@/shared/ui';
+
+import { ListItemsEditor } from './ListItemsEditor';
+import { ParameterBlockEditor } from './ParameterBlockEditor';
 import { useDocumentState, useDocumentActions } from '../../context/hooks/useDocument';
 import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
-import { ParameterBlockEditor } from './ParameterBlockEditor';
-import { ListItemsEditor } from './ListItemsEditor';
 import { PromptExploderHierarchyTreeProvider } from '../PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '../PromptExploderHierarchyTreeEditor';
-import { PromptExploderSubsectionsTreeEditor } from '../tree/PromptExploderSubsectionsTreeEditor';
 import { SegmentEditorInsightsPanel } from '../SegmentEditorInsightsPanel';
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
+import { PromptExploderSubsectionsTreeEditor } from '../tree/PromptExploderSubsectionsTreeEditor';
+
 import type { PromptExploderSegment, PromptExploderSegmentType } from '../../types';
 
 const promptExploderSupportsSegmentTextSplit = (segment: PromptExploderSegment | null): boolean =>

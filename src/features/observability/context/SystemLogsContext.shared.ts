@@ -1,5 +1,3 @@
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import type { ComponentType, Dispatch, SetStateAction } from 'react';
 
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
@@ -10,6 +8,9 @@ import type {
 } from '@/shared/contracts/observability';
 import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import type { FilterField } from '@/shared/ui';
+
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type { ComponentType, Dispatch, SetStateAction } from 'react';
 
 const levelOptions: Array<{ value: SystemLogLevel | 'all'; label: string }> = [
   { value: 'all', label: 'All levels' },

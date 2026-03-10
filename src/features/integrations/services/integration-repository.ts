@@ -1,8 +1,8 @@
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { IntegrationRepository, IntegrationWithConnections } from '../types/integrations';
 
-import { getPrismaIntegrationRepository } from './integration-repository/prisma-impl';
+import { IntegrationRepository, IntegrationWithConnections } from '../types/integrations';
 import { getMongoIntegrationRepository } from './integration-repository/mongo-impl';
+import { getPrismaIntegrationRepository } from './integration-repository/prisma-impl';
 
 export async function getIntegrationRepository(): Promise<IntegrationRepository> {
   const provider = await getAppDbProvider();

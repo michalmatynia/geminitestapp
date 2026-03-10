@@ -1,4 +1,6 @@
 import { useCallback, useMemo } from 'react';
+
+import { buildFilemakerPartyOptions } from '@/features/filemaker';
 import type {
   CaseResolverCategory,
   CaseResolverFile,
@@ -7,7 +9,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { buildFilemakerPartyOptions } from '@/features/filemaker';
+
 import { buildPathLabelMap } from '../pages/admin-case-resolver-page-helpers';
 
 export function useAdminCaseResolverMetadataActions({

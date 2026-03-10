@@ -1,12 +1,13 @@
+import { Browser, BrowserContext } from 'playwright';
+
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
-import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
-import unknownToErrorMessage from '@/shared/utils/error-formatting';
 import {
   appendTaskTypeToPrompt,
   isExtractionStep,
 } from '@/features/ai/agent-runtime/planning/utils';
-import { Browser, BrowserContext } from 'playwright';
+import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
+import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import unknownToErrorMessage from '@/shared/utils/error-formatting';
 
 export async function executeTool(args: {
   step: PlanStep;

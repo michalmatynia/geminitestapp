@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+
+import { type CanvasResizeDirection } from '@/features/ai/image-studio/utils/canvas-resize';
 import { Button, FormActions, Input, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
+
 import {
   CANVAS_RESIZE_DIRECTION_OPTIONS,
   CANVAS_RESIZE_MIN_PX,
@@ -12,7 +15,6 @@ import {
 } from './right-sidebar-utils';
 import { useRightSidebarCanvasResize } from './useRightSidebarCanvasResize';
 import { useRightSidebarContext } from '../RightSidebarContext';
-import { type CanvasResizeDirection } from '@/features/ai/image-studio/utils/canvas-resize';
 
 export function CanvasResizeModal(): React.JSX.Element {
   const {

@@ -1,4 +1,6 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
+
+import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 import type {
   AiPathsValidationConfig,
   PathBlockedRunPolicy,
@@ -7,7 +9,6 @@ import type {
   PathRunMode,
 } from '@/shared/lib/ai-paths';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useExecutionSettingsState() {
   const graphState = useGraphState();

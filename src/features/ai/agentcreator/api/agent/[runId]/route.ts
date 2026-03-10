@@ -4,7 +4,6 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   badRequestError,
   conflictError,
@@ -16,8 +15,8 @@ import {
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
-
 import type { Prisma } from '@/shared/lib/db/prisma-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

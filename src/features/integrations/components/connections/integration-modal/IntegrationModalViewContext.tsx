@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { internalError } from '@/shared/errors/app-error';
 
 export type IntegrationModalViewContextValue = {

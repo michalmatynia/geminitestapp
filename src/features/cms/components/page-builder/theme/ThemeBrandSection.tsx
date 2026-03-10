@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Hint } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 import { MiniRichTextEditor } from './MiniRichTextEditor';
 import { ImagePickerField } from '../shared-fields';
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 
 type BrandIdentitySettings = Pick<
   ThemeSettings,

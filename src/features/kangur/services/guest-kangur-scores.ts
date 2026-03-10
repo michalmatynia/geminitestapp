@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 
+import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import {
   kangurScoreSchema,
   type KangurScore,
@@ -10,7 +11,6 @@ import {
   type KangurScoreLimit,
   type KangurScoreSort,
 } from '@/shared/contracts/kangur';
-import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 
 const KANGUR_GUEST_SCORES_STORAGE_KEY = 'kangur_guest_scores_v1';
 export const KANGUR_GUEST_SCORES_SESSION_STORAGE_KEY = 'kangur_guest_scores_session_v1';
@@ -177,6 +177,7 @@ export const createGuestKangurScore = (input: KangurScoreCreateInput): KangurSco
     total_questions: input.total_questions,
     correct_answers: input.correct_answers,
     time_taken: input.time_taken,
+    xp_earned: input.xp_earned ?? null,
     created_date: new Date().toISOString(),
     client_mutation_id: clientMutationId,
     created_by: null,
@@ -235,6 +236,7 @@ export const syncGuestKangurScores = async (input: {
         total_questions: score.total_questions,
         correct_answers: score.correct_answers,
         time_taken: score.time_taken,
+        xp_earned: score.xp_earned ?? undefined,
         client_mutation_id: clientMutationId,
       });
       syncedCount += 1;

@@ -104,6 +104,7 @@ describe('mongoKangurScoreRepository', () => {
       total_questions: 10,
       correct_answers: 8,
       time_taken: 30,
+      xp_earned: null,
       created_date: '2026-03-08T13:10:00.000Z',
       client_mutation_id: 'guest-score:mongo-race',
       created_by: 'ada@example.com',

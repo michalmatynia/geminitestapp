@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button, useToast } from '@/shared/ui';
 

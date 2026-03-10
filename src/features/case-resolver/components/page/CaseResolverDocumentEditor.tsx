@@ -24,6 +24,7 @@ import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
 } from '@/features/filemaker';
+import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Button,
@@ -41,23 +42,23 @@ import {
   EmptyState,
   FormSection,
 } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+
 import {
   useCaseResolverViewActionsContext,
   useCaseResolverViewStateContext,
 } from '../CaseResolverViewContext';
-import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
+import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
+import { CaseResolverHistoryEntriesRuntimeProvider } from './CaseResolverHistoryEntriesRuntimeContext';
 import { CaseResolverPartyFieldRuntimeProvider } from './CaseResolverPartyFieldRuntimeContext';
-import { DocumentRelationSearchPanel } from '../../relation-search';
-import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
+import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import {
   resolvePromptExploderTransferStatusLabel,
   type PromptExploderTransferUiStatus,
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
-import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
-import { CaseResolverHistoryEntriesRuntimeProvider } from './CaseResolverHistoryEntriesRuntimeContext';
-import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
+import { DocumentRelationSearchPanel } from '../../relation-search';
+import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
 export type { EditorDetailsTab };
 
 const formatHistoryTimestamp = (value: string): string => {

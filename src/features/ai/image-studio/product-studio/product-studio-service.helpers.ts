@@ -1,15 +1,16 @@
 import { createHash } from 'crypto';
-import { sanitizeImageStudioProjectId } from '@/features/ai/image-studio/server/run-executor';
-import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
+
 import {
   parsePersistedImageStudioSettings,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/server';
+import { sanitizeImageStudioProjectId } from '@/features/ai/image-studio/server/run-executor';
 import {
   type ProductStudioSequencingDiagnostics,
   type ProductWithImages,
 } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
+import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 
 export const normalizeProjectId = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;

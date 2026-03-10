@@ -2,10 +2,10 @@
 
 import React from 'react';
 
-import { getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
-import { getSelectableSurfaceProps } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
+import { getSelectableSurfaceProps } from '@/features/cms/components/page-builder/preview/preview-utils';
+import { getSectionStyles } from '@/features/cms/public';
 import { cn } from '@/shared/utils';
 
 interface PreviewSectionFrameProps {

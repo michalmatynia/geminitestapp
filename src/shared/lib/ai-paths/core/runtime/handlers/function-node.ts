@@ -1,9 +1,9 @@
+import type { FunctionConfig } from '@/shared/contracts/ai-paths-core/nodes';
 import type {
   NodeHandler,
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { FunctionConfig } from '@/shared/contracts/ai-paths-core/nodes';
 
 import { parseJsonSafe, safeStringify } from '../../utils';
 

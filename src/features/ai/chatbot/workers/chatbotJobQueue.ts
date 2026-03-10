@@ -1,8 +1,8 @@
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/ai/chatbot/workers/chatbot-job-processor';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type ChatbotJobData = {
   jobId: string;

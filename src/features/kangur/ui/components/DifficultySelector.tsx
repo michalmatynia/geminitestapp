@@ -1,8 +1,7 @@
-import { useId } from 'react';
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
+import { useId } from 'react';
 
-import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import {
   KangurIconBadge,
   KangurOptionCardButton,
@@ -13,6 +12,7 @@ import {
   KANGUR_ACCENT_STYLES,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import type { KangurDifficulty } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 

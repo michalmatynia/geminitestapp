@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+
 import { api } from '@/shared/lib/api-client';
+
 import type { SequenceRunStatus, SequenceRunDetailResponse } from './sequencing-types';
 
 const POLL_INTERVAL_MS = 1500;

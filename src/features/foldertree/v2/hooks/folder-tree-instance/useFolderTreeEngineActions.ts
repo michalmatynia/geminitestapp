@@ -1,14 +1,17 @@
 import { useCallback } from 'react';
+
 import {
   type MasterFolderTreeActionResult,
   type MasterTreeDropPositionDto,
   type MasterFolderTreePersistOperation,
   type FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
-import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import type { FolderTreeState } from '../../types';
-import { canDropNodeV2, moveNodeV2, reorderNodeV2, dropNodeToRootV2 } from '../../core/engine';
+
 import { createErrorAction, toActionOk, createTxId } from './folder-tree-utils';
+import { canDropNodeV2, moveNodeV2, reorderNodeV2, dropNodeToRootV2 } from '../../core/engine';
+import { FolderTreeStore } from '../../store/createFolderTreeStore';
+
+import type { FolderTreeState } from '../../types';
 
 export type ApplyPersistedOperationArgs = {
   operation: MasterFolderTreePersistOperation;

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { DataTable, FormSection, Hint } from '@/shared/ui';
 
 export type AnalyticsStatCardProps = {

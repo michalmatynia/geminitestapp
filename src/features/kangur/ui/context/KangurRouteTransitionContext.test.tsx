@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -58,6 +58,10 @@ function renderRouteTransitionHarness({
 describe('KangurRouteTransitionProvider', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('resets scroll after a Kangur route transition commits to a new requested path', () => {

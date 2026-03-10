@@ -1,15 +1,17 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
 import {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   buildLatestFieldRecipe,
   buildUniqueLabel,
   getPatternSequence,
   isLatestFieldMirrorPattern,
 } from '../helpers';
+
 import type { CreatePatternMutation, UpdatePatternMutation } from './types';
 
 export const handleCreateLatestPriceStockSequence = async (args: {

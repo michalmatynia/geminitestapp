@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+
 import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/features/gsap';
+import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
 export function AdvancedTextEffectsSection(): React.JSX.Element {

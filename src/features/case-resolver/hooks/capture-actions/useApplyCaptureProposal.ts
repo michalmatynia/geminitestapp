@@ -2,33 +2,36 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
+
+import {
+  buildFileEditDraft,
+  createCaseResolverHistorySnapshotEntry,
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
 } from '@/features/case-resolver-capture';
 import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor';
-import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { useToast } from '@/shared/ui';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  applyCaseResolverFileMutationAndRebaseDraft,
-  resolveCaptureTargetFile,
-  type CaseResolverFileMutationStage,
-} from '../useCaseResolverState.helpers';
+import { useToast } from '@/shared/ui';
+
+
+import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../../types';
 import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../../workspace-persistence';
 import {
-  buildFileEditDraft,
-  createCaseResolverHistorySnapshotEntry,
-} from '@/features/case-resolver/utils/caseResolverUtils';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture';
-import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';
-import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../../types';
+  applyCaseResolverFileMutationAndRebaseDraft,
+  resolveCaptureTargetFile,
+  type CaseResolverFileMutationStage,
+} from '../useCaseResolverState.helpers';
 
 const readCaptureApplyNowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'

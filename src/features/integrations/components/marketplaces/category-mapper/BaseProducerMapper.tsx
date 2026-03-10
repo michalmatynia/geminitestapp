@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import { useCategoryMapperConfig } from '@/features/integrations/context/CategoryMapperContext';
+import { useIntegrationProductProducers } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
@@ -11,7 +12,6 @@ import {
   useProducerMappings,
   useExternalProducers,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useIntegrationProductProducers } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import { type ProducerMapping, type ExternalProducer } from '@/shared/contracts/integrations';
 import { type Producer } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';

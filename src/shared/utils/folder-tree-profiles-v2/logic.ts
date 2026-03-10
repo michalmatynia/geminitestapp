@@ -1,5 +1,7 @@
 import { validationError } from '@/shared/errors/app-error';
+
 import { normalizeMasterTreeKind } from '../master-folder-tree-contract';
+import { profileV2Schema } from './schema';
 import {
   FolderTreeProfileV2,
   FolderTreeKeyboardConfig,
@@ -14,7 +16,6 @@ import {
   CanNestTreeNodeV2Input,
 } from './types';
 import { folderTreeInstanceValues } from './types';
-import { profileV2Schema } from './schema';
 
 export type ResolvedFolderTreeKeyboardConfig = FolderTreeKeyboardConfig;
 export type ResolvedFolderTreeMultiSelectConfig = FolderTreeMultiSelectConfig;

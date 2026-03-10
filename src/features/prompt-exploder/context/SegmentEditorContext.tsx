@@ -14,9 +14,9 @@ import {
   promptExploderSplitSegmentByRange,
 } from '../helpers/segment-transforms';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
-import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 import { useSegmentEditorPatterns } from './hooks/useSegmentEditorPatterns';
 import { useSegmentPatternApproval } from './hooks/useSegmentPatternApproval';
+import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
 import type { PromptExploderSegment } from '../types';
 import type {

@@ -12,6 +12,8 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   powers: { label: 'Potegi', emoji: '⚡' },
   roots: { label: 'Pierwiastki', emoji: '√' },
   clock: { label: 'Zegar', emoji: '🕐' },
+  calendar: { label: 'Kalendarz', emoji: '📅' },
+  geometry: { label: 'Geometria', emoji: '🔷' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
 };
 
@@ -21,6 +23,7 @@ export type KangurScoreInsightOperation = {
   emoji: string;
   attempts: number;
   averageAccuracy: number;
+  averageXpEarned: number;
   perfectSessions: number;
 };
 
@@ -30,6 +33,8 @@ export type KangurScoreInsights = {
   recentGames: number;
   recentAverageAccuracy: number;
   recentPerfectGames: number;
+  recentXpEarned: number;
+  averageXpPerRecentGame: number;
   lastPlayedAt: string | null;
   trend: {
     direction: KangurScoreTrendDirection;
@@ -42,6 +47,8 @@ export type KangurScoreInsights = {
 };
 
 const toPercent = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
+const normalizeXpEarned = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
 
 const parseDateOrNull = (value: string): Date | null => {
   const parsed = new Date(value);
@@ -78,6 +85,7 @@ const buildOperationInsights = (
     {
       attempts: number;
       accuracySum: number;
+      xpSum: number;
       perfectSessions: number;
     }
   >();
@@ -88,10 +96,12 @@ const buildOperationInsights = (
     const bucket = buckets.get(score.operation) ?? {
       attempts: 0,
       accuracySum: 0,
+      xpSum: 0,
       perfectSessions: 0,
     };
     bucket.attempts += 1;
     bucket.accuracySum += accuracy;
+    bucket.xpSum += normalizeXpEarned(score.xp_earned);
     if (score.correct_answers === score.total_questions) {
       bucket.perfectSessions += 1;
     }
@@ -107,6 +117,7 @@ const buildOperationInsights = (
         emoji: operationInfo.emoji,
         attempts: bucket.attempts,
         averageAccuracy: toPercent(bucket.accuracySum / bucket.attempts),
+        averageXpEarned: Math.round(bucket.xpSum / bucket.attempts),
         perfectSessions: bucket.perfectSessions,
       };
     }
@@ -152,6 +163,8 @@ export const buildKangurScoreInsights = (
       recentGames: 0,
       recentAverageAccuracy: 0,
       recentPerfectGames: 0,
+      recentXpEarned: 0,
+      averageXpPerRecentGame: 0,
       lastPlayedAt: null,
       trend: {
         direction: 'insufficient_data',
@@ -204,6 +217,7 @@ export const buildKangurScoreInsights = (
           : 'flat';
   const insightScores = recentScores.length > 0 ? recentScores : normalizedScores;
   const operationInsights = buildOperationInsights(insightScores);
+  const recentXpEarned = recentScores.reduce((sum, score) => sum + normalizeXpEarned(score.xp_earned), 0);
 
   return {
     recentGames: recentScores.length,
@@ -211,6 +225,8 @@ export const buildKangurScoreInsights = (
     recentPerfectGames: recentScores.filter(
       (score) => score.correct_answers === score.total_questions
     ).length,
+    recentXpEarned,
+    averageXpPerRecentGame: recentScores.length > 0 ? Math.round(recentXpEarned / recentScores.length) : 0,
     lastPlayedAt: normalizedScores[0]?.created_date ?? null,
     trend: {
       direction: trendDirection,

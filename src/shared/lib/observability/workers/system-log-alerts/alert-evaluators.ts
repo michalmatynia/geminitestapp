@@ -1,13 +1,13 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
 import type {
   SystemLogRecordDto as SystemLogRecord,
   Alert,
 } from '@/shared/contracts/observability';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import {
   SYSTEM_LOG_ALERT_WINDOW_SECONDS,
@@ -24,9 +24,9 @@ import {
   SYSTEM_LOG_TELEMETRY_SILENCE_COOLDOWN_SECONDS,
   SYSTEM_LOG_SILENCE_WINDOW_SECONDS,
 } from './config';
-import { queueState, shouldCheckAlerts } from './state';
 import { buildAlertEvidenceContext, readTrimmedString } from './evidence';
 import { listAlertEvidenceLogs } from './repository';
+import { queueState, shouldCheckAlerts } from './state';
 import {
   isInCooldown,
   isInSilenceCooldown,

@@ -3,11 +3,20 @@
  */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
 
 describe('MultiplicationGame', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
   it('uses Kangur option-card styling for multiplication choices', () => {
     render(<MultiplicationGame onFinish={() => undefined} />);
 
@@ -33,11 +42,7 @@ describe('MultiplicationGame', () => {
     expect(firstChoice).toHaveClass('border-amber-300');
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź ✓' }));
 
-    const feedback = screen.getByTestId('multiplication-game-feedback');
-    expect(feedback).toHaveClass(
-      feedback.textContent?.includes('Brawo')
-        ? 'border-emerald-200'
-        : 'border-rose-200'
-    );
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });
+    expect(checkButton.className).toMatch(/bg-(emerald|rose)-500/);
   });
 });

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect } from 'react';
 
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { DatabaseConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
-import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import {

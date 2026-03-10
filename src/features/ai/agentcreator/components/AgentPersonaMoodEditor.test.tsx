@@ -167,6 +167,34 @@ describe('AgentPersonaMoodEditor', () => {
     });
   });
 
+  it('uploads image files selected through the hidden file input', async () => {
+    const runtime = renderEditor({
+      originalMoods: buildDefaultAgentPersonaMoods(),
+    });
+
+    const file = new File(['selected-image'], 'selected.png', { type: 'image/png' });
+    const fileInput = document.querySelector('input[type="file"]');
+    if (!(fileInput instanceof HTMLInputElement)) {
+      throw new Error('Expected hidden file input to be rendered.');
+    }
+
+    fireEvent.change(fileInput, {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(uploadPersonaAvatarMock).toHaveBeenCalledTimes(1));
+    expect(uploadPersonaAvatarMock).toHaveBeenCalledWith({
+      file,
+      personaId: 'persona-test',
+      moodId: 'neutral',
+    });
+    expect(runtime.getLatestMood()).toMatchObject({
+      id: 'neutral',
+      avatarImageFileId: 'uploaded-file-1',
+      avatarImageUrl: '/uploads/agentcreator/personas/persona-test/neutral/avatar.png',
+    });
+  });
+
   it('switches uploaded draft avatars back to inline SVG and deletes the draft file', async () => {
     const draftMood = buildAgentPersonaMood('neutral', {
       svgContent: '',

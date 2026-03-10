@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import {
   CreateProductListingInput,

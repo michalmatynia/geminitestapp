@@ -3,6 +3,7 @@ import {
   listImageStudioSlots,
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server';
+
 import { trimString } from './product-studio-service.helpers';
 
 export const sortSlotsNewestFirst = (input: ImageStudioSlotRecord[]): ImageStudioSlotRecord[] => {

@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
+
+import type { PromptAutofixOperation } from '@/shared/lib/prompt-engine/settings';
 import { Button, Input, FormField, Card, StatusBadge, Hint } from '@/shared/ui';
+
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { formatAutofixOperation } from '../rule-item-utils';
-import type { PromptAutofixOperation } from '@/shared/lib/prompt-engine/settings';
 
 export function RuleItemAutofixSettings(): React.JSX.Element | null {
   const { rule, patchRule, addAutofixOperation, updateAutofixOperation, removeAutofixOperation } =

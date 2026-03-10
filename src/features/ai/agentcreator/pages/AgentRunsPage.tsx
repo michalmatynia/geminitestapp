@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import {
   Button,
   MetadataItem,
@@ -16,7 +17,6 @@ import {
   Card,
 } from '@/shared/ui';
 
-import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
 import { AgentRunsProvider, useAgentRunsContext } from '../context/AgentRunsContext';

@@ -82,6 +82,7 @@ The question-bank workspace is also expected to support triage directly:
 - workflow visibility for `Draft / Ready to publish / Published` at both question-bank and suite-health level
 - preview controls inside the question editor for learner view, correct-answer review, wrong-answer review, and compact framing
 - quick repair actions inside the question review panel for common structural issues such as missing explanation, invalid correct-answer mapping, split layout without illustration, and SVG choices missing descriptive notes
+- presentation presets inside the question editor for common learner-facing layouts such as classic list, answer-card grid, and split illustration scaffolds
 
 Learner-facing runtime should only consume questions from suites that are explicitly `live`, and only the `published` questions inside those suites. `draft` and `ready` questions remain in the bank for authoring and review, but they are not live learner content.
 

@@ -1,13 +1,14 @@
-import {
-  BASE_IMPORT_RETRY_BASE_DELAY_MS,
-  BASE_IMPORT_RETRY_MAX_DELAY_MS,
-} from './base-import-service-shared';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
   BaseImportRunRecord,
 } from '@/shared/contracts/integrations';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
+
+import {
+  BASE_IMPORT_RETRY_BASE_DELAY_MS,
+  BASE_IMPORT_RETRY_MAX_DELAY_MS,
+} from './base-import-service-shared';
 
 type ClassifiedBaseImportError = {
   code: BaseImportErrorCode;

@@ -38,7 +38,7 @@ describe('CalendarInteractiveGame', () => {
     expect(screen.getByTestId('calendar-day-1')).toHaveClass('soft-card', 'rounded-[16px]');
   });
 
-  it('uses shared option-card buttons for weekday tasks and marks the correct answer state', () => {
+  it('uses shared option-card buttons for weekday tasks and marks the correct answer inline', () => {
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.1).mockReturnValueOnce(0.0);
 
     render(<CalendarInteractiveGame onFinish={() => undefined} />);
@@ -50,10 +50,21 @@ describe('CalendarInteractiveGame', () => {
     fireEvent.click(mondayButton);
 
     expect(mondayButton).toHaveClass('border-emerald-300');
-    expect(screen.getByTestId('calendar-interactive-feedback')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
-    );
+    expect(screen.queryByTestId('calendar-interactive-feedback')).toBeNull();
+  });
+
+  it('marks a wrong weekday answer inline without a floating result badge', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.1).mockReturnValueOnce(0.0);
+
+    render(<CalendarInteractiveGame onFinish={() => undefined} />);
+
+    const tuesdayButton = screen.getByTestId('calendar-weekday-1');
+
+    fireEvent.click(tuesdayButton);
+
+    expect(tuesdayButton).toHaveClass('border-rose-300');
+    expect(screen.getByTestId('calendar-weekday-0')).toHaveClass('border-emerald-300');
+    expect(screen.queryByTestId('calendar-interactive-feedback')).toBeNull();
   });
 
   it('uses shared option-card buttons for season drop targets', () => {

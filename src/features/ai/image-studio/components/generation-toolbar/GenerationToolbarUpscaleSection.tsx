@@ -7,8 +7,9 @@ import {
   type UpscaleMode,
   type UpscaleStrategy,
 } from './GenerationToolbarContext';
-import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
 import { useGenerationToolbarUpscaleSectionRuntime } from './GenerationToolbarSectionContexts';
+
+import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
 
 export function GenerationToolbarUpscaleSection(): React.JSX.Element {
   const {

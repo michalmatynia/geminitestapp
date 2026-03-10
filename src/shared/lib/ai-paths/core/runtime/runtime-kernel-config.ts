@@ -1,4 +1,5 @@
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,

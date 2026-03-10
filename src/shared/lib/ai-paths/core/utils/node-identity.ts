@@ -1,7 +1,7 @@
 import type { AiNode, NodeDefinition, PathConfig } from '@/shared/contracts/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { hashString, stableStringify } from './runtime';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type NodeIdentityLike = Pick<AiNode, 'type' | 'title'> &
   Partial<Pick<AiNode, 'config' | 'nodeTypeId'>>;

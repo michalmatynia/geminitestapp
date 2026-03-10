@@ -3,9 +3,9 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
+import prisma from '@/shared/lib/db/prisma';
 import { Prisma } from '@/shared/lib/db/prisma-client';
 
-import prisma from '@/shared/lib/db/prisma';
 
 import { SUPPORTED_3D_FORMATS, type Supported3DExtension } from './validateAsset3d';
 

@@ -2,6 +2,8 @@
 
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
+import type { Toast } from '@/shared/contracts/ui';
+import { internalError } from '@/shared/errors/app-error';
 import type {
   AiNode,
   DbNodePreset,
@@ -14,8 +16,6 @@ import type {
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
-import type { Toast } from '@/shared/contracts/ui';
-import { internalError } from '@/shared/errors/app-error';
 
 import {
   useGraphState,

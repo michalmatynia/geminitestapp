@@ -1,10 +1,11 @@
+import type { PageZone } from '@/shared/contracts/cms';
 import {
   DRAG_KEYS,
   getFirstDragValue,
   parseDragIndex,
   setDragData,
 } from '@/shared/utils/drag-drop';
-import type { PageZone } from '@/shared/contracts/cms';
+
 import type {
   BlockDragState as BlockDragData,
   SectionDragState as SectionDragData,

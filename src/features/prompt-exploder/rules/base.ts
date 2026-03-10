@@ -5,7 +5,6 @@ import type {
   PromptValidationRule,
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
-
 import type { PromptExploderRuntimeValidationScope } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;

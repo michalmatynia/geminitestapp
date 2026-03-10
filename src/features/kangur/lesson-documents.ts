@@ -5,6 +5,7 @@ import {
   type KangurLessonPage,
 } from '@/shared/contracts/kangur';
 import { parseJsonSetting } from '@/shared/utils';
+
 import { flattenKangurLessonDocumentPages } from './lesson-documents/creators';
 import { normalizeKangurLessonDocument } from './lesson-documents/normalization';
 import { isRecord, isSvgImageSource } from './lesson-documents/utils';

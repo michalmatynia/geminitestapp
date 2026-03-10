@@ -20,6 +20,7 @@ import {
 const mocks = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
   fireAiPathTriggerEventMock: vi.fn(),
+  getAiPathRunMock: vi.fn(),
   useAiPathsTriggerButtonsQueryMock: vi.fn(),
   toastMock: vi.fn(),
   createListQueryV2Mock: vi.fn(),
@@ -38,6 +39,10 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
   useAiPathTriggerEvent: () => ({
     fireAiPathTriggerEvent: mocks.fireAiPathTriggerEventMock,
   }),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRun: (...args: unknown[]) => mocks.getAiPathRunMock(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
@@ -80,6 +85,9 @@ vi.mock('@/shared/ui', () => ({
     </button>
   ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  StatusBadge: ({ label, status }: { label?: string; status: string }) => (
+    <span>{label ?? status}</span>
+  ),
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
@@ -125,6 +133,7 @@ describe('Job Queue open-after-trigger flow', () => {
   beforeEach(() => {
     mocks.usePathnameMock.mockReset();
     mocks.fireAiPathTriggerEventMock.mockReset();
+    mocks.getAiPathRunMock.mockReset();
     mocks.useAiPathsTriggerButtonsQueryMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
@@ -186,6 +195,18 @@ describe('Job Queue open-after-trigger flow', () => {
     };
     mocks.createMutationV2Mock.mockReturnValue(baseMutationValue);
     mocks.createDeleteMutationV2Mock.mockReturnValue(baseMutationValue);
+    mocks.getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: RUN.id,
+          status: 'completed',
+          createdAt: RUN.createdAt,
+          updatedAt: RUN.updatedAt,
+          finishedAt: RUN.updatedAt,
+        },
+      },
+    });
 
     mocks.fireAiPathTriggerEventMock.mockImplementation(
       async (args: { onSuccess?: (runId: string) => void }) => {

@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 
+import type { ProductDraft } from '@/shared/contracts/products';
 import { FormModal, Button } from '@/shared/ui';
 
-import type { ProductDraft } from '@/shared/contracts/products';
+import { DraftCreator } from './DraftCreator';
 import { useDrafterActions, useDrafterState } from '../context/DrafterContext';
 import { useDraftQueries } from '../hooks/useDraftQueries';
-import { DraftCreator } from './DraftCreator';
 
 export function DraftCreatorModal(): React.JSX.Element | null {
   const { isCreatorOpen: isOpen, editingDraftId, formRef } = useDrafterState();

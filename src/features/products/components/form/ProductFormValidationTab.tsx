@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
+
 import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
+import { SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
 
 export function ProductFormValidationTab(): React.JSX.Element {
   const { validatorEnabled, formatterEnabled, validationDenyBehavior, validationInstanceScope } =

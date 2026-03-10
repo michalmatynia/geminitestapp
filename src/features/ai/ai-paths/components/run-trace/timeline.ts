@@ -1,4 +1,5 @@
 import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+
 import { 
   readRuntimeTraceSummary, 
   toDate, 
@@ -9,6 +10,7 @@ import {
   formatTraceSpanDetails, 
   resolveDurationMs 
 } from './normalization';
+
 import type { 
   RuntimeTraceTimelineItem
 } from './types';

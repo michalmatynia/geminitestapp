@@ -1,15 +1,19 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useAiPathTriggerEvent } from './useAiPathTriggerEvent';
 import type {
   AiTriggerButtonLocation,
   AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
+import {
+  type TrackedAiPathRunSnapshot,
+  subscribeToTrackedAiPathRun,
+} from '@/shared/lib/ai-paths/client-run-tracker';
 import { useToast } from '@/shared/ui';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
+import { useAiPathTriggerEvent } from './useAiPathTriggerEvent';
 
 const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
 const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';
@@ -18,6 +22,11 @@ type TriggerRunState = {
   status: 'idle' | 'running' | 'success' | 'error';
   progress: number;
 };
+
+export type TriggerButtonLastRun = Pick<
+  TrackedAiPathRunSnapshot,
+  'runId' | 'status' | 'updatedAt' | 'finishedAt' | 'errorMessage'
+>;
 
 const readMapFromStorage = (key: string): Record<string, boolean> => {
   if (typeof window === 'undefined') return {};
@@ -73,6 +82,8 @@ export function useTriggerButtons({
     readMapFromStorage(SUCCESS_STORAGE_KEY)
   );
   const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
+  const [lastRuns, setLastRuns] = useState<Record<string, TriggerButtonLastRun>>({});
+  const runSubscriptionsRef = useRef<Map<string, () => void>>(new Map());
 
   const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
 
@@ -99,6 +110,54 @@ export function useTriggerButtons({
         return left - right;
       });
   }, [triggerButtonsQuery.data, location]);
+
+  const stopRunSubscription = useCallback((buttonId: string): void => {
+    const unsubscribe = runSubscriptionsRef.current.get(buttonId);
+    if (!unsubscribe) return;
+    runSubscriptionsRef.current.delete(buttonId);
+    unsubscribe();
+  }, []);
+
+  const startRunSubscription = useCallback(
+    (
+      buttonId: string,
+      runId: string,
+      initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined
+    ): void => {
+      stopRunSubscription(buttonId);
+      let didStop = false;
+      const unsubscribe = subscribeToTrackedAiPathRun(
+        runId,
+        (snapshot: TrackedAiPathRunSnapshot): void => {
+          setLastRuns((prev) => ({
+            ...prev,
+            [buttonId]: {
+              runId: snapshot.runId,
+              status: snapshot.status,
+              updatedAt: snapshot.updatedAt,
+              finishedAt: snapshot.finishedAt,
+              errorMessage: snapshot.errorMessage,
+            },
+          }));
+
+          if (snapshot.trackingState !== 'stopped' || didStop) return;
+          didStop = true;
+          stopRunSubscription(buttonId);
+        },
+        initialSnapshot ? { initialSnapshot } : undefined
+      );
+      runSubscriptionsRef.current.set(buttonId, unsubscribe);
+    },
+    [stopRunSubscription]
+  );
+
+  useEffect(() => {
+    return () => {
+      Array.from(runSubscriptionsRef.current.keys()).forEach((buttonId: string) => {
+        stopRunSubscription(buttonId);
+      });
+    };
+  }, [stopRunSubscription]);
 
   const handleTrigger = useCallback(
     async (
@@ -139,6 +198,15 @@ export function useTriggerButtons({
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
           onSuccess: (runId: string): void => {
+            startRunSubscription(button.id, runId, {
+              runId,
+              status: 'queued',
+              updatedAt: new Date().toISOString(),
+              finishedAt: null,
+              errorMessage: null,
+              entityId: entityId ?? null,
+              entityType,
+            });
             onRunQueued?.({
               button,
               runId,
@@ -198,7 +266,16 @@ export function useTriggerButtons({
         }
       }
     },
-    [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, onRunQueued, toast]
+    [
+      entityId,
+      entityType,
+      fireAiPathTriggerEvent,
+      getEntityJson,
+      location,
+      onRunQueued,
+      startRunSubscription,
+      toast,
+    ]
   );
 
   return {
@@ -206,6 +283,7 @@ export function useTriggerButtons({
     toggleMap,
     successMap,
     runStates,
+    lastRuns,
     handleTrigger,
     isLoading: triggerButtonsQuery.isLoading,
   };

@@ -43,6 +43,7 @@ type MockKangurTutorEnvironmentOptions = {
   rememberTutorContext?: boolean;
   hintDepth?: 'brief' | 'guided' | 'step_by_step';
   proactiveNudges?: 'off' | 'gentle' | 'coach';
+  guestIntroMode?: 'first_visit' | 'every_visit';
   tutorPersonaImageUrl?: string | null;
   tutorLearnerMoodId?: string | null;
   chatResponseDelayMs?: number;
@@ -102,6 +103,7 @@ export async function mockKangurTutorEnvironment(
     rememberTutorContext = true,
     hintDepth = 'guided',
     proactiveNudges = 'gentle',
+    guestIntroMode = 'first_visit',
     tutorPersonaImageUrl = null,
     tutorLearnerMoodId = null,
     chatResponseDelayMs = 0,
@@ -146,37 +148,38 @@ export async function mockKangurTutorEnvironment(
     'Podpowiedz do pytania: dopelnij 8 do 10, a potem dodaj pozostale 3.';
   let progress = createDefaultProgress();
   const tutorPersonaId = 'persona-mila';
-  const heavySettings = tutorPersonaImageUrl
+  const tutorPersona = tutorPersonaImageUrl
+    ? {
+      id: tutorPersonaId,
+      name: 'Mila',
+      createdAt: NOW_ISO,
+      updatedAt: NOW_ISO,
+      defaultMoodId: 'neutral',
+      moods: [
+        {
+          id: 'neutral',
+          label: 'Neutral',
+          description: 'Default tutor expression.',
+          svgContent: '',
+          avatarImageUrl: tutorPersonaImageUrl,
+          avatarImageFileId: 'persona-file-neutral',
+        },
+        {
+          id: 'thinking',
+          label: 'Thinking',
+          description: 'Shown while the tutor prepares a response.',
+          svgContent: '',
+          avatarImageUrl: null,
+          avatarImageFileId: null,
+        },
+      ],
+    }
+    : null;
+  const heavySettings = tutorPersona
     ? [
       {
         key: AGENT_PERSONA_SETTINGS_KEY,
-        value: JSON.stringify([
-          {
-            id: tutorPersonaId,
-            name: 'Mila',
-            createdAt: NOW_ISO,
-            updatedAt: NOW_ISO,
-            defaultMoodId: 'neutral',
-            moods: [
-              {
-                id: 'neutral',
-                label: 'Neutral',
-                description: 'Default tutor expression.',
-                svgContent: '',
-                avatarImageUrl: tutorPersonaImageUrl,
-                avatarImageFileId: 'persona-file-neutral',
-              },
-              {
-                id: 'thinking',
-                label: 'Thinking',
-                description: 'Shown while the tutor prepares a response.',
-                svgContent: '',
-                avatarImageUrl: null,
-                avatarImageFileId: null,
-              },
-            ],
-          },
-        ]),
+        value: JSON.stringify([tutorPersona]),
       },
     ]
     : [];
@@ -206,6 +209,7 @@ export async function mockKangurTutorEnvironment(
         agentPersonaId: tutorPersonaImageUrl ? tutorPersonaId : null,
         motionPresetId: null,
         dailyMessageLimit: null,
+        guestIntroMode,
       }),
     },
     {
@@ -306,6 +310,19 @@ export async function mockKangurTutorEnvironment(
 
   await page.route(/\/api\/settings\?scope=heavy(?:&.*)?$/, async (route) => {
     await fulfillJson(route, heavySettings);
+  });
+
+  await page.route(/\/api\/agentcreator\/personas\/([^/]+)\/visuals(?:\?.*)?$/, async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const match = requestUrl.pathname.match(/\/api\/agentcreator\/personas\/([^/]+)\/visuals$/);
+    const requestedPersonaId = match?.[1] ? decodeURIComponent(match[1]) : null;
+
+    if (!tutorPersona || requestedPersonaId !== tutorPersona.id) {
+      await fulfillJson(route, { error: 'Agent persona not found.' }, 404);
+      return;
+    }
+
+    await fulfillJson(route, tutorPersona);
   });
 
   await page.route('**/api/kangur/auth/me**', async (route) => {

@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { DocumentEditorMode } from '../types';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { DocumentEditorMode } from '../types';
 
 export type MarkdownToolbarActionHandlers = {
   onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;

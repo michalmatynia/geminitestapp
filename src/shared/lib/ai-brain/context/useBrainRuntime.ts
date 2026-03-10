@@ -6,11 +6,6 @@ import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
-import type {
-  BrainActionsContextType,
-  BrainStateContextType,
-  BrainTab,
-} from './BrainContext.types';
 import {
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_BRAIN_OVERRIDES_ENABLED,
@@ -34,6 +29,12 @@ import {
   type AiBrainProviderCatalog,
   type AiBrainSettings,
 } from '../settings';
+
+import type {
+  BrainActionsContextType,
+  BrainStateContextType,
+  BrainTab,
+} from './BrainContext.types';
 
 interface BrainRuntimeResult {
   actionsValue: BrainActionsContextType;

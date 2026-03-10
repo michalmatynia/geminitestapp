@@ -4,8 +4,8 @@ import { CalendarDays } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
-import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,

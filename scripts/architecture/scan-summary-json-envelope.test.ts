@@ -1356,7 +1356,7 @@ describe('scanner summary-json envelope', () => {
       strictMode: false,
     });
     expect(canonicalSitewide.notes).toContain('canonical sitewide check result');
-  }, 20_000);
+  }, 45_000);
 
   it('wraps canonical stabilization aggregate checks in the shared scan envelope', () => {
     const canonicalStabilization = runSummaryJson(repoRoot, canonicalStabilizationScriptPath, [

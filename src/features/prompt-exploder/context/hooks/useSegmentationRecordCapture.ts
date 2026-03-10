@@ -10,6 +10,7 @@ import {
   buildPromptExploderSegmentationRecord,
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
 } from '../../segmentation-library';
+
 import type { DocumentState } from '../DocumentContext';
 
 export const useSegmentationRecordCapture = ({

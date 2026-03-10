@@ -1,12 +1,12 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   findDueProductSyncProfiles,
   recoverStaleProductSyncRuns,
 } from '@/features/product-sync/services/product-sync-repository';
 import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import { createManagedQueue } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type ProductSyncSchedulerJobData = {
   type: 'scheduled-tick';

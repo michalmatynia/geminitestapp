@@ -1,4 +1,4 @@
-import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { fetchSettingValue } from '@/shared/api/settings-client';
 import {
   AGENT_PERSONA_MOOD_IDS,
   AGENT_PERSONA_SETTINGS_KEY,
@@ -65,10 +65,17 @@ export const createAgentPersonaId = (): string => {
 
 export const buildAgentPersonaSettings = (
   settings?: Partial<AgentPersonaSettings> | null
-): AgentPersonaSettings => ({
-  ...DEFAULT_AGENT_PERSONA_SETTINGS,
-  ...(settings ?? {}),
-});
+): AgentPersonaSettings => {
+  const resolvedSettings = settings ?? {};
+  return {
+    ...DEFAULT_AGENT_PERSONA_SETTINGS,
+    ...resolvedSettings,
+    memory: {
+      ...DEFAULT_AGENT_PERSONA_SETTINGS.memory,
+      ...(resolvedSettings.memory ?? {}),
+    },
+  };
+};
 
 const normalizeOptionalText = (value: unknown): string | undefined => {
   if (typeof value !== 'string') {
@@ -467,9 +474,12 @@ const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
 };
 
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
-  const data = await fetchSettingsCached({ scope: 'heavy' });
-  const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-  const stored = parseStoredAgentPersonas(map.get(AGENT_PERSONA_SETTINGS_KEY));
+  const rawValue = await fetchSettingValue({
+    key: AGENT_PERSONA_SETTINGS_KEY,
+    scope: 'heavy',
+    bypassCache: true,
+  });
+  const stored = parseStoredAgentPersonas(rawValue ?? undefined);
   return normalizeAgentPersonas(stored);
 };
 

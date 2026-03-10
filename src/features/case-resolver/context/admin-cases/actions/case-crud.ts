@@ -1,17 +1,19 @@
-import type * as React from 'react';
 
-import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import {
   createCaseResolverWorkspaceMutationId,
   stampCaseResolverWorkspaceMutation,
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
-import { createCaseResolverFile } from '@/features/case-resolver/settings';
+import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { isDescendantCaseId } from '../utils';
 import { waitForCaseAvailability } from './case-availability';
+
 import type { CaseResolverCaseListConfirmationState } from '../types';
+import type * as React from 'react';
 
 type ToastFn = (message: string, options?: { variant?: string }) => void;
 

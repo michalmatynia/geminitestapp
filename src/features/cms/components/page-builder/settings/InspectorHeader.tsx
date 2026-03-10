@@ -1,17 +1,20 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
 import { MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from 'lucide-react';
-import { Button, SectionHeader, Tooltip } from '@/shared/ui';
+import React, { useMemo, useCallback } from 'react';
+
+import { usePageBuilderDispatch } from '@/features/cms/hooks/page-builder/PageDispatchContext';
+import { usePageBuilderState } from '@/features/cms/hooks/page-builder/PageStateContext';
+import type { InspectorSettings } from '@/shared/contracts/cms';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { usePageBuilderState } from '@/features/cms/hooks/page-builder/PageStateContext';
-import { usePageBuilderDispatch } from '@/features/cms/hooks/page-builder/PageDispatchContext';
+import { Button, SectionHeader, Tooltip } from '@/shared/ui';
+
 import {
   useComponentSettingsActions,
   useComponentSettingsState,
 } from '../context/ComponentSettingsContext';
-import type { InspectorSettings } from '@/shared/contracts/cms';
+
 
 export function InspectorHeader(): React.JSX.Element {
   const state = usePageBuilderState();

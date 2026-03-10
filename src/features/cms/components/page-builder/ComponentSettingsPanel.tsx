@@ -5,25 +5,24 @@ import React, { useEffect } from 'react';
 import { SidePanel, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
-import { InspectorAiProvider } from './context/InspectorAiContext';
-import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
-import { ConnectionsTab } from './settings/ConnectionsTab';
-import { ContentAiSection } from './settings/ContentAiSection';
-import { EventEffectsTab } from './settings/EventEffectsTab';
-import { PageSettingsTab } from './settings/PageSettingsTab';
 import {
   ComponentSettingsProvider,
   useComponentSettingsActions,
   useComponentSettingsState,
 } from './context/ComponentSettingsContext';
-import { usePageBuilderState, usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
-
+import { InspectorAiProvider } from './context/InspectorAiContext';
+import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
+import { BlockSettingsTab } from './settings/BlockSettingsTab';
+import { ColumnSettingsTab } from './settings/ColumnSettingsTab';
+import { ConnectionsTab } from './settings/ConnectionsTab';
+import { ContentAiSection } from './settings/ContentAiSection';
+import { CustomCssTab } from './settings/CustomCssTab';
+import { EventEffectsTab } from './settings/EventEffectsTab';
 import { InspectorHeader } from './settings/InspectorHeader';
 import { InspectorOptions } from './settings/InspectorOptions';
+import { PageSettingsTab } from './settings/PageSettingsTab';
 import { SectionSettingsTab } from './settings/SectionSettingsTab';
-import { ColumnSettingsTab } from './settings/ColumnSettingsTab';
-import { BlockSettingsTab } from './settings/BlockSettingsTab';
-import { CustomCssTab } from './settings/CustomCssTab';
+import { usePageBuilderState, usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
 
 type TabValue =
   | 'settings'

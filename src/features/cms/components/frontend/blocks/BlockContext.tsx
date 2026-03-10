@@ -1,10 +1,11 @@
 'use client';
 
-import type { CSSProperties } from 'react';
 import { createContext, useContext } from 'react';
 
 import type { PreviewBlockProps } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { CSSProperties } from 'react';
 
 type BlockRenderContextValue = {
   block: PreviewBlockProps['block'];

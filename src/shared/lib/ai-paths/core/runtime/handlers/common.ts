@@ -1,13 +1,13 @@
 import type {
-  NodeHandler,
-  NodeHandlerContext,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths-runtime';
-import type {
   LogicalConditionConfig,
   LogicalConditionOperator,
 } from '@/shared/contracts/ai-paths-core/nodes';
 import { logicalConditionConfigSchema } from '@/shared/contracts/ai-paths-core/nodes';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import { coerceInput, coerceInputArray, safeStringify } from '../../utils';

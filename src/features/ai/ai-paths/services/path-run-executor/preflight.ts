@@ -1,9 +1,3 @@
-import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
-import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
-import {
-  evaluateDisabledNodeTypesPolicy,
-  formatDisabledNodeTypesPolicyMessage,
-} from '../path-run-policy';
 import {
   AiNode,
   Edge,
@@ -11,7 +5,15 @@ import {
   AiPathRunRecord,
   AiPathRunRepository,
 } from '@/shared/contracts/ai-paths';
+import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
+import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
+
+import {
+  evaluateDisabledNodeTypesPolicy,
+  formatDisabledNodeTypesPolicyMessage,
+} from '../path-run-policy';
+
 
 export async function runExecutorPreflight(input: {
   run: AiPathRunRecord;

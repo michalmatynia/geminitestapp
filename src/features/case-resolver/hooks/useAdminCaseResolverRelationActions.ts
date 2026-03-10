@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+
+import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import type {
   CaseResolverAssetFile,
   CaseResolverGraph,
@@ -6,12 +8,12 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
+
 import {
   createCaseResolverAssetFile,
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
-import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 
 export function useAdminCaseResolverRelationActions({
   workspace: _workspace,

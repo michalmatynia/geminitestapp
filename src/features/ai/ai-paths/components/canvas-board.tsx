@@ -1,24 +1,26 @@
 'use client';
 
 import React from 'react';
+
 import { type AiNode, type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 import { cn } from '@/shared/utils';
 
-import { useCanvasBoardState } from './useCanvasBoardState';
-import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
-import { CanvasControlPanel } from './CanvasControlPanel';
+import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
+import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';
+import { CanvasNodeDiagnosticsTooltip } from './canvas/CanvasNodeDiagnosticsTooltip';
+import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
+import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
 import { CanvasMinimap } from './canvas-minimap';
 import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
 import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
-import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
-import { CanvasNodeDiagnosticsTooltip } from './canvas/CanvasNodeDiagnosticsTooltip';
-import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
-import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';
-import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
 import {
   type CanvasBoardConnectorTooltipOverrideInput,
   type CanvasBoardConnectorTooltipOverride,
 } from './CanvasBoard.utils';
+import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
+import { CanvasControlPanel } from './CanvasControlPanel';
+import { useCanvasBoardState } from './useCanvasBoardState';
+
 import type { ConnectorInfo } from './canvas-board-connectors';
 
 const CONNECTOR_HIT_TARGET_PX = 14;

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import React from 'react';
 
 import {
   DEFAULT_APP_EMBED_BASE_PATH,

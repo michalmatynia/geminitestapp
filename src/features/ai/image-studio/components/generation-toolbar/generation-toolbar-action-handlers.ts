@@ -28,6 +28,7 @@ import {
   imageStudioUpscaleResponseSchema,
   type ImageStudioUpscaleResponse,
 } from '../../contracts/upscale';
+
 import type { QueryClient } from '@tanstack/react-query';
 
 type Toast = (

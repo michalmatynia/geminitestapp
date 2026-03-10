@@ -1,18 +1,18 @@
 import { GripVertical, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useToast } from '@/shared/ui';
-
-import { StudioCard } from '../StudioCard';
-import { SequenceStepEditor } from './SequenceStepEditor';
-import { SequenceStepEditorRuntimeContext } from './SequenceStepEditorRuntimeContext';
-import { PROJECT_SEQUENCE_OPERATION_LABELS } from './sequencing-constants';
 import {
   IMAGE_STUDIO_SEQUENCE_MAX_STEPS,
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { useToast } from '@/shared/ui';
+
+import { StudioCard } from '../StudioCard';
+import { SequenceStepEditor } from './SequenceStepEditor';
+import { SequenceStepEditorRuntimeContext } from './SequenceStepEditorRuntimeContext';
+import { PROJECT_SEQUENCE_OPERATION_LABELS } from './sequencing-constants';
 import { useSequencingPanelContext } from './SequencingPanelContext';
 
 const createSequenceStepId = (operation: ImageStudioSequenceOperation, index: number): string => {

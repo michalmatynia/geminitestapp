@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   useUpdateUserPreferences,
   useUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
-import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Button,
   FormField,

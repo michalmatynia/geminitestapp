@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from 'react';
 
 import type {
   CaptureSegmentationRecordResult,
@@ -7,6 +6,7 @@ import type {
 } from '@/shared/contracts/prompt-exploder';
 
 import type { PromptExploderLibraryItem } from '../prompt-library';
+import type { Dispatch, SetStateAction } from 'react';
 
 export interface LibraryState {
   selectedLibraryItemId: string | null;

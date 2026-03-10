@@ -36,15 +36,6 @@ type LessonActivityStageProps = {
     onConfirm: () => void;
     title: string;
   } | null;
-  unlockModal?: {
-    cancelText?: string;
-    confirmText?: string;
-    isOpen: boolean;
-    message: React.ReactNode;
-    onClose: () => void;
-    onConfirm: () => void;
-    title: string;
-  } | null;
   onBack: () => void;
   sectionHeader?: KangurLessonSubsectionSummary | null;
   shellClassName?: string;
@@ -63,7 +54,6 @@ export default function LessonActivityStage({
   maxWidthClassName = 'max-w-lg',
   navigationPills,
   navigationWarningModal = null,
-  unlockModal = null,
   onBack,
   sectionHeader = null,
   shellClassName,
@@ -140,17 +130,6 @@ export default function LessonActivityStage({
           onClose={navigationWarningModal.onClose}
           onConfirm={navigationWarningModal.onConfirm}
           title={navigationWarningModal.title}
-        />
-      ) : null}
-      {unlockModal ? (
-        <KangurConfirmModal
-          cancelText={unlockModal.cancelText}
-          confirmText={unlockModal.confirmText}
-          isOpen={unlockModal.isOpen}
-          message={unlockModal.message}
-          onClose={unlockModal.onClose}
-          onConfirm={unlockModal.onConfirm}
-          title={unlockModal.title}
         />
       ) : null}
     </div>

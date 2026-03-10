@@ -1,6 +1,5 @@
 'use client';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
 import {
   usePlaywrightPersonas,
@@ -12,6 +11,7 @@ import {
 } from '@/features/playwright/utils/personas';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { SetStateAction } from 'react';
 

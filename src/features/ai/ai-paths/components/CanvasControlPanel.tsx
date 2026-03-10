@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   Maximize,
   ZoomIn,
@@ -11,9 +10,12 @@ import {
   Route,
   Map as MapIcon,
 } from 'lucide-react';
+import React from 'react';
+
 import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
 import { Button, Tooltip, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 
 export interface CanvasControlPanelProps {

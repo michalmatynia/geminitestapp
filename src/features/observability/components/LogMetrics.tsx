@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
 import { Card, FormSection, Hint, LoadingState, MetadataItem, StatusBadge } from '@/shared/ui';
+
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {

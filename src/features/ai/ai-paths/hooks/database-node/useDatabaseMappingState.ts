@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+
 import type { DatabaseConfig, UpdaterMapping } from '@/shared/lib/ai-paths';
 
 export function useDatabaseMappingState(args: {

@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

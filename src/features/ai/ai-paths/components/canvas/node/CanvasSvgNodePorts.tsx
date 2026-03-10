@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
-import { NODE_WIDTH, PORT_SIZE, getPortOffsetY, type AiNode } from '@/shared/lib/ai-paths';
-import { INPUT_CONNECTOR_COLORS, OUTPUT_CONNECTOR_COLORS } from './canvas-svg-node-utils';
+
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { NODE_WIDTH, PORT_SIZE, getPortOffsetY, type AiNode } from '@/shared/lib/ai-paths';
+
+import { INPUT_CONNECTOR_COLORS, OUTPUT_CONNECTOR_COLORS } from './canvas-svg-node-utils';
 import { type ConnectorInfo } from '../../canvas-board-connectors';
 import { useCanvasBoardUI } from '../../CanvasBoardUIContext';
 

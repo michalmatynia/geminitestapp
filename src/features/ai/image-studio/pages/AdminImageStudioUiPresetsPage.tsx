@@ -3,17 +3,16 @@
 import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Textarea, SelectSimple, useToast, Card, EmptyState } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
-
 import {
   IMAGE_STUDIO_UI_ACTIVE_KEY,
   IMAGE_STUDIO_UI_PRESETS_KEY,
   parseImageStudioUiPresets,
   type ImageStudioUiPreset,
 } from '@/features/ai/image-studio/utils/ui-presets';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Label, Textarea, SelectSimple, useToast, Card, EmptyState } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const { toast } = useToast();

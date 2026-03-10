@@ -1,6 +1,6 @@
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import type { ResolvedFolderTreeKeyboardConfig } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 
 import type { FolderTreeNodeView } from '../types';
 

@@ -22,12 +22,12 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
 import {
   CrudPanelProvider,
   type CrudPanelActionsContextValue,
   type CrudPanelStateContextValue,
 } from '../context/CrudPanelContext';
+import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
 
 import type { ColumnDef } from '@tanstack/react-table';

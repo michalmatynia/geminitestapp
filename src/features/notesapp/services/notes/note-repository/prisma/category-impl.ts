@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type {
   CategoryRecord,
@@ -9,6 +8,7 @@ import type {
   CategoryUpdateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

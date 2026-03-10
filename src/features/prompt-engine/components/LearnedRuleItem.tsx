@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { type PromptValidationSeverity } from '@/shared/lib/prompt-engine/settings';
 import {
   Button,
   Textarea,
@@ -14,7 +15,6 @@ import {
 
 import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
-import { type PromptValidationSeverity } from '@/shared/lib/prompt-engine/settings';
 
 const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === 'error') return 'Error';

@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
+import React from 'react';
 
 import { BRAIN_CATALOG_POOL_LABELS } from '@/shared/lib/ai-brain/catalog-entries';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AiBrainCatalogEntry } from '@/shared/lib/ai-brain/settings';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 

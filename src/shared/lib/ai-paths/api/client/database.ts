@@ -1,5 +1,6 @@
-import { apiFetch, apiPost, ApiResponse } from './base';
 import type { DatabaseBrowse, SchemaResponse } from '@/shared/contracts/database';
+
+import { apiFetch, apiPost, ApiResponse } from './base';
 
 export type DbActionPayload = {
   provider?: 'auto' | 'mongodb' | 'prisma';

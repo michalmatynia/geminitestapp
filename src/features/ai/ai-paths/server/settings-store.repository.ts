@@ -1,4 +1,5 @@
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import {
   AI_PATHS_SETTINGS_COLLECTION,
   MONGO_INDEX_NAME,

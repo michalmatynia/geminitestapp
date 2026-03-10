@@ -1,5 +1,6 @@
-import { isObjectRecord } from '../object-utils';
 import { ParamLeaf } from '@/shared/contracts/prompt-engine';
+
+import { isObjectRecord } from '../object-utils';
 
 export function flattenParams(params: Record<string, unknown>): ParamLeaf[] {
   const result: ParamLeaf[] = [];

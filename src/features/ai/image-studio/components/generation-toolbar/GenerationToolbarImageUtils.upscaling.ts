@@ -1,9 +1,10 @@
+import { ApiError } from '@/shared/lib/api-client';
+
+import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
 import {
   type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './GenerationToolbarImageUtils.types';
-import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
-import { ApiError } from '@/shared/lib/api-client';
 
 export const isClientUpscaleCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);

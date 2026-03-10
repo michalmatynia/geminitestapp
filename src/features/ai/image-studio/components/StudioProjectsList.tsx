@@ -4,6 +4,19 @@ import { Check, Lock, Pencil, Plus, Trash2, Unlock, X } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
 import {
+  IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
+  parseImageStudioCanvasTemplates,
+  type ImageStudioCanvasTemplate,
+} from '@/features/ai/image-studio/utils/canvas-templates';
+import {
+  IMAGE_STUDIO_PROJECT_LOCKS_KEY,
+  isImageStudioProjectLocked,
+  moveImageStudioProjectLock,
+  parseImageStudioProjectLocks,
+  serializeImageStudioProjectLocks,
+  setImageStudioProjectDeletionLock,
+} from '@/features/ai/image-studio/utils/project-locks';
+import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
 } from '@/features/ai/image-studio/utils/studio-settings';
@@ -18,24 +31,11 @@ import {
   useToast,
   StandardDataTablePanel,
 } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
-import {
-  IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
-  parseImageStudioCanvasTemplates,
-  type ImageStudioCanvasTemplate,
-} from '@/features/ai/image-studio/utils/canvas-templates';
-import {
-  IMAGE_STUDIO_PROJECT_LOCKS_KEY,
-  isImageStudioProjectLocked,
-  moveImageStudioProjectLock,
-  parseImageStudioProjectLocks,
-  serializeImageStudioProjectLocks,
-  setImageStudioProjectDeletionLock,
-} from '@/features/ai/image-studio/utils/project-locks';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

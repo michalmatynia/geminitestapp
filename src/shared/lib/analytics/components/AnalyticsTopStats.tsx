@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
+
 import { AnalyticsStatCard } from './AnalyticsStatCard';
+import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
 const formatCount = (value: number): string => {
   try {

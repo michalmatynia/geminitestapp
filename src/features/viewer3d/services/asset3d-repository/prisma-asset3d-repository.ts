@@ -1,4 +1,3 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type {
   Asset3DCreateInput,
@@ -8,6 +7,7 @@ import type {
   Asset3DUpdateInput,
 } from '@/shared/contracts/viewer3d';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 type PrismaAsset3D = {
   id: string;

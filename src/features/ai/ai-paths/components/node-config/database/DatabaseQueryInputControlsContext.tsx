@@ -2,8 +2,8 @@
 
 import React, { useMemo } from 'react';
 
-import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
+import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 

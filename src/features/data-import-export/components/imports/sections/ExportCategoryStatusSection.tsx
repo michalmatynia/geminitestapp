@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
 import Link from 'next/link';
+import React, { useMemo } from 'react';
+
 import { useImportExportState } from '@/features/data-import-export/context/ImportExportContext';
 import { useCategoryMappingsByConnection } from '@/shared/hooks/useIntegrationQueries';
 import { Badge, Hint } from '@/shared/ui';

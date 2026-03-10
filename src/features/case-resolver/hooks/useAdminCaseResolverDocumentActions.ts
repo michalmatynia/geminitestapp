@@ -1,30 +1,34 @@
-import { useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverPartyReference,
-  CaseResolverPdfExportRequest,
-} from '@/shared/contracts/case-resolver';
-import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { useToast } from '@/shared/ui';
+import { useCallback, useRef } from 'react';
+
 import {
   buildDocumentPdfMarkup,
   createCaseResolverHistorySnapshotEntry,
   createId,
 } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
-  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
-  buildCaseResolverDraftComparableFingerprint,
-} from './useCaseResolverState.helpers';
-import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
   type DocumentContentCanonical,
 } from '@/features/document-editor';
+import type {
+  CaseResolverDocumentHistoryEntry,
+  CaseResolverPartyReference,
+  CaseResolverPdfExportRequest,
+} from '@/shared/contracts/case-resolver';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
-import type { CaseResolverFileEditDraft } from '../types';
+import { useToast } from '@/shared/ui';
+
+import {
+  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+  buildCaseResolverDraftComparableFingerprint,
+} from './useCaseResolverState.helpers';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
+
+import type { CaseResolverFileEditDraft } from '../types';
+
 
 const sanitizeDocumentExportBaseName = (value: string): string => {
   return (

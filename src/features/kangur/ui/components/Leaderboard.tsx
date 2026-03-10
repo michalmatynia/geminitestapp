@@ -168,6 +168,14 @@ export default function Leaderboard(): React.JSX.Element {
                     {item.scoreLabel}
                   </div>
                   <div className='text-xs text-slate-500'>{item.timeLabel}</div>
+                  {item.xpLabel ? (
+                    <div
+                      className='text-[11px] font-semibold text-violet-600'
+                      data-testid={`leaderboard-xp-${item.id}`}
+                    >
+                      {item.xpLabel}
+                    </div>
+                  ) : null}
                 </div>
               </KangurInfoCard>
             );

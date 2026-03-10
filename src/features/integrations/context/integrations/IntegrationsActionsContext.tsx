@@ -1,9 +1,11 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import type { IntegrationDefinition, SaveConnectionOptions } from '../integrations-context-types';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { IntegrationDefinition, SaveConnectionOptions } from '../integrations-context-types';
 
 export interface IntegrationsActions {
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;

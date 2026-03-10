@@ -1,11 +1,11 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
 import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
   type KangurProgressState,
 } from '@/shared/contracts/kangur';
+import prisma from '@/shared/lib/db/prisma';
 
 import type { KangurProgressRepository } from './types';
 

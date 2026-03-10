@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,8 +9,6 @@ import {
   KangurInfoCard,
   KangurOptionCardButton,
   KangurProgressBar,
-  KangurResultBadge,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -316,7 +314,7 @@ export default function CalendarInteractiveGame({
   const [dragOver, setDragOver] = useState<Season | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
-  const trainingSectionLabel = getCalendarInteractiveSectionLabel(section);
+  const [selectedWeekdayIdx, setSelectedWeekdayIdx] = useState<number | null>(null);
   const trainingSectionContent = getCalendarInteractiveSectionContent(section);
 
   const nextRound = (correct: boolean): void => {
@@ -327,6 +325,7 @@ export default function CalendarInteractiveGame({
     setTimeout(() => {
       setSelectedDays([]);
       setSelectedSeason(null);
+      setSelectedWeekdayIdx(null);
       setFeedback(null);
       if (round + 1 >= TOTAL) {
         setDone(true);
@@ -343,6 +342,7 @@ export default function CalendarInteractiveGame({
   const handleWeekdayNameClick = (idx: number): void => {
     if (feedback) return;
     if (task.type !== 'click_weekday_name') return;
+    setSelectedWeekdayIdx(idx);
     nextRound(idx === task.targetIdx);
   };
 
@@ -397,6 +397,7 @@ export default function CalendarInteractiveGame({
     setFeedback(null);
     setSelectedDays([]);
     setSelectedSeason(null);
+    setSelectedWeekdayIdx(null);
     setDragOver(null);
     setMonth(startMonth);
     setTask(generateTask(startMonth, YEAR, section));
@@ -520,23 +521,6 @@ export default function CalendarInteractiveGame({
           <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>
         </KangurInfoCard>
       </motion.div>
-
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <KangurResultBadge
-              data-testid='calendar-interactive-feedback'
-              tone={feedback === 'correct' ? 'success' : 'error'}
-            >
-              {feedback === 'correct' ? '🎉 Brawo!' : '❌ Nie tym razem!'}
-            </KangurResultBadge>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {(task.type === 'click_date' ||
         task.type === 'click_all_weekends' ||
@@ -677,17 +661,29 @@ export default function CalendarInteractiveGame({
       {task.type === 'click_weekday_name' && (
         <div className='grid grid-cols-4 gap-2 w-full'>
           {DAY_LABELS.map((dayLabel, idx) => {
-            const buttonAccent: KangurAccent =
-              feedback && idx === task.targetIdx ? 'emerald' : idx >= 5 ? 'rose' : 'slate';
+            const isCorrectTarget = feedback !== null && idx === task.targetIdx;
+            const isWrongSelection =
+              feedback === 'wrong' &&
+              selectedWeekdayIdx === idx &&
+              idx !== task.targetIdx;
+            const buttonAccent: KangurAccent = isCorrectTarget
+              ? 'emerald'
+              : isWrongSelection
+                ? 'rose'
+                : idx >= 5
+                  ? 'rose'
+                  : 'slate';
             const buttonEmphasis: 'neutral' | 'accent' =
-              feedback && idx === task.targetIdx ? 'accent' : 'neutral';
+              isCorrectTarget || isWrongSelection ? 'accent' : 'neutral';
             const className = cn(
               'rounded-[24px] py-3 text-sm font-bold',
-              feedback && idx === task.targetIdx
+              isCorrectTarget
                 ? KANGUR_ACCENT_STYLES.emerald.activeText
-                : idx >= 5
-                  ? 'text-rose-600'
-                  : 'text-slate-700',
+                : isWrongSelection
+                  ? KANGUR_ACCENT_STYLES.rose.activeText
+                  : idx >= 5
+                    ? 'text-rose-600'
+                    : 'text-slate-700',
               feedback !== null && 'cursor-default'
             );
 

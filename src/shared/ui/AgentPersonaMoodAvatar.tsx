@@ -1,7 +1,7 @@
 'use client';
 
-import NextImage from 'next/image';
 import { BrainCircuit } from 'lucide-react';
+import NextImage from 'next/image';
 
 import { cn, sanitizeSvg } from '@/shared/utils';
 

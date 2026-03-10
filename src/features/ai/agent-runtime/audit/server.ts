@@ -1,11 +1,10 @@
 import 'server-only';
 
+import type { AuditLevel } from '@/shared/contracts/agent-runtime';
+import prisma from '@/shared/lib/db/prisma';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import prisma from '@/shared/lib/db/prisma';
-import type { AuditLevel } from '@/shared/contracts/agent-runtime';
-
-import type { Prisma } from '@/shared/lib/db/prisma-client';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 /**

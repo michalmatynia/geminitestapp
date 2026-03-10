@@ -10,11 +10,6 @@ import {
   useMasterFolderTreeShell,
 } from '@/features/foldertree';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
-import { FolderTreePanel } from '@/shared/ui';
-import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
-import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
-
 import {
   buildMasterNodesFromNotesFolderTree,
   toFolderMasterNodeId,
@@ -28,6 +23,12 @@ import {
   canDropNotesNode,
   resolveNotesExternalDropAction,
 } from '@/features/notesapp/utils/notes-master-tree-external-drop';
+import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
+import { FolderTreePanel } from '@/shared/ui';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
+
+
 import { NotesAppTreeHeader } from './tree/NotesAppTreeHeader';
 import { NotesAppTreeNode } from './tree/NotesAppTreeNode';
 import { NotesAppTreeNodeRuntimeProvider } from './tree/NotesAppTreeNodeRuntimeContext';

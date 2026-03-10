@@ -1,6 +1,7 @@
-import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
-import { expandFolderPath, normalizeFolderPath, renameFolderPath } from '../settings';
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
+import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
+
+import { expandFolderPath, normalizeFolderPath, renameFolderPath } from '../settings';
 
 const buildFolderRecordKey = (path: string, ownerCaseId: string | null): string =>
   `${ownerCaseId ?? '__none__'}::${path}`;

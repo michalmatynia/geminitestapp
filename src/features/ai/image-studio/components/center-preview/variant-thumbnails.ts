@@ -1,8 +1,8 @@
-import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
 import {
   getImageStudioSlotImageSrc,
   isLikelyImageStudioErrorText,
 } from '@/features/ai/image-studio/image-src';
+import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   ImageStudioSlotRecord,

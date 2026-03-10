@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';
+import React from 'react';
+
 import { Card, PanelHeader, Hint, Button } from '@/shared/ui';
+
 import { resolveContentPreview } from './CaseResolverNodeFileUtils';
 import {
   useNodeFileWorkspaceActionsContext,

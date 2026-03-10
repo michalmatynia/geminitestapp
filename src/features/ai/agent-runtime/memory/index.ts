@@ -1,15 +1,14 @@
 import 'server-only';
 
+import type { MemoryScope } from '@/shared/contracts/agent-runtime';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
-import type { MemoryScope } from '@/shared/contracts/agent-runtime';
-
 import type { Prisma } from '@/shared/lib/db/prisma-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { MemoryScope };
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';

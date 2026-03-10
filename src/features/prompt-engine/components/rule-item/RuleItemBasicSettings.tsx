@@ -1,19 +1,21 @@
 'use client';
 
 import React from 'react';
+
+import type {
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/lib/prompt-engine/settings';
 import { Input, MultiSelect, SelectSimple, Textarea, FormField } from '@/shared/ui';
-import { useRuleItemContext } from '../context/RuleItemContext';
+
 import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
+import { useRuleItemContext } from '../context/RuleItemContext';
 import {
   SCOPE_OPTIONS,
   compileRegex,
   normalizeRuleKind,
   normalizeRuleScopes,
 } from '../rule-item-utils';
-import type {
-  PromptValidationRule,
-  PromptValidationScope,
-} from '@/shared/lib/prompt-engine/settings';
 
 export function RuleItemBasicSettings(): React.JSX.Element | null {
   const { draft, rule, patchRule } = useRuleItemContext();

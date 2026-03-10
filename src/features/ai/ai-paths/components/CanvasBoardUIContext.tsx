@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type {
   AiNode,
   AiPathRuntimeNodeStatusMap,
@@ -11,13 +12,11 @@ import type {
   RuntimeState,
   SvgDetailLevel,
 } from '@/shared/lib/ai-paths';
-import { internalError } from '@/shared/errors/app-error';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
-
+import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
 import type { EdgePath } from '../context/hooks/useEdgePaths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
-import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
 
 export interface CanvasBoardUIContextValue {
   // View & Viewport

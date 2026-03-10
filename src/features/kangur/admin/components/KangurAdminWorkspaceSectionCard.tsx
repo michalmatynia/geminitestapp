@@ -1,9 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
 
 import { Badge, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import type { ReactNode } from 'react';
 
 type KangurAdminWorkspaceSectionCardProps = {
   title: string;

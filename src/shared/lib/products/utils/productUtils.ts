@@ -1,7 +1,7 @@
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { validateProductCreate } from '@/shared/lib/products/validations';
 import type { ProductRecord } from '@/shared/contracts/products';
 import { validationError } from '@/shared/errors/app-error';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { validateProductCreate } from '@/shared/lib/products/validations';
 
 export async function createMockProduct(productData: {
   name_en?: string;

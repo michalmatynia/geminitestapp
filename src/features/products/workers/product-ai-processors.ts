@@ -2,35 +2,35 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
+import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
+import { getProductRepository } from '@/features/products/server';
+import { type DatabaseSyncDirection } from '@/shared/contracts';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
+import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import {
   resolveAiPathsNodeExecutionConfig,
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
-import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
-import { runDatabaseSync } from '@/shared/lib/db/services/database-sync';
-import { type DatabaseSyncDirection } from '@/shared/contracts';
 import {
   markDatabaseBackupJobFailed,
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
+import { runDatabaseSync } from '@/shared/lib/db/services/database-sync';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import {
   getDiskPathFromPublicPath,
   type ImageFileRecord,
 } from '@/shared/lib/files/services/image-file-service';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
-} from '@/features/integrations/services/base-image-sync';
-import { getProductRepository } from '@/features/products/server';
+} from '@/shared/lib/product-integrations-server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
-import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
-import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 

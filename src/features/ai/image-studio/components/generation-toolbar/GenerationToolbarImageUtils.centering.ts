@@ -1,9 +1,12 @@
-import {
-  type AutoScaleCanvasResult,
-  type CenterLayoutResult,
-  type ClientImageObjectAnalysisResult,
-} from './GenerationToolbarImageUtils.types';
 import { type ImageStudioCenterLayoutConfig as CenterLayoutConfig } from '@/features/ai/image-studio/analysis/shared';
+import {
+  analyzeAndPlanAutoScaleFromRgba,
+  detectObjectBoundsForLayoutFromRgba,
+  resolveWhiteBgSimpleBboxFromRgba,
+  type NormalizedImageStudioAnalysisLayoutConfig,
+} from '@/features/ai/image-studio/analysis/shared';
+import { ApiError } from '@/shared/lib/api-client';
+
 import {
   CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
@@ -19,13 +22,11 @@ import {
   loadImageElement,
   sleep,
 } from './GenerationToolbarImageUtils.helpers';
-import { ApiError } from '@/shared/lib/api-client';
 import {
-  analyzeAndPlanAutoScaleFromRgba,
-  detectObjectBoundsForLayoutFromRgba,
-  resolveWhiteBgSimpleBboxFromRgba,
-  type NormalizedImageStudioAnalysisLayoutConfig,
-} from '@/features/ai/image-studio/analysis/shared';
+  type AutoScaleCanvasResult,
+  type CenterLayoutResult,
+  type ClientImageObjectAnalysisResult,
+} from './GenerationToolbarImageUtils.types';
 
 export const isClientCenterCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);

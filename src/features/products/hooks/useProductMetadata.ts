@@ -15,8 +15,8 @@ import type {
 import type { ProductFormData } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { isEditingProductHydrated } from './editingProductHydration';
 
+import { isEditingProductHydrated } from './editingProductHydration';
 import {
   useCatalogs,
   useCategories,

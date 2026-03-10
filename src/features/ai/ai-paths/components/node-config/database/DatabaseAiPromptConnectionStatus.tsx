@@ -2,9 +2,10 @@
 
 import React from 'react';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { Button } from '@/shared/ui';
+
 import {
   useAiPathGraph,
   useAiPathOrchestrator,

@@ -1,9 +1,11 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import type { JSX } from 'react';
 
-import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
+
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
 import { cn } from '@/shared/utils';
+
+import type { JSX } from 'react';
 
 export function KangurLoginModal(): JSX.Element {
   const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen } =

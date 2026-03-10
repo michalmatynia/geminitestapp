@@ -3,9 +3,8 @@ import { z } from 'zod';
 import { type PathConfig, pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { canvasSemanticDocumentSchema } from '@/shared/contracts/ai-paths-semantic-grammar';
 import { serializePathConfigToSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
-import { withPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
-import { buildPortablePathJsonSchemaHash } from './portable-engine-integrity-support';
 
+import { withPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackage,
@@ -17,6 +16,8 @@ import {
   aiPathPortablePackageEnvelopeSchema,
   aiPathPortablePackageSchema,
 } from './portable-engine-contract';
+import { buildPortablePathJsonSchemaHash } from './portable-engine-integrity-support';
+
 
 export const buildPortablePathPackage = (
   pathConfig: PathConfig,

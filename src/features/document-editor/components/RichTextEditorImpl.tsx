@@ -42,12 +42,6 @@ import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type {
-  HeadingLevel,
-  TextAlignOption,
-  RichTextEditorFontOption,
-  RichTextEditorProps,
-} from './RichTextEditorTypes';
 import {
   fontFamilyMark,
   underlineMark,
@@ -55,6 +49,13 @@ import {
   textAlignExtension,
 } from './rich-text/RichTextEditorExtensions';
 import { ToolbarButton, ToolbarVariantContext } from './rich-text/RichTextEditorToolbar';
+
+import type {
+  HeadingLevel,
+  TextAlignOption,
+  RichTextEditorFontOption,
+  RichTextEditorProps,
+} from './RichTextEditorTypes';
 
 const defaultFontFamilyOptions: RichTextEditorFontOption[] = [
   { value: '"Times New Roman", Georgia, serif', label: 'Times' },

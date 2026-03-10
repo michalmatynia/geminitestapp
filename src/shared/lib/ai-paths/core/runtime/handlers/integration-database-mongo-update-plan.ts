@@ -18,11 +18,11 @@ import {
   buildMongoUpdateDebugPayload,
   resolveMongoUpdateFilter,
 } from './integration-database-mongo-update-plan-helpers';
+import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
 } from './integration-database-write-guardrails';
-import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 
 export type MongoUpdatePlan = {
   resolvedFilter: Record<string, unknown>;

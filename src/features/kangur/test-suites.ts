@@ -7,6 +7,7 @@ import {
   type KangurTestSuites,
 } from '@/shared/contracts/kangur-tests';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+
 import { hasFullyPublishedQuestionSetForSuite } from './test-questions';
 
 export { KANGUR_TEST_SUITES_SETTING_KEY };

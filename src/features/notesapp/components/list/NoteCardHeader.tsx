@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
 import { GripVertical, Pin, Star } from 'lucide-react';
+import React from 'react';
 
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, CopyButton, Badge } from '@/shared/ui';
 
 export type NoteCardHeaderRuntimeValue = {

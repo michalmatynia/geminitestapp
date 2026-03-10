@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
+
 import { Button } from './button';
 
 export interface BreadcrumbItem {

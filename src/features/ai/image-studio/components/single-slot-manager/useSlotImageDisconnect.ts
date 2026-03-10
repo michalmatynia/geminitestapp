@@ -1,18 +1,21 @@
 'use client';
 
 import { useCallback } from 'react';
+
+import type {
+  ImageStudioSlotDto as ImageStudioSlot,
+  ImageStudioAssetDto as ImageStudioUploadedAsset,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
+
 import {
   OBJECT_SLOT_INDEX,
   slotHasRenderableImage,
   resolveSlotIdCandidates,
 } from './single-slot-manager-utils';
-import type {
-  ImageStudioSlotDto as ImageStudioSlot,
-  ImageStudioAssetDto as ImageStudioUploadedAsset,
-} from '@/shared/contracts/image-studio';
+import { studioKeys } from '../../hooks/useImageStudioQueries';
+
 import type { QueryClient } from '@tanstack/react-query';
 
 interface SlotImageDisconnectProps {

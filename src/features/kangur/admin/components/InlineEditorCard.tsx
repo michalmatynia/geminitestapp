@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+
 import { MediaLibraryPanel } from '@/features/cms/public';
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
@@ -9,6 +10,7 @@ import {
 import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { ALIGNMENT_OPTIONS, MEDIA_FIT_OPTIONS } from '../constants';
 import { clamp, parseNumberInput } from '../utils';
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';

@@ -34,5 +34,6 @@ export const buildWeeklyReportSummaryJsonDetails = (
   stabilization: report.stabilization,
   stabilizationError: report.stabilizationError,
   trends: report.trends,
+  kangurAiTutorBridge: report.kangurAiTutorBridge ?? null,
   criticalFlows: report.criticalFlows,
 });

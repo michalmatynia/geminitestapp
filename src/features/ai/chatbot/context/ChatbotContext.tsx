@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 
-import { useChatbotLogic } from '../hooks/useChatbotLogic';
 import type {
   ChatbotMessagesData,
   ChatbotSettingsData,
@@ -10,6 +9,8 @@ import type {
   ChatbotUIData,
 } from '@/shared/contracts/chatbot';
 import { internalError } from '@/shared/errors/app-error';
+
+import { useChatbotLogic } from '../hooks/useChatbotLogic';
 
 // --- Messages Context ---
 const MessagesContext = createContext<ChatbotMessagesData | null>(null);

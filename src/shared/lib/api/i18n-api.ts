@@ -1,4 +1,3 @@
-import { api } from '@/shared/lib/api-client';
 import type {
   CountryOption,
   CurrencyOption,
@@ -7,6 +6,7 @@ import type {
   SaveCountryInput,
   SaveLanguageInput,
 } from '@/shared/contracts/internationalization';
+import { api } from '@/shared/lib/api-client';
 
 const I18N_METADATA_BASE = '/api/v2/metadata';
 const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;

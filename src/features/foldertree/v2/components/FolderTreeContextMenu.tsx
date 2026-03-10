@@ -3,8 +3,8 @@
 import React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui/tree/TreeContextMenu';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export type FolderTreeContextMenuItem = {
   /** Unique key for this item. */

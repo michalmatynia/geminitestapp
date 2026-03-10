@@ -2,24 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
-import { internalError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
-
-import { useSlotsActions, useSlotsState } from './SlotsContext';
-import type {
-  VersionGraphActions,
-  VersionGraphFilterType,
-  VersionGraphState,
-} from './version-graph-context-types';
-import {
-  VERSION_GRAPH_IMAGE_PRELOAD_LIMIT,
-  asRecord,
-  collectHiddenIds,
-  matchesFilter,
-  preloadVersionGraphImage,
-  remapMetadataForDetachedCopy,
-} from './version-graph-context-utils';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import {
@@ -28,6 +10,25 @@ import {
   type LayoutMode,
 } from '@/features/ai/image-studio/utils/version-graph';
 import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
+import { useToast } from '@/shared/ui';
+
+import { useSlotsActions, useSlotsState } from './SlotsContext';
+import {
+  VERSION_GRAPH_IMAGE_PRELOAD_LIMIT,
+  asRecord,
+  collectHiddenIds,
+  matchesFilter,
+  preloadVersionGraphImage,
+  remapMetadataForDetachedCopy,
+} from './version-graph-context-utils';
+
+import type {
+  VersionGraphActions,
+  VersionGraphFilterType,
+  VersionGraphState,
+} from './version-graph-context-types';
 
 export function useVersionGraphRuntime(): {
   state: VersionGraphState;

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { GenerationToolbarProvider } from './generation-toolbar/GenerationToolbarContext';
 import { GenerationToolbarInner } from './generation-toolbar/GenerationToolbarInner';
 

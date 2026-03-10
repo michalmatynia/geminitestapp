@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';
 

@@ -1,9 +1,10 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
 
 import { Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import type { LucideIcon } from 'lucide-react';
 
 type KangurAdminMetricCardTone = 'neutral' | 'info' | 'warning' | 'success';
 

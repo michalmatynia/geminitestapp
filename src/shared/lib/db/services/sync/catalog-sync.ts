@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import type {
   MongoPriceGroupDoc,
   MongoCatalogDoc,
@@ -8,6 +7,7 @@ import type {
   MongoProductParameterDoc,
 } from '../database-sync-types';
 import type { SyncHandler } from './types';
+import type { Prisma } from '@prisma/client';
 
 export const syncPriceGroups: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const availableCurrencyIds = new Set<string>(

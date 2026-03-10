@@ -13,12 +13,12 @@ import {
   type NormalizedImageStudioAnalysisLayoutConfig,
   type ImageStudioAutoScaleAnalysis,
 } from '@/features/ai/image-studio/analysis/shared';
-import type { ImageStudioAutoScalerMode } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX,
 } from '@/shared/contracts/image-studio';
+import type { ImageStudioAutoScalerMode } from '@/shared/contracts/image-studio';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterLayoutConfig,

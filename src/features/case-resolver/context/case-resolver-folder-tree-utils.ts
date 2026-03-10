@@ -1,6 +1,7 @@
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
+import { parseString } from '../components/CaseResolverFolderTree.helpers';
 import {
   buildMasterCaseNodesFromCaseResolverWorkspace,
   buildMasterNodesFromCaseResolverWorkspace,
@@ -9,7 +10,6 @@ import {
   fromCaseResolverFolderNodeId,
   toCaseResolverFolderNodeId,
 } from '../master-tree';
-import { parseString } from '../components/CaseResolverFolderTree.helpers';
 
 const CHILD_CASE_STRUCTURE_FOLDER_PATH = '__case_resolver_children_case_structure__';
 export const CHILD_CASE_STRUCTURE_NODE_ID = toCaseResolverFolderNodeId(

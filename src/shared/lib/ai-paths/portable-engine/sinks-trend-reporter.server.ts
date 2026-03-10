@@ -11,10 +11,14 @@ import {
   registerPortablePathSigningPolicyUsageHook,
   type PortablePathSigningPolicyUsageSnapshot,
 } from './portable-engine-signing-policy-observability';
-import type {
-  PortablePathSigningPolicyProfile,
-  PortablePathSigningPolicySurface,
-} from './portable-engine-resolution-types';
+import {
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_CATEGORY,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_KIND,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_SOURCE,
+} from './sinks-constants.server';
 import { resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment } from './sinks-environment.server';
 import {
   appendPortablePathSigningPolicyTrendSnapshot,
@@ -28,14 +32,11 @@ import {
   type PortablePathSigningPolicyTrendPersistedSnapshot,
   type PortablePathSigningPolicyTrendReportTrigger,
 } from './sinks-trend-state.server';
-import {
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_CATEGORY,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_KIND,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_SOURCE,
-} from './sinks-constants.server';
+
+import type {
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicySurface,
+} from './portable-engine-resolution-types';
 import type { PortablePathSigningPolicyAlertLevel } from './sinks-contracts.server';
 
 const toPortablePathSigningPolicyUsageSurfaceDelta = (

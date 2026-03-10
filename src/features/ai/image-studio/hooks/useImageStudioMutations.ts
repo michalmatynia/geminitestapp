@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {

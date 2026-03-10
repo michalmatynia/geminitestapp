@@ -3,6 +3,14 @@ import { expect, type Page } from '@playwright/test';
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import {
+  isPlaywrightAiPathsFixturePathId,
+  isPlaywrightAiPathsFixtureTriggerButton,
+  PLAYWRIGHT_AI_PATHS_PATH_ID_PREFIX,
+  PLAYWRIGHT_AI_PATHS_PRODUCT_SKU_PREFIX,
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME,
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
+} from '@/shared/lib/ai-paths/playwright-fixture-scope';
 
 import { ensureAdminSession } from './admin-auth';
 
@@ -11,6 +19,7 @@ const AI_PATHS_CONFIG_KEY_PREFIX = 'ai_paths_config_';
 const PRODUCTS_SEARCH_PLACEHOLDER = 'Search by product name...';
 const JOB_QUEUE_SEARCH_PLACEHOLDER = 'Run ID, path name, entity, error...';
 const DEFAULT_WAIT_TIMEOUT_MS = 120_000;
+const playwrightFixtureJanitorRun = new WeakSet<Page>();
 
 type BrowserRequestResult<T> = {
   ok: boolean;
@@ -46,6 +55,7 @@ type ProductWorkflowFixtureOptions = {
   pathName: string;
   updateField: 'description_pl' | 'description_de';
   expectedValue: string;
+  outcome?: 'success' | 'zero_affected_fail';
 };
 
 type ProductWorkflowFixture = {
@@ -57,6 +67,13 @@ type ProductWorkflowFixture = {
   expectedValue: string;
   updateField: 'description_pl' | 'description_de';
   cleanup: () => Promise<void>;
+};
+
+type AiPathRunDetailRecord = {
+  run: Record<string, unknown>;
+  nodes: Array<Record<string, unknown>>;
+  events: unknown[];
+  errorSummary?: Record<string, unknown> | null;
 };
 
 const randomSuffix = (): string =>
@@ -75,6 +92,12 @@ const readOrCreateCsrfToken = async (page: Page): Promise<string> => {
     document.cookie = `csrf-token=${encodeURIComponent(fallbackToken)}; path=/; SameSite=Lax`;
     return fallbackToken;
   }, createCsrfToken());
+};
+
+const enablePlaywrightFixtureButtons = async (page: Page): Promise<void> => {
+  await page.evaluate((cookieName: string) => {
+    document.cookie = `${cookieName}=1; Path=/; SameSite=Lax`;
+  }, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);
 };
 
 const browserRequest = async <T>(
@@ -119,6 +142,7 @@ const browserRequest = async <T>(
         method: request.method,
         headers,
         body,
+        cache: 'no-store',
         credentials: 'include',
       });
       const text = await response.text();
@@ -135,7 +159,7 @@ const browserRequest = async <T>(
       return {
         ok: response.ok,
         status: response.status,
-        data,
+        data: data as T | null,
         text,
       };
     },
@@ -157,6 +181,24 @@ const expectApiSuccess = <T>(response: BrowserRequestResult<T>, url: string): T 
   }
   return response.data;
 };
+
+const readRecordString = (record: Record<string, unknown>, key: string): string | null => {
+  const value = record[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+};
+
+const readPrimaryErrorSummaryMessage = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const primary = (value as Record<string, unknown>)['primary'];
+  if (!primary || typeof primary !== 'object' || Array.isArray(primary)) return null;
+  return (
+    readRecordString(primary as Record<string, unknown>, 'userMessage') ??
+    readRecordString(primary as Record<string, unknown>, 'message')
+  );
+};
+
+export const readRunFailureMessage = (detail: AiPathRunDetailRecord): string | null =>
+  readPrimaryErrorSummaryMessage(detail.errorSummary) ?? readRecordString(detail.run, 'errorMessage');
 
 const readAiPathsIndex = async (page: Page): Promise<{
   existed: boolean;
@@ -315,6 +357,58 @@ const deleteProduct = async (page: Page, productId: string): Promise<void> => {
   }
 };
 
+export const fetchProductById = async (page: Page, productId: string): Promise<ProductApiRecord> => {
+  const url = `/api/v2/products/${encodeURIComponent(productId)}?fresh=1`;
+  const response = await browserRequest<ProductApiRecord>(page, { url });
+  return expectApiSuccess(response, url);
+};
+
+const listTriggerButtons = async (page: Page): Promise<AiTriggerButtonRecord[]> => {
+  const url = `/api/ai-paths/trigger-buttons?${PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM}=1`;
+  const response = await browserRequest<AiTriggerButtonRecord[]>(page, { url });
+  return expectApiSuccess(response, url);
+};
+
+const cleanupStaleProductWorkflowFixtures = async (page: Page): Promise<void> => {
+  if (playwrightFixtureJanitorRun.has(page)) return;
+
+  const triggerButtons = await listTriggerButtons(page);
+  const fixtureButtons = triggerButtons.filter((button) =>
+    isPlaywrightAiPathsFixtureTriggerButton(button)
+  );
+  const fixturePathIds = new Set<string>();
+
+  for (const button of fixtureButtons) {
+    if (button.pathId) {
+      fixturePathIds.add(button.pathId);
+    }
+    await deleteTriggerButton(page, button.id);
+  }
+
+  const { existed, entries } = await readAiPathsIndex(page);
+  const remainingEntries = entries.filter((entry) => {
+    const isFixtureEntry = isPlaywrightAiPathsFixturePathId(entry.id);
+    if (isFixtureEntry) {
+      fixturePathIds.add(entry.id);
+    }
+    return !isFixtureEntry;
+  });
+
+  if (fixturePathIds.size > 0) {
+    if (remainingEntries.length > 0 || existed) {
+      await upsertAiPathsSetting(page, AI_PATHS_INDEX_KEY, JSON.stringify(remainingEntries));
+    } else {
+      await deleteAiPathsSettings(page, [AI_PATHS_INDEX_KEY]);
+    }
+
+    await deleteAiPathsSettings(
+      page,
+      Array.from(fixturePathIds, (pathId) => `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`)
+    );
+  }
+  playwrightFixtureJanitorRun.add(page);
+};
+
 const createDeterministicProductUpdatePathConfig = (args: {
   pathId: string;
   pathName: string;
@@ -322,11 +416,13 @@ const createDeterministicProductUpdatePathConfig = (args: {
   updateField: 'description_pl' | 'description_de';
   expectedValue: string;
   timestamp: string;
+  outcome?: 'success' | 'zero_affected_fail';
 }): PathConfig => {
   const baseConfig = createDefaultPathConfig(args.pathId);
   const triggerNodeId = `node-trigger-${randomSuffix()}`;
   const constantNodeId = `node-constant-${randomSuffix()}`;
   const databaseNodeId = `node-database-${randomSuffix()}`;
+  const shouldForceZeroAffected = args.outcome === 'zero_affected_fail';
 
   const nodes: AiNode[] = [
     {
@@ -356,7 +452,7 @@ const createDeterministicProductUpdatePathConfig = (args: {
       description: 'Deterministic product mutation payload',
       position: { x: 360, y: 48 },
       data: {},
-      inputs: [],
+      inputs: ['trigger'],
       outputs: ['value'],
       config: {
         constant: {
@@ -392,7 +488,9 @@ const createDeterministicProductUpdatePathConfig = (args: {
             preset: 'by_id',
             field: 'id',
             idType: 'string',
-            queryTemplate: '{"id":"{{entityId}}"}',
+            queryTemplate: shouldForceZeroAffected
+              ? '{"id":"missing-{{entityId}}"}'
+              : '{"id":"{{entityId}}"}',
             limit: 1,
             sort: '',
             projection: '',
@@ -420,11 +518,20 @@ const createDeterministicProductUpdatePathConfig = (args: {
   return {
     ...baseConfig,
     name: args.pathName,
-    description: 'Playwright deterministic product workflow success path',
+    description: shouldForceZeroAffected
+      ? 'Playwright deterministic product workflow failure path'
+      : 'Playwright deterministic product workflow success path',
     strictFlowMode: true,
     aiPathsValidation: { enabled: false },
     nodes,
     edges: [
+      {
+        id: `edge-trigger-constant-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: constantNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
       {
         id: `edge-trigger-database-${randomSuffix()}`,
         from: triggerNodeId,
@@ -457,21 +564,20 @@ const extractRunId = (payload: unknown): string | null => {
   if (!payload || typeof payload !== 'object') return null;
 
   const record = payload as Record<string, unknown>;
-  if (typeof record.runId === 'string' && record.runId.trim()) {
-    return record.runId.trim();
+  const directRunId = readRecordString(record, 'runId');
+  if (directRunId) {
+    return directRunId;
   }
 
-  const run = record.run;
+  const run = record['run'];
   if (run && typeof run === 'object') {
     const runRecord = run as Record<string, unknown>;
-    if (typeof runRecord.id === 'string' && runRecord.id.trim()) {
-      return runRecord.id.trim();
-    }
-    if (typeof runRecord.runId === 'string' && runRecord.runId.trim()) {
-      return runRecord.runId.trim();
-    }
-    if (typeof runRecord._id === 'string' && runRecord._id.trim()) {
-      return runRecord._id.trim();
+    const nestedRunId =
+      readRecordString(runRecord, 'id') ??
+      readRecordString(runRecord, 'runId') ??
+      readRecordString(runRecord, '_id');
+    if (nestedRunId) {
+      return nestedRunId;
     }
   }
 
@@ -479,28 +585,67 @@ const extractRunId = (payload: unknown): string | null => {
 };
 
 export async function openAdminProductsPage(page: Page): Promise<void> {
-  await ensureAdminSession(page, '/admin/products');
-  await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({
-    timeout: 30_000,
-  });
+  const productsHeading = page.getByRole('heading', { name: 'Products', exact: true });
+  const currentPath = new URL(page.url(), 'http://localhost').pathname;
+  const alreadyOnProducts =
+    currentPath === '/admin/products' &&
+    (await productsHeading.isVisible().catch(() => false));
+
+  if (!alreadyOnProducts) {
+    await ensureAdminSession(page, '/admin/products');
+    await expect(productsHeading).toBeVisible({
+      timeout: 30_000,
+    });
+  }
+
+  await enablePlaywrightFixtureButtons(page);
+
+  const catalogFilter = page.getByRole('combobox', { name: 'Filter by catalog' }).first();
+  await expect(catalogFilter).toBeVisible({ timeout: 15_000 });
+  const catalogLabel = (await catalogFilter.textContent())?.trim() ?? '';
+  if (!catalogLabel.includes('All catalogs')) {
+    await catalogFilter.click();
+    await page.getByRole('option', { name: 'All catalogs' }).click();
+  }
 }
 
 export async function openAdminQueuePage(page: Page): Promise<void> {
-  await ensureAdminSession(page, '/admin/ai-paths/queue?tab=paths-all');
-  await expect(page.getByRole('heading', { name: 'Job Queue', exact: true })).toBeVisible({
-    timeout: 30_000,
-  });
+  const queueHeading = page.getByRole('heading', { name: 'Job Queue', exact: true });
+  const currentUrl = new URL(page.url(), 'http://localhost');
+  const alreadyOnQueue =
+    currentUrl.pathname === '/admin/ai-paths/queue' &&
+    currentUrl.search === '?tab=paths-all' &&
+    (await queueHeading.isVisible().catch(() => false));
+
+  if (!alreadyOnQueue) {
+    await ensureAdminSession(page, '/admin/ai-paths/queue?tab=paths-all');
+    await expect(queueHeading).toBeVisible({
+      timeout: 30_000,
+    });
+  }
 }
 
 export async function searchForProductRow(
   page: Page,
   searchTerm: string,
-  options?: { rowText?: string }
+  options?: { rowText?: string; mode?: 'name' | 'sku' }
 ) {
-  const searchInput = page.locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`).first();
-  await expect(searchInput).toBeVisible({ timeout: 15_000 });
-  await searchInput.fill(searchTerm);
-  await page.keyboard.press('Enter');
+  const mode = options?.mode ?? 'name';
+  if (mode === 'sku') {
+    const showFiltersButton = page.getByRole('button', { name: /show filters/i });
+    if (await showFiltersButton.isVisible().catch(() => false)) {
+      await showFiltersButton.click();
+    }
+    const skuInput = page.locator('input[placeholder="Search by SKU..."]:visible').first();
+    await expect(skuInput).toBeVisible({ timeout: 15_000 });
+    await skuInput.fill(searchTerm);
+    await page.keyboard.press('Enter');
+  } else {
+    const searchInput = page.locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`).first();
+    await expect(searchInput).toBeVisible({ timeout: 15_000 });
+    await searchInput.fill(searchTerm);
+    await page.keyboard.press('Enter');
+  }
 
   const rowText = options?.rowText ?? searchTerm;
   const row = page.locator('tr').filter({ hasText: rowText }).first();
@@ -513,6 +658,7 @@ export async function createProductWorkflowFixture(
   options: ProductWorkflowFixtureOptions
 ): Promise<ProductWorkflowFixture> {
   await openAdminProductsPage(page);
+  await cleanupStaleProductWorkflowFixtures(page);
 
   const cleanupTasks: Array<() => Promise<void>> = [];
   const cleanup = async (): Promise<void> => {
@@ -525,11 +671,14 @@ export async function createProductWorkflowFixture(
 
   try {
     const suffix = randomSuffix();
+    const shortSuffix = suffix.slice(-6).toUpperCase();
     const timestamp = new Date().toISOString();
-    const sku = `PW-AIP-${suffix}`.toUpperCase();
+    const sku = `${PLAYWRIGHT_AI_PATHS_PRODUCT_SKU_PREFIX}${suffix}`.toUpperCase();
     const nameEn = `Playwright AI Paths ${suffix}`;
     const descriptionEn = `Playwright AI Paths source description ${suffix}`;
-    const pathId = `path_pw_products_${suffix.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const pathId = `${PLAYWRIGHT_AI_PATHS_PATH_ID_PREFIX}${suffix.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const pathName = `${options.pathName} ${shortSuffix}`;
+    const triggerButtonName = `${options.triggerButtonName} ${shortSuffix}`;
     const placeholderTriggerEventId = `pending-${suffix}`;
 
     const product = await createProduct(page, {
@@ -543,16 +692,17 @@ export async function createProductWorkflowFixture(
 
     const initialConfig = createDeterministicProductUpdatePathConfig({
       pathId,
-      pathName: options.pathName,
+      pathName,
       triggerEventId: placeholderTriggerEventId,
       updateField: options.updateField,
       expectedValue: options.expectedValue,
       timestamp,
+      outcome: options.outcome,
     });
 
     const { indexExisted } = await upsertPathConfig(page, {
       pathId,
-      pathName: options.pathName,
+      pathName,
       config: initialConfig,
     });
     cleanupTasks.push(async () => {
@@ -560,7 +710,7 @@ export async function createProductWorkflowFixture(
     });
 
     const triggerButton = await createTriggerButton(page, {
-      name: options.triggerButtonName,
+      name: triggerButtonName,
       pathId,
       location: options.location,
     });
@@ -570,16 +720,17 @@ export async function createProductWorkflowFixture(
 
     const finalConfig = createDeterministicProductUpdatePathConfig({
       pathId,
-      pathName: options.pathName,
+      pathName,
       triggerEventId: triggerButton.id,
       updateField: options.updateField,
       expectedValue: options.expectedValue,
       timestamp,
+      outcome: options.outcome,
     });
 
     await upsertPathConfig(page, {
       pathId,
-      pathName: options.pathName,
+      pathName,
       config: finalConfig,
     });
 
@@ -590,7 +741,7 @@ export async function createProductWorkflowFixture(
       product,
       searchTerm: nameEn,
       pathId,
-      pathName: options.pathName,
+      pathName,
       triggerButton,
       expectedValue: options.expectedValue,
       updateField: options.updateField,
@@ -629,7 +780,22 @@ export async function waitForRunToComplete(
   page: Page,
   runId: string,
   options?: { timeoutMs?: number }
-): Promise<{ run: Record<string, unknown>; nodes: Array<Record<string, unknown>>; events: unknown[] }> {
+): Promise<AiPathRunDetailRecord> {
+  const detail = await waitForRunToReachTerminal(page, runId, options);
+  const status = readRecordString(detail.run, 'status') ?? 'unknown';
+  if (status !== 'completed') {
+    throw new Error(
+      `Run ${runId} terminated with status ${status}: ${readRunFailureMessage(detail) ?? 'no error message'}`
+    );
+  }
+  return detail;
+}
+
+export async function waitForRunToReachTerminal(
+  page: Page,
+  runId: string,
+  options?: { timeoutMs?: number }
+): Promise<AiPathRunDetailRecord> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_WAIT_TIMEOUT_MS;
   const startedAt = Date.now();
 
@@ -639,24 +805,23 @@ export async function waitForRunToComplete(
       run: Record<string, unknown>;
       nodes: Array<Record<string, unknown>>;
       events: unknown[];
+      errorSummary?: Record<string, unknown> | null;
     }>(page, { url });
     const detail = expectApiSuccess(response, url);
-    const status = typeof detail.run?.status === 'string' ? detail.run.status : 'unknown';
+    const status = readRecordString(detail.run, 'status') ?? 'unknown';
 
     if (status === 'completed') {
       return detail;
     }
 
     if (status === 'failed' || status === 'canceled' || status === 'dead_lettered') {
-      throw new Error(
-        `Run ${runId} terminated with status ${status}: ${String(detail.run?.errorMessage ?? 'no error message')}`
-      );
+      return detail;
     }
 
     await page.waitForTimeout(1_000);
   }
 
-  throw new Error(`Timed out waiting for run ${runId} to complete.`);
+  throw new Error(`Timed out waiting for run ${runId} to reach a terminal status.`);
 }
 
 export async function waitForProductFieldValue(
@@ -672,9 +837,7 @@ export async function waitForProductFieldValue(
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
-    const url = `/api/v2/products/${encodeURIComponent(args.productId)}?fresh=1`;
-    const response = await browserRequest<ProductApiRecord>(page, { url });
-    const product = expectApiSuccess(response, url);
+    const product = await fetchProductById(page, args.productId);
     if (product[args.field] === args.expectedValue) {
       return product;
     }

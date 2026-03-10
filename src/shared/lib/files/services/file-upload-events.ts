@@ -2,12 +2,12 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Prisma, type FileUploadEvent } from '@/shared/lib/db/prisma-client';
 import { ObjectId } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, type FileUploadEvent } from '@/shared/lib/db/prisma-client';
 
 export type FileUploadEventInput = {
   status: 'success' | 'error';

@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
 import { internalError } from '@/shared/errors/app-error';
+
 import {
   useAgentAudits,
   useAgentLogs,

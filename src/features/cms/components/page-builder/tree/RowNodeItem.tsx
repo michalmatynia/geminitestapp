@@ -3,6 +3,11 @@
 import { Columns, Trash2, Plus, GripVertical } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import {
   TreeRow,
   TreeCaret,
@@ -19,13 +24,9 @@ import { CONVERTIBLE_SECTION_TYPES, resolveNodeLabel } from './tree-constants';
 import { TreeParentBlockProvider } from './TreeParentBlockContext';
 import { TreeRowProvider } from './TreeRowContext';
 import { useTreeSectionId } from './TreeSectionContext';
-import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
-import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 
 import type { RowNodeItemProps } from './tree-types';
-import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 
 export function RowNodeItem(props: RowNodeItemProps): React.ReactNode {
   const { row, rowIndex, rowCount } = props;

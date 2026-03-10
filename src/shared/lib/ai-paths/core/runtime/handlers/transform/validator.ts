@@ -1,8 +1,3 @@
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import {
-  preparePromptValidationRuntime,
-  validateProgrammaticPromptWithRuntime,
-} from '@/shared/lib/prompt-engine';
 import type {
   NodeHandler,
   NodeHandlerContext,
@@ -20,6 +15,11 @@ import {
   normalizeMappingPath,
   safeStringify,
 } from '@/shared/lib/ai-paths/core/utils';
+import {
+  preparePromptValidationRuntime,
+  validateProgrammaticPromptWithRuntime,
+} from '@/shared/lib/prompt-engine';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 
 export const handleValidator: NodeHandler = ({
   node,

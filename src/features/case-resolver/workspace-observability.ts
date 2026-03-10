@@ -7,6 +7,7 @@ import type {
   RuntimeCounterSnapshot,
   RuntimeDurationSnapshot,
 } from '@/shared/contracts/case-resolver';
+
 import { createCaseResolverWorkspaceMutationId } from './utils/workspace-persistence-utils';
 
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';

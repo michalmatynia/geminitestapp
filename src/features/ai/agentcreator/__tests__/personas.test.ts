@@ -89,6 +89,29 @@ describe('normalizeAgentPersonas', () => {
     });
   });
 
+  it('fills missing memory settings from defaults when the stored payload is partial', () => {
+    const normalized = normalizeAgentPersonas([
+      {
+        id: 'persona-memory-partial',
+        name: 'Partial Memory Persona',
+        settings: {
+          memory: {
+            enabled: false,
+          },
+        },
+      },
+    ]);
+
+    expect(normalized[0]?.settings).toEqual({
+      memory: {
+        enabled: false,
+        includeChatHistory: true,
+        useMoodSignals: true,
+        defaultSearchLimit: 20,
+      },
+    });
+  });
+
   it('injects a neutral mood and preserves persona visuals', () => {
     const normalized = normalizeAgentPersonas([
       {

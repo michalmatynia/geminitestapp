@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { namedDtoSchema, type NamedDto } from '../base';
 import { documentEditorModeSchema } from '../document-editor';
 import {

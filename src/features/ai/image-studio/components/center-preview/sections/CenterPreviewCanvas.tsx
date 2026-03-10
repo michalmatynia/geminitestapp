@@ -1,17 +1,19 @@
 'use client';
 
-import React from 'react';
 import { Locate } from 'lucide-react';
-import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
+import React from 'react';
+
+import { useMaskingState } from '@/features/ai/image-studio/context/MaskingContext';
+import { useSlotsState } from '@/features/ai/image-studio/context/SlotsContext';
+import { useUiState, useUiActions } from '@/features/ai/image-studio/context/UiContext';
+import { useVersionGraphState } from '@/features/ai/image-studio/context/VersionGraphContext';
 import { Viewer3D } from '@/features/viewer3d';
+import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { SplitVariantPreview } from '../SplitVariantPreview';
 import { SplitViewControls } from '../SplitViewControls';
-import { useUiState, useUiActions } from '@/features/ai/image-studio/context/UiContext';
-import { useSlotsState } from '@/features/ai/image-studio/context/SlotsContext';
-import { useVersionGraphState } from '@/features/ai/image-studio/context/VersionGraphContext';
-import { useMaskingState } from '@/features/ai/image-studio/context/MaskingContext';
 import { useCenterPreviewCanvasContext } from './CenterPreviewCanvasContext';
 
 export function CenterPreviewCanvas(): React.JSX.Element {

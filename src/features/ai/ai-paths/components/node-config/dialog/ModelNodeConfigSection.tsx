@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo } from 'react';
 
-import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
 import { Button, Card, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import {

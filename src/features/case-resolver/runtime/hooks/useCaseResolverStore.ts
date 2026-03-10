@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
-import type { CaseResolverRuntimeSelector, CaseResolverRuntimeSnapshot } from '../types';
-import type { CaseResolverRuntimeStore } from '../store';
 import { incrementCaseResolverCounterMetric } from '../metrics';
+
+import type { CaseResolverRuntimeStore } from '../store';
+import type { CaseResolverRuntimeSelector, CaseResolverRuntimeSnapshot } from '../types';
 
 const defaultEquality = <T>(left: T, right: T): boolean => Object.is(left, right);
 

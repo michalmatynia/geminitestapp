@@ -9,13 +9,18 @@ import {
   type UseSuspenseQueryResult,
 } from '@tanstack/react-query';
 import { useRef } from 'react';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 import {
   attachTanstackFactoryMeta,
   resolveTanstackFactoryMeta,
   telemetryErrorStage,
 } from '@/shared/lib/observability/tanstack-telemetry';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 import { TanstackFactoryMeta } from '../tanstack-factory-v2.types';
+import { invokeQueryFactoryFn } from './executors';
+import { applyQueryRuntimeGuards, applySuspenseQueryRuntimeGuards } from './guards';
+import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import {
   BaseQueryFactoryV2Config,
   QueryDescriptorV2,
@@ -23,9 +28,6 @@ import {
   SuspenseQueryOptionsWithoutCore,
   SuspenseQueryDescriptorV2,
 } from './types';
-import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
-import { applyQueryRuntimeGuards, applySuspenseQueryRuntimeGuards } from './guards';
-import { invokeQueryFactoryFn } from './executors';
 
 const createTelemetrizedQueryFnInternal = <
   TQueryFnData,

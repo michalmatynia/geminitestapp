@@ -1,4 +1,3 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type {
   TagMapping,
@@ -7,6 +6,7 @@ import type {
   TagMappingWithDetails,
 } from '@/shared/contracts/integrations';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export type TagMappingRepository = {
   create: (input: TagMappingCreateInput) => Promise<TagMapping>;

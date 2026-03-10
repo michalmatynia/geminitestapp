@@ -4,20 +4,20 @@ import {
   executeImageStudioSequenceStep,
   resolveSequenceStepsForExecution,
 } from '@/features/ai/image-studio/server/sequence-executor';
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import {
+  getImageStudioSequenceRunById,
+  updateImageStudioSequenceRun,
+} from '@/features/ai/image-studio/server/sequence-run-repository';
 import {
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunDispatchMode,
   type ImageStudioSequenceRunRecord,
 } from '@/shared/contracts/image-studio';
-import {
-  getImageStudioSequenceRunById,
-  updateImageStudioSequenceRun,
-} from '@/features/ai/image-studio/server/sequence-run-repository';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const LOG_SOURCE = 'image-studio-sequence-queue';
 

@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
+import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -21,7 +22,6 @@ import {
   parseCustomBenchmarkCasesDraft,
   upsertCustomBenchmarkCase,
 } from '../custom-benchmark-cases';
-import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';
 import {
   promptExploderBenchmarkSuiteLabel,
   promptExploderClampNumber,

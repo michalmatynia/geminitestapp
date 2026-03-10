@@ -421,10 +421,24 @@ export async function listAiPathRuns(options?: {
 }
 
 export async function getAiPathRun(
-  runId: string
+  runId: string,
+  options?: RequestInit & { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
 ): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
   return apiFetch<{ run: unknown; nodes: unknown[]; events: unknown[] }>(
-    `/api/ai-paths/runs/${encodeURIComponent(runId)}`
+    `/api/ai-paths/runs/${encodeURIComponent(runId)}`,
+    {
+      ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+      ...(options?.signal ? { signal: options.signal } : {}),
+      ...(options?.cache ? { cache: options.cache } : {}),
+      ...(options?.credentials ? { credentials: options.credentials } : {}),
+      ...(options?.headers ? { headers: options.headers } : {}),
+      ...(options?.integrity ? { integrity: options.integrity } : {}),
+      ...(options?.keepalive ? { keepalive: options.keepalive } : {}),
+      ...(options?.mode ? { mode: options.mode } : {}),
+      ...(options?.redirect ? { redirect: options.redirect } : {}),
+      ...(options?.referrer ? { referrer: options.referrer } : {}),
+      ...(options?.referrerPolicy ? { referrerPolicy: options.referrerPolicy } : {}),
+    }
   );
 }
 

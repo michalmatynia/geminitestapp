@@ -1,5 +1,27 @@
 import { ObjectId, type Db, type Document, type Filter, type UpdateFilter } from 'mongodb';
 
+import type {
+  CreateProductValidationPatternInput,
+  ProductValidationPatternRepository,
+  UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products';
+import type {
+  ProductValidationChainMode,
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationInstanceScope,
+  ProductValidationLaunchScopeBehavior,
+  ProductValidationLaunchOperator,
+  ProductValidationLaunchSourceMode,
+  ProductValidationPostAcceptBehavior,
+  ProductValidationRuntimeType,
+  ProductValidationPattern,
+  ProductValidationSeverity,
+  ProductValidationTarget,
+} from '@/shared/contracts/products';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
@@ -15,28 +37,6 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPatternRepository,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
-import type {
-  ProductValidationChainMode,
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationInstanceScope,
-  ProductValidationLaunchScopeBehavior,
-  ProductValidationLaunchOperator,
-  ProductValidationLaunchSourceMode,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationRuntimeType,
-  ProductValidationPattern,
-  ProductValidationSeverity,
-  ProductValidationTarget,
-} from '@/shared/contracts/products';
-import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION = 'product_validation_patterns';
 const SETTINGS_COLLECTION = 'settings';

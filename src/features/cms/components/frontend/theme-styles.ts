@@ -1,8 +1,8 @@
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type React from 'react';
 
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type { ColorSchemeColors };
 

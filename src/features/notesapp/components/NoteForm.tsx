@@ -24,8 +24,8 @@ import {
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
-import { NotesMarkdownToolbar } from './editor/NotesMarkdownToolbar';
 import { NoteMetadata } from './editor/NoteMetadata';
+import { NotesMarkdownToolbar } from './editor/NotesMarkdownToolbar';
 import { WysiwygEditor } from './editor/WysiwygEditor';
 
 type NoteFormViewContextValue = {

@@ -6,6 +6,15 @@ const createAnalyticsSnapshot = (overrides?: {
   signInSuccess?: number;
   signInFailure?: number;
   progressSyncFailure?: number;
+  aiTutor?: {
+    messageSucceededCount?: number;
+    bridgeSuggestionCount?: number;
+    lessonToGameBridgeSuggestionCount?: number;
+    gameToLessonBridgeSuggestionCount?: number;
+    bridgeQuickActionClickCount?: number;
+    bridgeFollowUpClickCount?: number;
+    bridgeFollowUpCompletionCount?: number;
+  };
 }): {
   totals: { events: number; pageviews: number };
   visitors: number;
@@ -13,6 +22,15 @@ const createAnalyticsSnapshot = (overrides?: {
   topPaths: Array<{ path: string; count: number }>;
   topEventNames: Array<{ name: string; count: number }>;
   importantEvents: Array<{ name: string; count: number }>;
+  aiTutor: {
+    messageSucceededCount: number;
+    bridgeSuggestionCount: number;
+    lessonToGameBridgeSuggestionCount: number;
+    gameToLessonBridgeSuggestionCount: number;
+    bridgeQuickActionClickCount: number;
+    bridgeFollowUpClickCount: number;
+    bridgeFollowUpCompletionCount: number;
+  };
   recent: never[];
 } => ({
   totals: { events: 0, pageviews: 0 },
@@ -34,6 +52,15 @@ const createAnalyticsSnapshot = (overrides?: {
       count: overrides?.progressSyncFailure ?? 0,
     },
   ],
+  aiTutor: {
+    messageSucceededCount: overrides?.aiTutor?.messageSucceededCount ?? 0,
+    bridgeSuggestionCount: overrides?.aiTutor?.bridgeSuggestionCount ?? 0,
+    lessonToGameBridgeSuggestionCount: overrides?.aiTutor?.lessonToGameBridgeSuggestionCount ?? 0,
+    gameToLessonBridgeSuggestionCount: overrides?.aiTutor?.gameToLessonBridgeSuggestionCount ?? 0,
+    bridgeQuickActionClickCount: overrides?.aiTutor?.bridgeQuickActionClickCount ?? 0,
+    bridgeFollowUpClickCount: overrides?.aiTutor?.bridgeFollowUpClickCount ?? 0,
+    bridgeFollowUpCompletionCount: overrides?.aiTutor?.bridgeFollowUpCompletionCount ?? 0,
+  },
   recent: [],
 });
 
@@ -230,6 +257,34 @@ describe('kangur observability alerts', () => {
     });
   });
 
+  it('flags degraded ai tutor bridge completion when bridge suggestions do not convert', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot({
+        aiTutor: {
+          bridgeSuggestionCount: 6,
+          bridgeFollowUpCompletionCount: 1,
+        },
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const bridgeAlert = alerts.find((alert) => alert.id === 'kangur-ai-tutor-bridge-completion-rate');
+    expect(bridgeAlert?.status).toBe('critical');
+    expect(bridgeAlert?.value).toBe(16.7);
+    expect(bridgeAlert?.investigation).toEqual({
+      label: 'Review tutor bridge analytics',
+      href: '/admin/kangur/observability?range=24h#recent-analytics-events',
+    });
+  });
+
   it('flags neural narration generation failures independently of fallback rate', () => {
     const alerts = __testables.buildKangurObservabilityAlerts({
       range: '24h',
@@ -266,6 +321,55 @@ describe('kangur route latency stats', () => {
       slowRequestCount: 2,
       slowRequestRatePercent: 40,
       slowThresholdMs: 750,
+    });
+  });
+});
+
+describe('kangur ai tutor bridge analytics summary', () => {
+  it('summarizes bridge suggestions, clicks, and completions from tutor analytics events', () => {
+    expect(
+      __testables.summarizeKangurAiTutorAnalytics([
+        {
+          name: 'kangur_ai_tutor_message_succeeded',
+          meta: {
+            hasBridgeFollowUpAction: true,
+            bridgeFollowUpDirection: 'lesson_to_game',
+          },
+        },
+        {
+          name: 'kangur_ai_tutor_message_succeeded',
+          meta: {
+            hasBridgeFollowUpAction: true,
+            bridgeFollowUpDirection: 'game_to_lesson',
+          },
+        },
+        {
+          name: 'kangur_ai_tutor_quick_action_clicked',
+          meta: {
+            isBridgeAction: true,
+          },
+        },
+        {
+          name: 'kangur_ai_tutor_follow_up_clicked',
+          meta: {
+            actionId: 'bridge:lesson-to-game:adding',
+          },
+        },
+        {
+          name: 'kangur_ai_tutor_follow_up_completed',
+          meta: {
+            actionId: 'bridge:game-to-lesson:adding',
+          },
+        },
+      ])
+    ).toEqual({
+      messageSucceededCount: 2,
+      bridgeSuggestionCount: 2,
+      lessonToGameBridgeSuggestionCount: 1,
+      gameToLessonBridgeSuggestionCount: 1,
+      bridgeQuickActionClickCount: 1,
+      bridgeFollowUpClickCount: 1,
+      bridgeFollowUpCompletionCount: 1,
     });
   });
 });

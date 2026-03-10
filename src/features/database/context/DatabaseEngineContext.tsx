@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 import {
   useDatabaseEngineState,
   type UseDatabaseEngineStateReturn,
 } from '../hooks/useDatabaseEngineState';
-import { internalError } from '@/shared/errors/app-error';
 
 type DatabaseEngineContextValue = UseDatabaseEngineStateReturn;
 

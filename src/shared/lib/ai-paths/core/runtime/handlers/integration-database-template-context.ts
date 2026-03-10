@@ -1,6 +1,7 @@
 import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema } from '@/shared/contracts/database';
+import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 
 import {
   normalizeNonEmptyString,
@@ -11,7 +12,6 @@ import {
 import { DB_PROVIDER_PLACEHOLDERS } from '../../constants';
 import { coerceInput, renderTemplate } from '../../utils';
 
-import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 
 const toTitleCase = (value: string): string =>
   value

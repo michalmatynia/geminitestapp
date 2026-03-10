@@ -1,8 +1,10 @@
 import fs from 'fs/promises';
+
 import { IMAGE_STUDIO_UPSCALE_ERROR_CODES } from '@/features/ai/image-studio/contracts/upscale';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import { upscaleBadRequest } from './upscale-request-parser';
+
 import { StudioSlotRecord } from './types';
+import { upscaleBadRequest } from './upscale-request-parser';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 

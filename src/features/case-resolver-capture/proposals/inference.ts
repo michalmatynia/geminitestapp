@@ -1,10 +1,3 @@
-import {
-  composeCandidateStreetNumber,
-  findExistingFilemakerAddressId,
-  findExistingFilemakerPartyReference,
-  normalizeCaseResolverComparable,
-  extractCaseResolverDocumentDate,
-} from '@/shared/lib/case-resolver-capture-adapter';
 
 import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {
@@ -12,6 +5,13 @@ import type {
   PromptExploderCaseResolverPartyBundle,
   PromptExploderCaseResolverPartyCandidate,
 } from '@/shared/contracts/prompt-exploder';
+import {
+  composeCandidateStreetNumber,
+  findExistingFilemakerAddressId,
+  findExistingFilemakerPartyReference,
+  normalizeCaseResolverComparable,
+  extractCaseResolverDocumentDate,
+} from '@/shared/lib/case-resolver-capture-adapter';
 
 import type {
   CaseResolverCaptureAction,

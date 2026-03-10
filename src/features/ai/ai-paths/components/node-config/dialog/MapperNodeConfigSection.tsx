@@ -1,12 +1,12 @@
 'use client';
 
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import {
   createParserMappings,
   formatRuntimeValue,
   getValueAtMappingPath,
   parsePathList,
 } from '@/shared/lib/ai-paths';
-import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import {

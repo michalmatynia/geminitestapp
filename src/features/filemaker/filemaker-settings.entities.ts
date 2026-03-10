@@ -1,4 +1,9 @@
 import {
+  normalizeAddressFields,
+} from '@/shared/lib/filemaker/entity-builders';
+
+import { normalizeString } from './filemaker-settings.helpers';
+import {
   type FilemakerAddressLink,
   type FilemakerAddressOwnerKind,
   type FilemakerEmail,
@@ -9,10 +14,6 @@ import {
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
 } from './types';
-import {
-  normalizeAddressFields,
-} from '@/shared/lib/filemaker/entity-builders';
-import { normalizeString } from './filemaker-settings.helpers';
 
 export {
   createFilemakerAddress,

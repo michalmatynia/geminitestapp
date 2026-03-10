@@ -10,9 +10,11 @@ import {
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
+import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
 import {
   buildValidatorPatternMasterNodes,
   fromSeqGroupMasterNodeId,
@@ -20,8 +22,6 @@ import {
 } from './validator-pattern-master-tree';
 import { ValidatorPatternTreeContext } from './ValidatorPatternTreeContext';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
-import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
-import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
 
 // ─── Group Settings Panel ─────────────────────────────────────────────────────
 

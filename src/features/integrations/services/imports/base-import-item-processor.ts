@@ -1,20 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import {
-  MAX_IMAGES_PER_PRODUCT,
-  extractFilename,
-  guessMimeType,
-  isSkuConflictError,
-  sanitizeSku,
-  toStringId,
-  type ImportDecision,
-  type NormalizedMappedProduct,
-  type ProcessItemResult,
-  type ProductLookupMaps,
-} from './base-import-service-shared';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
 import {
@@ -22,10 +9,6 @@ import {
   getProductListingRepository,
 } from '@/features/integrations/services/product-listing-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
-import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
-import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
@@ -49,6 +32,24 @@ import type {
   CreateProduct as ProductCreateInput,
   UpdateProduct as ProductUpdateInput,
 } from '@/shared/contracts/products';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
+import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
+
+import {
+  MAX_IMAGES_PER_PRODUCT,
+  extractFilename,
+  guessMimeType,
+  isSkuConflictError,
+  sanitizeSku,
+  toStringId,
+  type ImportDecision,
+  type NormalizedMappedProduct,
+  type ProcessItemResult,
+  type ProductLookupMaps,
+} from './base-import-service-shared';
 
 export const resolveProducerAndTagLookups = async (
   connectionId: string

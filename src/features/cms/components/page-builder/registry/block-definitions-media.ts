@@ -1,3 +1,4 @@
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
 import {
   DEFAULT_APP_EMBED_BASE_PATH,
   DEFAULT_APP_EMBED_ENTRY_PAGE,
@@ -9,7 +10,6 @@ import { KANGUR_WIDGET_OPTIONS } from '@/shared/lib/kangur-cms-adapter';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 
-import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
   ImageElement: {

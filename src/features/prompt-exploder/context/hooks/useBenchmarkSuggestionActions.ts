@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+
 
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -18,9 +18,11 @@ import {
   resolveSegmentIdAfterReexplode,
 } from '../../runtime-refresh';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
+
 import type { PromptExploderBenchmarkSuggestion } from '../../types';
 import type { DocumentActions, DocumentState } from '../DocumentContext';
 import type { SettingsActions, SettingsState } from '../SettingsContext';
+import type { Dispatch, SetStateAction } from 'react';
 
 type ToastFn = (
   message: string,

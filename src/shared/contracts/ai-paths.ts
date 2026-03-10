@@ -10,9 +10,6 @@ import {
   type Edge,
   type AiPathsValidationRule,
 } from './ai-paths-core';
-
-import { dtoBaseSchema, namedDtoSchema } from './base';
-
 import {
   aiPathNodeStatusSchema,
   aiPathRunSchema,
@@ -21,6 +18,7 @@ import {
   type AiPathRun,
   type AiPathRunStatus,
 } from './ai-paths-runtime';
+import { dtoBaseSchema, namedDtoSchema } from './base';
 
 export {
   aiPathNodeStatusSchema,

@@ -1,14 +1,14 @@
 import 'server-only';
 
+import type {
+  AgentTeachingChatMessage,
+  AgentTeachingChatSource,
+} from '@/shared/contracts/agent-teaching';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   type BrainChatMessage,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import type {
-  AgentTeachingChatMessage,
-  AgentTeachingChatSource,
-} from '@/shared/contracts/agent-teaching';
 
 import { generateOllamaEmbedding } from './embeddings';
 import { getTeachingAgentById } from './repository';

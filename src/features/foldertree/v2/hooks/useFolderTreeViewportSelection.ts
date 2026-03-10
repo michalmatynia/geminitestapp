@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useCallback, useRef, useEffect } from 'react';
+
 import { MasterFolderTreeController, MasterTreeId } from '@/shared/contracts/master-folder-tree';
 import { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
+
 import { resolveNextSelectedNodeIds } from '../operations/selection';
 import { FolderTreeNodeView } from '../types';
 

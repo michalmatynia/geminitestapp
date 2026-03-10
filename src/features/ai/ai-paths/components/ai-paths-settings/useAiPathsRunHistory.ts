@@ -4,6 +4,10 @@ import { type Query } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import {
+  useRunHistoryActions,
+  useRunHistoryState,
+} from '@/features/ai/ai-paths/context/RunHistoryContext';
+import {
   cancelAiPathRun,
   getAiPathRun,
   listAiPathRuns,
@@ -17,17 +21,13 @@ import {
 } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  useRunHistoryActions,
-  useRunHistoryState,
-} from '@/features/ai/ai-paths/context/RunHistoryContext';
 
-import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
 import {
   normalizeRunDetail,
   normalizeRunEvents,
   normalizeRunNodes,
 } from '../job-queue-panel-utils';
+import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
 
 type ToastFn = (
   message: string,

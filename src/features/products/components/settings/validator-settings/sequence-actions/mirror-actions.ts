@@ -1,11 +1,14 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
-import type { QueryClient } from '@tanstack/react-query';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+
 import { buildUniqueLabel, createSequenceGroupId, getPatternSequence } from '../helpers';
+
 import type { CreatePatternMutation } from './types';
+import type { QueryClient } from '@tanstack/react-query';
 
 export const handleCreateNameLengthMirrorPattern = async (args: {
   queryClient: QueryClient;

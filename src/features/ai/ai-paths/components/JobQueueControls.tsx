@@ -1,10 +1,13 @@
 'use client';
 
-import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
-import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
+import React from 'react';
+
 import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
+
+import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
+
 
 export function JobQueueControls(): React.JSX.Element {
   const {

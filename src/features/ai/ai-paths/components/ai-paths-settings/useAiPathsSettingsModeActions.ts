@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import type {
   AiNode,
   Edge,
@@ -22,7 +23,6 @@ import {
   STORAGE_VERSION,
   createDefaultPathConfig,
 } from '@/shared/lib/ai-paths';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 
 type ToastFn = (
   message: string,

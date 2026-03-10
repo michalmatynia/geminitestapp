@@ -1,4 +1,3 @@
-import { Prisma, ProductParameter as PrismaProductParameter } from '@/shared/lib/db/prisma-client';
 
 import type {
   ParameterRepository,
@@ -8,6 +7,7 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductParameter } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, ProductParameter as PrismaProductParameter } from '@/shared/lib/db/prisma-client';
 
 const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
   'text',

@@ -1,10 +1,11 @@
-import { getProductAiJobRepository } from './product-ai-job-repository';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { productService } from './productService';
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
+import { getProductAiJobRepository } from './product-ai-job-repository';
+import { productService } from './productService';
 
 type ProductSummary = {
   name_en: string | null;

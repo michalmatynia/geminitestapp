@@ -12,6 +12,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+
 import { useKangurRouting } from './KangurRoutingContext';
 
 type KangurRouteTransitionState = {

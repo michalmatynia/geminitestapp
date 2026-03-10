@@ -2,10 +2,6 @@ import 'server-only';
 
 import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
 
-import type {
-  PortablePathEnvelopeVerificationAuditEvent,
-  PortablePathEnvelopeVerificationObservabilitySnapshot,
-} from './portable-engine-envelope-observability';
 import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
@@ -15,6 +11,11 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
 } from './sinks-constants.server';
+
+import type {
+  PortablePathEnvelopeVerificationAuditEvent,
+  PortablePathEnvelopeVerificationObservabilitySnapshot,
+} from './portable-engine-envelope-observability';
 import type { PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary } from './sinks-contracts.server';
 
 export type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';

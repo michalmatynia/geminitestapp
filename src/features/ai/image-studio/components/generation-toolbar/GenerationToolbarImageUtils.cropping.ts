@@ -1,7 +1,8 @@
 import { ApiError } from '@/shared/lib/api-client';
-import { type CropCanvasContext, type CropRect } from './GenerationToolbarImageUtils.types';
-import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
+
 import { mapCanvasRectToImageRect } from './GenerationToolbarImageUtils.geometry';
+import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
+import { type CropCanvasContext, type CropRect } from './GenerationToolbarImageUtils.types';
 
 export const isClientCropCrossOriginError = (error: unknown): boolean =>
   error instanceof Error && /cross-origin restrictions/i.test(error.message);

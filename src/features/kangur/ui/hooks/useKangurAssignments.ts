@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
   KangurAssignmentCreateInput,
@@ -10,7 +11,6 @@ import type {
   KangurAssignmentUpdateInput,
 } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { logKangurClientError } from '@/features/kangur/observability/client';
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
 
 const kangurPlatform = getKangurPlatform();

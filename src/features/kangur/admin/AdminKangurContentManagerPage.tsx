@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -11,6 +10,7 @@ import {
   Volume2,
   type LucideIcon,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 import {
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
@@ -28,10 +28,10 @@ import { cn } from '@/shared/utils';
 
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
-import { summarizeKangurContentCreator } from './content-creator-insights';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { summarizeKangurContentCreator } from './content-creator-insights';
 
 type ContentTab = 'lessons' | 'tests';
 

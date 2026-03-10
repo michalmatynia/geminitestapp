@@ -1,7 +1,8 @@
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
-import type { CaseResolverRuntimeIndexes } from '../runtime';
 import { resolveScopedCaseResolverWorkspaceWithIndexes } from '../runtime';
+
+import type { CaseResolverRuntimeIndexes } from '../runtime';
 
 type ResolveCaseResolverTreeWorkspaceArgs = {
   selectedFileId: string | null;

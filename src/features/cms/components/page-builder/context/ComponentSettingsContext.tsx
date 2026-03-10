@@ -2,17 +2,18 @@
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap';
 import {
   DEFAULT_CUSTOM_CSS_AI_CONFIG,
   type CustomCssAiConfig,
   type CssAnimationConfig,
 } from '@/shared/contracts/cms';
-import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
-
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { getSectionDefinition, getBlockDefinition } from '../section-registry';
 import { internalError } from '@/shared/errors/app-error';
+
+import { getSectionDefinition, getBlockDefinition } from '../section-registry';
+
 import type {
   ComponentSettingsActionsContextValue,
   ComponentSettingsStateContextValue,

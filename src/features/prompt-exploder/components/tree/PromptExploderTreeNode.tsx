@@ -15,8 +15,8 @@ import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { Button, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { readPromptExploderTreeMetadata, type PromptExploderTreeNodeKind } from '../../tree/types';
 import { usePromptExploderTreeNodeRuntimeContext } from './PromptExploderTreeNodeRuntimeContext';
+import { readPromptExploderTreeMetadata, type PromptExploderTreeNodeKind } from '../../tree/types';
 
 type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;
 

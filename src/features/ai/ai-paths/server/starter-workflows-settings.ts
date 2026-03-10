@@ -1,6 +1,6 @@
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import {
   computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,

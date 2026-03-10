@@ -119,7 +119,7 @@ const upsertQueuedProductSourceInternal = (
 ): void => {
   const sources = ensureSourceMap(productId);
   const currentState = sources.get(source);
-  if (currentState && currentState.expiresAt === expiresAt) {
+  if (currentState?.expiresAt === expiresAt) {
     scheduleQueuedSourceExpiry(productId, source, expiresAt);
     return;
   }

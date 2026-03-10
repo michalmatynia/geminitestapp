@@ -1,13 +1,9 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent, type SystemLogInput } from '@/shared/lib/observability/system-logger';
 
-import type {
-  PortablePathEnvelopeVerificationAuditEvent,
-  PortablePathEnvelopeVerificationObservabilitySnapshot,
-} from './portable-engine-envelope-observability';
 import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
@@ -16,10 +12,6 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
 } from './sinks-constants.server';
-import type {
-  PortablePathEnvelopeVerificationAuditSinkHealthCheck,
-  PortablePathEnvelopeVerificationAuditSinkWithHealthCheck,
-} from './sinks-contracts.server';
 import {
   buildPortablePathEnvelopeVerificationAuditSinkHealthMessage,
   buildPortablePathEnvelopeVerificationMessage,
@@ -31,6 +23,16 @@ import {
   toPortablePathEnvelopeVerificationSystemLogInput,
   toPrismaJson,
 } from './sinks-shared.server';
+
+import type {
+  PortablePathEnvelopeVerificationAuditEvent,
+  PortablePathEnvelopeVerificationObservabilitySnapshot,
+} from './portable-engine-envelope-observability';
+import type {
+  PortablePathEnvelopeVerificationAuditSinkHealthCheck,
+  PortablePathEnvelopeVerificationAuditSinkWithHealthCheck,
+} from './sinks-contracts.server';
+
 
 export type CreatePortablePathEnvelopeVerificationLogForwardingSinkOptions = {
   id?: string;

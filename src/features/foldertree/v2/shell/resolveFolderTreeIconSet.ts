@@ -1,6 +1,6 @@
+import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 import type { LucideIcon } from 'lucide-react';
 
-import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 
 export function resolveFolderTreeIconSet<TName extends string>(
   resolveIcon: (input: ResolveFolderTreeIconInput) => LucideIcon,

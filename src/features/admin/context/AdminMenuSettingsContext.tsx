@@ -26,14 +26,9 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import type {
-  AdminMenuSettingsActionsContextValue,
-  AdminMenuSettingsContextValue,
-  AdminMenuSettingsStateContextValue,
-} from './AdminMenuSettingsContext.types';
 import {
   cloneCustomNav,
   collectCustomIds,
@@ -45,6 +40,12 @@ import {
   updateNodeById,
 } from './admin-menu-settings-tree';
 import { useAdminMenuSettingsDerivedState } from './useAdminMenuSettingsDerivedState';
+
+import type {
+  AdminMenuSettingsActionsContextValue,
+  AdminMenuSettingsContextValue,
+  AdminMenuSettingsStateContextValue,
+} from './AdminMenuSettingsContext.types';
 
 export type {
   AdminMenuLayoutNodeState,

@@ -2,14 +2,26 @@
 import { z } from 'zod';
 
 import {
-  kangurAuthUserSchema,
-  kangurAssignmentSnapshotSchema,
-  kangurLearnerProfileSchema,
-  kangurProgressStateSchema,
-  kangurScoreSchema,
-  type KangurProgressState,
-} from '@/shared/contracts/kangur';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+  getKangurLoginHref,
+  resolveKangurPublicBasePathFromHref,
+} from '@/features/kangur/config/routing';
+import {
+  logKangurClientError,
+  trackKangurClientEvent,
+} from '@/features/kangur/observability/client';
+import {
+  createGuestKangurScore,
+  hasGuestKangurScores,
+  listGuestKangurScores,
+  resetGuestKangurScoreSession,
+  syncGuestKangurScores,
+} from '@/features/kangur/services/guest-kangur-scores';
+import {
+  clearStoredActiveLearnerId,
+  getStoredActiveLearnerId,
+  setStoredActiveLearnerId,
+} from '@/features/kangur/services/kangur-active-learner';
+import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentListQuery,
@@ -28,26 +40,14 @@ import {
   isKangurStatusError,
 } from '@/features/kangur/services/status-errors';
 import {
-  logKangurClientError,
-  trackKangurClientEvent,
-} from '@/features/kangur/observability/client';
-import {
-  clearStoredActiveLearnerId,
-  getStoredActiveLearnerId,
-  setStoredActiveLearnerId,
-} from '@/features/kangur/services/kangur-active-learner';
-import {
-  getKangurLoginHref,
-  resolveKangurPublicBasePathFromHref,
-} from '@/features/kangur/config/routing';
-import {
-  createGuestKangurScore,
-  hasGuestKangurScores,
-  listGuestKangurScores,
-  resetGuestKangurScoreSession,
-  syncGuestKangurScores,
-} from '@/features/kangur/services/guest-kangur-scores';
-import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
+  kangurAuthUserSchema,
+  kangurAssignmentSnapshotSchema,
+  kangurLearnerProfileSchema,
+  kangurProgressStateSchema,
+  kangurScoreSchema,
+  type KangurProgressState,
+} from '@/shared/contracts/kangur';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 const KANGUR_AUTH_ME_ENDPOINT = '/api/kangur/auth/me';
 const KANGUR_LOGOUT_ENDPOINT = '/api/kangur/auth/logout';
@@ -187,6 +187,7 @@ const resolveSessionUser = async (): Promise<KangurUser> => {
 
   const fetchPromise = (async (): Promise<KangurUser> => {
     const response = await fetch(KANGUR_AUTH_ME_ENDPOINT, {
+      cache: 'no-store',
       method: 'GET',
       headers: createActorAwareHeaders(),
       credentials: 'same-origin',

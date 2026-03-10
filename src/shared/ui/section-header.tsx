@@ -1,8 +1,9 @@
+import { useMemo, type ReactNode } from 'react';
+
 import { cn } from '@/shared/utils';
 
 import { RefreshButton } from './RefreshButton';
 
-import { useMemo, type ReactNode } from 'react';
 
 type SectionHeaderSize = 'lg' | 'md' | 'sm' | 'xs' | 'xxs';
 

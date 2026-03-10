@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
+
 import { Label } from './label';
 
 interface HintProps {

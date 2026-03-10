@@ -1,7 +1,7 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import prisma from '@/shared/lib/db/prisma';
 
 type LLMContext = {
   model: string;

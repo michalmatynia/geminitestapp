@@ -37,11 +37,11 @@ import {
   type StreamConnectionStatus,
 } from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
-import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
-import { RunHistoryEntries } from './RunHistoryEntries';
-import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
+import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
+import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { RunHistoryEntries } from './RunHistoryEntries';
 
 type HistoryOption = {
   id: string;

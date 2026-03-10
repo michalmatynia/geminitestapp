@@ -1,10 +1,12 @@
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+
 import { 
   readRuntimeTraceSummary, 
   toDate, 
   readRuntimeHistoryEntries 
 } from './normalization';
+
 import type { 
   AggregatedRuntimeNode, 
   RuntimeTraceSummary 

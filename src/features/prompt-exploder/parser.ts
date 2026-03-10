@@ -1,3 +1,10 @@
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptExploderLearnedTemplate,
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
+import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+
 import { buildPromptExploderBindings } from './parser-bindings';
 import { collectReferencedParamsFromItems, parseListLines } from './parser-list-items';
 import {
@@ -7,15 +14,10 @@ import {
 } from './parser-runtime-patterns';
 import { renderPromptExploderSegment } from './parser-segment-factory';
 import { inferTypeFromLearnedTemplates } from './parser-type-inference';
+import { getPromptExploderScopedRules } from './pattern-pack';
 import { parseSegmentsLoop, parseSegmentsRuleDriven } from './utils/parser-loops';
 import { normalizePromptSource, trimTrailingBlankLines } from './utils/parser-utils';
-import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
-import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import type {
-  PromptExploderLearnedTemplate,
-  PromptExploderRuntimeValidationScope,
-} from '@/shared/contracts/prompt-exploder';
-import { getPromptExploderScopedRules } from './pattern-pack';
+
 
 import type {
   PromptExploderBinding,

@@ -4,16 +4,16 @@ import { SaveIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   FRONT_PAGE_OPTIONS,
   normalizeFrontPageApp,
   type FrontPageOption,
   type FrontPageSelectableApp,
 } from '@/shared/lib/front-page-app';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type FrontAppOption = FrontPageSelectableApp;
 

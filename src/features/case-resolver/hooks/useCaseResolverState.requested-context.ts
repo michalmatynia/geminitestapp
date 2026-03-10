@@ -5,6 +5,7 @@ import type {
   CaseResolverRequestedCaseIssue,
   CaseResolverRequestedCaseStatus,
 } from '@/shared/contracts/case-resolver';
+
 import {
   fetchCaseResolverWorkspaceRecordDetailed,
   getCaseResolverWorkspaceRevision,

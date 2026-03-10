@@ -3,16 +3,15 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Textarea, useToast, EmptyState, Card } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-
 import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Input, Label, Textarea, useToast, EmptyState, Card } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 function createPromptId(): string {
   return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'

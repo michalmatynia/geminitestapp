@@ -12,15 +12,12 @@ import {
 } from '@/features/foldertree';
 import { useMasterFolderTreeSearch } from '@/features/foldertree';
 import type { MasterTreeDropInput } from '@/features/foldertree';
+import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
 import {
   CaseResolverFolderTreeProvider,
   useCaseResolverFolderTreeDataContext,
@@ -28,6 +25,10 @@ import {
   useCaseResolverFolderTreeUiStateContext,
   isCaseResolverVirtualSectionNode,
 } from '../context/CaseResolverFolderTreeContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import {
   emitCaseResolverDropDocumentToCanvas,
   emitCaseResolverShowDocumentInCanvas,
@@ -55,7 +56,6 @@ import {
   type CaseResolverTreeNodeRuntimeContextValue,
 } from './CaseResolverTreeNodeRuntimeContext';
 
-import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
 
 type PendingNodeCanvasAction = {
   kind: 'drop' | 'show';

@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
+
 import {
   type MasterFolderTreeActionResult,
   type MasterFolderTreePersistOperation,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
-import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
+
 import {
   createAppliedTx,
   createErrorAction,
@@ -16,8 +16,11 @@ import {
   cloneUndoStack,
   withUndoEntry,
 } from './folder-tree-utils';
-import { normalizeNodesV2 } from '../../core/engine';
 import { ApplyPersistedOperationArgs } from './useFolderTreeEngineActions';
+import { normalizeNodesV2 } from '../../core/engine';
+import { FolderTreeStore } from '../../store/createFolderTreeStore';
+import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
+
 import type { MasterFolderTreeShellRuntime } from '../../shell/useFolderTreeShellRuntime';
 
 export function useFolderTreeTransaction(

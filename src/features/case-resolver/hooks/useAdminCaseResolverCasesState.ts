@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
+import { useCaseResolverCaseSearchIndex } from './useCaseResolverCaseSearchIndex';
 import {
   type CaseSortKey,
   useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 import { buildPathLabelMap } from '../pages/AdminCaseResolverCasesUtils';
-import { useCaseResolverCaseSearchIndex } from './useCaseResolverCaseSearchIndex';
 
 const resolveCaseSortOrderValue = (file: CaseResolverFile): number =>
   typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)

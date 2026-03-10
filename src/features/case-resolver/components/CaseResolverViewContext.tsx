@@ -1,7 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import type { CaseResolverStateValue } from '../types';
+
+import type {
+  CaseResolverCaptureProposalState,
+  CaseResolverCaptureDocumentDateAction,
+} from '@/features/case-resolver-capture';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
 import type {
   CaseResolverGraph,
   CaseResolverRelationGraph,
@@ -13,12 +18,9 @@ import type {
   CaseMetadataDraft,
   WorkspaceView as CaseResolverWorkspaceView,
 } from '@/shared/contracts/case-resolver';
-import type {
-  CaseResolverCaptureProposalState,
-  CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { CaseResolverStateValue } from '../types';
 export type { EditorDetailsTab };
 
 type WorkspaceView = CaseResolverWorkspaceView;

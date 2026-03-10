@@ -1,16 +1,16 @@
 import 'server-only';
 
-import type { Filter } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
   type KangurProgressState,
 } from '@/shared/contracts/kangur';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurProgressRepository } from './types';
+import type { Filter } from 'mongodb';
 
 const SETTINGS_COLLECTION = 'settings';
 const KANGUR_PROGRESS_SETTING_PREFIX = 'kangur_progress:';

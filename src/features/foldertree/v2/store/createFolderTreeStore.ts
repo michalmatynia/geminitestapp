@@ -1,5 +1,6 @@
-import type { FolderTreeState, FolderTreeStoreSnapshot } from '../types';
 import type { SnapshotStateStore } from '@/shared/contracts/state-store';
+
+import type { FolderTreeState, FolderTreeStoreSnapshot } from '../types';
 
 type FolderTreeStore = SnapshotStateStore<FolderTreeState, FolderTreeStoreSnapshot>;
 

@@ -5,8 +5,8 @@ import React from 'react';
 import type { AiNode } from '@/shared/lib/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
 
-import { CanvasSvgNode } from './CanvasSvgNode';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
+import { CanvasSvgNode } from './CanvasSvgNode';
 
 export function CanvasSvgNodeLayer({
   cullPadding = 260,

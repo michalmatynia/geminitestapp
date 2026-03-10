@@ -13,7 +13,6 @@ import {
   createDefaultFilemakerDatabase,
   parseFilemakerDatabase,
 } from '@/features/filemaker';
-import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,
@@ -25,6 +24,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
+import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import {
   useAdminLayoutActions,
   useAdminLayoutState,
@@ -32,6 +32,11 @@ import {
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
+import {
+  fromCaseResolverCaseContentFileNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+} from '../master-tree';
 import {
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -48,25 +53,21 @@ import {
   parseCaseResolverTags,
   safeParseCaseResolverWorkspace,
 } from '../settings';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import {
   logCaseResolverWorkspaceEvent,
   readCaseResolverNavigationWorkspace,
   getCaseResolverWorkspaceRevision,
 } from '../workspace-persistence';
-import {
-  fromCaseResolverCaseContentFileNodeId,
-  fromCaseResolverCaseNodeId,
-  fromCaseResolverFileNodeId,
-} from '../master-tree';
-import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
-import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import { useCaseResolverStateAssetActions } from './useCaseResolverState.asset-actions';
+import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
+import { useCaseResolverStateEditorActions } from './useCaseResolverState.editor-actions';
+import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
 import {
   resolvePreferredCaseResolverWorkspace,
   shouldRefetchSettingsStoreForRequestedFile,
 } from './useCaseResolverState.helpers.hydration';
-import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 import {
   useCaseResolverPersistence,
   type UseCaseResolverPersistenceValue,
@@ -75,13 +76,12 @@ import {
   useCaseResolverPromptExploder,
   type UseCaseResolverPromptExploderValue,
 } from './useCaseResolverState.prompt-exploder-actions';
-import { useCaseResolverStateEditorActions } from './useCaseResolverState.editor-actions';
 import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.related-files-actions';
-import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
-import { useCaseResolverStateViewState } from './useCaseResolverState.view-state';
 import { useCaseResolverStateRequestedContext } from './useCaseResolverState.requested-context';
-import { useCaseResolverStateWorkspaceHydration } from './useCaseResolverState.workspace-hydration';
+import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
+import { useCaseResolverStateViewState } from './useCaseResolverState.view-state';
 import { useCaseResolverStateWorkspaceDiagnostics } from './useCaseResolverState.workspace-diagnostics';
+import { useCaseResolverStateWorkspaceHydration } from './useCaseResolverState.workspace-hydration';
 import { useCaseResolverStateWorkspaceMutations } from './useCaseResolverState.workspace-mutations';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';

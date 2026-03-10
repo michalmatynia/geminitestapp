@@ -1,12 +1,15 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
-import type { RuleDraft } from '../../context/prompt-engine-context-utils';
+
+import { internalError } from '@/shared/errors/app-error';
 import type {
   PromptValidationRule,
   PromptValidationSimilarPattern,
   PromptAutofixOperation,
 } from '@/shared/lib/prompt-engine/settings';
+
+import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 import {
   updateSimilarInRule,
   removeSimilarFromRule,
@@ -15,8 +18,9 @@ import {
   removeAutofixOperationFromRule,
   addAutofixOperationToRule,
 } from '../rule-item-mutations';
-import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
-import { internalError } from '@/shared/errors/app-error';
+
+import type { RuleDraft } from '../../context/prompt-engine-context-utils';
+
 
 interface RuleItemStateContextValue {
   draft: RuleDraft;

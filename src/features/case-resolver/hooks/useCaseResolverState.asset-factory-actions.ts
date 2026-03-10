@@ -1,24 +1,27 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { CASE_RESOLVER_SETTINGS_KEY, parseCaseResolverSettings } from '../settings';
+
+import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
+import type { Toast } from '@/shared/contracts/ui';
+import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+
 import {
   appendOwnedFolderRecords,
   createUniqueCaseFileName,
   resolveCaseScopedFolderTarget,
 } from './useCaseResolverState.helpers';
+import { CASE_RESOLVER_SETTINGS_KEY, parseCaseResolverSettings } from '../settings';
 import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
   normalizeFolderPaths,
 } from '../settings';
-import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import type { Toast } from '@/shared/contracts/ui';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+
 
 export function useCaseResolverAssetFactoryActions({
   settingsStoreRef,

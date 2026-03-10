@@ -34,7 +34,24 @@ export type KangurLeaderboardUserFilterItem = KangurLeaderboardFilterItem & {
   icon: KangurLeaderboardUserFilterIcon;
 };
 
-export type KangurLeaderboardItem = SharedKangurLeaderboardItem;
+export type KangurLeaderboardItem = {
+  accountLabel: string;
+  currentUserBadgeLabel: string;
+  id: string;
+  isCurrentUser: boolean;
+  isMedal: boolean;
+  isRegistered: boolean;
+  metaLabel: string;
+  operationEmoji: string;
+  operationLabel: string;
+  operationSummary: string;
+  playerName: string;
+  rank: number;
+  rankLabel: string;
+  scoreLabel: string;
+  timeLabel: string;
+  xpLabel: string | null;
+};
 
 type UseKangurLeaderboardStateOptions = {
   enabled?: boolean;
@@ -54,6 +71,40 @@ type UseKangurLeaderboardStateResult = {
   userFilters: KangurLeaderboardUserFilterItem[];
   visibleScores: KangurScoreRecord[];
 };
+
+const OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  addition: { label: 'Dodawanie', emoji: '➕' },
+  subtraction: { label: 'Odejmowanie', emoji: '➖' },
+  multiplication: { label: 'Mnozenie', emoji: '✖️' },
+  division: { label: 'Dzielenie', emoji: '➗' },
+  decimals: { label: 'Ulamki', emoji: '🔢' },
+  powers: { label: 'Potegi', emoji: '⚡' },
+  roots: { label: 'Pierwiastki', emoji: '√' },
+  clock: { label: 'Zegar', emoji: '🕐' },
+  calendar: { label: 'Kalendarz', emoji: '📅' },
+  geometry: { label: 'Geometria', emoji: '🔷' },
+  mixed: { label: 'Mieszane', emoji: '🎲' },
+};
+
+const OPERATION_OPTIONS: KangurLeaderboardOperationOption[] = Object.entries(OPERATION_LABELS).map(
+  ([id, info]) => ({
+    id,
+    ...info,
+  })
+);
+
+const USER_OPTIONS: KangurLeaderboardUserOption[] = [
+  { id: 'all', label: 'Wszyscy', icon: null },
+  { id: 'registered', label: 'Zalogowani', icon: 'user' },
+  { id: 'anonymous', label: 'Anonimowi', icon: 'ghost' },
+];
+
+const getOperationInfo = (operation: string): KangurLeaderboardOperationLabel =>
+  OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation };
+
+const normalizeXpEarned = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
 
 export const useKangurLeaderboardState = (
   options: UseKangurLeaderboardStateOptions = {}
@@ -141,10 +192,32 @@ export const useKangurLeaderboardState = (
 
   const items = useMemo(
     () =>
-      buildKangurLeaderboardItems({
-        currentUserEmail: currentUser?.email ?? null,
-        currentLearnerId: currentUser?.activeLearner?.id ?? null,
-        scores: visibleScores,
+      visibleScores.map((score, index) => {
+        const isRegistered = Boolean(score.created_by);
+        const operationInfo = getOperationInfo(score.operation);
+        const medal = index < MEDALS.length ? MEDALS[index]! : null;
+        const xpEarned = normalizeXpEarned(score.xp_earned);
+        const isCurrentUser =
+          Boolean(currentUser?.email) && score.created_by === (currentUser?.email ?? null);
+
+        return {
+          accountLabel: isRegistered ? 'Zalogowany' : 'Anonim',
+          currentUserBadgeLabel: 'Ty',
+          id: score.id,
+          isCurrentUser,
+          isMedal: medal !== null,
+          isRegistered,
+          metaLabel: `${operationInfo.emoji} ${operationInfo.label} · ${isRegistered ? 'Zalogowany' : 'Anonim'}`,
+          operationEmoji: operationInfo.emoji,
+          operationLabel: operationInfo.label,
+          operationSummary: `${operationInfo.emoji} ${operationInfo.label}`,
+          playerName: score.player_name,
+          rank: index + 1,
+          rankLabel: medal ?? `${index + 1}.`,
+          scoreLabel: `${score.score}/${score.total_questions}`,
+          timeLabel: `${score.time_taken}s`,
+          xpLabel: xpEarned !== null ? `+${xpEarned} XP` : null,
+        };
       }),
     [currentUser?.activeLearner?.id, currentUser?.email, visibleScores]
   );

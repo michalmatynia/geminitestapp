@@ -3,7 +3,9 @@ import 'server-only';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
+import { getKangurAiTutorBridgeFollowUpDirection } from '@/features/kangur/ai-tutor/follow-up-reporting';
 import type {
+  KangurAiTutorAnalyticsSnapshot,
   KangurAnalyticsCount,
   KangurAnalyticsEventType,
   KangurAnalyticsSnapshot,
@@ -108,6 +110,15 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
     name,
     count: 0,
   })),
+  aiTutor: {
+    messageSucceededCount: 0,
+    bridgeSuggestionCount: 0,
+    lessonToGameBridgeSuggestionCount: 0,
+    gameToLessonBridgeSuggestionCount: 0,
+    bridgeQuickActionClickCount: 0,
+    bridgeFollowUpClickCount: 0,
+    bridgeFollowUpCompletionCount: 0,
+  },
   recent: [],
 });
 
@@ -358,6 +369,60 @@ const buildKangurAnalyticsMatch = (from: Date, to: Date): Record<string, unknown
   $or: [{ path: /^\/kangur(?:\/|$)/i }, { 'meta.feature': 'kangur' }],
 });
 
+const summarizeKangurAiTutorAnalytics = (
+  docs: AnalyticsEventMongoDoc[]
+): KangurAiTutorAnalyticsSnapshot =>
+  docs.reduce<KangurAiTutorAnalyticsSnapshot>(
+    (summary, doc) => {
+      const name = doc.name;
+      const meta = doc.meta;
+      const actionId =
+        meta && typeof meta['actionId'] === 'string' && meta['actionId'].trim().length > 0
+          ? meta['actionId']
+          : null;
+      const bridgeDirectionFromAction = getKangurAiTutorBridgeFollowUpDirection(actionId);
+
+      if (name === 'kangur_ai_tutor_message_succeeded') {
+        summary.messageSucceededCount += 1;
+
+        if (meta?.['hasBridgeFollowUpAction'] === true) {
+          summary.bridgeSuggestionCount += 1;
+        }
+
+        if (meta?.['bridgeFollowUpDirection'] === 'lesson_to_game') {
+          summary.lessonToGameBridgeSuggestionCount += 1;
+        }
+
+        if (meta?.['bridgeFollowUpDirection'] === 'game_to_lesson') {
+          summary.gameToLessonBridgeSuggestionCount += 1;
+        }
+      }
+
+      if (name === 'kangur_ai_tutor_quick_action_clicked' && meta?.['isBridgeAction'] === true) {
+        summary.bridgeQuickActionClickCount += 1;
+      }
+
+      if (name === 'kangur_ai_tutor_follow_up_clicked' && bridgeDirectionFromAction) {
+        summary.bridgeFollowUpClickCount += 1;
+      }
+
+      if (name === 'kangur_ai_tutor_follow_up_completed' && bridgeDirectionFromAction) {
+        summary.bridgeFollowUpCompletionCount += 1;
+      }
+
+      return summary;
+    },
+    {
+      messageSucceededCount: 0,
+      bridgeSuggestionCount: 0,
+      lessonToGameBridgeSuggestionCount: 0,
+      gameToLessonBridgeSuggestionCount: 0,
+      bridgeQuickActionClickCount: 0,
+      bridgeFollowUpClickCount: 0,
+      bridgeFollowUpCompletionCount: 0,
+    }
+  );
+
 const loadKangurAnalyticsSnapshot = async (
   range: KangurObservabilityRange
 ): Promise<KangurAnalyticsSnapshot> => {
@@ -372,6 +437,7 @@ const loadKangurAnalyticsSnapshot = async (
     sessionsResult,
     topPathsResult,
     topEventNamesResult,
+    aiTutorResult,
     recentResult,
   ] = await Promise.all([
     collection
@@ -430,6 +496,28 @@ const loadKangurAnalyticsSnapshot = async (
       ])
       .toArray(),
     collection
+      .find(
+        {
+          ...match,
+          type: 'event',
+          name: {
+            $in: [
+              'kangur_ai_tutor_message_succeeded',
+              'kangur_ai_tutor_quick_action_clicked',
+              'kangur_ai_tutor_follow_up_clicked',
+              'kangur_ai_tutor_follow_up_completed',
+            ],
+          },
+        },
+        {
+          projection: {
+            name: 1,
+            meta: 1,
+          },
+        }
+      )
+      .toArray(),
+    collection
       .find(match, {
         projection: {
           _id: 1,
@@ -465,6 +553,7 @@ const loadKangurAnalyticsSnapshot = async (
       name,
       count: topEventCountMap.get(name) ?? 0,
     })),
+    aiTutor: summarizeKangurAiTutorAnalytics(aiTutorResult ?? []),
     recent: (recentResult ?? []).map(toRecentAnalyticsEvent),
   };
 };
@@ -574,10 +663,16 @@ const buildKangurObservabilityAlerts = (input: {
   const progressPatchLatency = input.routeMetrics.progressPatch.latency;
   const serverErrorCount = input.serverLogMetrics?.levels.error ?? 0;
   const serverTotalCount = input.serverLogMetrics?.total ?? 0;
+  const aiTutorBridgeSuggestionCount = input.analytics.aiTutor.bridgeSuggestionCount;
+  const aiTutorBridgeCompletionCount = input.analytics.aiTutor.bridgeFollowUpCompletionCount;
 
   const serverErrorRatePercent = toPercent(serverErrorCount, serverTotalCount);
   const signInFailureRatePercent = toPercent(signInFailureCount, signInAttemptCount);
   const ttsFallbackRatePercent = toPercent(input.ttsFallbackCount, input.ttsRequestCount);
+  const aiTutorBridgeCompletionRatePercent = toPercent(
+    aiTutorBridgeCompletionCount,
+    aiTutorBridgeSuggestionCount
+  );
 
   const progressWarningThreshold = scaleCountThreshold(input.range, 3);
   const progressCriticalThreshold = scaleCountThreshold(input.range, 10);
@@ -599,6 +694,14 @@ const buildKangurObservabilityAlerts = (input: {
       : input.performanceBaseline.e2eStatus === 'fail'
         ? 'critical'
         : input.performanceBaseline.e2eStatus === 'infra_fail'
+          ? 'warning'
+          : 'ok';
+  const aiTutorBridgeCompletionStatus: KangurObservabilityStatus =
+    aiTutorBridgeSuggestionCount < 5 || aiTutorBridgeCompletionRatePercent === null
+      ? 'insufficient_data'
+      : aiTutorBridgeCompletionRatePercent < 20
+        ? 'critical'
+        : aiTutorBridgeCompletionRatePercent < 40
           ? 'warning'
           : 'ok';
 
@@ -744,6 +847,23 @@ const buildKangurObservabilityAlerts = (input: {
           from: input.from,
           to: input.to,
         }),
+      },
+    },
+    {
+      id: 'kangur-ai-tutor-bridge-completion-rate',
+      title: 'AI Tutor Bridge Completion Rate',
+      status: aiTutorBridgeCompletionStatus,
+      value: aiTutorBridgeCompletionRatePercent,
+      unit: '%',
+      warningThreshold: 40,
+      criticalThreshold: 20,
+      summary:
+        aiTutorBridgeSuggestionCount < 5
+          ? 'Insufficient AI Tutor bridge suggestion volume to evaluate cross-surface completion reliably.'
+          : `${aiTutorBridgeCompletionCount} completed bridge follow-ups out of ${aiTutorBridgeSuggestionCount} bridge suggestions in the selected window.`,
+      investigation: {
+        label: 'Review tutor bridge analytics',
+        href: recentAnalyticsHref,
       },
     },
     {
@@ -899,4 +1019,5 @@ export const __testables = {
   buildKangurObservabilityAlerts,
   buildRouteLatencyStats,
   loadKangurPerformanceBaseline,
+  summarizeKangurAiTutorAnalytics,
 };

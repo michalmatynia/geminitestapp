@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+
+import type { Toast } from '@/shared/contracts/ui';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
@@ -10,6 +12,7 @@ import {
   resolveNodeTypeId,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
+
 import {
   SUBGRAPH_CLIPBOARD_STORAGE_KEY,
   SUBGRAPH_CLIPBOARD_VERSION,
@@ -18,7 +21,7 @@ import {
   parseSubgraphClipboardPayload,
   type SubgraphClipboardPayload,
 } from './useCanvasInteractions.helpers';
-import type { Toast } from '@/shared/contracts/ui';
+
 import type { GraphMutationMeta } from '../GraphContext';
 
 let inMemorySubgraphClipboard: SubgraphClipboardPayload | null = null;

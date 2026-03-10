@@ -1,7 +1,9 @@
-import React from 'react';
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';
-import { Button, SelectSimple, Switch } from '@/shared/ui';
+import React from 'react';
+
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
+import { Button, SelectSimple, Switch } from '@/shared/ui';
+
 import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 
 interface CaseListSortingProps {

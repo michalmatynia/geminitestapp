@@ -1,7 +1,6 @@
 import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
-import { coerceInput } from '../../utils';
 import {
   type ParameterDefinitionRecord,
   MULTI_VALUE_DELIMITER,
@@ -17,6 +16,7 @@ import {
   resolveParameterValue,
   toRecord,
 } from './database-parameter-inference-utils';
+import { coerceInput } from '../../utils';
 
 export {
   coerceArrayLike,

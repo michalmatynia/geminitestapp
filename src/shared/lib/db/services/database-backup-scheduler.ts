@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseBackupSchedulerTickResult,
   DatabaseEngineBackupSchedulerStatus,
@@ -19,6 +17,8 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type TargetEvaluation = {
   dueNow: boolean;

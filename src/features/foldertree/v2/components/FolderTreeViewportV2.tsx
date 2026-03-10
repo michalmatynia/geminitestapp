@@ -2,37 +2,39 @@
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useEffect, useMemo, useRef } from 'react';
-import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
-import type { FolderTreeNodeView } from '../types';
+
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import { MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
 import { EmptyState } from '@/shared/ui';
+import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
-import { MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
 
-import { getMasterTreeNodeStatus } from '../operations/node-status';
-import { FolderTreeContextMenu } from './FolderTreeContextMenu';
-import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 
-import { buildRootsV2, flattenVisibleNodesV2 } from '../core/engine';
-import { setMasterTreeDragNodeData } from '../operations/drag-data';
-import type { MasterFolderTreeSearchState } from '../search/useMasterFolderTreeSearch';
-import {
-  useFolderTreeShellRuntime,
-  type MasterFolderTreeShellRuntime,
-} from '../shell/useFolderTreeShellRuntime';
 
 import { DefaultRow } from './DefaultRow';
+import { FolderTreeContextMenu } from './FolderTreeContextMenu';
 import { FolderTreeViewportRenderNodeInput } from './types';
-import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
+import { buildRootsV2, flattenVisibleNodesV2 } from '../core/engine';
 import {
   useFolderTreeViewportDnd,
   FolderTreeDropInput,
   FolderTreeResolveDropPositionInput,
 } from '../hooks/useFolderTreeViewportDnd';
+import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
+import { setMasterTreeDragNodeData } from '../operations/drag-data';
+import { getMasterTreeNodeStatus } from '../operations/node-status';
 import { useOptionalMasterFolderTreeShellContext } from '../shell/MasterFolderTreeShellContext';
+import {
+  useFolderTreeShellRuntime,
+  type MasterFolderTreeShellRuntime,
+} from '../shell/useFolderTreeShellRuntime';
+
+import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
+import type { MasterFolderTreeSearchState } from '../search/useMasterFolderTreeSearch';
+import type { FolderTreeNodeView } from '../types';
 
 export type { FolderTreeViewportRenderNodeInput };
 

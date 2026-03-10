@@ -1,15 +1,15 @@
-import { useId } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
+import { useId } from 'react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
-import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurSectionHeading,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 

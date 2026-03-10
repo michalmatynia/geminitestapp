@@ -1,7 +1,8 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -10,20 +11,20 @@ import {
   KangurHeadline,
   KangurOptionCardButton,
   KangurProgressBar,
-  KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
-import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type SubtractingQuestion = {
@@ -92,15 +93,15 @@ export default function SubtractingGame({
   finishLabel = 'Wróć do lekcji',
   onFinish,
 }: SubtractingGameProps): React.JSX.Element {
-  const prefersReducedMotion = useReducedMotion();
-  const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [question, setQuestion] = useState<SubtractingQuestion>(() => generateQuestion(0));
   const [selected, setSelected] = useState<number | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const sessionStartedAtRef = useRef(Date.now());
 
   const handleSelect = (choice: number): void => {
     if (confirmed) {
@@ -122,7 +123,16 @@ export default function SubtractingGame({
         const progress = loadProgress();
         const reward = createLessonPracticeReward(progress, 'subtracting', newScore, TOTAL);
         addXp(reward.xp, reward.progressUpdates);
+        void persistKangurSessionScore({
+          operation: 'subtraction',
+          score: newScore,
+          totalQuestions: TOTAL,
+          correctAnswers: newScore,
+          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+          xpEarned: reward.xp,
+        });
         setXpEarned(reward.xp);
+        setXpBreakdown(reward.breakdown ?? []);
         setScore(newScore);
         setDone(true);
       } else {
@@ -161,6 +171,13 @@ export default function SubtractingGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurRewardBreakdownChips
+            accent='slate'
+            breakdown={xpBreakdown}
+            className='justify-center'
+            dataTestId='subtracting-game-summary-breakdown'
+            itemDataTestIdPrefix='subtracting-game-summary-breakdown'
+          />
           <KangurProgressBar accent='rose' animated size='md' value={percent} />
           <p className='text-slate-500'>
             {percent === 100
@@ -177,9 +194,11 @@ export default function SubtractingGame({
                 setScore(0);
                 setDone(false);
                 setXpEarned(0);
+                setXpBreakdown([]);
                 setQuestion(generateQuestion(0));
                 setSelected(null);
                 setConfirmed(false);
+                sessionStartedAtRef.current = Date.now();
               }}
               size='lg'
               variant='surface'
@@ -210,102 +229,87 @@ export default function SubtractingGame({
         </span>
       </div>
 
-      <AnimatePresence mode='wait'>
-        <motion.div
-          key={roundIndex}
-          {...roundMotionProps}
-          className='w-full'
+      <div className='w-full'>
+        <KangurGlassPanel
+          className='flex w-full flex-col items-center gap-4'
+          data-testid='subtracting-game-round-shell'
+          padding='lg'
+          surface='solid'
+          variant='soft'
         >
-          <KangurGlassPanel
-            className='flex w-full flex-col items-center gap-4'
-            data-testid='subtracting-game-round-shell'
-            padding='lg'
-            surface='solid'
-            variant='soft'
-          >
-            <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
-              {question.a} − {question.b} = <span className='text-slate-400'>?</span>
-            </KangurEquationDisplay>
-            <AppleVisual a={question.a} b={question.b} />
-            <div className='grid grid-cols-2 gap-2 w-full'>
-              {question.choices.map((choice, index) => {
-                let accent: KangurAccent = 'rose';
-                let emphasis: 'neutral' | 'accent' = 'neutral';
-                let state: 'default' | 'muted' = 'default';
-                let className = 'text-slate-700';
-                if (confirmed) {
-                  if (choice === question.correct) {
-                    accent = 'emerald';
-                    emphasis = 'accent';
-                    className = KANGUR_ACCENT_STYLES.emerald.activeText;
-                  } else if (choice === selected) {
-                    accent = 'rose';
-                    emphasis = 'accent';
-                    className = KANGUR_ACCENT_STYLES.rose.activeText;
-                  } else {
-                    accent = 'slate';
-                    state = 'muted';
-                    className = '';
-                  }
-                } else if (choice === selected) {
-                  accent = 'amber';
+          <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
+            {question.a} − {question.b} = <span className='text-slate-400'>?</span>
+          </KangurEquationDisplay>
+          <AppleVisual a={question.a} b={question.b} />
+          <div className='grid grid-cols-2 gap-2 w-full'>
+            {question.choices.map((choice, index) => {
+              let accent: KangurAccent = 'rose';
+              let emphasis: 'neutral' | 'accent' = 'neutral';
+              let state: 'default' | 'muted' = 'default';
+              let className = 'text-slate-700';
+              if (confirmed) {
+                if (choice === question.correct) {
+                  accent = 'emerald';
                   emphasis = 'accent';
-                  className = KANGUR_ACCENT_STYLES.amber.activeText;
+                  className = KANGUR_ACCENT_STYLES.emerald.activeText;
+                } else if (choice === selected) {
+                  accent = 'rose';
+                  emphasis = 'accent';
+                  className = KANGUR_ACCENT_STYLES.rose.activeText;
+                } else {
+                  accent = 'slate';
+                  state = 'muted';
+                  className = '';
                 }
+              } else if (choice === selected) {
+                accent = 'amber';
+                emphasis = 'accent';
+                className = KANGUR_ACCENT_STYLES.amber.activeText;
+              }
 
-                return (
-                  <motion.div
-                    key={index}
-                    whileHover={!confirmed ? { scale: 1.04 } : {}}
-                    whileTap={!confirmed ? { scale: 0.96 } : {}}
-                  >
-                    <KangurOptionCardButton
-                      accent={accent}
-                      className={cn(
-                        'w-full flex items-center justify-center rounded-[24px] px-4 py-3 text-center text-xl font-extrabold transition-all',
-                        className,
-                        confirmed ? 'cursor-default' : 'cursor-pointer'
-                      )}
-                      data-testid={`subtracting-game-choice-${index}`}
-                      emphasis={emphasis}
-                      onClick={() => handleSelect(choice)}
-                      state={state}
-                      type='button'
-                    >
-                      {choice}
-                    </KangurOptionCardButton>
-                  </motion.div>
-                );
-              })}
-            </div>
-            {confirmed && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-              >
-                <KangurResultBadge
-                  data-testid='subtracting-game-feedback'
-                  size='md'
-                  tone={selected === question.correct ? 'success' : 'error'}
+              return (
+                <motion.div
+                  key={index}
+                  whileHover={!confirmed ? { scale: 1.04 } : {}}
+                  whileTap={!confirmed ? { scale: 0.96 } : {}}
                 >
-                  {selected === question.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${question.correct}`}
-                </KangurResultBadge>
-              </motion.div>
+                  <KangurOptionCardButton
+                    accent={accent}
+                    className={cn(
+                      'w-full flex items-center justify-center rounded-[24px] px-4 py-3 text-center text-xl font-extrabold transition-all',
+                      className,
+                      confirmed ? 'cursor-default' : 'cursor-pointer'
+                    )}
+                    data-testid={`subtracting-game-choice-${index}`}
+                    emphasis={emphasis}
+                    onClick={() => handleSelect(choice)}
+                    state={state}
+                    type='button'
+                  >
+                    {choice}
+                  </KangurOptionCardButton>
+                </motion.div>
+              );
+            })}
+          </div>
+          <KangurButton
+            className={cn(
+              'w-full',
+              confirmed
+                ? selected === question.correct
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'bg-rose-500 border-rose-500 text-white'
+                : 'bg-white'
             )}
-            {!confirmed && (
-              <KangurButton
-                className='w-full'
-                disabled={selected === null}
-                onClick={handleConfirm}
-                size='lg'
-                variant='primary'
-              >
-                Sprawdź ✓
-              </KangurButton>
-            )}
-          </KangurGlassPanel>
-        </motion.div>
-      </AnimatePresence>
+            disabled={selected === null || confirmed}
+            onClick={handleConfirm}
+            size='lg'
+            variant='primary'
+          >
+            Sprawdź ✓
+          </KangurButton>
+        </KangurGlassPanel>
+      </div>
     </div>
   );
 }

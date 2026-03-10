@@ -1,4 +1,3 @@
-import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { type Edge as AiEdge, type AiNode, type NodeDefinition } from '@/shared/contracts/ai-paths';
 import {
   type CaseResolverPdfExtractRequest,
@@ -14,6 +13,7 @@ import {
   type CaseResolverDroppedAsset,
   type CaseResolverDroppedDocument,
 } from '@/shared/contracts/case-resolver';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 
 import {
   DOCUMENT_PLAINTEXT_CONTENT_PORT,

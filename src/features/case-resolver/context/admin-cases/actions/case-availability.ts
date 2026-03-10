@@ -1,15 +1,17 @@
-import type * as React from 'react';
 
 import {
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '@/features/case-resolver/workspace-persistence';
+import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
 import {
   CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
   CASE_RESOLVER_CASE_READY_INTERVAL_MS,
 } from '../utils';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
+import type * as React from 'react';
 
 export const waitForCaseAvailability = async (
   caseId: string,

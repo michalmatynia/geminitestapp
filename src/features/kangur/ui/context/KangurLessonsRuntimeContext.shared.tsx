@@ -1,12 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { ComponentType, JSX, RefObject } from 'react';
+
 
 import { parseKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
+
+import type { ComponentType, JSX, RefObject } from 'react';
 
 export type LessonProps = {
   onBack?: () => void;

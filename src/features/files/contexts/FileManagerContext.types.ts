@@ -1,8 +1,9 @@
-import type { ComponentType } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+
+import type { ComponentType } from 'react';
 
 export interface FileManagerConfig {
   mode: 'view' | 'select';

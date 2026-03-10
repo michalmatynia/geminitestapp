@@ -63,18 +63,19 @@ import { LessonContentEditorDialog } from './components/LessonContentEditorDialo
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
 import { LessonTreeRow } from './components/LessonTreeRow';
+import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
 import {
   getKangurLessonAuthoringFilterCounts,
   getKangurLessonAuthoringStatus,
   matchesKangurLessonAuthoringFilter,
   type KangurLessonAuthoringFilter,
 } from './content-creator-insights';
-import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
 import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
 import {
   buildKangurAdminLessonsManagerContextBundle,
   KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
 } from './context-registry/lessons-manager';
+import { clearLessonContentEditorDraft } from './lesson-content-editor-drafts';
 import {
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
@@ -83,7 +84,6 @@ import {
   toLessonFormData,
   upsertLesson,
 } from './utils';
-import { clearLessonContentEditorDraft } from './lesson-content-editor-drafts';
 
 import type { LessonFormData, LessonTreeMode } from './types';
 

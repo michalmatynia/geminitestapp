@@ -15,8 +15,8 @@ import {
   buildValidatorListMasterNodes,
   resolveValidatorListOrderFromNodes,
 } from './validator-list-master-tree';
-import { ValidatorListTreeContext, useValidatorListTreeContext } from './ValidatorListTreeContext';
 import { ValidatorListNodeItem } from './ValidatorListNodeItem';
+import { ValidatorListTreeContext, useValidatorListTreeContext } from './ValidatorListTreeContext';
 
 // ─── ValidatorListTree ────────────────────────────────────────────────────────
 

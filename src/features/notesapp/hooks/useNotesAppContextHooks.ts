@@ -5,6 +5,7 @@ import { useContext } from 'react';
 import { internalError } from '@/shared/errors/app-error';
 
 import { NotesAppActionsContext, NotesAppStateContext } from './NotesAppContext';
+
 import type { NotesAppActionsValue, NotesAppStateValue } from './NotesAppContext.types';
 
 export function useNotesAppState(): NotesAppStateValue {

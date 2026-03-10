@@ -1,16 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Input, MultiSelect, SelectSimple, FormField, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-import { useRuleItemContext } from '../context/RuleItemContext';
-import { LAUNCH_OPERATORS, SCOPE_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+
 import type {
   PromptValidationChainMode,
   PromptValidationLaunchScopeBehavior,
   PromptValidationLaunchOperator,
   PromptValidationScope,
 } from '@/shared/lib/prompt-engine/settings';
+import { Input, MultiSelect, SelectSimple, FormField, Card } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { useRuleItemContext } from '../context/RuleItemContext';
+import { LAUNCH_OPERATORS, SCOPE_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
 
 export function RuleItemExecutionSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();

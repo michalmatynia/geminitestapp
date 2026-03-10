@@ -1,8 +1,8 @@
 'use client';
 
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
-import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import {
   useCreateNote,
@@ -29,7 +29,6 @@ import {
   useNoteTags as useNoteTagsQuery,
   useNoteThemes as useNoteThemesQuery,
 } from '@/features/notesapp/api/useNoteQueries';
-import { noteKeys } from '@/shared/lib/query-key-exports';
 import { type FetchNotesParams } from '@/features/notesapp/api/useNoteQueries';
 export type { FetchNotesParams };
 import type { UseNoteDataProps } from '@/shared/contracts/notes';
@@ -62,6 +61,7 @@ import {
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateNoteDetail } from '@/shared/lib/query-invalidation';
+import { noteKeys } from '@/shared/lib/query-key-exports';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // --- Queries ---

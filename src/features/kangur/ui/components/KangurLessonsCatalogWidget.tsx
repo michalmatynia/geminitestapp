@@ -1,19 +1,20 @@
 'use client';
 
-import type { JSX } from 'react';
 
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
+import {
+  useKangurLessonsRuntimeActions,
+  useKangurLessonsRuntimeState,
+} from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KangurEmptyState,
   KangurGradientIconTile,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
-import {
-  useKangurLessonsRuntimeActions,
-  useKangurLessonsRuntimeState,
-} from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+
+import type { JSX } from 'react';
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
   const {

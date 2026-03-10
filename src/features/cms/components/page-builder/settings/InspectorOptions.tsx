@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { ToggleRow } from '@/shared/ui';
+
 import { usePageBuilderState, usePageBuilderDispatch } from '@/features/cms/hooks/usePageBuilderContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
+import { ToggleRow } from '@/shared/ui';
 
 export function InspectorOptions(): React.JSX.Element | null {
   const state = usePageBuilderState();

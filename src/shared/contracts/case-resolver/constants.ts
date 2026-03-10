@@ -1,5 +1,3 @@
-import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta } from './graph';
-import { type CaseResolverRelationNodeMeta, type CaseResolverRelationEdgeMeta } from './relations';
 import {
   type CaseResolverNodeRole,
   type CaseResolverQuoteMode,
@@ -7,6 +5,8 @@ import {
   type CaseResolverDocumentNodePort,
   type CaseResolverPdfExtractionPresetId,
 } from './base';
+import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta } from './graph';
+import { type CaseResolverRelationNodeMeta, type CaseResolverRelationEdgeMeta } from './relations';
 
 export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
   value: CaseResolverNodeRole;

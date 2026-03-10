@@ -9,20 +9,21 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { useMasterFolderTreeSearch } from '@/features/foldertree';
-import type {
-  MasterTreeDropPosition,
-  MasterTreeNode,
-} from '@/shared/utils/master-folder-tree-contract';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import {
   resolveFolderTreeMultiSelectConfig,
   resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import type {
+  MasterTreeDropPosition,
+  MasterTreeNode,
+} from '@/shared/utils/master-folder-tree-contract';
 
-import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
-import { RelationTreeNodeItem } from './RelationTreeNodeItem';
 import { useOptionalRelationTreeBrowserRuntime } from './RelationTreeBrowserRuntimeContext';
+import { RelationTreeNodeItem } from './RelationTreeNodeItem';
 import { RelationTreeNodeRuntimeProvider } from './RelationTreeNodeRuntimeContext';
+import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
+
 import type { RelationBrowserMode, RelationTreeInstance, RelationTreeLookup } from '../types';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';

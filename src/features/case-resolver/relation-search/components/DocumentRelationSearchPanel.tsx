@@ -2,41 +2,41 @@
 
 import React from 'react';
 
-import { cn } from '@/shared/utils';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
-import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
-
 import type {
   DocumentRelationFileTypeFilter,
   DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
-import {
-  DocumentRelationSearchProvider,
-  useDocumentRelationSearchActionsContext,
-  useDocumentRelationSearchStateContext,
-} from '../context/DocumentRelationSearchContext';
-import { type NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { cn } from '@/shared/utils';
+import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
-import { RESULT_HEIGHT_MAP } from './sections/document-relation-search-utils';
-import { ScopeBar } from './sections/ScopeBar';
-import { FilterBar } from './sections/FilterBar';
-import { SearchBar } from './sections/SearchBar';
-import { BulkActionBar } from './sections/BulkActionBar';
-import { DocumentPreviewDialog } from './sections/DocumentPreviewDialog';
-import {
-  DocumentRelationSearchUiProvider,
-  type DocumentRelationSearchUiContextValue,
-} from './DocumentRelationSearchUiContext';
 import {
   DocumentRelationSearchRuntimeContext,
   type DocumentRelationSearchRuntimeValue,
   useDocumentRelationSearchRuntime,
 } from './DocumentRelationSearchRuntimeContext';
+import {
+  DocumentRelationSearchUiProvider,
+  type DocumentRelationSearchUiContextValue,
+} from './DocumentRelationSearchUiContext';
 import { RelationTreeBrowser } from './RelationTreeBrowser';
 import {
   RelationTreeBrowserRuntimeContext,
   type RelationTreeBrowserRuntimeValue,
 } from './RelationTreeBrowserRuntimeContext';
+import { BulkActionBar } from './sections/BulkActionBar';
+import { DocumentPreviewDialog } from './sections/DocumentPreviewDialog';
+import { FilterBar } from './sections/FilterBar';
+import { SearchBar } from './sections/SearchBar';
+import { type NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
+import {
+  DocumentRelationSearchProvider,
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../context/DocumentRelationSearchContext';
+import { RESULT_HEIGHT_MAP } from './sections/document-relation-search-utils';
+import { ScopeBar } from './sections/ScopeBar';
+
 import type { RelationTreeInstance } from '../types';
 
 function DocumentRelationSearchInner(): React.JSX.Element {

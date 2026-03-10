@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
+
 import {
   useCanvasActions,
   useCanvasRefs,
@@ -23,9 +20,15 @@ import type {
   CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
   CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
+
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import { useDocumentRelationSearch } from '../relation-search/hooks/useDocumentRelationSearch';
-import type { NodeFileSnapshotPersistOptions } from '../components/CaseResolverNodeFileWorkspace';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
+
+import type { NodeFileSnapshotPersistOptions } from '../components/CaseResolverNodeFileWorkspace';
 
 export type UseNodeFileWorkspaceStateProps = {
   assetId: string;

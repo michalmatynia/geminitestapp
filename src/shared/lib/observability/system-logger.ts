@@ -9,8 +9,8 @@ import {
   redactSensitiveText,
   truncateString,
 } from './log-redaction';
-import { emitOtelLogRecord } from './otel-log-bridge';
 import { getActiveOtelContextAttributes } from './otel-context';
+import { emitOtelLogRecord } from './otel-log-bridge';
 import { forwardToCentralizedLogging } from './system-logger-central-forwarding';
 
 const MAX_CONTEXT_SIZE = 12000;

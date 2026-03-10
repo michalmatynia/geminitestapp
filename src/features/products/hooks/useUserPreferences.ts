@@ -9,8 +9,8 @@ import type {
   ProductListPreferences,
 } from '@/shared/contracts/products';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
-import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { api, ApiError } from '@/shared/lib/api-client';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

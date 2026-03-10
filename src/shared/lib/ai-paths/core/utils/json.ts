@@ -1,10 +1,10 @@
 import type { JsonPathEntry } from '@/shared/contracts/ai-paths';
 
+import { cloneValue } from './runtime';
 import {
   normalizeJsonLikeValue,
   type JsonIntegrityPolicy,
 } from '../runtime/handlers/json-integrity';
-import { cloneValue } from './runtime';
 
 export const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathEntry[] => {
   const entries: JsonPathEntry[] = [];

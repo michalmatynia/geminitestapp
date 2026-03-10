@@ -1,4 +1,16 @@
+import {
+  recordRuntimeRunBlockedOnLease,
+  recordRuntimeRunStarted,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  processRun,
+  processStaleRunRecovery,
+} from '@/features/ai/ai-paths/workers/ai-path-run-processor';
+import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue } from '@/shared/lib/queue';
+
 import {
   AI_PATH_RUN_QUEUE_NAME,
   DEFAULT_CONCURRENCY,
@@ -6,18 +18,8 @@ import {
   LOG_SOURCE,
 } from './config';
 import { type AiPathRunJobData } from './types';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import {
-  processRun,
-  processStaleRunRecovery,
-} from '@/features/ai/ai-paths/workers/ai-path-run-processor';
-import {
-  recordRuntimeRunBlockedOnLease,
-  recordRuntimeRunStarted,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { createDebugQueueLogger } from '../ai-path-run-queue-utils';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
+
 
 const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
   LOG_SOURCE,

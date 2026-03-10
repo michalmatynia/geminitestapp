@@ -11,8 +11,8 @@ import {
   type RefObject,
 } from 'react';
 
-import { clampScale } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
+import { clampScale } from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types

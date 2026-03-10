@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import type { NoteRecord } from '@/shared/contracts/notes';
 import type { EntityModalProps } from '@/shared/contracts/ui';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { FormModal } from '@/shared/ui';
 
 import { NoteForm } from './NoteForm';

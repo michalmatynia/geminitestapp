@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { Search } from 'lucide-react';
+import React from 'react';
+
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import { Button, Input, Textarea, FormSection, FormField, Alert, Card } from '@/shared/ui';
 

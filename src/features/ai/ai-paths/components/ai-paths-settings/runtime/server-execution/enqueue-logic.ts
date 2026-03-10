@@ -4,12 +4,13 @@ import {
 } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { normalizeRuntimeKernelConfigRecord } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
-import { isObjectRecord } from '@/shared/utils/object-utils';
+import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
 import {
   createAiPathTriggerRequestId,
   isRecoverableTriggerEnqueueError,
 } from '@/shared/lib/ai-paths/hooks/trigger-event-utils';
-import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import {
   collectInvalidRunEnqueuePayloadIssues,
   collectInvalidRunEnqueueSerializationIssues,
@@ -21,6 +22,7 @@ import {
   resolveEntityTypeFromContext,
   SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS,
 } from './helpers';
+
 import type { ServerExecutionArgs } from './types';
 
 type EnqueuePayload = Parameters<typeof enqueueAiPathRun>[0];

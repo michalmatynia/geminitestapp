@@ -1,11 +1,10 @@
 import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-
 import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
-import { parseJsonSafe } from '../../utils';
-
 import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
+import { parseJsonSafe } from '../../utils';
 
 interface DbQueryResult {
   items?: unknown[];

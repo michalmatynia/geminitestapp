@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
+
 import { clampScale } from '@/shared/lib/ai-paths';
+
 import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 
 export interface UseCanvasEventHandlersValue {

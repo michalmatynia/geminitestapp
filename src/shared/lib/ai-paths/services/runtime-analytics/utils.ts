@@ -1,8 +1,10 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { RETENTION_MS } from './config';
+
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
+
+import { RETENTION_MS } from './config';
 
 export const toTimestampMs = (value?: Date | string | number | null): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;

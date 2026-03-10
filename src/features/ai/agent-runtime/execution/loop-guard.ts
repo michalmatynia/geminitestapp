@@ -1,4 +1,3 @@
-import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import {
   buildBranchStepsFromAlternatives,
@@ -9,9 +8,10 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { LoopSignal, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type PlanStepSpecInput = {
   title?: string;

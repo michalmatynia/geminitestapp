@@ -1,7 +1,13 @@
 'use client';
 
-import React from 'react';
 import { Trash2 } from 'lucide-react';
+import React from 'react';
+
+import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import {
+  TRADERA_INTEGRATION_SLUGS,
+  isTraderaBrowserIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useProductListingsActions,
   useProductListingsModals,
@@ -9,11 +15,7 @@ import {
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
-import {
-  TRADERA_INTEGRATION_SLUGS,
-  isTraderaBrowserIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
-import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+
 import { useProductListingItemRuntime } from './ProductListingItemRuntimeContext';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>

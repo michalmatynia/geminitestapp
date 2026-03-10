@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
-import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
+import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
 
 export type { UseProductsFilters };
 

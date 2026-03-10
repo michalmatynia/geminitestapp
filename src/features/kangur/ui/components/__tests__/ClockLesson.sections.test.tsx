@@ -17,32 +17,67 @@ const loadProgressMock = vi.fn(() => ({
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   __esModule: true,
   default: ({
+    completionPrimaryActionLabel,
     initialMode = 'practice',
+    onCompletionPrimaryAction,
     onFinish,
+    onPracticeCompleted,
     onPracticeSuccess,
     onChallengeSuccess,
     practiceTasks,
     section,
+    showTimeDisplay = true,
   }: {
+    completionPrimaryActionLabel?: string;
     initialMode?: 'practice' | 'challenge';
+    onCompletionPrimaryAction?: () => void;
     onFinish: () => void;
+    onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
     onPracticeSuccess?: () => void;
-    onChallengeSuccess?: () => void;
+    onChallengeSuccess?: (result: {
+      correctCount: number;
+      medal: 'gold' | 'silver' | 'bronze';
+      totalCount: number;
+    }) => void;
     practiceTasks?: Array<{ hours: number; minutes: number }>;
     section?: string;
+    showTimeDisplay?: boolean;
   }): React.JSX.Element => (
     <div data-testid='mock-clock-training-game'>
       <span data-testid='mock-clock-training-section'>{section ?? 'mixed'}</span>
       <span data-testid='mock-clock-training-mode'>{initialMode}</span>
+      <span data-testid='mock-clock-training-show-time-display'>
+        {showTimeDisplay ? 'visible' : 'hidden'}
+      </span>
       <span data-testid='mock-clock-training-target'>
         {practiceTasks?.[0]
           ? `${practiceTasks[0].hours}:${String(practiceTasks[0].minutes).padStart(2, '0')}`
           : 'random'}
       </span>
-      <button type='button' onClick={onPracticeSuccess}>
+      <button
+        type='button'
+        onClick={() => {
+          onPracticeSuccess?.();
+          onPracticeCompleted?.({ correctCount: 5, totalCount: 5 });
+        }}
+      >
         Complete practice
       </button>
-      <button type='button' onClick={onChallengeSuccess}>
+      {completionPrimaryActionLabel && initialMode === 'challenge' ? (
+        <button type='button' onClick={onCompletionPrimaryAction}>
+          {completionPrimaryActionLabel}
+        </button>
+      ) : null}
+      <button
+        type='button'
+        onClick={() =>
+          onChallengeSuccess?.({
+            correctCount: 5,
+            medal: 'gold',
+            totalCount: 5,
+          })
+        }
+      >
         Complete challenge
       </button>
       <button type='button' onClick={onFinish}>
@@ -261,21 +296,19 @@ describe('ClockLesson section hub layout', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Brawo!')).toBeInTheDocument();
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Otwórz wyzwanie' }));
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');
     });
@@ -305,6 +338,150 @@ describe('ClockLesson section hub layout', () => {
     });
   });
 
+  it('auto-advances to the second panel after completing the first practice round', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('3:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    expect(screen.getByTestId('clock-lesson-training-panel-learn')).toHaveClass('bg-indigo-300');
+    expect(screen.queryByRole('button', { name: 'Zakończ lekcję ✅' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Następne zadanie' })).toBeNull();
+    expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
+  });
+
+  it('auto-advances to the third panel after completing the second practice round', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('3:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveClass(
+      'bg-indigo-300'
+    );
+    expect(screen.queryByRole('button', { name: 'Zakończ lekcję ✅' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Następne zadanie' })).toBeNull();
+    expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
+  });
+
+  it('hides the blue time readout after the first practice panel and in challenge mode', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-show-time-display')).toHaveTextContent(
+        'visible'
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    expect(screen.getByTestId('mock-clock-training-show-time-display')).toHaveTextContent(
+      'hidden'
+    );
+
+    fireEvent.click(screen.getByTestId('clock-lesson-training-panel-learn'));
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-learn')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveAttribute(
+        'aria-current',
+        'step'
+      );
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');
+    });
+    expect(screen.getByTestId('mock-clock-training-show-time-display')).toHaveTextContent(
+      'hidden'
+    );
+  });
+
+  it('reveals the challenge pill after winning the third practice panel', async () => {
+    render(<ClockLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('3:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
+    expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');
+  });
+
   it('warns before switching away from the challenge panel', async () => {
     render(<ClockLesson />);
 
@@ -315,21 +492,18 @@ describe('ClockLesson section hub layout', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Brawo!')).toBeInTheDocument();
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Otwórz wyzwanie' }));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');
     });
@@ -496,22 +670,19 @@ describe('ClockLesson section hub layout', () => {
     expect(screen.queryByTestId('clock-lesson-training-panel-challenge')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Brawo!')).toBeInTheDocument();
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
     });
-    expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Otwórz wyzwanie' }));
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');
@@ -521,7 +692,7 @@ describe('ClockLesson section hub layout', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toHaveClass(
-        'bg-amber-500'
+        'bg-yellow-400'
       );
     });
 
@@ -536,7 +707,7 @@ describe('ClockLesson section hub layout', () => {
     });
 
     expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toHaveClass(
-      'bg-amber-200'
+      'bg-yellow-400'
     );
   });
 
@@ -552,7 +723,6 @@ describe('ClockLesson section hub layout', () => {
     expect(screen.queryByTestId('clock-lesson-training-panel-challenge')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
 
     await waitFor(() => {
       expect(screen.getByTestId('clock-lesson-training-panel-learn')).toHaveClass('bg-indigo-300');
@@ -561,8 +731,6 @@ describe('ClockLesson section hub layout', () => {
     expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
 
     await waitFor(() => {
       expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveClass(
@@ -575,14 +743,17 @@ describe('ClockLesson section hub layout', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Brawo!')).toBeInTheDocument();
+      expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
     });
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
 
-    expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveAttribute(
+    expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toHaveAttribute(
       'aria-current',
       'step'
     );
-    expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveClass(
+      'bg-indigo-300'
+    );
   });
 
   it('does not reveal challenge before the third practice panel is completed', async () => {
@@ -595,7 +766,6 @@ describe('ClockLesson section hub layout', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
@@ -603,19 +773,19 @@ describe('ClockLesson section hub layout', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
     await waitFor(() => {
-      expect(screen.getByTestId('clock-lesson-training-panel-learn')).toHaveClass(
+      expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveClass(
         'bg-indigo-300'
       );
     });
-    expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveAttribute(
+    expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveAttribute(
       'aria-current',
       'step'
     );
     expect(screen.queryByTestId('clock-lesson-training-panel-challenge')).toBeNull();
-    expect(screen.queryByText('Brawo!')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
   });
 
-  it('keeps the orange challenge pill available after closing the Brawo modal', async () => {
+  it('keeps the orange challenge pill available after unlocking the challenge', async () => {
     render(<ClockLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
@@ -625,34 +795,21 @@ describe('ClockLesson section hub layout', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('7:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
-    fireEvent.click(screen.getByTestId('clock-lesson-training-next-button'));
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-target')).toHaveTextContent('11:00');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Complete practice' }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Brawo!')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Później' }));
-
-    await waitFor(() => {
-      expect(screen.queryByText('Brawo!')).toBeNull();
-    });
-
     expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toBeInTheDocument();
-    expect(screen.getByTestId('clock-lesson-training-panel-pick_two')).toHaveAttribute(
+    expect(screen.getByTestId('clock-lesson-training-panel-challenge')).toHaveAttribute(
       'aria-current',
       'step'
     );
-
-    fireEvent.click(screen.getByTestId('clock-lesson-training-panel-challenge'));
+    expect(screen.queryByRole('button', { name: 'Otwórz wyzwanie' })).toBeNull();
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-mode')).toHaveTextContent('challenge');

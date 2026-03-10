@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { PromptExploderCaseResolverContext } from '../../bridge';
+
 import {
   savePromptExploderApplyPrompt,
   savePromptExploderApplyPromptForCaseResolver,
@@ -14,6 +14,8 @@ import {
   buildCaseResolverSegmentCaptureRules,
   resolveCaseResolverBridgePayloadForTransfer,
 } from '../../utils/case-resolver-extraction';
+
+import type { PromptExploderCaseResolverContext } from '../../bridge';
 import type { DocumentCoreState } from '../document/DocumentCoreContext';
 import type { DocumentPromptState } from '../document/DocumentPromptContext';
 import type { SettingsState } from '../SettingsContext';

@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+
 import { z } from 'zod';
-import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
+
 import {
   CRITICAL_CONFIG_FIELD_PATTERN,
   DOC_ASSERTION_BLOCK_REGEX,
@@ -37,6 +38,7 @@ import {
   type CoverageMatrixRow,
   type AiPathsDocAssertionConditionInput,
 } from './docs-registry-adapter.types';
+import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 
 const PROJECT_ROOT = process.cwd();
 const DOCS_AI_PATHS_ROOT = path.join(PROJECT_ROOT, 'docs', 'ai-paths');

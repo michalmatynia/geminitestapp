@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { CatalogMultiSelectField } from '@/features/products';
 import { CategorySingleSelectField } from '@/features/products';
 import { ProducerMultiSelectField } from '@/features/products';
@@ -13,6 +12,7 @@ import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   Button,
   Input,

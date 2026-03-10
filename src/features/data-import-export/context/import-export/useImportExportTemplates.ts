@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+
+import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import {
   type Template,
   type TemplateMapping,
@@ -8,7 +10,6 @@ import {
   normalizeBaseImportParameterImportSettings,
   type ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
-import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import type { useToast } from '@/shared/ui';
 
 const UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX = 'parameter:';

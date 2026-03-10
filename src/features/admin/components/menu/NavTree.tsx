@@ -1,10 +1,12 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-import Link from 'next/link';
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
-import { cn } from '@/shared/utils';
+import Link from 'next/link';
+import React, { createContext, useContext } from 'react';
+
 import { Tooltip, TreeContextMenu, Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
 import { type NavItem, isActiveHref } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';
 

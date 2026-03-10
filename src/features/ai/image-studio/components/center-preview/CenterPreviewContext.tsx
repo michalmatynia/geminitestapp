@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
-import type { VariantTooltipState } from './VariantTooltipPortal';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { VariantTooltipState } from './VariantTooltipPortal';
 
 type Pane = 'left' | 'right';
 

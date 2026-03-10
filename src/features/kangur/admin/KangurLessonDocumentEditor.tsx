@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -14,6 +13,7 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   cloneKangurLessonGridItem,
@@ -61,10 +61,10 @@ import {
   GRID_TEMPLATE_OPTIONS,
   ROOT_BLOCK_TYPE_OPTIONS,
 } from './constants';
-import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
+import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
 import { useBlockListDnd } from './hooks/useBlockListDnd';
-import { validateKangurLessonPageDraft } from './content-creator-insights';
+import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
 
 const resolvePageSectionOptions = (
   page: KangurLessonPage | null

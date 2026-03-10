@@ -6,10 +6,8 @@ import {
   type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
 } from '@/shared/contracts/case-resolver';
 
+import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
 import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-utils';
-
-import { logCaseResolverWorkspaceEvent } from './workspace-observability';
-
 import {
   CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -21,23 +19,21 @@ import {
   buildWorkspaceRecordFetchAttempts,
   type WorkspaceMetadataLike,
 } from './utils/workspace-settings-persistence-helpers';
-
-import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
-
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import {
-  CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-  readWorkspaceFromSettingRecord,
-} from './workspace-persistence-shared';
+  applyCaseResolverWorkspaceDetachedDocumentsPayload,
+  parseCaseResolverWorkspaceDetachedDocumentsPayload,
+  type CaseResolverWorkspaceDetachedDocumentsPayload,
+} from './workspace-persistence-detached-documents';
 import {
   applyCaseResolverWorkspaceDetachedHistoryPayload,
   parseCaseResolverWorkspaceDetachedHistoryPayload,
   type CaseResolverWorkspaceDetachedHistoryPayload,
 } from './workspace-persistence-detached-history';
 import {
-  applyCaseResolverWorkspaceDetachedDocumentsPayload,
-  parseCaseResolverWorkspaceDetachedDocumentsPayload,
-  type CaseResolverWorkspaceDetachedDocumentsPayload,
-} from './workspace-persistence-detached-documents';
+  CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+  readWorkspaceFromSettingRecord,
+} from './workspace-persistence-shared';
 
 export type WorkspaceRecordFetchAttempt = {
   key: string;

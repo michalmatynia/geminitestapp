@@ -1,4 +1,5 @@
 import type { AiNode } from '@/shared/contracts/ai-paths';
+
 import { PORT_STACK_TOP, PORT_GAP, PORT_COMPATIBILITY } from '../constants';
 import { arePortTypesCompatible, getPortDataTypes } from './port-types';
 

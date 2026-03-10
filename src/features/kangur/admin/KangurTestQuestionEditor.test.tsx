@@ -295,4 +295,33 @@ describe('KangurTestQuestionEditor', () => {
 
     expect(screen.getByDisplayValue('Describe what is shown in option A.')).toBeInTheDocument();
   });
+
+  it('applies the grid answer-card preset', () => {
+    render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Grid answer cards/i }));
+
+    expect(screen.getAllByText('Choice grid').length).toBeGreaterThan(0);
+  });
+
+  it('applies the split illustration preset and seeds illustration panels', () => {
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          illustration: { type: 'none' },
+          presentation: { layout: 'classic', choiceStyle: 'list' },
+        })}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Illustration left/i }));
+
+    expect(screen.getAllByText('Choice grid').length).toBeGreaterThan(0);
+    expect(
+      screen.getByText('Split layouts need an illustration before they can be saved.')
+    ).toBeInTheDocument();
+    const panelLabelInputs = screen.getAllByLabelText('Panel label') as HTMLInputElement[];
+    expect(panelLabelInputs[0]?.value).toBe('A');
+    expect(panelLabelInputs[1]?.value).toBe('B');
+  });
 });

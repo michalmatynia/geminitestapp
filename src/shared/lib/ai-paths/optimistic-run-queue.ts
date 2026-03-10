@@ -284,7 +284,7 @@ const readEntries = (): StoredOptimisticRun[] => {
     if (raw) {
       hasStoragePayload = true;
       try {
-        const parsed = JSON.parse(raw);
+        const parsed: unknown = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           persistedCount = parsed.length;
           parsedEntries.push(

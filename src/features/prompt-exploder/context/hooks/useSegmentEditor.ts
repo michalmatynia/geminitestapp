@@ -4,6 +4,7 @@ import {
   SegmentEditorStateContext,
   SegmentEditorActionsContext,
 } from '../SegmentEditorContext';
+
 import type { SegmentEditorState, SegmentEditorActions } from '../SegmentEditorContext.types';
 
 export const useSegmentEditorState = (): SegmentEditorState => {

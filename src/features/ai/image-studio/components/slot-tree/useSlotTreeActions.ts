@@ -1,7 +1,13 @@
 'use client';
 
 import { useCallback } from 'react';
+
+import {
+  fromFolderMasterNodeId,
+  fromSlotMasterNodeId,
+} from '@/features/ai/image-studio/utils/master-folder-tree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 import {
@@ -11,11 +17,7 @@ import {
   canMoveTreePath,
   getTreePathLeaf,
 } from '@/shared/utils';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import {
-  fromFolderMasterNodeId,
-  fromSlotMasterNodeId,
-} from '@/features/ai/image-studio/utils/master-folder-tree';
+
 import { useSlotsActions } from '../../context/SlotsContext';
 
 export function useSlotTreeActions({

@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+
 import {
   IMAGE_STUDIO_UPSCALE_ERROR_CODES,
   type ImageStudioUpscaleRequest,
@@ -9,14 +10,15 @@ import {
   validateUpscaleOutputDimensions,
   validateUpscaleSourceDimensions,
 } from '@/features/ai/image-studio/server/upscale-utils';
-import { loadSourceBuffer, parseDataUrl } from './upscale-buffer-loader';
-import { upscaleBadRequest } from './upscale-request-parser';
+
 import {
   ResolvedUpscaleRequest,
   StudioSlotRecord,
   UploadedClientUpscaleImage,
   UpscaleProcessingResult,
 } from './types';
+import { loadSourceBuffer, parseDataUrl } from './upscale-buffer-loader';
+import { upscaleBadRequest } from './upscale-request-parser';
 
 const STRICT_SERVER_UPSCALE_ENABLED =
   process.env['IMAGE_STUDIO_UPSCALE_SERVER_AUTHORITATIVE'] !== 'false';

@@ -2,18 +2,20 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-import type { ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import type {
   ImageStudioAnalysisPlanSnapshot,
   ImageStudioAnalysisApplyTarget,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
-import type { AnalysisStatus } from '../analysis/analysis-types';
+import type { ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
+import { internalError } from '@/shared/errors/app-error';
+
 import type { UpscaleSmoothingQuality, AutoScalerMode } from './GenerationToolbarImageUtils';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
 } from '../../contracts/center';
-import { internalError } from '@/shared/errors/app-error';
+import type { AnalysisStatus } from '../analysis/analysis-types';
+
 
 export type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 export type UpscaleMode = 'client_canvas' | 'server_sharp';

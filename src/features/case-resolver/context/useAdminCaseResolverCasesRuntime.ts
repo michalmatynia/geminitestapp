@@ -2,10 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import {
-  useUpdateUserPreferences,
-  useUserPreferences,
-} from '@/shared/hooks/useUserPreferences';
 import type {
   CaseResolverCategory,
   CaseResolverIdentifier,
@@ -13,8 +9,12 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import type { ToastVariant } from '@/shared/contracts/ui';
-import { useToast } from '@/shared/ui';
+import {
+  useUpdateUserPreferences,
+  useUserPreferences,
+} from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useToast } from '@/shared/ui';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -28,11 +28,6 @@ import {
   safeParseCaseResolverWorkspace,
 } from '../settings';
 import { fetchCaseResolverWorkspaceRecordDetailed } from '../workspace-persistence';
-
-import type {
-  AdminCaseResolverCasesActionsValue,
-  AdminCaseResolverCasesStateValue,
-} from './AdminCaseResolverCasesContext.types';
 import { useAdminCaseResolverCasesActions } from './admin-cases/useAdminCaseResolverCasesActions';
 import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
 import {
@@ -41,6 +36,11 @@ import {
   shouldAdoptIncomingCaseResolverCasesWorkspace,
   shouldBootstrapCaseResolverCasesFromRecord,
 } from './admin-cases/utils';
+
+import type {
+  AdminCaseResolverCasesActionsValue,
+  AdminCaseResolverCasesStateValue,
+} from './AdminCaseResolverCasesContext.types';
 
 interface AdminCaseResolverCasesRuntimeResult {
   actionsValue: AdminCaseResolverCasesActionsValue;

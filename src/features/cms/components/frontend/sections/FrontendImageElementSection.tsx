@@ -2,10 +2,11 @@
 
 import React, { useMemo } from 'react';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendImageElementSection(): React.ReactNode {
   const { settings } = useSectionBlockData();

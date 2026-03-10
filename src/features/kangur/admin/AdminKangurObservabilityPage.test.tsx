@@ -182,6 +182,20 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       },
     },
     {
+      id: 'kangur-ai-tutor-bridge-completion-rate',
+      title: 'AI Tutor Bridge Completion Rate',
+      status: 'warning' as const,
+      value: 33.3,
+      unit: '%',
+      warningThreshold: 40,
+      criticalThreshold: 20,
+      summary: 'Bridge suggestions are not converting into completed cross-surface follow-ups fast enough.',
+      investigation: {
+        label: 'Review tutor bridge analytics',
+        href: `/admin/kangur/observability?range=${range}#recent-analytics-events`,
+      },
+    },
+    {
       id: 'kangur-performance-baseline',
       title: 'Performance baseline',
       status: 'warning' as const,
@@ -256,6 +270,15 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     topPaths: [{ path: '/kangur', count: 4 }],
     topEventNames: [{ name: 'kangur_game_completed', count: 3 }],
     importantEvents: [{ name: 'kangur_progress_sync_failed', count: 4 }],
+    aiTutor: {
+      messageSucceededCount: 6,
+      bridgeSuggestionCount: 3,
+      lessonToGameBridgeSuggestionCount: 2,
+      gameToLessonBridgeSuggestionCount: 1,
+      bridgeQuickActionClickCount: 2,
+      bridgeFollowUpClickCount: 2,
+      bridgeFollowUpCompletionCount: 1,
+    },
     recent: [
       {
         id: 'event-1',
@@ -311,6 +334,19 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Progress sync failures detected.')).toBeInTheDocument();
     expect(screen.getByText('Kangur TTS fallback used.')).toBeInTheDocument();
     expect(screen.getByText('TTS Generation Failures')).toBeInTheDocument();
+    expect(screen.getByText('AI Tutor Bridge Completion Rate')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Bridge suggestions are not converting into completed cross-surface follow-ups fast enough.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('AI Tutor Bridge Snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Bridge Suggestions')).toBeInTheDocument();
+    expect(screen.getByText('Lekcja -> Grajmy')).toBeInTheDocument();
+    expect(screen.getByText('Grajmy -> Lekcja')).toBeInTheDocument();
+    expect(screen.getByText('Bridge CTA Clicks')).toBeInTheDocument();
+    expect(screen.getByText('Bridge Completions')).toBeInTheDocument();
+    expect(screen.getByText('Opened: 2 bridge follow-ups. Completed: 1.')).toBeInTheDocument();
     expect(useKangurObservabilitySummaryMock).toHaveBeenCalledWith('30d');
     const allLogsHref = screen.getByRole('link', { name: /all kangur logs/i }).getAttribute('href');
     const logsUrl = new URL(allLogsHref ?? '', 'http://localhost');

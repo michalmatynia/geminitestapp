@@ -1,15 +1,12 @@
 'use client';
 
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
-import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
+
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptEngineSettings,
   type PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
-import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
 import {
   PromptExploderPatternSnapshot,
   PromptExploderParserTuningRuleDraft,
@@ -18,19 +15,26 @@ import {
   PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
 import type { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { ensurePromptExploderPatternPack } from '../../pattern-pack';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { LearningDraft } from './SettingsDraftsContext';
 import {
   validatePromptExploderParserTuningDrafts,
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,
 } from '../../parser-tuning';
+import { ensurePromptExploderPatternPack } from '../../pattern-pack';
 import {
   buildPatternSnapshot,
   prependPatternSnapshot,
   mergeRestoredPromptExploderRules,
   removePatternSnapshotById,
 } from '../../pattern-snapshots';
-import { LearningDraft } from './SettingsDraftsContext';
+import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
+
+
 
 type UseSettingsActionsImplArgs = {
   settingsMap: Map<string, string>;

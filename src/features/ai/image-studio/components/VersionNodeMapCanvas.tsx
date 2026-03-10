@@ -2,11 +2,6 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
-
-import { CompositeStackNode } from './CompositeStackNode';
-import { useVersionNodeMapContext } from './VersionNodeMapContext';
-import { useSettingsState } from '../context/SettingsContext';
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import {
@@ -16,6 +11,11 @@ import {
   NODE_WIDTH,
   getCompositeNodeHeight,
 } from '@/features/ai/image-studio/utils/version-graph';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+
+import { CompositeStackNode } from './CompositeStackNode';
+import { useVersionNodeMapContext } from './VersionNodeMapContext';
+import { useSettingsState } from '../context/SettingsContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 

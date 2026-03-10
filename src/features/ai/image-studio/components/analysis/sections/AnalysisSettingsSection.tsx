@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { Button, Card, SelectSimple, FormActions } from '@/shared/ui';
+
 import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
 import {
   PADDING_MIN,

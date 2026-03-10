@@ -7,10 +7,10 @@ import { Card, Checkbox, CollapsibleSection, Label, StatusBadge } from '@/shared
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment } from '../settings';
 import { AssignmentEditor } from './AssignmentEditor';
+import { ROUTING_GROUPS } from './brain-routing-master-tree';
 import { BrainRoutingProvider } from './BrainRoutingContext';
 import { BrainRoutingEditModal } from './BrainRoutingEditModal';
 import { BrainRoutingTree } from './BrainRoutingTree';
-import { ROUTING_GROUPS } from './brain-routing-master-tree';
 
 export function RoutingTab(): React.JSX.Element {
   const {

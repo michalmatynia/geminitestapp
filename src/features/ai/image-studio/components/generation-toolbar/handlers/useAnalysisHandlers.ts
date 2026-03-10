@@ -1,22 +1,25 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { api } from '@/shared/lib/api-client';
+
 import {
   imageStudioAnalysisResponseSchema,
   type ImageStudioCenterLayoutConfig,
   type ImageStudioAnalysisResponse,
 } from '@/features/ai/image-studio/contracts/analysis';
-import type { AnalysisResult } from '../../analysis/analysis-types';
-import { analyzeCanvasImageObject } from '../GenerationToolbarImageUtils';
 import {
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
+import { api } from '@/shared/lib/api-client';
+
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
+import { analyzeCanvasImageObject } from '../GenerationToolbarImageUtils';
+
+import type { AnalysisResult } from '../../analysis/analysis-types';
 
 const ANALYSIS_REQUEST_TIMEOUT_MS = 60000;
 

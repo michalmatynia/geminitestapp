@@ -3,8 +3,8 @@
 import { Box, Eye, Edit2, Trash2, Globe, Lock } from 'lucide-react';
 import { useCallback, useMemo, type JSX, type MouseEvent } from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Tag, ResourceCard } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

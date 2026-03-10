@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
 import { CheckCircle2, Circle } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   KangurButton,
   KangurEmptyState,
@@ -14,6 +13,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';

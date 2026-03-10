@@ -5,6 +5,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoKangurScoreRepository } from './mongo-kangur-score-repository';
 import { prismaKangurScoreRepository } from './prisma-kangur-score-repository';
+
 import type { KangurScoreRepository } from './types';
 
 export type { KangurScoreRepository, KangurScoreListInput } from './types';

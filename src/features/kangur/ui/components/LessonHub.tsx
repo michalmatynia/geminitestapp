@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
+
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
-import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 export type HubSection = {
   id: string;

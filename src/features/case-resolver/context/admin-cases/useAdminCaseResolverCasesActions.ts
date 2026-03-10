@@ -1,7 +1,25 @@
 'use client';
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import {
+  createCaseResolverWorkspaceMutationId,
+  getCaseResolverWorkspaceRevision,
+  persistCaseResolverWorkspaceSnapshot,
+  stampCaseResolverWorkspaceMutation,
+} from '../../workspace-persistence';
+import { waitForCaseAvailability } from './actions/case-availability';
+import {
+  handleCreateCaseImpl,
+  handleUpdateCaseImpl,
+  handleSaveCaseDraftImpl,
+  handleDeleteCaseImpl,
+} from './actions/case-crud';
+import { handleMoveCaseImpl, handleReorderCaseImpl } from './actions/case-ordering';
+
 import type {
   CaseResolverCaseListConfirmationState,
   CaseResolverCasesLoadState,
@@ -16,22 +34,6 @@ import type {
   CaseSortOrder,
   CaseViewMode,
 } from './types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  createCaseResolverWorkspaceMutationId,
-  getCaseResolverWorkspaceRevision,
-  persistCaseResolverWorkspaceSnapshot,
-  stampCaseResolverWorkspaceMutation,
-} from '../../workspace-persistence';
-
-import { waitForCaseAvailability } from './actions/case-availability';
-import {
-  handleCreateCaseImpl,
-  handleUpdateCaseImpl,
-  handleSaveCaseDraftImpl,
-  handleDeleteCaseImpl,
-} from './actions/case-crud';
-import { handleMoveCaseImpl, handleReorderCaseImpl } from './actions/case-ordering';
 
 export type ToastFn = (message: string, options?: { variant?: string }) => void;
 type WaitForCaseAvailabilityOptions = Parameters<typeof waitForCaseAvailability>[1]['options'];

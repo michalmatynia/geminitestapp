@@ -1,9 +1,9 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 const SETTINGS_COLLECTION = 'settings';
 const CENTRAL_LOG_DEAD_LETTER_STORE_VERSION = 1;

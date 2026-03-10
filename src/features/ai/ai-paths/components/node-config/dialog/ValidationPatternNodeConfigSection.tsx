@@ -3,19 +3,19 @@
 import React from 'react';
 import { z } from 'zod';
 
+import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
+import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_LABELS,
   parseValidatorPatternLists,
   type ValidatorPatternList,
 } from '@/shared/contracts/validator';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
-import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Badge, Button, Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';

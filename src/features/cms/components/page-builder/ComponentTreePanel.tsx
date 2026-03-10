@@ -12,15 +12,15 @@ import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
   PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
 } from './settings/PageBuilderSettingsPage';
-import {
-  ComponentTreePanelProvider,
-  type ComponentTreePanelContextValue,
-} from './tree/ComponentTreePanelContext';
+import { ComponentTreeNodeRenderer } from './tree/ComponentTreeNodeRenderer';
 import {
   ComponentTreeNodeRuntimeProvider,
   type ComponentTreeNodeRuntimeContextValue,
 } from './tree/ComponentTreeNodeRuntimeContext';
-import { ComponentTreeNodeRenderer } from './tree/ComponentTreeNodeRenderer';
+import {
+  ComponentTreePanelProvider,
+  type ComponentTreePanelContextValue,
+} from './tree/ComponentTreePanelContext';
 import {
   CMS_ZONE_ORDER,
   buildCmsMasterNodes,

@@ -1,18 +1,21 @@
 import { ObjectId, type Document, type Filter } from 'mongodb';
+
+import {
+  productAdvancedFilterGroupSchema,
+  type ProductAdvancedFilterGroup,
+  type ProductParameterValue,
+} from '@/shared/contracts/products';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductAdvancedFilterGroup,
-  type ProductParameterValue,
-} from '@/shared/contracts/products';
 import { logger } from '@/shared/utils/logger';
+
 import { type ProductDocument } from './mongo-product-repository-mappers';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 
 export const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
 

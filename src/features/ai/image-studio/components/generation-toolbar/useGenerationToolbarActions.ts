@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
+
+import { type VectorShape } from '@/shared/contracts/vector';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+
+import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
@@ -8,8 +12,6 @@ import {
   loadImageElement,
   type CropRect,
 } from './GenerationToolbarImageUtils';
-import { type GenerationToolbarState } from './GenerationToolbar.types';
-import { type VectorShape } from '@/shared/contracts/vector';
 import { useGenerationToolbarResolution } from './useGenerationToolbarResolution';
 
 export function useGenerationToolbarActions(

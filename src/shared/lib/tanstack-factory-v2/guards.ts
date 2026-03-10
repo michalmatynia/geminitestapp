@@ -1,10 +1,11 @@
-import type { QueryKey } from '@tanstack/react-query';
 import {
   QueryOptionsWithoutCore,
   InfiniteQueryOptionsWithoutCore,
   SuspenseInfiniteQueryOptionsWithoutCore,
   SuspenseQueryOptionsWithoutCore,
 } from './types';
+
+import type { QueryKey } from '@tanstack/react-query';
 
 export const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
 const MIN_REFETCH_INTERVAL_MS = 1;

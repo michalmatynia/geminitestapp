@@ -4,10 +4,10 @@ import { Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import { useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 

@@ -1,4 +1,5 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import { VALIDATION_PATTERN_INPUT_PORTS, VALIDATION_PATTERN_OUTPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
 

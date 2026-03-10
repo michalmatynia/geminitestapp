@@ -1,8 +1,10 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { MasterFolderTreeShell } from './useMasterFolderTreeShell';
+
 import { internalError } from '@/shared/errors/app-error';
+
+import type { MasterFolderTreeShell } from './useMasterFolderTreeShell';
 
 export const MasterFolderTreeShellContext = createContext<MasterFolderTreeShell | null>(null);
 

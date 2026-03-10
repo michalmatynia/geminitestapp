@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react';
+
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { PathConfig, PathDebugSnapshot, RuntimeState } from '@/shared/lib/ai-paths';
 import { PATH_DEBUG_PREFIX, appendLocalRun } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 import { buildActivePathConfig, buildDebugSnapshot, safeJsonStringify } from '../utils';
 

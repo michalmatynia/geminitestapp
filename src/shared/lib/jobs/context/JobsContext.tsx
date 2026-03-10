@@ -2,6 +2,9 @@
 
 import React, { useState, useMemo, type ReactNode } from 'react';
 
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { TraderaQueueHealthResponse } from '@/shared/lib/jobs/api';
 import {
   useCancelListingMutation,
@@ -13,11 +16,8 @@ import {
   useChatbotJobs,
   useTraderaQueueHealth,
 } from '@/shared/lib/jobs/hooks/useJobQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type ChatbotJob = {
   id: string;

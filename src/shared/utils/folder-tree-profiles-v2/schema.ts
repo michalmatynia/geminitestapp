@@ -1,4 +1,11 @@
 import { z } from 'zod';
+
+import {
+  folderTreePlaceholderPresetValues,
+  folderTreePlaceholderStyleValues,
+  folderTreePlaceholderEmphasisValues,
+  folderTreeSelectionBehaviorValues,
+} from './constants';
 import {
   FolderTreePlaceholderPreset,
   FolderTreePlaceholderStyle,
@@ -11,12 +18,6 @@ import {
   MasterTreeNodeStatus,
   FolderTreeProfileV2,
 } from './types';
-import {
-  folderTreePlaceholderPresetValues,
-  folderTreePlaceholderStyleValues,
-  folderTreePlaceholderEmphasisValues,
-  folderTreeSelectionBehaviorValues,
-} from './constants';
 
 export const placeholderPresetSchema = z.enum(
   folderTreePlaceholderPresetValues as [string, ...string[]]

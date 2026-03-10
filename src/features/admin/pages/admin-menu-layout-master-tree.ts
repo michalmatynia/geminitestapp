@@ -1,5 +1,6 @@
 import type { AdminMenuCustomNode, AdminNavNodeEntry } from '@/shared/contracts/admin';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
 import type {
   AdminMenuLayoutNodeEntry as AdminMenuLayoutFallbackEntry,
   AdminMenuLayoutNodeSemantic,

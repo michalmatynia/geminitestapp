@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export const createNoteFile = async (data: NoteFileCreateInput): Promise<NoteFileRecord> => {
   const createData: Prisma.NoteFileCreateInput = {

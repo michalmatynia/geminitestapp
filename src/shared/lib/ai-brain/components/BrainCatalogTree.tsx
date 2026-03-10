@@ -10,13 +10,14 @@ import {
   type FolderTreeViewportV2Props,
 } from '@/features/foldertree/v2';
 
-import type { AiBrainCatalogEntry } from '../settings';
-import { BrainCatalogNodeItem, BrainCatalogNodeItemRuntimeContext } from './BrainCatalogNodeItem';
 import {
   buildBrainCatalogMasterNodes,
   createBrainCatalogNodeEntryMap,
   resolveBrainCatalogOrderFromNodes,
 } from './brain-catalog-master-tree';
+import { BrainCatalogNodeItem, BrainCatalogNodeItemRuntimeContext } from './BrainCatalogNodeItem';
+
+import type { AiBrainCatalogEntry } from '../settings';
 
 export interface BrainCatalogTreeProps {
   entries: AiBrainCatalogEntry[];

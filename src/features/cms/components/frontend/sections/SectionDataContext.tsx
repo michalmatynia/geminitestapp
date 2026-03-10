@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 import { useOptionalCmsPageContext } from '../CmsPageContext';
 
 import type { ColorSchemeColors } from '../theme-styles';
-import { internalError } from '@/shared/errors/app-error';
 
 interface SectionData {
   settings: Record<string, unknown>;

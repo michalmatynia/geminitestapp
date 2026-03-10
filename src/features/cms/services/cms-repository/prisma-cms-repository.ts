@@ -14,7 +14,6 @@ import type {
   UpdateCmsDomainDto,
 } from '@/shared/contracts/cms';
 import prisma from '@/shared/lib/db/prisma';
-
 import type {
   Prisma,
   Page as PrismaPage,

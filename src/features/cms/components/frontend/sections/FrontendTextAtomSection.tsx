@@ -1,7 +1,8 @@
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useSectionBlockData } from './SectionBlockContext';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendTextAtomSection(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

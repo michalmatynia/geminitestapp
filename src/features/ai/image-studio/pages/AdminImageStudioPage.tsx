@@ -7,6 +7,9 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 import {
   ClientOnly,
   Tabs,
@@ -17,8 +20,6 @@ import {
   CopyButton,
   Button,
 } from '@/shared/ui';
-import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
@@ -31,8 +32,8 @@ import { ToggleButtonGroup } from '../components/ToggleButtonGroup';
 import { useGenerationState } from '../context/GenerationContext';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useMaskingState } from '../context/MaskingContext';
-import { usePromptState } from '../context/PromptContext';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
+import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
@@ -40,7 +41,7 @@ import {
   buildImageStudioWorkspaceContextBundle,
   IMAGE_STUDIO_CONTEXT_ROOT_IDS,
 } from '../context-registry/workspace';
-import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [

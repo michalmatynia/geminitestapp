@@ -1,4 +1,5 @@
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
 import { getCaseResolverWorkspaceRevision } from '../workspace-persistence';
 
 export type CaseResolverWorkspaceHydrationDecisionReason =

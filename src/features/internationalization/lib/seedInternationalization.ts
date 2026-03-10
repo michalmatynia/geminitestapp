@@ -6,7 +6,6 @@ import {
   defaultCurrencies,
   defaultLanguages,
 } from '@/features/internationalization/lib/internationalizationDefaults';
-
 import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 export async function ensureInternationalizationDefaults(

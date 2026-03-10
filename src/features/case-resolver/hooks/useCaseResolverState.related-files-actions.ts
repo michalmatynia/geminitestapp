@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
+import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { type Toast } from '@/shared/contracts/ui';
 
 export function useCaseResolverStateRelatedFilesActions({

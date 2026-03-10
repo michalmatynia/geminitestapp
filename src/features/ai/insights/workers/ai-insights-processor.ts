@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -10,6 +8,8 @@ import {
 } from '@/features/ai/insights/server';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/server';
 import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/server';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
 
 const AI_INSIGHTS_RUN_PATH_ID = 'brain-ai-insights';

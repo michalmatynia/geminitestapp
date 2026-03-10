@@ -1,4 +1,6 @@
 import { type AiNode, type Edge } from '@/shared/contracts/ai-paths-core';
+
+import { DEFAULT_CONTEXT_ROLE } from './base';
 import {
   CONTEXT_INPUT_PORTS,
   CONTEXT_OUTPUT_PORTS,
@@ -6,7 +8,6 @@ import {
   MODEL_OUTPUT_PORTS,
   DATABASE_INPUT_PORTS,
 } from './ports';
-import { DEFAULT_CONTEXT_ROLE } from './base';
 
 const INITIAL_NODE_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 

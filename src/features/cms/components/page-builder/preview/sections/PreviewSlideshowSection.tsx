@@ -2,20 +2,20 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
-import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import {
   usePreviewEditorActions,
   usePreviewEditorState,
 } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import { resolveNodeLabel } from '@/features/cms/components/page-builder/preview/InspectorOverlay';
-import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
+import { resolveNodeLabel } from '@/features/cms/components/page-builder/preview/InspectorOverlay';
 import {
   getSelectableSurfaceProps,
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
+import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
+import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';

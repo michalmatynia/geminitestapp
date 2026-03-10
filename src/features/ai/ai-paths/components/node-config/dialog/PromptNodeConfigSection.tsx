@@ -2,10 +2,10 @@
 
 import React from 'react';
 
+import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Textarea, Alert, FormField } from '@/shared/ui';
 
 import {

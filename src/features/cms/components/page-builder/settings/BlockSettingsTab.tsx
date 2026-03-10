@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Button } from '@/shared/ui';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import React, { useMemo, useCallback } from 'react';
+
+import {
+  usePageBuilderSelection,
+  usePageBuilderDispatch,
+} from '@/features/cms/hooks/usePageBuilderContext';
 import {
   APP_EMBED_SETTING_KEY,
   type AppEmbedId,
@@ -13,20 +15,21 @@ import {
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
   getAppEmbedOption,
 } from '@/shared/lib/app-embeds';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Button } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-import { SettingsFormProvider } from './SettingsFormContext';
 import {
   appendRuntimeVisibilityFields,
   prependManagementFields,
   groupSettingsFields,
   renderFieldGroups,
 } from './field-group-helpers';
-import { getBlockDefinition } from '../section-registry';
-import {
-  usePageBuilderSelection,
-  usePageBuilderDispatch,
-} from '@/features/cms/hooks/usePageBuilderContext';
+import { SettingsFormProvider } from './SettingsFormContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
+import { getBlockDefinition } from '../section-registry';
+
+
 
 export function BlockSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();

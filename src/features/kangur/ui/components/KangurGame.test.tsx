@@ -84,6 +84,13 @@ describe('KangurGame', () => {
       'border-white/88',
       'bg-white/94'
     );
+    expect(screen.getByText('+10 XP ✨')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByTestId('kangur-game-summary-breakdown')).toHaveTextContent(
+      'Ukonczenie rundy +10'
+    );
+    expect(screen.getByTestId('kangur-game-summary-breakdown-base')).toHaveTextContent(
+      'Ukonczenie rundy +10'
+    );
     expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

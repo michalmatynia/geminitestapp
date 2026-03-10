@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 
 const PRODUCT_EDITOR_QUERY_KEYS = [
   'openProductId',

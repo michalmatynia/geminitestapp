@@ -1,10 +1,12 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { UseAiPathsSettingsStateReturn } from './types';
+
+import { internalError } from '@/shared/errors/app-error';
 import type { AiPathsValidationConfig, DataContractPreflightReport } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/ui';
-import { internalError } from '@/shared/errors/app-error';
+
+import type { UseAiPathsSettingsStateReturn } from './types';
 
 export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   activeTab: 'canvas' | 'paths' | 'docs';

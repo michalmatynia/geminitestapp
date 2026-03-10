@@ -1,14 +1,15 @@
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
+import { ALERT_EVIDENCE_SAMPLE_LIMIT } from './config';
+import { listAlertEvidenceLogs } from './repository';
 import {
   type AlertEvidenceContextRegistry,
   type AlertEvidenceSample,
   type AlertEvidenceContext,
   type AlertEvidenceQuery,
 } from './types';
-import { listAlertEvidenceLogs } from './repository';
-import { ALERT_EVIDENCE_SAMPLE_LIMIT } from './config';
 
 export const asRecord = (value: unknown): Record<string, unknown> | null =>
   isObjectRecord(value) ? value : null;

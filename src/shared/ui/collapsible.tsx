@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/shared/utils';
+
 import { SectionHeader } from './section-header';
 
 const Collapsible = CollapsiblePrimitive.Root;

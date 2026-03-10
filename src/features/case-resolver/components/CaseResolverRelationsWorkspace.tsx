@@ -12,8 +12,6 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai';
-import { EMPTY_RUNTIME_STATE, typeStyles } from '@/shared/lib/ai-paths/core/constants';
-import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type { AiNode, Edge } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverAssetFile,
@@ -22,25 +20,27 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverRelationNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import { EMPTY_RUNTIME_STATE, typeStyles } from '@/shared/lib/ai-paths/core/constants';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { EmptyState } from '@/shared/ui';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
 import {
   CaseResolverRelationsWorkspaceProvider,
   useCaseResolverRelationsWorkspaceContext,
 } from './CaseResolverRelationsWorkspaceContext';
 import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
+import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
+import {
   buildCaseResolverRelationGraph,
   toCaseResolverRelationCaseNodeId,
 } from '../settings-relation-graph';
 import { parseCanonicalCaseResolverEdge } from '../settings.edge-validation';
-import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const isCaseResolverFile = (value: unknown): value is CaseResolverFile =>
   isObjectRecord(value) &&

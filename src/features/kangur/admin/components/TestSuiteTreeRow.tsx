@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertTriangle,
   ChevronDown,
@@ -13,12 +12,15 @@ import {
   Trash2,
   WandSparkles,
 } from 'lucide-react';
+import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
+import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { Badge, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
+
 import { fromKangurTestSuiteNodeId } from '../kangur-test-suites-master-tree';
+
 import type { KangurTestSuiteHealth } from '../test-suite-health';
 
 export function TestSuiteTreeRow(props: {
@@ -181,13 +183,13 @@ export function TestSuiteTreeRow(props: {
           !suiteHealth.draftQuestionCount &&
           !suiteHealth.readyToPublishQuestionCount &&
           suiteHealth.publishedQuestionCount !== suiteHealth.questionCount ? (
-            <Badge
-              variant='outline'
-              className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
-            >
+              <Badge
+                variant='outline'
+                className='h-5 px-1.5 text-[10px] border-emerald-400/40 text-emerald-300'
+              >
               Clean
-            </Badge>
-          ) : null}
+              </Badge>
+            ) : null}
           {suiteHealth?.draftQuestionCount ? (
             <Badge
               variant='outline'

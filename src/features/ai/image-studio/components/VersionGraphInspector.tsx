@@ -3,12 +3,12 @@
 import { Copy, Crosshair, Focus, Info, Layers, MousePointer2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import { Button, Hint } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { readMeta } from '@/features/ai/image-studio/utils/metadata';
-import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

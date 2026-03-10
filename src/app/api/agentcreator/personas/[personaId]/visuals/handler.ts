@@ -5,8 +5,8 @@ import type { AgentPersona } from '@/shared/contracts/agents';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 export async function GET_handler(
   _req: NextRequest,

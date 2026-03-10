@@ -1,9 +1,10 @@
+import { recordPortablePathEnvelopeVerificationEvent } from './portable-engine-envelope-observability';
+
+import type { AiPathPortablePackageEnvelopeVersioned } from './portable-engine-contract';
 import type {
   PortablePathEnvelopeVerificationOutcome,
   PortablePathEnvelopeVerificationStatus,
 } from './portable-engine-envelope-observability';
-import { recordPortablePathEnvelopeVerificationEvent } from './portable-engine-envelope-observability';
-import type { AiPathPortablePackageEnvelopeVersioned } from './portable-engine-contract';
 import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
 

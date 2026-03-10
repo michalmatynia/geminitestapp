@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { SectionInstance, BlockInstance } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
 

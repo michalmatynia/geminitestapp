@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
+
 import { FormSection, EmptyState } from '@/shared/ui';
-import { useDocumentState } from '../context/hooks/useDocument';
-import { PromptExploderSegmentsTreeEditor } from './tree/PromptExploderSegmentsTreeEditor';
+
 import { SegmentDetailEditor } from './segment-editor/SegmentDetailEditor';
+import { PromptExploderSegmentsTreeEditor } from './tree/PromptExploderSegmentsTreeEditor';
+import { useDocumentState } from '../context/hooks/useDocument';
 
 export function SegmentEditorPanel(): React.JSX.Element {
   const { documentState } = useDocumentState();

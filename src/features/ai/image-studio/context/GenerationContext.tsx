@@ -4,11 +4,12 @@ import React, { createContext, useContext } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
+import { useGenerationRuntime } from './useGenerationRuntime';
+
 import type {
   GenerationActions,
   GenerationState,
 } from './GenerationContext.types';
-import { useGenerationRuntime } from './useGenerationRuntime';
 
 export type {
   GenerationRecord,

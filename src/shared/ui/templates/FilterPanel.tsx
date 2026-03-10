@@ -2,9 +2,10 @@
 
 import { useMemo, type JSX, type ReactNode } from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 import { FilterField } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
+import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 
 /**
  * FilterPanel - Enhanced filter container with context integration support

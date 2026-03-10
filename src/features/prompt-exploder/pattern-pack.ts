@@ -1,9 +1,13 @@
-import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import type {
   PromptEngineSettings,
   PromptValidationRule,
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptExploderPatternPackResult,
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
+import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 
 import {
   PROMPT_EXPLODER_PATTERN_PACK,
@@ -11,10 +15,6 @@ import {
   remapExploderScopesForTarget,
 } from './pattern-pack-rules';
 
-import type {
-  PromptExploderPatternPackResult,
-  PromptExploderRuntimeValidationScope,
-} from '@/shared/contracts/prompt-exploder';
 
 export { PROMPT_EXPLODER_PATTERN_PACK };
 

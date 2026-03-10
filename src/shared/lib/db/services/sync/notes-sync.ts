@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
-import type { Prisma } from '@prisma/client';
+
 import type { SyncHandler } from './types';
+import type { Prisma } from '@prisma/client';
 
 export const syncNotebooks: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('notebooks').find({}).toArray();

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback } from 'react';
 import { Clipboard, X } from 'lucide-react';
+import React, { useCallback } from 'react';
 
 import { Button, Textarea } from '@/shared/ui';
 import { cn, sanitizeSvg } from '@/shared/utils';

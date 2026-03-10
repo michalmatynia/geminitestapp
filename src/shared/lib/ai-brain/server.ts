@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { configurationError } from '@/shared/errors/app-error';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
+import { configurationError } from '@/shared/errors/app-error';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

@@ -3,14 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
-
-import { useUiActions, useUiCanvasState } from '../context/UiContext';
-import {
-  saveImageStudioAnalysisApplyIntent,
-  type ImageStudioAnalysisApplyTarget,
-} from '@/features/ai/image-studio/utils/analysis-bridge';
 import {
   buildDefaultSharedLayout,
   computeCanvasOffsetFromObjectBounds,
@@ -24,6 +16,14 @@ import {
   type AiPathsObjectAnalysisConfig,
   type ExtractedObjectBounds,
 } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
+import {
+  saveImageStudioAnalysisApplyIntent,
+  type ImageStudioAnalysisApplyTarget,
+} from '@/features/ai/image-studio/utils/analysis-bridge';
+import { api } from '@/shared/lib/api-client';
+import { useToast } from '@/shared/ui';
+
+import { useUiActions, useUiCanvasState } from '../context/UiContext';
 
 // ---------------------------------------------------------------------------
 // Types

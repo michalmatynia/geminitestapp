@@ -28,8 +28,8 @@ import {
   promptExploderValidatorScopeFromStack,
 } from '../validation-stack';
 
-import type { PromptExploderLearnedTemplate } from '../types';
 import type { LearningDraft } from '../context/settings/SettingsDraftsContext';
+import type { PromptExploderLearnedTemplate } from '../types';
 
 const looksLikeCaseResolverPrompt = (value: string): boolean => {
   const text = value.trim();

@@ -3,6 +3,12 @@
 import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type {
+  CaseResolverFile,
+  CaseResolverTag,
+  CaseResolverIdentifier,
+  CaseResolverCategory,
+} from '@/shared/contracts/case-resolver';
 import {
   Button,
   EmptyState,
@@ -18,12 +24,6 @@ import {
   useCaseResolverPageActions,
   useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
-import type {
-  CaseResolverFile,
-  CaseResolverTag,
-  CaseResolverIdentifier,
-  CaseResolverCategory,
-} from '@/shared/contracts/case-resolver';
 
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';

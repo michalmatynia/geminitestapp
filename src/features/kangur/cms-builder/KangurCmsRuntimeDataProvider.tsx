@@ -1,17 +1,10 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import React, { useCallback, useMemo } from 'react';
 
 import { CmsRuntimeProvider } from '@/features/cms/public';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
-import {
-  buildKangurAssignmentHref,
-  formatKangurAssignmentOperationLabel,
-  getKangurAssignmentActionLabel,
-  selectKangurPriorityAssignments,
-} from '@/features/kangur/ui/services/delegated-assignments';
-import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   useOptionalKangurGameRuntime,
@@ -19,10 +12,10 @@ import {
 import {
   useOptionalKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import {
   useOptionalKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -30,6 +23,13 @@ import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurL
 import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
+import {
+  buildKangurAssignmentHref,
+  formatKangurAssignmentOperationLabel,
+  getKangurAssignmentActionLabel,
+  selectKangurPriorityAssignments,
+} from '@/features/kangur/ui/services/delegated-assignments';
+import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurPracticeAssignmentOperation } from '@/shared/contracts/kangur';
 

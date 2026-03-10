@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Pagination } from '@/shared/ui/pagination';
 

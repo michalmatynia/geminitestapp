@@ -1,13 +1,14 @@
 import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+
 import { cloneValue } from '../utils';
+import { EngineStateManager } from './engine-state-manager';
 import {
   type EvaluateGraphOptions,
   type RuntimeValidationIssue,
   type RuntimeValidationStage,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
-import { EngineStateManager } from './engine-state-manager';
 import { buildInputLinks } from './engine-utils';
 
 export const buildRuntimeTelemetryFields = (

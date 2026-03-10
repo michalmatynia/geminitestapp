@@ -18,6 +18,7 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
@@ -36,7 +37,11 @@ import {
   createGameSessionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import type {
+  KangurExamQuestion,
+  KangurQuestionChoice,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type IllustrationComponent = () => React.JSX.Element;
@@ -49,6 +54,8 @@ type QuestionViewProps = {
 };
 
 type ResultViewProps = {
+  rewardBreakdown?: KangurRewardBreakdownEntry[];
+  xpEarned?: number;
   score: number;
   total: number;
   onRestart: () => void;
@@ -246,7 +253,13 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
   );
 }
 
-function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Element {
+function ResultView({
+  rewardBreakdown = [],
+  xpEarned = 0,
+  score,
+  total,
+  onRestart,
+}: ResultViewProps): React.JSX.Element {
   const { onBack } = useKangurGameContext();
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
@@ -275,6 +288,18 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
                 ? 'Dobra robota! Ćwicz dalej!'
                 : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
         </p>
+        {xpEarned > 0 ? (
+          <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
+            +{xpEarned} XP ✨
+          </KangurStatusChip>
+        ) : null}
+        <KangurRewardBreakdownChips
+          accent='slate'
+          breakdown={rewardBreakdown}
+          className='justify-center'
+          dataTestId='kangur-game-summary-breakdown'
+          itemDataTestIdPrefix='kangur-game-summary-breakdown'
+        />
         <KangurProgressBar
           accent='amber'
           animated
@@ -304,6 +329,10 @@ function PracticeModeGame(): React.JSX.Element {
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [resultRewardXp, setResultRewardXp] = useState(0);
+  const [resultRewardBreakdown, setResultRewardBreakdown] = useState<
+    KangurRewardBreakdownEntry[]
+  >([]);
 
   const handleAnswer = (correct: boolean): void => {
     const newScore = correct ? score + 1 : score;
@@ -321,6 +350,8 @@ function PracticeModeGame(): React.JSX.Element {
       });
 
       addXp(reward.xp, reward.progressUpdates);
+      setResultRewardXp(reward.xp);
+      setResultRewardBreakdown(reward.breakdown ?? []);
       setScore(newScore);
       setFinished(true);
     } else {
@@ -332,15 +363,33 @@ function PracticeModeGame(): React.JSX.Element {
     setCurrent(0);
     setScore(0);
     setFinished(false);
+    setResultRewardXp(0);
+    setResultRewardBreakdown([]);
   };
 
   if (finished) {
-    return <ResultView score={score} total={questions.length} onRestart={handleRestart} />;
+    return (
+      <ResultView
+        rewardBreakdown={resultRewardBreakdown}
+        score={score}
+        total={questions.length}
+        onRestart={handleRestart}
+        xpEarned={resultRewardXp}
+      />
+    );
   }
 
   const activeQuestion = questions[current];
   if (!activeQuestion) {
-    return <ResultView score={score} total={questions.length} onRestart={handleRestart} />;
+    return (
+      <ResultView
+        rewardBreakdown={resultRewardBreakdown}
+        score={score}
+        total={questions.length}
+        onRestart={handleRestart}
+        xpEarned={resultRewardXp}
+      />
+    );
   }
 
   return (

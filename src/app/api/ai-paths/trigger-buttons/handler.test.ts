@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { authError } from '@/shared/errors/app-error';
+import {
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME,
+  PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
+} from '@/shared/lib/ai-paths/playwright-fixture-scope';
 
 const {
   getAiPathsSettingMock,
@@ -75,6 +79,102 @@ describe('ai-paths trigger-buttons GET handler', () => {
           label: 'Run Path',
           showLabel: false,
         },
+      }),
+    ]);
+  });
+
+  it('hides playwright fixture trigger buttons by default', async () => {
+    getAiPathsSettingMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'btn-live',
+          name: 'Run Path',
+          iconId: null,
+          pathId: 'path_live',
+          enabled: true,
+          locations: ['product_modal'],
+          mode: 'click',
+          display: 'icon',
+          createdAt: '2026-03-03T00:00:00.000Z',
+          updatedAt: '2026-03-03T00:00:00.000Z',
+          sortIndex: 0,
+        },
+        {
+          id: 'btn-fixture',
+          name: 'Generate Polish Copy 123',
+          iconId: null,
+          pathId: 'path_pw_products_abc123',
+          enabled: true,
+          locations: ['product_row'],
+          mode: 'click',
+          display: 'icon_label',
+          createdAt: '2026-03-03T00:00:00.000Z',
+          updatedAt: '2026-03-03T00:00:00.000Z',
+          sortIndex: 1,
+        },
+      ])
+    );
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-live',
+      }),
+    ]);
+  });
+
+  it('returns playwright fixture trigger buttons when explicitly requested', async () => {
+    getAiPathsSettingMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'btn-fixture',
+          name: 'Generate Polish Copy 123',
+          iconId: null,
+          pathId: 'path_pw_products_abc123',
+          enabled: true,
+          locations: ['product_row'],
+          mode: 'click',
+          display: 'icon_label',
+          createdAt: '2026-03-03T00:00:00.000Z',
+          updatedAt: '2026-03-03T00:00:00.000Z',
+          sortIndex: 0,
+        },
+      ])
+    );
+
+    const cookieRequest = new NextRequest('http://localhost/api/ai-paths/trigger-buttons');
+    Object.defineProperty(cookieRequest, 'cookies', {
+      value: {
+        get: (key: string) =>
+          key === PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME ? { value: '1' } : undefined,
+      },
+    });
+
+    const responseFromCookie = await GET_handler(
+      cookieRequest,
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    await expect(responseFromCookie.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-fixture',
+      }),
+    ]);
+
+    const responseFromQuery = await GET_handler(
+      new NextRequest(
+        `http://localhost/api/ai-paths/trigger-buttons?${PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM}=1`
+      ),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    await expect(responseFromQuery.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-fixture',
       }),
     ]);
   });

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
 import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+
 import { usePageAiAssistant } from './usePageAiAssistant';
 
 export function PageAiTabContent({

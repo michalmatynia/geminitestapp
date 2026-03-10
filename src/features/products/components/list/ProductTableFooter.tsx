@@ -3,7 +3,6 @@ import { Table as ReactTable, Row } from '@tanstack/react-table';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
 import React, { JSX, memo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   useBulkDeleteProducts,
   useBulkConvertImagesToBase64,
@@ -12,6 +11,7 @@ import { ProductWithImages } from '@/shared/contracts/products';
 import { Button, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;

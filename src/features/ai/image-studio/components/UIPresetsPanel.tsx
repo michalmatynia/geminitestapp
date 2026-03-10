@@ -2,16 +2,16 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
-
-import { usePromptState, usePromptActions } from '../context/PromptContext';
 import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { usePromptState, usePromptActions } from '../context/PromptContext';
 
 const CUSTOM_OPTION_VALUE = '__custom__';
 

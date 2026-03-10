@@ -1,14 +1,14 @@
 import 'server-only';
 
-import { productService } from '@/shared/lib/products/services/productService';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   ProductParameter,
   ProductWithImages,
   ProductRecord,
 } from '@/shared/contracts/products';
 import type { ProductFilters } from '@/shared/contracts/products';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { productService } from '@/shared/lib/products/services/productService';
 
 import { withQueryCache, ProductCacheHelpers, queryCache, stableStringify } from './query-cache';
 

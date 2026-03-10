@@ -1,12 +1,12 @@
+import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { ListQuery, VoidMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
-import { invalidateSettingsCache } from '@/shared/api/settings-client';
 
 export function usePlaywrightPersonas(options?: {
   enabled?: boolean;

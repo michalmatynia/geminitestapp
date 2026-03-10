@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
+
 import type { ParserSampleState } from '@/shared/lib/ai-paths';
+import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 export interface ParserSampleSectionProps {
   selectedNodeId: string;

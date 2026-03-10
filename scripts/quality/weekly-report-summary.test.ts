@@ -146,6 +146,22 @@ describe('weekly report summary helpers', () => {
           runCount: 3,
         },
       },
+      kangurAiTutorBridge: {
+        status: 'ok',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 4,
+          bridgeCompletionRatePercent: 50,
+          alertStatus: 'ok',
+        },
+        details: {
+          window: {
+            from: '2026-03-02T00:00:00.000Z',
+            to: '2026-03-09T00:00:00.000Z',
+          },
+        },
+        error: null,
+      },
       criticalFlows: [
         {
           id: 'auth-session',
@@ -175,6 +191,15 @@ describe('weekly report summary helpers', () => {
       trends: {
         weeklyLane: {
           runCount: 3,
+        },
+      },
+      kangurAiTutorBridge: {
+        status: 'ok',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 4,
+          bridgeCompletionRatePercent: 50,
+          alertStatus: 'ok',
         },
       },
       criticalFlows: [
@@ -326,6 +351,17 @@ describe('weekly report summary helpers', () => {
       stabilization: null,
       stabilizationError: null,
       trends: null,
+      kangurAiTutorBridge: {
+        status: 'warning',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 6,
+          bridgeCompletionRatePercent: 33.3,
+          alertStatus: 'warning',
+        },
+        details: null,
+        error: null,
+      },
       criticalFlows: [],
     });
 
@@ -378,6 +414,15 @@ describe('weekly report summary helpers', () => {
           loggerViolations: 0,
           runtimeErrors: 0,
         },
+      },
+    });
+    expect(details.kangurAiTutorBridge).toMatchObject({
+      status: 'warning',
+      summary: {
+        range: '7d',
+        bridgeSuggestionCount: 6,
+        bridgeCompletionRatePercent: 33.3,
+        alertStatus: 'warning',
       },
     });
   });

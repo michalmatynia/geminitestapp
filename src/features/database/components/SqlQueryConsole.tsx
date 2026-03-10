@@ -3,9 +3,9 @@
 import { PlayIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import { Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useDatabaseConfig } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';

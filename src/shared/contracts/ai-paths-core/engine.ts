@@ -1,3 +1,4 @@
+import { type AiPathsValidationStage } from './base';
 import {
   type AiNode,
   type Edge,
@@ -5,7 +6,6 @@ import {
   type UpdaterSampleState,
   type AiPathsValidationConfig,
 } from './nodes';
-import { type AiPathsValidationStage } from './base';
 import { type RuntimeState } from '../ai-paths-runtime';
 
 /**

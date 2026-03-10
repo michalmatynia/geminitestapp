@@ -3,10 +3,11 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import PlayerProgressCard from '@/features/kangur/ui/components/PlayerProgressCard';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+
+let PlayerProgressCard: typeof import('@/features/kangur/ui/components/PlayerProgressCard').default;
 
 const progress: KangurProgressState = {
   totalXp: 480,
@@ -28,6 +29,7 @@ const progress: KangurProgressState = {
       perfectSessions: 1,
       totalCorrectAnswers: 18,
       totalQuestionsAnswered: 20,
+      totalXpEarned: 112,
       bestScorePercent: 100,
       lastScorePercent: 80,
       currentStreak: 2,
@@ -38,6 +40,15 @@ const progress: KangurProgressState = {
 };
 
 describe('PlayerProgressCard', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    PlayerProgressCard = (
+      await vi.importActual<typeof import('@/features/kangur/ui/components/PlayerProgressCard')>(
+        '@/features/kangur/ui/components/PlayerProgressCard'
+      )
+    ).default;
+  });
+
   it('uses shared metric and badge-chip styling for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
@@ -54,10 +65,14 @@ describe('PlayerProgressCard', () => {
       'border-emerald-300'
     );
     expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border-amber-300');
+    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border-sky-300');
+    expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
       'Trening zegara: Godziny'
     );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('4 sesji');
+    expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('28 XP / gre');
+    expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
     expect(screen.getByTestId('player-progress-badge-first_game')).toHaveClass(
       'border-amber-200',
       'bg-amber-100'

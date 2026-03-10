@@ -52,6 +52,34 @@ the app.
   - `npm run perf:ops:weekly`
   - Matches the scheduled weekly workflow and writes trend artifacts under
     `docs/metrics`.
+  - The weekly lane trend now carries a compact `latestKangurAiTutorBridgeSummaryText`
+    signal when Kangur weekly artifacts include the AI Tutor bridge snapshot, and
+    the trend index surfaces that as `Latest Signal` plus an explicit `Alert`
+    column in markdown output.
+  - The weekly lane markdown also shows the latest bridge alert and signal near
+    the top of the report for faster human review, together with bridge state
+    and age when available.
+  - `trend-index --summary-json` now also exposes `entriesWithSignals` and
+    `latestWeeklyLaneSignal` plus `latestWeeklyLaneAlertStatus` in the top-level
+    summary for automation.
+  - When the newest weekly lane run has no Kangur bridge snapshot, the weekly
+    trend summary preserves the most recent bridge-bearing run via
+    `latestAvailableKangurAiTutorBridge*`, including age via
+    `latestAvailableKangurAiTutorBridgeAgeMs` /
+    `latestAvailableKangurAiTutorBridgeAgeRuns`, and the trend index exposes the
+    reused bridge timestamp as `latestWeeklyLaneSignalRun`.
+  - `latestKangurAiTutorBridgeState` and `latestAvailableKangurAiTutorBridgeState`
+    distinguish the newest run from the most recent bridge-bearing run using
+    `current`, `stale`, `absent`, or `missing`.
+  - The trend index also exposes `latestWeeklyLaneSignalIsStale`, and the
+    markdown report shows dedicated `Signal Run`, `Signal State`, and
+    `Signal Age` columns plus a top-level current/stale/absent/missing signal
+    distribution line
+    whenever the reused bridge signal comes from an older weekly artifact.
+  - `latestWeeklyLaneSignalState` is the fastest machine-readable way to tell if
+    the weekly bridge signal is `current`, `stale`, `absent`, or `missing`.
+  - `latestWeeklyLaneSignalAgeRuns` and `latestWeeklyLaneSignalAgeMs` expose how
+    old a reused weekly bridge signal is when the state is `stale`.
 - Feature baseline:
   - `npm run metrics:kangur:baseline:strict`
 
@@ -70,6 +98,10 @@ Successful runs update these files:
 - `docs/metrics/unit-domain-timings-latest.md`
 - `docs/metrics/weekly-quality-latest.json`
 - `docs/metrics/weekly-quality-latest.md`
+- `docs/metrics/weekly-quality-trend-latest.json`
+- `docs/metrics/weekly-quality-trend-latest.md`
+- `docs/metrics/trend-index-latest.json`
+- `docs/metrics/trend-index-latest.md`
 
 ## Live Telemetry Surfaces
 

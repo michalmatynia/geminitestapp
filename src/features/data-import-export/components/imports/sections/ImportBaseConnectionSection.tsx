@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+
 import {
   useImportExportActions,
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { InventoryOption, CatalogOption, Template } from '@/shared/contracts/integrations';
 import {
   Button,
   SelectSimple,
@@ -16,7 +18,6 @@ import {
   ToggleRow,
   Card,
 } from '@/shared/ui';
-import type { InventoryOption, CatalogOption, Template } from '@/shared/contracts/integrations';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
   const {

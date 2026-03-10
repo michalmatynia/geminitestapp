@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Input, SelectSimple } from '@/shared/ui';
+
 import { useGenerationToolbarDefaultsSectionRuntime } from './GenerationToolbarSectionContexts';
 
 export function GenerationToolbarDefaultsSection(): React.JSX.Element {

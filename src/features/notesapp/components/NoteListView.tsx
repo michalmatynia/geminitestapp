@@ -1,10 +1,10 @@
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 

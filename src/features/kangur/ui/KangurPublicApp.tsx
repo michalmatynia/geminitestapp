@@ -1,9 +1,10 @@
-import type { JSX } from 'react';
 
 import { getKangurHomeHref, normalizeKangurBasePath } from '@/features/kangur/config/routing';
-import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
 import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
+import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+
+import type { JSX } from 'react';
 
 export function KangurPublicApp({
   slug = [],

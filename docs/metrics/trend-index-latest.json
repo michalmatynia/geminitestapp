@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T07:53:03.046Z",
+  "generatedAt": "2026-03-09T21:30:50.791Z",
   "entries": [
     {
       "id": "weekly-lane",
@@ -7,9 +7,15 @@
       "latestJson": "weekly-quality-trend-latest.json",
       "latestMd": "weekly-quality-trend-latest.md",
       "status": "ready",
-      "latestRun": "2026-03-05T00:31:37.152Z",
-      "runCount": 1,
-      "deltaText": null
+      "latestRun": "2026-03-09T09:07:34.294Z",
+      "runCount": 10,
+      "deltaText": "+10.4s",
+      "latestSignal": null,
+      "latestAlertStatus": null,
+      "latestSignalRun": null,
+      "latestSignalState": "absent",
+      "latestSignalAgeMs": null,
+      "latestSignalAgeRuns": null
     },
     {
       "id": "unit-domains",
@@ -19,7 +25,13 @@
       "status": "ready",
       "latestRun": "2026-03-05T03:49:28.650Z",
       "runCount": 2,
-      "deltaText": "+5.3s"
+      "deltaText": "+5.3s",
+      "latestSignal": null,
+      "latestAlertStatus": null,
+      "latestSignalRun": null,
+      "latestSignalState": "absent",
+      "latestSignalAgeMs": null,
+      "latestSignalAgeRuns": null
     },
     {
       "id": "lint-domains",
@@ -29,7 +41,13 @@
       "status": "ready",
       "latestRun": "2026-03-05T04:36:38.577Z",
       "runCount": 4,
-      "deltaText": "+31.5s"
+      "deltaText": "+31.5s",
+      "latestSignal": null,
+      "latestAlertStatus": null,
+      "latestSignalRun": null,
+      "latestSignalState": "absent",
+      "latestSignalAgeMs": null,
+      "latestSignalAgeRuns": null
     }
   ]
 }

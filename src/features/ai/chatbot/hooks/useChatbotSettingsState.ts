@@ -3,17 +3,17 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   parseChatbotSettingsPayload,
   type ChatbotSettingsDto as ChatbotSettingsPayload,
 } from '@/shared/contracts/chatbot';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
-import { useChatbotSettings } from './useChatbotQueries';
 import { useSaveChatbotSettings } from './useChatbotMutations';
+import { useChatbotSettings } from './useChatbotQueries';
 
 export interface UseChatbotSettingsStateReturn {
   model: string;

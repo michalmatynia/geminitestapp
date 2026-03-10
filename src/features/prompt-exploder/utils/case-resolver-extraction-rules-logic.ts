@@ -1,3 +1,4 @@
+import { readRegexCaptureGroup } from '@/features/prompt-exploder/helpers/capture';
 import type {
   PromptExploderSegment,
   PromptExploderCaseResolverPartyRole,
@@ -6,8 +7,11 @@ import type {
   CaseResolverCaptureField,
   CaseResolverSegmentCaptureRule,
 } from '@/shared/contracts/prompt-exploder';
-import { readRegexCaptureGroup } from '@/features/prompt-exploder/helpers/capture';
 
+import {
+  isLikelyAddresserSegment,
+  isLikelyAddresseeSegment,
+} from './case-resolver-extraction-heuristics';
 import {
   CASE_RESOLVER_LABEL_ROLE_CONFIG,
   ORGANIZATION_HINT_RE,
@@ -21,10 +25,6 @@ import {
   splitSegmentLines,
   normalizeCountryName,
 } from './case-resolver-extraction-utils';
-import {
-  isLikelyAddresserSegment,
-  isLikelyAddresseeSegment,
-} from './case-resolver-extraction-heuristics';
 
 export type CaseResolverExtractionSegment = PromptExploderSegment & {
   __caseResolverForcedRole?: PromptExploderCaseResolverPartyRole | null;

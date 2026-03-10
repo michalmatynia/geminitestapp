@@ -5,18 +5,12 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { CanvasBoard } from '@/features/ai';
 import { AiPathsProvider } from '@/features/ai';
-import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
-import type { AiNode, Edge as CaseResolverEdge } from '@/shared/contracts/case-resolver';
-import {
-  fetchAiPathsSettingsCached,
-  invalidateAiPathsSettingsCache,
-  updateAiPathsSetting,
-} from '@/shared/lib/ai-paths/settings-store-client';
 import { useGraphState } from '@/features/ai';
 import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai';
+import type { AiNode, Edge as CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverNodeMeta,
   type CaseResolverEdgeMeta,
@@ -24,23 +18,29 @@ import {
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_EDGE_META,
 } from '@/shared/contracts/case-resolver';
-import { Badge, Button, Card, EmptyState } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
-import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/shared/lib/ai-paths/settings-store-client';
+import { Badge, Button, Card, EmptyState } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
+import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
 import { CaseResolverLinkedPreviewModal } from './CaseResolverLinkedPreviewModal';
+import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import {
   NodeFileWorkspaceProvider,
   type NodeFileWorkspaceContextValue,
 } from './NodeFileWorkspaceContext';
-import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
-import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { workspace, activeFile } = useCaseResolverPageState();

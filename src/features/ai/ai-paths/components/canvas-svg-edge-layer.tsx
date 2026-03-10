@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import { useCanvasBoardUI } from './CanvasBoardUIContext';
-import { SignalDots } from './SignalDots';
-import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 import {
   normalizeRuntimeStatus,
   resolveEdgeRuntimeActive,
 } from './canvas/signal-flow-visual-state';
+import { buildConnectingPreviewPath } from './CanvasBoard.utils';
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
+import { SignalDots } from './SignalDots';
 
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   cullPadding = 160,

@@ -1,5 +1,3 @@
-import { cloneJsonSafe } from '@/shared/lib/ai-paths';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathNodeStatus,
   AiNode,
@@ -15,12 +13,17 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
-import { EMPTY_RUNTIME_STATE, collectDroppedRuntimePorts } from './path-run-executor.runtime-state';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import {
   RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
   RUNTIME_PROFILE_SLOW_NODE_MS,
 } from './path-run-executor.profiling-config';
-import { isObjectRecord } from '@/shared/utils/object-utils';
+import { EMPTY_RUNTIME_STATE, collectDroppedRuntimePorts } from './path-run-executor.runtime-state';
+
+
 import type {
   RuntimeProfileHighlight,
   RuntimeProfileNodeSpan,

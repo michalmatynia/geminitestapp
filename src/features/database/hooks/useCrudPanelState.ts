@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   type DatabaseColumnInfo,
   type DatabaseTableDetail,
@@ -14,6 +13,7 @@ import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { executeSqlQuery } from '../api';
 import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';

@@ -5,24 +5,26 @@ import type {
   RuntimeValidationMiddleware,
 } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+
 import {
   recordPortablePathRunExecutionAttempt,
   recordPortablePathRunExecutionFailure,
   recordPortablePathRunExecutionSuccess,
 } from './portable-engine-observability';
-
-import { normalizePortablePathSigningPolicySurface } from './portable-engine-signing-policy';
 import { resolvePortablePathInputAsync } from './portable-engine-resolvers';
-import {
-  PortablePathValidationError,
-  validatePortablePathConfig,
-} from './portable-engine-validation';
-import type { PortablePathInputSource } from './portable-engine-contract';
 import {
   type PortablePathRunOptions,
   type PortablePathRunResult,
   type PortablePathValidationMode,
 } from './portable-engine-runtime-types';
+import { normalizePortablePathSigningPolicySurface } from './portable-engine-signing-policy';
+import {
+  PortablePathValidationError,
+  validatePortablePathConfig,
+} from './portable-engine-validation';
+
+import type { PortablePathInputSource } from './portable-engine-contract';
+
 
 export const runPortablePathClient = async (
   input: unknown,

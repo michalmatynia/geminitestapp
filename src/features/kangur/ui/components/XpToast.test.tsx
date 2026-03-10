@@ -28,7 +28,17 @@ import XpToast from '@/features/kangur/ui/components/XpToast';
 
 describe('XpToast', () => {
   it('uses shared status chips for xp and badge rewards', () => {
-    render(<XpToast newBadges={['first_game']} visible xpGained={25} />);
+    render(
+      <XpToast
+        breakdown={[
+          { kind: 'base', label: 'Ukonczenie rundy', xp: 10 },
+          { kind: 'accuracy', label: 'Skutecznosc', xp: 15 },
+        ]}
+        newBadges={['first_game']}
+        visible
+        xpGained={25}
+      />
+    );
 
     expect(screen.getByTestId('xp-toast-xp-shell')).toHaveClass(
       'glass-panel',
@@ -41,6 +51,13 @@ describe('XpToast', () => {
       'bg-white/95'
     );
     expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByTestId('xp-toast-breakdown')).toBeInTheDocument();
+    expect(screen.getByTestId('xp-toast-breakdown-base')).toHaveTextContent(
+      'Ukonczenie rundy +10'
+    );
+    expect(screen.getByTestId('xp-toast-breakdown-accuracy')).toHaveTextContent(
+      'Skutecznosc +15'
+    );
     expect(screen.getByText(/Nowa odznaka/)).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(

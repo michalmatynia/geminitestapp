@@ -5,8 +5,8 @@ import React from 'react';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Tag, Card } from '@/shared/ui';
 
-import { useFileManagerData, useFileManagerUIState } from '../../contexts/FileManagerContext';
 import { FileManagerGrid } from './FileManagerGrid';
+import { useFileManagerData, useFileManagerUIState } from '../../contexts/FileManagerContext';
 
 export function FileManagerContent(): React.JSX.Element {
   const { activeTab, setActiveTab, setPreviewAsset } = useFileManagerUIState();

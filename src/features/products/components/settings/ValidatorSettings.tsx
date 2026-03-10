@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 
-import { FormSection, StatusToggle } from '@/shared/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { FormSection, StatusToggle } from '@/shared/ui';
 
 import { useValidatorSettingsController } from './validator-settings/useValidatorSettingsController';
 import {

@@ -1,5 +1,6 @@
 import { configurationError } from '@/shared/errors/app-error';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+
 import { AI_PATHS_ENABLED_CACHE_TTL_MS } from './config';
 
 let aiPathsEnabledCache: { value: boolean; expiresAt: number } | null = null;

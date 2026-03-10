@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { ProductValidationPatternRepository } from '@/shared/contracts/products';
 import {
   getProductDataProvider,
   type ProductDbProvider,
 } from '@/shared/lib/products/services/product-provider';
-import type { ProductValidationPatternRepository } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoValidationPatternRepository } from './mongo-validation-pattern-repository';
 import { prismaValidationPatternRepository } from './prisma-validation-pattern-repository';

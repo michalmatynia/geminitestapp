@@ -6,13 +6,13 @@ import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/
 import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';
 
+import { NoteCardContent } from './list/NoteCardContent';
+import { NoteCardFooter } from './list/NoteCardFooter';
 import {
   NoteCardHeader,
   NoteCardHeaderRuntimeContext,
   type NoteCardHeaderRuntimeValue,
 } from './list/NoteCardHeader';
-import { NoteCardContent } from './list/NoteCardContent';
-import { NoteCardFooter } from './list/NoteCardFooter';
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> =

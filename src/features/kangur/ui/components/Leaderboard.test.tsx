@@ -29,7 +29,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
 }));
 
-import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
+let Leaderboard: typeof import('@/features/kangur/ui/components/Leaderboard').default;
 
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
   id: 'score-1',
@@ -39,13 +39,16 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   total_questions: 10,
   correct_answers: 9,
   time_taken: 41,
+  xp_earned: 24,
   created_date: '2026-03-07T12:00:00.000Z',
   created_by: 'ada@example.com',
   ...overrides,
 });
 
 describe('Leaderboard', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    Leaderboard = (await import('@/features/kangur/ui/components/Leaderboard')).default;
     vi.clearAllMocks();
     authMeMock.mockResolvedValue({
       email: 'ada@example.com',
@@ -111,6 +114,7 @@ describe('Leaderboard', () => {
       'border-indigo-200',
       'bg-indigo-100'
     );
+    expect(screen.getByTestId('leaderboard-xp-score-1')).toHaveTextContent('+24 XP');
     expect(screen.getByTestId('leaderboard-row-score-2')).toHaveClass(
       'soft-card',
       'border-slate-200/80'

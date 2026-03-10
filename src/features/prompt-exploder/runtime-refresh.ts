@@ -1,8 +1,4 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-
-import { explodePromptText } from './parser';
-import { normalizeLearningText } from './template-learning';
-
 import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
@@ -11,6 +7,10 @@ import type {
   SegmentSelectionStrategy,
 } from '@/shared/contracts/prompt-exploder';
 import type { PromptExploderRuntimeValidationScope } from '@/shared/contracts/prompt-exploder';
+
+import { explodePromptText } from './parser';
+import { normalizeLearningText } from './template-learning';
+
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

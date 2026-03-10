@@ -1,13 +1,4 @@
 import {
-  uid,
-  normalizeTextAtomText,
-  buildTextAtomLetterBlocks,
-  applyTextAtomSettings,
-  createRowBlock,
-  TEXT_ATOM_BLOCK_TYPE,
-} from '../block-helpers';
-import { moveSectionSubtree, removeSectionSubtree } from '../section-hierarchy';
-import {
   getSectionDefinition,
   getBlockDefinition,
 } from '@/features/cms/components/page-builder/section-registry';
@@ -18,6 +9,16 @@ import type {
   SectionInstance,
   BlockInstance,
 } from '@/features/cms/types/page-builder';
+
+import {
+  uid,
+  normalizeTextAtomText,
+  buildTextAtomLetterBlocks,
+  applyTextAtomSettings,
+  createRowBlock,
+  TEXT_ATOM_BLOCK_TYPE,
+} from '../block-helpers';
+import { moveSectionSubtree, removeSectionSubtree } from '../section-hierarchy';
 
 export function reduceSectionActions(
   state: PageBuilderState,

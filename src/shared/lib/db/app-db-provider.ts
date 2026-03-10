@@ -1,3 +1,4 @@
+import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -7,7 +8,6 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
-import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
 export type { AppDbProvider };

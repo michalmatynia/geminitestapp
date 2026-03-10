@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { CaseResolverTreeIconComponent as CaseResolverTreeNodeIconComponent } from './tree-node-icon';
+
 import { internalError } from '@/shared/errors/app-error';
+
+import type { CaseResolverTreeIconComponent as CaseResolverTreeNodeIconComponent } from './tree-node-icon';
 
 export type { CaseResolverTreeNodeIconComponent };
 

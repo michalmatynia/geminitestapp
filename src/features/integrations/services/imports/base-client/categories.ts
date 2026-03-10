@@ -1,7 +1,9 @@
+import { BaseCategory, BaseInventory } from '@/shared/contracts/integrations';
+
 import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
 import { dedupeCategories, fetchBaseCategoriesFromPayload } from '../base-client-parsers';
-import { BaseCategory, BaseInventory } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
+
 import type { BaseInventoryScopeOptions } from './config';
 
 type FetchBaseCategoriesOptions = BaseInventoryScopeOptions;

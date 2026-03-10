@@ -1,8 +1,8 @@
 import 'server-only';
 
+import type { InternationalizationProvider } from '@/shared/contracts/internationalization';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
-import type { InternationalizationProvider } from '@/shared/contracts/internationalization';
 
 const normalizeProvider = (value?: string | null): InternationalizationProvider | null => {
   if (!value) return null;

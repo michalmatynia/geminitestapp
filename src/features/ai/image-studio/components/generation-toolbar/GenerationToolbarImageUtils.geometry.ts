@@ -1,14 +1,14 @@
 import {
+  normalizeImageContentFrame,
+  shapePointsAreUnitNormalized,
+} from './GenerationToolbarImageUtils.helpers';
+import {
   type CropCanvasContext,
   type CropRect,
   type CropRectResolutionDiagnostics,
   type MaskShapeForExport,
   type ImageContentFrame,
 } from './GenerationToolbarImageUtils.types';
-import {
-  normalizeImageContentFrame,
-  shapePointsAreUnitNormalized,
-} from './GenerationToolbarImageUtils.helpers';
 
 type ShapeBounds = {
   minX: number;

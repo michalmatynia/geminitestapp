@@ -6,8 +6,8 @@ import type {
   ImageStudioDeleteVariantMode,
   ImageStudioDeleteVariantResponse,
 } from '@/shared/contracts/image-studio';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 

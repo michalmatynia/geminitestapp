@@ -1,5 +1,18 @@
 import { randomUUID } from 'crypto';
+
+import { AnyBulkWriteOperation, Filter, UpdateFilter, WithId } from 'mongodb';
+
+import {
+  NoteRecord,
+  NoteWithRelations,
+  NoteFilters,
+  NoteCreateInput,
+  NoteUpdateInput,
+  NoteFileRecord,
+} from '@/shared/contracts/notes';
+import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import {
   NoteDocument,
   TagDocument,
@@ -11,14 +24,6 @@ import {
   NoteRelationToEmbedded,
 } from '../../types/mongo-note-types';
 import {
-  NoteRecord,
-  NoteWithRelations,
-  NoteFilters,
-  NoteCreateInput,
-  NoteUpdateInput,
-  NoteFileRecord,
-} from '@/shared/contracts/notes';
-import {
   toNoteResponse,
   toNoteFileResponse,
   buildSearchFilter,
@@ -27,8 +32,8 @@ import {
   toTagResponse,
   toCategoryResponse,
 } from '../mongo-note-repository-utils';
-import { AnyBulkWriteOperation, Filter, UpdateFilter, WithId } from 'mongodb';
-import { notFoundError } from '@/shared/errors/app-error';
+
+
 
 const noteCollectionName = 'notes';
 const tagCollectionName = 'tags';

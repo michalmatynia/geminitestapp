@@ -1,5 +1,6 @@
 import { type ImageStudioCenterObjectBounds } from '@/shared/contracts/image-studio';
 import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio';
+
 import { type PixelData } from './types';
 
 export const resolveAlphaObjectBoundsFromRgba = (

@@ -5,8 +5,8 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
-import { normalizeFolderPaths } from '../../settings';
 import { getCachedCaseResolverRuntimeIndexes, type CaseResolverRuntimeIndexes } from './indexes';
+import { normalizeFolderPaths } from '../../settings';
 
 type ResolveScopedWorkspaceArgs = {
   workspace: CaseResolverWorkspace;

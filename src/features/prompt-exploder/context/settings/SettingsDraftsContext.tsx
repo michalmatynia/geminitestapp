@@ -2,13 +2,13 @@
 
 import { createContext, type Dispatch, type SetStateAction } from 'react';
 
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderLearnedTemplate,
   PromptExploderParserTuningRuleDraft,
   PromptExploderRuntimeRuleProfile,
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
-import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 export interface LearningDraft {
   runtimeRuleProfile: PromptExploderRuntimeRuleProfile;

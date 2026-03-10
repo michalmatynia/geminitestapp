@@ -1,10 +1,10 @@
-import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type {
   RuntimeHistoryEntry,
   RuntimeTraceResumeMode,
   RuntimeTraceResumeDecision,
 } from '@/shared/contracts/ai-paths-runtime';
+import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths';
 
 import {
   RunTraceComparison,
@@ -14,7 +14,6 @@ import {
   HistoryPayloadSnapshot,
   AggregatedRuntimeNode
 } from './run-trace-types';
-
 import { readRuntimeTraceSummary, readRuntimeHistoryEntries } from './run-trace-utils';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

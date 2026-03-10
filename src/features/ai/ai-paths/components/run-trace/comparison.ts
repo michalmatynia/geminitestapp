@@ -4,12 +4,14 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeDecision
 } from '@/shared/contracts/ai-paths-runtime';
+
+import { buildNodeAggregateIndex } from './aggregation';
 import { 
   readRuntimeTraceSummary, 
   readRuntimeHistoryEntries, 
   buildPayloadDiff 
 } from './normalization';
-import { buildNodeAggregateIndex } from './aggregation';
+
 import type { 
   RunTraceComparison, 
   RunTraceComparisonRow,

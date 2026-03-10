@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useCallback } from 'react';
+
 import { ToggleRow, Hint } from '@/shared/ui';
-import { StudioCard } from '../StudioCard';
+
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
+import { StudioCard } from '../StudioCard';
 
 export function SequenceRuntimeCard(): React.JSX.Element {
   const { studioSettings } = useSettingsState();

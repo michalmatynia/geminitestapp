@@ -4,7 +4,6 @@ import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
 import React from 'react';
 
-import { getSectionContainerClass, getVerticalAlign } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import {
@@ -12,6 +11,7 @@ import {
   usePreviewEditorState,
 } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
+import { getSectionContainerClass, getVerticalAlign } from '@/features/cms/public';
 
 import { PreviewSectionBlocks } from './PreviewSectionBlocks';
 import { PreviewSectionFrame } from './PreviewSectionFrame';

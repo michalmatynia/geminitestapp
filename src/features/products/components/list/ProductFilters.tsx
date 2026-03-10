@@ -2,8 +2,8 @@
 
 import React, { memo, useCallback, useMemo, useState } from 'react';
 
-import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
+import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import {
   useCatalogs,
@@ -20,6 +20,7 @@ import type {
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
+
 import {
   createAdvancedPreset,
   hasPresetNameConflict,

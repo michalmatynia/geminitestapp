@@ -1,4 +1,5 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import {
   DEFAULT_DB_QUERY,
   DELAY_INPUT_PORTS,

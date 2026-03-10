@@ -1,4 +1,5 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
+
 import { STRING_MUTATOR_INPUT_PORTS, STRING_MUTATOR_OUTPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
 

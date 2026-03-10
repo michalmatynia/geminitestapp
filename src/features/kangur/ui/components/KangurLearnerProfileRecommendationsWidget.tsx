@@ -2,17 +2,17 @@
 
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
+  KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
+  buildKangurRecommendationHref,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
-  buildKangurRecommendationHref,
-  useKangurLearnerProfileRuntime,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();

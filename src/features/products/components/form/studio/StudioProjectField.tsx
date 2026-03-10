@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { FormField, SelectSimple } from '@/shared/ui';
+
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
+import { FormField, SelectSimple } from '@/shared/ui';
 
 export function StudioProjectField(): React.JSX.Element {
   const { studioProjectId, setStudioProjectId, studioProjectOptions, isStudioLoading } =

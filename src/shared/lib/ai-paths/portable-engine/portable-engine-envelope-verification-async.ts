@@ -1,11 +1,5 @@
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 
-import {
-  type PortablePathEnvelopeSignatureVerificationOptions,
-  computeHmacSha256Hex,
-  normalizePortableEnvelopeSignatureInput,
-  resolveEnvelopeSignatureSecrets,
-} from './portable-engine-integrity-support';
 import { computePortablePathEnvelopeSignatureSync } from './portable-engine-envelope-signing';
 import {
   acceptPortablePathEnvelopeVerification,
@@ -17,6 +11,13 @@ import {
   warnOrRejectPortablePathEnvelopeVerification,
   type PortablePathEnvelopeVerificationResult,
 } from './portable-engine-envelope-verification-support';
+import {
+  type PortablePathEnvelopeSignatureVerificationOptions,
+  computeHmacSha256Hex,
+  normalizePortableEnvelopeSignatureInput,
+  resolveEnvelopeSignatureSecrets,
+} from './portable-engine-integrity-support';
+
 import type { AiPathPortablePackageEnvelopeVersioned } from './portable-engine-contract';
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
 

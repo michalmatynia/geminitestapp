@@ -1,8 +1,8 @@
 'use client';
 
+import { useRuntimeState } from '@/features/ai/ai-paths/context';
 import { JsonViewer } from '@/shared/ui';
 
-import { useRuntimeState } from '@/features/ai/ai-paths/context';
 
 export function GraphModelDebugPanel(): React.JSX.Element {
   const { runtimeState: payload } = useRuntimeState();

@@ -3,10 +3,11 @@
 import React, { useMemo } from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import { sanitizeHtml } from '@/shared/utils';
 import { useToast } from '@/shared/ui';
-import { renderMarkdownToHtml } from '../../utils';
+import { sanitizeHtml } from '@/shared/utils';
+
 import { NoteDetailRelatedNotes } from './NoteDetailRelatedNotes';
+import { renderMarkdownToHtml } from '../../utils';
 
 export function NoteDetailPreview(): React.JSX.Element | null {
   const { selectedNote, selectedNoteTheme } = useNotesAppState();

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams, type ApiHandlerContext } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

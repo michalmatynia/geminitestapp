@@ -1,4 +1,3 @@
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   CaseResolverCompiledSegment,
   CaseResolverCompileResult,
@@ -15,6 +14,7 @@ import {
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export type CaseResolverPlainTextTransformInput = {
   nodeId: string;

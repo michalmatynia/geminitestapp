@@ -18,6 +18,8 @@ import {
 import { createEmptyNodeFileSnapshot } from '../settings';
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
+import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
+import { NodeFilePanel } from './NodeFilePanel';
 import {
   NodeFileWorkspaceProvider,
   useNodeFileWorkspaceActionsContext,
@@ -27,8 +29,6 @@ import {
   useNodeFileWorkspaceState,
   type UseNodeFileWorkspaceStateProps,
 } from '../hooks/useNodeFileWorkspaceState';
-import { NodeFilePanel } from './NodeFilePanel';
-import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import {
   fetchCaseResolverNodeFileSnapshot,

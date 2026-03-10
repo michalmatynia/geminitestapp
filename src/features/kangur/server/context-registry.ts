@@ -1,5 +1,35 @@
 import 'server-only';
 
+import {
+  KANGUR_CONTEXT_ROOT_IDS,
+  KANGUR_RUNTIME_ENTITY_TYPES,
+} from '@/features/kangur/context-registry/refs';
+import { parseKangurLessonDocumentStore, resolveKangurLessonDocumentPages, stripHtmlToText } from '@/features/kangur/lesson-documents';
+import { listKangurLoginActivity } from '@/features/kangur/server/kangur-login-activity';
+import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
+import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
+import { getKangurLearnerById } from '@/features/kangur/services/kangur-learner-repository';
+import { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
+import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
+import {
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  KANGUR_LESSONS_SETTING_KEY,
+  parseKangurLessons,
+} from '@/features/kangur/settings';
+import {
+  hasFullyPublishedQuestionSetForSuite,
+  getPublishedQuestionsForSuite,
+  parseKangurTestQuestionStore,
+} from '@/features/kangur/test-questions';
+import { isLiveKangurTestSuite, parseKangurTestSuites } from '@/features/kangur/test-suites';
+import {
+  buildKangurLearnerProfileSnapshot,
+  buildLessonMasteryInsights,
+  type KangurLearnerProfileSnapshot,
+  type KangurLearnerRecommendation,
+  type KangurLessonMasteryInsight,
+  type KangurRecentSession,
+} from '@/features/kangur/ui/services/profile';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
@@ -10,43 +40,13 @@ import type {
   KangurLessonDocument,
   KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
-import type { KangurTestQuestion, KangurTestQuestionStore, KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import {
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-  KANGUR_LESSONS_SETTING_KEY,
-  parseKangurLessons,
-} from '@/features/kangur/settings';
+import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
 } from '@/shared/contracts/kangur-tests';
-import { parseKangurLessonDocumentStore, resolveKangurLessonDocumentPages, stripHtmlToText } from '@/features/kangur/lesson-documents';
-import { isLiveKangurTestSuite, parseKangurTestSuites } from '@/features/kangur/test-suites';
-import {
-  hasFullyPublishedQuestionSetForSuite,
-  getPublishedQuestionsForSuite,
-  parseKangurTestQuestionStore,
-} from '@/features/kangur/test-questions';
-import { getKangurAssignmentRepository } from '@/features/kangur/services/kangur-assignment-repository';
-import { getKangurProgressRepository } from '@/features/kangur/services/kangur-progress-repository';
-import { getKangurScoreRepository } from '@/features/kangur/services/kangur-score-repository';
-import { getKangurLearnerById } from '@/features/kangur/services/kangur-learner-repository';
-import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
-import {
-  buildKangurLearnerProfileSnapshot,
-  buildLessonMasteryInsights,
-  type KangurLearnerProfileSnapshot,
-  type KangurLearnerRecommendation,
-  type KangurLessonMasteryInsight,
-  type KangurRecentSession,
-} from '@/features/kangur/ui/services/profile';
-import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
-import {
-  KANGUR_CONTEXT_ROOT_IDS,
-  KANGUR_RUNTIME_ENTITY_TYPES,
-} from '@/features/kangur/context-registry/refs';
-import { listKangurLoginActivity } from '@/features/kangur/server/kangur-login-activity';
+import type { KangurTestQuestion, KangurTestQuestionStore, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 const KANGUR_AI_TUTOR_DAILY_GOAL_GAMES = 3;
 const KANGUR_AI_TUTOR_RECENT_SCORE_LIMIT = 24;
 const QUICK_START_OPERATIONS = new Set([
@@ -241,6 +241,7 @@ const buildRecentSessionItem = (session: KangurRecentSession): Record<string, un
   score: session.score,
   totalQuestions: session.totalQuestions,
   createdAt: session.createdAt,
+  ...(session.xpEarned !== null ? { xpEarned: session.xpEarned } : {}),
 });
 
 const buildWeakLessonItem = (lesson: KangurLessonMasteryInsight): Record<string, unknown> => ({
@@ -290,6 +291,8 @@ const buildLearnerSummary = (
   [
     `Average accuracy ${snapshot.averageAccuracy}%.`,
     `Daily goal ${snapshot.todayGames}/${snapshot.dailyGoalGames}.`,
+    `XP today +${snapshot.todayXpEarned}.`,
+    `XP last 7 days +${snapshot.weeklyXpEarned}.`,
     `Current streak ${snapshot.currentStreakDays} days.`,
     `${activeAssignments.length} active assignments.`,
     `${masteryInsights.lessonsNeedingPractice} lessons need practice.`,
@@ -498,6 +501,9 @@ export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
       displayName: data.learnerDisplayName,
       averageAccuracy: data.snapshot.averageAccuracy,
       todayGames: data.snapshot.todayGames,
+      todayXpEarned: data.snapshot.todayXpEarned,
+      weeklyXpEarned: data.snapshot.weeklyXpEarned,
+      averageXpPerSession: data.snapshot.averageXpPerSession,
       dailyGoalGames: data.snapshot.dailyGoalGames,
       currentStreakDays: data.snapshot.currentStreakDays,
       lessonsCompleted: data.snapshot.lessonsCompleted,

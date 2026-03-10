@@ -1,9 +1,9 @@
 import type { TagRecord, TagCreateInput, TagUpdateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
+import type { Tag } from '@/shared/lib/db/prisma-client';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
-import type { Tag } from '@/shared/lib/db/prisma-client';
 
 export const getAllTags = async (notebookId?: string | null): Promise<TagRecord[]> => {
   const resolvedNotebookId = notebookId ?? (await getOrCreateDefaultNotebook()).id;

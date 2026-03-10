@@ -1,15 +1,18 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
-import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
+import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-paths';
+import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
+import { type FireAiPathTriggerEventArgs } from '@/shared/contracts/ai-trigger-buttons';
 import {
   enqueueAiPathRun,
   listAiPathRuns,
   mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
+import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { resolveHistoryRetentionPasses } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
@@ -17,33 +20,30 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-paths';
-import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
 import {
   invalidateAiPathSettings,
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { type FireAiPathTriggerEventArgs } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import {
-  isTimeoutMessage,
-  isRecoverableTriggerEnqueueError,
-  createAiPathTriggerRequestId,
-} from './trigger-event-utils';
+import { buildTriggerContext } from './trigger-event-context';
+import { handleAiPathTriggerInvalidation } from './trigger-event-invalidation';
 import { recoverEnqueuedRunByRequestId } from './trigger-event-recovery';
+import { resolveTriggerSelection } from './trigger-event-selection';
 import {
   loadTriggerSettingsData,
   resolveRuntimeStateHint,
   coerceSampleStateMap,
   resolvePreferredPathId,
 } from './trigger-event-settings';
-import { resolveTriggerSelection } from './trigger-event-selection';
-import { buildTriggerContext } from './trigger-event-context';
-import { handleAiPathTriggerInvalidation } from './trigger-event-invalidation';
+import {
+  isTimeoutMessage,
+  isRecoverableTriggerEnqueueError,
+  createAiPathTriggerRequestId,
+} from './trigger-event-utils';
 
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 

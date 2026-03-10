@@ -2,6 +2,7 @@
 
 import { useQueryErrorResetBoundary } from '@tanstack/react-query';
 import React from 'react';
+
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 interface QueryErrorBoundaryProps {

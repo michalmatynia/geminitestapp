@@ -1,5 +1,4 @@
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
-
 import type {
   CanvasSemanticDocument,
   SemanticEdge,

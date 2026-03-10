@@ -11,6 +11,7 @@ import {
   getCurrentLevel,
   getNextLevel,
   getProgressAverageAccuracy,
+  getProgressAverageXpPerSession,
   getProgressBadges,
   getProgressTopActivities,
 } from '@/features/kangur/ui/services/progress';
@@ -30,10 +31,10 @@ export default function PlayerProgressCard({
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
   const averageAccuracy = getProgressAverageAccuracy(progress);
+  const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const bestWinStreak = progress.bestWinStreak ?? 0;
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   const badgeStatuses = getProgressBadges(progress);
-  const unlockedBadgeCount = badgeStatuses.filter((badge) => badge.isUnlocked).length;
 
   return (
     <motion.div
@@ -103,8 +104,8 @@ export default function PlayerProgressCard({
           <KangurMetricCard
             accent='sky'
             align='center'
-            label='Odznaki'
-            value={unlockedBadgeCount}
+            label='XP / gre'
+            value={averageXpPerSession}
           />
         </div>
 
@@ -118,10 +119,11 @@ export default function PlayerProgressCard({
                 Najczesciej cwiczysz
               </p>
               <p className='text-sm font-semibold text-slate-800'>{topActivity.label}</p>
+              <p className='text-xs text-slate-500'>
+                {topActivity.sessionsPlayed} sesji · {topActivity.averageXpPerSession} XP / gre
+              </p>
             </div>
-            <KangurStatusChip accent='indigo'>
-              {topActivity.sessionsPlayed} sesji
-            </KangurStatusChip>
+            <KangurStatusChip accent='indigo'>{topActivity.totalXpEarned} XP</KangurStatusChip>
           </div>
         )}
 

@@ -3,8 +3,9 @@ import {
   type CaseResolverDefaultDocumentFormat,
   type CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { validationError } from '@/shared/errors/app-error';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
 import { DEFAULT_CASE_RESOLVER_SETTINGS } from './settings.constants';
 import {
   normalizeCaseResolverDefaultDocumentFormatValue,

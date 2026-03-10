@@ -8,6 +8,10 @@ import { useAdminLayoutActions } from '@/features/admin';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/useCmsQueries';
+import {
+  normalizePageSlugLinks,
+  type NormalizedPageSlugLink,
+} from '@/features/cms/utils/slug-utils';
 import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import {
   Button,
@@ -22,16 +26,12 @@ import {
   StandardDataTablePanel,
   FilterPanel,
 } from '@/shared/ui';
-import type { FilterField } from '@/shared/ui/templates/panels';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import type { FilterField } from '@/shared/ui/templates/panels';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import {
-  normalizePageSlugLinks,
-  type NormalizedPageSlugLink,
-} from '@/features/cms/utils/slug-utils';
 
 type StatusFilter = PageStatus | 'all';
 type StatusFilterOption = { label: string; value: StatusFilter };

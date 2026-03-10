@@ -1,3 +1,5 @@
+import { normalizeString } from './filemaker-settings.helpers';
+
 import type {
   FilemakerAddress,
   FilemakerEmail,
@@ -6,7 +8,6 @@ import type {
   FilemakerPhoneNumber,
   FilemakerPerson,
 } from './types';
-import { normalizeString } from './filemaker-settings.helpers';
 
 export const createDefaultFilemakerPerson = (id: string, name?: string): FilemakerPerson => {
   const now = new Date().toISOString();

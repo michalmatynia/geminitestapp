@@ -10,23 +10,18 @@ import {
   type ReactNode,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
-import type {
-  KangurAssignmentPriority,
-  KangurProgressState,
-  KangurRouteAction,
-} from '@/shared/contracts/kangur';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   LEARNER_PROFILE_SCORE_FETCH_LIMIT,
@@ -36,8 +31,13 @@ import {
   buildKangurLearnerProfileSnapshot,
   type KangurLearnerProfileSnapshot,
 } from '@/features/kangur/ui/services/profile';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
+import type {
+  KangurAssignmentPriority,
+  KangurProgressState,
+  KangurRouteAction,
+} from '@/shared/contracts/kangur';
+import { internalError } from '@/shared/errors/app-error';
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
 

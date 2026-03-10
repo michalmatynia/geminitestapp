@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback } from 'react';
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
+import { useCallback } from 'react';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 

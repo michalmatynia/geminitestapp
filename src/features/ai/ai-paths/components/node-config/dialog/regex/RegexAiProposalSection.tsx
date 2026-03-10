@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Button, SelectSimple } from '@/shared/ui';
+
 import type { RegexConfig } from '@/shared/lib/ai-paths';
+import { Button, SelectSimple } from '@/shared/ui';
 
 export type RegexAiProposalSectionProps = {
   regexConfig: RegexConfig;

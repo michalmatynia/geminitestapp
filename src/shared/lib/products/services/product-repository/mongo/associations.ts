@@ -1,4 +1,12 @@
 import { Collection, Document, AnyBulkWriteOperation, UpdateFilter, Filter } from 'mongodb';
+
+import type { ImageFile } from '@/shared/contracts/files';
+import { ProductImageRecord } from '@/shared/contracts/products';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
+import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
+
+import { ProductDocument } from '../mongo-product-repository-mappers';
 import {
   buildProductIdFilter,
   normalizeLookupId,
@@ -6,12 +14,6 @@ import {
   buildLookupFilterForIds,
   resolveLookupDocumentId,
 } from '../mongo-product-repository.helpers';
-import { ProductImageRecord } from '@/shared/contracts/products';
-import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
-import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFile } from '@/shared/contracts/files';
-import { ProductDocument } from '../mongo-product-repository-mappers';
 
 export const mongoProductAssociationsImpl = {
   async getProductImages(

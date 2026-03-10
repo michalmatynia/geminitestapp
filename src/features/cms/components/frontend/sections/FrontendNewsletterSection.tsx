@@ -1,11 +1,12 @@
 'use client';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendNewsletterSection(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

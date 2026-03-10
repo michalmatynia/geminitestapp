@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useConnectionSession } from '@/features/integrations/hooks/useIntegrationQueries';
 import { IntegrationConnection } from '@/shared/contracts/integrations';
+
 import { SessionPayload } from '../integrations-context-types';
 
 export function useIntegrationsSessionImpl(activeConnection: IntegrationConnection | null) {

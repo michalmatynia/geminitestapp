@@ -4,12 +4,30 @@ import { Clock3, GitBranch, Redo2, Sparkles, Undo2, Workflow } from 'lucide-reac
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Button, useToast } from '@/shared/ui';
+import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
+import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
+import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/utils/studio-settings';
+import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { flattenParams } from '@/shared/lib/prompt-engine';
+import { Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
+import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
+import { ControlPromptModal } from './right-sidebar/ControlPromptModalImpl';
 import { ACTION_HISTORY_MAX_STEPS } from './right-sidebar/right-sidebar-utils';
+import {
+  formatCanvasSizeLabel,
+  CANVAS_SIZE_PRESET_OPTIONS,
+  estimatePromptTokens,
+  resolveModelCostProfile,
+  cloneSerializableValue,
+  parseCanvasSizePresetValue,
+  type StudioActionHistorySnapshot,
+} from './right-sidebar/right-sidebar-utils';
 import { RightSidebarControlsModal } from './right-sidebar/RightSidebarControlsModal';
 import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab';
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
@@ -28,24 +46,8 @@ import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
-import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
-import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/utils/studio-settings';
-import {
-  formatCanvasSizeLabel,
-  CANVAS_SIZE_PRESET_OPTIONS,
-  estimatePromptTokens,
-  resolveModelCostProfile,
-  cloneSerializableValue,
-  parseCanvasSizePresetValue,
-  type StudioActionHistorySnapshot,
-} from './right-sidebar/right-sidebar-utils';
-import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
-import { ControlPromptModal } from './right-sidebar/ControlPromptModalImpl';
-import { flattenParams } from '@/shared/lib/prompt-engine';
-import type { ParamSpec } from '@/shared/contracts/prompt-engine';
-import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
-import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+
+
 
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 

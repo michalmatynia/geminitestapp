@@ -5,14 +5,14 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '@/shared/contracts/cms';
-
-import { BlockContextProvider, useBlockContext } from './context/BlockContext';
-import { resolveNodeLabel } from './InspectorOverlay';
-import { PreviewNodeSelectionButton } from './PreviewNodeSelectionButton';
-import { usePreviewEditorActions, usePreviewEditorState } from './context/PreviewEditorContext';
-import { normalizeSlideshowAnimationType } from './preview-utils';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import { BlockContextProvider, useBlockContext } from './context/BlockContext';
+import { usePreviewEditorActions, usePreviewEditorState } from './context/PreviewEditorContext';
+import { resolveNodeLabel } from './InspectorOverlay';
+import { normalizeSlideshowAnimationType } from './preview-utils';
+import { PreviewNodeSelectionButton } from './PreviewNodeSelectionButton';
 
 const STRETCH_TRUE_BLOCK_CONTEXT_VALUE = { stretch: true };
 const STRETCH_FALSE_BLOCK_CONTEXT_VALUE = { stretch: false };

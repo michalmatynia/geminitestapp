@@ -55,18 +55,37 @@ const createRegistryBundle = (): ContextRegistryResolutionBundle => ({
       kind: 'runtime_document',
       entityType: 'kangur_learner_snapshot',
       title: 'Learner snapshot',
-      summary: 'Average accuracy 81%. 1 active assignment.',
+      summary:
+        'Average accuracy 81%. Daily goal 2/3. XP today +42. XP last 7 days +126. 1 active assignment.',
       status: 'active',
       tags: ['kangur', 'learner', 'ai-tutor'],
       relatedNodeIds: [],
       facts: {
-        learnerSummary: 'Average accuracy 81%. 1 active assignment.',
+        learnerSummary:
+          'Average accuracy 81%. Daily goal 2/3. XP today +42. XP last 7 days +126. 1 active assignment.',
         averageAccuracy: 81,
         todayGames: 2,
+        todayXpEarned: 42,
+        weeklyXpEarned: 126,
         dailyGoalGames: 3,
         currentStreakDays: 4,
       },
-      sections: [],
+      sections: [
+        {
+          id: 'recent_sessions',
+          kind: 'items',
+          title: 'Recent practice',
+          items: [
+            {
+              id: 'session-1',
+              operation: 'addition',
+              operationLabel: 'Dodawanie',
+              accuracyPercent: 88,
+              xpEarned: 18,
+            },
+          ],
+        },
+      ],
       provenance: {
         providerId: 'kangur',
         source: 'test',
@@ -132,6 +151,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         total_questions: 8,
         correct_answers: 4,
         time_taken: 80,
+        xp_earned: 12,
         created_date: '2026-03-07T09:00:00.000Z',
         learner_id: 'learner-1',
         created_by: 'owner-1',
@@ -145,6 +165,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
         total_questions: 8,
         correct_answers: 8,
         time_taken: 95,
+        xp_earned: 20,
         created_date: '2026-03-06T09:00:00.000Z',
         learner_id: 'learner-1',
         created_by: 'owner-1',
@@ -192,11 +213,15 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
       },
     });
 
-    expect(guidance.instructions).toContain('Adaptive learner snapshot: average accuracy 75%');
+    expect(guidance.instructions).toContain(
+      'Adaptive learner snapshot: average accuracy 75%, daily goal 1/3, +12 XP today, +32 XP in the last 7 days, streak 2 days.'
+    );
     expect(guidance.instructions).toContain(
       'Current lesson is a weaker area: Dodawanie at 45% mastery.'
     );
-    expect(guidance.instructions).toContain('Most recent practice: Dodawanie at 50% accuracy.');
+    expect(guidance.instructions).toContain(
+      'Most recent practice: Dodawanie at 50% accuracy for +12 XP.'
+    );
     expect(guidance.instructions).toContain('Top adaptive recommendation: Skup sie na: Dodawanie');
     expect(guidance.instructions).toContain('Relevant active assignment: Powtórka dodawania');
     expect(guidance.instructions).toContain('Progress: Powtorki po przydziale: 1/2.');
@@ -322,19 +347,97 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     expect(guidance.instructions).toContain(
       'Completed tutor follow-up in this thread: the learner already carried out the previous recommended action, so avoid repeating the same next step unless there is a clear new reason.'
     );
+    expect(guidance.instructions).toContain(
+      'Successful follow-up signal: build on that completion with one adjacent next move: Uruchom trening (Po lekcji: Dodawanie).'
+    );
     expect(guidance.instructions).not.toContain('Relevant active assignment: Powtórka dodawania');
     expect(guidance.instructions).toContain(
-      'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+      'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
     );
     expect(guidance.followUpActions).toEqual([
       {
-        id: 'recommendation:focus_weakest_operation',
+        id: 'bridge:lesson-to-game:adding',
+        label: 'Uruchom trening',
+        page: 'Game',
+        query: {
+          quickStart: 'operation',
+          operation: 'addition',
+          difficulty: 'medium',
+        },
+        reason: 'Po lekcji: Dodawanie',
+      },
+    ]);
+  });
+
+  it('turns a completed game follow-up into a lesson bridge for the same weak area', async () => {
+    const progress = {
+      ...createDefaultKangurProgressState(),
+      totalXp: 160,
+      gamesPlayed: 6,
+      lessonMastery: {
+        adding: {
+          attempts: 3,
+          completions: 1,
+          masteryPercent: 42,
+          bestScorePercent: 58,
+          lastScorePercent: 42,
+          lastCompletedAt: '2026-03-07T08:00:00.000Z',
+        },
+      },
+    };
+    const scores: KangurScore[] = [
+      {
+        id: 'score-1',
+        player_name: 'Ada',
+        score: 4,
+        operation: 'addition',
+        total_questions: 8,
+        correct_answers: 4,
+        time_taken: 80,
+        created_date: '2026-03-07T09:00:00.000Z',
+        learner_id: 'learner-1',
+        created_by: 'owner-1',
+        owner_user_id: 'owner-1',
+      },
+    ];
+
+    getKangurProgressRepositoryMock.mockResolvedValue({
+      getProgress: vi.fn().mockResolvedValue(progress),
+    });
+    getKangurScoreRepositoryMock.mockResolvedValue({
+      listScores: vi.fn().mockResolvedValue(scores),
+    });
+    getKangurAssignmentRepositoryMock.mockResolvedValue({
+      listAssignments: vi.fn().mockResolvedValue([]),
+    });
+
+    const guidance = await buildKangurAiTutorAdaptiveGuidance({
+      learnerId: 'learner-1',
+      context: {
+        surface: 'game',
+        contentId: 'game-training-addition',
+        interactionIntent: 'next_step',
+      },
+      memory: {
+        lastRecommendedAction: 'Completed follow-up: Uruchom trening',
+        lastSuccessfulIntervention:
+          'The learner completed the tutor follow-up Uruchom trening on Game.',
+        lastCoachingMode: 'next_best_action',
+      },
+    });
+
+    expect(guidance.instructions).toContain(
+      'Successful follow-up signal: build on that completion with one adjacent next move: Otworz lekcje (Po treningu: Dodawanie).'
+    );
+    expect(guidance.followUpActions).toEqual([
+      {
+        id: 'bridge:game-to-lesson:adding',
         label: 'Otworz lekcje',
         page: 'Lessons',
         query: {
-          focus: 'addition',
+          focus: 'adding',
         },
-        reason: 'Skup sie na: Dodawanie',
+        reason: 'Po treningu: Dodawanie',
       },
     ]);
   });
@@ -388,13 +491,16 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     });
 
     expect(guidance.instructions).toContain(
-      'Adaptive learner snapshot: Average accuracy 81%. 1 active assignment.'
+      'Adaptive learner snapshot: Average accuracy 81%. Daily goal 2/3. XP today +42. XP last 7 days +126. 1 active assignment.'
     );
     expect(guidance.instructions).toContain(
       'Engagement signal: the learner has signed into Kangur at most once in the last 7 days, so prefer a very small restart step.'
     );
     expect(guidance.instructions).toContain(
       'Support signal: the parent has not logged into Kangur in the last 7 days, so avoid depending on immediate parent follow-up.'
+    );
+    expect(guidance.instructions).toContain(
+      'Most recent practice: Dodawanie at 88% accuracy for +18 XP.'
     );
     expect(guidance.instructions).toContain(
       'Relevant active assignment: Trening: dodawanie do 20.'

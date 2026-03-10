@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
-import { Badge, Button, FormModal, Input, useToast } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { Badge, Button, FormModal, Input, useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import { useKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
   applyPublishedQuestionEditPolicy,
@@ -38,21 +37,23 @@ import {
   parseKangurTestSuites,
   promoteKangurTestSuitesLive,
 } from '../test-suites';
-
-import { moveItem } from './utils';
+import { useKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import { KangurTestQuestionEditor } from './KangurTestQuestionEditor';
 import {
   getQuestionAuthoringSummary,
   getQuestionWorkflowLabel,
 } from './question-authoring-insights';
-import { getKangurTestSuiteHealth } from './test-suite-health';
-import type { QuestionListFilter, QuestionListSort } from './question-manager-view';
 import {
   clearQuestionEditorDraft,
   QUESTION_EDITOR_NEW_DRAFT_SLOT,
   readQuestionEditorDraft,
   writeQuestionEditorDraft,
 } from './question-editor-drafts';
+import { getKangurTestSuiteHealth } from './test-suite-health';
+import { moveItem } from './utils';
+
+import type { QuestionListFilter, QuestionListSort } from './question-manager-view';
+
 
 const QUESTION_LIST_FILTER_OPTIONS: Array<{
   value: QuestionListFilter;
@@ -453,9 +454,9 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
           ? 'Question saved. The live suite was taken offline because its published question set changed.'
           : questionReturnedToDraft
             ? 'Question updated. Learner-facing changes moved this published question back to draft.'
-          : isNewQuestion
-            ? 'Question created.'
-            : 'Question updated.',
+            : isNewQuestion
+              ? 'Question created.'
+              : 'Question updated.',
         {
           variant:
             suiteTakenOffline || questionReturnedToDraft ? 'warning' : 'success',
@@ -1097,167 +1098,167 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               const workflowLabel = getQuestionWorkflowLabel(q.editorial.workflowStatus);
 
               return (
-              <div
-                key={q.id}
-                className='flex items-start gap-3 rounded-xl border border-border/50 bg-card/30 p-3'
-              >
-                <div className='flex flex-col gap-0.5 shrink-0'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    className='h-5 px-1'
-                    onClick={(): void => {
-                      if (canReorder) {
-                        void handleMove(absoluteIndex, absoluteIndex - 1);
-                      }
-                    }}
-                    disabled={!canReorder || absoluteIndex === 0 || isSaving}
-                    aria-label='Move up'
-                  >
-                    <ArrowUp className='size-3' />
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    className='h-5 px-1'
-                    onClick={(): void => {
-                      if (canReorder) {
-                        void handleMove(absoluteIndex, absoluteIndex + 1);
-                      }
-                    }}
-                    disabled={!canReorder || absoluteIndex === questions.length - 1 || isSaving}
-                    aria-label='Move down'
-                  >
-                    <ArrowDown className='size-3' />
-                  </Button>
-                </div>
-
-                <div className='min-w-0 flex-1'>
-                  <div className='flex flex-wrap items-center gap-1.5 mb-1'>
-                    <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
-                    {listFilter !== 'all' && absoluteIndex >= 0 ? (
-                      <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
-                        Order {absoluteIndex + 1}
-                      </Badge>
-                    ) : null}
-                    {sortMode === 'review-queue' ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                      >
-                        Queue {index + 1}
-                      </Badge>
-                    ) : null}
-                    <Badge variant='outline' className='h-4 px-1 text-[9px]'>
-                      {q.pointValue}pt
-                    </Badge>
-                    <Badge
-                      variant='outline'
-                      className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                <div
+                  key={q.id}
+                  className='flex items-start gap-3 rounded-xl border border-border/50 bg-card/30 p-3'
+                >
+                  <div className='flex flex-col gap-0.5 shrink-0'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='ghost'
+                      className='h-5 px-1'
+                      onClick={(): void => {
+                        if (canReorder) {
+                          void handleMove(absoluteIndex, absoluteIndex - 1);
+                        }
+                      }}
+                      disabled={!canReorder || absoluteIndex === 0 || isSaving}
+                      aria-label='Move up'
                     >
-                      ✓ {q.correctChoiceLabel}
-                    </Badge>
-                    {hasIllustration(q) ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
-                      >
-                        SVG
-                      </Badge>
-                    ) : null}
-                    {hasRichChoiceContent(q) ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-sky-300 border-sky-400/40'
-                      >
-                        Choice UI
-                      </Badge>
-                    ) : null}
-                    {usesRichQuestionPresentation(q) ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                      >
-                        Layout
-                      </Badge>
-                    ) : null}
-                    {questionSummary?.status === 'needs-review' ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-amber-300 border-amber-400/40'
-                      >
-                        Review
-                      </Badge>
-                    ) : null}
-                    {questionSummary?.status === 'needs-fix' ? (
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-rose-300 border-rose-400/40'
-                      >
-                        Fix
-                      </Badge>
-                    ) : null}
-                    <Badge
-                      variant='outline'
-                      className={
-                        q.editorial.workflowStatus === 'published'
-                          ? 'h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
-                          : q.editorial.workflowStatus === 'ready'
-                            ? 'h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                            : 'h-4 px-1 text-[9px] text-slate-300 border-slate-400/40'
-                      }
+                      <ArrowUp className='size-3' />
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='ghost'
+                      className='h-5 px-1'
+                      onClick={(): void => {
+                        if (canReorder) {
+                          void handleMove(absoluteIndex, absoluteIndex + 1);
+                        }
+                      }}
+                      disabled={!canReorder || absoluteIndex === questions.length - 1 || isSaving}
+                      aria-label='Move down'
                     >
-                      {workflowLabel}
-                    </Badge>
+                      <ArrowDown className='size-3' />
+                    </Button>
                   </div>
-                  <p className='text-sm text-gray-200 line-clamp-2'>
-                    {q.prompt || '(empty prompt)'}
-                  </p>
-                </div>
 
-                <div className='flex shrink-0 items-center gap-1'>
-                  <button
-                    type='button'
-                    className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
-                    onClick={(): void => openEdit(q)}
-                    title='Edit question'
-                    disabled={isSaving}
-                  >
-                    <span className='sr-only'>Edit</span>
-                    <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type='button'
-                    className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
-                    onClick={(): void => {
-                      void handleDuplicate(q);
-                    }}
-                    title='Duplicate question'
-                    disabled={isSaving}
-                  >
-                    <Copy className='size-3.5' />
-                  </button>
-                  <button
-                    type='button'
-                    className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
-                    onClick={(): void => setQuestionToDelete(q)}
-                    title='Delete question'
-                    disabled={isSaving}
-                  >
-                    <Trash2 className='size-3.5' />
-                  </button>
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex flex-wrap items-center gap-1.5 mb-1'>
+                      <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
+                      {listFilter !== 'all' && absoluteIndex >= 0 ? (
+                        <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
+                        Order {absoluteIndex + 1}
+                        </Badge>
+                      ) : null}
+                      {sortMode === 'review-queue' ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                        >
+                        Queue {index + 1}
+                        </Badge>
+                      ) : null}
+                      <Badge variant='outline' className='h-4 px-1 text-[9px]'>
+                        {q.pointValue}pt
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                      >
+                      ✓ {q.correctChoiceLabel}
+                      </Badge>
+                      {hasIllustration(q) ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
+                        >
+                        SVG
+                        </Badge>
+                      ) : null}
+                      {hasRichChoiceContent(q) ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-sky-300 border-sky-400/40'
+                        >
+                        Choice UI
+                        </Badge>
+                      ) : null}
+                      {usesRichQuestionPresentation(q) ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                        >
+                        Layout
+                        </Badge>
+                      ) : null}
+                      {questionSummary?.status === 'needs-review' ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-amber-300 border-amber-400/40'
+                        >
+                        Review
+                        </Badge>
+                      ) : null}
+                      {questionSummary?.status === 'needs-fix' ? (
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-rose-300 border-rose-400/40'
+                        >
+                        Fix
+                        </Badge>
+                      ) : null}
+                      <Badge
+                        variant='outline'
+                        className={
+                          q.editorial.workflowStatus === 'published'
+                            ? 'h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                            : q.editorial.workflowStatus === 'ready'
+                              ? 'h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                              : 'h-4 px-1 text-[9px] text-slate-300 border-slate-400/40'
+                        }
+                      >
+                        {workflowLabel}
+                      </Badge>
+                    </div>
+                    <p className='text-sm text-gray-200 line-clamp-2'>
+                      {q.prompt || '(empty prompt)'}
+                    </p>
+                  </div>
+
+                  <div className='flex shrink-0 items-center gap-1'>
+                    <button
+                      type='button'
+                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+                      onClick={(): void => openEdit(q)}
+                      title='Edit question'
+                      disabled={isSaving}
+                    >
+                      <span className='sr-only'>Edit</span>
+                      <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type='button'
+                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+                      onClick={(): void => {
+                        void handleDuplicate(q);
+                      }}
+                      title='Duplicate question'
+                      disabled={isSaving}
+                    >
+                      <Copy className='size-3.5' />
+                    </button>
+                    <button
+                      type='button'
+                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+                      onClick={(): void => setQuestionToDelete(q)}
+                      title='Delete question'
+                      disabled={isSaving}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
+              );
             })
           )}
         </div>

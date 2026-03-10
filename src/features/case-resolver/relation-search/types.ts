@@ -1,5 +1,6 @@
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
 import type { NodeFileDocumentSearchRow } from '../components/CaseResolverNodeFileUtils';
 
 export type RelationBrowserMode = 'link_relations' | 'add_to_node_canvas';

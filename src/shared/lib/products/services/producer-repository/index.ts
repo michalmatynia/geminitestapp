@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { ProducerRepository } from '@/shared/contracts/products';
 import {
   getProductDataProvider,
   type ProductDbProvider,
 } from '@/shared/lib/products/services/product-provider';
-import type { ProducerRepository } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoProducerRepository } from './mongo-producer-repository';
 import { prismaProducerRepository } from './prisma-producer-repository';

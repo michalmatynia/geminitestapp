@@ -2,11 +2,12 @@
 
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { ProductImageManagerController } from '@/features/products';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 
 import {
   INLINE_CARD_IMAGE_SLOT_INDEX,
@@ -17,6 +18,12 @@ import {
   copyCardIdToClipboard,
   createPromptExtractionHandlers,
 } from './studio-modals-prompt-handlers';
+import { useStudioInlineEditRuntimeState } from './useStudioInlineEditRuntimeState';
+import { useProjectsState } from '../../context/ProjectsContext';
+import { usePromptActions, usePromptState } from '../../context/PromptContext';
+import { useSettingsState } from '../../context/SettingsContext';
+import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
+
 import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from './slot-inline-edit-tab-types';
 import type {
   LocalUploadMode,
@@ -24,12 +31,7 @@ import type {
   StudioInlineEditContextValue,
   StudioInlineEditStateContextValue,
 } from './StudioInlineEditContext.types';
-import { useStudioInlineEditRuntimeState } from './useStudioInlineEditRuntimeState';
-import { useProjectsState } from '../../context/ProjectsContext';
-import { usePromptActions, usePromptState } from '../../context/PromptContext';
-import { useSettingsState } from '../../context/SettingsContext';
-import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
-import { internalError } from '@/shared/errors/app-error';
+
 
 export type {
   EditCardTab,

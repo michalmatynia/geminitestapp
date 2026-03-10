@@ -4,12 +4,13 @@ import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
 import React from 'react';
 
-import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import {
   CmsRuntimeScopeProvider,
   resolveCmsRuntimeCollection,
   useOptionalCmsRuntime,
 } from '@/features/cms/components/frontend/CmsRuntimeContext';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import { Card } from '@/shared/ui';
 
@@ -18,7 +19,6 @@ import { usePreviewEditorState } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 

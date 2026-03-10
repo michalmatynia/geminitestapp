@@ -2,7 +2,6 @@ import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
 } from '@/shared/contracts/documentation';
-
 import {
   KANGUR_DOCUMENTATION_GUIDES,
   KANGUR_TOOLTIP_CATALOG,

@@ -4,7 +4,6 @@ import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import { DEFAULT_DB_QUERY } from '../../constants';
 import { coerceInput, hashRuntimeValue } from '../../utils';
 import { buildDbQueryPayload } from '../utils';
-
 import { resolveNodeCacheScope } from './engine-state-manager';
 import { pickString } from './engine-utils';
 

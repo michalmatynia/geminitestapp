@@ -3,37 +3,35 @@
 import React, { useMemo } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+
+import {
+  ActionsContext,
+  type PromptEngineActions,
+} from './prompt-engine/PromptEngineActionsContext';
 import {
   ConfigContext,
   type PromptEngineConfig,
   type PatternCollectionTab,
   type ExploderPatternSubTab,
 } from './prompt-engine/PromptEngineConfigContext';
-
+import { DataContext, type PromptEngineData } from './prompt-engine/PromptEngineDataContext';
 import {
   FiltersContext,
   type PromptEngineFilters,
   type ScopeFilter,
 } from './prompt-engine/PromptEngineFiltersContext';
-import { DataContext, type PromptEngineData } from './prompt-engine/PromptEngineDataContext';
-import {
-  ActionsContext,
-  type PromptEngineActions,
-} from './prompt-engine/PromptEngineActionsContext';
-
+import { usePromptEngineActionsImpl } from './prompt-engine/usePromptEngineActionsImpl';
 import { usePromptEngineConfigImpl } from './prompt-engine/usePromptEngineConfigImpl';
 import { usePromptEngineDataImpl } from './prompt-engine/usePromptEngineDataImpl';
 import { usePromptEngineFilteringImpl } from './prompt-engine/usePromptEngineFilteringImpl';
-import { usePromptEngineActionsImpl } from './prompt-engine/usePromptEngineActionsImpl';
+import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
 
 export type { PatternCollectionTab, ExploderPatternSubTab };
 

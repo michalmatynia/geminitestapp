@@ -1,13 +1,13 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { ProductRepository } from '@/shared/contracts/products';
 import {
   getProductDataProvider,
   type ProductDbProvider,
 } from '@/shared/lib/products/services/product-provider';
 import { mongoProductRepository } from '@/shared/lib/products/services/product-repository/mongo-product-repository';
 import { prismaProductRepository } from '@/shared/lib/products/services/product-repository/prisma-product-repository';
-import type { ProductRepository } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const getProductRepository = async (
   providerOverride?: ProductDbProvider

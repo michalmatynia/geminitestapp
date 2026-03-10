@@ -7,6 +7,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { CLUSTER_PRESETS_KEY, createPresetId } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { useToast } from '@/shared/ui';
+
 import { usePresetsActions, usePresetsState } from '../../context';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
 

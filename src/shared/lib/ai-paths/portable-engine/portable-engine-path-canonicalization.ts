@@ -6,19 +6,20 @@ import {
   repairPathNodeIdentities,
 } from '@/shared/lib/ai-paths/core/utils/node-identity';
 
-import { resolvePayloadLimits } from './portable-engine-resolution-support';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackage,
   type AiPathPortablePackageEnvelope,
   type PortablePathInputSource,
 } from './portable-engine-contract';
+import { resolvePayloadLimits } from './portable-engine-resolution-support';
+
 import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
-import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 import type {
   PortablePayloadLimits,
   ResolvePortablePathInputOptions,
 } from './portable-engine-resolution-types';
+import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
 
 const asTrimmedString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;

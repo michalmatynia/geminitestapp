@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+
 import { Label, Textarea } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
 export function ThemeCustomCssSection(): React.JSX.Element {

@@ -3,21 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
-import { api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Card, useToast } from '@/shared/ui';
-
-import { useProjectsState } from '../context/ProjectsContext';
-import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { imageStudioAnalysisResponseSchema } from '../contracts/analysis';
-import {
-  analyzeCanvasImageObject,
-  resolveClientProcessingImageSrc,
-} from './generation-toolbar/GenerationToolbarImageUtils';
-import {
   buildImageStudioAnalysisSourceSignature,
   IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
   loadImageStudioAnalysisPlanSnapshot,
@@ -27,7 +12,6 @@ import {
   saveImageStudioAnalysisPlanSnapshot,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import { useRightSidebarContext } from './RightSidebarContext';
 import {
   buildObjectLayoutPresetOptions,
   deleteObjectLayoutCustomPreset,
@@ -42,7 +26,17 @@ import {
   type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
 } from '@/features/ai/image-studio/utils/object-layout-presets';
+import { api } from '@/shared/lib/api-client';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/shared/lib/products/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Card, useToast } from '@/shared/ui';
 
+import { useProjectsState } from '../context/ProjectsContext';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { imageStudioAnalysisResponseSchema } from '../contracts/analysis';
 import {
   type AnalysisMode,
   type AnalysisStatus,
@@ -58,18 +52,26 @@ import {
   CHROMA_THRESHOLD_MAX,
   ANALYSIS_REQUEST_TIMEOUT_MS,
 } from './analysis/analysis-types';
-import {
-  AnalysisSettingsSection,
-  type AnalysisSettingsSectionConfig,
-} from './analysis/sections/AnalysisSettingsSection';
-import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
+import { useAiPathsObjectAnalysis } from '../hooks/useAiPathsObjectAnalysis';
 import {
   AiPathAnalysisTriggerProvider,
   AiPathAnalysisTriggerSection,
 } from './analysis/sections/AiPathAnalysisTriggerSection';
+import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
+import {
+  AnalysisSettingsSection,
+  type AnalysisSettingsSectionConfig,
+} from './analysis/sections/AnalysisSettingsSection';
 import { CustomTriggerButtonsSection } from './analysis/sections/CustomTriggerButtonsSection';
 import { ImageStudioAnalysisRuntimeProvider } from './analysis/sections/ImageStudioAnalysisRuntimeContext';
-import { useAiPathsObjectAnalysis } from '../hooks/useAiPathsObjectAnalysis';
+import {
+  analyzeCanvasImageObject,
+  resolveClientProcessingImageSrc,
+} from './generation-toolbar/GenerationToolbarImageUtils';
+
+import { useRightSidebarContext } from './RightSidebarContext';
+
+
 
 const sanitizePaddingInput = (value: string): string => value.replace(/[^0-9.]/g, '');
 const sanitizeThresholdInput = (value: string): string => value.replace(/[^0-9]/g, '');

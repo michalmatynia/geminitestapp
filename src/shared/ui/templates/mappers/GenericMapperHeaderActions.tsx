@@ -1,5 +1,6 @@
-import React from 'react';
 import { Download, Save } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '../../button';
 
 export type GenericMapperHeaderActionsProps = {

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { IntegrationConnectionBasic, ImageRetryPreset } from '@/shared/contracts/integrations';
+
 import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
+import type { IntegrationConnectionBasic, ImageRetryPreset } from '@/shared/contracts/integrations';
 
 export function useImportExportPreferences({
   lastImportTemplatePref,

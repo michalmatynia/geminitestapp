@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Input, SelectSimple } from '@/shared/ui';
+
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BORDER_STYLE_OPTIONS } from '../settings-field-constants';
 

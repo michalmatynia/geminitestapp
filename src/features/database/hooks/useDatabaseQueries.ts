@@ -18,9 +18,9 @@ import type {
   DatabaseType,
   SqlQueryResult,
 } from '@/shared/contracts/database';
+import type { ApiPayloadResult } from '@/shared/contracts/http';
 import type { ListQuery, SingleQuery, MutationResult, UpdateMutation } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
-import type { ApiPayloadResult } from '@/shared/contracts/http';
 import {
   resolvePayloadErrorMessage,
   unwrapMutationResult,

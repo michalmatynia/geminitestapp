@@ -8,6 +8,8 @@ import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
+export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
+
 export const kangurAiTutorChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: nonEmptyTrimmedString.max(8_000),

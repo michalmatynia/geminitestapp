@@ -1,9 +1,10 @@
+import { z } from 'zod';
+
 import {
   type CaseResolverNodeFileSnapshot,
   caseResolverNodeFileSnapshotSchema,
 } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
-import { z } from 'zod';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 

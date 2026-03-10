@@ -1,5 +1,6 @@
 import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
 import type { UpdaterMapping } from '@/shared/contracts/ai-paths';
+
 import { getValueAtMappingPath } from '../../utils';
 
 export type ResolveDatabaseUpdateMappingsInput = {

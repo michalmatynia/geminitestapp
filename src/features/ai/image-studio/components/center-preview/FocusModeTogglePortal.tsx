@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { Button } from '@/shared/ui';
+
 import { useUiActions, useUiState } from '../../context/UiContext';
 
 export function FocusModeTogglePortal(): React.JSX.Element | null {

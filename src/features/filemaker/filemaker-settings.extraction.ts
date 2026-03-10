@@ -1,13 +1,14 @@
-import {
-  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
-  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
-} from './settings-constants';
 import type {
   FilemakerEmailParserRule,
   FilemakerEmailExtractionResult,
   FilemakerPhoneValidationRule,
   FilemakerPhoneValidationResult,
 } from '@/shared/contracts/filemaker';
+
+import {
+  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
+} from './settings-constants';
 
 export type {
   FilemakerEmailParserRule,

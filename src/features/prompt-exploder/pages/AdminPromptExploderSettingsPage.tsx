@@ -4,12 +4,17 @@ import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
+import type {
+  PromptExploderOperationMode,
+  PromptExploderSettings,
+} from '@/shared/contracts/prompt-exploder';
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/shared/contracts/validator';
-import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
   FormField,
   FormActions,
@@ -25,23 +30,18 @@ import {
   SettingsFieldsRenderer,
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import { defaultPromptExploderSettings, parsePromptExploderSettingsResult } from '../settings';
-import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
 import {
   buildPromptExploderValidationRuleStackOptions,
   normalizePromptExploderValidationRuleStack,
 } from '../validation-stack';
 
-import type {
-  PromptExploderOperationMode,
-  PromptExploderSettings,
-} from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

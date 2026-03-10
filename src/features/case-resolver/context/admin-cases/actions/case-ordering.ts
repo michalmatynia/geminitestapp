@@ -1,19 +1,22 @@
-import type * as React from 'react';
 
-import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   createCaseResolverWorkspaceMutationId,
   stampCaseResolverWorkspaceMutation,
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
+import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   normalizeCaseParentId,
   getSortedSiblingIds,
   assignSiblingCaseOrder,
   isDescendantCaseId,
 } from '../utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+
+import type * as React from 'react';
 
 export const handleMoveCaseImpl = async (args: {
   caseId: string;

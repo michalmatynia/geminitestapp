@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useState, useMemo, useRef } from 'react';
+
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+
 import {
   type CaseResolverCaseListConfirmationState,
   type CaseSearchScope,

@@ -3,12 +3,21 @@
 import { Copy, FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import {
+  getImageStudioProjectSessionKey,
+  saveImageStudioProjectSessionLocal,
+  serializeImageStudioProjectSession,
+  type ImageStudioProjectSession,
+} from '@/features/ai/image-studio/utils/project-session';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { buildImageStudioSequenceSnapshot } from '@/features/ai/image-studio/utils/studio-settings';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, SidePanel, Tooltip, useToast, EmptyState } from '@/shared/ui';
 
@@ -24,15 +33,7 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import {
-  getImageStudioProjectSessionKey,
-  saveImageStudioProjectSessionLocal,
-  serializeImageStudioProjectSession,
-  type ImageStudioProjectSession,
-} from '@/features/ai/image-studio/utils/project-session';
-import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { buildImageStudioSequenceSnapshot } from '@/features/ai/image-studio/utils/studio-settings';
+
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 

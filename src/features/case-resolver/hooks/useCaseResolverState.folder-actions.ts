@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
@@ -14,7 +15,6 @@ import {
   removeOwnedFolderRecordsWithinPath,
   renameOwnedFolderRecordsWithinPath,
 } from './useCaseResolverState.helpers';
-import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 
 type ConfirmFn = (input: {
   title: string;

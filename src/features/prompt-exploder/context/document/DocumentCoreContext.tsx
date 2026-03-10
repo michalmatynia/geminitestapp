@@ -1,12 +1,14 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
+import { internalError } from '@/shared/errors/app-error';
+
 import type {
   PromptExploderDocument,
   PromptExploderBinding,
   PromptExploderSegment,
 } from '../../types';
-import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentCoreState {
   documentState: PromptExploderDocument | null;

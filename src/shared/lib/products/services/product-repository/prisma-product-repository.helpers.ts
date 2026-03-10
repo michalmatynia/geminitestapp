@@ -1,14 +1,14 @@
+import {
+  productAdvancedFilterGroupSchema,
+  type ProductAdvancedFilterGroup,
+  type ProductParameterValue,
+} from '@/shared/contracts/products';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductAdvancedFilterGroup,
-  type ProductParameterValue,
-} from '@/shared/contracts/products';
 import { logger } from '@/shared/utils/logger';
 
 export function removeUndefined<T extends object>(obj: T): T {

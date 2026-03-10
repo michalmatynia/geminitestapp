@@ -1,10 +1,13 @@
 'use client';
 
-import React from 'react';
 import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
+import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/features/foldertree';
-import { useCaseResolverPageActions } from '../context/CaseResolverPageContext';
+import { Button, Badge, Input } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+
 import {
   useCaseResolverFolderTreeDataContext,
   useCaseResolverFolderTreeUiStateContext,
@@ -17,10 +20,8 @@ import {
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
 import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
-import { Button, Badge, Input } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { cn } from '@/shared/utils';
 import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRuntimeContext';
+import { useCaseResolverPageActions } from '../context/CaseResolverPageContext';
 
 export type { CaseResolverTreeNodeProps };
 

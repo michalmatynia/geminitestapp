@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
@@ -13,8 +13,8 @@ import type {
   ImageStudioRunsResponse,
   ImageStudioRunStatus,
 } from '@/shared/contracts/image-studio';
-import { api } from '@/shared/lib/api-client';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { useMaskingActions, useMaskingState } from './MaskingContext';
@@ -22,6 +22,7 @@ import { useProjectsState } from './ProjectsContext';
 import { usePromptActions, usePromptState } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsActions, useSlotsState } from './SlotsContext';
+
 import type {
   GenerationActions,
   GenerationLandingSlot,

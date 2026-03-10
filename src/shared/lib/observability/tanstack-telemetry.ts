@@ -1,5 +1,6 @@
-import { classifyError } from '@/shared/errors/error-classifier';
 import { z } from 'zod';
+
+import { classifyError } from '@/shared/errors/error-classifier';
 import type {
   TanstackCriticality,
   TanstackEntityKind,
@@ -9,7 +10,6 @@ import type {
   TanstackTelemetryBatch,
   TanstackTelemetryEvent,
 } from '@/shared/lib/tanstack-factory-v2.types';
-import { getTraceId } from '@/shared/utils/observability/trace';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   isSensitiveKey,
@@ -17,6 +17,7 @@ import {
   redactSensitiveText,
   truncateString,
 } from '@/shared/utils/observability/client-redaction';
+import { getTraceId } from '@/shared/utils/observability/trace';
 
 import type { QueryKey } from '@tanstack/react-query';
 

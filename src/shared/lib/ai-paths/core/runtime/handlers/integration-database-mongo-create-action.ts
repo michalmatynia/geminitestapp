@@ -5,15 +5,15 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-
 import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
-import { coerceInput, parseJsonSafe } from '../../utils';
+
 import {
   createWriteTemplateGuardrailOutput,
   evaluateWriteOutcome,
   resolveWriteTemplateGuardrail,
   resolveWriteOutcomePolicy,
 } from './integration-database-write-guardrails';
+import { coerceInput, parseJsonSafe } from '../../utils';
 
 export type HandleDatabaseMongoCreateActionInput = {
   action: DatabaseAction;

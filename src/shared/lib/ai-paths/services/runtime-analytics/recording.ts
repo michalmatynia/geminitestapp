@@ -1,7 +1,8 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import { keyRuns, keyTotals, keyDurations, keyNodes, keyBrain } from './config';
 import {
   toTimestampMs,

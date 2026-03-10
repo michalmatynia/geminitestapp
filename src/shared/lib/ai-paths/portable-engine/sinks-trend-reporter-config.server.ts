@@ -1,6 +1,13 @@
 import 'server-only';
 
-import type { PortablePathSigningPolicyProfile } from './portable-engine-resolution-types';
+import {
+  PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL_ENV,
+  PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL_ENV,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED_ENV,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS_ENV,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES_ENV,
+  PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED_ENV,
+} from './sinks-constants.server';
 import {
   parseBooleanFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
@@ -14,14 +21,8 @@ import {
   resolvePortablePathSigningPolicyTrendReportEveryUsesFromEnvironment,
   type PortablePathSigningPolicyExpectedProfilesBySurface,
 } from './sinks-trend-state.server';
-import {
-  PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL_ENV,
-  PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL_ENV,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED_ENV,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS_ENV,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES_ENV,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED_ENV,
-} from './sinks-constants.server';
+
+import type { PortablePathSigningPolicyProfile } from './portable-engine-resolution-types';
 import type { PortablePathSigningPolicyAlertLevel } from './sinks-contracts.server';
 
 export type PortablePathSigningPolicyTrendReporterBootstrapEnvironmentSettings = {

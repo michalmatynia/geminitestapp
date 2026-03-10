@@ -1,9 +1,11 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { TestLogEntry } from '@/shared/contracts/integrations';
-import type { StepWithResult } from '../integrations-context-types';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { StepWithResult } from '../integrations-context-types';
 
 export interface IntegrationsTesting {
   isTesting: boolean;

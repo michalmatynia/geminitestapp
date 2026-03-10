@@ -3,11 +3,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 const getAlignmentClass = (alignment: string): string => {
   if (alignment === 'center') return 'items-center justify-center';

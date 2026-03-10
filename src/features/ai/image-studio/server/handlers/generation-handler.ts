@@ -5,22 +5,23 @@ import path from 'path';
 
 import OpenAI, { toFile } from 'openai';
 
+import { buildImageStudioGenerationPrompt } from '@/features/ai/image-studio/context-registry/generation-prompt';
+import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
+import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   type ImageStudioRunExecutionResult,
   type ImageStudioRunRequest,
   type ImageStudioGenerationExecutionMeta,
   type ImageFileRecord,
 } from '@/shared/contracts/image-studio';
-import { buildImageStudioGenerationPrompt } from '@/features/ai/image-studio/context-registry/generation-prompt';
-import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
-import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   badRequestError,
   configurationError,
   operationFailedError,
 } from '@/shared/errors/app-error';
+import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+
 import {
   assertDallePromptWithinLimit,
   buildMaskBuffer,

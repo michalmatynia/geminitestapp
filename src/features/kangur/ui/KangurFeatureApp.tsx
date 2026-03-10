@@ -1,29 +1,28 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import type { JSX } from 'react';
 import { useEffect } from 'react';
 
-import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
-import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
-import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
-import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
-import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
-import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
+import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
-import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
+import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
+import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
+import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
+import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
+import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
-import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
-import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import {
   KangurRouteTransitionProvider,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import {
   KangurTopNavigationHost,
   KangurTopNavigationProvider,
@@ -31,6 +30,8 @@ import {
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/shared/utils';
+
+import type { JSX } from 'react';
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();

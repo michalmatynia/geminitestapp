@@ -1,7 +1,7 @@
 import { z } from 'zod';
+
 import { namedDtoSchema } from '../base';
 import { type PromptExploderSegmentType } from './base';
-
 import { type PromptValidationRule } from '../prompt-engine';
 import { type PromptExploderLearnedTemplate } from './settings';
 

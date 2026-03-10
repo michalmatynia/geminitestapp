@@ -8,6 +8,10 @@ import {
   useSaveAgentPersonasMutation,
 } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import {
+  deletePersonaAvatar,
+  deletePersonaAvatarThumbnail,
+} from '@/features/ai/agentcreator/utils/avatar-input';
+import {
   buildDefaultAgentPersonaMoods,
   buildAgentPersonaSettings,
   collectAgentPersonaAvatarFileIds,
@@ -18,15 +22,11 @@ import {
   normalizeAgentPersonas,
 } from '@/features/ai/agentcreator/utils/personas';
 import {
-  deletePersonaAvatar,
-  deletePersonaAvatarThumbnail,
-} from '@/features/ai/agentcreator/utils/avatar-input';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   type AgentPersona,
 } from '@/shared/contracts/agents';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function AgentPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -96,7 +96,7 @@ export function AgentPersonasPage(): React.JSX.Element {
           (typeof draft.id === 'string' && draft.id.trim() ? draft.id.trim() : createAgentPersonaId()),
         name,
         description: draft.description?.trim() || null,
-        settings: buildAgentPersonaSettings(draft.settings),
+        settings: buildAgentPersonaSettings(draft.settings ?? existing?.settings),
         defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
         moods: draft.moods ?? existing?.moods ?? buildDefaultAgentPersonaMoods(),
         createdAt: existing?.createdAt ?? now,

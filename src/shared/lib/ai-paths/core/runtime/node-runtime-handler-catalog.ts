@@ -1,6 +1,7 @@
 import type { NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 
 import { listNodeCodeObjectV3NativeRegistryContracts } from './node-code-object-v3-legacy-bridge';
+
 import type { ResolveCodeObjectHandlerArgs } from './node-runtime-kernel';
 
 export type NodeRuntimeLegacyHandlerCatalog = Record<string, NodeHandler>;

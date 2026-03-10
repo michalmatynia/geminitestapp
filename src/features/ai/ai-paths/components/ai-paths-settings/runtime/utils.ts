@@ -1,4 +1,5 @@
-import type * as React from 'react';
+import type { AiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import type {
   AiNode,
   AiPathRunRecord,
@@ -15,10 +16,10 @@ import type {
   RuntimePortValues,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-import type { AiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
-import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
+
+import type * as React from 'react';
 
 /**
  * Generate a unique run ID

@@ -1,11 +1,12 @@
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 
-import type { AiPathTemplateRegistryEntry } from '../starter-workflows';
 import {
   getStarterWorkflowRegistry,
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '../starter-workflows';
+
+import type { AiPathTemplateRegistryEntry } from '../starter-workflows';
 
 export type AiPathTemplate = Pick<
   AiPathTemplateRegistryEntry,

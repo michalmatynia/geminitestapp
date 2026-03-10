@@ -2,7 +2,6 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { isDomainZoningEnabled } from './cms-domain';
 import {
   DEFAULT_MENU_SETTINGS,
   getCmsMenuSettingsKey,
@@ -14,6 +13,8 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+
+import { isDomainZoningEnabled } from './cms-domain';
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

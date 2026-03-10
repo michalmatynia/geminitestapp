@@ -173,9 +173,9 @@ export const parsePathConfig = (
     config: normalizedConfig,
     repairedSetting: remediated.changed
       ? {
-          key: `${PATH_CONFIG_PREFIX}${pathId}`,
-          value: JSON.stringify(normalizedConfig),
-        }
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: JSON.stringify(normalizedConfig),
+      }
       : null,
   };
 };

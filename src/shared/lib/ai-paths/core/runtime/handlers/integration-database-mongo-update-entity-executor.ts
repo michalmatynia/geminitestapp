@@ -4,6 +4,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { entityApi } from '@/shared/lib/ai-paths/api';
 
 import {
   coerceArrayLike,
@@ -11,7 +12,6 @@ import {
   resolveObjectPathValue,
   toRecord,
 } from './database-parameter-inference';
-import { entityApi } from '@/shared/lib/ai-paths/api';
 import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,

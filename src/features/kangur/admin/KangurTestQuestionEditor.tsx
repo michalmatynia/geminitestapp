@@ -2,24 +2,31 @@
 
 import React from 'react';
 
-import { Badge, Button, SelectSimple, Textarea } from '@/shared/ui';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
-import type { QuestionFormData } from '../test-questions';
+import { Badge, Button, SelectSimple, Textarea } from '@/shared/ui';
+
+
 import { hasIllustration } from '../test-questions';
 import { QuestionChoicesEditor } from './components/QuestionChoicesEditor';
 import { QuestionIllustrationEditor } from './components/QuestionIllustrationEditor';
-import { KangurTestQuestionRenderer } from '../ui/components/KangurTestQuestionRenderer';
+import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import {
   KangurTestQuestionEditorProvider,
   useKangurTestQuestionEditorContext,
 } from './context/KangurTestQuestionEditorContext';
-import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import { getQuestionAuthoringSummary } from './question-authoring-insights';
 import { getQuestionWorkflowLabel } from './question-authoring-insights';
 import {
   applyQuestionAuthoringRepair,
   getQuestionAuthoringRepairActions,
 } from './question-authoring-repairs';
+import {
+  applyQuestionPresentationPreset,
+  QUESTION_PRESENTATION_PRESETS,
+} from './question-presentation-presets';
+import { KangurTestQuestionRenderer } from '../ui/components/KangurTestQuestionRenderer';
+
+import type { QuestionFormData } from '../test-questions';
 
 const POINT_VALUE_OPTIONS = [
   { value: '1', label: '1 pt' },
@@ -282,6 +289,34 @@ function KangurTestQuestionEditorContent({
               </div>
             </div>
           ) : null}
+        </div>
+
+        <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              Presentation presets
+            </div>
+            <div className='text-sm text-muted-foreground'>
+              Start from a learner-facing question layout, then adjust the details below.
+            </div>
+          </div>
+          <div className='grid gap-2 md:grid-cols-2'>
+            {QUESTION_PRESENTATION_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type='button'
+                className='rounded-2xl border border-border/50 bg-background/30 px-4 py-3 text-left transition hover:border-cyan-400/40 hover:bg-cyan-500/5'
+                onClick={(): void =>
+                  updateFormData(applyQuestionPresentationPreset(formData, preset.id))
+                }
+              >
+                <div className='text-sm font-semibold text-white'>{preset.label}</div>
+                <div className='mt-1 text-xs leading-relaxed text-muted-foreground'>
+                  {preset.description}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4'>

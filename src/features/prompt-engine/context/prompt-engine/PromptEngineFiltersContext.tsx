@@ -1,11 +1,12 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
+import { internalError } from '@/shared/errors/app-error';
 import type {
   PromptValidationSeverity,
   PromptValidationScope,
 } from '@/shared/lib/prompt-engine/settings';
-import { internalError } from '@/shared/errors/app-error';
 
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';

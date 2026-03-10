@@ -12,15 +12,16 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
   type ImageStudioCenterLayoutConfig,
 } from '@/shared/contracts/image-studio';
+
+import {
+  detectObjectBoundsForLayoutFromRgba,
+  computeAutoScalePlanFromBounds,
+} from './segments/autoscale-planning';
 import {
   type PixelData,
   type NormalizedImageStudioAnalysisLayoutConfig,
   type ImageStudioAutoScaleAnalysis,
 } from './segments/types';
-import {
-  detectObjectBoundsForLayoutFromRgba,
-  computeAutoScalePlanFromBounds,
-} from './segments/autoscale-planning';
 
 export * from './segments/types';
 export * from './segments/alpha-detection';

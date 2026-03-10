@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Globe } from 'lucide-react';
-import { Input, Label } from '@/shared/ui';
+import React from 'react';
+
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { Input, Label } from '@/shared/ui';
 
 export function PageSeoTabContent(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();

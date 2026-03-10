@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
-import type { Edge } from '@/shared/lib/ai-paths';
-import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
+
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
+import type { Edge } from '@/shared/lib/ai-paths';
 
 export function useAiPathsRuntimeManagement() {
   const { setRuntimeState } = useRuntimeActions();

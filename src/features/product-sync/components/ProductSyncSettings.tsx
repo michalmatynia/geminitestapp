@@ -4,11 +4,6 @@ import { Plus, Play, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-  useDefaultExportConnection,
-  useDefaultExportInventory,
-  useIntegrationsWithConnections,
-} from '@/shared/hooks/useIntegrationQueries';
-import {
   useCreateProductSyncProfileMutation,
   useDeleteProductSyncProfileMutation,
   useProductSyncProfiles,
@@ -28,6 +23,11 @@ import type {
   ProductSyncProfile,
 } from '@/shared/contracts/product-sync';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import {
+  useDefaultExportConnection,
+  useDefaultExportInventory,
+  useIntegrationsWithConnections,
+} from '@/shared/hooks/useIntegrationQueries';
 import { api } from '@/shared/lib/api-client';
 import {
   Badge,

@@ -1,6 +1,6 @@
-import { FolderTreeProfilesV2Map } from './folder-tree-profiles-v2/types';
 import { defaultFolderTreeProfilesV2 } from './folder-tree-profiles-v2/defaults';
 import * as logic from './folder-tree-profiles-v2/logic';
+import { FolderTreeProfilesV2Map } from './folder-tree-profiles-v2/types';
 
 export * from './folder-tree-profiles-v2/types';
 export * from './folder-tree-profiles-v2/constants';

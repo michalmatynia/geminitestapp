@@ -3,6 +3,7 @@
 import { KeyRound, Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   appendCatalogPoolValues,
   BRAIN_CATALOG_POOL_LABELS,
@@ -10,7 +11,6 @@ import {
   catalogToEntries,
   isSameCatalogEntry,
 } from '@/shared/lib/ai-brain/catalog-entries';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { Button, FormSection, Input, Label, useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,

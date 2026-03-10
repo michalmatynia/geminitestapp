@@ -1,6 +1,6 @@
+import type { AiPathRunRecord, AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { AiPathRunRecord, AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
 export type ErrorReportingCtx = {
   run: AiPathRunRecord;

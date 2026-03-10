@@ -3,6 +3,16 @@ import 'server-only';
 import { hash } from 'bcryptjs';
 
 import {
+  getKangurLoginHref,
+  KANGUR_BASE_PATH,
+  resolveKangurPublicBasePathFromHref,
+} from '@/features/kangur/config/routing';
+import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
+import {
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurParentVerificationEmailSettings,
+} from '@/features/kangur/settings';
+import {
   consumeEmailVerificationChallenge,
   createAuthUserWithEmail,
   createEmailVerificationChallenge,
@@ -18,17 +28,6 @@ import {
   shouldExposeAuthEmailDebug,
   validatePasswordStrength,
 } from '@/server/auth';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-import {
-  getKangurLoginHref,
-  KANGUR_BASE_PATH,
-  resolveKangurPublicBasePathFromHref,
-} from '@/features/kangur/config/routing';
-import {
-  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
-  parseKangurParentVerificationEmailSettings,
-} from '@/features/kangur/settings';
-import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
 import {
   conflictError,
   forbiddenError,
@@ -36,6 +35,7 @@ import {
   rateLimitedError,
   validationError,
 } from '@/shared/errors/app-error';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 type KangurParentAccountCreateResult = {
   email: string;

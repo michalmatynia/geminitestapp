@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { CmsRepository } from '@/shared/contracts/cms';
-
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
 import { mongoCmsRepository } from './mongo-cms-repository';
 import { prismaCmsRepository } from './prisma-cms-repository';
 

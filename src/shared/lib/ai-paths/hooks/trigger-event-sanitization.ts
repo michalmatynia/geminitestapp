@@ -1,4 +1,5 @@
 import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+
 import { toRecord } from './trigger-event-utils';
 
 export const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 6;

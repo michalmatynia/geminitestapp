@@ -1,19 +1,20 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   AiPathRunRecord,
   AiPathRuntimeTraceAnalytics,
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
-import { asRecord, toNonEmptyString, toFiniteDurationMs, withTimeout } from './utils';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import {
   TRACE_NODE_HIGHLIGHT_LIMIT,
   TRACE_RUN_SAMPLE_LIMIT,
   SUMMARY_QUERY_TIMEOUT_MS,
 } from './config';
+import { asRecord, toNonEmptyString, toFiniteDurationMs, withTimeout } from './utils';
 
 export const extractRuntimeTraceNodeSpans = (run: AiPathRunRecord): unknown[] => {
   const meta = asRecord(run.meta);

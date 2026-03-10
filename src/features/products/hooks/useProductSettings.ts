@@ -2,7 +2,10 @@
 
 import { useCallback, useRef } from 'react';
 
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  normalizeProductStudioSequenceGenerationMode,
+  type ProductStudioSequenceGenerationMode,
+} from '@/shared/contracts/products';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
@@ -10,10 +13,7 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioSequenceGenerationMode,
-} from '@/shared/contracts/products';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 export type ProductSettingsSnapshot = {
   /** External image server base URL (never null; defaults to localhost:3000) */

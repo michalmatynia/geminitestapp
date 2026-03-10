@@ -1,4 +1,5 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
 import { type ImageContentFrame } from './GenerationToolbarImageUtils.types';
 
 export const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;

@@ -2,6 +2,12 @@ import 'server-only';
 
 import { logSystemEvent, type SystemLogInput } from '@/shared/lib/observability/system-logger';
 
+import {
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
+} from './sinks-constants.server';
 import { resolvePortablePathSigningPolicyTrendReporterBootstrapSettingsFromEnvironment } from './sinks-trend-reporter-config.server';
 import {
   createPortablePathSigningPolicyTrendReporter,
@@ -12,12 +18,7 @@ import {
   toPortablePathSigningPolicyAlertLevel,
   type PortablePathSigningPolicyExpectedProfilesBySurface,
 } from './sinks-trend-state.server';
-import {
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-} from './sinks-constants.server';
+
 import type {
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
   PortablePathSigningPolicyAlertLevel,

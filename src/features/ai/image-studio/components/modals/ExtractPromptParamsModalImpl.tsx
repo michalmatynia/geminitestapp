@@ -5,10 +5,11 @@ import React from 'react';
 
 import { FormModal, Label, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 
-import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
-import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioActionButtonRow';
 import { StudioPromptTextSection } from './StudioPromptTextSection';
+import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
+import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function ExtractPromptParamsModal(): React.JSX.Element {

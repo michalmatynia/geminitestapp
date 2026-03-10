@@ -1,5 +1,5 @@
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { act, render } from '@testing-library/react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +15,6 @@ import {
   clearRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,
 } from '@/shared/lib/query-invalidation';
-import { JobQueueProvider, useJobQueueState } from '../JobQueueContext';
 
 const mocks = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
@@ -23,10 +22,17 @@ const mocks = vi.hoisted(() => ({
   createListQueryV2Mock: vi.fn(),
   createMutationV2Mock: vi.fn(),
   createDeleteMutationV2Mock: vi.fn(),
+  getAiPathRunMock: vi.fn(),
+  handoffAiPathRunMock: vi.fn(),
+  resumeAiPathRunMock: vi.fn(),
+  retryAiPathRunNodeMock: vi.fn(),
   refetchSettingsMock: vi.fn(),
   refetchRunsMock: vi.fn(),
   refetchQueueStatusMock: vi.fn(),
 }));
+
+let JobQueueProvider: typeof import('../JobQueueContext').JobQueueProvider;
+let useJobQueueState: typeof import('../JobQueueContext').useJobQueueState;
 
 vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
@@ -44,6 +50,15 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
   createDeleteMutationV2:
     mocks.createDeleteMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createDeleteMutationV2,
 }));
+
+vi.mock('@/shared/lib/ai-paths', () => ({
+  getAiPathRun: (...args: unknown[]) => mocks.getAiPathRunMock(...args),
+  handoffAiPathRun: (...args: unknown[]) => mocks.handoffAiPathRunMock(...args),
+  resumeAiPathRun: (...args: unknown[]) => mocks.resumeAiPathRunMock(...args),
+  retryAiPathRunNode: (...args: unknown[]) => mocks.retryAiPathRunNodeMock(...args),
+}));
+
+let jobQueueRunsData: { runs: AiPathRunRecord[]; total: number } = { runs: [], total: 0 };
 
 const renderProvider = () =>
   render(
@@ -81,22 +96,66 @@ function QueueCountProbe(): React.JSX.Element {
   return <div data-testid='queue-counts'>{`${runs.length}:${total}`}</div>;
 }
 
+function SearchQueryProbe(): React.JSX.Element {
+  const { searchQuery } = useJobQueueState();
+
+  return <div data-testid='search-query'>{searchQuery || 'empty'}</div>;
+}
+
+function ExpandedRunProbe(): React.JSX.Element {
+  const { expandedRunIds } = useJobQueueState();
+
+  return <div data-testid='expanded-runs'>{Array.from(expandedRunIds).sort().join(',') || 'empty'}</div>;
+}
+
 describe('JobQueueProvider enqueue event listeners', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    class MockEventSource {
+      close(): void {}
+      addEventListener(): void {}
+      removeEventListener(): void {}
+    }
+
     resetOptimisticQueue();
     mocks.usePathnameMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
     mocks.createMutationV2Mock.mockReset();
     mocks.createDeleteMutationV2Mock.mockReset();
+    mocks.getAiPathRunMock.mockReset();
+    mocks.handoffAiPathRunMock.mockReset();
+    mocks.resumeAiPathRunMock.mockReset();
+    mocks.retryAiPathRunNodeMock.mockReset();
     mocks.refetchSettingsMock.mockReset();
     mocks.refetchRunsMock.mockReset();
     mocks.refetchQueueStatusMock.mockReset();
+    jobQueueRunsData = { runs: [], total: 0 };
 
     mocks.usePathnameMock.mockReturnValue('/admin/ai-paths/queue');
+    vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
     mocks.refetchSettingsMock.mockResolvedValue(undefined);
     mocks.refetchRunsMock.mockResolvedValue(undefined);
     mocks.refetchQueueStatusMock.mockResolvedValue(undefined);
+    mocks.getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run-from-link',
+          status: 'completed',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+        },
+        nodes: [],
+        events: [],
+      },
+    });
+    mocks.handoffAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
+    mocks.resumeAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
+    mocks.retryAiPathRunNodeMock.mockResolvedValue({ ok: true, data: { run: {} } });
+    ({ JobQueueProvider, useJobQueueState } = await vi.importActual<typeof import('../JobQueueContext')>(
+      '../JobQueueContext'
+    ));
 
     mocks.createListQueryV2Mock.mockImplementation((config: { queryKey?: unknown }) => {
       const queryKey = JSON.stringify(config?.queryKey ?? []);
@@ -110,7 +169,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
       }
       if (queryKey.includes('"job-queue"')) {
         return {
-          data: { runs: [], total: 0 },
+          data: jobQueueRunsData,
           isLoading: false,
           error: null,
           refetch: mocks.refetchRunsMock,
@@ -190,6 +249,52 @@ describe('JobQueueProvider enqueue event listeners', () => {
     container.remove();
   });
 
+  it('seeds the queue search state from the initial search query prop and updates on prop change', async () => {
+    const view = render(
+      <JobQueueProvider initialSearchQuery='run-from-link'>
+        <SearchQueryProbe />
+      </JobQueueProvider>
+    );
+
+    expect(screen.getByTestId('search-query')).toHaveTextContent('run-from-link');
+
+    view.rerender(
+      <JobQueueProvider initialSearchQuery='run-after-navigation'>
+        <SearchQueryProbe />
+      </JobQueueProvider>
+    );
+
+    expect(screen.getByTestId('search-query')).toHaveTextContent('run-after-navigation');
+  });
+
+  it('auto-expands and loads the requested run when initialExpandedRunId is present in the filtered results', async () => {
+    jobQueueRunsData = {
+      runs: [
+        {
+          id: 'run-from-link',
+          status: 'completed',
+          pathId: 'path-1',
+          pathName: 'Path 1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+        } as AiPathRunRecord,
+      ],
+      total: 1,
+    };
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='run-from-link' initialExpandedRunId='run-from-link'>
+          <ExpandedRunProbe />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('expanded-runs')).toHaveTextContent('run-from-link');
+    expect(mocks.getAiPathRunMock).toHaveBeenCalledWith('run-from-link');
+  });
+
   it('refreshes queue only for valid window enqueue events', () => {
     renderProvider();
 
@@ -229,7 +334,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
       if (key === 'ai-path-run-recent-enqueue') {
         throw new Error('Quota exceeded');
       }
-      return originalSetItem(key, value);
+      originalSetItem(key, value);
     });
 
     act(() => {

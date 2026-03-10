@@ -3,7 +3,10 @@
 import { Upload, Plus, X } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  validate3DFileAsync,
+  SUPPORTED_3D_FORMATS,
+} from '@/features/viewer3d/utils/validateAsset3d';
 import {
   Button,
   Input,
@@ -15,13 +18,10 @@ import {
   FormActions,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { uploadAsset3DFile } from '../api';
-import {
-  validate3DFileAsync,
-  SUPPORTED_3D_FORMATS,
-} from '@/features/viewer3d/utils/validateAsset3d';
+import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 
 interface Asset3DUploaderProps {
   className?: string;

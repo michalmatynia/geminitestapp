@@ -1,21 +1,22 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useMemo } from 'react';
 
-import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
+import { Button, Switch } from '@/shared/ui';
+
 import {
   useCaseResolverFolderTreeDataContext,
   useCaseResolverFolderTreeUiActionsContext,
   useCaseResolverFolderTreeUiStateContext,
 } from '../context/CaseResolverFolderTreeContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 
 type CaseResolverTreeHeaderProps = {
   searchQuery?: string | undefined;

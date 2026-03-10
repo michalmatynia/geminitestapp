@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { Label, Textarea } from '@/shared/ui';
 
 export type RegexPreviewSectionProps = {

@@ -7,24 +7,24 @@ import {
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server';
-import { uploadFile } from '@/shared/lib/files/file-uploader';
-import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
-import { getProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { productService } from '@/shared/lib/products/services/productService';
 import {
   type ProductStudioSequencingConfig,
   type ProductWithImages,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
+import { uploadFile } from '@/shared/lib/files/file-uploader';
+import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { getProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
+import { productService } from '@/shared/lib/products/services/productService';
 
+import { asRecord, normalizeImageSlotIndex, trimString } from './product-studio-service.helpers';
+import { toProductImageFileSource } from './product-studio-service.images';
 import {
   appendFilenameSuffix,
   buildUpscaledImage,
   resolveBufferFromImagePath,
 } from './product-studio-service.io';
-import { toProductImageFileSource } from './product-studio-service.images';
-import { asRecord, normalizeImageSlotIndex, trimString } from './product-studio-service.helpers';
 import {
   ensureProduct,
   resolveProductAndStudioTarget,

@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+
+import { useDragState } from '@/features/cms/hooks/useDragStateContext';
 import type { PageZone } from '@/shared/contracts/cms';
+import { Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
 import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
 } from './ComponentTreePanelContext';
-import { useDragState } from '@/features/cms/hooks/useDragStateContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+
 
 export function ZoneFooterNode({
   zone,

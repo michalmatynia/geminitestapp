@@ -17,10 +17,10 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
 import { collectPlaywrightArtifacts } from './playwright-artifacts';
-import { buildHistoryNodeOptions } from './run-history-utils';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
-import { readRuntimeTraceSummary } from './run-trace-utils';
+import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
+import { readRuntimeTraceSummary } from './run-trace-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 

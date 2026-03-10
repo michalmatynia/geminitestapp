@@ -5,10 +5,10 @@ import React from 'react';
 
 import { Button, EmptyState, FormSection, LoadingState, useToast } from '@/shared/ui';
 
+import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 import { ValidatorPatternImportModal } from './ValidatorPatternImportModal';
 import { ValidatorPatternTree } from './ValidatorPatternTree';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
-import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel

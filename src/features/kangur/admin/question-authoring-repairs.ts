@@ -32,7 +32,7 @@ export const getQuestionAuthoringRepairActions = (
   issues: readonly QuestionAuthoringIssue[]
 ): QuestionAuthoringRepairAction[] =>
   uniqueRepairs(
-    issues.flatMap((issue) => {
+    issues.flatMap<QuestionAuthoringRepairAction>((issue) => {
       switch (issue.code) {
         case 'missing_choice_label':
         case 'duplicate_choice_labels':
@@ -105,11 +105,11 @@ export const applyQuestionAuthoringRepair = (
         choices: formData.choices.map((choice) =>
           choice.svgContent?.trim().length > 0 && (choice.description?.trim().length ?? 0) === 0
             ? {
-                ...choice,
-                description: choice.label.trim()
-                  ? `Describe what is shown in option ${choice.label}.`
-                  : 'Describe what is shown in this option.',
-              }
+              ...choice,
+              description: choice.label.trim()
+                ? `Describe what is shown in option ${choice.label}.`
+                : 'Describe what is shown in this option.',
+            }
             : choice
         ),
       };

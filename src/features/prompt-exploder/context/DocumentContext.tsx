@@ -3,6 +3,11 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
+import type {
+  PromptExploderParamEntry,
+  PromptExploderParamEntriesState,
+} from '@/shared/contracts/prompt-exploder';
+import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -10,16 +15,17 @@ import {
   type PromptExploderCaseResolverContext,
 } from '../bridge';
 import { promptExploderClampNumber } from '../helpers/formatting';
-import type {
-  PromptExploderParamEntry,
-  PromptExploderParamEntriesState,
-} from '@/shared/contracts/prompt-exploder';
 import { buildPromptExploderParamEntries } from '../params-editor';
 import { updatePromptExploderDocument } from '../parser';
-import { useSettingsState } from './hooks/useSettings';
+import {
+  DocumentPromptContext,
+  type DocumentPromptState,
+  useDocumentPrompt as useDocumentPromptValue,
+} from './document/DocumentPromptContext';
 import { useDocumentApplyAction } from './hooks/useDocumentApplyAction';
 import { useDocumentBridgeHydration } from './hooks/useDocumentBridgeHydration';
 import { useDocumentExplodeAction } from './hooks/useDocumentExplodeAction';
+import { useSettingsState } from './hooks/useSettings';
 
 import type {
   PromptExploderBinding,
@@ -28,11 +34,6 @@ import type {
   PromptExploderSegment,
 } from '../types';
 
-import {
-  DocumentPromptContext,
-  type DocumentPromptState,
-  useDocumentPrompt as useDocumentPromptValue,
-} from './document/DocumentPromptContext';
 export { DocumentPromptContext, type DocumentPromptState };
 import {
   DocumentCoreContext,
@@ -59,7 +60,7 @@ import {
   type DocumentActions,
   useDocumentActions as useDocumentActionsValue,
 } from './document/DocumentActionsContext';
-import { internalError } from '@/shared/errors/app-error';
+
 
 export { DocumentActionsContext };
 export type { DocumentActions };

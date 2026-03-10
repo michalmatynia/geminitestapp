@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
+
+import type { Toast } from '@/shared/contracts/ui';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   NODE_WIDTH,
@@ -7,7 +9,7 @@ import {
   sanitizeEdges,
   validateConnection,
 } from '@/shared/lib/ai-paths';
-import type { Toast } from '@/shared/contracts/ui';
+
 import type { GraphMutationMeta } from '../GraphContext';
 
 export interface UseCanvasInteractionsConnectionsValue {

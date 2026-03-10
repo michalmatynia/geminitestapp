@@ -7,7 +7,6 @@ import type {
   CatalogUpdateInput,
 } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
-
 import type { Catalog as PrismaCatalog } from '@/shared/lib/db/prisma-client';
 
 const toRecord = (

@@ -6,7 +6,13 @@ export type KangurTutorAnchorKind =
   | 'document'
   | 'question'
   | 'review'
-  | 'summary';
+  | 'summary'
+  | 'login_action'
+  | 'create_account_action'
+  | 'login_identifier_field'
+  | 'login_form';
+
+export type KangurTutorAnchorSurface = 'lesson' | 'test' | 'game' | 'auth';
 
 export type KangurTutorAnchorMetadata = {
   contentId?: string | null;
@@ -17,7 +23,7 @@ export type KangurTutorAnchorMetadata = {
 export type KangurTutorAnchorRegistration = {
   id: string;
   kind: KangurTutorAnchorKind;
-  surface: 'lesson' | 'test' | 'game';
+  surface: KangurTutorAnchorSurface;
   priority: number;
   metadata?: KangurTutorAnchorMetadata;
   getRect: () => DOMRect | null;

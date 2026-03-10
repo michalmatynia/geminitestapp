@@ -11,12 +11,18 @@ import {
   useImportStudioAssetsFromDrive,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import {
+  getImageStudioProjectSessionKey,
+  type ImageStudioProjectSession,
+  resolveImageStudioProjectSession,
+} from '@/features/ai/image-studio/utils/project-session';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   ImageStudioSlotRecord,
   StudioSlotsResponse,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
 } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -24,13 +30,9 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { isTreePathWithin, normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { useProjectsState } from './ProjectsContext';
-import {
-  getImageStudioProjectSessionKey,
-  type ImageStudioProjectSession,
-  resolveImageStudioProjectSession,
-} from '@/features/ai/image-studio/utils/project-session';
 import { type StudioUploadMode } from '../components/studio-modals/StudioImportContext';
-import { internalError } from '@/shared/errors/app-error';
+
+
 import type {
   SlotsContextType,
   StudioFolderMutation,

@@ -1,3 +1,5 @@
+import type { ImageFileRecord } from '@/shared/contracts/files';
+import { CatalogRecord, ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
 import {
   Prisma,
   Product as PrismaProduct,
@@ -6,8 +8,7 @@ import {
   Catalog as PrismaCatalog,
   ProductCatalog as PrismaProductCatalog,
 } from '@/shared/lib/db/prisma-client';
-import type { ImageFileRecord } from '@/shared/contracts/files';
-import { CatalogRecord, ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
+
 import { normalizeProductParameterValues } from './prisma-product-repository.helpers';
 
 export const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord => ({

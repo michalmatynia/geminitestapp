@@ -1,5 +1,6 @@
-import { listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
+
 import { toNonEmptyString, toRecord, waitForMs } from './trigger-event-utils';
 
 export const TRIGGER_ENQUEUE_RECOVERY_TIMEOUT_MS = 10_000;

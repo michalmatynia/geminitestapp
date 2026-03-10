@@ -11,8 +11,8 @@ import type {
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { useChatbotSessions } from './useChatbotQueries';
 import { useCreateChatbotSession, useDeleteChatbotSession } from './useChatbotMutations';
+import { useChatbotSessions } from './useChatbotQueries';
 
 export type { UseChatbotSessionManagerReturn };
 

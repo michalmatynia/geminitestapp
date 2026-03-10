@@ -1,14 +1,17 @@
 'use client';
 
-import React from 'react';
 import { PenLine, Trash2 } from 'lucide-react';
-import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
+import React from 'react';
+
+import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { type VectorShape } from '@/shared/contracts/vector';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
+
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
-import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
-import { type VectorShape } from '@/shared/contracts/vector';
+
 
 const EMPTY_SHAPES: VectorShape[] = [];
 

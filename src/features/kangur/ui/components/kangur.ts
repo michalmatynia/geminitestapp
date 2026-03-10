@@ -1,9 +1,10 @@
-import type { ComponentType, ReactNode } from 'react';
 
 import KangurGameView from '@/features/kangur/ui/components/KangurGame';
 import KangurSetupView from '@/features/kangur/ui/components/KangurSetup';
 import { KangurGameProvider as KangurGameProviderLegacy } from '@/features/kangur/ui/context/KangurGameContext';
 import type { KangurMode } from '@/features/kangur/ui/types';
+
+import type { ComponentType, ReactNode } from 'react';
 
 type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;

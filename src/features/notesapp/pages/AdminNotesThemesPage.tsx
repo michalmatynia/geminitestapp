@@ -3,18 +3,17 @@
 import { Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
   useCreateNoteTheme,
   useDeleteNoteTheme,
   useUpdateNoteTheme,
 } from '@/features/notesapp/api/useNoteMutations';
 import { useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
-import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
   useNoteSettingsActions,
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ThemeRecord } from '@/shared/contracts/notes';
 import {
   Button,
@@ -27,6 +26,7 @@ import {
   FormActions,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '',

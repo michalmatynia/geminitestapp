@@ -1,6 +1,7 @@
 import type {
   KangurAddXpResult,
   KangurProgressState,
+  KangurRewardBreakdownEntry,
   KangurXpRewards,
 } from '@/features/kangur/ui/types';
 import {
@@ -33,6 +34,7 @@ type KangurLessonPracticeReward = {
   xp: number;
   scorePercent: number;
   progressUpdates: Partial<KangurProgressState>;
+  breakdown: KangurRewardBreakdownEntry[];
 };
 
 type KangurRewardProfile = 'game' | 'lesson_practice' | 'training' | 'lesson_completion';
@@ -71,6 +73,8 @@ export type KangurProgressActivitySummary = {
   label: string;
   sessionsPlayed: number;
   perfectSessions: number;
+  totalXpEarned: number;
+  averageXpPerSession: number;
   averageAccuracy: number;
   bestScorePercent: number;
   currentStreak: number;
@@ -82,6 +86,7 @@ export type KangurBadgeProgress = {
   target: number;
   summary: string;
   isUnlocked: boolean;
+  progressPercent: number;
 };
 
 export type KangurBadgeStatus = KangurBadge & KangurBadgeProgress;
@@ -186,6 +191,19 @@ const ACTIVITY_LABELS: Record<string, string> = {
   logical_thinking: 'Logiczne myslenie',
 };
 
+const LESSON_KEY_TO_OPERATION: Record<string, string> = {
+  adding: 'addition',
+  subtracting: 'subtraction',
+  multiplication: 'multiplication',
+  division: 'division',
+  clock: 'clock',
+  calendar: 'calendar',
+  geometry_basics: 'geometry',
+  geometry_shapes: 'geometry',
+  geometry_symmetry: 'geometry',
+  geometry_perimeter: 'geometry',
+};
+
 const CLOCK_TRAINING_SECTION_LABELS: Record<string, string> = {
   hours: 'Godziny',
   minutes: 'Minuty',
@@ -209,7 +227,7 @@ export const BADGES: KangurBadge[] = [
     id: 'perfect_10',
     emoji: '💯',
     name: 'Idealny wynik',
-    desc: 'Zdobadz 10/10 w grze',
+    desc: 'Zdobadz pelny wynik w grze',
     progress: (progress) => ({
       current: progress.perfectGames,
       target: 1,
@@ -370,6 +388,7 @@ const createEmptyActivityStatsEntry = (): KangurActivityStatsEntry => ({
   perfectSessions: 0,
   totalCorrectAnswers: 0,
   totalQuestionsAnswered: 0,
+  totalXpEarned: 0,
   bestScorePercent: 0,
   lastScorePercent: 0,
   currentStreak: 0,
@@ -393,6 +412,39 @@ function getAverageAccuracyPercent(progress: KangurProgressState): number {
 
 const resolveActivityTokenLabel = (token: string): string =>
   ACTIVITY_LABELS[token] ?? token.replace(/_/g, ' ').trim();
+
+const resolveRewardOperation = ({
+  operation,
+  lessonKey,
+  activityKey,
+}: {
+  operation?: string | null;
+  lessonKey?: string | null;
+  activityKey?: string | null;
+}): string | null => {
+  const normalizedOperation = operation?.trim();
+  if (normalizedOperation) {
+    return normalizedOperation;
+  }
+
+  const normalizedLessonKey = lessonKey?.trim();
+  if (normalizedLessonKey) {
+    return LESSON_KEY_TO_OPERATION[normalizedLessonKey] ?? normalizedLessonKey;
+  }
+
+  const normalizedActivityKey = activityKey?.trim();
+  if (!normalizedActivityKey) {
+    return null;
+  }
+
+  const [, rawPrimary = ''] = normalizedActivityKey.split(':');
+  const normalizedPrimary = rawPrimary.trim();
+  if (!normalizedPrimary) {
+    return null;
+  }
+
+  return LESSON_KEY_TO_OPERATION[normalizedPrimary] ?? normalizedPrimary;
+};
 
 export const formatKangurProgressActivityLabel = (activityKey: string): string => {
   const [kind = '', rawPrimary = '', rawSecondary = ''] = activityKey.split(':');
@@ -425,6 +477,22 @@ export const formatKangurProgressActivityLabel = (activityKey: string): string =
 export const getProgressAverageAccuracy = (progress: KangurProgressState): number =>
   getAverageAccuracyPercent(progress);
 
+export const getProgressAverageXpPerSession = (progress: KangurProgressState): number => {
+  if (progress.gamesPlayed <= 0) {
+    return 0;
+  }
+
+  return clampCounter(progress.totalXp / progress.gamesPlayed);
+};
+
+const getActivityAverageXpPerSession = (entry: KangurActivityStatsEntry): number => {
+  if (entry.sessionsPlayed <= 0) {
+    return 0;
+  }
+
+  return clampCounter(entry.totalXpEarned / entry.sessionsPlayed);
+};
+
 export const getProgressBestAccuracy = (progress: KangurProgressState): number => {
   const activityStats = Object.values(progress.activityStats ?? {});
   if (activityStats.length === 0) {
@@ -444,6 +512,8 @@ export const getProgressTopActivities = (
       label: formatKangurProgressActivityLabel(key),
       sessionsPlayed: value.sessionsPlayed,
       perfectSessions: value.perfectSessions,
+      totalXpEarned: value.totalXpEarned,
+      averageXpPerSession: getActivityAverageXpPerSession(value),
       averageAccuracy:
         value.totalQuestionsAnswered > 0
           ? clampPercent((value.totalCorrectAnswers / value.totalQuestionsAnswered) * 100)
@@ -455,6 +525,9 @@ export const getProgressTopActivities = (
     .sort((left, right) => {
       if (left.sessionsPlayed !== right.sessionsPlayed) {
         return right.sessionsPlayed - left.sessionsPlayed;
+      }
+      if (left.totalXpEarned !== right.totalXpEarned) {
+        return right.totalXpEarned - left.totalXpEarned;
       }
       if (left.averageAccuracy !== right.averageAccuracy) {
         return right.averageAccuracy - left.averageAccuracy;
@@ -476,6 +549,7 @@ export const getBadgeProgress = (
     target,
     summary: details.summary,
     isUnlocked: current >= target,
+    progressPercent: clampPercent((Math.min(current, target) / target) * 100),
   };
 };
 
@@ -484,6 +558,23 @@ export const getProgressBadges = (progress: KangurProgressState): KangurBadgeSta
     ...badge,
     ...getBadgeProgress(progress, badge),
   }));
+
+export const getNextLockedBadge = (progress: KangurProgressState): KangurBadgeStatus | null =>
+  getProgressBadges(progress)
+    .filter((badge) => !badge.isUnlocked)
+    .sort((left, right) => {
+      if (left.progressPercent !== right.progressPercent) {
+        return right.progressPercent - left.progressPercent;
+      }
+
+      const leftRemaining = Math.max(0, left.target - left.current);
+      const rightRemaining = Math.max(0, right.target - right.current);
+      if (leftRemaining !== rightRemaining) {
+        return leftRemaining - rightRemaining;
+      }
+
+      return left.target - right.target;
+    })[0] ?? null;
 
 const getAccuracyBonus = (scorePercent: number): number => {
   if (scorePercent >= 100) {
@@ -541,6 +632,66 @@ const getStreakBonus = (nextStreak: number): number => {
   return Math.min(8, (nextStreak - 1) * 2);
 };
 
+const buildRewardBreakdown = (
+  config: KangurRewardProfileConfig,
+  {
+    accuracyBonus,
+    difficultyBonus,
+    speedBonus,
+    streakBonus,
+    firstActivityBonus,
+    improvementBonus,
+    perfectBonus,
+    totalXp,
+  }: {
+    accuracyBonus: number;
+    difficultyBonus: number;
+    speedBonus: number;
+    streakBonus: number;
+    firstActivityBonus: number;
+    improvementBonus: number;
+    perfectBonus: number;
+    totalXp: number;
+  }
+): KangurRewardBreakdownEntry[] => {
+  const entries: KangurRewardBreakdownEntry[] = [
+    { kind: 'base', label: 'Ukonczenie rundy', xp: config.baseXp },
+  ];
+
+  if (accuracyBonus > 0) {
+    entries.push({ kind: 'accuracy', label: 'Skutecznosc', xp: accuracyBonus });
+  }
+  if (difficultyBonus > 0) {
+    entries.push({ kind: 'difficulty', label: 'Poziom trudnosci', xp: difficultyBonus });
+  }
+  if (speedBonus > 0) {
+    entries.push({ kind: 'speed', label: 'Tempo', xp: speedBonus });
+  }
+  if (streakBonus > 0) {
+    entries.push({ kind: 'streak', label: 'Seria', xp: streakBonus });
+  }
+  if (firstActivityBonus > 0) {
+    entries.push({ kind: 'first_activity', label: 'Pierwsza mocna proba', xp: firstActivityBonus });
+  }
+  if (improvementBonus > 0) {
+    entries.push({ kind: 'improvement', label: 'Poprawa wyniku', xp: improvementBonus });
+  }
+  if (perfectBonus > 0) {
+    entries.push({ kind: 'perfect', label: 'Pelny wynik', xp: perfectBonus });
+  }
+
+  const breakdownTotal = entries.reduce((sum, entry) => sum + entry.xp, 0);
+  if (totalXp > breakdownTotal) {
+    entries.push({
+      kind: 'minimum_floor',
+      label: 'Minimalna nagroda',
+      xp: totalXp - breakdownTotal,
+    });
+  }
+
+  return entries.filter((entry) => entry.xp > 0);
+};
+
 const buildActivityStatsUpdate = (
   progress: KangurProgressState,
   activityKey: string,
@@ -548,6 +699,7 @@ const buildActivityStatsUpdate = (
     scorePercent,
     correctAnswers,
     totalQuestions,
+    xpEarned,
     isPerfect,
     passedStrongThreshold,
     playedAt,
@@ -555,6 +707,7 @@ const buildActivityStatsUpdate = (
     scorePercent: number;
     correctAnswers: number;
     totalQuestions: number;
+    xpEarned: number;
     isPerfect: boolean;
     passedStrongThreshold: boolean;
     playedAt: string;
@@ -570,6 +723,7 @@ const buildActivityStatsUpdate = (
       perfectSessions: current.perfectSessions + (isPerfect ? 1 : 0),
       totalCorrectAnswers: current.totalCorrectAnswers + correctAnswers,
       totalQuestionsAnswered: current.totalQuestionsAnswered + totalQuestions,
+      totalXpEarned: current.totalXpEarned + xpEarned,
       bestScorePercent: Math.max(current.bestScorePercent, scorePercent),
       lastScorePercent: scorePercent,
       currentStreak: nextCurrentStreak,
@@ -650,6 +804,16 @@ const createRewardOutcome = (
         (isPerfect ? config.perfectBonus : 0)
     )
   );
+  const breakdown = buildRewardBreakdown(config, {
+    accuracyBonus,
+    difficultyBonus,
+    speedBonus,
+    streakBonus,
+    firstActivityBonus,
+    improvementBonus,
+    perfectBonus: isPerfect ? config.perfectBonus : 0,
+    totalXp: xp,
+  });
 
   const progressUpdates: Partial<KangurProgressState> = {
     totalCorrectAnswers: (progress.totalCorrectAnswers ?? 0) + normalizedCorrectAnswers,
@@ -662,6 +826,7 @@ const createRewardOutcome = (
       scorePercent,
       correctAnswers: normalizedCorrectAnswers,
       totalQuestions: safeTotalQuestions,
+      xpEarned: xp,
       isPerfect,
       passedStrongThreshold,
       playedAt,
@@ -699,6 +864,7 @@ const createRewardOutcome = (
     xp,
     scorePercent,
     progressUpdates,
+    breakdown,
   };
 };
 
@@ -893,6 +1059,7 @@ export function mergeProgressStates(
         leftEntry.totalQuestionsAnswered,
         rightEntry.totalQuestionsAnswered
       ),
+      totalXpEarned: Math.max(leftEntry.totalXpEarned, rightEntry.totalXpEarned),
       bestScorePercent: Math.max(leftEntry.bestScorePercent, rightEntry.bestScorePercent),
       lastScorePercent: latestEntry.lastScorePercent,
       currentStreak: Math.max(leftEntry.currentStreak, rightEntry.currentStreak),
@@ -973,8 +1140,10 @@ export function createLessonPracticeReward(
     activityKey: `lesson_practice:${lessonKey.trim() || 'unknown'}`,
     profile: 'lesson_practice',
     lessonKey,
+    operation: resolveRewardOperation({ lessonKey }),
     correctAnswers,
     totalQuestions,
+    countsAsGame: true,
     strongThresholdPercent: greatThresholdPercent,
   });
 }
@@ -1034,10 +1203,12 @@ export function createTrainingReward(
     activityKey,
     profile: 'training',
     lessonKey,
+    operation: resolveRewardOperation({ lessonKey, activityKey }),
     correctAnswers,
     totalQuestions,
     difficulty,
     durationSeconds,
+    countsAsGame: true,
     strongThresholdPercent,
     perfectCounterKey,
   });

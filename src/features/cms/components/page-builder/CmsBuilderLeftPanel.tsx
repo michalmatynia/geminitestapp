@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
 import { ArrowLeft, Menu, AppWindow, Settings, PanelLeftClose, Workflow } from 'lucide-react';
+import React from 'react';
+
 import { Button, SectionHeader } from '@/shared/ui';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
-import { ComponentTreePanel } from './ComponentTreePanel';
-import { ThemeSettingsPanel } from './ThemeSettingsPanel';
-import { MenuSettingsPanel } from './MenuSettingsPanel';
+
 import { AppEmbedsPanel } from './AppEmbedsPanel';
+import { ComponentTreePanel } from './ComponentTreePanel';
+import { MenuSettingsPanel } from './MenuSettingsPanel';
+import { ThemeSettingsPanel } from './ThemeSettingsPanel';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
 export type LeftPanelMode = 'sections' | 'theme' | 'menu' | 'app-embeds' | 'structure';
 

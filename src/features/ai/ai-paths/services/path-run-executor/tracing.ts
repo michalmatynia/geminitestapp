@@ -1,5 +1,5 @@
-import type { RuntimeTraceRecord } from '@/shared/contracts/ai-paths-runtime';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { RuntimeTraceRecord } from '@/shared/contracts/ai-paths-runtime';
 
 export type TracingCtx = {
   run: AiPathRunRecord;

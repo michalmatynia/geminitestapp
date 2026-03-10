@@ -1,5 +1,5 @@
-import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 
 export const resolveConnectionListingSettings = (
   connection: IntegrationConnectionRecord,

@@ -11,12 +11,6 @@ import {
   useUpdateValidatorSettingsMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
-import {
-  normalizeProductValidationDenyBehavior,
-  normalizeProductValidationInstanceDenyBehaviorMap,
-  normalizeProductValidationPatternDenyBehaviorOverride,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
-import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -27,6 +21,12 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductFormData, ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import {
+  normalizeProductValidationDenyBehavior,
+  normalizeProductValidationInstanceDenyBehaviorMap,
+  normalizeProductValidationPatternDenyBehaviorOverride,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

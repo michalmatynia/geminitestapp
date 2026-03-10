@@ -258,7 +258,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       }
     }
 
-    const rawNodes = (input.nodes ?? []) as AiNode[];
+    const rawNodes = (input.nodes ?? []);
     const rawEdges = input.edges ?? [];
     const remediatedNodes = remediateRemovedLegacyTriggerContextModes(rawNodes).value as AiNode[];
     const normalizedNodes = normalizeNodes(remediatedNodes);

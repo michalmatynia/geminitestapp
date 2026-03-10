@@ -1,3 +1,4 @@
+import type { KangurLessonDocument, KangurLessonRootBlock } from '@/shared/contracts/kangur';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   type KangurTestQuestionEditorial,
@@ -13,7 +14,7 @@ import {
 } from '@/shared/contracts/kangur-tests';
 import { sanitizeSvg } from '@/shared/utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import type { KangurLessonDocument, KangurLessonRootBlock } from '@/shared/contracts/kangur';
+
 import {
   canonicalizeKangurLessonDocument,
   createKangurLessonPage,
@@ -231,7 +232,7 @@ export const questionDocumentNeedsRichRenderer = (
   }
 
   const [block] = blocks;
-  if (!block || block.type !== 'text') {
+  if (block?.type !== 'text') {
     return true;
   }
 

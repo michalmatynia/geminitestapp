@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+
 import {
   IMAGE_STUDIO_UPSCALE_ERROR_CODES,
   IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX,
@@ -8,6 +9,7 @@ import {
 } from '@/features/ai/image-studio/contracts/upscale';
 import { resolveUpscaleStrategyFromRequest } from '@/features/ai/image-studio/server/upscale-utils';
 import { badRequestError } from '@/shared/errors/app-error';
+
 import { ResolvedUpscaleRequest, UploadedClientUpscaleImage } from './types';
 
 export const upscaleBadRequest = (

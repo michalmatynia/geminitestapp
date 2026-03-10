@@ -1,13 +1,15 @@
 import { useCallback } from 'react';
+
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { UPSCALE_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
-import { loadImageElement } from '../GenerationToolbarImageUtils';
+
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
+import { UPSCALE_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
+import { loadImageElement } from '../GenerationToolbarImageUtils';
 
 export function useUpscaleHandlers(
   state: GenerationToolbarState,

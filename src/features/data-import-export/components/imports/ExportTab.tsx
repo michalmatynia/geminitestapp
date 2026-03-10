@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
-import { Card, DocumentationSection } from '@/shared/ui';
 import Link from 'next/link';
+import React from 'react';
+
+import { Card, DocumentationSection } from '@/shared/ui';
 
 import { ExportBaseConfigSection } from './sections/ExportBaseConfigSection';
 import { ExportCategoryStatusSection } from './sections/ExportCategoryStatusSection';
-import { ExportWarehouseConfigSection } from './sections/ExportWarehouseConfigSection';
 import { ExportImageRetryPresetsSection } from './sections/ExportImageRetryPresetsSection';
 import { ExportQuickActionsSection } from './sections/ExportQuickActionsSection';
+import { ExportWarehouseConfigSection } from './sections/ExportWarehouseConfigSection';
 
 export function ExportTab(): React.JSX.Element {
   return (

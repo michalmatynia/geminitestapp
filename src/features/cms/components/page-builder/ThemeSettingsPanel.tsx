@@ -11,6 +11,7 @@ import { Button, SectionHeader, FormSection } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { THEME_SECTIONS, toSectionId, SAVED_THEME_PREFIX } from './theme/theme-constants';
+import { ThemeBrandSection } from './theme/ThemeBrandSection';
 import { ThemeButtonsSection } from './theme/ThemeButtonsSection';
 import {
   ThemeProductCardsSection,
@@ -19,13 +20,12 @@ import {
 } from './theme/ThemeCardsSection';
 import { ThemeColorsProvider } from './theme/ThemeColorsContext';
 import { ThemeColorsSection } from './theme/ThemeColorsSection';
-import { ThemeLayoutSection } from './theme/ThemeLayoutSection';
-import { ThemeTypographySection } from './theme/ThemeTypographySection';
-import { ThemeLogoSection } from './theme/ThemeLogoSection';
-import { ThemeBrandSection } from './theme/ThemeBrandSection';
-import { ThemeSocialSection } from './theme/ThemeSocialSection';
 import { ThemeCustomCssSection } from './theme/ThemeCustomCssSection';
+import { ThemeLayoutSection } from './theme/ThemeLayoutSection';
+import { ThemeLogoSection } from './theme/ThemeLogoSection';
 import { getFieldsForSection } from './theme/ThemeSettingsFields';
+import { ThemeSocialSection } from './theme/ThemeSocialSection';
+import { ThemeTypographySection } from './theme/ThemeTypographySection';
 import { useThemeSettingsActions, useThemeSettingsValue } from './ThemeSettingsContext';
 
 // ---------------------------------------------------------------------------

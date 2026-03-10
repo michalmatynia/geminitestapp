@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ConfirmModal } from '@/shared/ui';
+
 import type { AiPathRunVisibility } from '@/shared/lib/ai-paths';
+import { ConfirmModal } from '@/shared/ui';
+
+import { JobQueueOverview } from './job-queue-overview';
 import { JobQueueProvider, useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { JobQueueControls } from './JobQueueControls';
-import { JobQueueOverview } from './job-queue-overview';
 import { JobQueueFilterPanel } from './JobQueueFilterPanel';
 import { JobQueueList } from './JobQueueList';
 
@@ -94,16 +96,28 @@ function JobQueuePanelInner(): React.JSX.Element {
 
 export function JobQueuePanel(props: {
   activePathId?: string | null;
+  initialSearchQuery?: string | null;
+  initialExpandedRunId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
   visibility?: AiPathRunVisibility;
   isActive?: boolean;
 }): React.JSX.Element {
-  const { activePathId, sourceFilter, sourceMode, visibility, isActive } = props;
+  const {
+    activePathId,
+    initialSearchQuery,
+    initialExpandedRunId,
+    sourceFilter,
+    sourceMode,
+    visibility,
+    isActive,
+  } = props;
 
   return (
     <JobQueueProvider
       activePathId={activePathId}
+      initialSearchQuery={initialSearchQuery}
+      initialExpandedRunId={initialExpandedRunId}
       sourceFilter={sourceFilter}
       sourceMode={sourceMode}
       visibility={visibility}

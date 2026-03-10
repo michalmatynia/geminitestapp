@@ -2,13 +2,13 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
-
 import {
   NODE_WIDTH,
   COMPOSITE_LAYER_ROW_HEIGHT,
   getCompositeNodeHeight,
 } from '@/features/ai/image-studio/utils/version-graph';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+
 
 import type { VersionNode } from '../context/VersionGraphContext';
 

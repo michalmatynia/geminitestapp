@@ -6,6 +6,7 @@ import type { KangurScore, KangurScoreRepositoryCreateInput } from '@/shared/con
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';
+
 import type { KangurScoreListInput, KangurScoreRepository } from './types';
 
 const KANGUR_SCORES_COLLECTION = 'kangur_scores';
@@ -19,6 +20,7 @@ type KangurScoreDocument = {
   total_questions: number;
   correct_answers: number;
   time_taken: number;
+  xp_earned?: number | null;
   created_date: Date;
   client_mutation_id?: string | null;
   created_by?: string | null;
@@ -34,6 +36,7 @@ const toDto = (doc: KangurScoreDocument): KangurScore => ({
   total_questions: doc.total_questions,
   correct_answers: doc.correct_answers,
   time_taken: doc.time_taken,
+  xp_earned: doc.xp_earned ?? null,
   created_date: doc.created_date.toISOString(),
   client_mutation_id: doc.client_mutation_id ?? null,
   created_by: doc.created_by ?? null,
@@ -113,6 +116,7 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
       total_questions: input.total_questions,
       correct_answers: input.correct_answers,
       time_taken: input.time_taken,
+      xp_earned: input.xp_earned ?? null,
       created_date: now,
       client_mutation_id: clientMutationId || null,
       created_by: input.created_by ?? null,

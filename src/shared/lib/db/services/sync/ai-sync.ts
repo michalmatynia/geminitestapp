@@ -1,3 +1,4 @@
+import type { SyncHandler } from './types';
 import type {
   Prisma,
   ProductAiJobStatus,
@@ -5,7 +6,6 @@ import type {
   AiPathNodeStatus,
   AiPathRunEventLevel,
 } from '@prisma/client';
-import type { SyncHandler } from './types';
 
 export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection('product_ai_jobs').find({}).toArray();

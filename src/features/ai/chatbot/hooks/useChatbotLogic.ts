@@ -3,9 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import {
   parseChatbotSettingsPayload,
   type ChatMessageDto as ChatMessage,
@@ -13,11 +12,13 @@ import {
   type ChatbotDebugStateDto as ChatbotDebugState,
   type ChatbotSessionDto as ChatSession,
 } from '@/shared/contracts/chatbot';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import * as chatbotApi from '../api';
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
+
 
 export interface UseChatbotLogicReturn {
   messages: ChatMessage[];

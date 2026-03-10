@@ -1,8 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
+
 import { internalError } from '@/shared/errors/app-error';
+
+import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
 
 export type AdminCaseResolverPageContextValue = ReturnType<typeof useAdminCaseResolverPageState>;
 

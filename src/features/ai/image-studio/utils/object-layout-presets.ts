@@ -1,3 +1,4 @@
+import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
@@ -10,7 +11,6 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
 } from '@/shared/contracts/image-studio';
-import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 
 export type ObjectLayoutPresetId =
   | 'default_product'

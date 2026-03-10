@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
-import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
 import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurPriorityAssignmentsProps = {
   basePath: string;

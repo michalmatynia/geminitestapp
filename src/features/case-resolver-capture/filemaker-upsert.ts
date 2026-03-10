@@ -1,3 +1,9 @@
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
+import type {
+  FilemakerAddressDto as FilemakerAddress,
+  FilemakerDatabaseDto as FilemakerDatabase,
+} from '@/shared/contracts/filemaker';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 import {
   composeCandidateStreetNumber,
   findExistingFilemakerAddressId,
@@ -10,12 +16,6 @@ import {
   createFilemakerOrganization,
   createFilemakerPerson,
 } from '@/shared/lib/filemaker/entity-builders';
-import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
-import type {
-  FilemakerAddressDto as FilemakerAddress,
-  FilemakerDatabaseDto as FilemakerDatabase,
-} from '@/shared/contracts/filemaker';
-import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;

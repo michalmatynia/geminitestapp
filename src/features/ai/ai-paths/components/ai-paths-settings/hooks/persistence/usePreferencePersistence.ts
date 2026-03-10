@@ -1,6 +1,12 @@
 import { useCallback, useRef } from 'react';
+
 import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths';
+import {
+  type AiPathsSettingRecord,
+  updateAiPathsSettingsBulk,
+} from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   USER_PREFERENCES_STALE_MS,
   type AiPathsUiState,
@@ -8,10 +14,6 @@ import {
   type UseAiPathsPersistenceArgs,
 } from '../../useAiPathsPersistence.types';
 
-import {
-  type AiPathsSettingRecord,
-  updateAiPathsSettingsBulk,
-} from '@/shared/lib/ai-paths/settings-store-client';
 
 export function usePreferencePersistence(
   _args: UseAiPathsPersistenceArgs,

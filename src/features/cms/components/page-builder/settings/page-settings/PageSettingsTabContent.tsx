@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdateSlug } from '@/features/cms/hooks/useCmsQueries';
-import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import type { PageStatus, Slug } from '@/features/cms/types';
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
 
 const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
   { label: 'Draft', value: 'draft' },

@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   CatalogRecord,
@@ -10,6 +9,7 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { WithId } from 'mongodb';
 

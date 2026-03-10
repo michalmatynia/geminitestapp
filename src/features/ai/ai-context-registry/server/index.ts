@@ -2,9 +2,9 @@ import 'server-only';
 
 import { registryBackend } from '../registry/index';
 import { ContextRegistryEngine } from '../services/engine';
+import { ContextRetrievalService } from '../services/retrieval';
 import { aiPathRunRuntimeContextProvider } from '../services/runtime-providers/ai-path-run';
 import { kangurRuntimeContextProvider } from '../services/runtime-providers/kangur';
-import { ContextRetrievalService } from '../services/retrieval';
 
 export { registryBackend } from '../registry/index';
 

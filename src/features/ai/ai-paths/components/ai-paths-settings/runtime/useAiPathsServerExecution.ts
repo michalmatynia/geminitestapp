@@ -4,24 +4,25 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import type { AiNode, AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { mergeEnqueuedAiPathRunForCache } from '@/shared/lib/ai-paths';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   invalidateAiPathQueue,
   invalidateAiPathRuns,
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { prepareEnqueuePayload, performEnqueue } from './server-execution/enqueue-logic';
+import { useServerRunStream } from './server-execution/useServerRunStream';
 import {
   resolveRunAt,
   resolveRunStartedAt,
   buildActivePathConfig,
 } from './utils';
-import { prepareEnqueuePayload, performEnqueue } from './server-execution/enqueue-logic';
-import { useServerRunStream } from './server-execution/useServerRunStream';
+
 import type { ServerExecutionArgs, ServerRunFinalizeOptions } from './server-execution/types';
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {

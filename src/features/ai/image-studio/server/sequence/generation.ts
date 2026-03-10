@@ -1,13 +1,14 @@
 import { createImageStudioRun, getImageStudioRunById } from '@/features/ai/image-studio/server';
 import { listImageStudioSlots } from '@/features/ai/image-studio/server';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
+import { type ImageStudioSequenceGenerateStep } from '@/features/ai/image-studio/utils/studio-settings';
+import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 import type {
   ImageStudioSlotRecord,
   ImageStudioSequenceRunRecord,
   ImageStudioSequenceMaskContext,
 } from '@/shared/contracts/image-studio';
-import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
-import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
-import { type ImageStudioSequenceGenerateStep } from '@/features/ai/image-studio/utils/studio-settings';
+
 import { sleep } from './utils';
 
 const POLL_INTERVAL_MS = 1200;

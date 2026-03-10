@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+
 import type { ImageStudioDetectionDetails } from '@/features/ai/image-studio/analysis/shared';
 import {
   IMAGE_STUDIO_CENTER_ERROR_CODES,
@@ -8,7 +9,7 @@ import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
-import type { UploadedClientCenterImage } from '@/shared/contracts/image-studio';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,
@@ -16,11 +17,12 @@ import {
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
+import type { UploadedClientCenterImage } from '@/shared/contracts/image-studio';
+
 import { centerBadRequest, isClientCenterMode, isServerCenterMode } from './image-handler-utils';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;

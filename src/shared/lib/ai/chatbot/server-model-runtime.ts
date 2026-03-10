@@ -1,8 +1,9 @@
 import 'server-only';
 
-import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
-import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
 const resolveImageUrl = (raw: string): string => {
   const value = raw.trim();

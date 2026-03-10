@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
@@ -8,6 +7,7 @@ import type {
   AgentTeachingDocumentMetadataDto as AgentTeachingEmbeddingDocumentMetadata,
 } from '@/shared/contracts/agent-teaching';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const AGENTS_COLLECTION = 'agent_teaching_agents';
 const COLLECTIONS_COLLECTION = 'agent_teaching_collections';

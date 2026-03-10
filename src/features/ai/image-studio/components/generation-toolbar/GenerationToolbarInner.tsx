@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useGenerationToolbarState } from './GenerationToolbar.hooks';
-import { UPSCALE_MAX_OUTPUT_SIDE } from './GenerationToolbar.utils';
+
 import {
   getObjectLayoutPresetValuesFromOption,
   saveObjectLayoutCustomPreset,
@@ -11,9 +9,12 @@ import {
   type ObjectLayoutPresetOptionValue,
 } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+
 import { useGenerationToolbarHandlers } from './GenerationToolbar.handlers';
+import { useGenerationToolbarState } from './GenerationToolbar.hooks';
 import { type GenerationToolbarHandlers } from './GenerationToolbar.types';
-import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';
+import { UPSCALE_MAX_OUTPUT_SIDE } from './GenerationToolbar.utils';
 import { GenerationToolbarAutoScalerSection } from './GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './GenerationToolbarCenterSection';
 import { GenerationToolbarCropSection } from './GenerationToolbarCropSection';
@@ -28,6 +29,7 @@ import {
   GenerationToolbarUpscaleSectionRuntimeProvider,
 } from './GenerationToolbarSectionContexts';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
+import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';
 
 export function GenerationToolbarInner(): React.JSX.Element {
   const brainGenerationModel = useBrainAssignment({

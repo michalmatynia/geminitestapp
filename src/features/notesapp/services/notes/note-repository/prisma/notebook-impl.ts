@@ -4,7 +4,6 @@ import type {
   NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
-
 import type { Notebook } from '@/shared/lib/db/prisma-client';
 
 let cachedDefaultNotebook: NotebookRecord | null = null;

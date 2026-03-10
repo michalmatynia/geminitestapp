@@ -2,11 +2,11 @@
 
 import React from 'react';
 
+import type { SettingsField } from '@/features/cms/types/page-builder';
 import { Input, Label } from '@/shared/ui';
 
 import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
 
-import type { SettingsField } from '@/features/cms/types/page-builder';
 
 const PADDING_KEYS = new Set(['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']);
 const MARGIN_KEYS = new Set(['marginTop', 'marginRight', 'marginBottom', 'marginLeft']);

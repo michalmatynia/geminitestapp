@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import { useOptionalCmsRuntime } from './CmsRuntimeContext';
 import {
   CmsPageRendererBase,
   SectionRendererBase,
   type CmsPageRendererProps,
   type SectionRendererProps,
 } from './CmsPageRendererBase';
+import { useOptionalCmsRuntime } from './CmsRuntimeContext';
 
 export type { CmsPageRendererProps } from './CmsPageRendererBase';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 
+import type { PromptValidationSimilarPattern } from '@/shared/lib/prompt-engine/settings';
 import { Button, Input, Label, Hint } from '@/shared/ui';
 
-import type { PromptValidationSimilarPattern } from '@/shared/lib/prompt-engine/settings';
 
 import { useRuleItemContext } from './context/RuleItemContext';
 

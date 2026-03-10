@@ -2,11 +2,6 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import type {
-  AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatus,
-  AiPathRuntimeNodeStatusMap,
-} from '@/shared/lib/ai-paths';
 import {
   MAX_RUNTIME_EVENTS,
   NON_SETTLED_RUNTIME_NODE_STATUSES,
@@ -17,7 +12,13 @@ import {
   type RuntimeEventInput,
   type SetNodeStatusInput,
 } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatus,
+  AiPathRuntimeNodeStatusMap,
+} from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { resolveRuntimeNodeDisplayStatus } from './utils';
 
 const DURATION_TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([

@@ -4,8 +4,8 @@ import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface RealtimeConfig {
   queryKey?: readonly unknown[];

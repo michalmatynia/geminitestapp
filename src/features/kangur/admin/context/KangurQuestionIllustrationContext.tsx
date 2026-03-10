@@ -8,10 +8,10 @@ import type {
   KangurQuestionIllustrationLayout,
   KangurTestChoice,
 } from '@/shared/contracts/kangur-tests';
-
-import { createPanelIllustration } from '../../test-questions';
-import { useKangurTestQuestionEditorContext } from './KangurTestQuestionEditorContext';
 import { internalError } from '@/shared/errors/app-error';
+
+import { useKangurTestQuestionEditorContext } from './KangurTestQuestionEditorContext';
+import { createPanelIllustration } from '../../test-questions';
 
 const createPanelId = (): string => `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 

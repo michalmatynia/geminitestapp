@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import {
@@ -18,6 +17,7 @@ import {
   CollapsibleSection,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getControlPanelColumns,

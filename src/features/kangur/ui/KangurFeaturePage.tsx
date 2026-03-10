@@ -1,6 +1,5 @@
 'use client';
 
-import type { JSX } from 'react';
 import { useEffect } from 'react';
 
 import {
@@ -16,6 +15,8 @@ import {
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { cn } from '@/shared/utils';
+
+import type { JSX } from 'react';
 
 export function KangurFeaturePage({
   slug = [],

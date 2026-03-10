@@ -3,18 +3,21 @@
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 
+import { useSectionLayout } from './SectionLayoutContext';
 import { AppEmbedBlock } from '../blocks/AppEmbedBlock';
+import {
+  BlockRenderContext,
+  BlockSettingsContext,
+  useBlockSettings as useBlockSettingsFromBlockContext,
+  useRequiredBlockRenderContext,
+} from '../blocks/BlockContext';
 import { ButtonBlock } from '../blocks/ButtonBlock';
 import { HeadingBlock } from '../blocks/HeadingBlock';
 import { ImageBlock, ImageElementBlock } from '../blocks/ImageBlock';
 import { InputBlock } from '../blocks/InputBlock';
 import { KangurWidgetBlock } from '../blocks/KangurWidgetBlock';
-import {
-  isCmsNodeVisible,
-  resolveCmsConnectedSettings,
-  useOptionalCmsRuntime,
-} from '../CmsRuntimeContext';
 import {
   AnnouncementBlock,
   DividerBlock,
@@ -26,20 +29,17 @@ import { Model3DBlock } from '../blocks/Model3DBlock';
 import { ProgressBlock } from '../blocks/ProgressBlock';
 import { RepeaterBlock } from '../blocks/RepeaterBlock';
 import { RichTextBlock } from '../blocks/RichTextBlock';
+import { TextAtomBlock, TextAtomLetterBlock } from '../blocks/TextAtomBlock';
+import { TextBlock, TextElementBlock } from '../blocks/TextBlock';
+import {
+  isCmsNodeVisible,
+  resolveCmsConnectedSettings,
+  useOptionalCmsRuntime,
+} from '../CmsRuntimeContext';
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 import { useMediaStyles } from '../media-styles-context';
-import { useSectionLayout } from './SectionLayoutContext';
-import {
-  BlockRenderContext,
-  BlockSettingsContext,
-  useBlockSettings as useBlockSettingsFromBlockContext,
-  useRequiredBlockRenderContext,
-} from '../blocks/BlockContext';
-import { TextAtomBlock, TextAtomLetterBlock } from '../blocks/TextAtomBlock';
-import { TextBlock, TextElementBlock } from '../blocks/TextBlock';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export { BlockSettingsContext };
 export const useBlockSettings = useBlockSettingsFromBlockContext;

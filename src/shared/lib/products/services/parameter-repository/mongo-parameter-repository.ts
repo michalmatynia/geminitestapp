@@ -1,5 +1,6 @@
-import { ObjectId } from 'mongodb';
 import { randomUUID } from 'crypto';
+
+import { ObjectId } from 'mongodb';
 
 import type {
   ParameterRepository,

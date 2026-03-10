@@ -3,9 +3,10 @@
 import React from 'react';
 
 import { Textarea, LoadingState } from '@/shared/ui';
-import { useMarkdownSplitResizer } from '../hooks/useMarkdownSplitResizer';
-import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';
+
 import { useOptionalMarkdownSplitEditorContext } from '../context/MarkdownSplitEditorContext';
+import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';
+import { useMarkdownSplitResizer } from '../hooks/useMarkdownSplitResizer';
 
 export interface MarkdownSplitEditorProps {
   value?: string;

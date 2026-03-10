@@ -1,14 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   deleteFileFromStorage,
   uploadToConfiguredStorage,
 } from '@/shared/lib/files/services/image-file-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { badRequestError } from '@/shared/errors/app-error';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
 

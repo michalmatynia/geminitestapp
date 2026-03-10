@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
+import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useStudioProjects } from '@/shared/lib/image-studio-adapter';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -11,10 +14,6 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
-import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
-import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import {
   Button,
   FormField,
@@ -28,6 +27,7 @@ import {
   Separator,
   FormActions,
 } from '@/shared/ui';
+import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
 
 const dedupeRoutes = (routes: string[]): string[] => {
   const next: string[] = [];

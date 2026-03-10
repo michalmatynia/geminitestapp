@@ -1,6 +1,7 @@
-import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { normalizeFolderPath } from '../settings';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver';
+
+import { normalizeFolderPath } from '../settings';
 
 export const createPlaceholderAssetName = ({
   assets,

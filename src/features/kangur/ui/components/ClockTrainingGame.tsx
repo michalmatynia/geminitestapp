@@ -1,8 +1,9 @@
 // @ts-nocheck
-import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurAccentDot,
   KangurButton,
@@ -14,26 +15,36 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 
 type ClockTrainingGameProps = {
+  completionPrimaryActionLabel?: string;
+  enableAdaptiveRetry?: boolean;
   hideModeSwitch?: boolean;
   initialMode?: ClockGameMode;
+  onCompletionPrimaryAction?: () => void;
   onFinish: () => void;
+  onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
   onPracticeSuccess?: () => void;
   onModeChange?: (mode: ClockGameMode) => void;
-  onChallengeSuccess?: () => void;
+  onChallengeSuccess?: (result: ClockChallengeResult) => void;
   practiceTasks?: ClockTask[];
   section?: ClockTrainingTaskPoolId;
+  showTaskTitle?: boolean;
+  showTimeDisplay?: boolean;
 };
 
 type ClockTask = {
@@ -47,6 +58,13 @@ type MinuteSnapMode = '5min' | '1min';
 export type ClockGameMode = 'practice' | 'challenge';
 export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
 export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
+export type ClockChallengeMedal = 'gold' | 'silver' | 'bronze';
+
+type ClockChallengeResult = {
+  correctCount: number;
+  medal: ClockChallengeMedal;
+  totalCount: number;
+};
 
 type ClockFeedback = {
   kind: Feedback;
@@ -61,6 +79,12 @@ type DraggableClockProps = {
   challengeTimeLeft?: number;
   challengeTimeLimit?: number;
   section?: ClockTrainingTaskPoolId;
+  showTimeDisplay?: boolean;
+  submitFeedback?: Feedback;
+  submitFeedbackDetails?: string | null;
+  submitFeedbackTitle?: string | null;
+  submitNextStep?: 'next-stage' | 'next-task' | 'summary' | null;
+  submitLocked?: boolean;
 };
 
 type ClockTrainingSectionContent = {
@@ -190,6 +214,32 @@ function resolveClockPracticeTaskSet(
   }
 
   return createClockTaskSet(section);
+}
+
+function resolveClockChallengeMedal(
+  correctCount: number,
+  totalCount: number
+): ClockChallengeMedal {
+  if (correctCount >= totalCount) {
+    return 'gold';
+  }
+  if (correctCount >= Math.max(1, totalCount - 1)) {
+    return 'silver';
+  }
+  return 'bronze';
+}
+
+function getClockChallengeMedalLabel(medal: ClockChallengeMedal): string {
+  switch (medal) {
+    case 'gold':
+      return 'Złoty medal';
+    case 'silver':
+      return 'Srebrny medal';
+    case 'bronze':
+      return 'Brązowy medal';
+    default:
+      return 'Medal';
+  }
 }
 
 function pad(value: number): string {
@@ -559,6 +609,12 @@ function DraggableClock({
   challengeTimeLeft = CHALLENGE_TIME_LIMIT_SECONDS,
   challengeTimeLimit = CHALLENGE_TIME_LIMIT_SECONDS,
   section = 'mixed',
+  showTimeDisplay = true,
+  submitFeedback = null,
+  submitFeedbackDetails = null,
+  submitFeedbackTitle = null,
+  submitNextStep = null,
+  submitLocked = false,
 }: DraggableClockProps): React.JSX.Element {
   const [cycleMinutes, setCycleMinutes] = useState(0);
   const [minuteSnapMode, setMinuteSnapMode] = useState<MinuteSnapMode>('5min');
@@ -604,6 +660,9 @@ function DraggableClock({
   const onMouseDown =
     (hand: Hand) =>
       (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
+        if (submitLocked) {
+          return;
+        }
         const handEnabled =
           (hand === 'hour' && hourHandEnabled) || (hand === 'minute' && minuteHandEnabled);
         if (!handEnabled) {
@@ -681,16 +740,24 @@ function DraggableClock({
     opacity: minuteHandEnabled ? 1 : 0.45,
     touchAction: 'none',
   };
+  const submitButtonLabel =
+    submitFeedback === 'correct'
+      ? 'Dobrze! ✅'
+      : submitFeedback === 'wrong'
+        ? 'Błąd! ❌'
+        : 'Sprawdź! ✅';
 
   return (
     <div className='flex flex-col items-center gap-4'>
-      <KangurStatusChip
-        accent='indigo'
-        className='px-5 py-2 text-2xl font-extrabold'
-        data-testid='clock-time-display'
-      >
-        {displayHour}:{pad(displayMinutes)}
-      </KangurStatusChip>
+      {showTimeDisplay ? (
+        <KangurStatusChip
+          accent='indigo'
+          className='px-5 py-2 text-2xl font-extrabold'
+          data-testid='clock-time-display'
+        >
+          {displayHour}:{pad(displayMinutes)}
+        </KangurStatusChip>
+      ) : null}
       {minuteHandEnabled ? (
         <div
           className={cn(
@@ -726,11 +793,23 @@ function DraggableClock({
           ? 'Przestawiasz krótką wskazówkę (godziny).'
           : activeHand === 'minute'
             ? 'Przestawiasz długą wskazówkę (minuty).'
-            : section === 'hours'
-              ? 'Długa wskazówka jest zablokowana na 12.'
-              : section === 'minutes'
-                ? 'Krótka wskazówka jest zablokowana na 12.'
-                : 'Wskazówka godzin przesuwa się płynnie razem z minutami.'}
+            : submitFeedback === 'correct'
+              ? submitNextStep === 'summary'
+                ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
+                : submitNextStep === 'next-stage'
+                  ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
+                  : 'Dobra odpowiedź. Za chwilę następne zadanie.'
+              : submitFeedback === 'wrong'
+                ? submitNextStep === 'summary'
+                  ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                  : submitNextStep === 'next-stage'
+                    ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
+                    : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
+                : section === 'hours'
+                  ? 'Długa wskazówka jest zablokowana na 12.'
+                  : section === 'minutes'
+                    ? 'Krótka wskazówka jest zablokowana na 12.'
+                    : 'Wskazówka godzin przesuwa się płynnie razem z minutami.'}
       </p>
 
       <svg
@@ -908,25 +987,57 @@ function DraggableClock({
       </div>
 
       <KangurButton
+        className={cn(
+          'disabled:opacity-100',
+          submitFeedback === 'correct' &&
+            'border-emerald-500 bg-emerald-500 text-white hover:border-emerald-500 hover:bg-emerald-500',
+          submitFeedback === 'wrong' &&
+            'border-rose-500 bg-rose-500 text-white hover:border-rose-500 hover:bg-rose-500'
+        )}
+        data-testid='clock-submit-button'
+        disabled={submitLocked}
         onClick={() => onSubmit(displayHour, displayMinutes)}
         size='xl'
         variant='primary'
       >
-        Sprawdź! ✅
+        {submitButtonLabel}
       </KangurButton>
+      {submitFeedbackTitle ? (
+        <div
+          aria-live='polite'
+          className={cn(
+            'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm',
+            submitFeedback === 'correct'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-rose-200 bg-rose-50 text-rose-800'
+          )}
+          data-testid='clock-submit-feedback'
+        >
+          <p className='text-sm font-extrabold'>{submitFeedbackTitle}</p>
+          {submitFeedbackDetails ? (
+            <p className='mt-1 text-xs font-medium leading-relaxed'>{submitFeedbackDetails}</p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export default function ClockTrainingGame({
+  completionPrimaryActionLabel = 'Zakończ ćwiczenie ✅',
+  enableAdaptiveRetry = true,
   hideModeSwitch = false,
   initialMode = 'practice',
+  onCompletionPrimaryAction,
   onFinish,
+  onPracticeCompleted,
   onPracticeSuccess,
   onModeChange,
   onChallengeSuccess,
   practiceTasks,
   section = 'mixed',
+  showTaskTitle = true,
+  showTimeDisplay = true,
 }: ClockTrainingGameProps): React.JSX.Element {
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
@@ -937,23 +1048,29 @@ export default function ClockTrainingGame({
   const [feedback, setFeedback] = useState<ClockFeedback | null>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
+  const [submitNextStep, setSubmitNextStep] = useState<'next-stage' | 'next-task' | 'summary' | null>(
+    null
+  );
   const [retryCounts, setRetryCounts] = useState<Record<string, number>>({});
   const [retryAddedCount, setRetryAddedCount] = useState(0);
   const [challengeTimeLeft, setChallengeTimeLeft] = useState(CHALLENGE_TIME_LIMIT_SECONDS);
   const [challengeStreak, setChallengeStreak] = useState(0);
   const [challengeBestStreak, setChallengeBestStreak] = useState(0);
+  const [challengeMedal, setChallengeMedal] = useState<ClockChallengeMedal | null>(null);
+  const sessionStartedAtRef = useRef(Date.now());
+  const advanceTimeoutRef = useRef<number | null>(null);
   const trainingSectionContent = getClockTrainingSectionContent(section);
 
   const task = tasks[current];
   if (!task) {
     return <KangurInlineFallback data-testid='clock-training-empty' title='Brak zadania.' />;
   }
+  const currentTaskNumber = Math.min(current + 1, tasks.length);
+  const showStandalonePracticeSummary = done && gameMode === 'practice' && !onPracticeCompleted;
 
   const handleDone = useCallback(
     (finalScore: number): void => {
-      const isChallengeSuccessful =
-        gameMode === 'challenge' && finalScore >= Math.max(1, Math.ceil(tasks.length * 0.8));
-
       const progress = loadProgress();
       const reward = createTrainingReward(progress, {
         activityKey: `training:clock:${section}`,
@@ -964,18 +1081,46 @@ export default function ClockTrainingGame({
         perfectCounterKey: 'clockPerfect',
       });
       addXp(reward.xp, reward.progressUpdates);
+      void persistKangurSessionScore({
+        operation: 'clock',
+        score: finalScore,
+        totalQuestions: tasks.length,
+        correctAnswers: finalScore,
+        timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+        xpEarned: reward.xp,
+      });
 
       setXpEarned(reward.xp);
+      setXpBreakdown(reward.breakdown ?? []);
       setDone(true);
-      if (isChallengeSuccessful) {
-        onChallengeSuccess?.();
+      if (gameMode === 'challenge') {
+        const medal = resolveClockChallengeMedal(finalScore, tasks.length);
+        setChallengeMedal(medal);
+        onChallengeSuccess?.({
+          correctCount: finalScore,
+          medal,
+          totalCount: tasks.length,
+        });
+      } else {
+        onPracticeCompleted?.({
+          correctCount: finalScore,
+          totalCount: tasks.length,
+        });
       }
     },
-    [gameMode, onChallengeSuccess, section, tasks.length]
+    [gameMode, onChallengeSuccess, onPracticeCompleted, section, tasks.length]
   );
+
+  const clearAdvanceTimeout = useCallback((): void => {
+    if (advanceTimeoutRef.current !== null) {
+      window.clearTimeout(advanceTimeoutRef.current);
+      advanceTimeoutRef.current = null;
+    }
+  }, []);
 
   const resetSession = useCallback(
     (mode: ClockGameMode = gameMode): void => {
+      clearAdvanceTimeout();
       onModeChange?.(mode);
       setGameMode(mode);
       setTasks(
@@ -988,13 +1133,17 @@ export default function ClockTrainingGame({
       setFeedback(null);
       setDone(false);
       setXpEarned(0);
+      setXpBreakdown([]);
+      setSubmitNextStep(null);
       setRetryCounts({});
       setRetryAddedCount(0);
       setChallengeTimeLeft(CHALLENGE_TIME_LIMIT_SECONDS);
       setChallengeStreak(0);
       setChallengeBestStreak(0);
+      setChallengeMedal(null);
+      sessionStartedAtRef.current = Date.now();
     },
-    [gameMode, onModeChange, practiceTasks, section]
+    [clearAdvanceTimeout, gameMode, onModeChange, practiceTasks, section]
   );
 
   const resolveAttempt = useCallback(
@@ -1020,7 +1169,7 @@ export default function ClockTrainingGame({
           const nextStreak = challengeStreak + 1;
           setChallengeStreak(nextStreak);
           setChallengeBestStreak((value) => Math.max(value, nextStreak));
-        } else {
+        } else if (!onPracticeCompleted) {
           onPracticeSuccess?.();
         }
         setFeedback(
@@ -1045,7 +1194,7 @@ export default function ClockTrainingGame({
             section
           );
 
-        if (gameMode === 'practice') {
+        if (gameMode === 'practice' && enableAdaptiveRetry) {
           const retryPlan = scheduleRetryTask(tasks, retryCounts, expectedTask);
           nextTaskCount = retryPlan.tasks.length;
           if (retryPlan.added) {
@@ -1063,19 +1212,48 @@ export default function ClockTrainingGame({
       }
 
       const feedbackDelay = correct ? 1200 : gameMode === 'challenge' ? 1400 : 2100;
-      setTimeout(() => {
-        setFeedback(null);
-        if (current + 1 >= nextTaskCount) {
-          handleDone(scoreAfterAttempt);
-        } else {
-          setCurrent((prev) => prev + 1);
+      const isLastTask = current + 1 >= nextTaskCount;
+      setSubmitNextStep(
+        isLastTask
+          ? gameMode === 'challenge' || !onPracticeCompleted
+            ? 'summary'
+            : 'next-stage'
+          : 'next-task'
+      );
+      clearAdvanceTimeout();
+      advanceTimeoutRef.current = window.setTimeout(() => {
+        if (isLastTask) {
           if (gameMode === 'challenge') {
-            setChallengeTimeLeft(CHALLENGE_TIME_LIMIT_SECONDS);
+            setFeedback(null);
           }
+          setSubmitNextStep(null);
+          advanceTimeoutRef.current = null;
+          handleDone(scoreAfterAttempt);
+          return;
         }
+
+        setFeedback(null);
+        setSubmitNextStep(null);
+        setCurrent((prev) => prev + 1);
+        if (gameMode === 'challenge') {
+          setChallengeTimeLeft(CHALLENGE_TIME_LIMIT_SECONDS);
+        }
+        advanceTimeoutRef.current = null;
       }, feedbackDelay);
     },
-    [challengeStreak, current, gameMode, handleDone, onPracticeSuccess, retryCounts, score, tasks]
+    [
+      challengeStreak,
+      clearAdvanceTimeout,
+      current,
+      enableAdaptiveRetry,
+      gameMode,
+      handleDone,
+      onPracticeCompleted,
+      onPracticeSuccess,
+      retryCounts,
+      score,
+      tasks,
+    ]
   );
 
   const handleSubmit = (hours: number, minutes: number): void => {
@@ -1114,7 +1292,9 @@ export default function ClockTrainingGame({
     };
   }, [challengeTimeLeft, done, feedback, gameMode, resolveAttempt, task]);
 
-  if (done) {
+  useEffect(() => () => clearAdvanceTimeout(), [clearAdvanceTimeout]);
+
+  if (done && (gameMode === 'challenge' || showStandalonePracticeSummary)) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='py-4'>
         <KangurGlassPanel
@@ -1137,6 +1317,21 @@ export default function ClockTrainingGame({
           <p className='text-xs font-semibold text-indigo-600'>
             Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
           </p>
+          {gameMode === 'challenge' && challengeMedal ? (
+            <KangurStatusChip
+              accent={
+                challengeMedal === 'gold'
+                  ? 'amber'
+                  : challengeMedal === 'silver'
+                    ? 'slate'
+                    : 'rose'
+              }
+              className='px-4 py-2 text-sm font-bold'
+              data-testid='clock-challenge-medal'
+            >
+              {getClockChallengeMedalLabel(challengeMedal)}
+            </KangurStatusChip>
+          ) : null}
           {gameMode === 'challenge' && (
             <p
               data-testid='clock-challenge-summary'
@@ -1155,6 +1350,13 @@ export default function ClockTrainingGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurRewardBreakdownChips
+            accent='slate'
+            breakdown={xpBreakdown}
+            className='justify-center'
+            dataTestId='clock-training-summary-breakdown'
+            itemDataTestIdPrefix='clock-training-summary-breakdown'
+          />
           <p className='max-w-xs text-center text-slate-500'>
             {getClockTrainingSummaryMessage(section, score, tasks.length)}
           </p>
@@ -1162,8 +1364,12 @@ export default function ClockTrainingGame({
             <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='surface'>
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
-            <KangurButton onClick={onFinish} size='lg' variant='primary'>
-              Zakończ lekcję ✅
+            <KangurButton
+              onClick={onCompletionPrimaryAction ?? onFinish}
+              size='lg'
+              variant='primary'
+            >
+              {completionPrimaryActionLabel}
             </KangurButton>
           </div>
         </KangurGlassPanel>
@@ -1244,14 +1450,58 @@ export default function ClockTrainingGame({
             className='gap-2 text-xs font-bold'
             data-testid='clock-challenge-streak'
           >
-            🔥 Seria: {challengeStreak}
+            🔥 Seria {Math.min(current + 1, tasks.length)}/{tasks.length}
           </KangurStatusChip>
         </div>
-      ) : retryAddedCount > 0 ? (
-        <KangurStatusChip accent='indigo' className='text-xs font-semibold' data-testid='clock-retry-count'>
-          Powtórki adaptacyjne: {retryAddedCount}
-        </KangurStatusChip>
-      ) : null}
+      ) : (
+        <div className='inline-flex flex-wrap items-center gap-2'>
+          <KangurStatusChip
+            accent='indigo'
+            className='gap-2 text-xs font-bold'
+            data-testid='clock-practice-series'
+          >
+            Seria {Math.min(current + 1, tasks.length)}/{tasks.length}
+          </KangurStatusChip>
+          {retryAddedCount > 0 ? (
+            <KangurStatusChip
+              accent='indigo'
+              className='text-xs font-semibold'
+              data-testid='clock-retry-count'
+            >
+              Powtórki adaptacyjne: {retryAddedCount}
+            </KangurStatusChip>
+          ) : null}
+        </div>
+      )}
+      <div className='flex flex-col items-center gap-2' data-testid='clock-task-progress'>
+        <p
+          className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'
+          data-testid='clock-task-progress-label'
+        >
+          Zadanie {currentTaskNumber} z {tasks.length}
+        </p>
+        <div className='flex items-center gap-1.5' data-testid='clock-task-progress-pills'>
+          {tasks.map((_, index) => {
+            const isCompleted = index < current || (done && index === current);
+            const isActive = !done && index === current;
+            return (
+              <span
+                key={`${taskToKey(tasks[index]!)}-${index}`}
+                className={cn(
+                  KANGUR_STEP_PILL_CLASSNAME,
+                  'h-[12px] min-w-[12px]',
+                  isActive
+                    ? [gameMode === 'challenge' ? 'w-7 bg-amber-500' : 'w-7 bg-indigo-500']
+                    : isCompleted
+                      ? [gameMode === 'challenge' ? 'w-4 bg-amber-200' : 'w-4 bg-indigo-200']
+                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                )}
+                data-testid={`clock-task-progress-pill-${index}`}
+              />
+            );
+          })}
+        </div>
+      </div>
 
       <KangurSummaryPanel
         accent='amber'
@@ -1259,7 +1509,7 @@ export default function ClockTrainingGame({
         className='w-full max-w-md'
         label={trainingSectionContent.promptLabel}
         padding='md'
-        title={`${task.hours}:${pad(task.minutes)}`}
+        title={showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null}
         tone='accent'
       >
         <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
@@ -1267,50 +1517,19 @@ export default function ClockTrainingGame({
         </p>
       </KangurSummaryPanel>
 
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <KangurInfoCard
-              accent={
-                feedback.kind === 'correct'
-                  ? 'emerald'
-                  : feedback.tone === 'near'
-                    ? 'amber'
-                    : 'rose'
-              }
-              className='w-full max-w-xl'
-              data-testid='clock-feedback'
-              padding='md'
-              role='status'
-              tone='accent'
-            >
-              <div className='flex items-center gap-2 text-lg font-bold'>
-                {feedback.kind === 'correct' ? (
-                  <CheckCircle className='h-5 w-5' />
-                ) : (
-                  <XCircle className='h-5 w-5' />
-                )}
-                <span>{feedback.title}</span>
-              </div>
-              <p className='mt-2 text-sm font-semibold leading-relaxed'>{feedback.details}</p>
-            </KangurInfoCard>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {!feedback && (
-        <DraggableClock
-          onSubmit={handleSubmit}
-          showChallengeRing={gameMode === 'challenge'}
-          challengeTimeLeft={challengeTimeLeft}
-          challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
-          section={section}
-        />
-      )}
+      <DraggableClock
+        onSubmit={handleSubmit}
+        showChallengeRing={gameMode === 'challenge'}
+        challengeTimeLeft={challengeTimeLeft}
+        challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
+        section={section}
+        showTimeDisplay={showTimeDisplay}
+        submitFeedback={feedback?.kind ?? (done && gameMode === 'practice' ? 'correct' : null)}
+        submitFeedbackDetails={feedback?.details ?? null}
+        submitFeedbackTitle={feedback?.title ?? null}
+        submitNextStep={submitNextStep}
+        submitLocked={feedback !== null || done}
+      />
     </div>
   );
 }

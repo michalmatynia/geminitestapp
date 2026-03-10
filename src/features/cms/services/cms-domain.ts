@@ -2,12 +2,13 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { getCmsDomainSettings } from './cms-domain-settings';
-import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import type { CmsRepository } from '@/shared/contracts/cms';
+import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+
+import { getCmsDomainSettings } from './cms-domain-settings';
 
 import type { NextRequest } from 'next/server';
 

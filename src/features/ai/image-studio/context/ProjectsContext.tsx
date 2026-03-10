@@ -25,20 +25,19 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
-  useUserPreferences,
-  useUpdateUserPreferences,
-} from '@/shared/hooks/useUserPreferences';
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
-import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { ApiError } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
-
-import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
 } from '@/features/ai/image-studio/utils/project-session';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import {
+  useUserPreferences,
+  useUpdateUserPreferences,
+} from '@/shared/hooks/useUserPreferences';
+import { ApiError } from '@/shared/lib/api-client';
+import { useToast } from '@/shared/ui';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

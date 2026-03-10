@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext } from 'react';
+
 import type { ThemeRecord } from '@/shared/contracts/notes';
 
 export interface NoteEditorData {

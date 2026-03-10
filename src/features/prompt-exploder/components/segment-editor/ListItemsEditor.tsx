@@ -8,6 +8,7 @@ import { useDocumentActions, useDocumentState } from '../../context/hooks/useDoc
 import { PromptExploderHierarchyTreeProvider } from '../PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '../PromptExploderHierarchyTreeEditor';
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
+
 import type { PromptExploderSegment } from '../../types';
 
 export function ListItemsEditor(): React.JSX.Element {

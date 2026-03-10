@@ -3,8 +3,8 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import { logAgentAudit, runAgentControlLoop } from '@/features/ai/agent-runtime/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
 

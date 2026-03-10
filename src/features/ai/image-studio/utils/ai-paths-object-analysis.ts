@@ -1,11 +1,12 @@
+import type { IdNameDto } from '@/shared/contracts/base';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
-import type { IdNameDto } from '@/shared/contracts/base';
+
+import { sanitizeStudioProjectId } from './project-session';
 
 import type { ImageStudioAnalysisSharedLayout } from './analysis-bridge';
-import { sanitizeStudioProjectId } from './project-session';
 
 export type { IdNameDto as AiPathMeta };
 

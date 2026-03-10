@@ -16,10 +16,10 @@ import {
   normalizeThemeSettings,
   type ThemeSettings,
 } from '@/shared/contracts/cms-theme';
+import { internalError } from '@/shared/errors/app-error';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
-import { internalError } from '@/shared/errors/app-error';
 
 interface ThemeSettingsStateContextValue {
   theme: ThemeSettings;

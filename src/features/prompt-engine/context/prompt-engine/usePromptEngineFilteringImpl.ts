@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+
+import { DEFAULT_PROMPT_VALIDATION_SCOPES } from '@/shared/lib/prompt-engine/settings';
+
 import { SeverityFilter, ScopeFilter } from './PromptEngineFiltersContext';
 import {
   RuleDraft,
@@ -10,7 +13,6 @@ import {
   ruleSearchText,
 } from '../prompt-engine-context-utils';
 import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
-import { DEFAULT_PROMPT_VALIDATION_SCOPES } from '@/shared/lib/prompt-engine/settings';
 
 export function usePromptEngineFilteringImpl(args: {
   sortedDrafts: RuleDraft[];

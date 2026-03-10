@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
 import { TestLogEntry } from '@/shared/contracts/integrations';
+
 import { StepWithResult } from '../integrations-context-types';
 
 export function useIntegrationsTestingImpl() {

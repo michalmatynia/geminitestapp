@@ -1,9 +1,10 @@
-import { syncNextIdFromSections } from '../block-helpers';
 import type {
   PageBuilderState,
   PageBuilderAction,
   SectionInstance,
 } from '@/features/cms/types/page-builder';
+
+import { syncNextIdFromSections } from '../block-helpers';
 
 export function reducePageActions(
   state: PageBuilderState,

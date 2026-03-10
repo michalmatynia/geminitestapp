@@ -1,5 +1,6 @@
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { type StatusVariant } from '@/shared/ui';
+
 import {
   type ContextRegistryDisplay,
   type ContextDocumentDisplay,

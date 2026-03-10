@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteEditorType } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 // Why: Editor mode (markdown/wysiwyg) has complex migration logic:
 // - Existing notes lock to their type

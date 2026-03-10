@@ -3,8 +3,8 @@
 import React, { createContext, useContext } from 'react';
 
 import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
 import { internalError } from '@/shared/errors/app-error';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
 
 export type CategoryTreeNodeRuntimeContextValue = {
   categoryById: Map<string, ProductCategoryWithChildren>;

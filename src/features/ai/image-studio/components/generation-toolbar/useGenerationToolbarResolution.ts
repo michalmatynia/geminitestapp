@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
+
+import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {
   loadImageElement,
   resolveCropRectFromShapesWithDiagnostics,
@@ -10,7 +12,6 @@ import {
   type CropRect,
   type CropRectResolutionDiagnostics,
 } from './GenerationToolbarImageUtils';
-import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarResolution(state: GenerationToolbarState) {
   const {

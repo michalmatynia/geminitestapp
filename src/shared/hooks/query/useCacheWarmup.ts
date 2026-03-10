@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
+
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 

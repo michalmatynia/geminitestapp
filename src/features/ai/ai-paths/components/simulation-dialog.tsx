@@ -2,13 +2,12 @@
 
 import React, { useMemo, useCallback } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
+import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { AiNode } from '@/shared/lib/ai-paths';
 import { Button, Input, Alert, FormField } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
-import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
 
 export interface SimulationDialogProps extends EntityModalProps<AiNode> {
   isPathLocked: boolean;

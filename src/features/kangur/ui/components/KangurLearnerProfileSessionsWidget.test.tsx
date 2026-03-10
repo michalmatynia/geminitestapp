@@ -71,6 +71,7 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
         totalQuestions: 6,
         accuracyPercent: 83,
         timeTakenSeconds: 41,
+        xpEarned: 28,
       },
     ],
     weeklyActivity: [],
@@ -93,6 +94,9 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     render(<KangurLearnerProfileSessionsWidget />);
 
     expect(screen.getByTestId('learner-profile-session-session-1')).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-session-xp-session-1')).toHaveTextContent(
+      '+28 XP'
+    );
     expect(screen.getByTestId('learner-profile-badge-first_game')).toHaveClass(
       'border-indigo-200',
       'bg-indigo-100'

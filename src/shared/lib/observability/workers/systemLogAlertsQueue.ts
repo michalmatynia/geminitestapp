@@ -1,16 +1,8 @@
 import 'server-only';
 
-import { createManagedQueue } from '@/shared/lib/queue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { createManagedQueue } from '@/shared/lib/queue';
 
-import {
-  ALERT_QUEUE_NAME,
-  ALERT_REPEAT_JOB_ID,
-  ALERT_STARTUP_JOB_ID,
-  SYSTEM_LOG_ALERT_REPEAT_EVERY_MS,
-} from './system-log-alerts/config';
-import { type SystemLogAlertsJobData } from './system-log-alerts/types';
-import { queueState, shouldCheckAlerts } from './system-log-alerts/state';
 import {
   evaluateErrorSpike,
   evaluatePerSourceErrorSpikes,
@@ -20,6 +12,14 @@ import {
   evaluateUserDefinedAlerts,
   evaluateLogSilence,
 } from './system-log-alerts/alert-evaluators';
+import {
+  ALERT_QUEUE_NAME,
+  ALERT_REPEAT_JOB_ID,
+  ALERT_STARTUP_JOB_ID,
+  SYSTEM_LOG_ALERT_REPEAT_EVERY_MS,
+} from './system-log-alerts/config';
+import { queueState, shouldCheckAlerts } from './system-log-alerts/state';
+import { type SystemLogAlertsJobData } from './system-log-alerts/types';
 
 export { SYSTEM_LOG_ALERT_REPEAT_EVERY_MS };
 

@@ -6,7 +6,6 @@ import type {
   PromptValidationSettings,
   PromptValidationSeverity,
 } from '@/shared/contracts/prompt-engine';
-
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 function compileRegex(pattern: string, flags: string | undefined): RegExp | null {

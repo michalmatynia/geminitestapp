@@ -3,6 +3,7 @@
 import { Download, FolderOpen, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
+import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
 import {
   Badge,
   Button,
@@ -23,7 +24,6 @@ import {
 import { useLibraryActions, useLibraryState } from '../context/hooks/useLibrary';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
 import { buildPromptExploderSegmentationOutline } from '../segmentation-library';
-import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
 
 type SegmentationListItem = {
   id: string;

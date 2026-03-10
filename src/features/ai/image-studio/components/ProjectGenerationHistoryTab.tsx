@@ -4,10 +4,10 @@ import {} from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { api } from '@/shared/lib/api-client';
 import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
+import type { FilterField } from '@/shared/contracts/ui';
+import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
   Pagination,
   Card,
@@ -19,7 +19,7 @@ import {
   SearchInput,
   Checkbox,
 } from '@/shared/ui';
-import type { FilterField } from '@/shared/contracts/ui';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';

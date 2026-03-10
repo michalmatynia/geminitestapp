@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import {
   getAiPathRun,
   handoffAiPathRun,
@@ -10,7 +11,6 @@ import {
   retryAiPathRunNode,
 } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
-import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -23,12 +23,13 @@ import {
   normalizeRunDetail,
   type RunDetail,
 } from './job-queue-panel-utils';
-import type { JobQueueActionsValue, JobQueueStateValue } from './job-queue/types';
 import {
   JOB_QUEUE_LAG_THRESHOLD_KEY,
   useJobQueueDataLayer,
 } from './useJobQueueDataLayer';
 import { useJobQueueRealtime } from './useJobQueueRealtime';
+
+import type { JobQueueActionsValue, JobQueueStateValue } from './job-queue/types';
 
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
@@ -36,6 +37,8 @@ const BURST_REFRESH_WINDOW_MS = 15_000;
 
 type JobQueueRuntimeParams = {
   activePathId?: string | null;
+  initialSearchQuery?: string | null;
+  initialExpandedRunId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
   visibility?: AiPathRunVisibility;
@@ -49,6 +52,8 @@ interface JobQueueRuntimeResult {
 
 export function useJobQueueRuntime({
   activePathId,
+  initialSearchQuery,
+  initialExpandedRunId,
   sourceFilter,
   sourceMode = 'include',
   visibility = 'scoped',
@@ -58,10 +63,12 @@ export function useJobQueueRuntime({
   const { toast } = useToast();
 
   const normalizedVisibility = visibility === 'global' ? 'global' : 'scoped';
+  const normalizedInitialSearchQuery = initialSearchQuery?.trim() ?? '';
+  const normalizedInitialExpandedRunId = initialExpandedRunId?.trim() ?? '';
 
   const [pathFilter, setPathFilter] = useState(activePathId ?? '');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  const [searchQuery, setSearchQuery] = useState(normalizedInitialSearchQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(normalizedInitialSearchQuery);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
@@ -82,6 +89,7 @@ export function useJobQueueRuntime({
   const [runToDelete, setRunToDelete] = useState<AiPathRunRecord | null>(null);
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
   const [optimisticRunsHydrated, setOptimisticRunsHydrated] = useState(false);
+  const lastInitialSearchQueryRef = useRef(normalizedInitialSearchQuery);
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
@@ -92,6 +100,16 @@ export function useJobQueueRuntime({
     const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (lastInitialSearchQueryRef.current === normalizedInitialSearchQuery) {
+      return;
+    }
+    lastInitialSearchQueryRef.current = normalizedInitialSearchQuery;
+    setSearchQuery(normalizedInitialSearchQuery);
+    setDebouncedQuery(normalizedInitialSearchQuery);
+    setPage(1);
+  }, [normalizedInitialSearchQuery]);
 
   const setAutoRefreshInterval = useCallback((interval: number): void => {
     setAutoRefreshIntervalState(normalizeJobQueueAutoRefreshInterval(interval));
@@ -245,6 +263,33 @@ export function useJobQueueRuntime({
     },
     [handleToggleRun]
   );
+
+  useEffect(() => {
+    if (!normalizedInitialExpandedRunId) return;
+    if (!visibleRunsPayload.runs.some((run) => run.id === normalizedInitialExpandedRunId)) {
+      return;
+    }
+
+    setExpandedRunIds((prev) => {
+      if (prev.has(normalizedInitialExpandedRunId)) return prev;
+      const next = new Set(prev);
+      next.add(normalizedInitialExpandedRunId);
+      return next;
+    });
+
+    if (
+      !runDetails[normalizedInitialExpandedRunId] &&
+      !runDetailLoading.has(normalizedInitialExpandedRunId)
+    ) {
+      void loadRunDetail(normalizedInitialExpandedRunId);
+    }
+  }, [
+    normalizedInitialExpandedRunId,
+    visibleRunsPayload.runs,
+    runDetails,
+    runDetailLoading,
+    loadRunDetail,
+  ]);
 
   const setHistorySelectionForRun = useCallback((runId: string, nodeId: string): void => {
     setHistorySelection((prev) => ({ ...prev, [runId]: nodeId }));

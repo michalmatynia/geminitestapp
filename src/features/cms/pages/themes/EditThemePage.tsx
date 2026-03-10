@@ -3,13 +3,13 @@
 import { useRouter, useParams } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 
+import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CmsTheme, CmsThemeUpdateInput } from '@/shared/contracts/cms';
 import { PageLayout, Alert, LoadingState, Breadcrumbs } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 
 function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
   const router = useRouter();

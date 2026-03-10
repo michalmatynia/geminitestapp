@@ -3,7 +3,6 @@
 import { Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -18,6 +17,7 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverEntityModalVariants';

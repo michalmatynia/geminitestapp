@@ -1,3 +1,5 @@
+import type { SectionDefinition } from '@/features/cms/types/page-builder';
+
 import { BLOCK_DEFINITIONS, BLOCK_SECTION_ALLOWED_BLOCK_TYPES } from './block-definitions';
 import {
   WRAP_OPTIONS,
@@ -11,7 +13,6 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { SectionDefinition } from '@/features/cms/types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Section definitions

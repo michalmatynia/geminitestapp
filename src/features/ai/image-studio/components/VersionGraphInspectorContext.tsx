@@ -3,9 +3,9 @@
 import React from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import { internalError } from '@/shared/errors/app-error';
 
 type VersionGraphInspectorContextValue = {
   selectedNode: VersionNode | null;

@@ -1,7 +1,9 @@
 'use client';
 
 import * as React from 'react';
+
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { MultiSelect, type MultiSelectOption } from './multi-select';
 
 export interface SearchableSelectProps {

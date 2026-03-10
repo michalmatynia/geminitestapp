@@ -1,3 +1,6 @@
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { validationError } from '@/shared/errors/app-error';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_UI_STATE_KEY,
@@ -17,9 +20,6 @@ import {
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
-import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
-import { validationError } from '@/shared/errors/app-error';
 
 export const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
 
@@ -232,18 +232,18 @@ export const loadPathConfigsFromSettings = async (
         ? resolvedConfig.value.pathConfig
         : parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
           ? ({
-              ...baseConfig,
-              ...(parsedConfig as Partial<PathConfig>),
-              id:
+            ...baseConfig,
+            ...(parsedConfig as Partial<PathConfig>),
+            id:
                 typeof (parsedConfig as { id?: unknown }).id === 'string' &&
                 (parsedConfig as { id?: string }).id!.trim().length > 0
                   ? (parsedConfig as { id: string }).id.trim()
                   : meta.id,
-              name:
+            name:
                 typeof (parsedConfig as { name?: unknown }).name === 'string'
                   ? (parsedConfig as { name: string }).name
                   : baseConfig.name,
-            } as PathConfig)
+          } as PathConfig)
           : null;
     if (!mergedConfig) {
       throw validationError('Invalid AI Path config payload.', {

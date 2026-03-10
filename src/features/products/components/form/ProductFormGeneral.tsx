@@ -6,10 +6,6 @@ import { useFormContext } from 'react-hook-form';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import {
-  isPatternEnabledForValidationScope,
-  isPatternReplacementEnabledForValidationScope,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
-import {
   applyResolvedReplacement,
   buildSequenceGroupCounts,
   isLatestPriceStockMirrorPattern,
@@ -26,6 +22,10 @@ import {
 } from '@/features/products/validation-engine/core';
 import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
+import {
+  isPatternEnabledForValidationScope,
+  isPatternReplacementEnabledForValidationScope,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   Input,
   Tabs,

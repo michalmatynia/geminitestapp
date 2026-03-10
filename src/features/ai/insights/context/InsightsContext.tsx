@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -12,7 +13,6 @@ import {
   useRunRuntimeAnalyticsInsightMutation,
   useRunLogInsightMutation,
 } from '../hooks/useInsightQueries';
-import { internalError } from '@/shared/errors/app-error';
 
 interface InsightsContextValue {
   analyticsQuery: ReturnType<typeof useAnalyticsInsightsQuery>;

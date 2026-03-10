@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -10,14 +9,15 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   PlanStep,
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
 

@@ -1,14 +1,15 @@
 'use client';
 
 import React from 'react';
+
 import {
   useImportExportActions,
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
-import { Label, SelectSimple } from '@/shared/ui';
 import type { InventoryOption, Template } from '@/shared/contracts/integrations';
+import { Label, SelectSimple } from '@/shared/ui';
 
 export function ExportBaseConfigSection(): React.JSX.Element {
   const { baseConnections, inventories, exportTemplates, loadingExportTemplates } =

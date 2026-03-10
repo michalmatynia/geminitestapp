@@ -1,5 +1,3 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
-import prisma from '@/shared/lib/db/prisma';
 import {
   CategoryMapping,
   CategoryMappingWithDetails,
@@ -9,6 +7,9 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ProductCategory } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+
 import { normalizeInternalCategoryId, UniqueInternalCategoryScope } from './types';
 
 function mapToRecord(record: {

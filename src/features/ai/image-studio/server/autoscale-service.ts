@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+
 import type {
   ImageStudioDetectionDetails,
   ImageStudioObjectWhitespaceMetrics,
@@ -13,7 +14,6 @@ import type {
   ImageStudioCenterObjectBounds,
   ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
-import type { UploadedImageBinaryDto as UploadedClientAutoScaleImage } from '@/shared/contracts/image-studio';
 import {
   autoScaleObjectByAnalysis,
   normalizeAutoScalerLayoutConfig,
@@ -24,11 +24,14 @@ import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
+import type { UploadedImageBinaryDto as UploadedClientAutoScaleImage } from '@/shared/contracts/image-studio';
+
 import {
   autoScaleBadRequest,
   isClientAutoScaleMode,
   isServerAutoScaleMode,
 } from './image-handler-utils';
+
 import type { StudioSlotRecord } from './upscale/types';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;

@@ -1,11 +1,12 @@
-import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
+import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
+import { KANGUR_LESSONS_SETTING_KEY } from '@/shared/contracts/kangur';
+import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
-import { KANGUR_LESSONS_SETTING_KEY } from '@/shared/contracts/kangur';
+import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
-import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
 
 const FOLDER_TREE_UI_STATE_V2_LITE_KEYS = folderTreeInstanceValues.map(
@@ -28,6 +29,7 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
   KANGUR_LESSONS_SETTING_KEY,
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,

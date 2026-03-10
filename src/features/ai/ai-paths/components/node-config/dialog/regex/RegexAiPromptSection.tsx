@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Button, Label, Textarea, ToggleRow, Tooltip } from '@/shared/ui';
+
 import type { RegexConfig, AiNode } from '@/shared/lib/ai-paths';
+import { Button, Label, Textarea, ToggleRow, Tooltip } from '@/shared/ui';
 
 export type RegexAiPromptSectionProps = {
   regexConfig: RegexConfig;

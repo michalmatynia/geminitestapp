@@ -38,9 +38,17 @@ export type KangurAiTutorPendingFollowUpRecord = {
   createdAt: string;
 };
 
+export type KangurAiTutorAvatarPositionRecord = {
+  version: 1;
+  left: number;
+  top: number;
+  updatedAt: string;
+};
+
 type KangurAiTutorWidgetStorageState = {
   lastSessionKey?: string | null;
   pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
+  avatarPosition?: KangurAiTutorAvatarPositionRecord | null;
 };
 
 const loadPersistedTutorWidgetState = (): KangurAiTutorWidgetStorageState | null => {
@@ -71,10 +79,15 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       ? { lastSessionKey: state.lastSessionKey }
       : {}),
     ...(state.pendingFollowUp ? { pendingFollowUp: state.pendingFollowUp } : {}),
+    ...(state.avatarPosition ? { avatarPosition: state.avatarPosition } : {}),
   };
 
   try {
-    if (!('lastSessionKey' in nextState) && !('pendingFollowUp' in nextState)) {
+    if (
+      !('lastSessionKey' in nextState) &&
+      !('pendingFollowUp' in nextState) &&
+      !('avatarPosition' in nextState)
+    ) {
       window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
       return;
     }
@@ -113,6 +126,24 @@ const isValidPendingFollowUpRecord = (
     typeof input.sourcePathname === 'string' &&
     typeof input.sourceSearch === 'string' &&
     typeof input.createdAt === 'string'
+  );
+};
+
+const isValidAvatarPositionRecord = (
+  value: unknown
+): value is KangurAiTutorAvatarPositionRecord => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const input = value as Partial<KangurAiTutorAvatarPositionRecord>;
+  return (
+    input.version === 1 &&
+    typeof input.left === 'number' &&
+    Number.isFinite(input.left) &&
+    typeof input.top === 'number' &&
+    Number.isFinite(input.top) &&
+    typeof input.updatedAt === 'string'
   );
 };
 
@@ -158,6 +189,42 @@ export const clearPersistedPendingTutorFollowUp = (): void => {
   persistTutorWidgetState({
     ...currentState,
     pendingFollowUp: null,
+  });
+};
+
+export const loadPersistedTutorAvatarPosition =
+  (): KangurAiTutorAvatarPositionRecord | null => {
+    const parsed = loadPersistedTutorWidgetState();
+    return isValidAvatarPositionRecord(parsed?.avatarPosition) ? parsed.avatarPosition : null;
+  };
+
+export const persistTutorAvatarPosition = (
+  position: Pick<KangurAiTutorAvatarPositionRecord, 'left' | 'top'>
+): KangurAiTutorAvatarPositionRecord | null => {
+  if (!Number.isFinite(position.left) || !Number.isFinite(position.top)) {
+    return null;
+  }
+
+  const nextRecord: KangurAiTutorAvatarPositionRecord = {
+    version: 1,
+    left: position.left,
+    top: position.top,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    avatarPosition: nextRecord,
+  });
+  return nextRecord;
+};
+
+export const clearPersistedTutorAvatarPosition = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    avatarPosition: null,
   });
 };
 

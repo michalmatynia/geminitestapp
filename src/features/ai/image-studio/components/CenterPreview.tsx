@@ -3,10 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import type {
   ImageStudioSlotRecord,
   SlotGenerationMetadata,
@@ -14,21 +11,30 @@ import type {
 import type { VectorShape } from '@/shared/contracts/vector';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/shared/lib/products/constants';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
-import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import {
   CenterPreviewProvider,
   useCenterPreviewContext,
 } from './center-preview/CenterPreviewContext';
+import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import { useCenterPreviewVariants } from './center-preview/useCenterPreviewVariants';
 import {
   deleteVariantFromCenterPreview,
   loadVariantIntoCanvas,
 } from './center-preview/variant-actions';
+import {
+  isTreeRevealableCardSlot,
+  resolveSourceSlotIdFromGeneratedPath,
+  resolveVariantSlotIdForCenterPreview,
+} from './center-preview/variant-thumbnails';
 import { VariantPanel } from './center-preview/VariantPanel';
 import {
   VariantPanelProvider,
@@ -41,25 +47,18 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import { CenterPreviewDetailsModal } from './center-preview/CenterPreviewDetailsModal';
 import { asObjectRecord, type VariantThumbnailInfo } from './center-preview/preview-utils';
-import {
-  isTreeRevealableCardSlot,
-  resolveSourceSlotIdFromGeneratedPath,
-  resolveVariantSlotIdForCenterPreview,
-} from './center-preview/variant-thumbnails';
-
-import { CenterPreviewHeader } from './center-preview/sections/CenterPreviewHeader';
 import { CenterPreviewCanvas } from './center-preview/sections/CenterPreviewCanvas';
 import {
   CenterPreviewCanvasSectionProvider,
   type CenterPreviewCanvasContextValue,
 } from './center-preview/sections/CenterPreviewCanvasContext';
+import { CenterPreviewHeader } from './center-preview/sections/CenterPreviewHeader';
 import {
   CenterPreviewHeaderSectionProvider,
   type CenterPreviewHeaderContextValue,
 } from './center-preview/sections/CenterPreviewHeaderContext';
-import { CenterPreviewDetailsModal } from './center-preview/CenterPreviewDetailsModal';
 
 const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
   regular: 280,

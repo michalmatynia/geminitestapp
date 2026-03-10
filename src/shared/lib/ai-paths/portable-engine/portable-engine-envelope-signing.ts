@@ -1,18 +1,18 @@
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 import {
-  computeHmacSha256Hex,
-  createStableHashHex,
-  normalizeOptionalSecret,
-  normalizePortableEnvelopeSignatureInput,
-} from './portable-engine-integrity-support';
-import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackage,
   type AiPathPortablePackageEnvelope,
   type BuildPortablePathPackageEnvelopeOptions,
   type PortablePathEnvelopeSignature,
 } from './portable-engine-contract';
+import {
+  computeHmacSha256Hex,
+  createStableHashHex,
+  normalizeOptionalSecret,
+  normalizePortableEnvelopeSignatureInput,
+} from './portable-engine-integrity-support';
 
 export const computePortablePathEnvelopeSignatureSync = (
   input: unknown,

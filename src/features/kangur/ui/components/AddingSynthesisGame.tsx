@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -16,11 +17,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
-  addXp,
-  createLessonPracticeReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
-import {
   ADDING_SYNTHESIS_FEEDBACK_PAUSE_MS,
   ADDING_SYNTHESIS_HIT_LINE_RATIO,
   ADDING_SYNTHESIS_NOTE_DURATION_MS,
@@ -31,6 +27,13 @@ import {
   type AddingSynthesisNote,
   type AddingSynthesisTimingGrade,
 } from '@/features/kangur/ui/services/adding-synthesis';
+import {
+  addXp,
+  createLessonPracticeReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type AddingSynthesisGameProps = {
@@ -56,6 +59,7 @@ type GameSummary = {
   perfectHits: number;
   bestStreak: number;
   xpEarned: number;
+  breakdown: KangurRewardBreakdownEntry[];
 };
 
 const LANE_STYLES = [
@@ -150,6 +154,7 @@ export default function AddingSynthesisGame({
   const noteIntervalRef = useRef<number | null>(null);
   const noteDeadlineRef = useRef<number | null>(null);
   const noteAdvanceRef = useRef<number | null>(null);
+  const sessionStartedAtRef = useRef(Date.now());
 
   const currentNote = phase === 'playing' ? (notes[currentIndex] ?? null) : null;
   const currentStage = currentNote
@@ -197,6 +202,7 @@ export default function AddingSynthesisGame({
     setBestStreak(0);
     setPerfectHits(0);
     setSummary(null);
+    sessionStartedAtRef.current = Date.now();
   };
 
   const startSession = (): void => {
@@ -213,6 +219,14 @@ export default function AddingSynthesisGame({
     const progress = loadProgress();
     const reward = createLessonPracticeReward(progress, 'adding', finalScore, notes.length, 65);
     addXp(reward.xp, reward.progressUpdates);
+    void persistKangurSessionScore({
+      operation: 'addition',
+      score: finalScore,
+      totalQuestions: notes.length,
+      correctAnswers: finalScore,
+      timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+      xpEarned: reward.xp,
+    });
 
     setSummary({
       accuracy: Math.round((finalScore / Math.max(1, notes.length)) * 100),
@@ -221,6 +235,7 @@ export default function AddingSynthesisGame({
       perfectHits: finalPerfectHits,
       bestStreak: finalBestStreak,
       xpEarned: reward.xp,
+      breakdown: reward.breakdown ?? [],
     });
     setPhase('summary');
   };
@@ -484,6 +499,12 @@ export default function AddingSynthesisGame({
               <KangurStatusChip accent='emerald'>Sesja zakonczona</KangurStatusChip>
               <KangurStatusChip accent='amber'>+{summary.xpEarned} XP</KangurStatusChip>
             </div>
+            <KangurRewardBreakdownChips
+              accent='slate'
+              breakdown={summary.breakdown}
+              dataTestId='adding-synthesis-summary-breakdown'
+              itemDataTestIdPrefix='adding-synthesis-summary-breakdown'
+            />
 
             <div className='flex flex-col gap-2'>
               <h2 className='text-3xl font-extrabold tracking-[-0.03em] text-slate-900 sm:text-4xl'>

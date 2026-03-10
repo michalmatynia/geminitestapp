@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+
 import type {
   FolderTreeProfileV2,
   MasterFolderTreeSearchResult,
 } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import {
   resolveFolderTreeSearchConfig,
   type ResolvedFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { filterMasterTreeToMatches, searchMasterTreeNodes } from '../operations/search';
 

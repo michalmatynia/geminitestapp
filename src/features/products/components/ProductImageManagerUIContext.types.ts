@@ -1,7 +1,8 @@
-import type { DragEvent } from 'react';
 
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { DebugInfo } from '@/shared/contracts/products';
+
+import type { DragEvent } from 'react';
 
 export type SlotViewMode = 'upload' | 'link' | 'base64';
 

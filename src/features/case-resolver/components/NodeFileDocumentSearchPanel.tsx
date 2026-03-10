@@ -4,7 +4,6 @@ import { Sparkles } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree';
-import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import {
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
@@ -12,6 +11,7 @@ import {
   type CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
@@ -21,6 +21,7 @@ import {
 } from './NodeFileWorkspaceContext';
 import { RelationTreeBrowser } from '../relation-search/components/RelationTreeBrowser';
 import { RelationTreeBrowserRuntimeContext } from '../relation-search/components/RelationTreeBrowserRuntimeContext';
+
 import type { RelationTreeLookup } from '../relation-search/types';
 
 export function NodeFileDocumentSearchPanel(): React.JSX.Element {

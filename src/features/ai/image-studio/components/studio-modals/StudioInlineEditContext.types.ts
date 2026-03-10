@@ -1,12 +1,11 @@
 'use client';
 
-import type React from 'react';
-import type { ProductImageManagerController } from '@/features/products';
 import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import type { ProductImageManagerController } from '@/features/products';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { ListQuery } from '@/shared/contracts/ui';
 import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 import type {
   PromptDiffLine,
@@ -20,6 +19,7 @@ import type {
   LinkedGeneratedVariantViewModel as LinkedGeneratedVariant,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
+import type React from 'react';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 

@@ -2,13 +2,14 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 
-import { useVersionNodeMapContext } from './VersionNodeMapContext';
 import {
   CONTENT_OFFSET_X,
   CONTENT_OFFSET_Y,
   NODE_HEIGHT,
   NODE_WIDTH,
 } from '@/features/ai/image-studio/utils/version-graph';
+
+import { useVersionNodeMapContext } from './VersionNodeMapContext';
 
 import type { VersionEdge } from '../context/VersionGraphContext';
 

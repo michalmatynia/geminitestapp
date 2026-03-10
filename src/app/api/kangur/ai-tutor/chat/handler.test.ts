@@ -670,6 +670,11 @@ describe('kangur ai tutor chat handler', () => {
         context: expect.objectContaining({
           interactionIntent: 'next_step',
           followUpActionCount: 1,
+          primaryFollowUpActionId: 'recommendation:strengthen_lesson_mastery',
+          primaryFollowUpPage: 'Lessons',
+          hasBridgeFollowUpAction: false,
+          bridgeFollowUpActionCount: 0,
+          bridgeFollowUpDirection: null,
           coachingMode: 'next_best_action',
         }),
       })

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type {
   ClusterPreset,
   DbQueryPreset,
@@ -17,7 +18,6 @@ import type {
   DatabaseConfig,
 } from '@/shared/lib/ai-paths';
 import { createPresetId, databaseConfigSchema } from '@/shared/lib/ai-paths';
-import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 // ---------------------------------------------------------------------------

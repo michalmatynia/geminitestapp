@@ -11,8 +11,8 @@ import {
 } from '../../prompt-library';
 import { PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY } from '../../segmentation-library';
 
-import type { SettingsState } from '../SettingsContext';
 import type { SettingsActions } from '../settings/SettingsActionsContext';
+import type { SettingsState } from '../SettingsContext';
 
 export const useLibraryPersistence = ({
   settingsMap,

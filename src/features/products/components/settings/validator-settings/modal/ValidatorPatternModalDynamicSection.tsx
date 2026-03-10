@@ -1,7 +1,16 @@
 'use client';
 
 import React from 'react';
+
+import type { PatternFormData } from '@/shared/contracts/products';
+import type {
+  DynamicReplacementMathOperation,
+  DynamicReplacementRoundMode,
+  DynamicReplacementLogicOperator,
+  DynamicReplacementLogicAction,
+} from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { Input, SelectSimple, FormField, FormSection } from '@/shared/ui';
+
 import {
   LOGIC_ACTION_OPTIONS,
   LOGIC_OPERATOR_OPTIONS,
@@ -12,13 +21,6 @@ import {
   TARGET_APPLY_OPTIONS,
 } from '../validator-pattern-modal-options';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import type { PatternFormData } from '@/shared/contracts/products';
-import type {
-  DynamicReplacementMathOperation,
-  DynamicReplacementRoundMode,
-  DynamicReplacementLogicOperator,
-  DynamicReplacementLogicAction,
-} from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null {
   const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();

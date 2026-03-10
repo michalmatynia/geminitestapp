@@ -17,8 +17,8 @@ import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { Button, Checkbox, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';
 import { useRelationTreeNodeRuntimeContext } from './RelationTreeNodeRuntimeContext';
+import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';
 
 type RelationTreeNodeItemProps = FolderTreeViewportRenderNodeInput;
 

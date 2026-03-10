@@ -1,4 +1,3 @@
-import type * as React from 'react';
 import type { RuntimeRunStatus } from '@/shared/contracts/ai-paths';
 import type {
   AiNode,
@@ -10,6 +9,7 @@ import type {
   AiPathRuntimeEvent,
   RunPreflightBlockReason,
 } from '@/shared/lib/ai-paths';
+
 import {
   type CanvasRendererMode,
   type SvgConnectorTooltipState,
@@ -17,14 +17,16 @@ import {
   type CanvasBoardConnectorTooltipOverrideInput,
   type CanvasBoardConnectorTooltipOverride,
 } from './CanvasBoard.utils';
-import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
-import type { ConnectorInfo } from './canvas-board-connectors';
 import {
   type ViewState,
   type PanState,
   type DragState,
   type ConnectingState,
 } from '../context/CanvasContext';
+import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
+
+import type { ConnectorInfo } from './canvas-board-connectors';
+import type * as React from 'react';
 
 export type { RuntimeRunStatus };
 

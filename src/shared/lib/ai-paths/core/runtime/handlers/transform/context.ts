@@ -4,6 +4,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput } from '@/shared/lib/ai-paths/core/utils';
+
 import { resolveContextPayload } from '../../utils';
 
 export const handleContext: NodeHandler = async ({

@@ -7,6 +7,21 @@ import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms'
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
 import { Label, RadioGroup, RadioGroupItem, Button, SelectSimple } from '@/shared/ui';
 
+import { BackgroundField } from './settings/fields/composite/BackgroundField';
+import { BorderField } from './settings/fields/composite/BorderField';
+import { ShadowField } from './settings/fields/composite/ShadowField';
+import { SpacingField } from './settings/fields/composite/SpacingField';
+import { TypographyField } from './settings/fields/composite/TypographyField';
+import {
+  CompositeFieldContext,
+  type CompositeFieldContextValue,
+} from './settings/fields/CompositeFieldContext';
+import { LinkField } from './settings/fields/LinkField';
+import {
+  FONT_FAMILY_OPTIONS,
+  FONT_WEIGHT_OPTIONS,
+  COLOR_SCHEME_OPTIONS,
+} from './settings/fields/settings-field-constants';
 import {
   useOptionalSettingsFormActions,
   useOptionalSettingsFormState,
@@ -21,21 +36,6 @@ import {
 } from './shared-fields';
 import { useThemeSettingsValue } from './ThemeSettingsContext';
 
-import {
-  FONT_FAMILY_OPTIONS,
-  FONT_WEIGHT_OPTIONS,
-  COLOR_SCHEME_OPTIONS,
-} from './settings/fields/settings-field-constants';
-import {
-  CompositeFieldContext,
-  type CompositeFieldContextValue,
-} from './settings/fields/CompositeFieldContext';
-import { SpacingField } from './settings/fields/composite/SpacingField';
-import { BorderField } from './settings/fields/composite/BorderField';
-import { ShadowField } from './settings/fields/composite/ShadowField';
-import { BackgroundField } from './settings/fields/composite/BackgroundField';
-import { TypographyField } from './settings/fields/composite/TypographyField';
-import { LinkField } from './settings/fields/LinkField';
 
 function CompositeFieldProvider(props: {
   value: unknown;

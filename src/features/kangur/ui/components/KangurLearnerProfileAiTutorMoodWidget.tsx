@@ -2,16 +2,16 @@
 
 import { BrainCircuit } from 'lucide-react';
 
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  formatKangurProfileDateTime,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
   KangurGlassPanel,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  formatKangurProfileDateTime,
-  useKangurLearnerProfileRuntime,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
   createDefaultKangurAiTutorLearnerMood,
   getKangurTutorMoodPreset,

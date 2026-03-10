@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
+
 import { buildBreadcrumbPath } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };

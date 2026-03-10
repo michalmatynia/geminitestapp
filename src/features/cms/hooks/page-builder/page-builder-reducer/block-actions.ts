@@ -1,15 +1,16 @@
-import {
-  applyTextAtomSettings,
-  createBlockInstance,
-  createRowBlock,
-  getCanonicalGridStructure,
-} from '../block-helpers';
 import type {
   PageBuilderState,
   PageBuilderAction,
   SectionInstance,
   BlockInstance,
 } from '@/features/cms/types/page-builder';
+
+import {
+  applyTextAtomSettings,
+  createBlockInstance,
+  createRowBlock,
+  getCanonicalGridStructure,
+} from '../block-helpers';
 
 export function reduceBlockActions(
   state: PageBuilderState,

@@ -9,6 +9,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
+
 import {
   buildRuntimeDurationRows,
   buildRuntimeTimelineItems,

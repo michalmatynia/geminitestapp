@@ -68,6 +68,7 @@ describe('kangur auth me handler', () => {
         }),
       })
     );
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
         id: 'parent-1',

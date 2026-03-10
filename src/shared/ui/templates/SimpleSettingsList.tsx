@@ -2,11 +2,13 @@
 
 import React from 'react';
 
-import { DropdownMenuItem } from '../dropdown-menu';
+import { cn } from '@/shared/utils';
+
 import { ActionMenu } from '../ActionMenu';
+import { DropdownMenuItem } from '../dropdown-menu';
 import { EmptyState } from '../empty-state';
 import { LoadingState } from '../LoadingState';
-import { cn } from '@/shared/utils';
+
 
 export interface SimpleSettingsListItem {
   id: string;

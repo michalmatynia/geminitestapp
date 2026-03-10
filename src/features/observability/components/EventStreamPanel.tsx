@@ -3,13 +3,13 @@
 import { AlertTriangle, Monitor, SearchIcon, Eye } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   useSystemLogsActions,
   useSystemLogsState,
 } from '@/features/observability/context/SystemLogsContext';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   Button,
   StandardDataTablePanel,
@@ -22,7 +22,9 @@ import {
   Card,
   type StatusVariant,
 } from '@/shared/ui';
-import type { ColumnDef } from '@tanstack/react-table';
+
+import { ContextDocumentCard } from './ContextDocumentCard';
+import { ContextRegistryNodesCard } from './ContextRegistryNodesCard';
 import { formatTimestamp } from '../utils/formatTimestamp';
 import {
   readLogContextRegistry,
@@ -32,8 +34,8 @@ import {
   getLogCategory,
   readContextString,
 } from '../utils/logHelpers';
-import { ContextDocumentCard } from './ContextDocumentCard';
-import { ContextRegistryNodesCard } from './ContextRegistryNodesCard';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function EventStreamPanel(): React.JSX.Element {
   const { logsQuery, logs, total, totalPages, page, interpretLogMutation, logInterpretations } =

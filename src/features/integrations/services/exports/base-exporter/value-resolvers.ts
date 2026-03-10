@@ -1,17 +1,5 @@
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { ImageExportLogger } from '../base-exporter-images';
-import {
-  toStringValue,
-  toTrimmedString,
-  parseParameterSourceKey,
-  IMAGE_TARGET_FIELDS,
-} from './template-helpers';
-import {
-  getProductParameterValue,
-  getProductCategoryId,
-  getProductProducerValues,
-  getProductTagValues,
-} from './product-resolvers';
+
 import {
   ProducerNameLookup,
   ProducerExternalIdLookup,
@@ -24,6 +12,19 @@ import {
   buildProducerNameToExternalIdLookup,
   buildTagNameToExternalIdLookup,
 } from './lookup-resolvers';
+import {
+  getProductParameterValue,
+  getProductCategoryId,
+  getProductProducerValues,
+  getProductTagValues,
+} from './product-resolvers';
+import {
+  toStringValue,
+  toTrimmedString,
+  parseParameterSourceKey,
+  IMAGE_TARGET_FIELDS,
+} from './template-helpers';
+import { ImageExportLogger } from '../base-exporter-images';
 import { getAllImageUrls, getImageSlotUrl } from '../base-exporter-images';
 
 export const getProductValue = (

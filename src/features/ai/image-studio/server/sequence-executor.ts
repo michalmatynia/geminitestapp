@@ -9,14 +9,13 @@ import {
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-
 import type {
   ImageStudioSequenceMaskContext,
   ImageStudioSequenceRunRecord,
 } from '@/shared/contracts/image-studio';
 
-import { executeCropStep, executeUpscaleStep } from './sequence/image-processing';
 import { executeGenerateStep } from './sequence/generation';
+import { executeCropStep, executeUpscaleStep } from './sequence/image-processing';
 
 const isSequenceOperation = (value: unknown): value is ImageStudioSequenceOperation =>
   typeof value === 'string' &&

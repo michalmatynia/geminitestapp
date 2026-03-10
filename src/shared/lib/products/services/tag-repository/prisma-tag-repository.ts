@@ -1,8 +1,8 @@
-import { Prisma, ProductTag as PrismaProductTag } from '@/shared/lib/db/prisma-client';
 
 import type { TagRepository, TagFilters } from '@/shared/contracts/products';
 import type { ProductTag } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, ProductTag as PrismaProductTag } from '@/shared/lib/db/prisma-client';
 
 const toTagDomain = (tag: PrismaProductTag): ProductTag => ({
   id: tag.id,

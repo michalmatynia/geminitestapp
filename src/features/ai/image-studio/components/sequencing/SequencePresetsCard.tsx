@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { SelectSimple, Button, useToast } from '@/shared/ui';
-import { StudioCard } from '../StudioCard';
-import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
+
 import {
   normalizeImageStudioSequenceSteps,
   type ImageStudioSequencePreset,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { SelectSimple, Button, useToast } from '@/shared/ui';
+
+import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
+import { StudioCard } from '../StudioCard';
 import { PRESET_NAME_MAX_LENGTH } from './sequencing-constants';
 
 const normalizePresetIdFragment = (value: string): string =>

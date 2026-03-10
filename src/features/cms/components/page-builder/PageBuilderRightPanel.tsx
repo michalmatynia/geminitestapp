@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+
 import { ComponentSettingsPanel } from './ComponentSettingsPanel';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
 export function PageBuilderRightPanel(): React.JSX.Element {
   const { state } = usePageBuilder();

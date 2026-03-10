@@ -1,24 +1,26 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import type {
-  ImageStudioSlotRecord,
-  RunStudioEnqueueResult,
-  RunStudioPayload,
-} from '@/shared/contracts/image-studio';
+
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import {
-  PROMPT_ENGINE_SETTINGS_KEY,
-  parsePromptEngineSettings,
-} from '@/shared/lib/prompt-engine/settings';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { parseImageStudioFolderTree } from '@/features/ai/image-studio/utils/studio-tree';
 import {
   IMAGE_STUDIO_UI_ACTIVE_KEY,
   IMAGE_STUDIO_UI_PRESETS_KEY,
   parseImageStudioUiPresets,
 } from '@/features/ai/image-studio/utils/ui-presets';
+import type {
+  ImageStudioSlotRecord,
+  RunStudioEnqueueResult,
+  RunStudioPayload,
+} from '@/shared/contracts/image-studio';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+} from '@/shared/lib/prompt-engine/settings';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 
 interface UseDocsSnapshotsProps {
   projectId: string;

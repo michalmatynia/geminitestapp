@@ -8,7 +8,6 @@ import type {
 } from '@/shared/contracts/chatbot';
 import { parseChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import prisma from '@/shared/lib/db/prisma';
-
 import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 type ChatMessageRow = Prisma.ChatbotMessageGetPayload<Record<string, never>>;

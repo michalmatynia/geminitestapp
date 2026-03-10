@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
-import { createPortal } from 'react-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import React from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   Button,
@@ -14,16 +14,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui';
+
+import { CaseResolverFolderTree } from './CaseResolverFolderTree';
 import {
   useCaseResolverViewActionsContext,
   useCaseResolverViewStateContext,
 } from './CaseResolverViewContext';
-import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
-import { CaseResolverFolderTree } from './CaseResolverFolderTree';
-import { CaseResolverPageMainContent } from './page/CaseResolverPageMainContent';
-import { CaseResolverCaptureMappingModal } from './page/CaseResolverCaptureMappingModal';
 import { CaseResolverWorkspaceDebugPanel } from './CaseResolverWorkspaceDebugPanel';
+import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { CaseResolverRuntimeProvider } from '../runtime';
+import { CaseResolverCaptureMappingModal } from './page/CaseResolverCaptureMappingModal';
+import { CaseResolverPageMainContent } from './page/CaseResolverPageMainContent';
 
 type PendingNavigation = {
   kind: 'document' | 'case';

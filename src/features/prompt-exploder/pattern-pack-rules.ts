@@ -1,7 +1,8 @@
 import { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+
 import { PROMPT_EXPLODER_PATTERN_PACK_EXTRA } from './pattern-pack-rules-extra';
-import { EXPLODER_RULES } from './rules/exploder-rules';
 import { CASE_RESOLVER_RULES } from './rules/case-resolver-rules';
+import { EXPLODER_RULES } from './rules/exploder-rules';
 import { OTHER_RULES } from './rules/other-rules';
 
 export {

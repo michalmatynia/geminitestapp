@@ -26,6 +26,27 @@ import {
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
+
+import {
+  ensureQueryDataV2 as ensureQueryDataLogic,
+  prefetchQueryV2 as prefetchQueryLogic,
+  fetchQueryV2 as fetchQueryLogic,
+} from './tanstack-factory-v2/executors';
+import {
+  applyInfiniteQueryRuntimeGuards,
+  applySuspenseInfiniteQueryRuntimeGuards,
+  guardRefetchInterval,
+  isRefetchEnabledForQuery,
+  sanitizeRefetchIntervalValue,
+} from './tanstack-factory-v2/guards';
+import {
+  useTelemetrizedQueryFn,
+  useTelemetrizedMultiQueryOptionsV2,
+  useTelemetrizedSuspenseMultiQueryOptionsV2,
+  useQueryFactoryV2,
+  useSuspenseQueryFactoryV2,
+} from './tanstack-factory-v2/hooks';
+import { emitFactoryTelemetry, withMutationKeyMeta } from './tanstack-factory-v2/telemetry';
 import {
   type BaseQueryFactoryV2Config,
   type QueryDescriptorV2,
@@ -44,30 +65,6 @@ import {
   type SaveMutationFactoryV2Config,
   type QueryOptionsWithoutCore,
 } from './tanstack-factory-v2/types';
-
-import {
-  applyInfiniteQueryRuntimeGuards,
-  applySuspenseInfiniteQueryRuntimeGuards,
-  guardRefetchInterval,
-  isRefetchEnabledForQuery,
-  sanitizeRefetchIntervalValue,
-} from './tanstack-factory-v2/guards';
-
-import { emitFactoryTelemetry, withMutationKeyMeta } from './tanstack-factory-v2/telemetry';
-
-import {
-  ensureQueryDataV2 as ensureQueryDataLogic,
-  prefetchQueryV2 as prefetchQueryLogic,
-  fetchQueryV2 as fetchQueryLogic,
-} from './tanstack-factory-v2/executors';
-
-import {
-  useTelemetrizedQueryFn,
-  useTelemetrizedMultiQueryOptionsV2,
-  useTelemetrizedSuspenseMultiQueryOptionsV2,
-  useQueryFactoryV2,
-  useSuspenseQueryFactoryV2,
-} from './tanstack-factory-v2/hooks';
 
 export type {
   BaseQueryFactoryV2Config,

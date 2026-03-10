@@ -140,6 +140,76 @@ describe('agent persona avatar handler', () => {
     );
   });
 
+  it('still uploads the avatar when thumbnail generation fails', async () => {
+    buildAgentPersonaAvatarThumbnailMock.mockRejectedValue(
+      new Error('pngload_buffer: libspng read error')
+    );
+
+    const file = new File([new Uint8Array([1, 2, 3])], 'avatar.png', {
+      type: 'image/png',
+    });
+
+    const response = await POST_handler(
+      createUploadRequest({
+        file,
+        personaId: 'persona-1',
+        moodId: 'neutral',
+      }),
+      createRequestContext(),
+    );
+
+    expect(response.status).toBe(201);
+    expect(uploadFileMock).toHaveBeenCalledTimes(1);
+    expect(upsertAgentPersonaAvatarThumbnailMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        id: 'file-1',
+        folder: 'personas/persona-1/neutral',
+        thumbnail: null,
+      }),
+    );
+  });
+
+  it('still uploads the avatar when thumbnail persistence fails', async () => {
+    buildAgentPersonaAvatarThumbnailMock.mockResolvedValue({
+      ref: 'persona-1:neutral:thumb:def456',
+      personaId: 'persona-1',
+      moodId: 'neutral',
+      dataUrl: 'data:image/webp;base64,ZmFrZQ==',
+      mimeType: 'image/webp',
+      width: 96,
+      height: 96,
+      bytes: 2048,
+      hash: 'hash-2',
+      updatedAt: '2026-03-09T10:00:00.000Z',
+    });
+    upsertAgentPersonaAvatarThumbnailMock.mockResolvedValue(false);
+
+    const file = new File([new Uint8Array([1, 2, 3])], 'avatar.png', {
+      type: 'image/png',
+    });
+
+    const response = await POST_handler(
+      createUploadRequest({
+        file,
+        personaId: 'persona-1',
+        moodId: 'neutral',
+      }),
+      createRequestContext(),
+    );
+
+    expect(response.status).toBe(201);
+    expect(uploadFileMock).toHaveBeenCalledTimes(1);
+    expect(upsertAgentPersonaAvatarThumbnailMock).toHaveBeenCalledTimes(1);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        id: 'file-1',
+        folder: 'personas/persona-1/neutral',
+        thumbnail: null,
+      }),
+    );
+  });
+
   it('skips embedded thumbnail generation for svg uploads', async () => {
     const file = new File(['<svg viewBox="0 0 10 10"></svg>'], 'avatar.svg', {
       type: 'image/svg+xml',

@@ -3,10 +3,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { Toast } from '@/shared/contracts/ui';
 
-import { getCaseResolverWorkspaceNormalizationDiagnostics } from '../settings';
-import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import { collectCaseScopeIds } from './useCaseResolverState.helpers';
+import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import { getCachedCaseResolverRuntimeIndexes } from '../runtime';
+import { getCaseResolverWorkspaceNormalizationDiagnostics } from '../settings';
 import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,

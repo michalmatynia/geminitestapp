@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
+
+import type { Toast } from '@/shared/contracts/ui';
 import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
 import { normalizeAiPathsValidationConfig, AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { Toast } from '@/shared/contracts/ui';
 
 export function useAiPathsValidationActions(args: {
   setAiPathsValidation: (config: AiPathsValidationConfig) => void;

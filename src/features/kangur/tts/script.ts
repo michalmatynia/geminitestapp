@@ -1,3 +1,6 @@
+import { stripHtmlToPlainText } from '@/features/document-editor';
+import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
+import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import type {
   KangurLessonActivityBlock,
   KangurLessonDocument,
@@ -6,12 +9,10 @@ import type {
   KangurLessonPage,
   KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
-import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
-import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
-import { stripHtmlToPlainText } from '@/features/document-editor';
+
+import { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE } from './contracts';
 
 import type { KangurLessonNarrationScript, KangurLessonNarrationSegment } from './contracts';
-import { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE } from './contracts';
 
 const DEFAULT_SEGMENT_MAX_CHARS = 900;
 const DEFAULT_MAX_SEGMENTS = 24;

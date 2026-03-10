@@ -1,22 +1,25 @@
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
+
+import { useRunHistoryActions, useRuntimeState, useGraphState } from '@/features/ai/ai-paths/context';
+import type {
+  AiPathRuntimeTraceSlowNode,
+  AiPathRuntimeTraceFailedNode,
+} from '@/shared/contracts/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
-import { useRunHistoryActions, useRuntimeState, useGraphState } from '@/features/ai/ai-paths/context';
-import { useAiPathsErrorState } from '../hooks/useAiPathsErrorState';
+
 import {
   formatDurationMs,
   formatPercent,
   formatStatusLabel,
   statusToVariant,
 } from '../ai-paths-settings-view-utils';
-import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
-import type {
-  AiPathRuntimeTraceSlowNode,
-  AiPathRuntimeTraceFailedNode,
-} from '@/shared/contracts/ai-paths';
+import { useAiPathsErrorState } from '../hooks/useAiPathsErrorState';
+
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const { runtimeRunStatus, runtimeNodeStatuses } = useRuntimeState();

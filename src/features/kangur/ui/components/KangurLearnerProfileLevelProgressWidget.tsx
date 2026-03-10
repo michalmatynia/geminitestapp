@@ -1,10 +1,10 @@
 'use client';
 
+import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
   KangurGlassPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
   const { snapshot, xpToNextLevel } = useKangurLearnerProfileRuntime();

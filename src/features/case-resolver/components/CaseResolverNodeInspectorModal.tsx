@@ -2,16 +2,16 @@ import { Split } from 'lucide-react';
 import React from 'react';
 
 import {
-  VALIDATOR_PATTERN_LISTS_KEY,
-  parseValidatorPatternLists,
-} from '@/shared/contracts/validator';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
   type CaseResolverEditorNodeContext,
 } from '@/shared/contracts/case-resolver';
+import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
+} from '@/shared/contracts/validator';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   Button,
   Checkbox,
@@ -26,15 +26,15 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from '../context/CaseResolverPageContext';
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 import {
   useNodeFileWorkspaceActionsContext,
   useNodeFileWorkspaceStateContext,
 } from './NodeFileWorkspaceContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 

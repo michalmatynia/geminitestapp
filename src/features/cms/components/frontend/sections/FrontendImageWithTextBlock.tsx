@@ -3,11 +3,12 @@
 import { Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { useMediaStyles } from '../media-styles-context';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendImageWithTextBlock(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

@@ -76,6 +76,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 }));
 
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
@@ -222,6 +223,36 @@ describe('KangurPrimaryNavigation', () => {
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
+  });
+
+  it('registers tutor anchors on the anonymous auth actions', () => {
+    render(
+      <KangurTutorAnchorProvider>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Game'
+          guestPlayerName='Ala'
+          isAuthenticated={false}
+          onCreateAccount={vi.fn()}
+          onGuestPlayerNameChange={vi.fn()}
+          onLogin={vi.fn()}
+          onLogout={vi.fn()}
+        />
+      </KangurTutorAnchorProvider>
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-login')).toHaveAttribute(
+      'data-kangur-tutor-anchor-kind',
+      'login_action'
+    );
+    expect(screen.getByTestId('kangur-primary-nav-create-account')).toHaveAttribute(
+      'data-kangur-tutor-anchor-kind',
+      'create_account_action'
+    );
+    expect(screen.getByTestId('kangur-primary-nav-login')).toHaveAttribute(
+      'data-kangur-tutor-anchor-surface',
+      'auth'
+    );
   });
 
   it('collapses the guest name input on blur and reopens it on click', () => {

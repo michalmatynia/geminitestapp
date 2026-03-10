@@ -2,13 +2,14 @@
 
 import { useCallback, type MutableRefObject } from 'react';
 
-import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import type { Toast } from '@/shared/contracts/ui';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { promptExploderClampNumber } from '../../helpers/formatting';
 import { explodePromptWithValidationRuntime } from '../../prompt-validation-orchestrator';
 import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../../runtime-load-shedder';
+
 import type { PromptExploderDocument, PromptExploderLearnedTemplate } from '../../types';
 import type { DocumentActions } from '../document/DocumentActionsContext';
 import type { SettingsState } from '../SettingsContext';

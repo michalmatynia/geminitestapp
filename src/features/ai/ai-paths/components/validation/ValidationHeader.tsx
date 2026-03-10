@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { RefreshCw, Save, ShieldCheck } from 'lucide-react';
+import React from 'react';
+
 import {
   Badge,
   Breadcrumbs,
@@ -12,6 +13,7 @@ import {
   SelectSimple,
   StatusBadge,
 } from '@/shared/ui';
+
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 export function ValidationHeader(): React.JSX.Element {

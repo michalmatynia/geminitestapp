@@ -19,17 +19,17 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import {
+  getImageStudioDocTooltip,
+  type ImageStudioDocKey,
+} from '@/features/ai/image-studio/utils/studio-docs';
+import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
 import { useSettingsState } from '../context/SettingsContext';
-import {
-  getImageStudioDocTooltip,
-  type ImageStudioDocKey,
-} from '@/features/ai/image-studio/utils/studio-docs';
 
-import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

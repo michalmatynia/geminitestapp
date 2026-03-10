@@ -2,8 +2,8 @@
 
 import { useCallback } from 'react';
 
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import { useGraphActions, useGraphState } from '../../context';

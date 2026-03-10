@@ -1,6 +1,18 @@
 import { useCallback } from 'react';
+
+import {
+  imageStudioCenterRequestSchema,
+  imageStudioCenterResponseSchema,
+  type ImageStudioCenterResponse,
+  type ImageStudioCenterMode,
+} from '@/features/ai/image-studio/contracts/center';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+
+import {
+  type GenerationToolbarState,
+  type GenerationToolbarHelpers,
+} from '../GenerationToolbar.types';
 import {
   buildCenterRequestId,
   layoutCanvasImageObject,
@@ -10,16 +22,6 @@ import {
   withCenterRetry,
   isCenterAbortError,
 } from '../GenerationToolbarImageUtils';
-import {
-  imageStudioCenterRequestSchema,
-  imageStudioCenterResponseSchema,
-  type ImageStudioCenterResponse,
-  type ImageStudioCenterMode,
-} from '@/features/ai/image-studio/contracts/center';
-import {
-  type GenerationToolbarState,
-  type GenerationToolbarHelpers,
-} from '../GenerationToolbar.types';
 
 export function useCenterAndScaleHandlers(
   state: GenerationToolbarState,

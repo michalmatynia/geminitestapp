@@ -1,14 +1,16 @@
 'use client';
 
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
+
+import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
 import { StatusBadge, Card, MetadataItem, Hint, Button } from '@/shared/ui';
-import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+
 import { useProductListingItemRuntime } from './ProductListingItemRuntimeContext';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {

@@ -5,11 +5,11 @@ import type {
   ProductCategoryWithChildren,
   ProductTag,
 } from '@/shared/contracts/products';
+import type { ProductFilter } from '@/shared/contracts/products/filters';
 import type {
   ProductWithImages,
   ProductsPagedResult,
 } from '@/shared/contracts/products/product';
-import type { ProductFilter } from '@/shared/contracts/products/filters';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {

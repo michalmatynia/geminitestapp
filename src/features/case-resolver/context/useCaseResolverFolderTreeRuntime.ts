@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
+import {
+  buildCaseResolverNodeFileRelationIndexFromAssets,
+} from '@/features/case-resolver/nodefile-relations';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
@@ -10,20 +14,28 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
 
-import {
-  buildCaseResolverNodeFileRelationIndexFromAssets,
-} from '@/features/case-resolver/nodefile-relations';
+
+import { useCaseResolverPageActions, useCaseResolverPageState } from './CaseResolverPageContext';
+import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import {
   type FolderCaseFileStats,
 } from '../components/CaseResolverFolderTree.helpers';
-import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
-import { useCaseResolverPageActions, useCaseResolverPageState } from './CaseResolverPageContext';
-import type {
-  CaseResolverFolderTreeRuntimeResult,
-  CaseResolverFolderTreeUiStateContextValue,
-} from './CaseResolverFolderTreeContext.types';
+import {
+  fromCaseResolverAssetNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+  fromCaseResolverFolderNodeId,
+  toCaseResolverAssetNodeId,
+  toCaseResolverCaseNodeId,
+  toCaseResolverFileNodeId,
+  toCaseResolverFolderNodeId,
+} from '../master-tree';
+import {
+  getCachedCaseResolverRuntimeIndexes,
+  logCaseResolverDurationMetric,
+  useCaseResolverRuntimeSelector,
+} from '../runtime';
 import {
   CHILD_CASE_STRUCTURE_NODE_ID,
   UNASSIGNED_NODE_ID,
@@ -36,21 +48,11 @@ import {
   resolveFolderAncestorNodeIds,
   resolveRequestedCaseResolverFileId,
 } from './case-resolver-folder-tree-utils';
-import {
-  getCachedCaseResolverRuntimeIndexes,
-  logCaseResolverDurationMetric,
-  useCaseResolverRuntimeSelector,
-} from '../runtime';
-import {
-  fromCaseResolverAssetNodeId,
-  fromCaseResolverCaseNodeId,
-  fromCaseResolverFileNodeId,
-  fromCaseResolverFolderNodeId,
-  toCaseResolverAssetNodeId,
-  toCaseResolverCaseNodeId,
-  toCaseResolverFileNodeId,
-  toCaseResolverFolderNodeId,
-} from '../master-tree';
+
+import type {
+  CaseResolverFolderTreeRuntimeResult,
+  CaseResolverFolderTreeUiStateContextValue,
+} from './CaseResolverFolderTreeContext.types';
 
 export function useCaseResolverFolderTreeRuntime({
   showChildCaseFolders,

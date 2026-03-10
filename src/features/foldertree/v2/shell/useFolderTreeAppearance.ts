@@ -2,11 +2,11 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import type {
   FolderTreeIconSlot,
   FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   getFolderTreePlaceholderClasses,
   type FolderTreePlaceholderClassSet,

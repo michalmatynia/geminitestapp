@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 
 import {
   getKangurHomeHref,

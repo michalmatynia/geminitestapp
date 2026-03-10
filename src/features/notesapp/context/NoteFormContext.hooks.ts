@@ -8,13 +8,13 @@ import { NoteContentContext, type NoteContentData } from './note-form/NoteConten
 import { NoteEditorContext, type NoteEditorData } from './note-form/NoteEditorContext';
 import { NoteFilesContext, type NoteFilesData } from './note-form/NoteFilesContext';
 import { NoteFoldersContext, type NoteFoldersData } from './note-form/NoteFoldersContext';
+import { useNoteFormRuntime } from './note-form/NoteFormRuntimeContext';
 import { NoteMetadataContext, type NoteMetadataData } from './note-form/NoteMetadataContext';
 import {
   NoteRelationsContext,
   type NoteRelationsData,
 } from './note-form/NoteRelationsContext';
 import { NoteTagsContext, type NoteTagsData } from './note-form/NoteTagsContext';
-import { useNoteFormRuntime } from './note-form/NoteFormRuntimeContext';
 
 export { useNoteFormRuntime };
 

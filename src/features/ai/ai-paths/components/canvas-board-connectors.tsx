@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, Edge, PortDataType } from '@/shared/lib/ai-paths';
 import {
   arePortTypesCompatible,
@@ -10,7 +11,6 @@ import {
   isValueCompatibleWithTypes,
 } from '@/shared/lib/ai-paths';
 
-import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 type ConnectionTypeMismatch = {
   fromNode?: AiNode | null;

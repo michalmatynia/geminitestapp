@@ -1,11 +1,11 @@
 'use client';
 
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import { api } from '@/shared/lib/api-client';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/shared/lib/data-import-export-adapter';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

@@ -1,3 +1,5 @@
+import { normalizeString } from '../filemaker-settings.helpers';
+import { FILEMAKER_REFERENCE_NONE } from '../settings-constants';
 import {
   FilemakerDatabase,
   FilemakerPerson,
@@ -6,8 +8,6 @@ import {
   FilemakerPartyOption,
   FilemakerPartyKind,
 } from '../types';
-import { normalizeString } from '../filemaker-settings.helpers';
-import { FILEMAKER_REFERENCE_NONE } from '../settings-constants';
 
 export const getFilemakerPersonById = (
   database: FilemakerDatabase,

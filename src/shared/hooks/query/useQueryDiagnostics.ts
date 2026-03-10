@@ -2,6 +2,7 @@
 
 import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 export type QueryDiagnosticsItem = {

@@ -1,3 +1,24 @@
+import { validationError } from '@/shared/errors/app-error';
+
+import {
+  createFilemakerAddress,
+  createFilemakerAddressLink,
+  createFilemakerEmail,
+  createFilemakerEmailLink,
+  createFilemakerEvent,
+  createFilemakerEventOrganizationLink,
+  createFilemakerOrganization,
+  createFilemakerPerson,
+  createFilemakerPhoneNumber,
+  createFilemakerPhoneNumberLink,
+} from './filemaker-settings.entities';
+import {
+  ensureUniqueId,
+  normalizePhoneNumbers,
+  normalizeString,
+  toIdToken,
+} from './filemaker-settings.helpers';
+import { validateFilemakerPhoneNumber } from './filemaker-settings.validation';
 import {
   type FilemakerAddress,
   type FilemakerAddressLink,
@@ -13,26 +34,6 @@ import {
   type FilemakerPhoneNumberLink,
   type FilemakerPerson,
 } from './types';
-import {
-  ensureUniqueId,
-  normalizePhoneNumbers,
-  normalizeString,
-  toIdToken,
-} from './filemaker-settings.helpers';
-import { validationError } from '@/shared/errors/app-error';
-import {
-  createFilemakerAddress,
-  createFilemakerAddressLink,
-  createFilemakerEmail,
-  createFilemakerEmailLink,
-  createFilemakerEvent,
-  createFilemakerEventOrganizationLink,
-  createFilemakerOrganization,
-  createFilemakerPerson,
-  createFilemakerPhoneNumber,
-  createFilemakerPhoneNumberLink,
-} from './filemaker-settings.entities';
-import { validateFilemakerPhoneNumber } from './filemaker-settings.validation';
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

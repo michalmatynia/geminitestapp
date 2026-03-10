@@ -1,11 +1,12 @@
-import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type {
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { isSerializablePortValue } from './path-run-executor.runtime-state';
 
 type PortBucket = 'inputs' | 'outputs' | 'nodeOutputs';

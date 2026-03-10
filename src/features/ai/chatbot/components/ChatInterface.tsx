@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 
-import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import { AgentPersonaMoodAvatar } from '@/features/ai/agentcreator/components/AgentPersonaMoodAvatar';
+import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import { resolveAgentPersonaMood } from '@/features/ai/agentcreator/utils/personas';
 import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
@@ -13,6 +13,7 @@ import {
 } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { Button, Input } from '@/shared/ui';
+import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ChatMessageContent } from './ChatMessageContent';
 import {
@@ -20,7 +21,6 @@ import {
   useChatbotSessions,
   useChatbotSettings,
 } from '../context/ChatbotContext';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 export function ChatInterface(): React.JSX.Element {
   const { messages, input, setInput, isSending, sendMessage } = useChatbotMessages();

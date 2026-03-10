@@ -7,9 +7,9 @@ import React, { useMemo } from 'react';
 import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 import { Button, StandardDataTablePanel, Badge, ConfirmModal, PanelHeader } from '@/shared/ui';
 
-import { useAgentTeachingCollectionDetailState } from '../hooks/useAgentTeachingCollectionDetailState';
 import { DocumentAddForm } from '../components/DocumentAddForm';
 import { SearchSimulator } from '../components/SearchSimulator';
+import { useAgentTeachingCollectionDetailState } from '../hooks/useAgentTeachingCollectionDetailState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

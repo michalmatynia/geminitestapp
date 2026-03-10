@@ -65,6 +65,11 @@ export type TutorMotionProfile = {
     stiffness: number;
     damping: number;
   };
+  guidedAvatarTransition: {
+    type: 'tween';
+    duration: number;
+    ease: [number, number, number, number];
+  };
   bubbleTransition: {
     type: 'spring';
     stiffness: number;

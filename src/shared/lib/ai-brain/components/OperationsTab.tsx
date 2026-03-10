@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
-import type { ComponentType } from 'react';
+
 
 import type {
   BrainOperationsDomainKey,
@@ -25,6 +25,8 @@ import type {
 import { Card, EmptyState, SectionHeader, SelectSimple, StatusBadge } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
+
+import type { ComponentType } from 'react';
 
 const DOMAIN_ORDER: BrainOperationsDomainKey[] = [
   'ai_paths',

@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import type { BlockInstance } from '@/shared/contracts/cms';
+
 import {
   CmsRuntimeScopeProvider,
   resolveCmsRuntimeCollection,
@@ -11,7 +13,6 @@ import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './Block
 import { FrontendBlockRenderer } from '../sections/FrontendBlockRenderer';
 import { SectionBlockRenderer } from '../sections/grid/SectionBlockRenderer';
 
-import type { BlockInstance } from '@/shared/contracts/cms';
 
 const CONTAINER_BLOCK_TYPES = new Set([
   'ImageWithText',

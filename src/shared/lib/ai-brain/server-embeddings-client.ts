@@ -4,9 +4,9 @@ import OpenAI from 'openai';
 
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
-import { inferBrainRuntimeVendor, normalizeBrainRuntimeModelId } from './server-runtime-client';
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { resolveBrainProviderCredential } from './provider-credentials';
+import { inferBrainRuntimeVendor, normalizeBrainRuntimeModelId } from './server-runtime-client';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 

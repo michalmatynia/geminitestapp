@@ -1,6 +1,6 @@
-import type { Prisma, CurrencyCode } from '@prisma/client';
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
 import type { SyncHandler } from './types';
+import type { Prisma, CurrencyCode } from '@prisma/client';
 
 export const syncCurrencies: SyncHandler = async ({ mongo, prisma, currencyCodes }) => {
   // Clear dependent data so currency deletes don't fail on FK constraints.

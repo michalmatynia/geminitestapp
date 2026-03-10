@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
+
 import { ImportBaseConnectionSection } from './sections/ImportBaseConnectionSection';
+import { ImportLastResultSection } from './sections/ImportLastResultSection';
 import { ImportListPreviewSection } from './sections/ImportListPreviewSection';
 import { ImportRunStatusSection } from './sections/ImportRunStatusSection';
-import { ImportLastResultSection } from './sections/ImportLastResultSection';
 
 export function ImportTab(): React.JSX.Element {
   return (

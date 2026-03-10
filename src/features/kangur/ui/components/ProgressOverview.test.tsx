@@ -3,10 +3,11 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import ProgressOverview from '@/features/kangur/ui/components/ProgressOverview';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+
+let ProgressOverview: typeof import('@/features/kangur/ui/components/ProgressOverview').default;
 
 const progress: KangurProgressState = {
   totalXp: 480,
@@ -27,6 +28,7 @@ const progress: KangurProgressState = {
       perfectSessions: 1,
       totalCorrectAnswers: 18,
       totalQuestionsAnswered: 20,
+      totalXpEarned: 116,
       bestScorePercent: 100,
       lastScorePercent: 80,
       currentStreak: 2,
@@ -38,6 +40,7 @@ const progress: KangurProgressState = {
       perfectSessions: 0,
       totalCorrectAnswers: 11,
       totalQuestionsAnswered: 18,
+      totalXpEarned: 63,
       bestScorePercent: 72,
       lastScorePercent: 61,
       currentStreak: 1,
@@ -66,12 +69,23 @@ const progress: KangurProgressState = {
 };
 
 describe('ProgressOverview lesson mastery insights', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    ProgressOverview = (
+      await vi.importActual<typeof import('@/features/kangur/ui/components/ProgressOverview')>(
+        '@/features/kangur/ui/components/ProgressOverview'
+      )
+    ).default;
+  });
+
   it('renders weakest and strongest lesson summaries from tracked mastery', () => {
     render(<ProgressOverview progress={progress} />);
 
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-level-bar')).toHaveAttribute('aria-valuenow', '92');
     expect(screen.getByText('Laczne XP').parentElement).toHaveClass('soft-card', 'border-indigo-300');
+    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border-violet-300');
+    expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
     expect(screen.getByText('Srednia skutecznosc').parentElement).toHaveClass(
       'soft-card',
       'border-amber-300'
@@ -88,6 +102,12 @@ describe('ProgressOverview lesson mastery insights', () => {
     );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       '4 sesji'
+    );
+    expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
+      '29 XP / gre'
+    );
+    expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
+      '116 XP'
     );
     expect(screen.getAllByText('➗ Dzielenie')).toHaveLength(2);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();

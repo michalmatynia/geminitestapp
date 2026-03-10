@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import React, { createContext, useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
@@ -22,12 +23,12 @@ import type {
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useQueryClient } from '@tanstack/react-query';
+
+import { useNotesAppDerivedState } from './useNotesAppDerivedState';
+import { useNotesAppDialogs } from './useNotesAppDialogs';
+import { useNotesAppEntityHandlers } from './useNotesAppEntityHandlers';
 
 import type { NotesAppActionsValue, NotesAppStateValue } from './NotesAppContext.types';
-import { useNotesAppDialogs } from './useNotesAppDialogs';
-import { useNotesAppDerivedState } from './useNotesAppDerivedState';
-import { useNotesAppEntityHandlers } from './useNotesAppEntityHandlers';
 
 export const NotesAppStateContext = createContext<NotesAppStateValue | null>(null);
 export const NotesAppActionsContext = createContext<NotesAppActionsValue | null>(null);

@@ -4,8 +4,6 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   PRODUCT_SYNC_APP_FIELDS,
@@ -25,8 +23,10 @@ import type {
   ProductSyncRunStatus,
   ProductSyncRunTrigger,
 } from '@/shared/contracts/product-sync';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
 

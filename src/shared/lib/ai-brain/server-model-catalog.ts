@@ -8,6 +8,15 @@ import type {
   BrainModelsResponse,
 } from '@/shared/contracts/ai-brain';
 
+import { catalogToEntries, entriesToCatalogArrays } from './catalog-entries';
+import { resolveOllamaBaseUrl } from './ollama-config';
+import { readStoredSettingValue, upsertStoredSettingValue } from './server';
+import {
+  inferBrainRuntimeVendor,
+  normalizeBrainRuntimeModelId,
+  supportsBrainJsonMode,
+  supportsBrainStreaming,
+} from './server-runtime-client';
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   defaultBrainProviderCatalog,
@@ -15,15 +24,6 @@ import {
   sanitizeBrainProviderCatalog,
   toPersistedBrainProviderCatalog,
 } from './settings';
-import { catalogToEntries, entriesToCatalogArrays } from './catalog-entries';
-import {
-  inferBrainRuntimeVendor,
-  normalizeBrainRuntimeModelId,
-  supportsBrainJsonMode,
-  supportsBrainStreaming,
-} from './server-runtime-client';
-import { resolveOllamaBaseUrl } from './ollama-config';
-import { readStoredSettingValue, upsertStoredSettingValue } from './server';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 const OLLAMA_MODELS_TIMEOUT_MS = 4_500;

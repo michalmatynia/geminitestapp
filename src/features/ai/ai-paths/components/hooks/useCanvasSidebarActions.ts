@@ -2,8 +2,8 @@
 
 import { useCallback } from 'react';
 
-import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 import { DRAG_KEYS, setDragData } from '@/shared/utils/drag-drop';
 

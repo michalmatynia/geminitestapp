@@ -11,11 +11,11 @@ import {
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
 } from '../settings';
+import { AssignmentEditor } from './AssignmentEditor';
 import {
   useOptionalBrainRoutingActionsContext,
   useOptionalBrainRoutingStateContext,
 } from './BrainRoutingContext';
-import { AssignmentEditor } from './AssignmentEditor';
 
 type BrainRoutingEditModalState = {
   overrideEnabled: boolean;

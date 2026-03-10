@@ -1,15 +1,17 @@
 'use client';
 
-import { BarChart2, Flame, Target } from 'lucide-react';
+import { Award, BarChart2, Flame, Sparkles, Target } from 'lucide-react';
 
-import { KangurMetricCard } from '@/features/kangur/ui/design/primitives';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { KangurMetricCard } from '@/features/kangur/ui/design/primitives';
+import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
-  const { snapshot } = useKangurLearnerProfileRuntime();
+  const { progress, snapshot } = useKangurLearnerProfileRuntime();
+  const nextBadge = getNextLockedBadge(progress);
 
   return (
-    <section className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+    <section className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5'>
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'
@@ -35,6 +37,18 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       />
 
       <KangurMetricCard
+        accent='violet'
+        data-testid='learner-profile-overview-xp-today'
+        description={`7 dni: +${snapshot.weeklyXpEarned} XP · srednio ${snapshot.averageXpPerSession} XP na sesje`}
+        label={
+          <span className='inline-flex items-center gap-2'>
+            <Sparkles className='h-4 w-4' /> XP dzisiaj
+          </span>
+        }
+        value={`+${snapshot.todayXpEarned}`}
+      />
+
+      <KangurMetricCard
         accent='teal'
         data-testid='learner-profile-overview-daily-goal'
         description={`Wypelnienie: ${snapshot.dailyGoalPercent}%`}
@@ -49,8 +63,16 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='amber'
         data-testid='learner-profile-overview-badges'
-        description='Odblokowane osiagniecia'
-        label={<span className='inline-flex items-center gap-2'>🏅 Odznaki</span>}
+        description={
+          nextBadge
+            ? `Nastepna: ${nextBadge.name} · ${nextBadge.summary}`
+            : 'Wszystkie odznaki odblokowane'
+        }
+        label={
+          <span className='inline-flex items-center gap-2'>
+            <Award className='h-4 w-4' /> Odznaki
+          </span>
+        }
         value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}
       />
     </section>

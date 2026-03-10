@@ -1,15 +1,15 @@
 import 'server-only';
 
+import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-run-recovery-service';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '5000');

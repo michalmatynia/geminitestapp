@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Textarea } from '@/shared/ui';
+
 import { CssAiSection } from './CssAiSection';
 import {
   useComponentSettingsActions,

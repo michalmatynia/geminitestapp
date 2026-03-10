@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
+import { agentPersonaMoodIdSchema } from './agents';
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
-import { agentPersonaMoodIdSchema } from './agents';
 
 /**
  * Chatbot Settings & Config

@@ -1,13 +1,16 @@
 'use client';
 
-import React from 'react';
 import { Trash2 } from 'lucide-react';
+import React from 'react';
+
+import { fromSlotMasterNodeId } from '@/features/ai/image-studio/utils/master-folder-tree';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
+
 import { useSlotTreeContext } from './SlotTreeContext';
-import { fromSlotMasterNodeId } from '@/features/ai/image-studio/utils/master-folder-tree';
+
 
 export interface CardNodeItemProps {
   node: MasterTreeNode;

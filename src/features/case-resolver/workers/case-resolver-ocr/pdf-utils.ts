@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+
 import { MAX_PDF_OCR_TEXT_CHARS } from './config';
 
 type PdfParseResult = {

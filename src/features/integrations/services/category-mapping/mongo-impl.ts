@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+
 import {
   ObjectId,
   type Filter,
@@ -6,7 +7,7 @@ import {
   type UpdateFilter,
   type AnyBulkWriteOperation,
 } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import {
   CategoryMapping,
   CategoryMappingWithDetails,
@@ -16,6 +17,8 @@ import {
 } from '@/shared/contracts/integrations';
 import { type ProductCategory as InternalCategory } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import {
   MongoCategoryMappingDoc,
   CATEGORY_MAPPING_COLLECTION,

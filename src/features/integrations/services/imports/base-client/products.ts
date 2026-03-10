@@ -1,6 +1,7 @@
+import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations';
+
 import { callBaseApi } from './core';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';
-import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations';
 
 export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
   const candidates = [

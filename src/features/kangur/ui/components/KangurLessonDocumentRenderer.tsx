@@ -1,16 +1,7 @@
 'use client';
 
-import type {
-  KangurLessonActivityBlock,
-  KangurLessonCalloutBlock,
-  KangurLessonDocument,
-  KangurLessonGridBlock,
-  KangurLessonImageBlock,
-  KangurLessonInlineBlock,
-  KangurLessonQuizBlock,
-  KangurLessonSvgBlock,
-  KangurLessonTextBlock,
-} from '@/shared/contracts/kangur';
+import React from 'react';
+
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import {
   KangurEmptyState,
@@ -22,10 +13,21 @@ import {
   KangurSurfacePanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import type {
+  KangurLessonActivityBlock,
+  KangurLessonCalloutBlock,
+  KangurLessonDocument,
+  KangurLessonGridBlock,
+  KangurLessonImageBlock,
+  KangurLessonInlineBlock,
+  KangurLessonQuizBlock,
+  KangurLessonSvgBlock,
+  KangurLessonTextBlock,
+} from '@/shared/contracts/kangur';
 import { cn, sanitizeHtml, sanitizeSvg } from '@/shared/utils';
+
 import { KangurLessonActivityBlock as KangurLessonActivityBlockView } from './KangurLessonActivityBlock';
 
-import React from 'react';
 
 type KangurLessonDocumentRendererProps = {
   document: KangurLessonDocument;

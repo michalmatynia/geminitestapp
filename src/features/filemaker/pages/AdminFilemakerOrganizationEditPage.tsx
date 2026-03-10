@@ -2,14 +2,14 @@
 
 import React from 'react';
 
+import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
+import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
+import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerOrganizationEditPageActionsContext,
   AdminFilemakerOrganizationEditPageProvider,
   useAdminFilemakerOrganizationEditPageStateContext,
 } from '../context/AdminFilemakerOrganizationEditPageContext';
-import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
-import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
-import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
   const { organization, updateSetting, router } =

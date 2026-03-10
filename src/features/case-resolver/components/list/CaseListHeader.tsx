@@ -3,9 +3,10 @@
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, type ReactNode } from 'react';
 
-import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
+
 import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';
 
 type CaseListHeaderProps = {

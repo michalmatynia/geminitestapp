@@ -45,11 +45,7 @@ import {
   shouldReuseIdempotentRun,
   toStringId,
 } from '@/features/integrations/services/imports/base-import-service-shared';
-import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getCatalogParameterLinks } from '@/features/integrations/services/imports/parameter-import/link-map-repository';
-import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { findProductListingsByProductsAndConnectionAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type {
   BaseImportRunDetailResponse,
@@ -64,10 +60,14 @@ import type {
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
+import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { buildPreflight } from './base-import/preflight';
-import { resolveRunItems } from './base-import/run-items';
 import { markRunItem, failRemainingItems } from './base-import/processor';
+import { resolveRunItems } from './base-import/run-items';
 
 export type { StartBaseImportRunInput };
 

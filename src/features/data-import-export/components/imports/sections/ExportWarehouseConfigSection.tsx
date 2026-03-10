@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+
 import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
-import { Label, SelectSimple, Checkbox } from '@/shared/ui';
 import type { WarehouseOption } from '@/shared/contracts/integrations';
+import { Label, SelectSimple, Checkbox } from '@/shared/ui';
 
 export function ExportWarehouseConfigSection(): React.JSX.Element {
   const { warehouses: warehouseOptions, allWarehouses, warehouses } = useImportExportData();

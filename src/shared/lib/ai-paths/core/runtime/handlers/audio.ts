@@ -1,9 +1,9 @@
 import type { AudioWaveform } from '@/shared/contracts/ai-paths-core/base';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type OscillatorSignal = {
   kind: 'oscillator';

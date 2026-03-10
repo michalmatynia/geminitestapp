@@ -2,14 +2,15 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { DatabaseSyncDirection } from '@/shared/contracts/database';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { normalizeId, toDate, toJsonValue, toObjectIdMaybe } from './sync-utils';
 
-import type { DatabaseSyncDirection } from '@/shared/contracts/database';
+
 import type { DatabaseSyncCollectionResult } from './database-sync';
 
 // ── Types ──

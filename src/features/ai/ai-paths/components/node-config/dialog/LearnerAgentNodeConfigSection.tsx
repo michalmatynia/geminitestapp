@@ -4,8 +4,8 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import type { LearnerAgentConfig } from '@/shared/lib/ai-paths';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { LearnerAgentConfig } from '@/shared/lib/ai-paths';
 import { Button, SelectSimple, Textarea, LoadingState, Card, Alert, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';

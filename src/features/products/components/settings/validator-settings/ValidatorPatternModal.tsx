@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+
+
+import type { PatternFormData } from '@/shared/contracts/products';
 import {
   Input,
   MultiSelect,
@@ -11,16 +14,14 @@ import {
   FormField,
 } from '@/shared/ui';
 
+import { ValidatorPatternModalBasicSection } from './modal/ValidatorPatternModalBasicSection';
+import { ValidatorPatternModalDynamicSection } from './modal/ValidatorPatternModalDynamicSection';
+import { ValidatorPatternModalLaunchSection } from './modal/ValidatorPatternModalLaunchSection';
+import { ValidatorPatternModalPolicySection } from './modal/ValidatorPatternModalPolicySection';
+import { ValidatorPatternModalRuntimeSection } from './modal/ValidatorPatternModalRuntimeSection';
+import { CHAIN_MODE_OPTIONS } from './validator-pattern-modal-options';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
-import type { PatternFormData } from '@/shared/contracts/products';
-import { CHAIN_MODE_OPTIONS } from './validator-pattern-modal-options';
-
-import { ValidatorPatternModalBasicSection } from './modal/ValidatorPatternModalBasicSection';
-import { ValidatorPatternModalLaunchSection } from './modal/ValidatorPatternModalLaunchSection';
-import { ValidatorPatternModalRuntimeSection } from './modal/ValidatorPatternModalRuntimeSection';
-import { ValidatorPatternModalDynamicSection } from './modal/ValidatorPatternModalDynamicSection';
-import { ValidatorPatternModalPolicySection } from './modal/ValidatorPatternModalPolicySection';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal

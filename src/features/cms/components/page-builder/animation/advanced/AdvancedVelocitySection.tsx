@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
+
 import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/features/gsap';
+import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
+
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
 export function AdvancedVelocitySection(): React.JSX.Element {

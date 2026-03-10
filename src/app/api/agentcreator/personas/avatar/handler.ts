@@ -8,6 +8,7 @@ import {
 import { uploadFile } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { logger } from '@/shared/utils/logger';
 
 const MAX_AVATAR_UPLOAD_BYTES = 4 * 1024 * 1024;
 const THUMBNAIL_GENERATION_MIME_TYPES = new Set([
@@ -56,14 +57,30 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const sourceBuffer = Buffer.from(await file.arrayBuffer());
-  const thumbnail =
-    THUMBNAIL_GENERATION_MIME_TYPES.has(mimeType) && sourceBuffer.byteLength > 0
-      ? await buildAgentPersonaAvatarThumbnail({
+  let thumbnail: Awaited<ReturnType<typeof buildAgentPersonaAvatarThumbnail>> | null = null;
+  if (THUMBNAIL_GENERATION_MIME_TYPES.has(mimeType) && sourceBuffer.byteLength > 0) {
+    try {
+      thumbnail = await buildAgentPersonaAvatarThumbnail({
         personaId,
         moodId,
         buffer: sourceBuffer,
-      })
-      : null;
+      });
+    } catch (error) {
+      logger.warn(
+        '[agentcreator.personas.avatar] thumbnail generation failed; continuing without embedded thumbnail',
+        {
+          service: 'agentcreator.personas',
+          context: {
+            personaId,
+            moodId,
+            mimeType,
+            bytes: sourceBuffer.byteLength,
+          },
+          error,
+        }
+      );
+    }
+  }
 
   const uploaded = await uploadFile(file, {
     category: 'agentcreator',
@@ -74,7 +91,19 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (thumbnail) {
     const persisted = await upsertAgentPersonaAvatarThumbnail(thumbnail);
     if (!persisted) {
-      throw badRequestError('Failed to persist avatar thumbnail.');
+      logger.warn(
+        '[agentcreator.personas.avatar] thumbnail persistence failed; continuing without embedded thumbnail',
+        {
+          service: 'agentcreator.personas',
+          context: {
+            personaId,
+            moodId,
+            mimeType,
+            thumbnailRef: thumbnail.ref,
+          },
+        }
+      );
+      thumbnail = null;
     }
   }
 

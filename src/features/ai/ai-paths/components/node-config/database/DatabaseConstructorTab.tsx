@@ -19,6 +19,7 @@ import {
   AGGREGATION_STAGE_SNIPPETS,
   PRISMA_AGGREGATION_STAGE_SNIPPETS,
 } from '@/features/ai/ai-paths/config/query-presets';
+import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { Button, Label, Textarea, SelectSimple, Input, Card } from '@/shared/ui';
 
 import {
@@ -45,7 +46,6 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../../AiPathConfigContext';
-import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {

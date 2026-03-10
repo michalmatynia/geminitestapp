@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ProductAiJob, Prisma } from '@/shared/lib/db/prisma-client';
 
 import type {
   FindProductAiJobsOptions,
@@ -10,6 +9,7 @@ import type {
   ProductAiJobStatus,
 } from '@/shared/contracts/jobs';
 import prisma from '@/shared/lib/db/prisma';
+import { ProductAiJob, Prisma } from '@/shared/lib/db/prisma-client';
 
 const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({
   id: job.id,

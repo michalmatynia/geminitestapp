@@ -1,12 +1,13 @@
 'use client';
 
-import type { JSX } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson } from '@/shared/contracts/kangur';
+
+import type { JSX } from 'react';
 
 type KangurLessonNavigationWidgetProps = {
   prevLesson?: KangurLesson | null;

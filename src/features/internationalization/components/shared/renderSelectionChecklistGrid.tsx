@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { cn } from '@/shared/utils';
 import { Checkbox, Hint, Label } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 type SelectionChecklistItem = {
   id: string;

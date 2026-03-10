@@ -153,6 +153,127 @@ export const formatDuration = (ms) => {
   return `${(sec / 60).toFixed(1)}m`;
 };
 
+export const summarizeKangurAiTutorBridgeSignal = (bridgeSnapshot) => {
+  if (!bridgeSnapshot || typeof bridgeSnapshot !== 'object') {
+    return null;
+  }
+
+  const alertStatus =
+    typeof bridgeSnapshot.alertStatus === 'string' ? bridgeSnapshot.alertStatus : null;
+  const completionRate =
+    Number.isFinite(bridgeSnapshot.bridgeCompletionRatePercent)
+      ? Number(bridgeSnapshot.bridgeCompletionRatePercent)
+      : null;
+
+  if (alertStatus === 'critical') {
+    return `bridge funnel critical${completionRate === null ? '' : ` (${completionRate}%)`}`;
+  }
+
+  if (alertStatus === 'warning') {
+    return `bridge funnel degraded${completionRate === null ? '' : ` (${completionRate}%)`}`;
+  }
+
+  if (alertStatus === 'ok') {
+    return `bridge funnel healthy${completionRate === null ? '' : ` (${completionRate}%)`}`;
+  }
+
+  if (alertStatus === 'insufficient_data') {
+    return 'bridge funnel insufficient data';
+  }
+
+  return null;
+};
+
+export const findLatestKangurAiTutorBridgeRun = (runs) => {
+  if (!Array.isArray(runs) || runs.length === 0) {
+    return null;
+  }
+
+  for (let index = runs.length - 1; index >= 0; index -= 1) {
+    const run = runs[index];
+    if (
+      run &&
+      (run.kangurAiTutorBridge ||
+        (typeof run.kangurAiTutorBridgeSummaryText === 'string' &&
+          run.kangurAiTutorBridgeSummaryText.trim().length > 0))
+    ) {
+      return run;
+    }
+  }
+
+  return null;
+};
+
+export const getKangurAiTutorBridgeAgeMs = (runs, signalRunGeneratedAt) => {
+  if (!Array.isArray(runs) || runs.length === 0 || typeof signalRunGeneratedAt !== 'string') {
+    return null;
+  }
+
+  const latestRun = runs[runs.length - 1] ?? null;
+  const latestRunMs =
+    typeof latestRun?.generatedAt === 'string' ? Date.parse(latestRun.generatedAt) : Number.NaN;
+  const signalRunMs = Date.parse(signalRunGeneratedAt);
+  if (!Number.isFinite(latestRunMs) || !Number.isFinite(signalRunMs)) {
+    return null;
+  }
+
+  return Math.max(0, latestRunMs - signalRunMs);
+};
+
+export const getKangurAiTutorBridgeAgeRuns = (runs, signalRunGeneratedAt) => {
+  if (!Array.isArray(runs) || runs.length === 0 || typeof signalRunGeneratedAt !== 'string') {
+    return null;
+  }
+
+  const signalIndex = runs.findIndex((run) => run?.generatedAt === signalRunGeneratedAt);
+  if (signalIndex === -1) {
+    return null;
+  }
+
+  return Math.max(0, runs.length - 1 - signalIndex);
+};
+
+export const getKangurAiTutorBridgeSignalState = (runs, signalRunGeneratedAt) => {
+  if (!Array.isArray(runs) || runs.length === 0) {
+    return 'missing';
+  }
+
+  if (typeof signalRunGeneratedAt !== 'string' || signalRunGeneratedAt.trim().length === 0) {
+    return 'absent';
+  }
+
+  const latestRun = runs[runs.length - 1] ?? null;
+  if (latestRun?.generatedAt === signalRunGeneratedAt) {
+    return 'current';
+  }
+
+  return 'stale';
+};
+
+export const formatKangurAiTutorBridgeSignalAge = (ageRuns, ageMs) => {
+  if (Number.isFinite(ageRuns) && Number(ageRuns) === 0) {
+    return '0 runs';
+  }
+
+  if (Number.isFinite(ageRuns) && Number.isFinite(ageMs)) {
+    const runCount = Number(ageRuns);
+    const runLabel = runCount === 1 ? 'run' : 'runs';
+    return `${runCount} ${runLabel} / ${formatDuration(Number(ageMs))}`;
+  }
+
+  if (Number.isFinite(ageRuns)) {
+    const runCount = Number(ageRuns);
+    const runLabel = runCount === 1 ? 'run' : 'runs';
+    return `${runCount} ${runLabel}`;
+  }
+
+  if (Number.isFinite(ageMs)) {
+    return formatDuration(Number(ageMs));
+  }
+
+  return null;
+};
+
 export const summarizeStructuredCheck = (checkId, scanSummary) => {
   const rawSummary = scanSummary?.summary;
   if (!rawSummary || typeof rawSummary !== 'object' || Array.isArray(rawSummary)) {
@@ -232,6 +353,10 @@ export const runFromWeeklyReportPayload = (sourceFile, payload) => {
     summary: payload.summary ?? null,
     passRates: payload.passRates ?? null,
     totalDurationMs,
+    kangurAiTutorBridge: payload.kangurAiTutorBridge?.summary ?? null,
+    kangurAiTutorBridgeSummaryText: summarizeKangurAiTutorBridgeSignal(
+      payload.kangurAiTutorBridge?.summary ?? null
+    ),
     checks: Object.fromEntries(
       CHECK_IDS.map((checkId) => [checkId, buildCheckSnapshot(checkId, checkMap[checkId])])
     ),
@@ -240,10 +365,76 @@ export const runFromWeeklyReportPayload = (sourceFile, payload) => {
 
 export const toWeeklyLaneTrendMarkdown = (payload) => {
   const lines = [];
+  const latestRun = payload.runs[payload.runs.length - 1] ?? null;
+  const latestBridgeRun = findLatestKangurAiTutorBridgeRun(payload.runs);
+  const latestBridgeRunGeneratedAt = latestBridgeRun?.generatedAt ?? null;
+  const latestAvailableBridgeState = getKangurAiTutorBridgeSignalState(
+    payload.runs,
+    latestBridgeRunGeneratedAt
+  );
+  const latestAvailableBridgeAgeMs = getKangurAiTutorBridgeAgeMs(
+    payload.runs,
+    latestBridgeRunGeneratedAt
+  );
+  const latestAvailableBridgeAgeRuns = getKangurAiTutorBridgeAgeRuns(
+    payload.runs,
+    latestBridgeRunGeneratedAt
+  );
+  const latestAvailableBridgeAge = formatKangurAiTutorBridgeSignalAge(
+    latestAvailableBridgeAgeRuns,
+    latestAvailableBridgeAgeMs
+  );
+  const latestBridgeState = latestRun?.kangurAiTutorBridge
+    ? 'current'
+    : payload.runs.length > 0
+      ? 'absent'
+      : 'missing';
+  const latestBridgeAlert = latestRun?.kangurAiTutorBridge?.alertStatus ?? null;
+  const latestBridgeSignal = latestRun?.kangurAiTutorBridgeSummaryText ?? null;
+  const latestAvailableBridgeAlert = latestBridgeRun?.kangurAiTutorBridge?.alertStatus ?? null;
+  const latestAvailableBridgeSignal =
+    latestBridgeRun?.kangurAiTutorBridgeSummaryText ??
+    summarizeKangurAiTutorBridgeSignal(latestBridgeRun?.kangurAiTutorBridge ?? null);
   lines.push('# Weekly Lane Duration Trend');
   lines.push('');
   lines.push(`Generated at: ${payload.generatedAt}`);
   lines.push(`Runs analyzed: ${payload.summary.runCount}`);
+  if (latestBridgeState !== 'missing') {
+    lines.push(`Latest Kangur AI Tutor bridge state: ${latestBridgeState}`);
+  }
+  if (latestBridgeState === 'current' && latestAvailableBridgeAge) {
+    lines.push(`Latest Kangur AI Tutor bridge age: ${latestAvailableBridgeAge}`);
+  }
+  if (typeof latestBridgeAlert === 'string' && latestBridgeAlert.trim().length > 0) {
+    lines.push(`Latest Kangur AI Tutor bridge alert: ${latestBridgeAlert}`);
+  }
+  if (typeof latestBridgeSignal === 'string' && latestBridgeSignal.trim().length > 0) {
+    lines.push(`Latest Kangur AI Tutor bridge signal: ${latestBridgeSignal}`);
+  }
+  if (
+    latestBridgeRun &&
+    latestRun &&
+    latestBridgeRun.generatedAt !== latestRun.generatedAt &&
+    (latestAvailableBridgeAlert || latestAvailableBridgeSignal)
+  ) {
+    lines.push(`Most recent Kangur AI Tutor bridge snapshot: ${latestBridgeRun.generatedAt}`);
+    lines.push(`Most recent Kangur AI Tutor bridge state: ${latestAvailableBridgeState}`);
+    if (latestAvailableBridgeAge) {
+      lines.push(`Most recent Kangur AI Tutor bridge age: ${latestAvailableBridgeAge}`);
+    }
+    if (
+      typeof latestAvailableBridgeAlert === 'string' &&
+      latestAvailableBridgeAlert.trim().length > 0
+    ) {
+      lines.push(`Most recent Kangur AI Tutor bridge alert: ${latestAvailableBridgeAlert}`);
+    }
+    if (
+      typeof latestAvailableBridgeSignal === 'string' &&
+      latestAvailableBridgeSignal.trim().length > 0
+    ) {
+      lines.push(`Most recent Kangur AI Tutor bridge signal: ${latestAvailableBridgeSignal}`);
+    }
+  }
   lines.push('');
   lines.push('## Run Timeline');
   lines.push('');
@@ -289,10 +480,27 @@ export const toWeeklyLaneTrendMarkdown = (payload) => {
     lines.push('');
   }
 
+  const includesKangurAiTutorBridge = payload.runs.some((run) => Boolean(run.kangurAiTutorBridge));
+  if (includesKangurAiTutorBridge) {
+    lines.push('## Kangur AI Tutor Bridge Snapshot');
+    lines.push('');
+    lines.push('| Run | Suggestions | Completion Rate | CTA Clicks | Opens | Completions | Alert |');
+    lines.push('| --- | ---: | ---: | ---: | ---: | ---: | --- |');
+    for (const run of payload.runs) {
+      const bridge = run.kangurAiTutorBridge;
+      lines.push(
+        `| ${run.generatedAt} | ${bridge?.bridgeSuggestionCount ?? '-'} | ${bridge?.bridgeCompletionRatePercent ?? '-'} | ${bridge?.bridgeQuickActionClickCount ?? '-'} | ${bridge?.bridgeFollowUpClickCount ?? '-'} | ${bridge?.bridgeFollowUpCompletionCount ?? '-'} | ${bridge?.alertStatus ?? '-'} |`
+      );
+    }
+    lines.push('');
+  }
+
   lines.push('## Notes');
   lines.push('');
-  lines.push('- This trend report summarizes historical `weekly-quality-*.json` runs.');
+  lines.push('- This trend report summarizes historical `weekly-quality-*.json` runs and prefers `weekly-quality-latest.json` when it contains the richer snapshot for the newest run.');
   lines.push('- Structured gate summaries are preserved for weekly testing, architecture, and observability checks when available.');
+  lines.push('- Kangur AI Tutor bridge snapshots are preserved from weekly artifacts when the report includes them.');
+  lines.push('- Kangur AI Tutor bridge state is `current` when the newest weekly run carries the signal, `stale` when it is reused from an older weekly artifact, and `absent` when no bridge signal exists yet.');
   lines.push('- Use this to tune per-check timeouts and detect weekly lane runtime drift.');
   return `${lines.join('\n')}\n`;
 };

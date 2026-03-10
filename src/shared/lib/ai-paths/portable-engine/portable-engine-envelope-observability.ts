@@ -1,4 +1,5 @@
 import { dispatchPortablePathEnvelopeVerificationAuditSinks } from './portable-engine-envelope-audit-sinks';
+
 import type { PortablePathEnvelopeSignatureVerificationMode } from './portable-engine-resolution-types';
 
 export type PortablePathEnvelopeVerificationOutcome =

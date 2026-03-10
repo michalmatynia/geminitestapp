@@ -3,9 +3,8 @@ import { PlusIcon, Edit2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { useDraftQueries, useDeleteDraftMutation } from '@/features/drafter/hooks/useDraftQueries';
-import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductDraft } from '@/shared/contracts/products';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   Button,
   ListPanel,
@@ -16,6 +15,7 @@ import {
   type SimpleSettingsListItem,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useDrafterActions } from '../context/DrafterContext';
 

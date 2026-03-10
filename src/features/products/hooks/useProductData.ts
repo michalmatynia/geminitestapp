@@ -23,8 +23,8 @@ import {
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {

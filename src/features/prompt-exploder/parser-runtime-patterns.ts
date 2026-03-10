@@ -1,14 +1,14 @@
-import { validateRegexSafety } from '@/shared/utils/regex-safety';
+import type {
+  PromptExploderRuleSegmentType,
+  PromptValidationRule,
+} from '@/shared/contracts/prompt-engine';
 import { PromptValidationRuleCompileError } from '@/shared/lib/prompt-core/errors';
 import {
   recordPromptValidationCounter,
   recordPromptValidationError,
   recordPromptValidationTiming,
 } from '@/shared/lib/prompt-core/runtime-observability';
-import type {
-  PromptExploderRuleSegmentType,
-  PromptValidationRule,
-} from '@/shared/contracts/prompt-engine';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 
 import type { PromptExploderSegmentType } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';

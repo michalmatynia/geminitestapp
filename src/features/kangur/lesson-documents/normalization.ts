@@ -14,6 +14,7 @@ import {
   type KangurLessonTextBlock,
 } from '@/shared/contracts/kangur';
 import { sanitizeHtml, sanitizeSvg } from '@/shared/utils';
+
 import { applyKangurLessonActivityDefaults } from '../lesson-activities';
 import {
   createKangurLessonBlockId,

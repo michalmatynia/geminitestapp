@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useAdminCaseResolverCasesStateContext } from '../context/AdminCaseResolverCasesContext';
+
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/shared/ui';
+
+import { useAdminCaseResolverCasesStateContext } from '../context/AdminCaseResolverCasesContext';
 
 type CaseIdentifierTextSelectorProps = {
   value: string[];

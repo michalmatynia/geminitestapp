@@ -3,11 +3,6 @@ import 'server-only';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { getAuthDataProvider } from '@/shared/lib/auth/services/auth-provider';
-import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
-import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   DatabaseEngineCollectionStatus,
   DatabaseEnginePrimaryProvider,
@@ -16,6 +11,8 @@ import type {
   DatabaseEngineService,
   DatabaseEngineStatus,
 } from '@/shared/contracts/database';
+import { getAuthDataProvider } from '@/shared/lib/auth/services/auth-provider';
+import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
   getDatabaseEngineCollectionRouteMap,
@@ -26,6 +23,9 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type DmmfModel = { name: string };
 type DmmfDatamodel = { models?: DmmfModel[] };

@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Button, FormSection, Alert, LoadingState } from '@/shared/ui';
+
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
+import { Button, FormSection, Alert, LoadingState } from '@/shared/ui';
 
 const formatTimestamp = (value: string | null): string => {
   if (!value) return 'n/a';

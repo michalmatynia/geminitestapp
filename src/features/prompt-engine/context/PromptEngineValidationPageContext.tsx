@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { ExploderPatternSubTab, PatternCollectionTab } from './PromptEngineContext';
 import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
+
+import type { ExploderPatternSubTab, PatternCollectionTab } from './PromptEngineContext';
 
 type PromptEngineScopeFilter = PromptValidationScope | 'all';
 

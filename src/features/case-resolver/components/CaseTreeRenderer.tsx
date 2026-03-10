@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Eye,
   Plus,
@@ -14,6 +12,10 @@ import {
   Star,
   Copy,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Button,
   Badge,
@@ -26,6 +28,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { buildCaseResolverCaseHref } from './list/case-list-utils';
 import {
   useAdminCaseResolverCasesActionsContext,
@@ -33,7 +36,6 @@ import {
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 
 export function CaseTreeRenderer({

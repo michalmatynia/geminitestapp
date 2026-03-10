@@ -1,7 +1,8 @@
-import React, { ReactNode } from 'react';
 import { type VariantProps } from 'class-variance-authority';
+import React, { ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
+
 import { Badge, badgeVariants } from './badge';
 
 export type StatusVariant =

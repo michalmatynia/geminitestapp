@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
+import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
 import { Button, SectionHeader, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
-import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
 
 const marketplaces = [
   {

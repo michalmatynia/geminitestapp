@@ -2,8 +2,9 @@
 
 import React, { type ReactNode, useState, useMemo } from 'react';
 
-import { DocumentationSection } from './documentation-section';
 import { cn } from '@/shared/utils';
+
+import { DocumentationSection } from './documentation-section';
 import { SearchInput } from './search-input';
 
 export type DocumentationListVariant = 'default' | 'warning' | 'recommendation' | 'error' | 'info';

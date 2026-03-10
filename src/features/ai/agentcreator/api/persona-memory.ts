@@ -1,8 +1,8 @@
+import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type {
   PersonaMemorySearchResponse,
   PersonaMemorySourceType,
 } from '@/shared/contracts/persona-memory';
-import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 
 export type FetchAgentPersonaMemoryParams = {

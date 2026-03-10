@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { GripVertical, Pencil } from 'lucide-react';
+import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Badge, StatusToggle, TreeContextMenu, TreeRow } from '@/shared/ui';

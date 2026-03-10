@@ -3,11 +3,11 @@
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 
+import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
-import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState, Card } from '@/shared/ui';
 
 import { ChatbotDebugPanel } from '../components/ChatbotDebugPanel';

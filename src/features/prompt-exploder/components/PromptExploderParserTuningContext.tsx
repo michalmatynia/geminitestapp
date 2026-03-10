@@ -7,8 +7,8 @@ import {
   SettingsActionsContext,
   SettingsStateContext,
 } from '@/features/prompt-exploder/context/SettingsContext';
-import type { PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import { promptExploderValidatorScopeFromStack } from '@/features/prompt-exploder/validation-stack';
+import type { PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import { internalError } from '@/shared/errors/app-error';
 
 type PromptExploderParserTuningContextValue = {

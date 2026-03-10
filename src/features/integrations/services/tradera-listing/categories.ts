@@ -1,16 +1,19 @@
 import { chromium, devices, type BrowserContextOptions } from 'playwright';
-import {
-  IntegrationConnectionRecord,
-  TraderaCategoryRecord,
-} from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
-import { findVisibleLocator } from './utils';
+
 import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
+import {
+  IntegrationConnectionRecord,
+  TraderaCategoryRecord,
+} from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
+
 import { ensureLoggedIn } from './browser';
+import { findVisibleLocator } from './utils';
+
 
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord

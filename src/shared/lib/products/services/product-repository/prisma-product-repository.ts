@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import {
   type CreateProductInput,
@@ -12,13 +11,14 @@ import {
 } from '@/shared/contracts/products';
 import { conflictError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
+import { buildProductWhere } from './prisma-product-repository.filters';
 import {
   removeUndefined,
   normalizeImageFileIds,
   normalizeProductParameterValues,
 } from './prisma-product-repository.helpers';
-import { buildProductWhere } from './prisma-product-repository.filters';
 import {
   toProductRecord,
   toProductListRecord,

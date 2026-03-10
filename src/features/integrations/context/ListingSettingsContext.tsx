@@ -11,9 +11,10 @@ import type {
   BaseInventory,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
+
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
-import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 

@@ -1,14 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/personas';
 import { useAgentPersonaMemory } from '@/features/ai/agentcreator/hooks/useAgentPersonaMemory';
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
+import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
+import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
 import { Button, Card, FormField, Hint, Input, SectionHeader, SelectSimple, StandardDataTablePanel, Tag } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';

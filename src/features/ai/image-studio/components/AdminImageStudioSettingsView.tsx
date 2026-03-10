@@ -19,10 +19,10 @@ import {
   useImageStudioSettingsActions,
   useImageStudioSettingsState,
 } from '../context/ImageStudioSettingsContext';
-import { PromptSettingsTab } from './settings/PromptSettingsTab';
 import { GenerationSettingsTab } from './settings/GenerationSettingsTab';
-import { ValidationSettingsTab } from './settings/ValidationSettingsTab';
 import { MaintenanceSettingsTab } from './settings/MaintenanceSettingsTab';
+import { PromptSettingsTab } from './settings/PromptSettingsTab';
+import { ValidationSettingsTab } from './settings/ValidationSettingsTab';
 
 type AdminImageStudioSettingsViewProps = {
   embedded: boolean;

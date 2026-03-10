@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Card, Hint, StatusBadge } from '@/shared/ui';
+
 import { type ContextRegistryNodeDisplay } from '../types';
 
 export function ContextRegistryNodesCard({

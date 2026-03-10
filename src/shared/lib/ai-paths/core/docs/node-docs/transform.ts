@@ -1,5 +1,6 @@
-import type { NodeConfigDocField } from '../node-docs.types';
 import { COMMON_RUNTIME_FIELDS } from '../node-docs.constants';
+
+import type { NodeConfigDocField } from '../node-docs.types';
 
 export const contextDocs: NodeConfigDocField[] = [
   {

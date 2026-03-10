@@ -11,9 +11,9 @@ import {
   useNoteEditorContext,
   useNoteFilesContext,
 } from '@/features/notesapp/context/NoteFormContext';
+import { useMarkdownEditor } from '@/features/notesapp/hooks/useMarkdownEditor';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
-import { useMarkdownEditor } from '@/features/notesapp/hooks/useMarkdownEditor';
 
 export function NotesMarkdownToolbar(): React.JSX.Element {
   const { content, setContent, undo, redo, canUndo, canRedo } = useNoteContentContext();

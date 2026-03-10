@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
-import type { ParamUiControl } from './param-ui';
 import { paramSpecSchema } from '@/shared/contracts/prompt-engine';
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';
+
+import type { ParamUiControl } from './param-ui';
 
 export const IMAGE_STUDIO_UI_PRESETS_KEY = 'image_studio_ui_presets';
 export const IMAGE_STUDIO_UI_ACTIVE_KEY = 'image_studio_ui_active_preset';

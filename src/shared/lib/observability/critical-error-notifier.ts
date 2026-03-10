@@ -8,8 +8,8 @@ import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 
 const SETTINGS_COLLECTION = 'settings';

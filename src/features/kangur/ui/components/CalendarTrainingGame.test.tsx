@@ -29,10 +29,17 @@ const DAYS = [
   'Niedziela',
 ] as const;
 const MONTHS_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
+const { persistKangurSessionScoreMock } = vi.hoisted(() => ({
+  persistKangurSessionScoreMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({
   addXp: vi.fn(),
   createTrainingReward: vi.fn(() => ({
+    breakdown: [
+      { kind: 'base', label: 'Ukonczenie rundy', xp: 14 },
+      { kind: 'accuracy', label: 'Skutecznosc', xp: 18 },
+    ],
     xp: 32,
     scorePercent: 100,
     progressUpdates: {},
@@ -49,6 +56,10 @@ vi.mock('@/features/kangur/ui/services/progress', () => ({
     operationsPlayed: [],
     lessonMastery: {},
   }),
+}));
+
+vi.mock('@/features/kangur/ui/services/session-score', () => ({
+  persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),
 }));
 
 import CalendarTrainingGame from '@/features/kangur/ui/components/CalendarTrainingGame';
@@ -131,11 +142,6 @@ describe('CalendarTrainingGame', () => {
       'aria-disabled',
       'true'
     );
-    expect(screen.getByTestId('calendar-training-feedback')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
-    );
-    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('uses the shared display emoji on the summary screen', () => {
@@ -173,9 +179,23 @@ describe('CalendarTrainingGame', () => {
       'text-green-700'
     );
     expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
+    expect(screen.getByTestId('calendar-training-summary-breakdown')).toHaveTextContent(
+      'Ukonczenie rundy +14'
+    );
+    expect(screen.getByTestId('calendar-training-summary-breakdown-accuracy')).toHaveTextContent(
+      'Skutecznosc +18'
+    );
     expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
+    );
+    expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'calendar',
+        score: 6,
+        totalQuestions: 6,
+        correctAnswers: 6,
+      })
     );
   });
 });

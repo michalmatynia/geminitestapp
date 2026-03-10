@@ -5,15 +5,15 @@ import dynamic from 'next/dynamic';
 import { memo, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
-import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import {
   useProductListFiltersContext,
   useProductListHeaderActionsContext,
 } from '@/features/products/context/ProductListContext';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductDraft } from '@/shared/contracts/products';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
+import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { Button, SelectSimple, Pagination, Breadcrumbs } from '@/shared/ui';
 
 const TriggerButtonBar = dynamic(

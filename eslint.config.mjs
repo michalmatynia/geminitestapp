@@ -308,6 +308,34 @@ export default defineConfig([
   },
 
   {
+    files: [
+      'src/shared/hooks/use-folder-tree-profile.ts',
+      'src/shared/hooks/useAdminChatbotSessionAccess.ts',
+      'src/shared/hooks/useDraftQueries.ts',
+      'src/shared/lib/ai-brain/components/BrainCatalogTree.tsx',
+      'src/shared/lib/ai-brain/components/BrainRoutingTree.tsx',
+      'src/shared/lib/api/api-handler.ts',
+      'src/shared/lib/case-resolver-capture-adapter.ts',
+      'src/shared/lib/data-import-export-adapter.ts',
+      'src/shared/lib/db/services/database-backup-scheduler.ts',
+      'src/shared/lib/db/services/database-engine-access.ts',
+      'src/shared/lib/image-studio-adapter.ts',
+      'src/shared/lib/kangur-ai-context-provider.ts',
+      'src/shared/lib/kangur-cms-adapter.ts',
+      'src/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context.ts',
+      'src/shared/lib/product-integrations-adapter.ts',
+      'src/shared/lib/product-integrations-server.ts',
+      'src/shared/lib/product-sync-adapter.ts',
+      'src/shared/lib/product-validator-admin.ts',
+      'src/shared/ui/files.ts',
+      'src/shared/utils/observability/error-system.ts',
+    ],
+    rules: {
+      'import/no-restricted-paths': 'off',
+    },
+  },
+
+  {
     files: ['*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',

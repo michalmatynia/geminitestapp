@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
 import { AlertTriangle, ClipboardList, Folders, ListOrdered, Plus, Sparkles, WandSparkles } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   createMasterFolderTreeTransactionAdapter,
@@ -10,6 +10,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
+import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -24,6 +25,14 @@ import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+
+import {
+  KANGUR_TEST_QUESTIONS_SETTING_KEY,
+  deleteKangurTestSuiteQuestions,
+  getQuestionsForSuite,
+  parseKangurTestQuestionStore,
+  publishReadyQuestions,
+} from '../test-questions';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_SUITE_SORT_ORDER_GAP,
@@ -38,36 +47,25 @@ import {
   upsertKangurTestSuite,
   type TestSuiteFormData,
 } from '../test-suites';
-
-import {
-  KANGUR_TEST_QUESTIONS_SETTING_KEY,
-  deleteKangurTestSuiteQuestions,
-  getQuestionsForSuite,
-  parseKangurTestQuestionStore,
-  publishReadyQuestions,
-} from '../test-questions';
-
-import { importLegacyKangurQuestions } from '../test-suites/import-legacy';
-
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
+import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { TestSuiteMetadataForm } from './components/TestSuiteMetadataForm';
+import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
+import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
 import {
   buildKangurTestSuiteCatalogMasterNodes,
   buildKangurTestSuiteMasterNodes,
   resolveKangurTestSuiteOrderFromNodes,
 } from './kangur-test-suites-master-tree';
-
-import { TestSuiteMetadataForm } from './components/TestSuiteMetadataForm';
-import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
 import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
-import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';
-import type { KangurTestSuite } from '@/shared/contracts/kangur-tests';
-import { KangurAdminContentShell } from './components/KangurAdminContentShell';
-import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
-import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { getQuestionAuthoringSummary } from './question-authoring-insights';
 import {
   buildKangurTestSuiteHealthMap,
   getKangurTestLibraryHealthSummary,
 } from './test-suite-health';
+import { importLegacyKangurQuestions } from '../test-suites/import-legacy';
+
 import type { KangurQuestionsManagerInitialView } from './question-manager-view';
 
 const ORDERED_TREE_INSTANCE = 'kangur_test_suites_manager';

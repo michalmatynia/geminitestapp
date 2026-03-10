@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
+
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
 
 export function useAiPathsNodeConfigActions(args: { selectedNodeId: string | null }) {
   const { selectedNodeId } = args;

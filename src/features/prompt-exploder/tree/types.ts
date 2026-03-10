@@ -1,8 +1,8 @@
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type {
   PromptExploderTreeNodeKind,
   PromptExploderTreeMetadata,
 } from '@/shared/contracts/prompt-exploder';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export const PROMPT_EXPLODER_TREE_NODE_PREFIX = 'prompt_exploder_tree:';
 

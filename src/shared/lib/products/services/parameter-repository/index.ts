@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { ParameterRepository } from '@/shared/contracts/products';
 import {
   getProductDataProvider,
   type ProductDbProvider,
 } from '@/shared/lib/products/services/product-provider';
-import type { ParameterRepository } from '@/shared/contracts/products';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoParameterRepository } from './mongo-parameter-repository';
 import { prismaParameterRepository } from './prisma-parameter-repository';

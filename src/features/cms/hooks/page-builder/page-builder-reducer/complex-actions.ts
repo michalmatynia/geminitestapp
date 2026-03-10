@@ -1,3 +1,10 @@
+import type {
+  PageBuilderState,
+  PageBuilderAction,
+  SectionInstance,
+  BlockInstance,
+} from '@/features/cms/types/page-builder';
+
 import {
   uid,
   findSection,
@@ -11,12 +18,6 @@ import {
   cloneSectionSubtree,
   moveSectionSubtree,
 } from '../section-hierarchy';
-import type {
-  PageBuilderState,
-  PageBuilderAction,
-  SectionInstance,
-  BlockInstance,
-} from '@/features/cms/types/page-builder';
 
 export function reduceComplexActions(
   state: PageBuilderState,

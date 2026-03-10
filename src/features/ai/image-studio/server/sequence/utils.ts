@@ -1,4 +1,5 @@
 import path from 'path';
+
 import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server';
 
 export const STUDIO_UPLOADS_ROOT = path.join(process.cwd(), 'public', 'uploads', 'studio');

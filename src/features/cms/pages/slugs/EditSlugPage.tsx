@@ -3,6 +3,7 @@
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
   useCmsDomains,
@@ -15,7 +16,6 @@ import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/
 import type { Slug } from '@/shared/contracts/cms';
 import { SectionHeader, useToast, LoadingState, Alert } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();

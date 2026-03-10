@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
-import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 export function KangurGameNavigationWidget(): React.JSX.Element {
   const {

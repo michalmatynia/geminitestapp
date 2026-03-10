@@ -1,9 +1,12 @@
 import { randomUUID } from 'crypto';
-import type { Filter } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import type { NoteFileDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/contracts/notes';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
 import { noteFileCollectionName } from './common';
+
+import type { Filter } from 'mongodb';
 
 const toNoteFileRecord = (doc: NoteFileDocument): NoteFileRecord => ({
   id: doc.id ?? doc._id,

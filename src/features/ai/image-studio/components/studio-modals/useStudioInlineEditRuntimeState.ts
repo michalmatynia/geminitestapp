@@ -2,14 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ParamSpec, PromptValidationIssue } from '@/shared/contracts/prompt-engine';
+import { api } from '@/shared/lib/api-client';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { flattenParams } from '@/shared/utils/prompt-params';
 
+import { buildPromptDiffLines } from './prompt-extract-utils';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
   estimateBase64Bytes,
@@ -26,20 +30,17 @@ import {
   resolveInlinePreviewSource,
   resolveSelectedGenerationPreview,
 } from './slot-inline-edit-utils';
-import { buildPromptDiffLines } from './prompt-extract-utils';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { flattenParams } from '@/shared/utils/prompt-params';
-import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
-import type { ParamSpec, PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 
-import type {
-  EditCardTab,
-  StudioInlineEditStateContextValue,
-} from './StudioInlineEditContext.types';
+
 import type {
   EnvironmentReferenceDraftViewModel as EnvironmentReferenceDraft,
   LinkedGeneratedRunsResponse,
 } from './slot-inline-edit-tab-types';
+import type {
+  EditCardTab,
+  StudioInlineEditStateContextValue,
+} from './StudioInlineEditContext.types';
 
 type PreviewSize = { width: number; height: number } | null;
 

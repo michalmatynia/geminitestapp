@@ -16,13 +16,13 @@ import {
 import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
-  useProductListFiltersContext,
-  useProductListSelectionContext,
-} from '@/features/products/context/ProductListContext';
-import {
   findPresetById,
   parseAdvancedFilterPayload,
 } from '@/features/products/components/list/advanced-filter';
+import {
+  useProductListFiltersContext,
+  useProductListSelectionContext,
+} from '@/features/products/context/ProductListContext';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
@@ -42,6 +42,7 @@ import {
   JSONImportModal,
   Chip,
 } from '@/shared/ui';
+
 import {
   buildPresetBundle,
   createAdvancedPreset,

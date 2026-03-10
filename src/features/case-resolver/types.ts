@@ -64,7 +64,6 @@ import type {
   CaseResolverPromptExploderApplyUiDiagnostics,
   CaseResolverPromptExploderPendingPayload,
 } from './hooks/useCaseResolverState.prompt-exploder-sync';
-
 import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
 
 export type CaseResolverStateValue = {

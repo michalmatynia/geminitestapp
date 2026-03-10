@@ -4,6 +4,15 @@ import Link from 'next/link';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  KANGUR_NARRATOR_ENGINE_OPTIONS,
+  KANGUR_NARRATOR_SETTINGS_KEY,
+  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurParentVerificationEmailSettings,
+  parseKangurNarratorSettings,
+  type KangurParentVerificationEmailSettings,
+  type KangurNarratorEngine,
+} from '@/features/kangur/settings';
+import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS,
   KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
@@ -15,23 +24,14 @@ import {
   type KangurAiTutorGuestIntroMode,
 } from '@/features/kangur/settings-ai-tutor';
 import {
-  KANGUR_NARRATOR_ENGINE_OPTIONS,
-  KANGUR_NARRATOR_SETTINGS_KEY,
-  KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
-  parseKangurParentVerificationEmailSettings,
-  parseKangurNarratorSettings,
-  type KangurParentVerificationEmailSettings,
-  type KangurNarratorEngine,
-} from '@/features/kangur/settings';
-import {
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsProbeResponse,
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
-import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { api } from '@/shared/lib/api-client';
+import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   AgentPersonaMoodAvatar,

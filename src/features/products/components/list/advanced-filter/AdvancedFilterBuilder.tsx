@@ -3,7 +3,6 @@
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   PRODUCT_ADVANCED_FILTER_MAX_DEPTH,
   type ProductAdvancedFilterCombinator,
@@ -12,6 +11,7 @@ import {
   type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterRule,
 } from '@/shared/contracts/products';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Checkbox, Input, Label, SelectSimple } from '@/shared/ui';
 import type { SelectSimpleOption } from '@/shared/ui/select-simple';
 

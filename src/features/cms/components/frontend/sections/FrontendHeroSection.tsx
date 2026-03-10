@@ -1,5 +1,6 @@
 'use client';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { EmptyState } from '@/shared/ui';
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
@@ -9,7 +10,6 @@ import { useMediaStyles } from '../media-styles-context';
 import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendHeroSection(): React.ReactNode {
   const { settings, blocks } = useSectionBlockData();

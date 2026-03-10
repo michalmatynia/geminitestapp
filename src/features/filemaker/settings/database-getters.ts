@@ -1,4 +1,10 @@
 import { validationError } from '@/shared/errors/app-error';
+
+import {
+  assertCanonicalFilemakerDatabasePayload,
+  normalizeFilemakerDatabase,
+} from '../filemaker-settings.database';
+import { normalizeString } from '../filemaker-settings.helpers';
 import {
   FilemakerDatabase,
   FilemakerAddress,
@@ -13,11 +19,6 @@ import {
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
-import { normalizeString } from '../filemaker-settings.helpers';
-import {
-  assertCanonicalFilemakerDatabasePayload,
-  normalizeFilemakerDatabase,
-} from '../filemaker-settings.database';
 
 const parseFilemakerDatabasePayload = (
   raw: string | null | undefined

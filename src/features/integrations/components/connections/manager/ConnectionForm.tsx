@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 
 import {
-  useIntegrationsActions,
-  useIntegrationsData,
-} from '@/features/integrations/context/IntegrationsContext';
-import {
   createEmptyConnectionForm,
   type ConnectionFormState,
 } from '@/features/integrations/context/integrations-context-types';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import { FormSection, FormActions } from '@/shared/ui';
 
 import { ConnectionFormFields } from './ConnectionFormFields';

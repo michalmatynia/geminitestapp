@@ -4,14 +4,14 @@ import type {
   DatabaseWriteOutcome,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-
 import { dbApi, entityApi, ApiResponse } from '@/shared/lib/ai-paths/api';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+
 import { buildDbQueryPayload } from '../utils';
 import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,
 } from './integration-database-write-guardrails';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 interface DbActionResult {
   items?: unknown[];

@@ -2,31 +2,32 @@
 
 import { useState, useCallback, useMemo } from 'react';
 
+import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
+import { api } from '@/shared/lib/api-client';
 import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
 } from '@/shared/lib/products/constants';
-import type { ImageFileSelection } from '@/shared/contracts/files';
-import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import { toSlotName } from '../components/studio-modals/prompt-extract-utils';
+import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState, usePromptActions } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 
+import type { PromptExtractHistoryEntry } from '../components/studio-modals/prompt-extract-utils';
 import type {
   LinkedGeneratedRunsResponse,
   LinkedGeneratedVariantViewModel as LinkedGeneratedVariant,
 } from '../components/studio-modals/slot-inline-edit-tab-types';
-import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
-import type { PromptExtractHistoryEntry } from '../components/studio-modals/prompt-extract-utils';
-import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
-import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+
 
 export function useStudioModalsState() {
   const { toast } = useToast();

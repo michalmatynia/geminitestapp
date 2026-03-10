@@ -1,3 +1,5 @@
+import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
+import { normalizeString } from '../filemaker-settings.helpers';
 import {
   FilemakerDatabase,
   FilemakerEvent,
@@ -8,8 +10,6 @@ import {
   FilemakerEmailLink,
   FilemakerEventOrganizationLink,
 } from '../types';
-import { normalizeString } from '../filemaker-settings.helpers';
-import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 
 export const removeFilemakerPhoneNumber = (
   database: FilemakerDatabase,

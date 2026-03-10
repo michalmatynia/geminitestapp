@@ -4,11 +4,12 @@ import React, { createContext, useContext } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
+import { useVersionGraphRuntime } from './useVersionGraphRuntime';
+
 import type {
   VersionGraphActions,
   VersionGraphState,
 } from './version-graph-context-types';
-import { useVersionGraphRuntime } from './useVersionGraphRuntime';
 
 export type { VersionNode, VersionEdge, LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 export type {

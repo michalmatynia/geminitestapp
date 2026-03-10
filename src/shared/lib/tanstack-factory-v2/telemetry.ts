@@ -1,5 +1,7 @@
 import { type QueryKey } from '@tanstack/react-query';
+
 import { emitTanstackTelemetry } from '@/shared/lib/observability/tanstack-telemetry';
+
 import { TanstackFactoryMeta, TanstackLifecycleStage } from '../tanstack-factory-v2.types';
 
 type EmitFactoryTelemetryInput = {

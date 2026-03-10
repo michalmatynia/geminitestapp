@@ -4,10 +4,9 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
-
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
   launchBrowser,

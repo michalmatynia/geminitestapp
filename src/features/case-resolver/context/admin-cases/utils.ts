@@ -1,5 +1,6 @@
 import type { UserPreferences } from '@/shared/contracts/auth';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
 import { type CaseListViewDefaults } from './types';
 
 export const CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS = 15;

@@ -1,4 +1,5 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+
 import type { GraphIntegrityReport, GraphIntegrityIssue } from './graph.types';
 
 const PROCESSING_NODE_TYPES = new Set<string>([

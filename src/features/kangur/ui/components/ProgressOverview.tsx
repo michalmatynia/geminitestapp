@@ -12,6 +12,7 @@ import {
   getNextLevel,
   getProgressBadges,
   getProgressAverageAccuracy,
+  getProgressAverageXpPerSession,
   getProgressTopActivities,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -34,12 +35,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
   const averageAccuracy = getProgressAverageAccuracy(progress);
+  const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const topActivities = getProgressTopActivities(progress);
   const badgeStatuses = getProgressBadges(progress);
 
   const stats: ProgressStat[] = [
     { accent: 'indigo', label: 'Laczne XP', value: totalXp },
-    { accent: 'violet', label: 'Poziom', value: currentLevel.level },
+    { accent: 'violet', label: 'XP / gre', value: averageXpPerSession },
     { accent: 'sky', label: 'Rozegrane gry', value: gamesPlayed },
     {
       accent: 'emerald',
@@ -131,11 +133,12 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-semibold text-slate-800'>{activity.label}</p>
                   <p className='text-xs text-slate-500'>
-                    {activity.sessionsPlayed} sesji · srednio {activity.averageAccuracy}% · najlepszy
-                    wynik {activity.bestScorePercent}%
+                    {activity.sessionsPlayed} sesji · {activity.averageXpPerSession} XP / gre ·
+                    srednio {activity.averageAccuracy}% · najlepszy wynik{' '}
+                    {activity.bestScorePercent}%
                   </p>
                 </div>
-                <KangurStatusChip accent='indigo'>seria {activity.bestStreak}</KangurStatusChip>
+                <KangurStatusChip accent='indigo'>{activity.totalXpEarned} XP</KangurStatusChip>
               </div>
             ))}
           </div>

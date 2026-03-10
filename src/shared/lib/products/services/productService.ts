@@ -1,23 +1,6 @@
 import 'server-only';
 
-import {
-  deleteFileFromStorage,
-  uploadFile,
-  getImageFileRepository,
-} from '@/shared/lib/files/services/image-file-service';
-import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import {
-  getProductDataProvider,
-  type ProductDbProvider,
-} from '@/shared/lib/products/services/product-provider';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import {
-  parseProductForm,
-  type ParsedProductImageSequenceEntry,
-} from '@/shared/lib/products/services/product-service-form-utils';
-import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import type {
   ImageFileRecord,
   ImageFileCreateInput,
@@ -33,6 +16,23 @@ import type {
   ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import {
+  deleteFileFromStorage,
+  uploadFile,
+  getImageFileRepository,
+} from '@/shared/lib/files/services/image-file-service';
+import {
+  getProductDataProvider,
+  type ProductDbProvider,
+} from '@/shared/lib/products/services/product-provider';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import {
+  parseProductForm,
+  type ParsedProductImageSequenceEntry,
+} from '@/shared/lib/products/services/product-service-form-utils';
+import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { withRetry } from '@/shared/utils/retry';
 
 export type ImageFileRepository = {

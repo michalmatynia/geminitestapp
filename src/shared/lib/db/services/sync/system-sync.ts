@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import type {
   MongoSettingDoc,
   MongoUserPreferencesDoc,
@@ -7,6 +6,7 @@ import type {
   MongoAiConfigurationDoc,
 } from '../database-sync-types';
 import type { SyncHandler } from './types';
+import type { Prisma } from '@prisma/client';
 
 export const syncSettings: SyncHandler = async ({ mongo, prisma, toDate }) => {
   const docs = await mongo.collection('settings').find({}).toArray();

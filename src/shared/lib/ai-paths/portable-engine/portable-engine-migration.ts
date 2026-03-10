@@ -49,12 +49,12 @@ export const migratePortablePathInput = (
   const migrationWarnings: PortablePathMigrationWarning[] =
     triggerContextModeRemediation.changed
       ? [
-          {
-            code: 'removed_trigger_context_modes_normalized',
-            message:
+        {
+          code: 'removed_trigger_context_modes_normalized',
+          message:
               'Portable payload normalized removed Trigger.contextMode values to trigger_only.',
-          },
-        ]
+        },
+      ]
       : [];
   const migratedInput = triggerContextModeRemediation.value;
 

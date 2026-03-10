@@ -1,14 +1,15 @@
 import { z } from 'zod';
+
+import {
+  type PromptExploderBenchmarkCase as PromptExploderBenchmarkCaseContract,
+  type PromptExploderBenchmarkReport as PromptExploderBenchmarkReportContract,
+} from './benchmark';
 import {
   promptExploderDocumentSchema,
   promptExploderSegmentSchema,
   type PromptExploderSegment,
   type PromptExploderBinding,
 } from './document';
-import {
-  type PromptExploderBenchmarkCase as PromptExploderBenchmarkCaseContract,
-  type PromptExploderBenchmarkReport as PromptExploderBenchmarkReportContract,
-} from './benchmark';
 
 export type SegmentSelectionStrategy =
   | {

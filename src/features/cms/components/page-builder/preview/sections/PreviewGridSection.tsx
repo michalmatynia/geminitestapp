@@ -3,7 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { getSectionContainerClass, getSectionStyles, getTextAlign } from '@/features/cms/public';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
@@ -18,7 +17,6 @@ import {
   InspectorHover,
   resolveNodeLabel,
 } from '@/features/cms/components/page-builder/preview/InspectorOverlay';
-import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import {
   getGapClass,
   resolveGapValue,
@@ -28,6 +26,8 @@ import {
   getBlockMinHeight,
   getSelectableSurfaceProps,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
+import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '@/features/cms/public';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import { Separator, EmptyState, Button } from '@/shared/ui';

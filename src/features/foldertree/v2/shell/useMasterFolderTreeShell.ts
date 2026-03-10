@@ -18,18 +18,18 @@ import {
   type FolderTreeInstance,
   type FolderTreePlaceholderClassSet,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
+import { useFolderTreeProfileConfig } from './useFolderTreeProfileConfig';
+import { useFolderTreeUiState, type FolderTreePanelState } from './useFolderTreeUiState';
 import {
   useFolderTreeInstanceV2,
   type UseFolderTreeInstanceV2Options,
 } from '../hooks/useFolderTreeInstanceV2';
 import { useFolderTreeKeyboardNav } from '../hooks/useFolderTreeKeyboardNav';
-import { useFolderTreeProfileConfig } from './useFolderTreeProfileConfig';
-import { useFolderTreeUiState, type FolderTreePanelState } from './useFolderTreeUiState';
-import type { MasterFolderTreeShellRuntime } from './useFolderTreeShellRuntime';
-import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
+import type { MasterFolderTreeShellRuntime } from './useFolderTreeShellRuntime';
 import type { LucideIcon } from 'lucide-react';
 
 export type UseMasterFolderTreeShellOptions = Omit<

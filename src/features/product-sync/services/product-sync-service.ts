@@ -3,6 +3,14 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import {
+  getProductSyncProfile,
+  getProductSyncRun,
+  putProductSyncRunItem,
+  touchProductSyncProfileLastRunAt,
+  updateProductSyncRun,
+  updateProductSyncRunStatus,
+} from '@/features/product-sync/services/product-sync-repository';
+import {
   getExportDefaultConnectionId,
   getIntegrationRepository,
   getProductListingRepository,
@@ -11,16 +19,6 @@ import {
   callBaseApi,
   fetchBaseProductDetails,
 } from '@/server/integrations';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import {
-  getProductSyncProfile,
-  getProductSyncRun,
-  putProductSyncRunItem,
-  touchProductSyncProfileLastRunAt,
-  updateProductSyncRun,
-  updateProductSyncRunStatus,
-} from '@/features/product-sync/services/product-sync-repository';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   ProductSyncAppField,
   ProductSyncFieldRule,
@@ -31,6 +29,8 @@ import type {
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
 import type { ProductWithImages, UpdateProductInput } from '@/shared/contracts/products';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
 const BASE_DETAILS_BATCH_SIZE = 100;

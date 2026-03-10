@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import {
   Eye,
   EyeOff,
@@ -10,6 +9,7 @@ import {
   Smartphone,
   Undo2,
 } from 'lucide-react';
+import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -41,24 +41,24 @@ import {
 import { KangurAuthProvider } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
-import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import type { PageZone } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { Badge, Button } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { useKangurCmsBuilderRuntime } from './KangurCmsBuilderRuntimeContext';
+import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_SCREEN_KEYS,
   KANGUR_CMS_SCREEN_LABELS,
   serializeKangurCmsSections,
   type KangurCmsScreenKey,
 } from './project';
-import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 
 const KANGUR_BUILDER_BASE_PATH = '/admin/kangur';
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];

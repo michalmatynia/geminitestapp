@@ -1,4 +1,5 @@
 import { type Filter } from 'mongodb';
+
 import {
   getProductAdvancedFilterMetrics,
   type ProductAdvancedFilterCondition,
@@ -6,6 +7,7 @@ import {
   type ProductFilters,
 } from '@/shared/contracts/products';
 import { logger } from '@/shared/utils/logger';
+
 import { type ProductDocument } from './mongo-product-repository-mappers';
 import {
   appendAndCondition,

@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
+
 import {
   useImportExportActions,
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
 import { Button, FormSection, Hint, StatusBadge } from '@/shared/ui';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {

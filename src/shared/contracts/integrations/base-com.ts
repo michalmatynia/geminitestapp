@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import type { TemplateMapping as BaseFieldMapping } from './templates';
 
 /**

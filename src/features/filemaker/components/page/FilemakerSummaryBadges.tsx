@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { Badge } from '@/shared/ui';
+
 import { useAdminFilemakerPageStateContext } from '../../context/AdminFilemakerPageContext';
 
 export function FilemakerSummaryBadges(): React.JSX.Element {

@@ -1,7 +1,7 @@
+import type { UiElement, UiInventory } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Page } from 'playwright';
-import type { UiElement, UiInventory } from '@/shared/contracts/agent-runtime';
 
 export type { UiElement, UiInventory };
 

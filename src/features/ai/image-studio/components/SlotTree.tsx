@@ -4,31 +4,6 @@ import { Folder, FolderOpen, GripVertical, LayoutGrid } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
-  FolderTreeViewportV2,
-  handleMasterTreeDrop,
-  isInternalMasterTreeNode,
-  resolveFolderTreeIconSet,
-  useMasterFolderTreeShell,
-} from '@/features/foldertree';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import {
-  getFolderTreeInstanceSettingsHref,
-  getMotionSafeScrollBehavior,
-  type MasterTreeDropPosition,
-  type MasterTreeId,
-  type MasterTreeNode,
-} from '@/shared/utils';
-import { MasterTreeSettingsButton } from '@/shared/ui';
-import {
-  DRAG_KEYS,
-  getFirstDragValue,
-  resolveVerticalDropPosition,
-} from '@/shared/utils/drag-drop';
-import { normalizeTreePath } from '@/shared/utils/tree-operations';
-
-import { useSlotsState } from '../context/SlotsContext';
-import { useSlotsActions } from '../context/SlotsContext';
-import {
   buildMasterNodesFromStudioTree,
   findMasterNodeAncestorIds,
   fromFolderMasterNodeId,
@@ -41,10 +16,34 @@ import {
   canDropImageStudioExternalNode,
   resolveImageStudioExternalDropAction,
 } from '@/features/ai/image-studio/utils/studio-master-tree-external-drop';
+import {
+  FolderTreeViewportV2,
+  handleMasterTreeDrop,
+  isInternalMasterTreeNode,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { MasterTreeSettingsButton } from '@/shared/ui';
+import {
+  getFolderTreeInstanceSettingsHref,
+  getMotionSafeScrollBehavior,
+  type MasterTreeDropPosition,
+  type MasterTreeId,
+  type MasterTreeNode,
+} from '@/shared/utils';
+import {
+  DRAG_KEYS,
+  getFirstDragValue,
+  resolveVerticalDropPosition,
+} from '@/shared/utils/drag-drop';
+import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
-import { SlotTreeContext, type SlotTreeContextValue } from './slot-tree/SlotTreeContext';
-import { FolderNodeItem } from './slot-tree/FolderNodeItem';
+import { useSlotsState } from '../context/SlotsContext';
+import { useSlotsActions } from '../context/SlotsContext';
 import { CardNodeItem } from './slot-tree/CardNodeItem';
+import { FolderNodeItem } from './slot-tree/FolderNodeItem';
+import { SlotTreeContext, type SlotTreeContextValue } from './slot-tree/SlotTreeContext';
 import { useSlotTreeActions } from './slot-tree/useSlotTreeActions';
 
 type SlotTreeRevealRequest = {

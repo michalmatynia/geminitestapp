@@ -1,6 +1,8 @@
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
+import { agentCapabilityManifest } from './agent-capability-manifest';
+import { getAgentDiscoverySummary, getAgentResource } from './agent-discovery';
 import {
   AgentLeaseEventSchema,
   AgentLeaseMutationRequestSchema,
@@ -8,8 +10,6 @@ import {
   AgentLeaseRecordSchema,
   AgentLeaseStateSchema,
 } from '../contracts/agent-leases';
-import { getAgentDiscoverySummary, getAgentResource } from './agent-discovery';
-import { agentCapabilityManifest } from './agent-capability-manifest';
 
 const DEFAULT_LEASE_MS = 5 * 60 * 1000;
 const MAX_RECENT_EVENTS = 10;

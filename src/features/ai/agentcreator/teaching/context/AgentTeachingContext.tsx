@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
 import { internalError } from '@/shared/errors/app-error';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 

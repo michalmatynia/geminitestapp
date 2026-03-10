@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
+
 import {
   MasterFolderTreeController,
   MasterTreeId,
   MasterTreeDropPositionDto,
 } from '@/shared/contracts/master-folder-tree';
-import { getMasterTreeDragNodeData } from '../operations/drag-data';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+
+import { getMasterTreeDragNodeData } from '../operations/drag-data';
 
 export type FolderTreeDropInput = {
   draggedNodeId: MasterTreeId;

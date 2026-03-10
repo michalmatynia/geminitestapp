@@ -2,7 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type {
   AiNode,
   Edge,
@@ -20,6 +19,7 @@ import type {
   AiPathRunUpdate,
 } from '@/shared/contracts/ai-paths';
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths-core';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const RUNS_COLLECTION = 'ai_path_runs';

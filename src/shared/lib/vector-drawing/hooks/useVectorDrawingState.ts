@@ -1,14 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useShapeHistory } from '../useShapeHistory';
-import { smoothShape, simplifyShape } from '../geometry';
-import { vectorShapesToPath } from '@/shared/ui';
+
 import type {
   VectorOverlayResult as VectorDrawingOutput,
   VectorShape,
   VectorToolMode,
 } from '@/shared/contracts/vector';
+import { vectorShapesToPath } from '@/shared/ui';
+
+import { smoothShape, simplifyShape } from '../geometry';
+import { useShapeHistory } from '../useShapeHistory';
 
 export type { VectorDrawingOutput };
 

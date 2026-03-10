@@ -1,8 +1,10 @@
 import { Document, Collection, Filter, WithId } from 'mongodb';
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+
 import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
-import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
+
+import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
+import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 
 type ProductsWithCountAggregateResult = {
   products?: Document[];

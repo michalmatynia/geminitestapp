@@ -1,9 +1,9 @@
-import { cloneJsonSafe, hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
   mergeNodeOutputsForStatus,
   toRuntimeNodeStatus,
 } from '@/features/ai/ai-paths/services/path-run-executor.logic';
 import { toRuntimeNodeResolutionTelemetry } from '@/features/ai/ai-paths/services/path-run-executor.runtime-kernel';
+import { recordRuntimeNodeStatus } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type {
   AiNode,
   AiPathRunNodeRecord,
@@ -20,14 +20,16 @@ import type {
   RuntimeTraceResume,
   RuntimeTraceSpanStatus,
 } from '@/shared/contracts/ai-paths-runtime';
-import { recordRuntimeNodeStatus } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 import type {
   RuntimeNodeBlockedEvent,
   RuntimeNodeErrorEvent,
   RuntimeNodeFinishEvent,
   RuntimeNodeStartEvent,
 } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
+import { cloneJsonSafe, hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
+
+import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
+
 import type { PathRunProfiling } from './profiling';
 import type { UpsertRuntimeTraceSpan } from './tracing';
 

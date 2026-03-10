@@ -11,8 +11,9 @@ import {
   clampScale,
 } from '@/shared/lib/ai-paths';
 
-import type { EdgePath } from '../context/hooks/useEdgePaths';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
+
+import type { EdgePath } from '../context/hooks/useEdgePaths';
 
 const MINIMAP_WIDTH_PX = 220;
 const MINIMAP_HEIGHT_PX = 132;

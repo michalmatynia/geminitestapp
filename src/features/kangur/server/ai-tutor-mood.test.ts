@@ -7,6 +7,9 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
     const mood = resolveKangurAiTutorMoodFromSignals({
       averageAccuracy: 92,
       dailyGoalPercent: 50,
+      todayXpEarned: 48,
+      weeklyXpEarned: 160,
+      averageXpPerSession: 24,
       perfectGames: 1,
       currentStreakDays: 2,
       currentLessonMasteryPercent: null,
@@ -40,6 +43,9 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
     const mood = resolveKangurAiTutorMoodFromSignals({
       averageAccuracy: 88,
       dailyGoalPercent: 100,
+      todayXpEarned: 52,
+      weeklyXpEarned: 180,
+      averageXpPerSession: 26,
       perfectGames: 2,
       currentStreakDays: 6,
       currentLessonMasteryPercent: null,
@@ -74,6 +80,9 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
     const mood = resolveKangurAiTutorMoodFromSignals({
       averageAccuracy: 48,
       dailyGoalPercent: 0,
+      todayXpEarned: 0,
+      weeklyXpEarned: 12,
+      averageXpPerSession: 10,
       perfectGames: 0,
       currentStreakDays: 0,
       currentLessonMasteryPercent: 32,
@@ -101,5 +110,39 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
       lastReasonCode: 'learner_frustration',
     });
     expect(mood.confidence).toBeGreaterThan(0.35);
+  });
+
+  it('shifts toward a proud tone when xp momentum is strong even without a perfect-game trigger', () => {
+    const mood = resolveKangurAiTutorMoodFromSignals({
+      averageAccuracy: 74,
+      dailyGoalPercent: 67,
+      todayXpEarned: 42,
+      weeklyXpEarned: 132,
+      averageXpPerSession: 20,
+      perfectGames: 0,
+      currentStreakDays: 3,
+      currentLessonMasteryPercent: null,
+      context: {
+        surface: 'lesson',
+        contentId: 'clock',
+        promptMode: 'chat',
+      },
+      messages: [
+        {
+          role: 'user',
+          content: 'Chce zrobic jeszcze jedno zadanie.',
+        },
+      ],
+      latestUserMessage: 'Chce zrobic jeszcze jedno zadanie.',
+      personaSuggestedMoodId: 'neutral',
+      previousMood: null,
+      computedAt: '2026-03-08T12:00:00.000Z',
+    });
+
+    expect(mood).toMatchObject({
+      currentMoodId: 'proud',
+      baselineMoodId: 'encouraging',
+      lastReasonCode: 'xp_momentum_today',
+    });
   });
 });

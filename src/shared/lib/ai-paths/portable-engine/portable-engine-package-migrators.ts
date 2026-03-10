@@ -1,16 +1,17 @@
 import { z } from 'zod';
 
 import {
-  markPortablePathMigratorRegistration,
-  markPortablePathMigratorUnregistration,
-} from './portable-engine-migrator-observability';
-import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackage,
   type AiPathPortablePackageVersioned,
   aiPathPortablePackageSchema,
   portablePathPackageVersionedSpecVersionSchema,
 } from './portable-engine-contract';
+import {
+  markPortablePathMigratorRegistration,
+  markPortablePathMigratorUnregistration,
+} from './portable-engine-migrator-observability';
+
 import type { PortablePathMigrationWarning } from './portable-engine-migration-types';
 
 type PortablePathPackageMigrationResult =

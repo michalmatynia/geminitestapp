@@ -1,4 +1,3 @@
-import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-observability';
 import type {
   PromptAutofixOperation,
   PromptValidationRule,
@@ -8,6 +7,7 @@ import type {
   FormatPromptResult,
   FormatPromptOptions,
 } from '@/shared/contracts/prompt-engine';
+import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-observability';
 
 import {
   doesPromptRuleApplyToScope,

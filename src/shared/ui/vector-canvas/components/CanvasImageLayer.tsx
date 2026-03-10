@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+
 import { useVectorCanvasContext } from '../VectorCanvasContext';
 
 export const CanvasImageLayer = forwardRef<HTMLImageElement>(

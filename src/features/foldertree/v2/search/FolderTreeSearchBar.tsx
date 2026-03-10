@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { SearchInput } from '@/shared/ui';
 
 export type FolderTreeSearchBarProps = {

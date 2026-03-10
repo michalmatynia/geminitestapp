@@ -3,8 +3,8 @@
 import React, { createContext, useContext } from 'react';
 
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
-import { internalError } from '@/shared/errors/app-error';
 import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
+import { internalError } from '@/shared/errors/app-error';
 
 export type { SelectOption };
 

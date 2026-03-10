@@ -8,12 +8,12 @@ import type {
 } from '@/shared/contracts/master-folder-tree';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
+import { FolderTreeSearchBar } from './FolderTreeSearchBar';
+import { useMasterFolderTreeSearch } from './useMasterFolderTreeSearch';
 import {
   FolderTreeViewportV2,
   type FolderTreeViewportV2Props,
 } from '../components/FolderTreeViewportV2';
-import { FolderTreeSearchBar } from './FolderTreeSearchBar';
-import { useMasterFolderTreeSearch } from './useMasterFolderTreeSearch';
 
 export type FolderTreeSearchViewportProps = {
   controller: MasterFolderTreeController;

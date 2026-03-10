@@ -40,6 +40,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
+  xp_earned: 24,
   created_date: '2026-03-06T12:00:00.000Z',
   created_by: 'jan@example.com',
   ...overrides,
@@ -121,6 +122,8 @@ describe('ScoreHistory', () => {
     expect(screen.getByText('Obraz ostatnich 7 dni')).toBeInTheDocument();
     expect(screen.getByText('Trend tygodnia')).toBeInTheDocument();
     expect(screen.getByText('Ostatnie gry')).toBeInTheDocument();
+    expect(screen.getByText('XP: +72 · srednio 24 na sesje')).toBeInTheDocument();
+    expect(screen.getByText('Srednio 100% · proby 1 · +24 XP / sesje')).toBeInTheDocument();
     expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border-sky-300');
     expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('3');
     expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass('soft-card', 'border-emerald-300');
@@ -138,6 +141,7 @@ describe('ScoreHistory', () => {
     expect(
       getParagraphByTextContent(screen.getByTestId('score-history-recent-row-score-3'), '42s')
     ).toHaveClass('text-slate-400');
+    expect(screen.getByTestId('score-history-recent-xp-score-3')).toHaveTextContent('+24 XP');
     expect(screen.getByTestId('score-history-recent-score-score-2')).toHaveClass(
       'border-emerald-200',
       'bg-emerald-100'

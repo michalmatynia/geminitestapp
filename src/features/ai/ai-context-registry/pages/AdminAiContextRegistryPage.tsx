@@ -1,7 +1,7 @@
 'use client';
 
-import { NetworkIcon, SearchIcon, WorkflowIcon, WrenchIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { NetworkIcon, SearchIcon, WorkflowIcon, WrenchIcon } from 'lucide-react';
 import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import type {
@@ -33,13 +33,13 @@ import {
   Textarea,
 } from '@/shared/ui';
 
-import { contextPacks } from '../registry/context-packs';
-import { buildContextRegistryTools } from '../tools/ai-tools';
 import {
   buildContextRegistryConsumerEnvelope,
   createStaticContextRegistryRef,
   mergeContextRegistryRefs,
 } from '../context/page-context-shared';
+import { contextPacks } from '../registry/context-packs';
+import { buildContextRegistryTools } from '../tools/ai-tools';
 
 const NODE_KIND_FILTERS: Array<{ label: string; value: ContextNodeKind | 'all' }> = [
   { label: 'All', value: 'all' },

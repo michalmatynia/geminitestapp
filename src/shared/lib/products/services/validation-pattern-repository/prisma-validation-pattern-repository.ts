@@ -1,20 +1,4 @@
-import { Prisma, ProductValidationPattern as PrismaPattern } from '@/shared/lib/db/prisma-client';
 
-import {
-  PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
-  PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
-  PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
-  PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
-} from '@/shared/lib/products/constants';
-import {
-  normalizeProductValidationPatternDenyBehaviorOverride,
-  normalizeProductValidationLaunchScopeBehavior,
-  normalizeProductValidationSkipNoopReplacementProposal,
-  normalizeProductValidationPatternLaunchScopes,
-  normalizeProductValidationPatternReplacementScopes,
-  normalizeProductValidationPatternScopes,
-  normalizeProductValidationInstanceDenyBehaviorMap,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
 import type {
   CreateProductValidationPatternInput,
   ProductValidationPatternRepository,
@@ -33,6 +17,22 @@ import type {
 } from '@/shared/contracts/products';
 import { conflictError, operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, ProductValidationPattern as PrismaPattern } from '@/shared/lib/db/prisma-client';
+import {
+  PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
+  PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
+  PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
+  PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
+} from '@/shared/lib/products/constants';
+import {
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+  normalizeProductValidationInstanceDenyBehaviorMap,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
 
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const DEFAULT_FORMATTER_ENABLED_BY_DEFAULT = false;

@@ -1,4 +1,5 @@
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
+
 import { getQuestionAuthoringSummary } from './question-authoring-insights';
 import { isLiveKangurTestSuite } from '../test-suites';
 

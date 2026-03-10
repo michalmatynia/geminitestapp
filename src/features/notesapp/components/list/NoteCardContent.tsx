@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
 import Image from 'next/image';
+import React from 'react';
 
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import { Tag } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
-import { renderMarkdownToHtml } from '../../utils';
+
 import { useNoteCardHeaderRuntime } from './NoteCardHeader';
+import { renderMarkdownToHtml } from '../../utils';
 
 export function NoteCardContent(): React.JSX.Element {
   const { note } = useNoteCardHeaderRuntime();

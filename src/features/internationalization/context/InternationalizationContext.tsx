@@ -7,16 +7,16 @@ import {
   useDeleteCurrencyMutation,
   useDeleteLanguageMutation,
 } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
 import type {
   CountryOption,
   CurrencyOption,
   Language,
 } from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type ConfirmationConfig = {
   title: string;

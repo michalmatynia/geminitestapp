@@ -1,3 +1,5 @@
+import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationPatternLaunchScopes,
@@ -9,8 +11,6 @@ import {
   getStaticReplacementValue,
   parseDynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
-import type { PatternFormData } from '@/shared/contracts/products';
 
 import { normalizeReplacementFields } from './helpers';
 

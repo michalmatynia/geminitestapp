@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import { BookOpen, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   getKangurHomeHref,
@@ -11,13 +10,14 @@ import {
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   KangurButton,
   KangurPageTopBar,
   KangurTextField,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
 type KangurPrimaryNavigationPage =
   | 'Game'
@@ -30,6 +30,7 @@ type NavActionProps = {
   children: React.ReactNode;
   className?: string;
   docId: string;
+  elementRef?: React.Ref<HTMLButtonElement>;
   href?: string;
   onClick?: () => void;
   targetPageKey?: KangurPrimaryNavigationPage;
@@ -65,6 +66,7 @@ const NavAction = ({
   children,
   className,
   docId,
+  elementRef,
   href,
   onClick,
   targetPageKey,
@@ -97,6 +99,7 @@ const NavAction = ({
       data-doc-id={docId}
       data-testid={testId}
       onClick={onClick}
+      ref={elementRef}
       size='md'
       type='button'
       variant={variant}
@@ -132,6 +135,8 @@ export function KangurPrimaryNavigation({
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
   const mobileAuthActionClassName = 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center';
+  const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
+  const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
     !(guestPlayerName?.trim() ?? '')
   );
@@ -151,6 +156,30 @@ export function KangurPrimaryNavigation({
       setIsEditingGuestPlayerName(true);
     }
   }, [hasGuestPlayerName, showGuestPlayerNameInput]);
+
+  useKangurTutorAnchor({
+    id: 'kangur-auth-create-account-action',
+    kind: 'create_account_action',
+    ref: createAccountActionRef,
+    surface: 'auth',
+    enabled: !effectiveIsAuthenticated && Boolean(onCreateAccount),
+    priority: 140,
+    metadata: {
+      label: 'Utworz konto',
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: 'kangur-auth-login-action',
+    kind: 'login_action',
+    ref: loginActionRef,
+    surface: 'auth',
+    enabled: !effectiveIsAuthenticated && Boolean(onLogin),
+    priority: 130,
+    metadata: {
+      label: 'Zaloguj się',
+    },
+  });
 
   const commitGuestPlayerName = (): void => {
     if (!showGuestPlayerNameInput || !hasGuestPlayerName) {
@@ -215,6 +244,7 @@ export function KangurPrimaryNavigation({
         <NavAction
           className={mobileAuthActionClassName}
           docId='profile_create_account'
+          elementRef={createAccountActionRef}
           onClick={onCreateAccount}
           testId='kangur-primary-nav-create-account'
         >
@@ -226,7 +256,9 @@ export function KangurPrimaryNavigation({
         <NavAction
           className={mobileAuthActionClassName}
           docId='profile_login'
+          elementRef={loginActionRef}
           onClick={onLogin}
+          testId='kangur-primary-nav-login'
         >
           <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
           <span>Zaloguj się</span>
@@ -292,11 +324,11 @@ export function KangurPrimaryNavigation({
 
           {rightAccessory || authAction ? (
             <div className='ml-auto flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
-          {rightAccessory}
-          {authAction}
-        </div>
-      ) : null}
-    </KangurTopNavGroup>
+              {rightAccessory}
+              {authAction}
+            </div>
+          ) : null}
+        </KangurTopNavGroup>
       }
     />
   );

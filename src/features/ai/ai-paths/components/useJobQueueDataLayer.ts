@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { Toast, ListQuery, MutationResult } from '@/shared/contracts/ui';
+import { internalError } from '@/shared/errors/app-error';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import {
   cancelAiPathRun,
@@ -18,13 +19,12 @@ import {
   rememberOptimisticAiPathRun,
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   createDeleteMutationV2,
   createListQueryV2,
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { internalError } from '@/shared/errors/app-error';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { QueueStatus } from './job-queue-panel-utils';
 

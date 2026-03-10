@@ -1,21 +1,9 @@
 import { useCallback } from 'react';
-import type {
-  CaseResolverEditorNodeContext,
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import { type CaseResolverFileEditDraft } from '../types';
+
 import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
 } from '@/features/case-resolver/utils/caseResolverUtils';
-import {
-  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
-  buildCaseResolverDraftCanonicalState,
-  canCaseResolverDraftPerformInitialManualSave,
-  clearStoredEditorDraft,
-  hasCaseResolverDraftMeaningfulChanges,
-} from './useCaseResolverState.helpers';
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
@@ -24,6 +12,20 @@ import {
   stripHtmlToPlainText,
   toStorageDocumentValue,
 } from '@/features/document-editor';
+import type {
+  CaseResolverEditorNodeContext,
+  CaseResolverFile,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
+
+import { type CaseResolverFileEditDraft } from '../types';
+import {
+  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+  buildCaseResolverDraftCanonicalState,
+  canCaseResolverDraftPerformInitialManualSave,
+  clearStoredEditorDraft,
+  hasCaseResolverDraftMeaningfulChanges,
+} from './useCaseResolverState.helpers';
 import { createCaseResolverFile } from '../settings';
 
 type CaseResolverOpenFileEditorOptions = {

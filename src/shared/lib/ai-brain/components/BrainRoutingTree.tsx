@@ -2,24 +2,14 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
+import { internalError } from '@/shared/errors/app-error';
 
 import { getBrainCapabilityDefinition } from '../settings';
-import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
-import {
-  useOptionalBrainRoutingActionsContext,
-  useOptionalBrainRoutingStateContext,
-} from './BrainRoutingContext';
-import {
-  BrainRoutingCapabilityNodeItem,
-  BrainRoutingCapabilityNodeItemRuntimeContext,
-} from './BrainRoutingCapabilityNodeItem';
-import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
 import {
   buildBrainRoutingMasterNodes,
   createBrainRoutingCapabilityNodeMap,
@@ -27,6 +17,17 @@ import {
   ROUTING_GROUPS,
   toBrainRoutingFeatureNodeId,
 } from './brain-routing-master-tree';
+import {
+  BrainRoutingCapabilityNodeItem,
+  BrainRoutingCapabilityNodeItemRuntimeContext,
+} from './BrainRoutingCapabilityNodeItem';
+import {
+  useOptionalBrainRoutingActionsContext,
+  useOptionalBrainRoutingStateContext,
+} from './BrainRoutingContext';
+import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
+
+import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
 
 export interface BrainRoutingTreeProps {
   settings?: AiBrainSettings;

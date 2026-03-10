@@ -3,8 +3,9 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
-import type { KangurLessonDocument } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
+import { useKangurLessonSubsectionSummary } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import type { KangurLessonDocument } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -12,7 +13,6 @@ import {
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonSubsectionSummary } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 
 type KangurActiveLessonHeaderProps = {
@@ -100,67 +100,67 @@ export function KangurActiveLessonHeader({
             readLabel='Czytaj'
             resumeLabel='Wznow'
           />
-        <div className='min-w-0 flex-1'>
-          {subsectionSummary ? (
-            <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
-              <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 text-lg shadow-sm'>
-                {subsectionSummary.emoji}
-              </div>
-              <div className='min-w-0'>
-                <div className='flex min-w-0 flex-wrap items-center gap-2'>
-                  <KangurStatusChip
-                    accent={subsectionSummary.isGame ? 'amber' : 'sky'}
-                    className='uppercase tracking-[0.12em]'
-                    size='sm'
-                  >
-                    {subsectionTypeLabel}
-                  </KangurStatusChip>
-                  <KangurHeadline accent='slate' as='h2' size='sm'>
-                    {displayTitle}
-                  </KangurHeadline>
+          <div className='min-w-0 flex-1'>
+            {subsectionSummary ? (
+              <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
+                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 text-lg shadow-sm'>
+                  {subsectionSummary.emoji}
                 </div>
-                <p className='mt-0.5 text-xs text-slate-500'>{displayDescription}</p>
+                <div className='min-w-0'>
+                  <div className='flex min-w-0 flex-wrap items-center gap-2'>
+                    <KangurStatusChip
+                      accent={subsectionSummary.isGame ? 'amber' : 'sky'}
+                      className='uppercase tracking-[0.12em]'
+                      size='sm'
+                    >
+                      {subsectionTypeLabel}
+                    </KangurStatusChip>
+                    <KangurHeadline accent='slate' as='h2' size='sm'>
+                      {displayTitle}
+                    </KangurHeadline>
+                  </div>
+                  <p className='mt-0.5 text-xs text-slate-500'>{displayDescription}</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
-              <KangurHeadline accent='slate' as='h2' size='md'>
-                {displayTitle}
-              </KangurHeadline>
-              <p className='mt-1 text-sm text-slate-500'>{displayDescription}</p>
-            </>
-          )}
-          {activeLessonAssignment ? (
-            <div ref={assignmentRef} className='mt-3 inline-flex'>
+            ) : (
+              <>
+                <KangurHeadline accent='slate' as='h2' size='md'>
+                  {displayTitle}
+                </KangurHeadline>
+                <p className='mt-1 text-sm text-slate-500'>{displayDescription}</p>
+              </>
+            )}
+            {activeLessonAssignment ? (
+              <div ref={assignmentRef} className='mt-3 inline-flex'>
+                <KangurStatusChip
+                  accent='rose'
+                  className='uppercase tracking-[0.14em]'
+                  data-testid={priorityChipTestId}
+                  size='sm'
+                >
+                Priorytet Rodzica
+                </KangurStatusChip>
+              </div>
+            ) : completedActiveLessonAssignment ? (
               <KangurStatusChip
-                accent='rose'
-                className='uppercase tracking-[0.14em]'
-                data-testid={priorityChipTestId}
+                accent='emerald'
+                className='mt-3 uppercase tracking-[0.14em]'
+                data-testid={completedChipTestId}
                 size='sm'
               >
-                Priorytet Rodzica
-              </KangurStatusChip>
-            </div>
-          ) : completedActiveLessonAssignment ? (
-            <KangurStatusChip
-              accent='emerald'
-              className='mt-3 uppercase tracking-[0.14em]'
-              data-testid={completedChipTestId}
-              size='sm'
-            >
               Ukonczone dla rodzica
-            </KangurStatusChip>
-          ) : null}
-        </div>
-        <div className='ml-auto flex shrink-0 justify-end'>
-          <KangurGradientIconTile
-            data-testid={iconTestId}
-            gradientClass={lesson.color}
-            size='lg'
-          >
-            {lesson.emoji}
-          </KangurGradientIconTile>
-        </div>
+              </KangurStatusChip>
+            ) : null}
+          </div>
+          <div className='ml-auto flex shrink-0 justify-end'>
+            <KangurGradientIconTile
+              data-testid={iconTestId}
+              gradientClass={lesson.color}
+              size='lg'
+            >
+              {lesson.emoji}
+            </KangurGradientIconTile>
+          </div>
         </div>
       </KangurGlassPanel>
     </div>

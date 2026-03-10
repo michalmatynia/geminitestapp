@@ -14,8 +14,8 @@ import {
   useFileUploadEvents,
   type FileUploadEventRecord,
 } from '@/features/files/hooks/useFileUploadEvents';
-import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { useToast } from '@/shared/ui';
 
 export const statusOptions = [
   { value: 'all', label: 'All statuses' },

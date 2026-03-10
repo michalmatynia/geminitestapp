@@ -1,5 +1,6 @@
 'use client';
 
+import type { DatabaseType } from '@/shared/contracts/database';
 import {
   Button,
   FileUploadButton,
@@ -20,7 +21,6 @@ import {
 } from '../context/DatabaseBackupsContext';
 import { DatabaseProvider } from '../context/DatabaseContext';
 
-import type { DatabaseType } from '@/shared/contracts/database';
 
 function DatabasesContentInner(): React.JSX.Element {
   const {

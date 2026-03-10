@@ -2,11 +2,11 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,
 } from '@/shared/lib/security/outbound-url-policy';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const TOTAL_IMAGE_SLOTS = 15;
 

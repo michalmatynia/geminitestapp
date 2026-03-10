@@ -1,12 +1,14 @@
 import { useCallback, useMemo } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import type { VectorShape } from '@/shared/lib/vector-drawing';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import type {
   ImageStudioSlotRecord,
   ImageStudioSequenceRunStartResponse,
 } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
+import type { VectorShape } from '@/shared/lib/vector-drawing';
 
 import {
   buildReferencePreviewImages,
@@ -14,9 +16,7 @@ import {
   resolveSequenceStepsForRun,
   type SequenceRequestPreview,
 } from './right-sidebar-utils';
-import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 
-import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 
 type Toast = (
   message: string,

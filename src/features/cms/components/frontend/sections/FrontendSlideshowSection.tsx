@@ -1,5 +1,6 @@
 'use client';
 
+import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
@@ -8,7 +9,6 @@ import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
-import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 export function FrontendSlideshowSection({
   layout: propLayout,

@@ -1,5 +1,5 @@
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 export function isLikelyImageStudioErrorText(rawValue: string | null | undefined): boolean {
   const value = rawValue?.trim() ?? '';

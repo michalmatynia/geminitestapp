@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { AppProviderValue as AuthDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
+import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
   getDatabaseEnginePolicy,
@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AppProviderValue as AuthDbProvider } from '@/shared/contracts/system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { AuthDbProvider };
 

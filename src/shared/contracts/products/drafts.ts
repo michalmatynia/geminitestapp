@@ -1,11 +1,11 @@
-import { z } from 'zod';
 import * as React from 'react';
+import { z } from 'zod';
+
 import { namedDtoSchema } from '../base';
+import { productParameterValueSchema } from './product';
+
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
-import { productParameterValueSchema } from './product';
-import type { ProductRecord, ProductWithImages, ProductImageRecord } from './product';
-import type { ProductCreateInput, ProductUpdateInput } from './io';
 import type { CatalogCreateInput, CatalogUpdateInput, CatalogRecord } from './catalogs';
 import type {
   ProductCategoryFilters,
@@ -14,13 +14,15 @@ import type {
   ProductCategoryCreateInput,
   ProductCategoryUpdateInput,
 } from './categories';
+import type { ProductFilter, ProductStockOperator } from './filters';
+import type { ProductCreateInput, ProductUpdateInput } from './io';
 import type {
   ProductParameter,
   ProductParameterCreateInput,
   ProductParameterUpdateInput,
 } from './parameters';
 import type { Producer } from './producers';
-import type { ProductFilter, ProductStockOperator } from './filters';
+import type { ProductRecord, ProductWithImages, ProductImageRecord } from './product';
 import type { AppProviderValue as DraftProvider } from '../system';
 import type {
   ProductTagFilters,

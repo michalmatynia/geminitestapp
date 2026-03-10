@@ -2,13 +2,6 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
-import {
-  mergeProductParameterValue,
-  normalizeParameterValuesByLanguage,
-  resolveStoredParameterValue,
-} from '@/shared/lib/products/utils/parameter-values';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -16,7 +9,14 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductImageSlot } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import {
+  mergeProductParameterValue,
+  normalizeParameterValuesByLanguage,
+  resolveStoredParameterValue,
+} from '@/shared/lib/products/utils/parameter-values';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
@@ -66,34 +66,34 @@ export const normalizeProductParametersForSubmission = (
         byParameterId: Map<string, NormalizedSubmittedParameterValue>,
         entry: ProductParameterValue
       ): Map<string, NormalizedSubmittedParameterValue> => {
-      const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
+        const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
 
-      const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
-      const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
-      const normalizedParameterId = decodeSimpleParameterStorageId(
-        typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
-      );
+        const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
+        const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
+        const normalizedParameterId = decodeSimpleParameterStorageId(
+          typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
+        );
 
-      if (!normalizedParameterId) {
+        if (!normalizedParameterId) {
+          return byParameterId;
+        }
+
+        const existingEntry = byParameterId.get(normalizedParameterId);
+        byParameterId.set(
+          normalizedParameterId,
+          hasLocalizedValues
+            ? mergeProductParameterValue(existingEntry, {
+              parameterId: normalizedParameterId,
+              value: directValue,
+              valuesByLanguage,
+            })
+            : {
+              parameterId: normalizedParameterId,
+              value: resolveStoredParameterValue({}, directValue),
+            }
+        );
         return byParameterId;
-      }
-
-      const existingEntry = byParameterId.get(normalizedParameterId);
-      byParameterId.set(
-        normalizedParameterId,
-        hasLocalizedValues
-          ? mergeProductParameterValue(existingEntry, {
-            parameterId: normalizedParameterId,
-            value: directValue,
-            valuesByLanguage,
-          })
-          : {
-            parameterId: normalizedParameterId,
-            value: resolveStoredParameterValue({}, directValue),
-          }
-      );
-      return byParameterId;
-    },
+      },
       new Map<string, NormalizedSubmittedParameterValue>()
     ).values()
   );

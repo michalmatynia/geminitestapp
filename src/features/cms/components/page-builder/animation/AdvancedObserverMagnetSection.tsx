@@ -12,6 +12,7 @@ import {
   SelectSimple,
   Tooltip,
 } from '@/shared/ui';
+
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 
 const observerTypeIcons: Record<string, React.ReactNode> = {

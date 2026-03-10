@@ -23,10 +23,6 @@ import {
   type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
   type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
-import {
-  type ProductValidatorImportRequest as ImportValidationPatternsPayload,
-  type ProductValidatorImportResult as ImportValidationPatternsResult,
-} from '@/shared/contracts/validator-import';
 import type {
   UpdateMutation,
   DeleteMutation,
@@ -35,6 +31,10 @@ import type {
   ListQuery,
   SingleQuery,
 } from '@/shared/contracts/ui';
+import {
+  type ProductValidatorImportRequest as ImportValidationPatternsPayload,
+  type ProductValidatorImportResult as ImportValidationPatternsResult,
+} from '@/shared/contracts/validator-import';
 import {
   createListQueryV2,
   createSingleQueryV2,

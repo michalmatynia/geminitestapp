@@ -1,7 +1,7 @@
+import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
-import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
 

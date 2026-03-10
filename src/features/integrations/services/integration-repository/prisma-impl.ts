@@ -1,12 +1,8 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
-import prisma from '@/shared/lib/db/prisma';
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-} from '../../types/integrations';
+import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+
 import {
   DEFAULT_CONNECTION_SETTING_KEY,
   ACTIVE_TEMPLATE_SETTING_KEY,
@@ -20,6 +16,11 @@ import {
   ConnectionDeleteOptions,
   ConnectionDependencyCounts,
 } from './common';
+import {
+  IntegrationRecord,
+  IntegrationConnectionRecord,
+  IntegrationRepository,
+} from '../../types/integrations';
 
 const isPrismaNotFoundError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';

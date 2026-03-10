@@ -1,3 +1,5 @@
+import { QueryClient } from '@tanstack/react-query';
+
 import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
@@ -7,7 +9,6 @@ import {
   SequenceGroupDraft,
   SequenceGroupView,
 } from '@/shared/contracts/products';
-import { QueryClient } from '@tanstack/react-query';
 
 type ValidationPatternMutation<TPayload> = {
   mutateAsync: (payload: TPayload) => Promise<unknown>;

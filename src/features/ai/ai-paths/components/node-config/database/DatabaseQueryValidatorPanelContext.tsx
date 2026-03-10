@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
+import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 

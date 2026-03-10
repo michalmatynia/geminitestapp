@@ -1,5 +1,6 @@
 import { AiNode } from '@/shared/contracts/ai-paths';
 import { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+
 import { pickString, readEntityIdFromContext, readEntityTypeFromContext } from './engine-utils';
 
 export function deriveNodeInputs(args: {

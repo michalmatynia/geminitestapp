@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import { Button, Input, Label, EmptyState, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -10,11 +11,10 @@ import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
 import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
-import { type RuleDraft } from '../context/prompt-engine-context-utils';
 import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 import { usePromptEngineFilters } from '../context/prompt-engine/PromptEngineFiltersContext';
+import { type RuleDraft } from '../context/prompt-engine-context-utils';
 
-import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 
 type SequenceGroupView = {
   id: string;

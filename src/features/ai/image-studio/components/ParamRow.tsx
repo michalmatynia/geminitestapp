@@ -3,10 +3,6 @@
 import { Repeat2 } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-
-import { usePromptState, usePromptActions } from '../context/PromptContext';
 import {
   isParamUiControl,
   paramUiControlLabel,
@@ -14,6 +10,10 @@ import {
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
 import { type ParamLeaf, type ParamSpec } from '@/shared/contracts/prompt-engine';
+import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { usePromptState, usePromptActions } from '../context/PromptContext';
 
 function safeJsonStringify(value: unknown): string {
   try {

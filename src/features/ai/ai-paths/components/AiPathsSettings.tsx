@@ -9,8 +9,8 @@ import { AiPathsProvider } from '../context';
 import { buildAiPathsWorkspaceContextBundle } from '../context-registry/workspace';
 import { AiPathsSettingsPageProvider } from './ai-paths-settings/AiPathsSettingsPageContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
-import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 import { useAiPathsSettingsPageValue } from './ai-paths-settings/useAiPathsSettingsPageValue';
+import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 
 export type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';

@@ -3,6 +3,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+
 import { parseJsonSafe, safeStringify } from '../../utils';
 
 const coerceNumber = (value: unknown, fallback: number): number => {

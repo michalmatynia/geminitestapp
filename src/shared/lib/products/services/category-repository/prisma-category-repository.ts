@@ -1,4 +1,3 @@
-import { Prisma, ProductCategory as PrismaProductCategory } from '@/shared/lib/db/prisma-client';
 
 import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
 import type {
@@ -8,6 +7,7 @@ import type {
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, ProductCategory as PrismaProductCategory } from '@/shared/lib/db/prisma-client';
 
 type PrismaCategoryWithChildren = PrismaProductCategory & {
   children?: PrismaCategoryWithChildren[];

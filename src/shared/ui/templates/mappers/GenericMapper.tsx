@@ -3,16 +3,17 @@
 import { useEffect, useMemo } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { StandardDataTablePanel } from '../StandardDataTablePanel';
-import { EmptyState } from '../../empty-state';
-import { useToast } from '../../toast';
 
+import { GenericMapperExternalCell } from './GenericMapperExternalCell';
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
 import { GenericMapperStats } from './GenericMapperStats';
-import { GenericMapperExternalCell } from './GenericMapperExternalCell';
+import { usePendingMappings, type PendingExternalMappingsState } from './usePendingMappings';
+import { EmptyState } from '../../empty-state';
+import { useToast } from '../../toast';
+import { StandardDataTablePanel } from '../StandardDataTablePanel';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
-import { usePendingMappings, type PendingExternalMappingsState } from './usePendingMappings';
+
 
 export type { PendingExternalMappingsState };
 

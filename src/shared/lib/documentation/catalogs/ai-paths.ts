@@ -2,7 +2,6 @@ import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
 } from '@/shared/contracts/documentation';
-
 import {
   AI_PATHS_TOOLTIP_CATALOG,
   type AiPathsTooltipDocEntry,

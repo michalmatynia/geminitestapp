@@ -5,9 +5,9 @@ import React, { useMemo } from 'react';
 import { StandardDataTablePanel, PanelPagination, RefreshButton, FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
-import { useFileUploadEventsTableProps } from '../../hooks/useFileUploadEventsTableProps';
-import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
 import { useFileUploadEventsPanelContext } from './context/FileUploadEventsPanelContext';
+import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
+import { useFileUploadEventsTableProps } from '../../hooks/useFileUploadEventsTableProps';
 
 export function FileUploadEventsTable(): React.JSX.Element {
   const tableProps = useFileUploadEventsTableProps();

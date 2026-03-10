@@ -10,8 +10,6 @@ import {
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
-import { PromptExploderTreeNode } from './tree/PromptExploderTreeNode';
-import { PromptExploderTreeNodeRuntimeProvider } from './tree/PromptExploderTreeNodeRuntimeContext';
 import {
   buildPromptExploderMasterNodes,
   fromPromptExploderMasterNodeId,
@@ -19,6 +17,8 @@ import {
   removePromptExploderListItemById,
   updatePromptExploderListItemById,
 } from '../hierarchy-master-tree';
+import { PromptExploderTreeNode } from './tree/PromptExploderTreeNode';
+import { PromptExploderTreeNodeRuntimeProvider } from './tree/PromptExploderTreeNodeRuntimeContext';
 import { buildPromptExploderTreeRevision, usePromptExploderHandleOnlyDrag } from '../tree/shared';
 
 import type { PromptExploderListItem } from '../types';

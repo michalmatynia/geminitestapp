@@ -8,9 +8,9 @@ import { StandardDataTablePanel, StandardDataTablePanelRuntimeContext } from '@/
 
 import { type JobRowData } from '../types';
 import { useJobTablePanelRuntime } from './context/JobTableRuntimeContext';
+import { JobActionsCell } from './job-table/JobActionsCell';
 import { JobStatusCell } from './job-table/JobStatusCell';
 import { JobTimingCell } from './job-table/JobTimingCell';
-import { JobActionsCell } from './job-table/JobActionsCell';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

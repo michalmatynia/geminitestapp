@@ -2,12 +2,12 @@ import 'server-only';
 
 import { dispatchProductAiJob } from '@/features/products/workers/product-ai-processors';
 import type { Job } from '@/features/products/workers/product-ai-processors';
-import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { notFoundError } from '@/shared/errors/app-error';
-import { createManagedQueue } from '@/shared/lib/queue';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
+import { notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
+import { createManagedQueue } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const STALE_RUNNING_TTL_MS = 1000 * 60 * 10;
 const LOG_SOURCE = 'product-ai-queue';

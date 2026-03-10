@@ -1,3 +1,5 @@
+import { BaseProducer, BaseInventory, BaseTag } from '@/shared/contracts/integrations';
+
 import { callBaseApi } from './core';
 import {
   extractProducerList,
@@ -5,8 +7,8 @@ import {
   extractTagList,
   dedupeTags,
 } from '../base-client-parsers';
-import { BaseProducer, BaseInventory, BaseTag } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
+
 import type { BaseInventoryScopeOptions } from './config';
 
 type FetchBaseProducersOptions = BaseInventoryScopeOptions;

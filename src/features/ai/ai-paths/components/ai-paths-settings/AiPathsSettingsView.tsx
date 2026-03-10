@@ -1,15 +1,18 @@
 'use client';
 
 import React from 'react';
+
+import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
+import { LoadingState } from '@/shared/ui';
+
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
 import { usePersistenceState } from '../../context';
-import { AiPathsCanvasView } from './sections/AiPathsCanvasView';
-import { AiPathsListView } from './sections/AiPathsListView';
-import { AiPathsDocsView } from './sections/AiPathsDocsView';
-import { AiPathsDialogs } from './sections/AiPathsDialogs';
-import { LoadingState } from '@/shared/ui';
 import { DocsTooltipEnhancer } from '../DocsTooltipEnhancer';
-import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
+import { AiPathsCanvasView } from './sections/AiPathsCanvasView';
+import { AiPathsDialogs } from './sections/AiPathsDialogs';
+import { AiPathsDocsView } from './sections/AiPathsDocsView';
+import { AiPathsListView } from './sections/AiPathsListView';
+
 
 export function AiPathsSettingsView(): React.JSX.Element {
   const { isFocusMode } = useAiPathsSettingsPageContext();

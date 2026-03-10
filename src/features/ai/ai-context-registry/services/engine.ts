@@ -8,8 +8,8 @@ import type {
   ContextRegistryBackend,
 } from '@/shared/contracts/ai-context-registry';
 
-import type { RuntimeContextProvider } from './runtime-provider';
 import type { ContextRetrievalService } from './retrieval';
+import type { RuntimeContextProvider } from './runtime-provider';
 
 const dedupeRefs = (refs: ContextRegistryRef[]): ContextRegistryRef[] => {
   const seen = new Set<string>();

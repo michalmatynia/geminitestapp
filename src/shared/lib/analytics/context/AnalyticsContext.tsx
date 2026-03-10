@@ -3,14 +3,14 @@
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
 
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import {
   useAnalyticsSummary,
   useAnalyticsInsights,
   useRunAnalyticsInsight,
 } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
-import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 import { type AnalyticsRange } from '../api';
 

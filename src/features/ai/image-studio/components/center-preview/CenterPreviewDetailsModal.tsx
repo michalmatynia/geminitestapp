@@ -2,17 +2,17 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
-import { useSlotsState } from '../../context/SlotsContext';
 import { buildDetailsNodeForCenterPreview } from './variant-thumbnails';
+import { useSlotsState } from '../../context/SlotsContext';
 import { VersionNodeDetailsModal } from '../VersionNodeDetailsModal';
 import { VersionNodeDetailsModalRuntimeProvider } from '../VersionNodeDetailsModalRuntimeContext';
 

@@ -2,30 +2,17 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimePortableEngineAnalytics,
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine';
-import { getRedisConnection } from '@/shared/lib/queue';
-import { keyBrain, keyTotals } from '@/shared/lib/ai-paths/services/runtime-analytics/config';
 import {
   getRuntimeAnalyticsAvailability as getRuntimeAnalyticsAvailabilityShared,
   type RuntimeAnalyticsAvailability,
 } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
-import { summarizeRuntimeTraceAnalytics } from '@/shared/lib/ai-paths/services/runtime-analytics/trace';
-import {
-  getRuntimeAnalyticsSummaryBase,
-  resolveRuntimeAnalyticsRangeWindow,
-} from '@/shared/lib/ai-paths/services/runtime-analytics/summary';
-import {
-  buildEventMember,
-  clampRate,
-  pruneBefore,
-  toTimestampMs,
-} from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
+import { keyBrain, keyTotals } from '@/shared/lib/ai-paths/services/runtime-analytics/config';
 import {
   recordRuntimeRunBlockedOnLease as recordRuntimeRunBlockedOnLeaseShared,
   recordRuntimeNodeStatus as recordRuntimeNodeStatusShared,
@@ -34,6 +21,19 @@ import {
   recordRuntimeRunQueued as recordRuntimeRunQueuedShared,
   recordRuntimeRunStarted as recordRuntimeRunStartedShared,
 } from '@/shared/lib/ai-paths/services/runtime-analytics/recording';
+import {
+  getRuntimeAnalyticsSummaryBase,
+  resolveRuntimeAnalyticsRangeWindow,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/summary';
+import { summarizeRuntimeTraceAnalytics } from '@/shared/lib/ai-paths/services/runtime-analytics/trace';
+import {
+  buildEventMember,
+  clampRate,
+  pruneBefore,
+  toTimestampMs,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
+import { getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { RuntimeAnalyticsAvailability };
 export { summarizeRuntimeTraceAnalytics };

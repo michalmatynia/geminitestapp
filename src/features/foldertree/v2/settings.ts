@@ -1,15 +1,15 @@
 import {
+  FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
+  FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
+} from '@/shared/contracts/master-folder-tree';
+import { validationError } from '@/shared/errors/app-error';
+import {
   defaultFolderTreeProfilesV2,
   parseFolderTreeProfileV2Strict,
   type FolderTreeInstance,
   type FolderTreeProfileV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
-import { validationError } from '@/shared/errors/app-error';
 
-import {
-  FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
-  FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
-} from '@/shared/contracts/master-folder-tree';
 
 export { FOLDER_TREE_UI_STATE_V2_KEY_PREFIX, FOLDER_TREE_PROFILE_V2_KEY_PREFIX };
 

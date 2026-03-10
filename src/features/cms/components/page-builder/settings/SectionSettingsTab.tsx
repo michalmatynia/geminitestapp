@@ -1,32 +1,35 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Button, Input, useToast } from '@/shared/ui';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import React, { useState, useCallback } from 'react';
 
-import { SettingsFormProvider } from './SettingsFormContext';
+import {
+  usePageBuilderSelection,
+  usePageBuilderDispatch,
+} from '@/features/cms/hooks/usePageBuilderContext';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Button, Input, useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+
 import {
   appendRuntimeVisibilityFields,
   prependManagementFields,
   groupSettingsFields,
   renderFieldGroups,
 } from './field-group-helpers';
+import { SettingsFormProvider } from './SettingsFormContext';
+import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-templates';
 import { getSectionDefinition } from '../section-registry';
 import {
   SECTION_TEMPLATE_SETTINGS_KEY,
   normalizeSectionTemplates,
   type SectionTemplateRecord,
 } from '../section-template-store';
-import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-templates';
-import {
-  usePageBuilderSelection,
-  usePageBuilderDispatch,
-} from '@/features/cms/hooks/usePageBuilderContext';
-import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
+
+
 
 export function SectionSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();

@@ -1,9 +1,10 @@
 import React from 'react';
 
-import { Card } from '@/shared/ui';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import { ProductListingDetails } from './listing-item/ProductListingDetails';
+import { Card } from '@/shared/ui';
+
 import { ProductListingActions } from './listing-item/ProductListingActions';
+import { ProductListingDetails } from './listing-item/ProductListingDetails';
 import { ProductListingItemRuntimeContext } from './listing-item/ProductListingItemRuntimeContext';
 
 export function ProductListingItem({

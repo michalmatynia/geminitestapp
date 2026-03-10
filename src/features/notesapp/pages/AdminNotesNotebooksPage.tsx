@@ -8,7 +8,6 @@ import {
   useNoteSettingsActions,
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NotebookRecord } from '@/shared/contracts/notes';
 import {
   Button,
@@ -24,6 +23,8 @@ import {
   FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {

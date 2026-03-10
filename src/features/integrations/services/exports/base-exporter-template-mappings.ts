@@ -3,15 +3,6 @@ import 'server-only';
 import type { ImportExportTemplateMappingDto as ExportTemplateMapping } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
-import { ImageExportLogger } from './base-exporter-images';
-
-import {
-  toStringValue,
-  toNumberValue,
-  normalizeProducerTargetField,
-  normalizeTagTargetField,
-  NUMERIC_TARGET_FIELDS,
-} from './base-exporter/template-helpers';
 
 import {
   ProducerNameLookup,
@@ -19,7 +10,13 @@ import {
   TagNameLookup,
   TagExternalIdLookup,
 } from './base-exporter/lookup-resolvers';
-
+import {
+  toStringValue,
+  toNumberValue,
+  normalizeProducerTargetField,
+  normalizeTagTargetField,
+  NUMERIC_TARGET_FIELDS,
+} from './base-exporter/template-helpers';
 import {
   getProductValue,
   toProducerNameValueList,
@@ -27,6 +24,7 @@ import {
   toTagNameValueList,
   toTagIdValueList,
 } from './base-exporter/value-resolvers';
+import { ImageExportLogger } from './base-exporter-images';
 
 export { toStringValue, toNumberValue };
 

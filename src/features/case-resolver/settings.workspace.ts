@@ -6,16 +6,7 @@ import {
   type CaseResolverWorkspace,
   type CaseResolverWorkspaceNormalizationDiagnostics,
 } from '@/shared/contracts/case-resolver';
-import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
-import {
-  normalizeCaseResolverFileType,
-  normalizeFolderPaths,
-  normalizeOptionalTimestamp,
-  normalizeTimestamp,
-  normalizeWorkspaceRevision,
-  sanitizeOptionalId,
-} from './settings.helpers';
-import { createCaseResolverFile, normalizeCaseResolverRelatedFileLinks } from './settings.files';
+
 import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
 import {
   buildCaseResolverFolderRecords,
@@ -26,6 +17,16 @@ import {
   createCaseResolverAssetFile,
   normalizeCaseResolverFolderTimestamps,
 } from './settings-workspace-helpers';
+import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
+import { createCaseResolverFile, normalizeCaseResolverRelatedFileLinks } from './settings.files';
+import {
+  normalizeCaseResolverFileType,
+  normalizeFolderPaths,
+  normalizeOptionalTimestamp,
+  normalizeTimestamp,
+  normalizeWorkspaceRevision,
+  sanitizeOptionalId,
+} from './settings.helpers';
 
 const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
   {

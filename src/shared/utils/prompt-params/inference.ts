@@ -1,4 +1,6 @@
 import { ParamSpec, ParamLeaf } from '@/shared/contracts/prompt-engine';
+
+import { splitLineCodeAndLineComment } from './scanner';
 import {
   flattenParams,
   looksLikeConstraintHint,
@@ -8,7 +10,6 @@ import {
   isRgbArray,
   isTuple2NumberArray,
 } from './utils';
-import { splitLineCodeAndLineComment } from './scanner';
 
 export function extractConstraintHintsByPath(rawObjectText: string): Record<string, string> {
   const stack: string[] = [];

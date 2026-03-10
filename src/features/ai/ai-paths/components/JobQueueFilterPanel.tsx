@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
+
 import { FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
+
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 
 const PAGE_SIZES = [10, 25, 50];
 const STATUS_FILTERS = [

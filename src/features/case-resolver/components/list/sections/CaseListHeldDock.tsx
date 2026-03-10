@@ -1,7 +1,8 @@
-import React from 'react';
 import { Pin, X } from 'lucide-react';
+import React from 'react';
 
 import { Button } from '@/shared/ui';
+
 import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 
 export function CaseListHeldDock(): React.JSX.Element | null {

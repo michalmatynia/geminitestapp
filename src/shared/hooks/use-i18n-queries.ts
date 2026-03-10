@@ -4,9 +4,9 @@ import type {
   Language,
 } from '@/shared/contracts/internationalization';
 import type { ListQuery } from '@/shared/contracts/ui';
+import { getCurrencies, getCountries, getLanguages } from '@/shared/lib/api/i18n-api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { getCurrencies, getCountries, getLanguages } from '@/shared/lib/api/i18n-api';
 
 const i18nKeys = QUERY_KEYS.internationalization;
 

@@ -1,4 +1,5 @@
 import { type ProductWithImages } from '@/shared/contracts/products';
+
 import { pickProductName } from './product-studio-service.helpers';
 
 export const buildGenerationPrompt = (product: ProductWithImages): string => {

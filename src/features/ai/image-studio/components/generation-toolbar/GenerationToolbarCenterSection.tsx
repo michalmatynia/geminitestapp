@@ -5,6 +5,7 @@ import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type CenterMode } from './GenerationToolbarContext';
 import { useGenerationToolbarCenterSectionRuntime } from './GenerationToolbarSectionContexts';
+
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,

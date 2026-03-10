@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { dtoBaseSchema, type DtoBase } from '../base';
 import {
   caseResolverFileTypeSchema,
@@ -11,13 +12,13 @@ import {
   type CaseResolverAssetKind,
   type CaseResolverDocumentFormatVersion,
 } from './base';
-import { caseResolverScanSlotSchema, type CaseResolverScanSlot } from './ocr';
 import { caseResolverGraphSchema, type CaseResolverGraph } from './graph';
-import { caseResolverPartyReferenceSchema, type CaseResolverPartyReference } from './relations';
 import {
   caseResolverDocumentHistoryEntrySchema,
   type CaseResolverDocumentHistoryEntry,
 } from './history';
+import { caseResolverScanSlotSchema, type CaseResolverScanSlot } from './ocr';
+import { caseResolverPartyReferenceSchema, type CaseResolverPartyReference } from './relations';
 
 export const caseResolverDocumentDateActionSchema = z.enum([
   'useDetectedDate',

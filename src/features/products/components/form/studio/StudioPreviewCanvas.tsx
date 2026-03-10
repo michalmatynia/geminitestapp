@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
 import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
-import { Button, FormSection } from '@/shared/ui';
+import React from 'react';
+
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { SplitVariantPreview } from '@/shared/lib/image-studio-adapter';
 import {
   CenterPreviewProvider,
   useCenterPreviewContext,
 } from '@/shared/lib/image-studio-adapter';
-import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
+import { Button, FormSection } from '@/shared/ui';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
   const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();

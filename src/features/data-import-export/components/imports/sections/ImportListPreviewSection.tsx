@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
 import NextImage from 'next/image';
-import type { ColumnDef } from '@tanstack/react-table';
+import React, { useCallback, useMemo } from 'react';
+
 
 import {
   useImportExportActions,
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import type { ImportListItem } from '@/shared/contracts/integrations';
+import type { FilterField } from '@/shared/contracts/ui';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   Button,
   StatusBadge,
@@ -21,7 +22,8 @@ import {
   Pagination,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { FilterField } from '@/shared/contracts/ui';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function ImportListPreviewSection(): React.JSX.Element {
   const { loadingImportList, importListStats, importList } = useImportExportData();

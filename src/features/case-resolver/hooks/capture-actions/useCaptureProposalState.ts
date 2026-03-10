@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
   CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { decodeFilemakerPartyReference } from '@/features/filemaker';
-import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
+
+import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
+
 
 export function useCaptureProposalState(args: {
   workspace: CaseResolverWorkspace;

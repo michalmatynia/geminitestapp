@@ -2,11 +2,12 @@
 
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
+
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
-import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface LoggableWithErrorFlag {
   __logged?: boolean;

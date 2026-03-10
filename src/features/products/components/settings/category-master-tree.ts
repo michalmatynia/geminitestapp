@@ -1,5 +1,5 @@
-import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
 import type {
   MasterTreeDropPosition,
   MasterTreeNode,

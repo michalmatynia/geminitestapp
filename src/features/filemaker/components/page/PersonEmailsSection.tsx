@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import { FilemakerLinkedEmailsSection } from '../shared/FilemakerLinkedEmailsSection';
 import {
   useAdminFilemakerPersonEditPageActionsContext,
   useAdminFilemakerPersonEditPageStateContext,
 } from '../../context/AdminFilemakerPersonEditPageContext';
+import { FilemakerLinkedEmailsSection } from '../shared/FilemakerLinkedEmailsSection';
 
 export function PersonEmailsSection(): React.JSX.Element {
   const { emails, emailExtractionText, updateSetting } =

@@ -1,4 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
+
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 import {
   invalidateAiPathQueue,
   invalidateNotes,
@@ -7,8 +10,6 @@ import {
   invalidateProductsAndCounts,
   invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
-import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 export const handleAiPathTriggerInvalidation = async (args: {
   queryClient: QueryClient;

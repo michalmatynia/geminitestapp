@@ -1,5 +1,5 @@
-import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
+import React from 'react';
 
 import {
   getQuestionExplanationNarrationText,
@@ -15,12 +15,13 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { cn, sanitizeSvg } from '@/shared/utils';
-import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import type { KangurLesson } from '@/shared/contracts/kangur';
+import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
+import { cn, sanitizeSvg } from '@/shared/utils';
+
+import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
 import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
-import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
 
 type Props = {
   question: KangurTestQuestion;
@@ -104,21 +105,21 @@ export function KangurTestQuestionRenderer({
     illustrationContent &&
     (presentation.layout === 'split-illustration-left' ||
       presentation.layout === 'split-illustration-right') ? (
-      <div
-        className={cn(
-          'grid gap-4 rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4 lg:grid-cols-2',
-          presentation.layout === 'split-illustration-left' && 'lg:[&>*:first-child]:order-2'
-        )}
-      >
-        <div className='min-w-0'>{stemContent}</div>
-        <div className='min-w-0'>{illustrationContent}</div>
-      </div>
-    ) : (
-      <>
-        {stemContent}
-        {illustrationContent}
-      </>
-    );
+        <div
+          className={cn(
+            'grid gap-4 rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4 lg:grid-cols-2',
+            presentation.layout === 'split-illustration-left' && 'lg:[&>*:first-child]:order-2'
+          )}
+        >
+          <div className='min-w-0'>{stemContent}</div>
+          <div className='min-w-0'>{illustrationContent}</div>
+        </div>
+      ) : (
+        <>
+          {stemContent}
+          {illustrationContent}
+        </>
+      );
 
   return (
     <div className='space-y-4'>

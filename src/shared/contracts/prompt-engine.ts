@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScope } from './validator';
 import {
   promptExploderSegmentTypeSchema,
   promptExploderLearnedTemplateSchema,
@@ -10,6 +9,7 @@ import {
   type PromptExploderRuntimeValidationScope,
   type PromptExploderValidationRuleStack,
 } from './prompt-exploder-core';
+import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScope } from './validator';
 
 export type { PromptExploderSegmentType as PromptExploderRuleSegmentType } from './prompt-exploder-core';
 

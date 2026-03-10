@@ -1,8 +1,8 @@
+import { clamp01, normalizeImageContentFrame } from './GenerationToolbarImageUtils.helpers';
 import {
   type ImageContentFrame,
   type MaskShapeForExport,
 } from './GenerationToolbarImageUtils.types';
-import { clamp01, normalizeImageContentFrame } from './GenerationToolbarImageUtils.helpers';
 
 const toNormalizedUnit = (value: number, sourceSize: number): number | null => {
   if (!Number.isFinite(value)) return null;

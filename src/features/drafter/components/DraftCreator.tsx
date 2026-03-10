@@ -8,7 +8,12 @@ import {
   useUpdateDraftMutation,
 } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
-import { IconSelector } from '@/shared/lib/icons';
+import type { ProductImageManagerController } from '@/features/products';
+import { getCategoriesFlat, getParameters, getTags } from '@/features/products';
+import { ProductImagesTabContent } from '@/features/products';
+import { ProductImagesTabProvider } from '@/features/products';
+import { useProductImages } from '@/features/products';
+import { useCatalogs, useProducers } from '@/features/products';
 import type {
   ProductCategory,
   ProductTag,
@@ -16,13 +21,8 @@ import type {
   ProductParameterValue,
   CreateProductDraftInput,
 } from '@/shared/contracts/products';
-import { getCategoriesFlat, getParameters, getTags } from '@/features/products';
-import { ProductImagesTabContent } from '@/features/products';
-import { ProductImagesTabProvider } from '@/features/products';
-import type { ProductImageManagerController } from '@/features/products';
-import { useProductImages } from '@/features/products';
-import { useCatalogs, useProducers } from '@/features/products';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { IconSelector } from '@/shared/lib/icons';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

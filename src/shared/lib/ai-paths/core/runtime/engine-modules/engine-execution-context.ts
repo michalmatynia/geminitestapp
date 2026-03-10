@@ -1,8 +1,9 @@
 import { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+
 import { cloneValue } from '../utils';
-import { EngineStateManager } from './engine-state-manager';
 import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
+import { EngineStateManager } from './engine-state-manager';
 import { type EvaluateGraphOptions, type RuntimeNodeResolutionTelemetry } from './engine-types';
 
 export const buildSpanId = (nodeId: string, attempt: number, nodeIteration: number): string =>

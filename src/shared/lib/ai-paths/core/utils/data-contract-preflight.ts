@@ -13,6 +13,7 @@ import type {
   EvaluateDataContractPreflightArgs,
 } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { getNodeInputPortContract, normalizePortName, sanitizeEdges } from './graph';
 import { getValueAtMappingPath } from './json';
@@ -24,7 +25,6 @@ import {
   isValueCompatibleWithTypes,
 } from './port-types';
 import { parseJsonSafe } from './runtime';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type {
   DataContractPreflightMode,

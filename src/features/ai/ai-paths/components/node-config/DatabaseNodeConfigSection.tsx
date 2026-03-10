@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { resolveNodeLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import {
   getProviderActionCategoryOptions,
   getProviderActionOptions,
@@ -30,7 +31,6 @@ import {
   type QueryValidationResult,
 } from './database/query-utils';
 import { useDatabaseNodeConfigState } from '../../hooks/useDatabaseNodeConfigState';
-import { resolveNodeLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 import type { DatabaseConstructorContextValue } from './database/DatabaseConstructorContext';
 import type { DatabaseQueryInputControlsContextValue } from './database/DatabaseQueryInputControlsContext';

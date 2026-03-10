@@ -9,17 +9,17 @@ import {
 } from '@/features/ai/ai-paths/context/CanvasContext';
 import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 import {
-  useSelectionActions,
-  useSelectionState,
-} from '@/features/ai/ai-paths/context/SelectionContext';
-import { useCanvasInteractions } from '@/features/ai/ai-paths/context/hooks/useCanvasInteractions';
-import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
-import { sanitizeEdges } from '@/shared/lib/ai-paths';
-import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import {
   computeEdgeSelectionDeleteResult,
   computeNodeSelectionDeleteResult,
 } from '@/features/ai/ai-paths/context/hooks/canvas/delete-selection-command';
+import { useCanvasInteractions } from '@/features/ai/ai-paths/context/hooks/useCanvasInteractions';
+import {
+  useSelectionActions,
+  useSelectionState,
+} from '@/features/ai/ai-paths/context/SelectionContext';
+import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
+import { sanitizeEdges } from '@/shared/lib/ai-paths';
 
 import { isEditableElement } from './utils/canvas-interaction-utils';
 

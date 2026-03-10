@@ -12,6 +12,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   internalError,
 } from '@/shared/errors/app-error';
+
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
 
 // --- Granular Contexts ---

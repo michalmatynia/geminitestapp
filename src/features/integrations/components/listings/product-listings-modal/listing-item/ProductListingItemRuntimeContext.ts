@@ -1,7 +1,7 @@
 'use client';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ProductListingItemRuntimeValue = {
   listing: ProductListingWithDetails;

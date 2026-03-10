@@ -1,11 +1,12 @@
+import { type ProductWithImages } from '@/shared/contracts/products';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   getProductStudioConfig,
   setProductStudioProject,
   type ProductStudioConfig,
 } from '@/shared/lib/products/services/product-studio-config';
 import { productService } from '@/shared/lib/products/services/productService';
-import { type ProductWithImages } from '@/shared/contracts/products';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+
 import {
   normalizeImageSlotIndex,
   normalizeProjectId,

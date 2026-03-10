@@ -4,10 +4,10 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurEmptyState,
@@ -52,6 +52,8 @@ const OP_LABELS: Record<string, OperationLabel> = {
   powers: { label: 'Potegi', emoji: '⚡' },
   roots: { label: 'Pierwiastki', emoji: '√' },
   clock: { label: 'Zegar', emoji: '🕐' },
+  calendar: { label: 'Kalendarz', emoji: '📅' },
+  geometry: { label: 'Geometria', emoji: '🔷' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
 };
 
@@ -64,6 +66,8 @@ const OP_ACCENTS: Record<string, KangurAccent> = {
   powers: 'amber',
   roots: 'indigo',
   clock: 'indigo',
+  calendar: 'emerald',
+  geometry: 'teal',
   mixed: 'violet',
 };
 
@@ -268,6 +272,9 @@ export default function ScoreHistory({
             <p className='text-xs text-sky-800/80'>
               Srednia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
             </p>
+            <p className='mt-1 text-xs text-sky-800/80'>
+              XP: +{insights.recentXpEarned} · srednio {insights.averageXpPerRecentGame} na sesje
+            </p>
             <p className='mt-2 text-[11px] text-sky-800/70'>
               Ostatnia aktywnosc: {formatRelativeLastPlayed(insights.lastPlayedAt)}
             </p>
@@ -294,7 +301,7 @@ export default function ScoreHistory({
             {insights.strongestOperation ? (
               <p className='text-xs text-emerald-800/80'>
                 Srednio {insights.strongestOperation.averageAccuracy}% · proby{' '}
-                {insights.strongestOperation.attempts}
+                {insights.strongestOperation.attempts} · +{insights.strongestOperation.averageXpEarned} XP / sesje
               </p>
             ) : (
               <p className='text-sm text-emerald-800/80'>Za malo danych na wskazanie przewagi.</p>
@@ -315,7 +322,7 @@ export default function ScoreHistory({
               <>
                 <p className='text-xs text-rose-800/80'>
                   Srednio {insights.weakestOperation.averageAccuracy}% · proby{' '}
-                  {insights.weakestOperation.attempts}
+                  {insights.weakestOperation.attempts} · +{insights.weakestOperation.averageXpEarned} XP / sesje
                 </p>
                 {weakestLessonHref && (
                   <KangurButton asChild className='mt-3' size='sm' variant='surface'>
@@ -407,6 +414,15 @@ export default function ScoreHistory({
                   >
                     {score.correct_answers}/{score.total_questions || 10}
                   </KangurStatusChip>
+                  {typeof score.xp_earned === 'number' && Number.isFinite(score.xp_earned) ? (
+                    <KangurStatusChip
+                      accent='indigo'
+                      data-testid={`score-history-recent-xp-${score.id}`}
+                      size='sm'
+                    >
+                      +{Math.max(0, Math.round(score.xp_earned))} XP
+                    </KangurStatusChip>
+                  ) : null}
                   {score.time_taken > 0 && (
                     <p className='text-xs text-slate-400'>{score.time_taken}s</p>
                   )}

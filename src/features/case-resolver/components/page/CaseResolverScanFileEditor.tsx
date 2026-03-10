@@ -32,16 +32,19 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui';
+
 import {
   useCaseResolverViewActionsContext,
   useCaseResolverViewStateContext,
 } from '../CaseResolverViewContext';
-import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
-import { CaseResolverPartyFieldRuntimeProvider } from './CaseResolverPartyFieldRuntimeContext';
-import { DocumentRelationSearchPanel } from '../../relation-search';
-import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
 import { CaseResolverHistoryEntriesRuntimeProvider } from './CaseResolverHistoryEntriesRuntimeContext';
+import { CaseResolverPartyFieldRuntimeProvider } from './CaseResolverPartyFieldRuntimeContext';
+import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
+import { DocumentRelationSearchPanel } from '../../relation-search';
+
+import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
+
 
 const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);

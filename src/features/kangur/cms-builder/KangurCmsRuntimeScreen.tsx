@@ -1,6 +1,5 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 
 import {
@@ -10,21 +9,22 @@ import {
 } from '@/features/cms/public';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { buildColorSchemeMap, normalizeThemeSettings } from '@/shared/contracts/cms-theme';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
   KANGUR_CMS_THEME_SETTINGS_KEY,
   parseKangurCmsProject,
   resolveKangurCmsScreenKey,
 } from './project';
-import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { CSSProperties, ReactNode } from 'react';
 
 const buildThemeVars = (theme: ThemeSettings): CSSProperties => ({
   ['--cms-font-heading' as keyof CSSProperties]: theme.headingFont,

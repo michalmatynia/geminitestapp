@@ -20,11 +20,11 @@ import {
   resolvePortablePathInput,
   stableStringify,
 } from '@/shared/lib/ai-paths';
+import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

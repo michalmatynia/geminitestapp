@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Brain, GripVertical } from 'lucide-react';
+import React from 'react';
 
 import { TreeCaret, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';

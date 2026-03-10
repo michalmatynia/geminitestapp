@@ -3,6 +3,7 @@ import 'server-only';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import type { DatabaseBackupResult, FullDatabaseBackupResult } from '@/shared/contracts/database';
 import {
   backupsDir as mongoBackupsDir,
   ensureBackupsDir as ensureMongoBackupsDir,
@@ -20,7 +21,6 @@ import {
   execFileAsync as pgExecFileAsync,
 } from '@/shared/lib/db/utils/postgres';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { DatabaseBackupResult, FullDatabaseBackupResult } from '@/shared/contracts/database';
 
 export type { DatabaseBackupResult, FullDatabaseBackupResult };
 

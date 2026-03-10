@@ -8,15 +8,16 @@ import {
   toPortablePathAuditSinkAutoRemediationNotificationStatusCode,
   toPortablePathAuditSinkAutoRemediationNotificationTimestamp,
 } from './sinks-auto-remediation-delivery.server';
+
+import type {
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+} from './sinks-auto-remediation-dead-letters.server';
 import type {
   PortablePathAuditSinkAutoRemediationStrategy,
   PortablePathAuditSinkStartupHealthState,
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
 } from './types';
-import type {
-  PortablePathAuditSinkAutoRemediationNotificationChannel,
-  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
-} from './sinks-auto-remediation-dead-letters.server';
 
 export {
   enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore,

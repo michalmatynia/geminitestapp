@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   ProductDraft,
   CreateProductDraftInput,
   UpdateProductDraftInput,
 } from '@/features/products/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import * as repo from './draft-repository';
 

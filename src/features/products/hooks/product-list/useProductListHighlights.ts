@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+
 import { PRODUCT_ROW_HIGHLIGHT_TOTAL_MS } from '@/features/products/hooks/product-list-state-utils';
 
 export function useProductListHighlights() {

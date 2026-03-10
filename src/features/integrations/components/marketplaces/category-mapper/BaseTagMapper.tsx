@@ -6,6 +6,7 @@ import {
   useCategoryMapperConfig,
   useCategoryMapperData,
 } from '@/features/integrations/context/CategoryMapperContext';
+import { useIntegrationProductTags } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
@@ -14,7 +15,6 @@ import {
   useTagMappings,
   useExternalTags,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useIntegrationProductTags } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import { type TagMapping, type ExternalTag } from '@/shared/contracts/integrations';
 import { type ProductTag } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';

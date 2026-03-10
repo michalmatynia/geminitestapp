@@ -1,14 +1,15 @@
 'use client';
 
-import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+
 import { getProductIds } from '@/features/products/api';
 import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProductData';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useToast } from '@/shared/ui';
 import type { ProductWithImages, ProductFilters } from '@/shared/contracts/products';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type RowSelectionState = Record<string, boolean>;
 

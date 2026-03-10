@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
 import type {
   CaseResolverWorkspace,
   CaseResolverFile,
   CaseResolverCaptureSettings,
 } from '@/shared/contracts/case-resolver';
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
+import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
+import { type Toast } from '@/shared/contracts/ui';
+import {
+  PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+  PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
+} from '@/shared/lib/prompt-exploder/bridge';
+
+import { resolveCaseResolverFileById } from './useCaseResolverState.helpers';
 import {
   discardPendingCaseResolverPromptExploderPayload,
   readCaseResolverPromptExploderPayloadState,
@@ -14,19 +23,14 @@ import {
   type CaseResolverPromptExploderPayloadReadState,
   type CaseResolverPromptExploderPendingPayload,
 } from './useCaseResolverState.prompt-exploder-sync';
-import {
-  PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
-  PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
-} from '@/shared/lib/prompt-exploder/bridge';
-import { resolveCaseResolverFileById } from './useCaseResolverState.helpers';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 import {
   applyPromptExploderTransferLifecycleUpdate,
   type PromptExploderTransferUiStatus,
 } from './prompt-exploder-transfer-lifecycle';
+
 import type { CaseResolverFileEditDraft } from '../types';
-import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { type Toast } from '@/shared/contracts/ui';
+
 
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =
   'case_resolver:applied_prompt_exploder_transfer_ids';

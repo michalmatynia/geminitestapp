@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { Prisma, type Theme } from '@/shared/lib/db/prisma-client';
 
 import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, type Theme } from '@/shared/lib/db/prisma-client';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

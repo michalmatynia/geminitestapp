@@ -1,11 +1,14 @@
-import React from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
-import type { ColumnDef, Row } from '@tanstack/react-table';
+import React from 'react';
 
-import { StatusBadge, Button, Tooltip, Badge } from '@/shared/ui';
+
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
+import { StatusBadge, Button, Tooltip, Badge } from '@/shared/ui';
+
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
+
+import type { NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export interface NodeFileDocumentColumnsProps {
   isAllCases: boolean;

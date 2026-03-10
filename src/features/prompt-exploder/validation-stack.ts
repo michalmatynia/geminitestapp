@@ -1,7 +1,5 @@
-import { VALIDATOR_SCOPE_DESCRIPTIONS, VALIDATOR_SCOPE_LABELS } from '@/shared/contracts/validator';
-import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
-import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
+import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationStackResolution,
@@ -9,6 +7,8 @@ import type {
   PromptExploderValidationRuleStack,
   PromptExploderValidationRuleStackOption,
 } from '@/shared/contracts/prompt-exploder';
+import { VALIDATOR_SCOPE_DESCRIPTIONS, VALIDATOR_SCOPE_LABELS } from '@/shared/contracts/validator';
+import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
 
 export type {
   PromptExploderRuntimeValidationScope,

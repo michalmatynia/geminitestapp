@@ -1,5 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { persistKangurSessionScoreMock } = vi.hoisted(() => ({
+  persistKangurSessionScoreMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/services/session-score', () => ({
+  persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),
+}));
 
 import ClockTrainingGame from '../ClockTrainingGame';
 
@@ -99,8 +107,13 @@ describe('ClockTrainingGame drag interactions', () => {
     Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
   });
 
   it('moves the hour hand when minute hand is dragged', async () => {
@@ -273,7 +286,7 @@ describe('ClockTrainingGame drag interactions', () => {
     });
   });
 
-  it('shows minute-specific coaching after a near miss in the minutes section', async () => {
+  it('turns Sprawdź red after a near miss in the minutes section', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='minutes' />);
     const minuteHand = getMinuteHand(container);
     const taskLabel = screen.getByText('Ustaw minuty na tarczy');
@@ -285,16 +298,14 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
-        'Długa wskazówka jest prawie dobrze.'
+      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
+        'border-rose-500',
+        'bg-rose-500'
       );
     });
-    expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
-      'Przesuń ją jeszcze o jedną kreskę.'
-    );
   });
 
-  it('shows contextual detailed feedback after wrong submission', async () => {
+  it('turns Sprawdź red after a wrong submission', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
@@ -310,11 +321,11 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Twoja odpowiedź:');
+      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
+        'border-rose-500',
+        'bg-rose-500'
+      );
     });
-    expect(screen.getByTestId('clock-feedback')).toHaveClass('soft-card', 'border-rose-300');
-    expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Poprawna:');
-    expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Różnica:');
   });
 
   it('shows adaptive retry notice after wrong submission', async () => {
@@ -333,14 +344,41 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent(
-        'Dodaliśmy krótką powtórkę tego zadania.'
-      );
+      expect(screen.getByTestId('clock-retry-count')).toBeInTheDocument();
     });
     expect(screen.getByTestId('clock-retry-count')).toHaveClass('border-indigo-200', 'bg-indigo-100');
   });
 
-  it('shows challenge timer and streak HUD after switching mode', async () => {
+  it('persists a completed clock training session into learner history', async () => {
+    vi.useFakeTimers();
+
+    render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[{ hours: 12, minutes: 0 }]}
+        section='hours'
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
+
+    expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'clock',
+        score: 1,
+        totalQuestions: 1,
+        correctAnswers: 1,
+      })
+    );
+  });
+
+  it('shows challenge timer and series progress HUD after switching mode', async () => {
     render(<ClockTrainingGame onFinish={vi.fn()} />);
     expect(screen.queryByTestId('clock-challenge-ring')).toBeNull();
 
@@ -357,7 +395,7 @@ describe('ClockTrainingGame drag interactions', () => {
       'border-amber-200',
       'bg-amber-100'
     );
-    expect(screen.getByTestId('clock-challenge-streak')).toHaveTextContent('Seria: 0');
+    expect(screen.getByTestId('clock-challenge-streak')).toHaveTextContent('Seria 1/5');
     expect(screen.getByTestId('clock-challenge-ring')).toBeInTheDocument();
     expect(screen.getByTestId('clock-challenge-ring-track')).toBeInTheDocument();
   });
@@ -380,11 +418,12 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Poprawna:');
+      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
+        'border-rose-500',
+        'bg-rose-500'
+      );
     });
-    expect(screen.getByTestId('clock-feedback')).not.toHaveTextContent(
-      'Dodaliśmy krótką powtórkę tego zadania.'
-    );
+    expect(screen.queryByTestId('clock-retry-count')).toBeNull();
   });
 
   it('calls onPracticeSuccess after a correct solve in practice mode', async () => {
@@ -401,10 +440,196 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Brawo');
+      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
+        'border-emerald-500',
+        'bg-emerald-500'
+      );
     });
 
     expect(onPracticeSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('turns Sprawdź green and advances to the next hours task in the series', async () => {
+    vi.useFakeTimers();
+
+    const { container } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[
+          { hours: 3, minutes: 0 },
+          { hours: 7, minutes: 0 },
+        ]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 1 z 2');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-500');
+    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+
+    dragHandToAngle(hourHand, hourToAngle(3));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    expect(screen.getByRole('button', { name: 'Dobrze! ✅' })).toHaveClass(
+      'border-emerald-500',
+      'bg-emerald-500'
+    );
+    expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
+      'Brawo! To dobra godzina!'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
+    expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
+    expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 2');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-200');
+    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass('bg-indigo-500');
+  });
+
+  it('turns Sprawdź red and still advances to the next hours task in the series', async () => {
+    vi.useFakeTimers();
+
+    const { container } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[
+          { hours: 3, minutes: 0 },
+          { hours: 7, minutes: 0 },
+        ]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(4));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    expect(screen.getByRole('button', { name: 'Błąd! ❌' })).toHaveClass(
+      'border-rose-500',
+      'bg-rose-500'
+    );
+    expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
+      'Prawie! To sąsiednia godzina.'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    const nextTaskLabel = screen.getByText('Ustaw pełną godzinę');
+    expect(nextTaskLabel.nextElementSibling).toHaveTextContent('7:00');
+    expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
+    expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 3');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-200');
+    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass('bg-indigo-500');
+    expect(screen.getByTestId('clock-task-progress-pill-2')).toHaveClass(
+      'kangur-step-pill-pending'
+    );
+  });
+
+  it('locks the clock hands during the feedback window after checking', async () => {
+    vi.useFakeTimers();
+
+    const { container } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[
+          { hours: 3, minutes: 0 },
+          { hours: 7, minutes: 0 },
+        ]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(3));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
+      'Dobra odpowiedź. Za chwilę następne zadanie.'
+    );
+    expect(getClockDisplay()).toHaveTextContent('3:00');
+
+    dragHandToAngle(hourHand, hourToAngle(8));
+    expect(getClockDisplay()).toHaveTextContent('3:00');
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
+  });
+
+  it('announces the next stage when the final lesson practice task completes', async () => {
+    vi.useFakeTimers();
+
+    const onPracticeCompleted = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        onPracticeCompleted={onPracticeCompleted}
+        practiceTasks={[{ hours: 11, minutes: 0 }]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(11));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
+      'Dobra odpowiedź. Za chwilę kolejny etap.'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    expect(onPracticeCompleted).toHaveBeenCalledWith({
+      correctCount: 1,
+      totalCount: 1,
+    });
+  });
+
+  it('announces the next stage after a wrong final lesson practice task too', async () => {
+    vi.useFakeTimers();
+
+    const onPracticeCompleted = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame
+        enableAdaptiveRetry={false}
+        onFinish={vi.fn()}
+        onPracticeCompleted={onPracticeCompleted}
+        practiceTasks={[{ hours: 11, minutes: 0 }]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(10));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
+      'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(onPracticeCompleted).toHaveBeenCalledWith({
+      correctCount: 0,
+      totalCount: 1,
+    });
   });
 
   it('uses provided practiceTasks for deterministic staged rounds', () => {
@@ -418,6 +643,63 @@ describe('ClockTrainingGame drag interactions', () => {
 
     const taskLabel = screen.getByText('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('11:00');
+  });
+
+  it('shows a standalone practice summary CTA after a practice win', async () => {
+    vi.useFakeTimers();
+
+    const onCompletionPrimaryAction = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame
+        completionPrimaryActionLabel='Następne zadanie'
+        onCompletionPrimaryAction={onCompletionPrimaryAction}
+        onFinish={vi.fn()}
+        practiceTasks={[{ hours: 11, minutes: 0 }]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(11));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Następne zadanie' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Następne zadanie' }));
+    expect(onCompletionPrimaryAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a standalone practice summary after a wrong final answer too', async () => {
+    vi.useFakeTimers();
+
+    const onFinish = vi.fn();
+    const { container } = render(
+      <ClockTrainingGame
+        enableAdaptiveRetry={false}
+        onFinish={onFinish}
+        practiceTasks={[{ hours: 11, minutes: 0 }]}
+        section='hours'
+      />
+    );
+    const hourHand = getHourHand(container);
+
+    dragHandToAngle(hourHand, hourToAngle(10));
+    fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
+    expect(screen.getByText('Wynik: 0/1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' }));
+    expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
   it('does not call onPracticeSuccess in challenge mode', async () => {
@@ -441,9 +723,18 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-feedback')).toHaveTextContent('Brawo');
+      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
+        'border-emerald-500',
+        'bg-emerald-500'
+      );
     });
 
     expect(onPracticeSuccess).not.toHaveBeenCalled();
+  });
+
+  it('hides the live blue time display when showTimeDisplay is false', () => {
+    render(<ClockTrainingGame onFinish={vi.fn()} section='hours' showTimeDisplay={false} />);
+
+    expect(screen.queryByTestId('clock-time-display')).toBeNull();
   });
 });

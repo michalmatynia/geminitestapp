@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   runFromWeeklyReportPayload,
+  summarizeKangurAiTutorBridgeSignal,
   summarizeStructuredCheck,
   toWeeklyLaneTrendMarkdown,
 } from './lib/weekly-lane-trend.mjs';
@@ -92,6 +93,13 @@ describe('weekly lane trend helpers', () => {
     ).toBe(
       'mode=check routes=343 uncovered=0 logger=0 event=0 core=0 console=44 catches=4 legacy=0 runtime=0 logWrites=0'
     );
+
+    expect(
+      summarizeKangurAiTutorBridgeSignal({
+        alertStatus: 'warning',
+        bridgeCompletionRatePercent: 33.3,
+      })
+    ).toBe('bridge funnel degraded (33.3%)');
   });
 
   it('preserves scan summaries when building weekly trend runs', () => {
@@ -105,6 +113,18 @@ describe('weekly lane trend helpers', () => {
       },
       passRates: {
         criticalFlows: 100,
+      },
+      kangurAiTutorBridge: {
+        status: 'ok',
+        summary: {
+          range: '7d',
+          bridgeSuggestionCount: 4,
+          bridgeCompletionRatePercent: 50,
+          bridgeQuickActionClickCount: 2,
+          bridgeFollowUpClickCount: 2,
+          bridgeFollowUpCompletionCount: 2,
+          alertStatus: 'ok',
+        },
       },
       checks: [
         {
@@ -158,6 +178,15 @@ describe('weekly lane trend helpers', () => {
         },
       },
     });
+    expect(run?.kangurAiTutorBridge).toMatchObject({
+      range: '7d',
+      bridgeSuggestionCount: 4,
+      bridgeCompletionRatePercent: 50,
+      bridgeQuickActionClickCount: 2,
+      bridgeFollowUpCompletionCount: 2,
+      alertStatus: 'ok',
+    });
+    expect(run?.kangurAiTutorBridgeSummaryText).toBe('bridge funnel healthy (50%)');
     expect(run?.checks.build).toMatchObject({
       status: 'pass',
       durationMs: 1_200,
@@ -182,6 +211,15 @@ describe('weekly lane trend helpers', () => {
             timedOut: 0,
             skipped: 0,
           },
+          kangurAiTutorBridge: {
+            bridgeSuggestionCount: 4,
+            bridgeCompletionRatePercent: 50,
+            bridgeQuickActionClickCount: 2,
+            bridgeFollowUpClickCount: 2,
+            bridgeFollowUpCompletionCount: 2,
+            alertStatus: 'ok',
+          },
+          kangurAiTutorBridgeSummaryText: 'bridge funnel healthy (50%)',
           checks: {
             build: {
               status: 'pass',
@@ -227,6 +265,12 @@ describe('weekly lane trend helpers', () => {
     });
 
     expect(markdown).toContain('## Check: criticalFlows');
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge state: current');
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge age: 0 runs');
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge alert: ok');
+    expect(markdown).toContain(
+      'Latest Kangur AI Tutor bridge signal: bridge funnel healthy (50%)'
+    );
     expect(markdown).toContain('| Run | Status | Duration | Exit | Structured Summary |');
     expect(markdown).toContain('pass=5/6 fail=1');
     expect(markdown).toContain('## Check: guardrails');
@@ -239,8 +283,102 @@ describe('weekly lane trend helpers', () => {
     );
     expect(markdown).toContain('## Check: build');
     expect(markdown).toContain('| 2026-03-09T10:30:00.000Z | PASS | 1.2s | 0 |');
+    expect(markdown).toContain('## Kangur AI Tutor Bridge Snapshot');
+    expect(markdown).toContain(
+      '| 2026-03-09T10:30:00.000Z | 4 | 50 | 2 | 2 | 2 | ok |'
+    );
     expect(markdown).toContain(
       'Structured gate summaries are preserved for weekly testing, architecture, and observability checks when available.'
+    );
+    expect(markdown).toContain(
+      'This trend report summarizes historical `weekly-quality-*.json` runs and prefers `weekly-quality-latest.json` when it contains the richer snapshot for the newest run.'
+    );
+    expect(markdown).toContain(
+      'Kangur AI Tutor bridge snapshots are preserved from weekly artifacts when the report includes them.'
+    );
+    expect(markdown).toContain(
+      'Kangur AI Tutor bridge state is `current` when the newest weekly run carries the signal, `stale` when it is reused from an older weekly artifact, and `absent` when no bridge signal exists yet.'
+    );
+  });
+
+  it('renders the most recent bridge-bearing run when the latest run has no bridge snapshot', () => {
+    const markdown = toWeeklyLaneTrendMarkdown({
+      generatedAt: '2026-03-09T12:00:00.000Z',
+      summary: {
+        runCount: 2,
+      },
+      runs: [
+        {
+          generatedAt: '2026-03-09T10:30:00.000Z',
+          totalDurationMs: 23_678,
+          summary: {
+            passed: 2,
+            failed: 0,
+            timedOut: 0,
+            skipped: 0,
+          },
+          kangurAiTutorBridge: {
+            bridgeSuggestionCount: 6,
+            bridgeCompletionRatePercent: 33.3,
+            bridgeQuickActionClickCount: 2,
+            bridgeFollowUpClickCount: 2,
+            bridgeFollowUpCompletionCount: 1,
+            alertStatus: 'warning',
+          },
+          kangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+          checks: {
+            build: null,
+            lint: null,
+            lintDomains: null,
+            typecheck: null,
+            criticalFlows: null,
+            securitySmoke: null,
+            unitDomains: null,
+            fullUnit: null,
+            e2e: null,
+            guardrails: null,
+            uiConsolidation: null,
+            observability: null,
+          },
+        },
+        {
+          generatedAt: '2026-03-09T11:30:00.000Z',
+          totalDurationMs: 24_000,
+          summary: {
+            passed: 3,
+            failed: 0,
+            timedOut: 0,
+            skipped: 0,
+          },
+          kangurAiTutorBridge: null,
+          kangurAiTutorBridgeSummaryText: null,
+          checks: {
+            build: null,
+            lint: null,
+            lintDomains: null,
+            typecheck: null,
+            criticalFlows: null,
+            securitySmoke: null,
+            unitDomains: null,
+            fullUnit: null,
+            e2e: null,
+            guardrails: null,
+            uiConsolidation: null,
+            observability: null,
+          },
+        },
+      ],
+    });
+
+    expect(markdown).toContain(
+      'Most recent Kangur AI Tutor bridge snapshot: 2026-03-09T10:30:00.000Z'
+    );
+    expect(markdown).toContain('Latest Kangur AI Tutor bridge state: absent');
+    expect(markdown).toContain('Most recent Kangur AI Tutor bridge state: stale');
+    expect(markdown).toContain('Most recent Kangur AI Tutor bridge age: 1 run / 60.0m');
+    expect(markdown).toContain('Most recent Kangur AI Tutor bridge alert: warning');
+    expect(markdown).toContain(
+      'Most recent Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%)'
     );
   });
 });

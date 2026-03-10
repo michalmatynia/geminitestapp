@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, Card, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
-import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
+
 import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
+import { Badge, Button, Card, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
+
+import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 const VALIDATION_STAGE_OPTIONS: Array<{ value: AiPathsValidationStage; label: string }> = [
   { value: 'graph_parse', label: 'Parse' },

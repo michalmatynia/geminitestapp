@@ -4,15 +4,16 @@ import { CalendarDays, Database, Mail } from 'lucide-react';
 import React from 'react';
 
 import { PanelHeader } from '@/shared/ui';
+
+import { FilemakerEmailsSection } from '../components/page/FilemakerEmailsSection';
+import { FilemakerEventsSection } from '../components/page/FilemakerEventsSection';
+import { FilemakerOrganizationsSection } from '../components/page/FilemakerOrganizationsSection';
+import { FilemakerPersonsSection } from '../components/page/FilemakerPersonsSection';
+import { FilemakerSummaryBadges } from '../components/page/FilemakerSummaryBadges';
 import {
   AdminFilemakerPageProvider,
   useAdminFilemakerPageStateContext,
 } from '../context/AdminFilemakerPageContext';
-import { FilemakerSummaryBadges } from '../components/page/FilemakerSummaryBadges';
-import { FilemakerPersonsSection } from '../components/page/FilemakerPersonsSection';
-import { FilemakerEmailsSection } from '../components/page/FilemakerEmailsSection';
-import { FilemakerOrganizationsSection } from '../components/page/FilemakerOrganizationsSection';
-import { FilemakerEventsSection } from '../components/page/FilemakerEventsSection';
 
 function AdminFilemakerPageInner(): React.JSX.Element {
   const { router } = useAdminFilemakerPageStateContext();

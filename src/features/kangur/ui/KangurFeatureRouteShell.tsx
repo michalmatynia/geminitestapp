@@ -1,8 +1,7 @@
 'use client';
 
-import type { JSX } from 'react';
-import { useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 
 import {
   KANGUR_BASE_PATH,
@@ -16,6 +15,8 @@ import {
 } from '@/features/kangur/observability/client';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+
+import type { JSX } from 'react';
 
 const getSlugFromPathname = (
   pathname: string | null,

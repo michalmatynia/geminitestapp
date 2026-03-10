@@ -11,16 +11,21 @@ import {
 } from '@/shared/contracts/case-resolver';
 
 export type { ResultHeight, CaseRow };
+import { internalError } from '@/shared/errors/app-error';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
+import { useCaseResolverViewStateContext } from '../../components/CaseResolverViewContext';
+import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
+import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
+
 import type {
   NodeFileDocumentSearchRow,
   NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
-import { useCaseResolverViewStateContext } from '../../components/CaseResolverViewContext';
-import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
 import type { RelationTreeLookup } from '../types';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
-import { internalError } from '@/shared/errors/app-error';
+
+
+
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
 type SelectOption = {

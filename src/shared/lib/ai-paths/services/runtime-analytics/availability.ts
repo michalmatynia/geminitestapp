@@ -1,8 +1,9 @@
 import 'server-only';
 
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import { RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS } from './config';
 
 export type RuntimeAnalyticsAvailability = {

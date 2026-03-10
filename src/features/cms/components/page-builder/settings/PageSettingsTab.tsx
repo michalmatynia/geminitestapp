@@ -3,16 +3,16 @@
 import { FileText, Pencil, Check, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui';
 
 import { useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { CmsDomainSelector } from '../../CmsDomainSelector';
-
 import type { Slug } from '@/features/cms/types';
-import { PageSettingsTabContent } from './page-settings/PageSettingsTabContent';
-import { PageSeoTabContent } from './page-settings/PageSeoTabContent';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui';
+
+import { CmsDomainSelector } from '../../CmsDomainSelector';
 import { PageAiTabContent } from './page-settings/PageAiTabContent';
+import { PageSeoTabContent } from './page-settings/PageSeoTabContent';
+import { PageSettingsTabContent } from './page-settings/PageSettingsTabContent';
 
 function PageSettingsTab(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();

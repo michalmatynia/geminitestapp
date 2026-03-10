@@ -6,17 +6,16 @@ import { Card, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useRuleItemDragState } from './context/RuleListDragContext';
+import { RuleItemAutofixSettings } from './rule-item/RuleItemAutofixSettings';
+import { RuleItemBasicSettings } from './rule-item/RuleItemBasicSettings';
+import { RuleItemExecutionSettings } from './rule-item/RuleItemExecutionSettings';
+import { RuleItemExploderSettings } from './rule-item/RuleItemExploderSettings';
 import { normalizeRuleScopes } from './rule-item-utils';
 import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
 import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
 import { RuleItemProvider, useRuleItemContext } from './context/RuleItemContext';
-
 import { RuleItemHeader } from './rule-item/RuleItemHeader';
-import { RuleItemBasicSettings } from './rule-item/RuleItemBasicSettings';
-import { RuleItemExploderSettings } from './rule-item/RuleItemExploderSettings';
-import { RuleItemExecutionSettings } from './rule-item/RuleItemExecutionSettings';
-import { RuleItemAutofixSettings } from './rule-item/RuleItemAutofixSettings';
 import { RuleItemRawEditor } from './rule-item/RuleItemRawEditor';
 
 type RuleItemProps = {

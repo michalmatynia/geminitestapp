@@ -5,10 +5,6 @@ import path from 'path';
 
 import { UnrecoverableError } from 'bullmq';
 
-import {
-  getBrainAssignmentForFeature,
-  resolveBrainExecutionConfigForCapability,
-} from '@/shared/lib/ai-brain/server';
 import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/ocr-runtime';
 import {
   markCaseResolverOcrJobCompleted,
@@ -17,29 +13,33 @@ import {
   markCaseResolverOcrJobRunning,
 } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
+import {
+  getBrainAssignmentForFeature,
+  resolveBrainExecutionConfigForCapability,
+} from '@/shared/lib/ai-brain/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 
 import { LOG_SOURCE } from './case-resolver-ocr/config';
 import {
-  type CaseResolverOcrQueueJobData,
-  type CaseResolverResolvedOcrModel,
-  type PreparedCaseResolverOcrInput,
-} from './case-resolver-ocr/types';
+  classifyCaseResolverOcrError,
+  isRetryableCaseResolverOcrError,
+} from './case-resolver-ocr/error-classification';
 import {
   inferCaseResolverOcrProviderFromModel,
   resolveCaseResolverOcrModel,
   resolveCaseResolverOcrModelCandidates,
 } from './case-resolver-ocr/model-resolution';
-import { runOpenAiOcrRequest } from './case-resolver-ocr/processors/openai';
+import { extractPdfTextForOcr } from './case-resolver-ocr/pdf-utils';
 import { runAnthropicOcrRequest } from './case-resolver-ocr/processors/anthropic';
 import { runGeminiOcrRequest } from './case-resolver-ocr/processors/gemini';
 import { runOllamaOcrRequest } from './case-resolver-ocr/processors/ollama';
-import { extractPdfTextForOcr } from './case-resolver-ocr/pdf-utils';
+import { runOpenAiOcrRequest } from './case-resolver-ocr/processors/openai';
 import {
-  classifyCaseResolverOcrError,
-  isRetryableCaseResolverOcrError,
-} from './case-resolver-ocr/error-classification';
+  type CaseResolverOcrQueueJobData,
+  type CaseResolverResolvedOcrModel,
+  type PreparedCaseResolverOcrInput,
+} from './case-resolver-ocr/types';
 
 const resolveImageMimeType = (filepath: string): string => {
   const extension = path.extname(filepath).toLowerCase();

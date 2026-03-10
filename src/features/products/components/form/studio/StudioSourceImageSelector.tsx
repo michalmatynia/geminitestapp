@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
 import Image from 'next/image';
+import React from 'react';
+
+import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { FormSection, StatusBadge, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 
 export function StudioSourceImageSelector(): React.JSX.Element {
   const { imageSlotPreviews, selectedImageIndex, setSelectedImageIndex } =

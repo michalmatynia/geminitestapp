@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import type { AnalyticsSummary } from '@/shared/contracts';
 
 type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];

@@ -1,5 +1,3 @@
-import type { UseQueryResult } from '@tanstack/react-query';
-import type { MutableRefObject } from 'react';
 
 import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -11,6 +9,8 @@ import type {
 import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 
 import type { StudioUploadMode } from '../components/studio-modals/StudioImportContext';
+import type { UseQueryResult } from '@tanstack/react-query';
+import type { MutableRefObject } from 'react';
 
 export type StudioPreviewMode = 'image' | '3d';
 

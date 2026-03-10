@@ -124,6 +124,7 @@ export async function postKangurScoresHandler(
       totalQuestions: row.total_questions,
       correctAnswers: row.correct_answers,
       timeTaken: row.time_taken,
+      xpEarned: row.xp_earned ?? null,
     },
   });
   return NextResponse.json(row, { status: 201 });

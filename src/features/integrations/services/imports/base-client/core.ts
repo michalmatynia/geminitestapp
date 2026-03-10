@@ -1,5 +1,7 @@
-import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
+import type { BaseApiResponse } from '@/shared/contracts/integrations';
 import { externalServiceError } from '@/shared/errors/app-error';
+import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
+
 import {
   BASE_API_TIMEOUT_MS,
   BASE_API_PRODUCT_WRITE_TIMEOUT_MS,
@@ -7,7 +9,7 @@ import {
   BASE_API_LARGE_PAYLOAD_BYTES,
   buildBaseApiUrl,
 } from './config';
-import type { BaseApiResponse } from '@/shared/contracts/integrations';
+
 
 export type BaseApiRawResult = {
   ok: boolean;

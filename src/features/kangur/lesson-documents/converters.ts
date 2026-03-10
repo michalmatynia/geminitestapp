@@ -8,6 +8,7 @@ import {
   type KangurLessonQuizBlock,
   type KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
+
 import {
   createKangurLessonActivityBlock,
   createKangurLessonBlockId,

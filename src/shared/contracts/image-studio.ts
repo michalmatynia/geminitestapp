@@ -18,12 +18,13 @@ import {
 } from './image-studio-transform-contracts';
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { promptValidationIssueSchema } from './prompt-engine';
+import { asset3DRecordSchema } from './viewer3d';
+
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterMode,
   ImageStudioCenterObjectBounds,
 } from './image-studio-transform-contracts';
-import { asset3DRecordSchema } from './viewer3d';
 
 export type ImageStudioProjectListItem = {
   id: string;

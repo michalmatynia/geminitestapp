@@ -3,11 +3,11 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
-import { useToast, type FileUploadHelpers } from '@/shared/ui';
 import type {
   ChatbotContextItem as ContextItem,
   ChatbotContextDraft as ContextDraft,
 } from '@/shared/contracts/chatbot';
+import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
 import {
   useChatbotContextSettingsQuery,

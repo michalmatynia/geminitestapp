@@ -10,9 +10,10 @@ import {
   type ReactNode,
 } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
+import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-paths-settings/useAiPathsPersistence.types';
 
 // ---------------------------------------------------------------------------

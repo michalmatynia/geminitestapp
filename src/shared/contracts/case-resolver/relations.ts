@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { type DtoBase } from '../base';
+
 import { aiNodeSchema } from '../ai-paths';
+import { type DtoBase } from '../base';
 import { caseResolverEdgeSchema } from './graph';
 
 /**

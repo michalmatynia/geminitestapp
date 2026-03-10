@@ -4,9 +4,10 @@ import { FileText } from 'lucide-react';
 import React from 'react';
 
 import { Card, EmptyState } from '@/shared/ui';
+
 import { useCaseResolverViewStateContext } from '../CaseResolverViewContext';
-import { CaseResolverScanFileEditor } from './CaseResolverScanFileEditor';
 import { CaseResolverDocumentEditor } from './CaseResolverDocumentEditor';
+import { CaseResolverScanFileEditor } from './CaseResolverScanFileEditor';
 import { CaseResolverCanvasWorkspace } from '../CaseResolverCanvasWorkspace';
 import { CaseResolverCaseOverviewWorkspace } from '../CaseResolverCaseOverviewWorkspace';
 import { CaseResolverFileViewer } from '../CaseResolverFileViewer';

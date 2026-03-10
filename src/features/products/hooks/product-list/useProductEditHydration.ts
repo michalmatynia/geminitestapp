@@ -1,16 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import {
-  EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
-  isIncomingProductDetailNewer,
-} from '@/features/products/hooks/product-list-state-utils';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import {
   isEditingProductHydrated,
   markEditingProductHydrated,
 } from '@/features/products/hooks/editingProductHydration';
+import {
+  EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+  isIncomingProductDetailNewer,
+} from '@/features/products/hooks/product-list-state-utils';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError, api } from '@/shared/lib/api-client';

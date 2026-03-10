@@ -27,5 +27,9 @@ export async function getKangurAuthMeHandler(
     },
   });
 
-  return NextResponse.json(authUser);
+  return NextResponse.json(authUser, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }

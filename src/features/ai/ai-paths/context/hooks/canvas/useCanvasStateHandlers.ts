@@ -1,12 +1,15 @@
 import { useCallback, useRef } from 'react';
-import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
+
 import type { Toast } from '@/shared/contracts/ui';
+import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import { clampTranslate } from '@/shared/lib/ai-paths';
+
 import {
   getMarqueeRect,
   setPointerCaptureSafe,
   releasePointerCaptureSafe,
 } from '../useCanvasInteractions.helpers';
+
 import type { MarqueeSelectionState } from '../useCanvasInteractions.helpers';
 
 export interface UseCanvasStateHandlersValue {

@@ -1,7 +1,5 @@
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import type { RelationTreeBuildResult } from '../types';
-import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
 
 import {
   buildRelationCaseNodeId,
@@ -11,10 +9,13 @@ import {
   buildRelationFolderPath,
   RELATION_TREE_UNASSIGNED_CASE_KEY,
 } from './relation-master-tree.helpers';
+
 import type {
   RelationCaseBucket,
   RelationMasterTreeBuildInput,
 } from './relation-master-tree.types';
+import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
+import type { RelationTreeBuildResult } from '../types';
 
 const resolveCaseBucketKey = (caseId: string | null): string =>
   caseId?.trim() || RELATION_TREE_UNASSIGNED_CASE_KEY;

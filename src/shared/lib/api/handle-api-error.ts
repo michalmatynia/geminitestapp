@@ -4,10 +4,10 @@ import { randomUUID } from 'crypto';
 
 import { NextResponse } from 'next/server';
 
+import type { SystemLogLevelDto } from '@/shared/contracts/observability';
 import { validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { logger } from '@/shared/utils/logger';
-import type { SystemLogLevelDto } from '@/shared/contracts/observability';
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {

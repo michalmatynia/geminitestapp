@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -10,12 +9,16 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
+import React from 'react';
+
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
+import type { KangurLesson } from '@/shared/contracts/kangur';
 import { Badge, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { KangurLesson } from '@/shared/contracts/kangur';
+
 import { fromKangurLessonNodeId } from '../kangur-lessons-master-tree';
 import { readLessonGroupCount } from '../utils';
+
 import type { KangurLessonAuthoringStatus } from '../content-creator-insights';
 
 export function LessonTreeRow(props: {

@@ -7,9 +7,9 @@ import path from 'path';
 import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
-import { badRequestError } from '@/shared/errors/app-error';
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { imageStudioRunRequestSchema, type ImageFileRecord } from '@/shared/contracts/image-studio';
+import { badRequestError } from '@/shared/errors/app-error';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 
 export const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');

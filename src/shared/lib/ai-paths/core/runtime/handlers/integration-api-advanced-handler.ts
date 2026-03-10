@@ -7,8 +7,14 @@ import {
 } from '@/shared/lib/security/outbound-url-policy';
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
-
+import { resolveAuthHeaders } from './advanced-api/auth';
 import { DEFAULT_ADVANCED_API_CONFIG, JsonRecord } from './advanced-api/config';
+import {
+  parseErrorRoutes,
+  evaluateErrorRoute,
+  resolveRetryStatuses,
+  parseOutputMappings,
+} from './advanced-api/routing';
 import {
   toStringRecord,
   applyPathParams,
@@ -18,13 +24,6 @@ import {
   buildMappedOutputs,
   createSignalControl,
 } from './advanced-api/utils';
-import {
-  parseErrorRoutes,
-  evaluateErrorRoute,
-  resolveRetryStatuses,
-  parseOutputMappings,
-} from './advanced-api/routing';
-import { resolveAuthHeaders } from './advanced-api/auth';
 
 export const handleAdvancedApi: NodeHandler = async ({
   node,

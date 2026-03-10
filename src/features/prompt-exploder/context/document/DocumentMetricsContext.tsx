@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import { internalError } from '@/shared/errors/app-error';
 
 export interface DocumentMetricsState {

@@ -17,10 +17,11 @@ import {
 } from '../../runtime-refresh';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
 import { upsertLearnedTemplate } from '../../template-learning';
-import type { DocumentState } from '../DocumentContext';
+
 import type { DocumentActions } from '../document/DocumentActionsContext';
-import type { SettingsState } from '../SettingsContext';
+import type { DocumentState } from '../DocumentContext';
 import type { SettingsActions } from '../settings/SettingsActionsContext';
+import type { SettingsState } from '../SettingsContext';
 
 export const useSegmentPatternApproval = ({
   approvalDraft,

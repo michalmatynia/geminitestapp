@@ -1,5 +1,6 @@
 import type { ContextConfig, DbQueryConfig } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import { getAiPathsCollectionMapFromInputs } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 import { aiJobsApi, dbApi } from '../../api';
 import { DEFAULT_CONTEXT_ROLE } from '../constants';
@@ -13,7 +14,6 @@ import {
   renderTemplate,
   safeStringify,
 } from '../utils';
-import { getAiPathsCollectionMapFromInputs } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 export {
   appendInputValue,

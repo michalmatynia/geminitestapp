@@ -1,7 +1,8 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -21,6 +22,8 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type MultiplicationArrayGameProps = {
@@ -80,6 +83,8 @@ export default function MultiplicationArrayGame({
   const [celebrating, setCelebrating] = useState(false);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
+  const sessionStartedAtRef = useRef(Date.now());
 
   const total = a * b;
   const collectedCount = collected.size * b;
@@ -99,7 +104,16 @@ export default function MultiplicationArrayGame({
             TOTAL_ROUNDS
           );
           addXp(reward.xp, reward.progressUpdates);
+          void persistKangurSessionScore({
+            operation: 'multiplication',
+            score: newScore,
+            totalQuestions: TOTAL_ROUNDS,
+            correctAnswers: newScore,
+            timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+            xpEarned: reward.xp,
+          });
           setXpEarned(reward.xp);
+          setXpBreakdown(reward.breakdown ?? []);
           setScore(newScore);
           setDone(true);
         } else {
@@ -147,6 +161,13 @@ export default function MultiplicationArrayGame({
               +{xpEarned} XP ✨
             </KangurStatusChip>
           )}
+          <KangurRewardBreakdownChips
+            accent='slate'
+            breakdown={xpBreakdown}
+            className='justify-center'
+            dataTestId='multiplication-array-summary-breakdown'
+            itemDataTestIdPrefix='multiplication-array-summary-breakdown'
+          />
           <KangurProgressBar accent='indigo' animated size='md' value={percent} />
           <p className='text-slate-500'>
             {percent === 100
@@ -163,10 +184,12 @@ export default function MultiplicationArrayGame({
                 setScore(0);
                 setDone(false);
                 setXpEarned(0);
+                setXpBreakdown([]);
                 setCelebrating(false);
                 const next = pickProblem();
                 setProblem(next);
                 setCollected(new Set());
+                sessionStartedAtRef.current = Date.now();
               }}
               size='lg'
               variant='surface'

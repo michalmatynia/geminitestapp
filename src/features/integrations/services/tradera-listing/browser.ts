@@ -1,8 +1,15 @@
 import { chromium, devices, type BrowserContextOptions, type Page } from 'playwright';
-import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
+
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { decryptSecret } from '@/features/integrations/server';
+import {
+  parsePersistedStorageState,
+  resolveConnectionPlaywrightSettings,
+} from '@/features/integrations/services/tradera-playwright-settings';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+
 import {
   LOGIN_SUCCESS_SELECTOR,
   LOGIN_FORM_SELECTOR,
@@ -19,11 +26,7 @@ import {
   extractExternalListingId,
   captureTraderaListingDebugArtifacts,
 } from './utils';
-import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-} from '@/features/integrations/services/tradera-playwright-settings';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+
 
 export const ensureLoggedIn = async (
   page: Page,

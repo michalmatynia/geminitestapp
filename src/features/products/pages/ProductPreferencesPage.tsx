@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import {
   useUserPreferences,
@@ -22,6 +21,7 @@ import {
   PageLayout,
   FormActions,
 } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',

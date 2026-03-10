@@ -3,12 +3,12 @@ import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
+import type { MongoSettingRecord } from '@/shared/contracts/base';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-import type { MongoSettingRecord } from '@/shared/contracts/base';
 
 export type { AuthUserPageSettings };
 

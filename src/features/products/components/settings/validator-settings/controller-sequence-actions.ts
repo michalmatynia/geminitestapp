@@ -1,12 +1,3 @@
-import { SequenceActionInput, SequenceActionResult } from './sequence-actions/types';
-
-import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
-import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-stock-actions';
-import {
-  handleCreateNameLengthMirrorPattern,
-  handleCreateNameCategoryMirrorPattern,
-  handleCreateNameMirrorPolishSequence,
-} from './sequence-actions/mirror-actions';
 import {
   handleSaveSequenceGroup,
   handleUngroup,
@@ -18,6 +9,15 @@ import {
   handleRenameGroup,
   handleUpdateGroupDebounce,
 } from './sequence-actions/group-actions';
+import {
+  handleCreateNameLengthMirrorPattern,
+  handleCreateNameCategoryMirrorPattern,
+  handleCreateNameMirrorPolishSequence,
+} from './sequence-actions/mirror-actions';
+import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-stock-actions';
+import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
+import { SequenceActionInput, SequenceActionResult } from './sequence-actions/types';
+
 
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions

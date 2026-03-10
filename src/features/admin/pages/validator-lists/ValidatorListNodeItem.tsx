@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
 import { ExternalLink, GripVertical, Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 import Link from 'next/link';
+import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as ValidatorListNodeItemProps } from '@/features/foldertree';
 import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';

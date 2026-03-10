@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import type { Prisma } from '@prisma/client';
+
 import type {
   MongoUserDoc,
   MongoAccountDoc,
@@ -8,6 +8,7 @@ import type {
   MongoAuthSecurityProfileDoc,
 } from '../database-sync-types';
 import type { SyncHandler } from './types';
+import type { Prisma } from '@prisma/client';
 
 export const syncUsers: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection('users').find({}).toArray();

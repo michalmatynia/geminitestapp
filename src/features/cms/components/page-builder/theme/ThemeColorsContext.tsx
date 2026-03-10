@@ -3,9 +3,10 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
+import { internalError } from '@/shared/errors/app-error';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -13,7 +14,8 @@ import { useToast } from '@/shared/ui';
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
 import { parseColorSchemeFromText } from './theme-utils';
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
-import { internalError } from '@/shared/errors/app-error';
+
+
 import type {
   ThemeColorsActionsContextValue,
   ThemeColorsStateContextValue,

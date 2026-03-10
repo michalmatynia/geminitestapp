@@ -2,17 +2,18 @@
 
 import { useEffect, type RefObject } from 'react';
 
-import { useOptionalKangurTutorAnchors } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorMetadata,
+  KangurTutorAnchorSurface,
 } from '@/features/kangur/ui/context/kangur-tutor-types';
+import { useOptionalKangurTutorAnchors } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 type UseKangurTutorAnchorInput = {
   id: string;
   kind: KangurTutorAnchorKind;
   ref: RefObject<HTMLElement | null>;
-  surface: 'lesson' | 'test' | 'game';
+  surface: KangurTutorAnchorSurface;
   enabled?: boolean;
   priority?: number;
   metadata?: KangurTutorAnchorMetadata;
@@ -30,7 +31,14 @@ export function useKangurTutorAnchor(input: UseKangurTutorAnchorInput): void {
       return;
     }
 
-    return registerAnchor({
+    const element = input.ref.current;
+    if (element) {
+      element.dataset['kangurTutorAnchorId'] = input.id;
+      element.dataset['kangurTutorAnchorKind'] = input.kind;
+      element.dataset['kangurTutorAnchorSurface'] = input.surface;
+    }
+
+    const unregister = registerAnchor({
       id: input.id,
       kind: input.kind,
       surface: input.surface,
@@ -42,6 +50,15 @@ export function useKangurTutorAnchor(input: UseKangurTutorAnchorInput): void {
       },
       getRect: () => input.ref.current?.getBoundingClientRect() ?? null,
     });
+
+    return () => {
+      if (element) {
+        delete element.dataset['kangurTutorAnchorId'];
+        delete element.dataset['kangurTutorAnchorKind'];
+        delete element.dataset['kangurTutorAnchorSurface'];
+      }
+      unregister();
+    };
   }, [
     input.enabled,
     input.id,

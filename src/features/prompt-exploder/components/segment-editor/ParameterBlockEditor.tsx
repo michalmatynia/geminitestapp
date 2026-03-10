@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+
 import { FormField, Label, SelectSimple, Textarea } from '@/shared/ui';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
+
 import { useDocumentState, useDocumentActions } from '../../context/hooks/useDocument';
 import {
   promptExploderSafeJsonStringify,
@@ -13,6 +15,7 @@ import {
   promptExploderParamUiControlLabel,
   sanitizeParamJsonValue,
 } from '../../params-editor';
+
 import type { PromptExploderSegment } from '../../types';
 
 export function ParameterBlockEditor(): React.JSX.Element {

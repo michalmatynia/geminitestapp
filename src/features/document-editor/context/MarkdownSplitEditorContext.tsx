@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+
 import { internalError } from '@/shared/errors/app-error';
 
 interface MarkdownSplitEditorContextValue {

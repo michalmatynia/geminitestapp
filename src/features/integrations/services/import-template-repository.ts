@@ -2,9 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {
   buildActiveTemplateScopeKey,
   normalizeActiveTemplateId,
@@ -12,6 +9,11 @@ import {
   stringifyScopedActiveTemplateMap,
   type ActiveTemplateScopeInput,
 } from '@/features/integrations/services/active-template-preference';
+import {
+  EXPORT_WAREHOUSE_SKIP_VALUE,
+  parseExportWarehouseByInventoryMap,
+  stringifyExportWarehouseByInventoryMap,
+} from '@/features/integrations/services/export-warehouse-preference';
 import type {
   IntegrationTemplate as Template,
   IntegrationTemplateMapping as TemplateMapping,
@@ -20,13 +22,11 @@ import {
   normalizeBaseImportParameterImportSettings,
   defaultBaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
-import {
-  EXPORT_WAREHOUSE_SKIP_VALUE,
-  parseExportWarehouseByInventoryMap,
-  stringifyExportWarehouseByInventoryMap,
-} from '@/features/integrations/services/export-warehouse-preference';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Document, Filter } from 'mongodb';
 

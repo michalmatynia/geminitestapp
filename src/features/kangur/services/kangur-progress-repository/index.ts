@@ -5,6 +5,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoKangurProgressRepository } from './mongo-kangur-progress-repository';
 import { prismaKangurProgressRepository } from './prisma-kangur-progress-repository';
+
 import type { KangurProgressRepository } from './types';
 
 export type { KangurProgressRepository } from './types';

@@ -1,10 +1,19 @@
 import { useCallback } from 'react';
+
+import { buildCombinedOcrText } from '@/features/case-resolver/utils/caseResolverUtils';
+import {
+  deriveDocumentContentSync,
+  toStorageDocumentValue,
+} from '@/features/document-editor';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,
   CaseResolverScanSlot,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { Toast } from '@/shared/contracts/ui';
+import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+
 import {
   CASE_RESOLVER_SETTINGS_KEY,
   DEFAULT_CASE_RESOLVER_OCR_PROMPT,
@@ -15,13 +24,7 @@ import {
   CASE_RESOLVER_OCR_JOB_TIMEOUT_MS,
   sleep,
 } from './useCaseResolverState.helpers';
-import { buildCombinedOcrText } from '@/features/case-resolver/utils/caseResolverUtils';
-import {
-  deriveDocumentContentSync,
-  toStorageDocumentValue,
-} from '@/features/document-editor';
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import type { Toast } from '@/shared/contracts/ui';
+
 
 export function useCaseResolverStateOcrActions({
   settingsStoreRef,

@@ -1,11 +1,12 @@
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import {
   getProductAdvancedFilterMetrics,
   type ProductAdvancedFilterCondition,
   type ProductAdvancedFilterRule,
   type ProductFilters,
 } from '@/shared/contracts/products';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 import { logger } from '@/shared/utils/logger';
+
 import {
   BASE_INTEGRATION_SLUGS,
   parseAdvancedFilterGroup,

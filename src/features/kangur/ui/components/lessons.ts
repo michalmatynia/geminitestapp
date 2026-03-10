@@ -1,4 +1,3 @@
-import type { ComponentType } from 'react';
 
 import AddingLessonView from '@/features/kangur/ui/components/AddingLesson';
 import CalendarLessonView from '@/features/kangur/ui/components/CalendarLesson';
@@ -16,6 +15,8 @@ import LogicalReasoningLessonView from '@/features/kangur/ui/components/LogicalR
 import LogicalThinkingLessonView from '@/features/kangur/ui/components/LogicalThinkingLesson';
 import MultiplicationLessonView from '@/features/kangur/ui/components/MultiplicationLesson';
 import SubtractingLessonView from '@/features/kangur/ui/components/SubtractingLesson';
+
+import type { ComponentType } from 'react';
 
 type LessonProps = {
   onBack?: () => void;

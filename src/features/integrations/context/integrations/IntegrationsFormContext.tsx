@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { internalError } from '@/shared/errors/app-error';

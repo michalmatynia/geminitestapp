@@ -23,8 +23,8 @@ import {
 import { cn } from '@/shared/utils';
 
 import { useGraphActions, useGraphState } from '../../context';
-import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
 import { sanitizePathConfig } from '../AiPathsSettingsUtils';
+import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

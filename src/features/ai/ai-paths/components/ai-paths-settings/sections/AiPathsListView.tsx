@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { PathsTabPanel } from '../../ui-panels';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 

@@ -6,8 +6,8 @@ import type { AnalyticsSummary } from '@/shared/contracts';
 import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 import { AnalyticsEventDetails } from './AnalyticsEventDetails';
+import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

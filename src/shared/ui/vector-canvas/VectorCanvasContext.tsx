@@ -1,12 +1,14 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
+import { internalError } from '@/shared/errors/app-error';
+
 import {
   type VectorCanvasImageContentFrame,
   type VectorCanvasViewCropRect,
 } from '../vector-canvas.geometry';
-import { internalError } from '@/shared/errors/app-error';
 
 export interface VectorCanvasContextValue {
   // Props

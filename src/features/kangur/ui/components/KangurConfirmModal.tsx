@@ -41,12 +41,12 @@ export function KangurConfirmModal({
             <div className='flex w-full gap-2'>
               <div className='flex-1' />
               <AlertDialog.Cancel asChild>
-                <KangurButton onClick={onClose} type='button' variant='outline'>
+                <KangurButton onClick={onClose} type='button' variant='secondary'>
                   {cancelText}
                 </KangurButton>
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
-                <KangurButton onClick={onConfirm} type='button' variant='outline'>
+                <KangurButton onClick={onConfirm} type='button' variant='primary'>
                   {confirmText}
                 </KangurButton>
               </AlertDialog.Action>

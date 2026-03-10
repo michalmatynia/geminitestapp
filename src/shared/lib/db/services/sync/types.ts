@@ -1,6 +1,7 @@
+import type { SyncCollectionResult } from '@/shared/contracts/database';
+
 import type { PrismaClient } from '@prisma/client';
 import type { Db, ObjectId } from 'mongodb';
-import type { SyncCollectionResult } from '@/shared/contracts/database';
 
 export type { SyncCollectionResult };
 

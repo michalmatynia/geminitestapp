@@ -1,14 +1,7 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { api } from '@/shared/lib/api-client';
-import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
-import {
-  slotHasRenderableImage,
-  resolveSlotIdCandidates,
-  REVEAL_IN_TREE_EVENT,
-} from './single-slot-manager-utils';
+
 import {
   isImageStudioSlotImageLocked,
   setImageStudioSlotImageLocked,
@@ -18,6 +11,16 @@ import type {
   ImageStudioAssetDto as ImageStudioUploadedAsset,
   UpdateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
+import { api } from '@/shared/lib/api-client';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+
+import {
+  slotHasRenderableImage,
+  resolveSlotIdCandidates,
+  REVEAL_IN_TREE_EVENT,
+} from './single-slot-manager-utils';
+import { studioKeys } from '../../hooks/useImageStudioQueries';
+
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
 interface ConsumeTemporaryUploadProps {

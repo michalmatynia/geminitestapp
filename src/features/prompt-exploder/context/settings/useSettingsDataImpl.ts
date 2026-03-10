@@ -1,38 +1,40 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useToast } from '@/shared/ui';
-import type { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
-  parsePromptEngineSettings,
-  parsePromptValidationRules,
-} from '@/shared/lib/prompt-engine/settings';
+
 import { PROMPT_ENGINE_SETTINGS_KEY, PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
-import { parsePromptExploderSettingsResult } from '../../settings';
-import {
-  VALIDATOR_PATTERN_LISTS_KEY,
-  parseValidatorPatternLists,
-} from '@/shared/contracts/validator';
-import {
-  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-  normalizePromptExploderValidationRuleStack,
-  promptExploderValidationStackFromBridgeSource,
-} from '../../validation-stack';
-import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
-import {
-  resolvePromptValidationRuntime,
-  type PromptValidationOrchestrationResult,
-} from '../../prompt-validation-orchestrator';
 import {
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
   PromptExploderPatternSnapshot,
   PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
+import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
+} from '@/shared/contracts/validator';
+import type { useSettingsMap } from '@/shared/hooks/use-settings';
+import {
+  parsePromptEngineSettings,
+  parsePromptValidationRules,
+} from '@/shared/lib/prompt-engine/settings';
+import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { LearningDraft } from './SettingsDraftsContext';
+import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
+import {
+  resolvePromptValidationRuntime,
+  type PromptValidationOrchestrationResult,
+} from '../../prompt-validation-orchestrator';
+import { parsePromptExploderSettingsResult } from '../../settings';
+import {
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  normalizePromptExploderValidationRuleStack,
+  promptExploderValidationStackFromBridgeSource,
+} from '../../validation-stack';
 
 type UseSettingsDataImplArgs = {
   settingsQuery: ReturnType<typeof useSettingsMap>;

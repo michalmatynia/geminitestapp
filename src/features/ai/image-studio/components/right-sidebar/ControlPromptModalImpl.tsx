@@ -1,9 +1,29 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
 import { Play, Sparkles, Workflow } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useState, useCallback } from 'react';
+
+import {
+  serializeImageStudioProjectSession,
+  getImageStudioProjectSessionKey,
+  saveImageStudioProjectSessionLocal,
+  type ImageStudioProjectSession,
+} from '@/features/ai/image-studio/utils/project-session';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import {
+  parsePromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+} from '@/shared/lib/prompt-engine/settings';
+import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/bridge';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { cloneSerializableValue } from './right-sidebar-utils';
 import {
   RightSidebarPromptControlHeader,
   RightSidebarPromptControlHeaderRuntimeContext,
@@ -19,24 +39,8 @@ import { usePromptState, usePromptActions } from '../../context/PromptContext';
 import { useUiState, useUiActions } from '../../context/UiContext';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { useSlotsState } from '../../context/SlotsContext';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cloneSerializableValue } from './right-sidebar-utils';
-import {
-  serializeImageStudioProjectSession,
-  getImageStudioProjectSessionKey,
-  saveImageStudioProjectSessionLocal,
-  type ImageStudioProjectSession,
-} from '@/features/ai/image-studio/utils/project-session';
-import {
-  parsePromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-} from '@/shared/lib/prompt-engine/settings';
-import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/bridge';
-import { useRouter } from 'next/navigation';
+
+
 import { useRightSidebarContext } from '../RightSidebarContext';
 
 export function ControlPromptModal(): React.JSX.Element {

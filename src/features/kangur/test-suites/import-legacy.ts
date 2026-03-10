@@ -15,8 +15,9 @@ import type {
   KangurTestQuestionStore,
   KangurTestSuite,
 } from '@/shared/contracts/kangur-tests';
-import { createKangurTestSuiteId } from '../test-suites';
+
 import { createKangurTestQuestionId, KANGUR_QUESTION_SORT_ORDER_GAP } from '../test-questions';
+import { createKangurTestSuiteId } from '../test-suites';
 import { auditLegacyKangurQuestion } from './question-audit';
 
 type LegacyQuestion = {
@@ -110,6 +111,7 @@ export const importLegacyKangurQuestions = (): LegacyImportResult => {
       gradeLevel,
       category,
       enabled: true,
+      publicationStatus: 'draft',
       sortOrder,
     });
     questions.forEach((lq, i) => {

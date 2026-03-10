@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 import type { AiPathMeta } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
+import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type {

@@ -4,8 +4,6 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import type {
   BaseImportItemRecord,
   BaseImportItemStatus,
@@ -19,9 +17,11 @@ import type {
   BaseImportRunStatus,
   BaseImportPreflight,
 } from '@/shared/contracts/integrations';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
 

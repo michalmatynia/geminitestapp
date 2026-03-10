@@ -1,11 +1,12 @@
 'use client';
 
-import type { UseQueryResult } from '@tanstack/react-query';
 
 import { fetchAgentPersonaMemory, type FetchAgentPersonaMemoryParams } from '@/features/ai/agentcreator/api/persona-memory';
 import type { PersonaMemorySearchResponse } from '@/shared/contracts/persona-memory';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useAgentPersonaMemory(
   personaId: string,

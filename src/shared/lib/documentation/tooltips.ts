@@ -1,5 +1,6 @@
-import { getDocumentationEntry, resolveDocumentationEntryFromElement } from './registry';
 import type { DocumentationEntry, DocumentationModuleId } from '@/shared/contracts/documentation';
+
+import { getDocumentationEntry, resolveDocumentationEntryFromElement } from './registry';
 
 /**
  * Formats a documentation entry as a tooltip string.

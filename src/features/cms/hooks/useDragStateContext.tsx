@@ -3,8 +3,9 @@
 import { createContext, useContext, useReducer, useMemo, useCallback, type ReactNode } from 'react';
 
 import type { PageZone } from '@/shared/contracts/cms';
-import type { BlockDragPayload } from '../types/drag-drop';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { BlockDragPayload } from '../types/drag-drop';
 
 // ---------------------------------------------------------------------------
 // Types

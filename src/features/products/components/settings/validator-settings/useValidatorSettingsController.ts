@@ -1,11 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  type CreateProductValidationPatternInput as CreateValidationPatternPayload,
-  type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
-} from '@/shared/contracts/products/validation';
 import {
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
@@ -15,8 +10,6 @@ import {
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
-import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -26,14 +19,21 @@ import type {
   SequenceGroupDraft,
   PatternFormData,
 } from '@/shared/contracts/products';
+import {
+  type CreateProductValidationPatternInput as CreateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
+} from '@/shared/contracts/products/validation';
+import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { buildFormDataFromPattern } from './controller-form-utils';
 import {
   buildPatternPayloadDiff,
   buildValidationPayload,
   parseStrictInt,
 } from './controller-diff-utils';
+import { buildFormDataFromPattern } from './controller-form-utils';
 import { createSequenceActions } from './controller-sequence-actions';
 import {
   buildDynamicRecipeFromForm,

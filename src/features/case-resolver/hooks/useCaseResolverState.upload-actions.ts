@@ -1,4 +1,10 @@
 import { useCallback } from 'react';
+
+import {
+  createId,
+  isLikelyImageFile,
+  isLikelyScanInputFile,
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import type {
   CaseResolverAssetFile,
   CaseResolverAssetKind,
@@ -7,6 +13,8 @@ import type {
   CaseResolverScanSlot,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { Toast } from '@/shared/contracts/ui';
+
 import {
   createCaseResolverAssetFile,
   inferCaseResolverAssetKind,
@@ -14,16 +22,11 @@ import {
   normalizeFolderPaths,
 } from '../settings';
 import {
-  createId,
-  isLikelyImageFile,
-  isLikelyScanInputFile,
-} from '@/features/case-resolver/utils/caseResolverUtils';
-import {
   normalizeUploadedCaseResolverFile,
   resolveUploadBaseFolder,
   type CaseResolverUploadedFile,
 } from './useCaseResolverState.helpers';
-import type { Toast } from '@/shared/contracts/ui';
+
 
 export interface UseCaseResolverStateUploadActionsValue {
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;

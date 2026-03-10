@@ -1,7 +1,8 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, Eraser, PencilRuler, RefreshCw, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Eraser, PencilRuler, RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -22,6 +23,8 @@ import {
   createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type GeometryDrawingGameProps = {
@@ -176,6 +179,7 @@ export default function GeometryDrawingGame({
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<GeometryDrawPoint[][]>([]);
   const [keyboardCursor, setKeyboardCursor] = useState<GeometryDrawPoint>(KEYBOARD_CURSOR_START);
@@ -183,6 +187,7 @@ export default function GeometryDrawingGame({
   const [keyboardStatus, setKeyboardStatus] = useState(
     'Plansza gotowa do rysowania klawiaturą.'
   );
+  const sessionStartedAtRef = useRef(Date.now());
 
   const rounds =
     SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
@@ -315,7 +320,16 @@ export default function GeometryDrawingGame({
         perfectCounterKey: 'geometryPerfect',
       });
       addXp(reward.xp, reward.progressUpdates);
+      void persistKangurSessionScore({
+        operation: 'geometry',
+        score: finalScore,
+        totalQuestions: totalRounds,
+        correctAnswers: finalScore,
+        timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+        xpEarned: reward.xp,
+      });
       setXpEarned(reward.xp);
+      setXpBreakdown(reward.breakdown ?? []);
       setDone(true);
     },
     [difficulty, totalRounds]
@@ -326,10 +340,12 @@ export default function GeometryDrawingGame({
     setScore(0);
     setDone(false);
     setXpEarned(0);
+    setXpBreakdown([]);
     setFeedback(null);
     setKeyboardCursor(KEYBOARD_CURSOR_START);
     setKeyboardDrawing(false);
     setKeyboardStatus('Rozpoczęto nową rundę figur.');
+    sessionStartedAtRef.current = Date.now();
     clearDrawing();
   }, [clearDrawing]);
 
@@ -478,8 +494,6 @@ export default function GeometryDrawingGame({
         : feedback?.kind === 'info'
           ? 'amber'
           : 'teal';
-  const feedbackAccent =
-    feedback?.kind === 'success' ? 'emerald' : feedback?.kind === 'error' ? 'rose' : 'amber';
 
   return (
     <section
@@ -519,6 +533,13 @@ export default function GeometryDrawingGame({
                 +{xpEarned} XP ✨
               </KangurStatusChip>
             ) : null}
+            <KangurRewardBreakdownChips
+              accent='slate'
+              breakdown={xpBreakdown}
+              className='justify-center'
+              dataTestId='geometry-drawing-summary-breakdown'
+              itemDataTestIdPrefix='geometry-drawing-summary-breakdown'
+            />
             <KangurProgressBar
               accent='emerald'
               animated
@@ -608,12 +629,7 @@ export default function GeometryDrawingGame({
             </KangurStatusChip>
           </div>
 
-          <motion.div
-            key={currentRound?.id}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className='w-full'
-          >
+          <div className='w-full'>
             <KangurGlassPanel
               className='flex flex-col items-center gap-3'
               data-testid='geometry-drawing-round-shell'
@@ -688,37 +704,6 @@ export default function GeometryDrawingGame({
                 konczy kreske, strzalki przesuwaja kursor, Escape czysci plansze.
               </p>
 
-              <AnimatePresence>
-                {feedback && (
-                  <motion.div
-                    aria-atomic='true'
-                    aria-live='assertive'
-                    initial={{ opacity: 0, scale: 0.94 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.94 }}
-                    className='w-full'
-                    role='status'
-                  >
-                    <KangurInfoCard
-                      accent={feedbackAccent}
-                      className='flex w-full items-center justify-center gap-2 rounded-[24px] text-sm font-bold'
-                      data-testid='geometry-drawing-feedback'
-                      padding='sm'
-                      tone='accent'
-                    >
-                      {feedback.kind === 'success' ? (
-                        <CheckCircle className='w-4 h-4' />
-                      ) : feedback.kind === 'error' ? (
-                        <XCircle className='w-4 h-4' />
-                      ) : (
-                        <PencilRuler className='w-4 h-4' />
-                      )}
-                      {feedback.text}
-                    </KangurInfoCard>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               <div className='flex gap-3 w-full'>
                 <KangurButton
                   className='flex-1'
@@ -732,7 +717,16 @@ export default function GeometryDrawingGame({
                   Wyczyść
                 </KangurButton>
                 <KangurButton
-                  className='flex-1'
+                  className={cn(
+                    'flex-1',
+                    feedback
+                      ? feedback.kind === 'success'
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : feedback.kind === 'error'
+                          ? 'bg-rose-500 border-rose-500 text-white'
+                          : 'bg-amber-500 border-amber-500 text-white'
+                      : 'bg-white'
+                  )}
                   disabled={feedback !== null}
                   onClick={handleCheck}
                   type='button'
@@ -743,7 +737,7 @@ export default function GeometryDrawingGame({
                 </KangurButton>
               </div>
             </KangurGlassPanel>
-          </motion.div>
+          </div>
         </>
       )}
     </section>

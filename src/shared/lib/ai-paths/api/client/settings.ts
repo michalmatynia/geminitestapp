@@ -1,5 +1,6 @@
-import { apiFetch, apiPost, ApiResponse } from './base';
 import type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
+
+import { apiFetch, apiPost, ApiResponse } from './base';
 
 export async function fetchSettings(scope: SettingsScope): Promise<ApiResponse<SettingRecord[]>> {
   return apiFetch<SettingRecord[]>(`/api/settings?scope=${scope}`);

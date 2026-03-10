@@ -1,15 +1,15 @@
+import type {
+  ProductParameterValue,
+  ProductRecord,
+  ProductWithImages,
+} from '@/shared/contracts/products';
+import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
-import { validationError } from '@/shared/errors/app-error';
-import type {
-  ProductParameterValue,
-  ProductRecord,
-  ProductWithImages,
-} from '@/shared/contracts/products';
 
 import type { WithId } from 'mongodb';
 

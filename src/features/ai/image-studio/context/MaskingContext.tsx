@@ -3,12 +3,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { type VectorShape, type VectorToolMode } from '@/shared/lib/vector-drawing';
+import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
+import { type VectorShape, type VectorToolMode } from '@/shared/lib/vector-drawing';
 import { useToast } from '@/shared/ui';
 
-import { useProjectsState } from './ProjectsContext';
-import { useSlotsState } from './SlotsContext';
 import {
   DEFAULT_MASK_DETECTION_SETTINGS,
   getEdgeMaskBounds,
@@ -19,7 +18,8 @@ import {
   type MaskDetectionSettings,
   type MaskGenerationMode,
 } from './masking-context-utils';
-import { internalError } from '@/shared/errors/app-error';
+import { useProjectsState } from './ProjectsContext';
+import { useSlotsState } from './SlotsContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

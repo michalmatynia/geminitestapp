@@ -1,6 +1,8 @@
-import { Page } from 'playwright';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+
+import { Page } from 'playwright';
+
 import { TraderaFailureCategory } from './config';
 
 export const toRecord = (value: unknown): Record<string, unknown> =>

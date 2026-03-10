@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { logActivity } from '@/shared/utils/observability/activity-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type {
   Page,
@@ -15,6 +13,8 @@ import type {
   UpdateCmsDomainDto,
 } from '@/shared/contracts/cms';
 import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCmsRepository } from './cms-repository';
 

@@ -1,6 +1,10 @@
 'use client';
 
 import React from 'react';
+
+import type { PatternFormData, ProductValidationLaunchOperator } from '@/shared/contracts/products';
+import { normalizeProductValidationPatternLaunchScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
+import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
   Input,
   MultiSelect,
@@ -9,6 +13,7 @@ import {
   FormField,
   FormSection,
 } from '@/shared/ui';
+
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {
   LAUNCH_OPERATOR_OPTIONS,
@@ -18,9 +23,6 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { normalizeProductValidationPatternLaunchScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
-import type { PatternFormData, ProductValidationLaunchOperator } from '@/shared/contracts/products';
-import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
   const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();

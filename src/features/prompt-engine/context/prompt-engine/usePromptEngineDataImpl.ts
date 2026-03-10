@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+
+import type { SingleQuery } from '@/shared/contracts/ui';
 import {
   parsePromptEngineSettings,
   defaultPromptEngineSettings,
   PromptValidationRule,
 } from '@/shared/lib/prompt-engine/settings';
+
 import {
   RuleDraft,
   createRuleDraft,
   sortRuleDraftsBySequence,
 } from '../prompt-engine-context-utils';
-import type { SingleQuery } from '@/shared/contracts/ui';
 
 export function usePromptEngineDataImpl(args: {
   settingsQuery: SingleQuery<Map<string, string>>;

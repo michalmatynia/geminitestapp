@@ -4,6 +4,10 @@ import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import type {
+  CaseResolverOcrModelsResponse,
+  CaseResolverSettings,
+} from '@/shared/contracts/case-resolver';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -36,10 +40,6 @@ import {
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
 } from '../settings';
-import type {
-  CaseResolverOcrModelsResponse,
-  CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
 
 export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();

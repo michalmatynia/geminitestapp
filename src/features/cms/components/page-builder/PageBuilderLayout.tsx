@@ -7,8 +7,10 @@ import { useAdminLayoutActions } from '@/features/admin';
 import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
 import { Button } from '@/shared/ui';
 
-import { PagePreviewPanel } from './PagePreviewPanel';
+import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';
 import { PageBuilderPageSkeleton } from './PageBuilderPageSkeleton';
+import { PageBuilderRightPanel } from './PageBuilderRightPanel';
+import { PagePreviewPanel } from './PagePreviewPanel';
 import { ThemeSettingsProvider } from './ThemeSettingsContext';
 import {
   buildCmsPageBuilderContextBundle,
@@ -19,9 +21,6 @@ import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPage, useCmsPages } from '../../hooks/useCmsQueries';
 import { DragStateProvider } from '../../hooks/useDragStateContext';
 import { PageBuilderProvider, usePageBuilder } from '../../hooks/usePageBuilderContext';
-
-import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';
-import { PageBuilderRightPanel } from './PageBuilderRightPanel';
 
 import type { PageBuilderState } from '../../types/page-builder';
 

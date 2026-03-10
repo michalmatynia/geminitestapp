@@ -5,6 +5,11 @@ import {
   fetchBaseProductDetails,
   type BaseProductRecord,
 } from '@/features/integrations/services/imports/base-client';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+
 import {
   BASE_DETAILS_BATCH_SIZE,
   BASE_INTEGRATION_SLUGS,
@@ -13,10 +18,6 @@ import {
   type BaseConnectionContext,
   type PriceGroupLookup,
 } from './base-import-service-shared';
-import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
-import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 type ProductDataProvider = Awaited<ReturnType<typeof getProductDataProvider>>;
 

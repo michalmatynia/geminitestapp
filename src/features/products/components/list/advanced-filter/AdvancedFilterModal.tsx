@@ -9,12 +9,12 @@ import {
 } from '@/shared/contracts/products';
 import { AppModal, Button, Input, Label, useToast } from '@/shared/ui';
 
-import { AdvancedFilterBuilder } from './AdvancedFilterBuilder';
 import {
   createEmptyGroup,
   parseAdvancedFilterPayloadOrDefault,
   serializeAdvancedFilterPayload,
 } from './advanced-filter-utils';
+import { AdvancedFilterBuilder } from './AdvancedFilterBuilder';
 
 interface AdvancedFilterModalProps {
   open: boolean;

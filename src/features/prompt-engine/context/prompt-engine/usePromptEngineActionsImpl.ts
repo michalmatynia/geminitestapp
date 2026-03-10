@@ -1,16 +1,19 @@
 'use client';
 
 import { useCallback } from 'react';
+
+import type { SingleQuery } from '@/shared/contracts/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
   PromptValidationRule,
 } from '@/shared/lib/prompt-engine/settings';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
 import {
   RuleDraft,
   RulePatch,
@@ -24,7 +27,6 @@ import {
   createNewRule,
 } from '../prompt-engine-context-utils';
 import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
-import type { SingleQuery } from '@/shared/contracts/ui';
 
 export function usePromptEngineActionsImpl(args: {
   drafts: RuleDraft[];

@@ -3,13 +3,17 @@
 import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'lucide-react';
 import React from 'react';
 
+import { isDescendant } from '@/features/cms/hooks/page-builder/section-hierarchy';
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
+import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import { setMasterTreeDragNodeData } from '@/features/foldertree';
 import { Button, Badge, TreeCaret } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
-import { isDescendant } from '@/features/cms/hooks/page-builder/section-hierarchy';
+
 import { BlockNodeItem } from './BlockNodeItem';
 import {
   useComponentTreePanelActions,
@@ -19,11 +23,10 @@ import { RowNodeItem } from './RowNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
 import { TreeSectionProvider } from './TreeSectionContext';
-import { toCmsSectionNodeId } from '../utils/cms-master-tree';
-import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
+import { toCmsSectionNodeId } from '../utils/cms-master-tree';
+
+
 import type { SectionNodeItemProps } from './tree-types';
 
 export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element {

@@ -1,5 +1,6 @@
-import type { ObjectId } from 'mongodb';
 import type { MongoTimestampedSettingRecord } from '@/shared/contracts/settings';
+
+import type { ObjectId } from 'mongodb';
 
 export const AUTH_COLLECTIONS: readonly string[] = [
   'users',

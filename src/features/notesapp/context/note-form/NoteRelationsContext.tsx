@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext } from 'react';
+
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 
 export interface RelatedNoteItem {

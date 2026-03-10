@@ -1,10 +1,11 @@
+import { normalizeNodesV2 } from '@/features/foldertree/v2/core/engine';
 import {
   toMasterFolderTreeActionFail,
   type MasterFolderTreeActionResult,
   type MasterFolderTreePersistOperation,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
-import { normalizeNodesV2 } from '@/features/foldertree/v2/core/engine';
+
 import type {
   FolderTreeAppliedTransaction,
   FolderTreeState,

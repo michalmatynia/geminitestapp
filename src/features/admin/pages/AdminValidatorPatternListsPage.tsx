@@ -24,6 +24,7 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { ValidatorListTree } from './validator-lists/ValidatorListTree';
 import {
   buildValidatorPatternListsPayload,
   normalizeValidatorPatternLists,
@@ -32,7 +33,6 @@ import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
 } from './validator-scope';
-import { ValidatorListTree } from './validator-lists/ValidatorListTree';
 
 const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
   { value: 'products', label: VALIDATOR_SCOPE_LABELS['products'] },

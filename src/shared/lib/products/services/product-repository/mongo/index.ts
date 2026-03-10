@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { Collection } from 'mongodb';
-import { ProductDocument } from '../mongo-product-repository-mappers';
+
 import {
   ProductFilters,
   ProductWithImages,
@@ -12,11 +12,12 @@ import {
   ProductImageRecord,
 } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { productCollectionName } from '../mongo-product-repository.helpers';
 
+import { ProductDocument } from '../mongo-product-repository-mappers';
+import { productCollectionName } from '../mongo-product-repository.helpers';
+import { mongoProductAssociationsImpl } from './associations';
 import { mongoProductReadImpl } from './read';
 import { mongoProductWriteImpl } from './write';
-import { mongoProductAssociationsImpl } from './associations';
 
 let productIndexesEnsured: Promise<void> | null = null;
 

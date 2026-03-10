@@ -3,7 +3,6 @@
 import { Plus, Trash2, Factory } from 'lucide-react';
 import { useMemo, useState, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   useDeleteProducerMutation,
   useProducers,
@@ -23,6 +22,7 @@ import {
   SettingsPanelBuilder,
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

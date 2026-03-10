@@ -7,6 +7,10 @@ import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import {
+  catalogToEntries,
+  entriesToCatalogArrays,
+} from '@/shared/lib/ai-brain/catalog-entries';
+import {
   useBrainAnalyticsSummary,
   useBrainInsights,
   useBrainLogMetrics,
@@ -32,10 +36,6 @@ import {
   type AiBrainProviderCatalog,
   type AiBrainSettings,
 } from '../settings';
-import {
-  catalogToEntries,
-  entriesToCatalogArrays,
-} from '@/shared/lib/ai-brain/catalog-entries';
 
 interface BrainDerivedStateParams {
   operationsRange: BrainOperationsRange;

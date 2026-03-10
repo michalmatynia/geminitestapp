@@ -6,6 +6,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useBrain } from '../context/BrainContext';
+
 import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
 
 export type BrainRoutingStateContextValue = {

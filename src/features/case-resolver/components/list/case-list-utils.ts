@@ -1,7 +1,7 @@
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
 import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export const parseBoolean = (value: unknown): boolean => value === true;
 export const CASE_RESOLVER_CASES_MASTER_INSTANCE = 'case_resolver_case_hierarchy';

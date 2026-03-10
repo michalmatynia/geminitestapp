@@ -4,6 +4,7 @@ import {
   type CaseResolverFileType,
   type CaseResolverPartyReference,
 } from '@/shared/contracts/case-resolver';
+
 import { type CaseResolverPartySearchKind } from './settings.constants';
 
 export const normalizeFolderPath = (value: string): string => {

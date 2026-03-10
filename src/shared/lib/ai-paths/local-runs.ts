@@ -1,10 +1,10 @@
+import type { AiPathLocalRunStatus, AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiPathLocalRunStatus, AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 
 import { AI_PATHS_LOCAL_RUNS_KEY } from './core/constants';
 

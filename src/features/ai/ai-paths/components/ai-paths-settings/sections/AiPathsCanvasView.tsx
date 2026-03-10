@@ -3,6 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
+import { useGraphActions, useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context';
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
@@ -19,16 +20,16 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
-import { useGraphActions, useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context';
+
+import { AiPathsLiveLog } from './AiPathsLiveLog';
 import { CanvasBoard } from '../../canvas-board';
 import { CanvasSidebar } from '../../canvas-sidebar';
 import { ClusterPresetsPanel } from '../../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../../graph-model-debug-panel';
 import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
+import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
-import { AiPathsLiveLog } from './AiPathsLiveLog';
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)

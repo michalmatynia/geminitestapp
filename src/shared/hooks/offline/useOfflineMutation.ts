@@ -9,9 +9,9 @@ import {
 import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface QueuedMutation {
   id: string;

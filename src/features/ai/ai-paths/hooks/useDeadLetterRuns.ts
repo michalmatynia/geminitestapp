@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
+import type {
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
+  AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
 import {
   getAiPathRun,
   listAiPathRuns,
@@ -9,15 +14,10 @@ import {
   resumeAiPathRun,
   retryAiPathRunNode,
 } from '@/shared/lib/ai-paths';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/contracts/ai-paths';
 import { createMutationV2, createPaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   SEARCH_DEBOUNCE_MS,

@@ -7,18 +7,19 @@ import type {
   PageBuilderAction,
   InspectorSettings,
 } from '@/shared/contracts/cms';
+
 import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
 import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
-import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
 import {
   PageSelectionContext,
   PageSelectionValue,
   usePageBuilderSelection,
 } from './page-builder/PageSelectionContext';
+import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
 import {
   VectorOverlayContext,
   VectorOverlayRequest,

@@ -8,12 +8,12 @@ import type {
   MasterFolderTreePreparedTransaction,
   MasterFolderTreeAdapterV3,
 } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeCanDropResult as FolderTreeDropCheck } from '@/shared/utils/master-folder-tree-engine';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,
   MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
+import type { MasterTreeCanDropResult as FolderTreeDropCheck } from '@/shared/utils/master-folder-tree-engine';
 
 export type FolderTreePersistOperationV3 = MasterFolderTreePersistOperation;
 export type FolderTreeTransaction = MasterFolderTreeTransaction;

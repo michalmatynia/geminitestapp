@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
 import { Plus } from 'lucide-react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
   createMasterFolderTreeTransactionAdapter,
@@ -13,6 +13,11 @@ import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/share
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
 import { PromptExploderTreeNode } from './PromptExploderTreeNode';
 import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
+import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
+import {
+  promptExploderAddBlankListItem,
+  promptExploderCreateSubsection,
+} from '../../helpers/segment-helpers';
 import {
   buildPromptExploderTreeRevision,
   usePromptExploderHandleOnlyDrag,
@@ -24,12 +29,7 @@ import {
   updatePromptExploderSubsectionById,
   updatePromptExploderSubsectionItemById,
 } from '../../tree/subsections-master-tree';
-import {
-  promptExploderAddBlankListItem,
-  promptExploderCreateSubsection,
-} from '../../helpers/segment-helpers';
 import { readPromptExploderTreeMetadata, toPromptExploderTreeNodeId } from '../../tree/types';
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
 
 import type { PromptExploderListItem, PromptExploderSegment } from '../../types';
 

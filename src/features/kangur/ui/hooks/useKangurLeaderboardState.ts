@@ -58,6 +58,7 @@ export type KangurLeaderboardItem = {
   rankLabel: string;
   scoreLabel: string;
   timeLabel: string;
+  xpLabel: string | null;
 };
 
 type UseKangurLeaderboardStateOptions = {
@@ -89,6 +90,8 @@ const OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   powers: { label: 'Potegi', emoji: '⚡' },
   roots: { label: 'Pierwiastki', emoji: '√' },
   clock: { label: 'Zegar', emoji: '🕐' },
+  calendar: { label: 'Kalendarz', emoji: '📅' },
+  geometry: { label: 'Geometria', emoji: '🔷' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
 };
 
@@ -107,6 +110,9 @@ const USER_OPTIONS: KangurLeaderboardUserOption[] = [
 
 const getOperationInfo = (operation: string): KangurLeaderboardOperationLabel =>
   OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation };
+
+const normalizeXpEarned = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
 
 export const useKangurLeaderboardState = (
   options: UseKangurLeaderboardStateOptions = {}
@@ -205,6 +211,7 @@ export const useKangurLeaderboardState = (
         const isRegistered = Boolean(score.created_by);
         const operationInfo = getOperationInfo(score.operation);
         const medal = index < MEDALS.length ? MEDALS[index]! : null;
+        const xpEarned = normalizeXpEarned(score.xp_earned);
         const isCurrentUser =
           Boolean(currentUser?.email) && score.created_by === (currentUser?.email ?? null);
 
@@ -224,6 +231,7 @@ export const useKangurLeaderboardState = (
           rankLabel: medal ?? `${index + 1}.`,
           scoreLabel: `${score.score}/${score.total_questions}`,
           timeLabel: `${score.time_taken}s`,
+          xpLabel: xpEarned !== null ? `+${xpEarned} XP` : null,
         };
       }),
     [currentUser?.email, visibleScores]

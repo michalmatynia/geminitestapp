@@ -1,14 +1,9 @@
 import 'server-only';
 
 import fs from 'fs/promises';
+
 import sharp from 'sharp';
 
-import {
-  type ImageStudioCenterExecutionMeta,
-  type ImageStudioCenterObjectBounds,
-  type ImageStudioRunExecutionResult,
-  type ImageStudioRunRequest,
-} from '@/shared/contracts/image-studio';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,
@@ -16,7 +11,14 @@ import {
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
+import {
+  type ImageStudioCenterExecutionMeta,
+  type ImageStudioCenterObjectBounds,
+  type ImageStudioRunExecutionResult,
+  type ImageStudioRunRequest,
+} from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
+
 import { createImageRecord, parseDataUrl, resolveCenterOutputFormat } from '../run-executor-utils';
 
 export async function executeCenterOperation(params: {

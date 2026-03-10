@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+
+import type { PatternFormData, ProductValidationRuntimeType } from '@/shared/contracts/products';
 import { Textarea, SelectSimple, StatusToggle, FormField, FormSection } from '@/shared/ui';
+
 import { RUNTIME_TYPE_OPTIONS } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import type { PatternFormData, ProductValidationRuntimeType } from '@/shared/contracts/products';
 
 export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
   const { formData, setFormData } = useValidatorSettingsContext();

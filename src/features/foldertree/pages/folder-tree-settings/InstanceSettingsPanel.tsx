@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { IconSelector } from '@/shared/lib/icons';
 import {
   Checkbox,
@@ -22,6 +23,7 @@ import {
   resolveFolderTreeMultiSelectConfig,
   resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
+
 import {
   getRuleAllow,
   getRuleKinds,

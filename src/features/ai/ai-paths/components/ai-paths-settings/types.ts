@@ -1,4 +1,4 @@
-import type * as React from 'react';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   AiNode,
   Edge,
@@ -21,8 +21,9 @@ import type {
   DbNodePreset,
   ClusterPreset,
 } from '@/shared/lib/ai-paths';
-import type { Toast } from '@/shared/contracts/ui';
+
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
+import type * as React from 'react';
 
 export interface UseAiPathsSettingsStateReturn {
   loading: boolean;

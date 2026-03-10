@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/contracts/auth';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

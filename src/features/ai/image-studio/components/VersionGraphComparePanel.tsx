@@ -3,12 +3,12 @@
 import { Info } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { compareGenerationParams } from '@/features/ai/image-studio/utils/version-graph-compare';
 import { Button } from '@/shared/ui';
 
 import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { compareGenerationParams } from '@/features/ai/image-studio/utils/version-graph-compare';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
+import type { PageZone } from '../types/page-builder';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 
-import type { PageZone } from '../types/page-builder';
 
 export interface TreeActionsStateContextValue {
   expandedIds: Set<string>;

@@ -38,6 +38,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   total_questions: 10,
   correct_answers: 9,
   time_taken: 41,
+  xp_earned: 24,
   created_date: '2026-03-07T12:00:00.000Z',
   created_by: 'ada@example.com',
   ...overrides,
@@ -91,6 +92,7 @@ describe('useKangurLeaderboardState', () => {
       isMedal: true,
       operationLabel: 'Dodawanie',
       rankLabel: '🥇',
+      xpLabel: '+24 XP',
     });
     expect(result.current.operationFilters.find((item) => item.id === 'all')?.selected).toBe(true);
     expect(result.current.userFilters.find((item) => item.id === 'all')?.selected).toBe(true);
@@ -111,6 +113,7 @@ describe('useKangurLeaderboardState', () => {
       metaLabel: '➗ Dzielenie · Anonim',
       scoreLabel: '7/10',
       timeLabel: '41s',
+      xpLabel: '+24 XP',
     });
   });
 });

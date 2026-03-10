@@ -3,15 +3,15 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
   useCmsDomains,
   useCreateSlug,
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
-import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { SectionHeader, useToast, Alert } from '@/shared/ui';
-import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function CreateSlugPage(): React.JSX.Element {
   const { toast } = useToast();

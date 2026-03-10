@@ -2,10 +2,11 @@
 
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { MouseEvent } from 'react';
 import { useEffect } from 'react';
 
 import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+
+import type { MouseEvent } from 'react';
 
 type KangurTransitionLinkProps = React.ComponentProps<typeof NextLink> & {
   targetPageKey?: string | null;
@@ -65,7 +66,9 @@ export function KangurTransitionLink({
       scroll={resolvedScroll}
       target={target}
       onClick={(event) => {
-        onClick?.(event);
+        if (onClick) {
+          onClick(event);
+        }
 
         if (!routeTransition || !shouldStartTransition(event, href, target)) {
           return;

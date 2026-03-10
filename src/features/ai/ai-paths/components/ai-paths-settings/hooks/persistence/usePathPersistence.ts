@@ -1,4 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
+
+import {
+  buildPersistedRuntimeState,
+  sanitizePathConfig,
+} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { AiNode, Edge, PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
@@ -12,13 +20,8 @@ import {
 } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import {
-  buildPersistedRuntimeState,
-  sanitizePathConfig,
-} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+
+import { pruneSingleCardinalityIncomingEdges } from '../../edge-cardinality-repair';
 import {
   buildNodesForAutoSave as buildNodesForAutoSaveHelper,
   collectInvalidPathSavePayloadIssues,
@@ -30,7 +33,7 @@ import {
   shouldExposePathSaveRawMessage,
   stripNodeConfig,
 } from '../../useAiPathsPersistence.helpers';
-import { pruneSingleCardinalityIncomingEdges } from '../../edge-cardinality-repair';
+
 import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPathsPersistence.types';
 
 export function usePathPersistence(

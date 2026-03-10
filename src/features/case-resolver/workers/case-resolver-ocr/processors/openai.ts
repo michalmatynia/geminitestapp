@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import { type ChatCompletionContentPart } from 'openai/resources/chat/completions';
+
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseOpenAiResponseText } from '../response-parsers';
 import { buildOcrPromptContent, withPromiseTimeout } from '../utils';

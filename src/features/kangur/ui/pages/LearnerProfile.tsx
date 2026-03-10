@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
 import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
+import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget';
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
 import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget';
 import { KangurLearnerProfileMasteryWidget } from '@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget';
@@ -13,14 +13,14 @@ import { KangurLearnerProfilePerformanceWidget } from '@/features/kangur/ui/comp
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
-import {
-  KangurPageContainer,
-  KangurPageShell,
-} from '@/features/kangur/ui/design/primitives';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  KangurPageContainer,
+  KangurPageShell,
+} from '@/features/kangur/ui/design/primitives';
 
 export default function LearnerProfile(): React.JSX.Element {
   const { basePath } = useKangurRouting();

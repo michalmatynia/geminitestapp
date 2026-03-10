@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
-import { JobQueueRunCard } from './job-queue-run-card';
+import React, { useRef } from 'react';
+
 import { Pagination, Alert } from '@/shared/ui';
+
+import { JobQueueRunCard } from './job-queue-run-card';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
+
 
 const PAGE_SIZES = [10, 25, 50];
 

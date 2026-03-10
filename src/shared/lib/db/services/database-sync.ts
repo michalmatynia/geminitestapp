@@ -2,6 +2,15 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
+import type {
+  DatabaseSyncDirection,
+  DatabaseSyncCollectionResult,
+  DatabaseSyncResult,
+  DatabaseSyncOptions,
+} from '@/shared/contracts/database';
+import { operationFailedError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import { createFullDatabaseBackup } from '@/shared/lib/db/services/database-backup';
 import {
   AUTH_COLLECTIONS,
@@ -15,18 +24,19 @@ import {
   normalizeId,
 } from '@/shared/lib/db/services/sync-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type {
-  DatabaseSyncDirection,
-  DatabaseSyncCollectionResult,
-  DatabaseSyncResult,
-  DatabaseSyncOptions,
-} from '@/shared/contracts/database';
 
 export type { DatabaseSyncCollectionResult };
-import { operationFailedError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
+import {
+  syncProductAiJobs,
+  syncAiPathRuns,
+  syncAiPathRunNodes,
+  syncAiPathRunEvents,
+  syncProductAiJobsPrismaToMongo,
+  syncAiPathRunsPrismaToMongo,
+  syncAiPathRunNodesPrismaToMongo,
+  syncAiPathRunEventsPrismaToMongo,
+} from './sync/ai-sync';
 import {
   syncUsers,
   syncAccounts,
@@ -39,20 +49,6 @@ import {
   syncVerificationTokensPrismaToMongo,
   syncAuthSecurityProfilesPrismaToMongo,
 } from './sync/auth-sync';
-import {
-  syncChatbotSessions,
-  syncChatbotJobs,
-  syncChatbotSessionsPrismaToMongo,
-  syncChatbotJobsPrismaToMongo,
-} from './sync/chatbot-sync';
-import {
-  syncCurrencies,
-  syncCountries,
-  syncLanguages,
-  syncCurrenciesPrismaToMongo,
-  syncCountriesPrismaToMongo,
-  syncLanguagesPrismaToMongo,
-} from './sync/geo-sync';
 import {
   syncPriceGroups,
   syncCatalogs,
@@ -68,6 +64,12 @@ import {
   syncProductParametersPrismaToMongo,
 } from './sync/catalog-sync';
 import {
+  syncChatbotSessions,
+  syncChatbotJobs,
+  syncChatbotSessionsPrismaToMongo,
+  syncChatbotJobsPrismaToMongo,
+} from './sync/chatbot-sync';
+import {
   syncCmsSlugs,
   syncCmsThemes,
   syncCmsPages,
@@ -82,33 +84,19 @@ import {
   syncCmsDomainSlugsPrismaToMongo,
 } from './sync/cms-sync';
 import {
-  syncProductAiJobs,
-  syncAiPathRuns,
-  syncAiPathRunNodes,
-  syncAiPathRunEvents,
-  syncProductAiJobsPrismaToMongo,
-  syncAiPathRunsPrismaToMongo,
-  syncAiPathRunNodesPrismaToMongo,
-  syncAiPathRunEventsPrismaToMongo,
-} from './sync/ai-sync';
+  syncCurrencies,
+  syncCountries,
+  syncLanguages,
+  syncCurrenciesPrismaToMongo,
+  syncCountriesPrismaToMongo,
+  syncLanguagesPrismaToMongo,
+} from './sync/geo-sync';
 import {
-  syncSettings,
-  syncUserPreferences,
-  syncSystemLogs,
-  syncFileUploadEvents,
-  syncAiConfigurations,
-  syncSettingsPrismaToMongo,
-  syncUserPreferencesPrismaToMongo,
-  syncSystemLogsPrismaToMongo,
-  syncFileUploadEventsPrismaToMongo,
-  syncAiConfigurationsPrismaToMongo,
-} from './sync/system-sync';
-import {
-  syncProducts,
-  syncProductDrafts,
-  syncProductsPrismaToMongo,
-  syncProductDraftsPrismaToMongo,
-} from './sync/product-sync';
+  syncImageFiles,
+  syncImageStudioSlots,
+  syncImageFilesPrismaToMongo,
+  syncImageStudioSlotsPrismaToMongo,
+} from './sync/image-sync';
 import {
   syncIntegrations,
   syncIntegrationConnections,
@@ -132,11 +120,24 @@ import {
   syncThemesPrismaToMongo,
 } from './sync/notes-sync';
 import {
-  syncImageFiles,
-  syncImageStudioSlots,
-  syncImageFilesPrismaToMongo,
-  syncImageStudioSlotsPrismaToMongo,
-} from './sync/image-sync';
+  syncProducts,
+  syncProductDrafts,
+  syncProductsPrismaToMongo,
+  syncProductDraftsPrismaToMongo,
+} from './sync/product-sync';
+import {
+  syncSettings,
+  syncUserPreferences,
+  syncSystemLogs,
+  syncFileUploadEvents,
+  syncAiConfigurations,
+  syncSettingsPrismaToMongo,
+  syncUserPreferencesPrismaToMongo,
+  syncSystemLogsPrismaToMongo,
+  syncFileUploadEventsPrismaToMongo,
+  syncAiConfigurationsPrismaToMongo,
+} from './sync/system-sync';
+
 import type { SyncHandlerContext } from './sync/types';
 
 const recordResult = (

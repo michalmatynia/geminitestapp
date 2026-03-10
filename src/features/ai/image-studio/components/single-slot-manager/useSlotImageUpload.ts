@@ -1,19 +1,22 @@
 'use client';
 
 import { useCallback } from 'react';
-import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import {
-  OBJECT_SLOT_INDEX,
-  resolveSlotIdCandidates,
-  REVEAL_IN_TREE_EVENT,
-} from './single-slot-manager-utils';
+
+import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type {
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
   UpdateImageStudioSlotDto,
   CreateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
-import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+
+import {
+  OBJECT_SLOT_INDEX,
+  resolveSlotIdCandidates,
+  REVEAL_IN_TREE_EVENT,
+} from './single-slot-manager-utils';
+
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
 interface SlotImageUploadProps {

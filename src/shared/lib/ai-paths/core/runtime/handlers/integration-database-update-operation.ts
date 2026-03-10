@@ -1,15 +1,15 @@
 import type { DatabaseConfig, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { parseJsonSafe, renderJsonTemplate } from '../../utils';
 import { buildDbQueryPayload, resolveEntityIdFromInputs } from '../utils';
+import { executeDatabaseUpdate } from './integration-database-update-execution';
+import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
 } from './integration-database-write-guardrails';
-import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
-import { executeDatabaseUpdate } from './integration-database-update-execution';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type HandleDatabaseUpdateOperationInput = {
   node: NodeHandlerContext['node'];

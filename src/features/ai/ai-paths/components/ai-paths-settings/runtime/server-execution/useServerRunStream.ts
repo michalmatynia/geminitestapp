@@ -1,6 +1,9 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+
+import { parseRuntimeState } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import type { 
   AiPathRunNodeRecord, 
   AiPathRunRecord, 
@@ -9,10 +12,9 @@ import type {
   RuntimeHistoryEntry
 } from '@/shared/lib/ai-paths';
 import { streamAiPathRun } from '@/shared/lib/ai-paths';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
-import { parseRuntimeState } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   mergeRuntimeStateSnapshot,
   mergeRuntimeNodeOutputsForStatus,
@@ -27,6 +29,7 @@ import {
   normalizeNodeStreamPayload,
   normalizeEventStreamPayload,
 } from './helpers';
+
 import type { ServerExecutionArgs, ServerRunFinalizeOptions, ServerRunStreamContext } from './types';
 
 export function useServerRunStream(

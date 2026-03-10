@@ -1,4 +1,5 @@
 import { gunzipSync, gzipSync } from 'zlib';
+
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';

@@ -45,6 +45,7 @@ const createScoreRow = () => ({
   total_questions: 10,
   correct_answers: 9,
   time_taken: 33,
+  xp_earned: 41,
   created_date: '2026-03-05T10:00:00.000Z',
   client_mutation_id: 'guest-score:1',
   created_by: 'teacher@example.com',
@@ -147,6 +148,7 @@ describe('kangur scores handler', () => {
           total_questions: 10,
           correct_answers: 9,
           time_taken: 33,
+          xp_earned: 41,
           client_mutation_id: 'guest-score:1',
         })
       ),
@@ -160,6 +162,7 @@ describe('kangur scores handler', () => {
       total_questions: 10,
       correct_answers: 9,
       time_taken: 33,
+      xp_earned: 41,
       client_mutation_id: 'guest-score:1',
       created_by: 'teacher@example.com',
       learner_id: 'learner-1',
@@ -172,6 +175,7 @@ describe('kangur scores handler', () => {
         context: expect.objectContaining({
           operation: 'addition',
           score: 9,
+          xpEarned: 41,
         }),
       })
     );

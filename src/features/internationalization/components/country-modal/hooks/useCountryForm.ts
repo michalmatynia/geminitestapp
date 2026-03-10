@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface CountryFormState {
   code: string;

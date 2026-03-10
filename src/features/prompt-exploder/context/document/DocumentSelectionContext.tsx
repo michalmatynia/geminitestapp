@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PromptExploderSegment } from '../../types';
+
 import { internalError } from '@/shared/errors/app-error';
+
+import type { PromptExploderSegment } from '../../types';
 
 export interface DocumentSelectionState {
   selectedSegmentId: string | null;

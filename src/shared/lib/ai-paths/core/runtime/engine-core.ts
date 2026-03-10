@@ -1,25 +1,25 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
-import { nowMs } from './execution-helpers';
 
 // Modular imports
+import { MAX_ITERATIONS } from './engine-modules/engine-constants';
+import { runExecutionLoop } from './engine-modules/engine-execution-loop';
+import { prepareGraphForExecution } from './engine-modules/engine-execution-preparation';
+import {
+  checkTriggerProvenance,
+  validateTriggerProvenanceFeasibility,
+} from './engine-modules/engine-execution-provenance';
+import { RuntimeTelemetryResolver } from './engine-modules/engine-execution-telemetry';
+import { EngineStateManager } from './engine-modules/engine-state-manager';
 import {
   GraphExecutionError,
   GraphExecutionCancelled,
   type EvaluateGraphOptions,
 } from './engine-modules/engine-types';
 import { collectNodeInputs } from './engine-modules/engine-utils';
-import { EngineStateManager } from './engine-modules/engine-state-manager';
-import { MAX_ITERATIONS } from './engine-modules/engine-constants';
 import { runRuntimeValidation } from './engine-modules/engine-validation-helpers';
-import { prepareGraphForExecution } from './engine-modules/engine-execution-preparation';
-import {
-  checkTriggerProvenance,
-  validateTriggerProvenanceFeasibility,
-} from './engine-modules/engine-execution-provenance';
-import { runExecutionLoop } from './engine-modules/engine-execution-loop';
-import { RuntimeTelemetryResolver } from './engine-modules/engine-execution-telemetry';
+import { nowMs } from './execution-helpers';
 
 export { GraphExecutionError, GraphExecutionCancelled };
 

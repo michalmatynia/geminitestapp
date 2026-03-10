@@ -1,5 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
+import type { ProductImageSlot } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
 import {
   DEFAULT_IMAGE_SLOT_COUNT,
   buildEmptySlots,
@@ -7,14 +11,10 @@ import {
   createFileImageSlot,
   swapSlots,
 } from '@/shared/lib/image-slots';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { invalidateProducts } from './productCache';
 

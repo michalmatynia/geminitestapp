@@ -28,9 +28,7 @@ describe('SubtractingGame', () => {
     expect(firstChoice).toHaveClass('border-amber-300');
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź ✓' }));
 
-    const feedback = screen.getByTestId('subtracting-game-feedback');
-    expect(feedback).toHaveClass(
-      feedback.textContent?.includes('Brawo') ? 'border-emerald-200' : 'border-rose-200'
-    );
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });
+    expect(checkButton.className).toMatch(/bg-(emerald|rose)-500/);
   });
 });

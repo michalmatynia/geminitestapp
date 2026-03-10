@@ -1,14 +1,14 @@
+import type {
+  ProductValidationPattern,
+  ProductValidationPatternFormData as PatternFormData,
+  SequenceGroupView,
+} from '@/shared/contracts/products';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   encodeDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
   type DynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import type {
-  ProductValidationPattern,
-  ProductValidationPatternFormData as PatternFormData,
-  SequenceGroupView,
-} from '@/shared/contracts/products';
 
 export const DEFAULT_SEQUENCE_STEP = 10;
 

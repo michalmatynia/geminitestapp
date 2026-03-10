@@ -1,22 +1,23 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+
 import { cloneValue } from '../utils';
+import { buildSpanId } from './engine-execution-context';
+import { runNode } from './engine-execution-node';
+import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
+import { deriveNodeInputs } from './engine-node-input-deriver';
+import { resolveBlockedNodeStatus, resolveDeclaredNodeStatus } from './engine-runtime-status';
+import { EngineStateManager } from './engine-state-manager';
 import {
   GraphExecutionError,
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
-import { EngineStateManager } from './engine-state-manager';
-import { deriveNodeInputs } from './engine-node-input-deriver';
-import { resolveBlockedNodeStatus, resolveDeclaredNodeStatus } from './engine-runtime-status';
 import {
   buildInputLinks,
   evaluateInputReadiness,
   resolveMissingInputStatus,
 } from './engine-utils';
-import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
-import { runNode } from './engine-execution-node';
-import { buildSpanId } from './engine-execution-context';
 
 export type RunExecutionLoopArgs = {
   state: EngineStateManager;

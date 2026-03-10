@@ -1,4 +1,5 @@
 import type { NodePortValueKind } from '@/shared/contracts/ai-paths';
+
 import { isImageLikeValue } from './image';
 
 export type PortDataType =

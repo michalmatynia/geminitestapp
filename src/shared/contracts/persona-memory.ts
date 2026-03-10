@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema } from './base';
 import { agentPersonaMoodIdSchema } from './agents';
+import { dtoBaseSchema } from './base';
 
 export const personaMemoryRecordTypeSchema = z.enum([
   'memory_entry',

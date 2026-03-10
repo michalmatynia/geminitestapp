@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Star } from 'lucide-react';
+import React from 'react';
 
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { Button } from '@/shared/ui';
 
 export function NoteDetailActions(): React.JSX.Element | null {

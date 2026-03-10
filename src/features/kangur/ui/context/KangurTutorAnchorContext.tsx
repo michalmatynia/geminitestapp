@@ -11,10 +11,12 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorMetadata,
   KangurTutorAnchorRegistration,
+  KangurTutorAnchorSurface,
 } from './kangur-tutor-types';
 
 type KangurTutorAnchorContextValue = {
@@ -131,7 +133,7 @@ const contentMatches = (
 
 export function selectBestTutorAnchor(input: {
   anchors: KangurTutorAnchorRegistration[];
-  surface: 'lesson' | 'test' | 'game' | null | undefined;
+  surface: KangurTutorAnchorSurface | null | undefined;
   contentId?: string | null;
   kinds?: KangurTutorAnchorKind[];
 }): KangurTutorAnchorRegistration | null {

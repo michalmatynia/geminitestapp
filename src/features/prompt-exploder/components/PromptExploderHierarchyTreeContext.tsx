@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { PromptExploderListItem } from '../types';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { PromptExploderListItem } from '../types';
 
 type PromptExploderHierarchyTreeContextValue = {
   items: PromptExploderListItem[];

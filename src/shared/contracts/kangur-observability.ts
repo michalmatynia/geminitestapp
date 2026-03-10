@@ -39,6 +39,19 @@ export const kangurAnalyticsCountSchema = z.object({
 });
 export type KangurAnalyticsCount = z.infer<typeof kangurAnalyticsCountSchema>;
 
+export const kangurAiTutorAnalyticsSnapshotSchema = z.object({
+  messageSucceededCount: z.number(),
+  bridgeSuggestionCount: z.number(),
+  lessonToGameBridgeSuggestionCount: z.number(),
+  gameToLessonBridgeSuggestionCount: z.number(),
+  bridgeQuickActionClickCount: z.number(),
+  bridgeFollowUpClickCount: z.number(),
+  bridgeFollowUpCompletionCount: z.number(),
+});
+export type KangurAiTutorAnalyticsSnapshot = z.infer<
+  typeof kangurAiTutorAnalyticsSnapshotSchema
+>;
+
 export const kangurPerformanceBaselineSchema = z.object({
   generatedAt: z.string().nullable(),
   unitStatus: z.string().nullable(),
@@ -88,6 +101,7 @@ export const kangurAnalyticsSnapshotSchema = z.object({
   ),
   topEventNames: z.array(kangurAnalyticsCountSchema),
   importantEvents: z.array(kangurAnalyticsCountSchema),
+  aiTutor: kangurAiTutorAnalyticsSnapshotSchema,
   recent: z.array(kangurRecentAnalyticsEventSchema),
 });
 export type KangurAnalyticsSnapshot = z.infer<typeof kangurAnalyticsSnapshotSchema>;

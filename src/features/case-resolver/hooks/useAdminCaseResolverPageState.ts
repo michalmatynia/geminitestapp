@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { FilemakerPartyKind } from '@/features/filemaker';
 import { resolveFilemakerPartyLabel } from '@/features/filemaker';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
@@ -13,21 +13,20 @@ import type {
   CaseResolverNodeMeta,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { useToast } from '@/shared/ui';
 
 import { useCaseResolverState } from './useCaseResolverState';
 import { hasCaseResolverDraftMeaningfulChanges } from './useCaseResolverState.helpers';
 import { stripCaseContextQueryParams } from './useCaseResolverState.helpers.requested-context';
-import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
-import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import { logCaseResolverDurationMetric } from '../runtime';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import { deleteCaseResolverNodeFileSnapshot } from '../workspace-persistence';
-
 import { useAdminCaseResolverCaptureActions } from './useAdminCaseResolverCaptureActions';
-import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorUiState';
 import { useAdminCaseResolverDocumentActions } from './useAdminCaseResolverDocumentActions';
-import { useAdminCaseResolverRelationActions } from './useAdminCaseResolverRelationActions';
+import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorUiState';
 import { useAdminCaseResolverMetadataActions } from './useAdminCaseResolverMetadataActions';
+import { useAdminCaseResolverRelationActions } from './useAdminCaseResolverRelationActions';
 import { buildCaseMetadataDraft, buildCaseMetadataPatch } from '../case-overview-draft';
 
 export function useAdminCaseResolverPageState() {

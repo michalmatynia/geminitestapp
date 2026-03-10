@@ -1,7 +1,7 @@
 'use client';
 
-import { triggers } from '@/shared/lib/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { triggers } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import { useGraphState } from '../../context';

@@ -3,6 +3,15 @@
 import { Trash2, Frame, GripVertical, type LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
+import type { BlockInstance } from '@/features/cms/types/page-builder';
+import {
+  readBlockDragData,
+  readSectionDragData,
+  setBlockDragData,
+} from '@/features/cms/utils/page-builder-dnd';
 import {
   TreeRow,
   TreeCaret,
@@ -13,14 +22,7 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
-import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
-import {
-  readBlockDragData,
-  readSectionDragData,
-  setBlockDragData,
-} from '@/features/cms/utils/page-builder-dnd';
+
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { getBlockDefinition } from '../section-registry';
 import { BlockNodeItem } from './BlockNodeItem';
@@ -29,7 +31,7 @@ import { TreeParentBlockProvider } from './TreeParentBlockContext';
 import { useTreeSectionId } from './TreeSectionContext';
 
 import type { SlideshowFrameNodeItemProps } from './tree-types';
-import type { BlockInstance } from '@/features/cms/types/page-builder';
+
 
 export function SlideshowFrameNodeItem(props: SlideshowFrameNodeItemProps): React.ReactNode {
   const { frame, index } = props;

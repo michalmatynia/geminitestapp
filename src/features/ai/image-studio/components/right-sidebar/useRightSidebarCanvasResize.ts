@@ -1,15 +1,16 @@
 import React from 'react';
 
-import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';
-import { useProjectsActions, useProjectsState } from '../../context/ProjectsContext';
-import { useSlotsState } from '../../context/SlotsContext';
-import { useUiActions, useUiState } from '../../context/UiContext';
 import {
   applyCanvasResizeLocalTransform,
   type CanvasResizeDirection,
 } from '@/features/ai/image-studio/utils/canvas-resize';
 
 import { parseCanvasSizePresetValue } from './right-sidebar-utils';
+import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';
+import { useProjectsActions, useProjectsState } from '../../context/ProjectsContext';
+import { useSlotsState } from '../../context/SlotsContext';
+import { useUiActions, useUiState } from '../../context/UiContext';
+
 
 type ApplyCanvasResizeArgs = {
   direction: CanvasResizeDirection;

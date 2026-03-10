@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { cmsPageBuilderComponentContentSchema } from '@/shared/contracts/cms';
 
 const nonEmptyStringSchema = z.string().trim().min(1);

@@ -1,9 +1,8 @@
-import { useId } from 'react';
 import { motion } from 'framer-motion';
+import { useId } from 'react';
 
-import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
-import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
+import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import {
   KangurIconBadge,
   KangurOptionCardButton,
@@ -11,6 +10,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 

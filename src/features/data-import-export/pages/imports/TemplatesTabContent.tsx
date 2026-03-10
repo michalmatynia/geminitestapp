@@ -1,7 +1,26 @@
 'use client';
 
-import React from 'react';
 import { Trash2, Plus } from 'lucide-react';
+import React from 'react';
+
+import {
+  PRODUCT_FIELDS,
+  EXPORT_PARAMETER_KEYS,
+  PRODUCT_PARAMETER_TARGET_PATTERN,
+  PRODUCT_PARAMETER_TARGET_PREFIX,
+  PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN,
+} from '@/features/data-import-export/components/imports/constants';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useProductParameters,
+  useProductSimpleParameters,
+} from '@/features/data-import-export/hooks/useImportQueries';
+import type { TemplateMapping } from '@/shared/contracts/integrations';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 import {
   Button,
   Checkbox,
@@ -15,29 +34,12 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import {
-  PRODUCT_FIELDS,
-  EXPORT_PARAMETER_KEYS,
-  PRODUCT_PARAMETER_TARGET_PATTERN,
-  PRODUCT_PARAMETER_TARGET_PREFIX,
-  PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN,
-} from '@/features/data-import-export/components/imports/constants';
-import {
-  useProductParameters,
-  useProductSimpleParameters,
-} from '@/features/data-import-export/hooks/useImportQueries';
-import {
-  useImportExportActions,
-  useImportExportData,
-  useImportExportState,
-} from '@/features/data-import-export/context/ImportExportContext';
+
 import {
   parseParameterTarget,
   toParameterTargetValue,
   getParameterDisplayName,
 } from './imports-page-utils';
-import type { TemplateMapping } from '@/shared/contracts/integrations';
-import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 
 export function TemplatesTabContent(): React.JSX.Element {
   const {

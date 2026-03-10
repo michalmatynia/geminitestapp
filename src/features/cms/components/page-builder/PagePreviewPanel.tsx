@@ -4,11 +4,11 @@ import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { Button, SelectSimple, useToast, Badge } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PageSelectorBar } from './PageSelectorBar';
@@ -16,19 +16,19 @@ import { PreviewEditorProvider } from './preview/context/PreviewEditorContext';
 import { PreviewSection, type MediaReplaceTarget } from './PreviewBlock';
 import { useThemeSettingsValue } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
-import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
-import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
-import { normalizePageSlugValues } from '../../utils/slug-utils';
-import { isCmsSectionHidden } from '../../utils/page-builder-normalization';
 import {
   buildHierarchyIndexes,
   flattenByZonePreorder,
 } from '../../hooks/page-builder/section-hierarchy';
+import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
+import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
   useVectorOverlay,
 } from '../../hooks/usePageBuilderContext';
+import { isCmsSectionHidden } from '../../utils/page-builder-normalization';
+import { normalizePageSlugValues } from '../../utils/slug-utils';
 import { CmsPageProvider } from '../frontend/CmsPageContext';
 import { MediaStylesProvider } from '../frontend/media-styles-context';
 import {

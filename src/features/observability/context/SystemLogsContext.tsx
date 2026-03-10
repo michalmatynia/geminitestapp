@@ -15,8 +15,6 @@ import {
   useMongoDiagnostics,
   useLogInsights,
 } from '@/features/observability/hooks/useLogQueries';
-import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
@@ -25,12 +23,16 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import {
   formatDateParam,
   parseMinDurationInput,
   parseStatusCodeInput,
   systemLogFilterFields,
 } from './SystemLogsContext.shared';
+import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
+
 import type {
   MongoDiagnosticsData,
   SystemLogsActionsContextValue,

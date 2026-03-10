@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurStatusChip,
@@ -11,7 +12,12 @@ import { cn } from '@/shared/utils';
 
 type XpToastProps = KangurXpToastState;
 
-export default function XpToast({ xpGained, newBadges, visible }: XpToastProps): React.JSX.Element {
+export default function XpToast({
+  xpGained,
+  newBadges,
+  visible,
+  breakdown = [],
+}: XpToastProps): React.JSX.Element {
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const badgeDetails = (newBadges ?? [])
@@ -47,6 +53,14 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
                   Świetnie, zdobywasz kolejne punkty
                 </span>
               </div>
+              <KangurRewardBreakdownChips
+                accent='slate'
+                breakdown={breakdown}
+                className='mt-2'
+                dataTestId='xp-toast-breakdown'
+                itemDataTestIdPrefix='xp-toast-breakdown'
+                limit={4}
+              />
             </KangurSurfacePanel>
           )}
           {badgeDetails.map((badge) => (

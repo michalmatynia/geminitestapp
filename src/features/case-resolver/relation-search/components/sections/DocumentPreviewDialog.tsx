@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import React from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -12,11 +13,12 @@ import {
   Button,
   Badge,
 } from '@/shared/ui';
+
+import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 import {
   useDocumentRelationSearchActionsContext,
   useDocumentRelationSearchStateContext,
 } from '../../context/DocumentRelationSearchContext';
-import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 
 export function DocumentPreviewDialog(): React.JSX.Element {
   const { previewFile: file, previewRow, isLocked } = useDocumentRelationSearchStateContext();

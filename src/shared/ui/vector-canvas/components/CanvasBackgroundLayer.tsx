@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { useVectorCanvasContext } from '../VectorCanvasContext';
 
 export function CanvasBackgroundLayer(): React.JSX.Element | null {

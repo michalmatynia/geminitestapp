@@ -2,24 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
   AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
 } from '@/shared/contracts/ai-paths';
+import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import {
   getRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,
 } from '@/shared/lib/query-invalidation';
 
-import type { QueueHistoryEntry, QueueStatus, RunDetail, StreamConnectionStatus } from './job-queue-panel-utils';
 import {
   getLatestEventTimestamp,
   normalizeRunEvents,
   normalizeRunNodes,
   refreshRunDetailErrorSummary,
 } from './job-queue-panel-utils';
+
+import type { QueueHistoryEntry, QueueStatus, RunDetail, StreamConnectionStatus } from './job-queue-panel-utils';
 import type { JobQueueRefetchData } from './useJobQueueDataLayer';
 
 interface JobQueueRealtimeParams {

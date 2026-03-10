@@ -8,10 +8,10 @@ import type {
   NoteEditorType,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
+import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
-import type { Prisma } from '@/shared/lib/db/prisma-client';
 
 const noteInclude = {
   tags: { include: { tag: true } },

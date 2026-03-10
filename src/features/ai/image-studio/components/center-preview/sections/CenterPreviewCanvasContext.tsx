@@ -2,13 +2,13 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
-import type { VectorShape } from '@/shared/contracts/vector';
 import type {
   PreviewCanvasCropRect,
   PreviewCanvasImageContentFrame,
 } from '@/features/ai/image-studio/context/UiContext';
+import type { VectorShape } from '@/shared/contracts/vector';
 import { internalError } from '@/shared/errors/app-error';
+import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
 
 export interface CenterPreviewCanvasContextValue {
   vectorContextValue: VectorDrawingContextValue;

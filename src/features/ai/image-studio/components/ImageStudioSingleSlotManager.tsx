@@ -11,14 +11,13 @@ import {
   useState,
 } from 'react';
 
+import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
 import ProductImageManager from '@/features/products';
 import { ProductImageManagerControllerProvider } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
-
 import {
   OBJECT_SLOT_INDEX,
   toManagedSlot,
@@ -26,8 +25,8 @@ import {
   slotHasRenderableImage,
 } from './single-slot-manager/single-slot-manager-utils';
 import { useConsumeTemporaryUpload } from './single-slot-manager/useConsumeTemporaryUpload';
-import { useSlotImageUpload } from './single-slot-manager/useSlotImageUpload';
 import { useSlotImageDisconnect } from './single-slot-manager/useSlotImageDisconnect';
+import { useSlotImageUpload } from './single-slot-manager/useSlotImageUpload';
 
 export interface ImageStudioSingleSlotManagerHandle {
   consumeTemporaryObjectUpload: (options?: { loadToCanvas?: boolean }) => Promise<boolean>;

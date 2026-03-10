@@ -1,17 +1,11 @@
 import 'server-only';
 
-import {
-  type ImageStudioSequenceMaskContext,
-  type ImageStudioSequenceRunRecord,
-  type ImageStudioSequenceRunStartResponse,
-} from '@/shared/contracts/image-studio';
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   createImageStudioSequenceRun,
   getImageStudioSequenceRunById,
   updateImageStudioSequenceRun,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
@@ -25,8 +19,14 @@ import {
   startImageStudioSequenceQueue,
   type ImageStudioSequenceDispatchMode,
 } from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import {
+  type ImageStudioSequenceMaskContext,
+  type ImageStudioSequenceRunRecord,
+  type ImageStudioSequenceRunStartResponse,
+} from '@/shared/contracts/image-studio';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 
 type SequenceStepInputLike = {
   type?: unknown;

@@ -3,19 +3,19 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 
-import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import {
   isEditingProductHydrated,
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
+import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
+import { ProductParameterValue } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
-import { ProductParameterValue } from '@/shared/contracts/products';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
 
 import {
   ProductFormCoreProvider,

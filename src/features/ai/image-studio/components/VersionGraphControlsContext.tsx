@@ -2,9 +2,10 @@
 
 import React from 'react';
 
-import type { VersionNode } from '../context/VersionGraphContext';
 import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { VersionNode } from '../context/VersionGraphContext';
 
 type VersionGraphControlsContextValue = {
   nodeCount: number;

@@ -2,16 +2,16 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import {
   buildParameterLinkScopeKey,
   parseScopedCatalogParameterLinkMap,
   stringifyScopedCatalogParameterLinkMap,
   normalizeParameterLinkEntries,
 } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
+import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
 

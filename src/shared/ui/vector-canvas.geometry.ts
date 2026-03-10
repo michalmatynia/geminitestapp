@@ -1,8 +1,8 @@
-import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
 import type {
   PositiveRectBoundsDto as VectorCanvasViewCropRect,
   PositiveRectBoundsDto as VectorCanvasImageContentFrame,
 } from '@/shared/contracts/geometry';
+import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
 
 export type { VectorCanvasViewCropRect, VectorCanvasImageContentFrame };
 

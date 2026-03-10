@@ -1,15 +1,15 @@
-import type {
-  ContextRegistryResolutionBundle,
-  ContextRuntimeDocument,
-  ContextRuntimeDocumentSection,
-} from '@/shared/contracts/ai-context-registry';
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingChatSource,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
+import type {
+  ContextRegistryResolutionBundle,
+  ContextRuntimeDocument,
+  ContextRuntimeDocumentSection,
+} from '@/shared/contracts/ai-context-registry';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 
 export const AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS = [
   'page:agent-teaching-chat',

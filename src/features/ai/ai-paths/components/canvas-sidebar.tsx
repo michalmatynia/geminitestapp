@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
+import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
 import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import {
@@ -28,7 +29,6 @@ import {
 } from '../context';
 import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
 import { useCanvasSidebarActions } from './hooks/useCanvasSidebarActions';
-import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 type PaletteMode = 'data' | 'sound';
 

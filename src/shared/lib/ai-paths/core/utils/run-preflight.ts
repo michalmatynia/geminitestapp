@@ -5,11 +5,11 @@ import type {
   EvaluateRunPreflightArgs,
 } from '@/shared/contracts/ai-paths';
 
-import { normalizeAiPathsValidationConfig } from '../validation-engine/defaults';
-import { evaluateAiPathsValidationPreflight } from '../validation-engine/evaluator';
 import { evaluateDataContractPreflight } from './data-contract-preflight';
 import { inspectPathDependencies } from './dependency-inspector';
 import { compileGraph } from './graph';
+import { normalizeAiPathsValidationConfig } from '../validation-engine/defaults';
+import { evaluateAiPathsValidationPreflight } from '../validation-engine/evaluator';
 
 export type {
   RunPreflightBlockReason,

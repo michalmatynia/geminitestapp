@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
+import { normalizeCaseResolverWorkspace } from '../settings';
 import {
   createCaseResolverWorkspaceMutationId,
   getCaseResolverWorkspaceRevision,
@@ -9,8 +10,8 @@ import {
   primeCaseResolverNavigationWorkspace,
   stampCaseResolverWorkspaceMutation,
 } from '../workspace-persistence';
-import { normalizeCaseResolverWorkspace } from '../settings';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
+
 import type { UseCaseResolverPersistenceValue } from './useCaseResolverState.persistence-actions';
 
 export type CaseResolverWorkspaceUpdateOptions = {

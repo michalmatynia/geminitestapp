@@ -2,21 +2,21 @@
 
 import React from 'react';
 
+import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 import { Alert, StatusBadge, MetadataItem, Card } from '@/shared/ui';
 
 import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
 import { RuleList } from '../components/RuleList';
-import { PromptEngineProvider } from '../context/PromptEngineContext';
 import {
   type ExploderPatternSubTab,
   type PatternCollectionTab,
   usePromptEngineConfig,
 } from '../context/prompt-engine/PromptEngineConfigContext';
 import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
+import { PromptEngineProvider } from '../context/PromptEngineContext';
 import { PromptEngineValidationPageProvider } from '../context/PromptEngineValidationPageContext';
-import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
 type AdminPromptEngineValidationPatternsPageProps = {
   embedded?: boolean;

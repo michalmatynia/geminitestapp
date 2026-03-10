@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import { validationError } from '@/shared/errors/app-error';
 import {
   aiTriggerButtonLocationSchema,
   aiTriggerButtonModeSchema,
@@ -11,6 +10,7 @@ import {
   aiTriggerButtonUpdatePayloadSchema as aiTriggerButtonUpdateSchema,
   aiTriggerButtonReorderPayloadSchema as aiTriggerButtonReorderSchema,
 } from '@/shared/contracts/ai-trigger-buttons';
+import { validationError } from '@/shared/errors/app-error';
 
 export {
   aiTriggerButtonLocationSchema,

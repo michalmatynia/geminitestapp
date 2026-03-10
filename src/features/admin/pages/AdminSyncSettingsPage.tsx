@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useOfflineQueueStatus } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
@@ -26,6 +25,7 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: 'background_sync_enabled',

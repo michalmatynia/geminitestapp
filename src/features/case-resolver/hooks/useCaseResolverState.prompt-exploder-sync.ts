@@ -1,4 +1,9 @@
 import {
+  buildFileEditDraft,
+  createCaseResolverHistorySnapshotEntry,
+  createId,
+} from '@/features/case-resolver/utils/caseResolverUtils';
+import {
   buildCaseResolverCaptureProposalState,
   type CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture';
@@ -7,6 +12,11 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor';
+import type {
+  CaseResolverFile,
+  CaseResolverFileEditDraft,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 import {
   clearPromptExploderApplyPayload,
   consumePromptExploderApplyPromptForCaseResolver,
@@ -14,11 +24,6 @@ import {
   savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgePayload,
 } from '@/shared/lib/prompt-exploder/bridge';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 import { createCaseResolverFile } from '../settings';
 import { type PromptExploderTransferUiStatus } from './prompt-exploder-transfer-lifecycle';
@@ -26,11 +31,6 @@ import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
 } from './useCaseResolverState.helpers';
-import {
-  buildFileEditDraft,
-  createCaseResolverHistorySnapshotEntry,
-  createId,
-} from '@/features/case-resolver/utils/caseResolverUtils';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;

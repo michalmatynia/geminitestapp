@@ -1,7 +1,11 @@
 'use client';
 
 import React from 'react';
+
+import type { PatternFormData } from '@/shared/contracts/products';
+import { normalizeProductValidationPatternReplacementScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { MultiSelect, SelectSimple, FormField, ToggleRow } from '@/shared/ui';
+
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {
   DENY_BEHAVIOR_OVERRIDE_OPTIONS,
@@ -9,8 +13,6 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { normalizeProductValidationPatternReplacementScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
-import type { PatternFormData } from '@/shared/contracts/products';
 
 export function ValidatorPatternModalPolicySection(): React.JSX.Element {
   const { formData, setFormData } = useValidatorSettingsContext();

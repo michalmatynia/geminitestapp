@@ -1,10 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
+
 import {
   type VectorPoint,
   type VectorShape,
   type VectorShapeType,
   type VectorToolMode,
 } from '@/shared/contracts/vector';
+
 import {
   type VectorCanvasImageContentFrame,
   type VectorCanvasViewCropRect,

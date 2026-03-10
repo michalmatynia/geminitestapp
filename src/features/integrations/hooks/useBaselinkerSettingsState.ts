@@ -7,8 +7,8 @@ import {
   useIntegrationsData,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useUpdateDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationMutations';
+import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 
 export function useBaselinkerSettingsState() {

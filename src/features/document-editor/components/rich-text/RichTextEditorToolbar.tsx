@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import type { RichTextEditorVariant } from '../../types';
 
 export const ToolbarVariantContext = React.createContext<RichTextEditorVariant>('compact');

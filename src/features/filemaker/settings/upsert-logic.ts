@@ -1,4 +1,23 @@
 import {
+  FilemakerPhoneValidationRule,
+  UpsertFilemakerPartyPhoneNumbersResult,
+  UpsertFilemakerPartyEmailsResult,
+  FilemakerEmailParserRule,
+  FilemakerEmailExtractionResult,
+} from '@/shared/contracts/filemaker';
+
+import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
+import { createFilemakerPhoneNumber, createFilemakerEmail } from '../filemaker-settings.entities';
+import { normalizeString, toIdToken, ensureUniqueId } from '../filemaker-settings.helpers';
+import {
+  linkFilemakerPhoneNumberToParty,
+  linkFilemakerEmailToParty,
+} from '../filemaker-settings.links';
+import {
+  validateFilemakerPhoneNumber,
+  extractFilemakerEmailsFromText,
+} from '../filemaker-settings.validation';
+import {
   FilemakerDatabase,
   FilemakerPhoneNumber,
   FilemakerPerson,
@@ -6,24 +25,6 @@ import {
   FilemakerEmail,
   FilemakerEmailStatus,
 } from '../types';
-import {
-  FilemakerPhoneValidationRule,
-  UpsertFilemakerPartyPhoneNumbersResult,
-  UpsertFilemakerPartyEmailsResult,
-  FilemakerEmailParserRule,
-  FilemakerEmailExtractionResult,
-} from '@/shared/contracts/filemaker';
-import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
-import { normalizeString, toIdToken, ensureUniqueId } from '../filemaker-settings.helpers';
-import {
-  validateFilemakerPhoneNumber,
-  extractFilemakerEmailsFromText,
-} from '../filemaker-settings.validation';
-import { createFilemakerPhoneNumber, createFilemakerEmail } from '../filemaker-settings.entities';
-import {
-  linkFilemakerPhoneNumberToParty,
-  linkFilemakerEmailToParty,
-} from '../filemaker-settings.links';
 
 export const upsertFilemakerPhoneNumbersForParty = (
   database: FilemakerDatabase,

@@ -1,17 +1,20 @@
 import fs from 'fs/promises';
 import path from 'path';
+
 import sharp from 'sharp';
+
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import {
   getDiskPathFromPublicPath,
   uploadFile,
 } from '@/shared/lib/files/services/image-file-service';
-import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
+
+import { trimString } from './product-studio-service.helpers';
 import {
   DATA_URL_REGEX,
   MIME_BY_EXTENSION,
   type ProductImageFileSource,
 } from './product-studio-service.images';
-import { trimString } from './product-studio-service.helpers';
 
 export const parseDataUrlToBuffer = (
   value: string

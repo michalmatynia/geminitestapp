@@ -14,6 +14,12 @@ import {
 } from './sinks-auto-remediation.server';
 import { resolvePortablePathEnvelopeVerificationAuditSinkBootstrapSettingsFromEnvironment } from './sinks-bootstrap-config.server';
 import {
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
+  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
+} from './sinks-constants.server';
+import {
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
   createPortablePathEnvelopeVerificationPrismaSink,
@@ -30,12 +36,7 @@ import {
   toErrorMessage,
   toStartupHealthSummaryLogInput,
 } from './sinks-shared.server';
-import {
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-} from './sinks-constants.server';
+
 import type {
   PortablePathEnvelopeVerificationAuditSinkHealthCheck,
   PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic,

@@ -12,7 +12,6 @@ import {
   type JSX,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
@@ -21,21 +20,24 @@ import {
   hasKangurLessonDocumentContent,
   parseKangurLessonDocumentStore,
 } from '@/features/kangur/lesson-documents';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
-import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/shared/contracts/kangur';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
 import {
   getLessonAssignmentTimestamp,
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
   LESSON_COMPONENTS,
   resolveFocusedLessonId,
 } from './KangurLessonsRuntimeContext.shared';
+
 import type {
   KangurLessonsRuntimeActionsContextValue,
   KangurLessonsRuntimeContextValue,

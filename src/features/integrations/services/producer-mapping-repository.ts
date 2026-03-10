@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ObjectId } from 'mongodb';
 
 import {
@@ -15,7 +14,6 @@ import {
   type MongoInternalProducerDoc,
   type MongoProducerMappingDoc,
 } from '@/features/integrations/services/producer-mapping-repository-mongo-utils';
-import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import type {
   ProducerMapping,
   ProducerMappingCreateInput,
@@ -26,6 +24,8 @@ import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 
 export type ProducerMappingRepository = {
   create: (input: ProducerMappingCreateInput) => Promise<ProducerMapping>;

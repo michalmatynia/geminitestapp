@@ -1,9 +1,9 @@
-import type { Dispatch, SetStateAction } from 'react';
 
 import type { LabelValueOptionDto } from '@/shared/contracts/ui';
 
 import type { ApprovalDraft } from '../helpers/segment-helpers';
 import type { PromptExploderLearnedTemplate } from '../types';
+import type { Dispatch, SetStateAction } from 'react';
 
 export interface SegmentEditorMatchedRuleDetail {
   id: string;

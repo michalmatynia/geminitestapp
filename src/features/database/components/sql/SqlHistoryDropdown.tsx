@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { ClockIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';
+import React from 'react';
+
 import { Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

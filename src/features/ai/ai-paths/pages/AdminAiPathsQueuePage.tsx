@@ -4,10 +4,10 @@ import { ActivityIcon, ExternalLinkIcon, ImageIcon, UploadCloudIcon } from 'luci
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { FileUploadEventsPanel } from '@/shared/ui/files';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
 import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
+import { FileUploadEventsPanel } from '@/shared/ui/files';
+import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -42,6 +42,8 @@ const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab
 export function AdminAiPathsQueuePage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedTab = searchParams?.get('tab') ?? 'paths-all';
+  const requestedQuery = searchParams?.get('query')?.trim() ?? '';
+  const requestedRunId = searchParams?.get('runId')?.trim() ?? '';
   const defaultTab = toQueueTab(requestedTab);
   const [activeTab, setActiveTab] = useState<QueueTab>(defaultTab);
 
@@ -143,7 +145,12 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('paths-all')}
             className='space-y-4'
           >
-            <JobQueuePanel visibility='global' isActive />
+            <JobQueuePanel
+              visibility='global'
+              initialSearchQuery={requestedQuery}
+              initialExpandedRunId={requestedRunId}
+              isActive
+            />
           </section>
         ) : null}
 
@@ -154,7 +161,13 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('paths')}
             className='space-y-4'
           >
-            <JobQueuePanel sourceFilter='ai_paths_ui' visibility='global' isActive />
+            <JobQueuePanel
+              sourceFilter='ai_paths_ui'
+              visibility='global'
+              initialSearchQuery={requestedQuery}
+              initialExpandedRunId={requestedRunId}
+              isActive
+            />
           </section>
         ) : null}
 
@@ -169,6 +182,8 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
               sourceFilter='ai_paths_ui'
               sourceMode='exclude'
               visibility='global'
+              initialSearchQuery={requestedQuery}
+              initialExpandedRunId={requestedRunId}
               isActive
             />
             <div id='export-jobs'>

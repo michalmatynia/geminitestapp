@@ -2,9 +2,9 @@ import 'server-only';
 
 import path from 'path';
 
+import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
-import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_IMAGE_EXTENSION_PATTERN = /\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i;

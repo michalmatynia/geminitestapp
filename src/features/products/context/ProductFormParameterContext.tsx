@@ -9,13 +9,13 @@ import type {
   ProductDraft,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
 
 import { useParameters } from '../hooks/useProductMetadataQueries';
-import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 
 export interface ProductFormParameterContextType {
   parameters: ProductParameter[];

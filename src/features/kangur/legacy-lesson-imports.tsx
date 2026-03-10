@@ -1,4 +1,3 @@
-import type { JSX } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server.browser';
 
 import type {
@@ -8,6 +7,7 @@ import type {
 } from '@/shared/contracts/kangur';
 import { sanitizeHtml } from '@/shared/utils';
 
+import { getKangurLessonActivityDefinition } from './lesson-activities';
 import {
   createKangurLessonActivityBlock,
   createDefaultKangurLessonDocument,
@@ -16,7 +16,6 @@ import {
   updateKangurLessonDocumentPages,
   updateKangurLessonDocumentTimestamp,
 } from './lesson-documents';
-import { getKangurLessonActivityDefinition } from './lesson-activities';
 import { KANGUR_LESSON_LIBRARY } from './settings';
 import {
   HUB_SECTIONS as ADDING_HUB_SECTIONS,
@@ -72,6 +71,8 @@ import {
   HUB_SECTIONS as SUBTRACTING_HUB_SECTIONS,
   SLIDES as SUBTRACTING_SLIDES,
 } from './ui/components/SubtractingLesson';
+
+import type { JSX } from 'react';
 
 type LegacyImportSlide = {
   title: string;

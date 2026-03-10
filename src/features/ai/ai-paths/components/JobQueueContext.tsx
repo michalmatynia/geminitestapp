@@ -3,11 +3,13 @@
 import { createContext, useContext, type JSX, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+
+import { useJobQueueRuntime } from './useJobQueueRuntime';
+
 import type {
   JobQueueActionsValue,
   JobQueueStateValue,
 } from './job-queue/types';
-import { useJobQueueRuntime } from './useJobQueueRuntime';
 
 export type {
   JobQueueActionsValue,
@@ -21,6 +23,8 @@ const JobQueueActionsContext = createContext<JobQueueActionsValue | null>(null);
 type JobQueueProviderProps = {
   children: ReactNode;
   activePathId?: string | null;
+  initialSearchQuery?: string | null;
+  initialExpandedRunId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
   visibility?: 'scoped' | 'global';
@@ -30,6 +34,8 @@ type JobQueueProviderProps = {
 export function JobQueueProvider({
   children,
   activePathId,
+  initialSearchQuery,
+  initialExpandedRunId,
   sourceFilter,
   sourceMode = 'include',
   visibility = 'scoped',
@@ -37,6 +43,8 @@ export function JobQueueProvider({
 }: JobQueueProviderProps): JSX.Element {
   const { actionsValue, stateValue } = useJobQueueRuntime({
     activePathId,
+    initialSearchQuery,
+    initialExpandedRunId,
     sourceFilter,
     sourceMode,
     visibility,

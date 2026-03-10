@@ -4,8 +4,8 @@ import {
   processTraderaListingJob,
   type TraderaListingJobInput as _TraderaListingJobInput,
 } from '@/features/integrations/services/tradera-listing-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type TraderaListingQueueJobData = {
   listingId: string;

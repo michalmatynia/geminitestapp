@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -8,8 +9,8 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+
 import { sanitizeRuntimeState } from '../path-run-executor.logic';
-import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 
 export class PathRunRuntimeStateManager {
   private latestSnapshot: RuntimeState | null = null;

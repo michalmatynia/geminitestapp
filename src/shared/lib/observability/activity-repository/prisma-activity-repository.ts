@@ -1,10 +1,10 @@
 import { randomUUID } from 'crypto';
 
-import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 
 import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
 import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
 
 const ACTIVITY_SOURCE = 'activity';
 const isMissingSystemLogStorage = (error: unknown): boolean =>

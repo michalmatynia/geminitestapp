@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
 import { internalError } from '@/shared/errors/app-error';
 
 export type DatabaseSaveQueryPresetDialogContextValue = {

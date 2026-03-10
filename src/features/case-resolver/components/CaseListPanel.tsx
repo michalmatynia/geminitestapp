@@ -19,7 +19,9 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
-import { CaseListSearchPanel } from './list/search';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   Card,
@@ -27,23 +29,16 @@ import {
   Skeleton,
   StandardDataTablePanel,
 } from '@/shared/ui';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
+import { CaseFilterPanel } from './CaseFilterPanel';
+import { CaseListSearchPanel } from './list/search';
 import {
   useAdminCaseResolverCasesActionsContext,
   useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
-import { CaseFilterPanel } from './CaseFilterPanel';
-import { CaseListHeader } from './list/CaseListHeader';
-import {
-  CaseListPanelControlsContext,
-  type CaseListPanelControlsContextValue,
-} from './list/CaseListPanelControlsContext';
-
+import { primeCaseResolverNavigationWorkspace } from '../workspace-persistence';
 import {
   CASE_RESOLVER_CASES_MASTER_INSTANCE,
   CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
@@ -51,15 +46,19 @@ import {
   sortCaseTreeNodes,
   parseBoolean,
 } from './list/case-list-utils';
-import { primeCaseResolverNavigationWorkspace } from '../workspace-persistence';
-import { CaseListSorting } from './list/sections/CaseListSorting';
-import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
-import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
+import { CaseListHeader } from './list/CaseListHeader';
+import {
+  CaseListPanelControlsContext,
+  type CaseListPanelControlsContextValue,
+} from './list/CaseListPanelControlsContext';
 import { useCaseListAutoExpandBootstrap } from './list/hooks/useCaseListAutoExpandBootstrap';
+import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
+import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
 import {
   CaseListNodeRuntimeProvider,
   type CaseListNodeRuntimeContextValue,
 } from './list/sections/CaseListNodeRuntimeContext';
+import { CaseListSorting } from './list/sections/CaseListSorting';
 
 const CASE_LIST_LOADING_SKELETON_ROWS = 8;
 

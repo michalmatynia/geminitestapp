@@ -2,15 +2,16 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import {
   kangurScoreSchema,
   type KangurScore,
   type KangurScoreRepositoryCreateInput,
 } from '@/shared/contracts/kangur';
+import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import { sortScores } from './shared';
+
 import type { KangurScoreListInput, KangurScoreRepository } from './types';
 
 const KANGUR_SCORE_SETTING_PREFIX = 'kangur_score:';
@@ -106,6 +107,7 @@ export const prismaKangurScoreRepository: KangurScoreRepository = {
       total_questions: input.total_questions,
       correct_answers: input.correct_answers,
       time_taken: input.time_taken,
+      xp_earned: input.xp_earned ?? null,
       created_date: createdDate,
       client_mutation_id: clientMutationId || null,
       created_by: input.created_by ?? null,

@@ -15,8 +15,9 @@ import {
   type FolderTreeProfileV2,
   type FolderTreeProfilesV2Map,
 } from '@/shared/utils/folder-tree-profiles-v2';
-import { INSTANCE_META } from './folder-tree-settings/utils';
+
 import { InstanceSettingsPanel } from './folder-tree-settings/InstanceSettingsPanel';
+import { INSTANCE_META } from './folder-tree-settings/utils';
 
 export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   const parsedProfiles = useFolderTreeProfiles();

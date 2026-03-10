@@ -1,10 +1,5 @@
 import { useCallback } from 'react';
-import {
-  resolveDbActionProvider,
-  isProviderActionCategorySupported,
-  getDefaultProviderAction,
-  resolveProviderAction,
-} from '@/shared/lib/ai-paths/core/utils/provider-actions';
+
 import type {
   DatabaseAction,
   DatabaseActionCategory,
@@ -12,6 +7,12 @@ import type {
   DbQueryConfig,
   DatabaseOperation,
 } from '@/shared/lib/ai-paths';
+import {
+  resolveDbActionProvider,
+  isProviderActionCategorySupported,
+  getDefaultProviderAction,
+  resolveProviderAction,
+} from '@/shared/lib/ai-paths/core/utils/provider-actions';
 
 export function useDatabaseActionConfig(args: {
   databaseConfig: DatabaseConfig;

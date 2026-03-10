@@ -17,8 +17,8 @@ import {
   CollapsibleSection,
 } from '@/shared/ui';
 
-import { buildHistoryNodeOptions } from './run-history-utils';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
+import { buildHistoryNodeOptions } from './run-history-utils';
 import {
   buildRunTraceComparison,
   readRuntimeTraceSummary,

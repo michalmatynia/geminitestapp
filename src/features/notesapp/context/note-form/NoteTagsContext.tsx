@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+
 import type { TagRecord } from '@/shared/contracts/notes';
 
 export interface NoteTagsData {

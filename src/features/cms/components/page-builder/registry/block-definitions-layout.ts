@@ -1,3 +1,5 @@
+import type { BlockDefinition } from '@/features/cms/types/page-builder';
+
 import {
   WRAP_OPTIONS,
   JUSTIFY_OPTIONS,
@@ -9,7 +11,6 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
-import type { BlockDefinition } from '@/features/cms/types/page-builder';
 
 export const COLUMN_ALLOWED_BLOCK_TYPES = [
   'Heading',

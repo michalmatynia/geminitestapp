@@ -14,6 +14,11 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
+  ADMIN_MENU_COLOR_MAP,
+  ADMIN_MENU_COLORS,
+  type NavItem,
+} from '@/features/admin/components/Menu';
+import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
@@ -36,11 +41,6 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import {
-  ADMIN_MENU_COLOR_MAP,
-  ADMIN_MENU_COLORS,
-  type NavItem,
-} from '@/features/admin/components/Menu';
 import {
   AdminMenuSettingsProvider,
   useAdminMenuSettings,

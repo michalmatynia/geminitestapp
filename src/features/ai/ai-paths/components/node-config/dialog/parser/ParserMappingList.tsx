@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { Button, Input, SelectSimple } from '@/shared/ui';
 
 export interface ParserMappingListProps {

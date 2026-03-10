@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
+import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn } from '@/shared/utils';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';

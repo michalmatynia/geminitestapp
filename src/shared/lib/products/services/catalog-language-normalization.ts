@@ -1,8 +1,8 @@
 import 'server-only';
 
-import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 
 type LanguageLookupRow = {
   id?: string | null;

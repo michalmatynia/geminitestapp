@@ -2,9 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraft,
@@ -16,6 +14,8 @@ import {
 } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { Prisma } from '@/shared/lib/db/prisma-client';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 type MongoDraftDoc = {
   _id: string;

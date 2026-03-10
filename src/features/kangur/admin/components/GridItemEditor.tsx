@@ -1,8 +1,10 @@
-import React from 'react';
 import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
+import React from 'react';
+
 import { convertKangurLessonInlineBlockType } from '@/features/kangur/lesson-documents';
 import type { KangurLessonGridItem } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple } from '@/shared/ui';
+
 import { INLINE_BLOCK_TYPE_OPTIONS } from '../constants';
 import {
   clamp,

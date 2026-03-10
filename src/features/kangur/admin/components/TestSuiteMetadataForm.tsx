@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FormField, Input, Switch, Textarea } from '@/shared/ui';
+
 import type { TestSuiteFormData } from '../../test-suites';
 
 export function TestSuiteMetadataForm(props: {

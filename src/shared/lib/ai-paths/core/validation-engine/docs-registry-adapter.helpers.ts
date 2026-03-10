@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
+
 import type {
   AiPathsValidationModule,
   AiPathsValidationSeverity,
 } from '@/shared/contracts/ai-paths';
+
 import {
   ENUM_FALLBACK_LISTS_BY_SUFFIX,
   ENUM_INFERENCE_SUFFIX_HINT,

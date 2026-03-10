@@ -16,12 +16,11 @@ import {
 } from '../vector-canvas.geometry';
 import { useVectorCanvasInteractions } from '../vector-canvas.hooks';
 import { VectorToolbar, VectorShapeOverlay } from '../vector-canvas.rendering';
-
 import { CanvasBackgroundLayer } from './components/CanvasBackgroundLayer';
-import { CanvasGridLayer } from './components/CanvasGridLayer';
 import { CanvasCenterGuides } from './components/CanvasCenterGuides';
-import { CanvasImageLayer } from './components/CanvasImageLayer';
+import { CanvasGridLayer } from './components/CanvasGridLayer';
 import { CanvasHud } from './components/CanvasHud';
+import { CanvasImageLayer } from './components/CanvasImageLayer';
 import {
   VectorCanvasProvider,
   useOptionalVectorCanvasContext,

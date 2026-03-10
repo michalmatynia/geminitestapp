@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+
 import { Button, Card } from '@/shared/ui';
-import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
+
 import {
   type AnalysisResultSectionRuntime,
   useOptionalImageStudioAnalysisRuntime,
 } from './ImageStudioAnalysisRuntimeContext';
+import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
 
 export type AnalysisResultSectionProps = AnalysisResultSectionRuntime;
 

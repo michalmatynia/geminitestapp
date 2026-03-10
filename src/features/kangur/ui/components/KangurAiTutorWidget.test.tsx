@@ -3133,6 +3133,12 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
     );
+    expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-ask-modal-backdrop')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
       'Czekaj chwilę. Skupiam się teraz tylko na tym fragmencie i przygotowuję wyjaśnienie.'

@@ -5,6 +5,8 @@ import { getAiPathRun, streamAiPathRun } from '@/shared/lib/ai-paths/api/client'
 import { parseAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 
 const RUN_DETAIL_POLL_INTERVAL_MS = 2_000;
+const RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS = 5_000;
+const RUN_DETAIL_REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RUN_DETAIL_POLL_FAILURES = 3;
 
 const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
@@ -154,6 +156,13 @@ const cloneSnapshot = (snapshot: TrackedAiPathRunSnapshot): TrackedAiPathRunSnap
 const isTerminalStatus = (status: AiPathRunRecord['status']): boolean =>
   TERMINAL_RUN_STATUSES.has(status);
 
+const isTransientRunDetailError = (message: string | null | undefined): boolean => {
+  if (typeof message !== 'string') return false;
+  return /\btimeout\b|failed to fetch|network request failed|connection|temporarily unavailable/i.test(
+    message
+  );
+};
+
 export const isTrackedAiPathRunTerminal = (snapshot: TrackedAiPathRunSnapshot): boolean =>
   isTerminalStatus(snapshot.status);
 
@@ -176,6 +185,13 @@ const teardownStream = (record: TrackRecord): void => {
   record.removeStreamListeners = null;
   record.eventSource?.close();
   record.eventSource = null;
+};
+
+const schedulePoll = (record: TrackRecord, delayMs: number): void => {
+  clearPollTimer(record);
+  record.pollTimerId = setTimeout(() => {
+    void pollRecord(record.runId);
+  }, delayMs);
 };
 
 const cleanupRecord = (runId: string): void => {
@@ -294,10 +310,14 @@ const syncTerminalDetail = async (
   try {
     const response = await getAiPathRun(record.runId, {
       cache: 'no-store',
-      timeoutMs: 15_000,
+      timeoutMs: RUN_DETAIL_REQUEST_TIMEOUT_MS,
     });
     if (trackRecords.get(record.runId) !== record) return;
     if (!response.ok) {
+      if (isTransientRunDetailError(response.error)) {
+        finalizeRecord(record, fallback);
+        return;
+      }
       finalizeRecord(record, {
         ...fallback,
         errorMessage: fallback.errorMessage ?? response.error ?? null,
@@ -308,6 +328,10 @@ const syncTerminalDetail = async (
     finalizeRecord(record, nextSnapshot ?? fallback);
   } catch (error) {
     if (trackRecords.get(record.runId) !== record) return;
+    if (isTransientRunDetailError(error instanceof Error ? error.message : null)) {
+      finalizeRecord(record, fallback);
+      return;
+    }
     finalizeRecord(record, {
       ...fallback,
       errorMessage:
@@ -335,10 +359,7 @@ const handlePollFailure = (record: TrackRecord, message: string): void => {
     });
     return;
   }
-  clearPollTimer(record);
-  record.pollTimerId = setTimeout(() => {
-    void pollRecord(record.runId);
-  }, RUN_DETAIL_POLL_INTERVAL_MS);
+  schedulePoll(record, RUN_DETAIL_POLL_INTERVAL_MS);
 };
 
 const pollRecord = async (runId: string): Promise<void> => {
@@ -348,11 +369,15 @@ const pollRecord = async (runId: string): Promise<void> => {
   try {
     const response = await getAiPathRun(runId, {
       cache: 'no-store',
-      timeoutMs: 15_000,
+      timeoutMs: RUN_DETAIL_REQUEST_TIMEOUT_MS,
     });
     const activeRecord = trackRecords.get(runId);
     if (activeRecord !== record) return;
     if (!response.ok) {
+      if (isTransientRunDetailError(response.error)) {
+        schedulePoll(record, RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS);
+        return;
+      }
       handlePollFailure(record, response.error || 'Failed to load AI Path run details.');
       return;
     }
@@ -367,13 +392,14 @@ const pollRecord = async (runId: string): Promise<void> => {
       return;
     }
     updateRecordSnapshot(record, nextSnapshot);
-    clearPollTimer(record);
-    record.pollTimerId = setTimeout(() => {
-      void pollRecord(runId);
-    }, RUN_DETAIL_POLL_INTERVAL_MS);
+    schedulePoll(record, RUN_DETAIL_POLL_INTERVAL_MS);
   } catch (error) {
     const activeRecord = trackRecords.get(runId);
     if (activeRecord !== record) return;
+    if (isTransientRunDetailError(error instanceof Error ? error.message : null)) {
+      schedulePoll(record, RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS);
+      return;
+    }
     handlePollFailure(
       record,
       error instanceof Error ? error.message : 'Failed to load AI Path run details.'

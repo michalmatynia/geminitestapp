@@ -63,16 +63,19 @@ export async function PUT_products_entity_handler(
   params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'products.entities.[type].[id].PUT',
-  });
-  if (!parsed.ok) {
-    return parsed.response;
+  let payload = _ctx.body;
+  if (payload === undefined) {
+    const parsed = await parseObjectJsonBody(req, {
+      logPrefix: 'products.entities.[type].[id].PUT',
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    payload = parsed.data;
   }
-  const data = parsed.data;
 
   if (type === 'catalogs') {
-    const validated = updateCatalogSchema.safeParse(data);
+    const validated = updateCatalogSchema.safeParse(payload);
     if (!validated.success) {
       throw badRequestError('Invalid catalog payload.', {
         errors: validated.error.flatten(),

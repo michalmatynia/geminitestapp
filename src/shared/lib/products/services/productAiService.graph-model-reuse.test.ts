@@ -117,6 +117,11 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
       cacheKey: 'cache-1',
       payloadHash: 'hash-1',
       prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
     });
 
     expect(result.id).toBe('job-existing');
@@ -139,6 +144,11 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
       cacheKey: 'cache-1',
       payloadHash: 'hash-new',
       prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
     });
 
     expect(result.id).toBe('job-created');
@@ -164,6 +174,11 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
       cacheKey: 'cache-1',
       payloadHash: 'hash-1',
       prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
     });
 
     expect(result.id).toBe('job-created');
@@ -188,7 +203,10 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
     const result = await enqueueProductAiJob('product-1', 'graph_model', {
       cacheKey: 'cache-1',
       payloadHash: 'hash-1',
+      source: 'ai_paths',
       graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
         requestedModelId: 'model-new',
       },
       prompt: 'Generate a title',
@@ -196,5 +214,99 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
 
     expect(result.id).toBe('job-created');
     expect(createJobMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reuse a legacy pending graph_model job when only the new payload resolves a requestedModelId', async () => {
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        status: 'pending',
+        payload: {
+          cacheKey: 'cache-1',
+          payloadHash: 'hash-1',
+          prompt: 'Generate a title',
+        },
+      }),
+    ]);
+
+    const result = await enqueueProductAiJob('product-1', 'graph_model', {
+      cacheKey: 'cache-1',
+      payloadHash: 'hash-1',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+        requestedModelId: 'model-new',
+      },
+      prompt: 'Generate a title',
+    });
+
+    expect(result.id).toBe('job-created');
+    expect(createJobMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reuse a pending graph_model job when only the existing payload resolves a requestedModelId', async () => {
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        status: 'pending',
+        payload: {
+          cacheKey: 'cache-1',
+          payloadHash: 'hash-1',
+          graph: {
+            requestedModelId: 'model-existing',
+          },
+          prompt: 'Generate a title',
+        },
+      }),
+    ]);
+
+    const result = await enqueueProductAiJob('product-1', 'graph_model', {
+      cacheKey: 'cache-1',
+      payloadHash: 'hash-1',
+      prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
+    });
+
+    expect(result.id).toBe('job-created');
+    expect(createJobMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects graph_model payloads without explicit source', async () => {
+    await expect(
+      enqueueProductAiJob('product-1', 'graph_model', {
+        prompt: 'Generate a title',
+        graph: {
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+        },
+      })
+    ).rejects.toMatchObject({
+      message: 'Invalid graph_model payload',
+    });
+
+    expect(findJobsMock).not.toHaveBeenCalled();
+    expect(createJobMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects graph_model payloads without AI Paths node context', async () => {
+    await expect(
+      enqueueProductAiJob('product-1', 'graph_model', {
+        prompt: 'Generate a title',
+        source: 'ai_paths',
+        graph: {
+          runId: 'run-1',
+        },
+      })
+    ).rejects.toMatchObject({
+      message: 'Invalid graph_model payload',
+    });
+
+    expect(findJobsMock).not.toHaveBeenCalled();
+    expect(createJobMock).not.toHaveBeenCalled();
   });
 });

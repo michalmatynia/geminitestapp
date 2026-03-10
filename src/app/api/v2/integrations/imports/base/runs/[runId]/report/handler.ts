@@ -103,10 +103,13 @@ const loadReportDetail = async (input: {
 
 export async function GET_handler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const parsed = querySchema.safeParse(Object.fromEntries(new URL(req.url).searchParams.entries()));
+  const parsed = querySchema.safeParse({
+    ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+    ...((ctx.query ?? {}) as Record<string, unknown>),
+  });
   const format = parsed.success ? (parsed.data.format ?? 'json') : 'json';
   const statusesRaw = parsed.success ? (parsed.data.statuses ?? '') : '';
   const statuses = statusesRaw

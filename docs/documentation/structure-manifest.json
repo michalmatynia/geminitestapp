@@ -79,6 +79,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/build",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/plans",
       "mode": "complete_direct_files"
     },
@@ -230,6 +234,8 @@
     "docs/COPILOT.md",
     "docs/documentation/README.md",
     "docs/platform/README.md",
+    "docs/platform/bun-support.md",
+    "docs/build/README.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",

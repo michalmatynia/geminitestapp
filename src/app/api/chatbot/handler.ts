@@ -18,13 +18,15 @@ import type {
   ChatMessageDto as ChatMessage,
   ChatbotChatRequest,
   ChatbotChatResponseDto,
+  ChatbotChatRequestDto,
 } from '@/shared/contracts/chatbot';
+import { chatbotChatRequestSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -34,7 +36,11 @@ const chatbotTempRoot = path.join(process.cwd(), 'public', 'uploads', 'chatbot',
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-const chatbotRequestSchema = z.object({}).passthrough();
+const chatbotJsonRequestSchema = chatbotChatRequestSchema
+  .extend({
+    model: z.unknown().optional(),
+  })
+  .passthrough();
 
 let lastTempCleanupAt = 0;
 
@@ -252,19 +258,14 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         }
       }
     } else {
-      const parsed = await parseObjectJsonBody(req, {
+      const parsed = await parseJsonBody(req, chatbotJsonRequestSchema, {
         logPrefix: 'chatbot.POST',
       });
       if (!parsed.ok) {
         return parsed.response;
       }
 
-      const body = chatbotRequestSchema.parse(parsed.data) as {
-        messages?: IncomingChatMessage[];
-        sessionId?: string;
-        contextRegistry?: unknown;
-        model?: unknown;
-      };
+      const body = parsed.data as ChatbotChatRequestDto & { model?: unknown };
       if (Object.prototype.hasOwnProperty.call(body, 'model')) {
         throw badRequestError('Chatbot payload contains unsupported model override.');
       }

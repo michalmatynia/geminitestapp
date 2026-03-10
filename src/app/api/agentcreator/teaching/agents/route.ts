@@ -6,8 +6,10 @@ import { GET_handler, POST_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'agentcreator.teaching.agents.GET',
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'agentcreator.teaching.agents.POST',
+  requireAuth: true,
 });

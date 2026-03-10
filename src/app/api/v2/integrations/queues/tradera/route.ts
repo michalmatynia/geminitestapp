@@ -7,4 +7,5 @@ import { GET_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'v2.integrations.queues.tradera.GET',
+  requireAuth: true,
 });

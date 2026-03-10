@@ -8,4 +8,5 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.products.validator-config.GET',
   cacheControl: 'no-store',
   querySchema,
+  requireAuth: true,
 });

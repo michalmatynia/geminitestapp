@@ -8,41 +8,26 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-10T11:50:01.650Z
+Generated at: 2026-03-10T20:22:23.078Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 701
-- Total handlers: 675
-- Validated handlers: 675
+- Status: PASSED
+- Files scanned: 703
+- Total handlers: 677
+- Validated handlers: 677
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 13
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| query-param-unvalidated | 0 | 13 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:12 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/approval-gates/route.ts:32 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:32 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:33 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:58 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:66 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/leases/route.ts:67 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:25 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:46 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:47 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:48 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/agentcreator/personas/avatar/handler.ts:130 | searchParams.get() used without Zod schema validation. |
-| WARN | query-param-unvalidated | src/app/api/ai-paths/trigger-buttons/handler.ts:67 | searchParams.get() used without Zod schema validation. |
+All API handlers have proper input validation.
 
 ## Notes
 

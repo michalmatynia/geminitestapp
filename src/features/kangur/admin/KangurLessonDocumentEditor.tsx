@@ -1,5 +1,4 @@
 'use client';
-
 import {
   ArrowDown,
   ArrowUp,
@@ -14,7 +13,6 @@ import {
   Type,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
 import {
   cloneKangurLessonGridItem,
   cloneKangurLessonPage,
@@ -49,7 +47,6 @@ import type {
 } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-
 import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';
@@ -65,7 +62,6 @@ import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
 import { useBlockListDnd } from './hooks/useBlockListDnd';
 import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
-
 const resolvePageSectionOptions = (
   page: KangurLessonPage | null
 ): {
@@ -77,14 +73,12 @@ const resolvePageSectionOptions = (
   sectionTitle: page?.sectionTitle?.trim() || '',
   sectionDescription: page?.sectionDescription?.trim() || '',
 });
-
 type StarterRecipe = {
   id: string;
   label: string;
   description: string;
   onClick: () => void;
 };
-
 const getLessonRecipeFamily = (
   componentId: KangurLessonComponentId | null | undefined
 ): 'time' | 'arithmetic' | 'geometry' | 'logic' => {
@@ -109,7 +103,6 @@ const getLessonRecipeFamily = (
   }
   return 'logic';
 };
-
 export function KangurLessonDocumentEditor(): React.JSX.Element {
   const { lesson, document: value, onChange } = useLessonContentEditorContext();
   const pages = resolveKangurLessonDocumentPages(value);
@@ -117,16 +110,13 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
   const [insertQuery, setInsertQuery] = useState('');
   const [previewScope, setPreviewScope] = useState<'page' | 'lesson'>('page');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-
   useEffect(() => {
     if (!pages.some((page) => page.id === activePageId)) {
       setActivePageId(pages[0]?.id ?? null);
     }
   }, [activePageId, pages]);
-
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0] ?? null;
   const activePageIndex = activePage ? pages.findIndex((page) => page.id === activePage.id) : -1;
-
   const applyPages = useCallback(
     (nextPages: KangurLessonPage[]): void => {
       const nextDocument = updateKangurLessonDocumentPages(value, nextPages);
@@ -137,14 +127,12 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [onChange, value]
   );
-
   const updatePage = useCallback(
     (pageId: string, updater: (page: KangurLessonPage) => KangurLessonPage): void => {
       applyPages(pages.map((page) => (page.id === pageId ? updater(page) : page)));
     },
     [applyPages, pages]
   );
-
   const updateDocument = useCallback(
     (nextBlocks: KangurLessonRootBlock[]): void => {
       if (!activePage) return;
@@ -155,7 +143,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updatePage]
   );
-
   const updateRootBlock = useCallback(
     (blockId: string, nextBlock: KangurLessonRootBlock): void => {
       if (!activePage) return;
@@ -163,7 +150,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const removeRootBlock = useCallback(
     (blockId: string): void => {
       if (!activePage) return;
@@ -171,7 +157,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const moveRootBlock = useCallback(
     (fromIndex: number, toIndex: number): void => {
       if (!activePage) return;
@@ -179,7 +164,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const handleBlockReorder = useCallback(
     (draggedId: string, targetId: string, position: 'before' | 'after'): void => {
       if (!activePage) return;
@@ -187,9 +171,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const { dragState, getHandlers } = useBlockListDnd({ onReorder: handleBlockReorder });
-
   const duplicateRootBlock = useCallback(
     (index: number): void => {
       if (!activePage) return;
@@ -201,7 +183,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const updateGridBlock = useCallback(
     (blockId: string, updater: (block: KangurLessonGridBlock) => KangurLessonGridBlock): void => {
       if (!activePage) return;
@@ -214,7 +195,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
-
   const replaceWithDocumentTemplate = useCallback(
     (templateId: KangurLessonDocumentTemplateId): void => {
       const nextDocument = createKangurLessonDocumentFromTemplate(templateId);
@@ -226,7 +206,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [onChange]
   );
-
   const insertPageAfterActive = useCallback(
     (nextPage: KangurLessonPage): void => {
       if (activePageIndex >= 0) {
@@ -238,12 +217,10 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePageIndex, applyPages, pages]
   );
-
   const addBlankPage = useCallback((): void => {
     const nextPage = createKangurLessonPage('', [], resolvePageSectionOptions(activePage));
     insertPageAfterActive(nextPage);
   }, [activePage, insertPageAfterActive]);
-
   const addPageFromTemplate = useCallback(
     (templateId: KangurLessonDocumentTemplateId): void => {
       const templatePage =
@@ -257,14 +234,12 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, insertPageAfterActive]
   );
-
   const duplicateActivePage = useCallback((): void => {
     if (activePageIndex < 0 || !activePage) return;
     const nextPage = cloneKangurLessonPage(activePage);
     applyPages(insertAfterIndex(pages, activePageIndex, nextPage));
     setActivePageId(nextPage.id);
   }, [activePage, activePageIndex, applyPages, pages]);
-
   const moveActivePage = useCallback(
     (toIndex: number): void => {
       if (activePageIndex < 0 || !activePage) return;
@@ -273,14 +248,12 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, activePageIndex, applyPages, pages]
   );
-
   const deleteActivePage = useCallback((): void => {
     if (!activePage || pages.length <= 1) return;
     const nextPages = pages.filter((page) => page.id !== activePage.id);
     applyPages(nextPages);
     setActivePageId(nextPages[Math.max(0, activePageIndex - 1)]?.id ?? nextPages[0]?.id ?? null);
   }, [activePage, activePageIndex, applyPages, pages]);
-
   const quickInsertActions = useMemo(
     () => [
       {
@@ -421,13 +394,11 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     ],
     [activePage?.blocks, updateDocument]
   );
-
   const filteredQuickInsertActions = useMemo(() => {
     const normalizedQuery = insertQuery.trim().toLowerCase();
     if (!normalizedQuery) {
       return quickInsertActions;
     }
-
     return quickInsertActions.filter((action) =>
       [action.label, action.description, action.group, ...action.keywords]
         .join(' ')
@@ -435,7 +406,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
         .includes(normalizedQuery)
     );
   }, [insertQuery, quickInsertActions]);
-
   const groupedQuickInsertActions = useMemo(() => {
     const groups = new Map<string, typeof filteredQuickInsertActions>();
     for (const action of filteredQuickInsertActions) {
@@ -471,7 +441,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
       : null;
   const starterRecipes = useMemo<StarterRecipe[]>(() => {
     const family = getLessonRecipeFamily(lesson?.componentId);
-
     if (family === 'time') {
       return [
         {
@@ -496,7 +465,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
         },
       ];
     }
-
     if (family === 'arithmetic') {
       return [
         {
@@ -521,7 +489,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
         },
       ];
     }
-
     if (family === 'geometry') {
       return [
         {
@@ -549,7 +516,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
         },
       ];
     }
-
     return [
       {
         id: 'logic-intro',
@@ -573,7 +539,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
       },
     ];
   }, [activePage?.blocks, addPageFromTemplate, lesson?.componentId, updateDocument]);
-
   return (
     <div className='grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]'>
       <div className='space-y-4'>
@@ -596,7 +561,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               </Button>
             ))}
           </div>
-
           <div className='rounded-2xl border border-border/60 bg-card/30 p-4'>
             {lesson ? (
               <div className='mb-4 rounded-2xl border border-primary/20 bg-primary/10 p-4'>
@@ -635,7 +599,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 </div>
               </div>
             ) : null}
-
             <div className='mb-3 flex items-center justify-between gap-2'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Lesson pages</div>
@@ -645,7 +608,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               </div>
               <Badge variant='outline'>{pages.length} pages</Badge>
             </div>
-
             <div className='flex flex-wrap gap-2'>
               {pages.map((page, index) => {
                 const isActive = page.id === activePage?.id;
@@ -659,7 +621,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     : 'Ready';
                 const pageNarrationLabel =
                   pageReview?.narrationCoverage.summaryLabel ?? 'Waiting for content';
-
                 return (
                   <button
                     key={page.id}
@@ -713,7 +674,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                 );
               })}
             </div>
-
             <div className='mt-3 flex flex-wrap gap-2'>
               <Button
                 type='button'
@@ -757,7 +717,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               </Button>
             </div>
           </div>
-
           {activePage ? (
             <div className='mt-4 rounded-2xl border border-border/60 bg-card/30 p-4'>
               <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
@@ -869,7 +828,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                   <div className='mt-2 leading-relaxed'>{activePageNarrationCoverage.detail}</div>
                 </div>
               ) : null}
-
               <div className='grid gap-3 md:grid-cols-2'>
                 <FormField label='Section Key'>
                   <Input
@@ -884,7 +842,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-9'
                   />
                 </FormField>
-
                 <FormField label='Section Title'>
                   <Input
                     value={activePage.sectionTitle ?? ''}
@@ -898,7 +855,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-9'
                   />
                 </FormField>
-
                 <FormField label='Section Description'>
                   <Textarea
                     value={activePage.sectionDescription ?? ''}
@@ -912,7 +868,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='min-h-[96px]'
                   />
                 </FormField>
-
                 <FormField label='Page Title'>
                   <Input
                     value={activePage.title ?? ''}
@@ -926,7 +881,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     className='h-9'
                   />
                 </FormField>
-
                 <FormField label='Page Description'>
                   <Textarea
                     value={activePage.description ?? ''}
@@ -943,7 +897,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               </div>
             </div>
           ) : null}
-
           <div className='mt-4 rounded-2xl border border-border/60 bg-card/30 p-4'>
             <div className='mb-3 flex flex-wrap items-start justify-between gap-3'>
               <div>
@@ -1004,7 +957,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             activities, and responsive layouts without switching tools.
           </div>
         </KangurAdminWorkspaceSectionCard>
-
         {activePage?.blocks.length === 0 ? (
           <div className='rounded-2xl border border-dashed border-border/70 bg-card/20 p-6'>
             <div className='text-sm font-semibold text-foreground'>This page has no content yet.</div>
@@ -1035,12 +987,10 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             </div>
           </div>
         ) : null}
-
         {activePage?.blocks.map((block, index) => {
           const handlers = getHandlers(block.id);
           const isDragged = dragState.draggedBlockId === block.id;
           const isTarget = dragState.targetBlockId === block.id;
-
           return (
             <div
               key={block.id}
@@ -1114,7 +1064,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                   </Button>
                 </div>
               </div>
-
               {block.type === 'grid' ? (
                 <div className='space-y-4'>
                   <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
@@ -1147,7 +1096,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                         className='h-9'
                       />
                     </FormField>
-
                     <FormField label='Gap'>
                       <Input
                         type='number'
@@ -1163,7 +1111,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                         className='h-9'
                       />
                     </FormField>
-
                     <FormField label='Row Height'>
                       <Input
                         type='number'
@@ -1183,7 +1130,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                         className='h-9'
                       />
                     </FormField>
-
                     <div className='flex items-end'>
                       <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
                         <div>
@@ -1203,7 +1149,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                         />
                       </div>
                     </div>
-
                     <div className='flex items-end'>
                       <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
                         <div>
@@ -1224,7 +1169,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                       </div>
                     </div>
                   </div>
-
                   <div className='flex flex-wrap items-center gap-2'>
                     {GRID_TEMPLATE_OPTIONS.map((template) => (
                       <Button
@@ -1244,7 +1188,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                       </Button>
                     ))}
                   </div>
-
                   <div className='flex flex-wrap items-center gap-2'>
                     <Button
                       type='button'
@@ -1301,7 +1244,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                     Add grid image
                     </Button>
                   </div>
-
                   <div className='space-y-3'>
                     {block.items.map((item, itemIndex) => (
                       <GridItemEditor
@@ -1389,7 +1331,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                       />
                     </FormField>
                   </div>
-
                   {block.type === 'activity' ? (
                     <ActivityEditorCard
                       block={block}
@@ -1412,7 +1353,6 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
           );
         })}
       </div>
-
       <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/35 shadow-sm xl:flex'>
         <div className='flex items-center justify-between border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-md'>
           <div>

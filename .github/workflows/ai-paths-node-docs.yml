@@ -47,6 +47,11 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   ai-paths-node-docs:
     runs-on: ubuntu-latest
@@ -64,4 +69,4 @@ jobs:
         run: npm ci
 
       - name: Verify AI Paths node docs and tooltip artifacts
-        run: npm run docs:ai-paths:node-docs:ci
+        run: npm run bazel -- run //:ai_paths_node_docs

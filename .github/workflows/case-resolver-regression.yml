@@ -25,6 +25,11 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -42,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Run Case Resolver regression tests
-        run: npm run test:case-resolver:regression
+        run: npm run bazel -- run //:case_resolver_regression
 
   capture_mapping_e2e:
     if: ${{ secrets.PLAYWRIGHT_E2E_ADMIN_EMAIL != '' && secrets.PLAYWRIGHT_E2E_ADMIN_PASSWORD != '' }}
@@ -67,4 +72,4 @@ jobs:
         env:
           PLAYWRIGHT_E2E_ADMIN_EMAIL: ${{ secrets.PLAYWRIGHT_E2E_ADMIN_EMAIL }}
           PLAYWRIGHT_E2E_ADMIN_PASSWORD: ${{ secrets.PLAYWRIGHT_E2E_ADMIN_PASSWORD }}
-        run: npm run test:e2e:case-resolver:capture-mapping
+        run: npm run bazel -- run //:case_resolver_capture_mapping_e2e

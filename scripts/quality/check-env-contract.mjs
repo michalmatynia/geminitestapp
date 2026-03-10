@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { analyzeEnvContract } from './lib/check-env-contract.mjs';
 import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 

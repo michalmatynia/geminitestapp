@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getDatabaseEngineProviderPreview } from '@/shared/lib/db/services/database-engine-provider-preview';
 
 export const querySchema = z.object({
@@ -18,6 +19,7 @@ const resolveProviderPreviewQueryInput = (
 });
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   const query = querySchema.parse(resolveProviderPreviewQueryInput(req, _ctx));
   const collections = query.collections;
   const payload = await getDatabaseEngineProviderPreview(collections ? { collections } : {});

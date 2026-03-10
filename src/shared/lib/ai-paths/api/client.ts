@@ -18,6 +18,7 @@ import {
 } from '@/shared/contracts/ai-paths';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { SchemaResponse } from '@/shared/contracts/database';
+import type { ProductAiJobEnqueueRequest } from '@/shared/contracts/jobs';
 
 import {
   AgentEnqueuePayload,
@@ -661,7 +662,7 @@ const normalizeAiJobsPollPayload = (
 };
 
 export const aiJobsApi = {
-  enqueue: async (payload: unknown) =>
+  enqueue: async (payload: ProductAiJobEnqueueRequest) =>
     apiPost<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', payload),
   poll: async (
     jobId: string,

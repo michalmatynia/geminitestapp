@@ -8,13 +8,13 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-10T08:15:33.598Z
+Generated at: 2026-03-10T20:22:26.125Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 346
-- Handler files scanned: 329
+- Handler files scanned: 331
 - Errors: 0
 - Warnings: 0
 

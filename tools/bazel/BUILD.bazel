@@ -1,0 +1,13 @@
+exports_files([
+    "integration_mongo.sh",
+    "integration_prisma.sh",
+    "next_build.sh",
+    "npm_run.sh",
+    "npm_targets.bzl",
+    "node_script.sh",
+    "playwright_suite.sh",
+    "run-bazel.sh",
+    "scanner_contracts.sh",
+    "tsx_script.sh",
+    "ai_paths_node_docs.sh",
+])

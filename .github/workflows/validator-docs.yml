@@ -28,6 +28,11 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   validator-docs:
     runs-on: ubuntu-latest
@@ -45,7 +50,7 @@ jobs:
         run: npm ci
 
       - name: Check validator docs coverage
-        run: npm run docs:validator:check
+        run: npm run bazel -- run //:validator_docs_check
 
       - name: Generate validator docs
-        run: npm run docs:validator:generate
+        run: npm run bazel -- run //:validator_docs_generate

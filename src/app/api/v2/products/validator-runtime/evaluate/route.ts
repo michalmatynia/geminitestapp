@@ -13,4 +13,5 @@ export const POST = apiHandler(POST_handler, {
   parseJsonBody: true,
   bodySchema: evaluateRuntimeSchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

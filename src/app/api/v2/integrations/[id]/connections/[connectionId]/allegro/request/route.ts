@@ -7,4 +7,5 @@ import { POST_handler } from './handler';
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, {
   source: 'v2.integrations.[id].connections.[connectionId].allegro.request.POST',
   requireCsrf: false,
+  requireAuth: true,
 });

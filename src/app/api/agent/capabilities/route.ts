@@ -9,4 +9,5 @@ const GET_handler = async () => {
 
 export const GET = apiHandler(GET_handler, {
   source: 'agent.capabilities.GET',
+  requireAuth: true,
 });

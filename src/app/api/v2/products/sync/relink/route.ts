@@ -8,4 +8,5 @@ export const POST = apiHandler(POST_handler, {
   source: 'v2.products.sync.relink.POST',
   parseJsonBody: true,
   bodySchema: relinkSchema,
+  requireAuth: true,
 });

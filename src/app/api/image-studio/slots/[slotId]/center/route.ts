@@ -7,4 +7,5 @@ import { postCenterSlotHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(postCenterSlotHandler, {
   source: 'image-studio.slots.[slotId].center.POST',
+  requireAuth: true,
 });

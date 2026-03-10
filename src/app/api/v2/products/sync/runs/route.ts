@@ -9,4 +9,5 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.products.sync.runs.GET',
   querySchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

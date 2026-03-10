@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
+import { z } from 'zod';
 
 import type { CreateProductInput } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -12,16 +13,28 @@ interface CsvRow {
 
 const CHUNK_SIZE = 50;
 
+export const csvImportPayloadSchema = z.object({
+  file: z.custom<File>(
+    (value): value is File => typeof File !== 'undefined' && value instanceof File,
+    'CSV file is required'
+  ),
+});
+
 export async function postProductsImportCsvHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const formData = await req.formData();
-  const file = formData.get('file') as File | null;
-
-  if (!file) {
-    throw badRequestError('No file uploaded');
+  const payload = {
+    file: formData.get('file'),
+  };
+  const parsedPayload = csvImportPayloadSchema.safeParse(payload);
+  if (!parsedPayload.success) {
+    throw badRequestError('No file uploaded', {
+      issues: parsedPayload.error.flatten(),
+    });
   }
+  const { file } = parsedPayload.data;
 
   const text = await file.text();
   const parsed = Papa.parse<CsvRow>(text, {

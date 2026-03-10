@@ -5,6 +5,7 @@ import type { Job } from '@/features/products/workers/product-ai-processors';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import { notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { resolveGraphModelPayloadSource } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -63,8 +64,14 @@ const toDispatchJob = (job: ProductAiJobRecord): Job => {
   if (typeof source['vision'] === 'boolean') {
     payload.vision = source['vision'];
   }
-  if (typeof source['source'] === 'string') {
-    payload.source = source['source'];
+  const resolvedSource =
+    job.type === 'graph_model'
+      ? resolveGraphModelPayloadSource(source)
+      : typeof source['source'] === 'string'
+        ? source['source']
+        : null;
+  if (typeof resolvedSource === 'string') {
+    payload.source = resolvedSource;
   }
   if (isRecord(source['graph'])) {
     payload.graph = source['graph'];

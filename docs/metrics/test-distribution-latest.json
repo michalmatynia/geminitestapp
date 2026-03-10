@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-10T11:50:04.591Z",
+  "generatedAt": "2026-03-10T20:22:25.524Z",
   "status": "passed",
   "summary": {
-    "total": 23,
+    "total": 26,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 23,
+    "infoCount": 26,
     "status": "passed",
     "featureCount": 28,
     "featuresWithTestCount": 28,
     "featuresWithoutTestCount": 0,
-    "totalTestFiles": 1287,
+    "totalTestFiles": 1312,
     "onlyCount": 0,
-    "skipCount": 23
+    "skipCount": 26
   },
   "scope": {
     "featuresDir": "src/features",
@@ -24,12 +24,12 @@
   },
   "featuresWithTests": [
     {
-      "feature": "ai",
-      "testCount": 221
+      "feature": "kangur",
+      "testCount": 223
     },
     {
-      "feature": "kangur",
-      "testCount": 214
+      "feature": "ai",
+      "testCount": 222
     },
     {
       "feature": "case-resolver",
@@ -37,7 +37,7 @@
     },
     {
       "feature": "products",
-      "testCount": 76
+      "testCount": 78
     },
     {
       "feature": "cms",
@@ -49,7 +49,7 @@
     },
     {
       "feature": "integrations",
-      "testCount": 35
+      "testCount": 36
     },
     {
       "feature": "foldertree",
@@ -243,7 +243,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-parameter-inference.spec.ts",
-      "line": 67,
+      "line": 96,
       "column": null,
       "snippet": null,
       "context": null
@@ -253,7 +253,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 746,
+      "line": 831,
       "column": null,
       "snippet": null,
       "context": null
@@ -263,7 +263,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 761,
+      "line": 846,
       "column": null,
       "snippet": null,
       "context": null
@@ -273,7 +273,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 777,
+      "line": 862,
       "column": null,
       "snippet": null,
       "context": null
@@ -283,7 +283,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 784,
+      "line": 869,
       "column": null,
       "snippet": null,
       "context": null
@@ -293,7 +293,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 801,
+      "line": 902,
       "column": null,
       "snippet": null,
       "context": null
@@ -303,7 +303,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 817,
+      "line": 919,
       "column": null,
       "snippet": null,
       "context": null
@@ -313,7 +313,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 835,
+      "line": 935,
       "column": null,
       "snippet": null,
       "context": null
@@ -323,7 +323,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 847,
+      "line": 953,
       "column": null,
       "snippet": null,
       "context": null
@@ -333,7 +333,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 864,
+      "line": 965,
       "column": null,
       "snippet": null,
       "context": null
@@ -343,7 +343,37 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 916,
+      "line": 982,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 1013,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 1044,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "line": 1096,
       "column": null,
       "snippet": null,
       "context": null
@@ -374,8 +404,8 @@
       "ruleId": "test-skip-left",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 23
+      "infoCount": 26
     }
   ],
-  "durationMs": 455
+  "durationMs": 278
 }

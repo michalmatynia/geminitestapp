@@ -8,10 +8,12 @@ import { GET_handler, POST_handler, listRunsQuerySchema, startRunSchema } from '
 export const GET = apiHandler(GET_handler, {
   source: 'v2.integrations.imports.base.runs.GET',
   querySchema: listRunsQuerySchema,
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'v2.integrations.imports.base.runs.POST',
+  requireAuth: true,
   requireCsrf: false,
   parseJsonBody: true,
   bodySchema: startRunSchema,

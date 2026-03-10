@@ -33,6 +33,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
+import { isSelectionWithinTutorUi } from './KangurAiTutorWidget.coordinator.helpers';
 import {
   cloneRect,
   getExpandedRect,
@@ -303,16 +304,21 @@ export function useKangurAiTutorWidgetEnvironment({
   const hintDepth: KangurAiTutorHintDepth = tutorSettings?.hintDepth ?? 'guided';
   const shouldRepeatGuestIntroOnEntry = guestIntroMode === 'every_visit';
   const shouldRepeatHomeOnboardingOnEntry = homeOnboardingMode === 'every_visit';
+  const shouldIgnoreLiveTutorSelection =
+    allowSelectedTextSupport && selectedText !== null && isSelectionWithinTutorUi();
+  const liveSelectedText = shouldIgnoreLiveTutorSelection ? null : selectedText;
+  const liveSelectionRect = shouldIgnoreLiveTutorSelection ? null : selectionRect;
+  const liveSelectionContainerRect = shouldIgnoreLiveTutorSelection ? null : selectionContainerRect;
 
   const rawSelectedText = allowSelectedTextSupport
-    ? (selectedText ?? selectionConversationContext?.selectedText ?? highlightedText)?.trim() ||
+    ? (liveSelectedText ?? selectionConversationContext?.selectedText ?? highlightedText)?.trim() ||
       null
     : null;
   const activeSelectedText =
     rawSelectedText && rawSelectedText === dismissedSelectedText ? null : rawSelectedText;
-  const liveSelectionPageRect = selectionRect ? getPageRect(selectionRect) : null;
+  const liveSelectionPageRect = liveSelectionRect ? getPageRect(liveSelectionRect) : null;
   const activeSelectionRect = activeSelectedText
-    ? (selectionRect ??
+    ? (liveSelectionRect ??
       getViewportRectFromPageRect(persistedSelectionPageRect) ??
       persistedSelectionRect)
     : null;
@@ -320,7 +326,7 @@ export function useKangurAiTutorWidgetEnvironment({
     ? (liveSelectionPageRect ?? persistedSelectionPageRect)
     : null;
   const activeSelectionContainerRect = activeSelectedText
-    ? (selectionContainerRect ?? persistedSelectionContainerRect)
+    ? (liveSelectionContainerRect ?? persistedSelectionContainerRect)
     : null;
   const activeSelectionProtectedRect = activeSelectedText
     ? getSelectionProtectedRect(activeSelectionRect, activeSelectionContainerRect)
@@ -376,17 +382,17 @@ export function useKangurAiTutorWidgetEnvironment({
   };
 
   const persistSelectionGeometry = useCallback((): void => {
-    if (selectionRect) {
-      setPersistedSelectionRect(cloneRect(selectionRect));
-      setPersistedSelectionPageRect(getPageRect(selectionRect));
+    if (liveSelectionRect) {
+      setPersistedSelectionRect(cloneRect(liveSelectionRect));
+      setPersistedSelectionPageRect(getPageRect(liveSelectionRect));
     }
 
-    if (selectionContainerRect) {
-      setPersistedSelectionContainerRect(cloneRect(selectionContainerRect));
+    if (liveSelectionContainerRect) {
+      setPersistedSelectionContainerRect(cloneRect(liveSelectionContainerRect));
     }
   }, [
-    selectionContainerRect,
-    selectionRect,
+    liveSelectionContainerRect,
+    liveSelectionRect,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
@@ -443,9 +449,9 @@ export function useKangurAiTutorWidgetEnvironment({
     remainingMessages,
     resolveGuestLoginGuidanceIntentForContent,
     routing,
-    selectionContainerRect,
-    selectedText,
-    selectionRect,
+    selectionContainerRect: liveSelectionContainerRect,
+    selectedText: liveSelectedText,
+    selectionRect: liveSelectionRect,
     shouldRenderContextlessTutorUi,
     shouldRenderGuestIntroUi,
     shouldRepeatGuestIntroOnEntry,

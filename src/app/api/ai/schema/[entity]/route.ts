@@ -17,5 +17,5 @@ export const GET = apiHandlerWithParams<{ entity: string }>(
       schema: node?.jsonSchema2020 ?? null,
     });
   },
-  { source: 'ai.schema.[entity].GET' }
+  { source: 'ai.schema.[entity].GET', requireAuth: true }
 );

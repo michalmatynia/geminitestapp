@@ -1,5 +1,3 @@
-'use client';
-
 export {
   CenterPreviewProvider,
   useCenterPreviewContext,

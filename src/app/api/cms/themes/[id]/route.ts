@@ -6,10 +6,13 @@ import { DELETE_handler, GET_handler, PUT_handler } from './handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'cms.themes.[id].GET',
+  requireAuth: true,
 });
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'cms.themes.[id].PUT',
+  requireAuth: true,
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'cms.themes.[id].DELETE',
+  requireAuth: true,
 });

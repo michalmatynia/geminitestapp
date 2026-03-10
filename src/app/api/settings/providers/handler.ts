@@ -10,6 +10,7 @@ import type {
   AppProviderDiagnostics as ProviderDiagnosticsResponse,
 } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
@@ -99,6 +100,7 @@ const isIntentionalServiceOverride = (
 };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const hasDatabaseUrl = Boolean(process.env['DATABASE_URL']);
   const hasMongoUri = Boolean(process.env['MONGODB_URI']);
   const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;

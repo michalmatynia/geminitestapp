@@ -1,5 +1,3 @@
-'use client';
-
 import FileManager from '@/features/files/components/FileManager';
 import { PageLayout } from '@/shared/ui';
 

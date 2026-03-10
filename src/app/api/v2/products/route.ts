@@ -9,9 +9,11 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.products.GET',
   querySchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'v2.products.POST',
   logSuccess: true,
+  requireAuth: true,
 });

@@ -64,7 +64,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   panelMotionState: 'animating' | 'settled';
   selectionGuidanceHandoffText: string | null;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
-  setSelectionGuidanceHandoffText: (value: string | null) => void;
 }): void {
   const {
     activeFocusKind,
@@ -73,7 +72,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
-    setSelectionGuidanceHandoffText,
   } = input;
 
   useEffect(() => {
@@ -92,7 +90,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
         ? null
         : current
     );
-    setSelectionGuidanceHandoffText(null);
   }, [
     activeFocusKind,
     activeSelectedText,
@@ -100,7 +97,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
-    setSelectionGuidanceHandoffText,
   ]);
 }
 
@@ -113,7 +109,10 @@ export function useKangurAiTutorGuidedFlow(input: {
   resetAskModalState: () => void;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   sendMessage: KangurAiTutorContextValue['sendMessage'];
+  setContextualTutorMode: (value: 'selection_explain' | 'section_explain' | null) => void;
   setDismissedSelectedText: (value: string | null) => void;
+  setGuestIntroHelpVisible: (value: boolean) => void;
+  setGuestIntroVisible: (value: boolean) => void;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setHasNewMessage: (value: boolean) => void;
   setHighlightedSection: (value: SectionExplainContext | null) => void;
@@ -143,7 +142,10 @@ export function useKangurAiTutorGuidedFlow(input: {
     resetAskModalState,
     selectionExplainTimeoutRef,
     sendMessage,
+    setContextualTutorMode,
     setDismissedSelectedText,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
     setGuidedTutorTarget,
     setHasNewMessage,
     setHighlightedSection,
@@ -249,6 +251,9 @@ export function useKangurAiTutorGuidedFlow(input: {
       }
 
       setSelectionGuidanceHandoffText(null);
+      setContextualTutorMode('section_explain');
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
       resetAskModalState();
 
       const anchorRect = anchor.getRect();
@@ -317,7 +322,10 @@ export function useKangurAiTutorGuidedFlow(input: {
       resetAskModalState,
       selectionExplainTimeoutRef,
       sendMessage,
+      setContextualTutorMode,
       setDismissedSelectedText,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
       setGuidedTutorTarget,
       setHasNewMessage,
       setHighlightedSection,
@@ -345,6 +353,9 @@ export function useKangurAiTutorGuidedFlow(input: {
       }
 
       setSelectionGuidanceHandoffText(null);
+      setContextualTutorMode('selection_explain');
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
       resetAskModalState();
 
       trackKangurClientEvent('kangur_ai_tutor_selection_guidance_started', {
@@ -391,6 +402,9 @@ export function useKangurAiTutorGuidedFlow(input: {
       resetAskModalState,
       selectionExplainTimeoutRef,
       sendMessage,
+      setContextualTutorMode,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
       setSelectionGuidanceHandoffText,
       setGuidedTutorTarget,
       setHasNewMessage,

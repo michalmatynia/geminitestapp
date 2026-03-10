@@ -270,6 +270,7 @@ export function useKangurAiTutorPanelShellState(input: {
   guidedFocusRect: DOMRect | null;
   guidedMode: 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
   guidedTutorTarget: GuidedTutorTargetLike;
+  hasContextualVisibilityFallback: boolean;
   homeOnboardingStepKind: string | null;
   isAnchoredUiMode: boolean;
   isAvatarDragging: boolean;
@@ -296,6 +297,7 @@ export function useKangurAiTutorPanelShellState(input: {
     guidedFocusRect,
     guidedMode,
     guidedTutorTarget,
+    hasContextualVisibilityFallback,
     homeOnboardingStepKind,
     isAnchoredUiMode,
     isAvatarDragging,
@@ -324,7 +326,8 @@ export function useKangurAiTutorPanelShellState(input: {
     !isGuidedTutorMode &&
     !shouldPreserveInlineGuidanceAvatar &&
     !isAskModalMode;
-  const hideFloatingAvatar = isOpen && isStaticUiMode && !isAskModalMode;
+  const hideFloatingAvatar =
+    isOpen && isStaticUiMode && !isAskModalMode && !hasContextualVisibilityFallback;
   const showFloatingAvatar =
     !isTutorHidden &&
     (

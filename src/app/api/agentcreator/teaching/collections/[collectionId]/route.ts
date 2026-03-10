@@ -8,6 +8,7 @@ export const PATCH = apiHandlerWithParams<{ collectionId: string }>(
   async (request, ctx, params) => PATCH_handler(request, { ...ctx, params }),
   {
     source: 'agentcreator.teaching.collections.[collectionId].PATCH',
+    requireAuth: true,
   }
 );
 
@@ -15,5 +16,6 @@ export const DELETE = apiHandlerWithParams<{ collectionId: string }>(
   async (request, ctx, params) => DELETE_handler(request, { ...ctx, params }),
   {
     source: 'agentcreator.teaching.collections.[collectionId].DELETE',
+    requireAuth: true,
   }
 );

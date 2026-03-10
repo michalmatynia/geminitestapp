@@ -8,12 +8,12 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-10T17:52:57.047Z
+Generated at: 2026-03-10T20:22:26.808Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 356
+- Routes scanned: 355
 - Method exports scanned: 507
 - Errors: 0
 - Warnings: 0

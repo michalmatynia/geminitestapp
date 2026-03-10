@@ -32,5 +32,6 @@ export const GET = apiHandlerWithParams<ResourceParams>(
   {
     source: 'marketplace.[resource].GET',
     cacheControl: 'no-store',
+    requireAuth: true,
   }
 );

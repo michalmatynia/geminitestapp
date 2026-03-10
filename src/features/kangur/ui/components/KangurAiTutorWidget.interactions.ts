@@ -41,6 +41,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'avatarDragStateRef'
     | 'setAskModalDockStyle'
     | 'setAskModalVisible'
+    | 'setContextualTutorMode'
     | 'setDismissedSelectedText'
     | 'setDraggedAvatarPoint'
     | 'setGuestIntroHelpVisible'
@@ -87,6 +88,7 @@ export function useKangurAiTutorPanelInteractions({
     avatarDragStateRef,
     setAskModalDockStyle,
     setAskModalVisible,
+    setContextualTutorMode,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
@@ -165,6 +167,14 @@ export function useKangurAiTutorPanelInteractions({
         resetAskModalState();
       }
 
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      setLauncherPromptVisible(false);
+      if (reason === 'selection_explain' || reason === 'section_explain') {
+        setContextualTutorMode(reason);
+      } else {
+        setContextualTutorMode(null);
+      }
       setPanelAnchorMode(reason === 'toggle' ? 'dock' : 'contextual');
       trackKangurClientEvent('kangur_ai_tutor_opened', {
         ...telemetryContext,
@@ -179,6 +189,10 @@ export function useKangurAiTutorPanelInteractions({
       messageCount,
       openChat,
       resetAskModalState,
+      setContextualTutorMode,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
+      setLauncherPromptVisible,
       setPanelAnchorMode,
       telemetryContext,
     ]
@@ -201,6 +215,7 @@ export function useKangurAiTutorPanelInteractions({
         setPersistedSelectionPageRect(null);
         setPersistedSelectionContainerRect(null);
       }
+      setContextualTutorMode(null);
       closeChat();
     },
     [
@@ -209,6 +224,7 @@ export function useKangurAiTutorPanelInteractions({
       closeChat,
       messageCount,
       setHighlightedText,
+      setContextualTutorMode,
       setHoveredSectionAnchorId,
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
@@ -235,6 +251,7 @@ export function useKangurAiTutorPanelInteractions({
       setGuestIntroVisible(returnState?.guestIntroVisible ?? false);
       setGuestIntroHelpVisible(returnState?.guestIntroHelpVisible ?? false);
       setGuidedTutorTarget(returnState?.guidedTutorTarget ?? null);
+      setContextualTutorMode(null);
 
       if (!returnState?.wasOpen) {
         handleCloseChat(reason);
@@ -247,6 +264,7 @@ export function useKangurAiTutorPanelInteractions({
       setAskModalDockStyle,
       setAskModalVisible,
       setDraggedAvatarPoint,
+      setContextualTutorMode,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setGuidedTutorTarget,
@@ -266,6 +284,7 @@ export function useKangurAiTutorPanelInteractions({
     setAskModalVisible(false);
     askModalReturnStateRef.current = null;
     setGuidedTutorTarget(null);
+    setContextualTutorMode(null);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
     setHomeOnboardingStepIndex(null);
@@ -291,6 +310,7 @@ export function useKangurAiTutorPanelInteractions({
     setGuidedTutorTarget,
     setHasNewMessage,
     setDraggedAvatarPoint,
+    setContextualTutorMode,
     setHighlightedText,
     setHomeOnboardingStepIndex,
     setPersistedSelectionContainerRect,

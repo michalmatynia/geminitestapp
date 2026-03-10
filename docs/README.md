@@ -29,6 +29,7 @@ avoid becoming another dumping ground.
 
 - Repo entrypoints and governance stay at `docs/`
 - Cross-cutting platform docs belong in [`docs/platform/`](./platform/README.md)
+- Cross-feature build and toolchain docs belong in [`docs/build/README.md`](./build/README.md)
 - Feature-owned docs belong in feature folders such as
   [`docs/case-resolver/`](./case-resolver/index.md),
   [`docs/validator/`](./validator/README.md), and
@@ -60,6 +61,8 @@ These are canonical platform guides.
 - [`docs/platform/architecture-guardrails.md`](./platform/architecture-guardrails.md)
 - [`docs/platform/api-caching.md`](./platform/api-caching.md)
 - [`docs/platform/data-fetching-caching.md`](./platform/data-fetching-caching.md)
+- [`docs/build/README.md`](./build/README.md)
+- [`docs/platform/bun-support.md`](./platform/bun-support.md)
 
 Future platform-wide docs should land under [`docs/platform/`](./platform/README.md).
 

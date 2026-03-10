@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import { POST as POST_CRUD } from '@/app/api/databases/crud/route';
 import { POST as POST_EXECUTE } from '@/app/api/databases/execute/route';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
 vi.mock('@/shared/lib/db/collection-provider-map', () => ({
@@ -18,9 +19,14 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoClient: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/db/services/database-engine-access', () => ({
+  assertDatabaseEngineManageAccess: vi.fn(),
+}));
+
 describe('Database Engine routing in database operations APIs', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(assertDatabaseEngineManageAccess).mockResolvedValue(undefined);
   });
 
   it('routes CRUD auto mode through collection provider map', async () => {

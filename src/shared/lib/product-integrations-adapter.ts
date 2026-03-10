@@ -1,5 +1,3 @@
-'use client';
-
 export { default } from '@/features/integrations';
 export {
   fetchIntegrationsWithConnections,

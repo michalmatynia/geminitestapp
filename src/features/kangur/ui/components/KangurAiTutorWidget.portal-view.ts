@@ -47,6 +47,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   canSendMessages: KangurAiTutorPanelBodyContextValue['canSendMessages'];
   canStartHomeOnboardingManually: KangurAiTutorPanelBodyContextValue['canStartHomeOnboardingManually'];
   compactDockedTutorPanelWidth: KangurAiTutorPortalContextValue['panel']['compactDockedTutorPanelWidth'];
+  contextualTutorMode: 'selection_explain' | 'section_explain' | null;
   emptyStateMessage: KangurAiTutorPanelBodyContextValue['emptyStateMessage'];
   floatingAvatarPlacement: KangurAiTutorPortalContextValue['avatar']['floatingAvatarPlacement'];
   focusChipLabel: KangurAiTutorPanelBodyContextValue['focusChipLabel'];
@@ -179,6 +180,7 @@ export function useKangurAiTutorPortalViewModel(
     input.isGuidedTutorMode ||
     input.showSelectionGuidanceCallout ||
     input.showSectionGuidanceCallout;
+  const hasContextualTutorLock = input.contextualTutorMode !== null;
 
   const guestIntroHeadline = input.guestIntroHelpVisible
     ? input.tutorContent.guestIntro.help.headline
@@ -188,6 +190,12 @@ export function useKangurAiTutorPortalViewModel(
     : input.shouldRepeatGuestIntroOnEntry
       ? input.tutorContent.guestIntro.repeated.description
       : input.tutorContent.guestIntro.initial.description;
+  const shouldRenderGuestIntro =
+    input.shouldRenderGuestIntroUi &&
+    !input.isAskModalMode &&
+    !isGuidedAvatarMode &&
+    !hasContextualTutorLock &&
+    !input.isOpen;
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
@@ -333,7 +341,7 @@ export function useKangurAiTutorPortalViewModel(
         isAnonymousVisitor: input.isAnonymousVisitor,
         panelStyle: getGuestIntroPanelStyle(input.viewport),
         prefersReducedMotion: prefersReducedMotionEnabled,
-        shouldRender: input.shouldRenderGuestIntroUi,
+        shouldRender: shouldRenderGuestIntro,
         onAccept: input.handleGuestIntroAccept,
         onClose: input.handleCloseGuestIntroCard,
         onCreateAccount: input.handleGuestIntroCreateAccount,
@@ -404,7 +412,7 @@ export function useKangurAiTutorPortalViewModel(
         prefersReducedMotion: prefersReducedMotionEnabled,
         reducedMotionTransitions: input.reducedMotionTransitions,
         sessionSurfaceLabel: input.sessionSurfaceLabel,
-        shouldRenderGuestIntroUi: input.shouldRenderGuestIntroUi,
+        shouldRenderGuestIntroUi: shouldRenderGuestIntro,
         showAttachedAvatarShell: input.showAttachedAvatarShell,
         suppressPanelSurface: input.suppressPanelSurface,
         uiMode: input.uiMode,
@@ -440,6 +448,7 @@ export function useKangurAiTutorPortalViewModel(
       input.avatarStyle,
       input.bubblePlacement,
       input.compactDockedTutorPanelWidth,
+      input.contextualTutorMode,
       input.guestTutorAssistantLabel,
       input.guidedArrowheadTransition,
       input.guidedAvatarArrowhead,
@@ -503,7 +512,7 @@ export function useKangurAiTutorPortalViewModel(
       input.selectionContextSpotlightStyle,
       input.selectionSpotlightStyle,
       input.sessionSurfaceLabel,
-      input.shouldRenderGuestIntroUi,
+      shouldRenderGuestIntro,
       input.shouldRenderGuidedCallout,
       input.shouldRenderSelectionAction,
       input.showAttachedAvatarShell,
@@ -514,6 +523,7 @@ export function useKangurAiTutorPortalViewModel(
       input.tutorContent,
       input.uiMode,
       input.viewport,
+      hasContextualTutorLock,
       isGuidedAvatarMode,
       panelBodyContextValue,
       prefersReducedMotionEnabled,

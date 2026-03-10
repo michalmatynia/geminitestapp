@@ -7,5 +7,6 @@ import { postExportToBaseHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ id: string }>(postExportToBaseHandler, {
   source: 'v2.integrations.products.[id].export-to-base.POST',
+  requireAuth: true,
   requireCsrf: false,
 });

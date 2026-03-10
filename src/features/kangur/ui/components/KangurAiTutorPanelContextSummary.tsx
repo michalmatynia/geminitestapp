@@ -28,7 +28,15 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
     showSectionExplainCompleteState,
     showSelectionExplainCompleteState,
   } = useKangurAiTutorPanelBodyContext();
-  const { contextSwitchNotice, highlightedSection } = useKangurAiTutorWidgetStateContext();
+  const {
+    contextSwitchNotice,
+    highlightedSection,
+    selectionGuidanceHandoffText,
+    selectionResponsePending,
+  } = useKangurAiTutorWidgetStateContext();
+  const resolvedSelectedText =
+    activeSelectedText ?? selectionResponsePending?.selectedText ?? selectionGuidanceHandoffText ?? null;
+  const resolvedSelectedTextPreview = selectedTextPreview ?? resolvedSelectedText;
 
   return (
     <>
@@ -84,7 +92,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             </span>
           ) : null}
         </div>
-        {activeSelectedText ? (
+        {resolvedSelectedText ? (
           <div
             data-testid='kangur-ai-tutor-selected-text-preview'
             className='mt-2 rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-3 text-slate-700 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)]'
@@ -95,8 +103,8 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                   {tutorContent.panelContext.selectedTitle}
                 </div>
                 <div className='mt-2 text-xs italic leading-relaxed'>
-                  „{selectedTextPreview}”
-                  {activeSelectedText.length > (selectedTextPreview?.length ?? 0) ? '…' : ''}
+                  „{resolvedSelectedTextPreview}”
+                  {resolvedSelectedText.length > (resolvedSelectedTextPreview?.length ?? 0) ? '…' : ''}
                 </div>
               </div>
               {activeSelectionPageRect ? (

@@ -1,23 +1,31 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import {
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+export const querySchema = z.object({
+  stepId: optionalTrimmedQueryString(),
+  limit: optionalIntegerQuerySchema(z.number().int().min(10).max(500)),
+});
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req, _ctx, params) => {
+  async (_req, _ctx, params) => {
     const requestStart = Date.now();
     if (!('agentAuditLog' in prisma)) {
       throw internalError('Agent steps not initialized. Run prisma generate/db push.');
     }
     const { runId } = params;
-    const url = new URL(req.url);
-    const stepId = url.searchParams.get('stepId');
-    const limit = Number(url.searchParams.get('limit') ?? '200');
-    const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 10), 500) : 200;
+    const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+    const stepId = query.stepId ?? null;
+    const take = query.limit ?? 200;
     const audits = await prisma.agentAuditLog.findMany({
       where: { runId },
       orderBy: { createdAt: 'desc' },
@@ -54,5 +62,9 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
     }
     return NextResponse.json({ audits: filtered });
   },
-  { source: 'chatbot.agent.[runId].audits.GET' }
+  {
+    source: 'chatbot.agent.[runId].audits.GET',
+    requireAuth: true,
+    querySchema,
+  }
 );

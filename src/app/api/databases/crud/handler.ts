@@ -5,46 +5,57 @@ import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
 // Validate table/collection name to prevent injection
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+const nonEmptyRecordSchema = z.record(z.string(), z.unknown()).refine(
+  (value) => Object.keys(value).length > 0,
+  'Object cannot be empty.'
+);
+const databaseCrudRequestSchema = z.union([
+  z.object({
+    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    operation: z.literal('insert'),
+    type: z.enum(['postgresql', 'mongodb', 'auto']).optional().default('auto'),
+    data: nonEmptyRecordSchema,
+    primaryKey: z.record(z.string(), z.unknown()).optional(),
+  }),
+  z.object({
+    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    operation: z.literal('update'),
+    type: z.enum(['postgresql', 'mongodb', 'auto']).optional().default('auto'),
+    data: nonEmptyRecordSchema,
+    primaryKey: nonEmptyRecordSchema,
+  }),
+  z.object({
+    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    operation: z.literal('delete'),
+    type: z.enum(['postgresql', 'mongodb', 'auto']).optional().default('auto'),
+    data: z.record(z.string(), z.unknown()).optional(),
+    primaryKey: nonEmptyRecordSchema,
+  }),
+]);
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database operations are disabled in production.');
   }
 
-  const parsedBody = await parseObjectJsonBody(req, {
+  const parsedBody = await parseJsonBody(req, databaseCrudRequestSchema, {
     logPrefix: 'databases.crud',
   });
   if (!parsedBody.ok) {
     return parsedBody.response;
   }
 
-  const parsed = parsedBody.data as {
-    table?: string;
-    operation?: 'insert' | 'update' | 'delete';
-    type?: 'postgresql' | 'mongodb' | 'auto';
-    data?: Record<string, unknown>;
-    primaryKey?: Record<string, unknown>;
-  };
-  z.unknown().parse(parsed);
-
+  const parsed = parsedBody.data;
   const { table, operation, data, primaryKey } = parsed;
-  const requestedType = parsed.type ?? 'auto';
-  if (!['postgresql', 'mongodb', 'auto'].includes(requestedType)) {
-    throw badRequestError('Type must be postgresql, mongodb, or auto.');
-  }
-
-  if (!table || !SAFE_NAME_RE.test(table)) {
-    throw badRequestError('Valid table/collection name is required.');
-  }
-  if (!operation || !['insert', 'update', 'delete'].includes(operation)) {
-    throw badRequestError('Operation must be insert, update, or delete.');
-  }
+  const requestedType = parsed.type;
 
   const provider =
     requestedType === 'postgresql'

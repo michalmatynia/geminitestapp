@@ -82,6 +82,8 @@ npm run test
 npm run test:e2e
 npm run check:factory-meta
 npm run metrics:guardrails
+bun run lock:bun:sync
+bun run check:bun:compat
 ```
 
 `npm run check:factory-meta` also enforces the manual-query helper rule:

@@ -6,4 +6,5 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {
   source: 'v2.products.sync.profiles.[id].run.POST',
+  requireAuth: true,
 });

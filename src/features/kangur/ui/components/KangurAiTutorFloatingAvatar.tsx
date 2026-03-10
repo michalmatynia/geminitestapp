@@ -115,6 +115,7 @@ export function KangurAiTutorFloatingAvatar({
 
   return (
     <motion.button
+      data-kangur-ai-tutor-root='true'
       data-testid='kangur-ai-tutor-avatar'
       data-anchor-kind={avatarAnchorKind}
       data-avatar-placement={floatingAvatarPlacement}

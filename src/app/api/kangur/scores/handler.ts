@@ -72,10 +72,21 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
+const resolveBodyJson = async (
+  request: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<unknown> => {
+  if (ctx.body !== undefined) {
+    return ctx.body;
+  }
+  return readBodyJson(request);
+};
+
 export async function getKangurScoresHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  await resolveKangurActor(req).catch(() => null);
   const query = resolveKangurScoresQuery(req, ctx);
 
   const repository = await getKangurScoreRepository();
@@ -100,7 +111,7 @@ export async function postKangurScoresHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const payload = parseKangurScoreCreatePayload(await readBodyJson(req));
+  const payload = parseKangurScoreCreatePayload(await resolveBodyJson(req, ctx));
   const actor = await resolveKangurActor(req);
 
   const repository = await getKangurScoreRepository();

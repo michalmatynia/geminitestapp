@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   buildAgentPersonaAvatarThumbnail,
@@ -8,9 +9,13 @@ import {
 import { uploadFile } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const MAX_AVATAR_UPLOAD_BYTES = 4 * 1024 * 1024;
+export const deleteQuerySchema = z.object({
+  thumbnailRef: optionalTrimmedQueryString(),
+});
 const THUMBNAIL_GENERATION_MIME_TYPES = new Set([
   'image/png',
   'image/jpeg',
@@ -126,9 +131,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   );
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const thumbnailRef = req.nextUrl.searchParams.get('thumbnailRef');
-  const normalizedRef = typeof thumbnailRef === 'string' ? thumbnailRef.trim() : '';
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const normalizedRef = query.thumbnailRef ?? '';
   if (!normalizedRef) {
     throw badRequestError('Thumbnail ref is required.');
   }

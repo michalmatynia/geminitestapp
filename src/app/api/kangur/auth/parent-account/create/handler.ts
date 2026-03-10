@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import {
   buildKangurParentAccountCreateDebugPayload,
@@ -13,6 +14,7 @@ export async function postKangurParentAccountCreateHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  await auth().catch(() => null);
   const body = ctx.body as KangurParentAccountCreate | undefined;
   if (!body) {
     throw badRequestError('Invalid payload.');

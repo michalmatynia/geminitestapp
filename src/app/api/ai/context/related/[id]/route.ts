@@ -15,5 +15,5 @@ export const GET = apiHandlerWithParams<{ id: string }>(
       },
     });
   },
-  { source: 'ai.context.related.[id].GET' }
+  { source: 'ai.context.related.[id].GET', requireAuth: true }
 );

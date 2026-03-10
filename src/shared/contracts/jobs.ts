@@ -120,7 +120,7 @@ export const graphModelJobGraphSchema = z
   .object({
     pathId: z.string().optional(),
     nodeId: z.string().optional(),
-    nodeTitle: z.string().optional(),
+    nodeTitle: z.string().nullable().optional(),
     runId: z.string().optional(),
     requestedModelId: z.string().optional(),
     modelId: z.string().optional(),
@@ -135,6 +135,8 @@ export const graphModelJobPayloadSchema = z
     isTest: z.boolean().optional(),
     imageUrls: z.array(z.string()).optional(),
     prompt: z.string().optional(),
+    cacheKey: z.string().optional(),
+    payloadHash: z.string().optional(),
     modelId: z.string().optional(),
     temperature: z.number().optional(),
     maxTokens: z.number().optional(),
@@ -149,10 +151,61 @@ export const graphModelJobPayloadSchema = z
 export type GraphModelJobPayloadDto = z.infer<typeof graphModelJobPayloadSchema>;
 export type GraphModelJobPayload = GraphModelJobPayloadDto;
 
-export const bulkAiJobRequestSchema = z.object({
-  type: productAiJobTypeSchema,
-  config: z.record(z.string(), z.unknown()).optional(),
-});
+export const graphModelJobEnqueuePayloadSchema = graphModelJobPayloadSchema
+  .extend({
+    prompt: z.string().trim().min(1),
+    source: z.literal('ai_paths'),
+    graph: graphModelJobGraphSchema.extend({
+      runId: z.string().trim().min(1),
+      nodeId: z.string().trim().min(1),
+    }),
+  })
+  .passthrough();
+
+export type GraphModelJobEnqueuePayloadDto = z.infer<typeof graphModelJobEnqueuePayloadSchema>;
+export type GraphModelJobEnqueuePayload = GraphModelJobEnqueuePayloadDto;
+
+const genericProductAiJobPayloadSchema = z.record(z.string(), z.unknown());
+
+const nonGraphProductAiJobTypeSchema = productAiJobTypeSchema.refine(
+  (value): value is Exclude<ProductAiJobType, 'graph_model'> => value !== 'graph_model'
+);
+
+export const productAiJobEnqueueRequestSchema = z.union([
+  z.object({
+    productId: z.string().trim().min(1),
+    type: z.literal('graph_model'),
+    payload: graphModelJobEnqueuePayloadSchema,
+  }),
+  z.object({
+    productId: z.string().trim().min(1),
+    type: nonGraphProductAiJobTypeSchema,
+    payload: genericProductAiJobPayloadSchema.optional(),
+  }),
+]);
+
+export type ProductAiJobEnqueueRequest =
+  | {
+      productId: string;
+      type: 'graph_model';
+      payload: GraphModelJobEnqueuePayload;
+    }
+  | {
+      productId: string;
+      type: Exclude<ProductAiJobType, 'graph_model'>;
+      payload?: Record<string, unknown>;
+    };
+
+export const bulkAiJobRequestSchema = z.union([
+  z.object({
+    type: z.literal('graph_model'),
+    config: graphModelJobEnqueuePayloadSchema,
+  }),
+  z.object({
+    type: nonGraphProductAiJobTypeSchema,
+    config: genericProductAiJobPayloadSchema.optional(),
+  }),
+]);
 
 export type BulkAiJobRequestDto = z.infer<typeof bulkAiJobRequestSchema>;
 

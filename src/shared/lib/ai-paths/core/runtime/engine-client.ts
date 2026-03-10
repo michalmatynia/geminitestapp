@@ -11,6 +11,12 @@ import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
 import { evaluateGraphInternal } from './engine-core';
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
+import {
+  buildGraphModelQueuedPayload,
+  buildGraphModelJobEnqueueRequest,
+  buildGraphModelJobPayload,
+  readEnqueuedGraphModelJobId,
+} from './graph-model-job';
 import { handleAgent, handleLearnerAgent } from './handlers/agent';
 import { handleAudioOscillator, handleAudioSpeaker } from './handlers/audio';
 import {
@@ -53,7 +59,7 @@ import {
 } from './node-code-object-v3-legacy-bridge';
 import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
-import { buildPromptOutput } from './utils';
+import { buildPromptOutput, pollGraphJob } from './utils';
 
 // Re-export types from core
 export * from './engine-core';
@@ -143,30 +149,25 @@ const handleModel: NodeHandler = async ({
   }
 
   const modelConfig = (node.config?.model ?? {}) as Record<string, unknown>;
-  const payload = {
+  const payload = buildGraphModelJobPayload({
     prompt,
-    ...(typeof modelConfig['modelId'] === 'string' && modelConfig['modelId'].trim().length > 0
-      ? { modelId: modelConfig['modelId'].trim() }
-      : {}),
-    ...(typeof modelConfig['temperature'] === 'number'
-      ? { temperature: modelConfig['temperature'] }
-      : {}),
-    ...(typeof modelConfig['maxTokens'] === 'number'
-      ? { maxTokens: modelConfig['maxTokens'] }
-      : {}),
-    ...(typeof modelConfig['vision'] === 'boolean' ? { vision: modelConfig['vision'] } : {}),
-    source: 'ai_paths',
-    graph: {
-      pathId: activePathId ?? undefined,
-      nodeId: node.id,
-      nodeTitle: node.title,
-      ...(typeof modelConfig['modelId'] === 'string' && modelConfig['modelId'].trim().length > 0
-        ? { requestedModelId: modelConfig['modelId'].trim() }
-        : {}),
-      runId,
-    },
-    ...(contextRegistry ? { contextRegistry } : {}),
-  };
+    modelId:
+      typeof modelConfig['modelId'] === 'string' ? modelConfig['modelId'].trim() : null,
+    temperature:
+      typeof modelConfig['temperature'] === 'number' ? modelConfig['temperature'] : undefined,
+    maxTokens:
+      typeof modelConfig['maxTokens'] === 'number' ? modelConfig['maxTokens'] : undefined,
+    vision: typeof modelConfig['vision'] === 'boolean' ? modelConfig['vision'] : undefined,
+    activePathId,
+    nodeId: node.id,
+    nodeTitle: node.title,
+    runId,
+    contextRegistry,
+  });
+  const enqueuePayload = buildGraphModelQueuedPayload({
+    payload,
+    runId,
+  });
 
   const productIdInput =
     typeof nodeInputs['productId'] === 'string'
@@ -176,21 +177,20 @@ const handleModel: NodeHandler = async ({
         : typeof simulationEntityId === 'string'
           ? simulationEntityId
           : 'unknown';
+  let enqueuedJobId: string | undefined;
 
   try {
-    const enqueueResult = await aiJobsApi.enqueue({
-      productId: productIdInput,
-      type: 'graph_model',
-      payload,
-    });
+    const enqueueResult = await aiJobsApi.enqueue(
+      buildGraphModelJobEnqueueRequest({
+        productId: productIdInput,
+        payload: enqueuePayload,
+      })
+    );
     if (!enqueueResult.ok) {
       throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
     }
-    const jobIdRaw = enqueueResult.data?.jobId;
-    if (typeof jobIdRaw !== 'string' || jobIdRaw.trim().length === 0) {
-      throw new Error('AI job enqueue response did not include a valid job id.');
-    }
-    const jobId = jobIdRaw.trim();
+    const jobId = readEnqueuedGraphModelJobId(enqueueResult);
+    enqueuedJobId = jobId;
     executed.ai.add(node.id);
     toast('AI model job queued.', { variant: 'success' });
 
@@ -203,44 +203,14 @@ const handleModel: NodeHandler = async ({
       };
     }
 
-    const maxAttempts = 10;
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const pollResult = await aiJobsApi.poll(jobId);
-      if (!pollResult.ok) {
-        throw new Error(pollResult.error || 'Failed to poll AI job.');
-      }
-      const status =
-        typeof pollResult.data?.status === 'string' ? pollResult.data.status : 'processing';
-      if (status === 'completed') {
-        return {
-          result: pollResult.data.result ?? '',
-          jobId,
-          status,
-          debugPayload: payload,
-        };
-      }
-      if (status === 'failed' || status === 'cancelled') {
-        return {
-          result: '',
-          jobId,
-          status: 'failed',
-          error:
-            typeof pollResult.data?.error === 'string'
-              ? pollResult.data.error
-              : 'AI model job failed.',
-          debugPayload: payload,
-        };
-      }
-      if (attempt < maxAttempts - 1) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 500));
-      }
-    }
-
+    const result = await pollGraphJob(jobId, {
+      intervalMs: 500,
+      maxAttempts: 10,
+    });
     return {
-      result: '',
+      result,
       jobId,
-      status: 'failed',
-      error: 'AI model job timed out.',
+      status: 'completed',
       debugPayload: payload,
     };
   } catch (error) {
@@ -248,6 +218,7 @@ const handleModel: NodeHandler = async ({
     executed.ai.add(node.id);
     return {
       result: '',
+      ...(enqueuedJobId ? { jobId: enqueuedJobId } : {}),
       status: 'failed',
       error: error instanceof Error ? error.message : 'AI model job failed.',
       debugPayload: payload,

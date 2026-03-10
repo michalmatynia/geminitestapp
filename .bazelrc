@@ -1,0 +1,14 @@
+common --enable_bzlmod
+common --color=yes
+common --curses=no
+common --disk_cache=.cache/bazel-disk
+common --repository_cache=.cache/bazel-repo
+common --experimental_guard_against_concurrent_changes
+
+build --keep_going
+build --remote_verify_downloads
+
+run --ui_event_filters=-info
+
+test --keep_going
+test --test_output=errors

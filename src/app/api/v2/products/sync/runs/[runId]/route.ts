@@ -9,4 +9,5 @@ export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, {
   source: 'v2.products.sync.runs.[runId].GET',
   querySchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

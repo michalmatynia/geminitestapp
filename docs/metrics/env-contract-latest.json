@@ -1,42 +1,24 @@
 {
-  "generatedAt": "2026-03-10T08:15:39.914Z",
-  "status": "failed",
+  "generatedAt": "2026-03-10T20:22:33.407Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
-    "errorCount": 1,
+    "total": 0,
+    "errorCount": 0,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "failed"
+    "status": "passed"
   },
   "environment": {
     "nodeEnv": "development",
-    "hasDatabaseUrl": false,
-    "hasMongoUri": false,
-    "appDbProvider": null,
-    "hasAuthSecret": false,
+    "hasDatabaseUrl": true,
+    "hasMongoUri": true,
+    "appDbProvider": "mongodb",
+    "hasAuthSecret": true,
     "hasNextAuthSecret": false,
-    "hasRedisUrl": false,
+    "hasRedisUrl": true,
     "hasFastCometConfig": false
   },
-  "issues": [
-    {
-      "severity": "error",
-      "ruleId": "database-provider-missing",
-      "message": "No database provider is configured. Set DATABASE_URL or MONGODB_URI.",
-      "file": null,
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "database-provider-missing",
-      "errorCount": 1,
-      "warningCount": 0,
-      "infoCount": 0
-    }
-  ],
+  "issues": [],
+  "rules": [],
   "durationMs": 1
 }

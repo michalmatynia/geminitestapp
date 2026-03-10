@@ -9,10 +9,12 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.integrations.product-listings.GET',
   cacheControl: 'no-store',
   querySchema,
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'v2.integrations.product-listings.POST',
   requireCsrf: false,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

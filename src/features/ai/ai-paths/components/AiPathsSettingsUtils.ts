@@ -19,7 +19,6 @@ import {
   coerceInput,
   renderTemplate,
   dbApi,
-  aiJobsApi,
   backfillPathConfigNodeContracts,
   findPathConfigCollectionAliasIssues,
   getValueAtMappingPath,
@@ -34,6 +33,7 @@ import {
   EMPTY_RUNTIME_STATE,
 } from '@/shared/lib/ai-paths';
 import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
+import { pollGraphJob as sharedPollGraphJob } from '@/shared/lib/ai-paths/core/runtime/utils';
 import {
   findRemovedLegacyAiPathNodesInPathConfig,
   formatRemovedLegacyAiPathNodesMessage,
@@ -705,39 +705,4 @@ export const pollDatabaseQuery = async (
 export const pollGraphJob = async (
   jobId: string,
   options?: { intervalMs?: number; maxAttempts?: number; signal?: AbortSignal }
-): Promise<string> => {
-  const maxAttempts = options?.maxAttempts ?? 60;
-  const intervalMs = options?.intervalMs ?? 2000;
-  const signal = options?.signal;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    if (signal?.aborted) {
-      throw createAbortError();
-    }
-    const pollResult = await aiJobsApi.poll(jobId, signal ? { signal } : {});
-    if (!pollResult.ok) {
-      if (signal?.aborted) {
-        throw createAbortError();
-      }
-      throw new Error('Failed to fetch job status.');
-    }
-    const { status, result: jobResult, error: jobError } = pollResult.data;
-    if (!status) continue;
-    if (status === 'completed') {
-      const result = jobResult as { result?: string } | string | null | undefined;
-      if (result && typeof result === 'object' && 'result' in result) {
-        return (result as { result?: string }).result ?? '';
-      }
-      return typeof result === 'string' ? result : JSON.stringify(result ?? '');
-    }
-    if (status === 'failed') {
-      throw new Error(jobError || 'AI job failed.');
-    }
-    if (status === 'canceled') {
-      throw new Error('AI job was canceled.');
-    }
-    if (attempt < maxAttempts - 1) {
-      await sleep(Math.max(0, intervalMs), signal);
-    }
-  }
-  throw new Error('AI job timed out.');
-};
+): Promise<string> => sharedPollGraphJob(jobId, options);

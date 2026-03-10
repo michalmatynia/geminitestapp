@@ -37,6 +37,7 @@ export const promptValidationScopeSchema = z.enum([
   'case_resolver_prompt_exploder',
   'case_resolver_plain_text',
   'ai_paths',
+  'kangur_ai_tutor_onboarding',
   'global',
 ]);
 export type PromptValidationScope = z.infer<typeof promptValidationScopeSchema>;
@@ -59,6 +60,7 @@ export const DEFAULT_PROMPT_VALIDATION_SCOPES: PromptValidationScope[] = [
   'case_resolver_prompt_exploder',
   'case_resolver_plain_text',
   'ai_paths',
+  'kangur_ai_tutor_onboarding',
   'global',
 ];
 

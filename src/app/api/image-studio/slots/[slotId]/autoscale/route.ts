@@ -7,4 +7,5 @@ import { postAutoScaleSlotHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(postAutoScaleSlotHandler, {
   source: 'image-studio.slots.[slotId].autoscale.POST',
+  requireAuth: true,
 });

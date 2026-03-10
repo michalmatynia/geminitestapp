@@ -28,6 +28,11 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 import { GET_handler, POST_handler } from './handler';
 
+const createRequestContext = (query?: Record<string, unknown>) =>
+  ({
+    query,
+  }) as Parameters<typeof GET_handler>[1];
+
 describe('ai-paths trigger-buttons GET handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,7 +69,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-      {} as Parameters<typeof GET_handler>[1]
+      createRequestContext()
     );
 
     expect(response.status).toBe(200);
@@ -117,7 +122,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-      {} as Parameters<typeof GET_handler>[1]
+      createRequestContext()
     );
 
     await expect(response.json()).resolves.toEqual([
@@ -156,7 +161,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const responseFromCookie = await GET_handler(
       cookieRequest,
-      {} as Parameters<typeof GET_handler>[1]
+      createRequestContext()
     );
 
     await expect(responseFromCookie.json()).resolves.toEqual([
@@ -169,7 +174,9 @@ describe('ai-paths trigger-buttons GET handler', () => {
       new NextRequest(
         `http://localhost/api/ai-paths/trigger-buttons?${PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM}=1`
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      createRequestContext({
+        [PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM]: true,
+      })
     );
 
     await expect(responseFromQuery.json()).resolves.toEqual([
@@ -184,7 +191,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-      {} as Parameters<typeof GET_handler>[1]
+      createRequestContext()
     );
 
     expect(response.status).toBe(200);
@@ -199,7 +206,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-        {} as Parameters<typeof GET_handler>[1]
+        createRequestContext()
       )
     ).rejects.toThrow('Invalid AI trigger button settings payload.');
 
@@ -242,7 +249,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-        {} as Parameters<typeof GET_handler>[1]
+        createRequestContext()
       )
     ).rejects.toThrow('Invalid AI trigger button record payload.');
 

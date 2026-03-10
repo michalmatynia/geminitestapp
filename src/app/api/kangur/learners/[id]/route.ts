@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+import { kangurLearnerUpdateInputSchema } from '@/shared/contracts/kangur';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { patchKangurLearnerHandler } from './handler';
@@ -9,4 +10,6 @@ export const PATCH = apiHandlerWithParams<{ id: string }>(patchKangurLearnerHand
   source: 'kangur.learners.[id].PATCH',
   service: 'kangur.api',
   successLogging: 'all',
+  parseJsonBody: true,
+  bodySchema: kangurLearnerUpdateInputSchema,
 });

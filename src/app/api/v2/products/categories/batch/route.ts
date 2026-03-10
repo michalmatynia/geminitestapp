@@ -9,4 +9,5 @@ export const GET = apiHandler(GET_handler, {
   cacheControl: 'no-store',
   querySchema,
   rateLimitKey: 'search',
+  requireAuth: true,
 });

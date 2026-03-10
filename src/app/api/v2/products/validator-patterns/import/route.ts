@@ -11,4 +11,5 @@ export const POST = apiHandler(postValidatorPatternsImportHandler, {
   source: 'v2.products.validator-patterns.import.POST',
   parseJsonBody: true,
   bodySchema: postValidatorPatternsImportSchema,
+  requireAuth: true,
 });

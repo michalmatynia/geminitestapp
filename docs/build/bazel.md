@@ -1,0 +1,170 @@
+# Bazel rollout
+
+This repository now ships a first-wave Bazel bootstrap using Bazelisk.
+
+## Scope
+
+The current Bazel layer wraps the existing npm-based build, quality, and test entrypoints so CI can start converging on stable Bazel targets without rewriting the Next.js, Prisma, Vitest, and Playwright toolchains in one cut.
+
+Phase 2 adds source-aware dependency groups for selected JavaScript and TypeScript checks. These targets still invoke the existing npm scripts, but Bazel now has explicit input graphs for the highest-value CI checks instead of treating them as opaque shell commands.
+
+The repo now also has a real Bazel-managed npm dependency graph:
+
+- `MODULE.bazel` loads:
+  - `rules_nodejs`
+  - `aspect_rules_js`
+- `npm_translate_lock` imports dependencies directly from [package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json)
+- [REPO.bazel](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/REPO.bazel) uses Bazel 8 `ignore_directories` for `node_modules`
+- [tools/js/BUILD.bazel](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/tools/js/BUILD.bazel) exposes package-backed binaries for:
+  - ESLint
+  - TypeScript `tsc`
+  - Vitest
+  - Next.js
+
+The first direct Bazel-executed checks are now:
+
+- `//:lint` -> `//tools/js:lint`
+- `//:typecheck` -> `//tools/js:typecheck`
+- `//:api_error_sources` -> direct `node scripts/quality/check-api-error-sources.mjs`
+- `//:docs_structure` -> direct `node scripts/docs/check-docs-structure.mjs`
+- `//:scanner_contracts` -> direct ESLint + Vitest execution without `npm run`
+- `//:validator_docs_check` -> direct `tsx scripts/docs/check-validator-doc-coverage.ts`
+- `//:validator_docs_generate` -> direct `tsx scripts/docs/generate-validator-docs.ts`
+- `//:ai_paths_node_docs` -> direct docs verify + tooltip coverage execution
+- `//:architecture_collect_metrics` -> direct `node scripts/architecture/collect-metrics.mjs --ci`
+- `//:architecture_hotspots` -> direct `node scripts/perf/route-hotspots.mjs`
+- `//:architecture_critical_paths` -> direct `node scripts/perf/check-critical-path-performance.mjs --strict --ci`
+- `//:architecture_guardrails` -> direct `node scripts/architecture/check-guardrails.mjs`
+- `//:weekly_quality_report` -> direct `node scripts/quality/generate-weekly-report.mjs --strict --ci`
+- `//:weekly_trend_index` -> direct `node scripts/quality/generate-trend-index.mjs --ci --no-history`
+- `//:weekly_duration_budgets` -> direct `node scripts/quality/recalibrate-weekly-duration-budgets.mjs --ci --no-history`
+- `//:unit` -> `//tools/js:unit` via direct Vitest execution
+- `//:critical_flows` -> direct `node scripts/testing/run-critical-flow-tests.mjs --strict --ci`
+- `//:security_smoke` -> direct `node scripts/testing/run-security-smoke-tests.mjs --strict --ci`
+- `//:accessibility_smoke` -> direct `node scripts/testing/run-accessibility-smoke-tests.mjs --strict --ci`
+- `//:integration_prisma` -> direct Prisma preflight + `tsx` DB check + Vitest integration project
+- `//:integration_mongo` -> direct `vitest run --project integration-mongo`
+- `//:case_resolver_capture_mapping_e2e` -> direct Playwright suite runner for the Case Resolver capture-mapping flow
+- `//:products_trigger_queue_e2e` -> direct Playwright suite runner for the product trigger-queue flow
+- `//:next_build` -> direct Prisma generate + Next.js production build execution
+
+## Install
+
+```bash
+npm install
+```
+
+`npm install` remains the canonical path for Bazel and CI because
+`npm_translate_lock` is still sourced from
+[package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json).
+
+For local Bun parity checks, use:
+
+```bash
+bun run lock:bun:sync
+bun install --frozen-lockfile
+bun run check:bun:compat
+```
+
+Use Bazel through Bazelisk:
+
+```bash
+npm run bazel -- run //:lint
+npm run bazel -- run //:typecheck
+npm run bazel -- run //:unit
+npm run bazel -- run //:next_build
+```
+
+## Optional remote cache
+
+The repository now supports provider-neutral remote cache injection through [run-bazel.sh](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/tools/bazel/run-bazel.sh).
+
+Set these environment variables in CI or locally if you want remote caching:
+
+- `BAZEL_REMOTE_CACHE_URL`
+- `BAZEL_REMOTE_CACHE_HEADER`
+- `BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS`
+
+Example:
+
+```bash
+export BAZEL_REMOTE_CACHE_URL="grpcs://your-cache.example.com"
+export BAZEL_REMOTE_CACHE_HEADER="x-buildbuddy-api-key=REDACTED"
+export BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS=false
+npm run bazel -- run //:lint
+```
+
+CI is wired so:
+
+- pull requests read from the remote cache by default
+- pushes may upload local results back to the remote cache
+
+If the cache variables are unset, Bazel falls back to local disk/repository caches only.
+
+Package-backed tool binaries are available for the next Bazel-native migration step:
+
+```bash
+npm run bazel -- run //tools/js:eslint -- --version
+npm run bazel -- run //tools/js:tsc -- --version
+npm run bazel -- run //tools/js:vitest -- --version
+npm run bazel -- run //tools/js:next -- --version
+```
+
+## Core targets
+
+- `//:canonical_sitewide`
+- `//:ai_paths_node_docs`
+- `//:ai_paths_canonical`
+- `//:api_error_sources`
+- `//:observability`
+- `//:architecture_collect_metrics`
+- `//:architecture_hotspots`
+- `//:architecture_critical_paths`
+- `//:architecture_guardrails`
+- `//:ui_consolidation`
+- `//:docs_structure`
+- `//:scanner_contracts`
+- `//:validator_docs_check`
+- `//:validator_docs_generate`
+- `//:lint`
+- `//:typecheck`
+- `//:unit`
+- `//:unit_domain_timings`
+- `//:case_resolver_regression`
+- `//:case_resolver_capture_mapping_e2e`
+- `//:products_trigger_queue_unit`
+- `//:products_trigger_queue_e2e`
+- `//:critical_flows`
+- `//:security_smoke`
+- `//:accessibility_smoke`
+- `//:weekly_quality_report`
+- `//:weekly_trend_index`
+- `//:weekly_duration_budgets`
+- `//:integration_prisma`
+- `//:integration_mongo`
+- `//:next_build`
+
+## Current rollout model
+
+- Bazel is the orchestration layer for the main CI checks.
+- Existing npm scripts remain the underlying implementation.
+- Selected targets now carry explicit Bazel file dependencies:
+  - `//:lint`
+  - `//:typecheck`
+  - `//:scanner_contracts`
+  - `//:docs_structure`
+  - `//:api_error_sources`
+  - `//:ai_paths_node_docs`
+  - `//:validator_docs_check`
+  - `//:validator_docs_generate`
+- Bazel now owns the external npm dependency graph through `npm_translate_lock`.
+- `lint` and `typecheck` now execute through package-backed Bazel binaries rather than `npm run`.
+- `api_error_sources`, `docs_structure`, and `scanner_contracts` now execute directly instead of going through npm-script wrappers.
+- `validator_docs_check`, `validator_docs_generate`, and `ai_paths_node_docs` now also bypass the top-level npm wrapper layer.
+- `architecture_*` and `weekly_*` targets now execute directly and carry explicit Bazel input groups rather than npm wrapper indirection.
+- `unit`, `critical_flows`, `security_smoke`, and `accessibility_smoke` now also bypass the top-level npm wrapper layer.
+- `integration_prisma` and `integration_mongo` now also execute directly while preserving the existing CI service/env assumptions.
+- Playwright e2e gate targets now call the shared suite runner directly instead of routing through top-level npm scripts.
+- `next_build` now executes directly as a Bazel target while still preserving the existing Next.js + Prisma build contract.
+- Remote cache support is injected by the repo-owned Bazel wrapper rather than hard-coding provider-specific settings into `.bazelrc`.
+- The next migration step is to decide whether deeper `rules_js` / `nextjs_*` native modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.

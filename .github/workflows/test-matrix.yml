@@ -7,6 +7,11 @@ on:
       - main
       - master
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   canonical-sitewide:
     runs-on: ubuntu-latest
@@ -24,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Run site-wide canonical guardrail
-        run: npm run canonical:check:sitewide
+        run: npm run bazel -- run //:canonical_sitewide
 
   ai-paths-canonical:
     runs-on: ubuntu-latest
@@ -42,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Run AI Paths canonical guardrail
-        run: npm run ai-paths:check:canonical
+        run: npm run bazel -- run //:ai_paths_canonical
 
   observability:
     runs-on: ubuntu-latest
@@ -60,7 +65,7 @@ jobs:
         run: npm ci
 
       - name: Run observability quality gate
-        run: npm run observability:check
+        run: npm run bazel -- run //:observability
 
       - name: Upload observability check logs
         if: always()
@@ -88,7 +93,7 @@ jobs:
         run: npm ci
 
       - name: Run UI consolidation guardrail
-        run: node scripts/architecture/check-ui-consolidation.mjs
+        run: npm run bazel -- run //:ui_consolidation
 
   scanner-contracts:
     runs-on: ubuntu-latest
@@ -105,11 +110,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint scanner contract scripts
-        run: npm run lint:scanner-scripts
-
-      - name: Run scanner envelope regression tests
-        run: npm run test:scanner-envelopes
+      - name: Run scanner contracts
+        run: npm run bazel -- run //:scanner_contracts
 
   lint:
     runs-on: ubuntu-latest
@@ -127,7 +129,7 @@ jobs:
         run: npm ci
 
       - name: Run lint
-        run: npm run lint
+        run: npm run bazel -- run //:lint
 
   typecheck:
     runs-on: ubuntu-latest
@@ -145,7 +147,7 @@ jobs:
         run: npm ci
 
       - name: Run typecheck
-        run: npm run typecheck
+        run: npm run bazel -- run //:typecheck
 
   unit:
     runs-on: ubuntu-latest
@@ -163,7 +165,7 @@ jobs:
         run: npm ci
 
       - name: Run unit test project
-        run: npm run test:unit
+        run: npm run bazel -- run //:unit
 
   unit-domain-timings:
     runs-on: ubuntu-latest
@@ -181,7 +183,7 @@ jobs:
         run: npm ci
 
       - name: Run unit domain timing suite
-        run: npm run test:unit:domains:strict -- --ci
+        run: npm run bazel -- run //:unit_domain_timings
 
       - name: Upload unit domain timing report
         if: always()
@@ -209,7 +211,7 @@ jobs:
         run: npm ci
 
       - name: Run critical flow regression suite
-        run: npm run test:critical-flows:strict -- --ci
+        run: npm run bazel -- run //:critical_flows
 
       - name: Upload critical flow report
         if: always()
@@ -237,7 +239,7 @@ jobs:
         run: npm ci
 
       - name: Run security smoke suite
-        run: npm run test:security-smoke:strict -- --ci
+        run: npm run bazel -- run //:security_smoke
 
       - name: Upload security smoke report
         if: always()
@@ -265,7 +267,7 @@ jobs:
         run: npm ci
 
       - name: Run accessibility smoke suite
-        run: npm run test:accessibility-smoke:strict -- --ci
+        run: npm run bazel -- run //:accessibility_smoke
 
       - name: Upload accessibility smoke report
         if: always()
@@ -317,7 +319,7 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Run Prisma integration project
-        run: npm run test:integration:prisma
+        run: npm run bazel -- run //:integration_prisma
 
   integration-mongo:
     runs-on: ubuntu-latest
@@ -353,4 +355,4 @@ jobs:
         run: npm ci
 
       - name: Run Mongo integration project
-        run: npm run test:integration:mongo
+        run: npm run bazel -- run //:integration_mongo

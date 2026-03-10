@@ -21,7 +21,7 @@ export async function patchKangurAssignmentHandler(
 ): Promise<Response> {
   const actor = await resolveAssignmentActor(req);
   const payload = parseKangurAssignmentUpdatePayload(
-    await readKangurJsonBody(req, 'assignment update')
+    await readKangurJsonBody(req, 'assignment update', ctx.body)
   );
   const repository = await getKangurAssignmentRepository();
   let updatedAssignment = await repository

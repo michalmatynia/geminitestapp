@@ -13,9 +13,11 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 export const GET = apiHandler(GET_handler, {
   source: 'v2.products.ai-jobs.GET',
   querySchema: listQuerySchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandler(DELETE_handler, {
   source: 'v2.products.ai-jobs.DELETE',
   querySchema: deleteQuerySchema,
+  requireAuth: true,
 });

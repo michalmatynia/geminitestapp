@@ -106,6 +106,7 @@ export function KangurAiTutorGuidedCallout({
     <AnimatePresence mode='wait'>
       {shouldRender && style ? (
         <motion.div
+          data-kangur-ai-tutor-root='true'
           key={calloutKey}
           data-testid={calloutTestId}
           data-guidance-motion='gentle'
@@ -142,7 +143,7 @@ export function KangurAiTutorGuidedCallout({
                   data-testid='kangur-ai-tutor-guided-callout-close'
                   type='button'
                   onClick={handleCloseCallout}
-                  className='shrink-0 rounded-full border border-amber-200/80 bg-white/80 p-1 text-amber-900 transition-colors hover:bg-white'
+                  className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 bg-white/80 p-1 text-amber-900 transition-[background-color,box-shadow,transform] hover:-translate-y-[1px] hover:scale-[1.03] hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
                   aria-label={tutorContent.guidedCallout.closeAria}
                 >
                   <X className='h-3.5 w-3.5' />

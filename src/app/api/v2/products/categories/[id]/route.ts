@@ -11,14 +11,17 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'v2.products.categories.[id].GET',
+  requireAuth: true,
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'v2.products.categories.[id].PUT',
   parseJsonBody: true,
   bodySchema: productCategoryUpdateSchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'v2.products.categories.[id].DELETE',
+  requireAuth: true,
 });

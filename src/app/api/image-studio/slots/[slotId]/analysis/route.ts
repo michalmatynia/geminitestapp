@@ -7,4 +7,5 @@ import { postAnalyzeSlotHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(postAnalyzeSlotHandler, {
   source: 'image-studio.slots.[slotId].analysis.POST',
+  requireAuth: true,
 });

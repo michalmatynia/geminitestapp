@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getAgentApprovalGate,
@@ -6,10 +7,16 @@ import {
   listAgentApprovalGates,
 } from '@/shared/lib/agent-discovery';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const GET_handler = async (request: Request) => {
-  const { searchParams } = new URL(request.url);
-  const gateId = searchParams.get('gateId');
+export const querySchema = z.object({
+  gateId: optionalTrimmedQueryString(),
+  requiredFor: optionalTrimmedQueryString(),
+});
+
+const GET_handler = async (_request: Request, ctx: { query?: unknown }) => {
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const gateId = query.gateId;
 
   if (gateId) {
     const gate = getAgentApprovalGate(gateId);
@@ -29,7 +36,7 @@ const GET_handler = async (request: Request) => {
 
   return NextResponse.json({
     approvalGates: listAgentApprovalGates({
-      requiredFor: searchParams.get('requiredFor'),
+      requiredFor: query.requiredFor ?? null,
     }),
     ...getAgentDiscoverySummary(),
   });
@@ -37,4 +44,6 @@ const GET_handler = async (request: Request) => {
 
 export const GET = apiHandler(GET_handler, {
   source: 'agent.approval-gates.GET',
+  querySchema,
+  requireAuth: true,
 });

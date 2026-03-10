@@ -12,8 +12,10 @@ export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'v2.products.producers.[id].PUT',
   parseJsonBody: true,
   bodySchema: producerUpdateSchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'v2.products.producers.[id].DELETE',
+  requireAuth: true,
 });

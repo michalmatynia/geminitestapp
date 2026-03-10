@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { buildObservabilityExpectedByCollection } from '@/shared/lib/observability/observability-index-manifest';
 
@@ -66,6 +67,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
 };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const db = await getMongoDb();
   const collections = await buildDiagnostics(db);
   return NextResponse.json({
@@ -75,6 +77,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 }
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const db = await getMongoDb();
   const expectedByCollection = buildExpectedByCollection();
   const created: Array<{ collection: string; key: IndexSpecification }> = [];

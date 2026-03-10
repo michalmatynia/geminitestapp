@@ -336,6 +336,8 @@ npm run cleanup:cms-blocks
 npm run cleanup:category-mapping-duplicates
 npm run metrics:guardrails
 npm run check:factory-meta
+bun run lock:bun:sync
+bun run check:bun:compat
 ```
 
 ## Documentation Maintenance Rule

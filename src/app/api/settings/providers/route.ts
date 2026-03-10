@@ -6,4 +6,5 @@ import { GET_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'settings.providers.GET',
+  requireAuth: true,
 });

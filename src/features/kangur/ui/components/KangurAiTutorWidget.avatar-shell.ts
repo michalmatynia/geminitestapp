@@ -32,6 +32,9 @@ export function useKangurAiTutorAvatarShellActions(input: {
   launcherPromptVisible: boolean;
   persistSelectionContext: (options?: { prefillInput?: boolean }) => string | null;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  setContextualTutorMode: Dispatch<
+    SetStateAction<'selection_explain' | 'section_explain' | null>
+  >;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
   setGuestIntroHelpVisible: Dispatch<SetStateAction<boolean>>;
   setGuestIntroVisible: Dispatch<SetStateAction<boolean>>;
@@ -42,6 +45,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   setSectionResponsePending: Dispatch<SetStateAction<SectionExplainContext | null>>;
   setSelectionResponseComplete: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
   setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
+  setSelectionGuidanceHandoffText: Dispatch<SetStateAction<string | null>>;
   startGuidedSelectionExplanation: (selectedText: string) => void;
   suppressAvatarClickRef: MutableRefObject<boolean>;
 }) {
@@ -62,6 +66,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
+    setContextualTutorMode,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -72,6 +77,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setSectionResponsePending,
     setSelectionResponseComplete,
     setSelectionResponsePending,
+    setSelectionGuidanceHandoffText,
     startGuidedSelectionExplanation,
     suppressAvatarClickRef,
   } = input;
@@ -103,6 +109,33 @@ export function useKangurAiTutorAvatarShellActions(input: {
     startGuidedSelectionExplanation(persistedSelectedText);
   }, [persistSelectionContext, startGuidedSelectionExplanation]);
 
+  const openAnonymousOnboarding = useCallback((): void => {
+    clearPendingGuidance();
+    setHighlightedSection(null);
+    setHoveredSectionAnchorId(null);
+    setContextualTutorMode(null);
+    setSelectionGuidanceHandoffText(null);
+    setGuidedTutorTarget(null);
+
+    if (isOpen) {
+      handleCloseChat('toggle');
+    }
+
+    setGuestIntroHelpVisible(false);
+    setGuestIntroVisible(true);
+  }, [
+    clearPendingGuidance,
+    handleCloseChat,
+    isOpen,
+    setContextualTutorMode,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+    setGuidedTutorTarget,
+    setHighlightedSection,
+    setHoveredSectionAnchorId,
+    setSelectionGuidanceHandoffText,
+  ]);
+
   const handleAvatarClick = useCallback((): void => {
     if (suppressAvatarClickRef.current) {
       suppressAvatarClickRef.current = false;
@@ -124,30 +157,25 @@ export function useKangurAiTutorAvatarShellActions(input: {
       return;
     }
 
+    if (isAnonymousVisitor) {
+      openAnonymousOnboarding();
+      return;
+    }
+
     if (guidedTutorTarget) {
       clearPendingGuidance();
       setHighlightedSection(null);
       setHoveredSectionAnchorId(null);
+      setContextualTutorMode(null);
       setGuidedTutorTarget(null);
       if (!isOpen) {
-        if (isAnonymousVisitor) {
-          setGuestIntroHelpVisible(false);
-          setGuestIntroVisible(true);
-        } else {
-          handleOpenChat('toggle');
-        }
+        handleOpenChat('toggle');
       }
       return;
     }
 
     if (isOpen) {
       handleCloseChat('toggle');
-      return;
-    }
-
-    if (isAnonymousVisitor) {
-      setGuestIntroHelpVisible(false);
-      setGuestIntroVisible(true);
       return;
     }
 
@@ -166,6 +194,8 @@ export function useKangurAiTutorAvatarShellActions(input: {
     isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
+    openAnonymousOnboarding,
+    setContextualTutorMode,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,
@@ -188,6 +218,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     }
 
     setGuidedTutorTarget(null);
+    setContextualTutorMode(null);
     setDraggedAvatarPoint(null);
     clearPersistedTutorAvatarPosition();
     closeChat();
@@ -196,6 +227,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     closeChat,
     guidedMode,
     handleHomeOnboardingFinishEarly,
+    setContextualTutorMode,
     setDraggedAvatarPoint,
     setGuidedTutorTarget,
     setHighlightedSection,

@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: '0 13 * * 1'
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: 'true'
+
 jobs:
   report:
     runs-on: ubuntu-latest
@@ -23,15 +28,15 @@ jobs:
         run: npm ci
 
       - name: Run weekly quality report
-        run: npm run quality:weekly-report:strict -- --ci
+        run: npm run bazel -- run //:weekly_quality_report
 
       - name: Generate trend index snapshot
         if: always()
-        run: node scripts/quality/generate-trend-index.mjs --ci --no-history
+        run: npm run bazel -- run //:weekly_trend_index
 
       - name: Generate weekly duration budget recommendations
         if: always()
-        run: npm run quality:weekly-duration-budgets:ci
+        run: npm run bazel -- run //:weekly_duration_budgets
 
       - name: Upload weekly quality artifacts
         id: upload_weekly_quality_artifacts

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getAiPathsSetting,
@@ -21,10 +22,14 @@ import {
   shouldIncludePlaywrightAiPathsFixtureButtons,
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 import { assertTriggerButtonPathExists } from './path-validation';
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
+export const querySchema = z.object({
+  [PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM]: optionalBooleanQuerySchema(),
+});
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
 
@@ -59,13 +64,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const raw = await readTriggerButtonsRaw();
   const parsedButtons = parseAiTriggerButtonsRaw(raw);
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const fixtureCookieValue = readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);
   const includeFixtureButtons =
-    shouldIncludePlaywrightAiPathsFixtureButtons(
-      readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME)
-    ) ||
-    shouldIncludePlaywrightAiPathsFixtureButtons(
-      req.nextUrl.searchParams.get(PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM)
-    );
+    shouldIncludePlaywrightAiPathsFixtureButtons(fixtureCookieValue) ||
+    query[PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM] === true;
   const visibleButtons = includeFixtureButtons
     ? parsedButtons
     : parsedButtons.filter((button) => !isPlaywrightAiPathsFixtureTriggerButton(button));

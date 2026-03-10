@@ -8,23 +8,23 @@ canonical: true
 ---
 # Environment Contract Report
 
-Generated at: 2026-03-10T08:15:39.914Z
+Generated at: 2026-03-10T20:22:33.407Z
 
 ## Summary
 
-- Status: FAILED
-- Errors: 1
+- Status: PASSED
+- Errors: 0
 - Warnings: 0
 - Info: 0
 
 ## Environment Snapshot
 
 - NODE_ENV: development
-- DATABASE_URL configured: false
-- MONGODB_URI configured: false
-- APP_DB_PROVIDER: unset
-- REDIS_URL configured: false
-- AUTH_SECRET configured: false
+- DATABASE_URL configured: true
+- MONGODB_URI configured: true
+- APP_DB_PROVIDER: mongodb
+- REDIS_URL configured: true
+- AUTH_SECRET configured: true
 - NEXTAUTH_SECRET configured: false
 - FASTCOMET env configured: false
 
@@ -32,13 +32,10 @@ Generated at: 2026-03-10T08:15:39.914Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| database-provider-missing | 1 | 0 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| ERROR | database-provider-missing | - | No database provider is configured. Set DATABASE_URL or MONGODB_URI. |
+No environment contract issues detected.
 
 ## Notes
 

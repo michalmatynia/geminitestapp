@@ -1,6 +1,7 @@
 import { type CountryCode } from '@prisma/client';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getCurrencyRepository,
@@ -10,13 +11,24 @@ import {
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   MongoCountryDoc,
   MongoLanguageDoc,
 } from '@/shared/lib/db/services/database-sync-types';
+
+const metadataMutationSchema = z
+  .object({
+    code: z.string().trim().optional(),
+    name: z.string().trim().optional(),
+    symbol: z.string().trim().nullable().optional(),
+    nativeName: z.string().trim().nullable().optional(),
+    currencyIds: z.array(z.string().trim().min(1)).optional(),
+    countryIds: z.array(z.string().trim().min(1)).optional(),
+  })
+  .passthrough();
 
 const readString = (record: Record<string, unknown>, key: string): string | undefined => {
   const raw = record[key];
@@ -223,13 +235,13 @@ export async function POST_intl_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const parsed = await parseObjectJsonBody(req, {
+  const parsed = await parseJsonBody(req, metadataMutationSchema, {
     logPrefix: 'metadata.[type].POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
-  const data = parsed.data;
+  const data = parsed.data as Record<string, unknown>;
   const provider = await getInternationalizationProvider();
 
   if (type === 'currencies') {

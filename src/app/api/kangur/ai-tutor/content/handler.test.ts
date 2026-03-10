@@ -4,11 +4,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 
-const { getKangurAiTutorContentMock, upsertKangurAiTutorContentMock, resolveKangurActorMock } =
+const {
+  getKangurAiTutorContentMock,
+  upsertKangurAiTutorContentMock,
+  resolveKangurActorMock,
+  readStoredSettingValueMock,
+} =
   vi.hoisted(() => ({
     getKangurAiTutorContentMock: vi.fn(),
     upsertKangurAiTutorContentMock: vi.fn(),
     resolveKangurActorMock: vi.fn(),
+    readStoredSettingValueMock: vi.fn(),
   }));
 
 vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
@@ -20,12 +26,16 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: resolveKangurActorMock,
 }));
 
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  readStoredSettingValue: readStoredSettingValueMock,
+}));
+
 import {
   getKangurAiTutorContentHandler,
   postKangurAiTutorContentHandler,
 } from './handler';
 
-const createRequestContext = (body?: unknown): ApiHandlerContext =>
+const createRequestContext = (body?: unknown, query?: unknown): ApiHandlerContext =>
   ({
     requestId: 'request-kangur-ai-tutor-content-1',
     traceId: 'trace-kangur-ai-tutor-content-1',
@@ -33,6 +43,7 @@ const createRequestContext = (body?: unknown): ApiHandlerContext =>
     startTime: Date.now(),
     getElapsedMs: () => 1,
     body,
+    query,
   }) as ApiHandlerContext;
 
 describe('kangur ai tutor content handler', () => {
@@ -40,6 +51,7 @@ describe('kangur ai tutor content handler', () => {
     vi.clearAllMocks();
     getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
     upsertKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+    readStoredSettingValueMock.mockResolvedValue(null);
     resolveKangurActorMock.mockResolvedValue({
       actorId: 'admin-1',
       actorType: 'parent',
@@ -66,7 +78,7 @@ describe('kangur ai tutor content handler', () => {
   it('returns tutor content for the requested locale', async () => {
     const response = await getKangurAiTutorContentHandler(
       new NextRequest('http://localhost/api/kangur/ai-tutor/content?locale=pl'),
-      createRequestContext()
+      createRequestContext(undefined, { locale: 'pl' })
     );
 
     expect(getKangurAiTutorContentMock).toHaveBeenCalledWith('pl');
@@ -127,5 +139,28 @@ describe('kangur ai tutor content handler', () => {
         createRequestContext(DEFAULT_KANGUR_AI_TUTOR_CONTENT)
       )
     ).rejects.toThrow('Only admins can update Kangur AI Tutor content.');
+  });
+
+  it('rejects blocking onboarding validation issues before persisting content', async () => {
+    const payload = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      guestIntro: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro,
+        initial: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial,
+          headline: 'TODO uzupelnic naglowek',
+        },
+      },
+    };
+
+    await expect(
+      postKangurAiTutorContentHandler(
+        new NextRequest('http://localhost/api/kangur/ai-tutor/content', {
+          method: 'POST',
+        }),
+        createRequestContext(payload)
+      )
+    ).rejects.toThrow('AI Tutor onboarding validation failed.');
+    expect(upsertKangurAiTutorContentMock).not.toHaveBeenCalled();
   });
 });

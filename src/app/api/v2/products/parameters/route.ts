@@ -14,10 +14,12 @@ export const GET = apiHandler(GET_handler, {
   querySchema,
   rateLimitKey: 'search',
   cacheControl: 'no-store',
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'v2.products.parameters.POST',
   parseJsonBody: true,
   bodySchema: productParameterCreateSchema,
+  requireAuth: true,
 });

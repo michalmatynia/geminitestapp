@@ -18,6 +18,7 @@ import {
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 
 // Prisma DMMF types for internal use
 type DmmfField = {
@@ -360,6 +361,7 @@ export async function getDatabasesSchemaHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const providerParam = query.provider ?? 'auto';
   const includeCounts = query.includeCounts === true;

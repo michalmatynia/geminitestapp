@@ -65,6 +65,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
 }: UseKangurAiTutorWidgetCoordinatorDisplayInput) {
   const {
     askModalVisible,
+    contextualTutorMode,
     contextSwitchNotice,
     draggedAvatarPoint,
     guidedTutorTarget,
@@ -90,7 +91,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     setGuidedTutorTarget,
     setSectionResponseComplete,
     setSectionResponsePending,
-    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setTutorNarrationObservedText,
@@ -187,8 +187,17 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     viewportTick,
   });
 
+  const effectiveSelectedText =
+    activeSelectedText ??
+    (contextualTutorMode === 'selection_explain'
+      ? selectionResponsePending?.selectedText ?? selectionGuidanceHandoffText
+      : null);
+  const effectiveSelectionRect = effectiveSelectedText
+    ? activeSelectionRect ?? guidedSelectionRect
+    : activeSelectionRect;
+
   useKangurAiTutorGuidanceCompletionEffects({
-    activeSelectedText,
+    activeSelectedText: effectiveSelectedText,
     highlightedSection,
     isLoading,
     isOpen,
@@ -222,8 +231,8 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     shouldRenderSelectionAction,
   } = useKangurAiTutorFocusLayoutState({
     activeSectionRect,
-    activeSelectedText,
-    activeSelectionRect,
+    activeSelectedText: effectiveSelectedText,
+    activeSelectionRect: effectiveSelectionRect,
     allowSelectedTextSupport,
     guidedTutorTarget,
     hasAssignmentSummary,
@@ -235,8 +244,8 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isTutorHidden,
     motionProfile,
     panelAnchorMode,
-    selectedText,
-    selectionRect,
+    selectedText: effectiveSelectedText ?? selectedText,
+    selectionRect: effectiveSelectionRect ?? selectionRect,
     sessionContext: {
       answerRevealed: sessionContext?.answerRevealed,
       contentId: sessionContext?.contentId,
@@ -255,20 +264,19 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     panelMotionState: tutorPanelMotionState,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
-    setSelectionGuidanceHandoffText,
   });
 
   const conversationMessages = useMemo(() => {
     if (
       !selectionConversationContext ||
-      !activeSelectedText ||
-      selectionConversationContext.selectedText !== activeSelectedText
+      !effectiveSelectedText ||
+      selectionConversationContext.selectedText !== effectiveSelectedText
     ) {
       return messages;
     }
 
     return messages.slice(selectionConversationContext.messageStartIndex);
-  }, [activeSelectedText, messages, selectionConversationContext]);
+  }, [effectiveSelectedText, messages, selectionConversationContext]);
 
   const {
     bridgeQuickAction,
@@ -284,7 +292,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     visibleQuickActions,
   } = useKangurAiTutorConversationViewState({
     activeFocus: { kind: activeFocus.kind },
-    activeSelectedText,
+    activeSelectedText: effectiveSelectedText,
     canSendMessages,
     contextlessDisabledPlaceholder: CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
     contextlessEmptyStateMessage: CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
@@ -389,7 +397,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
       kind: activeFocus.kind,
       label: activeFocus.label,
     },
-    activeSelectedText,
+    activeSelectedText: effectiveSelectedText,
     askModalHelperText,
     bubblePlacementLaunchOrigin: bubblePlacement.launchOrigin,
     bubblePlacementMode: bubblePlacement.mode,
@@ -446,6 +454,10 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     guidedFocusRect,
     guidedMode,
     guidedTutorTarget,
+    hasContextualVisibilityFallback:
+      contextualTutorMode !== null ||
+      selectionGuidanceHandoffText !== null ||
+      selectionResponsePending !== null,
     homeOnboardingStepKind: homeOnboardingStep?.kind ?? null,
     isAnchoredUiMode,
     isAvatarDragging,

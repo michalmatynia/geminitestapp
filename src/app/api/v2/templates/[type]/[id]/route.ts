@@ -6,8 +6,10 @@ import { PUT_templates_item_handler, DELETE_templates_item_handler } from '../..
 
 export const PUT = apiHandlerWithParams<{ type: string; id: string }>(PUT_templates_item_handler, {
   source: 'v2.templates.[type].[id].PUT',
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ type: string; id: string }>(DELETE_templates_item_handler, {
   source: 'v2.templates.[type].[id].DELETE',
+  requireAuth: true,
 });

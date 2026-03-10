@@ -9,4 +9,5 @@ import { GET_handler } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'system.activity.GET',
   querySchema: commonListQuerySchema,
+  requireAuth: true,
 });

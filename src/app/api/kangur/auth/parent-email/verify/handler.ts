@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { verifyKangurParentEmail } from '@/features/kangur/server/parent-email-auth';
 import type { KangurParentEmailVerify } from '@/shared/contracts/kangur-auth';
@@ -10,6 +11,7 @@ export async function postKangurParentEmailVerifyHandler(
   _req: Request,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  await auth().catch(() => null);
   const body = ctx.body as KangurParentEmailVerify | undefined;
   if (!body) {
     throw badRequestError('Invalid payload.');

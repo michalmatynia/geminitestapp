@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { listFileUploadEvents } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,
@@ -34,6 +35,7 @@ export const querySchema = z.object({
 });
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const from = parseDateParam(query.from ?? null);
   const to = parseDateParam(query.to ?? null, true);

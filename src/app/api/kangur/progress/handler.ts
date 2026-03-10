@@ -21,6 +21,16 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
+const resolveBodyJson = async (
+  request: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<unknown> => {
+  if (ctx.body !== undefined) {
+    return ctx.body;
+  }
+  return readBodyJson(request);
+};
+
 const resolveProgressKeys = (input: {
   learnerId: string;
   legacyUserKey: string | null;
@@ -66,7 +76,7 @@ export async function patchKangurProgressHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const payload = parseKangurProgressUpdatePayload(await readBodyJson(req));
+  const payload = parseKangurProgressUpdatePayload(await resolveBodyJson(req, ctx));
   const actor = await resolveKangurActor(req);
   const repository = await getKangurProgressRepository();
   const progress = await repository.saveProgress(actor.activeLearner.id, payload);

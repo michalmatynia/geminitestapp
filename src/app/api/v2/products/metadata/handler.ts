@@ -27,10 +27,18 @@ export const querySchema = z.object({
   catalogId: optionalTrimmedQueryString(),
 });
 
-const parseObjectPayload = async (req: NextRequest) =>
-  await parseObjectJsonBody(req, {
+const parseObjectPayload = async (
+  req: NextRequest,
+  ctx?: ApiHandlerContext
+): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; response: Response }> => {
+  if (ctx?.body && typeof ctx.body === 'object' && !Array.isArray(ctx.body)) {
+    return { ok: true, data: ctx.body as Record<string, unknown> };
+  }
+
+  return await parseObjectJsonBody(req, {
     logPrefix: 'products.metadata.[type]',
   });
+};
 
 const readString = (record: Record<string, unknown>, key: string): string | null => {
   const raw = record[key];
@@ -54,6 +62,41 @@ const readBoolean = (record: Record<string, unknown>, key: string): boolean | nu
   if (typeof raw === 'boolean') return raw;
   return null;
 };
+
+const optionalTrimmedStringSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().optional());
+
+const optionalNumberSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : value;
+}, z.number().finite().optional());
+
+export const priceGroupCreatePayloadSchema = z.object({
+  groupId: optionalTrimmedStringSchema,
+  name: optionalTrimmedStringSchema,
+  description: optionalTrimmedStringSchema,
+  currencyId: optionalTrimmedStringSchema,
+  currencyCode: optionalTrimmedStringSchema,
+  type: z.preprocess((value: unknown): unknown => {
+    if (typeof value !== 'string') return value;
+    const normalized = value.trim().toLowerCase();
+    return normalized.length > 0 ? normalized : undefined;
+  }, z.enum(['standard', 'dependent']).optional()),
+  basePriceField: optionalTrimmedStringSchema,
+  sourceGroupId: optionalTrimmedStringSchema,
+  isDefault: z.boolean().optional(),
+  priceMultiplier: optionalNumberSchema,
+  addToPrice: optionalNumberSchema,
+}).passthrough();
 
 const normalizeGroupId = (value: string): string => {
   const normalized = value
@@ -275,11 +318,11 @@ export async function POST_products_metadata_handler(
     const provider = await getProductDataProvider();
     if (provider === 'mongodb') {
       const mongo = await getMongoDb();
-      const parsed = await parseObjectPayload(req);
+      const parsed = await parseObjectPayload(req, _ctx);
       if (!parsed.ok) {
         return parsed.response;
       }
-      const payload = parsed.data;
+      const payload = priceGroupCreatePayloadSchema.parse(parsed.data);
 
       const explicitCurrencyId = readString(payload, 'currencyId');
       const currencyCodeFromPayload = readString(payload, 'currencyCode')?.toUpperCase() ?? null;
@@ -352,11 +395,11 @@ export async function POST_products_metadata_handler(
       return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
     }
 
-    const parsed = await parseObjectPayload(req);
+    const parsed = await parseObjectPayload(req, _ctx);
     if (!parsed.ok) {
       return parsed.response;
     }
-    const payload = parsed.data;
+    const payload = priceGroupCreatePayloadSchema.parse(parsed.data);
     const currencyId = await resolveCurrencyId(payload);
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type');

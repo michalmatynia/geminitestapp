@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
 
 import {
   SHARED_LEASE_LIMITATION,
@@ -9,7 +9,18 @@ import {
   mutateAgentLease,
 } from '@/shared/lib/agent-lease-service';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import { AgentLeaseMutationRequestSchema } from '@/shared/contracts/agent-leases';
+
+export const querySchema = z.object({
+  resourceId: optionalTrimmedQueryString(),
+  scopeId: optionalTrimmedQueryString(),
+  activeOnly: optionalBooleanQuerySchema(),
+  resourceType: optionalTrimmedQueryString(),
+});
 
 function statusForLeaseMutation(code: string) {
   switch (code) {
@@ -28,10 +39,10 @@ function statusForLeaseMutation(code: string) {
   }
 }
 
-const GET_handler = async (request: Request) => {
-  const { searchParams } = new URL(request.url);
-  const resourceId = searchParams.get('resourceId');
-  const scopeId = searchParams.get('scopeId');
+const GET_handler = async (_request: Request, ctx: { query?: unknown }) => {
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const resourceId = query.resourceId;
+  const scopeId = query.scopeId;
 
   if (resourceId && scopeId) {
     const state = await getAgentLeaseState(resourceId, scopeId);
@@ -56,7 +67,7 @@ const GET_handler = async (request: Request) => {
       resourceId,
       leases: await listAgentLeaseStates({
         resourceId,
-        activeOnly: searchParams.get('activeOnly') === 'true',
+        activeOnly: query.activeOnly,
       }),
       limitation: SHARED_LEASE_LIMITATION,
     });
@@ -64,8 +75,8 @@ const GET_handler = async (request: Request) => {
 
   return NextResponse.json(
     await getAgentLeaseDiscoveryPayload({
-      activeOnly: searchParams.get('activeOnly') === 'true',
-      resourceType: searchParams.get('resourceType'),
+      activeOnly: query.activeOnly,
+      resourceType: query.resourceType ?? null,
     })
   );
 };
@@ -95,10 +106,13 @@ const POST_handler = async (_request: Request, ctx: { body?: unknown }) => {
 
 export const GET = apiHandler(GET_handler, {
   source: 'agent.leases.GET',
+  querySchema,
+  requireAuth: true,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'agent.leases.POST',
   parseJsonBody: true,
   bodySchema: AgentLeaseMutationRequestSchema,
+  requireAuth: true,
 });

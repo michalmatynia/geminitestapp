@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { RedisOverview } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getRedisClient } from '@/shared/lib/redis';
 
 export const querySchema = z.object({
@@ -27,6 +28,7 @@ const getNamespace = (key: string): string => {
 };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const client = getRedisClient();
   if (!client) {

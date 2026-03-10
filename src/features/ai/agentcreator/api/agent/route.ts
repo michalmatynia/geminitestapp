@@ -264,6 +264,15 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   return NextResponse.json({ deleted: ids.length });
 }
 
-export const GET = apiHandler(GET_handler, { source: 'chatbot.agent.GET' });
-export const POST = apiHandler(POST_handler, { source: 'chatbot.agent.POST' });
-export const DELETE = apiHandler(DELETE_handler, { source: 'chatbot.agent.DELETE' });
+export const GET = apiHandler(GET_handler, {
+  source: 'chatbot.agent.GET',
+  requireAuth: true,
+});
+export const POST = apiHandler(POST_handler, {
+  source: 'chatbot.agent.POST',
+  requireAuth: true,
+});
+export const DELETE = apiHandler(DELETE_handler, {
+  source: 'chatbot.agent.DELETE',
+  requireAuth: true,
+});

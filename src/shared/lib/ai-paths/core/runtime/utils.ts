@@ -36,6 +36,7 @@ const createAbortError = (): Error => {
 };
 
 const AI_JOB_NOT_FOUND_ERROR_NAME = 'AiJobNotFoundError';
+const AI_JOB_TERMINAL_ERROR_NAME = 'AiJobTerminalError';
 
 const isAiJobNotFoundErrorMessage = (message: string): boolean => {
   const normalized = message.trim().toLowerCase();
@@ -48,6 +49,12 @@ const isAiJobNotFoundErrorMessage = (message: string): boolean => {
 const createAiJobNotFoundError = (jobId: string, message: string): Error => {
   const error = new Error(`AI job "${jobId}" not found while polling: ${message}`);
   (error as { name?: string }).name = AI_JOB_NOT_FOUND_ERROR_NAME;
+  return error;
+};
+
+const createAiJobTerminalError = (message: string): Error => {
+  const error = new Error(message);
+  (error as { name?: string }).name = AI_JOB_TERMINAL_ERROR_NAME;
   return error;
 };
 
@@ -380,10 +387,10 @@ export const pollGraphJob = async (
         return typeof result === 'string' ? result : JSON.stringify(result ?? '');
       }
       if (status === 'failed') {
-        throw new Error(jobError || 'AI job failed.');
+        throw createAiJobTerminalError(jobError || 'AI job failed.');
       }
-      if (status === 'canceled') {
-        throw new Error('AI job was canceled.');
+      if (status === 'canceled' || status === 'cancelled') {
+        throw createAiJobTerminalError('AI job was canceled.');
       }
       if (attempt < maxAttempts - 1) {
         await sleep(Math.max(0, intervalMs), signal);
@@ -393,6 +400,9 @@ export const pollGraphJob = async (
         throw createAbortError();
       }
       if (error instanceof Error && error.name === AI_JOB_NOT_FOUND_ERROR_NAME) {
+        throw error;
+      }
+      if (error instanceof Error && error.name === AI_JOB_TERMINAL_ERROR_NAME) {
         throw error;
       }
       if (attempt === maxAttempts - 1) {

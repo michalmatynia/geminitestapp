@@ -74,6 +74,7 @@ const SCOPE_OPTIONS: Array<{ value: PromptValidationScope; label: string }> = [
   { value: 'case_resolver_prompt_exploder', label: 'Case Resolver Prompt Exploder' },
   { value: 'case_resolver_plain_text', label: 'Case Resolver Plain Text' },
   { value: 'ai_paths', label: 'AI Paths' },
+  { value: 'kangur_ai_tutor_onboarding', label: 'Kangur AI Tutor Onboarding' },
 ];
 
 const DEFAULT_CONFIG: ValidationPatternConfigDraft = {
@@ -103,6 +104,7 @@ const VALIDATOR_SCOPE_TO_PROMPT_SCOPE: Record<
   'case-resolver-prompt-exploder': 'case_resolver_prompt_exploder',
   'case-resolver-plain-text': 'case_resolver_plain_text',
   'ai-paths': 'ai_paths',
+  'kangur-ai-tutor-onboarding': 'kangur_ai_tutor_onboarding',
 };
 
 const parseRuleIdList = (value: string): string[] =>

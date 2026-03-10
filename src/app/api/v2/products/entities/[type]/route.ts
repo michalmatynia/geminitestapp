@@ -9,8 +9,10 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 export const GET = apiHandlerWithParams<{ type: string }>(GET_products_entities_handler, {
   source: 'v2.products.entities.[type].GET',
+  requireAuth: true,
 });
 
 export const POST = apiHandlerWithParams<{ type: string }>(POST_products_entities_handler, {
   source: 'v2.products.entities.[type].POST',
+  requireAuth: true,
 });

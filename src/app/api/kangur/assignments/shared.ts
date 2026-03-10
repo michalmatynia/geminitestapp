@@ -37,7 +37,15 @@ export const resolveAssignmentActor = async (
   };
 };
 
-export const readKangurJsonBody = async (request: NextRequest, label: string): Promise<unknown> => {
+export const readKangurJsonBody = async (
+  request: NextRequest,
+  label: string,
+  parsedBody?: unknown
+): Promise<unknown> => {
+  if (parsedBody !== undefined) {
+    return parsedBody;
+  }
+
   const rawBody = await request.text();
   if (!rawBody) {
     throw badRequestError(`Kangur ${label} payload is required.`);

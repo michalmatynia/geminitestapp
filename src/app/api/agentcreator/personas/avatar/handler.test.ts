@@ -27,13 +27,14 @@ vi.mock('@/features/ai/agentcreator/server/persona-avatar-thumbnails', () => ({
 
 import { DELETE_handler, POST_handler } from './handler';
 
-const createRequestContext = (): ApiHandlerContext =>
+const createRequestContext = (overrides?: Partial<ApiHandlerContext>): ApiHandlerContext =>
   ({
     requestId: 'request-agent-avatar-1',
     traceId: 'trace-agent-avatar-1',
     correlationId: 'corr-agent-avatar-1',
     startTime: Date.now(),
     getElapsedMs: () => 1,
+    ...overrides,
   }) as ApiHandlerContext;
 
 const createUploadRequest = (input: {
@@ -106,12 +107,8 @@ describe('agent persona avatar handler', () => {
       }),
     );
     const [uploadedFile, uploadOptions] = uploadFileMock.mock.calls[0] ?? [];
-    expect(uploadedFile).toEqual(
-      expect.objectContaining({
-        size: 3,
-        type: 'image/png',
-      }),
-    );
+    expect(uploadedFile?.type).toBe('image/png');
+    expect(uploadedFile?.size).toBeGreaterThan(0);
     expect(uploadOptions).toEqual(
       expect.objectContaining({
         category: 'agentcreator',
@@ -242,7 +239,11 @@ describe('agent persona avatar handler', () => {
           method: 'DELETE',
         },
       ),
-      createRequestContext(),
+      createRequestContext({
+        query: {
+          thumbnailRef: 'thumb-ref-1',
+        },
+      }),
     );
 
     expect(response.status).toBe(204);

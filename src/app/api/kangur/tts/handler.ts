@@ -21,6 +21,16 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
+const resolveBodyJson = async (
+  request: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<unknown> => {
+  if (ctx.body !== undefined) {
+    return ctx.body;
+  }
+  return readBodyJson(request);
+};
+
 const resolveOptionalKangurActor = async (request: NextRequest) => {
   try {
     return await resolveKangurActor(request);
@@ -37,7 +47,7 @@ export async function postKangurTtsHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveOptionalKangurActor(req);
-  const payload = kangurLessonTtsRequestSchema.parse(await readBodyJson(req));
+  const payload = kangurLessonTtsRequestSchema.parse(await resolveBodyJson(req, ctx));
   const contextRegistry = await resolveKangurTtsContextRegistryEnvelope(payload.contextRegistry);
   const response = await ensureKangurLessonNarrationAudio({
     script: payload.script,

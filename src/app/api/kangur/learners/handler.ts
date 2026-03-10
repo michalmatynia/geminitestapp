@@ -30,7 +30,9 @@ export async function postKangurLearnersHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await requireParentActor(req);
-  const payload = parseKangurLearnerCreatePayload(await readKangurAuthJsonBody(req, 'learner'));
+  const payload = parseKangurLearnerCreatePayload(
+    await readKangurAuthJsonBody(req, 'learner', ctx.body)
+  );
   const learner = await createKangurLearner({
     ownerUserId: actor.ownerUserId,
     learner: payload,

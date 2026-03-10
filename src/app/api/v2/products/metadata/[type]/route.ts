@@ -7,6 +7,7 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import {
   GET_products_metadata_handler,
   POST_products_metadata_handler,
+  priceGroupCreatePayloadSchema,
   querySchema,
 } from '../handler';
 
@@ -18,9 +19,13 @@ export const GET = apiHandlerWithParams<{ type: string }>(GET_products_metadata_
   source: 'v2.products.metadata.[type].GET',
   paramsSchema: typeParamSchema,
   querySchema,
+  requireAuth: true,
 });
 
 export const POST = apiHandlerWithParams<{ type: string }>(POST_products_metadata_handler, {
   source: 'v2.products.metadata.[type].POST',
   paramsSchema: typeParamSchema,
+  parseJsonBody: true,
+  bodySchema: priceGroupCreatePayloadSchema,
+  requireAuth: true,
 });

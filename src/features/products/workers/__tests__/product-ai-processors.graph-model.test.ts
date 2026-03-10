@@ -319,6 +319,82 @@ describe('processGraphModel AI Paths model selection', () => {
     expect(runBrainChatCompletion).not.toHaveBeenCalled();
   });
 
+  it('fails fast for ai_paths jobs without graph node context when no requested model can be resolved', async () => {
+    await expect(
+      processGraphModel(
+        buildJob({
+          modelId: '',
+          graph: undefined,
+        })
+      )
+    ).rejects.toThrow(
+      'AI Paths graph_model payload requires graph.runId and graph.nodeId when no requested model is provided.'
+    );
+    expect(resolveAiPathsNodeExecutionConfig).not.toHaveBeenCalled();
+    expect(runBrainChatCompletion).not.toHaveBeenCalled();
+  });
+
+  it('infers ai_paths source for legacy jobs that still carry AI Paths graph context', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'ollama:brain-default',
+      temperature: 0.3,
+      maxTokens: 222,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPromptApplied: true,
+        modelSelectionSource: 'brain_default',
+        enforced: true,
+      },
+    });
+
+    await processGraphModel(
+      buildJob({
+        source: undefined,
+        graph: {
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+        },
+      })
+    );
+
+    expect(resolveAiPathsNodeExecutionConfig).toHaveBeenCalled();
+  });
+
+  it('fails fast when a graph_model job has no source and no AI Paths graph markers', async () => {
+    await expect(
+      processGraphModel(
+        buildJob({
+          modelId: '',
+          source: undefined,
+          graph: undefined,
+        })
+      )
+    ).rejects.toThrow('Graph model job missing source');
+    expect(resolveAiPathsNodeExecutionConfig).not.toHaveBeenCalled();
+    expect(runBrainChatCompletion).not.toHaveBeenCalled();
+  });
+
   it('retries once when the completion is empty and keeps the second result', async () => {
     vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
       assignment: {

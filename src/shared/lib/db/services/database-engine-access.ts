@@ -1,13 +1,7 @@
 import 'server-only';
 
-import { authError } from '@/shared/errors/app-error';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 
 export async function assertDatabaseEngineManageAccess(): Promise<void> {
-  const { auth } = await import('@/features/auth/server');
-  const session = await auth();
-  const hasAccess =
-    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
-  if (!hasAccess) {
-    throw authError('Unauthorized.');
-  }
+  await assertSettingsManageAccess();
 }

@@ -7,4 +7,5 @@ import { GET_handler, querySchema } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'chatbot.memory.GET',
   querySchema,
+  requireAuth: true,
 });

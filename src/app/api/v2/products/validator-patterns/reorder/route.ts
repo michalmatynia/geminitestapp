@@ -11,4 +11,5 @@ export const POST = apiHandler(POST_handler, {
   source: 'v2.products.validator-patterns.reorder.POST',
   parseJsonBody: true,
   bodySchema: reorderPayloadSchema,
+  requireAuth: true,
 });

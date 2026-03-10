@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T08:15:45.570Z",
+  "generatedAt": "2026-03-10T20:22:39.497Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 4528,
+    "fileCount": 4591,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -3149,6 +3149,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/kangur/ai-tutor/content/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/ai-tutor/content/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/kangur/ai-tutor/guest-intro/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -3156,6 +3168,18 @@
     },
     {
       "file": "src/app/api/kangur/ai-tutor/guest-intro/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/ai-tutor/native-guide/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/ai-tutor/native-guide/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -5238,18 +5262,6 @@
     },
     {
       "file": "src/app/api/v2/products/validator-patterns/templates/handler.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16481,6 +16493,36 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryEditor.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAiTutorNativeGuideEntryList.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAiTutorNativeGuideSettingsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAiTutorNativeGuideValidationSummary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/components/KangurDocumentationCenter.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16685,6 +16727,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ai-tutor-onboarding-validation.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/cms-builder/KangurCmsBuilderLeftPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16841,7 +16889,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/server/ai-tutor-content-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/server/ai-tutor-mood.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-native-guide-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-native-guide.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17261,7 +17327,229 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurAiTutorComposer.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorFloatingAvatar.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorGuestIntroPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorGuidedLayout.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorMessageList.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorMoodAvatar.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPanelAuxiliaryControls.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorPortalContent.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorSelectionAction.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorSpotlightOverlays.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorUiBoundary.shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.avatar-drag.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.avatar-shell.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.conversation-view.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.coordinator-display.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.coordinator.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.coordinator.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.display.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.effects.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.entry.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.environment.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.focus-layout.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.guided-shell.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.guided.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.interactions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.lifecycle.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.panel-actions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.panel-derived.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.panel-shell.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.portal-view.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurAiTutorWidget.shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.state.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17273,7 +17561,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.telemetry.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17400,6 +17700,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurGameResultWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameSetupMomentumCard.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17963,6 +18269,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/context/KangurAiTutorContentContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/context/KangurAiTutorContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17988,6 +18300,12 @@
     },
     {
       "file": "src/features/kangur/ui/context/KangurGameContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurGameRuntimeContext.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18228,6 +18546,12 @@
     },
     {
       "file": "src/features/kangur/ui/services/delegated-assignments.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/services/game-setup-recommendations.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18912,6 +19236,12 @@
     },
     {
       "file": "src/features/observability/pages/SystemLogsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19788,6 +20118,12 @@
     },
     {
       "file": "src/features/products/context/ProductSettingsPageContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/context/ProductStudioContext.derived.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21815,6 +22151,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/integrations/marketplace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/integrations/parameter-reference.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21851,7 +22193,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/kangur-ai-tutor-content.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/kangur-ai-tutor-mood.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22823,6 +23177,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/core/constants/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23214,6 +23574,12 @@
     },
     {
       "file": "src/shared/lib/ai-paths/core/runtime/execution-helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/runtime/graph-model-job.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24581,6 +24947,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/auth/settings-manage-access.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/case-resolver-capture-adapter.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25494,6 +25866,12 @@
     },
     {
       "file": "src/shared/lib/products/services/producer-repository/prisma-producer-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/services/product-ai-graph-model-payload.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -27211,5 +27589,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 1845
+  "durationMs": 1954
 }

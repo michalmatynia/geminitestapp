@@ -18,6 +18,11 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   docs-structure:
     runs-on: ubuntu-latest
@@ -35,4 +40,4 @@ jobs:
         run: npm ci
 
       - name: Check docs structure
-        run: npm run docs:structure:check
+        run: npm run bazel -- run //:docs_structure

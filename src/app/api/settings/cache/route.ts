@@ -6,4 +6,5 @@ export const runtime = 'nodejs';
 
 export const GET = apiHandler(GET_handler, {
   source: 'settings.cache.GET',
+  requireAuth: true,
 });

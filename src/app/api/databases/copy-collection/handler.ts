@@ -1,25 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth } from '@/features/auth/server';
 import type { DatabaseSyncDirection } from '@/shared/contracts/database';
-import { authError, badRequestError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import {
   copyCollection,
   getSupportedCollections,
 } from '@/shared/lib/db/services/database-collection-copy';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 export async function POST_handler(req: NextRequest): Promise<Response> {
-  const session = await auth();
-  const hasAccess =
-    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
-  if (!hasAccess) {
-    throw authError('Unauthorized.');
-  }
+  await assertDatabaseEngineManageAccess();
 
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'databases.copy-collection',
@@ -51,6 +46,7 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
 }
 
 export async function GET_handler(): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   const collections = getSupportedCollections();
   return NextResponse.json({ collections });
 }

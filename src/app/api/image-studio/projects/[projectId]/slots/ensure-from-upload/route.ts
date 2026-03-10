@@ -6,4 +6,5 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(POST_handler, {
   source: 'image-studio.projects.[projectId].slots.ensure-from-upload.POST',
+  requireAuth: true,
 });

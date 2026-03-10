@@ -7,4 +7,5 @@ import { GET_handler, querySchema } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'notes.lookup.GET',
   querySchema,
+  requireAuth: true,
 });

@@ -16,6 +16,7 @@ import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
@@ -431,6 +432,7 @@ export async function GET_handler(
   _ctx: ApiHandlerContext,
   scopeOverride?: SettingsScope
 ): Promise<Response> {
+  await assertSettingsManageAccess();
   const requestStart = performance.now();
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
@@ -744,6 +746,7 @@ export async function GET_handler(
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }

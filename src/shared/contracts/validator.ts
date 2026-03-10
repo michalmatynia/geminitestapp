@@ -9,6 +9,7 @@ export const validatorScopeSchema = z.enum([
   'case-resolver-prompt-exploder',
   'case-resolver-plain-text',
   'ai-paths',
+  'kangur-ai-tutor-onboarding',
 ]);
 
 export type ValidatorScope = z.infer<typeof validatorScopeSchema>;
@@ -42,6 +43,7 @@ export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
   'case-resolver-prompt-exploder': 'Case Resolver (Prompt)',
   'case-resolver-plain-text': 'Case Resolver (Plain)',
   'ai-paths': 'AI Paths',
+  'kangur-ai-tutor-onboarding': 'Kangur AI Tutor Onboarding',
 };
 
 export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
@@ -51,7 +53,16 @@ export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
   'case-resolver-prompt-exploder': 'Legal case prompt validation.',
   'case-resolver-plain-text': 'Raw text document extraction.',
   'ai-paths': 'Node connectivity and data flow.',
+  'kangur-ai-tutor-onboarding':
+    'Kangur AI Tutor onboarding, native guides, and non-spoiler help copy.',
 };
+
+const KANGUR_AI_TUTOR_ONBOARDING_PATTERN_IDS = [
+  'kangur.onboarding.no_placeholders',
+  'kangur.onboarding.no_raw_urls',
+  'kangur.onboarding.no_admin_tokens',
+  'kangur.onboarding.non_spoiler_hints',
+] as const;
 
 const DEFAULT_VALIDATOR_PATTERN_LIST_DEFS: ReadonlyArray<{
   id: string;
@@ -95,6 +106,12 @@ const DEFAULT_VALIDATOR_PATTERN_LIST_DEFS: ReadonlyArray<{
     description: VALIDATOR_SCOPE_DESCRIPTIONS['ai-paths'],
     scope: 'ai-paths',
   },
+  {
+    id: 'kangur-ai-tutor-onboarding',
+    name: 'Kangur AI Tutor Onboarding',
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['kangur-ai-tutor-onboarding'],
+    scope: 'kangur-ai-tutor-onboarding',
+  },
 ];
 
 export const buildDefaultValidatorPatternLists = (): ValidatorPatternList[] => {
@@ -105,7 +122,10 @@ export const buildDefaultValidatorPatternLists = (): ValidatorPatternList[] => {
     description: entry.description,
     scope: entry.scope,
     deletionLocked: true,
-    patterns: [],
+    patterns:
+      entry.id === 'kangur-ai-tutor-onboarding'
+        ? [...KANGUR_AI_TUTOR_ONBOARDING_PATTERN_IDS]
+        : [],
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -205,6 +225,17 @@ export const normalizeValidatorPatternLists = (
     });
 
   if (normalized.length === 0) return defaults;
+
+  const normalizedById = new Map<string, ValidatorPatternList>(
+    normalized.map((entry: ValidatorPatternList) => [entry.id, entry])
+  );
+
+  for (const defaultEntry of defaults) {
+    if (!normalizedById.has(defaultEntry.id)) {
+      normalized.push(defaultEntry);
+    }
+  }
+
   return ensureUniqueValidatorListIds(normalized);
 };
 

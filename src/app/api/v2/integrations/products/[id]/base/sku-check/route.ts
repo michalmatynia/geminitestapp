@@ -6,5 +6,6 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {
   source: 'v2.integrations.products.[id].base.sku-check.POST',
+  requireAuth: true,
   requireCsrf: false,
 });

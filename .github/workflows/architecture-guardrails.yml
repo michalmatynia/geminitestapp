@@ -7,6 +7,11 @@ on:
       - main
       - master
 
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -24,13 +29,13 @@ jobs:
         run: npm ci
 
       - name: Collect architecture metrics
-        run: npm run metrics:collect -- --ci
+        run: npm run bazel -- run //:architecture_collect_metrics
 
       - name: Generate route hotspot report
-        run: npm run metrics:hotspots
+        run: npm run bazel -- run //:architecture_hotspots
 
       - name: Enforce critical path performance budgets
-        run: npm run metrics:critical-paths:check -- --ci
+        run: npm run bazel -- run //:architecture_critical_paths
 
       - name: Enforce guardrails
-        run: npm run metrics:guardrails
+        run: npm run bazel -- run //:architecture_guardrails

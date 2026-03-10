@@ -12,10 +12,13 @@ const querySchema = baseImportRunDetailQuerySchema;
 
 export async function GET_handler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const parsed = querySchema.safeParse(Object.fromEntries(new URL(req.url).searchParams.entries()));
+  const parsed = querySchema.safeParse({
+    ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+    ...((ctx.query ?? {}) as Record<string, unknown>),
+  });
   const statusesRaw = parsed.success ? (parsed.data.statuses ?? '') : '';
   const statuses = statusesRaw
     .split(',')

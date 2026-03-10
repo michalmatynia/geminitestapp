@@ -10,4 +10,5 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.products.paged.GET',
   querySchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

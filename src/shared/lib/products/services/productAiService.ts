@@ -1,9 +1,14 @@
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
-import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import { graphModelJobEnqueuePayloadSchema } from '@/shared/contracts/jobs';
+import { badRequestError, invalidStateError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
+import {
+  resolveGraphModelPayloadSource,
+  resolveGraphModelRequestedModelId,
+} from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
 
@@ -83,29 +88,13 @@ const resolveGraphModelPayloadHash = (payload: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveGraphModelRequestedModelId = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== 'object') return null;
-  const record = payload as Record<string, unknown>;
-  const graph =
-    record['graph'] && typeof record['graph'] === 'object' && !Array.isArray(record['graph'])
-      ? (record['graph'] as Record<string, unknown>)
-      : null;
-  const candidates = [graph?.['requestedModelId'], record['modelId'], graph?.['modelId']];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const trimmed = candidate.trim();
-    if (trimmed) return trimmed;
-  }
-  return null;
-};
-
 const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> | undefined => {
   if (!payload || typeof payload !== 'object') return undefined;
   const record = payload as Record<string, unknown>;
   const prompt = record['prompt'];
   const imageUrls = Array.isArray(record['imageUrls']) ? record['imageUrls'] : [];
   return {
-    source: record['source'],
+    source: resolveGraphModelPayloadSource(payload),
     modelId: record['modelId'],
     requestedModelId: resolveGraphModelRequestedModelId(payload),
     vision: record['vision'],
@@ -127,7 +116,10 @@ const canReuseGraphModelJob = (
   if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
   if (resolveGraphModelPayloadHash(job.payload) !== payloadHash) return false;
   const existingRequestedModelId = resolveGraphModelRequestedModelId(job.payload);
-  if (requestedModelId && existingRequestedModelId && requestedModelId !== existingRequestedModelId) {
+  if (requestedModelId !== existingRequestedModelId) {
+    // Reuse is only safe when both sides resolve to the same model or both sides
+    // have no model hint at all. Legacy queued jobs without requestedModelId
+    // should not be reused against newer node-scoped model jobs.
     return false;
   }
   if (job.status === 'pending') return true;
@@ -151,6 +143,23 @@ export async function enqueueProductAiJob(
   type: ProductAiJobType,
   payload: unknown
 ): Promise<ProductAiJob> {
+  const normalizedPayload =
+    type === 'graph_model'
+      ? (() => {
+        const parsed = graphModelJobEnqueuePayloadSchema.safeParse(payload);
+        if (!parsed.success) {
+          throw badRequestError('Invalid graph_model payload', {
+            productId,
+            issues: parsed.error.issues.map((issue) => ({
+              path: issue.path.join('.'),
+              message: issue.message,
+            })),
+          });
+        }
+        return parsed.data;
+      })()
+      : payload;
+
   try {
     const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
@@ -158,7 +167,8 @@ export async function enqueueProductAiJob(
       productId,
       context: {
         type,
-        payloadSummary: type === 'graph_model' ? summarizeGraphModelPayload(payload) : undefined,
+        payloadSummary:
+          type === 'graph_model' ? summarizeGraphModelPayload(normalizedPayload) : undefined,
       },
     });
   } catch {
@@ -173,9 +183,9 @@ export async function enqueueProductAiJob(
   const jobRepository = await getProductAiJobRepository();
 
   if (type === 'graph_model') {
-    const cacheKey = resolveGraphModelCacheKey(payload);
-    const payloadHash = resolveGraphModelPayloadHash(payload);
-    const requestedModelId = resolveGraphModelRequestedModelId(payload);
+    const cacheKey = resolveGraphModelCacheKey(normalizedPayload);
+    const payloadHash = resolveGraphModelPayloadHash(normalizedPayload);
+    const requestedModelId = resolveGraphModelRequestedModelId(normalizedPayload);
     if (cacheKey && payloadHash) {
       const existingJobs = await jobRepository.findJobs(productId, {
         type: 'graph_model',
@@ -207,7 +217,7 @@ export async function enqueueProductAiJob(
     }
   }
 
-  const jobRecord = await jobRepository.createJob(productId, type, payload);
+  const jobRecord = await jobRepository.createJob(productId, type, normalizedPayload);
 
   try {
     const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
@@ -247,7 +257,7 @@ export async function getProductAiJobs(
       ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
         | string
         | undefined);
-    const source = payload?.['source'] as string | undefined;
+    const source = resolveGraphModelPayloadSource(payload);
     const graph = payload?.['graph'] as Record<string, unknown> | undefined;
     if (entityType && entityType !== 'product') return false;
     if (source === 'ai_paths' && graph) return false;
@@ -326,7 +336,7 @@ export async function getProductAiJob(
     ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
       | string
       | undefined);
-  const source = payload?.['source'] as string | undefined;
+  const source = resolveGraphModelPayloadSource(payload);
   const graph = payload?.['graph'] as Record<string, unknown> | undefined;
   const shouldFetch =
     !!job.productId &&

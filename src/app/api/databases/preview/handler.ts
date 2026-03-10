@@ -22,12 +22,14 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export async function postDatabasesPreviewHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   let backupName: string | undefined;
   let previewMode: 'backup' | 'current';
   let previewDbName: string | null;

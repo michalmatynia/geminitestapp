@@ -9,10 +9,14 @@ import {
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 
-export const GET = apiHandler(GET_handler, { source: 'v2.products.producers.GET' });
+export const GET = apiHandler(GET_handler, {
+  source: 'v2.products.producers.GET',
+  requireAuth: true,
+});
 
 export const POST = apiHandler(POST_handler, {
   source: 'v2.products.producers.POST',
   parseJsonBody: true,
   bodySchema: producerCreateSchema,
+  requireAuth: true,
 });

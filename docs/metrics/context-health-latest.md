@@ -8,24 +8,29 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-03-10T11:50:02.853Z
+Generated at: 2026-03-10T20:22:23.999Z
 
 ## Summary
 
 - Status: PASSED
-- Context files scanned: 241
+- Context files scanned: 244
 - Errors: 0
 - Warnings: 0
-- Info: 0
+- Info: 3
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| context-missing-split | 0 | 0 | 3 |
 
 ## Issues
 
-All contexts are healthy.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+| INFO | context-missing-split | src/features/kangur/ui/context/KangurAiTutorContentContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 
 ## Notes
 

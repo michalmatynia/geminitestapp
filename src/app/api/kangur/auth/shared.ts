@@ -4,8 +4,13 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 export const readKangurAuthJsonBody = async (
   request: NextRequest,
-  label: string
+  label: string,
+  parsedBody?: unknown
 ): Promise<unknown> => {
+  if (parsedBody !== undefined) {
+    return parsedBody;
+  }
+
   const rawBody = await request.text();
   if (!rawBody) {
     throw badRequestError(`Kangur ${label} payload is required.`);

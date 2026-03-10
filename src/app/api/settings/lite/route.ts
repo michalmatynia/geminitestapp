@@ -11,4 +11,5 @@ export const GET = apiHandler(GET_handler, {
   source: 'settings.lite.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   querySchema,
+  requireAuth: true,
 });

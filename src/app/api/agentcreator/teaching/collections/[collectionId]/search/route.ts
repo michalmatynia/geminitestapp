@@ -8,5 +8,6 @@ export const POST = apiHandlerWithParams<{ collectionId: string }>(
   async (request, ctx, params) => POST_handler(request, { ...ctx, params }),
   {
     source: 'agentcreator.teaching.collections.[collectionId].search.POST',
+    requireAuth: true,
   }
 );

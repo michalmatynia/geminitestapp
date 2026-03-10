@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@/features/auth/server';
 import {
   buildKangurParentAccountCreateDebugPayload,
   resendKangurParentVerificationEmail,
@@ -12,6 +13,7 @@ export async function postKangurParentAccountResendHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  await auth().catch(() => null);
   const body = ctx.body as KangurParentAccountResend | undefined;
   if (!body) {
     throw badRequestError('Invalid payload.');

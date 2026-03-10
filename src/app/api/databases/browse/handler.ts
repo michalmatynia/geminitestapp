@@ -15,6 +15,7 @@ import {
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type PrismaBrowseModel = {
@@ -182,6 +183,7 @@ export async function GET_handler(
   _request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const collection = query.collection ?? null;
   const providerParam = query.provider?.toLowerCase() ?? '';

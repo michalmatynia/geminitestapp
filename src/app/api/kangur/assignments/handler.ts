@@ -43,7 +43,9 @@ export async function postKangurAssignmentsHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveAssignmentActor(req);
-  const payload = parseKangurAssignmentCreatePayload(await readKangurJsonBody(req, 'assignment'));
+  const payload = parseKangurAssignmentCreatePayload(
+    await readKangurJsonBody(req, 'assignment', ctx.body)
+  );
   const snapshot = await createAssignmentSnapshotForLearner({
     learnerKey: actor.learnerKey,
     learnerName: actor.learnerName,

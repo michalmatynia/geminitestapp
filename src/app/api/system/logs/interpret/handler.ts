@@ -13,6 +13,7 @@ import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observabili
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import { getSystemLogById } from '@/shared/lib/observability/system-logger';
 
@@ -28,6 +29,7 @@ const readContextRegistryEnvelope = (
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInterpretRequestSchema, {
     logPrefix: 'system.logs.interpret.POST',

@@ -11,10 +11,12 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 export const GET = apiHandler(GET_handler, {
   source: 'v2.products.validator-settings.GET',
   cacheControl: 'no-store',
+  requireAuth: true,
 });
 
 export const PUT = apiHandler(PUT_handler, {
   source: 'v2.products.validator-settings.PUT',
   parseJsonBody: true,
   bodySchema: updateValidatorSettingsSchema,
+  requireAuth: true,
 });

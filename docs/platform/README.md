@@ -32,6 +32,7 @@ New cross-cutting platform docs should land here instead of directly under
 - [`architecture-guardrails.md`](./architecture-guardrails.md)
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
+- [`bun-support.md`](./bun-support.md)
 
 ## Root Compatibility Stubs
 

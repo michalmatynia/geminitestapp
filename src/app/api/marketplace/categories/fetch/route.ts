@@ -7,4 +7,5 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandler(POST_handler, {
   source: 'marketplace.categories.fetch.POST',
+  requireAuth: true,
 });

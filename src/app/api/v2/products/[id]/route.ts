@@ -16,22 +16,26 @@ export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'v2.products.[id].GET',
   paramsSchema: idParamSchema,
   querySchema: getQuerySchema,
+  requireAuth: true,
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'v2.products.[id].PUT',
   paramsSchema: idParamSchema,
   logSuccess: true,
+  requireAuth: true,
 });
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'v2.products.[id].PATCH',
   paramsSchema: idParamSchema,
   logSuccess: true,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'v2.products.[id].DELETE',
   paramsSchema: idParamSchema,
   logSuccess: true,
+  requireAuth: true,
 });

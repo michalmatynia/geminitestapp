@@ -59,6 +59,9 @@ export function useKangurAiTutorWidgetState() {
   const [launcherPromptVisible, setLauncherPromptVisible] = useState(false);
   const [guestIntroVisible, setGuestIntroVisible] = useState(false);
   const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
+  const [contextualTutorMode, setContextualTutorMode] = useState<
+    'selection_explain' | 'section_explain' | null
+  >(null);
   const [guidedTutorTarget, setGuidedTutorTarget] = useState<GuidedTutorTarget | null>(null);
   const [homeOnboardingStepIndex, setHomeOnboardingStepIndex] = useState<number | null>(null);
   const [askModalVisible, setAskModalVisible] = useState(false);
@@ -146,6 +149,7 @@ export function useKangurAiTutorWidgetState() {
     askModalReturnStateRef,
     askModalVisible,
     avatarDragStateRef,
+    contextualTutorMode,
     contextSwitchNotice,
     dismissedSelectedText,
     draggedAvatarPoint,
@@ -196,6 +200,7 @@ export function useKangurAiTutorWidgetState() {
     setAskEntrySource,
     setAskModalDockStyle,
     setAskModalVisible,
+    setContextualTutorMode,
     setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,

@@ -34,5 +34,5 @@ export const GET = apiHandlerWithParams<{ runId: string; file: string }>(
       },
     });
   },
-  { source: 'chatbot.agent.[runId].assets.[file].GET' }
+  { source: 'chatbot.agent.[runId].assets.[file].GET', requireAuth: true }
 );

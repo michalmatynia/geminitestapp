@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { ActivityFilters } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 
@@ -13,6 +14,7 @@ type ListQuery = z.infer<typeof commonListQuerySchema>;
  * Fetches system-wide activity logs.
  */
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const query = ctx.query as ListQuery;
   const repository = await getActivityRepository();
 

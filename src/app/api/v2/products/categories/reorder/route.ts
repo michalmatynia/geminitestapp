@@ -11,4 +11,5 @@ export const POST = apiHandler(POST_handler, {
   source: 'v2.products.categories.reorder.POST',
   parseJsonBody: true,
   bodySchema: reorderCategorySchema,
+  requireAuth: true,
 });

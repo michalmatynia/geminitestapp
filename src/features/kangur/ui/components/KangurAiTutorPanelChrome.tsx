@@ -186,6 +186,7 @@ export function KangurAiTutorPanelChrome({
           <>
             {isAskModalMode || bubbleMode === 'sheet' ? (
               <motion.button
+                data-kangur-ai-tutor-root='true'
                 key={isAskModalMode ? 'ask-modal-backdrop' : 'chat-backdrop'}
                 data-testid={
                   isAskModalMode
@@ -209,6 +210,7 @@ export function KangurAiTutorPanelChrome({
             ) : null}
 
             <motion.div
+              data-kangur-ai-tutor-root='true'
               key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
               ref={panelRef}
               data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
@@ -389,7 +391,7 @@ export function KangurAiTutorPanelChrome({
                     <button
                       type='button'
                       onClick={onClose}
-                      className='shrink-0 rounded-full border border-amber-200/80 bg-white/85 p-1 text-amber-900 transition-colors hover:bg-white'
+                      className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 bg-white/85 p-1 text-amber-900 transition-[background-color,box-shadow,transform] hover:-translate-y-[1px] hover:scale-[1.03] hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
                       aria-label={tutorContent.common.closeAria}
                     >
                       <X className='h-4 w-4' />

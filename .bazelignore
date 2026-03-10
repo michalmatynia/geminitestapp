@@ -1,0 +1,10 @@
+node_modules
+.next
+.next-dev
+coverage
+build
+out
+dist
+test-results
+tmp
+docs/metrics

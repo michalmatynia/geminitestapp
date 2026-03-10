@@ -31,7 +31,10 @@ describe('aiJobsApi', () => {
       type: 'graph_model',
       payload: {
         prompt: 'x',
+        source: 'ai_paths',
         graph: {
+          runId: 'run-1',
+          nodeId: 'node-1',
           requestedModelId: 'gpt-4o-mini',
         },
       },
@@ -44,7 +47,10 @@ describe('aiJobsApi', () => {
       type: 'graph_model',
       payload: {
         prompt: 'x',
+        source: 'ai_paths',
         graph: {
+          runId: 'run-1',
+          nodeId: 'node-1',
           requestedModelId: 'gpt-4o-mini',
         },
       },

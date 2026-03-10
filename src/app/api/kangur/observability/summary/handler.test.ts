@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { authError } from '@/shared/errors/app-error';
+import { authError, badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const { authMock, getKangurObservabilitySummaryMock } = vi.hoisted(() => ({
@@ -19,13 +19,14 @@ vi.mock('@/features/kangur/observability/summary', () => ({
 
 import { GET_handler } from './handler';
 
-const createRequestContext = (): ApiHandlerContext =>
+const createRequestContext = (query?: unknown): ApiHandlerContext =>
   ({
     requestId: 'request-kangur-observability-summary-1',
     traceId: 'trace-kangur-observability-summary-1',
     correlationId: 'corr-kangur-observability-summary-1',
     startTime: Date.now(),
     getElapsedMs: () => 1,
+    query,
   }) as ApiHandlerContext;
 
 const createRouteHealth = (source: string) => ({
@@ -122,7 +123,7 @@ describe('kangur observability summary handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
-      createRequestContext()
+      createRequestContext({ range: '7d' })
     );
 
     expect(getKangurObservabilitySummaryMock).toHaveBeenCalledWith({ range: '7d' });
@@ -149,9 +150,9 @@ describe('kangur observability summary handler', () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/kangur/observability/summary?range=2h'),
-        createRequestContext()
+        createRequestContext({ range: '2h' })
       )
-    ).rejects.toThrow('Invalid range');
+    ).rejects.toMatchObject(badRequestError('Invalid range'));
   });
 
   it('rejects invalid summary payloads that do not match the shared contract', async () => {
@@ -170,7 +171,7 @@ describe('kangur observability summary handler', () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
-        createRequestContext()
+        createRequestContext({ range: '7d' })
       )
     ).rejects.toMatchObject({
       message: 'Invalid Kangur observability summary contract',

@@ -6,6 +6,8 @@ import type {
 } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 
+import { KANGUR_AI_TUTOR_UI_ROOT_SELECTOR } from './KangurAiTutorUiBoundary.shared';
+
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
@@ -15,6 +17,20 @@ export const CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE =
   'Otworz lekcje, gre albo test, a pomoge Ci w konkretnym zadaniu.';
 export const CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER =
   'Przejdz do lekcji, gry albo testu, aby zadac pytanie.';
+const getTutorUiElement = (value: EventTarget | Node | null): Element | null => {
+  if (value instanceof Element) {
+    return value;
+  }
+
+  if (value instanceof Node) {
+    return value.parentElement;
+  }
+
+  return null;
+};
+
+const isNodeWithinTutorUi = (value: EventTarget | Node | null): boolean =>
+  getTutorUiElement(value)?.closest(KANGUR_AI_TUTOR_UI_ROOT_SELECTOR) !== null;
 
 export const getInteractionIntent = (
   promptMode: KangurAiTutorPromptMode,
@@ -134,19 +150,7 @@ export const getContextSwitchNotice = (input: {
 };
 
 export const isTargetWithinTutorUi = (target: EventTarget | null): boolean => {
-  if (!(target instanceof Element)) {
-    return false;
-  }
-
-  return (
-    target.closest('[data-testid="kangur-ai-tutor-panel"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-ask-modal"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-backdrop"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-ask-modal-backdrop"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-guided-login-help"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-home-onboarding"]') !== null ||
-    target.closest('[data-testid="kangur-ai-tutor-avatar"]') !== null
-  );
+  return isNodeWithinTutorUi(target);
 };
 
 export const isSelectionWithinTutorUi = (): boolean => {
@@ -159,18 +163,14 @@ export const isSelectionWithinTutorUi = (): boolean => {
     return false;
   }
 
-  const nodes = [selection.anchorNode, selection.focusNode];
-  return nodes.some((node) => {
-    if (!node) {
-      return false;
+  const nodes: Array<Node | null> = [selection.anchorNode, selection.focusNode];
+  for (let index = 0; index < selection.rangeCount; index += 1) {
+    try {
+      nodes.push(selection.getRangeAt(index).commonAncestorContainer);
+    } catch {
+      // Ignore stale browser ranges and fall back to anchor/focus nodes.
     }
+  }
 
-    const element = node instanceof Element ? node : node.parentElement;
-    return Boolean(
-      element?.closest('[data-testid="kangur-ai-tutor-panel"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-ask-modal"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-avatar"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-selection-action"]')
-    );
-  });
+  return nodes.some((node) => isNodeWithinTutorUi(node));
 };

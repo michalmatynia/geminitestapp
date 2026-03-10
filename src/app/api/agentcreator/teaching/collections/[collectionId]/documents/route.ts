@@ -9,6 +9,7 @@ export const GET = apiHandlerWithParams<{ collectionId: string }>(
   {
     source: 'agentcreator.teaching.collections.[collectionId].documents.GET',
     querySchema,
+    requireAuth: true,
   }
 );
 
@@ -16,5 +17,6 @@ export const POST = apiHandlerWithParams<{ collectionId: string }>(
   async (request, ctx, params) => POST_handler(request, { ...ctx, params }),
   {
     source: 'agentcreator.teaching.collections.[collectionId].documents.POST',
+    requireAuth: true,
   }
 );

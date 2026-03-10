@@ -21,6 +21,9 @@
 # misc
 .DS_Store
 *.pem
+/bazel-*
+/.cache/bazel-disk
+/.cache/bazel-repo
 
 # debug
 npm-debug.log*

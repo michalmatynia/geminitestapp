@@ -5,6 +5,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
@@ -83,6 +84,7 @@ const parseCreateBody = async (
 };
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const url = new URL(req.url);
   const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const result = await listSystemLogs({
@@ -121,6 +123,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const parsed = await parseCreateBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
@@ -149,6 +152,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertSettingsManageAccess();
   const url = new URL(req.url);
   const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const before = parsed.before ? new Date(parsed.before) : null;

@@ -6,4 +6,5 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(POST_handler, {
   source: 'image-studio.slots.[slotId].screenshot.POST',
+  requireAuth: true,
 });

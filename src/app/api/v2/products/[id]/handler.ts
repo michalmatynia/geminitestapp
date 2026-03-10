@@ -4,12 +4,17 @@ import { z } from 'zod';
 import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/server';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
-import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
+import {
+  productUpdateInputSchema,
+  type ProductRecord,
+  type ProductWithImages,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 
 export const getQuerySchema = z.object({
@@ -44,6 +49,14 @@ const isLikelyPayloadTooLarge = (error: unknown): boolean => {
     normalized.includes('body limit') ||
     normalized.includes('request entity too large')
   );
+};
+
+const buildProductPayload = (
+  formData: FormData
+): Record<string, unknown> => {
+  const payload = formDataToObject(formData);
+  delete payload['images'];
+  return payload;
 };
 
 /**
@@ -117,6 +130,8 @@ export async function PUT_handler(
     }
     return validation.response;
   }
+  const payload = buildProductPayload(formData);
+  const validatedPayload = productUpdateInputSchema.parse(payload);
 
   const updateStart = performance.now();
   const options = _ctx.userId ? { userId: _ctx.userId } : {};
@@ -126,6 +141,7 @@ export async function PUT_handler(
     options
   );
   timings['serviceUpdate'] = performance.now() - updateStart;
+  timings['validatedFields'] = Object.keys(validatedPayload).length;
 
   if (!product) {
     throw notFoundError('Product not found', { productId: id });

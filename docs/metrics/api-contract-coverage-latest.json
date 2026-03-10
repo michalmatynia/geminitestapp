@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-03-10T08:38:01.370Z",
+  "generatedAt": "2026-03-10T20:22:31.386Z",
   "status": "failed",
   "summary": {
-    "total": 435,
-    "errorCount": 37,
-    "warningCount": 247,
+    "total": 387,
+    "errorCount": 2,
+    "warningCount": 234,
     "infoCount": 151,
     "status": "failed",
     "routeFileCount": 346,
-    "methodCount": 492,
-    "methodsWithTests": 91,
-    "mutationValidationCount": 89,
-    "queryValidationCount": 10
+    "methodCount": 494,
+    "methodsWithTests": 98,
+    "mutationValidationCount": 126,
+    "queryValidationCount": 12
   },
   "routes": [
     {
@@ -20,7 +20,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/agent/approval-gates/route.ts"
       ],
@@ -44,7 +44,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/agent/leases/route.ts"
       ],
@@ -68,7 +68,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/agent/resources/route.ts"
       ],
@@ -93,7 +93,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/agentcreator/agent/[runId]/audits/route.ts",
         "src/features/ai/agentcreator/api/agent/[runId]/audits/route.ts"
@@ -700,7 +700,7 @@
       "method": "POST",
       "expectedAccess": "signed",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/ai-paths/portable-engine/remediation-webhook/route.ts",
@@ -1092,7 +1092,7 @@
       "expectedAccess": "protected",
       "hasTests": true,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/ai-paths/trigger-buttons/route.ts",
         "src/app/api/ai-paths/trigger-buttons/handler.ts"
@@ -1244,7 +1244,7 @@
       "method": "PATCH",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/assets3d/[id]/route.ts",
@@ -1820,7 +1820,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/chatbot/jobs/route.ts",
@@ -1878,7 +1878,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/chatbot/route.ts",
@@ -2023,7 +2023,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/cms/css-ai/stream/route.ts",
@@ -2088,7 +2088,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/cms/media/route.ts",
@@ -2322,7 +2322,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/backup/route.ts",
@@ -2361,7 +2361,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/copy-collection/route.ts",
@@ -2387,7 +2387,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/crud/route.ts",
@@ -2504,7 +2504,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/execute/route.ts",
@@ -2543,7 +2543,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/json-restore/route.ts",
@@ -2556,7 +2556,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/preview/route.ts",
@@ -2582,7 +2582,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/databases/restore/route.ts",
@@ -2816,7 +2816,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/image-studio/projects/[projectId]/assets/import/route.ts",
@@ -2881,7 +2881,7 @@
       "method": "DELETE",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/image-studio/projects/[projectId]/folders/route.ts",
@@ -3188,7 +3188,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/image-studio/slots/[slotId]/masks/route.ts",
@@ -3305,6 +3305,36 @@
       ]
     },
     {
+      "route": "kangur/ai-tutor/content",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/ai-tutor/content/route.ts",
+        "src/app/api/kangur/ai-tutor/content/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/ai-tutor/content/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/ai-tutor/content",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/ai-tutor/content/route.ts",
+        "src/app/api/kangur/ai-tutor/content/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/ai-tutor/content/handler.test.ts"
+      ]
+    },
+    {
       "route": "kangur/ai-tutor/guest-intro",
       "method": "GET",
       "expectedAccess": "protected",
@@ -3317,6 +3347,36 @@
       ],
       "testFiles": [
         "src/app/api/kangur/ai-tutor/guest-intro/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/ai-tutor/native-guide",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/ai-tutor/native-guide/route.ts",
+        "src/app/api/kangur/ai-tutor/native-guide/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/ai-tutor/native-guide/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/ai-tutor/native-guide",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/ai-tutor/native-guide/route.ts",
+        "src/app/api/kangur/ai-tutor/native-guide/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/ai-tutor/native-guide/handler.test.ts"
       ]
     },
     {
@@ -3339,7 +3399,7 @@
       "method": "PATCH",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/assignments/[id]/route.ts",
@@ -3369,7 +3429,7 @@
       "method": "POST",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/assignments/route.ts",
@@ -3384,7 +3444,7 @@
       "method": "POST",
       "expectedAccess": "public",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/auth/learner-signin/route.ts",
@@ -3526,7 +3586,7 @@
       "method": "PATCH",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/learners/[id]/route.ts",
@@ -3556,7 +3616,7 @@
       "method": "POST",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/learners/route.ts",
@@ -3572,7 +3632,7 @@
       "expectedAccess": "protected",
       "hasTests": true,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/observability/summary/route.ts",
         "src/app/api/kangur/observability/summary/handler.ts"
@@ -3601,7 +3661,7 @@
       "method": "PATCH",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/progress/route.ts",
@@ -3631,7 +3691,7 @@
       "method": "POST",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/scores/route.ts",
@@ -3646,7 +3706,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/tts/probe/route.ts",
@@ -3661,7 +3721,7 @@
       "method": "POST",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/tts/route.ts",
@@ -3676,7 +3736,7 @@
       "method": "POST",
       "expectedAccess": "actor",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/kangur/tts/status/route.ts",
@@ -3703,7 +3763,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/marketplace/categories/fetch/route.ts",
@@ -3833,7 +3893,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/marketplace/producers/fetch/route.ts",
@@ -3885,7 +3945,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/marketplace/tags/fetch/route.ts",
@@ -4686,7 +4746,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
@@ -4751,7 +4811,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
@@ -4947,7 +5007,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": true,
       "sourceFiles": [
         "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
         "src/app/api/v2/integrations/imports/base/runs/[runId]/report/handler.ts"
@@ -4973,7 +5033,7 @@
       "expectedAccess": "protected",
       "hasTests": false,
       "bodyValidated": null,
-      "queryValidated": false,
+      "queryValidated": true,
       "sourceFiles": [
         "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
         "src/app/api/v2/integrations/imports/base/runs/[runId]/handler.ts"
@@ -5325,7 +5385,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/metadata/[type]/route.ts",
@@ -5542,27 +5602,31 @@
       "route": "v2/products/ai-jobs/bulk",
       "method": "POST",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/ai-jobs/bulk/route.ts",
         "src/app/api/v2/products/ai-jobs/bulk/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/v2/products/ai-jobs/bulk/handler.test.ts"
+      ]
     },
     {
       "route": "v2/products/ai-jobs/enqueue",
       "method": "POST",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/ai-jobs/enqueue/route.ts",
         "src/app/api/v2/products/ai-jobs/enqueue/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/v2/products/ai-jobs/enqueue/handler.test.ts"
+      ]
     },
     {
       "route": "v2/products/ai-jobs",
@@ -5753,7 +5817,7 @@
       "method": "PUT",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/entities/[type]/[id]/route.ts",
@@ -5860,8 +5924,7 @@
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/v2/products/images/upload/route.ts",
-        "src/features/products/api/routes/images-upload-route.ts"
+        "src/app/api/v2/products/images/upload/route.ts"
       ],
       "testFiles": []
     },
@@ -5870,7 +5933,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/import/csv/route.ts",
@@ -5937,7 +6000,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": true,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/metadata/[type]/route.ts",
@@ -6349,14 +6412,16 @@
       "route": "v2/products/validator-decisions",
       "method": "POST",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/validator-decisions/route.ts",
         "src/app/api/v2/products/validator-decisions/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/v2/products/validator-decisions/handler.test.ts"
+      ]
     },
     {
       "route": "v2/products/validator-patterns/[id]",
@@ -6446,30 +6511,6 @@
       "sourceFiles": [
         "src/app/api/v2/products/validator-patterns/templates/[type]/route.ts",
         "src/app/api/v2/products/validator-patterns/templates/handler.ts"
-      ],
-      "testFiles": []
-    },
-    {
-      "route": "v2/products/validator-patterns/templates/name-segment-category",
-      "method": "POST",
-      "expectedAccess": "protected",
-      "hasTests": false,
-      "bodyValidated": null,
-      "queryValidated": null,
-      "sourceFiles": [
-        "src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts"
-      ],
-      "testFiles": []
-    },
-    {
-      "route": "v2/products/validator-patterns/templates/name-segment-dimensions",
-      "method": "POST",
-      "expectedAccess": "protected",
-      "hasTests": false,
-      "bodyValidated": null,
-      "queryValidated": null,
-      "sourceFiles": [
-        "src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts"
       ],
       "testFiles": []
     },
@@ -6571,521 +6612,9 @@
     {
       "severity": "error",
       "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST ai-paths/portable-engine/remediation-webhook reads request body data without explicit schema validation.",
-      "file": "src/app/api/ai-paths/portable-engine/remediation-webhook/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "signed",
-        "sourceFiles": [
-          "src/app/api/ai-paths/portable-engine/remediation-webhook/route.ts",
-          "src/app/api/ai-paths/portable-engine/remediation-webhook/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "PATCH assets3d/[id] reads request body data without explicit schema validation.",
-      "file": "src/app/api/assets3d/[id]/route.ts",
-      "line": 12,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/assets3d/[id]/route.ts",
-          "src/app/api/assets3d/[id]/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST chatbot/jobs reads request body data without explicit schema validation.",
-      "file": "src/app/api/chatbot/jobs/route.ts",
-      "line": 9,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/chatbot/jobs/route.ts",
-          "src/app/api/chatbot/jobs/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST chatbot reads request body data without explicit schema validation.",
-      "file": "src/app/api/chatbot/route.ts",
-      "line": 10,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/chatbot/route.ts",
-          "src/app/api/chatbot/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST cms/css-ai/stream reads request body data without explicit schema validation.",
-      "file": "src/app/api/cms/css-ai/stream/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/cms/css-ai/stream/route.ts",
-          "src/app/api/cms/css-ai/stream/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST cms/media reads request body data without explicit schema validation.",
-      "file": "src/app/api/cms/media/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/cms/media/route.ts",
-          "src/app/api/cms/media/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/backup reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/backup/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/backup/route.ts",
-          "src/app/api/databases/backup/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/copy-collection reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/copy-collection/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/copy-collection/route.ts",
-          "src/app/api/databases/copy-collection/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/crud reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/crud/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/crud/route.ts",
-          "src/app/api/databases/crud/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/execute reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/execute/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/execute/route.ts",
-          "src/app/api/databases/execute/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/json-restore reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/json-restore/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/json-restore/route.ts",
-          "src/app/api/databases/json-restore/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/preview reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/preview/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/preview/route.ts",
-          "src/app/api/databases/preview/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST databases/restore reads request body data without explicit schema validation.",
-      "file": "src/app/api/databases/restore/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/databases/restore/route.ts",
-          "src/app/api/databases/restore/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST image-studio/projects/[projectId]/assets/import reads request body data without explicit schema validation.",
-      "file": "src/app/api/image-studio/projects/[projectId]/assets/import/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/image-studio/projects/[projectId]/assets/import/route.ts",
-          "src/app/api/image-studio/projects/[projectId]/assets/import/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "DELETE image-studio/projects/[projectId]/folders reads request body data without explicit schema validation.",
-      "file": "src/app/api/image-studio/projects/[projectId]/folders/route.ts",
-      "line": 11,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/image-studio/projects/[projectId]/folders/route.ts",
-          "src/app/api/image-studio/projects/[projectId]/folders/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST image-studio/slots/[slotId]/masks reads request body data without explicit schema validation.",
-      "file": "src/app/api/image-studio/slots/[slotId]/masks/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/image-studio/slots/[slotId]/masks/route.ts",
-          "src/app/api/image-studio/slots/[slotId]/masks/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "PATCH kangur/assignments/[id] reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/assignments/[id]/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/assignments/[id]/route.ts",
-          "src/app/api/kangur/assignments/[id]/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/assignments reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/assignments/route.ts",
-      "line": 15,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/assignments/route.ts",
-          "src/app/api/kangur/assignments/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/auth/learner-signin reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/auth/learner-signin/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "public",
-        "sourceFiles": [
-          "src/app/api/kangur/auth/learner-signin/route.ts",
-          "src/app/api/kangur/auth/learner-signin/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "PATCH kangur/learners/[id] reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/learners/[id]/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/learners/[id]/route.ts",
-          "src/app/api/kangur/learners/[id]/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/learners reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/learners/route.ts",
-      "line": 14,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/learners/route.ts",
-          "src/app/api/kangur/learners/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "PATCH kangur/progress reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/progress/route.ts",
-      "line": 14,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/progress/route.ts",
-          "src/app/api/kangur/progress/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/scores reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/scores/route.ts",
-      "line": 15,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/scores/route.ts",
-          "src/app/api/kangur/scores/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/tts/probe reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/tts/probe/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/kangur/tts/probe/route.ts",
-          "src/app/api/kangur/tts/probe/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/tts reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/tts/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/tts/route.ts",
-          "src/app/api/kangur/tts/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST kangur/tts/status reads request body data without explicit schema validation.",
-      "file": "src/app/api/kangur/tts/status/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "actor",
-        "sourceFiles": [
-          "src/app/api/kangur/tts/status/route.ts",
-          "src/app/api/kangur/tts/status/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST marketplace/categories/fetch reads request body data without explicit schema validation.",
-      "file": "src/app/api/marketplace/categories/fetch/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/marketplace/categories/fetch/route.ts",
-          "src/app/api/marketplace/categories/fetch/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST marketplace/producers/fetch reads request body data without explicit schema validation.",
-      "file": "src/app/api/marketplace/producers/fetch/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/marketplace/producers/fetch/route.ts",
-          "src/app/api/marketplace/producers/fetch/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST marketplace/tags/fetch reads request body data without explicit schema validation.",
-      "file": "src/app/api/marketplace/tags/fetch/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/marketplace/tags/fetch/route.ts",
-          "src/app/api/marketplace/tags/fetch/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST v2/integrations/[id]/connections/[connectionId]/allegro/test reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
-          "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST v2/integrations/[id]/connections/[connectionId]/test reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
-          "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST v2/metadata/[type] reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/metadata/[type]/route.ts",
-      "line": 13,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/metadata/[type]/route.ts",
-          "src/app/api/v2/metadata/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
       "message": "PUT v2/products/[id] reads request body data without explicit schema validation.",
       "file": "src/app/api/v2/products/[id]/route.ts",
-      "line": 21,
+      "line": 22,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7099,57 +6628,9 @@
     {
       "severity": "error",
       "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "PUT v2/products/entities/[type]/[id] reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-      "line": 15,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-          "src/app/api/v2/products/entities/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST v2/products/import/csv reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/products/import/csv/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/import/csv/route.ts",
-          "src/app/api/v2/products/import/csv/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST v2/products/metadata/[type] reads request body data without explicit schema validation.",
-      "file": "src/app/api/v2/products/metadata/[type]/route.ts",
-      "line": 23,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/metadata/[type]/route.ts",
-          "src/app/api/v2/products/metadata/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
       "message": "POST v2/products reads request body data without explicit schema validation.",
       "file": "src/app/api/v2/products/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7162,34 +6643,10 @@
     },
     {
       "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET agent/approval-gates reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/agent/approval-gates/route.ts",
-      "line": 38,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET agent/leases reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/agent/leases/route.ts",
-      "line": 95,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST agent/leases has no adjacent route/handler test coverage.",
       "file": "src/app/api/agent/leases/route.ts",
-      "line": 99,
+      "line": 113,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7197,30 +6654,6 @@
         "sourceFiles": [
           "src/app/api/agent/leases/route.ts"
         ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET agent/resources reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/agent/resources/route.ts",
-      "line": 54,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET agentcreator/agent/[runId]/audits reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/agentcreator/agent/[runId]/audits/route.ts",
-      "line": 6,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
       }
     },
     {
@@ -7323,7 +6756,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE agentcreator/teaching/agents/[agentId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/agentcreator/teaching/agents/[agentId]/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7338,7 +6771,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST agentcreator/teaching/agents has no adjacent route/handler test coverage.",
       "file": "src/app/api/agentcreator/teaching/agents/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7385,7 +6818,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST agentcreator/teaching/collections/[collectionId]/documents has no adjacent route/handler test coverage.",
       "file": "src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts",
-      "line": 15,
+      "line": 16,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7415,7 +6848,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE agentcreator/teaching/collections/[collectionId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/agentcreator/teaching/collections/[collectionId]/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7445,7 +6878,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST agentcreator/teaching/collections has no adjacent route/handler test coverage.",
       "file": "src/app/api/agentcreator/teaching/collections/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7461,7 +6894,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE ai-insights/notifications has no adjacent route/handler test coverage.",
       "file": "src/app/api/ai-insights/notifications/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7586,18 +7019,6 @@
     },
     {
       "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET ai-paths/trigger-buttons reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/ai-paths/trigger-buttons/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST ai-paths/update has no adjacent route/handler test coverage.",
       "file": "src/app/api/ai-paths/update/route.ts",
@@ -7633,7 +7054,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH assets3d/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/assets3d/[id]/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7649,7 +7070,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE assets3d/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/assets3d/[id]/route.ts",
-      "line": 16,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7681,7 +7102,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST assets3d has no adjacent route/handler test coverage.",
       "file": "src/app/api/assets3d/route.ts",
-      "line": 13,
+      "line": 14,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7857,7 +7278,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST case-resolver/ocr/jobs/[jobId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/case-resolver/ocr/jobs/[jobId]/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7984,7 +7405,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST chatbot/jobs/[jobId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/jobs/[jobId]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8000,7 +7421,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE chatbot/jobs/[jobId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/jobs/[jobId]/route.ts",
-      "line": 15,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8016,7 +7437,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST chatbot/sessions/[sessionId]/messages has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/sessions/[sessionId]/messages/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8048,7 +7469,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH chatbot/sessions has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/sessions/route.ts",
-      "line": 12,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8064,7 +7485,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE chatbot/sessions has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/sessions/route.ts",
-      "line": 16,
+      "line": 23,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8080,7 +7501,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST chatbot/settings has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/settings/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8128,7 +7549,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT cms/domains/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/domains/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8144,7 +7565,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST cms/domains has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/domains/route.ts",
-      "line": 8,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8176,7 +7597,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT cms/pages/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/pages/[id]/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8192,7 +7613,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE cms/pages/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/pages/[id]/route.ts",
-      "line": 16,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8208,7 +7629,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST cms/pages has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/pages/route.ts",
-      "line": 9,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8224,7 +7645,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT cms/slugs/[id]/domains has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/slugs/[id]/domains/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8240,7 +7661,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE cms/slugs/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/slugs/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8256,7 +7677,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT cms/slugs/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/slugs/[id]/route.ts",
-      "line": 15,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8272,7 +7693,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST cms/slugs has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/slugs/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8288,7 +7709,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT cms/themes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/themes/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8304,7 +7725,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE cms/themes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/themes/[id]/route.ts",
-      "line": 13,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8320,7 +7741,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST cms/themes has no adjacent route/handler test coverage.",
       "file": "src/app/api/cms/themes/route.ts",
-      "line": 8,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8544,7 +7965,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT drafts/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/drafts/[id]/route.ts",
-      "line": 13,
+      "line": 14,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8560,7 +7981,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE drafts/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/drafts/[id]/route.ts",
-      "line": 17,
+      "line": 19,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8576,7 +7997,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST drafts has no adjacent route/handler test coverage.",
       "file": "src/app/api/drafts/route.ts",
-      "line": 10,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8608,7 +8029,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH files/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/files/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8720,7 +8141,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST image-studio/projects/[projectId]/assets has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/projects/[projectId]/assets/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8752,7 +8173,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE image-studio/projects/[projectId]/folders has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/projects/[projectId]/folders/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8784,7 +8205,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH image-studio/projects/[projectId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/projects/[projectId]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8816,7 +8237,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST image-studio/projects/[projectId]/slots has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/projects/[projectId]/slots/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8848,7 +8269,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST image-studio/projects has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/projects/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8960,7 +8381,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE image-studio/slots/[slotId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/image-studio/slots/[slotId]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9040,7 +8461,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST kangur/auth/parent-magic-link/exchange has no adjacent route/handler test coverage.",
       "file": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
-      "line": 20,
+      "line": 23,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9055,7 +8476,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST kangur/auth/parent-magic-link/request has no adjacent route/handler test coverage.",
       "file": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
-      "line": 20,
+      "line": 23,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9063,18 +8484,6 @@
         "sourceFiles": [
           "src/app/api/kangur/auth/parent-magic-link/request/route.ts"
         ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET kangur/observability/summary reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/kangur/observability/summary/route.ts",
-      "line": 5,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
       }
     },
     {
@@ -9098,7 +8507,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT marketplace/mappings/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/marketplace/mappings/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9114,7 +8523,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE marketplace/mappings/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/marketplace/mappings/[id]/route.ts",
-      "line": 13,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9146,7 +8555,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST marketplace/mappings has no adjacent route/handler test coverage.",
       "file": "src/app/api/marketplace/mappings/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9178,7 +8587,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST marketplace/producer-mappings has no adjacent route/handler test coverage.",
       "file": "src/app/api/marketplace/producer-mappings/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9226,7 +8635,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST marketplace/tag-mappings has no adjacent route/handler test coverage.",
       "file": "src/app/api/marketplace/tag-mappings/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9274,7 +8683,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes/[id]/files has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/[id]/files/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9290,7 +8699,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH notes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9306,7 +8715,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE notes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/[id]/route.ts",
-      "line": 14,
+      "line": 16,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9338,7 +8747,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE notes/categories/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/categories/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9354,7 +8763,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes/categories has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/categories/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9402,7 +8811,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE notes/notebooks/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/notebooks/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9418,7 +8827,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes/notebooks has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/notebooks/route.ts",
-      "line": 8,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9434,7 +8843,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/route.ts",
-      "line": 13,
+      "line": 14,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9466,7 +8875,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE notes/tags/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/tags/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9482,7 +8891,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes/tags has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/tags/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9498,7 +8907,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH notes/themes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/themes/[id]/route.ts",
-      "line": 10,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9514,7 +8923,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE notes/themes/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/themes/[id]/route.ts",
-      "line": 13,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9530,7 +8939,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST notes/themes has no adjacent route/handler test coverage.",
       "file": "src/app/api/notes/themes/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9594,7 +9003,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST settings has no adjacent route/handler test coverage.",
       "file": "src/app/api/settings/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9610,7 +9019,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST system/diagnostics/mongo-indexes has no adjacent route/handler test coverage.",
       "file": "src/app/api/system/diagnostics/mongo-indexes/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9626,7 +9035,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST system/logs has no adjacent route/handler test coverage.",
       "file": "src/app/api/system/logs/route.ts",
-      "line": 10,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9642,7 +9051,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE system/logs has no adjacent route/handler test coverage.",
       "file": "src/app/api/system/logs/route.ts",
-      "line": 12,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9722,7 +9131,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/[id]/connections/[connectionId]/allegro/test has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts",
-      "line": 7,
+      "line": 11,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9802,7 +9211,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/[id]/connections has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/[id]/connections/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9834,7 +9243,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/integrations/connections/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/connections/[id]/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9850,7 +9259,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/exports/base/[setting] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/exports/base/[setting]/route.ts",
-      "line": 11,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9882,7 +9291,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/imports/base/[setting] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/[setting]/route.ts",
-      "line": 11,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -9943,18 +9352,6 @@
     },
     {
       "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET v2/integrations/imports/base/runs/[runId]/report reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/imports/base/runs/[runId]/resume has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/resume/route.ts",
@@ -9971,22 +9368,10 @@
     },
     {
       "severity": "warn",
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "message": "GET v2/integrations/imports/base/runs/[runId] reads search params without a query schema or parse/safeParse guard.",
-      "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected"
-      }
-    },
-    {
-      "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/imports/base/runs has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/runs/route.ts",
-      "line": 13,
+      "line": 14,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10002,7 +9387,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/imports/base/sample-product has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/sample-product/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10018,7 +9403,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/product-listings has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/product-listings/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10146,7 +9531,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PATCH v2/integrations/products/[id]/listings/[listingId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10178,7 +9563,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations/products/[id]/listings has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/products/[id]/listings/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10194,7 +9579,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/integrations has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10210,7 +9595,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/metadata/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
-      "line": 15,
+      "line": 16,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10226,7 +9611,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/metadata/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/metadata/[type]/[id]/route.ts",
-      "line": 19,
+      "line": 21,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10305,7 +9690,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/[id]/studio has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/[id]/studio/route.ts",
-      "line": 13,
+      "line": 14,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10321,7 +9706,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/ai-jobs/[jobId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/ai-jobs/[jobId]/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10337,7 +9722,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/ai-jobs/[jobId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/ai-jobs/[jobId]/route.ts",
-      "line": 17,
+      "line": 19,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10351,41 +9736,9 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/ai-jobs/bulk has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/ai-jobs/bulk/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/ai-jobs/bulk/route.ts",
-          "src/app/api/v2/products/ai-jobs/bulk/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/ai-jobs/enqueue has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/ai-jobs/enqueue/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/ai-jobs/enqueue/route.ts",
-          "src/app/api/v2/products/ai-jobs/enqueue/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/ai-jobs has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/ai-jobs/route.ts",
-      "line": 18,
+      "line": 19,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10401,7 +9754,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/categories/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/categories/[id]/route.ts",
-      "line": 16,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10417,7 +9770,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/categories/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/categories/[id]/route.ts",
-      "line": 22,
+      "line": 24,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10465,7 +9818,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/categories has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/categories/route.ts",
-      "line": 19,
+      "line": 20,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10481,7 +9834,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/entities/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-      "line": 15,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10497,7 +9850,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/entities/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-      "line": 19,
+      "line": 24,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10513,7 +9866,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/entities/[type] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/entities/[type]/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10577,14 +9930,13 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/images/upload has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/images/upload/route.ts",
-      "line": 6,
+      "line": 16,
       "column": 14,
       "snippet": null,
       "context": {
         "expectedAccess": "protected",
         "sourceFiles": [
-          "src/app/api/v2/products/images/upload/route.ts",
-          "src/features/products/api/routes/images-upload-route.ts"
+          "src/app/api/v2/products/images/upload/route.ts"
         ]
       }
     },
@@ -10593,7 +9945,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/import/csv has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/import/csv/route.ts",
-      "line": 8,
+      "line": 10,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10609,7 +9961,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/metadata/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
-      "line": 23,
+      "line": 24,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10625,7 +9977,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/metadata/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
-      "line": 28,
+      "line": 30,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10657,7 +10009,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/producers/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/producers/[id]/route.ts",
-      "line": 17,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10673,7 +10025,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/producers has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/producers/route.ts",
-      "line": 14,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10689,7 +10041,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/route.ts",
-      "line": 14,
+      "line": 15,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10720,7 +10072,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/sync/profiles/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
-      "line": 18,
+      "line": 19,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10736,7 +10088,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/sync/profiles/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
-      "line": 24,
+      "line": 26,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10768,7 +10120,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/sync/profiles has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/sync/profiles/route.ts",
-      "line": 17,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10816,7 +10168,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/tags/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/tags/[id]/route.ts",
-      "line": 17,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10832,7 +10184,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/tags has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/tags/route.ts",
-      "line": 18,
+      "line": 19,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10862,22 +10214,6 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/validator-decisions has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/validator-decisions/route.ts",
-      "line": 10,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/validator-decisions/route.ts",
-          "src/app/api/v2/products/validator-decisions/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/validator-patterns/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validator-patterns/[id]/route.ts",
       "line": 11,
@@ -10896,7 +10232,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/products/validator-patterns/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validator-patterns/[id]/route.ts",
-      "line": 17,
+      "line": 18,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10944,7 +10280,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/products/validator-patterns has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validator-patterns/route.ts",
-      "line": 16,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -10974,39 +10310,9 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/validator-patterns/templates/name-segment-category has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/validator-patterns/templates/name-segment-dimensions has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/validator-settings has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validator-settings/route.ts",
-      "line": 16,
+      "line": 17,
       "column": 14,
       "snippet": null,
       "context": {
@@ -11038,7 +10344,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "DELETE v2/templates/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/templates/[type]/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -11054,7 +10360,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST v2/templates/[type] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/templates/[type]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -11070,7 +10376,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET agent/approval-gates has no adjacent route/handler test coverage.",
       "file": "src/app/api/agent/approval-gates/route.ts",
-      "line": 38,
+      "line": 45,
       "column": 14,
       "snippet": null,
       "context": {
@@ -11100,7 +10406,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET agent/leases has no adjacent route/handler test coverage.",
       "file": "src/app/api/agent/leases/route.ts",
-      "line": 95,
+      "line": 107,
       "column": 14,
       "snippet": null,
       "context": {
@@ -11782,7 +11088,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET chatbot/sessions has no adjacent route/handler test coverage.",
       "file": "src/app/api/chatbot/sessions/route.ts",
-      "line": 10,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -12853,7 +12159,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/integrations/imports/base/parameters has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/parameters/route.ts",
-      "line": 12,
+      "line": 13,
       "column": 14,
       "snippet": null,
       "context": {
@@ -12869,7 +12175,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/integrations/imports/base/runs/[runId]/report has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts",
-      "line": 8,
+      "line": 9,
       "column": 14,
       "snippet": null,
       "context": {
@@ -12885,7 +12191,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/integrations/imports/base/runs/[runId] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts",
-      "line": 8,
+      "line": 9,
       "column": 14,
       "snippet": null,
       "context": {
@@ -13188,7 +12494,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/products/entities/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -13395,7 +12701,7 @@
       "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/products/validation has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validation/route.ts",
-      "line": 11,
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -13474,22 +12780,16 @@
   "rules": [
     {
       "ruleId": "api-contract-mutation-missing-body-validation",
-      "errorCount": 37,
+      "errorCount": 2,
       "warningCount": 0,
       "infoCount": 0
     },
     {
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
-      "warningCount": 239,
+      "warningCount": 234,
       "infoCount": 151
-    },
-    {
-      "ruleId": "api-contract-query-route-missing-query-validation",
-      "errorCount": 0,
-      "warningCount": 8,
-      "infoCount": 0
     }
   ],
-  "durationMs": 442
+  "durationMs": 301
 }

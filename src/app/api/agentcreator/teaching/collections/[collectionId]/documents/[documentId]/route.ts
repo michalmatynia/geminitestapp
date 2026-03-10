@@ -8,5 +8,6 @@ export const DELETE = apiHandlerWithParams<{ collectionId: string; documentId: s
   async (request, ctx, params) => DELETE_handler(request, { ...ctx, params }),
   {
     source: 'agentcreator.teaching.collections.[collectionId].documents.[documentId].DELETE',
+    requireAuth: true,
   }
 );

@@ -50,6 +50,10 @@ const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
     value: 'ai-paths',
     label: VALIDATOR_SCOPE_LABELS['ai-paths'],
   },
+  {
+    value: 'kangur-ai-tutor-onboarding',
+    label: VALIDATOR_SCOPE_LABELS['kangur-ai-tutor-onboarding'],
+  },
 ];
 
 const createListId = (): string => {

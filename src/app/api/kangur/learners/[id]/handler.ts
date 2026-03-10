@@ -30,7 +30,7 @@ export async function patchKangurLearnerHandler(
     });
   }
   const payload = parseKangurLearnerUpdatePayload(
-    await readKangurAuthJsonBody(req, 'learner update')
+    await readKangurAuthJsonBody(req, 'learner update', ctx.body)
   );
   const updatedLearner = await updateKangurLearner(params.id, payload);
   void logKangurServerEvent({

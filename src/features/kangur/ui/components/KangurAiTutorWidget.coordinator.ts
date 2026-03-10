@@ -86,6 +86,7 @@ export function useKangurAiTutorWidgetCoordinator({
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    contextualTutorMode,
     guidedTutorTarget,
     highlightedSection,
     homeOnboardingRecord,
@@ -104,6 +105,7 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionGuidanceHandoffText,
     setAskModalDockStyle,
     setAskModalVisible,
+    setContextualTutorMode,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
@@ -299,7 +301,7 @@ export function useKangurAiTutorWidgetCoordinator({
     activeFocus.kind === 'selection' &&
     activeSelectedText === selectionTakeoverText;
   const suppressPanelSurface =
-    selectionTakeoverText !== null && !hasReboundSelectedFragment;
+    contextualTutorMode === null && selectionTakeoverText !== null && !hasReboundSelectedFragment;
 
   useKangurAiTutorTelemetryBridge({
     activeFocus,
@@ -362,6 +364,7 @@ export function useKangurAiTutorWidgetCoordinator({
       avatarDragStateRef,
       setAskModalDockStyle,
       setAskModalVisible,
+      setContextualTutorMode,
       setDismissedSelectedText,
       setDraggedAvatarPoint,
       setGuestIntroHelpVisible,
@@ -399,6 +402,8 @@ export function useKangurAiTutorWidgetCoordinator({
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    contextualTutorMode,
+    guidedTutorTarget,
     handleCloseChat,
     handleOpenChat,
     isOpen: tutorRuntime.isOpen,
@@ -429,6 +434,9 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionExplainTimeoutRef,
     sendMessage,
     setDismissedSelectedText,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+    setContextualTutorMode,
     setGuidedTutorTarget,
     setHasNewMessage,
     setHighlightedSection,
@@ -495,6 +503,7 @@ export function useKangurAiTutorWidgetCoordinator({
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
+    setContextualTutorMode,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -505,6 +514,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setSectionResponsePending,
     setSelectionResponseComplete,
     setSelectionResponsePending,
+    setSelectionGuidanceHandoffText,
     startGuidedSelectionExplanation,
     suppressAvatarClickRef,
   });
@@ -608,6 +618,7 @@ export function useKangurAiTutorWidgetCoordinator({
     canSendMessages,
     canStartHomeOnboardingManually,
     compactDockedTutorPanelWidth,
+    contextualTutorMode,
     emptyStateMessage,
     floatingAvatarPlacement,
     focusChipLabel: conversationFocusChipLabel,
@@ -721,14 +732,20 @@ export function useKangurAiTutorWidgetCoordinator({
   });
 
   const shouldRender =
-    !(
-      (!enabled &&
-        !shouldRenderGuestIntroUi &&
-        !shouldRenderContextlessTutorUi &&
-        !isGuidedTutorMode &&
-        !askModalVisible &&
-        !isAnonymousVisitor) ||
-      !mounted
+    mounted &&
+    (
+      enabled ||
+      shouldRenderGuestIntroUi ||
+      shouldRenderContextlessTutorUi ||
+      isGuidedTutorMode ||
+      askModalVisible ||
+      isAnonymousVisitor ||
+      !isTutorHidden ||
+      tutorRuntime.isOpen ||
+      guidedTutorTarget !== null ||
+      contextualTutorMode !== null ||
+      selectionGuidanceHandoffText !== null ||
+      selectionResponsePending !== null
     );
 
   return {

@@ -8,4 +8,5 @@ import { GET_handler, querySchema } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'image-studio.runs.GET',
   querySchema,
+  requireAuth: true,
 });

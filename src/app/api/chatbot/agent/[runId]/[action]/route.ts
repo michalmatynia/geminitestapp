@@ -71,12 +71,12 @@ export const GET = apiHandlerWithParams<RouteParams>(
   async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
     return await GET_handler(req, params);
   },
-  { source: 'chatbot.agent.[runId].[action].GET' }
+  { source: 'chatbot.agent.[runId].[action].GET', requireAuth: true }
 );
 
 export const POST = apiHandlerWithParams<RouteParams>(
   async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
     return await POST_handler(req, params);
   },
-  { source: 'chatbot.agent.[runId].[action].POST' }
+  { source: 'chatbot.agent.[runId].[action].POST', requireAuth: true }
 );

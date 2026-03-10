@@ -1,0 +1,455 @@
+load("//tools/bazel:npm_targets.bzl", "npm_script_target")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+package(default_visibility = ["//visibility:public"])
+
+npm_link_all_packages(name = "node_modules")
+
+app_sources = glob([
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "src/**/*.mjs",
+    "src/**/*.cjs",
+    "src/**/*.json",
+])
+
+script_sources = glob([
+    "scripts/**/*.ts",
+    "scripts/**/*.tsx",
+    "scripts/**/*.js",
+    "scripts/**/*.jsx",
+    "scripts/**/*.mjs",
+    "scripts/**/*.cjs",
+    "scripts/**/*.json",
+])
+
+e2e_sources = glob([
+    "e2e/**/*.ts",
+    "e2e/**/*.tsx",
+    "e2e/**/*.js",
+    "e2e/**/*.jsx",
+    "e2e/**/*.mjs",
+    "e2e/**/*.cjs",
+    "e2e/**/*.json",
+])
+
+docs_sources = glob([
+    "docs/**/*.md",
+    "docs/**/*.mdx",
+    "docs/**/*.json",
+    "docs/**/*.ts",
+    "docs/**/*.js",
+])
+
+prisma_sources = glob([
+    "prisma/**/*.prisma",
+    "prisma/**/*.ts",
+    "prisma/**/*.js",
+    "prisma/**/*.sql",
+])
+
+config_sources = glob([
+    "*.config.ts",
+    "*.config.js",
+    "*.config.mjs",
+    "*.config.cjs",
+    "*.cjs",
+    "*.mjs",
+    "*.js",
+    "tsconfig*.json",
+]) + [
+    "package.json",
+    "package-lock.json",
+    "MODULE.bazel",
+    ".bazelversion",
+    ".bazelrc",
+]
+
+filegroup(
+    name = "package_metadata",
+    srcs = [
+        "package.json",
+        "package-lock.json",
+        "REPO.bazel",
+        "MODULE.bazel",
+        ".bazelversion",
+        ".bazelrc",
+    ],
+)
+
+filegroup(
+    name = "lint_inputs",
+    srcs = app_sources + e2e_sources + config_sources,
+)
+
+filegroup(
+    name = "typecheck_inputs",
+    srcs = app_sources + script_sources + e2e_sources + prisma_sources + config_sources,
+)
+
+filegroup(
+    name = "scanner_contracts_inputs",
+    srcs = script_sources + docs_sources + config_sources,
+)
+
+filegroup(
+    name = "docs_structure_inputs",
+    srcs = docs_sources + glob([
+        ".github/workflows/docs-structure.yml",
+    ]) + script_sources + config_sources,
+)
+
+filegroup(
+    name = "api_error_sources_inputs",
+    srcs = app_sources + glob([
+        "scripts/quality/check-api-error-sources.mjs",
+    ]) + config_sources,
+)
+
+filegroup(
+    name = "ai_paths_node_docs_inputs",
+    srcs = glob([
+        "src/shared/lib/ai-paths/core/docs/**/*",
+        "src/shared/lib/ai-paths/core/definitions/docs-snippets.ts",
+        "src/shared/lib/ai-paths/core/validation-engine/**/*",
+        "src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts",
+        "scripts/ai-paths/**/*.mjs",
+        "scripts/docs/**/*",
+        "docs/AI_PATHS.md",
+        "docs/ai-paths/**/*",
+    ]) + config_sources,
+)
+
+filegroup(
+    name = "validator_docs_inputs",
+    srcs = glob([
+        "src/features/products/components/settings/validator-settings/**/*",
+        "src/features/products/components/settings/ValidatorSettings.tsx",
+        "src/features/products/validation-engine/**/*",
+        "src/features/admin/pages/AdminGlobalValidatorPage.tsx",
+        "src/features/admin/pages/AdminValidatorPatternListsPage.tsx",
+        "src/features/admin/pages/validator-scope.ts",
+        "scripts/docs/**/*",
+        "docs/validator/**/*",
+    ]) + config_sources,
+)
+
+filegroup(
+    name = "architecture_metrics_inputs",
+    srcs = app_sources + docs_sources + glob([
+        "scripts/architecture/**/*",
+        "scripts/perf/**/*",
+    ]) + config_sources,
+)
+
+filegroup(
+    name = "weekly_quality_inputs",
+    srcs = app_sources + script_sources + e2e_sources + docs_sources + prisma_sources + config_sources,
+)
+
+filegroup(
+    name = "testing_gate_inputs",
+    srcs = app_sources + script_sources + e2e_sources + docs_sources + prisma_sources + config_sources,
+)
+
+filegroup(
+    name = "integration_gate_inputs",
+    srcs = app_sources + script_sources + prisma_sources + config_sources,
+)
+
+filegroup(
+    name = "playwright_gate_inputs",
+    srcs = app_sources + script_sources + e2e_sources + config_sources,
+)
+
+filegroup(
+    name = "next_build_inputs",
+    srcs = app_sources + script_sources + docs_sources + prisma_sources + config_sources + glob([
+        "public/**/*",
+    ], allow_empty = True),
+)
+
+sh_binary(
+    name = "ai_paths_node_docs",
+    srcs = ["tools/bazel/ai_paths_node_docs.sh"],
+    data = [
+        ":ai_paths_node_docs_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+npm_script_target(
+    name = "canonical_sitewide",
+    script = "canonical:check:sitewide",
+)
+
+npm_script_target(
+    name = "ai_paths_canonical",
+    script = "ai-paths:check:canonical",
+)
+
+sh_binary(
+    name = "api_error_sources",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/quality/check-api-error-sources.mjs"],
+    data = [
+        ":api_error_sources_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+npm_script_target(
+    name = "observability",
+    script = "observability:check",
+)
+
+sh_binary(
+    name = "architecture_collect_metrics",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/architecture/collect-metrics.mjs", "--ci"],
+    data = [
+        ":architecture_metrics_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "architecture_hotspots",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/perf/route-hotspots.mjs"],
+    data = [
+        ":architecture_metrics_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "architecture_critical_paths",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/perf/check-critical-path-performance.mjs", "--strict", "--ci"],
+    data = [
+        ":architecture_metrics_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "architecture_guardrails",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/architecture/check-guardrails.mjs"],
+    data = [
+        ":architecture_metrics_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+npm_script_target(
+    name = "ui_consolidation",
+    script = "check:ui-consolidation",
+)
+
+sh_binary(
+    name = "docs_structure",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/docs/check-docs-structure.mjs"],
+    data = [
+        ":docs_structure_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "scanner_contracts",
+    srcs = ["tools/bazel/scanner_contracts.sh"],
+    data = [
+        ":scanner_contracts_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "validator_docs_check",
+    srcs = ["tools/bazel/tsx_script.sh"],
+    args = ["scripts/docs/check-validator-doc-coverage.ts"],
+    data = [
+        ":validator_docs_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "validator_docs_generate",
+    srcs = ["tools/bazel/tsx_script.sh"],
+    args = ["scripts/docs/generate-validator-docs.ts"],
+    data = [
+        ":validator_docs_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+alias(
+    name = "lint",
+    actual = "//tools/js:lint",
+)
+
+alias(
+    name = "typecheck",
+    actual = "//tools/js:typecheck",
+)
+
+alias(
+    name = "unit",
+    actual = "//tools/js:unit",
+)
+
+npm_script_target(
+    name = "unit_domain_timings",
+    script = "test:unit:domains:strict",
+    args = ["--ci"],
+)
+
+npm_script_target(
+    name = "case_resolver_regression",
+    script = "test:case-resolver:regression",
+)
+
+sh_binary(
+    name = "case_resolver_capture_mapping_e2e",
+    srcs = ["tools/bazel/playwright_suite.sh"],
+    args = [
+        "e2e/features/case-resolver/case-resolver.spec.ts",
+        "--grep",
+        "capture mapping",
+    ],
+    data = [
+        ":playwright_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+npm_script_target(
+    name = "products_trigger_queue_unit",
+    script = "test:ai-paths:trigger-queue:unit",
+)
+
+sh_binary(
+    name = "products_trigger_queue_e2e",
+    srcs = ["tools/bazel/playwright_suite.sh"],
+    args = [
+        "e2e/features/products/products-trigger-queue-integration.spec.ts",
+    ],
+    data = [
+        ":playwright_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "critical_flows",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/testing/run-critical-flow-tests.mjs", "--strict", "--ci"],
+    data = [
+        ":testing_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "security_smoke",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/testing/run-security-smoke-tests.mjs", "--strict", "--ci"],
+    data = [
+        ":testing_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "accessibility_smoke",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/testing/run-accessibility-smoke-tests.mjs", "--strict", "--ci"],
+    data = [
+        ":testing_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "weekly_quality_report",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/quality/generate-weekly-report.mjs", "--strict", "--ci"],
+    data = [
+        ":weekly_quality_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "weekly_trend_index",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/quality/generate-trend-index.mjs", "--ci", "--no-history"],
+    data = [
+        ":weekly_quality_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "weekly_duration_budgets",
+    srcs = ["tools/bazel/node_script.sh"],
+    args = ["scripts/quality/recalibrate-weekly-duration-budgets.mjs", "--ci", "--no-history"],
+    data = [
+        ":weekly_quality_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "integration_prisma",
+    srcs = ["tools/bazel/integration_prisma.sh"],
+    data = [
+        ":integration_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "integration_mongo",
+    srcs = ["tools/bazel/integration_mongo.sh"],
+    data = [
+        ":integration_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+sh_binary(
+    name = "next_build",
+    srcs = ["tools/bazel/next_build.sh"],
+    data = [
+        ":next_build_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)

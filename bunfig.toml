@@ -1,0 +1,3 @@
+[install]
+# Match the current npm-style node_modules layout to minimize runtime drift.
+linker = "hoisted"

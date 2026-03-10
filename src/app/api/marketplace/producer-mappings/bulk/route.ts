@@ -6,4 +6,5 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandler(POST_handler, {
   source: 'marketplace.producer-mappings.bulk.POST',
+  requireAuth: true,
 });

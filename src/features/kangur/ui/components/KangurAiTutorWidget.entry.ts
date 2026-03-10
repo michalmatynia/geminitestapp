@@ -52,6 +52,8 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   guestIntroRecord: KangurAiTutorGuestIntroRecord | null;
   guestIntroShownForCurrentEntryRef: MutableRefObject<boolean>;
   guestIntroVisible: boolean;
+  contextualTutorMode: 'selection_explain' | 'section_explain' | null;
+  guidedTutorTarget: GuidedTutorTarget | null;
   handleCloseChat: (reason: 'toggle') => void;
   handleOpenChat: (reason: 'toggle') => void;
   isOpen: boolean;
@@ -75,6 +77,8 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    contextualTutorMode,
+    guidedTutorTarget,
     handleCloseChat,
     handleOpenChat,
     isOpen,
@@ -104,6 +108,20 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     if (authState.isAuthenticated) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      return;
+    }
+
+    if (contextualTutorMode || guidedTutorTarget) {
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      return;
+    }
+
+    if (guestIntroVisible || guestIntroHelpVisible) {
+      return;
+    }
+
+    if (isOpen) {
       return;
     }
 
@@ -198,7 +216,10 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    contextualTutorMode,
+    guidedTutorTarget,
     isTutorHidden,
+    isOpen,
     mounted,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,

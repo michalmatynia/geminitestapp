@@ -409,14 +409,14 @@ async function DELETE_handler(
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (req: NextRequest, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
-  { source: 'chatbot.agent.[runId].GET' }
+  { source: 'chatbot.agent.[runId].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<{ runId: string }>(
   async (req: NextRequest, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
-  { source: 'chatbot.agent.[runId].POST' }
+  { source: 'chatbot.agent.[runId].POST', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
   async (req: NextRequest, _ctx, params) =>
     DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: 'chatbot.agent.[runId].DELETE' }
+  { source: 'chatbot.agent.[runId].DELETE', requireAuth: true }
 );

@@ -4,13 +4,19 @@ export const dynamic = 'force-dynamic';
 import { kangurAiTutorContentSchema } from '@/shared/contracts/kangur-ai-tutor-content';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getKangurAiTutorContentHandler, postKangurAiTutorContentHandler } from './handler';
+import {
+  getKangurAiTutorContentHandler,
+  postKangurAiTutorContentHandler,
+  querySchema,
+} from './handler';
 
 export const GET = apiHandler(getKangurAiTutorContentHandler, {
   source: 'kangur.ai-tutor.content.GET',
   service: 'kangur.api',
   successLogging: 'off',
   resolveSessionUser: false,
+  querySchema,
+  requireAuth: true,
 });
 
 export const POST = apiHandler(postKangurAiTutorContentHandler, {
@@ -18,4 +24,5 @@ export const POST = apiHandler(postKangurAiTutorContentHandler, {
   service: 'kangur.api',
   parseJsonBody: true,
   bodySchema: kangurAiTutorContentSchema,
+  requireAuth: true,
 });

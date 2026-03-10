@@ -10,10 +10,16 @@ import {
 } from '@/app/api/v2/integrations/imports/base/last-template/handler';
 import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { z } from 'zod';
 
 import type { NextRequest } from 'next/server';
 
 export type { SettingParams };
+export const querySchema = z.object({
+  connectionId: optionalTrimmedQueryString(),
+  inventoryId: optionalTrimmedQueryString(),
+});
 
 type RouteHandlers = {
   GET: ApiRouteHandler;

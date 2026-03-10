@@ -12,8 +12,10 @@ export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'v2.products.parameters.[id].PUT',
   parseJsonBody: true,
   bodySchema: productParameterUpdateSchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'v2.products.parameters.[id].DELETE',
+  requireAuth: true,
 });

@@ -6,8 +6,10 @@ import { deleteImageStudioProjectHandler, patchImageStudioProjectHandler } from 
 
 export const DELETE = apiHandlerWithParams<{ projectId: string }>(deleteImageStudioProjectHandler, {
   source: 'image-studio.projects.[projectId].DELETE',
+  requireAuth: true,
 });
 
 export const PATCH = apiHandlerWithParams<{ projectId: string }>(patchImageStudioProjectHandler, {
   source: 'image-studio.projects.[projectId].PATCH',
+  requireAuth: true,
 });

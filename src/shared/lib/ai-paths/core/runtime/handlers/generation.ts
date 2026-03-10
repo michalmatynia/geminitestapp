@@ -11,9 +11,14 @@ import {
   coerceInput,
   coerceInputArray,
   formatRuntimeValue,
-  hashRuntimeValue,
   renderTemplate,
 } from '../../utils';
+import {
+  buildGraphModelJobCacheMetadata,
+  buildGraphModelJobEnqueueRequest,
+  buildGraphModelJobPayload,
+  readEnqueuedGraphModelJobId,
+} from '../graph-model-job';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
 
 export const handleTemplate: NodeHandler = ({
@@ -456,34 +461,33 @@ export const handleModel: NodeHandler = async ({
     reportAiPathsError,
     toast,
   });
-  const payload = {
+  const payload = buildGraphModelJobPayload({
     prompt,
     imageUrls,
-    ...(modelConfig.modelId?.trim() ? { modelId: modelConfig.modelId.trim() } : {}),
+    modelId: modelConfig.modelId?.trim() ?? null,
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,
     vision: modelConfig.vision,
-    ...(modelConfig.systemPrompt?.trim() ? { systemPrompt: modelConfig.systemPrompt.trim() } : {}),
-    source: 'ai_paths',
-    graph: {
-      pathId: activePathId ?? undefined,
-      nodeId: node.id,
-      nodeTitle: node.title,
-      ...(modelConfig.modelId?.trim() ? { requestedModelId: modelConfig.modelId.trim() } : {}),
-      // Keep graph-model cache scoped to a single run so repeated manual runs
-      // do not silently reuse completed jobs from older runs.
-      runId,
-    },
-    ...(contextRegistry ? { contextRegistry } : {}),
-  };
+    systemPrompt: modelConfig.systemPrompt?.trim() ?? null,
+    activePathId,
+    nodeId: node.id,
+    nodeTitle: node.title,
+    // Keep graph-model cache scoped to a single run so repeated manual runs
+    // do not silently reuse completed jobs from older runs.
+    runId,
+    contextRegistry,
+  });
   const productId = resolveJobProductId(
     nodeInputs,
     simulationEntityType,
     simulationEntityId,
     activePathId
   );
-  const cacheKey = hashRuntimeValue(payload);
-  const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
+  const { cacheKey, payloadHash } = buildGraphModelJobCacheMetadata({
+    payload,
+    runId,
+    runStartedAt,
+  });
 
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
@@ -496,11 +500,7 @@ export const handleModel: NodeHandler = async ({
   }
   let enqueuedJobId: string | undefined;
   try {
-    const enqueuePayload = {
-      ...payload,
-      cacheKey,
-      payloadHash,
-    };
+    const enqueuePayload = { ...payload, cacheKey, payloadHash };
     let enqueueResult: Awaited<ReturnType<typeof aiJobsApi.enqueue>> | null = null;
     let enqueueErrorMessage: string | null = null;
     for (
@@ -508,11 +508,12 @@ export const handleModel: NodeHandler = async ({
       enqueueAttempt <= defaultModelEnqueueRetryAttempts;
       enqueueAttempt += 1
     ) {
-      enqueueResult = await aiJobsApi.enqueue({
-        productId,
-        type: 'graph_model',
-        payload: enqueuePayload,
-      });
+      enqueueResult = await aiJobsApi.enqueue(
+        buildGraphModelJobEnqueueRequest({
+          productId,
+          payload: enqueuePayload,
+        })
+      );
       if (enqueueResult.ok) {
         enqueueErrorMessage = null;
         break;
@@ -529,12 +530,12 @@ export const handleModel: NodeHandler = async ({
     if (!enqueueResult?.ok) {
       throw new Error(enqueueErrorMessage || 'Failed to enqueue AI job.');
     }
-    enqueuedJobId = enqueueResult.data.jobId;
+    enqueuedJobId = readEnqueuedGraphModelJobId(enqueueResult);
     toast('AI model job queued.', { variant: 'success' });
     executed.ai.add(node.id);
     if (!shouldWait) {
       return {
-        jobId: enqueueResult.data.jobId,
+        jobId: enqueuedJobId,
         status: 'queued',
         debugPayload: payload,
         cacheKey,
@@ -551,14 +552,14 @@ export const handleModel: NodeHandler = async ({
       1,
       Math.ceil(configuredTimeoutMs / defaultModelPollIntervalMs)
     );
-    const result = await pollGraphJob(enqueueResult.data.jobId, {
+    const result = await pollGraphJob(enqueuedJobId, {
       intervalMs: defaultModelPollIntervalMs,
       maxAttempts: pollMaxAttempts,
       ...(abortSignal ? { signal: abortSignal } : {}),
     });
     return {
       result,
-      jobId: enqueueResult.data.jobId,
+      jobId: enqueuedJobId,
       status: 'completed',
       debugPayload: payload,
       cacheKey,

@@ -174,6 +174,8 @@ describe('client native code-object registry contract subset', () => {
         type: 'graph_model',
         payload: expect.objectContaining({
           modelId: 'gpt-4o-mini',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
           graph: expect.objectContaining({
             requestedModelId: 'gpt-4o-mini',
           }),

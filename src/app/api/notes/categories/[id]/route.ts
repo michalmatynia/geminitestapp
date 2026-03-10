@@ -6,8 +6,10 @@ import { DELETE_handler, PATCH_handler, querySchema } from './handler';
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'notes.categories.[id].PATCH',
+  requireAuth: true,
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'notes.categories.[id].DELETE',
   querySchema,
+  requireAuth: true,
 });

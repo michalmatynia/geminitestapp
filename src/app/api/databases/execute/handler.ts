@@ -4,48 +4,40 @@ import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
 const QUERY_TIMEOUT_MS = 30_000;
+const databaseExecuteRequestSchema = z.object({
+  sql: z.string().trim().min(1).optional(),
+  type: z.enum(['postgresql', 'mongodb', 'auto']).optional().default('auto'),
+  collection: z.string().trim().min(1).optional(),
+  operation: z
+    .enum(['find', 'insertOne', 'updateOne', 'deleteOne', 'deleteMany', 'aggregate', 'countDocuments'])
+    .optional(),
+  filter: z.record(z.string(), z.unknown()).optional(),
+  document: z.record(z.string(), z.unknown()).optional(),
+  update: z.record(z.string(), z.unknown()).optional(),
+  pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
+});
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database operations are disabled in production.');
   }
 
-  const parsedBody = await parseObjectJsonBody(req, {
+  const parsedBody = await parseJsonBody(req, databaseExecuteRequestSchema, {
     logPrefix: 'databases.execute',
   });
   if (!parsedBody.ok) {
     return parsedBody.response;
   }
 
-  const parsed = parsedBody.data as {
-    sql?: string;
-    type?: 'postgresql' | 'mongodb' | 'auto';
-    // MongoDB fields
-    collection?: string;
-    operation?:
-      | 'find'
-      | 'insertOne'
-      | 'updateOne'
-      | 'deleteOne'
-      | 'deleteMany'
-      | 'aggregate'
-      | 'countDocuments';
-    filter?: Record<string, unknown>;
-    document?: Record<string, unknown>;
-    update?: Record<string, unknown>;
-    pipeline?: Record<string, unknown>[];
-  };
-  z.unknown().parse(parsed);
-
-  const requestedType = parsed.type ?? 'auto';
-  if (!['postgresql', 'mongodb', 'auto'].includes(requestedType)) {
-    throw badRequestError('Type must be postgresql, mongodb, or auto.');
-  }
+  const parsed = parsedBody.data;
+  const requestedType = parsed.type;
 
   const hasMongoIntent = Boolean(
     parsed.collection ||

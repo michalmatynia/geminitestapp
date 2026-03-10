@@ -7,6 +7,13 @@ import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/conte
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
+import {
+  buildGraphModelQueuedPayload,
+  buildGraphModelJobEnqueueRequest,
+  buildGraphModelJobPayload,
+  readEnqueuedGraphModelJobId,
+} from '@/shared/lib/ai-paths/core/runtime/graph-model-job';
+import { pollGraphJob } from '@/shared/lib/ai-paths/core/runtime/utils';
 
 import { pruneSingleCardinalityIncomingEdges } from './edge-cardinality-repair';
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
@@ -16,14 +23,6 @@ import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
 import { createRunId } from './runtime/utils';
 
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
-
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    const timer = window.setTimeout((): void => {
-      window.clearTimeout(timer);
-      resolve();
-    }, ms);
-  });
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const runtimeContextState = useRuntimeState();
@@ -276,68 +275,44 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
     try {
       const sourceOutputs = runtimeContextState.runtimeState.outputs?.[sourceNodeId] ?? {};
-      const payload = {
+      const payload = buildGraphModelJobPayload({
         prompt,
-        ...(selectedModelId ? { modelId: selectedModelId } : {}),
+        modelId: selectedModelId,
         temperature: modelConfig.temperature,
         maxTokens: modelConfig.maxTokens,
         vision: modelConfig.vision ?? false,
-        ...(modelConfig.systemPrompt?.trim()
-          ? { systemPrompt: modelConfig.systemPrompt.trim() }
-          : {}),
-        source: 'ai_paths',
-        graph: {
-          pathId: args.activePathId ?? undefined,
-          nodeId: aiNode.id,
-          nodeTitle: aiNode.title,
-          ...(selectedModelId ? { requestedModelId: selectedModelId } : {}),
-          runId: `preview-${createRunId()}`,
+        systemPrompt: modelConfig.systemPrompt?.trim() ?? null,
+        activePathId: args.activePathId,
+        nodeId: aiNode.id,
+        nodeTitle: aiNode.title,
+        runId: `preview-${createRunId()}`,
+        contextRegistry,
+        extraPayload: {
+          context: sourceOutputs,
         },
-        context: sourceOutputs,
-        ...(contextRegistry ? { contextRegistry } : {}),
-      };
-
-      const res = await aiJobsApi.enqueue({
-        productId:
-          (typeof sourceOutputs['productId'] === 'string' ? sourceOutputs['productId'] : '') ||
-          args.activePathId ||
-          'direct',
-        type: 'graph_model',
+      });
+      const enqueuePayload = buildGraphModelQueuedPayload({
         payload,
+        runId: payload.graph?.runId ?? `preview-${createRunId()}`,
       });
 
+      const res = await aiJobsApi.enqueue(
+        buildGraphModelJobEnqueueRequest({
+          productId:
+            (typeof sourceOutputs['productId'] === 'string' ? sourceOutputs['productId'] : '') ||
+            args.activePathId ||
+            'direct',
+          payload: enqueuePayload,
+        })
+      );
+
       if (!res.ok) throw new Error(res.error);
-      directJobId = res.data.jobId;
+      directJobId = readEnqueuedGraphModelJobId(res);
 
-      // Simple polling for direct AI prompt
-      let result = '';
-      let attempts = 0;
-      while (attempts < 30) {
-        const statusRes = await aiJobsApi.poll(directJobId);
-        if (!statusRes.ok) {
-          throw new Error(statusRes.error || 'Failed to fetch AI job status.');
-        }
-        if (statusRes.data.status === 'completed') {
-          const rawResult = statusRes.data.result;
-          if (typeof rawResult === 'string') {
-            result = rawResult;
-          } else if (rawResult && typeof rawResult === 'object') {
-            const nestedResult = (rawResult as Record<string, unknown>)['result'];
-            result =
-              typeof nestedResult === 'string' ? nestedResult : JSON.stringify(rawResult ?? '');
-          } else {
-            result = JSON.stringify(rawResult ?? '');
-          }
-          break;
-        }
-        if (statusRes.data.status === 'failed') {
-          throw new Error(statusRes.data.error || 'AI job failed.');
-        }
-        await sleep(2000);
-        attempts++;
-      }
-
-      if (!result) throw new Error('AI prompt timed out.');
+      const result = await pollGraphJob(directJobId, {
+        intervalMs: 2000,
+        maxAttempts: 30,
+      });
 
       setRuntimeState((prev: RuntimeState): RuntimeState => {
         const aiOutputs = prev.outputs?.[aiNode.id] ?? {};

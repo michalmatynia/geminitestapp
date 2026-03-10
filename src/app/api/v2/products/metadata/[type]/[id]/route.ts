@@ -18,14 +18,17 @@ const metadataIdParamSchema = z.object({
 export const GET = apiHandlerWithParams<{ type: string; id: string }>(GET_products_metadata_id_handler, {
   source: 'v2.products.metadata.[type].[id].GET',
   paramsSchema: metadataIdParamSchema,
+  requireAuth: true,
 });
 
 export const PUT = apiHandlerWithParams<{ type: string; id: string }>(PUT_products_metadata_id_handler, {
   source: 'v2.products.metadata.[type].[id].PUT',
   paramsSchema: metadataIdParamSchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ type: string; id: string }>(DELETE_products_metadata_id_handler, {
   source: 'v2.products.metadata.[type].[id].DELETE',
   paramsSchema: metadataIdParamSchema,
+  requireAuth: true,
 });

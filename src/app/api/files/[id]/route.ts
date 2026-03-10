@@ -6,8 +6,10 @@ import { DELETE_handler, PATCH_handler } from './handler';
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'files.[id].DELETE',
+  requireAuth: true,
 });
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'files.[id].PATCH',
+  requireAuth: true,
 });

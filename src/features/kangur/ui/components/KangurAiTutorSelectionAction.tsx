@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 import type { CSSProperties, JSX, MouseEvent } from 'react';
 
@@ -36,6 +36,7 @@ export function KangurAiTutorSelectionAction({
 
   return (
     <motion.div
+      data-kangur-ai-tutor-root='true'
       key='highlight-tooltip'
       data-testid='kangur-ai-tutor-selection-action'
       data-selection-placement={placement}

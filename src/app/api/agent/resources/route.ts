@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getAgentDiscoverySummary,
@@ -7,22 +8,21 @@ import {
   listAgentResources,
 } from '@/shared/lib/agent-discovery';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
-function parseBooleanFlag(value: string | null) {
-  if (value === 'true') {
-    return true;
-  }
+export const querySchema = z.object({
+  resourceId: optionalTrimmedQueryString(),
+  mode: optionalTrimmedQueryString(),
+  requiresLease: optionalBooleanQuerySchema(),
+  resourceType: optionalTrimmedQueryString(),
+});
 
-  if (value === 'false') {
-    return false;
-  }
-
-  return undefined;
-}
-
-const GET_handler = async (request: Request) => {
-  const { searchParams } = new URL(request.url);
-  const resourceId = searchParams.get('resourceId');
+const GET_handler = async (_request: Request, ctx: { query?: unknown }) => {
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const resourceId = query.resourceId;
 
   if (resourceId) {
     const resource = getAgentResource(resourceId);
@@ -43,9 +43,9 @@ const GET_handler = async (request: Request) => {
 
   return NextResponse.json({
     resources: listAgentResources({
-      mode: searchParams.get('mode'),
-      requiresLease: parseBooleanFlag(searchParams.get('requiresLease')),
-      resourceType: searchParams.get('resourceType'),
+      mode: query.mode ?? null,
+      requiresLease: query.requiresLease,
+      resourceType: query.resourceType ?? null,
     }),
     ...getAgentDiscoverySummary(),
   });
@@ -53,4 +53,6 @@ const GET_handler = async (request: Request) => {
 
 export const GET = apiHandler(GET_handler, {
   source: 'agent.resources.GET',
+  querySchema,
+  requireAuth: true,
 });

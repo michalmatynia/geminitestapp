@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-10T11:50:00.210Z
+Generated at: 2026-03-10T20:22:21.778Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4564
+- Files scanned: 4611
 - Errors: 0
 - Warnings: 0
 - Info: 21
@@ -47,7 +47,7 @@ Generated at: 2026-03-10T11:50:00.210Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:174 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:186 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx:234 | eslint-disable comment disabling: @next/next/no-img-element |
 | INFO | eslint-disable | src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx:304 | eslint-disable comment disabling: @next/next/no-img-element |
 | INFO | eslint-disable | src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx:198 | eslint-disable comment disabling: @next/next/no-img-element |
@@ -65,7 +65,7 @@ Generated at: 2026-03-10T11:50:00.210Z
 | INFO | eslint-disable | src/features/products/components/form/studio/StudioPreviewCanvas.tsx:37 | eslint-disable comment disabling: @next/next/no-img-element |
 | INFO | eslint-disable | src/features/products/components/ProductImageSlot.tsx:184 | eslint-disable comment disabling: @next/next/no-img-element |
 | INFO | eslint-disable | src/shared/contracts/integrations/index.ts:1 | eslint-disable comment disabling: import/order |
-| INFO | non-null-assertion | src/shared/lib/ai-paths/hooks/trigger-event-settings.ts:239 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/shared/lib/ai-paths/hooks/trigger-event-settings.ts:268 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/shared/ui/AgentPersonaMoodAvatar.tsx:42 | eslint-disable comment disabling: @next/next/no-img-element |
 | INFO | eslint-disable | src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx:12 | eslint-disable comment disabling: @next/next/no-img-element |
 

@@ -4,11 +4,15 @@ import { z } from 'zod';
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import {
+  productCreateInputSchema,
+  type ProductWithImages,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 import { ProductFiltersParsed, productFilterSchema } from '@/shared/lib/products/validations';
 
@@ -65,6 +69,14 @@ const attachTimingHeaders = (
   if (value) {
     response.headers.set('Server-Timing', value);
   }
+};
+
+const buildProductPayload = (
+  formData: FormData
+): Record<string, unknown> => {
+  const payload = formDataToObject(formData);
+  delete payload['images'];
+  return payload;
 };
 
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -138,12 +150,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!validation.success) {
     return validation.response;
   }
+  const payload = buildProductPayload(formData);
+  const validatedPayload = productCreateInputSchema.parse(payload);
 
   const idempotencyKey = req.headers.get('idempotency-key') ?? req.headers.get('x-idempotency-key');
-  const skuField = formData.get('sku');
-  if (idempotencyKey && typeof skuField === 'string' && skuField.trim()) {
+  if (idempotencyKey && validatedPayload.sku.trim()) {
     const existing: ProductWithImages | null = await CachedProductService.getProductBySku(
-      skuField.trim()
+      validatedPayload.sku.trim()
     );
     if (existing) {
       return NextResponse.json({

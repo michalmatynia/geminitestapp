@@ -21,6 +21,16 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
+const resolveBodyJson = async (
+  request: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<unknown> => {
+  if (ctx.body !== undefined) {
+    return ctx.body;
+  }
+  return readBodyJson(request);
+};
+
 export async function postKangurTtsProbeHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
@@ -30,7 +40,7 @@ export async function postKangurTtsProbeHandler(
     throw forbiddenError('Only parents or admins can probe Kangur server narration.');
   }
 
-  const payload = kangurLessonTtsProbeRequestSchema.parse(await readBodyJson(req));
+  const payload = kangurLessonTtsProbeRequestSchema.parse(await resolveBodyJson(req, ctx));
   const response = await probeKangurLessonNarrationBackend(payload);
 
   void logKangurServerEvent({

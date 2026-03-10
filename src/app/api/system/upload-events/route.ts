@@ -7,4 +7,5 @@ import { GET_handler, querySchema } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'system.upload-events.GET',
   querySchema,
+  requireAuth: true,
 });

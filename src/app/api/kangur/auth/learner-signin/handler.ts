@@ -17,7 +17,7 @@ export async function postKangurLearnerSignInHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const payload = parseKangurLearnerSignInPayload(
-    await readKangurAuthJsonBody(req, 'learner sign-in')
+    await readKangurAuthJsonBody(req, 'learner sign-in', ctx.body)
   );
   const learner = await verifyKangurLearnerPassword(payload.loginName, payload.password);
   if (!learner) {

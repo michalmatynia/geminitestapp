@@ -7,4 +7,5 @@ import { postCropSlotHandler } from './handler';
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(postCropSlotHandler, {
   source: 'image-studio.slots.[slotId].crop.POST',
+  requireAuth: true,
 });

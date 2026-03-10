@@ -12,8 +12,10 @@ export const PUT = apiHandlerWithParams<{ id: string }>(putValidatorPatternByIdH
   source: 'v2.products.validator-patterns.[id].PUT',
   parseJsonBody: true,
   bodySchema: updatePatternSchema,
+  requireAuth: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(deleteValidatorPatternByIdHandler, {
   source: 'v2.products.validator-patterns.[id].DELETE',
+  requireAuth: true,
 });

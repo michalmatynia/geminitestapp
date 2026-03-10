@@ -70,4 +70,34 @@ describe('pollGraphJob', () => {
     );
     expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(2);
   });
+
+  it('does not retry terminal failed job statuses into connection errors', async () => {
+    pollMock.mockResolvedValue({
+      ok: true,
+      data: {
+        status: 'failed',
+        error:
+          'AI Paths Model has no model assigned in AI Brain. Failing AI Paths node "Opis i Tytuł" <node-model-ctx>, run run-ctx-1, requested node model: none.',
+      },
+    });
+
+    await expect(pollGraphJob('job-terminal-failure', { intervalMs: 0, maxAttempts: 150 })).rejects.toThrow(
+      'AI Paths Model has no model assigned in AI Brain. Failing AI Paths node "Opis i Tytuł" <node-model-ctx>, run run-ctx-1, requested node model: none.'
+    );
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats cancelled job statuses as terminal failures', async () => {
+    pollMock.mockResolvedValue({
+      ok: true,
+      data: {
+        status: 'cancelled',
+      },
+    });
+
+    await expect(
+      pollGraphJob('job-cancelled', { intervalMs: 0, maxAttempts: 5 })
+    ).rejects.toThrow('AI job was canceled.');
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
+  });
 });

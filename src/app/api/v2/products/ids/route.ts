@@ -9,4 +9,5 @@ export const GET = apiHandler(GET_handler, {
   source: 'v2.products.ids.GET',
   querySchema: productFilterSchema,
   cacheControl: 'no-store',
+  requireAuth: true,
 });

@@ -1,5 +1,3 @@
-'use client';
-
 export type { AiPathAnalysisTriggerSectionProps } from './AiPathAnalysisTriggerSectionImpl';
 export {
   AiPathAnalysisTriggerProvider,

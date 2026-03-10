@@ -6,4 +6,5 @@ import { POST_handler } from './handler';
 
 export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {
   source: 'image-studio.sequences.[runId].cancel.POST',
+  requireAuth: true,
 });

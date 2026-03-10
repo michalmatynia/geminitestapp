@@ -11,4 +11,5 @@ export const GET = apiHandler(GET_handler, {
   cacheControl: 'no-store',
   querySchema: descriptionContextQuerySchema,
   rateLimitKey: 'search',
+  requireAuth: true,
 });

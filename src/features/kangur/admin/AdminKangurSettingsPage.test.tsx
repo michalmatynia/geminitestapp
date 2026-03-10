@@ -298,6 +298,61 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
+  it('edits onboarding copy through the structured AI Tutor content editor', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
+    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
+
+    expect(headlineInput).toHaveValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial.headline);
+
+    const nextContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      guestIntro: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro,
+        initial: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial,
+          headline: 'Witaj w StudiQ',
+        },
+      },
+    };
+    apiPostMock.mockResolvedValueOnce(nextContent);
+
+    fireEvent.change(headlineInput, {
+      target: { value: 'Witaj w StudiQ' },
+    });
+    fireEvent.click(saveButton);
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/content',
+        nextContent,
+        { logError: false }
+      )
+    );
+  });
+
+  it('blocks saving AI Tutor content when structured onboarding validation finds placeholder copy', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
+    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
+
+    fireEvent.change(headlineInput, {
+      target: { value: 'TODO uzupelnic naglowek' },
+    });
+
+    expect(await screen.findByText(/remove placeholder or unfinished onboarding copy/i)).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+    expect(apiPostMock).not.toHaveBeenCalledWith(
+      '/api/kangur/ai-tutor/content',
+      expect.anything(),
+      { logError: false }
+    );
+  });
+
   it('loads and saves parent verification email settings from the admin page', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();

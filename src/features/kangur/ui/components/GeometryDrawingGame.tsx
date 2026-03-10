@@ -188,6 +188,9 @@ export default function GeometryDrawingGame({
     'Plansza gotowa do rysowania klawiaturą.'
   );
   const sessionStartedAtRef = useRef(Date.now());
+  const handleFinishSession = (): void => {
+    onFinish();
+  };
 
   const rounds =
     SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
@@ -561,12 +564,7 @@ export default function GeometryDrawingGame({
               </KangurButton>
               <KangurButton
                 className='flex-1'
-                onClick={(() => {
-                  const handleFinishSession = (): void => {
-                    onFinish();
-                  };
-                  return handleFinishSession;
-                })()}
+                onClick={handleFinishSession}
                 size='lg'
                 variant='primary'
               >

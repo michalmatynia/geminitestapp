@@ -85,6 +85,7 @@ type UseKangurAiTutorPanelActionsInput = {
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
     | 'setPersistedSelectionRect'
+    | 'setSelectionConversationContext'
     | 'setSectionResponseComplete'
     | 'setSectionResponsePending'
     | 'setSelectionResponseComplete'
@@ -128,6 +129,7 @@ export function useKangurAiTutorPanelActions({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionResponseComplete,
@@ -275,6 +277,7 @@ export function useKangurAiTutorPanelActions({
     setDismissedSelectedText(activeSelectedText);
     clearSelection();
     setHighlightedText(null);
+    setSelectionConversationContext(null);
     setSelectionResponseComplete(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionPageRect(null);
@@ -293,6 +296,7 @@ export function useKangurAiTutorPanelActions({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     setSelectionResponseComplete,
     telemetryContext,
   ]);

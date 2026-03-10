@@ -488,6 +488,67 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
+  test('rebinds a remembered tutor thread to the newly selected lesson fragment instead of resurfacing the old topic', async ({
+    page,
+  }) => {
+    const {
+      chatRequests,
+      hintResponse,
+      lessonResponse,
+      lessonSelectedText,
+      lessonTitle,
+    } = await mockKangurTutorEnvironment(page, {
+      chatResponseDelayMs: 500,
+    });
+
+    await gotoTutorRoute(page, '/kangur');
+
+    await openDivisionQuestionFromGameHome(page);
+    await triggerTutorAvatar(page);
+
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+    await expect(tutorPanel).toBeVisible();
+    await tutorPanel.getByRole('button', { name: 'Podpowiedź' }).click();
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.surface).toBe('game');
+    expect(chatRequests[0]?.context?.focusKind).toBe('question');
+    await expect(tutorPanel).toContainText(hintResponse);
+
+    await page.mouse.click(24, 24);
+    await expect(tutorPanel).toHaveCount(0);
+
+    await gotoTutorRoute(page, '/kangur/lessons');
+    await page.getByRole('button', { name: lessonTitle }).click();
+
+    const selectedLessonBlock = page
+      .locator('[data-testid^="lesson-text-block-"]')
+      .filter({ hasText: lessonSelectedText })
+      .first();
+    await expect(selectedLessonBlock).toContainText(lessonSelectedText);
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-action')).toBeVisible();
+
+    await openTutorFromSelection(page);
+
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selected-text-preview')).toContainText(
+      lessonSelectedText
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toBeVisible();
+    await expect(tutorPanel).not.toContainText(hintResponse);
+
+    await expect.poll(() => chatRequests.length).toBe(2);
+    expect(chatRequests[1]?.context?.surface).toBe('lesson');
+    expect(chatRequests[1]?.context?.selectedText).toBe(lessonSelectedText);
+    expect(chatRequests[1]?.context?.focusKind).toBe('selection');
+
+    await expect(tutorPanel).toContainText(lessonResponse);
+    await expect(tutorPanel).not.toContainText(hintResponse);
+  });
+
   test('lets the learner drag the tutor onto a game section and starts explaining that section', async ({
     page,
   }) => {

@@ -89,7 +89,13 @@ export function KangurLessonNavigationBoundary({
     return <>{children}</>;
   }
 
-  return <KangurLessonNavigationProvider onBack={onBack}>{children}</KangurLessonNavigationProvider>;
+  const boundaryOnBack = onBack;
+
+  return (
+    <KangurLessonNavigationProvider onBack={boundaryOnBack}>
+      {children}
+    </KangurLessonNavigationProvider>
+  );
 }
 
 export const useKangurLessonBackAction = (

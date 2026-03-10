@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
@@ -21,6 +22,7 @@ const {
   setAuthUserPasswordMock,
   validatePasswordStrengthMock,
   readStoredSettingValueMock,
+  getKangurAiTutorContentMock,
 } = vi.hoisted(() => ({
   createAuthUserWithEmailMock: vi.fn(),
   findAuthUserByEmailMock: vi.fn(),
@@ -37,6 +39,7 @@ const {
   setAuthUserPasswordMock: vi.fn(),
   validatePasswordStrengthMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
+  getKangurAiTutorContentMock: vi.fn(),
 }));
 
 vi.mock('@/server/auth', () => ({
@@ -63,6 +66,9 @@ vi.mock('@/features/kangur/services/kangur-learner-repository', () => ({
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   readStoredSettingValue: readStoredSettingValueMock,
 }));
+vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
+  getKangurAiTutorContent: getKangurAiTutorContentMock,
+}));
 
 import {
   buildKangurParentAccountCreateDebugPayload,
@@ -75,6 +81,7 @@ import {
 describe('parent email auth service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getKangurAiTutorContentMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
     readStoredSettingValueMock.mockResolvedValue(null);
     shouldExposeAuthEmailDebugMock.mockReturnValue(true);
     getAuthSecurityProfileMock.mockResolvedValue({
@@ -264,7 +271,11 @@ describe('parent email auth service', () => {
       expect.objectContaining({
         to: 'parent@example.com',
         purpose: 'email_verification',
+        subject: DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.emailSubject,
         text: expect.stringContaining('verifyEmailToken=verify-link-1'),
+        html: expect.stringContaining(
+          DEFAULT_KANGUR_AI_TUTOR_CONTENT.parentVerification.emailUnlockLine
+        ),
       })
     );
     expect(result).toEqual({

@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   getExportDefaultInventoryId,
   setExportDefaultInventoryId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  baseDefaultInventoryPreferencePayloadSchema,
+  type BaseDefaultInventoryPreferenceResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-const requestSchema = z.object({
-  inventoryId: z.string().trim().min(1).nullable().optional(),
-});
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let inventoryId: string | null = null;
@@ -27,11 +26,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     );
     inventoryId = null;
   }
-  return NextResponse.json({ inventoryId });
+  const response: BaseDefaultInventoryPreferenceResponse = { inventoryId };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, requestSchema, {
+  const parsed = await parseJsonBody(req, baseDefaultInventoryPreferencePayloadSchema, {
     logPrefix: 'exports.base.default-inventory.POST',
   });
   if (!parsed.ok) {
@@ -39,5 +39,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const data = parsed.data;
   await setExportDefaultInventoryId(data.inventoryId ?? null);
-  return NextResponse.json({ inventoryId: data.inventoryId ?? null });
+  const response: BaseDefaultInventoryPreferenceResponse = {
+    inventoryId: data.inventoryId ?? null,
+  };
+  return NextResponse.json(response);
 }

@@ -1268,31 +1268,42 @@ export function KangurEmptyState({
   ...props
 }: KangurEmptyStateProps): React.JSX.Element {
   const centered = align === 'center';
+  const emptyStateAccent = accent;
+  const emptyStateClassName = className;
+  const emptyStateDescription = description;
+  const emptyStateIcon = icon;
+  const emptyStatePadding = padding;
+  const emptyStateTitle = title;
 
   return (
-    <KangurInfoCard
-      accent={accent}
-      className={cn('space-y-3', centered && 'text-center', className)}
-      dashed
-      padding={padding}
-      tone='muted'
+    <div
+      className={cn(
+        kangurInfoCardVariants({ dashed: true, padding: emptyStatePadding, tone: 'muted' }),
+        'space-y-3',
+        centered && 'text-center',
+        emptyStateClassName
+      )}
       {...props}
     >
-      {icon ? (
+      {emptyStateIcon ? (
         <div
           className={cn(
             'flex h-12 w-12 items-center justify-center rounded-2xl',
-            KANGUR_ACCENT_STYLES[accent].icon,
+            KANGUR_ACCENT_STYLES[emptyStateAccent].icon,
             centered && 'mx-auto'
           )}
         >
-          {icon}
+          {emptyStateIcon}
         </div>
       ) : null}
-      {title ? <div className='text-base font-bold text-slate-700'>{title}</div> : null}
-      {description ? <p className='text-sm leading-6 text-slate-500'>{description}</p> : null}
+      {emptyStateTitle ? (
+        <div className='text-base font-bold text-slate-700'>{emptyStateTitle}</div>
+      ) : null}
+      {emptyStateDescription ? (
+        <p className='text-sm leading-6 text-slate-500'>{emptyStateDescription}</p>
+      ) : null}
       {children}
-    </KangurInfoCard>
+    </div>
   );
 }
 
@@ -1367,44 +1378,62 @@ export function KangurMetricCard({
 }: KangurMetricCardProps): React.JSX.Element {
   const centered = align === 'center';
   const tone = accent === 'slate' ? 'neutral' : 'accent';
+  const metricAccent = accent;
+  const metricCardClassName = className;
+  const metricDescription = description;
+  const metricLabel = label;
+  const metricPadding = padding;
+  const metricTone = tone;
+  const metricValue = value;
+  const metricValueClassName = valueClassName;
 
   return (
-    <KangurInfoCard
-      accent={accent}
-      className={cn('space-y-1.5', centered && 'text-center', className)}
-      padding={padding}
-      tone={tone}
+    <div
+      className={cn(
+        kangurInfoCardVariants({ tone: metricTone, padding: metricPadding }),
+        metricTone === 'accent' &&
+          cn(KANGUR_ACCENT_STYLES[metricAccent].activeCard, KANGUR_ACCENT_STYLES[metricAccent].activeText),
+        'space-y-1.5',
+        centered && 'text-center',
+        metricCardClassName
+      )}
       {...props}
     >
       <div
         className={cn(
           'text-[11px] font-bold uppercase tracking-wide',
-          tone === 'accent' ? KANGUR_ACCENT_STYLES[accent].activeText : 'text-slate-500'
+          metricTone === 'accent'
+            ? KANGUR_ACCENT_STYLES[metricAccent].activeText
+            : 'text-slate-500'
         )}
       >
-        {label}
+        {metricLabel}
       </div>
       <div
         className={cn(
           'text-3xl font-extrabold leading-none',
-          tone === 'accent' ? KANGUR_ACCENT_STYLES[accent].activeText : 'text-slate-900',
-          valueClassName
+          metricTone === 'accent'
+            ? KANGUR_ACCENT_STYLES[metricAccent].activeText
+            : 'text-slate-900',
+          metricValueClassName
         )}
       >
-        {value}
+        {metricValue}
       </div>
-      {description ? (
+      {metricDescription ? (
         <div
           className={cn(
             'text-xs leading-5',
-            tone === 'accent' ? KANGUR_ACCENT_STYLES[accent].mutedText : 'text-slate-500'
+            metricTone === 'accent'
+              ? KANGUR_ACCENT_STYLES[metricAccent].mutedText
+              : 'text-slate-500'
           )}
         >
-          {description}
+          {metricDescription}
         </div>
       ) : null}
       {children}
-    </KangurInfoCard>
+    </div>
   );
 }
 

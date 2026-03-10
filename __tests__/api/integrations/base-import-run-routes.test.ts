@@ -1,5 +1,10 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  BaseImportRunDetailResponse,
+  BaseImportRunReportResponse,
+  BaseImportStartResponse,
+} from '@/shared/contracts/integrations';
 
 const getBaseImportRunDetailOrThrowMock = vi.hoisted(() => vi.fn());
 const resumeBaseImportRunMock = vi.hoisted(() => vi.fn());
@@ -24,20 +29,6 @@ import { POST as cancelPost } from '@/app/api/v2/integrations/imports/base/runs/
 import { GET as reportGet } from '@/app/api/v2/integrations/imports/base/runs/[runId]/report/route';
 import { POST as resumePost } from '@/app/api/v2/integrations/imports/base/runs/[runId]/resume/route';
 import { GET as runDetailGet } from '@/app/api/v2/integrations/imports/base/runs/[runId]/route';
-
-type BaseImportRunDetailResponse = {
-  run: { id: string; status: string };
-  items: unknown[];
-  pagination: { page: number; pageSize: number; totalItems: number; totalPages: number };
-};
-
-type BaseImportRunStartResponse = {
-  runId: string;
-  status: string;
-  queueJobId: string | null;
-  summaryMessage: string | null;
-  preflight: { ok: boolean; issues: string[]; checkedAt: string };
-};
 
 describe('base import run routes', () => {
   beforeEach(() => {
@@ -215,7 +206,7 @@ describe('base import run routes', () => {
       ),
       { params: Promise.resolve({ runId: 'run-report-1' }) }
     );
-    const payload = (await response.json()) as BaseImportRunDetailResponse;
+    const payload = (await response.json()) as BaseImportRunReportResponse;
 
     expect(response.status).toBe(200);
     expect(getBaseImportRunDetailOrThrowMock).toHaveBeenNthCalledWith(1, 'run-report-1', {

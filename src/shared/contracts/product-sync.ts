@@ -47,6 +47,14 @@ export const productSyncFieldRuleSchema = z.object({
 });
 export type ProductSyncFieldRule = z.infer<typeof productSyncFieldRuleSchema>;
 
+export const productSyncFieldRulePayloadSchema = z.object({
+  id: z.string().trim().min(1).optional(),
+  appField: productSyncAppFieldSchema,
+  baseField: z.string().trim().min(1),
+  direction: productSyncDirectionSchema,
+});
+export type ProductSyncFieldRulePayload = z.infer<typeof productSyncFieldRulePayloadSchema>;
+
 export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 'id'>> = [
   {
     appField: 'stock',
@@ -105,6 +113,37 @@ export const createProductSyncProfileSchema = productSyncProfileSchema.omit({
 });
 export type CreateProductSyncProfileInput = z.infer<typeof createProductSyncProfileSchema>;
 export type UpdateProductSyncProfileInput = Partial<CreateProductSyncProfileInput>;
+
+export const productSyncProfileCreatePayloadSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  enabled: z.boolean().optional(),
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+  catalogId: z.string().trim().nullable().optional(),
+  scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
+  batchSize: z.number().int().min(1).max(500).optional(),
+  conflictPolicy: productSyncConflictPolicySchema.optional(),
+  fieldRules: z.array(productSyncFieldRulePayloadSchema).optional(),
+});
+export type ProductSyncProfileCreatePayload = z.infer<typeof productSyncProfileCreatePayloadSchema>;
+
+export const productSyncProfileUpdatePayloadSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  enabled: z.boolean().optional(),
+  connectionId: z.string().trim().min(1).optional(),
+  inventoryId: z.string().trim().min(1).optional(),
+  catalogId: z.string().trim().nullable().optional(),
+  scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
+  batchSize: z.number().int().min(1).max(500).optional(),
+  conflictPolicy: productSyncConflictPolicySchema.optional(),
+  fieldRules: z.array(productSyncFieldRulePayloadSchema).optional(),
+});
+export type ProductSyncProfileUpdatePayload = z.infer<typeof productSyncProfileUpdatePayloadSchema>;
+
+export const productSyncProfilesResponseSchema = z.object({
+  profiles: z.array(productSyncProfileSchema),
+});
+export type ProductSyncProfilesResponse = z.infer<typeof productSyncProfilesResponseSchema>;
 
 export const productSyncRunStatusSchema = z.enum([
   'queued',
@@ -170,6 +209,36 @@ export const productSyncRunDetailSchema = z.object({
   }),
 });
 export type ProductSyncRunDetail = z.infer<typeof productSyncRunDetailSchema>;
+
+export const productSyncRunListQuerySchema = z.object({
+  profileId: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+export type ProductSyncRunListQuery = z.infer<typeof productSyncRunListQuerySchema>;
+
+export const productSyncRunsResponseSchema = z.object({
+  runs: z.array(productSyncRunRecordSchema),
+});
+export type ProductSyncRunsResponse = z.infer<typeof productSyncRunsResponseSchema>;
+
+export const productSyncRelinkPayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).optional(),
+  inventoryId: z.string().trim().min(1).optional(),
+  catalogId: z.string().trim().nullable().optional(),
+  limit: z.number().int().min(1).max(100_000).optional(),
+});
+export type ProductSyncRelinkPayload = z.infer<typeof productSyncRelinkPayloadSchema>;
+
+export const productSyncRelinkResponseSchema = z.object({
+  status: z.literal('queued'),
+  jobId: z.string(),
+});
+export type ProductSyncRelinkResponse = z.infer<typeof productSyncRelinkResponseSchema>;
+
+export const productSyncDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+});
+export type ProductSyncDeleteResponse = z.infer<typeof productSyncDeleteResponseSchema>;
 
 export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
 export const PRODUCT_SYNC_RUN_KEY_PREFIX = 'product_sync_run:';

@@ -2,6 +2,11 @@
 
 import { createContext, useContext } from 'react';
 
+import type {
+  IntegrationAllegroApiMethod,
+  IntegrationAllegroApiResponse,
+  IntegrationBaseApiResponse,
+} from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsApiConsole {
@@ -11,21 +16,16 @@ export interface IntegrationsApiConsole {
   setBaseApiParams: (params: string) => void;
   baseApiLoading: boolean;
   baseApiError: string | null;
-  baseApiResponse: { data: unknown } | null;
-  allegroApiMethod: string;
-  setAllegroApiMethod: (method: string) => void;
+  baseApiResponse: IntegrationBaseApiResponse | null;
+  allegroApiMethod: IntegrationAllegroApiMethod;
+  setAllegroApiMethod: (method: IntegrationAllegroApiMethod) => void;
   allegroApiPath: string;
   setAllegroApiPath: (path: string) => void;
   allegroApiBody: string;
   setAllegroApiBody: (body: string) => void;
   allegroApiLoading: boolean;
   allegroApiError: string | null;
-  allegroApiResponse: {
-    status: number;
-    statusText: string;
-    data?: unknown;
-    refreshed?: boolean;
-  } | null;
+  allegroApiResponse: IntegrationAllegroApiResponse | null;
 }
 
 export const IntegrationsApiConsoleContext = createContext<IntegrationsApiConsole | null>(null);

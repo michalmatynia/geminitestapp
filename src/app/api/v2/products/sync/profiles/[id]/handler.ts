@@ -1,40 +1,21 @@
 import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   deleteProductSyncProfile,
   getProductSyncProfile,
   updateProductSyncProfile,
 } from '@/features/product-sync/services/product-sync-repository';
-import type { ProductSyncProfile } from '@/shared/contracts/product-sync';
+import type {
+  ProductSyncDeleteResponse,
+  ProductSyncProfile,
+  ProductSyncProfileUpdatePayload,
+} from '@/shared/contracts/product-sync';
+import { productSyncProfileUpdatePayloadSchema } from '@/shared/contracts/product-sync';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-
-const fieldRuleSchema = z.object({
-  id: z.string().trim().min(1).optional(),
-  appField: z.enum(['stock', 'price', 'name_en', 'description_en', 'sku', 'ean', 'weight']),
-  baseField: z.string().trim().min(1),
-  direction: z.enum(['disabled', 'base_to_app', 'app_to_base']),
-});
-
-export const updateProfileSchema = z.object({
-  name: z.string().trim().min(1).optional(),
-  enabled: z.boolean().optional(),
-  connectionId: z.string().trim().min(1).optional(),
-  inventoryId: z.string().trim().min(1).optional(),
-  catalogId: z.string().trim().nullable().optional(),
-  scheduleIntervalMinutes: z
-    .number()
-    .int()
-    .min(1)
-    .max(24 * 60)
-    .optional(),
-  batchSize: z.number().int().min(1).max(500).optional(),
-  conflictPolicy: z.enum(['skip']).optional(),
-  fieldRules: z.array(fieldRuleSchema).optional(),
-});
+export const updateProfileSchema = productSyncProfileUpdatePayloadSchema;
 
 export async function GET_handler(
   _req: NextRequest,
@@ -53,7 +34,7 @@ export async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const body = ctx.body as z.infer<typeof updateProfileSchema>;
+  const body = ctx.body as ProductSyncProfileUpdatePayload;
   const patch: Partial<ProductSyncProfile> = {};
   if (body.name !== undefined) patch.name = body.name;
   if (body.enabled !== undefined) patch.enabled = body.enabled;
@@ -91,5 +72,6 @@ export async function DELETE_handler(
   if (!deleted) {
     throw notFoundError('Sync profile not found.', { profileId: params.id });
   }
-  return NextResponse.json({ ok: true });
+  const response: ProductSyncDeleteResponse = { ok: true };
+  return NextResponse.json(response);
 }

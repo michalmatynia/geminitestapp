@@ -78,6 +78,11 @@ export function useKangurAiTutorWidgetState() {
   const [highlightedSection, setHighlightedSection] = useState<SectionExplainContext | null>(null);
   const [hoveredSectionAnchorId, setHoveredSectionAnchorId] = useState<string | null>(null);
   const [selectionContextSpotlightTick, setSelectionContextSpotlightTick] = useState(0);
+  const [selectionConversationContext, setSelectionConversationContext] =
+    useState<PendingSelectionResponse | null>(null);
+  const [selectionGuidanceHandoffText, setSelectionGuidanceHandoffText] = useState<string | null>(
+    null
+  );
   const [selectionResponsePending, setSelectionResponsePending] =
     useState<PendingSelectionResponse | null>(null);
   const [selectionResponseComplete, setSelectionResponseComplete] =
@@ -171,8 +176,10 @@ export function useKangurAiTutorWidgetState() {
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
+    selectionConversationContext,
     selectionContextSpotlightTick,
     selectionExplainTimeoutRef,
+    selectionGuidanceHandoffText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -205,7 +212,9 @@ export function useKangurAiTutorWidgetState() {
     setPersistedSelectionRect,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionConversationContext,
     setSelectionContextSpotlightTick,
+    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setTutorNarrationObservedText,

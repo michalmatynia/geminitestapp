@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
@@ -23,6 +24,7 @@ export async function postKangurParentAccountCreateHandler(
     callbackUrl: body.callbackUrl,
     request: req,
   });
+  const tutorContent = await getKangurAiTutorContent('pl');
 
   return NextResponse.json({
     ok: true,
@@ -32,8 +34,8 @@ export async function postKangurParentAccountCreateHandler(
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
     message: result.created
-      ? 'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.'
-      : 'To konto rodzica czeka na potwierdzenie emaila. Wyslalismy nowy email potwierdzajacy. Konto uaktywni sie po weryfikacji adresu.',
+      ? tutorContent.parentVerification.createSuccessMessage
+      : tutorContent.parentVerification.createResentMessage,
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

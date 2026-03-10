@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi, fetchBaseProducts } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  integrationBaseApiPayloadSchema,
+  type IntegrationBaseApiResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -20,13 +23,6 @@ const normalizeNumericObjectKey = (value: string): string | null => {
   return Number.isFinite(parsed) ? String(parsed) : null;
 };
 
-const requestSchema = z
-  .object({
-    method: z.string().trim().min(1),
-    parameters: z.record(z.string(), z['unknown']()).optional(),
-  })
-  .passthrough();
-
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
@@ -40,7 +36,7 @@ export async function POST_handler(
   if (!id || !connectionId) {
     throw badRequestError('Integration id and connection id are required');
   }
-  const parsed = await parseJsonBody(_req, requestSchema, {
+  const parsed = await parseJsonBody(_req, integrationBaseApiPayloadSchema, {
     logPrefix: 'integrations.base.request.POST',
   });
   if (!parsed.ok) {
@@ -88,9 +84,11 @@ export async function POST_handler(
           ? Number(limitRaw)
           : undefined;
     const products = await fetchBaseProducts(baseToken, inventoryId, limit);
-    return NextResponse.json({
+    const response: IntegrationBaseApiResponse = {
       data: { products, count: products.length, inventoryId },
-    });
+    };
+
+    return NextResponse.json(response);
   }
 
   if (method === 'getInventoryProductDetailed') {
@@ -140,13 +138,15 @@ export async function POST_handler(
         Object.values(recordMap)[0] ??
         null;
     }
-    return NextResponse.json({
+    const response: IntegrationBaseApiResponse = {
       data: {
         product: product ?? null,
         inventoryId,
         productId,
       },
-    });
+    };
+
+    return NextResponse.json(response);
   }
 
   const methodCandidates = isOrdersLogRequest
@@ -177,5 +177,7 @@ export async function POST_handler(
     throw lastError ?? new Error('Base API request failed.');
   }
 
-  return NextResponse.json({ data: payload });
+  const response: IntegrationBaseApiResponse = { data: payload };
+
+  return NextResponse.json(response);
 }

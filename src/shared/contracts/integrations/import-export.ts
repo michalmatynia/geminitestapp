@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from '../base';
-import { type BaseImportStartResponse, type BaseImportRunDetailResponse } from './base-com';
+import {
+  baseInventorySchema,
+  baseWarehouseSchema,
+  importParameterCacheResponseSchema,
+  type BaseImportStartResponse,
+  type BaseImportRunDetailResponse,
+} from './base-com';
 import {
   integrationTemplateMappingSchema as sharedIntegrationTemplateMappingSchema,
   importTemplateParameterImportSchema as sharedImportTemplateParameterImportSchema,
@@ -168,6 +174,59 @@ export const catalogOptionSchema = z.object({
 export type CatalogOptionDto = z.infer<typeof catalogOptionSchema>;
 export type CatalogOption = CatalogOptionDto;
 
+export const baseImportInventoriesPayloadSchema = z.object({
+  action: z.literal('inventories'),
+  connectionId: z.string().trim().min(1),
+});
+
+export type BaseImportInventoriesPayload = z.infer<typeof baseImportInventoriesPayloadSchema>;
+
+export const baseImportInventoriesResponseSchema = z.object({
+  inventories: z.array(baseInventorySchema),
+  error: z.string().optional(),
+});
+
+export type BaseImportInventoriesResponse = z.infer<typeof baseImportInventoriesResponseSchema>;
+
+export const baseImportWarehousesPayloadSchema = z.object({
+  action: z.literal('warehouses'),
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+  includeAllWarehouses: z.boolean().optional(),
+});
+
+export type BaseImportWarehousesPayload = z.infer<typeof baseImportWarehousesPayloadSchema>;
+
+export const baseImportWarehousesResponseSchema = z.object({
+  warehouses: z.array(baseWarehouseSchema).optional(),
+  allWarehouses: z.array(baseWarehouseSchema).optional(),
+});
+
+export type BaseImportWarehousesResponse = z.infer<typeof baseImportWarehousesResponseSchema>;
+
+export const baseImportWarehousesDebugPayloadSchema = baseImportWarehousesPayloadSchema.extend({
+  action: z.literal('warehouses_debug'),
+});
+
+export type BaseImportWarehousesDebugPayload = z.infer<
+  typeof baseImportWarehousesDebugPayloadSchema
+>;
+
+export const baseImportWarehousesDebugResponseSchema = z.object({
+  warehouses: z.array(baseWarehouseSchema),
+  allWarehouses: z.array(baseWarehouseSchema),
+  inventories: z.array(baseInventorySchema),
+  raw: z.object({
+    inventory: z.unknown(),
+    inventories: z.unknown(),
+    all: z.unknown().nullable(),
+  }),
+});
+
+export type BaseImportWarehousesDebugResponse = z.infer<
+  typeof baseImportWarehousesDebugResponseSchema
+>;
+
 /**
  * Import List DTOs
  */
@@ -200,6 +259,55 @@ export const importListStatsSchema = z.object({
 
 export type ImportListStatsDto = z.infer<typeof importListStatsSchema>;
 export type ImportListStats = ImportListStatsDto;
+
+export const baseImportListPayloadSchema = z.object({
+  action: z.literal('list'),
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+  catalogId: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  uniqueOnly: z.boolean().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  pageSize: z.coerce.number().int().positive().optional(),
+  searchName: z.string().trim().optional(),
+  searchSku: z.string().trim().optional(),
+});
+
+export type BaseImportListPayload = z.infer<typeof baseImportListPayloadSchema>;
+
+export const baseImportListResponseSchema = importListStatsSchema.extend({
+  products: z.array(importListItemSchema).optional(),
+});
+
+export type BaseImportListResponse = z.infer<typeof baseImportListResponseSchema>;
+
+const optionalBaseImportParameterIdSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}, z.string().trim().min(1).optional());
+
+export const baseImportParametersPayloadSchema = z.object({
+  inventoryId: optionalBaseImportParameterIdSchema,
+  productId: optionalBaseImportParameterIdSchema,
+  connectionId: optionalBaseImportParameterIdSchema,
+  sampleSize: z.coerce.number().int().positive().max(20).optional(),
+  clearOnly: z.boolean().optional(),
+});
+
+export type BaseImportParametersPayload = z.infer<typeof baseImportParametersPayloadSchema>;
+
+export const baseImportParametersResponseSchema = importParameterCacheResponseSchema;
+
+export type BaseImportParametersResponse = z.infer<typeof baseImportParametersResponseSchema>;
+
+export const baseImportParametersClearResponseSchema = z.object({
+  ok: z.literal(true),
+});
+
+export type BaseImportParametersClearResponse = z.infer<
+  typeof baseImportParametersClearResponseSchema
+>;
 
 export const exportParameterDocSchema = z.object({
   key: z.string(),

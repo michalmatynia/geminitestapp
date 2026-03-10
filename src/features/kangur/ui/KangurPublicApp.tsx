@@ -1,9 +1,9 @@
 
-import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import {
-  KangurFeaturePageShell,
+  getKangurHomeHref,
   resolveKangurFeaturePageRoute,
-} from '@/features/kangur/ui/KangurFeaturePage';
+} from '@/features/kangur/config/routing';
+import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
@@ -24,6 +24,7 @@ export function KangurPublicApp({
     basePath
   );
   const homeHref = getKangurHomeHref(normalizedBasePath);
+  const isEmbedded = embedded;
 
   return (
     <KangurSurfaceClassSync>
@@ -32,7 +33,7 @@ export function KangurPublicApp({
           pageKey={pageKey}
           requestedPath={requestedPath}
           basePath={normalizedBasePath}
-          embedded={embedded}
+          embedded={isEmbedded}
         >
           <KangurFeaturePageShell />
         </KangurRoutingProvider>

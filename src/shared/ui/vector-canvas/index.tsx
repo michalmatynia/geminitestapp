@@ -76,7 +76,7 @@ export interface VectorCanvasProps {
 const MIN_VIEW_SCALE = 0.25;
 const MAX_VIEW_SCALE = 8;
 
-function VectorCanvasInner(props: VectorCanvasProps): React.JSX.Element {
+export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
   const context = useOptionalVectorCanvasContext();
 
   const {
@@ -368,10 +368,6 @@ function VectorCanvasInner(props: VectorCanvasProps): React.JSX.Element {
       </div>
     </VectorCanvasProvider>
   );
-}
-
-export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
-  return <VectorCanvasInner {...props} />;
 }
 
 export { VectorToolbar };

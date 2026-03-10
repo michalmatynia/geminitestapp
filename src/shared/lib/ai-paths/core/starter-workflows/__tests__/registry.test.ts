@@ -175,6 +175,13 @@ const buildStaleLiveParameterInferencePathConfig = (): PathConfig => {
     trigger: 'Product Modal - Infer Parameters',
     extensions: undefined,
     nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'router' && node.id === 'node-router-seed-params') {
+        return {
+          ...node,
+          inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+          outputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        };
+      }
       if (node.type === 'parser') {
         return {
           ...node,
@@ -210,6 +217,153 @@ const buildStaleLiveParameterInferencePathConfig = (): PathConfig => {
       }
       return node;
     }),
+  } as PathConfig;
+};
+
+const buildProvenanceOnlyStaleParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_parameter_inference_v2_provenance_only',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'router' && node.id === 'node-router-seed-params') {
+        return {
+          ...node,
+          inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+          outputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        };
+      }
+      return node;
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 13,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
+const buildMappingModeLegacyParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_parameter_inference_v2_randomized_live',
+    seededDefault: false,
+  });
+
+  const remappedNodeIds = new Map<string, string>();
+  (config.nodes ?? []).forEach((node, index) => {
+    remappedNodeIds.set(node.id, `node-${index.toString(16).padStart(24, '0')}`);
+  });
+
+  const remappedNodes = (config.nodes ?? []).map((node) => {
+    const remappedId = remappedNodeIds.get(node.id) ?? node.id;
+    if (node.type !== 'database') {
+      return {
+        ...node,
+        id: remappedId,
+        instanceId: remappedId,
+      };
+    }
+    const databaseConfig = node.config?.database;
+    if (databaseConfig?.operation !== 'update') {
+      return {
+        ...node,
+        id: remappedId,
+      };
+    }
+    return {
+      ...node,
+      id: remappedId,
+      instanceId: remappedId,
+      config: {
+        ...node.config,
+        database: {
+          ...databaseConfig,
+          updatePayloadMode: 'mapping',
+          updateTemplate: '',
+          mappings: [
+            {
+              sourcePath: 'parameters',
+              sourcePort: 'value',
+              targetPath: 'parameters',
+            },
+          ],
+        },
+      },
+    };
+  });
+
+  if (!remappedNodes.some((node) => node.type === 'database' && node.config?.database?.operation === 'update')) {
+    throw new Error('Expected starter_parameter_inference to include a database update node.');
+  }
+
+  return {
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    nodes: remappedNodes,
+    edges: (config.edges ?? []).map((edge, index) => ({
+      ...edge,
+      id: `edge-${index.toString(16).padStart(24, '0')}`,
+      from: remappedNodeIds.get(edge.from) ?? edge.from,
+      to: remappedNodeIds.get(edge.to) ?? edge.to,
+    })),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 13,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
+const buildV14ParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_parameter_inference_v14',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            writeOutcomePolicy: { onZeroAffected: 'fail' as const },
+          },
+        },
+      };
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 14,
+        seededDefault: false,
+      },
+    },
   } as PathConfig;
 };
 
@@ -402,6 +556,13 @@ describe('starter workflow registry', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveParameterInferencePathConfig());
     const parserNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'parser');
     const parserMappings = parserNode?.config?.parser?.mappings as Record<string, string> | undefined;
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
 
     expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
     expect(upgraded.changed).toBe(true);
@@ -412,5 +573,74 @@ describe('starter workflow registry', () => {
     );
     expect(parserMappings?.['title']).toBe('$.name_en');
     expect(parserMappings?.['content_en']).toBe('$.description_en');
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('upgrades stale parameter inference starter provenance on non-default path ids', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(
+      buildProvenanceOnlyStaleParameterInferencePathConfig()
+    );
+    const seedRouterNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.type === 'router' && node.id === 'node-router-seed-params'
+    );
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(seedRouterNode?.inputs).not.toContain('prompt');
+    expect(seedRouterNode?.outputs).not.toContain('prompt');
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('upgrades v14 parameter inference configs to repair writeOutcomePolicy on both update nodes', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildV14ParameterInferencePathConfig());
+    const updateNodes = (upgraded.config.nodes ?? []).filter(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(updateNodes.length).toBeGreaterThanOrEqual(2);
+    updateNodes.forEach((node) => {
+      expect(node.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+    });
+  });
+
+  it('fully replaces stale parameter inference graphs that still use mapping-mode database updates', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(
+      buildMappingModeLegacyParameterInferencePathConfig()
+    );
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(
+      upgraded.config.nodes.some(
+        (node) =>
+          node.type === 'database' &&
+          node.config?.database?.operation === 'update' &&
+          node.config?.database?.updatePayloadMode === 'mapping'
+      )
+    ).toBe(false);
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-router-seed-params')).toBe(true);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });
 });

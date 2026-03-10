@@ -126,7 +126,7 @@ export function KangurAiTutorSpotlightOverlays({
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={sectionDropHighlightStyle}
-            className='pointer-events-none fixed z-[70] rounded-[22px] border-2 border-amber-400/85 bg-amber-100/14 shadow-[0_0_0_8px_rgba(251,191,36,0.18)]'
+            className='pointer-events-none fixed z-[70] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
           />
         ) : null}
       </AnimatePresence>

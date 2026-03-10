@@ -36,6 +36,8 @@ function Harness(): React.JSX.Element {
   return (
     <div>
       <div data-testid='restore-label'>{content.navigation.restoreTutorLabel}</div>
+      <div data-testid='default-tutor-name'>{content.common.defaultTutorName}</div>
+      <div data-testid='narrator-source-label'>{content.narrator.registrySourceLabel}</div>
       <div data-testid='step-label'>
         {formatKangurAiTutorTemplate(content.homeOnboarding.stepLabelTemplate, {
           current: 2,
@@ -57,6 +59,12 @@ describe('KangurAiTutorContentContext', () => {
     expect(screen.getByTestId('restore-label')).toHaveTextContent(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation.restoreTutorLabel
     );
+    expect(screen.getByTestId('default-tutor-name')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
+    );
+    expect(screen.getByTestId('narrator-source-label')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.narrator.registrySourceLabel
+    );
     expect(screen.getByTestId('step-label')).toHaveTextContent('Krok 2 z 5');
   });
 
@@ -66,6 +74,14 @@ describe('KangurAiTutorContentContext', () => {
       navigation: {
         ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
         restoreTutorLabel: 'Przywróć AI Tutora',
+      },
+      common: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.common,
+        defaultTutorName: 'Przewodnik',
+      },
+      narrator: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.narrator,
+        registrySourceLabel: 'Czytnik tutora',
       },
       homeOnboarding: {
         ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.homeOnboarding,
@@ -82,6 +98,8 @@ describe('KangurAiTutorContentContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('restore-label')).toHaveTextContent('Przywróć AI Tutora');
     });
+    expect(screen.getByTestId('default-tutor-name')).toHaveTextContent('Przewodnik');
+    expect(screen.getByTestId('narrator-source-label')).toHaveTextContent('Czytnik tutora');
     expect(screen.getByTestId('step-label')).toHaveTextContent('Etap 2 z 5');
   });
 });

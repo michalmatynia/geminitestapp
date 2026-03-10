@@ -4,13 +4,14 @@ import { fetchBaseProducers } from '@/features/integrations/server';
 import { getExternalProducerRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import {
+  marketplaceConnectionRequestSchema,
+  type MarketplaceConnectionRequest,
+  type MarketplaceFetchResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
-
-type FetchMarketplaceProducersRequest = {
-  connectionId: string;
-};
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 
@@ -22,14 +23,14 @@ export async function POST_handler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const parsed = await parseObjectJsonBody(request, {
+  const parsed = await parseJsonBody(request, marketplaceConnectionRequestSchema, {
     logPrefix: 'marketplace.producers.fetch',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
 
-  const body = parsed.data as FetchMarketplaceProducersRequest;
+  const body: MarketplaceConnectionRequest = parsed.data;
   const { connectionId } = body;
 
   if (!connectionId) {
@@ -66,20 +67,24 @@ export async function POST_handler(
   });
 
   if (producers.length === 0) {
-    return NextResponse.json({
+    const response: MarketplaceFetchResponse = {
       fetched: 0,
       total: 0,
       message:
         'No producers found in Base.com. Verify producer/manufacturer records exist in the selected inventory.',
-    });
+    };
+
+    return NextResponse.json(response);
   }
 
   const externalProducerRepo = getExternalProducerRepository();
   const syncedCount = await externalProducerRepo.syncFromBase(connectionId, producers);
 
-  return NextResponse.json({
+  const response: MarketplaceFetchResponse = {
     fetched: syncedCount,
     total: producers.length,
     message: `Successfully synced ${syncedCount} producers from Base.com`,
-  });
+  };
+
+  return NextResponse.json(response);
 }

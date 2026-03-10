@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
@@ -19,7 +20,6 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 import {
   getPageRect,
   isSectionGuidedTutorTarget,
-  isSelectionGuidedTutorTarget,
 } from './KangurAiTutorWidget.helpers';
 
 import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
@@ -57,12 +57,56 @@ const buildSectionExplainPrompt = (
   return prompt.defaultPrompt;
 };
 
+export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
+  activeFocusKind: string | null;
+  activeSelectedText: string | null;
+  isOpen: boolean;
+  selectionGuidanceHandoffText: string | null;
+  setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
+  setSelectionGuidanceHandoffText: (value: string | null) => void;
+}): void {
+  const {
+    activeFocusKind,
+    activeSelectedText,
+    isOpen,
+    selectionGuidanceHandoffText,
+    setGuidedTutorTarget,
+    setSelectionGuidanceHandoffText,
+  } = input;
+
+  useEffect(() => {
+    if (
+      !selectionGuidanceHandoffText ||
+      !isOpen ||
+      activeFocusKind !== 'selection' ||
+      activeSelectedText !== selectionGuidanceHandoffText
+    ) {
+      return;
+    }
+
+    setGuidedTutorTarget((current) =>
+      current?.mode === 'selection' && current.selectedText === selectionGuidanceHandoffText
+        ? null
+        : current
+    );
+    setSelectionGuidanceHandoffText(null);
+  }, [
+    activeFocusKind,
+    activeSelectedText,
+    isOpen,
+    selectionGuidanceHandoffText,
+    setGuidedTutorTarget,
+    setSelectionGuidanceHandoffText,
+  ]);
+}
+
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
   clearSelection: () => void;
   handleOpenChat: (reason: 'section_explain' | 'selection_explain') => void;
   motionProfile: Pick<TutorMotionProfile, 'guidedAvatarTransition'>;
   prefersReducedMotion: boolean;
+  resetAskModalState: () => void;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   sendMessage: KangurAiTutorContextValue['sendMessage'];
   setDismissedSelectedText: (value: string | null) => void;
@@ -74,6 +118,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   setPersistedSelectionContainerRect: (value: DOMRect | null) => void;
   setPersistedSelectionPageRect: (value: DOMRect | null) => void;
   setPersistedSelectionRect: (value: DOMRect | null) => void;
+  setSelectionGuidanceHandoffText: (value: string | null) => void;
   setSectionResponseComplete: (value: SectionExplainContext | null) => void;
   setSectionResponsePending: (value: SectionExplainContext | null) => void;
   setSelectionContextSpotlightTick: Dispatch<SetStateAction<number>>;
@@ -91,6 +136,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     handleOpenChat,
     motionProfile,
     prefersReducedMotion,
+    resetAskModalState,
     selectionExplainTimeoutRef,
     sendMessage,
     setDismissedSelectedText,
@@ -102,6 +148,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceHandoffText,
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionContextSpotlightTick,
@@ -197,6 +244,9 @@ export function useKangurAiTutorGuidedFlow(input: {
         selectionExplainTimeoutRef.current = null;
       }
 
+      setSelectionGuidanceHandoffText(null);
+      resetAskModalState();
+
       const anchorRect = anchor.getRect();
       const sectionLabel = anchor.metadata?.label ?? null;
       const nextSection: SectionExplainContext = {
@@ -221,7 +271,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setHighlightedSection(nextSection);
       setHoveredSectionAnchorId(null);
       setHasNewMessage(false);
-      focusSectionRect(anchorRect);
+      focusSectionRect(anchorRect, { spotlight: true });
       trackKangurClientEvent('kangur_ai_tutor_section_guidance_started', {
         ...telemetryContext,
         sectionId: anchor.id,
@@ -260,6 +310,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       handleOpenChat,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
+      resetAskModalState,
       selectionExplainTimeoutRef,
       sendMessage,
       setDismissedSelectedText,
@@ -271,6 +322,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
+      setSelectionGuidanceHandoffText,
       setSectionResponseComplete,
       setSectionResponsePending,
       setSelectionResponseComplete,
@@ -287,6 +339,9 @@ export function useKangurAiTutorGuidedFlow(input: {
         window.clearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
+
+      setSelectionGuidanceHandoffText(null);
+      resetAskModalState();
 
       trackKangurClientEvent('kangur_ai_tutor_selection_guidance_started', {
         ...telemetryContext,
@@ -310,9 +365,7 @@ export function useKangurAiTutorGuidedFlow(input: {
         : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000 * 0.9));
       selectionExplainTimeoutRef.current = window.setTimeout(() => {
         selectionExplainTimeoutRef.current = null;
-        setGuidedTutorTarget((current) =>
-          isSelectionGuidedTutorTarget(current) ? null : current
-        );
+        setSelectionGuidanceHandoffText(selectionText);
         handleOpenChat('selection_explain');
         void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
           promptMode: 'selected_text',
@@ -331,8 +384,10 @@ export function useKangurAiTutorGuidedFlow(input: {
       handleOpenChat,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
+      resetAskModalState,
       selectionExplainTimeoutRef,
       sendMessage,
+      setSelectionGuidanceHandoffText,
       setGuidedTutorTarget,
       setHasNewMessage,
       setSelectionResponseComplete,

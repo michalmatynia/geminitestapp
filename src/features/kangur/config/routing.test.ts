@@ -11,6 +11,7 @@ import {
   getKangurInternalQueryParamName,
   normalizeKangurRequestedPath,
   readKangurUrlParam,
+  resolveKangurFeaturePageRoute,
   resolveKangurPublicBasePathFromHref,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
@@ -38,6 +39,19 @@ describe('kangur routing config', () => {
     expect(getKangurHomeHref('/')).toBe('/');
     expect(getKangurHomeHref('/kangur')).toBe('/kangur');
     expect(getKangurHomeHref(embeddedBasePath)).toBe('/home?preview=1');
+  });
+
+  it('resolves the feature page route without keeping the compatibility login slug in the path', () => {
+    expect(resolveKangurFeaturePageRoute(['login'], '/')).toEqual({
+      normalizedBasePath: '/',
+      pageKey: 'Game',
+      requestedPath: '/',
+    });
+    expect(resolveKangurFeaturePageRoute(['parent-dashboard'], '/admin/kangur')).toEqual({
+      normalizedBasePath: '/admin/kangur',
+      pageKey: 'ParentDashboard',
+      requestedPath: '/admin/kangur/parent-dashboard',
+    });
   });
 
   it('builds login hrefs for both root-owned and /kangur-owned public mounts', () => {

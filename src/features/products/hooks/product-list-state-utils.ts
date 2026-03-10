@@ -32,6 +32,14 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const OPAQUE_CATEGORY_ID_PATTERN =
+  /^(?:[a-f0-9]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
 const toMillis = (value: unknown): number | null => {
   if (value instanceof Date) {
     const time = value.getTime();
@@ -65,18 +73,61 @@ export const isIncomingProductDetailNewer = (
 };
 
 export const resolveCategoryLabelByLocale = (
-  category: ProductCategory,
+  category: ProductCategory | Record<string, unknown>,
   locale: 'name_en' | 'name_pl' | 'name_de'
 ): string => {
-  const localizedName = toTrimmedString(category[locale]);
+  const record = toRecord(category) ?? {};
+  const localizedName = toTrimmedString(record[locale]);
   if (localizedName) return localizedName;
 
   return (
-    toTrimmedString(category.name_en) ||
-    toTrimmedString(category.name) ||
-    toTrimmedString(category.name_pl) ||
-    toTrimmedString(category.name_de)
+    toTrimmedString(record['name_en']) ||
+    toTrimmedString(record['name']) ||
+    toTrimmedString(record['name_pl']) ||
+    toTrimmedString(record['name_de'])
   );
+};
+
+export const resolveCategoryRecordId = (
+  category: ProductCategory | Record<string, unknown>
+): string => {
+  const record = toRecord(category) ?? {};
+  return (
+    toTrimmedString(record['id']) ||
+    toTrimmedString(record['_id']) ||
+    toTrimmedString(record['categoryId'])
+  );
+};
+
+export const buildCategoryNameById = (
+  grouped: Record<string, Array<ProductCategory | Record<string, unknown>> | undefined>,
+  locale: 'name_en' | 'name_pl' | 'name_de'
+): Map<string, string> => {
+  const map = new Map<string, string>();
+  for (const categories of Object.values(grouped)) {
+    if (!Array.isArray(categories)) continue;
+    for (const category of categories) {
+      const categoryId = resolveCategoryRecordId(category);
+      if (!categoryId || map.has(categoryId)) continue;
+      const label = resolveCategoryLabelByLocale(category, locale);
+      if (!label) continue;
+      map.set(categoryId, label);
+    }
+  }
+  return map;
+};
+
+export const resolveProductCategoryDisplayLabel = (
+  categoryId: string | null | undefined,
+  categoryNameById: ReadonlyMap<string, string>
+): string => {
+  const normalizedCategoryId = toTrimmedString(categoryId);
+  if (!normalizedCategoryId) return 'Unassigned';
+
+  const label = toTrimmedString(categoryNameById.get(normalizedCategoryId));
+  if (label) return label;
+
+  return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
 
 export const resolveProductCategoryId = (product: ProductWithImages): string => {

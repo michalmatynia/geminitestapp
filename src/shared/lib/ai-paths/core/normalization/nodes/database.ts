@@ -77,17 +77,23 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
   const updateTemplate = normalizeTemplateText(databaseConfig.updateTemplate ?? '');
   const rawMappings = databaseConfig.mappings ?? [];
+  const inferredUseMongoActions =
+    databaseConfig.useMongoActions ??
+    Boolean(databaseConfig.actionCategory || databaseConfig.action);
+  const shouldPreserveExplicitCustomUpdateMode =
+    databaseConfig.operation === 'update' &&
+    databaseConfig.updatePayloadMode === 'custom' &&
+    rawMappings.length > 0 &&
+    (inferredUseMongoActions || Boolean(databaseConfig.parameterInferenceGuard));
   const derivedMappings =
     databaseConfig.operation === 'update' &&
     databaseConfig.updatePayloadMode === 'custom' &&
-    rawMappings.length > 0
+    rawMappings.length > 0 &&
+    !shouldPreserveExplicitCustomUpdateMode
       ? deriveMappingsFromSimpleUpdateTemplate(updateTemplate)
       : null;
   const mappings = derivedMappings ?? rawMappings;
   const forcedInputs = ['result', 'content_en', 'productId', 'entityId'];
-  const inferredUseMongoActions =
-    databaseConfig.useMongoActions ??
-    Boolean(databaseConfig.actionCategory || databaseConfig.action);
   const parameterInferenceGuard = databaseConfig.parameterInferenceGuard
     ? {
       enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,

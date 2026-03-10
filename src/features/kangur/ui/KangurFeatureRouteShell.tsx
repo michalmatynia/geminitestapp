@@ -64,6 +64,7 @@ export function KangurFeatureRouteShell({
   const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
   const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+  const isEmbedded = embedded;
 
   return (
     <div
@@ -74,7 +75,7 @@ export function KangurFeatureRouteShell({
         pageKey={pageKey}
         requestedPath={requestedPath}
         basePath={normalizedBasePath}
-        embedded={embedded}
+        embedded={isEmbedded}
       >
         <KangurFeaturePageShell />
       </KangurRoutingProvider>

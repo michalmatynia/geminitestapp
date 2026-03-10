@@ -1,5 +1,6 @@
 
 import type {
+  TagMappingAssignment,
   TagMapping,
   TagMappingCreateInput,
   TagMappingUpdateInput,
@@ -25,7 +26,7 @@ export type TagMappingRepository = {
   ) => Promise<TagMappingWithDetails[]>;
   bulkUpsert: (
     connectionId: string,
-    mappings: { internalTagId: string; externalTagId: string | null }[]
+    mappings: TagMappingAssignment[]
   ) => Promise<number>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
@@ -198,10 +199,10 @@ export function getTagMappingRepository(): TagMappingRepository {
       return records.map((record: EnrichedTagMapping) => toDetails(record));
     },
 
-    async bulkUpsert(
-      connectionId: string,
-      mappings: { internalTagId: string; externalTagId: string | null }[]
-    ): Promise<number> {
+  async bulkUpsert(
+    connectionId: string,
+    mappings: TagMappingAssignment[]
+  ): Promise<number> {
       let count = 0;
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const mapping of mappings) {

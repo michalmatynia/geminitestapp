@@ -696,6 +696,7 @@ export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
 }: KangurAiTutorSessionSyncProps): void => {
+  const tutorContent = useKangurAiTutorContent();
   const registry = useContext(KangurAiTutorSessionRegistryContext);
   const tokenRef = useRef(Symbol('kangur-ai-tutor-session'));
   const setRegistration = registry?.setRegistration;
@@ -750,14 +751,14 @@ export const useKangurAiTutorSessionSync = ({
     () =>
       registry && learnerId && normalizedSessionContext
         ? {
-          label: 'Kangur AI tutor session',
+          label: tutorContent.common.sessionRegistryLabel,
           refs: buildKangurAiTutorContextRegistryRefs({
             learnerId,
             context: normalizedSessionContext,
           }),
         }
         : null,
-    [registry, learnerId, normalizedSessionContext]
+    [learnerId, normalizedSessionContext, registry, tutorContent.common.sessionRegistryLabel]
   );
 
   useRegisterContextRegistryPageSource('kangur-ai-tutor-session', registrySource);
@@ -821,7 +822,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const authUser = authState?.user ?? null;
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
 
-  const activeLearnerId = activeRegistration?.learnerId ?? null;
+  const activeLearnerId = activeRegistration?.learnerId ?? authUser?.activeLearner?.id ?? null;
   const activeSessionContext = activeRegistration?.sessionContext ?? null;
   const activeSessionKey = activeRegistration?.sessionKey ?? null;
 
@@ -980,7 +981,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
 
     return agentPersonas.find((persona) => persona.id === personaId) ?? null;
   }, [agentPersonas, effectiveTutorPersonaId]);
-  const tutorName = tutorPersona?.name ?? 'Pomocnik';
+  const tutorName = tutorPersona?.name ?? tutorContent.common.defaultTutorName;
   const requestedTutorMoodId = useMemo<AgentPersonaMoodId>(() => {
     if (isLoading) {
       return 'thinking';

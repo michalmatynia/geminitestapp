@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   resumeBaseImportRun,
@@ -7,13 +6,13 @@ import {
   updateBaseImportRunQueueJob,
 } from '@/features/integrations/server';
 import { enqueueBaseImportRunJob } from '@/features/integrations/server';
+import type {
+  BaseImportStartResponse,
+} from '@/shared/contracts/integrations';
+import { baseImportRunResumePayloadSchema } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const requestSchema = z.object({
-  statuses: z
-    .array(z.enum(['pending', 'processing', 'imported', 'updated', 'skipped', 'failed']))
-    .optional(),
-});
+const requestSchema = baseImportRunResumePayloadSchema;
 
 export async function POST_handler(
   req: NextRequest,
@@ -35,7 +34,8 @@ export async function POST_handler(
   });
   const responseRun = await updateBaseImportRunQueueJob(resumed.id, queueJobId);
 
-  return NextResponse.json(toStartResponse(responseRun), {
+  const response: BaseImportStartResponse = toStartResponse(responseRun);
+  return NextResponse.json(response, {
     headers: {
       'Cache-Control': 'no-store',
     },

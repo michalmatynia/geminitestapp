@@ -149,6 +149,9 @@ export default function AddingSynthesisGame({
   const [bestStreak, setBestStreak] = useState(0);
   const [perfectHits, setPerfectHits] = useState(0);
   const [summary, setSummary] = useState<GameSummary | null>(null);
+  const handleFinishSession = (): void => {
+    onFinish();
+  };
 
   const noteStartedAtRef = useRef<number | null>(null);
   const noteIntervalRef = useRef<number | null>(null);
@@ -479,12 +482,7 @@ export default function AddingSynthesisGame({
                 type='button'
                 size='lg'
                 variant='surface'
-                onClick={(() => {
-                  const handleFinishLesson = (): void => {
-                    onFinish();
-                  };
-                  return handleFinishLesson;
-                })()}
+                onClick={handleFinishSession}
               >
                 Wroc do Dodawania
               </KangurButton>
@@ -545,7 +543,12 @@ export default function AddingSynthesisGame({
                 <RefreshCw className='h-4 w-4' />
                 Zagraj jeszcze raz
               </KangurButton>
-              <KangurButton type='button' size='lg' variant='surface' onClick={onFinish}>
+              <KangurButton
+                type='button'
+                size='lg'
+                variant='surface'
+                onClick={handleFinishSession}
+              >
                 Wroc do Dodawania
               </KangurButton>
             </div>
@@ -783,7 +786,7 @@ export default function AddingSynthesisGame({
               size='sm'
               variant='ghost'
               className='mt-4'
-              onClick={onFinish}
+              onClick={handleFinishSession}
             >
               Zakoncz probe
             </KangurButton>

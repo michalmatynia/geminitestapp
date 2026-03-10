@@ -14,6 +14,13 @@ const {
   kangurRoutingProviderMock: vi.fn(),
 }));
 
+const mockKangurRoutingState = {
+  pageKey: null as string | null,
+  requestedPath: '/',
+  basePath: '/kangur',
+  embedded: false,
+};
+
 vi.mock('@/features/kangur/observability/client', () => ({
   setKangurClientObservabilityContext: setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,
@@ -28,11 +35,16 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
     requestedPath?: string;
     basePath: string;
     embedded: boolean;
-    children: ReactNode;
+      children: ReactNode;
   }) => {
     kangurRoutingProviderMock(props);
+    mockKangurRoutingState.pageKey = props.pageKey ?? null;
+    mockKangurRoutingState.requestedPath = props.requestedPath ?? '';
+    mockKangurRoutingState.basePath = props.basePath;
+    mockKangurRoutingState.embedded = props.embedded;
     return <div data-testid='kangur-routing-provider'>{children}</div>;
   },
+  useKangurRoutingState: () => ({ ...mockKangurRoutingState }),
 }));
 
 vi.mock('@/features/kangur/ui/KangurFeatureApp', () => ({

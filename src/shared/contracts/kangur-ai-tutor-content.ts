@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import {
-  KANGUR_TUTOR_MOOD_PRESETS,
+  KANGUR_TUTOR_MOOD_IDS,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
 
@@ -20,11 +20,94 @@ const tutorMoodContentSchema = z.object({
   description: tutorCopySchema,
 });
 const tutorCopyListSchema = z.array(tutorCopySchema).min(1);
+const DEFAULT_TUTOR_MOOD_CONTENT: Record<KangurTutorMoodId, { label: string; description: string }> = {
+  neutral: {
+    label: 'Neutralny',
+    description: 'Stabilny punkt wyjscia, gdy nie potrzeba silniejszego tonu.',
+  },
+  thinking: {
+    label: 'Zamyslony',
+    description: 'Tutor rozwaza kolejny krok i porzadkuje wskazowki.',
+  },
+  focused: {
+    label: 'Skupiony',
+    description: 'Tutor pilnuje biezacego zadania i prowadzi przez konkretny fragment.',
+  },
+  careful: {
+    label: 'Ostrozny',
+    description: 'Tutor zwalnia tempo i dba o precyzje kolejnych krokow.',
+  },
+  curious: {
+    label: 'Ciekawy',
+    description: 'Tutor zacheca do odkrywania i zadawania pytan.',
+  },
+  encouraging: {
+    label: 'Dodajacy otuchy',
+    description: 'Tutor wzmacnia wysilek ucznia i pomaga ruszyc dalej.',
+  },
+  motivating: {
+    label: 'Motywujacy',
+    description: 'Tutor podtrzymuje energie i chec do dalszej pracy.',
+  },
+  playful: {
+    label: 'Zabawowy',
+    description: 'Tutor utrzymuje lekki, bardziej grywalny ton rozmowy.',
+  },
+  calm: {
+    label: 'Spokojny',
+    description: 'Tutor obniza napiecie i porzadkuje sytuacje krok po kroku.',
+  },
+  patient: {
+    label: 'Cierpliwy',
+    description: 'Tutor daje wiecej czasu i wraca do podstaw bez presji.',
+  },
+  gentle: {
+    label: 'Lagodny',
+    description: 'Tutor prowadzi delikatnie i ogranicza nadmiar bodzcow.',
+  },
+  reassuring: {
+    label: 'Uspokajajacy',
+    description: 'Tutor wzmacnia poczucie bezpieczenstwa i zmniejsza stres.',
+  },
+  empathetic: {
+    label: 'Empatyczny',
+    description: 'Tutor rozpoznaje trudnosc ucznia i dopasowuje ton wsparcia.',
+  },
+  supportive: {
+    label: 'Wspierajacy',
+    description: 'Tutor aktywnie podtrzymuje ucznia w biezacej probie.',
+  },
+  reflective: {
+    label: 'Refleksyjny',
+    description: 'Tutor pomaga przeanalizowac, co juz sie wydarzylo i czego uczy.',
+  },
+  determined: {
+    label: 'Zdeterminowany',
+    description: 'Tutor prowadzi do jednego konkretnego nastepnego kroku.',
+  },
+  confident: {
+    label: 'Pewny siebie',
+    description: 'Tutor daje krotsze wskazowki, bo uczen radzi sobie coraz lepiej.',
+  },
+  proud: {
+    label: 'Dumny',
+    description: 'Tutor podkresla postep i realnie docenia osiagniecia ucznia.',
+  },
+  happy: {
+    label: 'Radosny',
+    description: 'Tutor utrzymuje cieply, pozytywny ton po udanej pracy.',
+  },
+  celebrating: {
+    label: 'Swietujacy',
+    description: 'Tutor mocno zaznacza sukces lub wazny przelom ucznia.',
+  },
+};
 
 export const kangurAiTutorContentSchema = z.object({
   locale: tutorCopySchema.default('pl'),
   version: z.number().int().positive().default(1),
   common: z.object({
+    defaultTutorName: tutorCopySchema,
     openTutorAria: tutorCopySchema,
     closeTutorAria: tutorCopySchema,
     closeAria: tutorCopySchema,
@@ -38,6 +121,7 @@ export const kangurAiTutorContentSchema = z.object({
     sendAria: tutorCopySchema,
     questionInputAria: tutorCopySchema,
     sendFailureFallback: tutorCopySchema,
+    sessionRegistryLabel: tutorCopySchema,
   }),
   narrator: z.object({
     readLabel: tutorCopySchema,
@@ -45,6 +129,7 @@ export const kangurAiTutorContentSchema = z.object({
     resumeLabel: tutorCopySchema,
     helpTitleSuffix: tutorCopySchema,
     chatTitleSuffix: tutorCopySchema,
+    registrySourceLabel: tutorCopySchema,
   }),
   navigation: z.object({
     restoreTutorLabel: tutorCopySchema,
@@ -373,6 +458,27 @@ export const kangurAiTutorContentSchema = z.object({
       uiModeStatic: tutorCopySchema,
     }),
   }),
+  usageApi: z.object({
+    availabilityErrors: z.object({
+      disabled: tutorCopySchema,
+      emailUnverified: tutorCopySchema,
+      missingContext: tutorCopySchema,
+      lessonsDisabled: tutorCopySchema,
+      testsDisabled: tutorCopySchema,
+      reviewAfterAnswerOnly: tutorCopySchema,
+    }),
+  }),
+  parentVerification: z.object({
+    createSuccessMessage: tutorCopySchema,
+    createResentMessage: tutorCopySchema,
+    verifySuccessMessage: tutorCopySchema,
+    emailSubject: tutorCopySchema,
+    emailGreetingTemplate: tutorCopySchema,
+    emailReadyLine: tutorCopySchema,
+    emailInstructionLine: tutorCopySchema,
+    emailUnlockLine: tutorCopySchema,
+    emailIgnoreLine: tutorCopySchema,
+  }),
   messageList: z.object({
     followUpTitle: tutorCopySchema,
     sourcesTitle: tutorCopySchema,
@@ -389,13 +495,7 @@ export const kangurAiTutorContentSchema = z.object({
 export type KangurAiTutorContent = z.infer<typeof kangurAiTutorContentSchema>;
 
 const defaultMoodContent = Object.fromEntries(
-  KANGUR_TUTOR_MOOD_PRESETS.map((preset) => [
-    preset.id,
-    {
-      label: preset.label,
-      description: preset.description,
-    },
-  ])
+  KANGUR_TUTOR_MOOD_IDS.map((moodId) => [moodId, DEFAULT_TUTOR_MOOD_CONTENT[moodId]])
 ) as Record<KangurTutorMoodId, { label: string; description: string }>;
 
 export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
@@ -403,6 +503,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
     locale: 'pl',
     version: 1,
     common: {
+      defaultTutorName: 'Pomocnik',
       openTutorAria: 'Otwórz pomocnika AI',
       closeTutorAria: 'Zamknij pomocnika',
       closeAria: 'Zamknij',
@@ -416,6 +517,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       sendAria: 'Wyślij',
       questionInputAria: 'Wpisz pytanie',
       sendFailureFallback: 'Przepraszam, coś poszło nie tak. Spróbuj ponownie.',
+      sessionRegistryLabel: 'Sesja AI Tutora Kangura',
     },
     narrator: {
       readLabel: 'Czytaj',
@@ -423,6 +525,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       resumeLabel: 'Wznow',
       helpTitleSuffix: 'pomoc',
       chatTitleSuffix: 'rozmowa',
+      registrySourceLabel: 'Lektor AI Tutora Kangura',
     },
     navigation: {
       restoreTutorLabel: 'Włącz AI Tutora',
@@ -911,6 +1014,31 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         uiModeAnchored: 'Ruchomy i zakotwiczony przy treści',
         uiModeStatic: 'Statyczny w rogu ekranu',
       },
+    },
+    usageApi: {
+      availabilityErrors: {
+        disabled: 'AI tutor is not enabled for this learner.',
+        emailUnverified: 'Verify your parent email to unlock AI Tutor.',
+        missingContext: 'AI tutor context is required for Kangur tutoring sessions.',
+        lessonsDisabled: 'AI tutor is disabled for lessons for this learner.',
+        testsDisabled: 'AI tutor is disabled for tests for this learner.',
+        reviewAfterAnswerOnly:
+          'AI tutor is available in tests only after the answer has been revealed.',
+      },
+    },
+    parentVerification: {
+      createSuccessMessage:
+        'Sprawdz email rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje sie po weryfikacji.',
+      createResentMessage:
+        'To konto rodzica czeka na potwierdzenie emaila. Wyslalismy nowy email potwierdzajacy. Konto uaktywni sie po weryfikacji adresu.',
+      verifySuccessMessage:
+        'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
+      emailSubject: 'Kangur: potwierdz email rodzica',
+      emailGreetingTemplate: 'Czesc {displayName},',
+      emailReadyLine: 'Konto rodzica w Kangurze jest prawie gotowe.',
+      emailInstructionLine: 'Kliknij link ponizej, aby potwierdzic email:',
+      emailUnlockLine: 'Po potwierdzeniu emaila AI Tutor zostanie odblokowany.',
+      emailIgnoreLine: 'Jesli to nie Ty tworzysz konto, zignoruj ta wiadomosc.',
     },
     messageList: {
       followUpTitle: 'Kolejny krok',

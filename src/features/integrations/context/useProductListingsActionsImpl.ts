@@ -15,6 +15,7 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 import type {
   ProductListingWithDetails,
   ProductListingExportEvent,
+  TestConnectionResponse,
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -220,7 +221,7 @@ export const useProductListingsActionsImpl = ({
         setRelistingListing(listingId);
         setError(null);
         const response = await relistTraderaMutation.mutateAsync({ listingId });
-        const queueJobId = (response as { queue?: { jobId?: string } } | null)?.queue?.jobId;
+        const queueJobId = response.queue?.jobId;
         toast(
           queueJobId ? `Tradera relist queued (job ${queueJobId}).` : 'Tradera relist queued.',
           { variant: 'success' }
@@ -248,17 +249,13 @@ export const useProductListingsActionsImpl = ({
       try {
         setOpeningTraderaLogin(listingId);
         setError(null);
-        const response = await api.post<{
-          ok?: boolean;
-          steps?: Array<{
-            step?: string;
-            status?: 'pending' | 'ok' | 'failed';
-            detail?: string;
-          }>;
-        }>(`/api/v2/integrations/${integrationId}/connections/${connectionId}/test`, {
-          mode: 'manual',
-          manualTimeoutMs: 240000,
-        });
+        const response = await api.post<TestConnectionResponse>(
+          `/api/v2/integrations/${integrationId}/connections/${connectionId}/test`,
+          {
+            mode: 'manual',
+            manualTimeoutMs: 240000,
+          }
+        );
         const hasSessionSaved = Array.isArray(response.steps)
           ? response.steps.some((step) => step.step === 'Saving session' && step.status === 'ok')
           : false;

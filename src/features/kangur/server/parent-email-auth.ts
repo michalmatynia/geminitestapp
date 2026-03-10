@@ -7,6 +7,7 @@ import {
   KANGUR_BASE_PATH,
   resolveKangurPublicBasePathFromHref,
 } from '@/features/kangur/config/routing';
+import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { ensureDefaultKangurLearnerForOwner } from '@/features/kangur/services/kangur-learner-repository';
 import {
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
@@ -35,6 +36,7 @@ import {
   rateLimitedError,
   validationError,
 } from '@/shared/errors/app-error';
+import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 type KangurParentAccountCreateResult = {
@@ -173,33 +175,38 @@ const assertValidParentPassword = async (password: string): Promise<void> => {
   }
 };
 
-const buildVerificationEmailContent = (input: {
+const buildVerificationEmailContent = async (input: {
   email: string;
   verificationUrl: string;
-}): { subject: string; text: string; html: string } => {
+}): Promise<{ subject: string; text: string; html: string }> => {
+  const tutorContent = await getKangurAiTutorContent('pl');
+  const verificationCopy = tutorContent.parentVerification;
+  const greetingLine = formatKangurAiTutorTemplate(verificationCopy.emailGreetingTemplate, {
+    displayName: buildParentDisplayName(input.email),
+  });
   const text = [
-    `Czesc ${buildParentDisplayName(input.email)},`,
+    greetingLine,
     '',
-    'Konto rodzica w Kangurze jest prawie gotowe.',
-    'Kliknij link ponizej, aby potwierdzic email:',
+    verificationCopy.emailReadyLine,
+    verificationCopy.emailInstructionLine,
     input.verificationUrl,
     '',
-    'Po potwierdzeniu emaila AI Tutor zostanie odblokowany.',
+    verificationCopy.emailUnlockLine,
     '',
-    'Jesli to nie Ty tworzysz konto, zignoruj ta wiadomosc.',
+    verificationCopy.emailIgnoreLine,
   ].join('\n');
 
   const html = [
-    `<p>Czesc ${buildParentDisplayName(input.email)},</p>`,
-    '<p>Konto rodzica w Kangurze jest prawie gotowe.</p>',
-    '<p>Kliknij link ponizej, aby potwierdzic email:</p>',
+    `<p>${greetingLine}</p>`,
+    `<p>${verificationCopy.emailReadyLine}</p>`,
+    `<p>${verificationCopy.emailInstructionLine}</p>`,
     `<p><a href="${input.verificationUrl}">${input.verificationUrl}</a></p>`,
-    '<p>Po potwierdzeniu emaila AI Tutor zostanie odblokowany.</p>',
-    '<p>Jesli to nie Ty tworzysz konto, zignoruj ta wiadomosc.</p>',
+    `<p>${verificationCopy.emailUnlockLine}</p>`,
+    `<p>${verificationCopy.emailIgnoreLine}</p>`,
   ].join('');
 
   return {
-    subject: 'Kangur: potwierdz email rodzica',
+    subject: verificationCopy.emailSubject,
     text,
     html,
   };
@@ -212,7 +219,7 @@ const sendKangurParentVerificationEmail = async (input: {
   hasPassword: boolean;
   verificationUrl: string;
 }): Promise<void> => {
-  const emailContent = buildVerificationEmailContent({
+  const emailContent = await buildVerificationEmailContent({
     email: input.email,
     verificationUrl: input.verificationUrl,
   });

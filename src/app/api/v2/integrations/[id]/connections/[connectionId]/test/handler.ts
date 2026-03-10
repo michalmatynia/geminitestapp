@@ -9,20 +9,20 @@ import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
-import type { TestLogEntry } from '@/shared/contracts/integrations';
+import {
+  integrationConnectionTestRequestSchema,
+  type IntegrationConnectionTestRequest,
+  type TestConnectionResponse,
+  type TestLogEntry,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
 
 type PersistedStorageState = NonNullable<Exclude<BrowserContextOptions['storageState'], string>>;
-
-type TraderaConnectionTestRequest = {
-  mode?: 'auto' | 'manual';
-  manualTimeoutMs?: number;
-};
 
 const DEFAULT_MANUAL_LOGIN_TIMEOUT_MS = 240000;
 const MAX_MANUAL_LOGIN_TIMEOUT_MS = 600000;
@@ -51,13 +51,13 @@ export async function postTestConnectionHandler(
   let integrationConnectionId: string | null;
   const steps: TestLogEntry[] = [];
 
-  let requestBody: TraderaConnectionTestRequest = {};
-  const parsedBody = await parseObjectJsonBody(req, {
+  let requestBody: IntegrationConnectionTestRequest = {};
+  const parsedBody = await parseJsonBody(req, integrationConnectionTestRequestSchema, {
     allowEmpty: true,
     logPrefix: 'integrations.connections.test',
   });
   if (parsedBody.ok) {
-    requestBody = parsedBody.data as TraderaConnectionTestRequest;
+    requestBody = parsedBody.data;
   }
 
   const mode = requestBody.mode === 'manual' ? 'manual' : 'auto';
@@ -190,11 +190,13 @@ export async function postTestConnectionHandler(
           ? `Authenticated as ${profile.alias}.`
           : `Authenticated as user ${profile.userId}.`
       );
-      return NextResponse.json({
+      const response: TestConnectionResponse = {
         ok: true,
         steps,
         profile,
-      });
+      };
+
+      return NextResponse.json(response);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return fail('Testing API connection', message);
@@ -806,5 +808,7 @@ export async function postTestConnectionHandler(
     await browser?.close().catch(() => undefined);
   }
 
-  return NextResponse.json({ ok: true, steps });
+  const response: TestConnectionResponse = { ok: true, steps };
+
+  return NextResponse.json(response);
 }

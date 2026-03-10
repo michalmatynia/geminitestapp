@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import type { TestLogEntry } from '@/shared/contracts/integrations';
+import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 
@@ -116,12 +116,14 @@ export async function POST_handler(
     }
 
     // Return success with inventory information
-    return NextResponse.json({
+    const response: TestConnectionResponse = {
       ok: true,
       steps,
       inventories: inventories.map((inv) => ({ id: inv.id, name: inv.name })),
       inventoryCount: inventories.length,
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return fail('Testing API connection', `Base.com API error: ${message}`);

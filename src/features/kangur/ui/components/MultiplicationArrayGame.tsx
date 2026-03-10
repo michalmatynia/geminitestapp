@@ -76,6 +76,9 @@ export default function MultiplicationArrayGame({
 }: MultiplicationArrayGameProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const handleFinishGame = (): void => {
+    onFinish();
+  };
   const [[a, b], setProblem] = useState<[number, number]>(() => pickProblem());
   const [collected, setCollected] = useState<Set<number>>(new Set());
   const [roundIndex, setRoundIndex] = useState(0);
@@ -198,12 +201,7 @@ export default function MultiplicationArrayGame({
             </KangurButton>
             <KangurButton
               className='flex-1'
-              onClick={(() => {
-                const handleFinishGame = (): void => {
-                  onFinish();
-                };
-                return handleFinishGame;
-              })()}
+              onClick={handleFinishGame}
               size='lg'
               variant='primary'
             >

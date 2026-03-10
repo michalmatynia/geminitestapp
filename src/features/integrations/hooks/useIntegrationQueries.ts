@@ -10,6 +10,10 @@ export {
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
+  type BaseImportInventoriesPayload,
+  type BaseImportInventoriesResponse,
+  type BaseActiveTemplatePreferenceResponse,
+  type BaseDefaultInventoryPreferenceResponse,
   importExportTemplateSchema,
   type ImportExportTemplate,
   integrationSchema,
@@ -153,10 +157,10 @@ export function useExportTemplates(): ListQuery<ImportExportTemplate> {
   });
 }
 
-export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | null }> {
+export function useActiveExportTemplate(): SingleQuery<BaseActiveTemplatePreferenceResponse> {
   const queryKey = integrationKeys.activeExportTemplate();
-  const queryFn = async (): Promise<{ templateId?: string | null }> =>
-    api.get<{ templateId?: string | null }>('/api/v2/integrations/exports/base/active-template');
+  const queryFn = async (): Promise<BaseActiveTemplatePreferenceResponse> =>
+    api.get<BaseActiveTemplatePreferenceResponse>('/api/v2/integrations/exports/base/active-template');
 
   return createSingleQueryV2({
     id: 'active-export-template',
@@ -195,14 +199,15 @@ export const getExportTemplatesQueryOptions = (): QueryDescriptorV2<ImportExport
   };
 };
 
-export const getActiveExportTemplateQueryOptions = (): QueryDescriptorV2<{
-  templateId?: string | null;
-}> => {
+export const getActiveExportTemplateQueryOptions =
+  (): QueryDescriptorV2<BaseActiveTemplatePreferenceResponse> => {
   const queryKey = integrationKeys.activeExportTemplate();
   return {
     queryKey,
     queryFn: () =>
-      api.get<{ templateId?: string | null }>('/api/v2/integrations/exports/base/active-template'),
+      api.get<BaseActiveTemplatePreferenceResponse>(
+        '/api/v2/integrations/exports/base/active-template'
+      ),
     staleTime: 5 * 60 * 1000,
     meta: {
       source: 'integrations.queries.getActiveExportTemplateOptions',
@@ -215,14 +220,13 @@ export const getActiveExportTemplateQueryOptions = (): QueryDescriptorV2<{
   };
 };
 
-export const getDefaultExportInventoryQueryOptions = (): QueryDescriptorV2<{
-  inventoryId?: string | null;
-}> => {
+export const getDefaultExportInventoryQueryOptions =
+  (): QueryDescriptorV2<BaseDefaultInventoryPreferenceResponse> => {
   const queryKey = integrationKeys.defaultExportInventory();
   return {
     queryKey,
     queryFn: () =>
-      api.get<{ inventoryId?: string | null }>(
+      api.get<BaseDefaultInventoryPreferenceResponse>(
         '/api/v2/integrations/exports/base/default-inventory'
       ),
     staleTime: 5 * 60 * 1000,
@@ -245,12 +249,12 @@ export const getBaseInventoriesQueryOptions = (
   return {
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
-      const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
+      const data = await api.post<BaseImportInventoriesResponse>(
         '/api/v2/integrations/imports/base',
         {
           action: 'inventories',
           connectionId,
-        }
+        } satisfies BaseImportInventoriesPayload
       );
       if (data.error) throw new ApiError(data.error, 400);
       return Array.isArray(data.inventories) ? data.inventories : [];

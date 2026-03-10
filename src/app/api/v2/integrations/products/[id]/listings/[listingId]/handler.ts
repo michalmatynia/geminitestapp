@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import {
+  productListingInventoryUpdatePayloadSchema,
+  type ProductListingUpdateResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-
-const updateListingSchema = z.object({
-  inventoryId: z.string().trim().min(1).nullable(),
-});
 
 /**
  * DELETE /api/v2/integrations/products/[id]/listings/[listingId]
@@ -58,7 +57,7 @@ export async function PATCH_handler(
     throw notFoundError('Listing not found', { listingId, productId });
   }
 
-  const parsed = await parseJsonBody(req, updateListingSchema, {
+  const parsed = await parseJsonBody(req, productListingInventoryUpdatePayloadSchema, {
     logPrefix: 'integrations.products.listings.PATCH',
   });
   if (!parsed.ok) {
@@ -66,5 +65,6 @@ export async function PATCH_handler(
   }
   const data = parsed.data;
   await resolved.repository.updateListingInventoryId(listingId, data.inventoryId ?? null);
-  return NextResponse.json({ success: true });
+  const response: ProductListingUpdateResponse = { success: true };
+  return NextResponse.json(response);
 }

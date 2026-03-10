@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getIntegrationRepository, checkBaseSkuExists } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
+import {
+  baseProductSkuCheckPayloadSchema,
+  type BaseProductSkuCheckResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-const requestSchema = z.object({
-  connectionId: z.string().trim().min(1),
-  inventoryId: z.string().trim().min(1),
-});
+const requestSchema = baseProductSkuCheckPayloadSchema;
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
@@ -86,9 +86,10 @@ export async function POST_handler(
 
   const checkResult = await checkBaseSkuExists(tokenResolution.token, inventoryId, sku);
 
-  return NextResponse.json({
+  const response: BaseProductSkuCheckResponse = {
     sku,
     exists: checkResult.exists,
     existingProductId: checkResult.productId?.trim() || null,
-  });
+  };
+  return NextResponse.json(response);
 }

@@ -30,8 +30,8 @@ export default function MarketplacesPage(): React.JSX.Element {
 
   const handleSyncBaseImages = async (): Promise<void> => {
     try {
-      await syncMutation.mutateAsync();
-      toast('Base.com image sync queued.', { variant: 'success' });
+      const response = await syncMutation.mutateAsync();
+      toast(`Base.com image sync queued (job ${response.jobId}).`, { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to enqueue Base.com image sync', {
         variant: 'error',

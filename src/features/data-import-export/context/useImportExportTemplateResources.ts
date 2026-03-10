@@ -17,6 +17,12 @@ import {
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import type {
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseImageRetryPresetsResponse,
+  BaseSampleProductResponse,
+  BaseStockFallbackPreferenceResponse,
   ImageRetryPreset,
   ImportParameterCacheResponse,
   IntegrationConnectionBasic,
@@ -118,12 +124,12 @@ export function useImportExportTemplateResources({
     ? `${normalizedSelectedBaseConnectionId}:${normalizedExportInventoryId}`
     : '';
 
-  const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+  const { data: lastImportTemplatePref } = useImportPreference<BaseActiveTemplatePreferenceResponse>(
     'last-template',
     '/api/v2/integrations/imports/base/last-template'
   );
   const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } =
-    useImportPreference<{ templateId?: string | null }>(
+    useImportPreference<BaseActiveTemplatePreferenceResponse>(
       `active-template:${importTemplateScopeKey || 'none'}`,
       importTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
@@ -135,7 +141,7 @@ export function useImportExportTemplateResources({
       { enabled: importTemplateScopeReady }
     );
   const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } =
-    useImportPreference<{ templateId?: string | null }>(
+    useImportPreference<BaseActiveTemplatePreferenceResponse>(
       `export-active-template:${exportTemplateScopeKey || 'none'}`,
       exportTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
@@ -146,27 +152,29 @@ export function useImportExportTemplateResources({
         : '/api/v2/integrations/exports/base/active-template',
       { enabled: exportTemplateScopeReady }
     );
-  const { data: defaultExportInventoryPref } = useImportPreference<{ inventoryId?: string | null }>(
+  const { data: defaultExportInventoryPref } =
+    useImportPreference<BaseDefaultInventoryPreferenceResponse>(
     'default-inventory',
     '/api/v2/integrations/exports/base/default-inventory'
   );
-  const { data: defaultConnectionPref } = useImportPreference<{ connectionId?: string | null }>(
+  const { data: defaultConnectionPref } =
+    useImportPreference<BaseDefaultConnectionPreferenceResponse>(
     'default-connection',
     '/api/v2/integrations/exports/base/default-connection'
   );
-  const { data: exportStockFallbackPref } = useImportPreference<{ enabled?: boolean }>(
+  const { data: exportStockFallbackPref } = useImportPreference<BaseStockFallbackPreferenceResponse>(
     'stock-fallback',
     '/api/v2/integrations/exports/base/stock-fallback'
   );
-  const { data: imageRetryPresetsPref } = useImportPreference<{ presets?: ImageRetryPreset[] }>(
+  const { data: imageRetryPresetsPref } = useImportPreference<BaseImageRetryPresetsResponse>(
     'image-retry-presets',
     '/api/v2/integrations/exports/base/image-retry-presets',
     { fallback: { presets: getDefaultImageRetryPresets() } }
   );
-  const { data: sampleProductPref } = useImportPreference<{
-    productId?: string | null;
-    inventoryId?: string | null;
-  }>('sample-product', '/api/v2/integrations/imports/base/sample-product');
+  const { data: sampleProductPref } = useImportPreference<BaseSampleProductResponse>(
+    'sample-product',
+    '/api/v2/integrations/imports/base/sample-product'
+  );
 
   useImportExportPreferences({
     lastImportTemplatePref,

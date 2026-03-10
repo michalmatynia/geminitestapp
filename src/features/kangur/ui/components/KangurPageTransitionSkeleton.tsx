@@ -33,14 +33,18 @@ const SkeletonBlock = ({ className }: { className?: string }): React.JSX.Element
   <div aria-hidden='true' className={cn('animate-pulse bg-slate-200/80', className)} />
 );
 
-const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => (
-  <SkeletonBlock
-    className={cn(
-      'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
-      className
-    )}
-  />
-);
+const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => {
+  const chipClassName = className;
+
+  return (
+    <SkeletonBlock
+      className={cn(
+        'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
+        chipClassName
+      )}
+    />
+  );
+};
 
 const SkeletonPanel = ({
   children,
@@ -59,9 +63,11 @@ const SkeletonPanel = ({
   </div>
 );
 
-const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => (
-  <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', className)} />
-);
+const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
+  const lineClassName = className;
+
+  return <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', lineClassName)} />;
+};
 
 const GameSkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col gap-6'>

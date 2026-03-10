@@ -396,7 +396,7 @@ describe('Admin Products List UI', () => {
       ),
       http.post('/api/v2/integrations/imports/base', async () =>
         HttpResponse.json({
-          inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
+          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
         })
       ),
       http.post('/api/v2/integrations/products/:id/export-to-base', () => {
@@ -429,7 +429,7 @@ describe('Admin Products List UI', () => {
       ),
       http.post('/api/v2/integrations/imports/base', async () =>
         HttpResponse.json({
-          inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
+          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
         })
       ),
       http.get('/api/v2/integrations/exports/base/active-template', ({ request }) => {

@@ -14,6 +14,7 @@ import parameterInferenceAsset from './assets/parameter-inference.canvas.json';
 import translationEnPlAsset from './assets/translation-en-pl.canvas.json';
 import { deserializeSemanticCanvasToPathConfig } from '../semantic-grammar/deserialize';
 import { sanitizeEdges } from '../utils/graph';
+import { resolvePortablePathInput } from '../../portable-engine/portable-engine-resolvers';
 
 export type StarterWorkflowSeedPolicy = {
   autoSeed: boolean;
@@ -174,6 +175,7 @@ export const computeStarterWorkflowGraphHash = (
 };
 
 const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff'];
+const PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES: string[] = ['7f2d8625'];
 
 const buildTriggerDisplay = (label: string): AiTriggerButtonDisplay => ({
   label,
@@ -276,14 +278,24 @@ const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean =>
   });
 };
 
-const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
-  const nameOrTriggerMatches =
-    hasAliasMatch(config.name ?? '', ['Parameter Inference', 'Parameter Inference v2 No Param Add']) ||
-    hasAliasMatch(config.trigger ?? '', ['Product Modal - Infer Parameters']);
+const hasParameterInferencePromptStructure = (config: PathConfig): boolean =>
+  (config.nodes ?? []).some((node) => {
+    if (node.type !== 'prompt') return false;
+    const prompt = toRecord(toRecord(node.config)?.['prompt']);
+    const template = normalizeText(prompt?.['template']);
+    return template.includes('{{title}}') && template.includes('{{content_en}}');
+  });
 
-  if (!nameOrTriggerMatches) return false;
+const hasParameterInferenceSeedRouterPromptContract = (config: PathConfig): boolean =>
+  (config.nodes ?? []).some((node) => {
+    if (node.type !== 'router' || normalizeText(node.id) !== 'node-router-seed-params') {
+      return false;
+    }
+    return node.inputs?.includes('prompt') === true || node.outputs?.includes('prompt') === true;
+  });
 
-  const hasBlankProductCoreParser = (config.nodes ?? []).some((node) => {
+const hasParameterInferenceBlankProductCoreParser = (config: PathConfig): boolean =>
+  (config.nodes ?? []).some((node) => {
     if (node.type !== 'parser') return false;
     const parser = toRecord(toRecord(node.config)?.['parser']);
     const mappings = toRecord(parser?.['mappings']);
@@ -294,14 +306,30 @@ const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boo
     );
   });
 
-  if (!hasBlankProductCoreParser) return false;
-
-  return (config.nodes ?? []).some((node) => {
-    if (node.type !== 'prompt') return false;
-    const prompt = toRecord(toRecord(node.config)?.['prompt']);
-    const template = normalizeText(prompt?.['template']);
-    return template.includes('{{title}}') && template.includes('{{content_en}}');
+const hasParameterInferenceLegacyMappingUpdate = (config: PathConfig): boolean =>
+  (config.nodes ?? []).some((node) => {
+    if (node.type !== 'database') return false;
+    const database = toRecord(toRecord(node.config)?.['database']);
+    return (
+      normalizeTextLower(database?.['operation']) === 'update' &&
+      normalizeTextLower(database?.['updatePayloadMode']) === 'mapping'
+    );
   });
+
+const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
+  const nameOrTriggerMatches =
+    hasAliasMatch(config.name ?? '', ['Parameter Inference', 'Parameter Inference v2 No Param Add']) ||
+    hasAliasMatch(config.trigger ?? '', ['Product Modal - Infer Parameters']);
+
+  if (!nameOrTriggerMatches) return false;
+
+  if (!hasParameterInferencePromptStructure(config)) return false;
+
+  return (
+    hasParameterInferenceBlankProductCoreParser(config) ||
+    hasParameterInferenceSeedRouterPromptContract(config) ||
+    hasParameterInferenceLegacyMappingUpdate(config)
+  );
 };
 
 const matchesLegacyStarterWorkflowRepairSignature = (
@@ -346,8 +374,8 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'parameter_inference',
-      templateVersion: 13,
-      canonicalGraphHashes: [],
+      templateVersion: 15,
+      canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
     },
   },
   {
@@ -731,6 +759,53 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
   return nextConfig;
 };
 
+const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): PathConfig => {
+  const currentExtensions = toRecord(current.extensions);
+  const latestExtensions = toRecord(latest.extensions);
+  return {
+    ...latest,
+    id: current.id,
+    name: normalizeText(current.name) || latest.name,
+    description: normalizeText(current.description) || latest.description,
+    trigger: normalizeText(current.trigger) || latest.trigger,
+    isActive: current.isActive ?? latest.isActive,
+    isLocked: current.isLocked ?? latest.isLocked,
+    updatedAt: current.updatedAt ?? latest.updatedAt,
+    ...(currentExtensions || latestExtensions
+      ? {
+        extensions: {
+          ...(currentExtensions ?? {}),
+          ...(latestExtensions ?? {}),
+        },
+      }
+      : {}),
+  };
+};
+
+const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {
+  const rightNodeIds = new Set((right.nodes ?? []).map((node) => node.id));
+  return (left.nodes ?? []).reduce((count, node) => count + Number(rightNodeIds.has(node.id)), 0);
+};
+
+const selectStarterOverlaySource = (current: PathConfig, latest: PathConfig): PathConfig => {
+  const variants: PathConfig[] = [latest];
+  const resolvedLatest = resolvePortablePathInput(latest, {
+    repairIdentities: true,
+    includeConnections: false,
+    signingPolicyTelemetrySurface: 'api',
+    nodeCodeObjectHashVerificationMode: 'warn',
+  });
+  if (resolvedLatest.ok) {
+    variants.push(resolvedLatest.value.pathConfig);
+  }
+
+  return variants.reduce<PathConfig>((best, candidate) => {
+    const bestScore = countNodeIdOverlap(current, best);
+    const candidateScore = countNodeIdOverlap(current, candidate);
+    return candidateScore > bestScore ? candidate : best;
+  }, variants[0]!);
+};
+
 export const resolveStarterWorkflowForPathConfig = (
   config: PathConfig
 ): StarterWorkflowResolution | null => {
@@ -791,14 +866,24 @@ export const upgradeStarterWorkflowPathConfig = (
       provenance &&
         provenance.starterKey === resolution.entry.starterLineage.starterKey &&
         provenance.templateVersion < resolution.entry.starterLineage.templateVersion &&
-        config.id === resolution.entry.seedPolicy?.defaultPathId
+        (config.id === resolution.entry.seedPolicy?.defaultPathId ||
+          resolution.entry.starterLineage.starterKey === 'parameter_inference')
     );
 
   if (!safeToOverlay) {
     return { config, changed: false, resolution };
   }
 
-  const next = buildStarterAssetOverlay(config, latest);
+  const overlaySource = selectStarterOverlaySource(config, latest);
+  const shouldReplaceGraphCompletely =
+    resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
+    hasParameterInferencePromptStructure(config) &&
+    hasParameterInferenceLegacyMappingUpdate(config) &&
+    countNodeIdOverlap(config, overlaySource) === 0;
+
+  const next = shouldReplaceGraphCompletely
+    ? buildStarterGraphReplacement(config, latest)
+    : buildStarterAssetOverlay(config, overlaySource);
   if (next === config || JSON.stringify(next) === JSON.stringify(config)) {
     return { config: next, changed: false, resolution };
   }

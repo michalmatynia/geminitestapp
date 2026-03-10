@@ -69,12 +69,21 @@ function KangurHomeActionCard({
   action: HomeAction;
   index: number;
 }): React.JSX.Element {
-  const docId = resolveHomeActionDocId(action.id);
-  const tone = HOME_ACTION_TONE_STYLES[action.tone];
+  const actionDisabled = action.disabled;
+  const actionHref = action.href;
+  const actionId = action.id;
+  const actionLabel = action.label;
+  const actionOnClick = action.onClick;
+  const actionSymbol = action.symbol;
+  const actionTargetPageKey = action.targetPageKey;
+  const actionTone = action.tone;
+  const actionTrailingSymbol = action.trailingSymbol;
+  const docId = resolveHomeActionDocId(actionId);
+  const tone = HOME_ACTION_TONE_STYLES[actionTone];
   const wrapperClassName = cn(
     'relative home-action-featured-shell',
     tone.shell,
-    action.disabled ? 'pointer-events-none opacity-55' : null
+    actionDisabled ? 'pointer-events-none opacity-55' : null
   );
   const sharedClassName = cn(
     'relative z-10 w-full cursor-pointer text-center',
@@ -104,10 +113,10 @@ function KangurHomeActionCard({
           )}
           aria-hidden='true'
         >
-          {action.symbol}
+          {actionSymbol}
         </span>
-        <span>{action.label}</span>
-        {action.trailingSymbol ? (
+        <span>{actionLabel}</span>
+        {actionTrailingSymbol ? (
           <span
             className={cn(
               'leading-none',
@@ -116,7 +125,7 @@ function KangurHomeActionCard({
             )}
             aria-hidden='true'
           >
-            {action.trailingSymbol}
+            {actionTrailingSymbol}
           </span>
         ) : null}
       </span>
@@ -141,20 +150,20 @@ function KangurHomeActionCard({
       className={wrapperClassName}
     >
       <div className='home-action-featured-underlay' />
-      {action.href ? (
+      {actionHref ? (
         <Link
-          href={(() => action.href)()}
+          href={actionHref}
           className={sharedClassName}
           data-doc-id={docId}
-          targetPageKey={(() => action.targetPageKey)()}
+          targetPageKey={actionTargetPageKey}
         >
           {content}
         </Link>
       ) : (
         <button
           type='button'
-          onClick={(() => action.onClick)()}
-          disabled={(() => action.disabled)()}
+          onClick={actionOnClick}
+          disabled={actionDisabled}
           className={sharedClassName}
           data-doc-id={docId}
         >

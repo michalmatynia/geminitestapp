@@ -22,6 +22,7 @@ export function KangurTopNavigationController({
 }): React.JSX.Element | null {
   const topNavigation = useOptionalKangurTopNavigation();
   const ownerIdRef = useRef<string | null>(null);
+  const primaryNavigation = navigation;
 
   if (ownerIdRef.current === null) {
     ownerIdRef.current = createKangurTopNavigationOwnerId();
@@ -32,7 +33,7 @@ export function KangurTopNavigationController({
       return;
     }
 
-    topNavigation.setNavigation(ownerIdRef.current, navigation);
+    topNavigation.setNavigation(ownerIdRef.current, primaryNavigation);
 
     return () => {
       if (!ownerIdRef.current) {
@@ -41,10 +42,10 @@ export function KangurTopNavigationController({
 
       topNavigation.clearNavigation(ownerIdRef.current);
     };
-  }, [navigation, topNavigation]);
+  }, [primaryNavigation, topNavigation]);
 
   if (!topNavigation) {
-    return <KangurPrimaryNavigation {...navigation} />;
+    return <KangurPrimaryNavigation {...primaryNavigation} />;
   }
 
   return null;

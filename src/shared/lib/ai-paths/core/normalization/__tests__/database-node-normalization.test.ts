@@ -194,4 +194,34 @@ describe('database node normalization', () => {
       },
     ]);
   });
+
+  it('keeps custom update mode for mongo-action update nodes even when the template is a direct token-only $set payload', () => {
+    const [normalized] = normalizeNodes([
+      buildDatabaseNode({
+        database: {
+          operation: 'update',
+          updatePayloadMode: 'custom',
+          useMongoActions: true,
+          actionCategory: 'update',
+          action: 'updateOne',
+          updateTemplate:
+            '{\n' + '  "$set": {\n' + '    "parameters": {{value}}\n' + '  }\n' + '}',
+          mappings: [
+            {
+              targetPath: 'parameters',
+              sourcePort: 'value',
+            },
+          ],
+        },
+      }),
+    ]);
+
+    expect(normalized?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(normalized?.config?.database?.mappings).toEqual([
+      {
+        targetPath: 'parameters',
+        sourcePort: 'value',
+      },
+    ]);
+  });
 });

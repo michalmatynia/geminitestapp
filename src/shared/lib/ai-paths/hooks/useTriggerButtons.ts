@@ -50,6 +50,29 @@ const writeMapToStorage = (key: string, value: Record<string, boolean>): void =>
   }
 };
 
+const normalizeOptionalEntityId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveTriggerEntityId = (
+  explicitEntityId: string | null | undefined,
+  getEntityJson?: (() => Record<string, unknown> | null) | undefined
+): string | null => {
+  const normalizedExplicitEntityId = normalizeOptionalEntityId(explicitEntityId);
+  if (normalizedExplicitEntityId) return normalizedExplicitEntityId;
+  if (!getEntityJson) return null;
+  const entityJson = getEntityJson();
+  if (!entityJson) return null;
+  return (
+    normalizeOptionalEntityId(entityJson['id']) ??
+    normalizeOptionalEntityId(entityJson['_id']) ??
+    normalizeOptionalEntityId(entityJson['productId']) ??
+    null
+  );
+};
+
 interface UseTriggerButtonsOptions {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
@@ -182,6 +205,7 @@ export function useTriggerButtons({
         ...prev,
         [button.id]: { status: 'running', progress: 0 },
       }));
+      const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
 
       try {
         await fireAiPathTriggerEvent({
@@ -189,7 +213,7 @@ export function useTriggerButtons({
           triggerLabel: button.name,
           preferredPathId: button.pathId ?? null,
           entityType,
-          entityId,
+          entityId: resolvedEntityId,
           ...(getEntityJson ? { getEntityJson } : {}),
           event: options.event,
           source: { tab: entityType, location },
@@ -204,13 +228,13 @@ export function useTriggerButtons({
               updatedAt: new Date().toISOString(),
               finishedAt: null,
               errorMessage: null,
-              entityId: entityId ?? null,
+              entityId: resolvedEntityId,
               entityType,
             });
             onRunQueued?.({
               button,
               runId,
-              entityId,
+              entityId: resolvedEntityId,
               entityType,
             });
           },

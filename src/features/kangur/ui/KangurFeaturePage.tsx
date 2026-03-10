@@ -4,9 +4,7 @@ import { useEffect } from 'react';
 
 import {
   KANGUR_BASE_PATH,
-  normalizeKangurBasePath,
-  normalizeKangurRequestedPath,
-  resolveKangurPageKeyFromSlug,
+  resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
 import {
   clearKangurClientObservabilityContext,
@@ -25,27 +23,6 @@ type KangurFeaturePageProps = {
   slug?: string[];
   basePath?: string;
   embedded?: boolean;
-};
-
-export const resolveKangurFeaturePageRoute = (
-  slug: string[] = [],
-  basePath: string = KANGUR_BASE_PATH
-): {
-  normalizedBasePath: string;
-  pageKey: string | null;
-  requestedPath: string;
-} => {
-  const normalizedBasePath = normalizeKangurBasePath(basePath);
-  const activeSlug = slug[0] ?? null;
-  const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
-  const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
-  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
-
-  return {
-    normalizedBasePath,
-    pageKey,
-    requestedPath,
-  };
 };
 
 export function KangurFeaturePageShell(): JSX.Element {
@@ -83,13 +60,14 @@ export function KangurFeaturePage({
     slug,
     basePath
   );
+  const isEmbedded = embedded;
 
   return (
     <KangurRoutingProvider
       pageKey={pageKey}
       requestedPath={requestedPath}
       basePath={normalizedBasePath}
-      embedded={embedded}
+      embedded={isEmbedded}
     >
       <KangurFeaturePageShell />
     </KangurRoutingProvider>

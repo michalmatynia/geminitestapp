@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import type { BaseProductRecord } from '@/features/integrations/server';
 import {
@@ -22,39 +21,40 @@ import {
   getProductRepository,
 } from '@/features/products/server';
 import type { ProductCreateInput, ProductWithImages } from '@/features/products/server';
+import {
+  baseImportInventoriesPayloadSchema,
+  baseImportListPayloadSchema,
+  baseImportWarehousesPayloadSchema,
+  baseImportWarehousesDebugPayloadSchema,
+  type BaseImportInventoriesResponse,
+  type BaseImportListResponse,
+  type BaseImportWarehousesResponse,
+  type BaseImportWarehousesDebugResponse,
+  type BaseWarehouse,
+  type ImportListItem,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-export const requestSchema = z.object({
-  action: z.enum(['inventories', 'warehouses', 'warehouses_debug', 'list']),
-  connectionId: z.string().trim().min(1).optional(),
-  inventoryId: z.string().trim().min(1).optional(),
-  includeAllWarehouses: z.boolean().optional(),
-  catalogId: z.string().trim().min(1).optional(),
-  limit: z.coerce.number().int().positive().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  pageSize: z.coerce.number().int().positive().optional(),
-  searchName: z.string().trim().optional(),
-  searchSku: z.string().trim().optional(),
-  uniqueOnly: z.boolean().optional(),
-});
+export const requestSchema = baseImportInventoriesPayloadSchema.or(
+  baseImportWarehousesPayloadSchema
+).or(baseImportWarehousesDebugPayloadSchema).or(baseImportListPayloadSchema);
 
-type MappedItem = {
+type MappedItem = Omit<ImportListItem, 'baseProductId' | 'sku'> & {
   baseProductId: string | null;
-  name: string;
   sku: string | null;
-  exists: boolean;
-  skuExists: boolean;
-  description: string;
-  price: number;
-  stock: number;
-  image: string | null;
 };
 
 const BASE_DETAILS_BATCH_SIZE = 100;
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+
+const isImportListItem = (item: MappedItem): item is ImportListItem =>
+  typeof item.baseProductId === 'string' &&
+  item.baseProductId.trim().length > 0 &&
+  typeof item.sku === 'string' &&
+  item.sku.trim().length > 0;
 
 type PriceGroupLookup = {
   id: string;
@@ -209,15 +209,13 @@ export async function postBaseImportsHandler(
 
   if (action === 'inventories') {
     const inventories = await fetchBaseInventories(token);
-    return NextResponse.json({ inventories });
+    const response: BaseImportInventoriesResponse = { inventories };
+    return NextResponse.json(response);
   }
 
   if (action === 'warehouses') {
-    if (!data.inventoryId) {
-      throw badRequestError('Inventory ID is required.');
-    }
     const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
-    let allWarehouses: { id: string; name: string }[] = [];
+    let allWarehouses: BaseWarehouse[] = [];
     if (data.includeAllWarehouses) {
       try {
         allWarehouses = await fetchBaseAllWarehouses(token);
@@ -225,13 +223,11 @@ export async function postBaseImportsHandler(
         allWarehouses = [];
       }
     }
-    return NextResponse.json({ warehouses, allWarehouses });
+    const response: BaseImportWarehousesResponse = { warehouses, allWarehouses };
+    return NextResponse.json(response);
   }
 
   if (action === 'warehouses_debug') {
-    if (!data.inventoryId) {
-      throw badRequestError('Inventory ID is required.');
-    }
     const inventoryResult = await fetchBaseWarehousesDebug(token, data.inventoryId);
     const inventoriesResult = await fetchBaseInventoriesDebug(token);
     let allResult: Awaited<ReturnType<typeof fetchBaseAllWarehousesDebug>> | null = null;
@@ -242,7 +238,7 @@ export async function postBaseImportsHandler(
         allResult = null;
       }
     }
-    return NextResponse.json({
+    const response: BaseImportWarehousesDebugResponse = {
       warehouses: inventoryResult.warehouses,
       allWarehouses: allResult?.warehouses ?? [],
       inventories: inventoriesResult.inventories ?? [],
@@ -251,12 +247,10 @@ export async function postBaseImportsHandler(
         inventories: inventoriesResult,
         all: allResult,
       },
-    });
+    };
+    return NextResponse.json(response);
   }
 
-  if (!data.inventoryId) {
-    throw badRequestError('Inventory ID is required.');
-  }
   const inventoryId = data.inventoryId;
   const provider = await getProductDataProvider();
 
@@ -315,9 +309,9 @@ export async function postBaseImportsHandler(
       return null;
     };
 
-    const mapRecordsToItems = (records: BaseProductRecord[]): MappedItem[] =>
+    const mapRecordsToItems = (records: BaseProductRecord[]): ImportListItem[] =>
       records
-        .map((record: BaseProductRecord) => {
+        .map((record: BaseProductRecord): MappedItem => {
           const mapped: ProductCreateInput = mapBaseProduct(record, [], {
             preferredPriceCurrencies: listPreferredCurrencies,
           });
@@ -353,9 +347,9 @@ export async function postBaseImportsHandler(
             image: images[0] ?? null,
           };
         })
-        .filter((item: MappedItem) => Boolean(item.baseProductId && item.sku));
+        .filter(isImportListItem);
 
-    const fetchMappedItemsByIds = async (ids: string[]): Promise<MappedItem[]> => {
+    const fetchMappedItemsByIds = async (ids: string[]): Promise<ImportListItem[]> => {
       if (ids.length === 0) return [];
       const records: BaseProductRecord[] = [];
       for (let index = 0; index < ids.length; index += BASE_DETAILS_BATCH_SIZE) {
@@ -373,7 +367,7 @@ export async function postBaseImportsHandler(
       const pagedItems = filteredItems.slice(startIndex, endIndex);
 
       if (pagedItems.length === 0) {
-        return NextResponse.json({
+        const response: BaseImportListResponse = {
           products: [],
           total: listItems.length,
           filtered: filteredItems.length,
@@ -383,15 +377,16 @@ export async function postBaseImportsHandler(
           page,
           pageSize,
           totalPages: filteredItemsTotalPages,
-        });
+        };
+        return NextResponse.json(response);
       }
 
       const mappedList = await fetchMappedItemsByIds(
         pagedItems.map((item: { id: string; exists: boolean }) => item.id)
       );
-      const skuDuplicateCount = mappedList.filter((item: MappedItem) => item.skuExists).length;
+      const skuDuplicateCount = mappedList.filter((item: ImportListItem) => item.skuExists).length;
 
-      return NextResponse.json({
+      const response: BaseImportListResponse = {
         products: mappedList,
         total: listItems.length,
         filtered: filteredItems.length,
@@ -401,7 +396,8 @@ export async function postBaseImportsHandler(
         page,
         pageSize,
         totalPages: filteredItemsTotalPages,
-      });
+      };
+      return NextResponse.json(response);
     }
 
     const searchableIds = filteredItems.map((item: { id: string; exists: boolean }) => item.id);
@@ -409,12 +405,12 @@ export async function postBaseImportsHandler(
     const hasExactSkuMatch =
       normalizedSku.length > 0 &&
       mappedSearchScope.some(
-        (item: MappedItem) => (item.sku ?? '').toLowerCase() === normalizedSku
+        (item: ImportListItem) => item.sku.toLowerCase() === normalizedSku
       );
-    const searchedList = mappedSearchScope.filter((item: MappedItem) => {
+    const searchedList = mappedSearchScope.filter((item: ImportListItem) => {
       const nameOk =
         normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
-      const skuValue = (item.sku ?? '').toLowerCase();
+      const skuValue = item.sku.toLowerCase();
       const skuOk =
         normalizedSku.length === 0
           ? true
@@ -428,9 +424,11 @@ export async function postBaseImportsHandler(
     const startIndex = (normalizedPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     const pagedSearchedList = searchedList.slice(startIndex, endIndex);
-    const skuDuplicateCount = pagedSearchedList.filter((item: MappedItem) => item.skuExists).length;
+    const skuDuplicateCount = pagedSearchedList.filter(
+      (item: ImportListItem) => item.skuExists
+    ).length;
 
-    return NextResponse.json({
+    const response: BaseImportListResponse = {
       products: pagedSearchedList,
       total: listItems.length,
       filtered: searchedList.length,
@@ -440,7 +438,8 @@ export async function postBaseImportsHandler(
       page: normalizedPage,
       pageSize,
       totalPages: searchedTotalPages,
-    });
+    };
+    return NextResponse.json(response);
   }
   throw badRequestError(`Unsupported action: ${action}`);
 }

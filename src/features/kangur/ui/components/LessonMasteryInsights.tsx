@@ -44,48 +44,52 @@ type InsightListProps = {
   title: string;
 };
 
-const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => (
-  <KangurInfoCard accent='slate' padding='md' tone='muted'>
-    <div className='text-xs font-bold uppercase tracking-wide text-slate-500'>{title}</div>
-    {items.length === 0 ? (
-      <KangurEmptyState
-        accent='slate'
-        className='mt-3'
-        description={(() => emptyState)()}
-        padding='md'
-      />
-    ) : (
-      <div className='mt-3 flex flex-col gap-3'>
-        {items.map((item) => (
-          <KangurInfoCard
-            key={item.componentId}
-            accent='slate'
-            className='rounded-[22px]'
-            padding='md'
-          >
-            <div className='flex items-start justify-between gap-3'>
-              <div>
-                <div className='text-sm font-semibold text-slate-700'>
-                  {item.emoji} {item.title}
+const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => {
+  const emptyStateDescription = emptyState;
+
+  return (
+    <KangurInfoCard accent='slate' padding='md' tone='muted'>
+      <div className='text-xs font-bold uppercase tracking-wide text-slate-500'>{title}</div>
+      {items.length === 0 ? (
+        <KangurEmptyState
+          accent='slate'
+          className='mt-3'
+          description={emptyStateDescription}
+          padding='md'
+        />
+      ) : (
+        <div className='mt-3 flex flex-col gap-3'>
+          {items.map((item) => (
+            <KangurInfoCard
+              key={item.componentId}
+              accent='slate'
+              className='rounded-[22px]'
+              padding='md'
+            >
+              <div className='flex items-start justify-between gap-3'>
+                <div>
+                  <div className='text-sm font-semibold text-slate-700'>
+                    {item.emoji} {item.title}
+                  </div>
+                  <div className='mt-1 text-xs text-slate-500'>
+                    Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
+                  </div>
                 </div>
-                <div className='mt-1 text-xs text-slate-500'>
-                  Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
-                </div>
+                <KangurStatusChip accent={getMasteryTone(item.masteryPercent)} size='md'>
+                  {item.masteryPercent}%
+                </KangurStatusChip>
               </div>
-              <KangurStatusChip accent={getMasteryTone(item.masteryPercent)} size='md'>
-                {item.masteryPercent}%
-              </KangurStatusChip>
-            </div>
-            <div className='mt-2 text-[11px] text-slate-500'>
-              Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
-              {formatCompletedAt(item.lastCompletedAt)}
-            </div>
-          </KangurInfoCard>
-        ))}
-      </div>
-    )}
-  </KangurInfoCard>
-);
+              <div className='mt-2 text-[11px] text-slate-500'>
+                Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
+                {formatCompletedAt(item.lastCompletedAt)}
+              </div>
+            </KangurInfoCard>
+          ))}
+        </div>
+      )}
+    </KangurInfoCard>
+  );
+};
 
 export default function LessonMasteryInsights({
   progress,

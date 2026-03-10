@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
+import { marketplaceConnectionRequestSchema } from './marketplace';
 import type { TemplateMapping as BaseFieldMapping } from './templates';
 
 /**
@@ -64,23 +65,23 @@ export const baseWarehouseSchema = z.object({
 
 export type BaseWarehouse = z.infer<typeof baseWarehouseSchema>;
 
-export const fetchMarketplaceCategoriesRequestSchema = z.object({
-  connectionId: z.string(),
-});
+export const fetchMarketplaceCategoriesRequestSchema = marketplaceConnectionRequestSchema;
 
 export type FetchMarketplaceCategoriesRequest = z.infer<
   typeof fetchMarketplaceCategoriesRequestSchema
 >;
 
+export const categoryMappingAssignmentSchema = z.object({
+  externalCategoryId: z.string().trim().min(1),
+  internalCategoryId: z.string().trim().min(1).nullable(),
+});
+
+export type CategoryMappingAssignment = z.infer<typeof categoryMappingAssignmentSchema>;
+
 export const bulkCategoryMappingRequestSchema = z.object({
   connectionId: z.string().trim().min(1),
   catalogId: z.string().trim().min(1),
-  mappings: z.array(
-    z.object({
-      externalCategoryId: z.string().trim().min(1),
-      internalCategoryId: z.string().trim().min(1).nullable(),
-    })
-  ).min(1),
+  mappings: z.array(categoryMappingAssignmentSchema).min(1),
 });
 
 export type BulkCategoryMappingRequest = z.infer<typeof bulkCategoryMappingRequestSchema>;
@@ -198,6 +199,27 @@ export const baseImportRunParamsSchema = z.object({
 });
 export type BaseImportRunParams = z.infer<typeof baseImportRunParamsSchema>;
 
+export const baseImportRunStartPayloadSchema = z.object({
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+  catalogId: z.string().trim().min(1),
+  templateId: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  imageMode: z.enum(['links', 'download']).default('links'),
+  uniqueOnly: z.boolean().default(true),
+  allowDuplicateSku: z.boolean().default(false),
+  selectedIds: z.array(z.string().trim().min(1)).optional(),
+  dryRun: z.boolean().optional(),
+  mode: baseImportModeSchema.optional(),
+  requestId: z.string().trim().min(1).optional(),
+});
+export type BaseImportRunStartPayload = z.infer<typeof baseImportRunStartPayloadSchema>;
+
+export const baseImportRunsListQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+export type BaseImportRunsListQuery = z.infer<typeof baseImportRunsListQuerySchema>;
+
 export type ExportToBaseVariables = {
   connectionId: string;
   inventoryId: string;
@@ -289,53 +311,62 @@ export const baseImportRunItemRecordSchema = z.object({
   lastErrorAt: z.string().nullable().optional(),
 });
 export type BaseImportRunItemRecord = z.infer<typeof baseImportRunItemRecordSchema>;
+export type BaseImportItemRecord = BaseImportRunItemRecord;
 
-export type BaseImportItemRecord = {
-  id: string;
-  runId: string;
-  externalId: string;
-  itemId: string;
-  baseProductId?: string | null;
-  sku?: string | null;
-  status: BaseImportItemStatus;
-  attempt: number;
-  idempotencyKey?: string;
-  action?: BaseImportItemAction | null;
-  productId?: string | null;
-  importedProductId?: string | null;
-  error?: string | null;
-  errorMessage?: string | null;
-  errorCode?: BaseImportErrorCode | null;
-  errorClass?: BaseImportErrorClass | null;
-  retryable?: boolean | null;
-  nextRetryAt?: string | null;
-  lastErrorAt?: string | null;
-  payloadSnapshot?: unknown;
-  parameterImportSummary?: BaseImportParameterImportSummary | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt?: string | null;
-  finishedAt?: string | null;
-};
+export const baseImportStartResponseSchema = z.object({
+  runId: z.string(),
+  status: baseImportRunStatusSchema,
+  preflight: baseImportPreflightSchema.nullable().optional(),
+  queueJobId: z.string().nullable(),
+  summaryMessage: z.string().nullable(),
+});
+export type BaseImportStartResponse = z.infer<typeof baseImportStartResponseSchema>;
 
-export type BaseImportStartResponse = {
-  runId: string;
-  status: BaseImportRunStatus;
-  preflight?: BaseImportPreflight | null | undefined;
-  queueJobId: string | null;
-  summaryMessage: string | null;
-};
+export const baseImportRunsResponseSchema = z.object({
+  runs: z.array(baseImportRunRecordSchema),
+});
+export type BaseImportRunsResponse = z.infer<typeof baseImportRunsResponseSchema>;
 
-export type BaseImportRunDetailResponse = {
-  run: BaseImportRunRecord;
-  items: BaseImportRunItemRecord[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-  };
-};
+export const baseImportRunDetailPaginationSchema = z.object({
+  page: z.number(),
+  pageSize: z.number(),
+  totalItems: z.number(),
+  totalPages: z.number(),
+});
+export type BaseImportRunDetailPagination = z.infer<typeof baseImportRunDetailPaginationSchema>;
+
+export const baseImportRunDetailResponseSchema = z.object({
+  run: baseImportRunRecordSchema,
+  items: z.array(baseImportRunItemRecordSchema),
+  pagination: baseImportRunDetailPaginationSchema,
+});
+export type BaseImportRunDetailResponse = z.infer<typeof baseImportRunDetailResponseSchema>;
+
+export const baseImportRunDetailQuerySchema = z.object({
+  statuses: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  pageSize: z.coerce.number().int().positive().max(1000).optional(),
+  includeItems: z.enum(['true', 'false']).optional(),
+});
+export type BaseImportRunDetailQuery = z.infer<typeof baseImportRunDetailQuerySchema>;
+
+export const baseImportRunResumePayloadSchema = z.object({
+  statuses: z
+    .array(z.enum(['pending', 'processing', 'imported', 'updated', 'skipped', 'failed']))
+    .optional(),
+});
+export type BaseImportRunResumePayload = z.infer<typeof baseImportRunResumePayloadSchema>;
+
+export const baseImportRunReportQuerySchema = z.object({
+  format: z.enum(['json', 'csv']).optional(),
+  statuses: z.string().trim().optional(),
+});
+export type BaseImportRunReportQuery = z.infer<typeof baseImportRunReportQuerySchema>;
+
+export const baseImportRunReportResponseSchema = baseImportRunDetailResponseSchema.extend({
+  generatedAt: z.string(),
+});
+export type BaseImportRunReportResponse = z.infer<typeof baseImportRunReportResponseSchema>;
 
 export const importParameterCacheResponseSchema = z.object({
   inventoryId: z.string().nullable().optional(),

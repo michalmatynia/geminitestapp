@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
+import type { IntegrationDisconnectResponse } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -32,5 +33,7 @@ export async function POST_handler(
     allegroTokenUpdatedAt: null,
   });
 
-  return NextResponse.json({ ok: true });
+  const response: IntegrationDisconnectResponse = { ok: true };
+
+  return NextResponse.json(response);
 }

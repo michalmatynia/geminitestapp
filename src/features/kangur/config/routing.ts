@@ -313,6 +313,29 @@ export const getKangurPageHref = (
 export const getKangurHomeHref = (basePath: string = KANGUR_BASE_PATH): string =>
   normalizeKangurRequestedPath([], basePath);
 
+export type ResolvedKangurFeaturePageRoute = {
+  normalizedBasePath: string;
+  pageKey: string | null;
+  requestedPath: string;
+};
+
+export const resolveKangurFeaturePageRoute = (
+  slug: string[] = [],
+  basePath: string = KANGUR_BASE_PATH
+): ResolvedKangurFeaturePageRoute => {
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const activeSlug = slug[0] ?? null;
+  const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
+  const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
+  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+
+  return {
+    normalizedBasePath,
+    pageKey,
+    requestedPath,
+  };
+};
+
 type KangurPublicSearchParams =
   | URLSearchParams
   | string

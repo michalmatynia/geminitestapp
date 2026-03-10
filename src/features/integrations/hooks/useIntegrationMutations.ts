@@ -1,8 +1,22 @@
 'use client';
 
 import type {
+  BaseActiveTemplatePreferencePayload,
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferencePayload,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferencePayload,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseSyncAllImagesResponse,
+  IntegrationAllegroApiRequest,
+  IntegrationAllegroApiResponse,
+  IntegrationBaseApiRequest,
+  IntegrationBaseApiResponse,
+  IntegrationConnectionActionTarget,
+  IntegrationConnectionTestVariables,
   Integration,
   IntegrationConnection,
+  IntegrationDisconnectResponse,
   TestConnectionResponse,
 } from '@/shared/contracts/integrations';
 import type { MutationResult } from '@/shared/contracts/ui';
@@ -113,18 +127,9 @@ export function useDeleteConnection() {
   });
 }
 
-type TestConnectionType = 'test' | 'base/test' | 'allegro/test';
-type TestConnectionVariables = {
-  integrationId: string;
-  connectionId: string;
-  type?: TestConnectionType;
-  body?: Record<string, unknown>;
-  timeoutMs?: number;
-};
-
 export function useTestConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<TestConnectionResponse, TestConnectionVariables>({
+  return createMutationV2<TestConnectionResponse, IntegrationConnectionTestVariables>({
     mutationFn: ({
       integrationId,
       connectionId,
@@ -149,37 +154,33 @@ export function useTestConnection() {
 
 export function useDisconnectAllegro() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<Record<string, unknown>, { integrationId: string; connectionId: string }>(
-    {
-      mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
-        api.post<Record<string, unknown>>(
-          `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/disconnect`,
-          { integrationId, connectionId }
-        ),
+  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+    mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
+      api.post<IntegrationDisconnectResponse>(
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/disconnect`,
+        { integrationId, connectionId }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useDisconnectAllegro',
+      operation: 'action',
+      resource: 'integrations.connections.allegro.disconnect',
+      domain: 'integrations',
       mutationKey,
-      meta: {
-        source: 'integrations.hooks.useDisconnectAllegro',
-        operation: 'action',
-        resource: 'integrations.connections.allegro.disconnect',
-        domain: 'integrations',
-        mutationKey,
-        tags: ['integrations', 'connections', 'allegro', 'disconnect'],
-        description: 'Runs integrations connections allegro disconnect.'},
-      invalidate: (queryClient, _data, variables) => {
-        void invalidateIntegrationConnections(queryClient, variables.integrationId);
-      },
-    }
-  );
+      tags: ['integrations', 'connections', 'allegro', 'disconnect'],
+      description: 'Runs integrations connections allegro disconnect.',
+    },
+    invalidate: (queryClient, _data, variables) => {
+      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    },
+  });
 }
 
 export function useBaseApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<
-    { data?: unknown },
-    { integrationId: string; connectionId: string; method: string; parameters: unknown }
-  >({
+  return createMutationV2<IntegrationBaseApiResponse, IntegrationBaseApiRequest>({
     mutationFn: ({ integrationId, connectionId, ...rest }) =>
-      api.post<{ data?: unknown }>(
+      api.post<IntegrationBaseApiResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/base/request`,
         { integrationId, connectionId, ...rest }
       ),
@@ -191,27 +192,23 @@ export function useBaseApiRequest() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'base', 'request'],
-      description: 'Runs integrations connections base request.'},
+      description: 'Runs integrations connections base request.',
+    },
   });
 }
 
 export function useAllegroApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<
-    { status: number; statusText: string; data?: unknown; refreshed?: boolean },
-    { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }
-  >({
+  return createMutationV2<IntegrationAllegroApiResponse, IntegrationAllegroApiRequest>({
     mutationFn: ({ integrationId, connectionId, ...rest }) =>
-      api.post<{
-        status: number;
-        statusText: string;
-        data?: unknown;
-        refreshed?: boolean;
-      }>(`/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/request`, {
-        integrationId,
-        connectionId,
-        ...rest,
-      }),
+      api.post<IntegrationAllegroApiResponse>(
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
+        {
+          integrationId,
+          connectionId,
+          ...rest,
+        }
+      ),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useAllegroApiRequest',
@@ -220,15 +217,22 @@ export function useAllegroApiRequest() {
       domain: 'integrations',
       mutationKey,
       tags: ['integrations', 'connections', 'allegro', 'request'],
-      description: 'Runs integrations connections allegro request.'},
+      description: 'Runs integrations connections allegro request.',
+    },
   });
 }
 
 export function useUpdatePreferredTemplate() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createUpdateMutationV2<void, { templateId: string }>({
+  return createUpdateMutationV2<
+    BaseActiveTemplatePreferenceResponse,
+    BaseActiveTemplatePreferencePayload
+  >({
     mutationFn: (variables) =>
-      api.post<void>('/api/v2/integrations/exports/base/active-template', variables),
+      api.post<BaseActiveTemplatePreferenceResponse>(
+        '/api/v2/integrations/exports/base/active-template',
+        variables
+      ),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useUpdatePreferredTemplate',
@@ -243,9 +247,9 @@ export function useUpdatePreferredTemplate() {
 
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createMutationV2<{ message?: string }, void>({
+  return createMutationV2<BaseSyncAllImagesResponse, void>({
     mutationFn: () =>
-      api.post<{ message?: string }>('/api/v2/integrations/images/sync-base/all', {}),
+      api.post<BaseSyncAllImagesResponse>('/api/v2/integrations/images/sync-base/all', {}),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useSyncAllBaseImagesMutation',
@@ -260,9 +264,15 @@ export function useSyncAllBaseImagesMutation() {
 
 export function useUpdatePreferredInventory() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createUpdateMutationV2<void, { inventoryId: string; connectionId: string }>({
-    mutationFn: ({ inventoryId }) =>
-      api.post<void>('/api/v2/integrations/exports/base/default-inventory', { inventoryId }),
+  return createUpdateMutationV2<
+    BaseDefaultInventoryPreferenceResponse,
+    BaseDefaultInventoryPreferencePayload
+  >({
+    mutationFn: (variables) =>
+      api.post<BaseDefaultInventoryPreferenceResponse>(
+        '/api/v2/integrations/exports/base/default-inventory',
+        variables
+      ),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useUpdatePreferredInventory',
@@ -276,9 +286,15 @@ export function useUpdatePreferredInventory() {
 }
 
 export function useUpdateDefaultExportConnection() {
-  return createUpdateMutationV2<void, { connectionId: string }>({
+  return createUpdateMutationV2<
+    BaseDefaultConnectionPreferenceResponse,
+    BaseDefaultConnectionPreferencePayload
+  >({
     mutationFn: (variables) =>
-      api.post<void>('/api/v2/integrations/exports/base/default-connection', variables),
+      api.post<BaseDefaultConnectionPreferenceResponse>(
+        '/api/v2/integrations/exports/base/default-connection',
+        variables
+      ),
     mutationKey: QUERY_KEYS.integrations.selection.defaultConnection(),
     meta: {
       source: 'integrations.hooks.useUpdateDefaultExportConnection',

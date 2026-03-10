@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getTagMappingRepository } from '@/features/integrations/server';
-import { bulkTagMappingRequestSchema } from '@/shared/contracts/integrations';
+import {
+  bulkTagMappingRequestSchema,
+  type MarketplaceBulkUpsertResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -24,9 +27,11 @@ export async function POST_handler(
   const repo = getTagMappingRepository();
   const upsertedCount = await repo.bulkUpsert(connectionId, mappings);
 
-  return NextResponse.json({
+  const response: MarketplaceBulkUpsertResponse = {
     success: true,
     upserted: upsertedCount,
     message: `Successfully saved ${upsertedCount} tag mappings`,
-  });
+  };
+
+  return NextResponse.json(response);
 }

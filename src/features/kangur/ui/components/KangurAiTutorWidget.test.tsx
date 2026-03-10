@@ -1792,7 +1792,7 @@ describe('KangurAiTutorWidget', () => {
         '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
       tutorAvatarImageUrl: null,
       sessionContext: null,
-      isOpen: true,
+      isOpen: false,
       messages: [],
       isLoading: false,
       isUsageLoading: false,
@@ -1826,14 +1826,31 @@ describe('KangurAiTutorWidget', () => {
       })
     );
 
-    render(<KangurAiTutorWidget />);
+    const { rerender } = render(<KangurAiTutorWidget />);
 
     fireEvent.click(await screen.findByTestId('kangur-ai-tutor-guest-intro-close'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
+    rerender(<KangurAiTutorWidget />);
 
     expect(await screen.findByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-layout',
       'bubble'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-panel-style',
+      'guided-card'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-avatar-placement',
+      'independent'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-has-pointer',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'floating'
     );
     expect(screen.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveAttribute(
       'placeholder',
@@ -1843,6 +1860,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Wyjaśnij' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Co dalej?' })).toBeVisible();
+    expect(screen.queryByTestId('kangur-ai-tutor-pointer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
   });
 
@@ -2960,6 +2978,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
     );
+    expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
       'guided'
@@ -3036,6 +3055,7 @@ describe('KangurAiTutorWidget', () => {
         hasSelectedText: true,
       })
     );
+    expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -3172,6 +3192,98 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
       'Możesz wrócić do zwykłej rozmowy albo ponownie pokazać fragment na stronie.'
     );
+    vi.useRealTimers();
+  });
+
+  it('retargets the reopened tutor to the new selected fragment instead of resurfacing the previous conversation', async () => {
+    vi.useFakeTimers();
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'W poprzednim wątku omawialiśmy zupełnie inne zadanie.',
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: 'Stary fragment',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 620, 140, 26),
+      selectionContainerRect: new DOMRect(80, 580, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      rerender(<KangurAiTutorWidget />);
+    });
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+        isLoading: true,
+      };
+      rerender(<KangurAiTutorWidget />);
+      return new Promise<void>(() => {});
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
+      '„2 + 2”'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-refocus')).toBeInTheDocument();
+    expect(
+      screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toHaveTextContent(
+      'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
+    );
+
     vi.useRealTimers();
   });
 
@@ -3751,6 +3863,11 @@ describe('KangurAiTutorWidget', () => {
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-section-drop-highlight')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-section-drop-highlight')).toHaveClass(
+      'border-2',
+      'border-amber-300/75',
+      'bg-amber-100/10'
+    );
     expect(avatar).toHaveAttribute('data-drag-visual', 'ghost');
 
     fireEvent.pointerUp(avatar, {
@@ -3837,6 +3954,212 @@ describe('KangurAiTutorWidget', () => {
         surface: 'game',
         contentId: 'game:home',
         title: 'Grajmy',
+        sectionId: 'kangur-game-leaderboard',
+        sectionKind: 'leaderboard',
+        sectionLabel: 'Ranking',
+      })
+    );
+    vi.useRealTimers();
+  });
+
+  it('shows a gentle section border while the dragged avatar overlaps a valid section', () => {
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game:home',
+        title: 'Grajmy',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    renderWithTutorAnchors({ homeAnchorKinds: ['leaderboard' as const] });
+
+    const avatar = screen.getByTestId('kangur-ai-tutor-avatar');
+    fireEvent.pointerDown(avatar, {
+      button: 0,
+      pointerId: 11,
+      clientX: 980,
+      clientY: 640,
+    });
+    fireEvent.pointerMove(avatar, {
+      pointerId: 11,
+      clientX: 260,
+      clientY: 1080,
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-section-drop-highlight')).toHaveClass(
+      'border-2',
+      'border-amber-300/75',
+      'bg-amber-100/10'
+    );
+
+    fireEvent.pointerMove(avatar, {
+      pointerId: 11,
+      clientX: 930,
+      clientY: 600,
+    });
+
+    expect(screen.queryByTestId('kangur-ai-tutor-section-drop-highlight')).not.toBeInTheDocument();
+
+    fireEvent.pointerUp(avatar, {
+      pointerId: 11,
+      clientX: 930,
+      clientY: 600,
+    });
+  });
+
+  it('starts section guidance when the drop target is only resolved on pointer release', async () => {
+    vi.useFakeTimers();
+    let resolveSendMessage: (() => void) | null = null;
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game:home',
+        title: 'Grajmy',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+
+    const renderOptions = { homeAnchorKinds: ['leaderboard' as const] };
+    const { rerender } = renderWithTutorAnchors(renderOptions);
+
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      rerender(buildTutorAnchorsTree(renderOptions));
+    });
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+        isLoading: true,
+      };
+      rerender(buildTutorAnchorsTree(renderOptions));
+      return new Promise<void>((resolve) => {
+        resolveSendMessage = resolve;
+      });
+    });
+
+    const avatar = screen.getByTestId('kangur-ai-tutor-avatar');
+    fireEvent.pointerDown(avatar, {
+      button: 0,
+      pointerId: 9,
+      clientX: 980,
+      clientY: 640,
+    });
+    fireEvent.pointerMove(avatar, {
+      pointerId: 9,
+      clientX: 932,
+      clientY: 598,
+    });
+
+    expect(screen.queryByTestId('kangur-ai-tutor-section-drop-highlight')).not.toBeInTheDocument();
+
+    fireEvent.pointerUp(avatar, {
+      pointerId: 9,
+      clientX: 260,
+      clientY: 1080,
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-section-guided-callout')).toHaveTextContent(
+      'Wyjaśniam sekcję: Ranking'
+    );
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-section-preview')).toHaveTextContent('Ranking');
+
+    tutorState = {
+      ...tutorState,
+      isLoading: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Ranking pokazuje Twoją pozycję, punkty i ile brakuje do kolejnego miejsca.',
+        },
+      ],
+    };
+    rerender(buildTutorAnchorsTree(renderOptions));
+
+    await act(async () => {
+      resolveSendMessage?.();
+      await Promise.resolve();
+    });
+
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_section_guidance_started',
+      expect.objectContaining({
         sectionId: 'kangur-game-leaderboard',
         sectionKind: 'leaderboard',
         sectionLabel: 'Ranking',

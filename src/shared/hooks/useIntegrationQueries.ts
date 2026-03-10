@@ -1,4 +1,8 @@
 import type {
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
   BaseInventory,
   CategoryMappingWithDetails,
   IntegrationWithConnections,
@@ -54,10 +58,12 @@ export function useCategoryMappingsByConnection(
   });
 }
 
-export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string | null }> {
+export function useDefaultExportInventory(): SingleQuery<BaseDefaultInventoryPreferenceResponse> {
   const queryKey = integrationKeys.defaultExportInventory();
-  const queryFn = async (): Promise<{ inventoryId?: string | null }> =>
-    api.get<{ inventoryId?: string | null }>('/api/v2/integrations/exports/base/default-inventory');
+  const queryFn = async (): Promise<BaseDefaultInventoryPreferenceResponse> =>
+    api.get<BaseDefaultInventoryPreferenceResponse>(
+      '/api/v2/integrations/exports/base/default-inventory'
+    );
 
   return createSingleQueryV2({
     id: 'default-export-inventory',
@@ -75,10 +81,10 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
   });
 }
 
-export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
+export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionPreferenceResponse> {
   const queryKey = integrationKeys.selection.defaultConnection();
-  const queryFn = async (): Promise<{ connectionId?: string | null }> =>
-    api.get<{ connectionId?: string | null }>(
+  const queryFn = async (): Promise<BaseDefaultConnectionPreferenceResponse> =>
+    api.get<BaseDefaultConnectionPreferenceResponse>(
       '/api/v2/integrations/exports/base/default-connection'
     );
 
@@ -104,12 +110,12 @@ export function useBaseInventories(
 ): ListQuery<BaseInventory> {
   const queryKey = integrationKeys.baseInventories(connectionId);
   const queryFn = async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
+    const data = await api.post<BaseImportInventoriesResponse>(
       '/api/v2/integrations/imports/base',
       {
         action: 'inventories',
         connectionId,
-      }
+      } satisfies BaseImportInventoriesPayload
     );
     if (data.error) {
       throw new ApiError(data.error, 400);

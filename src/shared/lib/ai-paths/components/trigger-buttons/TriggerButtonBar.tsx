@@ -108,7 +108,7 @@ function TriggerRunFeedback(props: {
 }): React.JSX.Element {
   const { location, run } = props;
   const presentation = resolveRunFeedbackPresentation(run.status);
-  const queueHref = `/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(run.runId)}&runId=${encodeURIComponent(run.runId)}`;
+  const queueHref = `/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(run.runId)}&runId=${encodeURIComponent(run.runId)}&status=all`;
   const messageClassName =
     run.status === 'failed' || run.status === 'dead_lettered'
       ? 'text-amber-200'
@@ -205,6 +205,7 @@ export function TriggerButtonBar({
     getEntityJson,
     onRunQueued,
   });
+  const feedbackLocation = location;
   const showRunFeedback =
     entityType === 'product' && PRODUCT_RUN_FEEDBACK_LOCATIONS.has(location);
   const compactInlineLimit = resolveCompactInlineLimit(location);
@@ -300,7 +301,7 @@ export function TriggerButtonBar({
       return (
         <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>
           {control}
-          {lastRun ? <TriggerRunFeedback location={(() => location)()} run={lastRun} /> : null}
+          {lastRun ? <TriggerRunFeedback location={feedbackLocation} run={lastRun} /> : null}
         </div>
       );
     }
@@ -346,7 +347,7 @@ export function TriggerButtonBar({
     return (
       <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>
         {control}
-        {lastRun ? <TriggerRunFeedback location={(() => location)()} run={lastRun} /> : null}
+        {lastRun ? <TriggerRunFeedback location={feedbackLocation} run={lastRun} /> : null}
       </div>
     );
   };
@@ -406,7 +407,7 @@ export function TriggerButtonBar({
             {overflowButtons.map(renderOverflowItem)}
           </ActionMenu>
           {latestOverflowRun ? (
-            <TriggerRunFeedback location={(() => location)()} run={latestOverflowRun} />
+            <TriggerRunFeedback location={feedbackLocation} run={latestOverflowRun} />
           ) : null}
         </div>
       ) : null}

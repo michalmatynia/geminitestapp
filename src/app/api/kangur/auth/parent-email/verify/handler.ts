@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { verifyKangurParentEmail } from '@/features/kangur/server/parent-email-auth';
 import type { KangurParentEmailVerify } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -15,13 +16,13 @@ export async function postKangurParentEmailVerifyHandler(
   }
 
   const result = await verifyKangurParentEmail(body.token);
+  const tutorContent = await getKangurAiTutorContent('pl');
 
   return NextResponse.json({
     ok: true,
     email: result.email,
     callbackUrl: result.callbackUrl,
     emailVerified: result.emailVerified,
-    message:
-      'Email zostal zweryfikowany. Konto rodzica jest gotowe, AI Tutor jest odblokowany i mozesz zalogowac sie emailem oraz haslem.',
+    message: tutorContent.parentVerification.verifySuccessMessage,
   });
 }

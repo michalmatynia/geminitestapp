@@ -65,14 +65,14 @@ type CmsPageRendererBaseProps = CmsPageRendererProps & {
   runtime: CmsRuntimeContextValue | null;
 };
 
-export function CmsPageRendererBase(props: CmsPageRendererBaseProps): React.ReactNode {
+export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.ReactNode {
   const { components, colorSchemes, layout, hoverEffect, hoverScale, mediaVars, mediaStyles, runtime } =
     props;
 
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
-  const resolvedMediaStyles = React.useMemo(() => mediaStyles ?? null, [mediaStyles]);
-  const resolvedColorSchemes = React.useMemo(() => colorSchemes ?? {}, [colorSchemes]);
-  const resolvedLayout = React.useMemo(() => layout ?? {}, [layout]);
+  const resolvedMediaStyles = mediaStyles ?? null;
+  const resolvedColorSchemes = colorSchemes ?? {};
+  const resolvedLayout = layout ?? {};
 
   const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
     const sectionId = comp.content.sectionId;
@@ -127,13 +127,13 @@ export function CmsPageRendererBase(props: CmsPageRendererBaseProps): React.Reac
                         config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
                       >
                         <EventEffectsWrapper settings={section.settings}>
-                          <SectionRendererBase
-                            type={section.type}
-                            sectionId={section.id}
-                            settings={section.settings}
-                            blocks={section.blocks}
-                            runtime={runtime}
-                          />
+                          {renderSectionRenderer({
+                            type: section.type,
+                            sectionId: section.id,
+                            settings: section.settings,
+                            blocks: section.blocks,
+                            runtime,
+                          })}
                         </EventEffectsWrapper>
                       </CssAnimationWrapper>
                     </GsapAnimationWrapper>
@@ -174,12 +174,9 @@ type SectionRendererBaseProps = SectionRendererProps & {
   runtime: CmsRuntimeContextValue | null;
 };
 
-export function SectionRendererBase(props: SectionRendererBaseProps): React.ReactNode {
+export function renderSectionRenderer(props: SectionRendererBaseProps): React.ReactNode {
   const { type, sectionId, settings, blocks, runtime } = props;
-  const resolvedSettings = React.useMemo(
-    () => resolveCmsConnectedSettings(type, settings, runtime),
-    [type, settings, runtime]
-  );
+  const resolvedSettings = resolveCmsConnectedSettings(type, settings, runtime);
 
   return (
     <SectionBlockProvider sectionId={sectionId} settings={resolvedSettings} blocks={blocks}>

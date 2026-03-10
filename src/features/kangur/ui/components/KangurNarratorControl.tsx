@@ -53,6 +53,7 @@ export function KangurNarratorControl({
   shellTestId,
   docId,
 }: KangurNarratorControlProps): React.JSX.Element | null {
+  const narratorDocId = docId;
   const contextRegistrySignature = useMemo(
     () => buildKangurLessonTtsEnvelopeSignature(contextRegistry),
     [contextRegistry]
@@ -409,7 +410,7 @@ export function KangurNarratorControl({
           size='sm'
           style={{ minWidth: controlButtonMinWidth }}
           variant='surface'
-          {...(docId ? { 'data-doc-id': docId } : {})}
+          {...(narratorDocId ? { 'data-doc-id': narratorDocId } : {})}
         >
           <ControlIcon className={cn('size-4', status === 'loading' ? 'animate-spin' : undefined)} />{' '}
           {controlLabel}

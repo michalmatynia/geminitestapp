@@ -3,6 +3,17 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useRef, useState } from 'react';
 
+import type {
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseProductLinkExistingPayload,
+  BaseProductLinkExistingResponse,
+  BaseProductSkuCheckPayload,
+  BaseProductSkuCheckResponse,
+} from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -27,12 +38,6 @@ type QuickExportContext = {
   connectionId: string;
   inventoryId: string;
   templateId: string;
-};
-
-type SkuCheckResponse = {
-  sku?: string;
-  exists?: boolean;
-  existingProductId?: string | null;
 };
 
 type ExistingSkuDecisionState = QuickExportContext & {
@@ -62,7 +67,7 @@ export function BaseQuickExportButton(props: {
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
       const [preferredConnection, defaultInventory] = await Promise.all([
-        fetchQueryV2<{ connectionId?: string | null }>(queryClient, {
+        fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
           queryFn: () => fetchPreferredBaseConnection(),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -75,10 +80,10 @@ export function BaseQuickExportButton(props: {
             tags: ['integrations', 'default-connection', 'fetch'],
             description: 'Loads integrations default connection.'},
         })(),
-        fetchQueryV2<{ inventoryId?: string | null }>(queryClient, {
+        fetchQueryV2<BaseDefaultInventoryPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
           queryFn: () =>
-            api.get<{ inventoryId?: string | null }>(
+            api.get<BaseDefaultInventoryPreferenceResponse>(
               '/api/v2/integrations/exports/base/default-inventory'
             ),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -109,23 +114,17 @@ export function BaseQuickExportButton(props: {
         return null;
       }
 
-      const inventoriesResponse = await api.post<{
-        inventories?: Array<{ inventory_id?: string | number; id?: string | number }>;
-      }>('/api/v2/integrations/imports/base', {
-        action: 'inventories',
-        connectionId,
-      });
+      const inventoriesResponse = await api.post<BaseImportInventoriesResponse>(
+        '/api/v2/integrations/imports/base',
+        {
+          action: 'inventories',
+          connectionId,
+        } satisfies BaseImportInventoriesPayload
+      );
 
       const availableInventoryIds = new Set(
         (Array.isArray(inventoriesResponse.inventories) ? inventoriesResponse.inventories : [])
-          .map((entry) => {
-            const rawId = entry.inventory_id ?? entry.id;
-            if (typeof rawId === 'string') return rawId.trim();
-            if (typeof rawId === 'number' && Number.isFinite(rawId)) {
-              return String(rawId);
-            }
-            return '';
-          })
+          .map((entry) => entry.id.trim())
           .filter((value) => value.length > 0)
       );
 
@@ -137,7 +136,7 @@ export function BaseQuickExportButton(props: {
         return null;
       }
 
-      const scopedTemplate = await api.get<{ templateId?: string | null }>(
+      const scopedTemplate = await api.get<BaseActiveTemplatePreferenceResponse>(
         `/api/v2/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
       );
       const templateId = scopedTemplate?.templateId?.trim() || '';
@@ -202,14 +201,14 @@ export function BaseQuickExportButton(props: {
       if (!showMarketplaceBadge) {
         const sku = (product.sku ?? '').trim();
         if (sku) {
-          let skuCheck: SkuCheckResponse;
+          let skuCheck: BaseProductSkuCheckResponse;
           try {
-            skuCheck = await api.post<SkuCheckResponse>(
+            skuCheck = await api.post<BaseProductSkuCheckResponse>(
               `/api/v2/integrations/products/${product.id}/base/sku-check`,
               {
                 connectionId: context.connectionId,
                 inventoryId: context.inventoryId,
-              }
+              } satisfies BaseProductSkuCheckPayload
             );
           } catch (error) {
             const message =
@@ -269,11 +268,14 @@ export function BaseQuickExportButton(props: {
 
     setLinkExistingPending(true);
     try {
-      await api.post(`/api/v2/integrations/products/${product.id}/base/link-existing`, {
-        connectionId: existingSkuDecision.connectionId,
-        inventoryId: existingSkuDecision.inventoryId,
-        externalListingId,
-      });
+      await api.post<BaseProductLinkExistingResponse>(
+        `/api/v2/integrations/products/${product.id}/base/link-existing`,
+        {
+          connectionId: existingSkuDecision.connectionId,
+          inventoryId: existingSkuDecision.inventoryId,
+          externalListingId,
+        } satisfies BaseProductLinkExistingPayload
+      );
 
       prefetchListings();
       await invalidateProductListingsAndBadges(queryClient, product.id);

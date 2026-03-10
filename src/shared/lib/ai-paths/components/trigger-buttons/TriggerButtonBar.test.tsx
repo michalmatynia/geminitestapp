@@ -116,7 +116,7 @@ describe('TriggerButtonBar', () => {
     expect(screen.getByText('Database write affected 0 records for update.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
       'href',
-      '/admin/ai-paths/queue?tab=paths-all&query=run-product-feedback-123456&runId=run-product-feedback-123456'
+      '/admin/ai-paths/queue?tab=paths-all&query=run-product-feedback-123456&runId=run-product-feedback-123456&status=all'
     );
   });
 

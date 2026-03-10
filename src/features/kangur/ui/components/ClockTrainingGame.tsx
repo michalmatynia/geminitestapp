@@ -1304,6 +1304,8 @@ export default function ClockTrainingGame({
 
   useEffect(() => () => clearAdvanceTimeout(), [clearAdvanceTimeout]);
 
+  const completionAction = onCompletionPrimaryAction ?? onFinish;
+
   if (done && (gameMode === 'challenge' || showStandalonePracticeSummary)) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='py-4'>
@@ -1382,8 +1384,6 @@ export default function ClockTrainingGame({
       </motion.div>
     );
   }
-
-  const completionAction = onCompletionPrimaryAction ?? onFinish;
   const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null;
   const activeSection = section;
   const timeDisplayEnabled = showTimeDisplay;

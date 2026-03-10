@@ -11,8 +11,10 @@ import { QuestionChoicesEditor } from './components/QuestionChoicesEditor';
 import { QuestionIllustrationEditor } from './components/QuestionIllustrationEditor';
 import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import {
-  KangurTestQuestionEditorProvider,
+  KangurTestQuestionEditorActionsContext,
+  KangurTestQuestionEditorStateContext,
   useKangurTestQuestionEditorContext,
+  useCreateKangurTestQuestionEditorProviderValues,
 } from './context/KangurTestQuestionEditorContext';
 import { getQuestionAuthoringSummary } from './question-authoring-insights';
 import { getQuestionWorkflowLabel } from './question-authoring-insights';
@@ -66,14 +68,21 @@ export function KangurTestQuestionEditor(props: Props): React.JSX.Element {
   const resolvedSuiteTitle = props.suiteTitle ?? runtime?.suite.title;
   const editorDirtyState = props.isDirty;
   const editorLocalDraftSavedAtLabel = props.localDraftSavedAtLabel;
+  const { stateValue, actionsValue } = useCreateKangurTestQuestionEditorProviderValues({
+    formData: props.formData,
+    onChange: props.onChange,
+    suiteTitle: resolvedSuiteTitle,
+  });
 
   return (
-    <KangurTestQuestionEditorProvider {...props} suiteTitle={resolvedSuiteTitle}>
-      <KangurTestQuestionEditorContent
-        isDirty={editorDirtyState}
-        localDraftSavedAtLabel={editorLocalDraftSavedAtLabel}
-      />
-    </KangurTestQuestionEditorProvider>
+    <KangurTestQuestionEditorActionsContext.Provider value={actionsValue}>
+      <KangurTestQuestionEditorStateContext.Provider value={stateValue}>
+        <KangurTestQuestionEditorContent
+          isDirty={editorDirtyState}
+          localDraftSavedAtLabel={editorLocalDraftSavedAtLabel}
+        />
+      </KangurTestQuestionEditorStateContext.Provider>
+    </KangurTestQuestionEditorActionsContext.Provider>
   );
 }
 

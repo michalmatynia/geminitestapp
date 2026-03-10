@@ -1,9 +1,7 @@
 'use client';
 
-import {
-  KangurFeaturePageShell,
-  resolveKangurFeaturePageRoute,
-} from '@/features/kangur/ui/KangurFeaturePage';
+import { resolveKangurFeaturePageRoute } from '@/features/kangur/config/routing';
+import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 import { KangurAdminMenuToggle } from './KangurAdminMenuToggle';

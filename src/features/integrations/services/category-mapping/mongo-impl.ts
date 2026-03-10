@@ -8,7 +8,8 @@ import {
   type AnyBulkWriteOperation,
 } from 'mongodb';
 
-import {
+import type {
+  CategoryMappingAssignment,
   CategoryMapping,
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
@@ -304,7 +305,7 @@ export const mongoCategoryMappingImpl = {
   async bulkUpsert(
     connectionId: string,
     catalogId: string,
-    mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
+    mappings: CategoryMappingAssignment[]
   ): Promise<number> {
     if (mappings.length === 0) return 0;
     await ensureMongoCategoryMappingIndexes();

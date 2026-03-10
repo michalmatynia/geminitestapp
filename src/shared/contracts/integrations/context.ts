@@ -1,8 +1,12 @@
 import type {
+  BulkCategoryMappingRequest,
   Integration,
   IntegrationConnection,
   CategoryMappingWithDetails,
   ExternalCategory,
+  MarketplaceBulkUpsertResponse,
+  MarketplaceConnectionRequest,
+  MarketplaceFetchResponse,
 } from './index';
 import type { PlaywrightPersona } from '../playwright';
 import type { CatalogRecord, ProductCategory } from '../products';
@@ -43,18 +47,6 @@ export interface CategoryMapperActions {
   handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
   handleSave: () => Promise<void>;
   getMappingForExternal: (externalCategoryId: string) => string | null;
-  fetchMutation: UseMutationResult<
-    { fetched: number; message: string },
-    Error,
-    { connectionId: string }
-  >;
-  saveMutation: UseMutationResult<
-    { upserted: number; message: string },
-    Error,
-    {
-      connectionId: string;
-      catalogId: string;
-      mappings: { externalCategoryId: string; internalCategoryId: string | null }[];
-    }
-  >;
+  fetchMutation: UseMutationResult<MarketplaceFetchResponse, Error, MarketplaceConnectionRequest>;
+  saveMutation: UseMutationResult<MarketplaceBulkUpsertResponse, Error, BulkCategoryMappingRequest>;
 }

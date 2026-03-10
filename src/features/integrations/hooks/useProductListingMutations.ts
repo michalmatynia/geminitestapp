@@ -5,6 +5,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import type {
   ListingBadgesPayload,
   MarketplaceBadgeEntry,
+  ProductListingCreatePayload,
+  ProductListingCreateResponse,
+  ProductListingCreateVariables,
+  ProductListingDeleteFromBaseResponse,
+  ProductListingDeleteFromBaseVariables,
+  ProductListingInventoryUpdateVariables,
+  ProductListingRelistResponse,
+  ProductListingRelistVariables,
+  ProductListingSyncBaseImagesResponse,
+  ProductListingSyncBaseImagesVariables,
+  ProductListingUpdateResponse,
   ProductListingWithDetails,
   ProductJob,
   ExportToBaseVariables,
@@ -126,7 +137,7 @@ const removeListingBadgeStatus = (
 export function useGenericExportToBaseMutation(): UpdateMutation<
   ExportResponse,
   GenericExportToBaseVariables
-  > {
+> {
   const mutationKey = listingBadgesQueryKey;
   const queryClient = useQueryClient();
 
@@ -181,23 +192,18 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
 }
 
 export function useGenericCreateListingMutation(): CreateMutation<
-  Record<string, unknown>,
-  { productId: string; integrationId: string; connectionId: string }
-  > {
+  ProductListingCreateResponse,
+  ProductListingCreateVariables
+> {
   return createCreateMutationV2({
     mutationFn: ({
       productId,
-      integrationId,
-      connectionId,
-    }: {
-      productId: string;
-      integrationId: string;
-      connectionId: string;
-    }) =>
-      api.post<Record<string, unknown>>(`/api/v2/integrations/products/${productId}/listings`, {
-        integrationId,
-        connectionId,
-      }),
+      ...payload
+    }: ProductListingCreateVariables) =>
+      api.post<ProductListingCreateResponse>(
+        `/api/v2/integrations/products/${productId}/listings`,
+        payload
+      ),
     mutationKey: integrationJobsQueryKey,
     meta: {
       source: 'integrations.hooks.useGenericCreateListingMutation',
@@ -216,15 +222,15 @@ export function useGenericCreateListingMutation(): CreateMutation<
 export function useDeleteFromBaseMutation(
   productId: string
 ): UpdateMutation<
-  { status?: string; message?: string; runId?: string | null },
-  { listingId: string; inventoryId?: string }
+  ProductListingDeleteFromBaseResponse,
+  ProductListingDeleteFromBaseVariables
 > {
   const listingQueryKey = getProductListingsQueryKey(productId);
   const queryClient = useQueryClient();
 
   return createDeleteMutationV2({
-    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) =>
-      api.post<{ status?: string; message?: string; runId?: string | null }>(
+    mutationFn: ({ listingId, inventoryId }: ProductListingDeleteFromBaseVariables) =>
+      api.post<ProductListingDeleteFromBaseResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
         { inventoryId }
       ),
@@ -312,10 +318,10 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
 
 export function useUpdateListingInventoryIdMutation(
   productId: string
-): UpdateMutation<Record<string, unknown>, { listingId: string; inventoryId: string }> {
+): UpdateMutation<ProductListingUpdateResponse, ProductListingInventoryUpdateVariables> {
   return createUpdateMutationV2({
-    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) =>
-      api.patch<Record<string, unknown>>(
+    mutationFn: ({ listingId, inventoryId }: ProductListingInventoryUpdateVariables) =>
+      api.patch<ProductListingUpdateResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}`,
         { inventoryId }
       ),
@@ -336,28 +342,13 @@ export function useUpdateListingInventoryIdMutation(
 
 export function useSyncBaseImagesMutation(
   productId: string
-): UpdateMutation<
-  { status: string; count: number; added: number },
-  { listingId: string; inventoryId?: string }
-> {
+): UpdateMutation<ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables> {
   return createUpdateMutationV2({
-    mutationFn: async ({
-      listingId,
-      inventoryId,
-    }: {
-      listingId: string;
-      inventoryId?: string;
-    }): Promise<{ status: string; count: number; added: number }> => {
-      const payload = await api.post<{ status?: string; count?: number; added?: number }>(
+    mutationFn: ({ listingId, inventoryId }: ProductListingSyncBaseImagesVariables) =>
+      api.post<ProductListingSyncBaseImagesResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
         { inventoryId }
-      );
-      return {
-        status: payload.status ?? 'synced',
-        count: payload.count ?? 0,
-        added: payload.added ?? 0,
-      };
-    },
+      ),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useSyncBaseImagesMutation',
@@ -429,15 +420,8 @@ export function useExportToBaseMutation(
 }
 
 export function useCreateListingMutation(productId: string): CreateMutation<
-  Record<string, unknown>,
-  {
-    integrationId: string;
-    connectionId: string;
-    durationHours?: number;
-    autoRelistEnabled?: boolean;
-    autoRelistLeadMinutes?: number;
-    templateId?: string | null;
-  }
+  ProductListingCreateResponse,
+  ProductListingCreatePayload
 > {
   return createCreateMutationV2({
     mutationFn: ({
@@ -447,15 +431,8 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       autoRelistEnabled,
       autoRelistLeadMinutes,
       templateId,
-    }: {
-      integrationId: string;
-      connectionId: string;
-      durationHours?: number;
-      autoRelistEnabled?: boolean;
-      autoRelistLeadMinutes?: number;
-      templateId?: string | null;
-    }) =>
-      api.post<Record<string, unknown>>(`/api/v2/integrations/products/${productId}/listings`, {
+    }: ProductListingCreatePayload) =>
+      api.post<ProductListingCreateResponse>(`/api/v2/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
         ...(typeof durationHours === 'number' ? { durationHours } : {}),
@@ -473,7 +450,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       tags: ['integrations', 'listings', 'create'],
       description: 'Creates integrations listings.'},
     invalidate: async (queryClient, data) => {
-      const queueName = (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
+      const queueName = data.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
@@ -483,20 +460,15 @@ export function useCreateListingMutation(productId: string): CreateMutation<
 }
 
 export function useRelistTraderaMutation(productId: string): UpdateMutation<
-  {
-    queued?: boolean;
-    listingId?: string;
-    queue?: { name?: string; jobId?: string; enqueuedAt?: string };
-  },
-  { listingId: string }
+  ProductListingRelistResponse,
+  ProductListingRelistVariables
 > {
   return createCreateMutationV2({
-    mutationFn: ({ listingId }: { listingId: string }) =>
-      api.post<{
-        queued?: boolean;
-        listingId?: string;
-        queue?: { name?: string; jobId?: string; enqueuedAt?: string };
-      }>(`/api/v2/integrations/products/${productId}/listings/${listingId}/relist`, {}),
+    mutationFn: ({ listingId }: ProductListingRelistVariables) =>
+      api.post<ProductListingRelistResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/relist`,
+        {}
+      ),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useRelistTraderaMutation',

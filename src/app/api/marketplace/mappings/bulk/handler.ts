@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/server';
-import { bulkCategoryMappingRequestSchema } from '@/shared/contracts/integrations';
+import {
+  bulkCategoryMappingRequestSchema,
+  type MarketplaceBulkUpsertResponse,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -24,9 +27,11 @@ export async function POST_handler(
   const repo = await getCategoryMappingRepository();
   const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);
 
-  return NextResponse.json({
+  const response: MarketplaceBulkUpsertResponse = {
     success: true,
     upserted: upsertedCount,
     message: `Successfully saved ${upsertedCount} category mappings`,
-  });
+  };
+
+  return NextResponse.json(response);
 }

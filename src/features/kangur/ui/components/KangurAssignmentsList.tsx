@@ -259,7 +259,7 @@ export function KangurAssignmentsList({
           <KangurEmptyState
             accent='slate'
             className='text-sm'
-            description={emptyLabel}
+            description={emptyStateDescription}
             padding='lg'
           />
         ) : (

@@ -23,6 +23,7 @@ export default function XpToast({
 }: XpToastProps): React.JSX.Element {
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
+  const rewardBreakdown = breakdown;
   const badgeDetails = (newBadges ?? [])
     .map((badgeId) => BADGES.find((badge) => badge.id === badgeId))
     .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge));
@@ -60,7 +61,7 @@ export default function XpToast({
               </div>
               <KangurRewardBreakdownChips
                 accent='slate'
-                breakdown={breakdown}
+                breakdown={rewardBreakdown}
                 className='mt-2'
                 dataTestId='xp-toast-breakdown'
                 itemDataTestIdPrefix='xp-toast-breakdown'

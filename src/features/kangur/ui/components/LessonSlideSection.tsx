@@ -54,10 +54,17 @@ export default function LessonSlideSection({
   useKangurSyncLessonSubsectionSummary(sectionHeader);
   const [slide, setSlide] = useState(0);
   const completionReportedRef = useRef(false);
-  const isLast = slide === slides.length - 1;
+  const totalSlides = slides.length;
+  const isLast = slide === totalSlides - 1;
   const isFirst = slide === 0;
   const activeSlide = slides[slide];
-  const shouldRenderNavigationPills = slides.length > 1 || Boolean(secretLessonPill?.isUnlocked);
+  const shouldRenderNavigationPills = totalSlides > 1 || Boolean(secretLessonPill?.isUnlocked);
+  const handlePreviousSlide = (): void => {
+    setSlide((currentSlide) => Math.max(0, currentSlide - 1));
+  };
+  const handleNextSlide = (): void => {
+    setSlide((currentSlide) => Math.min(totalSlides - 1, currentSlide + 1));
+  };
 
   if (!activeSlide) {
     return (
@@ -162,12 +169,7 @@ export default function LessonSlideSection({
             <div className='min-w-[72px]' />
           ) : (
             <KangurButton
-              onClick={() => {
-                const handlePreviousSlide = (): void => {
-                  setSlide((currentSlide) => Math.max(0, currentSlide - 1));
-                };
-                handlePreviousSlide();
-              }}
+              onClick={handlePreviousSlide}
               aria-label='Poprzedni panel'
               className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-prev-button'
@@ -184,13 +186,7 @@ export default function LessonSlideSection({
             <div className='min-w-[72px]' />
           ) : (
             <KangurButton
-              onClick={() => {
-                const totalSlides = slides.length;
-                const handleNextSlide = (): void => {
-                  setSlide((currentSlide) => Math.min(totalSlides - 1, currentSlide + 1));
-                };
-                handleNextSlide();
-              }}
+              onClick={handleNextSlide}
               aria-label='Nastepny panel'
               className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-next-button'

@@ -6,7 +6,12 @@ import type {
   ProductParameterValue,
   ProductParameterCreateInput as ParameterCreateInput,
 } from '@/shared/contracts/products';
-import type { Integration, ImageExportLogger, CapturedLog } from './base';
+import {
+  imageRetryPresetSchema,
+  type Integration,
+  type ImageExportLogger,
+  type CapturedLog,
+} from './base';
 import {
   baseImportPreflightIssueSchema,
   type BaseImportItemStatus,
@@ -45,6 +50,7 @@ import type { ImportTemplateParameterImport } from './templates';
 export * from './base';
 export * from './connections';
 export * from './listings';
+export * from './marketplace';
 export * from './producers';
 export * from './context';
 export {
@@ -59,8 +65,32 @@ export {
   type UpdateIntegrationTemplate,
 } from './templates';
 export * from './base-com';
-export { importExportTemplateSchema } from './import-export';
+export {
+  importExportTemplateSchema,
+  baseImportInventoriesPayloadSchema,
+  baseImportInventoriesResponseSchema,
+  baseImportWarehousesPayloadSchema,
+  baseImportWarehousesResponseSchema,
+  baseImportWarehousesDebugPayloadSchema,
+  baseImportWarehousesDebugResponseSchema,
+  baseImportListPayloadSchema,
+  baseImportListResponseSchema,
+  baseImportParametersPayloadSchema,
+  baseImportParametersResponseSchema,
+  baseImportParametersClearResponseSchema,
+} from './import-export';
 export type {
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseImportListPayload,
+  BaseImportListResponse,
+  BaseImportParametersPayload,
+  BaseImportParametersResponse,
+  BaseImportParametersClearResponse,
+  BaseImportWarehousesPayload,
+  BaseImportWarehousesResponse,
+  BaseImportWarehousesDebugPayload,
+  BaseImportWarehousesDebugResponse,
   CatalogOption,
   DebugWarehouses,
   ExportParameterDoc,
@@ -154,22 +184,217 @@ export type ImageExportDiagnostics = z.infer<typeof imageExportDiagnosticsSchema
  * Connection Testing DTOs
  */
 
-export type TestStatus = 'pending' | 'ok' | 'failed';
+export const testStatusSchema = z.enum(['pending', 'ok', 'failed']);
 
-export type TestLogEntry = {
-  step: string;
-  status: TestStatus;
-  timestamp: string;
-  detail?: string;
-};
+export type TestStatus = z.infer<typeof testStatusSchema>;
 
-export type TestConnectionResponse = {
-  ok: boolean;
-  steps: TestLogEntry[];
-  inventoryCount?: number;
-  profile?: Record<string, unknown>;
-  [key: string]: unknown;
-};
+export const testLogEntrySchema = z.object({
+  step: z.string(),
+  status: testStatusSchema,
+  timestamp: z.string(),
+  detail: z.string().optional(),
+});
+
+export type TestLogEntry = z.infer<typeof testLogEntrySchema>;
+
+export const testConnectionResponseSchema = z
+  .object({
+    ok: z.boolean(),
+    steps: z.array(testLogEntrySchema),
+    inventoryCount: z.number().optional(),
+    profile: z.unknown().optional(),
+  })
+  .passthrough();
+
+export type TestConnectionResponse = z.infer<typeof testConnectionResponseSchema>;
+
+export const integrationConnectionActionTargetSchema = z.object({
+  integrationId: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+});
+
+export type IntegrationConnectionActionTarget = z.infer<
+  typeof integrationConnectionActionTargetSchema
+>;
+
+export const integrationConnectionTestTypeSchema = z.enum(['test', 'base/test', 'allegro/test']);
+
+export type IntegrationConnectionTestType = z.infer<typeof integrationConnectionTestTypeSchema>;
+
+export const integrationConnectionTestModeSchema = z.enum(['auto', 'manual']);
+
+export type IntegrationConnectionTestMode = z.infer<typeof integrationConnectionTestModeSchema>;
+
+export const integrationConnectionTestRequestSchema = z.object({
+  mode: integrationConnectionTestModeSchema.optional().catch(undefined),
+  manualTimeoutMs: z.number().int().positive().optional().catch(undefined),
+});
+
+export type IntegrationConnectionTestRequest = z.infer<typeof integrationConnectionTestRequestSchema>;
+
+export const integrationConnectionTestVariablesSchema =
+  integrationConnectionActionTargetSchema.extend({
+    type: integrationConnectionTestTypeSchema.optional(),
+    body: z.record(z.string(), z.unknown()).optional(),
+    timeoutMs: z.number().int().positive().optional(),
+  });
+
+export type IntegrationConnectionTestVariables = z.infer<
+  typeof integrationConnectionTestVariablesSchema
+>;
+
+export const integrationBaseApiPayloadSchema = z.object({
+  method: z.string().trim().min(1),
+  parameters: z.unknown().optional(),
+});
+
+export type IntegrationBaseApiPayload = z.infer<typeof integrationBaseApiPayloadSchema>;
+
+export const integrationBaseApiRequestSchema = integrationConnectionActionTargetSchema.extend(
+  integrationBaseApiPayloadSchema.shape
+);
+
+export type IntegrationBaseApiRequest = z.infer<typeof integrationBaseApiRequestSchema>;
+
+export const integrationBaseApiResponseSchema = z.object({
+  data: z.unknown().optional(),
+});
+
+export type IntegrationBaseApiResponse = z.infer<typeof integrationBaseApiResponseSchema>;
+
+export const integrationAllegroApiMethodSchema = z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
+
+export type IntegrationAllegroApiMethod = z.infer<typeof integrationAllegroApiMethodSchema>;
+
+export const integrationAllegroApiPayloadSchema = z.object({
+  method: integrationAllegroApiMethodSchema,
+  path: z.string().trim().min(1),
+  body: z.unknown().optional(),
+});
+
+export type IntegrationAllegroApiPayload = z.infer<typeof integrationAllegroApiPayloadSchema>;
+
+export const integrationAllegroApiRequestSchema = integrationConnectionActionTargetSchema.extend(
+  integrationAllegroApiPayloadSchema.shape
+);
+
+export type IntegrationAllegroApiRequest = z.infer<typeof integrationAllegroApiRequestSchema>;
+
+export const integrationAllegroApiResponseSchema = z.object({
+  status: z.number().int(),
+  statusText: z.string(),
+  data: z.unknown().optional(),
+  refreshed: z.boolean().optional(),
+});
+
+export type IntegrationAllegroApiResponse = z.infer<typeof integrationAllegroApiResponseSchema>;
+
+export const integrationDisconnectResponseSchema = z.object({
+  ok: z.boolean(),
+});
+
+export type IntegrationDisconnectResponse = z.infer<typeof integrationDisconnectResponseSchema>;
+
+export const baseActiveTemplatePreferencePayloadSchema = z.object({
+  templateId: z.string().trim().min(1).nullable().optional(),
+  connectionId: z.string().trim().min(1).nullable().optional(),
+  inventoryId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type BaseActiveTemplatePreferencePayload = z.infer<
+  typeof baseActiveTemplatePreferencePayloadSchema
+>;
+
+export const baseActiveTemplatePreferenceResponseSchema = z.object({
+  templateId: z.string().nullable(),
+});
+
+export type BaseActiveTemplatePreferenceResponse = z.infer<
+  typeof baseActiveTemplatePreferenceResponseSchema
+>;
+
+export const baseDefaultInventoryPreferencePayloadSchema = z.object({
+  inventoryId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type BaseDefaultInventoryPreferencePayload = z.infer<
+  typeof baseDefaultInventoryPreferencePayloadSchema
+>;
+
+export const baseDefaultInventoryPreferenceResponseSchema = z.object({
+  inventoryId: z.string().nullable(),
+});
+
+export type BaseDefaultInventoryPreferenceResponse = z.infer<
+  typeof baseDefaultInventoryPreferenceResponseSchema
+>;
+
+export const baseDefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type BaseDefaultConnectionPreferencePayload = z.infer<
+  typeof baseDefaultConnectionPreferencePayloadSchema
+>;
+
+export const baseDefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type BaseDefaultConnectionPreferenceResponse = z.infer<
+  typeof baseDefaultConnectionPreferenceResponseSchema
+>;
+
+export const baseStockFallbackPreferencePayloadSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type BaseStockFallbackPreferencePayload = z.infer<
+  typeof baseStockFallbackPreferencePayloadSchema
+>;
+
+export const baseStockFallbackPreferenceResponseSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type BaseStockFallbackPreferenceResponse = z.infer<
+  typeof baseStockFallbackPreferenceResponseSchema
+>;
+
+export const baseImageRetryPresetsPayloadSchema = z.object({
+  presets: z.array(imageRetryPresetSchema).min(1),
+});
+
+export type BaseImageRetryPresetsPayload = z.infer<typeof baseImageRetryPresetsPayloadSchema>;
+
+export const baseImageRetryPresetsResponseSchema = z.object({
+  presets: z.array(imageRetryPresetSchema),
+});
+
+export type BaseImageRetryPresetsResponse = z.infer<typeof baseImageRetryPresetsResponseSchema>;
+
+export const baseSyncAllImagesResponseSchema = z.object({
+  status: z.literal('ok'),
+  jobId: z.string(),
+});
+
+export type BaseSyncAllImagesResponse = z.infer<typeof baseSyncAllImagesResponseSchema>;
+
+export const baseSampleProductPayloadSchema = z.object({
+  inventoryId: z.string().trim().optional().nullable(),
+  productId: z.string().trim().min(1).optional(),
+  connectionId: z.string().trim().min(1).optional(),
+  saveOnly: z.boolean().optional(),
+});
+
+export type BaseSampleProductPayload = z.infer<typeof baseSampleProductPayloadSchema>;
+
+export const baseSampleProductResponseSchema = z.object({
+  productId: z.string().nullable().optional(),
+  inventoryId: z.string().nullable().optional(),
+});
+
+export type BaseSampleProductResponse = z.infer<typeof baseSampleProductResponseSchema>;
 
 /**
  * Parameter Import DTOs

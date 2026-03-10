@@ -5,6 +5,7 @@ import {
   useIntegrationsApiConsole,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
+import type { IntegrationAllegroApiMethod } from '@/shared/contracts/integrations';
 import { GenericApiConsole, type ApiPreset } from '@/shared/ui';
 
 export function AllegroApiConsole(): React.JSX.Element {
@@ -66,7 +67,9 @@ export function AllegroApiConsole(): React.JSX.Element {
       }}
       presets={allegroApiPresets}
       isConnected={isConnected}
-      onSetMethod={setAllegroApiMethod}
+      onSetMethod={(value) => {
+        setAllegroApiMethod(value as IntegrationAllegroApiMethod);
+      }}
       onSetPath={setAllegroApiPath}
       onSetBodyOrParams={setAllegroApiBody}
       onRequest={() => {

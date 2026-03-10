@@ -316,6 +316,9 @@ export default function CalendarInteractiveGame({
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
   const [selectedWeekdayIdx, setSelectedWeekdayIdx] = useState<number | null>(null);
   const trainingSectionContent = getCalendarInteractiveSectionContent(section);
+  const handleFinishSession = (): void => {
+    onFinish();
+  };
 
   const nextRound = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
@@ -452,12 +455,7 @@ export default function CalendarInteractiveGame({
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton
-              onClick={(() => {
-                const handleFinishSession = (): void => {
-                  onFinish();
-                };
-                return handleFinishSession;
-              })()}
+              onClick={handleFinishSession}
               className='flex-1'
               size='lg'
               type='button'

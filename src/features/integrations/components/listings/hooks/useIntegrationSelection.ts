@@ -4,7 +4,10 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   isBaseIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
+import type {
+  BaseDefaultConnectionPreferenceResponse,
+  IntegrationWithConnections,
+} from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -20,8 +23,8 @@ const integrationSelectionKeys = {
 } as const;
 export const integrationSelectionQueryKeys = integrationSelectionKeys;
 
-export const fetchPreferredBaseConnection = async (): Promise<{ connectionId?: string | null }> => {
-  return await api.get<{ connectionId?: string | null }>(
+export const fetchPreferredBaseConnection = async (): Promise<BaseDefaultConnectionPreferenceResponse> => {
+  return await api.get<BaseDefaultConnectionPreferenceResponse>(
     '/api/v2/integrations/exports/base/default-connection'
   );
 };
@@ -98,6 +101,8 @@ export function useIntegrationSelection(
 
   const preferredConnectionQuery = results[0];
   const integrationsQuery = results[1];
+  const preferredConnectionData =
+    (preferredConnectionQuery?.data as BaseDefaultConnectionPreferenceResponse | undefined) ?? null;
   const integrationsData = integrationsQuery?.data;
 
   const loading = Boolean(integrationsQuery?.isPending && !integrationsData);
@@ -108,9 +113,6 @@ export function useIntegrationSelection(
       : [];
   }, [integrationsData]);
 
-  const preferredConnectionData = preferredConnectionQuery?.data as
-    | { connectionId?: string | null }
-    | undefined;
   const preferredConnectionId = preferredConnectionData?.connectionId ?? null;
 
   useEffect(() => {

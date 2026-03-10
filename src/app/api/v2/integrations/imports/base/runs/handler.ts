@@ -1,35 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
+import type {
+  BaseImportRunsListQuery,
+  BaseImportRunsResponse,
+  BaseImportRunStartPayload,
+  BaseImportStartResponse,
+} from '@/shared/contracts/integrations';
+import {
+  baseImportRunsListQuerySchema,
+  baseImportRunStartPayloadSchema,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export const startRunSchema = z.object({
-  connectionId: z.string().trim().min(1),
-  inventoryId: z.string().trim().min(1),
-  catalogId: z.string().trim().min(1),
-  templateId: z.string().trim().min(1).optional(),
-  limit: z.coerce.number().int().positive().optional(),
-  imageMode: z.enum(['links', 'download']).default('links'),
-  uniqueOnly: z.boolean().default(true),
-  allowDuplicateSku: z.boolean().default(false),
-  selectedIds: z.array(z.string().trim().min(1)).optional(),
-  dryRun: z.boolean().optional(),
-  mode: z.enum(['create_only', 'upsert_on_base_id', 'upsert_on_sku']).optional(),
-  requestId: z.string().trim().min(1).optional(),
-});
-
-export const listRunsQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(200).optional(),
-});
+export const startRunSchema = baseImportRunStartPayloadSchema;
+export const listRunsQuerySchema = baseImportRunsListQuerySchema;
 
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const query = (ctx.query ?? {}) as z.infer<typeof listRunsQuerySchema>;
+  const query = (ctx.query ?? {}) as BaseImportRunsListQuery;
   const runs = await listBaseImportRuns(query.limit ?? 25);
+  const response: BaseImportRunsResponse = { runs };
   return NextResponse.json(
-    { runs },
+    response,
     {
       headers: {
         'Cache-Control': 'no-store',
@@ -47,8 +41,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     throw badRequestError('Base.com connection is required.');
   }
 
-  const data = ctx.body as z.infer<typeof startRunSchema>;
-  const response = await startBaseImportRunResponse({
+  const data = ctx.body as BaseImportRunStartPayload;
+  const response: BaseImportStartResponse = await startBaseImportRunResponse({
     connectionId: rawConnectionId,
     inventoryId: data.inventoryId,
     catalogId: data.catalogId,

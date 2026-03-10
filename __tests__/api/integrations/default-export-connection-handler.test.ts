@@ -1,7 +1,10 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler } from '@/app/api/v2/integrations/exports/base/default-connection/handler';
+import {
+  GET_handler,
+  POST_handler,
+} from '@/app/api/v2/integrations/exports/base/default-connection/handler';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const getExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
@@ -87,5 +90,21 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: null });
+  });
+
+  it('stores normalized connection id on POST and returns the centralized response', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
+        method: 'POST',
+        body: JSON.stringify({ connectionId: '  conn-new  ' }),
+        headers: { 'content-type': 'application/json' },
+      }),
+      mockContext
+    );
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ connectionId: 'conn-new' });
+    expect(setExportDefaultConnectionIdMock).toHaveBeenCalledWith('conn-new');
   });
 });

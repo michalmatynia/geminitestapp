@@ -1,12 +1,33 @@
 'use client';
 
 import type {
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseImportListPayload,
+  BaseImportListResponse,
+  BaseImportParametersClearResponse,
+  BaseImportParametersPayload,
+  BaseImportParametersResponse,
+  BaseImportWarehousesPayload,
+  BaseImportWarehousesResponse,
+  BaseActiveTemplatePreferencePayload,
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferencePayload,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferencePayload,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseImageRetryPresetsPayload,
+  BaseImageRetryPresetsResponse,
+  BaseSampleProductPayload,
+  BaseSampleProductResponse,
+  BaseStockFallbackPreferencePayload,
+  BaseStockFallbackPreferenceResponse,
   CatalogOption as CatalogRecord,
-  ImportListItem,
-  WarehouseOption,
   BaseImportRunDetailResponse,
+  BaseImportRunResumePayload,
+  BaseImportRunStartPayload,
   BaseImportStartResponse,
-  BaseImportMode,
+  BaseImportItemStatus,
   ImportParameterCacheResponse,
   BaseInventory,
   IntegrationWithConnections,
@@ -141,6 +162,11 @@ type ImportPreferenceOptions<T> = {
   enabled?: boolean;
 };
 
+type RefreshImportParameterCacheVariables = {
+  inventoryId: string;
+  connectionId: string;
+};
+
 export function useImportPreference<T>(
   key: string,
   endpoint: string,
@@ -244,9 +270,12 @@ export function useInventories(
       if (!normalizedConnectionId) {
         throw new Error('Base.com connection is required to load inventories.');
       }
-      const data = await api.post<{ inventories: BaseInventory[] }>(
+      const data = await api.post<BaseImportInventoriesResponse>(
         '/api/v2/integrations/imports/base',
-        { action: 'inventories', connectionId: normalizedConnectionId }
+        {
+          action: 'inventories',
+          connectionId: normalizedConnectionId,
+        } satisfies BaseImportInventoriesPayload
       );
       return data.inventories;
     },
@@ -267,7 +296,7 @@ export function useWarehouses(
   connectionId: string,
   includeAll: boolean = false,
   enabled: boolean = true
-): SingleQuery<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> {
+): SingleQuery<BaseImportWarehousesResponse> {
   const queryKey = importExportKeys.warehouses(inventoryId, connectionId, includeAll);
   return createSingleQueryV2({
     id: inventoryId || null,
@@ -277,14 +306,14 @@ export function useWarehouses(
       if (!normalizedConnectionId) {
         throw new Error('Base.com connection is required to load warehouses.');
       }
-      return api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>(
+      return api.post<BaseImportWarehousesResponse>(
         '/api/v2/integrations/imports/base',
         {
           action: 'warehouses',
           inventoryId,
           connectionId: normalizedConnectionId,
           includeAllWarehouses: includeAll,
-        }
+        } satisfies BaseImportWarehousesPayload
       );
     },
     enabled: enabled && !!inventoryId && !!connectionId.trim(),
@@ -296,35 +325,6 @@ export function useWarehouses(
       queryKey,
       tags: ['import-export', 'warehouses'],
       description: 'Loads integrations import export warehouses.'},
-  });
-}
-
-export function useParameters(
-  inventoryId: string,
-  productId: string,
-  enabled: boolean = true
-): SingleQuery<{ parameters?: Array<{ id: string; name: string }> }> {
-  const queryKey = importExportKeys.parameters(inventoryId, productId);
-  return createSingleQueryV2({
-    id: inventoryId && productId ? `${inventoryId}-${productId}` : null,
-    queryKey,
-    queryFn: () =>
-      api.post<{ parameters?: Array<{ id: string; name: string }> }>(
-        '/api/v2/integrations/imports/base/parameters',
-        {
-          inventoryId,
-          productId,
-        }
-      ),
-    enabled: enabled && !!inventoryId && !!productId,
-    meta: {
-      source: 'importExport.hooks.useParameters',
-      operation: 'detail',
-      resource: 'integrations.import-export.parameters',
-      domain: 'integrations',
-      queryKey,
-      tags: ['import-export', 'parameters'],
-      description: 'Loads integrations import export parameters.'},
   });
 }
 
@@ -352,8 +352,8 @@ export function useImportParameterCache(
 }
 
 export function useRefreshImportParameterCacheMutation(): MutationResult<
-  { keys?: string[]; values?: Record<string, string> },
-  { inventoryId: string; connectionId: string }
+  BaseImportParametersResponse,
+  RefreshImportParameterCacheVariables
   > {
   const mutationKey = importExportKeys.lists();
 
@@ -361,10 +361,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
     mutationFn: async ({
       inventoryId,
       connectionId,
-    }: {
-      inventoryId: string;
-      connectionId: string;
-    }): Promise<{ keys?: string[]; values?: Record<string, string> }> => {
+    }: RefreshImportParameterCacheVariables): Promise<BaseImportParametersResponse> => {
       const normalizedInventoryId = inventoryId.trim();
       if (!normalizedInventoryId) {
         throw new Error('Inventory ID is required to load source fields.');
@@ -374,13 +371,13 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
       if (!normalizedConnectionId) {
         throw new Error('Base.com connection is required to load source fields.');
       }
-      return api.post<{ keys?: string[]; values?: Record<string, string> }>(
+      return api.post<BaseImportParametersResponse>(
         '/api/v2/integrations/imports/base/parameters',
         {
           inventoryId: normalizedInventoryId,
           sampleSize: 8,
           connectionId: normalizedConnectionId,
-        }
+        } satisfies BaseImportParametersPayload
       );
     },
     mutationKey,
@@ -412,17 +409,7 @@ export function useImportList(
     searchSku?: string;
   },
   enabled: boolean = true
-): SingleQuery<{
-  products?: ImportListItem[];
-  total?: number;
-  filtered?: number;
-  available?: number;
-  existing?: number;
-  skuDuplicates?: number;
-  page?: number;
-  pageSize?: number;
-  totalPages?: number;
-}> {
+): SingleQuery<BaseImportListResponse> {
   const queryKey = importExportKeys.importList(inventoryId, params);
   return createSingleQueryV2({
     id: inventoryId || null,
@@ -434,28 +421,21 @@ export function useImportList(
       if (!normalizedConnectionId) {
         throw new Error('Base.com connection is required to load import list.');
       }
-      return api.post<{
-        products?: ImportListItem[];
-        total?: number;
-        filtered?: number;
-        available?: number;
-        existing?: number;
-        skuDuplicates?: number;
-        page?: number;
-        pageSize?: number;
-        totalPages?: number;
-      }>('/api/v2/integrations/imports/base', {
-        action: 'list',
-        connectionId: normalizedConnectionId,
-        catalogId,
-        inventoryId,
-        limit: limit === 'all' ? undefined : Number(limit),
-        uniqueOnly,
-        page,
-        pageSize,
-        searchName,
-        searchSku,
-      });
+      return api.post<BaseImportListResponse>(
+        '/api/v2/integrations/imports/base',
+        {
+          action: 'list',
+          connectionId: normalizedConnectionId,
+          catalogId,
+          inventoryId,
+          limit: limit === 'all' ? undefined : Number(limit),
+          uniqueOnly,
+          page,
+          pageSize,
+          searchName,
+          searchSku,
+        } satisfies BaseImportListPayload
+      );
     },
     enabled: enabled && !!inventoryId && !!params.connectionId.trim(),
     meta: {
@@ -471,20 +451,7 @@ export function useImportList(
 
 export function useImportMutation(): MutationResult<
   ImportResponse,
-  {
-    connectionId: string;
-    inventoryId: string;
-    catalogId: string;
-    templateId?: string;
-    limit?: number;
-    imageMode: 'links' | 'download';
-    uniqueOnly: boolean;
-    allowDuplicateSku: boolean;
-    selectedIds?: string[];
-    dryRun?: boolean;
-    mode?: BaseImportMode;
-    requestId?: string;
-  }
+  BaseImportRunStartPayload
   > {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
@@ -515,7 +482,7 @@ export function useImportRun(
   options?: {
     enabled?: boolean;
     refetchInterval?: number | false;
-    statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+    statuses?: BaseImportItemStatus[];
     page?: number;
     pageSize?: number;
     includeItems?: boolean;
@@ -567,7 +534,7 @@ export function useResumeImportRunMutation(
   runId: string
 ): MutationResult<
   BaseImportStartResponse,
-  { statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'> }
+  BaseImportRunResumePayload
 > {
   const mutationKey = importExportKeys.run(runId || '__none__');
   return createMutationV2({
@@ -636,33 +603,53 @@ export function useSaveExportSettingsMutation(): MutationResult<
       const normalizedInventoryId = params.exportInventoryId?.trim() || null;
       const normalizedConnectionId = params.selectedBaseConnectionId?.trim() || null;
       const normalizedWarehouseId = params.exportWarehouseId?.trim() || null;
-      await Promise.all([
-        api.post('/api/v2/integrations/exports/base/active-template', {
+      const requests: Array<Promise<unknown>> = [
+        api.post<BaseActiveTemplatePreferenceResponse>(
+          '/api/v2/integrations/exports/base/active-template',
+          {
           templateId: normalizedTemplateId,
           connectionId: normalizedConnectionId,
           inventoryId: normalizedInventoryId,
-        }),
-        api.post('/api/v2/integrations/exports/base/default-inventory', {
+          } satisfies BaseActiveTemplatePreferencePayload
+        ),
+        api.post<BaseDefaultInventoryPreferenceResponse>(
+          '/api/v2/integrations/exports/base/default-inventory',
+          {
           inventoryId: normalizedInventoryId,
-        }),
-        api.post('/api/v2/integrations/exports/base/default-connection', {
+          } satisfies BaseDefaultInventoryPreferencePayload
+        ),
+        api.post<BaseDefaultConnectionPreferenceResponse>(
+          '/api/v2/integrations/exports/base/default-connection',
+          {
           connectionId: normalizedConnectionId,
-        }),
-        api.post('/api/v2/integrations/exports/base/stock-fallback', {
-          enabled: params.exportStockFallbackEnabled,
-        }),
-        api.post('/api/v2/integrations/exports/base/image-retry-presets', {
-          presets: params.imageRetryPresets,
-        }),
-        ...(normalizedInventoryId
-          ? [
-            api.post('/api/v2/integrations/exports/base/export-warehouse', {
-              warehouseId: normalizedWarehouseId,
-              inventoryId: normalizedInventoryId,
-            }),
-          ]
-          : []),
-      ]);
+          } satisfies BaseDefaultConnectionPreferencePayload
+        ),
+        api.post<BaseStockFallbackPreferenceResponse>(
+          '/api/v2/integrations/exports/base/stock-fallback',
+          {
+            enabled: Boolean(params.exportStockFallbackEnabled),
+          } satisfies BaseStockFallbackPreferencePayload
+        ),
+      ];
+      if (Array.isArray(params.imageRetryPresets)) {
+        requests.push(
+          api.post<BaseImageRetryPresetsResponse>(
+            '/api/v2/integrations/exports/base/image-retry-presets',
+            {
+              presets: params.imageRetryPresets,
+            } satisfies BaseImageRetryPresetsPayload
+          )
+        );
+      }
+      if (normalizedInventoryId) {
+        requests.push(
+          api.post('/api/v2/integrations/exports/base/export-warehouse', {
+            warehouseId: normalizedWarehouseId,
+            inventoryId: normalizedInventoryId,
+          })
+        );
+      }
+      await Promise.all(requests);
     },
     mutationKey,
     meta: {
@@ -683,21 +670,21 @@ export function useSaveExportSettingsMutation(): MutationResult<
 }
 
 export function useSaveDefaultConnectionMutation(): MutationResult<
-  { connectionId: string | null },
-  { connectionId?: string | null }
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultConnectionPreferencePayload
   > {
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
     mutationFn: async ({
       connectionId,
-    }: {
-      connectionId?: string | null;
-    }): Promise<{ connectionId: string | null }> => {
+    }: BaseDefaultConnectionPreferencePayload): Promise<BaseDefaultConnectionPreferenceResponse> => {
       const normalizedConnectionId = connectionId?.trim() || null;
-      return api.post<{ connectionId: string | null }>(
+      return api.post<BaseDefaultConnectionPreferenceResponse>(
         '/api/v2/integrations/exports/base/default-connection',
-        { connectionId: normalizedConnectionId }
+        {
+          connectionId: normalizedConnectionId,
+        } satisfies BaseDefaultConnectionPreferencePayload
       );
     },
     mutationKey,
@@ -722,15 +709,18 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
   return createDeleteMutationV2({
     mutationFn: async () => {
       await Promise.all([
-        api.post('/api/v2/integrations/imports/base/sample-product', {
+        api.post<BaseSampleProductResponse>('/api/v2/integrations/imports/base/sample-product', {
           inventoryId: '',
           saveOnly: true,
-        }),
-        api.post('/api/v2/integrations/imports/base/parameters', {
-          inventoryId: '',
-          productId: '',
-          clearOnly: true,
-        }),
+        } satisfies BaseSampleProductPayload),
+        api.post<BaseImportParametersClearResponse>(
+          '/api/v2/integrations/imports/base/parameters',
+          {
+            inventoryId: '',
+            productId: '',
+            clearOnly: true,
+          } satisfies BaseImportParametersPayload
+        ),
       ]);
     },
     mutationKey,

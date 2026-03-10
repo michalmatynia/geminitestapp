@@ -5,6 +5,7 @@ import {
   processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
+import { type BaseSyncAllImagesResponse } from '@/shared/contracts/integrations';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
@@ -30,5 +31,6 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     startProductAiJobQueue();
   }
 
-  return NextResponse.json({ status: 'ok', jobId: job.id });
+  const response: BaseSyncAllImagesResponse = { status: 'ok', jobId: job.id };
+  return NextResponse.json(response);
 }

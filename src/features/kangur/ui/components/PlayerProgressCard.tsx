@@ -26,6 +26,7 @@ type PlayerProgressCardProps = {
 export default function PlayerProgressCard({
   progress,
 }: PlayerProgressCardProps): React.JSX.Element {
+  const badgeTrackProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);
@@ -199,7 +200,7 @@ export default function PlayerProgressCard({
           <KangurBadgeTrackGrid
             dataTestIdPrefix='player-progress-badge-track'
             emptyTestId='player-progress-badges-empty'
-            progress={progress}
+            progress={badgeTrackProgress}
           />
         </div>
       </KangurGlassPanel>

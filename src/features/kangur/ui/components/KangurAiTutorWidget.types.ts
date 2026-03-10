@@ -73,3 +73,8 @@ export type TutorAskEntrySource = 'guest_intro' | 'guest_assistance' | 'guided_h
 export type PendingSelectionResponse = {
   selectedText: string;
 };
+
+export type SelectionConversationContext = {
+  messageStartIndex: number;
+  selectedText: string;
+};

@@ -493,33 +493,30 @@ test.describe('Kangur AI Tutor', () => {
   }) => {
     const {
       chatRequests,
-      hintResponse,
       lessonResponse,
       lessonSelectedText,
       lessonTitle,
     } = await mockKangurTutorEnvironment(page, {
       chatResponseDelayMs: 500,
     });
-
-    await gotoTutorRoute(page, '/kangur');
-
-    await openDivisionQuestionFromGameHome(page);
-    await triggerTutorAvatar(page);
-
-    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    await expect(tutorPanel).toBeVisible();
-    await tutorPanel.getByRole('button', { name: 'Podpowiedź' }).click();
-
-    await expect.poll(() => chatRequests.length).toBe(1);
-    expect(chatRequests[0]?.context?.surface).toBe('game');
-    expect(chatRequests[0]?.context?.focusKind).toBe('question');
-    await expect(tutorPanel).toContainText(hintResponse);
-
-    await page.mouse.click(24, 24);
-    await expect(tutorPanel).toHaveCount(0);
+    const staleReply = 'Pomagam dalej.';
 
     await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
+
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+    await triggerTutorAvatar(page);
+    await expect(tutorPanel).toBeVisible();
+    await tutorPanel.getByRole('textbox', { name: 'Wpisz pytanie' }).fill('Porozmawiajmy o czyms innym.');
+    await tutorPanel.getByRole('button', { name: 'Wyślij' }).click();
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.surface).toBe('lesson');
+    expect(chatRequests[0]?.context?.focusKind).toBeUndefined();
+    await expect(tutorPanel).toContainText(staleReply);
+
+    await page.mouse.click(24, 24);
+    await expect(tutorPanel).toHaveCount(0);
 
     const selectedLessonBlock = page
       .locator('[data-testid^="lesson-text-block-"]')
@@ -538,7 +535,7 @@ test.describe('Kangur AI Tutor', () => {
       lessonSelectedText
     );
     await expect(page.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toBeVisible();
-    await expect(tutorPanel).not.toContainText(hintResponse);
+    await expect(tutorPanel).not.toContainText(staleReply);
 
     await expect.poll(() => chatRequests.length).toBe(2);
     expect(chatRequests[1]?.context?.surface).toBe('lesson');
@@ -546,7 +543,7 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests[1]?.context?.focusKind).toBe('selection');
 
     await expect(tutorPanel).toContainText(lessonResponse);
-    await expect(tutorPanel).not.toContainText(hintResponse);
+    await expect(tutorPanel).not.toContainText(staleReply);
   });
 
   test('lets the learner drag the tutor onto a game section and starts explaining that section', async ({

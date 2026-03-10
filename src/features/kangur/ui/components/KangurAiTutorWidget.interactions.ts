@@ -125,6 +125,7 @@ export function useKangurAiTutorPanelInteractions({
       setDismissedSelectedText(null);
       setHighlightedText(trimmedSelectedText);
       setSelectionConversationContext({
+        messageStartIndex: messageCount,
         selectedText: trimmedSelectedText,
       });
       persistSelectionGeometry();
@@ -132,6 +133,7 @@ export function useKangurAiTutorPanelInteractions({
     },
     [
       allowSelectedTextSupport,
+      messageCount,
       persistSelectionGeometry,
       selectedText,
       setDismissedSelectedText,

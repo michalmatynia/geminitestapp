@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   type Dispatch,
   type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
@@ -151,8 +152,8 @@ const selectTutorSectionDropAnchor = (input: {
         entry
       ): entry is {
         anchor: SectionAnchor;
-        rect: DOMRect;
         expandedRect: DOMRect;
+        rect: DOMRect;
       } => hasUsableRect(entry.expandedRect)
     )
     .map((entry) => ({
@@ -225,6 +226,7 @@ export function useKangurAiTutorAvatarDrag(input: {
   guidedTutorTarget: GuidedTutorTarget | null;
   homeOnboardingStepIndex: number | null;
   hoveredSectionAnchor: SectionAnchor | null;
+  isAvatarDragging: boolean;
   isOpen: boolean;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
@@ -244,6 +246,7 @@ export function useKangurAiTutorAvatarDrag(input: {
     guidedTutorTarget,
     homeOnboardingStepIndex,
     hoveredSectionAnchor,
+    isAvatarDragging,
     isOpen,
     selectionExplainTimeoutRef,
     setDraggedAvatarPoint,
@@ -290,17 +293,14 @@ export function useKangurAiTutorAvatarDrag(input: {
     ]
   );
 
-  const handleFloatingAvatarPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>): void => {
+  const updateFloatingAvatarDrag = useCallback(
+    (pointerId: number, clientX: number, clientY: number): void => {
       const dragState = avatarDragStateRef.current;
-      if (dragState?.pointerId !== event.pointerId) {
+      if (dragState?.pointerId !== pointerId) {
         return;
       }
 
-      const pointerPoint = {
-        x: event.clientX,
-        y: event.clientY,
-      };
+      const pointerPoint = { x: clientX, y: clientY };
       const deltaX = pointerPoint.x - dragState.startX;
       const deltaY = pointerPoint.y - dragState.startY;
       const hasMovedEnough = Math.hypot(deltaX, deltaY) >= AVATAR_DRAG_THRESHOLD;
@@ -350,6 +350,13 @@ export function useKangurAiTutorAvatarDrag(input: {
     ]
   );
 
+  const handleFloatingAvatarPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>): void => {
+      updateFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+    },
+    [updateFloatingAvatarDrag]
+  );
+
   const finishFloatingAvatarDrag = useCallback(
     (pointerId: number, options?: { persistPosition?: boolean }): void => {
       const dragState = avatarDragStateRef.current;
@@ -370,15 +377,12 @@ export function useKangurAiTutorAvatarDrag(input: {
     [avatarDragStateRef, draggedAvatarPoint, setIsAvatarDragging]
   );
 
-  const handleFloatingAvatarPointerUp = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>): void => {
+  const completeFloatingAvatarDrag = useCallback(
+    (pointerId: number, clientX: number, clientY: number): void => {
       const dragState = avatarDragStateRef.current;
-      const pointerPoint = {
-        x: event.clientX,
-        y: event.clientY,
-      };
+      const pointerPoint = { x: clientX, y: clientY };
       const releaseAvatarPoint =
-        dragState?.pointerId === event.pointerId
+        dragState?.pointerId === pointerId
           ? getDraggedAvatarPoint({
               dragState,
               pointerPoint,
@@ -386,9 +390,7 @@ export function useKangurAiTutorAvatarDrag(input: {
             })
           : draggedAvatarPoint;
       const droppedSectionAnchor =
-        dragState?.pointerId === event.pointerId &&
-        dragState.moved &&
-        tutorAnchorContext
+        dragState?.pointerId === pointerId && dragState.moved && tutorAnchorContext
           ? resolveTutorSectionDropAnchor({
               anchors: tutorAnchorContext.anchors,
               avatarPoint: releaseAvatarPoint,
@@ -396,21 +398,19 @@ export function useKangurAiTutorAvatarDrag(input: {
             }) ?? hoveredSectionAnchor
           : null;
       const shouldExplainDroppedSection =
-        dragState?.pointerId === event.pointerId &&
-        dragState.moved &&
-        Boolean(droppedSectionAnchor);
+        dragState?.pointerId === pointerId && dragState.moved && Boolean(droppedSectionAnchor);
 
-      finishFloatingAvatarDrag(event.pointerId, {
+      finishFloatingAvatarDrag(pointerId, {
         persistPosition: !shouldExplainDroppedSection,
       });
       setHoveredSectionAnchorId(null);
       if (shouldExplainDroppedSection && droppedSectionAnchor) {
         startGuidedSectionExplanation(droppedSectionAnchor);
       }
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
     },
     [
       avatarDragStateRef,
+      draggedAvatarPoint,
       finishFloatingAvatarDrag,
       hoveredSectionAnchor,
       setHoveredSectionAnchorId,
@@ -418,6 +418,14 @@ export function useKangurAiTutorAvatarDrag(input: {
       tutorAnchorContext,
       viewport,
     ]
+  );
+
+  const handleFloatingAvatarPointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>): void => {
+      completeFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    },
+    [completeFloatingAvatarDrag]
   );
 
   const handleFloatingAvatarPointerCancel = useCallback(
@@ -428,6 +436,41 @@ export function useKangurAiTutorAvatarDrag(input: {
     },
     [finishFloatingAvatarDrag, setHoveredSectionAnchorId]
   );
+
+  useEffect(() => {
+    if (!isAvatarDragging || typeof window === 'undefined') {
+      return;
+    }
+
+    const handleWindowPointerMove = (event: PointerEvent): void => {
+      updateFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+    };
+
+    const handleWindowPointerUp = (event: PointerEvent): void => {
+      completeFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+    };
+
+    const handleWindowPointerCancel = (event: PointerEvent): void => {
+      finishFloatingAvatarDrag(event.pointerId);
+      setHoveredSectionAnchorId(null);
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove, true);
+    window.addEventListener('pointerup', handleWindowPointerUp, true);
+    window.addEventListener('pointercancel', handleWindowPointerCancel, true);
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove, true);
+      window.removeEventListener('pointerup', handleWindowPointerUp, true);
+      window.removeEventListener('pointercancel', handleWindowPointerCancel, true);
+    };
+  }, [
+    completeFloatingAvatarDrag,
+    finishFloatingAvatarDrag,
+    isAvatarDragging,
+    setHoveredSectionAnchorId,
+    updateFloatingAvatarDrag,
+  ]);
 
   return {
     handleFloatingAvatarPointerCancel,

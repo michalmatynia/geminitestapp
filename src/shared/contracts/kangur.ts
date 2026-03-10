@@ -375,6 +375,9 @@ export const kangurProgressStateSchema = z.object({
   totalQuestionsAnswered: kangurProgressCounterSchema.optional(),
   currentWinStreak: kangurProgressCounterSchema.optional(),
   bestWinStreak: kangurProgressCounterSchema.optional(),
+  dailyQuestsCompleted: kangurProgressCounterSchema.optional(),
+  currentActivityRepeatStreak: kangurProgressCounterSchema.optional(),
+  lastRewardedActivityKey: z.string().trim().max(120).nullable().optional(),
   activityStats: kangurActivityStatsSchema.optional(),
 });
 export type KangurProgressState = z.infer<typeof kangurProgressStateSchema>;
@@ -490,6 +493,9 @@ export const createDefaultKangurProgressState = (): KangurProgressState => ({
   totalQuestionsAnswered: 0,
   currentWinStreak: 0,
   bestWinStreak: 0,
+  dailyQuestsCompleted: 0,
+  currentActivityRepeatStreak: 0,
+  lastRewardedActivityKey: null,
   activityStats: {},
 });
 
@@ -509,6 +515,11 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
         parsed.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
       currentWinStreak: parsed.data.currentWinStreak ?? defaults.currentWinStreak,
       bestWinStreak: parsed.data.bestWinStreak ?? defaults.bestWinStreak,
+      dailyQuestsCompleted: parsed.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+      currentActivityRepeatStreak:
+        parsed.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
+      lastRewardedActivityKey:
+        parsed.data.lastRewardedActivityKey ?? defaults.lastRewardedActivityKey,
       activityStats: normalizeKangurActivityStats(parsed.data.activityStats),
     };
   }
@@ -531,6 +542,11 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
       partial.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
     currentWinStreak: partial.data.currentWinStreak ?? defaults.currentWinStreak,
     bestWinStreak: partial.data.bestWinStreak ?? defaults.bestWinStreak,
+    dailyQuestsCompleted: partial.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+    currentActivityRepeatStreak:
+      partial.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
+    lastRewardedActivityKey:
+      partial.data.lastRewardedActivityKey ?? defaults.lastRewardedActivityKey,
     activityStats: normalizeKangurActivityStats(partial.data.activityStats),
   };
 };

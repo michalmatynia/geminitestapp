@@ -1,17 +1,21 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY } from '@/features/kangur/ui/components/KangurAiTutorWidget.shared';
+
 import {
   mockKangurTutorEnvironment,
   selectTextInElement,
 } from '../../support/kangur-tutor-fixtures';
 
-async function clickSelectionTutorCta(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Zapytaj o to' }).evaluate((button) => {
-    if (!(button instanceof HTMLButtonElement)) {
-      throw new Error('Missing tutor selection CTA button.');
-    }
-    button.click();
-  });
+async function openTutorFromSelection(page: Page): Promise<void> {
+  const selectionAction = page.getByTestId('kangur-ai-tutor-selection-action');
+  if (await selectionAction.count()) {
+    await expect(selectionAction).toBeVisible();
+    await selectionAction.getByRole('button', { name: 'Zapytaj o to' }).click();
+    return;
+  }
+
+  await page.getByTestId('kangur-ai-tutor-avatar').click();
 }
 
 async function expectTutorAvatarAttachedToPanel(page: Page): Promise<void> {
@@ -42,6 +46,39 @@ async function waitForTutorPanelToSettle(panel: Locator): Promise<void> {
 async function gotoTutorRoute(page: Page, href: string): Promise<void> {
   await page.goto(href, { waitUntil: 'domcontentloaded' });
 }
+
+async function triggerOnboardingAcknowledge(onboarding: Locator): Promise<void> {
+  await onboarding.getByRole('button', { name: 'Rozumiem' }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+}
+
+async function triggerTutorAvatar(page: Page): Promise<void> {
+  await page.getByTestId('kangur-ai-tutor-avatar').evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+}
+
+async function triggerAskModalBackdrop(page: Page): Promise<void> {
+  await page.getByTestId('kangur-ai-tutor-ask-modal-backdrop').evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+}
+
+const readHomeOnboardingStatus = async (page: Page): Promise<string | null> =>
+  page.evaluate((storageKey) => {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { status?: unknown } | null;
+      return typeof parsed?.status === 'string' ? parsed.status : null;
+    } catch {
+      return null;
+    }
+  }, KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY);
 
 async function expectTutorPanelWithinViewport(page: Page): Promise<void> {
   const viewportSize = page.viewportSize();
@@ -82,7 +119,146 @@ async function expectLocatorsNotToOverlap(
 }
 
 test.describe('Kangur AI Tutor', () => {
-  test('anchors to selected lesson text and sends selected-text context', async ({ page }) => {
+  test('advances Game home onboarding with Rozumiem and docks the tutor after Zakończ', async ({
+    page,
+  }) => {
+    await mockKangurTutorEnvironment(page);
+
+    await gotoTutorRoute(page, '/kangur');
+    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+
+    const onboarding = page.getByTestId('kangur-ai-tutor-home-onboarding');
+    const avatar = page.getByTestId('kangur-ai-tutor-avatar');
+
+    await expect(onboarding).toBeVisible();
+    await expect(onboarding).toContainText('Krok 1 z 5');
+    await expect(onboarding).toContainText('Tutaj wybierasz, jak chcesz zaczac.');
+    await expect(onboarding.getByRole('button', { name: 'Rozumiem' })).toBeVisible();
+    await expect(onboarding.getByRole('button', { name: 'Zakończ' })).toBeVisible();
+    await expect(avatar).toHaveAttribute('data-avatar-placement', 'guided');
+    await expect(avatar).toHaveAttribute('data-guidance-target', 'home_actions');
+
+    await onboarding.getByRole('button', { name: 'Rozumiem' }).click();
+
+    await expect(onboarding).toContainText('Krok 2 z 5');
+    await expect(onboarding).toContainText('Tutaj pojawia sie Twoja aktualna misja.');
+    await expect(avatar).toHaveAttribute('data-guidance-target', 'home_quest');
+    await expect.poll(() => readHomeOnboardingStatus(page)).toBe('shown');
+
+    await onboarding.getByRole('button', { name: 'Zakończ' }).click();
+
+    await expect(onboarding).toHaveCount(0);
+    await expect(avatar).toHaveAttribute('data-avatar-placement', 'floating');
+    await expect(avatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect.poll(() => readHomeOnboardingStatus(page)).toBe('dismissed');
+  });
+
+  test('completes Game home onboarding with Rozumiem, keeps it suppressed after reload, and allows replay', async ({
+    page,
+  }) => {
+    await mockKangurTutorEnvironment(page);
+
+    await gotoTutorRoute(page, '/kangur');
+    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+
+    const onboarding = page.getByTestId('kangur-ai-tutor-home-onboarding');
+    const avatar = page.getByTestId('kangur-ai-tutor-avatar');
+
+    await expect(onboarding).toBeVisible();
+    await expect(onboarding).toContainText('Krok 1 z 5');
+
+    await triggerOnboardingAcknowledge(onboarding);
+    await expect(onboarding).toContainText('Krok 2 z 5');
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      if ((await onboarding.count()) === 0) {
+        break;
+      }
+      await triggerOnboardingAcknowledge(onboarding);
+    }
+
+    await expect(onboarding).toHaveCount(0);
+    await expect(avatar).toHaveAttribute('data-avatar-placement', 'floating');
+    await expect(avatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect.poll(() => readHomeOnboardingStatus(page)).toBe('completed');
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toHaveCount(0);
+
+    await triggerTutorAvatar(page);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeVisible();
+
+    await page.getByTestId('kangur-ai-tutor-home-onboarding-replay').click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toContainText('Krok 1 z 5');
+    const guidedAvatar = page.locator(
+      '[data-testid="kangur-ai-tutor-avatar"][data-avatar-placement="guided"]'
+    );
+    await expect(guidedAvatar).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
+    await expect(guidedAvatar).toHaveAttribute(
+      'data-guidance-target',
+      'home_actions'
+    );
+    await expect.poll(() => readHomeOnboardingStatus(page)).toBe('shown');
+  });
+
+  test('reopens the lightweight prompt from the docked Game tutor avatar after closing it', async ({
+    page,
+  }) => {
+    await mockKangurTutorEnvironment(page);
+
+    await gotoTutorRoute(page, '/kangur');
+    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+
+    const onboarding = page.getByTestId('kangur-ai-tutor-home-onboarding');
+    const avatar = page.getByTestId('kangur-ai-tutor-avatar');
+
+    await expect(onboarding).toBeVisible();
+    await onboarding.getByRole('button', { name: 'Zakończ' }).click();
+
+    await expect(onboarding).toHaveCount(0);
+    await expect(avatar).toHaveAttribute('data-avatar-placement', 'floating');
+    await expect(avatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect.poll(() => readHomeOnboardingStatus(page)).toBe('dismissed');
+
+    await triggerTutorAvatar(page);
+
+    const launcherPrompt = page.getByTestId('kangur-ai-tutor-launcher-prompt');
+    await expect(launcherPrompt).toBeVisible();
+    await expect(launcherPrompt).toContainText('How could I help you today?');
+    await expect(launcherPrompt.getByRole('button', { name: 'Zapytaj' })).toBeVisible();
+
+    await launcherPrompt.getByTestId('kangur-ai-tutor-launcher-prompt-close').click();
+
+    await expect(launcherPrompt).toHaveCount(0);
+    await expect(avatar).toBeVisible();
+
+    await triggerTutorAvatar(page);
+
+    await expect(launcherPrompt).toBeVisible();
+
+    await launcherPrompt.getByRole('button', { name: 'Zapytaj' }).click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toBeVisible();
+
+    await triggerAskModalBackdrop(page);
+
+    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
+    await expect(launcherPrompt).toBeVisible();
+    await expect(launcherPrompt).toContainText('How could I help you today?');
+  });
+
+  test('floats to selected lesson text and explains it automatically', async ({ page }) => {
     const {
       chatRequests,
       lessonTitle,
@@ -100,10 +276,25 @@ test.describe('Kangur AI Tutor', () => {
     await expect(selectedLessonBlock).toContainText(lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+
+    await expect(tutorAvatar).toHaveAttribute('data-guidance-target', 'selection_excerpt');
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
+    await expect(page.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toContainText(
+      'Wyjaśniam ten fragment.'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-selection-action')).toHaveCount(0);
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
+    expect(chatRequests[0]?.context?.focusKind).toBe('selection');
+    expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
+    expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
 
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
@@ -118,26 +309,22 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
     await waitForTutorPanelToSettle(tutorPanel);
     await expect(tutorPanel).toContainText(lessonSelectedText);
+    await expect(page.getByTestId('kangur-ai-tutor-selected-text-preview')).toContainText(
+      'Wyjaśniany fragment'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-selected-text-refocus')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Wróć do rozmowy' })).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-quick-action-selected-text')).toHaveCount(0);
     await expect(
       selectedLessonBlock.getByText(lessonSelectedText, { exact: true })
     ).toBeVisible();
     await expectTutorAvatarAttachedToPanel(page);
     await expectTutorPanelWithinViewport(page);
-
-    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        throw new Error('Missing selected-text quick action button.');
-      }
-      button.click();
-    });
-
-    await expect.poll(() => chatRequests.length).toBe(1);
-    expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
-    expect(chatRequests[0]?.context?.focusKind).toBe('selection');
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
-  test('shows a proactive tutor nudge on lesson selection and routes it through the tutor request flow', async ({
+  test('shows a proactive tutor nudge when selection opens through the avatar flow', async ({
     page,
   }) => {
     const {
@@ -153,7 +340,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await page.getByTestId('kangur-ai-tutor-avatar').click();
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     await expect(tutorPanel).toBeVisible();
@@ -198,20 +385,14 @@ test.describe('Kangur AI Tutor', () => {
     ).toHaveAttribute('src', tutorPersonaImageUrl);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     await expect(
       page.getByTestId('kangur-ai-tutor-header-avatar-image').locator('img')
     ).toHaveAttribute('src', tutorPersonaImageUrl);
 
-    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        throw new Error('Missing selected-text quick action button.');
-      }
-      button.click();
-    });
-
     await expect(page.getByText('Myślę…')).toBeVisible();
+    await expect.poll(() => chatRequests.length).toBe(1);
     await expect(
       page.getByTestId('kangur-ai-tutor-header-avatar-image').locator('img')
     ).toHaveAttribute('src', tutorPersonaImageUrl);
@@ -233,7 +414,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     await expect(page.getByTestId('kangur-ai-tutor-mood-chip')).toContainText(
       'Nastroj: Spokojny'
@@ -259,7 +440,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveCount(0);
@@ -277,21 +458,13 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
-
-    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        throw new Error('Missing selected-text quick action button.');
-      }
-      button.click();
-    });
-
     await expect.poll(() => chatRequests.length).toBe(1);
     await expect(tutorPanel).toContainText(lessonResponse);
 
@@ -319,7 +492,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
@@ -329,13 +502,6 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toHaveAttribute('data-ui-mode', 'static');
     await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'hidden');
     await expect(tutorPanel).toContainText(lessonSelectedText);
-
-    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        throw new Error('Missing selected-text quick action button.');
-      }
-      button.click();
-    });
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
@@ -506,18 +672,11 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 
-    await clickSelectionTutorCta(page);
+    await openTutorFromSelection(page);
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
     await expect(tutorPanel).toBeVisible();
-    await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        throw new Error('Missing selected-text quick action button.');
-      }
-      button.click();
-    });
-
     await expect.poll(() => chatRequests.length).toBe(1);
     await expect(tutorPanel).toContainText(lessonResponse);
 

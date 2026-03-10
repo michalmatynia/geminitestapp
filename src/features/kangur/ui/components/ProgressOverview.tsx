@@ -1,3 +1,4 @@
+import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import {
   KangurDisplayEmoji,
@@ -7,10 +8,10 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import {
   getCurrentLevel,
   getNextLevel,
-  getProgressBadges,
   getProgressAverageAccuracy,
   getProgressAverageXpPerSession,
   getProgressTopActivities,
@@ -19,6 +20,7 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type ProgressOverviewProps = {
   progress: KangurProgressState;
+  dailyQuest?: KangurDailyQuestState | null;
 };
 
 type ProgressStat = {
@@ -27,7 +29,10 @@ type ProgressStat = {
   value: number | string;
 };
 
-export default function ProgressOverview({ progress }: ProgressOverviewProps): React.JSX.Element {
+export default function ProgressOverview({
+  progress,
+  dailyQuest = null,
+}: ProgressOverviewProps): React.JSX.Element {
   const { totalXp, gamesPlayed, lessonsCompleted, operationsPlayed = [] } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);
@@ -37,7 +42,14 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
   const averageAccuracy = getProgressAverageAccuracy(progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const topActivities = getProgressTopActivities(progress);
-  const badgeStatuses = getProgressBadges(progress);
+  const dailyQuestAccent =
+    dailyQuest?.reward.status === 'claimed'
+      ? 'emerald'
+      : dailyQuest?.progress.status === 'completed'
+        ? 'amber'
+        : dailyQuest?.progress.status === 'in_progress'
+          ? 'indigo'
+          : 'slate';
 
   const stats: ProgressStat[] = [
     { accent: 'indigo', label: 'Laczne XP', value: totalXp },
@@ -96,6 +108,39 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
         ))}
       </div>
 
+      {dailyQuest ? (
+        <KangurGlassPanel
+          data-testid='progress-overview-daily-quest'
+          padding='md'
+          surface='solid'
+          variant='subtle'
+        >
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+                Misja dnia
+              </p>
+              <p className='mt-1 text-sm font-semibold text-slate-900'>
+                {dailyQuest.assignment.title}
+              </p>
+              <p className='mt-1 text-xs leading-5 text-slate-500'>
+                {dailyQuest.progress.summary} · {dailyQuest.reward.label}
+              </p>
+            </div>
+            <KangurStatusChip accent={dailyQuestAccent} className='shrink-0'>
+              {dailyQuest.progress.percent}%
+            </KangurStatusChip>
+          </div>
+          <KangurProgressBar
+            accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
+            className='mt-3'
+            data-testid='progress-overview-daily-quest-bar'
+            size='sm'
+            value={dailyQuest.progress.percent}
+          />
+        </KangurGlassPanel>
+      ) : null}
+
       <LessonMasteryInsights progress={progress} />
 
       {operationsPlayed.length > 0 && (
@@ -147,28 +192,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-          Odznaki
+          Sciezki odznak
         </p>
-        <div className='flex flex-wrap gap-2'>
-          {badgeStatuses.map((badge) => {
-            const unlocked = badge.isUnlocked;
-            return (
-              <KangurStatusChip
-                accent={unlocked ? 'amber' : 'slate'}
-                key={badge.id}
-                className={unlocked ? 'gap-1.5' : 'gap-1.5 opacity-70'}
-                title={`${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
-                data-testid={`progress-overview-badge-${badge.id}`}
-              >
-                <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
-                <span>{badge.name}</span>
-                {!unlocked ? (
-                  <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
-                ) : null}
-              </KangurStatusChip>
-            );
-          })}
-        </div>
+        <KangurBadgeTrackGrid
+          dataTestIdPrefix='progress-overview-badge-track'
+          emptyTestId='progress-overview-badges-empty'
+          progress={progress}
+        />
       </KangurGlassPanel>
     </div>
   );

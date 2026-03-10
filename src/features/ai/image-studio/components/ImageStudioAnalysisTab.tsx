@@ -68,7 +68,6 @@ import {
   analyzeCanvasImageObject,
   resolveClientProcessingImageSrc,
 } from './generation-toolbar/GenerationToolbarImageUtils';
-
 import { useRightSidebarContext } from './RightSidebarContext';
 
 

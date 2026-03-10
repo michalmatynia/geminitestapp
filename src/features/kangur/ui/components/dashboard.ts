@@ -2,12 +2,14 @@
 import { AssignmentPanel as AssignmentPanelView } from '@/features/kangur/ui/components/AssignmentPanel';
 import ProgressOverviewView from '@/features/kangur/ui/components/ProgressOverview';
 import ScoreHistoryView from '@/features/kangur/ui/components/ScoreHistory';
+import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 import type { ComponentType } from 'react';
 
 type ProgressOverviewProps = {
   progress: KangurProgressState;
+  dailyQuest?: KangurDailyQuestState | null;
 };
 
 type ScoreHistoryProps = {

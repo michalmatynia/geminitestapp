@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 
+import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import {
   KangurDisplayEmoji,
   KangurGlassPanel,
@@ -10,9 +11,9 @@ import {
 import {
   getCurrentLevel,
   getNextLevel,
+  getNextLockedBadge,
   getProgressAverageAccuracy,
   getProgressAverageXpPerSession,
-  getProgressBadges,
   getProgressTopActivities,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -34,7 +35,7 @@ export default function PlayerProgressCard({
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const bestWinStreak = progress.bestWinStreak ?? 0;
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
-  const badgeStatuses = getProgressBadges(progress);
+  const nextBadge = getNextLockedBadge(progress);
 
   return (
     <motion.div
@@ -127,28 +128,44 @@ export default function PlayerProgressCard({
           </div>
         )}
 
-        <div>
-          <p className='mb-2 text-xs font-bold uppercase tracking-wide text-slate-500'>Odznaki</p>
-          <div className='flex flex-wrap gap-2'>
-            {badgeStatuses.map((badge) => {
-              const unlocked = badge.isUnlocked;
-              return (
-                <KangurStatusChip
-                  key={badge.id}
-                  accent={unlocked ? 'amber' : 'slate'}
-                  className={unlocked ? 'gap-1.5' : 'gap-1.5 opacity-70'}
-                  data-testid={`player-progress-badge-${badge.id}`}
-                  title={`${badge.name}: ${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
-                >
-                  <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
-                  <span>{badge.name}</span>
-                  {!unlocked ? (
-                    <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
-                  ) : null}
-                </KangurStatusChip>
-              );
-            })}
+        {nextBadge ? (
+          <div
+            className='rounded-[28px] border border-amber-200/80 bg-amber-50/80 px-4 py-4'
+            data-testid='player-progress-next-badge'
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div>
+                <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700/80'>
+                  Nastepna odznaka
+                </p>
+                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                  {nextBadge.emoji} {nextBadge.name}
+                </p>
+                <p className='mt-1 text-xs leading-5 text-slate-600'>{nextBadge.desc}</p>
+              </div>
+              <KangurStatusChip accent='amber' className='shrink-0'>
+                {nextBadge.summary}
+              </KangurStatusChip>
+            </div>
+            <KangurProgressBar
+              accent='amber'
+              className='mt-3'
+              data-testid='player-progress-next-badge-bar'
+              size='sm'
+              value={nextBadge.progressPercent}
+            />
           </div>
+        ) : null}
+
+        <div>
+          <p className='mb-2 text-xs font-bold uppercase tracking-wide text-slate-500'>
+            Sciezki odznak
+          </p>
+          <KangurBadgeTrackGrid
+            dataTestIdPrefix='player-progress-badge-track'
+            emptyTestId='player-progress-badges-empty'
+            progress={progress}
+          />
         </div>
       </KangurGlassPanel>
     </motion.div>

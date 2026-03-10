@@ -4,6 +4,7 @@ import { LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
+import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import {
   getKangurLearnerProfileDisplayName,
@@ -13,7 +14,7 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const router = useRouter();
-  const { basePath, user, navigateToLogin } = useKangurLearnerProfileRuntime();
+  const { basePath, user, navigateToLogin, progress } = useKangurLearnerProfileRuntime();
   const displayName = getKangurLearnerProfileDisplayName(user);
 
   return (
@@ -34,6 +35,12 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       testId='kangur-learner-profile-hero'
       title='Profil ucznia'
     >
+      <KangurHeroMilestoneSummary
+        className='mb-3 w-full'
+        dataTestIdPrefix='kangur-learner-profile-hero-milestone'
+        progress={progress}
+      />
+
       {!user ? (
         <div className='grid w-full gap-3 sm:flex sm:w-auto sm:flex-row'>
           <KangurButton

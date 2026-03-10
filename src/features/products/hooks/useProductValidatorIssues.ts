@@ -139,7 +139,7 @@ export const useProductValidatorIssues = ({
               latestProductValues,
               patternIds: runtimePatternIds,
               validationScope,
-              contextRegistry,
+              ...(contextRegistry ? { contextRegistry } : {}),
             },
             { logError: false }
           )

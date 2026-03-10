@@ -24,6 +24,10 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
+  claimCurrentKangurDailyQuestReward,
+  getCurrentKangurDailyQuest,
+} from '@/features/kangur/ui/services/daily-quests';
+import {
   mapKangurPracticeAssignmentsByOperation,
   parseKangurMixedTrainingQuickStartParams,
   selectKangurPracticeAssignmentForScreen,
@@ -37,6 +41,7 @@ import {
 import {
   addXp,
   createGameSessionReward,
+  getNextLockedBadge,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import type {
@@ -102,6 +107,8 @@ export function KangurGameRuntimeProvider({
     xpGained: 0,
     newBadges: [],
     breakdown: [],
+    nextBadge: null,
+    dailyQuest: null,
   });
 
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
@@ -132,13 +139,15 @@ export function KangurGameRuntimeProvider({
   const showXpToast = (
     xpGained: number,
     newBadges: string[],
-    breakdown: KangurXpToastState['breakdown'] = []
+    breakdown: KangurXpToastState['breakdown'] = [],
+    nextBadge: KangurXpToastState['nextBadge'] = null,
+    dailyQuest: KangurXpToastState['dailyQuest'] = null
   ): void => {
     if (xpToastTimeoutRef.current) {
       window.clearTimeout(xpToastTimeoutRef.current);
     }
 
-    setXpToast({ visible: true, xpGained, newBadges, breakdown });
+    setXpToast({ visible: true, xpGained, newBadges, breakdown, nextBadge, dailyQuest });
     xpToastTimeoutRef.current = window.setTimeout(() => {
       setXpToast((current) => ({ ...current, visible: false }));
       xpToastTimeoutRef.current = null;
@@ -268,13 +277,62 @@ export function KangurGameRuntimeProvider({
       setTimeTaken(taken);
       setScore(nextScore);
       const storedProgress = loadProgress();
-      const reward = createGameSessionReward(storedProgress, {
+      const sessionReward = createGameSessionReward(storedProgress, {
         operation: selectedOperation,
         difficulty,
         correctAnswers: nextScore,
         totalQuestions,
         durationSeconds: taken,
       });
+
+      const isPerfect = nextScore === totalQuestions;
+      const isGreat = nextScore >= greatThreshold;
+      const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, { persist: false });
+      const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
+      let awardedXp = sessionReward.xp;
+      let awardedBreakdown = [...(sessionReward.breakdown ?? [])];
+      let finalProgress = sessionRewardResult.updated;
+      const questClaim = claimCurrentKangurDailyQuestReward(finalProgress);
+      let awardedBadges = [...sessionRewardResult.newBadges];
+      let dailyQuestAfter = questClaim.quest;
+
+      if (questClaim.xpAwarded > 0) {
+        const questBonusResult = addXp(questClaim.xpAwarded, {
+          dailyQuestsCompleted: (finalProgress.dailyQuestsCompleted ?? 0) + 1,
+        });
+        awardedXp += questClaim.xpAwarded;
+        awardedBreakdown.push({
+          kind: 'daily_quest',
+          label: 'Misja dnia',
+          xp: questClaim.xpAwarded,
+        });
+        finalProgress = questBonusResult.updated;
+        awardedBadges = Array.from(
+          new Set([...awardedBadges, ...questBonusResult.newBadges])
+        );
+        dailyQuestAfter = questClaim.quest;
+      }
+
+      const nextBadge = getNextLockedBadge(finalProgress);
+      let nextBadgeToastHint: KangurXpToastState['nextBadge'] = null;
+      if (nextBadge) {
+        nextBadgeToastHint = {
+          emoji: nextBadge.emoji,
+          name: nextBadge.name,
+          summary: nextBadge.summary,
+        };
+      }
+      let dailyQuestToastHint: KangurXpToastState['dailyQuest'] = null;
+      if (
+        dailyQuestAfter?.progress.status === 'completed' &&
+        dailyQuestBefore?.progress.status !== 'completed'
+      ) {
+        dailyQuestToastHint = {
+          title: dailyQuestAfter.assignment.title,
+          summary: dailyQuestAfter.progress.summary,
+          xpAwarded: questClaim.xpAwarded,
+        };
+      }
 
       void kangurPlatform.score
         .create({
@@ -284,7 +342,7 @@ export function KangurGameRuntimeProvider({
           total_questions: totalQuestions,
           correct_answers: nextScore,
           time_taken: taken,
-          xp_earned: reward.xp,
+          xp_earned: awardedXp,
         })
         .finally(() => {
           if (canAccessParentAssignments) {
@@ -292,9 +350,6 @@ export function KangurGameRuntimeProvider({
           }
         });
 
-      const isPerfect = nextScore === totalQuestions;
-      const isGreat = nextScore >= greatThreshold;
-      const { newBadges } = addXp(reward.xp, reward.progressUpdates);
       trackKangurClientEvent('kangur_game_completed', {
         operation: selectedOperation,
         difficulty,
@@ -305,10 +360,16 @@ export function KangurGameRuntimeProvider({
         accuracyPercent: Math.round((nextScore / totalQuestions) * 100),
         isPerfect,
         isGreat,
-        xpAwarded: reward.xp,
+        xpAwarded: awardedXp,
         playerNamePresent: nextPlayerName.length > 0,
       });
-      showXpToast(reward.xp, newBadges, reward.breakdown);
+      showXpToast(
+        awardedXp,
+        awardedBadges,
+        awardedBreakdown,
+        nextBadgeToastHint,
+        dailyQuestToastHint
+      );
 
       window.setTimeout(() => setScreen('result'), 1000);
       return;

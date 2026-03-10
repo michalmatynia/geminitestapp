@@ -43,7 +43,7 @@ export const evaluateRuntimeSchema = z.object({
   latestProductValues: z.record(z.string(), z.unknown()).nullable().optional(),
   patternIds: z.array(z.string().trim().min(1)).optional(),
   validationScope: z.enum(['draft_template', 'product_create', 'product_edit']).optional(),
-  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.nullable().optional(),
 });
 
 const MAX_RUNTIME_VALUE_FIELDS = 120;

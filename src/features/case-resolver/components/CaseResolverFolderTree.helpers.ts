@@ -6,9 +6,9 @@ import {
   type FolderCaseFileStats,
 } from '@/shared/contracts/case-resolver';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export type { PaletteEntry, FolderCaseFileStats };
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null;
 const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model') ?? null;

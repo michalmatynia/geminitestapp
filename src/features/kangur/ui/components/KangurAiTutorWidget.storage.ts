@@ -2,6 +2,7 @@ import {
   AVATAR_SIZE,
   EDGE_GAP,
   KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
+  KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
   KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
 } from './KangurAiTutorWidget.shared';
 
@@ -9,6 +10,12 @@ import type { CSSProperties } from 'react';
 
 export type KangurAiTutorGuestIntroRecord = {
   status: 'shown' | 'accepted' | 'dismissed';
+  version: 1;
+  updatedAt: string;
+};
+
+export type KangurAiTutorHomeOnboardingRecord = {
+  status: 'shown' | 'completed' | 'dismissed';
   version: 1;
   updatedAt: string;
 };
@@ -49,6 +56,27 @@ type KangurAiTutorWidgetStorageState = {
   lastSessionKey?: string | null;
   pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
   avatarPosition?: KangurAiTutorAvatarPositionRecord | null;
+  hidden?: boolean;
+};
+
+const KANGUR_AI_TUTOR_VISIBILITY_CHANGE_EVENT = 'kangur-ai-tutor-visibility-change';
+
+type TutorVisibilityChangeDetail = {
+  hidden: boolean;
+};
+
+const isTutorVisibilityChangeDetail = (
+  detail: unknown
+): detail is TutorVisibilityChangeDetail => {
+  if (!detail || typeof detail !== 'object') {
+    return false;
+  }
+
+  if (!('hidden' in detail)) {
+    return false;
+  }
+
+  return typeof (detail as { hidden?: unknown }).hidden === 'boolean';
 };
 
 const loadPersistedTutorWidgetState = (): KangurAiTutorWidgetStorageState | null => {
@@ -80,13 +108,15 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       : {}),
     ...(state.pendingFollowUp ? { pendingFollowUp: state.pendingFollowUp } : {}),
     ...(state.avatarPosition ? { avatarPosition: state.avatarPosition } : {}),
+    ...(state.hidden === true ? { hidden: true } : {}),
   };
 
   try {
     if (
       !('lastSessionKey' in nextState) &&
       !('pendingFollowUp' in nextState) &&
-      !('avatarPosition' in nextState)
+      !('avatarPosition' in nextState) &&
+      !('hidden' in nextState)
     ) {
       window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
       return;
@@ -192,6 +222,65 @@ export const clearPersistedPendingTutorFollowUp = (): void => {
   });
 };
 
+const dispatchTutorVisibilityChange = (hidden: boolean): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(KANGUR_AI_TUTOR_VISIBILITY_CHANGE_EVENT, {
+      detail: { hidden },
+    })
+  );
+};
+
+export const loadPersistedTutorVisibilityHidden = (): boolean =>
+  loadPersistedTutorWidgetState()?.hidden === true;
+
+export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    hidden,
+  });
+  dispatchTutorVisibilityChange(hidden);
+  return hidden;
+};
+
+export const subscribeToTutorVisibilityChanges = (
+  listener: (hidden: boolean) => void
+): (() => void) => {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  listener(loadPersistedTutorVisibilityHidden());
+
+  const handleVisibilityChange = (event: Event): void => {
+    if (event instanceof CustomEvent) {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (isTutorVisibilityChangeDetail(detail)) {
+        listener(detail.hidden);
+        return;
+      }
+    }
+
+    listener(loadPersistedTutorVisibilityHidden());
+  };
+
+  window.addEventListener(
+    KANGUR_AI_TUTOR_VISIBILITY_CHANGE_EVENT,
+    handleVisibilityChange as EventListener
+  );
+
+  return () => {
+    window.removeEventListener(
+      KANGUR_AI_TUTOR_VISIBILITY_CHANGE_EVENT,
+      handleVisibilityChange as EventListener
+    );
+  };
+};
+
 export const loadPersistedTutorAvatarPosition =
   (): KangurAiTutorAvatarPositionRecord | null => {
     const parsed = loadPersistedTutorWidgetState();
@@ -276,6 +365,63 @@ export const persistGuestIntroRecord = (
   try {
     window.localStorage.setItem(
       KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
+      JSON.stringify(nextRecord)
+    );
+  } catch {
+    // Ignore storage write failures so the widget stays non-blocking.
+  }
+
+  return nextRecord;
+};
+
+export const loadPersistedHomeOnboardingRecord = (): KangurAiTutorHomeOnboardingRecord | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<KangurAiTutorHomeOnboardingRecord> | null;
+    if (
+      parsed?.version !== 1 ||
+      (parsed?.status !== 'shown' &&
+        parsed?.status !== 'completed' &&
+        parsed?.status !== 'dismissed') ||
+      typeof parsed?.updatedAt !== 'string'
+    ) {
+      return null;
+    }
+
+    return {
+      status: parsed.status,
+      version: 1,
+      updatedAt: parsed.updatedAt,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const persistHomeOnboardingRecord = (
+  status: KangurAiTutorHomeOnboardingRecord['status']
+): KangurAiTutorHomeOnboardingRecord | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const nextRecord: KangurAiTutorHomeOnboardingRecord = {
+    status,
+    version: 1,
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    window.localStorage.setItem(
+      KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
       JSON.stringify(nextRecord)
     );
   } catch {

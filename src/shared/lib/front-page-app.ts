@@ -25,8 +25,8 @@ export const FRONT_PAGE_OPTIONS: FrontPageOption[] = [
   },
   {
     id: 'kangur',
-    title: 'Kangur',
-    description: 'Mount Kangur at / and let it own the full public frontend.',
+    title: 'StudiQ',
+    description: 'Mount StudiQ at / and let it own the full public frontend.',
     route: FRONT_PAGE_APP_ROUTE.kangur,
   },
   {

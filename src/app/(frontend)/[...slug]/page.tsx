@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
     const frontPageSetting = await getFrontPageSetting();
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
       return {
-        title: slug[0]?.trim().toLowerCase() === 'login' ? 'Kangur Login' : 'Kangur',
+        title: slug[0]?.trim().toLowerCase() === 'login' ? 'StudiQ Login' : 'StudiQ',
       };
     }
   }

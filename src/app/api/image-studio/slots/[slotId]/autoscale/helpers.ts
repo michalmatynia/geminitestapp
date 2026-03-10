@@ -3,6 +3,11 @@ import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 
 import {
+  coerceBoolean,
+  coerceFiniteNumber,
+  isFileLike,
+} from '@/features/ai/image-studio/server/image-handler-utils';
+import {
   type ImageStudioAutoScalerRequest,
   type ImageStudioAutoScalerResponse,
   imageStudioAutoScalerResponseSchema,
@@ -16,12 +21,6 @@ import {
 } from '@/shared/contracts/image-studio';
 
 export type { ImageStudioAutoScaleMetadata };
-
-import {
-  coerceBoolean,
-  coerceFiniteNumber,
-  isFileLike,
-} from '@/features/ai/image-studio/server/image-handler-utils';
 
 export async function parseAutoScalerRequestPayload(
   req: NextRequest

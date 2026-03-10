@@ -151,7 +151,19 @@ export function prepareDatabaseTemplateContext({
       }),
       { allowEmptyValue: true }
     );
-    if (existingFromInputs.length > 0) {
+    const shouldHydrateRichProductParameters =
+      targetPath === 'parameters' &&
+      existingFromInputs.length > 0 &&
+      existingFromInputs.every((entry) => {
+        const valuesByLanguage = entry.raw['valuesByLanguage'];
+        return !(
+          valuesByLanguage &&
+          typeof valuesByLanguage === 'object' &&
+          !Array.isArray(valuesByLanguage) &&
+          Object.keys(valuesByLanguage as Record<string, unknown>).length > 0
+        );
+      });
+    if (existingFromInputs.length > 0 && !shouldHydrateRichProductParameters) {
       return;
     }
 

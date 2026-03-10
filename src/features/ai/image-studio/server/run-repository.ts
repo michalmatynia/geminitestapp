@@ -9,6 +9,10 @@ import {
   ImageStudioRunHistoryEventSource,
   ImageStudioRunRequest,
 } from '@/shared/contracts/image-studio';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+
+import type { UpdateFilter } from 'mongodb';
 
 export type {
   ImageStudioRunDispatchMode,
@@ -18,10 +22,6 @@ export type {
   ImageStudioRunHistoryEventSource,
   ImageStudioRunRequest,
 };
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { isObjectRecord } from '@/shared/utils/object-utils';
-
-import type { UpdateFilter } from 'mongodb';
 
 type ImageStudioRunHistoryEventDocument = {
   id?: string | null;

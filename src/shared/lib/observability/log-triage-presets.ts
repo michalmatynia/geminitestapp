@@ -96,8 +96,8 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
   },
   {
     id: 'kangur-source-last7d',
-    label: 'Kangur',
-    description: 'Logs with a Kangur source prefix over the last 7 days.',
+    label: 'StudiQ',
+    description: 'Logs from the StudiQ app over the last 7 days.',
     resolve: (now: Date) => ({
       source: 'kangur.',
       fromDate: daysAgo(now, 7),
@@ -106,7 +106,7 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
   },
   {
     id: 'kangur-auth-last3d',
-    label: 'Kangur Auth',
+    label: 'StudiQ Auth',
     description: 'Learner sign-in and auth resolution logs from the last 3 days.',
     resolve: (now: Date) => ({
       source: 'kangur.auth.',
@@ -116,7 +116,7 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
   },
   {
     id: 'kangur-progress-last3d',
-    label: 'Kangur Progress',
+    label: 'StudiQ Progress',
     description: 'Progress update and sync-related server logs from the last 3 days.',
     resolve: (now: Date) => ({
       source: 'kangur.progress.',
@@ -126,8 +126,8 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
   },
   {
     id: 'kangur-slow-progress-last3d',
-    label: 'Kangur Slow Sync',
-    description: 'Slow Kangur progress PATCH requests over the last 3 days.',
+    label: 'StudiQ Slow Sync',
+    description: 'Slow StudiQ progress PATCH requests over the last 3 days.',
     resolve: (now: Date) => ({
       source: 'kangur.progress.PATCH',
       minDurationMs: '750',
@@ -137,7 +137,7 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
   },
   {
     id: 'kangur-tts-last3d',
-    label: 'Kangur TTS',
+    label: 'StudiQ TTS',
     description: 'Narration generation, status, and fallback logs from the last 3 days.',
     resolve: (now: Date) => ({
       source: 'kangur.tts.',

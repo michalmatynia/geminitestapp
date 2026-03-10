@@ -211,4 +211,20 @@ describe('product validator runtime handler', () => {
       },
     });
   });
+
+  it('accepts a null context registry envelope in the runtime evaluation schema', async () => {
+    const { evaluateRuntimeSchema } = await import('./handler');
+
+    expect(() =>
+      evaluateRuntimeSchema.parse({
+        values: {
+          name_en: 'Vintage Lamp',
+        },
+        latestProductValues: null,
+        patternIds: ['pattern-runtime-1'],
+        validationScope: 'product_edit',
+        contextRegistry: null,
+      })
+    ).not.toThrow();
+  });
 });

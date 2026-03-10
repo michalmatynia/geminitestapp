@@ -34,6 +34,7 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
         <SplitVariantPreview />
       ) : (
         <div className='relative h-full w-full overflow-hidden'>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={
               canCompareWithSource && singleVariantView === 'source'

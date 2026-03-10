@@ -9,8 +9,6 @@ import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
-
-export type { ResultHeight, CaseRow };
 import { internalError } from '@/shared/errors/app-error';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -24,8 +22,7 @@ import type {
 } from '../../components/CaseResolverNodeFileUtils';
 import type { RelationTreeLookup } from '../types';
 
-
-
+export type { ResultHeight, CaseRow };
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
 type SelectOption = {

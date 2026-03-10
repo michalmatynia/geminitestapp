@@ -1,17 +1,39 @@
 'use client';
 
 import { Award, BarChart2, Flame, Sparkles, Target } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { KangurMetricCard } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurMetricCard,
+  KangurProgressBar,
+} from '@/features/kangur/ui/design/primitives';
+import {
+  getCurrentKangurDailyQuest,
+  type KangurDailyQuestState,
+} from '@/features/kangur/ui/services/daily-quests';
 import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const { progress, snapshot } = useKangurLearnerProfileRuntime();
   const nextBadge = getNextLockedBadge(progress);
+  const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
+
+  useEffect(() => {
+    setDailyQuest(getCurrentKangurDailyQuest(progress));
+  }, [progress]);
+
+  const dailyQuestAccent =
+    dailyQuest?.reward.status === 'claimed'
+      ? 'emerald'
+      : dailyQuest?.progress.status === 'completed'
+        ? 'amber'
+        : dailyQuest?.progress.status === 'in_progress'
+          ? 'indigo'
+          : 'slate';
 
   return (
-    <section className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5'>
+    <section className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'
@@ -47,6 +69,37 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         value={`+${snapshot.todayXpEarned}`}
       />
+
+      <KangurMetricCard
+        accent={dailyQuestAccent}
+        data-testid='learner-profile-overview-daily-quest'
+        description={
+          dailyQuest
+            ? `${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`
+            : dailyQuest === null
+              ? 'Nowa misja pojawi sie wraz z postepem.'
+              : 'Trwa ladowanie misji dnia...'
+        }
+        label={
+          <span className='inline-flex items-center gap-2'>
+            <Target className='h-4 w-4' /> Misja dnia
+          </span>
+        }
+        value={dailyQuest ? `${dailyQuest.progress.percent}%` : dailyQuest === null ? '—' : '...'}
+        valueClassName='text-2xl sm:text-3xl'
+      >
+        {dailyQuest ? (
+          <div className='space-y-2 pt-1'>
+            <p className='text-xs font-semibold text-slate-700'>{dailyQuest.assignment.title}</p>
+            <KangurProgressBar
+              accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
+              data-testid='learner-profile-overview-daily-quest-bar'
+              size='sm'
+              value={dailyQuest.progress.percent}
+            />
+          </div>
+        ) : null}
+      </KangurMetricCard>
 
       <KangurMetricCard
         accent='teal'

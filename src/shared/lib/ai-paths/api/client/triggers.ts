@@ -41,3 +41,15 @@ export async function reorderTriggerButtons(payload: {
 }): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
   return apiPost<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons/reorder', payload);
 }
+
+export async function cleanupFixtureTriggerButtons(): Promise<ApiResponse<{
+  removedTriggerButtons: number;
+  removedPathIndexEntries: number;
+  removedPathConfigs: number;
+}>> {
+  return apiPost<{
+    removedTriggerButtons: number;
+    removedPathIndexEntries: number;
+    removedPathConfigs: number;
+  }>('/api/ai-paths/trigger-buttons/cleanup-fixtures', {});
+}

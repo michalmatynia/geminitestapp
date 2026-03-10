@@ -17,6 +17,8 @@ export default function XpToast({
   newBadges,
   visible,
   breakdown = [],
+  nextBadge = null,
+  dailyQuest = null,
 }: XpToastProps): React.JSX.Element {
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
@@ -61,6 +63,22 @@ export default function XpToast({
                 itemDataTestIdPrefix='xp-toast-breakdown'
                 limit={4}
               />
+              {nextBadge ? (
+                <p
+                  className='mt-2 text-xs font-medium text-slate-600'
+                  data-testid='xp-toast-next-badge'
+                >
+                  Nastepna odznaka: {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
+                </p>
+              ) : null}
+              {dailyQuest ? (
+                <p
+                  className='mt-1 text-xs font-semibold text-emerald-700'
+                  data-testid='xp-toast-daily-quest'
+                >
+                  Misja dnia ukonczona: {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
+                </p>
+              ) : null}
             </KangurSurfacePanel>
           )}
           {badgeDetails.map((badge) => (

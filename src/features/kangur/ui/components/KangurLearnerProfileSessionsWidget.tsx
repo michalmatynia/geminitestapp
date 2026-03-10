@@ -1,5 +1,6 @@
 'use client';
 
+import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import {
   formatKangurProfileDateTime,
   formatKangurProfileDuration,
@@ -13,8 +14,6 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { getProgressBadges } from '@/features/kangur/ui/services/progress';
-import { cn } from '@/shared/utils';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -42,7 +41,6 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
   const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
-  const badgeStatuses = getProgressBadges(progress);
 
   return (
     <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
@@ -135,29 +133,14 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
         <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-          Odznaki
+          Sciezki odznak
         </div>
-        <div className='flex flex-wrap gap-2'>
-          {badgeStatuses.map((badge) => {
-            const unlocked = badge.isUnlocked;
-            return (
-              <KangurStatusChip
-                accent={unlocked ? 'indigo' : 'slate'}
-                className={cn('gap-1.5', !unlocked && 'opacity-70')}
-                data-testid={`learner-profile-badge-${badge.id}`}
-                key={badge.id}
-                size='sm'
-                title={`${badge.name}: ${badge.desc}${unlocked ? '' : ` (${badge.summary})`}`}
-              >
-                <span className={unlocked ? '' : 'grayscale'}>{badge.emoji}</span>
-                <span>{badge.name}</span>
-                {!unlocked ? (
-                  <span className='text-[11px] font-semibold text-slate-500'>{badge.summary}</span>
-                ) : null}
-              </KangurStatusChip>
-            );
-          })}
-        </div>
+        <KangurBadgeTrackGrid
+          className='grid-cols-1'
+          dataTestIdPrefix='learner-profile-badge-track'
+          emptyTestId='learner-profile-badges-empty'
+          progress={progress}
+        />
       </KangurGlassPanel>
     </section>
   );

@@ -50,8 +50,8 @@ export const ROUTING_FEATURES: BrainRoutingFeatureConfig[] = [
   },
   {
     key: 'kangur_ai_tutor',
-    label: 'Kangur AI Tutor',
-    description: 'Tutor chat routing for Kangur, managed directly through Brain.',
+    label: 'StudiQ AI Tutor',
+    description: 'Tutor chat routing for StudiQ, managed directly through Brain.',
   },
   {
     key: 'products',

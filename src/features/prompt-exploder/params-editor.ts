@@ -1,8 +1,3 @@
-import {
-  extractParamsFromPrompt,
-  flattenParams,
-  inferParamSpecs,
-} from '@/shared/utils/prompt-params';
 import type { ParamSpec, ParamSpecKind } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderParamUiControl,
@@ -10,6 +5,12 @@ import type {
   PromptExploderParamEntry,
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  extractParamsFromPrompt,
+  flattenParams,
+  inferParamSpecs,
+} from '@/shared/utils/prompt-params';
 
 export type {
   PromptExploderParamUiControl,
@@ -31,8 +32,6 @@ const PROMPT_EXPLODER_PARAM_UI_CONTROLS: PromptExploderParamUiControl[] = [
   'rgb',
   'tuple2',
 ];
-
-import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type ScanState = {
   inSingle: boolean;

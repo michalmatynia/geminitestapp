@@ -338,6 +338,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                               const previewKind = resolveScanSlotPreviewKind(slot);
                               if (previewKind === 'image' && previewPath) {
                                 return (
+                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={previewPath}
                                     alt={slot.name || 'Scan page'}

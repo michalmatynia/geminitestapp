@@ -51,6 +51,7 @@ import {
 } from './client/database';
 import { fetchSettings, updateSetting } from './client/settings';
 import {
+  cleanupFixtureTriggerButtons,
   fetchTriggerButtons,
   createTriggerButton,
   updateTriggerButton,
@@ -99,6 +100,7 @@ export {
   updateTriggerButton,
   deleteTriggerButton,
   reorderTriggerButtons,
+  cleanupFixtureTriggerButtons,
   fetchRuntimeAnalyticsSummary,
 };
 
@@ -603,6 +605,7 @@ export const triggerButtonsApi = {
   update: updateTriggerButton,
   delete: deleteTriggerButton,
   reorder: reorderTriggerButtons,
+  cleanupFixtures: cleanupFixtureTriggerButtons,
 };
 
 type AiJobsPollPayload =

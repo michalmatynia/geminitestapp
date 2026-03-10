@@ -10,7 +10,10 @@ let createTrainingReward: typeof import('./progress').createTrainingReward;
 let getNextLockedBadge: typeof import('./progress').getNextLockedBadge;
 let getKangurProgressServerSnapshot: typeof import('./progress').getKangurProgressServerSnapshot;
 let getProgressBadges: typeof import('./progress').getProgressBadges;
+let getProgressBadgeTrackSummaries: typeof import('./progress').getProgressBadgeTrackSummaries;
 let getProgressTopActivities: typeof import('./progress').getProgressTopActivities;
+let getVisibleProgressBadges: typeof import('./progress').getVisibleProgressBadges;
+let getMasteredLessonCount: typeof import('./progress').getMasteredLessonCount;
 let mergeProgressStates: typeof import('./progress').mergeProgressStates;
 
 describe('kangur progress mastery helpers', () => {
@@ -25,7 +28,10 @@ describe('kangur progress mastery helpers', () => {
       getNextLockedBadge,
       getKangurProgressServerSnapshot,
       getProgressBadges,
+      getProgressBadgeTrackSummaries,
       getProgressTopActivities,
+      getVisibleProgressBadges,
+      getMasteredLessonCount,
       mergeProgressStates,
     } = await vi.importActual<typeof import('./progress')>('./progress'));
   });
@@ -58,7 +64,7 @@ describe('kangur progress mastery helpers', () => {
 
     const reward = createLessonPracticeReward(progress, 'adding', 4, 6);
 
-    expect(reward.xp).toBe(22);
+    expect(reward.xp).toBe(27);
     expect(reward.scorePercent).toBe(67);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
     expect(reward.progressUpdates.perfectGames).toBe(0);
@@ -68,12 +74,14 @@ describe('kangur progress mastery helpers', () => {
     expect(reward.progressUpdates.totalQuestionsAnswered).toBe(6);
     expect(reward.progressUpdates.currentWinStreak).toBe(1);
     expect(reward.progressUpdates.bestWinStreak).toBe(1);
+    expect(reward.progressUpdates.currentActivityRepeatStreak).toBe(1);
+    expect(reward.progressUpdates.lastRewardedActivityKey).toBe('lesson_practice:adding');
     expect(reward.progressUpdates.activityStats?.['lesson_practice:adding']).toEqual({
       sessionsPlayed: 1,
       perfectSessions: 0,
       totalCorrectAnswers: 4,
       totalQuestionsAnswered: 6,
-      totalXpEarned: 22,
+      totalXpEarned: 27,
       bestScorePercent: 67,
       lastScorePercent: 67,
       currentStreak: 1,
@@ -93,6 +101,8 @@ describe('kangur progress mastery helpers', () => {
         expect.objectContaining({ kind: 'base', xp: 12 }),
         expect.objectContaining({ kind: 'accuracy', xp: 6 }),
         expect.objectContaining({ kind: 'first_activity', xp: 4 }),
+        expect.objectContaining({ kind: 'mastery', xp: 2 }),
+        expect.objectContaining({ kind: 'variety', xp: 3 }),
       ])
     );
   });
@@ -102,7 +112,7 @@ describe('kangur progress mastery helpers', () => {
 
     const reward = createLessonPracticeReward(progress, 'division', 7, 7);
 
-    expect(reward.xp).toBe(46);
+    expect(reward.xp).toBe(53);
     expect(reward.scorePercent).toBe(100);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
     expect(reward.progressUpdates.perfectGames).toBe(1);
@@ -120,6 +130,8 @@ describe('kangur progress mastery helpers', () => {
         expect.objectContaining({ kind: 'base', xp: 12 }),
         expect.objectContaining({ kind: 'accuracy', xp: 18 }),
         expect.objectContaining({ kind: 'first_activity', xp: 4 }),
+        expect.objectContaining({ kind: 'mastery', xp: 4 }),
+        expect.objectContaining({ kind: 'variety', xp: 3 }),
         expect.objectContaining({ kind: 'perfect', xp: 12 }),
       ])
     );
@@ -147,7 +159,7 @@ describe('kangur progress mastery helpers', () => {
       durationSeconds: 48,
     });
 
-    expect(reward.xp).toBe(41);
+    expect(reward.xp).toBe(44);
     expect(reward.scorePercent).toBe(90);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
     expect(reward.progressUpdates.perfectGames).toBe(0);
@@ -161,6 +173,7 @@ describe('kangur progress mastery helpers', () => {
         expect.objectContaining({ kind: 'difficulty', xp: 8 }),
         expect.objectContaining({ kind: 'speed', xp: 5 }),
         expect.objectContaining({ kind: 'first_activity', xp: 4 }),
+        expect.objectContaining({ kind: 'variety', xp: 3 }),
       ])
     );
     expect(reward.progressUpdates.activityStats?.['game:addition']).toEqual({
@@ -168,7 +181,7 @@ describe('kangur progress mastery helpers', () => {
       perfectSessions: 0,
       totalCorrectAnswers: 9,
       totalQuestionsAnswered: 10,
-      totalXpEarned: 41,
+      totalXpEarned: 44,
       bestScorePercent: 90,
       lastScorePercent: 90,
       currentStreak: 1,
@@ -189,12 +202,18 @@ describe('kangur progress mastery helpers', () => {
       perfectCounterKey: 'calendarPerfect',
     });
 
-    expect(reward.xp).toBe(48);
+    expect(reward.xp).toBe(55);
     expect(reward.progressUpdates.gamesPlayed).toBe(1);
     expect(reward.progressUpdates.perfectGames).toBe(1);
     expect(reward.progressUpdates.operationsPlayed).toEqual(['calendar']);
     expect(reward.progressUpdates.calendarPerfect).toBe(1);
     expect(reward.progressUpdates.activityStats?.['training:calendar']?.perfectSessions).toBe(1);
+    expect(reward.breakdown).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'mastery', xp: 4 }),
+        expect.objectContaining({ kind: 'variety', xp: 3 }),
+      ])
+    );
   });
 
   it('creates a lesson completion reward without counting solved questions', () => {
@@ -202,7 +221,7 @@ describe('kangur progress mastery helpers', () => {
 
     const reward = createLessonCompletionReward(progress, 'clock', 100);
 
-    expect(reward.xp).toBe(52);
+    expect(reward.xp).toBe(56);
     expect(reward.scorePercent).toBe(100);
     expect(reward.progressUpdates.lessonsCompleted).toBe(1);
     expect(reward.progressUpdates.totalQuestionsAnswered).toBe(0);
@@ -211,13 +230,92 @@ describe('kangur progress mastery helpers', () => {
       perfectSessions: 1,
       totalCorrectAnswers: 0,
       totalQuestionsAnswered: 0,
-      totalXpEarned: 52,
+      totalXpEarned: 56,
       bestScorePercent: 100,
       lastScorePercent: 100,
       currentStreak: 1,
       bestStreak: 1,
       lastPlayedAt: expect.any(String),
     });
+    expect(reward.breakdown).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'mastery', xp: 4 })])
+    );
+  });
+
+  it('adds mastery and variety progression toward the new mastery badge track', () => {
+    const progress = createDefaultKangurProgressState();
+
+    const reward = createLessonPracticeReward(progress, 'clock', 5, 5);
+    const nextProgress = {
+      ...createDefaultKangurProgressState(),
+      ...reward.progressUpdates,
+      totalXp: reward.xp,
+    };
+
+    expect(getMasteredLessonCount(nextProgress, 75)).toBe(1);
+    expect(getProgressBadges(nextProgress).find((badge) => badge.id === 'mastery_builder')).toMatchObject({
+      isUnlocked: false,
+      summary: '1/3 lekcje',
+    });
+  });
+
+  it('unlocks quest badges from completed daily quests and exposes the next quest milestone', () => {
+    const progress = {
+      ...createDefaultKangurProgressState(),
+      dailyQuestsCompleted: 1,
+    };
+
+    const badges = getProgressBadges(progress);
+
+    expect(badges.find((badge) => badge.id === 'quest_starter')).toMatchObject({
+      isUnlocked: true,
+      summary: '1/1 misja',
+    });
+    expect(badges.find((badge) => badge.id === 'quest_keeper')).toMatchObject({
+      isUnlocked: false,
+      summary: '1/3 misje',
+      progressPercent: 33,
+    });
+  });
+
+  it('reduces repeated farming rewards after the same activity is played too many times in a row', () => {
+    const progress = {
+      ...createDefaultKangurProgressState(),
+      operationsPlayed: ['addition'],
+      currentWinStreak: 1,
+      bestWinStreak: 2,
+      currentActivityRepeatStreak: 2,
+      lastRewardedActivityKey: 'game:addition',
+      activityStats: {
+        'game:addition': {
+          sessionsPlayed: 2,
+          perfectSessions: 0,
+          totalCorrectAnswers: 15,
+          totalQuestionsAnswered: 20,
+          totalXpEarned: 42,
+          bestScorePercent: 80,
+          lastScorePercent: 80,
+          currentStreak: 2,
+          bestStreak: 2,
+          lastPlayedAt: '2026-03-09T10:00:00.000Z',
+        },
+      },
+    };
+
+    const reward = createGameSessionReward(progress, {
+      operation: 'addition',
+      difficulty: 'medium',
+      correctAnswers: 8,
+      totalQuestions: 10,
+      durationSeconds: 90,
+    });
+
+    expect(reward.xp).toBe(27);
+    expect(reward.progressUpdates.currentActivityRepeatStreak).toBe(3);
+    expect(reward.progressUpdates.lastRewardedActivityKey).toBe('game:addition');
+    expect(reward.breakdown).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'anti_repeat', xp: -2 })])
+    );
   });
 
   it('exposes badge progress metadata for locked and unlocked badges', () => {
@@ -278,6 +376,76 @@ describe('kangur progress mastery helpers', () => {
     });
     expect(badges.find((badge) => badge.id === 'variety')).toMatchObject({
       summary: '1/5 typow',
+    });
+  });
+
+  it('shows only unlocked badges plus the top locked badges already in progress', () => {
+    const badges = getVisibleProgressBadges({
+      ...createDefaultKangurProgressState(),
+      gamesPlayed: 4,
+      totalXp: 480,
+      dailyQuestsCompleted: 1,
+      operationsPlayed: ['addition', 'clock'],
+      totalCorrectAnswers: 32,
+      totalQuestionsAnswered: 40,
+      currentWinStreak: 2,
+      bestWinStreak: 2,
+      badges: ['first_game'],
+    });
+
+    expect(badges.map((badge) => badge.id)).toEqual([
+      'first_game',
+      'streak_3',
+      'accuracy_ace',
+      'xp_500',
+      'quest_starter',
+    ]);
+    expect(badges).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'ten_games' })])
+    );
+    expect(badges).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'variety' })])
+    );
+    expect(badges).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'xp_1000' })])
+    );
+  });
+
+  it('hides locked badges entirely when there is no real badge progress yet', () => {
+    expect(getVisibleProgressBadges(createDefaultKangurProgressState())).toEqual([]);
+  });
+
+  it('groups badge progress into themed track summaries', () => {
+    const tracks = getProgressBadgeTrackSummaries({
+      ...createDefaultKangurProgressState(),
+      gamesPlayed: 4,
+      lessonsCompleted: 2,
+      clockPerfect: 1,
+      totalXp: 480,
+      bestWinStreak: 2,
+      operationsPlayed: ['addition', 'clock'],
+      dailyQuestsCompleted: 1,
+    });
+
+    expect(tracks.map((track) => track.key)).toEqual([
+      'onboarding',
+      'quest',
+      'mastery',
+      'xp',
+    ]);
+    expect(tracks.find((track) => track.key === 'quest')).toMatchObject({
+      unlockedCount: 1,
+      totalCount: 2,
+      nextBadge: expect.objectContaining({
+        id: 'quest_keeper',
+        summary: '1/3 misje',
+      }),
+    });
+    expect(tracks.find((track) => track.key === 'xp')).toMatchObject({
+      progressPercent: 72,
+      nextBadge: expect.objectContaining({
+        id: 'xp_500',
+      }),
     });
   });
 
@@ -366,6 +534,7 @@ describe('kangur progress mastery helpers', () => {
     expect(merged.totalCorrectAnswers).toBe(15);
     expect(merged.totalQuestionsAnswered).toBe(18);
     expect(merged.bestWinStreak).toBe(3);
+    expect(merged.dailyQuestsCompleted).toBe(0);
     expect(merged.activityStats?.['lesson_practice:clock']).toEqual({
       sessionsPlayed: 3,
       perfectSessions: 1,
@@ -378,6 +547,8 @@ describe('kangur progress mastery helpers', () => {
       bestStreak: 3,
       lastPlayedAt: '2026-03-06T10:00:00.000Z',
     });
+    expect(merged.lastRewardedActivityKey).toBeNull();
+    expect(merged.currentActivityRepeatStreak).toBe(0);
   });
 
   it('exposes XP pace in top activity summaries', () => {

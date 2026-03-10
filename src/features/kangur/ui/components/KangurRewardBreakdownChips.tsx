@@ -24,6 +24,15 @@ export default function KangurRewardBreakdownChips({
 }: KangurRewardBreakdownChipsProps): React.JSX.Element | null {
   const visibleBreakdown =
     typeof limit === 'number' ? breakdown.slice(0, Math.max(0, limit)) : breakdown;
+  const formatXp = (value: number): string => {
+    if (value > 0) {
+      return `+${value}`;
+    }
+    if (value < 0) {
+      return `${value}`;
+    }
+    return '0';
+  };
 
   if (visibleBreakdown.length === 0) {
     return null;
@@ -40,7 +49,7 @@ export default function KangurRewardBreakdownChips({
           }
           key={`${entry.kind}-${entry.label}`}
         >
-          {entry.label} +{entry.xp}
+          {entry.label} {formatXp(entry.xp)}
         </KangurStatusChip>
       ))}
     </div>

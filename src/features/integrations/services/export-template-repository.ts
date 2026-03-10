@@ -19,14 +19,13 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/shared/lib/data-import-export-adapter';
-
-export type { Template, TemplateMapping };
-
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+export type { Template, TemplateMapping };
 
 type ExportTemplateProvider = 'mongodb' | 'prisma';
 type SettingDoc = MongoTimestampedStringSettingRecord<string | _ObjectId, Date>;

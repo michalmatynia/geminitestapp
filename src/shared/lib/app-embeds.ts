@@ -62,8 +62,8 @@ export const APP_EMBED_OPTIONS: AppEmbedOption[] = [
   },
   {
     id: 'kangur',
-    label: 'Kangur',
-    description: 'Mount the Kangur learning app inside CMS pages with CMS zoning around it.',
+    label: 'StudiQ',
+    description: 'Mount the StudiQ learning app inside CMS pages with CMS zoning around it.',
     settingsRoute: '/admin/kangur/settings',
     renderMode: 'internal-app',
   },

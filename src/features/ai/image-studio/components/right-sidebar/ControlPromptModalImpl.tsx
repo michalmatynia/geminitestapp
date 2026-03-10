@@ -21,27 +21,25 @@ import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/brid
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { cloneSerializableValue } from './right-sidebar-utils';
 import {
   RightSidebarPromptControlHeader,
   RightSidebarPromptControlHeaderRuntimeContext,
   type RightSidebarPromptControlHeaderRuntimeValue,
 } from './RightSidebarPromptControlHeader';
-import { UIPresetsPanel } from '../UIPresetsPanel';
+import { useProjectsState } from '../../context/ProjectsContext';
+import { usePromptState, usePromptActions } from '../../context/PromptContext';
+import { useSlotsState } from '../../context/SlotsContext';
+import { useUiState, useUiActions } from '../../context/UiContext';
 import {
   StudioActionButtonRow,
   type StudioActionButtonConfig,
 } from '../modals/StudioActionButtonRow';
 import { StudioPromptTextSection } from '../modals/StudioPromptTextSection';
-import { usePromptState, usePromptActions } from '../../context/PromptContext';
-import { useUiState, useUiActions } from '../../context/UiContext';
-import { useProjectsState } from '../../context/ProjectsContext';
-import { useSlotsState } from '../../context/SlotsContext';
-
-
 import { useRightSidebarContext } from '../RightSidebarContext';
+import { UIPresetsPanel } from '../UIPresetsPanel';
 
 export function ControlPromptModal(): React.JSX.Element {
   const router = useRouter();

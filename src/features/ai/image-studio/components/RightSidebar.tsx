@@ -33,8 +33,8 @@ import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
 import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
 import { RightSidebarRequestPreviewModal } from './right-sidebar/RightSidebarRequestPreviewModal';
-import { useRightSidebarCanvasResize } from './right-sidebar/useRightSidebarCanvasResize';
 import { useRightSidebarActionHistory } from './right-sidebar/useRightSidebarActionHistory';
+import { useRightSidebarCanvasResize } from './right-sidebar/useRightSidebarCanvasResize';
 import { useRightSidebarSequence } from './right-sidebar/useRightSidebarSequence';
 import { RightSidebarProvider, type RightSidebarContextValue } from './RightSidebarContext';
 import { SequencingPanel } from './SequencingPanel';

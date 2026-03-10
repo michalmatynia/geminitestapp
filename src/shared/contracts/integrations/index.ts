@@ -1,3 +1,47 @@
+/* eslint-disable import/order */
+import { z } from 'zod';
+import { namedDtoSchema } from '@/shared/contracts/base';
+import type {
+  ProductParameter,
+  ProductParameterValue,
+  ProductParameterCreateInput as ParameterCreateInput,
+} from '@/shared/contracts/products';
+import type { Integration, ImageExportLogger, CapturedLog } from './base';
+import {
+  baseImportPreflightIssueSchema,
+  type BaseImportItemStatus,
+  type BaseImportItemAction,
+  type BaseImportErrorCode,
+  type BaseImportErrorClass,
+  type BaseImportParameterImportSummary,
+  type BaseImportRunRecord,
+  type BaseImportRunStatus,
+  type BaseImportPreflight,
+  type BaseImportStartResponse,
+  type BaseImportRunDetailResponse,
+  type BaseImportItemRecord,
+  type ImportParameterCacheResponse,
+  type ExportToBaseVariables,
+  type ExportResponse,
+} from './base-com';
+import type {
+  IntegrationConnection,
+  ConnectionDeleteOptions,
+  ConnectionDependencyCounts,
+  ConnectionFormState,
+  StepWithResult,
+  SaveConnectionOptions,
+} from './connections';
+import {
+  productListingSchema,
+  type ProductListing,
+  type ProductListingExportEvent,
+  type CreateProductListing,
+  type ProductListingWithDetails,
+} from './listings';
+import type { ImportTemplateParameterImport } from './templates';
+/* eslint-enable import/order */
+
 export * from './base';
 export * from './connections';
 export * from './listings';
@@ -33,43 +77,6 @@ export type {
   WarehouseOption,
 } from './import-export';
 
-import { z } from 'zod';
-
-import { namedDtoSchema } from '../base';
-import { type Integration, type ImageExportLogger, type CapturedLog } from './base';
-import {
-  baseImportPreflightIssueSchema,
-  type BaseImportItemStatus,
-  type BaseImportItemAction,
-  type BaseImportErrorCode,
-  type BaseImportErrorClass,
-  type BaseImportParameterImportSummary,
-  type BaseImportRunRecord,
-  type BaseImportRunStatus,
-  type BaseImportPreflight,
-  type BaseImportStartResponse,
-  type BaseImportRunDetailResponse,
-  type BaseImportItemRecord,
-  type ImportParameterCacheResponse,
-  type ExportToBaseVariables,
-  type ExportResponse,
-} from './base-com';
-import {
-  type IntegrationConnection,
-  type ConnectionDeleteOptions,
-  type ConnectionDependencyCounts,
-  type ConnectionFormState,
-  type StepWithResult,
-  type SaveConnectionOptions,
-} from './connections';
-import {
-  productListingSchema,
-  type ProductListing,
-  type ProductListingExportEvent,
-  type CreateProductListing,
-  type ProductListingWithDetails,
-} from './listings';
-
 export type {
   Integration,
   ProductListing,
@@ -95,8 +102,6 @@ export type {
   StepWithResult,
   SaveConnectionOptions,
 };
-
-import type { ImportTemplateParameterImport } from './templates';
 
 /**
  * Session DTOs
@@ -182,12 +187,6 @@ export type BaseParameterImportSummary = {
   created: number;
   written: number;
 };
-
-import {
-  type ProductParameter,
-  type ProductParameterValue,
-  type ProductParameterCreateInput as ParameterCreateInput,
-} from '../products';
 
 export type ApplyBaseParameterImportInput = {
   settings: ImportTemplateParameterImport;

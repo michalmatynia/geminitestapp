@@ -49,7 +49,7 @@ describe('PlayerProgressCard', () => {
     ).default;
   });
 
-  it('uses shared metric and badge-chip styling for player progress', () => {
+  it('uses shared metric styling and grouped badge tracks for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
@@ -73,16 +73,60 @@ describe('PlayerProgressCard', () => {
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('4 sesji');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('28 XP / gre');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
-    expect(screen.getByTestId('player-progress-badge-first_game')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+    expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(
+      '⭐ Pol tysiaca XP'
     );
-    expect(screen.getByTestId('player-progress-badge-xp_1000')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+    expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(
+      '480/500 XP'
     );
-    expect(screen.getByTestId('player-progress-badge-xp_1000')).toHaveTextContent(
-      '480/1000 XP'
+    expect(screen.getByTestId('player-progress-next-badge-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '96'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-onboarding')).toHaveTextContent(
+      'Start'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-onboarding')).toHaveTextContent(
+      '2/2 odznak'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveTextContent(
+      'Wyzwania'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveTextContent(
+      '2/2 odznak'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-challenge-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
     );
   });
+
+  it('hides locked badges until the learner is meaningfully on the way to them', () => {
+    render(<PlayerProgressCard progress={createDefaultProgress()} />);
+
+    expect(screen.getByTestId('player-progress-badges-empty')).toHaveTextContent(
+      'Kolejne odznaki pojawia sie wraz z postepem.'
+    );
+    expect(screen.queryByTestId('player-progress-badge-first_game')).toBeNull();
+    expect(screen.queryByTestId('player-progress-badge-ten_games')).toBeNull();
+  });
 });
+
+function createDefaultProgress(): KangurProgressState {
+  return {
+    totalXp: 0,
+    gamesPlayed: 0,
+    perfectGames: 0,
+    lessonsCompleted: 0,
+    clockPerfect: 0,
+    calendarPerfect: 0,
+    geometryPerfect: 0,
+    badges: [],
+    operationsPlayed: [],
+    lessonMastery: {},
+    totalCorrectAnswers: 0,
+    totalQuestionsAnswered: 0,
+    bestWinStreak: 0,
+    activityStats: {},
+  };
+}

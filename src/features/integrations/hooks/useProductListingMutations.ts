@@ -11,8 +11,6 @@ import type {
   ExportResponse,
 } from '@/shared/contracts/integrations';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
-
-export type { ExportToBaseVariables };
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -25,6 +23,8 @@ import {
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+export type { ExportToBaseVariables };
 
 type GenericExportToBaseVariables = ExportToBaseVariables & {
   productId: string;

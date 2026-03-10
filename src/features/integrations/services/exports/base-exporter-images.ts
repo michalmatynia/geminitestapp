@@ -5,15 +5,15 @@ import path from 'path';
 
 import sharp from 'sharp';
 
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import {
   type ImageExportLogger,
   type ImageBase64Mode,
   type ImageTransformOptions,
 } from '@/shared/contracts/integrations';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 export type { ImageExportLogger, ImageBase64Mode, ImageTransformOptions };
-import type { ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =
   process.env['NEXT_PUBLIC_APP_URL'] ||

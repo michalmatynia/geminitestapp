@@ -85,11 +85,25 @@ export type KangurRewardBreakdownEntry = {
   xp: number;
 };
 
+export type KangurXpToastBadgeHint = {
+  emoji: string;
+  name: string;
+  summary: string;
+};
+
+export type KangurXpToastQuestHint = {
+  title: string;
+  summary: string;
+  xpAwarded: number;
+};
+
 export type KangurXpToastState = {
   visible: boolean;
   xpGained: number;
   newBadges: string[];
   breakdown?: KangurRewardBreakdownEntry[];
+  nextBadge?: KangurXpToastBadgeHint | null;
+  dailyQuest?: KangurXpToastQuestHint | null;
 };
 
 export type KangurAddXpResult = {

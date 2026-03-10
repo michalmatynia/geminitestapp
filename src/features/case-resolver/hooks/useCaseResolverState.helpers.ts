@@ -1,3 +1,4 @@
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { stableStringify } from '@/shared/lib/ai-paths';
 
 export {
@@ -68,8 +69,6 @@ export type {
 export const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
 export const CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS = 900;
 export const CASE_RESOLVER_OCR_JOB_TIMEOUT_MS = 120_000;
-
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 export const serializeWorkspaceForUnsavedChangesCheck = (
   workspace: CaseResolverWorkspace

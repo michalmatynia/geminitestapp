@@ -124,4 +124,34 @@ describe('useProductValidatorIssues', () => {
       { logError: false }
     );
   });
+
+  it('omits contextRegistry from the runtime validator request when no page envelope is available', async () => {
+    useOptionalContextRegistryPageEnvelopeMock.mockReturnValue(null);
+
+    renderHook(() =>
+      useProductValidatorIssues({
+        values: { name_en: 'Vintage Lamp' },
+        patterns: [createRuntimePattern()],
+        latestProductValues: null,
+        validationScope: 'product_edit',
+        validatorEnabled: true,
+        isIssueDenied: () => false,
+        isIssueAccepted: () => false,
+        runtimeDebounceMs: 10,
+        source: 'ProductForm',
+      })
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/products/validator-runtime/evaluate',
+      expect.not.objectContaining({
+        contextRegistry: expect.anything(),
+      }),
+      { logError: false }
+    );
+  });
 });

@@ -88,7 +88,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     vi.clearAllMocks();
   });
 
-  it('shows badge progress for locked profile badges', () => {
+  it('shows grouped badge-track progress for learner profile badges', () => {
     useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
 
     render(<KangurLearnerProfileSessionsWidget />);
@@ -97,14 +97,46 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     expect(screen.getByTestId('learner-profile-session-xp-session-1')).toHaveTextContent(
       '+28 XP'
     );
-    expect(screen.getByTestId('learner-profile-badge-first_game')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+    expect(screen.getByTestId('learner-profile-badge-track-onboarding')).toHaveTextContent(
+      'Start'
     );
-    expect(screen.getByTestId('learner-profile-badge-ten_games')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+    expect(screen.getByTestId('learner-profile-badge-track-onboarding')).toHaveTextContent(
+      '2/2 odznak'
     );
-    expect(screen.getByTestId('learner-profile-badge-ten_games')).toHaveTextContent('4/10 gier');
+    expect(screen.getByTestId('learner-profile-badge-track-xp')).toHaveTextContent(
+      'Pol tysiaca XP · 480/500 XP'
+    );
+    expect(screen.queryByTestId('learner-profile-badge-track-variety')).toBeNull();
+  });
+
+  it('shows a short empty hint when badge progress has not started yet', () => {
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        progress: {
+          totalXp: 0,
+          gamesPlayed: 0,
+          perfectGames: 0,
+          lessonsCompleted: 0,
+          clockPerfect: 0,
+          calendarPerfect: 0,
+          geometryPerfect: 0,
+          badges: [],
+          operationsPlayed: [],
+          lessonMastery: {},
+          totalCorrectAnswers: 0,
+          totalQuestionsAnswered: 0,
+          currentWinStreak: 0,
+          bestWinStreak: 0,
+          activityStats: {},
+        },
+      })
+    );
+
+    render(<KangurLearnerProfileSessionsWidget />);
+
+    expect(screen.getByTestId('learner-profile-badges-empty')).toHaveTextContent(
+      'Kolejne odznaki pojawia sie wraz z postepem.'
+    );
+    expect(screen.queryByTestId('learner-profile-badge-first_game')).toBeNull();
   });
 });

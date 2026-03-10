@@ -181,6 +181,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                 </div>
               )}
               {isLocalPreviewUrl(displayUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={displayUrl}
                   alt={`Product ${index + 1}`}

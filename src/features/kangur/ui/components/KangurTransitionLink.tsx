@@ -57,7 +57,7 @@ export function KangurTransitionLink({
       return;
     }
 
-    void router.prefetch(managedLocalHref);
+    router.prefetch(managedLocalHref);
   }, [managedLocalHref, router]);
 
   return (

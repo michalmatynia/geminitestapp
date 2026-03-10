@@ -7,9 +7,6 @@ import { z } from 'zod';
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
 import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
-
-export type { UseProductsFilters };
-
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import {
   createListQueryV2,
@@ -20,6 +17,8 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { refetchProductsAndCounts } from './productCache';
+
+export type { UseProductsFilters };
 
 export interface UseProductsOptions {
   enabled?: boolean;

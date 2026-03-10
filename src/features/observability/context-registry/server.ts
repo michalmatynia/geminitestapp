@@ -1,12 +1,22 @@
+import type {
+  ContextRegistryConsumerEnvelope,
+  ContextRegistryRef,
+  ContextRegistryResolutionBundle,
+} from '@/shared/contracts/ai-context-registry';
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,
-} from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+} from '@/shared/lib/ai-context-registry/page-context-shared';
+
+type ContextRegistryResolveRefs = (args: {
+  refs: ContextRegistryRef[];
+  maxNodes?: number;
+  depth?: number;
+}) => Promise<ContextRegistryResolutionBundle>;
 
 export const resolveObservabilityContextRegistryEnvelope = async (
-  contextRegistry: ContextRegistryConsumerEnvelope | null | undefined
+  contextRegistry: ContextRegistryConsumerEnvelope | null | undefined,
+  resolveRefs: ContextRegistryResolveRefs
 ): Promise<ContextRegistryConsumerEnvelope | null> => {
   if (!contextRegistry) {
     return null;
@@ -14,7 +24,7 @@ export const resolveObservabilityContextRegistryEnvelope = async (
 
   const resolvedRegistryBundle =
     contextRegistry.refs.length > 0
-      ? await contextRegistryEngine.resolveRefs({
+      ? await resolveRefs({
         refs: contextRegistry.refs,
         maxNodes: 24,
         depth: 1,

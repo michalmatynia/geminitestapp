@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, BarChart2, Flame, Sparkles, Target } from 'lucide-react';
+import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
@@ -69,6 +69,37 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         value={`+${snapshot.todayXpEarned}`}
       />
+
+      {snapshot.recommendedSessionsCompleted > 0 ? (
+        <KangurMetricCard
+          accent='sky'
+          data-testid='learner-profile-overview-guided-rounds'
+          description={
+            snapshot.recommendedSessionNextBadgeName
+              ? `Do odznaki: ${snapshot.recommendedSessionNextBadgeName} · ${snapshot.recommendedSessionSummary}`
+              : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+          }
+          label={
+            <span className='inline-flex items-center gap-2'>
+              <Compass className='h-4 w-4' /> Polecone rundy
+            </span>
+          }
+          value={snapshot.recommendedSessionsCompleted}
+          valueClassName='text-2xl sm:text-3xl'
+        >
+          <div className='space-y-2 pt-1'>
+            <p className='text-xs font-semibold text-slate-700'>
+              {snapshot.recommendedSessionSummary}
+            </p>
+            <KangurProgressBar
+              accent='sky'
+              data-testid='learner-profile-overview-guided-rounds-bar'
+              size='sm'
+              value={snapshot.recommendedSessionProgressPercent}
+            />
+          </div>
+        </KangurMetricCard>
+      ) : null}
 
       <KangurMetricCard
         accent={dailyQuestAccent}

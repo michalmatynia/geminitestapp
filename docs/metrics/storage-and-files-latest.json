@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-08T14:46:38.744Z",
+  "generatedAt": "2026-03-10T08:15:45.570Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 4380,
+    "fileCount": 4528,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -371,6 +371,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/(admin)/admin/context-registry/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/(admin)/admin/dashboard-panels.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -516,12 +522,6 @@
     },
     {
       "file": "src/app/(admin)/admin/image-studio/ui-presets/page.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(admin)/admin/image-studio/validation-patterns/ClientPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -941,6 +941,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/(admin)/admin/validator/ClientPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/(admin)/admin/validator/lists/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1085,6 +1091,30 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/agent/capabilities/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/agent/leases/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/agent/resources/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/agentcreator/agent/[runId]/assets/[file]/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1146,6 +1176,18 @@
     },
     {
       "file": "src/app/api/agentcreator/personas/[personaId]/memory/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/agentcreator/personas/[personaId]/visuals/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/agentcreator/personas/[personaId]/visuals/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -1278,6 +1320,18 @@
     },
     {
       "file": "src/app/api/ai/actions/propose/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai/context/bundle/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai/context/bundle/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -1487,6 +1541,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/ai-paths/runs/[runId]/handoff/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/ai-paths/runs/[runId]/resume/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1632,6 +1692,18 @@
     },
     {
       "file": "src/app/api/ai-paths/trigger-buttons/[id]/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -3059,6 +3131,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/kangur/ai-tutor/chat/handler.test-support.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/kangur/ai-tutor/chat/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -3066,6 +3144,18 @@
     },
     {
       "file": "src/app/api/kangur/ai-tutor/chat/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/ai-tutor/guest-intro/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/ai-tutor/guest-intro/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -3137,6 +3227,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/kangur/auth/logout/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/logout/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/kangur/auth/me/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -3144,6 +3246,66 @@
     },
     {
       "file": "src/app/api/kangur/auth/me/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-account/create/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-account/create/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-account/resend/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-account/resend/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-email/verify/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-email/verify/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-password/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/auth/parent-password/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -4727,6 +4889,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/products/ids/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/ids/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/products/images/base64/all/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -5267,12 +5441,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/admin/pages/AdminGlobalValidatorPage.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/admin/pages/AdminMenuSettingsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -5382,6 +5550,18 @@
     },
     {
       "file": "src/features/ai/agent-runtime/browsing/context.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/agent-runtime/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/agent-runtime/context-registry/shared.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -5819,6 +5999,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/agentcreator/server/persona-avatar-thumbnails.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/agentcreator/server/persona-memory.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -5868,6 +6054,18 @@
     },
     {
       "file": "src/features/ai/agentcreator/teaching/context/AgentTeachingContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/agentcreator/teaching/context-registry/chat-page.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/agentcreator/teaching/context-registry/system-prompt.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -5952,6 +6150,24 @@
     },
     {
       "file": "src/features/ai/agentcreator/utils/personas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-context-registry/context/page-context-shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-context-registry/context/page-context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-context-registry/pages/AdminAiContextRegistryPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6845,12 +7061,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/ai/ai-paths/components/node-config/dialog/AiDescriptionNodeConfigSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/ai/ai-paths/components/node-config/dialog/ApiAdvancedNodeConfigSection.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7301,6 +7511,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/components/useJobQueueDataLayer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/components/useJobQueueRealtime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7547,6 +7775,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/hooks/database-node/useDatabaseActionConfig.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7608,6 +7854,12 @@
     },
     {
       "file": "src/features/ai/ai-paths/lib/path-run-status.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/lib/playwright-fixture-cleanup.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -8136,6 +8388,18 @@
     },
     {
       "file": "src/features/ai/chatbot/context/ChatbotContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/chatbot/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/chatbot/context-registry/workspace.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -9497,6 +9761,30 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/image-studio/context-registry/generation-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/image-studio/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/image-studio/context-registry/workspace-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/image-studio/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/image-studio/contracts/analysis.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -9588,12 +9876,6 @@
     },
     {
       "file": "src/features/ai/image-studio/pages/AdminImageStudioUiPresetsPage.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -10097,6 +10379,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/insights/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/insights/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/insights/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/insights/generator/chat-runtime.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -10367,6 +10667,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/auth/services/auth-email-delivery.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/auth/services/auth-login-challenge.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -10398,6 +10704,12 @@
     },
     {
       "file": "src/features/auth/services/auth-user-service.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/auth/services/auth-user-write-service.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -13013,6 +13325,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/cms/context-registry/page-builder.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/cms/hooks/page-builder/PageDispatchContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -13506,6 +13830,30 @@
     },
     {
       "file": "src/features/data-import-export/context/import-export-runtime-actions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/context/useImportExportBootstrapResources.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/context/useImportExportRuntime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/context/useImportExportRuntimeResources.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/context/useImportExportTemplateResources.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -14268,6 +14616,12 @@
     },
     {
       "file": "src/features/files/contexts/FileUploadEventsContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/files/hooks/useFileAsset3dQueries.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15269,6 +15623,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/hooks/useIntegrationProductQueries.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/hooks/useIntegrationQueries.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16103,7 +16463,31 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/components/KangurAdminMetricCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAdminWorkspaceIntroCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurAdminWorkspaceSectionCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/components/KangurDocumentationCenter.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurDocumentationTooltipSettingsPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16175,6 +16559,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/content-creator-insights.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/context/KangurQuestionIllustrationContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16211,6 +16601,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/context-registry/lessons-manager.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/hooks/useBlockListDnd.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16229,6 +16625,48 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/lesson-content-editor-drafts.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/question-authoring-insights.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/question-authoring-repairs.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/question-editor-drafts.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/question-manager-view.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/question-presentation-presets.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/test-suite-health.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16236,6 +16674,12 @@
     },
     {
       "file": "src/features/kangur/admin/utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ai-tutor/follow-up-reporting.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16415,6 +16859,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/server/guest-ai-tutor-intro.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/kangur-login-activity.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/parent-email-auth.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16589,6 +17051,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/test-suites/question-audit.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/test-suites.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16596,6 +17064,18 @@
     },
     {
       "file": "src/features/kangur/tts/captions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/tts/context-registry/instructions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/tts/context-registry/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16617,6 +17097,12 @@
       "dynamicPublicResolvers": 0,
       "readOps": 1,
       "strongRootGuard": true
+    },
+    {
+      "file": "src/features/kangur/ui/KangurErrorFallback.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
     },
     {
       "file": "src/features/kangur/ui/KangurFeatureApp.tsx",
@@ -16644,6 +17130,12 @@
     },
     {
       "file": "src/features/kangur/ui/KangurPublicApp.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/KangurPublicErrorBoundary.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16757,6 +17249,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurActiveLessonHeader.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurActiveLessonPanelWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16769,7 +17267,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurAiTutorWidget.storage.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAppLoader.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16788,6 +17298,24 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurAssignmentsList.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurBadgeTrackGrid.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurBadgeTrackHighlights.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurConfirmModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16824,6 +17352,18 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurGameHomeHeroWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameHomeMomentumWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameHomeQuestWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16877,6 +17417,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurGrajmyWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurHeroMilestoneSummary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurHomeLogo.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16884,6 +17436,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurIllustrations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurKangurWordmark.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16973,6 +17531,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurLessonProgressDots.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurLessonsCatalogWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16980,6 +17544,18 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurLessonsWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurLoginModal.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurNarratorControl.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17069,6 +17645,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurRewardBreakdownChips.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17105,7 +17687,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurTreningWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/Leaderboard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/LessonActivityStage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17345,6 +17939,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/kangur-narrator-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/kangur.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17381,6 +17981,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/context/KangurContextRegistryPageBoundary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/context/KangurGameContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17394,6 +18000,12 @@
     },
     {
       "file": "src/features/kangur/ui/context/KangurGameRuntimeContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurGuestPlayerContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17418,6 +18030,12 @@
     },
     {
       "file": "src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurLoginModalContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17525,6 +18143,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/hooks/useKangurRouteTransitionScrollLock.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/hooks/useKangurTextHighlight.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17538,6 +18162,18 @@
     },
     {
       "file": "src/features/kangur/ui/hooks/useKangurTutorAnchor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useLessonHubProgress.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/motion/page-transition.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17567,12 +18203,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/ui/pages/Tests.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/kangur/ui/pages/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17586,6 +18216,12 @@
     },
     {
       "file": "src/features/kangur/ui/services/assignments.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/services/daily-quests.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17646,6 +18282,12 @@
     },
     {
       "file": "src/features/kangur/ui/services/score-insights.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/services/session-score.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18228,6 +18870,24 @@
     },
     {
       "file": "src/features/observability/context/SystemLogsContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/context-registry/workspace.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19151,6 +19811,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/context-registry/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/context-registry/system-prompt.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/hooks/editingProductHydration.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19224,18 +19902,6 @@
     },
     {
       "file": "src/features/products/hooks/productCache.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/products/hooks/useAiPathSettings.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/products/hooks/useAiPathTrigger.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20765,6 +21431,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/agent-capabilities.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/agent-leases.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/agent-runtime.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21180,6 +21858,12 @@
     },
     {
       "file": "src/shared/contracts/kangur-ai-tutor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-auth.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21683,6 +22367,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/hooks/useAgentPersonaVisuals.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/hooks/useAgentPersonas.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21713,7 +22403,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/hooks/useIntegrationQueries.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/hooks/useOptimisticMutation.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/hooks/usePlaywrightPersonas.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21758,6 +22460,24 @@
       "file": "src/shared/hooks/useUserPreferences.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/agent-capability-manifest.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/agent-discovery.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/agent-lease-service.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
       "strongRootGuard": false
     },
     {
@@ -21905,6 +22625,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-brain/context/BrainContext.types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-brain/context/brain-runtime-shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-brain/context/useBrainDerivedState.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-brain/context/useBrainPersistence.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-brain/context/useBrainRuntime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-brain/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-brain/hooks/useBrainAssignment.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21995,6 +22751,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-context-registry/page-context-shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-context-registry/page-context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/api/client/agent.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22038,6 +22806,12 @@
     },
     {
       "file": "src/shared/lib/ai-paths/api/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/client-run-tracker.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22847,12 +23621,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/ai-paths/core/runtime/server/description-generator.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/lib/ai-paths/core/runtime/utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22998,6 +23766,18 @@
     },
     {
       "file": "src/shared/lib/ai-paths/core/utils/json.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/utils/legacy-node-removal.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23183,6 +23963,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/legacy-trigger-context-mode-persistence.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/local-runs.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23190,6 +23976,12 @@
     },
     {
       "file": "src/shared/lib/ai-paths/optimistic-run-queue.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/playwright-fixture-scope.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23693,6 +24485,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/analytics/context-registry/workspace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/analytics/hooks/useAnalyticsQueries.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23760,6 +24558,12 @@
     },
     {
       "file": "src/shared/lib/api-client.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/app-embeds.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24023,6 +24827,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/documentation/DocumentationTooltip.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/documentation/catalogs/ai-paths.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24083,6 +24899,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/documentation/docs-tooltip-settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/documentation/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24102,6 +24924,12 @@
     },
     {
       "file": "src/shared/lib/env.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/filemaker/entity-builders.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24539,6 +25367,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/playwright/personas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/playwright/settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/product-integrations-adapter.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24869,6 +25709,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/products/utils/parameter-values.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/products/utils/priceCalculation.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24948,6 +25794,12 @@
     },
     {
       "file": "src/shared/lib/prompt-engine/settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/prompt-exploder/bridge.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25187,6 +26039,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/providers/AppEmbedsProvider.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/providers/AppFontProvider.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25200,6 +26058,12 @@
     },
     {
       "file": "src/shared/providers/CsrfProvider.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/providers/NoteSettingsProvider.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25355,6 +26219,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/ui/RouteAccessibilityAnnouncer.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/ui/SearchableList.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25493,6 +26363,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/ui/files.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/ui/filters-container.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25566,6 +26442,12 @@
     },
     {
       "file": "src/shared/ui/pagination.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/ui/playwright/PlaywrightSettingsForm.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -26129,6 +27011,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/utils/motion-accessibility.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/utils/object-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -26323,5 +27211,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 1874
+  "durationMs": 1845
 }

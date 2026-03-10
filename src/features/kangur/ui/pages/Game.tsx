@@ -295,7 +295,10 @@ function GameContent(): React.JSX.Element {
         <XpToast
           xpGained={xpToast.xpGained}
           newBadges={xpToast.newBadges}
+          breakdown={xpToast.breakdown}
+          dailyQuest={xpToast.dailyQuest}
           nextBadge={xpToast.nextBadge}
+          recommendation={xpToast.recommendation}
           visible={xpToast.visible}
         />
         <KangurGameNavigationWidget />

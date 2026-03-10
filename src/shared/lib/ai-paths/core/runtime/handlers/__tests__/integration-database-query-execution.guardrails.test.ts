@@ -133,7 +133,80 @@ describe('executeDatabaseQuery guardrail metadata', () => {
     expect(Object.prototype.hasOwnProperty.call(bundle, 'provider')).toBe(false);
   });
 
-  it('does not perform parameter-id fallback query', async () => {
+  it('performs parameter-id fallback query when catalog lookup resolves no parameter definitions', async () => {
+    dbQueryMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        items: [],
+        count: 0,
+        provider: 'mongodb',
+      },
+    });
+    dbQueryMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        items: [{ id: 'param-1', name_en: 'Material' }],
+        count: 1,
+        provider: 'mongodb',
+      },
+    });
+
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'product_parameters',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"catalogId":"{{context.entity.catalogId}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { catalogId: '' },
+      querySource: 'customTemplate',
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [{ parameterId: 'param-1' }],
+          },
+        },
+      },
+      dryRun: false,
+      aiPrompt: 'test',
+    });
+
+    expect(dbQueryMock).toHaveBeenCalledTimes(2);
+    expect(dbQueryMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        filter: {
+          id: {
+            $in: ['param-1'],
+          },
+        },
+      })
+    );
+    expect(result['result']).toEqual([{ id: 'param-1', name_en: 'Material' }]);
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        querySource: 'customTemplate',
+        query: { catalogId: '' },
+        count: 1,
+        fallback: expect.objectContaining({
+          strategy: 'parameterId',
+          count: 1,
+          parameterIds: ['param-1'],
+        }),
+      })
+    );
+  });
+
+  it('does not perform parameter-id fallback query when no product parameter ids are available', async () => {
     dbQueryMock.mockResolvedValueOnce({
       ok: true,
       data: {
@@ -161,6 +234,13 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       },
       query: { catalogId: '' },
       querySource: 'customTemplate',
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [],
+          },
+        },
+      },
       dryRun: false,
       aiPrompt: 'test',
     });

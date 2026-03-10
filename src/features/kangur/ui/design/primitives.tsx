@@ -1427,8 +1427,8 @@ export const KangurPageTopBar = ({
     <div
       className={cn(
         KANGUR_TOP_BAR_INNER_CLASSNAME,
-        right ? 'justify-between' : 'justify-center',
-        contentClassName
+        contentClassName,
+        right ? 'justify-between' : 'justify-center'
       )}
     >
       <div className='flex min-w-0 flex-1 items-center'>{left}</div>

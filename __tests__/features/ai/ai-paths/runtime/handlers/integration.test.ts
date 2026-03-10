@@ -226,9 +226,16 @@ describe('Integration Handlers', () => {
 
       const result = await handleDatabase(ctx);
 
-      expect(api.dbApi.query).toHaveBeenCalledTimes(1);
-      expect(result['result']).toEqual([]);
-      expect((result['bundle'] as Record<string, unknown>)['fallback']).toBeUndefined();
+      expect(api.dbApi.query).toHaveBeenCalledTimes(2);
+      expect(result['result']).toEqual([
+        { id: 'p_color', selectorType: 'select', optionLabels: ['Blue'] },
+        { id: 'p_material', selectorType: 'text', optionLabels: [] },
+      ]);
+      expect((result['bundle'] as Record<string, unknown>)['fallback']).toMatchObject({
+        strategy: 'parameterId',
+        parameterIds: ['p_color', 'p_material'],
+        count: 2,
+      });
     });
 
     it('blocks legacy mapping updates without explicit update template', async () => {

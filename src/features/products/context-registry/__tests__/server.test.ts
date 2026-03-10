@@ -39,30 +39,35 @@ describe('resolveProductEditorContextRegistryEnvelope', () => {
   });
 
   it('returns null when no envelope is provided', async () => {
-    await expect(resolveProductEditorContextRegistryEnvelope(null)).resolves.toBeNull();
+    await expect(
+      resolveProductEditorContextRegistryEnvelope(null, contextRegistryResolveRefsMock)
+    ).resolves.toBeNull();
     expect(contextRegistryResolveRefsMock).not.toHaveBeenCalled();
   });
 
   it('resolves static refs and merges any client-provided bundle', async () => {
-    const result = await resolveProductEditorContextRegistryEnvelope({
-      refs: [{ kind: 'static_node', id: 'page:product-editor' }],
-      resolved: {
-        refs: [{ kind: 'runtime_document', id: 'runtime:product-editor:workspace:product-1' }],
-        nodes: [],
-        documents: [
-          {
-            id: 'runtime:product-editor:workspace:product-1',
-            kind: 'runtime_document',
-            entityType: 'product_editor_workspace_state',
-            title: 'Product Editor workspace',
-            summary: 'Current workspace state.',
-            tags: ['products'],
-            relatedNodeIds: ['page:product-editor'],
-            sections: [],
-          },
-        ],
+    const result = await resolveProductEditorContextRegistryEnvelope(
+      {
+        refs: [{ kind: 'static_node', id: 'page:product-editor' }],
+        resolved: {
+          refs: [{ kind: 'runtime_document', id: 'runtime:product-editor:workspace:product-1' }],
+          nodes: [],
+          documents: [
+            {
+              id: 'runtime:product-editor:workspace:product-1',
+              kind: 'runtime_document',
+              entityType: 'product_editor_workspace_state',
+              title: 'Product Editor workspace',
+              summary: 'Current workspace state.',
+              tags: ['products'],
+              relatedNodeIds: ['page:product-editor'],
+              sections: [],
+            },
+          ],
+        },
       },
-    });
+      contextRegistryResolveRefsMock
+    );
 
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith({
       refs: [{ kind: 'static_node', id: 'page:product-editor' }],

@@ -107,7 +107,7 @@ describe('KangurFeatureApp shell behavior', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
   });
 

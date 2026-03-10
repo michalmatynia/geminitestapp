@@ -83,7 +83,7 @@ const buildNavContextItems = (
       id: 'open-new',
       label: 'Open in new tab',
       onSelect: () => {
-        if (typeof window !== 'undefined') window.open(itemHref, '_blank', 'noopener');
+        if (typeof window !== 'undefined') window.open(itemHref, '_blank', 'noopener,noreferrer');
       },
     });
     items.push({

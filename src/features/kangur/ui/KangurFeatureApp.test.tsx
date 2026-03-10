@@ -87,6 +87,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   KangurRouteTransitionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurRouteTransition: () => routeTransitionStateMock(),
+  useKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
 
 vi.mock('@/features/kangur/config/pages', () => ({

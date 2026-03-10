@@ -2,10 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
 import { KANGUR_MAIN_PAGE } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 
 import { useKangurRouting } from './KangurRoutingContext';
 

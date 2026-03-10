@@ -4,11 +4,6 @@ import { useSession } from 'next-auth/react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
-  useOptionalContextRegistryPageEnvelope,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
-import { buildContextRegistryConsumerEnvelope } from '@/features/ai/ai-context-registry/context/page-context-shared';
-import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
 } from '@/features/kangur/settings';
@@ -19,11 +14,16 @@ import {
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
 import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
+import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { cn } from '@/shared/utils';
 
-import { KangurNarratorControl } from './KangurNarratorControl';
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
+import { KangurNarratorControl } from './KangurNarratorControl';
 
 const KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS = [
   'component:kangur-lesson-narrator',

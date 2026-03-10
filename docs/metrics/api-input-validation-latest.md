@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,23 +8,23 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-09T09:07:29.693Z
+Generated at: 2026-03-10T08:15:31.415Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 691
-- Total handlers: 665
-- Validated handlers: 665
+- Files scanned: 701
+- Total handlers: 675
+- Validated handlers: 675
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 11
+- Warnings: 13
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| query-param-unvalidated | 0 | 11 | 0 |
+| query-param-unvalidated | 0 | 13 | 0 |
 
 ## Issues
 
@@ -41,6 +41,8 @@ Generated at: 2026-03-09T09:07:29.693Z
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:46 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:47 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/agent/resources/route.ts:48 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/agentcreator/personas/avatar/handler.ts:130 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/ai-paths/trigger-buttons/handler.ts:67 | searchParams.get() used without Zod schema validation. |
 
 ## Notes
 

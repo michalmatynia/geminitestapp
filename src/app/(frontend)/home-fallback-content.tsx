@@ -202,7 +202,7 @@ export function HomeFallbackContent({
                       href={link.href}
                       className='inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100'
                       target='_blank'
-                      rel='noreferrer'
+                      rel='noopener noreferrer'
                       aria-label={link.label}
                     >
                       {Icon ? (

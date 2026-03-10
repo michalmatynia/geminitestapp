@@ -6,6 +6,7 @@ import {
   getProgressBadges,
   getProgressAverageAccuracy,
   getProgressBestAccuracy,
+  getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type {
   KangurAssignmentPriority,
@@ -203,6 +204,10 @@ export type KangurLearnerProfileSnapshot = {
   todayXpEarned: number;
   weeklyXpEarned: number;
   averageXpPerSession: number;
+  recommendedSessionsCompleted: number;
+  recommendedSessionProgressPercent: number;
+  recommendedSessionSummary: string;
+  recommendedSessionNextBadgeName: string | null;
   operationPerformance: KangurOperationPerformance[];
   recentSessions: KangurRecentSession[];
   weeklyActivity: KangurWeeklyActivityPoint[];
@@ -732,6 +737,7 @@ export const buildKangurLearnerProfileSnapshot = (
   const weeklyActivity = computeWeeklyActivity(normalizedScores, now);
   const recentSessions = computeRecentSessions(normalizedScores);
   const xpAnalytics = computeXpAnalytics(normalizedScores, input.progress, now);
+  const recommendedSessionMomentum = getRecommendedSessionMomentum(input.progress);
   const accuracyValues = normalizedScores.map(
     (score) => (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100
   );
@@ -789,6 +795,10 @@ export const buildKangurLearnerProfileSnapshot = (
     todayXpEarned: xpAnalytics.todayXpEarned,
     weeklyXpEarned: xpAnalytics.weeklyXpEarned,
     averageXpPerSession: xpAnalytics.averageXpPerSession,
+    recommendedSessionsCompleted: recommendedSessionMomentum.completedSessions,
+    recommendedSessionProgressPercent: recommendedSessionMomentum.progressPercent,
+    recommendedSessionSummary: recommendedSessionMomentum.summary,
+    recommendedSessionNextBadgeName: recommendedSessionMomentum.nextBadgeName,
     operationPerformance,
     recentSessions,
     weeklyActivity,

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,24 +8,29 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-08T14:43:47.649Z
+Generated at: 2026-03-10T08:15:37.431Z
 
 ## Summary
 
 - Status: FAILED
-- Route files scanned: 330
-- Route methods scanned: 474
+- Route files scanned: 346
+- Route methods scanned: 492
 - Public methods: 14
-- Protected methods: 444
+- Protected methods: 462
 - Signed ingress methods: 1
 - Actor-scoped methods: 15
-- Errors: 378
+- Errors: 393
 - Warnings: 0
 
 ## Route Classification
 
 | Route | Method | Expected Access | Evidence |
 | --- | --- | --- | --- |
+| agent/approval-gates | GET | protected | - |
+| agent/capabilities | GET | protected | - |
+| agent/leases | GET | protected | - |
+| agent/leases | POST | protected | - |
+| agent/resources | GET | protected | - |
 | agentcreator/agent/[runId]/assets/[file] | GET | protected | - |
 | agentcreator/agent/[runId]/audits | GET | protected | - |
 | agentcreator/agent/[runId]/controls | POST | protected | - |
@@ -40,7 +45,9 @@ Generated at: 2026-03-08T14:43:47.649Z
 | agentcreator/agent | DELETE | protected | - |
 | agentcreator/agent/snapshots/[snapshotId] | GET | protected | - |
 | agentcreator/personas/[personaId]/memory | GET | protected | - |
+| agentcreator/personas/[personaId]/visuals | GET | protected | - |
 | agentcreator/personas/avatar | POST | protected | - |
+| agentcreator/personas/avatar | DELETE | protected | - |
 | agentcreator/teaching/agents/[agentId] | PATCH | protected | - |
 | agentcreator/teaching/agents/[agentId] | DELETE | protected | - |
 | agentcreator/teaching/agents | GET | protected | - |
@@ -56,6 +63,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | agentcreator/teaching/collections | POST | protected | - |
 | ai/actions/execute | POST | protected | - |
 | ai/actions/propose | POST | protected | - |
+| ai/context/bundle | POST | protected | - |
 | ai/context/related/[id] | GET | protected | - |
 | ai/context/resolve | POST | protected | - |
 | ai/context/search | POST | protected | - |
@@ -95,6 +103,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ai-paths/settings | DELETE | protected | - |
 | ai-paths/trigger-buttons/[id] | PATCH | protected | `access helper` |
 | ai-paths/trigger-buttons/[id] | DELETE | protected | `access helper` |
+| ai-paths/trigger-buttons/cleanup-fixtures | POST | protected | `access helper` |
 | ai-paths/trigger-buttons/reorder | POST | protected | `access helper` |
 | ai-paths/trigger-buttons | GET | protected | `access helper` |
 | ai-paths/trigger-buttons | POST | protected | `access helper` |
@@ -264,13 +273,21 @@ Generated at: 2026-03-08T14:43:47.649Z
 | image-studio/ui-extractor | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | image-studio/validation-patterns/learn | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | kangur/ai-tutor/chat | POST | actor | `access helper`, `actor/session resolver` |
+| kangur/ai-tutor/guest-intro | GET | protected | `auth()`, `actor/session resolver` |
 | kangur/ai-tutor/usage | GET | actor | `access helper`, `actor/session resolver` |
 | kangur/assignments/[id] | PATCH | actor | `access helper` |
 | kangur/assignments | GET | actor | `access helper` |
 | kangur/assignments | POST | actor | `access helper` |
 | kangur/auth/learner-signin | POST | public | - |
 | kangur/auth/learner-signout | POST | public | - |
+| kangur/auth/logout | POST | protected | - |
 | kangur/auth/me | GET | actor | `access helper`, `actor/session resolver` |
+| kangur/auth/parent-account/create | POST | protected | - |
+| kangur/auth/parent-account/resend | POST | protected | - |
+| kangur/auth/parent-email/verify | POST | protected | - |
+| kangur/auth/parent-magic-link/exchange | POST | protected | - |
+| kangur/auth/parent-magic-link/request | POST | protected | - |
+| kangur/auth/parent-password | POST | protected | `access helper`, `actor/session resolver` |
 | kangur/learners/[id] | PATCH | actor | `access helper`, `actor/session resolver` |
 | kangur/learners | GET | actor | `access helper` |
 | kangur/learners | POST | actor | `access helper` |
@@ -280,8 +297,8 @@ Generated at: 2026-03-08T14:43:47.649Z
 | kangur/scores | GET | actor | - |
 | kangur/scores | POST | actor | `access helper`, `actor/session resolver` |
 | kangur/tts/probe | POST | protected | `access helper`, `actor/session resolver` |
-| kangur/tts | POST | actor | `access helper`, `actor/session resolver` |
-| kangur/tts/status | POST | actor | `access helper`, `actor/session resolver` |
+| kangur/tts | POST | actor | `access helper` |
+| kangur/tts/status | POST | actor | `access helper` |
 | marketplace/[resource] | GET | protected | - |
 | marketplace/categories/fetch | POST | protected | - |
 | marketplace/mappings/[id] | GET | protected | - |
@@ -444,6 +461,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | v2/products/entities/[type] | GET | protected | - |
 | v2/products/entities/[type] | POST | protected | - |
 | v2/products/entities/catalogs/assign | POST | protected | - |
+| v2/products/ids | GET | protected | - |
 | v2/products/images/base64/all | POST | protected | - |
 | v2/products/images/base64 | POST | protected | - |
 | v2/products/images/upload | POST | protected | - |
@@ -505,13 +523,18 @@ Generated at: 2026-03-08T14:43:47.649Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| authz-protected-route-missing-auth-check | 377 | 0 | 0 |
+| authz-protected-route-missing-auth-check | 392 | 0 | 0 |
 | authz-actor-route-missing-session-or-actor-check | 1 | 0 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agent/approval-gates/route.ts:38:14 | GET agent/approval-gates is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agent/capabilities/route.ts:10:14 | GET agent/capabilities is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agent/leases/route.ts:95:14 | GET agent/leases is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agent/leases/route.ts:99:14 | POST agent/leases is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agent/resources/route.ts:54:14 | GET agent/resources is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/agent/[runId]/assets/[file]/route.ts:6:14 | GET agentcreator/agent/[runId]/assets/[file] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/agent/[runId]/audits/route.ts:6:14 | GET agentcreator/agent/[runId]/audits is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/agent/[runId]/controls/route.ts:6:14 | POST agentcreator/agent/[runId]/controls is classified as protected but no auth/session/access helper was found. |
@@ -526,7 +549,9 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/agent/route.ts:12:14 | DELETE agentcreator/agent is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/agent/snapshots/[snapshotId]/route.ts:6:14 | GET agentcreator/agent/snapshots/[snapshotId] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/personas/[personaId]/memory/route.ts:7:14 | GET agentcreator/personas/[personaId]/memory is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/personas/[personaId]/visuals/route.ts:7:14 | GET agentcreator/personas/[personaId]/visuals is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/personas/avatar/route.ts:8:14 | POST agentcreator/personas/avatar is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/personas/avatar/route.ts:12:14 | DELETE agentcreator/personas/avatar is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:7:14 | PATCH agentcreator/teaching/agents/[agentId] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:14:14 | DELETE agentcreator/teaching/agents/[agentId] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/agentcreator/teaching/agents/route.ts:7:14 | GET agentcreator/teaching/agents is classified as protected but no auth/session/access helper was found. |
@@ -552,6 +577,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai-paths/update/route.ts:7:14 | POST ai-paths/update is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/actions/execute/route.ts:7:14 | POST ai/actions/execute is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/actions/propose/route.ts:7:14 | POST ai/actions/propose is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/context/bundle/route.ts:7:14 | POST ai/context/bundle is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/context/related/[id]/route.ts:9:14 | GET ai/context/related/[id] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/context/resolve/route.ts:7:14 | POST ai/context/resolve is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/ai/context/search/route.ts:7:14 | POST ai/context/search is classified as protected but no auth/session/access helper was found. |
@@ -684,6 +710,12 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/image-studio/slots/[slotId]/screenshot/route.ts:7:14 | POST image-studio/slots/[slotId]/screenshot is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/image-studio/slots/[slotId]/upscale/route.ts:8:14 | POST image-studio/slots/[slotId]/upscale is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/image-studio/slots/base64/route.ts:7:14 | POST image-studio/slots/base64 is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/logout/route.ts:8:14 | POST kangur/auth/logout is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/parent-account/create/route.ts:9:14 | POST kangur/auth/parent-account/create is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/parent-account/resend/route.ts:9:14 | POST kangur/auth/parent-account/resend is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/parent-email/verify/route.ts:9:14 | POST kangur/auth/parent-email/verify is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/parent-magic-link/exchange/route.ts:20:14 | POST kangur/auth/parent-magic-link/exchange is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/kangur/auth/parent-magic-link/request/route.ts:20:14 | POST kangur/auth/parent-magic-link/request is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-actor-route-missing-session-or-actor-check | src/app/api/kangur/scores/route.ts:8:14 | GET kangur/scores is classified as an actor-scoped route but no actor/session resolver was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/marketplace/[resource]/route.ts:29:14 | GET marketplace/[resource] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/marketplace/categories/fetch/route.ts:8:14 | POST marketplace/categories/fetch is classified as protected but no auth/session/access helper was found. |
@@ -834,6 +866,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/entities/[type]/route.ts:10:14 | GET v2/products/entities/[type] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/entities/[type]/route.ts:14:14 | POST v2/products/entities/[type] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/entities/catalogs/assign/route.ts:7:14 | POST v2/products/entities/catalogs/assign is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/ids/route.ts:8:14 | GET v2/products/ids is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/images/base64/all/route.ts:7:14 | POST v2/products/images/base64/all is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/images/base64/route.ts:7:14 | POST v2/products/images/base64 is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/images/upload/route.ts:6:14 | POST v2/products/images/upload is classified as protected but no auth/session/access helper was found. |
@@ -843,7 +876,7 @@ Generated at: 2026-03-08T14:43:47.649Z
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/metadata/[type]/[id]/route.ts:28:14 | DELETE v2/products/metadata/[type]/[id] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/metadata/[type]/route.ts:17:14 | GET v2/products/metadata/[type] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/metadata/[type]/route.ts:23:14 | POST v2/products/metadata/[type] is classified as protected but no auth/session/access helper was found. |
-| ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/paged/route.ts:8:14 | GET v2/products/paged is classified as protected but no auth/session/access helper was found. |
+| ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/paged/route.ts:9:14 | GET v2/products/paged is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/parameters/[id]/route.ts:11:14 | PUT v2/products/parameters/[id] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/parameters/[id]/route.ts:17:14 | DELETE v2/products/parameters/[id] is classified as protected but no auth/session/access helper was found. |
 | ERROR | authz-protected-route-missing-auth-check | src/app/api/v2/products/parameters/route.ts:12:14 | GET v2/products/parameters is classified as protected but no auth/session/access helper was found. |

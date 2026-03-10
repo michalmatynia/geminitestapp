@@ -15,6 +15,7 @@ import {
   getProgressAverageAccuracy,
   getProgressAverageXpPerSession,
   getProgressTopActivities,
+  getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -42,6 +43,7 @@ export default function ProgressOverview({
   const averageAccuracy = getProgressAverageAccuracy(progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const topActivities = getProgressTopActivities(progress);
+  const guidedMomentum = getRecommendedSessionMomentum(progress);
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'
       ? 'emerald'
@@ -137,6 +139,41 @@ export default function ProgressOverview({
             data-testid='progress-overview-daily-quest-bar'
             size='sm'
             value={dailyQuest.progress.percent}
+          />
+        </KangurGlassPanel>
+      ) : null}
+
+      {guidedMomentum.completedSessions > 0 ? (
+        <KangurGlassPanel
+          data-testid='progress-overview-guided-momentum'
+          padding='md'
+          surface='solid'
+          variant='subtle'
+        >
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+                Polecony kierunek
+              </p>
+              <p className='mt-1 text-sm font-semibold text-slate-900'>
+                {guidedMomentum.completedSessions} polecone rundy
+              </p>
+              <p className='mt-1 text-xs leading-5 text-slate-500'>
+                {guidedMomentum.nextBadgeName
+                  ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
+              </p>
+            </div>
+            <KangurStatusChip accent='sky' className='shrink-0'>
+              {guidedMomentum.summary}
+            </KangurStatusChip>
+          </div>
+          <KangurProgressBar
+            accent='sky'
+            className='mt-3'
+            data-testid='progress-overview-guided-momentum-bar'
+            size='sm'
+            value={guidedMomentum.progressPercent}
           />
         </KangurGlassPanel>
       ) : null}

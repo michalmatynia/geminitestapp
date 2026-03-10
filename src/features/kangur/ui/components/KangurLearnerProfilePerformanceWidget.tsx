@@ -38,6 +38,14 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           <KangurStatusChip accent='teal' data-testid='learner-profile-xp-summary-average'>
             Srednio: {snapshot.averageXpPerSession} XP / sesje
           </KangurStatusChip>
+          {snapshot.recommendedSessionsCompleted > 0 ? (
+            <KangurStatusChip accent='sky' data-testid='learner-profile-xp-summary-guided'>
+              Polecone: {snapshot.recommendedSessionsCompleted} ·{' '}
+              {snapshot.recommendedSessionNextBadgeName
+                ? `${snapshot.recommendedSessionNextBadgeName} ${snapshot.recommendedSessionSummary}`
+                : 'wszystkie odznaki kierunku odblokowane'}
+            </KangurStatusChip>
+          ) : null}
         </div>
         <div className='flex h-32 items-end gap-2'>
           {snapshot.weeklyActivity.map((point) => {

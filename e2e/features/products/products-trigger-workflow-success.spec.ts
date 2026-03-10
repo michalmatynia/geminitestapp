@@ -25,6 +25,30 @@ const locateQueueRunCard = (page: Page, runId: string): Locator =>
     .locator('xpath=ancestor::div[contains(@class, "bg-card/70")]')
     .first();
 
+const runRowTriggerAction = async (
+  page: Page,
+  row: Locator,
+  triggerButtonName: string
+): Promise<string> => {
+  const inlineButton = row.getByRole('button', { name: triggerButtonName }).first();
+  if (await inlineButton.isVisible().catch(() => false)) {
+    return await triggerActionAndCaptureRunId(page, async () => {
+      await inlineButton.click();
+    });
+  }
+
+  const overflowToggle = row.getByRole('button', { name: /Open \d+ more AI actions/i }).first();
+  await expect(overflowToggle).toBeVisible({ timeout: 15_000 });
+  await overflowToggle.click();
+
+  const overflowItem = page.getByRole('menuitem', { name: triggerButtonName }).first();
+  await expect(overflowItem).toBeVisible({ timeout: 15_000 });
+  return await triggerActionAndCaptureRunId(page, async () => {
+    await overflowItem.click();
+    await page.keyboard.press('Escape').catch(() => undefined);
+  });
+};
+
 test.describe('Products AI Paths workflow success', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -54,12 +78,7 @@ test.describe('Products AI Paths workflow success', () => {
         rowText: fixture.product.sku ?? fixture.searchTerm,
         mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
-      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
-
-      const runId = await triggerActionAndCaptureRunId(page, async () => {
-        await triggerButton.click();
-      });
+      const runId = await runRowTriggerAction(page, row, fixture.triggerButton.name);
       const runFeedback = row.locator(`[data-run-id="${runId}"]`).first();
       await expect(runFeedback).toBeVisible({ timeout: 15_000 });
       await expect(runFeedback.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
@@ -219,6 +238,120 @@ test.describe('Products AI Paths workflow success', () => {
     }
   });
 
+  test('reruns a modal translation workflow without duplicating or erasing parameter language data', async ({
+    page,
+  }) => {
+    const fixture = await createProductTranslationWorkflowFixture(page, {
+      location: 'product_modal',
+      triggerButtonName: 'Translate Parameter Languages Twice',
+      pathName: 'E2E Product Modal Translation Parameter Idempotency',
+      expectedDescriptionPl: `Playwright translated description rerun ${Date.now()}`,
+      initialParameters: [
+        {
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: { en: 'Leather' },
+        },
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used' },
+        },
+        {
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: { en: '13 cm' },
+        },
+      ],
+      translatedParameters: [
+        { parameterId: 'material', value: 'Skora' },
+        { parameterId: 'condition', value: 'Uzywany' },
+      ],
+    });
+
+    const triggerModalWorkflow = async (): Promise<string> => {
+      const modal = page.locator('[role="dialog"]').last();
+      const modalVisible = await modal.isVisible().catch(() => false);
+
+      if (!modalVisible) {
+        const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+          rowText: fixture.product.sku ?? fixture.searchTerm,
+          mode: 'sku',
+        });
+        await row.getByLabel('Open row actions').click();
+        await page.getByRole('menuitem', { name: 'Edit' }).click();
+      }
+
+      const activeModal = page.locator('[role="dialog"]').last();
+      await expect(activeModal).toBeVisible({ timeout: 15_000 });
+      const triggerButton = activeModal
+        .getByRole('button', { name: fixture.triggerButton.name })
+        .first();
+      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
+
+      return await triggerActionAndCaptureRunId(page, async () => {
+        await triggerButton.click();
+      });
+    };
+
+    try {
+      const firstRunId = await triggerModalWorkflow();
+      const firstDetail = await waitForRunToComplete(page, firstRunId);
+      expect(firstDetail.run.status).toBe('completed');
+
+      const secondRunId = await triggerModalWorkflow();
+      const secondDetail = await waitForRunToComplete(page, secondRunId);
+      expect(secondDetail.run.status).toBe('completed');
+      expect(secondRunId).not.toBe(firstRunId);
+
+      const updatedProduct = await fetchProductById(page, fixture.product.id);
+      expect(updatedProduct.description_pl).toBe(fixture.expectedDescriptionPl);
+
+      const parameters = Array.isArray(updatedProduct.parameters) ? updatedProduct.parameters : [];
+      expect(parameters).toHaveLength(3);
+
+      const materials = parameters.filter((entry) => entry.parameterId === 'material');
+      const conditions = parameters.filter((entry) => entry.parameterId === 'condition');
+      const sizes = parameters.filter((entry) => entry.parameterId === 'size');
+
+      expect(materials).toHaveLength(1);
+      expect(conditions).toHaveLength(1);
+      expect(sizes).toHaveLength(1);
+
+      expect(materials[0]).toEqual(
+        expect.objectContaining({
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Leather',
+            pl: 'Skora',
+          }),
+        })
+      );
+      expect(conditions[0]).toEqual(
+        expect.objectContaining({
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Used',
+            pl: 'Uzywany',
+          }),
+        })
+      );
+      expect(sizes[0]).toEqual(
+        expect.objectContaining({
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: expect.objectContaining({
+            en: '13 cm',
+          }),
+        })
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   test('shows the completed product workflow run in Job Queue search results', async ({ page }) => {
     const fixture = await createProductWorkflowFixture(page, {
       location: 'product_row',
@@ -233,12 +366,7 @@ test.describe('Products AI Paths workflow success', () => {
         rowText: fixture.product.sku ?? fixture.searchTerm,
         mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
-      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
-
-      const runId = await triggerActionAndCaptureRunId(page, async () => {
-        await triggerButton.click();
-      });
+      const runId = await runRowTriggerAction(page, row, fixture.triggerButton.name);
 
       await waitForRunToComplete(page, runId);
       await waitForProductFieldValue(page, {
@@ -293,12 +421,7 @@ test.describe('Products AI Paths workflow success', () => {
         rowText: fixture.product.sku ?? fixture.searchTerm,
         mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
-      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
-
-      const runId = await triggerActionAndCaptureRunId(page, async () => {
-        await triggerButton.click();
-      });
+      const runId = await runRowTriggerAction(page, row, fixture.triggerButton.name);
       const runFeedback = row.locator(`[data-run-id="${runId}"]`).first();
       await expect(runFeedback).toBeVisible({ timeout: 15_000 });
 
@@ -342,12 +465,7 @@ test.describe('Products AI Paths workflow success', () => {
         rowText: fixture.product.sku ?? fixture.searchTerm,
         mode: 'sku',
       });
-      const triggerButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
-      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
-
-      const runId = await triggerActionAndCaptureRunId(page, async () => {
-        await triggerButton.click();
-      });
+      const runId = await runRowTriggerAction(page, row, fixture.triggerButton.name);
 
       await waitForRunToComplete(page, runId);
       await waitForProductFieldValue(page, {

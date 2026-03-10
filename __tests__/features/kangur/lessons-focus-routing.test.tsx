@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/__tests__/test-utils';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const {
   useKangurRoutingMock,
   settingsStoreGetMock,
@@ -48,6 +49,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
+  useOptionalKangurAiTutor: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -142,9 +144,7 @@ describe('Lessons page focus query support', () => {
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
     });
-    useKangurProgressStateMock.mockReturnValue({
-      lessonMastery: {},
-    });
+    useKangurProgressStateMock.mockReturnValue(createDefaultKangurProgressState());
   });
 
   it('auto-opens the focused lesson when focus query maps to operation', async () => {

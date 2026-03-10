@@ -50,6 +50,7 @@ import type {
   KangurMode,
   KangurOperation,
   KangurQuestion,
+  KangurSessionStartOptions,
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
@@ -102,6 +103,9 @@ export function KangurGameRuntimeProvider({
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeTaken, setTimeTaken] = useState(0);
   const [kangurMode, setKangurMode] = useState<KangurMode | null>(null);
+  const [activeSessionRecommendation, setActiveSessionRecommendation] = useState<
+    KangurGameRuntimeStateContextValue['activeSessionRecommendation']
+  >(null);
   const [xpToast, setXpToast] = useState<KangurXpToastState>({
     visible: false,
     xpGained: 0,
@@ -109,6 +113,7 @@ export function KangurGameRuntimeProvider({
     breakdown: [],
     nextBadge: null,
     dailyQuest: null,
+    recommendation: null,
   });
 
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
@@ -141,13 +146,22 @@ export function KangurGameRuntimeProvider({
     newBadges: string[],
     breakdown: KangurXpToastState['breakdown'] = [],
     nextBadge: KangurXpToastState['nextBadge'] = null,
-    dailyQuest: KangurXpToastState['dailyQuest'] = null
+    dailyQuest: KangurXpToastState['dailyQuest'] = null,
+    recommendation: KangurXpToastState['recommendation'] = null
   ): void => {
     if (xpToastTimeoutRef.current) {
       window.clearTimeout(xpToastTimeoutRef.current);
     }
 
-    setXpToast({ visible: true, xpGained, newBadges, breakdown, nextBadge, dailyQuest });
+    setXpToast({
+      visible: true,
+      xpGained,
+      newBadges,
+      breakdown,
+      nextBadge,
+      dailyQuest,
+      recommendation,
+    });
     xpToastTimeoutRef.current = window.setTimeout(() => {
       setXpToast((current) => ({ ...current, visible: false }));
       xpToastTimeoutRef.current = null;
@@ -166,7 +180,8 @@ export function KangurGameRuntimeProvider({
     categories,
     count,
     difficulty: nextDifficulty,
-  }: KangurTrainingSelection): void => {
+  }: KangurTrainingSelection,
+  options?: KangurSessionStartOptions): void => {
     ensureSessionPlayerName();
     const nextQuestions = generateTrainingQuestions(categories, nextDifficulty, count);
     setOperation('mixed');
@@ -176,12 +191,14 @@ export function KangurGameRuntimeProvider({
     setScore(0);
     setTimeTaken(0);
     setStartTime(Date.now());
+    setActiveSessionRecommendation(options?.recommendation ?? null);
     setScreen('playing');
   };
 
   const handleSelectOperation = (
     nextOperation: KangurOperation,
-    nextDifficulty: KangurDifficulty
+    nextDifficulty: KangurDifficulty,
+    options?: KangurSessionStartOptions
   ): void => {
     ensureSessionPlayerName();
     const nextQuestions = generateQuestions(nextOperation, nextDifficulty, TOTAL_QUESTIONS);
@@ -192,6 +209,7 @@ export function KangurGameRuntimeProvider({
     setScore(0);
     setTimeTaken(0);
     setStartTime(Date.now());
+    setActiveSessionRecommendation(options?.recommendation ?? null);
     setScreen('playing');
   };
 
@@ -281,6 +299,7 @@ export function KangurGameRuntimeProvider({
         operation: selectedOperation,
         difficulty,
         correctAnswers: nextScore,
+        followsRecommendation: Boolean(activeSessionRecommendation),
         totalQuestions,
         durationSeconds: taken,
       });
@@ -333,6 +352,18 @@ export function KangurGameRuntimeProvider({
           xpAwarded: questClaim.xpAwarded,
         };
       }
+      const recommendationToastHint: KangurXpToastState['recommendation'] =
+        activeSessionRecommendation
+          ? {
+            label: activeSessionRecommendation.label,
+            title: activeSessionRecommendation.title,
+            summary: dailyQuestToastHint
+              ? 'Ten ruch domknal polecany kierunek i misje dnia.'
+              : nextBadgeToastHint
+                ? `Ten ruch najmocniej przybliza odznake ${nextBadgeToastHint.name}.`
+                : 'To byl najmocniejszy ruch dla biezacego postepu.',
+          }
+          : null;
 
       void kangurPlatform.score
         .create({
@@ -368,7 +399,8 @@ export function KangurGameRuntimeProvider({
         awardedBadges,
         awardedBreakdown,
         nextBadgeToastHint,
-        dailyQuestToastHint
+        dailyQuestToastHint,
+        recommendationToastHint
       );
 
       window.setTimeout(() => setScreen('result'), 1000);
@@ -382,20 +414,24 @@ export function KangurGameRuntimeProvider({
 
   const handleStartGame = (): void => {
     ensureSessionPlayerName();
+    setActiveSessionRecommendation(null);
     setScreen('operation');
   };
 
-  const handleStartKangur = (mode: KangurMode): void => {
+  const handleStartKangur = (mode: KangurMode, options?: KangurSessionStartOptions): void => {
     ensureSessionPlayerName();
     setKangurMode(mode);
+    setActiveSessionRecommendation(options?.recommendation ?? null);
     setScreen('kangur');
   };
 
   const handleRestart = (): void => {
+    setActiveSessionRecommendation(null);
     setScreen('operation');
   };
 
   const handleHome = (): void => {
+    setActiveSessionRecommendation(null);
     setScreen('home');
   };
 
@@ -434,6 +470,7 @@ export function KangurGameRuntimeProvider({
       score,
       timeTaken,
       kangurMode,
+      activeSessionRecommendation,
       xpToast,
       canStartFromHome,
       questionTimeLimit,
@@ -452,6 +489,7 @@ export function KangurGameRuntimeProvider({
       isAuthenticated,
       isLoadingAuth,
       kangurMode,
+      activeSessionRecommendation,
       operation,
       playerName,
       practiceAssignmentsByOperation,

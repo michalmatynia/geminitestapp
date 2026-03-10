@@ -4,6 +4,7 @@ import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,
 } from '@/features/ai/ai-context-registry/context/page-context-shared';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogInterpretation } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/features/observability/context-registry/server';
@@ -40,7 +41,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const hydratedLog = await hydrateSystemLogRecordRuntimeContext(log);
   const pageContextRegistry = await resolveObservabilityContextRegistryEnvelope(
-    parsed.data.contextRegistry
+    parsed.data.contextRegistry,
+    contextRegistryEngine.resolveRefs.bind(contextRegistryEngine)
   );
   const logContextRegistry = readContextRegistryEnvelope(
     typeof hydratedLog.context === 'object' && hydratedLog.context !== null

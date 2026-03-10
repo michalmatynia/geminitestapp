@@ -31,7 +31,7 @@ export async function handleDatabaseQueryOperation({
   queryConfig,
   dryRun,
   templateInputValue,
-  templateInputs: _templateInputs,
+  templateInputs,
   templateContext,
   aiPrompt,
   strictFlowMode: _strictFlowMode,
@@ -59,6 +59,7 @@ export async function handleDatabaseQueryOperation({
     query: resolution.query,
     querySource: resolution.querySource,
     collectionMap: getAiPathsCollectionMapFromInputs(resolvedInputs),
+    templateInputs,
     dryRun,
     aiPrompt,
   });

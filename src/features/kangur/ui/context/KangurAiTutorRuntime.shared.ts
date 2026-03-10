@@ -12,10 +12,6 @@ import {
   type JSX,
 } from 'react';
 
-import {
-  useOptionalContextRegistryPageEnvelope,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
 import { summarizeKangurAiTutorFollowUpActions } from '@/features/kangur/ai-tutor/follow-up-reporting';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import {
@@ -64,6 +60,10 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
+import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 

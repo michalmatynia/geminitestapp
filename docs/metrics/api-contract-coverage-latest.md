@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,36 +8,34 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-08T14:44:28.388Z
+Generated at: 2026-03-10T08:38:01.370Z
 
 ## Summary
 
 - Status: FAILED
-- Route files scanned: 330
-- Route methods scanned: 474
-- Methods with adjacent tests: 76
-- Mutations with body validation: 81
+- Route files scanned: 346
+- Route methods scanned: 492
+- Methods with adjacent tests: 91
+- Mutations with body validation: 89
 - Query routes with validation: 10
-- Errors: 39
-- Warnings: 242
-- Info: 148
+- Errors: 37
+- Warnings: 247
+- Info: 151
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| api-contract-mutation-missing-body-validation | 39 | 0 | 0 |
-| api-contract-route-missing-tests | 0 | 238 | 148 |
-| api-contract-query-route-missing-query-validation | 0 | 4 | 0 |
+| api-contract-mutation-missing-body-validation | 37 | 0 | 0 |
+| api-contract-route-missing-tests | 0 | 239 | 151 |
+| api-contract-query-route-missing-query-validation | 0 | 8 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| ERROR | api-contract-mutation-missing-body-validation | src/app/api/agentcreator/agent/route.ts:11:14 | POST agentcreator/agent reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/ai-paths/portable-engine/remediation-webhook/route.ts:7:14 | POST ai-paths/portable-engine/remediation-webhook reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/assets3d/[id]/route.ts:12:14 | PATCH assets3d/[id] reads request body data without explicit schema validation. |
-| ERROR | api-contract-mutation-missing-body-validation | src/app/api/chatbot/agent/route.ts:11:14 | POST chatbot/agent reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/chatbot/jobs/route.ts:9:14 | POST chatbot/jobs reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/chatbot/route.ts:10:14 | POST chatbot reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/cms/css-ai/stream/route.ts:8:14 | POST cms/css-ai/stream reads request body data without explicit schema validation. |
@@ -73,6 +71,10 @@ Generated at: 2026-03-08T14:44:28.388Z
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/v2/products/import/csv/route.ts:8:14 | POST v2/products/import/csv reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/v2/products/metadata/[type]/route.ts:23:14 | POST v2/products/metadata/[type] reads request body data without explicit schema validation. |
 | ERROR | api-contract-mutation-missing-body-validation | src/app/api/v2/products/route.ts:14:14 | POST v2/products reads request body data without explicit schema validation. |
+| WARN | api-contract-query-route-missing-query-validation | src/app/api/agent/approval-gates/route.ts:38:14 | GET agent/approval-gates reads search params without a query schema or parse/safeParse guard. |
+| WARN | api-contract-query-route-missing-query-validation | src/app/api/agent/leases/route.ts:95:14 | GET agent/leases reads search params without a query schema or parse/safeParse guard. |
+| WARN | api-contract-route-missing-tests | src/app/api/agent/leases/route.ts:99:14 | POST agent/leases has no adjacent route/handler test coverage. |
+| WARN | api-contract-query-route-missing-query-validation | src/app/api/agent/resources/route.ts:54:14 | GET agent/resources reads search params without a query schema or parse/safeParse guard. |
 | WARN | api-contract-query-route-missing-query-validation | src/app/api/agentcreator/agent/[runId]/audits/route.ts:6:14 | GET agentcreator/agent/[runId]/audits reads search params without a query schema or parse/safeParse guard. |
 | WARN | api-contract-route-missing-tests | src/app/api/agentcreator/agent/[runId]/controls/route.ts:6:14 | POST agentcreator/agent/[runId]/controls has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/agentcreator/agent/[runId]/route.ts:11:14 | POST agentcreator/agent/[runId] has no adjacent route/handler test coverage. |
@@ -97,8 +99,9 @@ Generated at: 2026-03-08T14:44:28.388Z
 | WARN | api-contract-route-missing-tests | src/app/api/ai-paths/runs/[runId]/retry-node/route.ts:7:14 | POST ai-paths/runs/[runId]/retry-node has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/ai-paths/runs/[runId]/route.ts:10:14 | DELETE ai-paths/runs/[runId] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/ai-paths/runs/dead-letter/requeue/route.ts:7:14 | POST ai-paths/runs/dead-letter/requeue has no adjacent route/handler test coverage. |
+| WARN | api-contract-query-route-missing-query-validation | src/app/api/ai-paths/trigger-buttons/route.ts:8:14 | GET ai-paths/trigger-buttons reads search params without a query schema or parse/safeParse guard. |
 | WARN | api-contract-route-missing-tests | src/app/api/ai-paths/update/route.ts:7:14 | POST ai-paths/update has no adjacent route/handler test coverage. |
-| WARN | api-contract-route-missing-tests | src/app/api/analytics/insights/route.ts:10:14 | POST analytics/insights has no adjacent route/handler test coverage. |
+| WARN | api-contract-route-missing-tests | src/app/api/ai/context/bundle/route.ts:7:14 | POST ai/context/bundle has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/assets3d/[id]/route.ts:12:14 | PATCH assets3d/[id] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/assets3d/[id]/route.ts:16:14 | DELETE assets3d/[id] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/assets3d/reindex/route.ts:7:14 | POST assets3d/reindex has no adjacent route/handler test coverage. |
@@ -187,6 +190,8 @@ Generated at: 2026-03-08T14:44:28.388Z
 | WARN | api-contract-route-missing-tests | src/app/api/image-studio/slots/base64/route.ts:7:14 | POST image-studio/slots/base64 has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/image-studio/ui-extractor/route.ts:7:14 | POST image-studio/ui-extractor has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/image-studio/validation-patterns/learn/route.ts:7:14 | POST image-studio/validation-patterns/learn has no adjacent route/handler test coverage. |
+| WARN | api-contract-route-missing-tests | src/app/api/kangur/auth/parent-magic-link/exchange/route.ts:20:14 | POST kangur/auth/parent-magic-link/exchange has no adjacent route/handler test coverage. |
+| WARN | api-contract-route-missing-tests | src/app/api/kangur/auth/parent-magic-link/request/route.ts:20:14 | POST kangur/auth/parent-magic-link/request has no adjacent route/handler test coverage. |
 | WARN | api-contract-query-route-missing-query-validation | src/app/api/kangur/observability/summary/route.ts:5:14 | GET kangur/observability/summary reads search params without a query schema or parse/safeParse guard. |
 | WARN | api-contract-route-missing-tests | src/app/api/marketplace/categories/fetch/route.ts:8:14 | POST marketplace/categories/fetch has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/marketplace/mappings/[id]/route.ts:10:14 | PUT marketplace/mappings/[id] has no adjacent route/handler test coverage. |
@@ -222,7 +227,6 @@ Generated at: 2026-03-08T14:44:28.388Z
 | WARN | api-contract-route-missing-tests | src/app/api/settings/migrate/backfill-keys/route.ts:7:14 | POST settings/migrate/backfill-keys has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/settings/route.ts:14:14 | POST settings has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/system/diagnostics/mongo-indexes/route.ts:12:14 | POST system/diagnostics/mongo-indexes has no adjacent route/handler test coverage. |
-| WARN | api-contract-route-missing-tests | src/app/api/system/logs/insights/route.ts:8:14 | POST system/logs/insights has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/system/logs/route.ts:10:14 | POST system/logs has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/system/logs/route.ts:12:14 | DELETE system/logs has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/user/preferences/route.ts:17:14 | PATCH user/preferences has no adjacent route/handler test coverage. |
@@ -310,11 +314,14 @@ Generated at: 2026-03-08T14:44:28.388Z
 | WARN | api-contract-route-missing-tests | src/app/api/v2/products/validator-patterns/templates/[type]/route.ts:7:14 | POST v2/products/validator-patterns/templates/[type] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts:7:14 | POST v2/products/validator-patterns/templates/name-segment-category has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts:7:14 | POST v2/products/validator-patterns/templates/name-segment-dimensions has no adjacent route/handler test coverage. |
-| WARN | api-contract-route-missing-tests | src/app/api/v2/products/validator-runtime/evaluate/route.ts:11:14 | POST v2/products/validator-runtime/evaluate has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/products/validator-settings/route.ts:16:14 | PUT v2/products/validator-settings has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/templates/[type]/[id]/route.ts:7:14 | PUT v2/templates/[type]/[id] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/templates/[type]/[id]/route.ts:11:14 | DELETE v2/templates/[type]/[id] has no adjacent route/handler test coverage. |
 | WARN | api-contract-route-missing-tests | src/app/api/v2/templates/[type]/route.ts:11:14 | POST v2/templates/[type] has no adjacent route/handler test coverage. |
+| INFO | api-contract-route-missing-tests | src/app/api/agent/approval-gates/route.ts:38:14 | GET agent/approval-gates has no adjacent route/handler test coverage. |
+| INFO | api-contract-route-missing-tests | src/app/api/agent/capabilities/route.ts:10:14 | GET agent/capabilities has no adjacent route/handler test coverage. |
+| INFO | api-contract-route-missing-tests | src/app/api/agent/leases/route.ts:95:14 | GET agent/leases has no adjacent route/handler test coverage. |
+| INFO | api-contract-route-missing-tests | src/app/api/agent/resources/route.ts:54:14 | GET agent/resources has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/agentcreator/agent/[runId]/assets/[file]/route.ts:6:14 | GET agentcreator/agent/[runId]/assets/[file] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/agentcreator/agent/[runId]/audits/route.ts:6:14 | GET agentcreator/agent/[runId]/audits has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/agentcreator/agent/[runId]/logs/route.ts:6:14 | GET agentcreator/agent/[runId]/logs has no adjacent route/handler test coverage. |
@@ -338,7 +345,6 @@ Generated at: 2026-03-08T14:44:28.388Z
 | INFO | api-contract-route-missing-tests | src/app/api/ai/context/related/[id]/route.ts:9:14 | GET ai/context/related/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/ai/schema/[entity]/route.ts:9:14 | GET ai/schema/[entity] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/analytics/events/route.ts:13:14 | GET analytics/events has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/analytics/insights/route.ts:7:14 | GET analytics/insights has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/analytics/summary/route.ts:8:14 | GET analytics/summary has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/assets3d/[id]/route.ts:8:14 | GET assets3d/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/assets3d/categories/route.ts:7:14 | GET assets3d/categories has no adjacent route/handler test coverage. |
@@ -413,7 +419,6 @@ Generated at: 2026-03-08T14:44:28.388Z
 | INFO | api-contract-route-missing-tests | src/app/api/settings/route.ts:8:14 | GET settings has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/activity/route.ts:9:14 | GET system/activity has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/diagnostics/mongo-indexes/route.ts:7:14 | GET system/diagnostics/mongo-indexes has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/system/logs/insights/route.ts:7:14 | GET system/logs/insights has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/logs/metrics/route.ts:8:14 | GET system/logs/metrics has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/logs/route.ts:8:14 | GET system/logs has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/upload-events/route.ts:7:14 | GET system/upload-events has no adjacent route/handler test coverage. |
@@ -448,6 +453,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/count/route.ts:9:14 | GET v2/products/count has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/entities/[type]/[id]/route.ts:11:14 | GET v2/products/entities/[type]/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/entities/[type]/route.ts:10:14 | GET v2/products/entities/[type] has no adjacent route/handler test coverage. |
+| INFO | api-contract-route-missing-tests | src/app/api/v2/products/ids/route.ts:8:14 | GET v2/products/ids has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/metadata/[type]/[id]/route.ts:18:14 | GET v2/products/metadata/[type]/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/producers/route.ts:12:14 | GET v2/products/producers has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/v2/products/route.ts:8:14 | GET v2/products has no adjacent route/handler test coverage. |
@@ -468,6 +474,11 @@ Generated at: 2026-03-08T14:44:28.388Z
 
 | Route | Method | Access | Tests | Body Validation | Query Validation |
 | --- | --- | --- | --- | --- | --- |
+| agent/approval-gates | GET | protected | no | - | no |
+| agent/capabilities | GET | protected | no | - | - |
+| agent/leases | GET | protected | no | - | no |
+| agent/leases | POST | protected | no | yes | - |
+| agent/resources | GET | protected | no | - | no |
 | agentcreator/agent/[runId]/assets/[file] | GET | protected | no | - | - |
 | agentcreator/agent/[runId]/audits | GET | protected | no | - | no |
 | agentcreator/agent/[runId]/controls | POST | protected | no | - | - |
@@ -478,11 +489,13 @@ Generated at: 2026-03-08T14:44:28.388Z
 | agentcreator/agent/[runId]/snapshots | GET | protected | no | - | - |
 | agentcreator/agent/[runId]/stream | GET | protected | no | - | - |
 | agentcreator/agent | GET | protected | no | - | - |
-| agentcreator/agent | POST | protected | no | no | - |
+| agentcreator/agent | POST | protected | no | yes | - |
 | agentcreator/agent | DELETE | protected | no | - | - |
 | agentcreator/agent/snapshots/[snapshotId] | GET | protected | no | - | - |
 | agentcreator/personas/[personaId]/memory | GET | protected | no | - | - |
+| agentcreator/personas/[personaId]/visuals | GET | protected | yes | - | - |
 | agentcreator/personas/avatar | POST | protected | yes | - | - |
+| agentcreator/personas/avatar | DELETE | protected | yes | - | - |
 | agentcreator/teaching/agents/[agentId] | PATCH | protected | no | - | - |
 | agentcreator/teaching/agents/[agentId] | DELETE | protected | no | - | - |
 | agentcreator/teaching/agents | GET | protected | no | - | - |
@@ -498,6 +511,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | agentcreator/teaching/collections | POST | protected | no | - | - |
 | ai/actions/execute | POST | protected | yes | yes | - |
 | ai/actions/propose | POST | protected | yes | yes | - |
+| ai/context/bundle | POST | protected | no | yes | - |
 | ai/context/related/[id] | GET | protected | no | - | - |
 | ai/context/resolve | POST | protected | yes | yes | - |
 | ai/context/search | POST | protected | yes | yes | - |
@@ -537,15 +551,16 @@ Generated at: 2026-03-08T14:44:28.388Z
 | ai-paths/settings | DELETE | protected | yes | yes | - |
 | ai-paths/trigger-buttons/[id] | PATCH | protected | yes | - | - |
 | ai-paths/trigger-buttons/[id] | DELETE | protected | yes | - | - |
+| ai-paths/trigger-buttons/cleanup-fixtures | POST | protected | yes | - | - |
 | ai-paths/trigger-buttons/reorder | POST | protected | yes | - | - |
-| ai-paths/trigger-buttons | GET | protected | yes | - | - |
+| ai-paths/trigger-buttons | GET | protected | yes | - | no |
 | ai-paths/trigger-buttons | POST | protected | yes | - | - |
 | ai-paths/update | POST | protected | no | yes | - |
 | ai-paths/validation/docs-snapshot | GET | protected | no | - | - |
 | analytics/events | POST | public | no | - | - |
 | analytics/events | GET | session | no | - | - |
-| analytics/insights | GET | session | no | - | yes |
-| analytics/insights | POST | session | no | - | - |
+| analytics/insights | GET | session | yes | - | yes |
+| analytics/insights | POST | session | yes | - | - |
 | analytics/summary | GET | session | no | - | - |
 | assets3d/[id]/file | GET | protected | yes | - | - |
 | assets3d/[id] | GET | protected | no | - | - |
@@ -568,7 +583,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | auth/users/[id]/security | GET | protected | no | - | - |
 | auth/users/[id]/security | PATCH | protected | no | yes | - |
 | auth/users | GET | protected | no | - | - |
-| auth/verify-credentials | POST | public | no | yes | - |
+| auth/verify-credentials | POST | public | yes | yes | - |
 | brain/models | GET | protected | yes | - | - |
 | brain/operations/overview | GET | protected | yes | - | - |
 | case-resolver/assets/extract-pdf | POST | protected | no | yes | - |
@@ -586,7 +601,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | chatbot/agent/[runId] | POST | protected | no | - | - |
 | chatbot/agent/[runId] | DELETE | protected | no | - | - |
 | chatbot/agent | GET | protected | no | - | - |
-| chatbot/agent | POST | protected | no | no | - |
+| chatbot/agent | POST | protected | no | yes | - |
 | chatbot/agent | DELETE | protected | no | - | - |
 | chatbot/context | POST | protected | no | - | - |
 | chatbot/jobs/[jobId] | GET | protected | no | - | - |
@@ -706,13 +721,21 @@ Generated at: 2026-03-08T14:44:28.388Z
 | image-studio/ui-extractor | POST | protected | no | - | - |
 | image-studio/validation-patterns/learn | POST | protected | no | - | - |
 | kangur/ai-tutor/chat | POST | actor | yes | - | - |
+| kangur/ai-tutor/guest-intro | GET | protected | yes | - | - |
 | kangur/ai-tutor/usage | GET | actor | yes | - | - |
 | kangur/assignments/[id] | PATCH | actor | yes | no | - |
 | kangur/assignments | GET | actor | yes | - | - |
 | kangur/assignments | POST | actor | yes | no | - |
 | kangur/auth/learner-signin | POST | public | yes | no | - |
 | kangur/auth/learner-signout | POST | public | no | - | - |
+| kangur/auth/logout | POST | protected | yes | - | - |
 | kangur/auth/me | GET | actor | yes | - | - |
+| kangur/auth/parent-account/create | POST | protected | yes | yes | - |
+| kangur/auth/parent-account/resend | POST | protected | yes | yes | - |
+| kangur/auth/parent-email/verify | POST | protected | yes | yes | - |
+| kangur/auth/parent-magic-link/exchange | POST | protected | no | - | - |
+| kangur/auth/parent-magic-link/request | POST | protected | no | - | - |
+| kangur/auth/parent-password | POST | protected | yes | yes | - |
 | kangur/learners/[id] | PATCH | actor | yes | no | - |
 | kangur/learners | GET | actor | yes | - | - |
 | kangur/learners | POST | actor | yes | no | - |
@@ -785,8 +808,8 @@ Generated at: 2026-03-08T14:44:28.388Z
 | system/activity | GET | protected | no | - | - |
 | system/diagnostics/mongo-indexes | GET | protected | no | - | - |
 | system/diagnostics/mongo-indexes | POST | protected | no | - | - |
-| system/logs/insights | GET | protected | no | - | yes |
-| system/logs/insights | POST | protected | no | - | - |
+| system/logs/insights | GET | protected | yes | - | yes |
+| system/logs/insights | POST | protected | yes | - | - |
 | system/logs/interpret | POST | protected | yes | - | - |
 | system/logs/metrics | GET | protected | no | - | yes |
 | system/logs | GET | protected | no | - | yes |
@@ -886,6 +909,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | v2/products/entities/[type] | GET | protected | no | - | - |
 | v2/products/entities/[type] | POST | protected | no | - | - |
 | v2/products/entities/catalogs/assign | POST | protected | no | - | - |
+| v2/products/ids | GET | protected | no | - | - |
 | v2/products/images/base64/all | POST | protected | no | - | - |
 | v2/products/images/base64 | POST | protected | no | - | - |
 | v2/products/images/upload | POST | protected | no | - | - |
@@ -935,7 +959,7 @@ Generated at: 2026-03-08T14:44:28.388Z
 | v2/products/validator-patterns/templates/[type] | POST | protected | no | - | - |
 | v2/products/validator-patterns/templates/name-segment-category | POST | protected | no | - | - |
 | v2/products/validator-patterns/templates/name-segment-dimensions | POST | protected | no | - | - |
-| v2/products/validator-runtime/evaluate | POST | protected | no | yes | - |
+| v2/products/validator-runtime/evaluate | POST | protected | yes | yes | - |
 | v2/products/validator-settings | GET | protected | no | - | - |
 | v2/products/validator-settings | PUT | protected | no | yes | - |
 | v2/templates/[type]/[id] | PUT | protected | no | - | - |

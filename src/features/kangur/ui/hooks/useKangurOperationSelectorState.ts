@@ -21,8 +21,10 @@ export type KangurOperationSelectorItem = {
   emoji: string;
   hasPriorityAssignment: boolean;
   id: KangurOperation;
+  isRecommended: boolean;
   label: string;
   priorityLabel: string;
+  recommendedLabel: string;
   select: () => void;
   statusLabel: string;
 };
@@ -31,6 +33,8 @@ type UseKangurOperationSelectorStateOptions = {
   active?: boolean;
   onSelect?: (operation: KangurOperation, difficulty: KangurDifficulty) => void;
   priorityAssignmentsByOperation?: Partial<Record<KangurOperation, KangurPracticeAssignment>>;
+  recommendedLabel?: string;
+  recommendedOperation?: KangurOperation | null;
 };
 
 const OPERATIONS: Array<{
@@ -70,6 +74,8 @@ export const useKangurOperationSelectorState = (
   const active = options.active ?? true;
   const onSelect = options.onSelect;
   const priorityAssignmentsByOperation = options.priorityAssignmentsByOperation ?? {};
+  const recommendedLabel = options.recommendedLabel ?? 'Polecamy teraz';
+  const recommendedOperation = options.recommendedOperation ?? null;
   const previousActiveRef = useRef(active);
   const [difficulty, setDifficulty] = useState<KangurDifficulty>(DEFAULT_DIFFICULTY);
 
@@ -123,6 +129,7 @@ export const useKangurOperationSelectorState = (
         })
         .map((operation) => {
           const priorityAssignment = priorityAssignmentsByOperation[operation.id] ?? null;
+          const isRecommended = recommendedOperation === operation.id;
           return {
             accent: operation.accent,
             actionLabel: 'Zacznij lekcje',
@@ -133,15 +140,17 @@ export const useKangurOperationSelectorState = (
             emoji: operation.emoji,
             hasPriorityAssignment: Boolean(priorityAssignment),
             id: operation.id,
+            isRecommended,
             label: operation.label,
             priorityLabel: priorityAssignment ? PRIORITY_LABELS[priorityAssignment.priority] : '',
+            recommendedLabel: isRecommended ? recommendedLabel : '',
             select: (): void => {
               onSelect?.(operation.id, difficulty);
             },
             statusLabel: priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny',
           };
         }),
-    [difficulty, onSelect, priorityAssignmentsByOperation]
+    [difficulty, onSelect, priorityAssignmentsByOperation, recommendedLabel, recommendedOperation]
   );
 
   return {

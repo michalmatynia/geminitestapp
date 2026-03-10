@@ -270,6 +270,23 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.unlockedBadgeIds).toEqual(expect.arrayContaining(['quest_starter']));
   });
 
+  it('surfaces guided-session momentum before the next recommendation badge unlocks', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        recommendedSessionsCompleted: 2,
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-09T15:00:00.000Z'),
+    });
+
+    expect(snapshot.recommendedSessionsCompleted).toBe(2);
+    expect(snapshot.recommendedSessionProgressPercent).toBe(67);
+    expect(snapshot.recommendedSessionSummary).toBe('2/3 rundy');
+    expect(snapshot.recommendedSessionNextBadgeName).toBe('Trzymam kierunek');
+  });
+
   it('uses learner-friendly labels for calendar and geometry sessions in recent history', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       progress,

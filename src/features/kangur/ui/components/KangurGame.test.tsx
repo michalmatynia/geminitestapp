@@ -15,12 +15,17 @@ vi.mock('@/features/kangur/ui/context/KangurGameContext', () => ({
   useKangurGameContext: useKangurGameContextMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
+  useOptionalKangurGameRuntime: vi.fn(() => null),
+}));
+
 vi.mock('@/features/kangur/ui/services/kangur-questions', () => ({
   getKangurQuestions: getKangurQuestionsMock,
   isExamMode: isExamModeMock,
 }));
 
 import KangurGame from '@/features/kangur/ui/components/KangurGame';
+import { useOptionalKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 describe('KangurGame', () => {
   beforeEach(() => {
@@ -94,6 +99,30 @@ describe('KangurGame', () => {
     expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
+    );
+  });
+
+  it('adds a guided-focus reward chip when the Kangur session follows the recommended path', () => {
+    vi.mocked(useOptionalKangurGameRuntime).mockReturnValue({
+      activeSessionRecommendation: {
+        description: 'Ten zestaw najlepiej pcha biezace odznaki.',
+        label: 'Gotowosc konkursowa',
+        source: 'kangur_setup',
+        title: 'Polecamy pelny test konkursowy',
+      },
+    } as ReturnType<typeof useOptionalKangurGameRuntime>);
+
+    render(<KangurGame />);
+
+    fireEvent.click(screen.getByTestId('kangur-game-choice-1'));
+    fireEvent.click(screen.getByRole('button', { name: /zatwierdź odpowiedź/i }));
+
+    act(() => {
+      vi.advanceTimersByTime(1400);
+    });
+
+    expect(screen.getByTestId('kangur-game-summary-breakdown')).toHaveTextContent(
+      'Polecony kierunek +3'
     );
   });
 });

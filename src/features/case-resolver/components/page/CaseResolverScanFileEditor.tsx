@@ -357,7 +357,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                                     <a
                                       href={previewPath}
                                       target='_blank'
-                                      rel='noreferrer'
+                                      rel='noopener noreferrer'
                                       className='text-[9px] text-blue-300 underline-offset-2 hover:underline'
                                     >
                                       Open

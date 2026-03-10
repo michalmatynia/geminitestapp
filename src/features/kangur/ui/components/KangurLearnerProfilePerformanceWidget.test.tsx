@@ -62,6 +62,10 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
     todayXpEarned: 28,
     weeklyXpEarned: 112,
     averageXpPerSession: 120,
+    recommendedSessionsCompleted: 0,
+    recommendedSessionProgressPercent: 0,
+    recommendedSessionSummary: '0/1 runda',
+    recommendedSessionNextBadgeName: 'Pewny krok',
     operationPerformance: [
       {
         operation: 'clock',
@@ -116,6 +120,7 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     expect(screen.getByTestId('learner-profile-xp-summary-average')).toHaveTextContent(
       'Srednio: 120 XP / sesje'
     );
+    expect(screen.queryByTestId('learner-profile-xp-summary-guided')).toBeNull();
     expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-08')).toHaveAttribute(
       'title',
       '1 gier, srednia 100%'
@@ -129,6 +134,26 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     expect(screen.getByRole('link', { name: 'Trenuj' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=clock'
+    );
+  });
+
+  it('shows a guided-round rhythm chip when recommendation progress exists', () => {
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        snapshot: {
+          ...buildRuntimeValue().snapshot,
+          recommendedSessionsCompleted: 2,
+          recommendedSessionProgressPercent: 67,
+          recommendedSessionSummary: '2/3 rundy',
+          recommendedSessionNextBadgeName: 'Trzymam kierunek',
+        },
+      })
+    );
+
+    render(<KangurLearnerProfilePerformanceWidget />);
+
+    expect(screen.getByTestId('learner-profile-xp-summary-guided')).toHaveTextContent(
+      'Polecone: 2 · Trzymam kierunek 2/3 rundy'
     );
   });
 });

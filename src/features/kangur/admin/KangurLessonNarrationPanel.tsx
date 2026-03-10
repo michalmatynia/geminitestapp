@@ -3,11 +3,6 @@
 import { RefreshCw, Sparkles, Volume2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import {
-  useOptionalContextRegistryPageEnvelope,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
-import { buildContextRegistryConsumerEnvelope } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import { buildKangurLessonTtsEnvelopeSignature } from '@/features/kangur/tts/context-registry/instructions';
@@ -22,6 +17,11 @@ import {
   buildKangurLessonDocumentNarrationSignature,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
+import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
+import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { api } from '@/shared/lib/api-client';
 import { Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';

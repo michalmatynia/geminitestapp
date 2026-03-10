@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T09:53:44.658Z",
+  "generatedAt": "2026-03-10T08:15:34.196Z",
   "status": "warn",
   "summary": {
     "total": 1,
@@ -7,8 +7,8 @@
     "warningCount": 1,
     "infoCount": 0,
     "status": "warn",
-    "routeCount": 351,
-    "methodCount": 500,
+    "routeCount": 355,
+    "methodCount": 505,
     "csrfExemptionCount": 47,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
@@ -326,5 +326,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 131
+  "durationMs": 63
 }

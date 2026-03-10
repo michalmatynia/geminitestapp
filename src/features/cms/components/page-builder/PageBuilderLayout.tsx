@@ -4,7 +4,7 @@ import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
 import { useAdminLayoutActions } from '@/features/admin';
-import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 import { Button } from '@/shared/ui';
 
 import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';

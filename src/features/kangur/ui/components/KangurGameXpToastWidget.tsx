@@ -8,8 +8,12 @@ export function KangurGameXpToastWidget(): React.JSX.Element {
 
   return (
     <XpToast
+      breakdown={xpToast.breakdown}
+      dailyQuest={xpToast.dailyQuest}
+      nextBadge={xpToast.nextBadge}
       xpGained={xpToast.xpGained}
       newBadges={xpToast.newBadges}
+      recommendation={xpToast.recommendation}
       visible={xpToast.visible}
     />
   );

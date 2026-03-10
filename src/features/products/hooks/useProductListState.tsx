@@ -171,6 +171,7 @@ export function useProductListState(): ProductListContextType & {
     actionError,
     setActionError,
     handleOpenCreateModal,
+    handleOpenDuplicateModal,
     handleOpenCreateFromDraft,
     handleCreateSuccess,
     handleEditSuccess,
@@ -415,10 +416,9 @@ export function useProductListState(): ProductListContextType & {
   }, []);
   const handleDuplicateProduct = useCallback(
     (product: ProductWithImages): void => {
-      setEditingProduct(product);
-      handleOpenCreateModal();
+      handleOpenDuplicateModal(product);
     },
-    [handleOpenCreateModal, setEditingProduct]
+    [handleOpenDuplicateModal]
   );
   const getProductRowId = useCallback((row: ProductWithImages): string => row.id, []);
   const handleCloseCreateModal = useCallback((): void => {

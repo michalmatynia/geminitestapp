@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import {
   extractCssFromResponse,
   extractJsonFromResponse,
@@ -8,6 +7,7 @@ import {
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { CustomCssAiConfig } from '@/shared/contracts/cms';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError } from '@/shared/lib/api-client';
 
 

@@ -60,7 +60,7 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
     queryFn: () => api.get<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons'),
     id: 'trigger-buttons',
     staleTime: 30_000,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     meta: {

@@ -11,6 +11,8 @@ let getNextLockedBadge: typeof import('./progress').getNextLockedBadge;
 let getKangurProgressServerSnapshot: typeof import('./progress').getKangurProgressServerSnapshot;
 let getProgressBadges: typeof import('./progress').getProgressBadges;
 let getProgressBadgeTrackSummaries: typeof import('./progress').getProgressBadgeTrackSummaries;
+let getRecommendedSessionMomentum: typeof import('./progress').getRecommendedSessionMomentum;
+let getRecommendedSessionProjection: typeof import('./progress').getRecommendedSessionProjection;
 let getProgressTopActivities: typeof import('./progress').getProgressTopActivities;
 let getVisibleProgressBadges: typeof import('./progress').getVisibleProgressBadges;
 let getMasteredLessonCount: typeof import('./progress').getMasteredLessonCount;
@@ -29,6 +31,8 @@ describe('kangur progress mastery helpers', () => {
       getKangurProgressServerSnapshot,
       getProgressBadges,
       getProgressBadgeTrackSummaries,
+      getRecommendedSessionMomentum,
+      getRecommendedSessionProjection,
       getProgressTopActivities,
       getVisibleProgressBadges,
       getMasteredLessonCount,
@@ -190,6 +194,26 @@ describe('kangur progress mastery helpers', () => {
     });
   });
 
+  it('adds a guided-focus bonus when a recommended game session finishes strongly', () => {
+    const progress = createDefaultKangurProgressState();
+
+    const reward = createGameSessionReward(progress, {
+      operation: 'division',
+      difficulty: 'medium',
+      correctAnswers: 8,
+      followsRecommendation: true,
+      totalQuestions: 10,
+      durationSeconds: 80,
+    });
+
+    expect(reward.xp).toBe(37);
+    expect(reward.breakdown).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'guided_focus', label: 'Polecony kierunek', xp: 3 }),
+      ])
+    );
+  });
+
   it('creates a training reward with the dedicated perfect counter', () => {
     const progress = createDefaultKangurProgressState();
 
@@ -275,6 +299,60 @@ describe('kangur progress mastery helpers', () => {
       isUnlocked: false,
       summary: '1/3 misje',
       progressPercent: 33,
+    });
+  });
+
+  it('unlocks guided recommendation badges from completed recommended sessions', () => {
+    const badges = getProgressBadges({
+      ...createDefaultKangurProgressState(),
+      recommendedSessionsCompleted: 1,
+    });
+
+    expect(badges.find((badge) => badge.id === 'guided_step')).toMatchObject({
+      isUnlocked: true,
+      summary: '1/1 runda',
+    });
+    expect(badges.find((badge) => badge.id === 'guided_keeper')).toMatchObject({
+      isUnlocked: false,
+      summary: '1/3 rundy',
+      progressPercent: 33,
+    });
+  });
+
+  it('summarizes guided-session momentum toward the next recommendation badge', () => {
+    const momentum = getRecommendedSessionMomentum({
+      ...createDefaultKangurProgressState(),
+      recommendedSessionsCompleted: 2,
+    });
+
+    expect(momentum).toEqual({
+      completedSessions: 2,
+      progressPercent: 67,
+      summary: '2/3 rundy',
+      nextBadgeName: 'Trzymam kierunek',
+    });
+  });
+
+  it('projects guided-session momentum for the active recommended round', () => {
+    const projection = getRecommendedSessionProjection(
+      {
+        ...createDefaultKangurProgressState(),
+        recommendedSessionsCompleted: 2,
+      },
+      1
+    );
+
+    expect(projection.current).toEqual({
+      completedSessions: 2,
+      progressPercent: 67,
+      summary: '2/3 rundy',
+      nextBadgeName: 'Trzymam kierunek',
+    });
+    expect(projection.projected).toEqual({
+      completedSessions: 3,
+      progressPercent: 100,
+      summary: '3/3 rundy',
+      nextBadgeName: null,
     });
   });
 
@@ -435,7 +513,7 @@ describe('kangur progress mastery helpers', () => {
     ]);
     expect(tracks.find((track) => track.key === 'quest')).toMatchObject({
       unlockedCount: 1,
-      totalCount: 2,
+      totalCount: 4,
       nextBadge: expect.objectContaining({
         id: 'quest_keeper',
         summary: '1/3 misje',

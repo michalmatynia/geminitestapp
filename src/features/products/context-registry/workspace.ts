@@ -1,4 +1,3 @@
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   ProductImageSlotPreview,
   ProductStudioAuditEntry,
@@ -16,6 +15,7 @@ import type {
   ProductValidationInstanceScope,
   ProductWithImages,
 } from '@/shared/contracts/products';
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',

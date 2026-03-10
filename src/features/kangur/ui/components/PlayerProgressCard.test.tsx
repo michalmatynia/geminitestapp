@@ -14,6 +14,7 @@ const progress: KangurProgressState = {
   gamesPlayed: 18,
   perfectGames: 5,
   lessonsCompleted: 11,
+  recommendedSessionsCompleted: 2,
   clockPerfect: 2,
   calendarPerfect: 1,
   geometryPerfect: 1,
@@ -82,6 +83,16 @@ describe('PlayerProgressCard', () => {
     expect(screen.getByTestId('player-progress-next-badge-bar')).toHaveAttribute(
       'aria-valuenow',
       '96'
+    );
+    expect(screen.getByTestId('player-progress-guided-momentum')).toHaveTextContent(
+      '2 polecone rundy'
+    );
+    expect(screen.getByTestId('player-progress-guided-momentum')).toHaveTextContent(
+      'Do odznaki Trzymam kierunek: 2/3 rundy'
+    );
+    expect(screen.getByTestId('player-progress-guided-momentum-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '67'
     );
     expect(screen.getByTestId('player-progress-badge-track-onboarding')).toHaveTextContent(
       'Start'

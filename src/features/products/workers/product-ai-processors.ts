@@ -2,7 +2,6 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
 import { getProductRepository } from '@/features/products/server';
 import { type DatabaseSyncDirection } from '@/shared/contracts';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
@@ -14,6 +13,7 @@ import {
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
 import {
   markDatabaseBackupJobFailed,

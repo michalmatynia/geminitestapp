@@ -755,7 +755,7 @@ function SummaryContent({
               <a
                 href={`/api/kangur/observability/summary?range=${range}`}
                 target='_blank'
-                rel='noreferrer'
+                rel='noopener noreferrer'
               >
                 Raw Summary JSON
                 <ArrowUpRightIcon className='size-3.5' />

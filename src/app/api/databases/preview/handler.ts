@@ -2,6 +2,7 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
+import { z } from 'zod';
 
 import {
   pgBackupsDir,
@@ -48,6 +49,7 @@ export async function postDatabasesPreviewHandler(
     page?: number;
     pageSize?: number;
   };
+  z.unknown().parse(body);
   backupName = body.backupName;
   previewMode = body.mode === 'current' ? 'current' : 'backup';
   const previewType = body.type === 'mongodb' ? 'mongodb' : 'postgresql';

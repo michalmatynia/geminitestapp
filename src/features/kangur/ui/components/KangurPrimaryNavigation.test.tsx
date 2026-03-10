@@ -14,6 +14,10 @@ const { optionalAuthMock } = vi.hoisted(() => ({
   optionalAuthMock: vi.fn(),
 }));
 
+const { optionalTutorMock } = vi.hoisted(() => ({
+  optionalTutorMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -75,19 +79,30 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => optionalAuthMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  useOptionalKangurAiTutor: () => optionalTutorMock(),
+}));
+
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import {
+  loadPersistedTutorVisibilityHidden,
+  persistTutorVisibilityHidden,
+} from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     optionalAuthMock.mockReturnValue(null);
+    optionalTutorMock.mockReturnValue(null);
+    window.sessionStorage.clear();
   });
 
   it('renders the SVG logo inside the home control', () => {
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
+        contentClassName='justify-center'
         currentPage='Game'
         isAuthenticated
         onLogout={vi.fn()}
@@ -252,6 +267,82 @@ describe('KangurPrimaryNavigation', () => {
     expect(screen.getByTestId('kangur-primary-nav-login')).toHaveAttribute(
       'data-kangur-tutor-anchor-surface',
       'auth'
+    );
+  });
+
+  it('shows a visible restore action when the tutor was hidden locally and reopens it on click', () => {
+    const openChatMock = vi.fn();
+    optionalTutorMock.mockReturnValue({
+      enabled: true,
+      openChat: openChatMock,
+    });
+    persistTutorVisibilityHidden(true);
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const restoreButton = screen.getByTestId('kangur-ai-tutor-restore');
+
+    expect(restoreButton).toBeVisible();
+    expect(restoreButton).toHaveTextContent('Włącz AI Tutora');
+
+    fireEvent.click(restoreButton);
+
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(loadPersistedTutorVisibilityHidden()).toBe(false);
+  });
+
+  it('still shows the restore action when the current tutor surface is unavailable but tutoring is not globally disabled', () => {
+    optionalTutorMock.mockReturnValue({
+      enabled: false,
+      openChat: vi.fn(),
+      tutorSettings: {
+        enabled: true,
+      },
+    });
+    persistTutorVisibilityHidden(true);
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        contentClassName='justify-center'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-restore')).toBeVisible();
+  });
+
+  it('renders the restore action inside the main nav group when the tutor is hidden locally', () => {
+    optionalTutorMock.mockReturnValue({
+      enabled: true,
+      openChat: vi.fn(),
+      tutorSettings: {
+        enabled: true,
+      },
+    });
+    persistTutorVisibilityHidden(true);
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        contentClassName='justify-center'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toContainElement(
+      screen.getByTestId('kangur-ai-tutor-restore')
     );
   });
 

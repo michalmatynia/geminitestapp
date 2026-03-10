@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
+import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
@@ -39,6 +40,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   };
+  z.unknown().parse(parsed);
 
   const requestedType = parsed.type ?? 'auto';
   if (!['postgresql', 'mongodb', 'auto'].includes(requestedType)) {

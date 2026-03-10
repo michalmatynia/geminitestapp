@@ -42,11 +42,13 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
   } = props;
 
   const [value, setValue] = useState(defaultValue);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) {
       setValue(defaultValue);
+      setIsSubmitting(false);
     }
   }, [open, defaultValue]);
 
@@ -56,15 +58,21 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
     }
   }, [open, isLoading]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async (): Promise<void> => {
+    if (isLoading || isSubmitting) return;
     if (required && !value.trim()) return;
-    void onConfirm(value);
+    setIsSubmitting(true);
+    try {
+      await onConfirm(value);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleConfirm();
+      void handleConfirm();
     }
   };
 
@@ -74,8 +82,10 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
       onClose={onClose}
       title={title}
       size='sm'
-      onSave={handleConfirm}
-      isSaving={isLoading}
+      onSave={() => {
+        void handleConfirm();
+      }}
+      isSaving={isLoading || isSubmitting}
       isSaveDisabled={required && !value.trim()}
       saveText={confirmText}
       cancelText={cancelText}
@@ -91,7 +101,7 @@ export function PromptModal(props: PromptModalProps): React.JSX.Element {
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className='h-9'
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
           />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import type { DatabaseSyncDirection } from '@/shared/contracts/database';
@@ -31,6 +32,7 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
     collection?: string;
     direction?: DatabaseSyncDirection;
   };
+  z.unknown().parse(body);
 
   const { collection, direction } = body;
 

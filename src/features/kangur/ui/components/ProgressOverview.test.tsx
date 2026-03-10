@@ -55,6 +55,7 @@ const progress: KangurProgressState = {
   gamesPlayed: 18,
   perfectGames: 5,
   lessonsCompleted: 11,
+  recommendedSessionsCompleted: 2,
   clockPerfect: 2,
   calendarPerfect: 1,
   geometryPerfect: 1,
@@ -163,6 +164,16 @@ describe('ProgressOverview lesson mastery insights', () => {
     expect(screen.getByTestId('progress-overview-daily-quest-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'
+    );
+    expect(screen.getByTestId('progress-overview-guided-momentum')).toHaveTextContent(
+      '2 polecone rundy'
+    );
+    expect(screen.getByTestId('progress-overview-guided-momentum')).toHaveTextContent(
+      'Do odznaki Trzymam kierunek: 2/3 rundy'
+    );
+    expect(screen.getByTestId('progress-overview-guided-momentum-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '67'
     );
     expect(screen.getAllByText('➗ Dzielenie')).toHaveLength(2);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();

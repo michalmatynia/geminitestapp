@@ -159,10 +159,13 @@ describe('system logs interpret handler', () => {
         id: 'log-1',
       })
     );
-    expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith({
-      refs: [{ id: 'page:system-logs', kind: 'static_node' }],
-      engineVersion: 'page-context:v1',
-    });
+    expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith(
+      {
+        refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+        engineVersion: 'page-context:v1',
+      },
+      expect.any(Function)
+    );
     expect(generateLogInterpretationMock).toHaveBeenCalledWith({
       source: 'manual',
       contextRegistry: expect.objectContaining({

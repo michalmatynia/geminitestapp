@@ -41,7 +41,7 @@ describe('APP_EMBED_OPTIONS', () => {
   it('should contain kangur option', () => {
     const kangur = APP_EMBED_OPTIONS.find((o) => o.id === 'kangur');
     expect(kangur).toBeDefined();
-    expect(kangur?.label).toBe('Kangur');
+    expect(kangur?.label).toBe('StudiQ');
     expect(kangur?.settingsRoute).toBe('/admin/kangur/settings');
     expect(kangur?.renderMode).toBe('internal-app');
   });

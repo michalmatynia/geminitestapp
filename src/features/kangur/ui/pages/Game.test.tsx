@@ -11,11 +11,13 @@ const {
   homeHeroPropsMock,
   homeActionsPropsMock,
   tutorSessionSyncPropsMock,
+  xpToastPropsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
+  xpToastPropsMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -103,7 +105,10 @@ vi.mock('@/features/kangur/ui/components/Leaderboard', () => ({
 
 vi.mock('@/features/kangur/ui/components/progress', () => ({
   PlayerProgressCard: () => <div data-testid='player-progress-widget' />,
-  XpToast: () => <div data-testid='xp-toast-widget' />,
+  XpToast: (props: unknown) => {
+    xpToastPropsMock(props);
+    return <div data-testid='xp-toast-widget' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameTrainingSetupWidget', () => ({
@@ -164,6 +169,10 @@ describe('Game page', () => {
     xpToast: {
       xpGained: 0,
       newBadges: [],
+      breakdown: [],
+      nextBadge: null,
+      dailyQuest: null,
+      recommendation: null,
       visible: false,
     },
   });
@@ -182,6 +191,57 @@ describe('Game page', () => {
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
+  });
+
+  it('forwards the full xp toast state on the live game page path', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      xpToast: {
+        xpGained: 44,
+        newBadges: ['first_game'],
+        breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+        nextBadge: {
+          emoji: '⭐',
+          name: 'Pol tysiaca XP',
+          summary: '420/500 XP',
+        },
+        dailyQuest: {
+          title: '📅 Powtorka: Kalendarz',
+          summary: '68% / 75% opanowania',
+          xpAwarded: 55,
+        },
+        recommendation: {
+          label: 'Misja dnia',
+          summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
+          title: '📅 Powtorka: Kalendarz',
+        },
+        visible: true,
+      },
+    });
+
+    render(<Game />);
+
+    expect(xpToastPropsMock).toHaveBeenCalledWith({
+      xpGained: 44,
+      newBadges: ['first_game'],
+      breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+      nextBadge: {
+        emoji: '⭐',
+        name: 'Pol tysiaca XP',
+        summary: '420/500 XP',
+      },
+      dailyQuest: {
+        title: '📅 Powtorka: Kalendarz',
+        summary: '68% / 75% opanowania',
+        xpAwarded: 55,
+      },
+      recommendation: {
+        label: 'Misja dnia',
+        summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
+        title: '📅 Powtorka: Kalendarz',
+      },
+      visible: true,
+    });
   });
 
   it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {

@@ -91,10 +91,23 @@ export type KangurXpToastBadgeHint = {
   summary: string;
 };
 
+export type KangurSessionRecommendationHint = {
+  description?: string;
+  label: string;
+  source: 'kangur_setup' | 'operation_selector' | 'training_setup';
+  title: string;
+};
+
 export type KangurXpToastQuestHint = {
   title: string;
   summary: string;
   xpAwarded: number;
+};
+
+export type KangurXpToastRecommendationHint = {
+  label: string;
+  summary: string;
+  title: string;
 };
 
 export type KangurXpToastState = {
@@ -104,6 +117,7 @@ export type KangurXpToastState = {
   breakdown?: KangurRewardBreakdownEntry[];
   nextBadge?: KangurXpToastBadgeHint | null;
   dailyQuest?: KangurXpToastQuestHint | null;
+  recommendation?: KangurXpToastRecommendationHint | null;
 };
 
 export type KangurAddXpResult = {
@@ -116,6 +130,10 @@ export type KangurTrainingSelection = {
   categories: KangurOperation[];
   count: number;
   difficulty: KangurDifficulty;
+};
+
+export type KangurSessionStartOptions = {
+  recommendation?: KangurSessionRecommendationHint | null;
 };
 
 export type KangurMode = string;

@@ -19,6 +19,7 @@ export default function XpToast({
   breakdown = [],
   nextBadge = null,
   dailyQuest = null,
+  recommendation = null,
 }: XpToastProps): React.JSX.Element {
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
@@ -52,7 +53,9 @@ export default function XpToast({
                   +{xpGained} XP
                 </KangurStatusChip>
                 <span className='text-sm font-bold text-slate-900'>
-                  Świetnie, zdobywasz kolejne punkty
+                  {recommendation
+                    ? 'Swietnie, trzymasz polecany kierunek'
+                    : 'Swietnie, zdobywasz kolejne punkty'}
                 </span>
               </div>
               <KangurRewardBreakdownChips
@@ -77,6 +80,14 @@ export default function XpToast({
                   data-testid='xp-toast-daily-quest'
                 >
                   Misja dnia ukonczona: {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
+                </p>
+              ) : null}
+              {recommendation ? (
+                <p
+                  className='mt-1 text-xs font-semibold text-violet-700'
+                  data-testid='xp-toast-recommendation'
+                >
+                  Polecony kierunek: {recommendation.title} · {recommendation.summary}
                 </p>
               ) : null}
             </KangurSurfacePanel>

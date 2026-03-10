@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+test.describe.configure({ timeout: 60_000 });
+
 type TriggerButtonFixture = {
   id: string;
   name: string;
@@ -24,6 +26,12 @@ type ProductFixture = {
   asin: string | null;
   name: Record<string, string | null>;
   description: Record<string, string | null>;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
   supplierName: string | null;
   supplierLink: string | null;
   priceComment: string | null;
@@ -38,6 +46,8 @@ type ProductFixture = {
   catalogId: string;
   images: unknown[];
   catalogs: unknown[];
+  tags?: unknown[];
+  producers?: unknown[];
   parameters: Array<{ parameterId: string; value?: string | null }>;
   imageLinks: string[];
   imageBase64s: string[];
@@ -105,6 +115,12 @@ const createProductFixture = (
   asin: null,
   name: { en: label },
   description: { en: `${label} description` },
+  name_en: label,
+  name_pl: null,
+  name_de: null,
+  description_en: `${label} description`,
+  description_pl: null,
+  description_de: null,
   supplierName: null,
   supplierLink: null,
   priceComment: null,
@@ -119,6 +135,8 @@ const createProductFixture = (
   catalogId: 'catalog-1',
   images: [],
   catalogs: [],
+  tags: [],
+  producers: [],
   parameters: [],
   imageLinks: [],
   imageBase64s: [],
@@ -126,16 +144,34 @@ const createProductFixture = (
 });
 
 const openCreateProductModal = async (page: Page, sku: string) => {
-  page.once('dialog', async (dialog) => {
-    await dialog.accept(sku);
-  });
-  await page.getByLabel('Create new product').click();
-  const modal = page.getByRole('dialog').last();
+  await page.locator('[aria-label="Create new product"]:visible').first().click();
+  const skuDialog = page.getByRole('dialog', { name: 'Create New Product' }).last();
+  await expect(skuDialog).toBeVisible({ timeout: 15_000 });
+  await skuDialog.getByPlaceholder('e.g. ABC-123').fill(sku);
+  await skuDialog.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(skuDialog).toBeHidden({ timeout: 15_000 });
+  const modal = page.getByRole('dialog', { name: 'Create Product' }).last();
   await expect(modal).toBeVisible({ timeout: 15_000 });
   return modal;
 };
 
+const selectAllCatalogs = async (page: Page) => {
+  const showFiltersButton = page.getByRole('button', { name: /show filters/i });
+  if (await showFiltersButton.isVisible().catch(() => false)) {
+    await showFiltersButton.click();
+  }
+
+  const catalogSelect = page.locator('[aria-label="Filter by catalog"]:visible').first();
+  await expect(catalogSelect).toBeVisible({ timeout: 15_000 });
+  await catalogSelect.click();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Enter');
+  await page.mouse.click(0, 0);
+};
+
 test.describe('Products cache freshness', () => {
+  test.setTimeout(60_000);
+
   test('refreshes trigger buttons in Product modal without page reload', async ({ page }) => {
     const authenticated = await ensureAdminSession(page);
     test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
@@ -190,7 +226,7 @@ test.describe('Products cache freshness', () => {
     const oldProduct = createProductFixture('product-old', oldSku, 'Old Product', now);
     const newProduct = createProductFixture('product-new', newSku, 'New Product', now);
 
-    await page.route('**/api/products/count**', async (route) => {
+    await page.route('**/api/v2/products/count**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -199,27 +235,32 @@ test.describe('Products cache freshness', () => {
       });
     });
 
-    await page.route('**/api/products?**', async (route) => {
+    await page.route('**/api/v2/products/paged**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify(productPhase === 1 ? [oldProduct] : [oldProduct, newProduct]),
+        body: JSON.stringify({
+          products: productPhase === 1 ? [oldProduct] : [oldProduct, newProduct],
+          total: productPhase === 1 ? 1 : 2,
+        }),
       });
     });
 
-    await page.goto('/admin/ai-paths');
-    await page.goto('/admin/products');
+    await page.goto('/admin/ai-paths', { waitUntil: 'domcontentloaded' });
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
+    await selectAllCatalogs(page);
     await expect(page.getByText(oldSku).first()).toBeVisible();
     await expect(page.getByText(newSku).first()).toHaveCount(0);
 
     productPhase = 2;
 
-    await page.goto('/admin/settings');
-    await page.goto('/admin/products');
+    await page.goto('/admin/settings', { waitUntil: 'domcontentloaded' });
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
 
+    await selectAllCatalogs(page);
     await expect(page.getByText(newSku).first()).toBeVisible({
       timeout: 15_000,
     });

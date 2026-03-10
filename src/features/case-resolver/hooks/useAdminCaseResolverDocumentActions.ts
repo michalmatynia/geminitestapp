@@ -276,7 +276,7 @@ export function useAdminCaseResolverDocumentActions({
       if (typeof window === 'undefined') return;
       const previewBlob = new Blob([markup], { type: 'text/html;charset=utf-8' });
       const previewUrl = URL.createObjectURL(previewBlob);
-      const previewWindow = window.open(previewUrl, '_blank');
+      const previewWindow = window.open(previewUrl, '_blank', 'noopener,noreferrer');
       if (!previewWindow) {
         URL.revokeObjectURL(previewUrl);
         throw new Error('Preview popup was blocked by the browser.');

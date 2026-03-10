@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-03-08T14:46:03.465Z",
-  "durationMs": 2605,
-  "status": "failed",
+  "generatedAt": "2026-03-10T08:37:44.870Z",
+  "durationMs": 5066,
+  "status": "passed",
   "summary": {
     "queueCount": 16,
     "queueInitModuleCount": 8,
-    "gatedQueueCount": 8,
-    "explicitStartCallCount": 11,
+    "gatedQueueCount": 9,
+    "explicitStartCallCount": 12,
     "repeatQueueModuleCount": 15,
-    "errorCount": 21,
+    "errorCount": 0,
     "warningCount": 0
   },
   "queues": [
@@ -17,68 +17,104 @@
       "file": "src/features/ai/agent-runtime/workers/agentQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "ai-insights",
       "file": "src/features/ai/insights/workers/aiInsightsQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "ai-path-run",
       "file": "src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "base-import",
       "file": "src/features/integrations/workers/baseImportQueue.ts",
       "gated": false,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/integrations/server.ts",
-        "src/features/product-sync/server.ts",
-        "src/features/products/server.ts"
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue"
+      ]
     },
     {
       "queueName": "case-resolver-ocr",
       "file": "src/features/case-resolver/workers/caseResolverOcrQueue.ts",
       "gated": true,
       "repeatManaged": false,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/case-resolver/server.ts"
+        "src/server/queues/case-resolver-ocr.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startCaseResolverOcrQueue"
+      ]
     },
     {
       "queueName": "chatbot",
       "file": "src/features/ai/chatbot/workers/chatbotJobQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "database-backup-scheduler",
@@ -98,68 +134,91 @@
       "file": "src/features/ai/image-studio/workers/imageStudioRunQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "image-studio-sequence",
       "file": "src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/ai/server.ts"
+        "src/server/queues/ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue"
+      ]
     },
     {
       "queueName": "product-ai",
       "file": "src/features/products/workers/productAiQueue.ts",
-      "gated": false,
+      "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/integrations/server.ts",
-        "src/features/product-sync/server.ts",
-        "src/features/products/server.ts"
+        "src/server/queues/product-ai.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductAiJobQueue"
+      ]
     },
     {
       "queueName": "product-sync",
       "file": "src/features/product-sync/workers/productSyncQueue.ts",
       "gated": false,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/product-sync/server.ts"
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue"
+      ]
     },
     {
       "queueName": "product-sync-backfill",
       "file": "src/features/product-sync/workers/productSyncBackfillQueue.ts",
       "gated": false,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/product-sync/server.ts"
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue"
+      ]
     },
     {
       "queueName": "product-sync-scheduler",
       "file": "src/features/product-sync/workers/productSyncSchedulerQueue.ts",
       "gated": false,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/product-sync/server.ts"
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue"
+      ]
     },
     {
       "queueName": "system-log-alerts",
@@ -180,252 +239,40 @@
       "file": "src/features/integrations/workers/traderaListingQueue.ts",
       "gated": false,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/integrations/server.ts",
-        "src/features/product-sync/server.ts",
-        "src/features/products/server.ts"
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue"
+      ]
     },
     {
       "queueName": "tradera-relist-scheduler",
       "file": "src/features/integrations/workers/traderaRelistSchedulerQueue.ts",
       "gated": true,
       "repeatManaged": true,
-      "explicitlyStarted": false,
+      "explicitlyStarted": true,
       "ownerModules": [
-        "src/features/integrations/server.ts",
-        "src/features/product-sync/server.ts",
-        "src/features/products/server.ts"
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
-      "startExports": []
+      "startExports": [
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue"
+      ]
     }
   ],
-  "issues": [
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"agent\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/agent-runtime/workers/agentQueue.ts",
-      "line": 17,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"agent\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/agent-runtime/workers/agentQueue.ts",
-      "line": 17,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"ai-path-run\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts",
-      "line": 30,
-      "column": 22,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"ai-path-run\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts",
-      "line": 30,
-      "column": 22,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"chatbot\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/chatbot/workers/chatbotJobQueue.ts",
-      "line": 11,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"chatbot\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/chatbot/workers/chatbotJobQueue.ts",
-      "line": 11,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"image-studio-run\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/image-studio/workers/imageStudioRunQueue.ts",
-      "line": 432,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"image-studio-run\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/image-studio/workers/imageStudioRunQueue.ts",
-      "line": 432,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"image-studio-sequence\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts",
-      "line": 105,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"image-studio-sequence\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts",
-      "line": 105,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"ai-insights\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/ai/insights/workers/aiInsightsQueue.ts",
-      "line": 73,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"ai-insights\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/ai/insights/workers/aiInsightsQueue.ts",
-      "line": 73,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"case-resolver-ocr\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/case-resolver/workers/caseResolverOcrQueue.ts",
-      "line": 246,
-      "column": 18,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"base-import\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/integrations/workers/baseImportQueue.ts",
-      "line": 14,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"tradera-listings\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/integrations/workers/traderaListingQueue.ts",
-      "line": 18,
-      "column": 3,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-gated-missing-start-export",
-      "message": "Gated queue \"tradera-relist-scheduler\" needs an exported start function so queue-init can start it explicitly.",
-      "file": "src/features/integrations/workers/traderaRelistSchedulerQueue.ts",
-      "line": 33,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"tradera-relist-scheduler\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/integrations/workers/traderaRelistSchedulerQueue.ts",
-      "line": 33,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"product-sync-backfill\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/product-sync/workers/productSyncBackfillQueue.ts",
-      "line": 15,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"product-sync\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/product-sync/workers/productSyncQueue.ts",
-      "line": 14,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"product-sync-scheduler\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/product-sync/workers/productSyncSchedulerQueue.ts",
-      "line": 66,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "queue-repeat-missing-start-export",
-      "message": "Queue \"product-ai\" registers repeat or recovery jobs but has no exported start function to register them.",
-      "file": "src/features/products/workers/productAiQueue.ts",
-      "line": 85,
-      "column": 15,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "queue-repeat-missing-start-export",
-      "errorCount": 13,
-      "warningCount": 0,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "queue-gated-missing-start-export",
-      "errorCount": 8,
-      "warningCount": 0,
-      "infoCount": 0
-    }
-  ]
+  "issues": [],
+  "rules": []
 }

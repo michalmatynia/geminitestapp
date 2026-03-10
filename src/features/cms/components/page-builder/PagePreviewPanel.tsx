@@ -266,7 +266,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const handlePreview = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
     const initialTarget = previewFallbackUrl ?? 'about:blank';
-    const previewWindow = window.open(initialTarget, '_blank');
+    const previewWindow = window.open(initialTarget, '_blank', 'noopener,noreferrer');
     if (!previewWindow) {
       toast('Popup blocked. Allow popups to open the preview.', { variant: 'error' });
       return;

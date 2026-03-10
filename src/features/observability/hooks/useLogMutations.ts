@@ -1,9 +1,9 @@
 'use client';
 
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { AiInsightRecord } from '@/shared/contracts';
 import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
 import type { UpdateMutation } from '@/shared/contracts/ui';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateSystemDiagnostics, invalidateSystemLogs } from '@/shared/lib/query-invalidation';

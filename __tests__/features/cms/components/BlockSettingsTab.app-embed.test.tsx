@@ -123,7 +123,7 @@ describe('BlockSettingsTab app embeds', () => {
         type: 'AppEmbed',
         settings: {
           appId: 'kangur',
-          title: 'Kangur Home',
+          title: 'StudiQ Home',
           entryPage: 'Game',
           basePath: '',
           embedUrl: '',
@@ -138,7 +138,7 @@ describe('BlockSettingsTab app embeds', () => {
 
     render(<BlockSettingsTab />);
 
-    expect(screen.getByText('Kangur mounts inside this CMS page.')).toBeInTheDocument();
+    expect(screen.getByText('StudiQ mounts inside this CMS page.')).toBeInTheDocument();
     expect(screen.getByText(/first experience on HOME/i)).toBeInTheDocument();
     expect(screen.getByTestId('field-appId')).toHaveAttribute('data-options', 'chatbot,kangur');
     expect(screen.getByTestId('field-entryPage')).toHaveAttribute(

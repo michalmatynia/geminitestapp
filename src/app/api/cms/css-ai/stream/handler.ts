@@ -61,17 +61,18 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!parsed.ok) {
     return parsed.response;
   }
-  const bodyResult = cmsCssAiRequestSchema.safeParse(parsed.data);
+  const body = parsed.data;
+  const bodyResult = cmsCssAiRequestSchema.safeParse(body);
   if (!bodyResult.success) {
     throw badRequestError('Invalid CMS CSS AI request payload.');
   }
-  const body = bodyResult.data;
+  const payload = bodyResult.data;
 
-  const messages = Array.isArray(body.messages) ? body.messages : [];
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
   if (!isValidMessages(messages)) {
     throw badRequestError('Invalid messages payload.');
   }
-  const registryRefs = body.contextRegistry?.refs ?? [];
+  const registryRefs = payload.contextRegistry?.refs ?? [];
   const resolvedRegistryBundle = registryRefs.length
     ? await contextRegistryEngine.resolveRefs({
       refs: registryRefs,
@@ -81,7 +82,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     : null;
   const contextRegistryBundle = mergeContextRegistryResolutionBundles(
     resolvedRegistryBundle,
-    body.contextRegistry?.resolved ?? null
+    payload.contextRegistry?.resolved ?? null
   );
   const contextRegistryPrompt = buildCmsContextRegistrySystemPrompt(contextRegistryBundle);
   const messagesWithContext = buildMessagesWithRegistryContext(messages, contextRegistryPrompt);

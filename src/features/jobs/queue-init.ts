@@ -10,6 +10,7 @@ let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
 const LOG_SOURCE = 'queue-init';
 const STARTUP_GATED_QUEUE_NAMES = [
+  'product-ai',
   'ai-path-run',
   'chatbot',
   'agent',
@@ -147,6 +148,11 @@ export const initializeQueues = (): void => {
     startAllWorkers({ excludeQueueNames: STARTUP_GATED_QUEUE_NAMES });
 
     // AI workers are started with feature-aware gates to avoid running disabled capabilities.
+    (
+      (queueModules[0] as Record<string, unknown>)['startProductAiJobQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
     (
       (queueModules[1] as Record<string, unknown>)['startAiPathRunQueue'] as
         | (() => void)

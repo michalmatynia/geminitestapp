@@ -1,7 +1,7 @@
 'use client';
 
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type { ProductStudioSendRequest, ProductWithImages } from '@/shared/contracts/products';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 

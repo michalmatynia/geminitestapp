@@ -377,7 +377,7 @@ export function CmsMenu({
                     className={className}
                     style={style}
                     target='_blank'
-                    rel='noreferrer'
+                    rel='noopener noreferrer'
                     data-menu-item
                   >
                     {content}

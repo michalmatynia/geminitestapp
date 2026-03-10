@@ -6,7 +6,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 
 const { settingsStoreMock, apiPostMock, speechSynthesisMock, audioPlayMock, audioPauseMock } =
   vi.hoisted(() => ({

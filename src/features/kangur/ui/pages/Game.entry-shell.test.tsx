@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
 }));
@@ -158,7 +159,7 @@ const buildRuntime = (
   handleStartKangur: vi.fn(),
   handleStartTraining: vi.fn(),
   practiceAssignmentsByOperation: {},
-  progress: {},
+  progress: createDefaultKangurProgressState(),
   resultPracticeAssignment: null,
   score: 0,
   screen: screenKey,

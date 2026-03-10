@@ -6,7 +6,9 @@ import DifficultySelector from '@/features/kangur/ui/components/DifficultySelect
 import {
   KangurButton,
   KangurGlassPanel,
+  KangurInfoCard,
   KangurSectionHeading,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
@@ -15,9 +17,19 @@ import { cn } from '@/shared/utils';
 
 type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;
+  suggestedSelection?: KangurTrainingSelection | null;
+  suggestionDescription?: string;
+  suggestionLabel?: string;
+  suggestionTitle?: string;
 };
 
-export default function TrainingSetup({ onStart }: TrainingSetupProps): React.JSX.Element {
+export default function TrainingSetup({
+  onStart,
+  suggestedSelection,
+  suggestionDescription,
+  suggestionLabel,
+  suggestionTitle,
+}: TrainingSetupProps): React.JSX.Element {
   const {
     categoryOptions,
     countOptions,
@@ -29,6 +41,7 @@ export default function TrainingSetup({ onStart }: TrainingSetupProps): React.JS
     toggleAllLabel,
   } = useKangurTrainingSetupState({
     onStart,
+    suggestedSelection,
   });
   const categoryHeadingId = useId();
   const countHeadingId = useId();
@@ -66,6 +79,41 @@ export default function TrainingSetup({ onStart }: TrainingSetupProps): React.JS
         <div id={summaryId} aria-live='polite' aria-atomic='true' className='sr-only'>
           {summaryLabel}
         </div>
+
+        {suggestionTitle ? (
+          <KangurInfoCard
+            accent='indigo'
+            className='w-full rounded-[24px]'
+            data-testid='training-setup-suggestion-card'
+            padding='md'
+            tone='accent'
+          >
+            <div className='flex flex-col gap-2 text-left'>
+              <KangurStatusChip
+                accent='indigo'
+                className='w-fit text-[11px] uppercase tracking-[0.16em]'
+                data-testid='training-setup-suggestion-label'
+                size='sm'
+              >
+                {suggestionLabel ?? 'Polecamy teraz'}
+              </KangurStatusChip>
+              <p
+                className='text-sm font-extrabold text-slate-800'
+                data-testid='training-setup-suggestion-title'
+              >
+                {suggestionTitle}
+              </p>
+              {suggestionDescription ? (
+                <p
+                  className='text-xs text-slate-600'
+                  data-testid='training-setup-suggestion-description'
+                >
+                  {suggestionDescription}
+                </p>
+              ) : null}
+            </div>
+          </KangurInfoCard>
+        ) : null}
 
         <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
 

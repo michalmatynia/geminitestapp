@@ -8,6 +8,10 @@ import type { ComponentType, ReactNode } from 'react';
 
 type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;
+  recommendedDescription?: string;
+  recommendedLabel?: string;
+  recommendedMode?: KangurMode | null;
+  recommendedTitle?: string;
 };
 
 export type KangurGameProviderProps = {

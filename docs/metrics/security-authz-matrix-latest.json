@@ -1,20 +1,55 @@
 {
-  "generatedAt": "2026-03-08T14:43:47.649Z",
+  "generatedAt": "2026-03-10T08:15:37.431Z",
   "status": "failed",
   "summary": {
-    "total": 378,
-    "errorCount": 378,
+    "total": 393,
+    "errorCount": 393,
     "warningCount": 0,
     "infoCount": 0,
     "status": "failed",
-    "routeFileCount": 330,
-    "methodCount": 474,
+    "routeFileCount": 346,
+    "methodCount": 492,
     "publicRouteCount": 14,
-    "protectedRouteCount": 444,
+    "protectedRouteCount": 462,
     "signedRouteCount": 1,
     "actorRouteCount": 15
   },
   "routes": [
+    {
+      "route": "agent/approval-gates",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "agent/capabilities",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "agent/leases",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "agent/leases",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "agent/resources",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
     {
       "route": "agentcreator/agent/[runId]/assets/[file]",
       "method": "GET",
@@ -114,8 +149,22 @@
       "evidence": []
     },
     {
+      "route": "agentcreator/personas/[personaId]/visuals",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
       "route": "agentcreator/personas/avatar",
       "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "agentcreator/personas/avatar",
+      "method": "DELETE",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -220,6 +269,13 @@
     },
     {
       "route": "ai/actions/propose",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "ai/context/bundle",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
@@ -545,6 +601,15 @@
     {
       "route": "ai-paths/trigger-buttons/[id]",
       "method": "DELETE",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": [
+        "access helper"
+      ]
+    },
+    {
+      "route": "ai-paths/trigger-buttons/cleanup-fixtures",
+      "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
@@ -1837,6 +1902,16 @@
       ]
     },
     {
+      "route": "kangur/ai-tutor/guest-intro",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": [
+        "auth()",
+        "actor/session resolver"
+      ]
+    },
+    {
       "route": "kangur/ai-tutor/usage",
       "method": "GET",
       "policyId": "kangur-actor-routes",
@@ -1888,10 +1963,62 @@
       "evidence": []
     },
     {
+      "route": "kangur/auth/logout",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
       "route": "kangur/auth/me",
       "method": "GET",
       "policyId": "kangur-actor-routes",
       "expectedAccess": "actor",
+      "evidence": [
+        "access helper",
+        "actor/session resolver"
+      ]
+    },
+    {
+      "route": "kangur/auth/parent-account/create",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "kangur/auth/parent-account/resend",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "kangur/auth/parent-email/verify",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "kangur/auth/parent-magic-link/exchange",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "kangur/auth/parent-magic-link/request",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "kangur/auth/parent-password",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
       "evidence": [
         "access helper",
         "actor/session resolver"
@@ -1987,8 +2114,7 @@
       "policyId": "kangur-actor-routes",
       "expectedAccess": "actor",
       "evidence": [
-        "access helper",
-        "actor/session resolver"
+        "access helper"
       ]
     },
     {
@@ -1997,8 +2123,7 @@
       "policyId": "kangur-actor-routes",
       "expectedAccess": "actor",
       "evidence": [
-        "access helper",
-        "actor/session resolver"
+        "access helper"
       ]
     },
     {
@@ -3161,6 +3286,13 @@
       "evidence": []
     },
     {
+      "route": "v2/products/ids",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
       "route": "v2/products/images/base64/all",
       "method": "POST",
       "policyId": "default-protected",
@@ -3557,6 +3689,71 @@
     {
       "severity": "error",
       "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET agent/approval-gates is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 38,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET agent/capabilities is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agent/capabilities/route.ts",
+      "line": 10,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET agent/leases is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 95,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST agent/leases is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 99,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET agent/resources is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 54,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
       "message": "GET agentcreator/agent/[runId]/assets/[file] is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/agentcreator/agent/[runId]/assets/[file]/route.ts",
       "line": 6,
@@ -3739,9 +3936,35 @@
     {
       "severity": "error",
       "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET agentcreator/personas/[personaId]/visuals is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agentcreator/personas/[personaId]/visuals/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
       "message": "POST agentcreator/personas/avatar is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/agentcreator/personas/avatar/route.ts",
       "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "DELETE agentcreator/personas/avatar is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/agentcreator/personas/avatar/route.ts",
+      "line": 12,
       "column": 14,
       "snippet": null,
       "context": {
@@ -4066,6 +4289,19 @@
       "ruleId": "authz-protected-route-missing-auth-check",
       "message": "POST ai/actions/propose is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/ai/actions/propose/route.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST ai/context/bundle is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/ai/context/bundle/route.ts",
       "line": 7,
       "column": 14,
       "snippet": null,
@@ -5783,6 +6019,84 @@
       "message": "POST image-studio/slots/base64 is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/image-studio/slots/base64/route.ts",
       "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/logout is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/logout/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/parent-account/create is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/parent-account/create/route.ts",
+      "line": 9,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/parent-account/resend is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/parent-account/resend/route.ts",
+      "line": 9,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/parent-email/verify is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/parent-email/verify/route.ts",
+      "line": 9,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/parent-magic-link/exchange is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+      "line": 20,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "POST kangur/auth/parent-magic-link/request is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+      "line": 20,
       "column": 14,
       "snippet": null,
       "context": {
@@ -7743,6 +8057,19 @@
     {
       "severity": "error",
       "ruleId": "authz-protected-route-missing-auth-check",
+      "message": "GET v2/products/ids is classified as protected but no auth/session/access helper was found.",
+      "file": "src/app/api/v2/products/ids/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "policyId": "default-protected",
+        "evidence": []
+      }
+    },
+    {
+      "severity": "error",
+      "ruleId": "authz-protected-route-missing-auth-check",
       "message": "POST v2/products/images/base64/all is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/v2/products/images/base64/all/route.ts",
       "line": 7,
@@ -7862,7 +8189,7 @@
       "ruleId": "authz-protected-route-missing-auth-check",
       "message": "GET v2/products/paged is classified as protected but no auth/session/access helper was found.",
       "file": "src/app/api/v2/products/paged/route.ts",
-      "line": 8,
+      "line": 9,
       "column": 14,
       "snippet": null,
       "context": {
@@ -8472,7 +8799,7 @@
   "rules": [
     {
       "ruleId": "authz-protected-route-missing-auth-check",
-      "errorCount": 377,
+      "errorCount": 392,
       "warningCount": 0,
       "infoCount": 0
     },
@@ -8483,5 +8810,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 287
+  "durationMs": 269
 }

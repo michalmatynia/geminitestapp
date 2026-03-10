@@ -7,6 +7,13 @@ import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
 } from '@/features/kangur/settings';
+import type {
+  KangurAiTutorHintDepth,
+  KangurAiTutorHomeOnboardingMode,
+  KangurAiTutorLearnerSettings,
+  KangurAiTutorProactiveNudges,
+  KangurAiTutorUiMode,
+} from '@/features/kangur/settings-ai-tutor';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -38,6 +45,7 @@ import {
   MOBILE_BUBBLE_WIDTH,
   type TutorMotionProfile,
 } from './KangurAiTutorWidget.shared';
+
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type {
   GuidedTutorAuthMode,
@@ -63,16 +71,7 @@ type AuthState = {
   } | null;
 } | null | undefined;
 
-type TutorSettings = {
-  allowCrossPagePersistence?: boolean;
-  allowSelectedTextSupport?: boolean;
-  enabled?: boolean;
-  hintDepth?: 'guided' | 'progressive' | 'direct';
-  motionPresetId?: string | null;
-  proactiveNudges?: 'gentle' | 'coach' | 'off';
-  showSources?: boolean;
-  uiMode?: 'anchored' | 'static';
-} | null | undefined;
+type TutorSettings = KangurAiTutorLearnerSettings | null | undefined;
 
 type UsageSummary = {
   remainingMessages: number | null;
@@ -80,17 +79,15 @@ type UsageSummary = {
 
 type UseKangurAiTutorWidgetEnvironmentInput = {
   authState: AuthState;
-  enabled: boolean;
   highlightedText: string | null | undefined;
   mounted: boolean;
   sessionContext: KangurAiTutorConversationContext | null | undefined;
   tutorContent: KangurAiTutorContent;
-  tutorName: string;
   tutorSettings: TutorSettings;
   usageSummary: UsageSummary;
   widgetState: KangurAiTutorWidgetState;
   guestIntroMode: 'every_visit' | 'first_visit';
-  homeOnboardingMode: 'every_visit' | 'first_visit';
+  homeOnboardingMode: KangurAiTutorHomeOnboardingMode;
 };
 
 const normalizeTutorIntentText = (value: string): string =>
@@ -228,12 +225,10 @@ const getSelectionProtectedRect = (
 
 export function useKangurAiTutorWidgetEnvironment({
   authState,
-  enabled,
   highlightedText,
   mounted,
   sessionContext,
   tutorContent,
-  tutorName,
   tutorSettings,
   usageSummary,
   widgetState,
@@ -253,8 +248,6 @@ export function useKangurAiTutorWidgetEnvironment({
     guestIntroHelpVisible,
     guestIntroVisible,
     highlightedSection,
-    homeOnboardingRecord,
-    homeOnboardingStepIndex,
     isTutorHidden,
     mounted: widgetMounted,
     persistedSelectionContainerRect,
@@ -282,10 +275,10 @@ export function useKangurAiTutorWidgetEnvironment({
     () =>
       pageContextRegistry
         ? buildContextRegistryConsumerEnvelope({
-            refs: pageContextRegistry.refs,
-            resolved: pageContextRegistry.resolved ?? null,
-            rootNodeIds: [...KANGUR_AI_TUTOR_NARRATOR_CONTEXT_ROOT_IDS],
-          })
+          refs: pageContextRegistry.refs,
+          resolved: pageContextRegistry.resolved ?? null,
+          rootNodeIds: [...KANGUR_AI_TUTOR_NARRATOR_CONTEXT_ROOT_IDS],
+        })
         : null,
     [pageContextRegistry]
   );
@@ -301,13 +294,13 @@ export function useKangurAiTutorWidgetEnvironment({
     )
   );
 
-  const uiMode = tutorSettings?.uiMode ?? 'anchored';
+  const uiMode: KangurAiTutorUiMode = tutorSettings?.uiMode ?? 'anchored';
   const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
   const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
   const showSources = tutorSettings?.showSources ?? true;
-  const proactiveNudges = tutorSettings?.proactiveNudges ?? 'gentle';
-  const hintDepth = tutorSettings?.hintDepth ?? 'guided';
-  const guestTutorAssistantLabel = tutorName.trim() || tutorContent.common.defaultTutorName;
+  const proactiveNudges: KangurAiTutorProactiveNudges =
+    tutorSettings?.proactiveNudges ?? 'gentle';
+  const hintDepth: KangurAiTutorHintDepth = tutorSettings?.hintDepth ?? 'guided';
   const shouldRepeatGuestIntroOnEntry = guestIntroMode === 'every_visit';
   const shouldRepeatHomeOnboardingOnEntry = homeOnboardingMode === 'every_visit';
 
@@ -353,10 +346,10 @@ export function useKangurAiTutorWidgetEnvironment({
   const activeSectionRect = highlightedSectionAnchor?.getRect() ?? null;
   const activeSectionProtectedRect = highlightedSectionAnchor
     ? getExpandedRect(
-        activeSectionRect,
-        SECTION_DROP_TARGET_PADDING_X,
-        SECTION_DROP_TARGET_PADDING_Y
-      )
+      activeSectionRect,
+      SECTION_DROP_TARGET_PADDING_X,
+      SECTION_DROP_TARGET_PADDING_Y
+    )
     : null;
 
   const remainingMessages = usageSummary?.remainingMessages ?? null;
@@ -366,7 +359,7 @@ export function useKangurAiTutorWidgetEnvironment({
   const shouldRenderContextlessTutorUi = Boolean(
     !isTutorHidden &&
       isAuthenticatedVisitor &&
-      enabled &&
+      tutorSettings?.enabled &&
       !sessionContext &&
       authState?.user?.ownerEmailVerified !== false
   );

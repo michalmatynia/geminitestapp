@@ -3287,6 +3287,125 @@ describe('KangurAiTutorWidget', () => {
     vi.useRealTimers();
   });
 
+  it('keeps the previous conversation hidden after the selected-fragment explanation completes', async () => {
+    vi.useFakeTimers();
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'W poprzednim wątku omawialiśmy zupełnie inne zadanie.',
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: 'Stary fragment',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 620, 140, 26),
+      selectionContainerRect: new DOMRect(80, 580, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      rerender(<KangurAiTutorWidget />);
+    });
+    sendMessageMock.mockImplementation(async () => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+        isLoading: true,
+        messages: [
+          ...tutorState.messages,
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+        ],
+      };
+      rerender(<KangurAiTutorWidget />);
+
+      await Promise.resolve();
+
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+        isLoading: false,
+        messages: [
+          {
+            role: 'assistant',
+            content: 'W poprzednim wątku omawialiśmy zupełnie inne zadanie.',
+          },
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+          {
+            role: 'assistant',
+            content: 'Nowe wyjaśnienie fragmentu.',
+          },
+        ],
+      };
+      rerender(<KangurAiTutorWidget />);
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(sendMessageMock).toHaveBeenCalled();
+    expect(screen.getByText('Nowe wyjaśnienie fragmentu.')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
+      '„2 + 2”'
+    );
+    expect(
+      screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
+    ).not.toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
   it('places the selection action below the excerpt when the highlight is near the top edge', () => {
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,

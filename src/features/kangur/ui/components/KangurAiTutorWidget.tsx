@@ -25,7 +25,6 @@ import { useKangurAiTutorAvatarDrag } from './KangurAiTutorWidget.avatar-drag';
 import { useKangurAiTutorAvatarShellActions } from './KangurAiTutorWidget.avatar-shell';
 import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.conversation-view';
 import { useKangurAiTutorGuidedDisplayState } from './KangurAiTutorWidget.display';
-import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
   useKangurAiTutorGuidanceCompletionEffects,
   useKangurAiTutorNarrationObserverEffect,
@@ -35,6 +34,7 @@ import {
   useKangurAiTutorGuidedAuthHandoffEffect,
   useKangurAiTutorHomeOnboardingFlow,
 } from './KangurAiTutorWidget.entry';
+import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
   useKangurAiTutorBubblePlacementState,
   useKangurAiTutorFocusLayoutState,
@@ -233,7 +233,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const prefersReducedMotion = useReducedMotion();
   const tutorContent = useKangurAiTutorContent();
   const tutorRuntime = useKangurAiTutor();
-  const settingsStore = useSettingsStore();
   const authState = useOptionalKangurAuth();
   const loginModal = useKangurLoginModal();
   const {
@@ -254,32 +253,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     setHighlightedText,
   } = tutorRuntime;
   const sessionContext = tutorRuntime.sessionContext;
-  const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
-  const resolveGuestLoginGuidanceIntentForContent = useCallback(
-    (value: string): GuidedTutorAuthMode | null =>
-      resolveGuestLoginGuidanceIntent(value, tutorContent.guestIntro.intentPhrases),
-    [tutorContent.guestIntro.intentPhrases]
-  );
-  const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
-  const narratorSettings = useMemo(
-    () => parseKangurNarratorSettings(rawNarratorSettings),
-    [rawNarratorSettings]
-  );
-  const tutorNarratorContextRegistry = useMemo(
-    () =>
-      pageContextRegistry
-        ? buildContextRegistryConsumerEnvelope({
-          refs: pageContextRegistry.refs,
-          resolved: pageContextRegistry.resolved ?? null,
-          rootNodeIds: [...KANGUR_AI_TUTOR_NARRATOR_CONTEXT_ROOT_IDS],
-        })
-        : null,
-    [pageContextRegistry]
-  );
-  const { selectedText, selectionRect, selectionContainerRect, clearSelection } =
-    useKangurTextHighlight();
-  const tutorAnchorContext = useOptionalKangurTutorAnchors();
-  const routing = useOptionalKangurRouting();
   const widgetState = useKangurAiTutorWidgetState();
   const {
     askModalDockStyle,
@@ -287,7 +260,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     askModalVisible,
     avatarDragStateRef,
     contextSwitchNotice,
-    dismissedSelectedText,
     draggedAvatarPoint,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
@@ -312,7 +284,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     motionTimeoutRef,
     panelAnchorMode,
     panelMeasuredHeight,
-    persistedSelectionContainerRect,
     persistedSelectionPageRect,
     persistedSelectionRect,
     sectionResponseComplete,
@@ -360,127 +331,59 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     tutorNarrationRootRef,
     viewportTick,
   } = widgetState;
-  const uiMode = tutorSettings?.uiMode ?? 'anchored';
-  const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
-  const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
-  const showSources = tutorSettings?.showSources ?? true;
-  const proactiveNudges = tutorSettings?.proactiveNudges ?? 'gentle';
-  const hintDepth = tutorSettings?.hintDepth ?? 'guided';
+  const {
+    activeSectionProtectedRect,
+    activeSectionRect,
+    activeSelectedText,
+    activeSelectionContainerRect,
+    activeSelectionPageRect,
+    activeSelectionProtectedRect,
+    activeSelectionRect,
+    allowCrossPagePersistence,
+    allowSelectedTextSupport,
+    basePath,
+    canSendMessages,
+    clearSelection,
+    hasAssignmentSummary,
+    hasCurrentQuestion,
+    hintDepth,
+    homeOnboardingMode,
+    isAnonymousVisitor,
+    motionProfile,
+    narratorSettings,
+    proactiveNudges,
+    rawSelectedText,
+    reducedMotionTransitions,
+    remainingMessages,
+    resolveGuestLoginGuidanceIntentForContent,
+    routing,
+    selectedText,
+    selectionRect,
+    shouldRenderContextlessTutorUi,
+    shouldRenderGuestIntroUi,
+    shouldRepeatGuestIntroOnEntry,
+    shouldRepeatHomeOnboardingOnEntry,
+    showSources,
+    telemetryContext,
+    tutorAnchorContext,
+    tutorNarratorContextRegistry,
+    tutorSessionKey,
+    uiMode,
+    viewport,
+    persistSelectionGeometry,
+  } = useKangurAiTutorWidgetEnvironment({
+    authState,
+    guestIntroMode: tutorRuntime.appSettings?.guestIntroMode ?? 'first_visit',
+    highlightedText,
+    homeOnboardingMode: tutorRuntime.appSettings?.homeOnboardingMode ?? 'first_visit',
+    mounted,
+    sessionContext,
+    tutorContent,
+    tutorSettings,
+    usageSummary,
+    widgetState,
+  });
   const guestTutorAssistantLabel = tutorName.trim() || tutorContent.common.defaultTutorName;
-  useRegisterContextRegistryPageSource(
-    'kangur-ai-tutor-narrator',
-    useMemo(
-      () => ({
-        label: tutorContent.narrator.registrySourceLabel,
-        rootNodeIds: [...KANGUR_AI_TUTOR_NARRATOR_CONTEXT_ROOT_IDS],
-      }),
-      [tutorContent.narrator.registrySourceLabel]
-    )
-  );
-  const guestIntroMode = tutorRuntime.appSettings?.guestIntroMode ?? 'first_visit';
-  const homeOnboardingMode = tutorRuntime.appSettings?.homeOnboardingMode ?? 'first_visit';
-  const shouldRepeatGuestIntroOnEntry = guestIntroMode === 'every_visit';
-  const shouldRepeatHomeOnboardingOnEntry = homeOnboardingMode === 'every_visit';
-  const rawSelectedText = allowSelectedTextSupport
-    ? (selectedText ?? selectionConversationContext?.selectedText ?? highlightedText)?.trim() ||
-      null
-    : null;
-  const activeSelectedText =
-    rawSelectedText && rawSelectedText === dismissedSelectedText ? null : rawSelectedText;
-  const liveSelectionPageRect = selectionRect ? getPageRect(selectionRect) : null;
-  const activeSelectionRect = activeSelectedText
-    ? (selectionRect ??
-      getViewportRectFromPageRect(persistedSelectionPageRect) ??
-      persistedSelectionRect)
-    : null;
-  const activeSelectionPageRect = activeSelectedText
-    ? (liveSelectionPageRect ?? persistedSelectionPageRect)
-    : null;
-  const activeSelectionContainerRect = activeSelectedText
-    ? (selectionContainerRect ?? persistedSelectionContainerRect)
-    : null;
-  const activeSelectionProtectedRect = activeSelectedText
-    ? getSelectionProtectedRect(activeSelectionRect, activeSelectionContainerRect)
-    : null;
-  const highlightedSectionAnchor = useMemo(() => {
-    if (!highlightedSection || !tutorAnchorContext) {
-      return null;
-    }
-
-    return (
-      tutorAnchorContext.anchors.find(
-        (
-          anchor
-        ): anchor is KangurTutorAnchorRegistration & {
-          kind: GuidedTutorSectionKind;
-          surface: TutorSurface;
-        } => anchor.id === highlightedSection.anchorId && isSectionExplainableTutorAnchor(anchor)
-      ) ?? null
-    );
-  }, [highlightedSection, tutorAnchorContext]);
-  const activeSectionRect = highlightedSectionAnchor?.getRect() ?? null;
-  const activeSectionProtectedRect = highlightedSectionAnchor
-    ? getExpandedRect(
-      activeSectionRect,
-      SECTION_DROP_TARGET_PADDING_X,
-      SECTION_DROP_TARGET_PADDING_Y
-    )
-    : null;
-  const remainingMessages = usageSummary?.remainingMessages ?? null;
-  const isAuthenticatedVisitor = Boolean(
-    mounted && authState && !authState.isLoadingAuth && authState.isAuthenticated
-  );
-  const shouldRenderContextlessTutorUi = Boolean(
-    !isTutorHidden &&
-      isAuthenticatedVisitor &&
-      tutorSettings?.enabled &&
-      !sessionContext &&
-      authState?.user?.ownerEmailVerified !== false
-  );
-  const canSendMessages = remainingMessages !== 0 && !shouldRenderContextlessTutorUi;
-  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const isAnonymousVisitor = Boolean(
-    mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
-  );
-  const shouldRenderGuestIntroUi = !isTutorHidden && (guestIntroVisible || guestIntroHelpVisible);
-  const telemetryContext = {
-    surface: sessionContext?.surface ?? null,
-    contentId: sessionContext?.contentId ?? null,
-    title: sessionContext?.title ?? null,
-  };
-  const persistSelectionGeometry = useCallback((): void => {
-    if (selectionRect) {
-      setPersistedSelectionRect(cloneRect(selectionRect));
-      setPersistedSelectionPageRect(getPageRect(selectionRect));
-    }
-
-    if (selectionContainerRect) {
-      setPersistedSelectionContainerRect(cloneRect(selectionContainerRect));
-    }
-  }, [selectionContainerRect, selectionRect]);
-  const hasCurrentQuestion = Boolean(
-    sessionContext?.questionId?.trim() || sessionContext?.currentQuestion?.trim()
-  );
-  const hasAssignmentSummary = Boolean(
-    sessionContext?.assignmentId?.trim() || sessionContext?.assignmentSummary?.trim()
-  );
-  const tutorSessionKey = useMemo(
-    () => getTutorSessionKey(sessionContext ?? null),
-    [sessionContext]
-  );
-  const viewport = useMemo(() => getViewport(), [mounted, viewportTick]);
-  const motionProfile = useMemo(
-    () => getTutorMotionProfile(tutorSettings?.motionPresetId),
-    [tutorSettings?.motionPresetId]
-  );
-  const reducedMotionTransitions = useMemo(
-    () => ({
-      instant: { duration: 0 },
-      stableState: { opacity: 1, y: 0, scale: 1 },
-      staticSheetState: { opacity: 1, y: 0 },
-    }),
-    []
-  );
   useKangurAiTutorLifecycleEffects({
     allowCrossPagePersistence,
     allowSelectedTextSupport,
@@ -635,6 +538,17 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     setGuidedTutorTarget,
     setSelectionGuidanceHandoffText,
   });
+  const conversationMessages = useMemo(() => {
+    if (
+      !selectionConversationContext ||
+      !activeSelectedText ||
+      selectionConversationContext.selectedText !== activeSelectedText
+    ) {
+      return messages;
+    }
+
+    return messages.slice(selectionConversationContext.messageStartIndex);
+  }, [activeSelectedText, messages, selectionConversationContext]);
   const {
     bridgeQuickAction,
     bridgeSummaryChipLabel,
@@ -661,7 +575,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     isLoading,
     isOpen,
     learnerMemory,
-    messages,
+    messages: conversationMessages,
     proactiveNudges,
     sectionResponseComplete,
     sectionResponsePending,
@@ -764,7 +678,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     isOpen,
     isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
-    messages,
+    messages: conversationMessages,
     sessionContext: {
       contentId: sessionContext?.contentId,
       surface: sessionContext?.surface,
@@ -1050,6 +964,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     guidedTutorTarget,
     homeOnboardingStepIndex,
     hoveredSectionAnchor,
+    isAvatarDragging,
     isOpen,
     selectionExplainTimeoutRef,
     setDraggedAvatarPoint,
@@ -1204,7 +1119,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     isSelectionExplainPendingMode,
     isTutorHidden,
     isUsageLoading,
-    messages,
+    messages: conversationMessages,
     motionProfile,
     narratorSettings,
     panelAvatarPlacement,

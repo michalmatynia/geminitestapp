@@ -25,6 +25,7 @@ import {
 import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
+  SelectionConversationContext,
   SectionExplainContext,
   TutorAskEntrySource,
   TutorAvatarDragState,
@@ -79,7 +80,7 @@ export function useKangurAiTutorWidgetState() {
   const [hoveredSectionAnchorId, setHoveredSectionAnchorId] = useState<string | null>(null);
   const [selectionContextSpotlightTick, setSelectionContextSpotlightTick] = useState(0);
   const [selectionConversationContext, setSelectionConversationContext] =
-    useState<PendingSelectionResponse | null>(null);
+    useState<SelectionConversationContext | null>(null);
   const [selectionGuidanceHandoffText, setSelectionGuidanceHandoffText] = useState<string | null>(
     null
   );

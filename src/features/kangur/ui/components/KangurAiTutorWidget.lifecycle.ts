@@ -9,6 +9,7 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { AVATAR_SIZE, EDGE_GAP } from './KangurAiTutorWidget.shared';
 import {
+  clearPersistedTutorAvatarPosition,
   clearPersistedPendingTutorFollowUp,
   clearPersistedTutorSessionKey,
   loadPersistedPendingTutorFollowUp,
@@ -209,6 +210,9 @@ export function useKangurAiTutorLifecycleEffects({
     setHomeOnboardingStepIndex(null);
     setHasNewMessage(false);
     setDismissedSelectedText(null);
+    setDraggedAvatarPoint(null);
+    clearPersistedTutorAvatarPosition();
+    setAskModalDockStyle(null);
     clearSelection();
     setHighlightedText(null);
     setHighlightedSection(null);
@@ -230,6 +234,7 @@ export function useKangurAiTutorLifecycleEffects({
     isTutorHidden,
     setAskModalVisible,
     setDismissedSelectedText,
+    setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
     setGuidedTutorTarget,

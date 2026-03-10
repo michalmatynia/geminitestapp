@@ -248,6 +248,9 @@ describe('handleModel prompt routing', () => {
     expect(enqueueArgs?.type).toBe('graph_model');
     expect(enqueueArgs?.payload).toMatchObject({
       modelId: 'gpt-4o-mini',
+      graph: {
+        requestedModelId: 'gpt-4o-mini',
+      },
     });
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({

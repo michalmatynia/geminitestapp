@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { productAiJobTypeSchema } from '@/shared/contracts/jobs';
+import { graphModelJobPayloadSchema, productAiJobTypeSchema } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -23,6 +23,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return parsed.response;
   }
   const { productId, type, payload } = parsed.data;
+  let normalizedPayload = payload;
+  if (type === 'graph_model' && payload !== undefined) {
+    const parsedGraphPayload = graphModelJobPayloadSchema.safeParse(payload);
+    if (!parsedGraphPayload.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid graph_model payload.',
+          issues: z.treeifyError(parsedGraphPayload.error),
+        },
+        { status: 400 }
+      );
+    }
+    normalizedPayload = parsedGraphPayload.data;
+  }
 
   await logSystemEvent({
     level: 'info',
@@ -30,7 +45,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     context: { productId, type },
   });
 
-  const job = await enqueueProductAiJob(productId, type, payload);
+  const job = await enqueueProductAiJob(productId, type, normalizedPayload);
   await logSystemEvent({
     level: 'info',
     message: `[api/products/ai-jobs/enqueue] Job ${job.id} created`,

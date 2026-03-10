@@ -503,7 +503,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
     locale: 'pl',
     version: 1,
     common: {
-      defaultTutorName: 'Pomocnik',
+      defaultTutorName: 'Janek',
       openTutorAria: 'Otwórz pomocnika AI',
       closeTutorAria: 'Zamknij pomocnika',
       closeAria: 'Zamknij',
@@ -586,7 +586,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       initial: {
         headline: 'Czy chcesz pomocy z logowaniem albo założeniem konta?',
         description:
-          'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica. To pytanie pojawia się tylko raz przy pierwszej anonimowej wizycie na tym urządzeniu i łączu.',
+          'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica.',
       },
       repeated: {
         description:

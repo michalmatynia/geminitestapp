@@ -6,6 +6,7 @@ import { kangurLessonDocumentSchema } from './kangur';
 
 export const KANGUR_TEST_SUITES_SETTING_KEY = 'kangur_test_suites_v1';
 export const KANGUR_TEST_QUESTIONS_SETTING_KEY = 'kangur_test_questions_v1';
+export const KANGUR_TEST_GROUPS_SETTING_KEY = 'kangur_test_groups_v1';
 
 // ─── Illustration ─────────────────────────────────────────────────────────────
 
@@ -141,6 +142,7 @@ export const kangurTestSuiteSchema = z.object({
   year: z.number().int().nullable().default(null),
   gradeLevel: z.string().max(40).default(''),
   category: z.string().max(80).default('custom'),
+  groupId: z.string().trim().max(120).optional(),
   enabled: z.boolean().default(true),
   publicationStatus: z.enum(['draft', 'live']).default('draft'),
   publishedAt: z.string().datetime().optional(),
@@ -153,3 +155,18 @@ export type KangurTestSuites = z.infer<typeof kangurTestSuitesSchema>;
 
 export const kangurTestSuiteStoreSchema = z.record(z.string(), kangurTestSuiteSchema);
 export type KangurTestSuiteStore = z.infer<typeof kangurTestSuiteStoreSchema>;
+
+export const kangurTestGroupSchema = z.object({
+  id: z.string(),
+  title: z.string().max(120),
+  description: z.string().max(500).default(''),
+  enabled: z.boolean().default(true),
+  sortOrder: z.number().int(),
+});
+export type KangurTestGroup = z.infer<typeof kangurTestGroupSchema>;
+
+export const kangurTestGroupsSchema = z.array(kangurTestGroupSchema);
+export type KangurTestGroups = z.infer<typeof kangurTestGroupsSchema>;
+
+export const kangurTestGroupStoreSchema = z.record(z.string(), kangurTestGroupSchema);
+export type KangurTestGroupStore = z.infer<typeof kangurTestGroupStoreSchema>;

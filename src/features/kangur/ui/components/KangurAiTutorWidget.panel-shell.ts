@@ -272,6 +272,9 @@ export function useKangurAiTutorPanelShellState(input: {
   guidedTutorTarget: GuidedTutorTargetLike;
   homeOnboardingStepKind: string | null;
   isAnchoredUiMode: boolean;
+  isAvatarDragging: boolean;
+  showSelectionGuidanceCallout: boolean;
+  showSectionGuidanceCallout: boolean;
   isAskModalMode: boolean;
   isContextualPanelAnchor: boolean;
   isGuidedTutorMode: boolean;
@@ -281,8 +284,6 @@ export function useKangurAiTutorPanelShellState(input: {
   motionProfile: TutorMotionProfile;
   prefersReducedMotion: boolean;
   reducedMotionTransitions: ReducedMotionTransitions;
-  showSectionGuidanceCallout: boolean;
-  showSelectionGuidanceCallout: boolean;
   viewport: { width: number; height: number };
 }): PanelShellState {
   const {
@@ -297,6 +298,9 @@ export function useKangurAiTutorPanelShellState(input: {
     guidedTutorTarget,
     homeOnboardingStepKind,
     isAnchoredUiMode,
+    isAvatarDragging,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
     isAskModalMode,
     isContextualPanelAnchor,
     isGuidedTutorMode,
@@ -306,13 +310,12 @@ export function useKangurAiTutorPanelShellState(input: {
     motionProfile,
     prefersReducedMotion,
     reducedMotionTransitions,
-    showSectionGuidanceCallout,
-    showSelectionGuidanceCallout,
     viewport,
   } = input;
 
   const shouldPreserveInlineGuidanceAvatar =
     showSelectionGuidanceCallout || showSectionGuidanceCallout;
+
   const showAttachedAvatarShell =
     !isTutorHidden &&
     isOpen &&
@@ -387,14 +390,28 @@ export function useKangurAiTutorPanelShellState(input: {
                   ),
           }
           : getDockAvatarStyle(viewport);
+  const clampedDraggedAvatarPoint = draggedAvatarPoint
+    ? {
+      x: clamp(
+        draggedAvatarPoint.x,
+        EDGE_GAP,
+        Math.max(EDGE_GAP, viewport.width - EDGE_GAP - AVATAR_SIZE)
+      ),
+      y: clamp(
+        draggedAvatarPoint.y,
+        EDGE_GAP,
+        Math.max(EDGE_GAP, viewport.height - EDGE_GAP - AVATAR_SIZE)
+      ),
+    }
+    : null;
   const avatarStyle = guidedAvatarStyle
     ? guidedAvatarStyle
     : isAskModalMode && askModalDockStyle
       ? askModalDockStyle
-      : draggedAvatarPoint
+      : isAvatarDragging && clampedDraggedAvatarPoint
         ? {
-          left: draggedAvatarPoint.x,
-          top: draggedAvatarPoint.y,
+          left: clampedDraggedAvatarPoint.x,
+          top: clampedDraggedAvatarPoint.y,
         }
         : baseAvatarStyle;
   const avatarAnchorKind =

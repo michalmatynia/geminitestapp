@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
 
 /**
@@ -114,6 +115,39 @@ export const productAiJobResultSchema = z.record(z.string(), z.unknown());
 
 export type ProductAiJobResultDto = z.infer<typeof productAiJobResultSchema>;
 export type ProductAiJobResult = ProductAiJobResultDto;
+
+export const graphModelJobGraphSchema = z
+  .object({
+    pathId: z.string().optional(),
+    nodeId: z.string().optional(),
+    nodeTitle: z.string().optional(),
+    runId: z.string().optional(),
+    requestedModelId: z.string().optional(),
+    modelId: z.string().optional(),
+  })
+  .passthrough();
+
+export type GraphModelJobGraphDto = z.infer<typeof graphModelJobGraphSchema>;
+export type GraphModelJobGraph = GraphModelJobGraphDto;
+
+export const graphModelJobPayloadSchema = z
+  .object({
+    isTest: z.boolean().optional(),
+    imageUrls: z.array(z.string()).optional(),
+    prompt: z.string().optional(),
+    modelId: z.string().optional(),
+    temperature: z.number().optional(),
+    maxTokens: z.number().optional(),
+    vision: z.boolean().optional(),
+    source: z.string().optional(),
+    systemPrompt: z.string().optional(),
+    graph: graphModelJobGraphSchema.optional(),
+    contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+  })
+  .passthrough();
+
+export type GraphModelJobPayloadDto = z.infer<typeof graphModelJobPayloadSchema>;
+export type GraphModelJobPayload = GraphModelJobPayloadDto;
 
 export const bulkAiJobRequestSchema = z.object({
   type: productAiJobTypeSchema,

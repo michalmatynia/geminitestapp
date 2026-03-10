@@ -103,7 +103,7 @@ export function KangurAiTutorGuidedCallout({
   const homeOnboardingCanGoBack = homeOnboardingStepIndex !== null && homeOnboardingStepIndex > 0;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode='wait'>
       {shouldRender && style ? (
         <motion.div
           key={calloutKey}

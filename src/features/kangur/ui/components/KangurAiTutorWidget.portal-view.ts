@@ -153,6 +153,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   showSelectionExplainCompleteState: KangurAiTutorPanelBodyContextValue['showSelectionExplainCompleteState'];
   showSelectionGuidanceCallout: KangurAiTutorPortalContextValue['guidedCallout']['showSelectionGuidanceCallout'];
   showSources: KangurAiTutorPanelBodyContextValue['showSources'];
+  suppressPanelSurface: KangurAiTutorPortalContextValue['panel']['suppressPanelSurface'];
   tutorContent: KangurAiTutorContent;
   tutorNarrationScript: KangurAiTutorPanelBodyContextValue['tutorNarrationScript'];
   tutorNarratorContextRegistry: KangurAiTutorPanelBodyContextValue['tutorNarratorContextRegistry'];
@@ -405,6 +406,7 @@ export function useKangurAiTutorPortalViewModel(
         sessionSurfaceLabel: input.sessionSurfaceLabel,
         shouldRenderGuestIntroUi: input.shouldRenderGuestIntroUi,
         showAttachedAvatarShell: input.showAttachedAvatarShell,
+        suppressPanelSurface: input.suppressPanelSurface,
         uiMode: input.uiMode,
       },
       selectionAction: {
@@ -508,6 +510,7 @@ export function useKangurAiTutorPortalViewModel(
       input.showFloatingAvatar,
       input.showSectionGuidanceCallout,
       input.showSelectionGuidanceCallout,
+      input.suppressPanelSurface,
       input.tutorContent,
       input.uiMode,
       input.viewport,

@@ -469,6 +469,7 @@ export const handleModel: NodeHandler = async ({
       pathId: activePathId ?? undefined,
       nodeId: node.id,
       nodeTitle: node.title,
+      ...(modelConfig.modelId?.trim() ? { requestedModelId: modelConfig.modelId.trim() } : {}),
       // Keep graph-model cache scoped to a single run so repeated manual runs
       // do not silently reuse completed jobs from older runs.
       runId,

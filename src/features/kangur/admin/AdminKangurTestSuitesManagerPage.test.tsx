@@ -5,8 +5,9 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FolderTreeViewportV2Props } from '@/features/foldertree';
 
-const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock } =
+const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock, folderTreeViewportMock } =
   vi.hoisted(() => ({
     settingsStoreMock: {
       get: vi.fn(),
@@ -15,6 +16,7 @@ const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastM
     mutateAsyncMock: vi.fn(),
     useMasterFolderTreeShellMock: vi.fn(),
     toastMock: vi.fn(),
+    folderTreeViewportMock: vi.fn(),
   }));
 
 vi.mock('next/link', () => ({
@@ -37,7 +39,10 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
     FolderTreeSearchBar: ({ placeholder }: { placeholder?: string }) => (
       <div data-testid='folder-tree-search'>{placeholder}</div>
     ),
-    FolderTreeViewportV2: () => <div data-testid='folder-tree-viewport' />,
+    FolderTreeViewportV2: (props: FolderTreeViewportV2Props) => {
+      folderTreeViewportMock(props);
+      return <div data-testid='folder-tree-viewport' />;
+    },
     useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
     useMasterFolderTreeSearch: () => ({
       isActive: false,
@@ -66,12 +71,28 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
+import { toKangurTestSuiteNodeId } from './kangur-test-suites-master-tree';
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';
-import { KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
+import { KANGUR_TEST_GROUPS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
+
+const getLatestViewportProps = (): FolderTreeViewportV2Props => {
+  const latestCall = folderTreeViewportMock.mock.calls.at(-1)?.[0] as
+    | FolderTreeViewportV2Props
+    | undefined;
+  if (!latestCall) {
+    throw new Error('Expected FolderTreeViewportV2 to be rendered.');
+  }
+  return latestCall;
+};
+
+const renderTreeNode = (node: React.ReactNode): void => {
+  render(node);
+};
 
 describe('AdminKangurTestSuitesManagerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    folderTreeViewportMock.mockReset();
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_TEST_SUITES_SETTING_KEY) {
         return JSON.stringify([
@@ -231,6 +252,17 @@ describe('AdminKangurTestSuitesManagerPage', () => {
           },
         });
       }
+      if (key === KANGUR_TEST_GROUPS_SETTING_KEY) {
+        return JSON.stringify([
+          {
+            id: 'group-1',
+            title: 'Olympiad 2024',
+            description: 'Competition suites',
+            enabled: true,
+            sortOrder: 1000,
+          },
+        ]);
+      }
       return undefined;
     });
     useMasterFolderTreeShellMock.mockReturnValue({
@@ -258,6 +290,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
       'Admin/Kangur/Tests'
     );
     expect(screen.getByText('Question bank')).toBeInTheDocument();
+    expect(screen.getByText('Groups')).toBeInTheDocument();
     expect(screen.getByText('Suites')).toBeInTheDocument();
     expect(screen.getByText('Clean suites')).toBeInTheDocument();
     expect(screen.getByText('Needs review')).toBeInTheDocument();
@@ -272,9 +305,31 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     expect(screen.getByRole('button', { name: 'Publish ready queue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open review queue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open first fix' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add group/i })).toBeInTheDocument();
     expect(screen.getByText('Test Suite Library')).toBeInTheDocument();
     expect(screen.getByText('Search suites...')).toBeInTheDocument();
     expect(screen.getByTestId('folder-tree-viewport')).toBeInTheDocument();
+  });
+
+  it('creates a persisted test group from the group modal', async () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /add group/i }));
+    fireEvent.change(screen.getByPlaceholderText('e.g. Olympiad 2024'), {
+      target: { value: 'Geometry drills' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Optional description for this group'), {
+      target: { value: 'Practice suites for geometry.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Group' }));
+
+    await waitFor(() => {
+      expect(
+        mutateAsyncMock.mock.calls.some(
+          ([input]) => input?.key === KANGUR_TEST_GROUPS_SETTING_KEY
+        )
+      ).toBe(true);
+    });
   });
 
   it('can launch directly into the first fix-needed question', () => {
@@ -360,5 +415,111 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     expect(nowOfflineSuite.publicationStatus).toBe('draft');
     expect(nowOfflineSuite.publishedAt).toBeUndefined();
     expect(stillDraftSuite.publicationStatus).toBe('draft');
+  });
+
+  it('opens a dedicated group metadata panel from the suite tree', async () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    const viewportProps = getLatestViewportProps();
+    renderTreeNode(
+      viewportProps.renderNode?.({
+        node: {
+          id: 'kangur-test-suite-category-group:enabled:Olympiad%202024',
+          kind: 'kangur-test-suite-category-group',
+          name: 'Olympiad 2024',
+          metadata: {
+            kangurTestSuiteCategoryGroup: {
+              suiteCount: 0,
+            },
+          },
+        } as never,
+        depth: 0,
+        index: 0,
+        siblingCount: 1,
+        isSelected: false,
+        isExpanded: true,
+        isDragging: false,
+        isSearchMatch: false,
+        hasChildren: true,
+        select: vi.fn(),
+        toggleExpand: vi.fn(),
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit test group Olympiad 2024' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save group' })).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Delete group' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+  });
+
+  it('opens the suite move dialog from the suite tree', async () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    const viewportProps = getLatestViewportProps();
+    renderTreeNode(
+      viewportProps.renderNode?.({
+        node: {
+          id: toKangurTestSuiteNodeId('suite-1'),
+          name: 'Tabliczka mnozenia',
+          metadata: {},
+        } as never,
+        depth: 0,
+        index: 0,
+        siblingCount: 1,
+        isSelected: false,
+        isExpanded: false,
+        isDragging: false,
+        isSearchMatch: false,
+        hasChildren: false,
+        select: vi.fn(),
+        toggleExpand: vi.fn(),
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move suite to group' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Move Suite To Another Group')).toBeInTheDocument();
+    });
+  });
+
+  it('opens the bulk question move dialog from suite operations', async () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    const viewportProps = getLatestViewportProps();
+    renderTreeNode(
+      viewportProps.renderNode?.({
+        node: {
+          id: toKangurTestSuiteNodeId('suite-1'),
+          name: 'Tabliczka mnozenia',
+          metadata: {},
+        } as never,
+        depth: 0,
+        index: 0,
+        siblingCount: 1,
+        isSelected: false,
+        isExpanded: false,
+        isDragging: false,
+        isSearchMatch: false,
+        hasChildren: false,
+        select: vi.fn(),
+        toggleExpand: vi.fn(),
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage questions' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Move all 4 questions' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move all 4 questions' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Move Questions To Another Suite')).toBeInTheDocument();
+    });
   });
 });

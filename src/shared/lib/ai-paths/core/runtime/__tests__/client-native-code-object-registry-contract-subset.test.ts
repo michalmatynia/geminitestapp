@@ -136,6 +136,53 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-model']?.['status']).toBe('queued');
   });
 
+  it('forwards graph.requestedModelId for client model jobs when the node selects a model', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const modelNode = {
+      ...builders.buildModelNode(),
+      config: {
+        model: {
+          waitForResult: false,
+          temperature: 0.7,
+          maxTokens: 256,
+          vision: false,
+          modelId: 'gpt-4o-mini',
+        },
+      },
+    };
+
+    const result = await evaluateGraphClient({
+      nodes: [builders.buildPromptNode(), modelNode],
+      edges: [
+        {
+          id: 'edge-prompt-model-requested-model',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'graph_model',
+        payload: expect.objectContaining({
+          modelId: 'gpt-4o-mini',
+          graph: expect.objectContaining({
+            requestedModelId: 'gpt-4o-mini',
+          }),
+        }),
+      })
+    );
+    expect(result.outputs?.['node-model']?.['status']).toBe('queued');
+  });
+
   it('blocks model nodes when prompt input is missing', async () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();

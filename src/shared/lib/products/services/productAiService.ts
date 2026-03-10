@@ -83,6 +83,22 @@ const resolveGraphModelPayloadHash = (payload: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const resolveGraphModelRequestedModelId = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const record = payload as Record<string, unknown>;
+  const graph =
+    record['graph'] && typeof record['graph'] === 'object' && !Array.isArray(record['graph'])
+      ? (record['graph'] as Record<string, unknown>)
+      : null;
+  const candidates = [graph?.['requestedModelId'], record['modelId'], graph?.['modelId']];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+};
+
 const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> | undefined => {
   if (!payload || typeof payload !== 'object') return undefined;
   const record = payload as Record<string, unknown>;
@@ -91,6 +107,7 @@ const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> |
   return {
     source: record['source'],
     modelId: record['modelId'],
+    requestedModelId: resolveGraphModelRequestedModelId(payload),
     vision: record['vision'],
     promptLength: typeof prompt === 'string' ? prompt.length : null,
     imageCount: imageUrls.length,
@@ -103,11 +120,16 @@ const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> |
 const canReuseGraphModelJob = (
   job: ProductAiJobRecord,
   cacheKey: string,
-  payloadHash: string
+  payloadHash: string,
+  requestedModelId: string | null
 ): boolean => {
   if (job.type !== 'graph_model') return false;
   if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
   if (resolveGraphModelPayloadHash(job.payload) !== payloadHash) return false;
+  const existingRequestedModelId = resolveGraphModelRequestedModelId(job.payload);
+  if (requestedModelId && existingRequestedModelId && requestedModelId !== existingRequestedModelId) {
+    return false;
+  }
   if (job.status === 'pending') return true;
   if (job.status === 'running') {
     if (GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS <= 0) return false;
@@ -153,6 +175,7 @@ export async function enqueueProductAiJob(
   if (type === 'graph_model') {
     const cacheKey = resolveGraphModelCacheKey(payload);
     const payloadHash = resolveGraphModelPayloadHash(payload);
+    const requestedModelId = resolveGraphModelRequestedModelId(payload);
     if (cacheKey && payloadHash) {
       const existingJobs = await jobRepository.findJobs(productId, {
         type: 'graph_model',
@@ -160,7 +183,7 @@ export async function enqueueProductAiJob(
         limit: GRAPH_MODEL_REUSE_SCAN_LIMIT,
       });
       const reusable = existingJobs.find((job: ProductAiJobRecord) =>
-        canReuseGraphModelJob(job, cacheKey, payloadHash)
+        canReuseGraphModelJob(job, cacheKey, payloadHash, requestedModelId)
       );
       if (reusable) {
         try {

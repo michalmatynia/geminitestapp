@@ -870,16 +870,18 @@ export const upgradeStarterWorkflowPathConfig = (
           resolution.entry.starterLineage.starterKey === 'parameter_inference')
     );
 
-  if (!safeToOverlay) {
-    return { config, changed: false, resolution };
-  }
-
   const overlaySource = selectStarterOverlaySource(config, latest);
   const shouldReplaceGraphCompletely =
     resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
     hasParameterInferencePromptStructure(config) &&
-    hasParameterInferenceLegacyMappingUpdate(config) &&
     countNodeIdOverlap(config, overlaySource) === 0;
+
+  // Allow full graph replacement even when safeToOverlay is false (e.g. provenance already
+  // bumped to current templateVersion by a prior overlay that touched no nodes). Paths with zero
+  // canonical node overlap cannot be repaired by overlay — they always need full replacement.
+  if (!safeToOverlay && !shouldReplaceGraphCompletely) {
+    return { config, changed: false, resolution };
+  }
 
   const next = shouldReplaceGraphCompletely
     ? buildStarterGraphReplacement(config, latest)

@@ -32,6 +32,42 @@ import type { ResolvePortablePathInputOptions } from './portable-engine-resoluti
 const formatZodError = (error: z.ZodError): string =>
   error.issues.map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`).join('; ');
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeLegacyWriteOutcomePolicy = (input: unknown): unknown => {
+  if (Array.isArray(input)) {
+    return input.map((entry) => normalizeLegacyWriteOutcomePolicy(entry));
+  }
+
+  if (!isRecord(input)) {
+    return input;
+  }
+
+  const next: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    next[key] = normalizeLegacyWriteOutcomePolicy(value);
+  }
+
+  const databaseConfig = input['database'];
+  if (isRecord(databaseConfig)) {
+    const writeOutcomePolicy = databaseConfig['writeOutcomePolicy'];
+    if (isRecord(writeOutcomePolicy) && writeOutcomePolicy['onZeroAffected'] === 'pass') {
+      next['database'] = {
+        ...(next['database'] as Record<string, unknown>),
+        writeOutcomePolicy: {
+          ...(next['database'] && isRecord(next['database'])
+            ? (next['database']['writeOutcomePolicy'] as Record<string, unknown>)
+            : {}),
+          onZeroAffected: 'warn',
+        },
+      };
+    }
+  }
+
+  return next;
+};
+
 export const migratePortablePathInput = (
   input: unknown,
   options?: Pick<ResolvePortablePathInputOptions, 'includeConnections'>
@@ -56,7 +92,7 @@ export const migratePortablePathInput = (
         },
       ]
       : [];
-  const migratedInput = triggerContextModeRemediation.value;
+  const migratedInput = normalizeLegacyWriteOutcomePolicy(triggerContextModeRemediation.value);
 
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(migratedInput);
   if (packageParsed.success) {

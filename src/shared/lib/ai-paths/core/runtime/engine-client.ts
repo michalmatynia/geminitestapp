@@ -160,6 +160,9 @@ const handleModel: NodeHandler = async ({
       pathId: activePathId ?? undefined,
       nodeId: node.id,
       nodeTitle: node.title,
+      ...(typeof modelConfig['modelId'] === 'string' && modelConfig['modelId'].trim().length > 0
+        ? { requestedModelId: modelConfig['modelId'].trim() }
+        : {}),
       runId,
     },
     ...(contextRegistry ? { contextRegistry } : {}),

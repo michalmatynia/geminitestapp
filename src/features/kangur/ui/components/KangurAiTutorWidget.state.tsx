@@ -33,11 +33,29 @@ import type {
   TutorPoint,
 } from './KangurAiTutorWidget.types';
 
+const getInitialTutorHiddenState = (): boolean => loadPersistedTutorVisibilityHidden();
+
+const getInitialDraggedAvatarPoint = (): TutorPoint | null => {
+  if (loadPersistedTutorVisibilityHidden()) {
+    return null;
+  }
+
+  const persisted = loadPersistedTutorAvatarPosition();
+  if (!persisted) {
+    return null;
+  }
+
+  return {
+    x: persisted.left,
+    y: persisted.top,
+  };
+};
+
 export function useKangurAiTutorWidgetState() {
   const [mounted, setMounted] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [hasNewMessage, setHasNewMessage] = useState(false);
-  const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
+  const [isTutorHidden, setIsTutorHidden] = useState(getInitialTutorHiddenState);
   const [launcherPromptVisible, setLauncherPromptVisible] = useState(false);
   const [guestIntroVisible, setGuestIntroVisible] = useState(false);
   const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
@@ -51,17 +69,8 @@ export function useKangurAiTutorWidgetState() {
     right?: number | string;
     bottom?: number | string;
   } | null>(null);
-  const [draggedAvatarPoint, setDraggedAvatarPoint] = useState<TutorPoint | null>(() => {
-    const persisted = loadPersistedTutorAvatarPosition();
-    if (!persisted) {
-      return null;
-    }
-
-    return {
-      x: persisted.left,
-      y: persisted.top,
-    };
-  });
+  const [draggedAvatarPoint, setDraggedAvatarPoint] =
+    useState<TutorPoint | null>(getInitialDraggedAvatarPoint);
   const [isAvatarDragging, setIsAvatarDragging] = useState(false);
   const [messageFeedbackByKey, setMessageFeedbackByKey] = useState<
     Record<string, TutorMessageFeedback>

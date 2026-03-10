@@ -52,7 +52,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     tutorRuntime,
     widgetState,
   });
-
   if (!shouldRender) {
     return null;
   }

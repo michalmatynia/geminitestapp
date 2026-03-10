@@ -823,15 +823,19 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
     <>
       <div className='flex h-full flex-col gap-4 overflow-hidden'>
         {/* Header */}
-        <div className='flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3'>
-          <div>
-            <div className='text-sm font-semibold text-white'>{currentSuite.title}</div>
-            <div className='text-xs text-muted-foreground'>
-              {questions.length} {questions.length === 1 ? 'question' : 'questions'}
-              {currentSuite.year ? ` · ${currentSuite.year}` : ''}
-              {currentSuite.gradeLevel ? ` · ${currentSuite.gradeLevel}` : ''}
-            </div>
-            <div className='mt-2 flex flex-wrap gap-1.5'>
+        <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(9,16,32,0.96),rgba(10,30,55,0.88))] p-5 sm:p-6 shadow-[0_24px_80px_-44px_rgba(14,165,233,0.42)]'>
+          <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
+            <div className='max-w-3xl space-y-2'>
+              <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/78'>
+                Suite question workspace
+              </div>
+              <div className='text-xl font-semibold text-white'>{currentSuite.title}</div>
+              <div className='text-sm leading-6 text-slate-300/82'>
+                {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+                {currentSuite.year ? ` · ${currentSuite.year}` : ''}
+                {currentSuite.gradeLevel ? ` · ${currentSuite.gradeLevel}` : ''}
+              </div>
+              <div className='flex flex-wrap gap-2'>
               <Badge
                 variant='outline'
                 className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
@@ -927,18 +931,18 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 <Badge
                   variant='outline'
                   className='h-5 px-2 text-[10px] border-rose-400/40 bg-rose-500/10 text-rose-200'
-                >
-                  Live needs attention
-                </Badge>
+              >
+                Live needs attention
+              </Badge>
               ) : null}
             </div>
-          </div>
-          <div className='flex items-center gap-1'>
+            </div>
+            <div className='flex w-full flex-wrap items-center gap-2.5 xl:w-auto xl:justify-end'>
             {canPublishAndGoLiveCurrentSuite ? (
               <Button
                 type='button'
                 size='sm'
-                className='h-7 px-2 text-[11px]'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
                 onClick={(): void => {
                   void handlePublishAndGoLiveCurrentSuite();
                 }}
@@ -947,147 +951,166 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 Publish and go live
               </Button>
             ) : null}
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              className='h-7 px-2 text-[11px]'
-              onClick={(): void => {
-                void handlePublishReadyForCurrentSuite();
-              }}
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
+                onClick={(): void => {
+                  void handlePublishReadyForCurrentSuite();
+                }}
               disabled={isSaving || !canPublishReadyForCurrentSuite}
             >
               Publish ready questions
             </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              className='h-7 px-2 text-[11px]'
-              onClick={(): void => {
-                void handleGoLiveCurrentSuite();
-              }}
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
+                onClick={(): void => {
+                  void handleGoLiveCurrentSuite();
+                }}
               disabled={isSaving || !currentSuiteHealth.canGoLive}
             >
               Go live for learners
             </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              className='h-7 px-2 text-[11px]'
-              onClick={(): void => {
-                void handleTakeCurrentSuiteOffline();
-              }}
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
+                onClick={(): void => {
+                  void handleTakeCurrentSuiteOffline();
+                }}
               disabled={isSaving || !currentSuiteHealth.isLive}
             >
               Take suite offline
             </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              className='h-7 px-2 text-[11px]'
-              onClick={openCreate}
-              disabled={isSaving}
-            >
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
+                onClick={openCreate}
+                disabled={isSaving}
+              >
               <Plus className='mr-1 size-3.5' />
               Add question
             </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              className='h-7 px-2 text-[11px] text-gray-300'
-              onClick={onClose}
-            >
-              ← Back to suites
-            </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold text-gray-300 sm:w-auto'
+                onClick={onClose}
+              >
+                ← Back to suites
+              </Button>
+            </div>
           </div>
         </div>
 
         {currentSuiteHealth.liveNeedsAttention ? (
-          <div className='rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
+          <div className='rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
             This suite is still marked live, but its published question set is incomplete or needs review.
             Learner runtime will keep it offline until you repair and republish it.
           </div>
         ) : currentSuiteHealth.isLive ? (
-          <div className='rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100'>
+          <div className='rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100'>
             This suite is live for learners. Draft edits, deletions, or unpublished duplicates will
             take it offline until the published set is complete again.
           </div>
         ) : currentSuiteHealth.canGoLive ? (
-          <div className='rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
+          <div className='rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
             This suite is fully published and ready to go live for learners.
           </div>
         ) : canPublishAndGoLiveCurrentSuite ? (
-          <div className='rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
+          <div className='rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
             This suite can publish its ready queue and go live for learners in one step.
           </div>
         ) : null}
 
-        <div className='flex flex-col gap-3'>
-          <Input
-            type='search'
-            value={searchQuery}
-            onChange={(event): void => setSearchQuery(event.target.value)}
-            placeholder='Search prompts, answers, or audit flags...'
-            aria-label='Search questions'
-            className='h-8 text-sm'
-          />
-          <div className='flex flex-wrap items-center gap-2'>
-            {QUESTION_LIST_SORT_OPTIONS.map((option) => {
-              const isActive = option.value === sortMode;
-              return (
-                <Button
-                  key={option.value}
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className={
-                    isActive
-                      ? 'h-7 border-cyan-400/50 bg-cyan-500/15 px-2 text-[11px] text-cyan-100'
-                      : 'h-7 px-2 text-[11px]'
-                  }
-                  onClick={(): void => setSortMode(option.value)}
-                >
-                  {option.label}
-                </Button>
-              );
-            })}
+        <div className='rounded-[28px] border border-border/60 bg-card/25 p-4 sm:p-5'>
+          <div className='mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>
+            Filter and triage
           </div>
-          <div className='flex flex-wrap items-center gap-2'>
-            {QUESTION_LIST_FILTER_OPTIONS.map((option) => {
-              const isActive = option.value === listFilter;
-              return (
-                <Button
-                  key={option.value}
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className={
-                    isActive
-                      ? 'h-7 border-sky-400/50 bg-sky-500/15 px-2 text-[11px] text-sky-100'
-                      : 'h-7 px-2 text-[11px]'
-                  }
-                  onClick={(): void => setListFilter(option.value)}
-                >
-                  {option.label}
-                </Button>
-              );
-            })}
+          <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end'>
+            <Input
+              type='search'
+              value={searchQuery}
+              onChange={(event): void => setSearchQuery(event.target.value)}
+              placeholder='Search prompts, answers, or audit flags...'
+              aria-label='Search questions'
+              className='h-10 text-sm'
+            />
+            <div className='grid gap-3 lg:min-w-[26rem] lg:grid-cols-2'>
+              <div className='space-y-2'>
+                <div className='text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
+                  Sort
+                </div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {QUESTION_LIST_SORT_OPTIONS.map((option) => {
+                    const isActive = option.value === sortMode;
+                    return (
+                      <Button
+                        key={option.value}
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        className={
+                          isActive
+                            ? 'h-8 rounded-full border-cyan-400/50 bg-cyan-500/15 px-3 text-[11px] text-cyan-100'
+                            : 'h-8 rounded-full px-3 text-[11px]'
+                        }
+                        onClick={(): void => setSortMode(option.value)}
+                      >
+                        {option.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <div className='text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
+                  Filter
+                </div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {QUESTION_LIST_FILTER_OPTIONS.map((option) => {
+                    const isActive = option.value === listFilter;
+                    return (
+                      <Button
+                        key={option.value}
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        className={
+                          isActive
+                            ? 'h-8 rounded-full border-sky-400/50 bg-sky-500/15 px-3 text-[11px] text-sky-100'
+                            : 'h-8 rounded-full px-3 text-[11px]'
+                        }
+                        onClick={(): void => setListFilter(option.value)}
+                      >
+                        {option.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
           {listFilter !== 'all' || sortMode !== 'manual' ? (
-            <div className='self-center text-[11px] text-muted-foreground'>
+            <div className='mt-3 text-[11px] text-muted-foreground'>
               Reorder questions in the Manual order / All view.
             </div>
           ) : null}
         </div>
 
         {/* Question list */}
-        <div className='flex-1 overflow-auto space-y-2 pr-1'>
+        <div className='flex-1 overflow-auto rounded-[28px] border border-border/60 bg-card/20 p-3 sm:p-4'>
+          <div className='space-y-3 pr-1'>
           {visibleQuestions.length === 0 ? (
-            <div className='rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground'>
+            <div className='rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground'>
               {emptyFilterLabel}
             </div>
           ) : (
@@ -1100,9 +1123,9 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               return (
                 <div
                   key={q.id}
-                  className='flex items-start gap-3 rounded-xl border border-border/50 bg-card/30 p-3'
+                  className='group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5'
                 >
-                  <div className='flex flex-col gap-0.5 shrink-0'>
+                  <div className='flex shrink-0 flex-row gap-1.5 rounded-xl border border-border/50 bg-background/25 p-1 sm:flex-col'>
                     <Button
                       type='button'
                       size='sm'
@@ -1136,7 +1159,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                   </div>
 
                   <div className='min-w-0 flex-1'>
-                    <div className='flex flex-wrap items-center gap-1.5 mb-1'>
+                    <div className='mb-2.5 flex flex-wrap items-center gap-1.5'>
                       <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
                       {listFilter !== 'all' && absoluteIndex >= 0 ? (
                         <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
@@ -1213,15 +1236,15 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                         {workflowLabel}
                       </Badge>
                     </div>
-                    <p className='text-sm text-gray-200 line-clamp-2'>
+                    <p className='line-clamp-2 text-sm leading-6 text-gray-200 sm:text-[15px]'>
                       {q.prompt || '(empty prompt)'}
                     </p>
                   </div>
 
-                  <div className='flex shrink-0 items-center gap-1'>
+                  <div className='flex shrink-0 items-center justify-end gap-1 rounded-xl border border-border/50 bg-background/25 p-1 sm:justify-start'>
                     <button
                       type='button'
-                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
                       onClick={(): void => openEdit(q)}
                       title='Edit question'
                       disabled={isSaving}
@@ -1238,7 +1261,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                     </button>
                     <button
                       type='button'
-                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white'
                       onClick={(): void => {
                         void handleDuplicate(q);
                       }}
@@ -1249,7 +1272,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                     </button>
                     <button
                       type='button'
-                      className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
                       onClick={(): void => setQuestionToDelete(q)}
                       title='Delete question'
                       disabled={isSaving}
@@ -1261,6 +1284,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               );
             })
           )}
+        </div>
         </div>
       </div>
 

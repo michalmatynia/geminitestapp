@@ -270,7 +270,9 @@ export function useKangurAiTutorPanelInteractions({
     setGuestIntroHelpVisible(false);
     setHomeOnboardingStepIndex(null);
     setHasNewMessage(false);
+    setDraggedAvatarPoint(null);
     clearSelection();
+    clearPersistedTutorAvatarPosition();
     setHighlightedText(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionContainerRect(null);
@@ -288,6 +290,7 @@ export function useKangurAiTutorPanelInteractions({
     setGuestIntroVisible,
     setGuidedTutorTarget,
     setHasNewMessage,
+    setDraggedAvatarPoint,
     setHighlightedText,
     setHomeOnboardingStepIndex,
     setPersistedSelectionContainerRect,

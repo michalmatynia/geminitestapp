@@ -5,7 +5,6 @@ import { AnimatePresence } from 'framer-motion';
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';
 import { KangurAiTutorFloatingAvatar } from './KangurAiTutorFloatingAvatar';
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
-import { KangurAiTutorGuidedCallout } from './KangurAiTutorGuidedCallout';
 import { KangurAiTutorMessageList } from './KangurAiTutorMessageList';
 import { KangurAiTutorPanelAuxiliaryControls } from './KangurAiTutorPanelAuxiliaryControls';
 import { KangurAiTutorPanelBodyProvider } from './KangurAiTutorPanelBody.context';
@@ -24,7 +23,6 @@ export function KangurAiTutorPortalContent() {
   const {
     avatar,
     guestIntro,
-    guidedCallout,
     panel,
     selectionAction,
     spotlights,
@@ -70,46 +68,6 @@ export function KangurAiTutorPortalContent() {
         sectionDropHighlightStyle={spotlights.sectionDropHighlightStyle}
         selectionContextSpotlightStyle={spotlights.selectionContextSpotlightStyle}
         selectionSpotlightStyle={spotlights.selectionSpotlightStyle}
-      />
-
-      <KangurAiTutorGuidedCallout
-        calloutKey={guidedCallout.calloutKey}
-        calloutTestId={guidedCallout.calloutTestId}
-        detail={guidedCallout.detail}
-        headerLabel={guidedCallout.headerLabel}
-        mode={guidedCallout.mode}
-        onAction={(action): void => {
-          switch (action) {
-            case 'advance_home_onboarding':
-              guidedCallout.onAdvanceHomeOnboarding();
-              return;
-            case 'finish_home_onboarding':
-              guidedCallout.onFinishHomeOnboarding();
-              return;
-            case 'back_home_onboarding':
-              guidedCallout.onBackHomeOnboarding();
-              return;
-            case 'close':
-              guidedCallout.onClose();
-              return;
-            default:
-              return;
-          }
-        }}
-        placement={guidedCallout.placement}
-        prefersReducedMotion={guidedCallout.prefersReducedMotion}
-        reducedMotionTransitions={guidedCallout.reducedMotionTransitions}
-        sectionGuidanceLabel={guidedCallout.sectionGuidanceLabel}
-        sectionResponsePendingKind={guidedCallout.sectionResponsePendingKind}
-        selectionPreview={guidedCallout.selectionPreview}
-        shouldRender={guidedCallout.shouldRender}
-        showSectionGuidanceCallout={guidedCallout.showSectionGuidanceCallout}
-        showSelectionGuidanceCallout={guidedCallout.showSelectionGuidanceCallout}
-        stepLabel={guidedCallout.stepLabel}
-        style={guidedCallout.style}
-        title={guidedCallout.title}
-        transitionDuration={guidedCallout.transitionDuration}
-        transitionEase={guidedCallout.transitionEase}
       />
 
       <KangurAiTutorFloatingAvatar
@@ -172,6 +130,7 @@ export function KangurAiTutorPortalContent() {
         sessionSurfaceLabel={panel.sessionSurfaceLabel}
         shouldRenderGuestIntroUi={panel.shouldRenderGuestIntroUi}
         showAttachedAvatarShell={panel.showAttachedAvatarShell}
+        suppressPanelSurface={panel.suppressPanelSurface}
         uiMode={panel.uiMode}
         onAttachedAvatarClick={panel.onAttachedAvatarClick}
         onBackdropClose={panel.onBackdropClose}

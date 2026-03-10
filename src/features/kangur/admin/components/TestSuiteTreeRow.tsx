@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowRightLeft,
   ChevronDown,
   ChevronRight,
   Folder,
@@ -26,8 +27,12 @@ import type { KangurTestSuiteHealth } from '../test-suite-health';
 export function TestSuiteTreeRow(props: {
   input: FolderTreeViewportRenderNodeInput;
   suiteById: Map<string, KangurTestSuite>;
+  groupTitleBySuiteId?: Map<string, string>;
   questionCountBySuiteId: Map<string, number>;
   suiteHealthById?: Map<string, KangurTestSuiteHealth>;
+  onEditGroup?: (groupTitle: string) => void;
+  onDeleteGroup?: (groupTitle: string) => void;
+  onMoveSuiteToGroup?: (suite: KangurTestSuite) => void;
   onEdit: (suite: KangurTestSuite) => void;
   onManageQuestions: (suite: KangurTestSuite) => void;
   onReviewQueue?: (suite: KangurTestSuite) => void;
@@ -40,8 +45,12 @@ export function TestSuiteTreeRow(props: {
   const {
     input,
     suiteById,
+    groupTitleBySuiteId,
     questionCountBySuiteId,
     suiteHealthById,
+    onEditGroup,
+    onDeleteGroup,
+    onMoveSuiteToGroup,
     onEdit,
     onManageQuestions,
     onReviewQueue,
@@ -55,6 +64,14 @@ export function TestSuiteTreeRow(props: {
   const suite = suiteId ? (suiteById.get(suiteId) ?? null) : null;
 
   if (!suite) {
+    const isCategoryGroup = input.node.kind === 'kangur-test-suite-category-group';
+    const categoryGroupMeta =
+      (input.node.metadata as Record<string, unknown> | undefined)?.[
+        'kangurTestSuiteCategoryGroup'
+      ] as Record<string, unknown> | undefined;
+    const groupSuiteCount =
+      typeof categoryGroupMeta?.['suiteCount'] === 'number' ? categoryGroupMeta['suiteCount'] : 0;
+
     // Folder / group node
     return (
       <TreeRow
@@ -114,6 +131,41 @@ export function TestSuiteTreeRow(props: {
               {input.node.name}
             </div>
           </button>
+          {isCategoryGroup ? (
+            <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+              <button
+                type='button'
+                className='inline-flex size-7 items-center justify-center rounded-md text-slate-300 transition hover:bg-slate-800/50 hover:text-white'
+                onClick={(event): void => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onEditGroup?.(input.node.name);
+                }}
+                aria-label={`Edit test group ${input.node.name}`}
+                disabled={isUpdating}
+              >
+                <Pencil className='size-3.5' />
+              </button>
+              <button
+                type='button'
+                className='inline-flex size-7 items-center justify-center rounded-md text-rose-300 transition hover:bg-rose-950/40 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-40'
+                onClick={(event): void => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onDeleteGroup?.(input.node.name);
+                }}
+                aria-label={`Delete test group ${input.node.name}`}
+                disabled={isUpdating || groupSuiteCount > 0}
+                title={
+                  groupSuiteCount > 0
+                    ? 'Move suites out of this group before deleting it.'
+                    : 'Delete test group'
+                }
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+          ) : null}
         </div>
       </TreeRow>
     );
@@ -121,6 +173,7 @@ export function TestSuiteTreeRow(props: {
 
   const questionCount = questionCountBySuiteId.get(suite.id) ?? 0;
   const suiteHealth = suiteHealthById?.get(suite.id);
+  const groupTitle = groupTitleBySuiteId?.get(suite.id) ?? suite.category;
 
   return (
     <TreeRow
@@ -151,9 +204,9 @@ export function TestSuiteTreeRow(props: {
             <div className='flex items-center gap-1.5 text-[11px] text-gray-400'>
               {suite.year ? <span>{suite.year}</span> : null}
               {suite.gradeLevel ? <span>· {suite.gradeLevel}</span> : null}
-              {suite.category ? (
+              {groupTitle ? (
                 <Badge variant='outline' className='h-4 px-1 text-[9px]'>
-                  {suite.category}
+                  {groupTitle}
                 </Badge>
               ) : null}
             </div>
@@ -333,6 +386,20 @@ export function TestSuiteTreeRow(props: {
               <AlertTriangle className='size-3.5' />
             </button>
           ) : null}
+          <button
+            type='button'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-200'
+            onMouseDown={(e): void => e.stopPropagation()}
+            onClick={(e): void => {
+              e.stopPropagation();
+              onMoveSuiteToGroup?.(suite);
+            }}
+            title='Move suite to group'
+            aria-label='Move suite to group'
+            disabled={isUpdating || !onMoveSuiteToGroup}
+          >
+            <ArrowRightLeft className='size-3.5' />
+          </button>
           <button
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'

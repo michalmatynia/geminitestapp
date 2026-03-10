@@ -5,6 +5,7 @@ import { KANGUR_TEST_SUITE_SORT_ORDER_GAP } from '../test-suites';
 
 const SUITE_NODE_PREFIX = 'kangur-test-suite:';
 const SUITE_GROUP_NODE_PREFIX = 'kangur-test-suite-group:';
+const SUITE_CATEGORY_GROUP_NODE_PREFIX = 'kangur-test-suite-category-group:';
 
 type SuiteVisibilityGroup = 'enabled' | 'disabled';
 
@@ -56,8 +57,22 @@ const SUITE_VISIBILITY_GROUPS: Array<{ value: SuiteVisibilityGroup; label: strin
   { value: 'disabled', label: 'Disabled suites' },
 ];
 
+const normalizeSuiteGroupLabel = (value: string): string => {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : 'custom';
+};
+
+const toKangurTestSuiteCategoryGroupNodeId = (
+  visibility: SuiteVisibilityGroup,
+  category: string
+): string =>
+  `${SUITE_CATEGORY_GROUP_NODE_PREFIX}${visibility}:${encodeURIComponent(
+    normalizeSuiteGroupLabel(category)
+  )}`;
+
 export const buildKangurTestSuiteCatalogMasterNodes = (
-  suites: KangurTestSuite[]
+  suites: KangurTestSuite[],
+  groupTitleBySuiteId?: Map<string, string>
 ): MasterTreeNode[] => {
   const nodes: MasterTreeNode[] = [];
   let nextSortOrder = KANGUR_TEST_SUITE_SORT_ORDER_GAP;
@@ -87,36 +102,76 @@ export const buildKangurTestSuiteCatalogMasterNodes = (
       },
     });
 
+    const suitesByCategory = new Map<string, KangurTestSuite[]>();
     groupSuites.forEach((suite) => {
-      nodes.push({
-        id: toKangurTestSuiteNodeId(suite.id),
-        type: 'file' as const,
-        kind: 'kangur-test-suite',
-        parentId: visibilityNodeId,
-        name: suite.title,
-        path: `${group.value}/${suite.id}`,
-        sortOrder: nextSortOrder,
-        metadata: {
-          kangurTestSuite: {
-            suiteId: suite.id,
-            category: suite.category,
-            year: suite.year,
-            gradeLevel: suite.gradeLevel,
-            enabled: suite.enabled,
-          },
-          search: {
-            suiteId: suite.id,
-            title: suite.title,
-            description: suite.description,
-            category: suite.category,
-            gradeLevel: suite.gradeLevel,
-            year: suite.year !== null ? String(suite.year) : '',
-            visibility: group.value,
-          },
-        },
-      });
-      nextSortOrder += KANGUR_TEST_SUITE_SORT_ORDER_GAP;
+      const category = normalizeSuiteGroupLabel(
+        groupTitleBySuiteId?.get(suite.id) ?? suite.category
+      );
+      const categorySuites = suitesByCategory.get(category) ?? [];
+      categorySuites.push(suite);
+      suitesByCategory.set(category, categorySuites);
     });
+
+    Array.from(suitesByCategory.keys())
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((category) => {
+        const categoryNodeId = toKangurTestSuiteCategoryGroupNodeId(group.value, category);
+        const categorySuites = suitesByCategory.get(category) ?? [];
+
+        nodes.push({
+          id: categoryNodeId,
+          type: 'folder',
+          kind: 'kangur-test-suite-category-group',
+          parentId: visibilityNodeId,
+          name: category,
+          path: `${group.value}/${category}`,
+          sortOrder: nextSortOrder,
+          metadata: {
+            kangurTestSuiteCategoryGroup: {
+              visibility: group.value,
+              category,
+              suiteCount: categorySuites.length,
+            },
+            search: {
+              visibility: group.value,
+              category,
+              groupLabel: category,
+            },
+          },
+        });
+        nextSortOrder += KANGUR_TEST_SUITE_SORT_ORDER_GAP;
+
+        categorySuites.forEach((suite) => {
+          nodes.push({
+            id: toKangurTestSuiteNodeId(suite.id),
+            type: 'file' as const,
+            kind: 'kangur-test-suite',
+            parentId: categoryNodeId,
+            name: suite.title,
+            path: `${group.value}/${category}/${suite.id}`,
+            sortOrder: nextSortOrder,
+            metadata: {
+              kangurTestSuite: {
+                suiteId: suite.id,
+                category: suite.category,
+                year: suite.year,
+                gradeLevel: suite.gradeLevel,
+                enabled: suite.enabled,
+              },
+              search: {
+                suiteId: suite.id,
+                title: suite.title,
+                description: suite.description,
+                category: suite.category,
+                gradeLevel: suite.gradeLevel,
+                year: suite.year !== null ? String(suite.year) : '',
+                visibility: group.value,
+              },
+            },
+          });
+          nextSortOrder += KANGUR_TEST_SUITE_SORT_ORDER_GAP;
+        });
+      });
   });
 
   return nodes;

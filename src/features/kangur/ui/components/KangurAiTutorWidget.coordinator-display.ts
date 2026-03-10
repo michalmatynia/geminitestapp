@@ -1,0 +1,564 @@
+'use client';
+
+import { useMemo, type CSSProperties } from 'react';
+
+import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
+import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import { cn } from '@/shared/utils';
+
+import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.conversation-view';
+import {
+  CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
+  CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
+  FLOATING_TUTOR_AVATAR_RIM_COLOR,
+  HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
+  isSelectionWithinTutorUi,
+} from './KangurAiTutorWidget.coordinator.helpers';
+import { useKangurAiTutorGuidedDisplayState } from './KangurAiTutorWidget.display';
+import {
+  useKangurAiTutorGuidanceCompletionEffects,
+  useKangurAiTutorNarrationObserverEffect,
+} from './KangurAiTutorWidget.effects';
+import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
+import {
+  useKangurAiTutorBubblePlacementState,
+  useKangurAiTutorFocusLayoutState,
+} from './KangurAiTutorWidget.focus-layout';
+import { useKangurAiTutorSelectionGuidanceHandoffEffect } from './KangurAiTutorWidget.guided';
+import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
+import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
+import { useKangurAiTutorPanelDerivedState } from './KangurAiTutorWidget.panel-derived';
+import { useKangurAiTutorPanelShellState } from './KangurAiTutorWidget.panel-shell';
+
+import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
+
+type UseKangurAiTutorWidgetCoordinatorDisplayInput = {
+  authIsAuthenticated?: boolean;
+  enabled: boolean;
+  environment: ReturnType<typeof useKangurAiTutorWidgetEnvironment>;
+  isLoading: boolean;
+  isOpen: boolean;
+  learnerMemory: KangurAiTutorContextValue['learnerMemory'];
+  messages: KangurAiTutorContextValue['messages'];
+  prefersReducedMotion: boolean | undefined;
+  sessionContext: KangurAiTutorContextValue['sessionContext'];
+  tutorContent: KangurAiTutorContent;
+  tutorName: string;
+  usageSummary: KangurAiTutorContextValue['usageSummary'];
+  widgetState: KangurAiTutorWidgetState;
+};
+
+export function useKangurAiTutorWidgetCoordinatorDisplayState({
+  authIsAuthenticated,
+  enabled,
+  environment,
+  isLoading,
+  isOpen,
+  learnerMemory,
+  messages,
+  prefersReducedMotion,
+  sessionContext,
+  tutorContent,
+  tutorName,
+  usageSummary,
+  widgetState,
+}: UseKangurAiTutorWidgetCoordinatorDisplayInput) {
+  const {
+    askModalVisible,
+    contextSwitchNotice,
+    draggedAvatarPoint,
+    guidedTutorTarget,
+    highlightedSection,
+    homeOnboardingRecord,
+    homeOnboardingStepIndex,
+    hoveredSectionAnchorId,
+    isAvatarDragging,
+    isTutorHidden,
+    mounted,
+    panelAnchorMode,
+    panelMeasuredHeight,
+    persistedSelectionPageRect,
+    persistedSelectionRect,
+    sectionResponseComplete,
+    sectionResponseCompleteTimeoutRef,
+    sectionResponsePending,
+    selectionConversationContext,
+    selectionGuidanceHandoffText,
+    selectionResponseComplete,
+    selectionResponseCompleteTimeoutRef,
+    selectionResponsePending,
+    setGuidedTutorTarget,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    setSelectionGuidanceHandoffText,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    setTutorNarrationObservedText,
+    tutorNarrationObservedText,
+    tutorNarrationRootRef,
+    viewportTick,
+  } = widgetState;
+  const {
+    activeSectionProtectedRect,
+    activeSectionRect,
+    activeSelectedText,
+    activeSelectionContainerRect,
+    activeSelectionPageRect,
+    activeSelectionProtectedRect,
+    activeSelectionRect,
+    allowSelectedTextSupport,
+    canSendMessages,
+    hasAssignmentSummary,
+    hasCurrentQuestion,
+    hintDepth,
+    isAnonymousVisitor,
+    motionProfile,
+    proactiveNudges,
+    reducedMotionTransitions,
+    selectedText,
+    selectionRect,
+    shouldRenderContextlessTutorUi,
+    shouldRenderGuestIntroUi,
+    showSources,
+    telemetryContext,
+    tutorAnchorContext,
+    uiMode,
+    viewport,
+  } = environment;
+
+  const guestTutorAssistantLabel = tutorName.trim() || tutorContent.common.defaultTutorName;
+
+  const {
+    canStartHomeOnboardingManually,
+    guidedCalloutDetail,
+    guidedCalloutHeaderLabel,
+    guidedCalloutKey,
+    guidedCalloutStepLabel,
+    guidedCalloutTestId,
+    guidedCalloutTitle,
+    guidedFallbackRect,
+    guidedMode,
+    guidedSectionFocusRect,
+    guidedSelectionPreview,
+    guidedSelectionRect,
+    guidedSelectionSpotlightRect,
+    guidedTargetAnchor,
+    homeOnboardingAnchor,
+    homeOnboardingReplayLabel,
+    homeOnboardingStep,
+    homeOnboardingSteps,
+    hoveredSectionAnchor,
+    hoveredSectionProtectedRect,
+    isAskModalMode,
+    isEligibleForHomeOnboarding,
+    isSectionGuidedTutorMode,
+    isSelectionGuidedTutorMode,
+    sectionGuidanceLabel,
+    sectionResponsePendingKind,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+  } = useKangurAiTutorGuidedDisplayState({
+    activeSectionRect,
+    activeSelectionContainerRect,
+    activeSelectionPageRect,
+    activeSelectionRect,
+    askModalVisible,
+    enabled,
+    guestTutorAssistantLabel,
+    guidedTutorTarget,
+    homeOnboardingEligibleContentId: HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
+    homeOnboardingRecordStatus: homeOnboardingRecord?.status ?? null,
+    homeOnboardingStepIndex,
+    hoveredSectionAnchorId,
+    isAuthenticated: authIsAuthenticated,
+    isLoading,
+    isOpen,
+    isTutorHidden,
+    mounted,
+    persistedSelectionPageRect,
+    persistedSelectionRect,
+    sectionResponsePending,
+    selectionResponsePending,
+    sessionContentId: sessionContext?.contentId,
+    sessionSurface: sessionContext?.surface,
+    tutorAnchorContext,
+    tutorContent,
+    tutorName,
+    viewportTick,
+  });
+
+  useKangurAiTutorGuidanceCompletionEffects({
+    activeSelectedText,
+    highlightedSection,
+    isLoading,
+    isOpen,
+    isSectionGuidedMode: isSectionGuidedTutorMode,
+    isSelectionGuidedMode: isSelectionGuidedTutorMode,
+    sectionResponseComplete,
+    sectionResponseCompleteTimeoutRef,
+    sectionResponsePending,
+    selectionResponseComplete,
+    selectionResponseCompleteTimeoutRef,
+    selectionResponsePending,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    telemetryContext,
+  });
+
+  const tutorPanelMotionState =
+    widgetState.panelMotionState === 'animating' ? 'animating' : 'settled';
+
+  const {
+    activeFocus,
+    displayFocusRect,
+    isAnchoredUiMode,
+    isContextualPanelAnchor,
+    isMobileSheet,
+    isStaticUiMode,
+    selectionActionLayout,
+    selectionActionStyle,
+    shouldRenderSelectionAction,
+  } = useKangurAiTutorFocusLayoutState({
+    activeSectionRect,
+    activeSelectedText,
+    activeSelectionRect,
+    allowSelectedTextSupport,
+    guidedTutorTarget,
+    hasAssignmentSummary,
+    hasCurrentQuestion,
+    highlightedSection,
+    homeOnboardingStepIndex,
+    isOpen,
+    isSelectionWithinTutorUi,
+    isTutorHidden,
+    motionProfile,
+    panelAnchorMode,
+    selectedText,
+    selectionRect,
+    sessionContext: {
+      answerRevealed: sessionContext?.answerRevealed,
+      contentId: sessionContext?.contentId,
+      surface: sessionContext?.surface,
+    },
+    tutorAnchorContext,
+    uiMode,
+    viewport,
+    viewportTick,
+  });
+
+  useKangurAiTutorSelectionGuidanceHandoffEffect({
+    activeFocusKind: activeFocus.kind,
+    activeSelectedText,
+    isOpen,
+    panelMotionState: tutorPanelMotionState,
+    selectionGuidanceHandoffText,
+    setGuidedTutorTarget,
+    setSelectionGuidanceHandoffText,
+  });
+
+  const conversationMessages = useMemo(() => {
+    if (
+      !selectionConversationContext ||
+      !activeSelectedText ||
+      selectionConversationContext.selectedText !== activeSelectedText
+    ) {
+      return messages;
+    }
+
+    return messages.slice(selectionConversationContext.messageStartIndex);
+  }, [activeSelectedText, messages, selectionConversationContext]);
+
+  const {
+    bridgeQuickAction,
+    bridgeSummaryChipLabel,
+    emptyStateMessage,
+    focusChipLabel: conversationFocusChipLabel,
+    inputPlaceholder,
+    isSectionExplainPendingMode,
+    isSelectionExplainPendingMode,
+    showSectionExplainCompleteState,
+    showSelectionExplainCompleteState,
+    visibleProactiveNudge,
+    visibleQuickActions,
+  } = useKangurAiTutorConversationViewState({
+    activeFocus: { kind: activeFocus.kind },
+    activeSelectedText,
+    canSendMessages,
+    contextlessDisabledPlaceholder: CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
+    contextlessEmptyStateMessage: CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
+    hasAssignmentSummary,
+    hasCurrentQuestion,
+    highlightedSection,
+    hintDepth,
+    isAskModalMode,
+    isLoading,
+    isOpen,
+    learnerMemory,
+    messages: conversationMessages,
+    proactiveNudges,
+    sectionResponseComplete,
+    sectionResponsePending,
+    selectionResponseComplete,
+    selectionResponsePending,
+    sessionContext: {
+      answerRevealed: sessionContext?.answerRevealed,
+      surface: sessionContext?.surface,
+      title: sessionContext?.title,
+    },
+    shouldRenderContextlessTutorUi,
+    tutorContent,
+  });
+
+  const bubblePlacement = useKangurAiTutorBubblePlacementState({
+    activeSectionProtectedRect,
+    activeSelectionProtectedRect,
+    displayFocusRect,
+    isMobileSheet,
+    isOpen,
+    motionProfile,
+    panelMeasuredHeight,
+    viewport,
+    visibleQuickActionCount: visibleQuickActions.length,
+    visibleProactiveNudge: Boolean(visibleProactiveNudge),
+  });
+
+  const guidedFocusRect =
+    guidedMode === 'home_onboarding'
+      ? (homeOnboardingAnchor?.getRect() ?? null)
+      : showSectionGuidanceCallout
+        ? guidedSectionFocusRect
+        : showSelectionGuidanceCallout
+          ? guidedSelectionRect
+          : (guidedTargetAnchor?.getRect() ?? guidedFallbackRect);
+
+  const {
+    guidedArrowheadTransition,
+    guidedAvatarArrowhead,
+    guidedAvatarArrowheadDisplayAngle,
+    guidedAvatarArrowheadDisplayAngleLabel,
+    guidedAvatarLayout,
+    guidedAvatarStyle,
+    guidedCalloutLayout,
+    guidedCalloutStyle,
+    guidedCalloutTransitionDuration,
+    isGuidedTutorMode,
+    sectionContextSpotlightStyle,
+    sectionDropHighlightStyle,
+    selectionContextSpotlightStyle,
+    selectionSpotlightStyle,
+    shouldRenderGuidedCallout,
+  } = useKangurAiTutorGuidedShellState({
+    activeSectionProtectedRect,
+    activeSelectionProtectedRect,
+    guidedFocusRect,
+    guidedMode,
+    guidedSelectionSpotlightRect,
+    hoveredSectionProtectedRect,
+    isAnonymousVisitor,
+    isAskModalMode,
+    isAvatarDragging,
+    isContextualPanelAnchor,
+    isOpen,
+    isTutorHidden,
+    motionProfile,
+    prefersReducedMotion: Boolean(prefersReducedMotion),
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+    viewport,
+  });
+
+  const askModalHelperText = isAuthGuidedTutorTarget(guidedTutorTarget)
+    ? tutorContent.askModal.helperAuth
+    : tutorContent.askModal.helperDefault;
+
+  const {
+    canNarrateTutorText,
+    compactDockedTutorPanelWidth,
+    isCompactDockedTutorPanel,
+    narrationObservationKey,
+    panelEmptyStateMessage,
+    selectedTextPreview,
+    sessionSurfaceLabel,
+    shouldEnableTutorNarration,
+    shouldRenderAuxiliaryPanelControls,
+    tutorNarrationScript,
+  } = useKangurAiTutorPanelDerivedState({
+    activeFocus: {
+      kind: activeFocus.kind,
+      label: activeFocus.label,
+    },
+    activeSelectedText,
+    askModalHelperText,
+    bubblePlacementLaunchOrigin: bubblePlacement.launchOrigin,
+    bubblePlacementMode: bubblePlacement.mode,
+    canStartHomeOnboardingManually,
+    contextSwitchNotice,
+    emptyStateMessage,
+    focusChipLabel: conversationFocusChipLabel,
+    guidedTutorTarget,
+    highlightedSection,
+    isAskModalMode,
+    isGuidedTutorMode,
+    isOpen,
+    isSectionExplainPendingMode,
+    isSelectionExplainPendingMode,
+    messages: conversationMessages,
+    sessionContext: {
+      contentId: sessionContext?.contentId,
+      surface: sessionContext?.surface,
+      title: sessionContext?.title,
+    },
+    showSectionExplainCompleteState,
+    showSelectionExplainCompleteState,
+    showSources,
+    shouldRenderGuestIntroUi,
+    tutorContent,
+    tutorName,
+    tutorNarrationObservedText,
+    usageSummary,
+    viewportWidth: viewport.width,
+    visibleProactiveNudge,
+  });
+
+  const {
+    attachedAvatarStyle,
+    attachedLaunchOffset,
+    avatarAnchorKind,
+    avatarAttachmentSide,
+    avatarPointer,
+    avatarStyle,
+    floatingAvatarPlacement,
+    panelAvatarPlacement,
+    panelOpenAnimation,
+    panelTransition,
+    pointerMarkerId,
+    showAttachedAvatarShell,
+    showFloatingAvatar,
+  } = useKangurAiTutorPanelShellState({
+    activeFocusKind: activeFocus.kind,
+    askModalDockStyle: widgetState.askModalDockStyle,
+    bubblePlacement,
+    displayFocusRect,
+    draggedAvatarPoint,
+    guidedAvatarStyle,
+    guidedFocusRect,
+    guidedMode,
+    guidedTutorTarget,
+    homeOnboardingStepKind: homeOnboardingStep?.kind ?? null,
+    isAnchoredUiMode,
+    isAvatarDragging,
+    isAskModalMode,
+    isContextualPanelAnchor,
+    isGuidedTutorMode,
+    isOpen,
+    isStaticUiMode,
+    isTutorHidden,
+    motionProfile,
+    prefersReducedMotion: prefersReducedMotion ?? false,
+    reducedMotionTransitions,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+    viewport,
+  });
+
+  useKangurAiTutorNarrationObserverEffect({
+    observationKey: narrationObservationKey,
+    setTutorNarrationObservedText,
+    shouldEnableTutorNarration,
+    tutorNarrationRootRef,
+  });
+
+  const avatarButtonClassName = cn(
+    'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full',
+    'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
+    'shadow-[0_14px_28px_-16px_rgba(154,82,24,0.26)] hover:brightness-[1.03]',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
+  );
+  const avatarButtonStyle: CSSProperties = {
+    borderColor: FLOATING_TUTOR_AVATAR_RIM_COLOR,
+  };
+
+  return {
+    activeFocus,
+    activeSectionRect,
+    activeSelectedText,
+    activeSelectionPageRect,
+    askModalHelperText,
+    avatarAnchorKind,
+    avatarAttachmentSide,
+    avatarButtonClassName,
+    avatarButtonStyle,
+    avatarPointer,
+    avatarStyle,
+    attachedAvatarStyle,
+    attachedLaunchOffset,
+    bridgeQuickAction,
+    bridgeSummaryChipLabel,
+    bubblePlacement,
+    canNarrateTutorText,
+    canStartHomeOnboardingManually,
+    compactDockedTutorPanelWidth,
+    conversationFocusChipLabel,
+    conversationMessages,
+    emptyStateMessage,
+    floatingAvatarPlacement,
+    guidedArrowheadTransition,
+    guidedAvatarArrowhead,
+    guidedAvatarArrowheadDisplayAngle,
+    guidedAvatarArrowheadDisplayAngleLabel,
+    guidedAvatarLayout,
+    guidedCalloutDetail,
+    guidedCalloutHeaderLabel,
+    guidedCalloutKey,
+    guidedCalloutLayout,
+    guidedCalloutStepLabel,
+    guidedCalloutStyle,
+    guidedCalloutTestId,
+    guidedCalloutTitle,
+    guidedCalloutTransitionDuration,
+    guidedMode,
+    guidedSelectionPreview,
+    homeOnboardingReplayLabel,
+    homeOnboardingStep,
+    homeOnboardingSteps,
+    hoveredSectionAnchor,
+    inputPlaceholder,
+    isAskModalMode,
+    isCompactDockedTutorPanel,
+    isContextualPanelAnchor,
+    isEligibleForHomeOnboarding,
+    isGuidedTutorMode,
+    isSectionExplainPendingMode,
+    isSelectionExplainPendingMode,
+    panelAvatarPlacement,
+    panelEmptyStateMessage,
+    panelOpenAnimation,
+    panelTransition,
+    pointerMarkerId,
+    sectionContextSpotlightStyle,
+    sectionDropHighlightStyle,
+    sectionGuidanceLabel,
+    sectionResponsePendingKind,
+    selectedTextPreview,
+    selectionActionLayout,
+    selectionActionStyle,
+    selectionContextSpotlightStyle,
+    selectionSpotlightStyle,
+    sessionSurfaceLabel,
+    shouldRenderAuxiliaryPanelControls,
+    shouldRenderGuidedCallout,
+    shouldRenderSelectionAction,
+    showAttachedAvatarShell,
+    showFloatingAvatar,
+    showSectionExplainCompleteState,
+    showSectionGuidanceCallout,
+    showSelectionExplainCompleteState,
+    showSelectionGuidanceCallout,
+    tutorPanelMotionState,
+    tutorNarrationScript,
+    visibleProactiveNudge,
+    visibleQuickActions,
+  };
+}

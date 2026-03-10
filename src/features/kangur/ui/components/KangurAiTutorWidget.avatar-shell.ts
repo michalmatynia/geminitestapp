@@ -27,11 +27,14 @@ export function useKangurAiTutorAvatarShellActions(input: {
     reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
   ) => void;
   homeOnboardingStepIndex: number | null;
+  isAnonymousVisitor: boolean;
   isOpen: boolean;
   launcherPromptVisible: boolean;
   persistSelectionContext: (options?: { prefillInput?: boolean }) => string | null;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
+  setGuestIntroHelpVisible: Dispatch<SetStateAction<boolean>>;
+  setGuestIntroVisible: Dispatch<SetStateAction<boolean>>;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setHighlightedSection: Dispatch<SetStateAction<SectionExplainContext | null>>;
   setHoveredSectionAnchorId: Dispatch<SetStateAction<string | null>>;
@@ -54,11 +57,14 @@ export function useKangurAiTutorAvatarShellActions(input: {
     handleHomeOnboardingFinishEarly,
     handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
     setDraggedAvatarPoint,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
     setGuidedTutorTarget,
     setHighlightedSection,
     setHoveredSectionAnchorId,
@@ -124,13 +130,24 @@ export function useKangurAiTutorAvatarShellActions(input: {
       setHoveredSectionAnchorId(null);
       setGuidedTutorTarget(null);
       if (!isOpen) {
-        handleOpenChat('toggle');
+        if (isAnonymousVisitor) {
+          setGuestIntroHelpVisible(false);
+          setGuestIntroVisible(true);
+        } else {
+          handleOpenChat('toggle');
+        }
       }
       return;
     }
 
     if (isOpen) {
       handleCloseChat('toggle');
+      return;
+    }
+
+    if (isAnonymousVisitor) {
+      setGuestIntroHelpVisible(false);
+      setGuestIntroVisible(true);
       return;
     }
 
@@ -146,8 +163,11 @@ export function useKangurAiTutorAvatarShellActions(input: {
     handleHomeOnboardingFinishEarly,
     handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
     setGuidedTutorTarget,
     setHighlightedSection,
     setHoveredSectionAnchorId,

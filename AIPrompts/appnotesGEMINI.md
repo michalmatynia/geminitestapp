@@ -19,13 +19,13 @@ npm run observability:scan
 npm run observability:check
 npm run check:security:static (and :strict)
 npm run check:security:authz-matrix (and :strict)
-npm run check:accessibility:component-policies (and :strict)
+npm run check:accessibility:component-policies:strict
 npm run check:api-input-validation (and :strict)
 npm run check:import-boundaries (and :strict)
 npm run check:context-health:strict
 npm run check:timer-cleanup (and :strict)
 npm run check:test-distribution (and :strict)
-npm run check:route-policies (and :strict)
+npm run check:route-policies:strict
 npm run check:api-contract-coverage (and :strict)
 npm run check:api-error-sources (and :strict)
 npm run check:unsafe-patterns (and :strict)

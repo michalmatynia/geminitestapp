@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { processGraphModel, type Job } from '../product-ai-processors';
 import { resolveAiPathsNodeExecutionConfig } from '@/shared/lib/ai-brain/server';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { configurationError } from '@/shared/errors/app-error';
@@ -13,6 +14,10 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
 
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
+  getPathRunRepository: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-brain/model-vendor', () => ({
@@ -97,6 +102,179 @@ describe('processGraphModel AI Paths model selection', () => {
       })
     );
     expect(result['modelId']).toBe('ollama:brain-default');
+  });
+
+  it('passes graph.requestedModelId to AI Brain when the top-level payload modelId is missing', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: '',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'gemma3:27b',
+      temperature: 0.3,
+      maxTokens: 222,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'gemma3:27b',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPromptApplied: true,
+        modelSelectionSource: 'node',
+        enforced: true,
+      },
+    });
+
+    await processGraphModel(
+      buildJob({
+        modelId: '',
+        graph: {
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+          requestedModelId: 'gemma3:27b',
+        },
+      })
+    );
+
+    expect(resolveAiPathsNodeExecutionConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestedModelId: 'gemma3:27b',
+      })
+    );
+  });
+
+  it('prefers graph.requestedModelId over a conflicting top-level payload.modelId for AI Paths jobs', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: '',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'node-selected-model',
+      temperature: 0.3,
+      maxTokens: 222,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'node-selected-model',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPromptApplied: true,
+        modelSelectionSource: 'node',
+        enforced: true,
+      },
+    });
+
+    await processGraphModel(
+      buildJob({
+        modelId: 'stale-top-level-model',
+        graph: {
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+          requestedModelId: 'node-selected-model',
+        },
+      })
+    );
+
+    expect(resolveAiPathsNodeExecutionConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestedModelId: 'node-selected-model',
+      })
+    );
+  });
+
+  it('recovers the node-selected model from the AI Paths run graph when payload.modelId is blank', async () => {
+    vi.mocked(getPathRunRepository).mockResolvedValue({
+      findRunById: vi.fn().mockResolvedValue({
+        graph: {
+          nodes: [
+            {
+              id: 'model-node-1',
+              type: 'model',
+              config: {
+                model: {
+                  modelId: 'gemma3:27b',
+                },
+              },
+            },
+          ],
+        },
+      }),
+    } as Awaited<ReturnType<typeof getPathRunRepository>>);
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: '',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'gemma3:27b',
+      temperature: 0.3,
+      maxTokens: 222,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'gemma3:27b',
+        temperature: 0.3,
+        maxTokens: 222,
+        systemPromptApplied: true,
+        modelSelectionSource: 'node',
+        enforced: true,
+      },
+    });
+
+    await processGraphModel(
+      buildJob({
+        modelId: '',
+        graph: {
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+        },
+      })
+    );
+
+    expect(getPathRunRepository).toHaveBeenCalled();
+    expect(resolveAiPathsNodeExecutionConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestedModelId: 'gemma3:27b',
+      })
+    );
   });
 
   it('fails when AI Brain config is unavailable even if node model is provided', async () => {

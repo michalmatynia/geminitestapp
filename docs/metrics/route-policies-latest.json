@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-03-10T08:15:34.196Z",
-  "status": "warn",
+  "generatedAt": "2026-03-10T17:52:57.047Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "routeCount": 355,
-    "methodCount": 505,
+    "status": "passed",
+    "routeCount": 356,
+    "methodCount": 507,
     "csrfExemptionCount": 47,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
@@ -22,26 +22,8 @@
     "src/app/api",
     "src/features/ai/agentcreator/api"
   ],
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "route-parsejson-without-bodyschema",
-      "message": "POST parses JSON without a bodySchema guard.",
-      "file": "src/app/api/agent/leases/route.ts",
-      "line": 99,
-      "column": 14,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "route-parsejson-without-bodyschema",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
+  "issues": [],
+  "rules": [],
   "csrfExemptions": [
     {
       "routePath": "ai-paths/portable-engine/remediation-webhook",
@@ -326,5 +308,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 63
+  "durationMs": 99
 }

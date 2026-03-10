@@ -1126,7 +1126,7 @@ export function AdminKangurTestSuitesManagerPage({
       </div>
 
       {editingGroupOriginalTitle ? (
-        <div className='rounded-[28px] border border-border/60 bg-card/20 p-6'>
+        <div className='rounded-[28px] border border-border/60 bg-card/20 p-5 sm:p-6'>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-2'>
               <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>
@@ -1142,7 +1142,7 @@ export function AdminKangurTestSuitesManagerPage({
             </div>
           </div>
 
-          <div className='mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]'>
+          <div className='mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]'>
             <Input
               value={groupTitle}
               onChange={(event): void => setGroupTitle(event.target.value)}
@@ -1204,8 +1204,8 @@ export function AdminKangurTestSuitesManagerPage({
         className='min-h-0 flex-1'
         header={
           <div className='space-y-4'>
-            <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.95),rgba(19,38,61,0.86))] p-6 shadow-[0_24px_90px_-52px_rgba(14,165,233,0.35)]'>
-            <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.95),rgba(19,38,61,0.86))] p-5 sm:p-6 shadow-[0_24px_90px_-52px_rgba(14,165,233,0.35)]'>
+            <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
               <div className='max-w-3xl space-y-2'>
                 <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80'>
                   Suite library
@@ -1215,14 +1215,14 @@ export function AdminKangurTestSuitesManagerPage({
                   Each suite contains questions with scoring and optional SVG illustrations.
                 </div>
               </div>
-              <div className='flex flex-wrap items-center gap-2.5'>
+              <div className='flex flex-wrap items-center gap-2.5 xl:justify-end'>
                 <Button
                   onClick={(): void => {
                     void handleTakeLiveSuitesOffline();
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-slate-200 hover:bg-slate-800/50'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-slate-200 hover:bg-slate-800/50 sm:w-auto'
                   disabled={updateSetting.isPending || liveSuiteIds.length === 0}
                 >
                   <AlertTriangle className='mr-1 size-3.5' />
@@ -1234,7 +1234,7 @@ export function AdminKangurTestSuitesManagerPage({
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
                   disabled={updateSetting.isPending || liveReadySuiteIds.length === 0}
                 >
                   <Folders className='mr-1 size-3.5' />
@@ -1246,7 +1246,7 @@ export function AdminKangurTestSuitesManagerPage({
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
                   disabled={updateSetting.isPending || totalPublishableQuestionCount === 0}
                 >
                   <WandSparkles className='mr-1 size-3.5' />
@@ -1256,7 +1256,7 @@ export function AdminKangurTestSuitesManagerPage({
                   onClick={handleOpenReviewQueue}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30 sm:w-auto'
                   disabled={updateSetting.isPending || !firstSuiteNeedingAttention}
                 >
                   <ClipboardList className='mr-1 size-3.5' />
@@ -1266,7 +1266,7 @@ export function AdminKangurTestSuitesManagerPage({
                   onClick={handleOpenFirstFix}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-rose-200 hover:bg-rose-900/30'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-rose-200 hover:bg-rose-900/30 sm:w-auto'
                   disabled={updateSetting.isPending || !firstFixQuestion}
                 >
                   <AlertTriangle className='mr-1 size-3.5' />
@@ -1278,7 +1278,7 @@ export function AdminKangurTestSuitesManagerPage({
                   }}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
                   disabled={updateSetting.isPending}
                 >
                   <Sparkles className='mr-1 size-3.5' />
@@ -1288,7 +1288,7 @@ export function AdminKangurTestSuitesManagerPage({
                   onClick={openCreateGroupModal}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
                   disabled={updateSetting.isPending}
                 >
                   <Folders className='mr-1 size-3.5' />
@@ -1298,7 +1298,7 @@ export function AdminKangurTestSuitesManagerPage({
                   onClick={openCreateModal}
                   size='sm'
                   variant='outline'
-                  className='h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
+                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
                   disabled={updateSetting.isPending}
                 >
                   <Plus className='mr-1 size-3.5' />
@@ -1307,7 +1307,7 @@ export function AdminKangurTestSuitesManagerPage({
               </div>
             </div>
 
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2.5'>
                 <Button
                   type='button'
                   size='sm'

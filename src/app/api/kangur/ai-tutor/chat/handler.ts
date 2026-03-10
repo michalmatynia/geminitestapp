@@ -22,6 +22,7 @@ import {
   consumeKangurAiTutorDailyUsage,
   ensureKangurAiTutorDailyUsageAvailable,
 } from '@/features/kangur/server/ai-tutor-usage';
+import { resolveKangurAiTutorNativeGuideResponse } from '@/features/kangur/server/ai-tutor-native-guide';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
@@ -242,6 +243,39 @@ const buildLearnerMemoryInstructions = (
   }
 
   return lines.length > 1 ? lines.join('\n') : '';
+};
+
+const persistTutorMoodState = async (input: {
+  learnerId: string;
+  tutorMood: ReturnType<typeof createDefaultKangurAiTutorLearnerMood>;
+  actor: Awaited<ReturnType<typeof resolveKangurActor>>;
+  context: KangurAiTutorConversationContext | undefined;
+  req: NextRequest;
+  ctx: ApiHandlerContext;
+}): Promise<void> => {
+  try {
+    await setKangurLearnerAiTutorState(input.learnerId, input.tutorMood);
+  } catch (error) {
+    await logKangurServerEvent({
+      source: 'kangur.ai-tutor.chat.mood-persist-failed',
+      service: 'kangur.ai-tutor',
+      message: 'Failed to persist learner-specific Kangur tutor mood.',
+      level: 'warn',
+      request: input.req,
+      requestContext: input.ctx,
+      actor: input.actor,
+      error,
+      statusCode: 500,
+      context: {
+        learnerId: input.learnerId,
+        tutorMoodId: input.tutorMood.currentMoodId,
+        tutorBaselineMoodId: input.tutorMood.baselineMoodId,
+        tutorMoodReasonCode: input.tutorMood.lastReasonCode,
+        surface: input.context?.surface ?? null,
+        contentId: input.context?.contentId ?? null,
+      },
+    });
+  }
 };
 
 const buildContextInstructions = (input: {
@@ -614,6 +648,76 @@ export async function postKangurAiTutorChatHandler(
         'Match this tone in your wording, but keep the answer concise and age-appropriate.',
       ].join(' ')
     );
+    const nativeGuideResponse = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage,
+      context,
+      locale: 'pl',
+    });
+    if (nativeGuideResponse) {
+      const usage = await consumeKangurAiTutorDailyUsage({
+        learnerId,
+        dailyMessageLimit: tutorSettings.dailyMessageLimit,
+      });
+      const resolvedSources = buildKangurTutorResponseSources(resolvedRuntimeDocuments);
+      const responseSources = tutorSettings.showSources ? resolvedSources : [];
+
+      await persistTutorMoodState({
+        learnerId,
+        tutorMood,
+        actor,
+        context,
+        req,
+        ctx,
+      });
+
+      await logKangurServerEvent({
+        source: 'kangur.ai-tutor.chat.native-guide.completed',
+        service: 'kangur.ai-tutor',
+        message: 'Kangur AI tutor answered from the native guide repository.',
+        request: req,
+        requestContext: ctx,
+        actor,
+        statusCode: 200,
+        context: {
+          surface: context?.surface ?? null,
+          contentId: context?.contentId ?? null,
+          promptMode: resolvedPromptMode,
+          focusKind: context?.focusKind ?? null,
+          interactionIntent: context?.interactionIntent ?? null,
+          retrievedSourceCount: resolvedSources.length,
+          returnedSourceCount: responseSources.length,
+          showSources: tutorSettings.showSources,
+          allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
+          allowLessons: tutorSettings.allowLessons,
+          allowGames: tutorSettings.allowGames,
+          testAccessMode: tutorSettings.testAccessMode,
+          hintDepth: tutorSettings.hintDepth,
+          proactiveNudges: tutorSettings.proactiveNudges,
+          rememberTutorContext: tutorSettings.rememberTutorContext,
+          nativeGuideApplied: true,
+          contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
+          contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
+          followUpActionCount: nativeGuideResponse.followUpActions.length,
+          tutorMoodId: tutorMood.currentMoodId,
+          tutorBaselineMoodId: tutorMood.baselineMoodId,
+          tutorMoodReasonCode: tutorMood.lastReasonCode,
+          tutorMoodConfidence: tutorMood.confidence,
+          dailyMessageLimit: usage.dailyMessageLimit,
+          dailyUsageCount: usage.messageCount,
+          dailyUsageRemaining: usage.remainingMessages,
+          usageDateKey: usage.dateKey,
+          messageCount: messages.length,
+        },
+      });
+
+      return NextResponse.json({
+        message: nativeGuideResponse.message,
+        sources: responseSources,
+        followUpActions: nativeGuideResponse.followUpActions,
+        tutorMood,
+        usage,
+      } satisfies KangurAiTutorChatResponse);
+    }
     const contextInstructions = buildContextInstructions({
       context,
       registryBundle: contextRegistryBundle,
@@ -777,29 +881,14 @@ export async function postKangurAiTutorChatHandler(
       }
     }
 
-    try {
-      await setKangurLearnerAiTutorState(learnerId, tutorMood);
-    } catch (error) {
-      await logKangurServerEvent({
-        source: 'kangur.ai-tutor.chat.mood-persist-failed',
-        service: 'kangur.ai-tutor',
-        message: 'Failed to persist learner-specific Kangur tutor mood.',
-        level: 'warn',
-        request: req,
-        requestContext: ctx,
-        actor,
-        error,
-        statusCode: 500,
-        context: {
-          learnerId,
-          tutorMoodId: tutorMood.currentMoodId,
-          tutorBaselineMoodId: tutorMood.baselineMoodId,
-          tutorMoodReasonCode: tutorMood.lastReasonCode,
-          surface: context?.surface ?? null,
-          contentId: context?.contentId ?? null,
-        },
-      });
-    }
+    await persistTutorMoodState({
+      learnerId,
+      tutorMood,
+      actor,
+      context,
+      req,
+      ctx,
+    });
 
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.completed',

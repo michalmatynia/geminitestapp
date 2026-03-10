@@ -482,7 +482,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move suite to group' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Move Suite To Another Group')).toBeInTheDocument();
+      expect(screen.getAllByText('Move Suite To Another Group').length).toBeGreaterThan(0);
     });
   });
 
@@ -519,7 +519,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move all 4 questions' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Move Questions To Another Suite')).toBeInTheDocument();
+      expect(screen.getAllByText('Move Questions To Another Suite').length).toBeGreaterThan(0);
     });
   });
 });

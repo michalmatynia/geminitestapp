@@ -97,7 +97,6 @@ function toMotionTarget(
 
 export function KangurAiTutorPanelChrome({
   attachedAvatarStyle,
-  attachedLaunchOffset,
   avatarAnchorKind,
   avatarAttachmentSide,
   avatarButtonClassName,
@@ -184,227 +183,227 @@ export function KangurAiTutorPanelChrome({
       !isGuidedTutorMode &&
       !shouldRenderGuestIntroUi &&
       !suppressPanelSurface ? (
-        <>
-          {isAskModalMode || bubbleMode === 'sheet' ? (
-            <motion.button
-              key={isAskModalMode ? 'ask-modal-backdrop' : 'chat-backdrop'}
-              data-testid={
-                isAskModalMode
-                  ? 'kangur-ai-tutor-ask-modal-backdrop'
-                  : 'kangur-ai-tutor-backdrop'
-              }
-              type='button'
-              aria-label={tutorContent.common.closeTutorAria}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
-              className={cn(
-                'fixed inset-0 cursor-pointer',
-                isAskModalMode
-                  ? 'z-[76] bg-slate-900/32 backdrop-blur-[2px]'
-                  : 'z-[62] bg-slate-900/18'
-              )}
-              onClick={onBackdropClose}
-            />
-          ) : null}
-
-          <motion.div
-            key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
-            ref={panelRef}
-            data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
-            data-layout={isAskModalMode ? 'modal' : bubbleMode}
-            data-avatar-placement={panelAvatarPlacement}
-            data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-            data-motion-preset={motionProfile.kind}
-            data-motion-state={panelMotionState}
-            data-open-animation={panelOpenAnimation}
-            data-placement-strategy={bubbleStrategy}
-            data-launch-origin={bubbleLaunchOrigin}
-            data-panel-style='guided-card'
-            data-has-pointer={!isAskModalMode && avatarPointer ? 'true' : 'false'}
-            data-pointer-side={!isAskModalMode ? (avatarPointer?.side ?? 'none') : 'none'}
-            data-ui-mode={uiMode}
-            role={isAskModalMode ? 'dialog' : undefined}
-            aria-modal={isAskModalMode ? 'true' : undefined}
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            animate={isAskModalMode ? { opacity: 1 } : bubbleMotionTarget}
-            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            transition={isAskModalMode ? motionProfile.bubbleTransition : panelTransition}
-            className={
-              isAskModalMode
-                ? 'fixed inset-0 z-[77] flex items-center justify-center px-4 pt-10 pb-6 pointer-events-none'
-                : 'fixed z-[65]'
-            }
-            style={
-              isAskModalMode
-                ? undefined
-                : bubbleWidth
-                  ? {
-                    width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
-                  }
-                  : undefined
-            }
-          >
-            {!isAskModalMode && avatarPointer ? (
-              <svg
-                aria-hidden='true'
-                data-testid='kangur-ai-tutor-pointer'
-                data-pointer-side={avatarPointer.side}
-                className='pointer-events-none absolute z-0 overflow-visible'
-                style={{
-                  left: avatarPointer.left,
-                  top: avatarPointer.top,
-                  width: avatarPointer.width,
-                  height: avatarPointer.height,
-                }}
-                viewBox={`0 0 ${avatarPointer.width} ${avatarPointer.height}`}
-              >
-                <defs>
-                  <marker
-                    id={pointerMarkerId}
-                    markerWidth='9'
-                    markerHeight='9'
-                    refX='7'
-                    refY='4.5'
-                    orient='auto'
-                    viewBox='0 0 9 9'
-                  >
-                    <path d='M0 0 L9 4.5 L0 9 Z' fill='#b45309' />
-                  </marker>
-                </defs>
-                <line
-                  x1={avatarPointer.start.x}
-                  y1={avatarPointer.start.y}
-                  x2={avatarPointer.end.x}
-                  y2={avatarPointer.end.y}
-                  stroke='#fff7cf'
-                  strokeLinecap='round'
-                  strokeWidth='6'
-                />
-                <line
-                  x1={avatarPointer.start.x}
-                  y1={avatarPointer.start.y}
-                  x2={avatarPointer.end.x}
-                  y2={avatarPointer.end.y}
-                  markerEnd={`url(#${pointerMarkerId})`}
-                  stroke='#b45309'
-                  strokeLinecap='round'
-                  strokeWidth='3'
-                />
-              </svg>
-            ) : null}
-
-            {!isAskModalMode && showAttachedAvatarShell ? (
+          <>
+            {isAskModalMode || bubbleMode === 'sheet' ? (
               <motion.button
-                data-testid='kangur-ai-tutor-avatar'
-                data-anchor-kind={avatarAnchorKind}
-                data-avatar-placement='attached'
-                data-avatar-attachment-side={avatarAttachmentSide}
-                data-motion-preset={motionProfile.kind}
-                data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-                data-ui-mode={uiMode}
+                key={isAskModalMode ? 'ask-modal-backdrop' : 'chat-backdrop'}
+                data-testid={
+                  isAskModalMode
+                    ? 'kangur-ai-tutor-ask-modal-backdrop'
+                    : 'kangur-ai-tutor-backdrop'
+                }
                 type='button'
-                onClick={onAttachedAvatarClick}
-                whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
-                whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
-                className={cn('absolute z-10', avatarButtonClassName)}
-                style={attachedAvatarStyle}
                 aria-label={tutorContent.common.closeTutorAria}
-              >
-                <KangurAiTutorMoodAvatar
-                  svgContent={tutor?.tutorAvatarSvg ?? null}
-                  avatarImageUrl={tutor?.tutorAvatarImageUrl ?? null}
-                  label={`${tutorDisplayName} avatar (${tutorMoodId})`}
-                  className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
-                  svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
-                  data-testid='kangur-ai-tutor-avatar-image'
-                />
-              </motion.button>
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
+                className={cn(
+                  'fixed inset-0 cursor-pointer',
+                  isAskModalMode
+                    ? 'z-[76] bg-slate-900/32 backdrop-blur-[2px]'
+                    : 'z-[62] bg-slate-900/18'
+                )}
+                onClick={onBackdropClose}
+              />
             ) : null}
 
-            <KangurGlassPanel
-              data-testid={panelSurfaceTestId}
-              surface='warmGlow'
-              variant='soft'
-              className={panelSurfaceClassName}
-              style={panelSurfaceStyle}
+            <motion.div
+              key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
+              ref={panelRef}
+              data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
+              data-layout={isAskModalMode ? 'modal' : bubbleMode}
+              data-avatar-placement={panelAvatarPlacement}
+              data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+              data-motion-preset={motionProfile.kind}
+              data-motion-state={panelMotionState}
+              data-open-animation={panelOpenAnimation}
+              data-placement-strategy={bubbleStrategy}
+              data-launch-origin={bubbleLaunchOrigin}
+              data-panel-style='guided-card'
+              data-has-pointer={!isAskModalMode && avatarPointer ? 'true' : 'false'}
+              data-pointer-side={!isAskModalMode ? (avatarPointer?.side ?? 'none') : 'none'}
+              data-ui-mode={uiMode}
+              role={isAskModalMode ? 'dialog' : undefined}
+              aria-modal={isAskModalMode ? 'true' : undefined}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              animate={isAskModalMode ? { opacity: 1 } : bubbleMotionTarget}
+              exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              transition={isAskModalMode ? motionProfile.bubbleTransition : panelTransition}
+              className={
+                isAskModalMode
+                  ? 'fixed inset-0 z-[77] flex items-center justify-center px-4 pt-10 pb-6 pointer-events-none'
+                  : 'fixed z-[65]'
+              }
+              style={
+                isAskModalMode
+                  ? undefined
+                  : bubbleWidth
+                    ? {
+                      width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
+                    }
+                    : undefined
+              }
             >
-              {!isAskModalMode && !avatarPointer && bubbleTailPlacement !== 'dock' ? (
-                <div
+              {!isAskModalMode && avatarPointer ? (
+                <svg
                   aria-hidden='true'
-                  className={cn(
-                    'absolute left-8 h-4 w-4 rotate-45 border border-amber-200/80 bg-white',
-                    bubbleTailPlacement === 'top'
-                      ? '-top-2 border-b-0 border-r-0'
-                      : '-bottom-2 border-t-0 border-l-0'
-                  )}
-                />
-              ) : null}
-
-              {!isAskModalMode && bubbleMode === 'sheet' ? (
-                <div className='flex justify-center bg-white/92 px-3 pt-3'>
-                  <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-amber-200' />
-                </div>
-              ) : null}
-
-              <div
-                data-testid='kangur-ai-tutor-header'
-                className={panelHeaderClassName}
-              >
-                <div className='min-w-0 flex flex-1 flex-col'>
-                  <span className='text-[10px] font-semibold tracking-[0.16em] text-amber-700'>
-                    AI Tutor
-                  </span>
-                  <span className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
-                    {tutorDisplayName}
-                  </span>
-                  <span
-                    data-testid='kangur-ai-tutor-mood-chip'
-                    data-mood-id={tutorBehaviorMoodId}
-                    className='mt-2 inline-flex w-fit items-center rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800'
-                  >
-                    {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
-                  </span>
-                  {shouldRenderPanelMoodDescription ? (
-                    <span
-                      data-testid='kangur-ai-tutor-mood-description'
-                      className='mt-2 text-xs leading-relaxed text-slate-600'
+                  data-testid='kangur-ai-tutor-pointer'
+                  data-pointer-side={avatarPointer.side}
+                  className='pointer-events-none absolute z-0 overflow-visible'
+                  style={{
+                    left: avatarPointer.left,
+                    top: avatarPointer.top,
+                    width: avatarPointer.width,
+                    height: avatarPointer.height,
+                  }}
+                  viewBox={`0 0 ${avatarPointer.width} ${avatarPointer.height}`}
+                >
+                  <defs>
+                    <marker
+                      id={pointerMarkerId}
+                      markerWidth='9'
+                      markerHeight='9'
+                      refX='7'
+                      refY='4.5'
+                      orient='auto'
+                      viewBox='0 0 9 9'
                     >
-                      {panelMoodDescription}
-                    </span>
-                  ) : null}
-                  {sessionSurfaceLabel ? (
-                    <span className='mt-1 text-[11px] text-slate-500'>{sessionSurfaceLabel}</span>
-                  ) : null}
-                </div>
-                <div className='ml-3 flex items-center gap-2 pt-0.5'>
-                  <button
-                    type='button'
-                    onClick={onDisableTutor}
-                    className='cursor-pointer rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-white'
-                    aria-label={tutorContent.common.disableTutorAria}
-                  >
-                    {tutorContent.common.disableTutorLabel}
-                  </button>
-                  <button
-                    type='button'
-                    onClick={onClose}
-                    className='shrink-0 rounded-full border border-amber-200/80 bg-white/85 p-1 text-amber-900 transition-colors hover:bg-white'
-                    aria-label={tutorContent.common.closeAria}
-                  >
-                    <X className='h-4 w-4' />
-                  </button>
-                </div>
-              </div>
+                      <path d='M0 0 L9 4.5 L0 9 Z' fill='#b45309' />
+                    </marker>
+                  </defs>
+                  <line
+                    x1={avatarPointer.start.x}
+                    y1={avatarPointer.start.y}
+                    x2={avatarPointer.end.x}
+                    y2={avatarPointer.end.y}
+                    stroke='#fff7cf'
+                    strokeLinecap='round'
+                    strokeWidth='6'
+                  />
+                  <line
+                    x1={avatarPointer.start.x}
+                    y1={avatarPointer.start.y}
+                    x2={avatarPointer.end.x}
+                    y2={avatarPointer.end.y}
+                    markerEnd={`url(#${pointerMarkerId})`}
+                    stroke='#b45309'
+                    strokeLinecap='round'
+                    strokeWidth='3'
+                  />
+                </svg>
+              ) : null}
 
-              <div ref={tutorNarrationRootRef} className='flex min-h-0 flex-1 flex-col'>
-                {children}
-              </div>
-            </KangurGlassPanel>
-          </motion.div>
-        </>
-      ) : null}
+              {!isAskModalMode && showAttachedAvatarShell ? (
+                <motion.button
+                  data-testid='kangur-ai-tutor-avatar'
+                  data-anchor-kind={avatarAnchorKind}
+                  data-avatar-placement='attached'
+                  data-avatar-attachment-side={avatarAttachmentSide}
+                  data-motion-preset={motionProfile.kind}
+                  data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+                  data-ui-mode={uiMode}
+                  type='button'
+                  onClick={onAttachedAvatarClick}
+                  whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
+                  whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
+                  className={cn('absolute z-10', avatarButtonClassName)}
+                  style={attachedAvatarStyle}
+                  aria-label={tutorContent.common.closeTutorAria}
+                >
+                  <KangurAiTutorMoodAvatar
+                    svgContent={tutor?.tutorAvatarSvg ?? null}
+                    avatarImageUrl={tutor?.tutorAvatarImageUrl ?? null}
+                    label={`${tutorDisplayName} avatar (${tutorMoodId})`}
+                    className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
+                    svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
+                    data-testid='kangur-ai-tutor-avatar-image'
+                  />
+                </motion.button>
+              ) : null}
+
+              <KangurGlassPanel
+                data-testid={panelSurfaceTestId}
+                surface='warmGlow'
+                variant='soft'
+                className={panelSurfaceClassName}
+                style={panelSurfaceStyle}
+              >
+                {!isAskModalMode && !avatarPointer && bubbleTailPlacement !== 'dock' ? (
+                  <div
+                    aria-hidden='true'
+                    className={cn(
+                      'absolute left-8 h-4 w-4 rotate-45 border border-amber-200/80 bg-white',
+                      bubbleTailPlacement === 'top'
+                        ? '-top-2 border-b-0 border-r-0'
+                        : '-bottom-2 border-t-0 border-l-0'
+                    )}
+                  />
+                ) : null}
+
+                {!isAskModalMode && bubbleMode === 'sheet' ? (
+                  <div className='flex justify-center bg-white/92 px-3 pt-3'>
+                    <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-amber-200' />
+                  </div>
+                ) : null}
+
+                <div
+                  data-testid='kangur-ai-tutor-header'
+                  className={panelHeaderClassName}
+                >
+                  <div className='min-w-0 flex flex-1 flex-col'>
+                    <span className='text-[10px] font-semibold tracking-[0.16em] text-amber-700'>
+                    AI Tutor
+                    </span>
+                    <span className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
+                      {tutorDisplayName}
+                    </span>
+                    <span
+                      data-testid='kangur-ai-tutor-mood-chip'
+                      data-mood-id={tutorBehaviorMoodId}
+                      className='mt-2 inline-flex w-fit items-center rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800'
+                    >
+                      {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
+                    </span>
+                    {shouldRenderPanelMoodDescription ? (
+                      <span
+                        data-testid='kangur-ai-tutor-mood-description'
+                        className='mt-2 text-xs leading-relaxed text-slate-600'
+                      >
+                        {panelMoodDescription}
+                      </span>
+                    ) : null}
+                    {sessionSurfaceLabel ? (
+                      <span className='mt-1 text-[11px] text-slate-500'>{sessionSurfaceLabel}</span>
+                    ) : null}
+                  </div>
+                  <div className='ml-3 flex items-center gap-2 pt-0.5'>
+                    <button
+                      type='button'
+                      onClick={onDisableTutor}
+                      className='cursor-pointer rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-white'
+                      aria-label={tutorContent.common.disableTutorAria}
+                    >
+                      {tutorContent.common.disableTutorLabel}
+                    </button>
+                    <button
+                      type='button'
+                      onClick={onClose}
+                      className='shrink-0 rounded-full border border-amber-200/80 bg-white/85 p-1 text-amber-900 transition-colors hover:bg-white'
+                      aria-label={tutorContent.common.closeAria}
+                    >
+                      <X className='h-4 w-4' />
+                    </button>
+                  </div>
+                </div>
+
+                <div ref={tutorNarrationRootRef} className='flex min-h-0 flex-1 flex-col'>
+                  {children}
+                </div>
+              </KangurGlassPanel>
+            </motion.div>
+          </>
+        ) : null}
     </AnimatePresence>
   );
 }

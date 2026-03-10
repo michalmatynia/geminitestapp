@@ -26,14 +26,28 @@ describe('aiJobsApi', () => {
     apiPostMock.mockResolvedValueOnce({ ok: true, data: { jobId: 'job-1' } });
     apiFetchMock.mockResolvedValue({ ok: true, data: { jobs: [] } });
 
-    await aiJobsApi.enqueue({ productId: 'p-1', type: 'graph_model', payload: { prompt: 'x' } });
+    await aiJobsApi.enqueue({
+      productId: 'p-1',
+      type: 'graph_model',
+      payload: {
+        prompt: 'x',
+        graph: {
+          requestedModelId: 'gpt-4o-mini',
+        },
+      },
+    });
     await aiJobsApi.get('job-1');
     await aiJobsApi.list();
 
     expect(apiPostMock).toHaveBeenCalledWith('/api/v2/products/ai-jobs/enqueue', {
       productId: 'p-1',
       type: 'graph_model',
-      payload: { prompt: 'x' },
+      payload: {
+        prompt: 'x',
+        graph: {
+          requestedModelId: 'gpt-4o-mini',
+        },
+      },
     });
     expect(apiFetchMock).toHaveBeenNthCalledWith(1, '/api/v2/products/ai-jobs/job-1');
     expect(apiFetchMock).toHaveBeenNthCalledWith(2, '/api/v2/products/ai-jobs');

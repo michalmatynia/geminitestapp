@@ -241,7 +241,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect(onboarding).toBeVisible();
     await expect(onboarding).toContainText('Krok 1 z 5');
-    await expect(onboarding).toContainText('Tutaj wybierasz, jak chcesz zaczac.');
+    await expect(onboarding).toContainText('Tutaj wybierasz, jak chcesz zacząć.');
     await expect(onboarding.getByRole('button', { name: 'Rozumiem' })).toBeVisible();
     await expect(onboarding.getByRole('button', { name: 'Zakończ' })).toBeVisible();
     await expect(avatar).toHaveAttribute('data-avatar-placement', 'guided');
@@ -250,7 +250,7 @@ test.describe('Kangur AI Tutor', () => {
     await triggerOnboardingAcknowledge(onboarding);
 
     await expect(onboarding).toContainText('Krok 2 z 5');
-    await expect(onboarding).toContainText('Tutaj pojawia sie Twoja aktualna misja.');
+    await expect(onboarding).toContainText('Tutaj pojawia się Twoja aktualna misja.');
     await expect(avatar).toHaveAttribute('data-guidance-target', 'home_quest');
     await expect.poll(() => readHomeOnboardingStatus(page)).toBe('shown');
 
@@ -628,8 +628,14 @@ test.describe('Kangur AI Tutor', () => {
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await triggerTutorAvatar(page);
 
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     await expect(tutorPanel).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
+    await expect(tutorPanel).toHaveAttribute('data-placement-strategy', 'dock');
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
       'data-nudge-mode',
       'gentle'
@@ -796,7 +802,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
-  test('anchors to the active game question after entering from Home and sends question context', async ({
+  test('opens a regular docked tutor after entering a game question from Home and still sends question context', async ({
     page,
   }) => {
     const {
@@ -816,16 +822,19 @@ test.describe('Kangur AI Tutor', () => {
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     const questionAnchor = page.getByTestId('kangur-game-question-anchor');
     await expect(tutorPanel).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
     await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
     await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
+    await expect(tutorPanel).toHaveAttribute('data-placement-strategy', 'dock');
+    await expect(tutorPanel).toHaveAttribute('data-has-pointer', 'false');
     await waitForTutorPanelToSettle(tutorPanel);
     await expect(questionAnchor.getByRole('heading', { name: questionPrompt, exact: true })).toBeVisible();
-    await expect(tutorPanel).toContainText('Gra: Pytanie do rozwiazania');
-    await expect(tutorPanel.getByPlaceholder('Popros o wskazowke do pytania')).toBeVisible();
+    await expect(tutorPanel).toContainText('Poproś o wskazówkę do tego pytania.');
+    await expect(tutorPanel.getByPlaceholder('Poproś o wskazówkę do pytania')).toBeVisible();
     await expectTutorAvatarAttachedToPanel(page);
 
-    await tutorPanel.getByRole('button', { name: 'Podpowiedz' }).click();
+    await tutorPanel.getByRole('button', { name: 'Podpowiedź' }).click();
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.surface).toBe('game');
@@ -895,10 +904,14 @@ test.describe('Kangur AI Tutor', () => {
     await triggerTutorAvatar(page);
 
     await expect(tutorPanel).toBeVisible();
-    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'question');
-    await expect(page.getByTestId('kangur-ai-tutor-focus-chip')).toContainText('Aktualne pytanie');
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
+    await expect(tutorPanel).toHaveAttribute('data-placement-strategy', 'dock');
+    await expect(tutorPanel).toHaveAttribute('data-has-pointer', 'false');
+    await expect(tutorPanel).toContainText('Poproś o wskazówkę do tego pytania.');
+    await expect(page.getByTestId('kangur-ai-tutor-focus-chip')).toHaveCount(0);
 
-    await tutorPanel.getByRole('button', { name: 'Podpowiedz' }).click();
+    await tutorPanel.getByRole('button', { name: 'Podpowiedź' }).click();
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.surface).toBe('game');
@@ -947,7 +960,10 @@ test.describe('Kangur AI Tutor', () => {
     await triggerTutorAvatar(page);
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
-    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
+    await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toHaveCount(0);
     await page.getByTestId('kangur-ai-tutor-quick-action-selected-text').evaluate((button) => {
       if (!(button instanceof HTMLButtonElement)) {
         throw new Error('Missing selected-text quick action button.');
@@ -968,7 +984,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
     await triggerTutorAvatar(page);
     await expect(tutorPanel).toBeVisible();
-    await expect(tutorPanel).toContainText('Gra: Pytanie do rozwiazania');
+    await expect(tutorPanel).toContainText('Poproś o wskazówkę do tego pytania.');
     await expect(tutorPanel).not.toContainText(lessonResponse);
     await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);
 

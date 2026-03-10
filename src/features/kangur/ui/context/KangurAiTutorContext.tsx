@@ -16,6 +16,7 @@ import {
   type KangurAiTutorContextValue,
   type KangurAiTutorSessionSyncProps,
   useKangurAiTutorRuntime,
+  useKangurAiTutorSessionSync,
 } from './KangurAiTutorRuntime.shared';
 
 type Props = {
@@ -52,13 +53,15 @@ export function KangurAiTutorSessionSync({
   learnerId,
   sessionContext,
 }: KangurAiTutorSessionSyncProps): JSX.Element | null {
-  return (
-    <KangurAiTutorSessionSyncInner
-      learnerId={learnerId}
-      sessionContext={sessionContext ?? null}
-    />
-  );
+  useKangurAiTutorSessionSync({
+    learnerId,
+    sessionContext: sessionContext ?? null,
+  });
+
+  return null;
 }
+
+export { useKangurAiTutorSessionSync };
 
 export function useKangurAiTutor(): KangurAiTutorContextValue {
   const ctx = useContext(KangurAiTutorContext);

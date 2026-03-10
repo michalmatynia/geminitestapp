@@ -24,6 +24,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
   buildKangurAssignmentCatalog: () => [],
+  buildKangurAssignmentListItems: () => [],
   buildRecommendedKangurAssignmentCatalog: () => [],
   filterKangurAssignmentCatalog: () => [],
   buildKangurAssignmentHref: () => '/kangur/game',

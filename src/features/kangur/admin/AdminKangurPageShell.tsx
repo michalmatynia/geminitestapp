@@ -1,16 +1,32 @@
 'use client';
 
-import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
+import {
+  KangurFeaturePageShell,
+  resolveKangurFeaturePageRoute,
+} from '@/features/kangur/ui/KangurFeaturePage';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 import { KangurAdminMenuToggle } from './KangurAdminMenuToggle';
 
 const KANGUR_ADMIN_BASE_PATH = '/admin/kangur';
 
 export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.JSX.Element {
+  const { normalizedBasePath, pageKey, requestedPath } = resolveKangurFeaturePageRoute(
+    slug,
+    KANGUR_ADMIN_BASE_PATH
+  );
+
   return (
     <>
       <KangurAdminMenuToggle />
-      <KangurFeaturePage slug={slug} basePath={KANGUR_ADMIN_BASE_PATH} embedded />
+      <KangurRoutingProvider
+        pageKey={pageKey}
+        requestedPath={requestedPath}
+        basePath={normalizedBasePath}
+        embedded
+      >
+        <KangurFeaturePageShell />
+      </KangurRoutingProvider>
     </>
   );
 }

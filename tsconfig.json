@@ -149,7 +149,11 @@
     ".next-dev-web-dev-codex-kangur-login-activity-final-2/types/**/*.ts",
     ".next-dev-web-dev-codex-kangur-login-activity-final-2/dev/types/**/*.ts",
     ".next-dev-web-dev-oom-fix/types/**/*.ts",
-    ".next-dev-web-dev-oom-fix/dev/types/**/*.ts"
+    ".next-dev-web-dev-oom-fix/dev/types/**/*.ts",
+    ".next-dev-products-fix/types/**/*.ts",
+    ".next-dev-products-fix/dev/types/**/*.ts",
+    ".next-dev-products-fix-3200/types/**/*.ts",
+    ".next-dev-products-fix-3200/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

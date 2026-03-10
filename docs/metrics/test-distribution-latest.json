@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-10T08:15:33.217Z",
+  "generatedAt": "2026-03-10T11:50:04.591Z",
   "status": "passed",
   "summary": {
-    "total": 21,
+    "total": 23,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 21,
+    "infoCount": 23,
     "status": "passed",
     "featureCount": 28,
     "featuresWithTestCount": 28,
     "featuresWithoutTestCount": 0,
-    "totalTestFiles": 1276,
+    "totalTestFiles": 1287,
     "onlyCount": 0,
-    "skipCount": 21
+    "skipCount": 23
   },
   "scope": {
     "featuresDir": "src/features",
@@ -29,7 +29,7 @@
     },
     {
       "feature": "kangur",
-      "testCount": 207
+      "testCount": 214
     },
     {
       "feature": "case-resolver",
@@ -37,7 +37,7 @@
     },
     {
       "feature": "products",
-      "testCount": 75
+      "testCount": 76
     },
     {
       "feature": "cms",
@@ -49,7 +49,7 @@
     },
     {
       "feature": "integrations",
-      "testCount": 34
+      "testCount": 35
     },
     {
       "feature": "foldertree",
@@ -212,8 +212,8 @@
       "severity": "info",
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
-      "file": "e2e/features/products/products-freshness.spec.ts",
-      "line": 141,
+      "file": "e2e/features/products/products-advanced.spec.ts",
+      "line": 52,
       "column": null,
       "snippet": null,
       "context": null
@@ -223,7 +223,27 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-freshness.spec.ts",
-      "line": 182,
+      "line": 177,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-freshness.spec.ts",
+      "line": 218,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "test-skip-left",
+      "message": ".skip() in test file. Consider removing or adding a TODO comment.",
+      "file": "e2e/features/products/products-trigger-parameter-inference.spec.ts",
+      "line": 67,
       "column": null,
       "snippet": null,
       "context": null
@@ -233,7 +253,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 742,
+      "line": 746,
       "column": null,
       "snippet": null,
       "context": null
@@ -243,7 +263,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 757,
+      "line": 761,
       "column": null,
       "snippet": null,
       "context": null
@@ -253,7 +273,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 773,
+      "line": 777,
       "column": null,
       "snippet": null,
       "context": null
@@ -263,7 +283,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 780,
+      "line": 784,
       "column": null,
       "snippet": null,
       "context": null
@@ -273,7 +293,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 797,
+      "line": 801,
       "column": null,
       "snippet": null,
       "context": null
@@ -283,7 +303,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 813,
+      "line": 817,
       "column": null,
       "snippet": null,
       "context": null
@@ -293,7 +313,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 831,
+      "line": 835,
       "column": null,
       "snippet": null,
       "context": null
@@ -303,7 +323,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 843,
+      "line": 847,
       "column": null,
       "snippet": null,
       "context": null
@@ -313,7 +333,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 860,
+      "line": 864,
       "column": null,
       "snippet": null,
       "context": null
@@ -323,7 +343,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-queue-integration.spec.ts",
-      "line": 912,
+      "line": 916,
       "column": null,
       "snippet": null,
       "context": null
@@ -333,7 +353,7 @@
       "ruleId": "test-skip-left",
       "message": ".skip() in test file. Consider removing or adding a TODO comment.",
       "file": "e2e/features/products/products-trigger-workflow-success.spec.ts",
-      "line": 37,
+      "line": 61,
       "column": null,
       "snippet": null,
       "context": null
@@ -354,8 +374,8 @@
       "ruleId": "test-skip-left",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 21
+      "infoCount": 23
     }
   ],
-  "durationMs": 161
+  "durationMs": 455
 }

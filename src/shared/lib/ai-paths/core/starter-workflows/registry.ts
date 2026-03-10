@@ -59,7 +59,7 @@ export type AiPathsStarterProvenance = {
 
 export type StarterWorkflowResolution = {
   entry: AiPathTemplateRegistryEntry;
-  matchedBy: 'provenance' | 'canonical_hash';
+  matchedBy: 'provenance' | 'canonical_hash' | 'legacy_alias';
 };
 
 export type StarterWorkflowUpgradeResult = {
@@ -248,6 +248,76 @@ const hasCanonicalGraphHash = (entry: AiPathTemplateRegistryEntry, graphHash: st
   );
 };
 
+const hasAliasMatch = (value: string, aliases: string[]): boolean => {
+  const normalizedValue = normalizeTextLower(value);
+  if (!normalizedValue) return false;
+  return aliases.some((alias) => normalizeTextLower(alias) === normalizedValue);
+};
+
+const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean => {
+  const nameOrTriggerMatches =
+    hasAliasMatch(config.name ?? '', [
+      'Translation EN->PL Description + Parameters',
+      'Translation EN->PL Description + Parameters v2',
+    ]) ||
+    hasAliasMatch(config.trigger ?? '', ['Product Modal - Translate EN->PL (Desc+Params)']);
+
+  if (!nameOrTriggerMatches) return false;
+
+  return (config.nodes ?? []).some((node) => {
+    if (node.type !== 'database') return false;
+    const database = toRecord(toRecord(node.config)?.['database']);
+    const updateTemplate = normalizeText(database?.['updateTemplate']);
+    return (
+      updateTemplate.includes('"description_pl"') &&
+      updateTemplate.includes('"parameters"') &&
+      updateTemplate.includes('{{result.parameters}}')
+    );
+  });
+};
+
+const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
+  const nameOrTriggerMatches =
+    hasAliasMatch(config.name ?? '', ['Parameter Inference', 'Parameter Inference v2 No Param Add']) ||
+    hasAliasMatch(config.trigger ?? '', ['Product Modal - Infer Parameters']);
+
+  if (!nameOrTriggerMatches) return false;
+
+  const hasBlankProductCoreParser = (config.nodes ?? []).some((node) => {
+    if (node.type !== 'parser') return false;
+    const parser = toRecord(toRecord(node.config)?.['parser']);
+    const mappings = toRecord(parser?.['mappings']);
+    return (
+      normalizeText(parser?.['presetId']) === 'product_core' &&
+      normalizeText(mappings?.['title']) === '' &&
+      normalizeText(mappings?.['content_en']) === ''
+    );
+  });
+
+  if (!hasBlankProductCoreParser) return false;
+
+  return (config.nodes ?? []).some((node) => {
+    if (node.type !== 'prompt') return false;
+    const prompt = toRecord(toRecord(node.config)?.['prompt']);
+    const template = normalizeText(prompt?.['template']);
+    return template.includes('{{title}}') && template.includes('{{content_en}}');
+  });
+};
+
+const matchesLegacyStarterWorkflowRepairSignature = (
+  entry: AiPathTemplateRegistryEntry,
+  config: PathConfig
+): boolean => {
+  switch (entry.starterLineage.starterKey) {
+    case 'translation_en_pl':
+      return matchesLegacyTranslationRepairSignature(config);
+    case 'parameter_inference':
+      return matchesLegacyParameterInferenceRepairSignature(config);
+    default:
+      return false;
+  }
+};
+
 const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
   {
     templateId: 'starter_parameter_inference',
@@ -276,7 +346,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'parameter_inference',
-      templateVersion: 12,
+      templateVersion: 13,
       canonicalGraphHashes: [],
     },
   },
@@ -307,7 +377,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'description_inference_lite',
-      templateVersion: 4,
+      templateVersion: 5,
       canonicalGraphHashes: [],
     },
   },
@@ -355,7 +425,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     starterLineage: {
       starterKey: 'translation_en_pl',
-      templateVersion: 4,
+      templateVersion: 5,
       canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
     },
   },
@@ -686,6 +756,12 @@ export const resolveStarterWorkflowForPathConfig = (
   if (entryByCanonicalHash) {
     return { entry: entryByCanonicalHash, matchedBy: 'canonical_hash' };
   }
+  const entryByLegacyAlias = STARTER_WORKFLOW_REGISTRY.find((entry) =>
+    matchesLegacyStarterWorkflowRepairSignature(entry, config)
+  );
+  if (entryByLegacyAlias) {
+    return { entry: entryByLegacyAlias, matchedBy: 'legacy_alias' };
+  }
   return null;
 };
 
@@ -695,6 +771,7 @@ export const upgradeStarterWorkflowPathConfig = (
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return { config, changed: false, resolution: null };
   const currentGraphHash = computeStarterWorkflowGraphHash(config);
+  const provenance = readStarterProvenance(config);
 
   const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
     pathId: config.id,
@@ -707,7 +784,15 @@ export const upgradeStarterWorkflowPathConfig = (
       resolution.entry.seedPolicy?.autoSeed === true,
   });
 
-  const safeToOverlay = hasCanonicalGraphHash(resolution.entry, currentGraphHash);
+  const safeToOverlay =
+    hasCanonicalGraphHash(resolution.entry, currentGraphHash) ||
+    resolution.matchedBy === 'legacy_alias' ||
+    Boolean(
+      provenance &&
+        provenance.starterKey === resolution.entry.starterLineage.starterKey &&
+        provenance.templateVersion < resolution.entry.starterLineage.templateVersion &&
+        config.id === resolution.entry.seedPolicy?.defaultPathId
+    );
 
   if (!safeToOverlay) {
     return { config, changed: false, resolution };

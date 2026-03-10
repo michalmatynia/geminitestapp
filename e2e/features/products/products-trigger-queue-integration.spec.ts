@@ -384,6 +384,12 @@ test.describe('Products trigger button queue integration', () => {
       enqueueBody: Record<string, unknown>;
       pathConfigOverride?: Record<string, unknown>;
       pathName?: string;
+      productId?: string;
+      productSku?: string;
+      productLabel?: string;
+      initialQueuedProductStoragePayload?: unknown;
+      trackRunStatus?: boolean;
+      initialTrackedRunDetail?: Record<string, unknown> | null;
     }
   ): Promise<{
     triggerButtonName: string;
@@ -394,13 +400,19 @@ test.describe('Products trigger button queue integration', () => {
     getProductsPagedRequestCount: () => number;
     getEnqueueRequestBody: () => Record<string, unknown> | null;
     getSettingsWriteBodies: () => Array<Record<string, unknown>>;
+    setTrackedRunDetail: (detail: Record<string, unknown> | null) => void;
   }> => {
     const now = new Date().toISOString();
     const triggerEventId = 'manual';
     const pathId = 'path-e2e-product-trigger';
-    const productId = 'product-e2e-trigger';
-    const productSku = `E2E-TRIGGER-${Date.now()}`;
-    const product = createProductFixture(productId, productSku, 'Trigger Product', now);
+    const productId = options.productId ?? 'product-e2e-trigger';
+    const productSku = options.productSku ?? `E2E-TRIGGER-${Date.now()}`;
+    const product = createProductFixture(
+      productId,
+      productSku,
+      options.productLabel ?? 'Trigger Product',
+      now
+    );
 
     const triggerButton: TriggerButtonFixture = {
       id: triggerEventId,
@@ -419,6 +431,7 @@ test.describe('Products trigger button queue integration', () => {
     let productsPagedRequestCount = 0;
     let enqueueRequestBody: Record<string, unknown> | null = null;
     const settingsWriteBodies: Array<Record<string, unknown>> = [];
+    let trackedRunDetail = options.initialTrackedRunDetail ?? null;
     const pathName = options.pathName ?? 'E2E Trigger Path';
     const pathConfig =
       options.pathConfigOverride ??
@@ -427,6 +440,17 @@ test.describe('Products trigger button queue integration', () => {
         pathName,
         timestamp: now,
       });
+
+    if (options.initialQueuedProductStoragePayload !== undefined) {
+      await page.addInitScript(
+        ({ payload }) => {
+          window.localStorage.setItem('queued-product-ids', JSON.stringify(payload));
+        },
+        {
+          payload: options.initialQueuedProductStoragePayload,
+        }
+      );
+    }
 
     await routeSharedProductHarnessApis(page, product);
 
@@ -491,6 +515,64 @@ test.describe('Products trigger button queue integration', () => {
       });
     });
 
+    if (options.trackRunStatus) {
+      await page.route('**/api/ai-paths/runs/*', async (route) => {
+        const pathname = new URL(route.request().url()).pathname;
+        if (/\/api\/ai-paths\/runs\/[^/]+\/stream$/.test(pathname)) {
+          await route.fulfill({
+            status: 503,
+            contentType: 'text/plain',
+            headers: { 'Cache-Control': 'no-store' },
+            body: 'stream unavailable in e2e queue harness',
+          });
+          return;
+        }
+
+        const runDetailMatch = pathname.match(/\/api\/ai-paths\/runs\/([^/]+)$/);
+        if (!runDetailMatch) {
+          await route.fallback();
+          return;
+        }
+
+        const runId = decodeURIComponent(runDetailMatch[1] ?? '');
+        if (!runId || runId === 'enqueue') {
+          await route.fallback();
+          return;
+        }
+
+        if (!trackedRunDetail) {
+          await route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            headers: { 'Cache-Control': 'no-store' },
+            body: JSON.stringify({ error: 'Run not found' }),
+          });
+          return;
+        }
+
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'Cache-Control': 'no-store' },
+          body: JSON.stringify({
+            run: {
+              id: runId,
+              status: 'queued',
+              entityId: productId,
+              entityType: 'product',
+              pathId,
+              pathName,
+              createdAt: now,
+              updatedAt: now,
+              ...trackedRunDetail,
+            },
+            nodes: [],
+            events: [],
+          }),
+        });
+      });
+    }
+
     await page.route('**/api/ai-paths/runs*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -511,6 +593,9 @@ test.describe('Products trigger button queue integration', () => {
       getProductsPagedRequestCount: () => productsPagedRequestCount,
       getEnqueueRequestBody: () => enqueueRequestBody,
       getSettingsWriteBodies: () => settingsWriteBodies,
+      setTrackedRunDetail: (detail: Record<string, unknown> | null): void => {
+        trackedRunDetail = detail;
+      },
     };
   };
 
@@ -777,6 +862,39 @@ test.describe('Products trigger button queue integration', () => {
     test.skip(queueOpened === false, 'Admin AI Paths queue access is required for this e2e test.');
   });
 
+  test('does not show a permanent queued pill from stale legacy or offline queued storage', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const staleSourceExpiresAt = Date.now() + 60_000;
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-unused',
+          status: 'queued',
+        },
+      },
+      productId: 'product-keycha1212',
+      productSku: 'KEYCHA1212',
+      productLabel: 'Keychain Product',
+      initialQueuedProductStoragePayload: {
+        version: 2,
+        products: {
+          'product-keycha1212': [
+            { source: 'legacy' },
+            { source: 'offline:update', expiresAt: staleSourceExpiresAt },
+          ],
+        },
+      },
+    });
+
+    const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    await expect(productRow).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByText('Queued')).toHaveCount(0);
+  });
+
   test('handles legacy enqueue payloads exposing only run._id and still updates queue state', async ({
     page,
   }) => {
@@ -855,6 +973,68 @@ test.describe('Products trigger button queue integration', () => {
       },
     });
     await assertTriggerRunQueued(page, setup);
+  });
+
+  test('keeps the queued pill visible after reload while the AI Path run is still queued', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-reload',
+          status: 'queued',
+        },
+      },
+      trackRunStatus: true,
+      initialTrackedRunDetail: {
+        status: 'queued',
+      },
+    });
+
+    await assertTriggerRunQueued(page, setup);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    await expect(productRow).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByText('Queued').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('clears the queued pill after the tracked AI Path run reaches a terminal status', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-terminal',
+          status: 'queued',
+        },
+      },
+      trackRunStatus: true,
+      initialTrackedRunDetail: {
+        status: 'queued',
+      },
+    });
+
+    await assertTriggerRunQueued(page, setup);
+
+    setup.setTrackedRunDetail({
+      status: 'completed',
+      finishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    await expect(productRow.getByText('Queued')).toHaveCount(0, { timeout: 15_000 });
   });
 
   test('repairs legacy Trigger contextMode in stored product path config and still enqueues', async ({

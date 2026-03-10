@@ -47,6 +47,12 @@ const isSourceFile = (filePath) => SOURCE_EXTENSIONS.has(path.extname(filePath).
 
 const isJsxFile = (filePath) => JSX_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 
+const isRuntimeSourceFile = (relativePath) => {
+  if (relativePath.includes('/__tests__/')) return false;
+  if (relativePath.includes('/__mocks__/')) return false;
+  return !/\.(test|spec)\.[jt]sx?$/i.test(path.basename(relativePath));
+};
+
 const isComponentName = (name) => /^[A-Z][A-Za-z0-9_]*$/.test(name);
 
 const normalizeAbsolute = (absolutePath) => path.normalize(absolutePath);
@@ -1177,8 +1183,7 @@ const run = async () => {
   const scanInputs = [];
   for (const absolutePath of files) {
     const relativePath = toPosix(path.relative(root, absolutePath));
-    if (relativePath.includes('/__tests__/')) continue;
-    if (relativePath.includes('/__mocks__/')) continue;
+    if (!isRuntimeSourceFile(relativePath)) continue;
     scanInputs.push({ absolutePath, relativePath });
   }
 

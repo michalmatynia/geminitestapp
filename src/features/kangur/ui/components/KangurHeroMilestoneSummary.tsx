@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils';
 type KangurHeroMilestoneSummaryProps = {
   className?: string;
   dataTestIdPrefix: string;
+  trackDataTestIdPrefix?: string;
   progress: KangurProgressState;
 };
 
@@ -67,7 +68,6 @@ export default function KangurHeroMilestoneSummary({
       <div data-testid={`${dataTestIdPrefix}-tracks`}>
         <KangurBadgeTrackHighlights
           className='sm:grid-cols-2'
-          dataTestIdPrefix={`${dataTestIdPrefix}-track`}
           limit={2}
           progress={progress}
         />

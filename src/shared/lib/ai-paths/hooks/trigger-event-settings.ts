@@ -12,12 +12,14 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
+  updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -191,20 +193,17 @@ export const loadPathConfigsFromSettings = async (
     return meta as PathMeta;
   });
   const normalizedMetas = normalizeLoadedPathMetas(metas);
-  const settingsPathOrder = normalizedMetas
-    .map((meta: PathMeta) => meta?.id)
-    .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
   const configs: Record<string, PathConfig> = {};
+  const retainedMetas: PathMeta[] = [];
+  let removedMissingConfigEntries = false;
 
   normalizedMetas.forEach((meta: PathMeta): void => {
     if (!meta?.id) return;
-    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+    const configKey = `${PATH_CONFIG_PREFIX}${meta.id}`;
+    const configRaw = map.get(configKey);
     if (!configRaw?.trim()) {
-      throw validationError('AI Paths index references missing config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'missing_path_config',
-        pathId: meta.id,
-      });
+      removedMissingConfigEntries = true;
+      return;
     }
 
     let parsedConfig: unknown;
@@ -219,7 +218,14 @@ export const loadPathConfigsFromSettings = async (
       });
     }
 
-    const resolvedConfig = resolvePortablePathInput(parsedConfig, {
+    const rawParsedConfig =
+      parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
+        ? (parsedConfig as PathConfig)
+        : null;
+    const rawStarterUpgrade = rawParsedConfig ? upgradeStarterWorkflowPathConfig(rawParsedConfig) : null;
+    const configForResolution = rawStarterUpgrade?.config ?? parsedConfig;
+
+    const resolvedConfig = resolvePortablePathInput(configForResolution, {
       repairIdentities: true,
       includeConnections: false,
       signingPolicyTelemetrySurface: 'product',
@@ -229,19 +235,42 @@ export const loadPathConfigsFromSettings = async (
     const baseConfig = createStoredPathConfigFallback(meta.id);
     const mergedConfig =
       resolvedConfig.ok
-        ? resolvedConfig.value.pathConfig
+        ? ({
+            ...resolvedConfig.value.pathConfig,
+            ...(
+              parsedConfig &&
+              typeof parsedConfig === 'object' &&
+              !Array.isArray(parsedConfig) &&
+              (parsedConfig as { extensions?: unknown }).extensions &&
+              typeof (parsedConfig as { extensions?: unknown }).extensions === 'object' &&
+              !Array.isArray((parsedConfig as { extensions?: unknown }).extensions)
+                ? {
+                    extensions: {
+                      ...(
+                        resolvedConfig.value.pathConfig.extensions &&
+                        typeof resolvedConfig.value.pathConfig.extensions === 'object' &&
+                        !Array.isArray(resolvedConfig.value.pathConfig.extensions)
+                          ? resolvedConfig.value.pathConfig.extensions
+                          : {}
+                      ),
+                      ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
+                    },
+                  }
+                : {}
+            ),
+          } as PathConfig)
         : parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
           ? ({
             ...baseConfig,
-            ...(parsedConfig as Partial<PathConfig>),
+            ...(configForResolution as Partial<PathConfig>),
             id:
-                typeof (parsedConfig as { id?: unknown }).id === 'string' &&
-                (parsedConfig as { id?: string }).id!.trim().length > 0
-                  ? (parsedConfig as { id: string }).id.trim()
+                typeof (configForResolution as { id?: unknown }).id === 'string' &&
+                (configForResolution as { id?: string }).id!.trim().length > 0
+                  ? (configForResolution as { id: string }).id.trim()
                   : meta.id,
             name:
-                typeof (parsedConfig as { name?: unknown }).name === 'string'
-                  ? (parsedConfig as { name: string }).name
+                typeof (configForResolution as { name?: unknown }).name === 'string'
+                  ? (configForResolution as { name: string }).name
                   : baseConfig.name,
           } as PathConfig)
           : null;
@@ -255,6 +284,11 @@ export const loadPathConfigsFromSettings = async (
     }
 
     const normalizedConfig = sanitizeLoadedPathConfig(mergedConfig);
+    if (rawStarterUpgrade?.changed) {
+      void updateAiPathsSetting(configKey, JSON.stringify(normalizedConfig)).catch(() => {
+        // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
+      });
+    }
     void persistLegacyTriggerContextModeRepair({
       pathId: meta.id,
       rawPayload: configRaw,
@@ -287,7 +321,18 @@ export const loadPathConfigsFromSettings = async (
       id: meta.id,
       name: normalizedName,
     };
+    retainedMetas.push(meta);
   });
+
+  if (removedMissingConfigEntries) {
+    void updateAiPathsSetting(PATH_INDEX_KEY, JSON.stringify(retainedMetas)).catch(() => {
+      // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
+    });
+  }
+
+  const settingsPathOrder = retainedMetas
+    .map((meta: PathMeta) => meta?.id)
+    .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
 
   return { configs, settingsPathOrder };
 };

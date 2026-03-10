@@ -58,6 +58,17 @@ export function RunHistoryPanel(): React.JSX.Element {
   const [handoffStateByRunId, setHandoffStateByRunId] = React.useState<
     Record<string, 'pending' | 'success'>
   >({});
+  const handoffResetTimeoutsRef = React.useRef<Record<string, number>>({});
+
+  React.useEffect(() => {
+    return () => {
+      Object.values(handoffResetTimeoutsRef.current).forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+      handoffResetTimeoutsRef.current = {};
+    };
+  }, []);
+
   const handleRefresh = (): void => {
     void refreshRuns().catch(() => {});
   };
@@ -75,6 +86,11 @@ export function RunHistoryPanel(): React.JSX.Element {
     void handoffRun(runId)
       .then((ok: boolean) => {
         if (!ok) {
+          const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
+          if (typeof existingTimeoutId === 'number') {
+            window.clearTimeout(existingTimeoutId);
+            delete handoffResetTimeoutsRef.current[runId];
+          }
           setHandoffStateByRunId((prev) => {
             const next = { ...prev };
             delete next[runId];
@@ -86,16 +102,26 @@ export function RunHistoryPanel(): React.JSX.Element {
           ...prev,
           [runId]: 'success',
         }));
-        window.setTimeout(() => {
+        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
+        if (typeof existingTimeoutId === 'number') {
+          window.clearTimeout(existingTimeoutId);
+        }
+        handoffResetTimeoutsRef.current[runId] = window.setTimeout(() => {
           setHandoffStateByRunId((prev) => {
             if (prev[runId] !== 'success') return prev;
             const next = { ...prev };
             delete next[runId];
             return next;
           });
+          delete handoffResetTimeoutsRef.current[runId];
         }, 4000);
       })
       .catch(() => {
+        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
+        if (typeof existingTimeoutId === 'number') {
+          window.clearTimeout(existingTimeoutId);
+          delete handoffResetTimeoutsRef.current[runId];
+        }
         setHandoffStateByRunId((prev) => {
           const next = { ...prev };
           delete next[runId];

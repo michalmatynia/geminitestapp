@@ -29,6 +29,13 @@ export function KangurParentDashboardTabsWidget({
   onBeforeTabChange?: (tabId: KangurParentDashboardTabId) => void;
 } = {}): React.JSX.Element | null {
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
+  const handleTabChange = useCallback(
+    (tabId: KangurParentDashboardTabId): void => {
+      onBeforeTabChange?.(tabId);
+      setActiveTab(tabId);
+    },
+    [onBeforeTabChange, setActiveTab]
+  );
 
   const handlePointerTabMouseDown = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>): void => {
@@ -56,8 +63,7 @@ export function KangurParentDashboardTabsWidget({
               if (isActive) {
                 return;
               }
-              onBeforeTabChange?.(tab.id);
-              setActiveTab(tab.id);
+              handleTabChange(tab.id);
             }}
             aria-pressed={isActive}
             className='min-w-0 flex-1 justify-center px-3 sm:px-4'

@@ -34,6 +34,11 @@ export default function LessonHub({
   sections,
   onSelect,
 }: LessonHubProps): React.JSX.Element {
+  const activeProgressDotClassName = progressDotClassName;
+  const handleSectionSelect = (id: string): void => {
+    onSelect(id);
+  };
+
   return (
     <div className='flex w-full max-w-md flex-col items-center'>
       <motion.div
@@ -64,7 +69,7 @@ export default function LessonHub({
                 emphasis={section.isGame ? 'accent' : 'neutral'}
                 onClick={() => {
                   if (!section.locked) {
-                    onSelect(section.id);
+                    handleSectionSelect(section.id);
                   }
                 }}
                 type='button'
@@ -89,7 +94,7 @@ export default function LessonHub({
                   </KangurStatusChip>
                   {resolvedProgress && resolvedProgress.totalCount > 0 ? (
                     <KangurLessonProgressDots
-                      activeDotClassName={progressDotClassName}
+                      activeDotClassName={activeProgressDotClassName}
                       className='self-end'
                       dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
                       srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}

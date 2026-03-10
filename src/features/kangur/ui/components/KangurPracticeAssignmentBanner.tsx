@@ -1,3 +1,5 @@
+import { createContext, useContext, useMemo } from 'react';
+
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -9,9 +11,8 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  buildKangurAssignmentHref,
+  buildKangurAssignmentListItem,
   formatKangurAssignmentOperationLabel,
-  getKangurAssignmentActionLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurPracticeAssignmentBannerProps = {
@@ -20,17 +21,38 @@ type KangurPracticeAssignmentBannerProps = {
   mode: 'queue' | 'active' | 'completed';
 };
 
-export function KangurPracticeAssignmentBanner({
-  assignment,
-  basePath,
-  mode,
-}: KangurPracticeAssignmentBannerProps): React.JSX.Element {
-  const statusLabel =
-    assignment.priority === 'high'
-      ? 'Priorytet wysoki'
-      : assignment.priority === 'medium'
-        ? 'Priorytet średni'
-        : 'Priorytet niski';
+type KangurPracticeAssignmentBannerModel = {
+  helperLabel: string;
+  priorityLabel: string;
+  title: string;
+  description: string;
+  progressPercent: number;
+  progressSummary: string;
+  actionHref: string;
+  actionLabel: string;
+};
+
+const KangurPracticeAssignmentBannerContext =
+  createContext<KangurPracticeAssignmentBannerModel | null>(null);
+
+const useKangurPracticeAssignmentBannerModel = (): KangurPracticeAssignmentBannerModel => {
+  const context = useContext(KangurPracticeAssignmentBannerContext);
+
+  if (!context) {
+    throw new Error(
+      'useKangurPracticeAssignmentBannerModel must be used within KangurPracticeAssignmentBanner.'
+    );
+  }
+
+  return context;
+};
+
+const buildKangurPracticeAssignmentBannerModel = (
+  assignment: KangurAssignmentSnapshot & { target: { type: 'practice' } },
+  basePath: string,
+  mode: KangurPracticeAssignmentBannerProps['mode']
+): KangurPracticeAssignmentBannerModel => {
+  const item = buildKangurAssignmentListItem(basePath, assignment);
   const helperLabel =
     mode === 'active'
       ? 'W tej sesji realizujesz przydzielone zadanie.'
@@ -40,17 +62,27 @@ export function KangurPracticeAssignmentBanner({
           assignment.target.operation
         )}.`;
 
+  return {
+    helperLabel,
+    priorityLabel: item.priorityLabel,
+    title: item.title,
+    description: item.description,
+    progressPercent: item.progressPercent,
+    progressSummary: item.progressSummary,
+    actionHref: item.actionHref,
+    actionLabel: item.actionLabel,
+  };
+};
+
+function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
+  const banner = useKangurPracticeAssignmentBannerModel();
+
   return (
-    <KangurSurfacePanel
-      accent='amber'
-      className='w-full max-w-md bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
-      data-testid='kangur-practice-assignment-shell'
-      padding='lg'
-    >
+    <>
       <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.18em]'>
         Priorytet rodzica
       </KangurStatusChip>
-      <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{helperLabel}</div>
+      <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{banner.helperLabel}</div>
 
       <KangurGlassPanel
         className='mt-4'
@@ -62,20 +94,20 @@ export function KangurPracticeAssignmentBanner({
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
             <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.16em]'>
-              {statusLabel}
+              {banner.priorityLabel}
             </KangurStatusChip>
-            <div className='mt-3 text-base font-extrabold text-slate-900'>{assignment.title}</div>
-            <div className='mt-1 text-sm leading-6 text-slate-600'>{assignment.description}</div>
+            <div className='mt-3 text-base font-extrabold text-slate-900'>{banner.title}</div>
+            <div className='mt-1 text-sm leading-6 text-slate-600'>{banner.description}</div>
           </div>
           <KangurStatusChip accent='amber' className='text-sm font-bold text-amber-800'>
-            {assignment.progress.percent}%
+            {banner.progressPercent}%
           </KangurStatusChip>
         </div>
 
         <KangurSummaryPanel
           accent='amber'
           className='mt-4 rounded-[24px]'
-          description={assignment.progress.summary}
+          description={banner.progressSummary}
           label='Postęp'
           padding='md'
           tone='accent'
@@ -85,17 +117,39 @@ export function KangurPracticeAssignmentBanner({
             className='mt-3'
             data-testid='kangur-practice-assignment-progress-bar'
             size='sm'
-            value={assignment.progress.percent}
+            value={banner.progressPercent}
           />
         </KangurSummaryPanel>
 
         <KangurButton asChild className='mt-4' fullWidth variant='primary'>
-          <Link href={buildKangurAssignmentHref(basePath, assignment)}>
-            {getKangurAssignmentActionLabel(assignment)}
-          </Link>
+          <Link href={banner.actionHref}>{banner.actionLabel}</Link>
         </KangurButton>
       </KangurGlassPanel>
-    </KangurSurfacePanel>
+    </>
+  );
+}
+
+export function KangurPracticeAssignmentBanner({
+  assignment,
+  basePath,
+  mode,
+}: KangurPracticeAssignmentBannerProps): React.JSX.Element {
+  const banner = useMemo(
+    () => buildKangurPracticeAssignmentBannerModel(assignment, basePath, mode),
+    [assignment, basePath, mode]
+  );
+
+  return (
+    <KangurPracticeAssignmentBannerContext.Provider value={banner}>
+      <KangurSurfacePanel
+        accent='amber'
+        className='w-full max-w-md bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
+        data-testid='kangur-practice-assignment-shell'
+        padding='lg'
+      >
+        <KangurPracticeAssignmentBannerBody />
+      </KangurSurfacePanel>
+    </KangurPracticeAssignmentBannerContext.Provider>
   );
 }
 

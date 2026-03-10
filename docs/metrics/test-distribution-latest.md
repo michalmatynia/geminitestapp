@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-10T08:15:33.217Z
+Generated at: 2026-03-10T11:50:04.591Z
 
 ## Summary
 
@@ -16,21 +16,21 @@ Generated at: 2026-03-10T08:15:33.217Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1276
+- Total test files: 1287
 - .only() occurrences: 0
-- .skip() occurrences: 21
+- .skip() occurrences: 23
 
 ## Test Coverage by Feature
 
 | Feature | Test Files |
 | --- | ---: |
 | ai | 221 |
-| kangur | 207 |
+| kangur | 214 |
 | case-resolver | 78 |
-| products | 75 |
+| products | 76 |
 | cms | 60 |
 | prompt-exploder | 47 |
-| integrations | 34 |
+| integrations | 35 |
 | foldertree | 27 |
 | observability | 22 |
 | notesapp | 15 |
@@ -57,7 +57,7 @@ Generated at: 2026-03-10T08:15:33.217Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| test-skip-left | 0 | 0 | 21 |
+| test-skip-left | 0 | 0 | 23 |
 
 ## Issues
 
@@ -70,19 +70,21 @@ Generated at: 2026-03-10T08:15:33.217Z
 | INFO | test-skip-left | e2e/features/case-resolver/case-resolver.spec.ts:387 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/case-resolver/case-resolver.spec.ts:471 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/case-resolver/case-resolver.spec.ts:524 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:141 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:182 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:742 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:757 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:773 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:780 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:797 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:813 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:831 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:843 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:860 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:912 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-workflow-success.spec.ts:37 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-advanced.spec.ts:52 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:177 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:218 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-parameter-inference.spec.ts:67 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:746 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:761 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:777 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:784 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:801 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:817 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:835 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:847 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:864 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:916 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-workflow-success.spec.ts:61 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/products/products.spec.ts:34 | .skip() in test file. Consider removing or adding a TODO comment. |
 
 ## Notes

@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
 import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
-import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
   KangurButton,
@@ -26,73 +26,6 @@ type Props = {
   learnerId?: string | null;
   onFinish?: (score: number, maxScore: number, answers: Record<string, string>) => void;
 };
-
-type SummaryProps = {
-  suite: KangurTestSuite;
-  questions: KangurTestQuestion[];
-  answers: Record<string, string>;
-  score: number;
-  maxScore: number;
-  onRestart: () => void;
-};
-
-function ExamSummary({
-  suite,
-  questions,
-  answers,
-  score,
-  maxScore,
-  onRestart,
-}: SummaryProps): React.JSX.Element {
-  const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-
-  return (
-    <div className='space-y-6'>
-      <KangurSummaryPanel
-        accent='indigo'
-        align='center'
-        data-testid='kangur-test-suite-summary'
-        label='Wynik'
-        padding='lg'
-        title={`${score} / ${maxScore} pts`}
-        tone='accent'
-      >
-        <div className='mt-1 text-lg font-semibold text-indigo-600'>{pct}%</div>
-        <div className='mt-2 text-sm text-indigo-500'>{suite.title}</div>
-      </KangurSummaryPanel>
-
-      <div className='space-y-4'>
-        {questions.map((q, i) => {
-          const selected = answers[q.id] ?? null;
-          return (
-            <KangurInfoCard key={q.id} accent='slate' className='rounded-[24px]' padding='md'>
-              <KangurTestQuestionRenderer
-                question={q}
-                selectedLabel={selected}
-                onSelect={(): void => {}}
-                showAnswer={true}
-                questionIndex={i}
-                showReadControl={false}
-              />
-            </KangurInfoCard>
-          );
-        })}
-      </div>
-
-      <KangurButton
-        type='button'
-        onClick={onRestart}
-        fullWidth
-        size='lg'
-        variant='surface'
-        data-doc-id='tests_suite_player'
-      >
-        <RotateCcw className='size-4' />
-        Try again
-      </KangurButton>
-    </div>
-  );
-}
 
 export function KangurTestSuitePlayer({
   suite,
@@ -122,6 +55,7 @@ export function KangurTestSuitePlayer({
     return total;
   }, 0);
   const maxScore = publishedQuestions.reduce((total, q) => total + q.pointValue, 0);
+  const scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   const totalQuestions = publishedQuestions.length;
   const activeTutorContext = useMemo(
     () => ({
@@ -155,6 +89,10 @@ export function KangurTestSuitePlayer({
     }),
     [suite.id, suite.title, totalQuestions]
   );
+  useKangurAiTutorSessionSync({
+    learnerId: learnerId ?? null,
+    sessionContext: finished ? summaryTutorContext : activeTutorContext,
+  });
   useKangurTutorAnchor({
     id: `kangur-test-question:${suite.id}:${currentQuestion?.id ?? 'none'}`,
     kind: showAnswer ? 'review' : 'question',
@@ -227,20 +165,57 @@ export function KangurTestSuitePlayer({
   if (finished) {
     return (
       <>
-        <KangurAiTutorSessionSync
-          learnerId={learnerId ?? null}
-          sessionContext={summaryTutorContext}
-        />
         <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
           <div ref={summaryAnchorRef}>
-            <ExamSummary
-              suite={suite}
-              questions={publishedQuestions}
-              answers={answers}
-              score={score}
-              maxScore={maxScore}
-              onRestart={handleRestart}
-            />
+            <div className='space-y-6'>
+              <KangurSummaryPanel
+                accent='indigo'
+                align='center'
+                data-testid='kangur-test-suite-summary'
+                label='Wynik'
+                padding='lg'
+                title={`${score} / ${maxScore} pts`}
+                tone='accent'
+              >
+                <div className='mt-1 text-lg font-semibold text-indigo-600'>{scorePercent}%</div>
+                <div className='mt-2 text-sm text-indigo-500'>{suite.title}</div>
+              </KangurSummaryPanel>
+
+              <div className='space-y-4'>
+                {publishedQuestions.map((question, index) => {
+                  const selected = answers[question.id] ?? null;
+                  return (
+                    <KangurInfoCard
+                      key={question.id}
+                      accent='slate'
+                      className='rounded-[24px]'
+                      padding='md'
+                    >
+                      <KangurTestQuestionRenderer
+                        question={question}
+                        selectedLabel={selected}
+                        onSelect={(): void => {}}
+                        showAnswer={true}
+                        questionIndex={index}
+                        showReadControl={false}
+                      />
+                    </KangurInfoCard>
+                  );
+                })}
+              </div>
+
+              <KangurButton
+                type='button'
+                onClick={handleRestart}
+                fullWidth
+                size='lg'
+                variant='surface'
+                data-doc-id='tests_suite_player'
+              >
+                <RotateCcw className='size-4' />
+                Try again
+              </KangurButton>
+            </div>
           </div>
         </KangurTestSuiteRuntimeProvider>
       </>
@@ -249,7 +224,6 @@ export function KangurTestSuitePlayer({
 
   return (
     <>
-      <KangurAiTutorSessionSync learnerId={learnerId ?? null} sessionContext={activeTutorContext} />
       <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
         <div className='space-y-4'>
           {/* Progress bar */}

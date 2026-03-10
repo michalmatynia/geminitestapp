@@ -7,7 +7,10 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
+import {
+  buildKangurAssignmentListItems,
+  selectKangurPriorityAssignments,
+} from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurPriorityAssignmentsProps = {
   basePath: string;
@@ -27,6 +30,8 @@ export function KangurPriorityAssignments({
   title,
   emptyLabel,
 }: KangurPriorityAssignmentsProps): React.JSX.Element | null {
+  const assignmentsTitle = title ?? PRIORITY_ASSIGNMENTS_TITLE;
+  const emptyDescription = emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION;
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
     query: {
@@ -37,6 +42,10 @@ export function KangurPriorityAssignments({
   const visibleAssignments = useMemo(
     () => selectKangurPriorityAssignments(assignments, limit),
     [assignments, limit]
+  );
+  const visibleItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, visibleAssignments),
+    [basePath, visibleAssignments]
   );
 
   if (!enabled) {
@@ -89,14 +98,14 @@ export function KangurPriorityAssignments({
       >
         <div className='mb-5 flex items-center justify-between gap-3'>
           <div className='text-2xl font-extrabold tracking-tight text-[#7a86b0]'>
-            {title ?? PRIORITY_ASSIGNMENTS_TITLE}
+            {assignmentsTitle}
           </div>
           <div className='text-sm font-medium text-[#96a0be]'>0 zadan</div>
         </div>
         <KangurEmptyState
           accent='slate'
           className='text-sm'
-          description={emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION}
+          description={emptyDescription}
           padding='lg'
         />
       </KangurGlassPanel>
@@ -105,10 +114,8 @@ export function KangurPriorityAssignments({
 
   return (
     <KangurAssignmentsList
-      assignments={visibleAssignments}
-      basePath={basePath}
-      title={title ?? PRIORITY_ASSIGNMENTS_TITLE}
-      emptyLabel={emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION}
+      items={visibleItems}
+      title={assignmentsTitle}
       compact
     />
   );

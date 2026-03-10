@@ -162,7 +162,12 @@ export default function LessonSlideSection({
             <div className='min-w-[72px]' />
           ) : (
             <KangurButton
-              onClick={() => setSlide((currentSlide) => Math.max(0, currentSlide - 1))}
+              onClick={() => {
+                const handlePreviousSlide = (): void => {
+                  setSlide((currentSlide) => Math.max(0, currentSlide - 1));
+                };
+                handlePreviousSlide();
+              }}
               aria-label='Poprzedni panel'
               className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-prev-button'
@@ -179,9 +184,13 @@ export default function LessonSlideSection({
             <div className='min-w-[72px]' />
           ) : (
             <KangurButton
-              onClick={() =>
-                setSlide((currentSlide) => Math.min(slides.length - 1, currentSlide + 1))
-              }
+              onClick={() => {
+                const totalSlides = slides.length;
+                const handleNextSlide = (): void => {
+                  setSlide((currentSlide) => Math.min(totalSlides - 1, currentSlide + 1));
+                };
+                handleNextSlide();
+              }}
               aria-label='Nastepny panel'
               className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
               data-testid='lesson-slide-next-button'

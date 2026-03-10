@@ -21,6 +21,7 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -32,9 +33,12 @@ import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import {
   createDefaultKangurAiTutorLearnerMood,
-  getKangurTutorMoodPreset,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
+import {
+  formatKangurAiTutorTemplate,
+  getKangurAiTutorMoodCopy,
+} from '@/shared/contracts/kangur-ai-tutor-content';
 import { api } from '@/shared/lib/api-client';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
@@ -64,14 +68,14 @@ const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'ind
   celebrating: 'rose',
 };
 
-const formatTutorMoodTimestamp = (value: string | null): string => {
+const formatTutorMoodTimestamp = (value: string | null, fallback: string): string => {
   if (!value) {
-    return 'Jeszcze nie obliczono';
+    return fallback;
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'Jeszcze nie obliczono';
+    return fallback;
   }
 
   return parsed.toLocaleString('pl-PL', {
@@ -136,6 +140,7 @@ function TutorToggleField({
 }
 
 function AiTutorConfigPanel(): React.JSX.Element {
+  const tutorContent = useKangurAiTutorContent();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
   const settingsStore = useSettingsStore();
   const queryClient = useQueryClient();
@@ -229,11 +234,19 @@ function AiTutorConfigPanel(): React.JSX.Element {
   });
   const usageSummary = tutorUsageResponse?.usage ?? null;
   const learnerMood = activeLearner?.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
-  const currentMoodPreset = getKangurTutorMoodPreset(learnerMood.currentMoodId);
-  const baselineMoodPreset = getKangurTutorMoodPreset(learnerMood.baselineMoodId);
+  const currentMoodPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.currentMoodId);
+  const baselineMoodPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.baselineMoodId);
   const currentMoodAccent = KANGUR_PARENT_TUTOR_MOOD_ACCENTS[learnerMood.currentMoodId];
   const moodConfidence = `${Math.round(learnerMood.confidence * 100)}%`;
-  const moodUpdatedAt = formatTutorMoodTimestamp(learnerMood.lastComputedAt);
+  const moodUpdatedAt = formatTutorMoodTimestamp(
+    learnerMood.lastComputedAt,
+    tutorContent.parentDashboard.updatedFallback
+  );
+  const [settingsManagedNoticeBefore, settingsManagedNoticeAfter] = useMemo(() => {
+    const [before, after = ''] =
+      tutorContent.parentDashboard.settingsManagedNotice.split('{highlight}');
+    return [before, after] as const;
+  }, [tutorContent.parentDashboard.settingsManagedNotice]);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!activeLearner || !canAccessDashboard) return;
@@ -272,9 +285,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
           queryKey: kangurKeys.aiTutor.usage(activeLearner.id),
         });
       }
-      setFeedback('Ustawienia AI Tutora zapisane.');
+      setFeedback(tutorContent.parentDashboard.saveSuccess);
     } catch {
-      setFeedback('Nie udało się zapisać ustawień.');
+      setFeedback(tutorContent.parentDashboard.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -294,12 +307,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
     proactiveNudges,
     settingsStoreMap,
     queryClient,
+    tutorContent.parentDashboard.saveError,
+    tutorContent.parentDashboard.saveSuccess,
   ]);
 
   if (!activeLearner) {
     return (
       <KangurGlassPanel padding='lg' surface='solid' variant='soft' className='w-full text-center'>
-        <p className='text-sm text-slate-500'>Wybierz ucznia, aby skonfigurować AI Tutora.</p>
+        <p className='text-sm text-slate-500'>{tutorContent.parentDashboard.noActiveLearner}</p>
       </KangurGlassPanel>
     );
   }
@@ -313,9 +328,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
       <div className='flex items-center gap-3'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
         <div>
-          <div className='text-sm font-bold text-slate-800'>AI Tutor dla {activeLearner.displayName}</div>
+          <div className='text-sm font-bold text-slate-800'>
+            {formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
+              learnerName: activeLearner.displayName,
+            })}
+          </div>
           <div className='text-xs text-slate-500'>
-            Ustaw dostępność i guardrails pomocy AI dla tego ucznia
+            {tutorContent.parentDashboard.subtitle}
           </div>
         </div>
       </div>
@@ -327,7 +346,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
             <div className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
-              Aktualny nastroj ucznia
+              {tutorContent.parentDashboard.moodTitle}
             </div>
             <p
               className='mt-1 text-sm leading-relaxed text-slate-600'
@@ -348,7 +367,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
         <div className='mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-3'>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>Ton bazowy</div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+              {tutorContent.parentDashboard.baselineLabel}
+            </div>
             <div
               className='mt-1 text-sm font-semibold text-slate-800'
               data-testid='parent-dashboard-ai-tutor-mood-baseline'
@@ -357,7 +378,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
             </div>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>Pewność</div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+              {tutorContent.parentDashboard.confidenceLabel}
+            </div>
             <div
               className='mt-1 text-sm font-semibold text-slate-800'
               data-testid='parent-dashboard-ai-tutor-mood-confidence'
@@ -366,7 +389,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
             </div>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>Aktualizacja</div>
+            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+              {tutorContent.parentDashboard.updatedLabel}
+            </div>
             <div
               className='mt-1 text-sm font-semibold text-slate-800'
               data-testid='parent-dashboard-ai-tutor-mood-updated'
@@ -382,37 +407,52 @@ function AiTutorConfigPanel(): React.JSX.Element {
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
               <div className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                Wykorzystanie dzisiaj
+                {tutorContent.parentDashboard.usageTitle}
               </div>
               <div className='mt-1 text-sm font-semibold text-slate-800'>
                 {isUsageLoading
-                  ? 'Sprawdzam dzisiejsze wiadomości…'
+                  ? tutorContent.parentDashboard.usageLoading
                   : hasUsageError || !usageSummary
-                    ? 'Nie udało się odczytać bieżącego użycia.'
+                    ? tutorContent.parentDashboard.usageError
                     : usageSummary.dailyMessageLimit === null
-                      ? `Wysłano ${usageSummary.messageCount} wiadomości.`
-                      : `Zużyto ${usageSummary.messageCount} z ${usageSummary.dailyMessageLimit} wiadomości.`}
+                      ? formatKangurAiTutorTemplate(
+                          tutorContent.parentDashboard.usageUnlimitedTemplate,
+                          { messageCount: usageSummary.messageCount }
+                        )
+                      : formatKangurAiTutorTemplate(
+                          tutorContent.parentDashboard.usageLimitedTemplate,
+                          {
+                            messageCount: usageSummary.messageCount,
+                            dailyMessageLimit: usageSummary.dailyMessageLimit,
+                          }
+                        )}
               </div>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
               <div className='shrink-0 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-amber-700'>
                 {usageSummary.dailyMessageLimit === null
-                  ? 'Bez limitu'
+                  ? tutorContent.parentDashboard.usageUnlimitedBadge
                   : usageSummary.remainingMessages === 0
-                    ? 'Limit wyczerpany'
-                    : `Pozostało ${usageSummary.remainingMessages}`}
+                    ? tutorContent.parentDashboard.usageExhaustedBadge
+                    : formatKangurAiTutorTemplate(
+                        tutorContent.parentDashboard.usageRemainingBadgeTemplate,
+                        { remainingMessages: usageSummary.remainingMessages }
+                      )}
               </div>
             ) : null}
           </div>
           <p className='mt-2 text-xs leading-relaxed text-slate-500'>
-            Widok odświeża się automatycznie, więc rodzic widzi bieżące użycie aktywnego ucznia.
+            {tutorContent.parentDashboard.usageHelp}
           </p>
         </div>
       ) : null}
 
       <div className='rounded-2xl border border-slate-200 bg-white/75 px-4 py-3 text-xs leading-relaxed text-slate-500'>
-        Globalna persona tutora, agent nauczający, dzienny limit wiadomości i preset urządzenia są
-        zarządzane w <span className='font-semibold text-slate-700'>Kangur Settings</span>.
+        {settingsManagedNoticeBefore}
+        <span className='font-semibold text-slate-700'>
+          {tutorContent.parentDashboard.settingsManagedHighlight}
+        </span>
+        {settingsManagedNoticeAfter}
       </div>
 
       {/* Enable toggle */}
@@ -436,26 +476,28 @@ function AiTutorConfigPanel(): React.JSX.Element {
           />
         </div>
         <span className='text-sm font-medium text-slate-700'>
-          {enabled ? 'AI Tutor włączony' : 'AI Tutor wyłączony'}
+          {enabled
+            ? tutorContent.parentDashboard.toggleEnabledLabel
+            : tutorContent.parentDashboard.toggleDisabledLabel}
         </span>
       </label>
 
       <div className='space-y-3'>
         <div className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-          Guardrails rodzica
+          {tutorContent.parentDashboard.guardrailsTitle}
         </div>
         <TutorToggleField
           checked={allowLessons}
           disabled={!enabled}
-          label='Pokazuj tutora w lekcjach'
-          description='Tutor może pomagać podczas otwartych lekcji i samodzielnych powtórek.'
+          label={tutorContent.parentDashboard.toggles.allowLessonsLabel}
+          description={tutorContent.parentDashboard.toggles.allowLessonsDescription}
           onChange={setAllowLessons}
         />
         <TutorToggleField
           checked={allowGames}
           disabled={!enabled}
-          label='Pokazuj tutora w grach'
-          description='Tutor może pomagać w Grajmy podczas treningów i quizów bez mieszania tego z ustawieniami lekcji.'
+          label={tutorContent.parentDashboard.toggles.allowGamesLabel}
+          description={tutorContent.parentDashboard.toggles.allowGamesDescription}
           onChange={setAllowGames}
         />
         <div className='flex flex-col gap-1'>
@@ -463,7 +505,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
             htmlFor={testAccessModeFieldId}
             className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
           >
-            Tryb pomocy w testach
+            {tutorContent.parentDashboard.selects.testAccessModeLabel}
           </label>
           <KangurSelectField
             id={testAccessModeFieldId}
@@ -473,13 +515,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
             size='md'
             disabled={!enabled}
           >
-            <option value='disabled'>Wyłącz tutora w testach</option>
-            <option value='guided'>Pozwól tylko na wskazówki bez odpowiedzi</option>
-            <option value='review_after_answer'>Pozwól dopiero po pokazaniu odpowiedzi</option>
+            <option value='disabled'>{tutorContent.parentDashboard.selects.testAccessModeDisabled}</option>
+            <option value='guided'>{tutorContent.parentDashboard.selects.testAccessModeGuided}</option>
+            <option value='review_after_answer'>
+              {tutorContent.parentDashboard.selects.testAccessModeReview}
+            </option>
           </KangurSelectField>
           <p className='text-xs leading-relaxed text-slate-500'>
-            To ograniczenie działa także w API, więc aktywny test nie obejdzie go ręcznym
-            żądaniem.
+            {tutorContent.parentDashboard.selects.testAccessModeDescription}
           </p>
         </div>
         <div className='grid gap-3 md:grid-cols-2'>
@@ -488,7 +531,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               htmlFor={hintDepthFieldId}
               className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
             >
-              Glebokosc wskazowek
+              {tutorContent.parentDashboard.selects.hintDepthLabel}
             </label>
             <KangurSelectField
               id={hintDepthFieldId}
@@ -498,12 +541,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
               size='md'
               disabled={!enabled}
             >
-              <option value='brief'>Jedno krotkie naprowadzenie</option>
-              <option value='guided'>Jedna wskazowka i pytanie kontrolne</option>
-              <option value='step_by_step'>Prowadz krok po kroku bez podawania odpowiedzi</option>
+              <option value='brief'>{tutorContent.parentDashboard.selects.hintDepthBrief}</option>
+              <option value='guided'>{tutorContent.parentDashboard.selects.hintDepthGuided}</option>
+              <option value='step_by_step'>
+                {tutorContent.parentDashboard.selects.hintDepthStepByStep}
+              </option>
             </KangurSelectField>
             <p className='text-xs leading-relaxed text-slate-500'>
-              Okresla, jak szczegolowe maja byc podpowiedzi w jednej odpowiedzi tutora.
+              {tutorContent.parentDashboard.selects.hintDepthDescription}
             </p>
           </div>
           <div className='flex flex-col gap-1'>
@@ -511,7 +556,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               htmlFor={proactiveNudgesFieldId}
               className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
             >
-              Aktywnosc tutora
+              {tutorContent.parentDashboard.selects.proactiveNudgesLabel}
             </label>
             <KangurSelectField
               id={proactiveNudgesFieldId}
@@ -522,34 +567,38 @@ function AiTutorConfigPanel(): React.JSX.Element {
               size='md'
               disabled={!enabled}
             >
-              <option value='off'>Bez aktywnych podpowiedzi</option>
-              <option value='gentle'>Delikatnie sugeruj kolejny krok</option>
-              <option value='coach'>Wyraznie proponuj dalsze cwiczenie</option>
+              <option value='off'>{tutorContent.parentDashboard.selects.proactiveNudgesOff}</option>
+              <option value='gentle'>
+                {tutorContent.parentDashboard.selects.proactiveNudgesGentle}
+              </option>
+              <option value='coach'>
+                {tutorContent.parentDashboard.selects.proactiveNudgesCoach}
+              </option>
             </KangurSelectField>
             <p className='text-xs leading-relaxed text-slate-500'>
-              Steruje, jak stanowczo tutor moze proponowac kolejny ruch lub powtorke.
+              {tutorContent.parentDashboard.selects.proactiveNudgesDescription}
             </p>
           </div>
         </div>
         <TutorToggleField
           checked={showSources}
           disabled={!enabled}
-          label='Pokazuj źródła odpowiedzi'
-          description='Po odpowiedzi tutor może pokazać fragmenty materiałów, z których korzystał.'
+          label={tutorContent.parentDashboard.toggles.showSourcesLabel}
+          description={tutorContent.parentDashboard.toggles.showSourcesDescription}
           onChange={setShowSources}
         />
         <TutorToggleField
           checked={allowSelectedTextSupport}
           disabled={!enabled}
-          label='Pozwól pytać o zaznaczony fragment'
-          description='Po otwarciu tutora może pracować na wskazanym fragmencie bez gubienia zaznaczenia.'
+          label={tutorContent.parentDashboard.toggles.allowSelectedTextSupportLabel}
+          description={tutorContent.parentDashboard.toggles.allowSelectedTextSupportDescription}
           onChange={setAllowSelectedTextSupport}
         />
         <TutorToggleField
           checked={allowCrossPagePersistence}
           disabled={!enabled}
-          label='Zachowuj rozmowę po zmianie miejsca'
-          description='Tutor może pozostać otwarty i wrócić do poprzedniego wątku po przejściu między lekcjami, testami i podsumowaniami.'
+          label={tutorContent.parentDashboard.toggles.allowCrossPagePersistenceLabel}
+          description={tutorContent.parentDashboard.toggles.allowCrossPagePersistenceDescription}
           onChange={(checked) => {
             setAllowCrossPagePersistence(checked);
             if (!checked) {
@@ -560,8 +609,8 @@ function AiTutorConfigPanel(): React.JSX.Element {
         <TutorToggleField
           checked={rememberTutorContext}
           disabled={!enabled || !allowCrossPagePersistence}
-          label='Zapamietuj ostatnie wskazowki'
-          description='Pozwala tutorowi przenosic krotka pamiec o ostatniej blokadzie i zalecanym kroku miedzy sesjami ucznia.'
+          label={tutorContent.parentDashboard.toggles.rememberTutorContextLabel}
+          description={tutorContent.parentDashboard.toggles.rememberTutorContextDescription}
           onChange={setRememberTutorContext}
         />
       </div>
@@ -571,7 +620,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
           htmlFor={uiModeFieldId}
           className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
         >
-          Tryb interfejsu tutora
+          {tutorContent.parentDashboard.selects.uiModeLabel}
         </label>
         <KangurSelectField
           id={uiModeFieldId}
@@ -581,12 +630,11 @@ function AiTutorConfigPanel(): React.JSX.Element {
           size='md'
           disabled={!enabled}
         >
-          <option value='anchored'>Ruchomy i zakotwiczony przy treści</option>
-          <option value='static'>Statyczny w rogu ekranu</option>
+          <option value='anchored'>{tutorContent.parentDashboard.selects.uiModeAnchored}</option>
+          <option value='static'>{tutorContent.parentDashboard.selects.uiModeStatic}</option>
         </KangurSelectField>
         <p className='text-xs leading-relaxed text-slate-500'>
-          Tryb ruchomy podąża za zaznaczeniem i aktywnym zadaniem. Tryb statyczny zachowuje chat w
-          stałym miejscu, ale nadal używa bieżącego kontekstu lekcji lub testu.
+          {tutorContent.parentDashboard.selects.uiModeDescription}
         </p>
       </div>
 
@@ -599,7 +647,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
         disabled={isSaving}
         fullWidth
       >
-        {isSaving ? 'Zapisywanie…' : 'Zapisz ustawienia AI Tutora'}
+        {isSaving
+          ? tutorContent.parentDashboard.savePendingLabel
+          : tutorContent.parentDashboard.saveIdleLabel}
       </KangurButton>
 
       {feedback && (

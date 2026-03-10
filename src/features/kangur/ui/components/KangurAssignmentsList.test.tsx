@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 
 import KangurAssignmentsList from './KangurAssignmentsList';
 
@@ -69,8 +70,7 @@ describe('KangurAssignmentsList', () => {
   it('uses shared info-card and button surfaces for regular assignment cards', () => {
     render(
       <KangurAssignmentsList
-        assignments={[regularAssignment]}
-        basePath='/kangur'
+        items={buildKangurAssignmentListItems('/kangur', [regularAssignment])}
         emptyLabel='Brak'
         onArchive={() => undefined}
         title='Aktywne zadania'
@@ -103,8 +103,7 @@ describe('KangurAssignmentsList', () => {
   it('uses shared info-card and CTA surfaces for compact assignment cards', () => {
     render(
       <KangurAssignmentsList
-        assignments={[compactAssignment]}
-        basePath='/kangur'
+        items={buildKangurAssignmentListItems('/kangur', [compactAssignment])}
         compact
         emptyLabel='Brak'
         title='Priorytetowe zadania'

@@ -123,6 +123,11 @@ export function AgentPersonaSettingsForm({
   originalItem,
   onChange,
 }: AgentPersonaSettingsFormProps): React.JSX.Element {
+  const editableMoods = item.moods;
+  const baselineMoods = originalItem?.moods;
+  const applyPersonaChange = (updates: Partial<AgentPersona>): void => {
+    onChange(updates);
+  };
   const resolvedSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
   const resolvedMemorySettings = resolvedSettings.memory ?? {};
   const personaId = item.id ?? originalItem?.id ?? null;
@@ -131,7 +136,7 @@ export function AgentPersonaSettingsForm({
     updates: Partial<NonNullable<typeof resolvedSettings.memory>>
   ): void => {
     const nextSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
-    onChange({
+    applyPersonaChange({
       settings: {
         ...nextSettings,
         memory: {
@@ -150,10 +155,10 @@ export function AgentPersonaSettingsForm({
       </div>
 
       <AgentPersonaMoodEditor
-        moods={item.moods}
-        originalMoods={originalItem?.moods}
+        moods={editableMoods}
+        originalMoods={baselineMoods}
         personaId={personaId}
-        onChange={(updates) => onChange(updates)}
+        onChange={applyPersonaChange}
       />
 
       <FormSection

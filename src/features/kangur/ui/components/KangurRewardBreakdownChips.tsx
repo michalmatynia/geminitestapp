@@ -22,6 +22,9 @@ export default function KangurRewardBreakdownChips({
   itemDataTestIdPrefix,
   limit,
 }: KangurRewardBreakdownChipsProps): React.JSX.Element | null {
+  const chipAccent = accent;
+  const chipClasses = chipClassName;
+  const chipTestIdPrefix = itemDataTestIdPrefix;
   const visibleBreakdown =
     typeof limit === 'number' ? breakdown.slice(0, Math.max(0, limit)) : breakdown;
   const formatXp = (value: number): string => {
@@ -42,11 +45,9 @@ export default function KangurRewardBreakdownChips({
     <div className={cn('flex flex-wrap gap-2', className)} data-testid={dataTestId}>
       {visibleBreakdown.map((entry) => (
         <KangurStatusChip
-          accent={accent}
-          className={cn('text-xs', chipClassName)}
-          data-testid={
-            itemDataTestIdPrefix ? `${itemDataTestIdPrefix}-${entry.kind}` : undefined
-          }
+          accent={chipAccent}
+          className={cn('text-xs', chipClasses)}
+          data-testid={chipTestIdPrefix ? `${chipTestIdPrefix}-${entry.kind}` : undefined}
           key={`${entry.kind}-${entry.label}`}
         >
           {entry.label} {formatXp(entry.xp)}

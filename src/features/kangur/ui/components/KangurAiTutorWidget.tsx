@@ -1,8 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { X, Send, BrainCircuit } from 'lucide-react';
-import NextImage from 'next/image';
+import { AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   useCallback,
   useEffect,
@@ -22,55 +20,92 @@ import {
 } from '@/features/kangur/settings';
 import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
 import { buildKangurLessonNarrationScriptFromText } from '@/features/kangur/tts/script';
-import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorRegistration,
 } from '@/features/kangur/ui/context/kangur-tutor-types';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import {
-  buildKangurRecommendationHref,
-} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   selectBestTutorAnchor,
   useOptionalKangurTutorAnchors,
 } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
-import {
-  KangurButton,
-  KangurGlassPanel,
-  KangurTextField,
-} from '@/features/kangur/ui/design/primitives';
 import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurTextHighlight';
 import type {
   KangurAiTutorConversationContext,
-  KangurAiTutorFollowUpAction,
   KangurAiTutorFocusKind,
   KangurAiTutorLearnerMemory,
   KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 import {
+  formatKangurAiTutorTemplate,
+  type KangurAiTutorContent,
+} from '@/shared/contracts/kangur-ai-tutor-content';
+import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn, getMotionSafeScrollBehavior, sanitizeSvg } from '@/shared/utils';
+import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
 
-import { extractNarrationTextFromElement } from './kangur-narrator-utils';
+import { KangurAiTutorComposer } from './KangurAiTutorComposer';
+import { KangurAiTutorFloatingAvatar } from './KangurAiTutorFloatingAvatar';
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
+import { KangurAiTutorGuidedCallout } from './KangurAiTutorGuidedCallout';
+import {
+  formatGuidedArrowheadTransition,
+  getAvatarRectFromPoint,
+  getEstimatedBubbleHeight,
+  getFloatingTutorArrowCorridorRect,
+  getFloatingTutorArrowheadGeometry,
+  getGuidedCalloutLayout,
+  getMotionPositionPoint,
+  getSelectionSpotlightStyle,
+  resolveContinuousRotationDegrees,
+} from './KangurAiTutorGuidedLayout';
+import { KangurAiTutorMessageList } from './KangurAiTutorMessageList';
+import { KangurAiTutorPanelAuxiliaryControls } from './KangurAiTutorPanelAuxiliaryControls';
+import {
+  KangurAiTutorPanelBodyProvider,
+  type KangurAiTutorPanelBodyContextValue,
+} from './KangurAiTutorPanelBody.context';
+import { KangurAiTutorPanelChrome } from './KangurAiTutorPanelChrome';
+import { KangurAiTutorPanelContextSummary } from './KangurAiTutorPanelContextSummary';
 import { KangurAiTutorSelectionAction } from './KangurAiTutorSelectionAction';
+import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays';
+import { useKangurAiTutorAvatarDrag } from './KangurAiTutorWidget.avatar-drag';
+import { useKangurAiTutorGuidedDisplayState } from './KangurAiTutorWidget.display';
+import {
+  useKangurAiTutorFocusTelemetryEffect,
+  useKangurAiTutorGuidanceCompletionEffects,
+  useKangurAiTutorNarrationObserverEffect,
+  useKangurAiTutorSupplementalTelemetryEffects,
+} from './KangurAiTutorWidget.effects';
+import {
+  useKangurAiTutorGuestIntroFlow,
+  useKangurAiTutorGuidedAuthHandoffEffect,
+  useKangurAiTutorHomeOnboardingFlow,
+} from './KangurAiTutorWidget.entry';
+import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
+import {
+  getPageRect,
+  isAuthGuidedTutorTarget,
+  isSectionExplainableTutorAnchor,
+  isSectionGuidedTutorTarget,
+} from './KangurAiTutorWidget.helpers';
+import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
+import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
 import {
   ATTACHED_AVATAR_EDGE_INSET,
   ATTACHED_AVATAR_OVERLAP,
   ATTACHED_AVATAR_POINTER_EDGE_INSET,
   ATTACHED_AVATAR_POINTER_PADDING,
   AVATAR_SIZE,
-  BUBBLE_MAX_HEIGHT,
-  BUBBLE_MIN_HEIGHT,
   CTA_HEIGHT,
   CTA_WIDTH,
   DESKTOP_BUBBLE_WIDTH,
@@ -80,7 +115,6 @@ import {
   type ActiveTutorFocus,
   type TutorAvatarAttachmentSide,
   type TutorBubblePlacementStrategy,
-  type TutorMoodAvatarProps,
   type TutorMotionPosition,
   type TutorMotionProfile,
   type TutorPointerSide,
@@ -96,26 +130,14 @@ import {
   clearPersistedTutorSessionKey,
   getGuestIntroPanelStyle,
   loadPersistedPendingTutorFollowUp,
-  persistGuestIntroRecord,
-  persistHomeOnboardingRecord,
-  persistPendingTutorFollowUp,
   persistTutorAvatarPosition,
-  persistTutorVisibilityHidden,
   persistTutorSessionKey,
   subscribeToTutorVisibilityChanges,
-  type KangurAiTutorGuestIntroCheckResponse,
-  type KangurAiTutorHomeOnboardingRecord,
 } from './KangurAiTutorWidget.storage';
-import { KangurNarratorControl } from './KangurNarratorControl';
 
 import type {
-  GuidedTutorAuthKind,
   GuidedTutorAuthMode,
   GuidedTutorSectionKind,
-  GuidedTutorTarget,
-  SectionExplainContext,
-  TutorHomeOnboardingStep,
-  TutorMessageFeedback,
   TutorPoint,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
@@ -142,29 +164,8 @@ type TutorPointerGeometry = {
   end: TutorPoint;
 };
 
-type FloatingTutorArrowheadGeometry = {
-  angle: number;
-  anchorAvatarLeft: number;
-  anchorAvatarTop: number;
-  anchorOffsetX: number;
-  anchorOffsetY: number;
-  left: number;
-  side: TutorPointerSide;
-  targetX: number;
-  targetY: number;
-  top: number;
-  quadrant: 'top' | 'right' | 'bottom' | 'left';
-};
-
 const FOLLOW_UP_COMPLETION_MAX_AGE_MS = 30 * 60 * 1000;
 const FLOATING_TUTOR_AVATAR_RIM_COLOR = '#78350f';
-const FLOATING_TUTOR_ARROWHEAD_ANCHOR_X = 12.5;
-const FLOATING_TUTOR_ARROWHEAD_ANCHOR_Y = 9;
-const FLOATING_TUTOR_ARROWHEAD_DOT_RADIUS_PX = 3.2;
-const FLOATING_TUTOR_ARROWHEAD_ROTATION_OFFSET_DEG = 180;
-const FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX = FLOATING_TUTOR_ARROWHEAD_DOT_RADIUS_PX + 1;
-const FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX = 18;
-const GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S = 0.22;
 const SELECTION_PROTECTED_ZONE_PADDING_X = 140;
 const SELECTION_PROTECTED_ZONE_PADDING_Y = 96;
 const SELECTION_GUIDED_AVATAR_PADDING_X = 72;
@@ -172,157 +173,13 @@ const SELECTION_GUIDED_AVATAR_PADDING_Y = 56;
 const SECTION_DROP_TARGET_PADDING_X = 18;
 const SECTION_DROP_TARGET_PADDING_Y = 18;
 const HOME_ONBOARDING_ELIGIBLE_CONTENT_ID = 'game:home';
-const HOME_ONBOARDING_STEP_DEFINITIONS: TutorHomeOnboardingStep[] = [
-  {
-    id: 'home-actions',
-    kind: 'home_actions',
-    title: 'Tutaj wybierasz, jak chcesz zacząć.',
-    description:
-      'Możesz przejść do lekcji, uruchomić grę, trening mieszany albo Kangura Matematycznego.',
-  },
-  {
-    id: 'home-quest',
-    kind: 'home_quest',
-    title: 'Tutaj pojawia się Twoja aktualna misja.',
-    description:
-      'To najszybszy sposób, żeby zobaczyć, co teraz warto zrobić dalej bez zgadywania.',
-  },
-  {
-    id: 'priority-assignments',
-    kind: 'priority_assignments',
-    title: 'Tutaj znajdziesz zadania od rodzica.',
-    description:
-      'Jeśli są ustawione, warto zaczynać od nich, bo to priorytety do wykonania.',
-  },
-  {
-    id: 'leaderboard',
-    kind: 'leaderboard',
-    title: 'Tutaj widzisz ranking.',
-    description:
-      'Możesz sprawdzić, jak wygląda Twój wynik na tle innych i ile jeszcze brakuje do kolejnego skoku.',
-  },
-  {
-    id: 'progress',
-    kind: 'progress',
-    title: 'Tutaj śledzisz swój postęp.',
-    description:
-      'W tym miejscu zobaczysz rozwój gracza, zdobyte punkty i tempo nauki.',
-  },
-];
+const CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE =
+  'Otworz lekcje, gre albo test, a pomoge Ci w konkretnym zadaniu.';
+const CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER =
+  'Przejdz do lekcji, gry albo testu, aby zadac pytanie.';
 
-const isAuthGuidedTutorTarget = (
-  value: GuidedTutorTarget | null | undefined
-): value is Extract<GuidedTutorTarget, { mode: 'auth' }> => value?.mode === 'auth';
-
-const isSelectionGuidedTutorTarget = (
-  value: GuidedTutorTarget | null | undefined
-): value is Extract<GuidedTutorTarget, { mode: 'selection' }> => value?.mode === 'selection';
-
-const isSectionGuidedTutorTarget = (
-  value: GuidedTutorTarget | null | undefined
-): value is Extract<GuidedTutorTarget, { mode: 'section' }> => value?.mode === 'section';
-
-const isSectionExplainableTutorAnchor = (
-  anchor: KangurTutorAnchorRegistration
-): anchor is KangurTutorAnchorRegistration & { kind: GuidedTutorSectionKind; surface: TutorSurface } =>
-  anchor.surface !== 'auth';
-
-const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
-
-const normalizeRotationDegrees = (value: number): number => {
-  const normalized = value % 360;
-  return normalized < 0 ? normalized + 360 : normalized;
-};
-
-const resolveContinuousRotationDegrees = (
-  previous: number | null,
-  next: number
-): number => {
-  if (previous === null || !Number.isFinite(previous)) {
-    return next;
-  }
-
-  const normalizedPrevious = normalizeRotationDegrees(previous);
-  const baseDelta = next - normalizedPrevious;
-  const candidateDeltas = [baseDelta, baseDelta + 360, baseDelta - 360];
-  const bestDelta = candidateDeltas.reduce((currentBest, candidate) =>
-    Math.abs(candidate) < Math.abs(currentBest) ? candidate : currentBest
-  );
-
-  return previous + bestDelta;
-};
-
-const formatGuidedArrowheadTransition = (
-  motionProfile: TutorMotionProfile,
-  prefersReducedMotion: boolean
-): string | undefined => {
-  if (prefersReducedMotion) {
-    return undefined;
-  }
-
-  const duration = Math.max(
-    GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S,
-    motionProfile.guidedAvatarTransition.duration * 0.55
-  );
-  const [x1, y1, x2, y2] = motionProfile.guidedAvatarTransition.ease;
-  const easing = `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
-
-  return `left ${duration}s ${easing}, top ${duration}s ${easing}, transform ${duration}s ${easing}`;
-};
-
-const getAssistantMessageFeedbackKey = (
-  sessionKey: string | null,
-  index: number,
-  message: { content: string }
-): string => `${sessionKey ?? 'session'}:${index}:${message.content.trim()}`;
-
-const TutorMoodAvatar = ({
-  svgContent,
-  avatarImageUrl,
-  label,
-  className,
-  imgClassName,
-  svgClassName,
-  fallbackIconClassName,
-  'data-testid': dataTestId,
-}: TutorMoodAvatarProps): React.JSX.Element => {
-  const hasImage = typeof avatarImageUrl === 'string' && avatarImageUrl.trim().length > 0;
-  const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
-
-  return (
-    <div
-      aria-label={label}
-      className={cn('relative flex items-center justify-center overflow-hidden rounded-full', className)}
-      data-testid={dataTestId}
-      role='img'
-    >
-      {hasImage ? (
-        <NextImage
-          src={avatarImageUrl}
-          alt={label}
-          fill
-          sizes='100%'
-          unoptimized
-          className={cn('h-full w-full object-cover', imgClassName)}
-          loading='lazy'
-        />
-      ) : hasSvg ? (
-        <div
-          className={cn(
-            'h-full w-full [&_svg]:h-full [&_svg]:w-full [&_svg]:overflow-visible',
-            svgClassName
-          )}
-          dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent, { viewBox: '0 0 100 100' }) }}
-        />
-      ) : (
-        <BrainCircuit
-          aria-hidden='true'
-          className={cn('h-1/2 w-1/2 text-white', fallbackIconClassName)}
-        />
-      )}
-    </div>
-  );
-};
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
 
 const cloneRect = (rect: DOMRect | null | undefined): DOMRect | null => {
   if (!rect) {
@@ -353,14 +210,6 @@ const cloneRect = (rect: DOMRect | null | undefined): DOMRect | null => {
       left: rect.left,
     }),
   } as DOMRect;
-};
-
-const getPageRect = (rect: DOMRect | null | undefined): DOMRect | null => {
-  if (!rect) {
-    return null;
-  }
-
-  return createRect(rect.left + window.scrollX, rect.top + window.scrollY, rect.width, rect.height);
 };
 
 const getViewportRectFromPageRect = (rect: DOMRect | null | undefined): DOMRect | null => {
@@ -430,57 +279,6 @@ const getSelectionProtectedRect = (
   );
 };
 
-const rectContainsPoint = (
-  rect: DOMRect | null | undefined,
-  point: TutorPoint
-): boolean => {
-  if (!rect) {
-    return false;
-  }
-
-  return (
-    point.x >= rect.left &&
-    point.x <= rect.right &&
-    point.y >= rect.top &&
-    point.y <= rect.bottom
-  );
-};
-
-const selectTutorSectionDropAnchor = (input: {
-  anchors: KangurTutorAnchorRegistration[];
-  point: TutorPoint;
-}): (KangurTutorAnchorRegistration & { kind: GuidedTutorSectionKind; surface: TutorSurface }) | null => {
-  const candidates = input.anchors
-    .filter(isSectionExplainableTutorAnchor)
-    .map((anchor) => ({
-      anchor,
-      rect: anchor.getRect(),
-    }))
-    .filter(
-      (
-        entry
-      ): entry is {
-        anchor: KangurTutorAnchorRegistration & { kind: GuidedTutorSectionKind; surface: TutorSurface };
-        rect: DOMRect;
-      } => Boolean(entry.rect && entry.rect.width >= 0 && entry.rect.height >= 0)
-    )
-    .filter((entry) =>
-      rectContainsPoint(
-        getExpandedRect(entry.rect, SECTION_DROP_TARGET_PADDING_X, SECTION_DROP_TARGET_PADDING_Y),
-        input.point
-      )
-    )
-    .sort((left, right) => {
-      if (right.anchor.priority !== left.anchor.priority) {
-        return right.anchor.priority - left.anchor.priority;
-      }
-
-      return left.rect.width * left.rect.height - right.rect.width * right.rect.height;
-    });
-
-  return candidates[0]?.anchor ?? null;
-};
-
 const getViewport = (): { width: number; height: number } => {
   if (typeof window === 'undefined') {
     return { width: 1280, height: 720 };
@@ -492,18 +290,18 @@ const getViewport = (): { width: number; height: number } => {
   };
 };
 
-const getDockAvatarPoint = (viewport: {
-  width: number;
-  height: number;
-}): TutorPoint => ({
+const getDockAvatarPoint = (viewport: { width: number; height: number }): TutorPoint => ({
   x: viewport.width - EDGE_GAP - AVATAR_SIZE,
   y: viewport.height - EDGE_GAP - AVATAR_SIZE,
 });
 
-const clampAvatarPoint = (point: TutorPoint, viewport: {
-  width: number;
-  height: number;
-}): TutorPoint => ({
+const clampAvatarPoint = (
+  point: TutorPoint,
+  viewport: {
+    width: number;
+    height: number;
+  }
+): TutorPoint => ({
   x: clamp(point.x, EDGE_GAP, viewport.width - EDGE_GAP - AVATAR_SIZE),
   y: clamp(point.y, EDGE_GAP, viewport.height - EDGE_GAP - AVATAR_SIZE),
 });
@@ -517,10 +315,12 @@ const getDockAvatarStyle = (): TutorMotionPosition => {
 };
 
 const getDockAvatarRect = (viewport: { width: number; height: number }): DOMRect =>
-  createRect(getDockAvatarPoint(viewport).x, getDockAvatarPoint(viewport).y, AVATAR_SIZE, AVATAR_SIZE);
-
-const getAvatarRectFromPoint = (point: TutorPoint): DOMRect =>
-  createRect(point.x, point.y, AVATAR_SIZE, AVATAR_SIZE);
+  createRect(
+    getDockAvatarPoint(viewport).x,
+    getDockAvatarPoint(viewport).y,
+    AVATAR_SIZE,
+    AVATAR_SIZE
+  );
 
 const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
   const viewport = getViewport();
@@ -531,9 +331,10 @@ const getAnchorAvatarStyle = (rect: DOMRect): TutorMotionPosition => {
   );
   const preferredTop = rect.top - AVATAR_SIZE - 12;
   const fallbackTop = rect.bottom + 12;
-  const top = preferredTop >= EDGE_GAP
-    ? preferredTop
-    : clamp(fallbackTop, EDGE_GAP, viewport.height - EDGE_GAP - AVATAR_SIZE);
+  const top =
+    preferredTop >= EDGE_GAP
+      ? preferredTop
+      : clamp(fallbackTop, EDGE_GAP, viewport.height - EDGE_GAP - AVATAR_SIZE);
 
   return {
     left,
@@ -582,44 +383,42 @@ const getGuidedAvatarLayout = (
     },
   ];
 
-  const bestCandidate =
-    candidates
-      .map((candidate) => {
-        const left = clamp(candidate.left, EDGE_GAP, maxLeft);
-        const top = clamp(candidate.top, EDGE_GAP, maxTop);
-        const avatarRect = createRect(left, top, AVATAR_SIZE, AVATAR_SIZE);
-        const overlapArea = getRectOverlapArea(avatarRect, rect);
-        const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
-        const score = overlapArea * 18 + repositionCost * 0.75 + candidate.priority * 22;
+  const bestCandidate = candidates
+    .map((candidate) => {
+      const left = clamp(candidate.left, EDGE_GAP, maxLeft);
+      const top = clamp(candidate.top, EDGE_GAP, maxTop);
+      const avatarRect = createRect(left, top, AVATAR_SIZE, AVATAR_SIZE);
+      const overlapArea = getRectOverlapArea(avatarRect, rect);
+      const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
+      const score = overlapArea * 18 + repositionCost * 0.75 + candidate.priority * 22;
 
-        return {
-          placement: candidate.placement,
-          left,
-          top,
-          overlapArea,
-          score,
-        };
-      })
-      .sort((leftCandidate, rightCandidate) => {
-        const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
-        const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
-        if (leftHasOverlap !== rightHasOverlap) {
-          return leftHasOverlap - rightHasOverlap;
-        }
+      return {
+        placement: candidate.placement,
+        left,
+        top,
+        overlapArea,
+        score,
+      };
+    })
+    .sort((leftCandidate, rightCandidate) => {
+      const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
+      const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
+      if (leftHasOverlap !== rightHasOverlap) {
+        return leftHasOverlap - rightHasOverlap;
+      }
 
-        if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
-          return leftCandidate.overlapArea - rightCandidate.overlapArea;
-        }
+      if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
+        return leftCandidate.overlapArea - rightCandidate.overlapArea;
+      }
 
-        return leftCandidate.score - rightCandidate.score;
-      })[0] ??
-    {
-      placement: 'bottom' as const,
-      left: clamp(centeredLeft, EDGE_GAP, maxLeft),
-      top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
-      overlapArea: 0,
-      score: 0,
-    };
+      return leftCandidate.score - rightCandidate.score;
+    })[0] ?? {
+    placement: 'bottom' as const,
+    left: clamp(centeredLeft, EDGE_GAP, maxLeft),
+    top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
+    overlapArea: 0,
+    score: 0,
+  };
 
   return {
     placement: bestCandidate.placement,
@@ -628,23 +427,6 @@ const getGuidedAvatarLayout = (
       top: bestCandidate.top,
     },
   };
-};
-
-const getEstimatedBubbleHeight = (
-  viewport: { width: number; height: number },
-  extraHeight = 0
-): number => {
-  const maxHeight = Math.max(220, viewport.height - EDGE_GAP * 2);
-  const baseHeight = clamp(
-    Math.min(viewport.height * 0.58, BUBBLE_MAX_HEIGHT),
-    Math.min(BUBBLE_MIN_HEIGHT, maxHeight),
-    maxHeight
-  );
-  return clamp(
-    baseHeight + extraHeight,
-    Math.min(BUBBLE_MIN_HEIGHT, maxHeight),
-    maxHeight
-  );
 };
 
 const getRectUnion = (rects: Array<DOMRect | null | undefined>): DOMRect | null => {
@@ -661,15 +443,18 @@ const getRectUnion = (rects: Array<DOMRect | null | undefined>): DOMRect | null 
 };
 
 const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
-  const overlapWidth = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left));
-  const overlapHeight = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
+  const overlapWidth = Math.max(
+    0,
+    Math.min(left.right, right.right) - Math.max(left.left, right.left)
+  );
+  const overlapHeight = Math.max(
+    0,
+    Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top)
+  );
   return overlapWidth * overlapHeight;
 };
 
-const getPanelCenterDistance = (
-  panelRect: DOMRect,
-  dockRect: DOMRect
-): number => {
+const getPanelCenterDistance = (panelRect: DOMRect, dockRect: DOMRect): number => {
   const panelCenterX = panelRect.left + panelRect.width / 2;
   const panelCenterY = panelRect.top + panelRect.height / 2;
   const dockCenterX = dockRect.left + dockRect.width / 2;
@@ -718,25 +503,29 @@ const getAttachedAvatarSide = (input: {
     return focusCenterX <= panelCenterX ? 'left' : 'right';
   }
 
-  if (input.strategy === 'right' || input.strategy === 'top-right' || input.strategy === 'bottom-right') {
+  if (
+    input.strategy === 'right' ||
+    input.strategy === 'top-right' ||
+    input.strategy === 'bottom-right'
+  ) {
     return 'left';
   }
 
-  if (input.strategy === 'left' || input.strategy === 'top-left' || input.strategy === 'bottom-left') {
+  if (
+    input.strategy === 'left' ||
+    input.strategy === 'top-left' ||
+    input.strategy === 'bottom-left'
+  ) {
     return 'right';
   }
 
   return 'left';
 };
 
-const getAttachedAvatarStyle = (
-  side: TutorAvatarAttachmentSide
-): CSSProperties => ({
+const getAttachedAvatarStyle = (side: TutorAvatarAttachmentSide): CSSProperties => ({
   position: 'absolute',
   top: ATTACHED_AVATAR_EDGE_INSET,
-  ...(side === 'left'
-    ? { left: -ATTACHED_AVATAR_OVERLAP }
-    : { right: -ATTACHED_AVATAR_OVERLAP }),
+  ...(side === 'left' ? { left: -ATTACHED_AVATAR_OVERLAP } : { right: -ATTACHED_AVATAR_OVERLAP }),
 });
 
 const getAttachedAvatarRect = (input: {
@@ -851,44 +640,42 @@ const getSelectionActionLayout = (
     },
   ];
 
-  const bestCandidate =
-    candidates
-      .map((candidate) => {
-        const left = clamp(candidate.left, EDGE_GAP, maxLeft);
-        const top = clamp(candidate.top, EDGE_GAP, maxTop);
-        const ctaRect = createRect(left, top, CTA_WIDTH, CTA_HEIGHT);
-        const overlapArea = getRectOverlapArea(ctaRect, rect);
-        const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
-        const score = overlapArea * 20 + repositionCost * 0.7 + candidate.priority * 20;
+  const bestCandidate = candidates
+    .map((candidate) => {
+      const left = clamp(candidate.left, EDGE_GAP, maxLeft);
+      const top = clamp(candidate.top, EDGE_GAP, maxTop);
+      const ctaRect = createRect(left, top, CTA_WIDTH, CTA_HEIGHT);
+      const overlapArea = getRectOverlapArea(ctaRect, rect);
+      const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
+      const score = overlapArea * 20 + repositionCost * 0.7 + candidate.priority * 20;
 
-        return {
-          placement: candidate.placement,
-          left,
-          top,
-          overlapArea,
-          score,
-        };
-      })
-      .sort((leftCandidate, rightCandidate) => {
-        const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
-        const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
-        if (leftHasOverlap !== rightHasOverlap) {
-          return leftHasOverlap - rightHasOverlap;
-        }
+      return {
+        placement: candidate.placement,
+        left,
+        top,
+        overlapArea,
+        score,
+      };
+    })
+    .sort((leftCandidate, rightCandidate) => {
+      const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
+      const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
+      if (leftHasOverlap !== rightHasOverlap) {
+        return leftHasOverlap - rightHasOverlap;
+      }
 
-        if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
-          return leftCandidate.overlapArea - rightCandidate.overlapArea;
-        }
+      if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
+        return leftCandidate.overlapArea - rightCandidate.overlapArea;
+      }
 
-        return leftCandidate.score - rightCandidate.score;
-      })[0] ??
-    {
-      placement: 'bottom' as const,
-      left: clamp(centeredLeft, EDGE_GAP, maxLeft),
-      top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
-      overlapArea: 0,
-      score: 0,
-    };
+      return leftCandidate.score - rightCandidate.score;
+    })[0] ?? {
+    placement: 'bottom' as const,
+    left: clamp(centeredLeft, EDGE_GAP, maxLeft),
+    top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
+    overlapArea: 0,
+    score: 0,
+  };
 
   return {
     placement: bestCandidate.placement,
@@ -897,244 +684,6 @@ const getSelectionActionLayout = (
       left: bestCandidate.left,
       top: bestCandidate.top,
     },
-  };
-};
-
-const getMotionPositionPoint = (
-  position: TutorMotionPosition | null | undefined
-): TutorPoint | null => {
-  if (!position || typeof position.left !== 'number' || typeof position.top !== 'number') {
-    return null;
-  }
-
-  return {
-    x: position.left,
-    y: position.top,
-  };
-};
-
-const getClosestPointOnRect = (
-  rect: DOMRect,
-  point: TutorPoint
-): TutorPoint => ({
-  x: clamp(point.x, rect.left, rect.right),
-  y: clamp(point.y, rect.top, rect.bottom),
-});
-
-const getFloatingTutorArrowheadGeometry = (input: {
-  avatarPoint: TutorPoint | null;
-  focusRect: DOMRect | null;
-}): FloatingTutorArrowheadGeometry | null => {
-  if (!input.avatarPoint || !input.focusRect) {
-    return null;
-  }
-
-  const avatarRect = getAvatarRectFromPoint(input.avatarPoint);
-  const avatarCenterX = avatarRect.left + avatarRect.width / 2;
-  const avatarCenterY = avatarRect.top + avatarRect.height / 2;
-  const nearestFocusPoint = getClosestPointOnRect(input.focusRect, {
-    x: avatarCenterX,
-    y: avatarCenterY,
-  });
-  let deltaX = nearestFocusPoint.x - avatarCenterX;
-  let deltaY = nearestFocusPoint.y - avatarCenterY;
-  let magnitude = Math.hypot(deltaX, deltaY);
-
-  if (magnitude < 0.01) {
-    const focusCenterX = input.focusRect.left + input.focusRect.width / 2;
-    const focusCenterY = input.focusRect.top + input.focusRect.height / 2;
-    deltaX = focusCenterX - avatarCenterX;
-    deltaY = focusCenterY - avatarCenterY;
-    magnitude = Math.hypot(deltaX, deltaY);
-  }
-
-  if (magnitude < 0.01) {
-    deltaX = 0;
-    deltaY = -1;
-    magnitude = 1;
-  }
-
-  const unitX = deltaX / magnitude;
-  const unitY = deltaY / magnitude;
-  const radius = avatarRect.width / 2 - FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX;
-  const localCenterX = avatarRect.width / 2;
-  const localCenterY = avatarRect.height / 2;
-  const anchorAvatarLeft = localCenterX + unitX * radius;
-  const anchorAvatarTop = localCenterY + unitY * radius;
-  const angle = normalizeRotationDegrees(
-    (Math.atan2(deltaY, deltaX) * 180) / Math.PI + FLOATING_TUTOR_ARROWHEAD_ROTATION_OFFSET_DEG
-  );
-  const side: TutorPointerSide = unitX >= 0 ? 'right' : 'left';
-  const absUnitX = Math.abs(unitX);
-  const absUnitY = Math.abs(unitY);
-  const quadrant =
-    absUnitX >= absUnitY
-      ? unitX >= 0
-        ? 'right'
-        : 'left'
-      : unitY >= 0
-        ? 'bottom'
-        : 'top';
-
-  return {
-    anchorAvatarLeft,
-    anchorAvatarTop,
-    anchorOffsetX: FLOATING_TUTOR_ARROWHEAD_ANCHOR_X,
-    anchorOffsetY: FLOATING_TUTOR_ARROWHEAD_ANCHOR_Y,
-    left: anchorAvatarLeft - FLOATING_TUTOR_ARROWHEAD_ANCHOR_X,
-    targetX: nearestFocusPoint.x,
-    targetY: nearestFocusPoint.y,
-    top: anchorAvatarTop - FLOATING_TUTOR_ARROWHEAD_ANCHOR_Y,
-    angle,
-    side,
-    quadrant,
-  };
-};
-
-const getFloatingTutorArrowCorridorRect = (input: {
-  avatarPoint: TutorPoint | null;
-  arrowhead: FloatingTutorArrowheadGeometry | null;
-}): DOMRect | null => {
-  if (!input.avatarPoint || !input.arrowhead) {
-    return null;
-  }
-
-  const anchorX = input.avatarPoint.x + input.arrowhead.anchorAvatarLeft;
-  const anchorY = input.avatarPoint.y + input.arrowhead.anchorAvatarTop;
-  const left =
-    Math.min(anchorX, input.arrowhead.targetX) - FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX;
-  const top =
-    Math.min(anchorY, input.arrowhead.targetY) - FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX;
-  const width =
-    Math.max(Math.abs(input.arrowhead.targetX - anchorX), 1) +
-    FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX * 2;
-  const height =
-    Math.max(Math.abs(input.arrowhead.targetY - anchorY), 1) +
-    FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX * 2;
-
-  return createRect(left, top, width, height);
-};
-
-const getGuidedCalloutLayout = (
-  rect: DOMRect,
-  viewport: { width: number; height: number },
-  protectedRects: DOMRect[] = []
-): { style: CSSProperties; placement: 'top' | 'bottom' | 'left' | 'right' } => {
-  const width = Math.min(280, Math.max(220, viewport.width * 0.24));
-  const height = 132;
-  const gap = 18;
-  const maxLeft = viewport.width - EDGE_GAP - width;
-  const maxTop = viewport.height - EDGE_GAP - height;
-  const centeredLeft = rect.left + rect.width / 2 - width / 2;
-  const centeredTop = rect.top + rect.height / 2 - height / 2;
-  const candidates: Array<{
-    placement: 'top' | 'bottom' | 'left' | 'right';
-    left: number;
-    top: number;
-    priority: number;
-  }> = [
-    {
-      placement: 'top',
-      left: centeredLeft,
-      top: rect.top - height - gap,
-      priority: 0,
-    },
-    {
-      placement: 'bottom',
-      left: centeredLeft,
-      top: rect.bottom + gap,
-      priority: 1,
-    },
-    {
-      placement: 'right',
-      left: rect.right + gap,
-      top: centeredTop,
-      priority: 2,
-    },
-    {
-      placement: 'left',
-      left: rect.left - width - gap,
-      top: centeredTop,
-      priority: 3,
-    },
-  ];
-
-  const bestCandidate =
-    candidates
-      .map((candidate) => {
-        const left = clamp(candidate.left, EDGE_GAP, maxLeft);
-        const top = clamp(candidate.top, EDGE_GAP, maxTop);
-        const panelRect = createRect(left, top, width, height);
-        const overlapArea = getRectOverlapArea(panelRect, rect);
-        const protectedOverlapArea = protectedRects.reduce(
-          (sum, protectedRect) => sum + getRectOverlapArea(panelRect, protectedRect),
-          0
-        );
-        const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
-        const score =
-          overlapArea * 20 + protectedOverlapArea * 10 + repositionCost * 0.6 + candidate.priority * 24;
-
-        return {
-          placement: candidate.placement,
-          left,
-          top,
-          overlapArea,
-          protectedOverlapArea,
-          score,
-        };
-      })
-      .sort((leftCandidate, rightCandidate) => {
-        const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
-        const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
-        if (leftHasOverlap !== rightHasOverlap) {
-          return leftHasOverlap - rightHasOverlap;
-        }
-
-        if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
-          return leftCandidate.overlapArea - rightCandidate.overlapArea;
-        }
-
-        const leftHasProtectedOverlap = leftCandidate.protectedOverlapArea > 0 ? 1 : 0;
-        const rightHasProtectedOverlap = rightCandidate.protectedOverlapArea > 0 ? 1 : 0;
-        if (leftHasProtectedOverlap !== rightHasProtectedOverlap) {
-          return leftHasProtectedOverlap - rightHasProtectedOverlap;
-        }
-
-        if (leftCandidate.protectedOverlapArea !== rightCandidate.protectedOverlapArea) {
-          return leftCandidate.protectedOverlapArea - rightCandidate.protectedOverlapArea;
-        }
-
-        return leftCandidate.score - rightCandidate.score;
-      })[0] ??
-    {
-      placement: 'bottom' as const,
-      left: clamp(centeredLeft, EDGE_GAP, maxLeft),
-      top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
-      overlapArea: 0,
-      protectedOverlapArea: 0,
-      score: 0,
-    };
-
-  return {
-    placement: bestCandidate.placement,
-    style: {
-      position: 'fixed',
-      left: bestCandidate.left,
-      top: bestCandidate.top,
-      width,
-    },
-  };
-};
-
-const getSelectionSpotlightStyle = (rect: DOMRect): CSSProperties => {
-  const padding = 10;
-
-  return {
-    position: 'fixed',
-    left: Math.max(EDGE_GAP, rect.left - padding),
-    top: Math.max(EDGE_GAP, rect.top - padding),
-    width: rect.width + padding * 2,
-    height: rect.height + padding * 2,
   };
 };
 
@@ -1338,7 +887,9 @@ const getBubblePlacement = (
     launchOrigin: 'dock-bottom-right',
     style: {
       left: bestCandidate?.left ?? viewport.width - EDGE_GAP - width,
-      top: bestCandidate?.top ?? clamp(viewport.height - 440, EDGE_GAP, viewport.height - EDGE_GAP - 220),
+      top:
+        bestCandidate?.top ??
+        clamp(viewport.height - 440, EDGE_GAP, viewport.height - EDGE_GAP - 220),
     },
   };
 };
@@ -1375,46 +926,28 @@ const getAnchorKindsForSurface = (
 };
 
 const getFocusChipLabel = (
+  tutorContent: KangurAiTutorContent,
   focus: ActiveTutorFocus,
   selectedText: string | null,
   surface: TutorSurface | null | undefined
 ): string | null => {
   if (focus.kind === 'selection') {
     if (surface === 'test') {
-      return selectedText ? 'Fragment pytania' : 'Zaznaczony fragment';
+      return selectedText
+        ? tutorContent.focusChips.selection.testWithText
+        : tutorContent.focusChips.selection.testWithoutText;
     }
     if (surface === 'game') {
-      return selectedText ? 'Fragment gry' : 'Zaznaczony fragment';
+      return selectedText
+        ? tutorContent.focusChips.selection.gameWithText
+        : tutorContent.focusChips.selection.gameWithoutText;
     }
-    return selectedText ? 'Fragment lekcji' : 'Zaznaczony fragment';
+    return selectedText
+      ? tutorContent.focusChips.selection.lessonWithText
+      : tutorContent.focusChips.selection.lessonWithoutText;
   }
 
-  switch (focus.kind) {
-    case 'home_actions':
-      return 'Start';
-    case 'home_quest':
-      return 'Misja';
-    case 'priority_assignments':
-      return 'Zadania od rodzica';
-    case 'leaderboard':
-      return 'Ranking';
-    case 'progress':
-      return 'Postep';
-    case 'assignment':
-      return 'Zadanie od rodzica';
-    case 'lesson_header':
-      return 'Temat lekcji';
-    case 'document':
-      return 'Treść lekcji';
-    case 'question':
-      return 'Aktualne pytanie';
-    case 'review':
-      return 'Omówienie pytania';
-    case 'summary':
-      return 'Podsumowanie testu';
-    default:
-      return null;
-  }
+  return focus.kind ? tutorContent.focusChips.kinds[focus.kind] ?? null : null;
 };
 
 const getInteractionIntent = (
@@ -1463,107 +996,32 @@ const normalizeTutorIntentText = (value: string): string =>
     .replace(/[\u0300-\u036f]/g, '');
 
 const resolveGuestLoginGuidanceIntent = (
-  value: string
+  value: string,
+  intentPhrases: {
+    createAccount: string[];
+    signIn: string[];
+  }
 ): GuidedTutorAuthMode | null => {
   const normalized = normalizeTutorIntentText(value);
   if (!normalized) {
     return null;
   }
 
-  const createAccountPhrases = [
-    'create account',
-    'create a parent account',
-    'how do i create an account',
-    'where do i create an account',
-    'how do i sign up',
-    'sign up',
-    'register',
-    'parent account',
-    'don\'t have an account',
-    'dont have an account',
-    'konto rodzica',
-    'nie mam konta',
-    'nie mam jeszcze konta',
-    'założyć konto',
-    'utworzyć konto',
-    'jak założyć konto',
-    'jak utworzyć konto',
-  ];
-  if (createAccountPhrases.some((phrase) => normalized.includes(phrase))) {
+  if (
+    intentPhrases.createAccount.some((phrase) =>
+      normalized.includes(normalizeTutorIntentText(phrase))
+    )
+  ) {
     return 'create-account';
   }
 
-  const loginPhrases = [
-    'how do i log in',
-    'where do i log in',
-    'open login',
-    'log in',
-    'login',
-    'sign in',
-    'zalogować',
-    'jak się zalogować',
-    'gdzie jest logowanie',
-    'gdzie się loguję',
-  ];
-  if (loginPhrases.some((phrase) => normalized.includes(phrase))) {
+  if (
+    intentPhrases.signIn.some((phrase) => normalized.includes(normalizeTutorIntentText(phrase)))
+  ) {
     return 'sign-in';
   }
 
   return null;
-};
-
-const getGuidedGuestTargetKind = (
-  authMode: GuidedTutorAuthMode
-): GuidedTutorAuthKind => {
-  return authMode === 'create-account' ? 'create_account_action' : 'login_action';
-};
-
-const getGuidedGuestModalTargetKind = (): GuidedTutorAuthKind => 'login_identifier_field';
-
-const buildSectionExplainPrompt = (
-  anchor: KangurTutorAnchorRegistration & {
-    kind: GuidedTutorSectionKind;
-    surface: TutorSurface;
-  }
-): string => {
-  const label = anchor.metadata?.label?.trim() ?? null;
-
-  switch (anchor.kind) {
-    case 'home_actions':
-      return 'Wyjaśnij sekcję wyboru aktywności. Powiedz, do czego służą dostępne opcje i kiedy wybrać każdą z nich.';
-    case 'home_quest':
-      return 'Wyjaśnij sekcję misji ucznia. Powiedz, jak czytać to zadanie i jaki powinien być następny krok.';
-    case 'priority_assignments':
-      return 'Wyjaśnij sekcję priorytetowych zadań. Powiedz, skąd biorą się te zadania i od czego najlepiej zacząć.';
-    case 'leaderboard':
-      return 'Wyjaśnij sekcję rankingu. Powiedz, co oznaczają pozycje, punkty i jak poprawić wynik.';
-    case 'progress':
-      return 'Wyjaśnij sekcję postępu. Powiedz, co oznaczają pokazane wskaźniki i na co warto zwrócić uwagę.';
-    case 'lesson_header':
-      return label
-        ? `Wyjaśnij, czego dotyczy lekcja „${label}” i czego uczeń się tutaj nauczy.`
-        : 'Wyjaśnij, czego dotyczy ta lekcja i czego uczeń się tutaj nauczy.';
-    case 'assignment':
-      return label
-        ? `Wyjaśnij zadanie „${label}”. Powiedz, co trzeba zrobić i od czego najlepiej zacząć.`
-        : 'Wyjaśnij to zadanie i powiedz, co trzeba zrobić oraz od czego najlepiej zacząć.';
-    case 'document':
-      return label
-        ? `Wyjaśnij główną treść lekcji „${label}”. Powiedz, o czym jest ta część i jak ją najlepiej czytać krok po kroku.`
-        : 'Wyjaśnij główną treść tej lekcji i powiedz, jak najlepiej czytać ją krok po kroku.';
-    case 'question':
-      return 'Wyjaśnij to pytanie. Powiedz, na czym trzeba się skupić, ale bez podawania gotowej odpowiedzi.';
-    case 'review':
-      return 'Wyjaśnij omówienie odpowiedzi. Powiedz, co poszło dobrze, gdzie mógł być błąd i co sprawdzić dalej.';
-    case 'summary':
-      return label
-        ? `Wyjaśnij podsumowanie „${label}”. Powiedz, co pokazuje wynik i jaki może być następny krok.`
-        : 'Wyjaśnij to podsumowanie i powiedz, co pokazuje wynik oraz jaki może być następny krok.';
-    default:
-      return label
-        ? `Wyjaśnij tę sekcję: ${label}. Powiedz, o czym jest i na co zwrócić uwagę.`
-        : 'Wyjaśnij tę sekcję strony i powiedz, na co zwrócić uwagę.';
-  }
 };
 
 const getLastAssistantCoachingMode = (
@@ -1589,15 +1047,14 @@ const parseCompletedTutorFollowUp = (
   }
 
   const separatorIndex = payload.indexOf(':');
-  const label =
-    separatorIndex === -1 ? payload.trim() : payload.slice(0, separatorIndex).trim();
-  const reason =
-    separatorIndex === -1 ? null : payload.slice(separatorIndex + 1).trim() || null;
+  const label = separatorIndex === -1 ? payload.trim() : payload.slice(0, separatorIndex).trim();
+  const reason = separatorIndex === -1 ? null : payload.slice(separatorIndex + 1).trim() || null;
 
   return label ? { label, reason } : null;
 };
 
 const buildCompletedFollowUpBridgeQuickAction = (input: {
+  tutorContent: KangurAiTutorContent;
   surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasCurrentQuestion: boolean;
@@ -1611,25 +1068,23 @@ const buildCompletedFollowUpBridgeQuickAction = (input: {
 
   if (input.surface === 'lesson') {
     const lessonTitle = input.title?.trim();
+    const bridgePrompt = formatKangurAiTutorTemplate(input.tutorContent.bridge.toGame.prompt, {
+      title: lessonTitle ?? '',
+    }).replace(/\s*:\s*\.$/, '.');
     return {
       id: 'bridge-to-game',
-      label: 'Po lekcji: trening',
-      prompt: lessonTitle
-        ? `Pomóż mi wybrać jeden konkretny trening po tej lekcji: ${lessonTitle}.`
-        : 'Pomóż mi wybrać jeden konkretny trening po tej lekcji.',
+      label: input.tutorContent.bridge.toGame.label,
+      prompt: bridgePrompt,
       promptMode: 'chat',
       interactionIntent: 'next_step',
     };
   }
 
-  if (
-    input.surface === 'game' &&
-    (!input.hasCurrentQuestion || input.answerRevealed)
-  ) {
+  if (input.surface === 'game' && (!input.hasCurrentQuestion || input.answerRevealed)) {
     return {
       id: 'bridge-to-lesson',
-      label: 'Po treningu: lekcja',
-      prompt: 'Pomóż mi wybrać jedną konkretną lekcję po tym treningu.',
+      label: input.tutorContent.bridge.toLesson.label,
+      prompt: input.tutorContent.bridge.toLesson.prompt,
       promptMode: 'chat',
       interactionIntent: 'next_step',
     };
@@ -1639,6 +1094,7 @@ const buildCompletedFollowUpBridgeQuickAction = (input: {
 };
 
 const getBridgeSummaryChipLabel = (
+  tutorContent: KangurAiTutorContent,
   bridgeQuickAction: TutorQuickAction | null
 ): string | null => {
   if (!bridgeQuickAction) {
@@ -1646,13 +1102,14 @@ const getBridgeSummaryChipLabel = (
   }
 
   return bridgeQuickAction.id === 'bridge-to-game'
-    ? 'Most: po lekcji'
+    ? tutorContent.bridge.toGame.summaryChip
     : bridgeQuickAction.id === 'bridge-to-lesson'
-      ? 'Most: po treningu'
+      ? tutorContent.bridge.toLesson.summaryChip
       : null;
 };
 
 const buildQuickActions = (input: {
+  tutorContent: KangurAiTutorContent;
   surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasSelectedText: boolean;
@@ -1671,6 +1128,7 @@ const buildQuickActions = (input: {
   const isReviewSurface =
     (input.surface === 'test' || input.surface === 'game') && input.answerRevealed;
   const bridgeAction = buildCompletedFollowUpBridgeQuickAction({
+    tutorContent: input.tutorContent,
     surface: input.surface,
     answerRevealed: input.answerRevealed,
     hasCurrentQuestion: input.hasCurrentQuestion,
@@ -1684,24 +1142,29 @@ const buildQuickActions = (input: {
     }
     actions.push({
       id: 'review',
-      label:
-        input.hasCurrentQuestion ? 'Omów odpowiedź' : input.surface === 'game' ? 'Omów grę' : 'Omów wynik',
-      prompt: input.hasCurrentQuestion
-        ? 'Omów to pytanie: co poszło dobrze, gdzie był błąd i co sprawdzić następnym razem.'
+      label: input.hasCurrentQuestion
+        ? input.tutorContent.quickActions.review.questionLabel
         : input.surface === 'game'
-          ? 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.'
-          : 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.',
+          ? input.tutorContent.quickActions.review.gameLabel
+          : input.tutorContent.quickActions.review.resultLabel,
+      prompt: input.hasCurrentQuestion
+        ? input.tutorContent.quickActions.review.questionPrompt
+        : input.surface === 'game'
+          ? input.tutorContent.quickActions.review.gamePrompt
+          : input.tutorContent.quickActions.review.resultPrompt,
       promptMode: 'explain',
       interactionIntent: 'review',
     });
     actions.push({
       id: 'next-step',
-      label: input.hasCurrentQuestion ? 'Co poprawić?' : 'Co ćwiczyć?',
+      label: input.hasCurrentQuestion
+        ? input.tutorContent.quickActions.nextStep.reviewQuestionLabel
+        : input.tutorContent.quickActions.nextStep.reviewOtherLabel,
       prompt: input.hasCurrentQuestion
-        ? 'Powiedz, co ćwiczyć dalej po tym pytaniu.'
+        ? input.tutorContent.quickActions.nextStep.reviewQuestionPrompt
         : input.surface === 'game'
-          ? 'Powiedz, jaki powinien być mój następny krok po tej grze.'
-          : 'Powiedz, jaki powinien być mój następny krok po tym teście.',
+          ? input.tutorContent.quickActions.nextStep.reviewGamePrompt
+          : input.tutorContent.quickActions.nextStep.reviewTestPrompt,
       promptMode: 'chat',
       interactionIntent: 'next_step',
     });
@@ -1709,46 +1172,45 @@ const buildQuickActions = (input: {
     if (input.lastAssistantCoachingMode === 'misconception_check') {
       actions.push({
         id: 'how-think',
-        label: 'Co mylę?',
-        prompt:
-          'Pomóż mi znaleźć, gdzie mogę mylić sposób myślenia, bez podawania odpowiedzi.',
+        label: input.tutorContent.quickActions.howThink.misconceptionLabel,
+        prompt: input.tutorContent.quickActions.howThink.misconceptionPrompt,
         promptMode: 'explain',
         interactionIntent: 'explain',
       });
       actions.push({
         id: 'hint',
-        label: 'Inny trop',
-        prompt: 'Daj mi inny mały trop, ale bez gotowej odpowiedzi.',
+        label: input.tutorContent.quickActions.hint.altLabel,
+        prompt: input.tutorContent.quickActions.hint.altPrompt,
         promptMode: 'hint',
         interactionIntent: 'hint',
       });
     } else if (input.lastAssistantCoachingMode === 'hint_ladder') {
       actions.push({
         id: 'how-think',
-        label: 'Jak myśleć dalej?',
-        prompt: 'Pomóż mi sprawdzić tok myślenia krok po kroku, bez podawania odpowiedzi.',
+        label: input.tutorContent.quickActions.howThink.ladderLabel,
+        prompt: input.tutorContent.quickActions.howThink.ladderPrompt,
         promptMode: 'explain',
         interactionIntent: 'explain',
       });
       actions.push({
         id: 'hint',
-        label: 'Inny trop',
-        prompt: 'Daj mi inny mały trop, ale bez gotowej odpowiedzi.',
+        label: input.tutorContent.quickActions.hint.altLabel,
+        prompt: input.tutorContent.quickActions.hint.altPrompt,
         promptMode: 'hint',
         interactionIntent: 'hint',
       });
     } else {
       actions.push({
         id: 'hint',
-        label: 'Podpowiedź',
-        prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+        label: input.tutorContent.quickActions.hint.defaultLabel,
+        prompt: input.tutorContent.quickActions.hint.defaultPrompt,
         promptMode: 'hint',
         interactionIntent: 'hint',
       });
       actions.push({
         id: 'how-think',
-        label: 'Jak myśleć?',
-        prompt: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.',
+        label: input.tutorContent.quickActions.howThink.defaultLabel,
+        prompt: input.tutorContent.quickActions.howThink.defaultPrompt,
         promptMode: 'explain',
         interactionIntent: 'explain',
       });
@@ -1757,31 +1219,36 @@ const buildQuickActions = (input: {
     const explainAction: TutorQuickAction = {
       id: 'explain',
       label:
-        input.focusKind === 'assignment' || input.hasAssignmentSummary ? 'Wyjaśnij temat' : 'Wyjaśnij',
+        input.focusKind === 'assignment' || input.hasAssignmentSummary
+          ? input.tutorContent.quickActions.explain.assignmentLabel
+          : input.tutorContent.quickActions.explain.defaultLabel,
       prompt: input.hasSelectedText
-        ? 'Wyjaśnij ten fragment prostymi słowami.'
-        : 'Wyjaśnij mi to prostymi słowami.',
+        ? input.tutorContent.quickActions.explain.selectedPrompt
+        : input.tutorContent.quickActions.explain.defaultPrompt,
       promptMode: 'explain',
       interactionIntent: 'explain',
     };
     const nextStepAction: TutorQuickAction = {
       id: 'next-step',
-      label: input.focusKind === 'assignment' || input.hasAssignmentSummary ? 'Plan zadania' : 'Co dalej?',
+      label:
+        input.focusKind === 'assignment' || input.hasAssignmentSummary
+          ? input.tutorContent.quickActions.nextStep.assignmentLabel
+          : input.tutorContent.quickActions.nextStep.defaultLabel,
       prompt:
         input.focusKind === 'assignment' || input.hasAssignmentSummary
           ? input.surface === 'game'
-            ? 'Powiedz, jaki ma być mój następny krok w tym zadaniu i w tej grze.'
-            : 'Powiedz, jaki ma być mój następny krok w tym zadaniu i w tej lekcji.'
+            ? input.tutorContent.quickActions.nextStep.assignmentGamePrompt
+            : input.tutorContent.quickActions.nextStep.assignmentLessonPrompt
           : input.surface === 'game'
-            ? 'Powiedz, co warto ćwiczyć dalej na podstawie mojej gry.'
-            : 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
+            ? input.tutorContent.quickActions.nextStep.gamePrompt
+            : input.tutorContent.quickActions.nextStep.defaultPrompt,
       promptMode: 'chat',
       interactionIntent: 'next_step',
     };
     const hintAction: TutorQuickAction = {
       id: 'hint',
-      label: 'Podpowiedź',
-      prompt: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
+      label: input.tutorContent.quickActions.hint.defaultLabel,
+      prompt: input.tutorContent.quickActions.hint.defaultPrompt,
       promptMode: 'hint',
       interactionIntent: 'hint',
     };
@@ -1799,8 +1266,8 @@ const buildQuickActions = (input: {
   if (input.hasSelectedText && !input.hasMessages && !input.isLoading) {
     actions.push({
       id: 'selected-text',
-      label: 'Ten fragment',
-      prompt: 'Wytłumacz ten zaznaczony fragment prostymi słowami.',
+      label: input.tutorContent.quickActions.selectedText.label,
+      prompt: input.tutorContent.quickActions.selectedText.prompt,
       promptMode: 'selected_text',
       interactionIntent: 'explain',
     });
@@ -1824,6 +1291,7 @@ const pickQuickAction = (
 };
 
 const buildProactiveNudge = (input: {
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
   proactiveNudges: 'off' | 'gentle' | 'coach';
   hintDepth: 'brief' | 'guided' | 'step_by_step';
   surface: TutorSurface | null | undefined;
@@ -1849,7 +1317,9 @@ const buildProactiveNudge = (input: {
   const isReviewSurface =
     (input.surface === 'test' || input.surface === 'game') && input.answerRevealed;
   const title =
-    input.proactiveNudges === 'coach' ? 'Tutor sugeruje start' : 'Sugerowany pierwszy krok';
+    input.proactiveNudges === 'coach'
+      ? input.tutorContent.proactiveNudges.coachTitle
+      : input.tutorContent.proactiveNudges.gentleTitle;
   const bridgeAction = pickQuickAction(input.quickActions, ['bridge-to-game', 'bridge-to-lesson']);
 
   if (input.hasSelectedText) {
@@ -1860,8 +1330,8 @@ const buildProactiveNudge = (input: {
         title,
         description:
           input.proactiveNudges === 'coach'
-            ? 'Masz zaznaczony fragment, więc tutor proponuje najpierw rozbroić tylko ten kawałek.'
-            : 'Zacznij od krótkiego wyjaśnienia zaznaczonego fragmentu.',
+            ? input.tutorContent.proactiveNudges.selectedTextCoach
+            : input.tutorContent.proactiveNudges.selectedTextGentle,
         action,
       }
       : null;
@@ -1874,12 +1344,11 @@ const buildProactiveNudge = (input: {
       description:
         bridgeAction.id === 'bridge-to-game'
           ? input.proactiveNudges === 'coach'
-            ? 'Tutor proponuje od razu zamienić tę lekcję w jeden konkretny trening.'
-            : 'Zacznij od jednego konkretnego treningu po tej lekcji.'
+            ? input.tutorContent.proactiveNudges.bridgeToGameCoach
+            : input.tutorContent.proactiveNudges.bridgeToGameGentle
           : input.proactiveNudges === 'coach'
-            ? 'Tutor proponuje domknąć ten trening jedną pasującą lekcją.'
-            : 'Zapytaj o jedną konkretną lekcję po tym treningu.'
-      ,
+            ? input.tutorContent.proactiveNudges.bridgeToLessonCoach
+            : input.tutorContent.proactiveNudges.bridgeToLessonGentle,
       action: bridgeAction,
     };
   }
@@ -1892,8 +1361,8 @@ const buildProactiveNudge = (input: {
         title,
         description:
           input.proactiveNudges === 'coach'
-            ? 'Tutor sugeruje najpierw omówić próbę, a dopiero potem wybierać dalsze ćwiczenie.'
-            : 'Najspokojniej będzie zacząć od krótkiego omówienia ostatniej próby.',
+            ? input.tutorContent.proactiveNudges.reviewCoach
+            : input.tutorContent.proactiveNudges.reviewGentle,
         action,
       }
       : null;
@@ -1911,11 +1380,11 @@ const buildProactiveNudge = (input: {
         description:
           input.hintDepth === 'step_by_step'
             ? input.proactiveNudges === 'coach'
-              ? 'Tutor proponuje wejść od razu w plan myślenia krok po kroku.'
-              : 'Najlepiej zacząć od planu myślenia krok po kroku.'
+              ? input.tutorContent.proactiveNudges.stepByStepCoach
+              : input.tutorContent.proactiveNudges.stepByStepGentle
             : input.proactiveNudges === 'coach'
-              ? 'Tutor sugeruje jedną szybką wskazówkę, żeby ruszyć bez zdradzania odpowiedzi.'
-              : 'Jedna mała wskazówka powinna wystarczyć, żeby ruszyć dalej.',
+              ? input.tutorContent.proactiveNudges.hintCoach
+              : input.tutorContent.proactiveNudges.hintGentle,
         action,
       }
       : null;
@@ -1929,8 +1398,8 @@ const buildProactiveNudge = (input: {
         title,
         description:
           input.proactiveNudges === 'coach'
-            ? 'Tutor sugeruje teraz wybrać jeden konkretny następny ruch do zadania.'
-            : 'Poproś o jeden konkretny kolejny krok do tego zadania.',
+            ? input.tutorContent.proactiveNudges.assignmentCoach
+            : input.tutorContent.proactiveNudges.assignmentGentle,
         action,
       }
       : null;
@@ -1948,14 +1417,15 @@ const buildProactiveNudge = (input: {
       title,
       description:
         input.proactiveNudges === 'coach'
-          ? 'Tutor sugeruje od razu ustawić następny kierunek pracy.'
-          : 'Krótki start od wyjaśnienia albo kolejnego kroku zwykle działa najlepiej.',
+          ? input.tutorContent.proactiveNudges.defaultCoach
+          : input.tutorContent.proactiveNudges.defaultGentle,
       action,
     }
     : null;
 };
 
 const getEmptyStateMessage = (input: {
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
   surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
   hasCurrentQuestion: boolean;
@@ -1964,41 +1434,46 @@ const getEmptyStateMessage = (input: {
   bridgeQuickAction: TutorQuickAction | null;
 }): string => {
   if (input.hasSelectedText) {
-    return 'Masz zaznaczony fragment. Poproś o wyjaśnienie albo kolejny krok.';
+    return input.tutorContent.emptyStates.selectedText;
   }
 
-  if ((input.surface === 'test' || input.surface === 'game') && !input.answerRevealed && input.hasCurrentQuestion) {
-    return 'Poproś o wskazówkę do tego pytania. Tutor nie poda gotowej odpowiedzi.';
+  if (
+    (input.surface === 'test' || input.surface === 'game') &&
+    !input.answerRevealed &&
+    input.hasCurrentQuestion
+  ) {
+    return input.tutorContent.emptyStates.activeQuestion;
   }
 
   if (input.bridgeQuickAction?.id === 'bridge-to-game') {
-    return 'Masz już wykonany poprzedni krok. Zapytaj o jeden konkretny trening po tej lekcji.';
+    return input.tutorContent.emptyStates.bridgeToGame;
   }
 
   if (input.bridgeQuickAction?.id === 'bridge-to-lesson') {
-    return 'Masz już wykonany poprzedni krok. Zapytaj o jedną konkretną lekcję po tym treningu.';
+    return input.tutorContent.emptyStates.bridgeToLesson;
   }
 
   if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
     return input.hasCurrentQuestion
-      ? 'Poproś o omówienie odpowiedzi albo o kolejny krok do ćwiczenia.'
+      ? input.tutorContent.emptyStates.reviewQuestion
       : input.surface === 'game'
-        ? 'Poproś o omówienie gry albo plan następnych ćwiczeń.'
-        : 'Poproś o omówienie wyniku albo plan następnych ćwiczeń.';
+        ? input.tutorContent.emptyStates.reviewGame
+        : input.tutorContent.emptyStates.reviewTest;
   }
 
   if (input.hasAssignmentSummary) {
-    return 'Poproś o plan wykonania zadania albo krótkie wyjaśnienie tematu.';
+    return input.tutorContent.emptyStates.assignment;
   }
 
   if (input.surface === 'game') {
-    return 'Masz pytanie dotyczące gry? Poproś o wyjaśnienie albo następny krok.';
+    return input.tutorContent.emptyStates.game;
   }
 
-  return 'Masz pytanie dotyczące lekcji? Poproś o wyjaśnienie albo następny krok.';
+  return input.tutorContent.emptyStates.lesson;
 };
 
 const getInputPlaceholder = (input: {
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
   canSendMessages: boolean;
   surface: TutorSurface | null | undefined;
   answerRevealed: boolean | undefined;
@@ -2008,53 +1483,47 @@ const getInputPlaceholder = (input: {
   bridgeQuickAction: TutorQuickAction | null;
 }): string => {
   if (!input.canSendMessages) {
-    return 'Dzienny limit wiadomości wykorzystany';
+    return input.tutorContent.placeholders.limitReached;
   }
 
   if (input.hasSelectedText) {
-    return 'Zapytaj o zaznaczony fragment';
+    return input.tutorContent.placeholders.selectedText;
   }
 
-  if ((input.surface === 'test' || input.surface === 'game') && !input.answerRevealed && input.hasCurrentQuestion) {
-    return 'Poproś o wskazówkę do pytania';
+  if (
+    (input.surface === 'test' || input.surface === 'game') &&
+    !input.answerRevealed &&
+    input.hasCurrentQuestion
+  ) {
+    return input.tutorContent.placeholders.activeQuestion;
   }
 
   if (input.bridgeQuickAction?.id === 'bridge-to-game') {
-    return 'Zapytaj o trening po tej lekcji';
+    return input.tutorContent.placeholders.bridgeToGame;
   }
 
   if (input.bridgeQuickAction?.id === 'bridge-to-lesson') {
-    return 'Zapytaj o lekcję po tym treningu';
+    return input.tutorContent.placeholders.bridgeToLesson;
   }
 
   if ((input.surface === 'test' || input.surface === 'game') && input.answerRevealed) {
     return input.hasCurrentQuestion
-      ? 'Poproś o omówienie odpowiedzi'
+      ? input.tutorContent.placeholders.reviewQuestion
       : input.surface === 'game'
-        ? 'Zapytaj o grę lub następny krok'
-        : 'Zapytaj o wynik lub następny krok';
+        ? input.tutorContent.placeholders.reviewGame
+        : input.tutorContent.placeholders.reviewTest;
   }
 
   if (input.hasAssignmentSummary) {
-    return 'Zapytaj o zadanie lub kolejny krok';
+    return input.tutorContent.placeholders.assignment;
   }
 
   if (input.surface === 'game') {
-    return 'Zapytaj o grę';
+    return input.tutorContent.placeholders.game;
   }
 
-  return 'Pytaj…';
+  return input.tutorContent.placeholders.lesson;
 };
-
-const toFollowUpHref = (
-  basePath: string,
-  action: KangurAiTutorFollowUpAction
-): string =>
-  buildKangurRecommendationHref(basePath, {
-    label: action.label,
-    page: action.page,
-    query: action.query,
-  });
 
 const resolveTutorFollowUpLocation = (
   href: string
@@ -2096,6 +1565,7 @@ const getTutorSessionKey = (
 };
 
 const getContextSwitchNotice = (input: {
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
   surface: TutorSurface | null | undefined;
   title?: string | null | undefined;
   contentId: string | null | undefined;
@@ -2113,28 +1583,32 @@ const getContextSwitchNotice = (input: {
   }
 
   const surfaceLabel =
-    input.surface === 'test' ? 'Test' : input.surface === 'game' ? 'Gra' : 'Lekcja';
+    input.surface === 'test'
+      ? input.tutorContent.panelChrome.surfaceLabels.test
+      : input.surface === 'game'
+        ? input.tutorContent.panelChrome.surfaceLabels.game
+        : input.tutorContent.panelChrome.surfaceLabels.lesson;
   const targetLabel = input.title?.trim()
     ? `${surfaceLabel}: ${input.title.trim()}`
     : input.contentId?.trim()
       ? `${surfaceLabel}: ${input.contentId.trim()}`
       : input.surface === 'test'
-        ? 'Nowe pytanie testowe'
+        ? input.tutorContent.panelChrome.contextFallbackTargets.test
         : input.surface === 'game'
-          ? 'Nowy etap gry'
-          : 'Nowy fragment lekcji';
+          ? input.tutorContent.panelChrome.contextFallbackTargets.game
+          : input.tutorContent.panelChrome.contextFallbackTargets.lesson;
   const detail = input.questionProgressLabel?.trim()
     ? input.questionProgressLabel.trim()
     : input.questionId?.trim()
-      ? 'Tutor ustawia się pod aktualne pytanie.'
+      ? input.tutorContent.contextSwitch.detailCurrentQuestion
       : input.assignmentSummary?.trim()
-        ? 'Tutor ustawia się pod aktywne zadanie.'
+        ? input.tutorContent.contextSwitch.detailCurrentAssignment
         : input.assignmentId?.trim()
-          ? 'Tutor ustawia się pod aktywne zadanie.'
+          ? input.tutorContent.contextSwitch.detailCurrentAssignment
           : null;
 
   return {
-    title: 'Nowe miejsce pomocy',
+    title: input.tutorContent.contextSwitch.title,
     target: targetLabel,
     detail,
   };
@@ -2146,9 +1620,7 @@ const getMotionPresetKind = (
   return resolveKangurAiTutorMotionPresetKind(motionPresetId);
 };
 
-const getTutorMotionProfile = (
-  motionPresetId: string | null | undefined
-): TutorMotionProfile => {
+const getTutorMotionProfile = (motionPresetId: string | null | undefined): TutorMotionProfile => {
   switch (getMotionPresetKind(motionPresetId)) {
     case 'mobile':
       return {
@@ -2251,15 +1723,16 @@ const isSelectionWithinTutorUi = (): boolean => {
     const element = node instanceof Element ? node : node.parentElement;
     return Boolean(
       element?.closest('[data-testid="kangur-ai-tutor-panel"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-ask-modal"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-avatar"]') ||
-        element?.closest('[data-testid="kangur-ai-tutor-selection-action"]')
+      element?.closest('[data-testid="kangur-ai-tutor-ask-modal"]') ||
+      element?.closest('[data-testid="kangur-ai-tutor-avatar"]') ||
+      element?.closest('[data-testid="kangur-ai-tutor-selection-action"]')
     );
   });
 };
 
 export function KangurAiTutorWidget(): React.JSX.Element | null {
   const prefersReducedMotion = useReducedMotion();
+  const tutorContent = useKangurAiTutorContent();
   const tutorRuntime = useKangurAiTutor();
   const settingsStore = useSettingsStore();
   const authState = useOptionalKangurAuth();
@@ -2272,9 +1745,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     isLoading,
     isUsageLoading,
     tutorName,
-    tutorMoodId,
-    tutorAvatarSvg,
-    tutorAvatarImageUrl,
     highlightedText,
     usageSummary,
     learnerMemory,
@@ -2284,13 +1754,13 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     recordFollowUpCompletion,
     setHighlightedText,
   } = tutorRuntime;
-  const tutorBehaviorMoodId = tutorRuntime.tutorBehaviorMoodId ?? 'neutral';
-  const tutorBehaviorMoodLabel = tutorRuntime.tutorBehaviorMoodLabel ?? 'Neutralny';
-  const tutorBehaviorMoodDescription =
-    tutorRuntime.tutorBehaviorMoodDescription ??
-    'Stabilny punkt wyjscia, gdy nie potrzeba silniejszego tonu.';
   const sessionContext = tutorRuntime.sessionContext;
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
+  const resolveGuestLoginGuidanceIntentForContent = useCallback(
+    (value: string): GuidedTutorAuthMode | null =>
+      resolveGuestLoginGuidanceIntent(value, tutorContent.guestIntro.intentPhrases),
+    [tutorContent.guestIntro.intentPhrases]
+  );
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
   const narratorSettings = useMemo(
     () => parseKangurNarratorSettings(rawNarratorSettings),
@@ -2307,7 +1777,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         : null,
     [pageContextRegistry]
   );
-  const { selectedText, selectionRect, selectionContainerRect, clearSelection } = useKangurTextHighlight();
+  const { selectedText, selectionRect, selectionContainerRect, clearSelection } =
+    useKangurTextHighlight();
   const tutorAnchorContext = useOptionalKangurTutorAnchors();
   const routing = useOptionalKangurRouting();
   const widgetState = useKangurAiTutorWidgetState();
@@ -2326,7 +1797,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
     guidedTutorTarget,
-    hasNewMessage,
     highlightedSection,
     homeOnboardingRecord,
     homeOnboardingShownForCurrentEntryRef,
@@ -2340,19 +1810,19 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     lastTrackedProactiveNudgeKeyRef,
     lastTrackedQuotaKeyRef,
     launcherPromptVisible,
-    messageFeedbackByKey,
     messagesEndRef,
     mounted,
     motionTimeoutRef,
     panelAnchorMode,
     panelMeasuredHeight,
-    panelMotionState,
     panelRef,
     persistedSelectionContainerRect,
     persistedSelectionPageRect,
     persistedSelectionRect,
     previousSessionKeyRef,
-    selectionContextSpotlightTick,
+    sectionResponseComplete,
+    sectionResponseCompleteTimeoutRef,
+    sectionResponsePending,
     selectionExplainTimeoutRef,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
@@ -2383,6 +1853,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSectionResponseComplete,
+    setSectionResponsePending,
     setSelectionContextSpotlightTick,
     setSelectionResponseComplete,
     setSelectionResponsePending,
@@ -2400,6 +1872,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const showSources = tutorSettings?.showSources ?? true;
   const proactiveNudges = tutorSettings?.proactiveNudges ?? 'gentle';
   const hintDepth = tutorSettings?.hintDepth ?? 'guided';
+  const guestTutorAssistantLabel = tutorName.trim() || 'Tutor';
   useRegisterContextRegistryPageSource(
     'kangur-ai-tutor-narrator',
     useMemo(
@@ -2414,20 +1887,22 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const homeOnboardingMode = tutorRuntime.appSettings?.homeOnboardingMode ?? 'first_visit';
   const shouldRepeatGuestIntroOnEntry = guestIntroMode === 'every_visit';
   const shouldRepeatHomeOnboardingOnEntry = homeOnboardingMode === 'every_visit';
-  const rawSelectedText = allowSelectedTextSupport ? (selectedText ?? highlightedText)?.trim() || null : null;
+  const rawSelectedText = allowSelectedTextSupport
+    ? (selectedText ?? highlightedText)?.trim() || null
+    : null;
   const activeSelectedText =
     rawSelectedText && rawSelectedText === dismissedSelectedText ? null : rawSelectedText;
   const liveSelectionPageRect = selectionRect ? getPageRect(selectionRect) : null;
   const activeSelectionRect = activeSelectedText
-    ? selectionRect ??
+    ? (selectionRect ??
       getViewportRectFromPageRect(persistedSelectionPageRect) ??
-      persistedSelectionRect
+      persistedSelectionRect)
     : null;
   const activeSelectionPageRect = activeSelectedText
-    ? liveSelectionPageRect ?? persistedSelectionPageRect
+    ? (liveSelectionPageRect ?? persistedSelectionPageRect)
     : null;
   const activeSelectionContainerRect = activeSelectedText
-    ? selectionContainerRect ?? persistedSelectionContainerRect
+    ? (selectionContainerRect ?? persistedSelectionContainerRect)
     : null;
   const activeSelectionProtectedRect = activeSelectedText
     ? getSelectionProtectedRect(activeSelectionRect, activeSelectionContainerRect)
@@ -2439,7 +1914,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
     return (
       tutorAnchorContext.anchors.find(
-        (anchor): anchor is KangurTutorAnchorRegistration & {
+        (
+          anchor
+        ): anchor is KangurTutorAnchorRegistration & {
           kind: GuidedTutorSectionKind;
           surface: TutorSurface;
         } => anchor.id === highlightedSection.anchorId && isSectionExplainableTutorAnchor(anchor)
@@ -2448,10 +1925,24 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, [highlightedSection, tutorAnchorContext]);
   const activeSectionRect = highlightedSectionAnchor?.getRect() ?? null;
   const activeSectionProtectedRect = highlightedSectionAnchor
-    ? getExpandedRect(activeSectionRect, SECTION_DROP_TARGET_PADDING_X, SECTION_DROP_TARGET_PADDING_Y)
+    ? getExpandedRect(
+      activeSectionRect,
+      SECTION_DROP_TARGET_PADDING_X,
+      SECTION_DROP_TARGET_PADDING_Y
+    )
     : null;
   const remainingMessages = usageSummary?.remainingMessages ?? null;
-  const canSendMessages = remainingMessages !== 0;
+  const isAuthenticatedVisitor = Boolean(
+    mounted && authState && !authState.isLoadingAuth && authState.isAuthenticated
+  );
+  const shouldRenderContextlessTutorUi = Boolean(
+    !isTutorHidden &&
+      isAuthenticatedVisitor &&
+      tutorSettings?.enabled &&
+      !sessionContext &&
+      authState?.user?.ownerEmailVerified !== false
+  );
+  const canSendMessages = remainingMessages !== 0 && !shouldRenderContextlessTutorUi;
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const isAnonymousVisitor = Boolean(
     mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
@@ -2531,114 +2022,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }, [draggedAvatarPoint, viewport]);
 
   useEffect(() => {
-    if (isTutorHidden) {
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      return;
-    }
-
-    if (!mounted || !authState || authState.isLoadingAuth) {
-      return;
-    }
-
-    if (authState.isAuthenticated) {
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      return;
-    }
-
-    if (shouldRepeatGuestIntroOnEntry) {
-      if (guestIntroShownForCurrentEntryRef.current) {
-        return;
-      }
-
-      guestIntroShownForCurrentEntryRef.current = true;
-      guestIntroLocalSuppressionTrackedRef.current = false;
-      const nextRecord = persistGuestIntroRecord('shown');
-      setGuestIntroRecord(nextRecord);
-      setGuestIntroVisible(true);
-      trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
-        reason: 'admin_every_visit',
-      });
-      return;
-    }
-
-    if (guestIntroRecord) {
-      if (
-        !guestIntroVisible &&
-        !guestIntroHelpVisible &&
-        !guestIntroLocalSuppressionTrackedRef.current
-      ) {
-        guestIntroLocalSuppressionTrackedRef.current = true;
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_local', {
-          status: guestIntroRecord.status,
-        });
-      }
-      return;
-    }
-
-    if (guestIntroCheckStartedRef.current) {
-      return;
-    }
-
-    guestIntroCheckStartedRef.current = true;
-    let cancelled = false;
-
-    void fetch('/api/kangur/ai-tutor/guest-intro', {
-      cache: 'no-store',
-      credentials: 'same-origin',
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          return null;
-        }
-
-        return (await response.json().catch(() => null)) as KangurAiTutorGuestIntroCheckResponse | null;
-      })
-      .then((payload) => {
-        if (cancelled || !payload) {
-          return;
-        }
-
-        guestIntroLocalSuppressionTrackedRef.current = false;
-
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_checked', {
-          reason: payload.reason ?? null,
-          shouldShow: payload.shouldShow === true,
-        });
-
-        if (payload.shouldShow !== true) {
-          trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_server_seen', {
-            reason: payload.reason ?? null,
-          });
-          return;
-        }
-
-        const nextRecord = persistGuestIntroRecord('shown');
-        setGuestIntroRecord(nextRecord);
-        setGuestIntroVisible(true);
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
-          reason: payload.reason ?? null,
-        });
-      })
-      .catch(() => {
-        // Keep the prompt best-effort and silent on network failures.
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    authState,
-    guestIntroHelpVisible,
-    guestIntroRecord,
-    guestIntroVisible,
-    isTutorHidden,
-    mounted,
-    shouldRepeatGuestIntroOnEntry,
-  ]);
-
-  useEffect(() => {
     if (!isTutorHidden) {
       return;
     }
@@ -2661,6 +2044,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     setPersistedSelectionContainerRect(null);
     setSelectionResponsePending(null);
     setSelectionResponseComplete(null);
+    setSectionResponsePending(null);
+    setSectionResponseComplete(null);
     closeChat();
   }, [
     clearSelection,
@@ -2668,6 +2053,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     isTutorHidden,
     setHighlightedSection,
     setHighlightedText,
+    setSectionResponseComplete,
+    setSectionResponsePending,
     setSelectionResponseComplete,
     setPersistedSelectionPageRect,
     setPersistedSelectionContainerRect,
@@ -2745,7 +2132,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       const askModalSurface = document.querySelector<HTMLElement>(
         '[data-testid=\'kangur-ai-tutor-ask-modal-surface\']'
       );
-      const anchorRect = askModalHeader?.getBoundingClientRect() ?? askModalSurface?.getBoundingClientRect();
+      const anchorRect =
+        askModalHeader?.getBoundingClientRect() ?? askModalSurface?.getBoundingClientRect();
       if (!anchorRect) {
         setAskModalDockStyle(null);
         return;
@@ -2884,6 +2272,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       setContextSwitchNotice(
         isOpen
           ? getContextSwitchNotice({
+            tutorContent,
             surface: sessionContext?.surface,
             title: sessionContext?.title ?? null,
             contentId: sessionContext?.contentId ?? null,
@@ -2912,6 +2301,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     sessionContext?.contentId,
     sessionContext?.surface,
     sessionContext?.title,
+    tutorContent,
     tutorSessionKey,
   ]);
 
@@ -2935,10 +2325,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
 
     const createdAtMs = Date.parse(pendingFollowUp.createdAt);
-    if (
-      Number.isNaN(createdAtMs) ||
-      Date.now() - createdAtMs > FOLLOW_UP_COMPLETION_MAX_AGE_MS
-    ) {
+    if (Number.isNaN(createdAtMs) || Date.now() - createdAtMs > FOLLOW_UP_COMPLETION_MAX_AGE_MS) {
       clearPersistedPendingTutorFollowUp();
       return;
     }
@@ -3006,64 +2393,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     };
   }, [contextSwitchNotice, isOpen]);
 
-  useEffect(() => {
-    if (
-      !selectionResponsePending ||
-      isLoading ||
-      isSelectionGuidedTutorTarget(guidedTutorTarget) ||
-      !isOpen
-    ) {
-      return;
-    }
-
-    trackKangurClientEvent('kangur_ai_tutor_selection_guidance_completed', {
-      ...telemetryContext,
-      selectionLength: selectionResponsePending.selectedText.length,
-    });
-    setSelectionResponseComplete({
-      selectedText: selectionResponsePending.selectedText,
-    });
-    setSelectionResponsePending(null);
-  }, [guidedTutorTarget, isLoading, isOpen, selectionResponsePending, telemetryContext]);
-
-  useEffect(() => {
-    if (!selectionResponseComplete) {
-      if (selectionResponseCompleteTimeoutRef.current !== null) {
-        window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-        selectionResponseCompleteTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    if (selectionResponseCompleteTimeoutRef.current !== null) {
-      window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-    }
-
-    selectionResponseCompleteTimeoutRef.current = window.setTimeout(() => {
-      selectionResponseCompleteTimeoutRef.current = null;
-      setSelectionResponseComplete(null);
-    }, 4200);
-
-    return () => {
-      if (selectionResponseCompleteTimeoutRef.current !== null) {
-        window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-        selectionResponseCompleteTimeoutRef.current = null;
-      }
-    };
-  }, [selectionResponseComplete]);
-
-  useEffect(() => {
-    if (activeSelectedText) {
-      return;
-    }
-
-    if (selectionResponseCompleteTimeoutRef.current !== null) {
-      window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-      selectionResponseCompleteTimeoutRef.current = null;
-    }
-    setSelectionResponseComplete(null);
-  }, [activeSelectedText]);
-
   const anchorKinds = useMemo(
     () =>
       getAnchorKindsForSurface(
@@ -3104,364 +2433,92 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     viewportTick,
   ]);
 
-  const homeOnboardingSteps = useMemo(() => {
-    if (
-      !tutorAnchorContext ||
-      sessionContext?.surface !== 'game' ||
-      sessionContext?.contentId !== HOME_ONBOARDING_ELIGIBLE_CONTENT_ID
-    ) {
-      return [];
-    }
-
-    return HOME_ONBOARDING_STEP_DEFINITIONS.filter((step) =>
-      Boolean(
-        selectBestTutorAnchor({
-          anchors: tutorAnchorContext.anchors,
-          surface: 'game',
-          contentId: HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
-          kinds: [step.kind],
-        })
-      )
-    );
-  }, [sessionContext?.contentId, sessionContext?.surface, tutorAnchorContext]);
-  const homeOnboardingStep =
-    homeOnboardingStepIndex !== null ? (homeOnboardingSteps[homeOnboardingStepIndex] ?? null) : null;
-  const canStartHomeOnboardingManually = Boolean(
-    mounted &&
-      authState?.isAuthenticated &&
-      enabled &&
-      !askModalVisible &&
-      sessionContext?.surface === 'game' &&
-      sessionContext?.contentId === HOME_ONBOARDING_ELIGIBLE_CONTENT_ID &&
-      homeOnboardingSteps.length > 0 &&
-      homeOnboardingStepIndex === null &&
-      !guidedTutorTarget
-  );
-  const homeOnboardingReplayLabel =
-    homeOnboardingRecord?.status === 'completed' || homeOnboardingRecord?.status === 'dismissed'
-      ? 'Powtorz plan strony'
-      : 'Pokaz plan strony';
-
-  useEffect(() => {
-    if (homeOnboardingStepIndex === null) {
-      return;
-    }
-
-    if (homeOnboardingSteps.length === 0) {
-      setHomeOnboardingStepIndex(null);
-      return;
-    }
-
-    if (homeOnboardingStepIndex >= homeOnboardingSteps.length) {
-      setHomeOnboardingStepIndex(homeOnboardingSteps.length - 1);
-    }
-  }, [homeOnboardingStepIndex, homeOnboardingSteps]);
-
-  const isEligibleForHomeOnboarding = Boolean(
-    mounted &&
-      authState?.isAuthenticated &&
-      enabled &&
-      !isTutorHidden &&
-      !askModalVisible &&
-      sessionContext?.surface === 'game' &&
-      sessionContext?.contentId === HOME_ONBOARDING_ELIGIBLE_CONTENT_ID &&
-      homeOnboardingSteps.length > 0
-  );
-
-  useEffect(() => {
-    if (!isEligibleForHomeOnboarding) {
-      homeOnboardingShownForCurrentEntryRef.current = false;
-      if (sessionContext?.contentId !== HOME_ONBOARDING_ELIGIBLE_CONTENT_ID) {
-        setHomeOnboardingStepIndex(null);
-      }
-      return;
-    }
-
-    if (homeOnboardingStepIndex !== null || guidedTutorTarget) {
-      return;
-    }
-
-    if (homeOnboardingMode === 'off') {
-      return;
-    }
-
-    if (
-      !shouldRepeatHomeOnboardingOnEntry &&
-      (homeOnboardingRecord?.status === 'completed' ||
-        homeOnboardingRecord?.status === 'dismissed')
-    ) {
-      return;
-    }
-
-    if (homeOnboardingShownForCurrentEntryRef.current) {
-      return;
-    }
-
-    homeOnboardingShownForCurrentEntryRef.current = true;
-    const nextRecord = persistHomeOnboardingRecord('shown');
-    setHomeOnboardingRecord(nextRecord);
-    setHomeOnboardingStepIndex(0);
-    trackKangurClientEvent('kangur_ai_tutor_home_onboarding_shown', {
-      stepCount: homeOnboardingSteps.length,
-    });
-  }, [
-    enabled,
-    guidedTutorTarget,
-    homeOnboardingMode,
-    homeOnboardingRecord?.status,
-    homeOnboardingStepIndex,
-    homeOnboardingSteps.length,
+  const {
+    canStartHomeOnboardingManually,
+    guidedCalloutDetail,
+    guidedCalloutHeaderLabel,
+    guidedCalloutKey,
+    sectionGuidanceLabel,
+    guidedCalloutStepLabel,
+    guidedCalloutTestId,
+    guidedCalloutTitle,
+    guidedFallbackRect,
+    guidedMode,
+    guidedSectionFocusRect,
+    guidedSelectionPreview,
+    guidedSelectionRect,
+    guidedSelectionSpotlightRect,
+    guidedTargetAnchor,
+    homeOnboardingAnchor,
+    homeOnboardingReplayLabel,
+    homeOnboardingStep,
+    homeOnboardingSteps,
+    hoveredSectionAnchor,
+    hoveredSectionProtectedRect,
+    isAskModalMode,
     isEligibleForHomeOnboarding,
-    sessionContext?.contentId,
-    shouldRepeatHomeOnboardingOnEntry,
-  ]);
-
-  const guidedTargetAnchor = useMemo(() => {
-    if (!isAuthGuidedTutorTarget(guidedTutorTarget) || !tutorAnchorContext) {
-      return null;
-    }
-
-    return selectBestTutorAnchor({
-      anchors: tutorAnchorContext.anchors,
-      surface: 'auth',
-      kinds: [guidedTutorTarget.kind],
-    });
-  }, [guidedTutorTarget, tutorAnchorContext, viewportTick]);
-  const guidedSectionAnchor = useMemo(() => {
-    if (!isSectionGuidedTutorTarget(guidedTutorTarget) || !tutorAnchorContext) {
-      return null;
-    }
-
-    return (
-      tutorAnchorContext.anchors.find(
-        (anchor): anchor is KangurTutorAnchorRegistration & {
-          kind: GuidedTutorSectionKind;
-          surface: TutorSurface;
-        } =>
-          anchor.id === guidedTutorTarget.anchorId && isSectionExplainableTutorAnchor(anchor)
-      ) ?? null
-    );
-  }, [guidedTutorTarget, tutorAnchorContext, viewportTick]);
-  const hoveredSectionAnchor = useMemo(() => {
-    if (!hoveredSectionAnchorId || !tutorAnchorContext) {
-      return null;
-    }
-
-    return (
-      tutorAnchorContext.anchors.find(
-        (anchor): anchor is KangurTutorAnchorRegistration & {
-          kind: GuidedTutorSectionKind;
-          surface: TutorSurface;
-        } => anchor.id === hoveredSectionAnchorId && isSectionExplainableTutorAnchor(anchor)
-      ) ?? null
-    );
-  }, [hoveredSectionAnchorId, tutorAnchorContext, viewportTick]);
-  const homeOnboardingAnchor = useMemo(() => {
-    if (!homeOnboardingStep || !tutorAnchorContext) {
-      return null;
-    }
-
-    return selectBestTutorAnchor({
-      anchors: tutorAnchorContext.anchors,
-      surface: 'game',
-      contentId: HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
-      kinds: [homeOnboardingStep.kind],
-    });
-  }, [homeOnboardingStep, tutorAnchorContext, viewportTick]);
-  const guidedFallbackRect = useMemo(() => {
-    if (!isAuthGuidedTutorTarget(guidedTutorTarget) || guidedTargetAnchor || typeof document === 'undefined') {
-      return null;
-    }
-
-    const fallbackAnchor = document.querySelector<HTMLElement>(
-      `[data-kangur-tutor-anchor-surface="auth"][data-kangur-tutor-anchor-kind="${guidedTutorTarget.kind}"]`
-    );
-    if (!fallbackAnchor) {
-      return null;
-    }
-
-    const rect = fallbackAnchor.getBoundingClientRect();
-    return rect.width >= 0 && rect.height >= 0 ? rect : null;
-  }, [guidedTargetAnchor, guidedTutorTarget, viewportTick]);
-  const guidedSelectionRect = useMemo(() => {
-    if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) {
-      return null;
-    }
-
-    return cloneRect(
-      getViewportRectFromPageRect(activeSelectionPageRect ?? persistedSelectionPageRect) ??
-        persistedSelectionRect ??
-        activeSelectionRect
-    );
-  }, [
+    isSectionGuidedTutorMode,
+    isSelectionGuidedTutorMode,
+    sectionResponsePendingKind,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+  } = useKangurAiTutorGuidedDisplayState({
+    activeSectionRect,
+    activeSelectionContainerRect,
     activeSelectionPageRect,
     activeSelectionRect,
+    askModalVisible,
+    enabled,
+    guestTutorAssistantLabel,
     guidedTutorTarget,
+    homeOnboardingEligibleContentId: HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
+    homeOnboardingRecordStatus: homeOnboardingRecord?.status ?? null,
+    homeOnboardingStepIndex,
+    hoveredSectionAnchorId,
+    isAuthenticated: authState?.isAuthenticated,
+    isLoading,
+    isOpen,
+    isTutorHidden,
+    mounted,
     persistedSelectionPageRect,
     persistedSelectionRect,
+    sectionResponsePending,
     selectionResponsePending,
-  ]);
-  const guidedSelectionSpotlightRect =
-    isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
-      ? cloneRect(
-        getSelectionProtectedRect(guidedSelectionRect, activeSelectionContainerRect) ?? guidedSelectionRect
-      )
-      : null;
-  const isAskModalState = !isTutorHidden && askModalVisible && isOpen;
-  const isAskModalMode = isAskModalState;
-  const showSelectionGuidanceCallout =
-    isSelectionGuidedTutorTarget(guidedTutorTarget) ||
-    (!isTutorHidden && isOpen && !isAskModalState && selectionResponsePending !== null);
-  const guidedMode = homeOnboardingStep
-    ? 'home_onboarding'
-    : isSelectionGuidedTutorTarget(guidedTutorTarget)
-      ? 'selection'
-      : isSectionGuidedTutorTarget(guidedTutorTarget)
-        ? 'section'
-        : isAuthGuidedTutorTarget(guidedTutorTarget)
-          ? 'auth'
-          : null;
-  const guidedTargetLabel =
-    guidedTargetAnchor?.metadata?.label?.trim() ||
-    (isAuthGuidedTutorTarget(guidedTutorTarget)
-      ? guidedTutorTarget.authMode === 'create-account'
-        ? 'Utwórz konto'
-        : 'Zaloguj się'
-      : null);
-  const guidedCalloutTitle =
-    guidedMode === 'home_onboarding'
-      ? (homeOnboardingStep?.title ?? '')
-      : showSelectionGuidanceCallout
-        ? 'Wyjaśniam ten fragment.'
-        : isSectionGuidedTutorTarget(guidedTutorTarget)
-          ? `Wyjaśniam sekcję${guidedTutorTarget.label ? `: ${guidedTutorTarget.label}` : '.'}`
-          : isAuthGuidedTutorTarget(guidedTutorTarget) && guidedTutorTarget.kind === 'login_identifier_field'
-            ? guidedTutorTarget.authMode === 'create-account'
-              ? 'Tutaj wpisz e-mail rodzica.'
-              : 'Tutaj wpisz e-mail rodzica albo nick ucznia.'
-            : isAuthGuidedTutorTarget(guidedTutorTarget) && guidedTutorTarget.kind === 'login_form'
-              ? guidedTutorTarget.authMode === 'create-account'
-                ? 'Tutaj założysz konto rodzica.'
-                : 'Tutaj wpiszesz dane do logowania.'
-              : guidedTargetLabel
-                ? `U góry kliknij „${guidedTargetLabel}”.`
-                : null;
-  const guidedCalloutDetail =
-    guidedMode === 'home_onboarding'
-      ? (homeOnboardingStep?.description ?? '')
-      : showSelectionGuidanceCallout
-        ? isLoading
-          ? 'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
-          : 'Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.'
-        : isSectionGuidedTutorTarget(guidedTutorTarget)
-          ? 'Za chwilę wyjaśnię tę część strony i pokażę, na co warto zwrócić uwagę.'
-          : isAuthGuidedTutorTarget(guidedTutorTarget) && guidedTutorTarget.kind === 'login_identifier_field'
-            ? guidedTutorTarget.authMode === 'create-account'
-              ? 'Zacznij od adresu e-mail rodzica w tym polu. Hasło ustawisz zaraz pod nim.'
-              : 'Zacznij od loginu w tym polu, a potem wpisz hasło poniżej.'
-            : isAuthGuidedTutorTarget(guidedTutorTarget) && guidedTutorTarget.kind === 'login_form'
-              ? guidedTutorTarget.authMode === 'create-account'
-                ? 'Wpisz e-mail rodzica i ustaw hasło. Po potwierdzeniu e-maila wrócisz tu tym samym loginem.'
-                : 'Wpisz e-mail rodzica albo nick ucznia, potem hasło.'
-              : isAuthGuidedTutorTarget(guidedTutorTarget) && guidedTutorTarget.authMode === 'create-account'
-                ? 'Ten przycisk otworzy zakładanie konta rodzica. Najpierw wybierz go w nawigacji, a formularz pojawi się potem.'
-                : isAuthGuidedTutorTarget(guidedTutorTarget)
-                  ? 'Ten przycisk otworzy logowanie. Najpierw kliknij go w nawigacji, a dopiero potem wpiszesz dane.'
-                  : null;
-  const guidedCalloutStepLabel =
-    guidedMode === 'home_onboarding' && homeOnboardingStepIndex !== null && homeOnboardingSteps.length > 0
-      ? `Krok ${homeOnboardingStepIndex + 1} z ${homeOnboardingSteps.length}`
-      : null;
-  const guidedSelectionPreview =
-    showSelectionGuidanceCallout
-      ? (isSelectionGuidedTutorTarget(guidedTutorTarget)
-        ? guidedTutorTarget.selectedText
-        : selectionResponsePending?.selectedText ?? '').slice(0, 120)
-      : null;
-  const guidedSectionRect = isSectionGuidedTutorTarget(guidedTutorTarget)
-    ? cloneRect(guidedSectionAnchor?.getRect())
-    : null;
-  const hoveredSectionProtectedRect = hoveredSectionAnchor
-    ? getExpandedRect(
-      hoveredSectionAnchor.getRect(),
-      SECTION_DROP_TARGET_PADDING_X,
-      SECTION_DROP_TARGET_PADDING_Y
-    )
-    : null;
+    sessionContentId: sessionContext?.contentId,
+    sessionSurface: sessionContext?.surface,
+    tutorAnchorContext,
+    tutorContent,
+    tutorName,
+    viewportTick,
+  });
+  useKangurAiTutorGuidanceCompletionEffects({
+    activeSelectedText,
+    highlightedSection,
+    isLoading,
+    isOpen,
+    isSectionGuidedMode: isSectionGuidedTutorMode,
+    isSelectionGuidedMode: isSelectionGuidedTutorMode,
+    sectionResponseComplete,
+    sectionResponseCompleteTimeoutRef,
+    sectionResponsePending,
+    selectionResponseComplete,
+    selectionResponseCompleteTimeoutRef,
+    selectionResponsePending,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    telemetryContext,
+  });
 
-  useEffect(() => {
-    if (!homeOnboardingAnchor || typeof document === 'undefined') {
-      return;
-    }
-
-    const anchorElement = document.querySelector<HTMLElement>(
-      `[data-kangur-tutor-anchor-id="${homeOnboardingAnchor.id}"]`
-    );
-    if (!anchorElement) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      anchorElement.scrollIntoView({
-        behavior: getMotionSafeScrollBehavior('smooth'),
-        block: 'center',
-        inline: 'nearest',
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [homeOnboardingAnchor?.id]);
-
-  useEffect(() => {
-    if (!isAuthGuidedTutorTarget(guidedTutorTarget)) {
-      return;
-    }
-
-    const expectedAuthMode = guidedTutorTarget.authMode;
-    const canGuideIntoForm =
-      loginModal.isOpen &&
-      loginModal.authMode === expectedAuthMode &&
-      guidedTutorTarget.kind !== getGuidedGuestModalTargetKind();
-    if (canGuideIntoForm) {
-      setGuidedTutorTarget((current) => {
-        if (!isAuthGuidedTutorTarget(current) || current.authMode !== expectedAuthMode) {
-          return current;
-        }
-        if (current.kind === getGuidedGuestModalTargetKind()) {
-          return current;
-        }
-        return {
-          ...current,
-          kind: getGuidedGuestModalTargetKind(),
-        };
-      });
-      return;
-    }
-
-    const shouldGuideBackToNav =
-      !loginModal.isOpen &&
-      (guidedTutorTarget.kind === 'login_form' ||
-        guidedTutorTarget.kind === getGuidedGuestModalTargetKind());
-    if (shouldGuideBackToNav) {
-      setGuidedTutorTarget((current) => {
-        if (!isAuthGuidedTutorTarget(current)) {
-          return current;
-        }
-        if (
-          current?.kind !== 'login_form' &&
-          current?.kind !== getGuidedGuestModalTargetKind()
-        ) {
-          return current;
-        }
-        return {
-          ...current,
-          kind: getGuidedGuestTargetKind(current.authMode),
-        };
-      });
-    }
-  }, [guidedTutorTarget, loginModal.authMode, loginModal.isOpen]);
+  useKangurAiTutorGuidedAuthHandoffEffect({
+    guidedTutorTarget,
+    loginModal: {
+      authMode: loginModal.authMode,
+      isOpen: loginModal.isOpen,
+    },
+    setGuidedTutorTarget,
+  });
 
   const activeFocus = useMemo<ActiveTutorFocus>(() => {
     if (activeSelectionRect) {
@@ -3510,7 +2567,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     viewportTick,
   ]);
 
-  const focusChipLabel = getFocusChipLabel(activeFocus, activeSelectedText, sessionContext?.surface);
+  const focusChipLabel = getFocusChipLabel(
+    tutorContent,
+    activeFocus,
+    activeSelectedText,
+    sessionContext?.surface
+  );
   const selectionActionLayout = selectionRect
     ? getSelectionActionLayout(selectionRect, viewport)
     : null;
@@ -3524,12 +2586,13 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     !highlightedSection &&
     Boolean(selectedText && selectionRect && selectionActionStyle) &&
     !isSelectionWithinTutorUi();
-  const isContextualPanelAnchor = panelAnchorMode === 'contextual';
   const isStaticUiMode = uiMode === 'static';
+  const isContextualPanelAnchor = panelAnchorMode === 'contextual' && !isStaticUiMode;
   const displayFocusRect = isAnchoredUiMode && isContextualPanelAnchor ? activeFocus.rect : null;
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
   const lastAssistantCoachingMode = getLastAssistantCoachingMode(messages);
   const quickActions = buildQuickActions({
+    tutorContent,
     surface: sessionContext?.surface,
     answerRevealed: sessionContext?.answerRevealed,
     hasSelectedText: Boolean(activeSelectedText),
@@ -3543,8 +2606,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     title: sessionContext?.title,
   });
   const bridgeQuickAction = pickQuickAction(quickActions, ['bridge-to-game', 'bridge-to-lesson']);
-  const bridgeSummaryChipLabel = getBridgeSummaryChipLabel(bridgeQuickAction);
+  const bridgeSummaryChipLabel = getBridgeSummaryChipLabel(tutorContent, bridgeQuickAction);
   const proactiveNudge = buildProactiveNudge({
+    tutorContent,
     proactiveNudges,
     hintDepth,
     surface: sessionContext?.surface,
@@ -3559,13 +2623,25 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const isSelectionExplainPendingMode = Boolean(
     selectionResponsePending && isOpen && !isAskModalMode
   );
+  const isSectionExplainPendingMode = Boolean(sectionResponsePending && isOpen && !isAskModalMode);
   const showSelectionExplainCompleteState = Boolean(
     activeSelectedText &&
-      selectionResponseComplete?.selectedText === activeSelectedText &&
-      !isSelectionExplainPendingMode
+    selectionResponseComplete?.selectedText === activeSelectedText &&
+    !isSelectionExplainPendingMode
   );
-  const visibleQuickActions = isSelectionExplainPendingMode ? [] : quickActions;
-  const visibleProactiveNudge = isSelectionExplainPendingMode ? null : proactiveNudge;
+  const showSectionExplainCompleteState = Boolean(
+    highlightedSection &&
+      sectionResponseComplete?.anchorId === highlightedSection.anchorId &&
+      !isSectionExplainPendingMode
+  );
+  const visibleQuickActions =
+    shouldRenderContextlessTutorUi || isSelectionExplainPendingMode || isSectionExplainPendingMode
+      ? []
+      : quickActions;
+  const visibleProactiveNudge =
+    shouldRenderContextlessTutorUi || isSelectionExplainPendingMode || isSectionExplainPendingMode
+      ? null
+      : proactiveNudge;
   const activeProtectedContentRects = [
     ...(activeSelectionProtectedRect ? [activeSelectionProtectedRect] : []),
     ...(activeSectionProtectedRect ? [activeSectionProtectedRect] : []),
@@ -3594,12 +2670,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   );
   const guidedFocusRect =
     guidedMode === 'home_onboarding'
-      ? homeOnboardingAnchor?.getRect() ?? null
-      : guidedMode === 'section'
-        ? guidedSectionRect
+      ? (homeOnboardingAnchor?.getRect() ?? null)
+      : showSectionGuidanceCallout
+        ? guidedSectionFocusRect
         : showSelectionGuidanceCallout
           ? guidedSelectionRect
-          : guidedTargetAnchor?.getRect() ?? guidedFallbackRect;
+          : (guidedTargetAnchor?.getRect() ?? guidedFallbackRect);
   const guidedAvatarSelectionProtectedRect =
     guidedMode === 'selection'
       ? getExpandedRect(
@@ -3659,30 +2735,49 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     ? getGuidedCalloutLayout(
       guidedFocusRect,
       viewport,
-      [guidedAvatarRect, guidedAvatarArrowCorridorRect].filter(
-        (rect): rect is DOMRect => Boolean(rect)
+      [guidedAvatarRect, guidedAvatarArrowCorridorRect].filter((rect): rect is DOMRect =>
+        Boolean(rect)
       )
     )
     : null;
   const guidedCalloutStyle = guidedCalloutLayout?.style ?? null;
+  const shouldRenderGuidedCallout =
+    !isTutorHidden &&
+    (guidedMode !== null || showSelectionGuidanceCallout || showSectionGuidanceCallout) &&
+    Boolean(guidedFocusRect && guidedCalloutStyle) &&
+    (guidedMode === 'home_onboarding' ||
+      showSectionGuidanceCallout ||
+      showSelectionGuidanceCallout ||
+      isAnonymousVisitor);
+  const guidedCalloutTransitionDuration = Math.max(
+    0.34,
+    motionProfile.guidedAvatarTransition.duration * 0.78
+  );
   const selectionSpotlightStyle =
     showSelectionGuidanceCallout && guidedSelectionSpotlightRect
       ? getSelectionSpotlightStyle(guidedSelectionSpotlightRect)
       : null;
   const isGuidedTutorMode = !isTutorHidden && guidedMode !== null;
   const shouldEnableTutorNarration = isOpen && !isGuidedTutorMode && !shouldRenderGuestIntroUi;
-  const emptyStateMessage = getEmptyStateMessage({
-    surface: sessionContext?.surface,
-    answerRevealed: sessionContext?.answerRevealed,
-    hasCurrentQuestion,
-    hasAssignmentSummary,
-    hasSelectedText: Boolean(activeSelectedText),
-    bridgeQuickAction,
-  });
-  const askModalHelperText =
-    isAuthGuidedTutorTarget(guidedTutorTarget)
-      ? 'Możesz zapytać o logowanie, konto rodzica albo kolejny krok na stronie.'
-      : 'Możesz zapytać o logowanie, konto rodzica albo korzystanie ze strony.';
+  const emptyStateMessage = shouldRenderContextlessTutorUi
+    ? CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE
+    : getEmptyStateMessage({
+      tutorContent,
+      surface: sessionContext?.surface,
+      answerRevealed: sessionContext?.answerRevealed,
+      hasCurrentQuestion,
+      hasAssignmentSummary,
+      hasSelectedText: Boolean(activeSelectedText),
+      bridgeQuickAction,
+    });
+  const panelEmptyStateMessage = isSelectionExplainPendingMode
+    ? tutorContent.emptyStates.selectionPending
+    : isSectionExplainPendingMode
+      ? tutorContent.emptyStates.sectionPending
+      : emptyStateMessage;
+  const askModalHelperText = isAuthGuidedTutorTarget(guidedTutorTarget)
+    ? tutorContent.askModal.helperAuth
+    : tutorContent.askModal.helperDefault;
   const selectedTextPreview = activeSelectedText?.slice(0, 140) ?? null;
   const tutorNarrationScriptId = useMemo(() => {
     const base = [
@@ -3725,25 +2820,31 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
 
     if (activeSelectedText) {
-      pushPart('Wyjaśniany fragment');
+      pushPart(tutorContent.panelContext.selectedTitle);
       pushPart(activeSelectedText);
       pushPart(
         showSelectionExplainCompleteState
-          ? 'Wyjaśnienie gotowe. Możesz dopytać albo wrócić do zwykłej rozmowy.'
-          : 'Możesz wrócić do zwykłej rozmowy albo ponownie pokazać fragment na stronie.'
+          ? tutorContent.panelContext.selectedCompleteDetail
+          : tutorContent.panelContext.selectedDefaultDetail
       );
     }
 
     if (highlightedSection) {
-      pushPart('Wyjaśniana sekcja');
+      pushPart(tutorContent.panelContext.sectionTitle);
       pushPart(highlightedSection.label ?? highlightedSection.kind);
       pushPart(
-        'Ta rozmowa jest teraz przypięta do tej części strony. Możesz pokazać sekcję ponownie albo wrócić do zwykłej rozmowy.'
+        isSectionExplainPendingMode
+          ? tutorContent.panelContext.sectionPendingDetail
+          : showSectionExplainCompleteState
+            ? tutorContent.panelContext.sectionCompleteDetail
+            : tutorContent.panelContext.sectionDefaultDetail
       );
     }
 
     if (isSelectionExplainPendingMode) {
-      pushPart('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.');
+      pushPart(tutorContent.panelContext.selectedPendingStatus);
+    } else if (isSectionExplainPendingMode) {
+      pushPart(tutorContent.panelContext.sectionPendingStatus);
     } else if (visibleProactiveNudge) {
       pushPart(visibleProactiveNudge.title);
       pushPart(visibleProactiveNudge.description);
@@ -3789,8 +2890,10 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     focusChipLabel,
     highlightedSection,
     isAskModalMode,
+    isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
     messages,
+    showSectionExplainCompleteState,
     showSelectionExplainCompleteState,
     showSources,
     visibleProactiveNudge,
@@ -3803,7 +2906,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     () =>
       buildKangurLessonNarrationScriptFromText({
         lessonId: tutorNarrationScriptId,
-        title: isAskModalMode ? `${tutorName} - pomoc` : `${tutorName} - rozmowa`,
+        title: isAskModalMode
+          ? `${tutorName} - ${tutorContent.narrator.helpTitleSuffix}`
+          : `${tutorName} - ${tutorContent.narrator.chatTitleSuffix}`,
         description: sessionContext?.title ?? null,
         text: tutorNarrationText,
         locale: 'pl-PL',
@@ -3811,6 +2916,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     [
       isAskModalMode,
       sessionContext?.title,
+      tutorContent.narrator.chatTitleSuffix,
+      tutorContent.narrator.helpTitleSuffix,
       tutorName,
       tutorNarrationText,
       tutorNarrationScriptId,
@@ -3845,15 +2952,16 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     bubblePlacement.launchOrigin === 'dock-bottom-right' &&
     messages.length === 0 &&
     !activeSelectedText &&
+    !highlightedSection &&
     !contextSwitchNotice;
   const compactDockedTutorPanelWidth = Math.min(Math.max(viewport.width - 24, 280), 360);
   const shouldRenderAuxiliaryPanelControls =
     canStartHomeOnboardingManually ||
-    visibleProactiveNudge ||
+    Boolean(visibleProactiveNudge) ||
     (!isCompactDockedTutorPanel &&
       (canNarrateTutorText ||
-      canStartHomeOnboardingManually ||
-      (usageSummary && usageSummary.dailyMessageLimit !== null)));
+        canStartHomeOnboardingManually ||
+        Boolean(usageSummary && usageSummary.dailyMessageLimit !== null)));
   const hideFloatingAvatar = isOpen && isStaticUiMode && !isAskModalMode;
   const showFloatingAvatar =
     !isTutorHidden &&
@@ -3917,7 +3025,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       : guidedTutorTarget && guidedFocusRect
         ? guidedTutorTarget.kind
         : isOpen && isAnchoredUiMode && isContextualPanelAnchor
-          ? activeFocus.kind ?? 'dock'
+          ? (activeFocus.kind ?? 'dock')
           : 'dock';
   const pointerMarkerId = `kangur-ai-tutor-pointer-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const panelAvatarPlacement = showAttachedAvatarShell
@@ -3931,47 +3039,50 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       ? 'guided'
       : 'floating';
   const panelOpenAnimation =
-    bubblePlacement.mode === 'sheet'
-      ? 'sheet'
-      : isStaticUiMode
-        ? 'fade'
-        : 'dock-launch';
+    bubblePlacement.mode === 'sheet' ? 'sheet' : isStaticUiMode ? 'fade' : 'dock-launch';
   const panelTransition = prefersReducedMotion
     ? reducedMotionTransitions.instant
     : panelOpenAnimation === 'fade'
       ? { duration: 0.2, ease: 'easeOut' as const }
       : motionProfile.bubbleTransition;
+  const sessionSurfaceLabel =
+    !isCompactDockedTutorPanel && (sessionContext?.title || sessionContext?.contentId)
+      ? `${
+        sessionContext?.surface === 'test'
+          ? tutorContent.panelChrome.surfaceLabels.test
+          : sessionContext?.surface === 'game'
+            ? tutorContent.panelChrome.surfaceLabels.game
+            : tutorContent.panelChrome.surfaceLabels.lesson
+      }: ${sessionContext?.title ?? sessionContext?.contentId}`
+      : null;
   const focusTelemetryKey = useMemo(
     () => (isOpen ? getFocusTelemetryKey(tutorSessionKey, activeFocus) : null),
     [activeFocus, isOpen, tutorSessionKey]
   );
-  const proactiveNudgeTelemetryKey = useMemo(
-    () => {
-      if (!isOpen || !visibleProactiveNudge) {
-        return null;
-      }
+  const proactiveNudgeTelemetryKey = useMemo(() => {
+    if (!isOpen || !visibleProactiveNudge) {
+      return null;
+    }
 
-      const contextKey =
-        tutorSessionKey ??
-        [
-          sessionContext?.surface ?? 'unknown',
-          sessionContext?.contentId ?? sessionContext?.title ?? 'none',
-          activeFocus.id ?? activeFocus.kind ?? 'focus',
-        ].join(':');
+    const contextKey =
+      tutorSessionKey ??
+      [
+        sessionContext?.surface ?? 'unknown',
+        sessionContext?.contentId ?? sessionContext?.title ?? 'none',
+        activeFocus.id ?? activeFocus.kind ?? 'focus',
+      ].join(':');
 
-      return `${contextKey}:${visibleProactiveNudge.mode}:${visibleProactiveNudge.action.id}`;
-    },
-    [
-      activeFocus.id,
-      activeFocus.kind,
-      isOpen,
-      sessionContext?.contentId,
-      sessionContext?.surface,
-      sessionContext?.title,
-      tutorSessionKey,
-      visibleProactiveNudge,
-    ]
-  );
+    return `${contextKey}:${visibleProactiveNudge.mode}:${visibleProactiveNudge.action.id}`;
+  }, [
+    activeFocus.id,
+    activeFocus.kind,
+    isOpen,
+    sessionContext?.contentId,
+    sessionContext?.surface,
+    sessionContext?.title,
+    tutorSessionKey,
+    visibleProactiveNudge,
+  ]);
   const quotaExhaustedTelemetryKey = useMemo(
     () =>
       usageSummary &&
@@ -3981,115 +3092,47 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
         : null,
     [usageSummary]
   );
-  useLayoutEffect(() => {
-    if (!proactiveNudgeTelemetryKey || !visibleProactiveNudge) {
-      lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
-      return;
-    }
-
-    if (lastTrackedProactiveNudgeKeyRef.current === proactiveNudgeTelemetryKey) {
-      return;
-    }
-
-    lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
-    trackKangurClientEvent('kangur_ai_tutor_proactive_nudge_shown', {
-      surface: sessionContext?.surface ?? null,
-      contentId: sessionContext?.contentId ?? null,
-      title: sessionContext?.title ?? null,
-      nudgeMode: proactiveNudges,
-      actionId: visibleProactiveNudge.action.id,
-      bridgeActionId: bridgeQuickAction?.id ?? null,
-      isBridgeAction: visibleProactiveNudge.action.id === bridgeQuickAction?.id,
-      hintDepth,
+  const inputPlaceholder = shouldRenderContextlessTutorUi
+    ? CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER
+    : getInputPlaceholder({
+      tutorContent,
+      canSendMessages,
+      surface: sessionContext?.surface,
+      answerRevealed: sessionContext?.answerRevealed,
+      hasCurrentQuestion,
+      hasAssignmentSummary,
       hasSelectedText: Boolean(activeSelectedText),
+      bridgeQuickAction,
     });
-  }, [
+  const narrationObservationKey = [
+    askModalHelperText,
+    sessionContext?.contentId ?? 'none',
+    sessionContext?.surface ?? 'none',
+  ].join(':');
+  useKangurAiTutorSupplementalTelemetryEffects({
     activeSelectedText,
-    bridgeQuickAction,
+    bridgeQuickActionId: bridgeQuickAction?.id ?? null,
     hintDepth,
+    lastTrackedProactiveNudgeKeyRef,
+    lastTrackedQuotaKeyRef,
     proactiveNudgeTelemetryKey,
     proactiveNudges,
-    sessionContext?.contentId,
-    sessionContext?.surface,
-    sessionContext?.title,
+    quotaExhaustedTelemetryKey,
+    sessionContext: {
+      surface: sessionContext?.surface,
+      contentId: sessionContext?.contentId,
+      title: sessionContext?.title,
+    },
+    telemetryContext,
+    usageSummary,
     visibleProactiveNudge,
-  ]);
-  useEffect(() => {
-    if (!quotaExhaustedTelemetryKey || !usageSummary) {
-      lastTrackedQuotaKeyRef.current = quotaExhaustedTelemetryKey;
-      return;
-    }
-
-    if (lastTrackedQuotaKeyRef.current === quotaExhaustedTelemetryKey) {
-      return;
-    }
-
-    lastTrackedQuotaKeyRef.current = quotaExhaustedTelemetryKey;
-    trackKangurClientEvent('kangur_ai_tutor_quota_exhausted', {
-      ...telemetryContext,
-      dateKey: usageSummary.dateKey,
-      messageCount: usageSummary.messageCount,
-      dailyMessageLimit: usageSummary.dailyMessageLimit,
-      remainingMessages: usageSummary.remainingMessages,
-    });
-  }, [quotaExhaustedTelemetryKey, telemetryContext, usageSummary]);
-  const inputPlaceholder = getInputPlaceholder({
-    canSendMessages,
-    surface: sessionContext?.surface,
-    answerRevealed: sessionContext?.answerRevealed,
-    hasCurrentQuestion,
-    hasAssignmentSummary,
-    hasSelectedText: Boolean(activeSelectedText),
-    bridgeQuickAction,
   });
-  useLayoutEffect(() => {
-    if (!shouldEnableTutorNarration) {
-      setTutorNarrationObservedText('');
-      return;
-    }
-
-    const root = tutorNarrationRootRef.current;
-    if (!root) {
-      setTutorNarrationObservedText('');
-      return;
-    }
-
-    let timeoutId: number | null = null;
-    const updateText = (): void => {
-      setTutorNarrationObservedText(extractNarrationTextFromElement(root));
-    };
-
-    updateText();
-
-    if (typeof MutationObserver === 'undefined') {
-      return;
-    }
-
-    const observer = new MutationObserver(() => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-      timeoutId = window.setTimeout(updateText, 120);
-    });
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-
-    return () => {
-      observer.disconnect();
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [
-    askModalHelperText,
-    sessionContext?.contentId,
-    sessionContext?.surface,
+  useKangurAiTutorNarrationObserverEffect({
+    observationKey: narrationObservationKey,
+    setTutorNarrationObservedText,
     shouldEnableTutorNarration,
-  ]);
+    tutorNarrationRootRef,
+  });
   const avatarButtonClassName = cn(
     'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full',
     'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
@@ -4099,556 +3142,165 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const avatarButtonStyle: CSSProperties = {
     borderColor: FLOATING_TUTOR_AVATAR_RIM_COLOR,
   };
-
-  useEffect(() => {
-    if (!isOpen || !focusTelemetryKey || !activeFocus.kind) {
-      lastTrackedFocusKeyRef.current = focusTelemetryKey;
-      setPanelMotionState('settled');
-      if (motionTimeoutRef.current !== null) {
-        window.clearTimeout(motionTimeoutRef.current);
-        motionTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    if (lastTrackedFocusKeyRef.current === focusTelemetryKey) {
-      return;
-    }
-
-    lastTrackedFocusKeyRef.current = focusTelemetryKey;
-    setPanelMotionState('animating');
-    trackKangurClientEvent('kangur_ai_tutor_anchor_changed', {
-      surface: sessionContext?.surface ?? null,
-      contentId: sessionContext?.contentId ?? null,
-      title: sessionContext?.title ?? null,
-      anchorKind: activeFocus.kind,
-      anchorId: activeFocus.id,
-      layoutMode: bubblePlacement.mode,
-      hasSelectedText: Boolean(activeSelectedText),
-    });
-
-    if (motionTimeoutRef.current !== null) {
-      window.clearTimeout(motionTimeoutRef.current);
-    }
-    motionTimeoutRef.current = window.setTimeout(() => {
-      setPanelMotionState('settled');
-      trackKangurClientEvent('kangur_ai_tutor_motion_completed', {
-        surface: sessionContext?.surface ?? null,
-        contentId: sessionContext?.contentId ?? null,
-        title: sessionContext?.title ?? null,
-        anchorKind: activeFocus.kind,
-        anchorId: activeFocus.id,
-        layoutMode: bubblePlacement.mode,
-        hasSelectedText: Boolean(activeSelectedText),
-      });
-      motionTimeoutRef.current = null;
-    }, prefersReducedMotion ? 0 : motionProfile.motionCompletedDelayMs);
-
-    return () => {
-      if (motionTimeoutRef.current !== null) {
-        window.clearTimeout(motionTimeoutRef.current);
-        motionTimeoutRef.current = null;
-      }
-    };
-  }, [
-    activeFocus.id,
-    activeFocus.kind,
+  useKangurAiTutorFocusTelemetryEffect({
+    activeFocus,
     activeSelectedText,
-    bubblePlacement.mode,
+    bubbleMode: bubblePlacement.mode,
     focusTelemetryKey,
     isOpen,
-    motionProfile.motionCompletedDelayMs,
-    prefersReducedMotion,
-    sessionContext?.contentId,
-    sessionContext?.surface,
-    sessionContext?.title,
-  ]);
-
-  const persistSelectionContext = useCallback(
-    (options?: { prefillInput?: boolean }): string | null => {
-      if (!allowSelectedTextSupport) {
-        return null;
-      }
-
-      const trimmedSelectedText = selectedText?.trim() || null;
-      if (!trimmedSelectedText) {
-        return null;
-      }
-
-      if (options?.prefillInput) {
-        setInputValue(`"${trimmedSelectedText}"\n\n`);
-      }
-
-      setHighlightedText(trimmedSelectedText);
-      persistSelectionGeometry();
-      return trimmedSelectedText;
+    lastTrackedFocusKeyRef,
+    motionProfile,
+    motionTimeoutRef,
+    prefersReducedMotion: prefersReducedMotion ?? false,
+    sessionContext: {
+      surface: sessionContext?.surface,
+      contentId: sessionContext?.contentId,
+      title: sessionContext?.title,
     },
-    [
-      allowSelectedTextSupport,
-      persistSelectionGeometry,
-      selectedText,
-      setHighlightedText,
-    ]
-  );
+    setPanelMotionState,
+  });
 
-  const handleOpenChat = useCallback(
-    (reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'): void => {
-      setPanelAnchorMode(reason === 'toggle' ? 'dock' : 'contextual');
-      trackKangurClientEvent('kangur_ai_tutor_opened', {
-        ...telemetryContext,
-        reason,
-        hasSelectedText: Boolean(activeSelectedText),
-        messageCount: messages.length,
-      });
-      openChat();
-    },
-    [
-      activeSelectedText,
-      messages.length,
-      openChat,
-      setPanelAnchorMode,
-      telemetryContext,
-    ]
-  );
-
-  const handleCloseChat = useCallback(
-    (reason: 'toggle' | 'header' | 'outside'): void => {
-      trackKangurClientEvent('kangur_ai_tutor_closed', {
-        ...telemetryContext,
-        reason,
-        messageCount: messages.length,
-      });
-      setSelectionResponsePending(null);
-      setSelectionResponseComplete(null);
-      setHoveredSectionAnchorId(null);
-      if (reason === 'outside' && activeFocus.kind === 'selection') {
-        clearSelection();
-        setHighlightedText(null);
-        setPersistedSelectionRect(null);
-        setPersistedSelectionPageRect(null);
-        setPersistedSelectionContainerRect(null);
-      }
-      closeChat();
-    },
-    [
-      activeFocus.kind,
-      clearSelection,
-      closeChat,
-      messages.length,
+  const {
+    handleAvatarMouseDown,
+    handleCloseChat,
+    handleCloseGuestIntroCard,
+    handleCloseLauncherPrompt,
+    handleDisableTutor,
+    handleOpenChat,
+    handlePanelBackdropClose,
+    handlePanelHeaderClose,
+    handleSelectionActionMouseDown,
+    persistSelectionContext,
+  } = useKangurAiTutorPanelInteractions({
+    activeFocusKind: activeFocus.kind,
+    activeSelectedText,
+    allowSelectedTextSupport,
+    bubblePlacementMode: bubblePlacement.mode,
+    clearSelection,
+    closeChat,
+    isAskModalMode,
+    isOpen,
+    isTargetWithinTutorUi,
+    messageCount: messages.length,
+    openChat,
+    persistSelectionGeometry,
+    selectedText,
+    selectionRect,
+    setHighlightedText,
+    setInputValue,
+    telemetryContext,
+    widgetState: {
+      askModalReturnStateRef,
+      avatarDragStateRef,
+      setAskModalDockStyle,
+      setAskModalVisible,
+      setDraggedAvatarPoint,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
+      setGuidedTutorTarget,
+      setHasNewMessage,
+      setHomeOnboardingStepIndex,
       setHoveredSectionAnchorId,
-      setSelectionResponsePending,
-      setSelectionResponseComplete,
-      setPersistedSelectionPageRect,
+      setIsAvatarDragging,
+      setLauncherPromptVisible,
+      setPanelAnchorMode,
       setPersistedSelectionContainerRect,
-      setHighlightedText,
-      telemetryContext,
-    ]
-  );
-
-  const handleCloseAskModal = useCallback(
-    (reason: 'toggle' | 'header' | 'outside' = 'header'): void => {
-      const returnState = askModalReturnStateRef.current;
-      setAskModalVisible(false);
-      askModalReturnStateRef.current = null;
-      avatarDragStateRef.current = null;
-      suppressAvatarClickRef.current = false;
-      setIsAvatarDragging(false);
-      setAskModalDockStyle(null);
-      setHomeOnboardingStepIndex(null);
-      setDraggedAvatarPoint(null);
-      clearPersistedTutorAvatarPosition();
-      setLauncherPromptVisible(returnState?.launcherPromptVisible ?? false);
-      setGuestIntroVisible(returnState?.guestIntroVisible ?? false);
-      setGuestIntroHelpVisible(returnState?.guestIntroHelpVisible ?? false);
-      setGuidedTutorTarget(returnState?.guidedTutorTarget ?? null);
-
-      if (!returnState?.wasOpen) {
-        handleCloseChat(reason);
-      }
-    },
-    [handleCloseChat]
-  );
-
-  const handleCloseLauncherPrompt = useCallback((): void => {
-    setLauncherPromptVisible(false);
-  }, []);
-
-  const handleCloseGuestIntroCard = useCallback((): void => {
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen || bubblePlacement.mode !== 'bubble') {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent): void => {
-      if (isTargetWithinTutorUi(event.target)) {
-        return;
-      }
-
-      handleCloseChat('outside');
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown, true);
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
-    };
-  }, [bubblePlacement.mode, handleCloseChat, isOpen]);
-
-  const handleGuestIntroDismiss = useCallback((): void => {
-    const nextRecord = persistGuestIntroRecord('dismissed');
-    setGuestIntroRecord(nextRecord);
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
-    trackKangurClientEvent('kangur_ai_tutor_guest_intro_dismissed');
-  }, []);
-
-  const handleGuestIntroAccept = useCallback((): void => {
-    const nextRecord = persistGuestIntroRecord('accepted');
-    setGuestIntroRecord(nextRecord);
-    setGuestIntroVisible(false);
-    trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
-      hasInteractiveTutor: enabled,
-    });
-
-    if (enabled) {
-      handleOpenChat('toggle');
-      return;
-    }
-
-    setGuestIntroHelpVisible(true);
-  }, [enabled, handleOpenChat]);
-
-  const handleGuestIntroHelpClose = useCallback((): void => {
-    setGuestIntroHelpVisible(false);
-  }, []);
-
-  const startGuidedGuestLogin = useCallback(
-    (
-      authMode: GuidedTutorAuthMode,
-      source: 'guest_intro' | 'chat_message' = 'guest_intro'
-    ): void => {
-      trackKangurClientEvent('kangur_ai_tutor_guest_intro_login_clicked', {
-        authMode,
-        guidance: 'guided_navigation',
-        source,
-      });
-      if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
-        selectionExplainTimeoutRef.current = null;
-      }
-      if (isOpen) {
-        handleCloseChat('toggle');
-      }
-      setGuidedTutorTarget({
-        mode: 'auth',
-        authMode,
-        kind: getGuidedGuestTargetKind(authMode),
-      });
-      setHasNewMessage(false);
-      suppressAvatarClickRef.current = false;
-    },
-    [handleCloseChat, isOpen]
-  );
-
-  const handleGuestIntroLogin = useCallback((): void => {
-    setGuestIntroHelpVisible(false);
-    startGuidedGuestLogin('sign-in');
-  }, [startGuidedGuestLogin]);
-
-  const handleGuestIntroCreateAccount = useCallback((): void => {
-    setGuestIntroHelpVisible(false);
-    startGuidedGuestLogin('create-account');
-  }, [startGuidedGuestLogin]);
-
-  const focusSelectionPageRect = useCallback(
-    (
-      selectionPageRect: DOMRect | null | undefined,
-      options?: {
-        forceScroll?: boolean;
-        spotlight?: boolean;
-      }
-    ): void => {
-      if (!selectionPageRect) {
-        return;
-      }
-
-      const viewportTop = window.scrollY;
-      const viewportBottom = viewportTop + viewport.height;
-      const topPadding = Math.min(Math.max(viewport.height * 0.24, 72), 180);
-      const bottomPadding = Math.min(Math.max(viewport.height * 0.18, 56), 140);
-      const needsScroll =
-        options?.forceScroll === true ||
-        selectionPageRect.top < viewportTop + topPadding ||
-        selectionPageRect.bottom > viewportBottom - bottomPadding;
-
-      if (needsScroll) {
-        const targetTop = Math.max(0, selectionPageRect.top - topPadding);
-        window.scrollTo({
-          top: targetTop,
-          behavior: getMotionSafeScrollBehavior('smooth'),
-        });
-      }
-
-      if (options?.spotlight) {
-        setSelectionContextSpotlightTick((current) => current + 1);
-      }
-    },
-    [viewport.height]
-  );
-
-  const focusSectionRect = useCallback(
-    (
-      sectionRect: DOMRect | null | undefined,
-      options?: {
-        forceScroll?: boolean;
-        spotlight?: boolean;
-      }
-    ): void => {
-      if (!sectionRect) {
-        return;
-      }
-
-      const sectionPageRect = getPageRect(sectionRect);
-      if (!sectionPageRect) {
-        return;
-      }
-      const viewportTop = window.scrollY;
-      const viewportBottom = viewportTop + viewport.height;
-      const topPadding = Math.min(Math.max(viewport.height * 0.22, 72), 180);
-      const bottomPadding = Math.min(Math.max(viewport.height * 0.16, 56), 132);
-      const needsScroll =
-        options?.forceScroll === true ||
-        sectionPageRect.top < viewportTop + topPadding ||
-        sectionPageRect.bottom > viewportBottom - bottomPadding;
-
-      if (needsScroll) {
-        const targetTop = Math.max(0, sectionPageRect.top - topPadding);
-        window.scrollTo({
-          top: targetTop,
-          behavior: getMotionSafeScrollBehavior('smooth'),
-        });
-      }
-
-      if (options?.spotlight) {
-        setViewportTick((current) => current + 1);
-      }
-    },
-    [viewport.height]
-  );
-
-  const startGuidedSectionExplanation = useCallback(
-    (
-      anchor: KangurTutorAnchorRegistration & {
-        kind: GuidedTutorSectionKind;
-        surface: TutorSurface;
-      }
-    ): void => {
-      if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
-        selectionExplainTimeoutRef.current = null;
-      }
-
-      const anchorRect = anchor.getRect();
-      const sectionLabel = anchor.metadata?.label ?? null;
-      const nextSection: SectionExplainContext = {
-        anchorId: anchor.id,
-        assignmentId: anchor.metadata?.assignmentId ?? null,
-        contentId: anchor.metadata?.contentId ?? null,
-        kind: anchor.kind,
-        label: sectionLabel,
-        surface: anchor.surface,
-      };
-
-      clearSelection();
-      setHighlightedText(null);
-      setPersistedSelectionRect(null);
-      setPersistedSelectionPageRect(null);
-      setPersistedSelectionContainerRect(null);
-      setDismissedSelectedText(null);
-      setSelectionResponsePending(null);
-      setSelectionResponseComplete(null);
-      setHighlightedSection(nextSection);
-      setHoveredSectionAnchorId(null);
-      setHasNewMessage(false);
-      focusSectionRect(anchorRect);
-      trackKangurClientEvent('kangur_ai_tutor_section_guidance_started', {
-        ...telemetryContext,
-        sectionId: anchor.id,
-        sectionKind: anchor.kind,
-        sectionLabel,
-      });
-      setGuidedTutorTarget({
-        mode: 'section',
-        anchorId: anchor.id,
-        kind: anchor.kind,
-        label: sectionLabel,
-        surface: anchor.surface,
-      });
-      suppressAvatarClickRef.current = false;
-
-      const guidanceDelayMs = prefersReducedMotion
-        ? 0
-        : Math.max(220, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
-      selectionExplainTimeoutRef.current = window.setTimeout(() => {
-        selectionExplainTimeoutRef.current = null;
-        setGuidedTutorTarget((current) =>
-          isSectionGuidedTutorTarget(current) ? null : current
-        );
-        handleOpenChat('section_explain');
-        void sendMessage(
-          buildSectionExplainPrompt(anchor),
-          {
-            promptMode: 'explain',
-            focusKind: anchor.kind,
-            focusId: anchor.id,
-            focusLabel: sectionLabel ?? anchor.id,
-            assignmentId: anchor.metadata?.assignmentId ?? null,
-            interactionIntent: 'explain',
-          }
-        );
-      }, guidanceDelayMs);
-    },
-    [
-      clearSelection,
-      focusSectionRect,
-      handleOpenChat,
-      motionProfile.guidedAvatarTransition.duration,
-      prefersReducedMotion,
-      sendMessage,
-      setHighlightedText,
-      telemetryContext,
-    ]
-  );
-
-  const startGuidedSelectionExplanation = useCallback(
-    (selectionText: string): void => {
-      if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
-        selectionExplainTimeoutRef.current = null;
-      }
-
-      trackKangurClientEvent('kangur_ai_tutor_selection_guidance_started', {
-        ...telemetryContext,
-        selectionLength: selectionText.length,
-      });
-      focusSelectionPageRect(activeSelectionPageRect);
-      setHasNewMessage(false);
-      setSelectionResponseComplete(null);
-      setSelectionResponsePending({
-        selectedText: selectionText,
-      });
-      setGuidedTutorTarget({
-        mode: 'selection',
-        kind: 'selection_excerpt',
-        selectedText: selectionText,
-      });
-      suppressAvatarClickRef.current = false;
-
-      const guidanceDelayMs = prefersReducedMotion
-        ? 0
-        : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000 * 0.9));
-      selectionExplainTimeoutRef.current = window.setTimeout(() => {
-        selectionExplainTimeoutRef.current = null;
-        setGuidedTutorTarget((current) =>
-          isSelectionGuidedTutorTarget(current) ? null : current
-        );
-        handleOpenChat('selection_explain');
-        void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
-          promptMode: 'selected_text',
-          selectedText: selectionText,
-          focusKind: 'selection',
-          focusId: 'selection',
-          focusLabel: selectionText,
-          assignmentId: null,
-          interactionIntent: 'explain',
-        });
-      }, guidanceDelayMs);
-    },
-    [
-      handleOpenChat,
-      motionProfile.guidedAvatarTransition.duration,
-      activeSelectionPageRect,
-      focusSelectionPageRect,
-      prefersReducedMotion,
-      sendMessage,
+      setPersistedSelectionPageRect,
+      setPersistedSelectionRect,
       setSelectionResponseComplete,
-      telemetryContext,
-    ]
-  );
-
-  const handleHomeOnboardingBack = useCallback((): void => {
-    if (homeOnboardingStepIndex === null || homeOnboardingStepIndex <= 0) {
-      return;
-    }
-
-    setHomeOnboardingStepIndex(homeOnboardingStepIndex - 1);
-  }, [homeOnboardingStepIndex]);
-
-  const handleStartHomeOnboarding = useCallback((): void => {
-    if (!canStartHomeOnboardingManually) {
-      return;
-    }
-
-    const nextRecord = persistHomeOnboardingRecord('shown');
-    setHomeOnboardingRecord(nextRecord);
-    setHomeOnboardingStepIndex(0);
-    homeOnboardingShownForCurrentEntryRef.current = true;
-    trackKangurClientEvent('kangur_ai_tutor_home_onboarding_started_manual', {
-      stepCount: homeOnboardingSteps.length,
-      mode: homeOnboardingMode,
-      previousStatus: homeOnboardingRecord?.status ?? null,
-    });
-  }, [
-    canStartHomeOnboardingManually,
-    homeOnboardingMode,
-    homeOnboardingRecord?.status,
-    homeOnboardingSteps.length,
-  ]);
-
-  const finishHomeOnboarding = useCallback(
-    (
-      status: KangurAiTutorHomeOnboardingRecord['status']
-    ): KangurAiTutorHomeOnboardingRecord | null => {
-      const nextRecord = persistHomeOnboardingRecord(status);
-      setDraggedAvatarPoint(null);
-      clearPersistedTutorAvatarPosition();
-      setHomeOnboardingStepIndex(null);
-      closeChat();
-      return nextRecord;
+      setSelectionResponsePending,
+      suppressAvatarClickRef,
     },
-    [closeChat]
-  );
+  });
 
-  const handleHomeOnboardingFinishEarly = useCallback((): void => {
-    const nextRecord = finishHomeOnboarding('dismissed');
-    setHomeOnboardingRecord(nextRecord);
-    trackKangurClientEvent('kangur_ai_tutor_home_onboarding_dismissed', {
-      stepId: homeOnboardingStep?.id ?? null,
-      stepIndex: homeOnboardingStepIndex,
-    });
-  }, [finishHomeOnboarding, homeOnboardingStep?.id, homeOnboardingStepIndex]);
+  const {
+    handleGuestIntroAccept,
+    handleGuestIntroCreateAccount,
+    handleGuestIntroDismiss,
+    handleGuestIntroHelpClose,
+    handleGuestIntroLogin,
+    startGuidedGuestLogin,
+  } = useKangurAiTutorGuestIntroFlow({
+    authState,
+    enabled,
+    guestIntroCheckStartedRef,
+    guestIntroHelpVisible,
+    guestIntroLocalSuppressionTrackedRef,
+    guestIntroRecord,
+    guestIntroShownForCurrentEntryRef,
+    guestIntroVisible,
+    handleCloseChat,
+    handleOpenChat,
+    isOpen,
+    isTutorHidden,
+    mounted,
+    selectionExplainTimeoutRef,
+    setGuidedTutorTarget,
+    setGuestIntroHelpVisible,
+    setGuestIntroRecord,
+    setGuestIntroVisible,
+    setHasNewMessage,
+    shouldRepeatGuestIntroOnEntry,
+    suppressAvatarClickRef,
+  });
 
-  const handleHomeOnboardingAdvance = useCallback((): void => {
-    if (homeOnboardingStepIndex === null) {
-      return;
-    }
+  const {
+    focusSectionRect,
+    focusSelectionPageRect,
+    startGuidedSectionExplanation,
+    startGuidedSelectionExplanation,
+  } = useKangurAiTutorGuidedFlow({
+    activeSelectionPageRect,
+    clearSelection,
+    handleOpenChat,
+    motionProfile,
+    prefersReducedMotion: Boolean(prefersReducedMotion),
+    selectionExplainTimeoutRef,
+    sendMessage,
+    setDismissedSelectedText,
+    setGuidedTutorTarget,
+    setHasNewMessage,
+    setHighlightedSection,
+    setHighlightedText,
+    setHoveredSectionAnchorId,
+    setPersistedSelectionContainerRect,
+    setPersistedSelectionPageRect,
+    setPersistedSelectionRect,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    setSelectionContextSpotlightTick,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    setViewportTick,
+    suppressAvatarClickRef,
+    telemetryContext,
+    tutorContent,
+    viewportHeight: viewport.height,
+  });
 
-    const nextIndex = homeOnboardingStepIndex + 1;
-    if (nextIndex >= homeOnboardingSteps.length) {
-      const nextRecord = finishHomeOnboarding('completed');
-      setHomeOnboardingRecord(nextRecord);
-      trackKangurClientEvent('kangur_ai_tutor_home_onboarding_completed', {
-        stepCount: homeOnboardingSteps.length,
-      });
-      return;
-    }
-
-    setHomeOnboardingStepIndex(nextIndex);
-  }, [finishHomeOnboarding, homeOnboardingStepIndex, homeOnboardingSteps.length]);
+  const {
+    handleHomeOnboardingAdvance,
+    handleHomeOnboardingBack,
+    handleHomeOnboardingFinishEarly,
+    handleStartHomeOnboarding,
+  } = useKangurAiTutorHomeOnboardingFlow({
+    canStartHomeOnboardingManually,
+    closeChat,
+    guidedTutorTarget,
+    homeOnboardingEligibleContentId: HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
+    homeOnboardingMode,
+    homeOnboardingRecord,
+    homeOnboardingShownForCurrentEntryRef,
+    homeOnboardingStep,
+    homeOnboardingStepIndex,
+    homeOnboardingStepsLength: homeOnboardingSteps.length,
+    isEligibleForHomeOnboarding,
+    sessionContentId: sessionContext?.contentId,
+    setDraggedAvatarPoint,
+    setHomeOnboardingRecord,
+    setHomeOnboardingStepIndex,
+    shouldRepeatHomeOnboardingOnEntry,
+  });
 
   const handleAskAbout = useCallback((): void => {
     const persistedSelectedText = persistSelectionContext();
@@ -4659,22 +3311,6 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     startGuidedSelectionExplanation(persistedSelectedText);
   }, [persistSelectionContext, startGuidedSelectionExplanation]);
 
-  const handleSelectionActionMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>): void => {
-      // Keep the browser selection alive long enough for the CTA click to open the tutor
-      // against the current highlighted fragment.
-      event.preventDefault();
-    },
-    []
-  );
-
-  const handleAvatarMouseDown = (event: React.MouseEvent<HTMLButtonElement>): void => {
-    if (!isOpen && allowSelectedTextSupport && selectedText && selectionRect) {
-      // Keep the lesson selection stable when opening via the launcher.
-      event.preventDefault();
-    }
-  };
-
   const handleAvatarClick = useCallback((): void => {
     if (suppressAvatarClickRef.current) {
       suppressAvatarClickRef.current = false;
@@ -4682,8 +3318,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     }
 
     if (homeOnboardingStepIndex !== null) {
-      const nextRecord = finishHomeOnboarding('dismissed');
-      setHomeOnboardingRecord(nextRecord);
+      handleHomeOnboardingFinishEarly();
       return;
     }
 
@@ -4704,6 +3339,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       }
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
+      setSectionResponsePending(null);
+      setSectionResponseComplete(null);
       if (isSectionGuidedTutorTarget(guidedTutorTarget)) {
         setHighlightedSection(null);
         setHoveredSectionAnchorId(null);
@@ -4722,12 +3359,12 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
     handleOpenChat('toggle');
   }, [
-    finishHomeOnboarding,
     guestIntroHelpVisible,
     guestIntroVisible,
     guidedTutorTarget,
     handleCloseGuestIntroCard,
     handleCloseChat,
+    handleHomeOnboardingFinishEarly,
     handleCloseLauncherPrompt,
     handleOpenChat,
     homeOnboardingStepIndex,
@@ -4737,348 +3374,81 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     setHoveredSectionAnchorId,
   ]);
 
-  const handleFloatingAvatarPointerDown = useCallback(
-    (event: React.PointerEvent<HTMLButtonElement>): void => {
-      if (event.button !== 0 || isOpen) {
-        return;
-      }
+  const {
+    handleFloatingAvatarPointerCancel,
+    handleFloatingAvatarPointerDown,
+    handleFloatingAvatarPointerMove,
+    handleFloatingAvatarPointerUp,
+  } = useKangurAiTutorAvatarDrag({
+    avatarDragStateRef,
+    avatarStyle,
+    draggedAvatarPoint,
+    guidedTutorTarget,
+    homeOnboardingStepIndex,
+    hoveredSectionAnchor,
+    isOpen,
+    selectionExplainTimeoutRef,
+    setDraggedAvatarPoint,
+    setGuidedTutorTarget,
+    setHomeOnboardingStepIndex,
+    setHoveredSectionAnchorId,
+    setIsAvatarDragging,
+    startGuidedSectionExplanation,
+    suppressAvatarClickRef,
+    tutorAnchorContext,
+    viewport,
+  });
 
-      const origin = getMotionPositionPoint(avatarStyle);
-      if (!origin) {
-        return;
-      }
-
-      avatarDragStateRef.current = {
-        moved: false,
-        origin,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-      };
-      setHoveredSectionAnchorId(null);
-      setIsAvatarDragging(true);
-      suppressAvatarClickRef.current = false;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-    },
-    [avatarStyle, isOpen]
-  );
-
-  const handleFloatingAvatarPointerMove = useCallback(
-    (event: React.PointerEvent<HTMLButtonElement>): void => {
-      const dragState = avatarDragStateRef.current;
-      if (dragState?.pointerId !== event.pointerId) {
-        return;
-      }
-
-      const deltaX = event.clientX - dragState.startX;
-      const deltaY = event.clientY - dragState.startY;
-      const hasMovedEnough = Math.hypot(deltaX, deltaY) >= 6;
-      const nextPoint = clampAvatarPoint(
-        {
-          x: dragState.origin.x + deltaX,
-          y: dragState.origin.y + deltaY,
-        },
-        viewport
-      );
-
-      if (hasMovedEnough) {
-        dragState.moved = true;
-        suppressAvatarClickRef.current = true;
-        if (homeOnboardingStepIndex !== null) {
-          setHomeOnboardingStepIndex(null);
-        }
-        if (guidedTutorTarget) {
-          if (selectionExplainTimeoutRef.current !== null) {
-            window.clearTimeout(selectionExplainTimeoutRef.current);
-            selectionExplainTimeoutRef.current = null;
-          }
-          setGuidedTutorTarget(null);
-        }
-      }
-
-      setDraggedAvatarPoint(nextPoint);
-      if (hasMovedEnough && tutorAnchorContext) {
-        const dropAnchor = selectTutorSectionDropAnchor({
-          anchors: tutorAnchorContext.anchors,
-          point: {
-            x: event.clientX,
-            y: event.clientY,
-          },
-        });
-        setHoveredSectionAnchorId(dropAnchor?.id ?? null);
-      }
-    },
-    [guidedTutorTarget, homeOnboardingStepIndex, tutorAnchorContext, viewport]
-  );
-
-  const finishFloatingAvatarDrag = useCallback(
-    (pointerId: number, options?: { persistPosition?: boolean }): void => {
-      const dragState = avatarDragStateRef.current;
-      if (dragState?.pointerId !== pointerId) {
-        return;
-      }
-
-      if (dragState.moved && draggedAvatarPoint && options?.persistPosition !== false) {
-        persistTutorAvatarPosition({
-          left: draggedAvatarPoint.x,
-          top: draggedAvatarPoint.y,
-        });
-      }
-
-      avatarDragStateRef.current = null;
-      setIsAvatarDragging(false);
-    },
-    [draggedAvatarPoint]
-  );
-
-  const handleFloatingAvatarPointerUp = useCallback(
-    (event: React.PointerEvent<HTMLButtonElement>): void => {
-      const shouldExplainDroppedSection =
-        avatarDragStateRef.current?.pointerId === event.pointerId &&
-        avatarDragStateRef.current?.moved &&
-        Boolean(hoveredSectionAnchor);
-      const droppedSectionAnchor = hoveredSectionAnchor;
-      finishFloatingAvatarDrag(event.pointerId, {
-        persistPosition: !shouldExplainDroppedSection,
-      });
-      setHoveredSectionAnchorId(null);
-      if (shouldExplainDroppedSection && droppedSectionAnchor) {
-        startGuidedSectionExplanation(droppedSectionAnchor);
-      }
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    },
-    [finishFloatingAvatarDrag, hoveredSectionAnchor, startGuidedSectionExplanation]
-  );
-
-  const handleFloatingAvatarPointerCancel = useCallback(
-    (event: React.PointerEvent<HTMLButtonElement>): void => {
-      finishFloatingAvatarDrag(event.pointerId);
-      setHoveredSectionAnchorId(null);
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    },
-    [finishFloatingAvatarDrag]
-  );
-
-  const handleSend = async (): Promise<void> => {
-    const text = inputValue.trim();
-    if (!text || isLoading || !canSendMessages) return;
-
-    const guestLoginIntent = isAnonymousVisitor
-      ? resolveGuestLoginGuidanceIntent(text)
-      : null;
-
-    if (guestLoginIntent) {
-      setInputValue('');
-      startGuidedGuestLogin(guestLoginIntent, 'chat_message');
-      return;
-    }
-
-    setInputValue('');
-    if (activeSelectedText) {
-      persistSelectionGeometry();
-    }
-    await sendMessage(text, {
-      promptMode: activeSelectedText ? 'selected_text' : 'chat',
-      selectedText: activeSelectedText,
-      focusKind: normalizeConversationFocusKind(activeFocus.kind),
-      focusId: activeFocus.id,
-      focusLabel: activeFocus.label,
-      assignmentId: activeFocus.assignmentId,
-      interactionIntent:
-        activeSelectedText || highlightedSection || activeFocus.kind === 'review'
-          ? activeFocus.kind === 'review'
-            ? 'review'
-            : 'explain'
-          : undefined,
-    });
-    if (activeSelectedText) {
-      clearSelection();
-      setHighlightedText(null);
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      void handleSend();
-    }
-  };
-
-  const handleQuickAction = async (
-    action: TutorQuickAction,
-    options?: {
-      source?: 'quick_action' | 'proactive_nudge';
-    }
-  ): Promise<void> => {
-    if (isLoading || !canSendMessages) return;
-    if (activeSelectedText) {
-      persistSelectionGeometry();
-    }
-    trackKangurClientEvent('kangur_ai_tutor_quick_action_clicked', {
-      ...telemetryContext,
-      source: options?.source ?? 'quick_action',
-      action: action.id,
-      promptMode: action.promptMode,
-      bridgeActionId: bridgeQuickAction?.id ?? null,
-      isBridgeAction: action.id === bridgeQuickAction?.id,
-      hasSelectedText: Boolean(activeSelectedText),
-      focusKind: activeFocus.kind ?? null,
-    });
-    await sendMessage(action.prompt, {
-      promptMode: action.promptMode,
-      selectedText: activeSelectedText,
-      focusKind: normalizeConversationFocusKind(activeFocus.kind),
-      focusId: activeFocus.id,
-      focusLabel: activeFocus.label,
-      assignmentId: activeFocus.assignmentId,
-      interactionIntent:
-        action.interactionIntent ??
-        getInteractionIntent(action.promptMode, activeFocus.kind, sessionContext?.answerRevealed),
-    });
-    if (activeSelectedText) {
-      clearSelection();
-      setHighlightedText(null);
-    }
-  };
-
-  const handleFocusSelectedFragment = useCallback((): void => {
-    if (!activeSelectionPageRect) {
-      return;
-    }
-
-    focusSelectionPageRect(activeSelectionPageRect, { forceScroll: true, spotlight: true });
-    trackKangurClientEvent('kangur_ai_tutor_selection_refocused', {
-      ...telemetryContext,
-      selectionLength: activeSelectedText?.length ?? 0,
-    });
-  }, [activeSelectedText, activeSelectionPageRect, focusSelectionPageRect, telemetryContext]);
-
-  const handleDetachSelectedFragment = useCallback((): void => {
-    setDismissedSelectedText(activeSelectedText);
-    clearSelection();
-    setHighlightedText(null);
-    setSelectionResponseComplete(null);
-    setPersistedSelectionRect(null);
-    setPersistedSelectionPageRect(null);
-    setPersistedSelectionContainerRect(null);
-    trackKangurClientEvent('kangur_ai_tutor_selection_detached', {
-      ...telemetryContext,
-      selectionLength: activeSelectedText?.length ?? 0,
-      messageCount: messages.length,
-    });
-  }, [
+  const {
+    handleDetachHighlightedSection,
+    handleDetachSelectedFragment,
+    handleFocusHighlightedSection,
+    handleFocusSelectedFragment,
+    handleFollowUpClick,
+    handleKeyDown,
+    handleMessageFeedback,
+    handleQuickAction,
+    handleSend,
+  } = useKangurAiTutorPanelActions({
+    activeFocus,
+    activeSectionRect,
     activeSelectedText,
+    activeSelectionPageRect,
+    answerRevealed: sessionContext?.answerRevealed,
+    bridgeQuickActionId: bridgeQuickAction?.id ?? null,
+    canSendMessages,
     clearSelection,
-    messages.length,
+    focusSectionRect,
+    focusSelectionPageRect,
+    getCurrentTutorLocation,
+    getInteractionIntent,
+    highlightedSection,
+    inputValue,
+    isAnonymousVisitor,
+    isLoading,
+    messageCount: messages.length,
+    normalizeConversationFocusKind,
+    persistSelectionGeometry,
+    resolveGuestLoginGuidanceIntent: resolveGuestLoginGuidanceIntentForContent,
+    resolveTutorFollowUpLocation,
     setHighlightedText,
-    setSelectionResponseComplete,
+    sendMessage,
+    startGuidedGuestLogin,
     telemetryContext,
-  ]);
-
-  const handleFocusHighlightedSection = useCallback((): void => {
-    if (!activeSectionRect) {
-      return;
-    }
-
-    focusSectionRect(activeSectionRect, { forceScroll: true, spotlight: true });
-    trackKangurClientEvent('kangur_ai_tutor_section_refocused', {
-      ...telemetryContext,
-      sectionId: highlightedSection?.anchorId ?? null,
-      sectionKind: highlightedSection?.kind ?? null,
-      sectionLabel: highlightedSection?.label ?? null,
-    });
-  }, [activeSectionRect, focusSectionRect, highlightedSection, telemetryContext]);
-
-  const handleDetachHighlightedSection = useCallback((): void => {
-    trackKangurClientEvent('kangur_ai_tutor_section_detached', {
-      ...telemetryContext,
-      sectionId: highlightedSection?.anchorId ?? null,
-      sectionKind: highlightedSection?.kind ?? null,
-      sectionLabel: highlightedSection?.label ?? null,
-      messageCount: messages.length,
-    });
-    setHighlightedSection(null);
-  }, [highlightedSection, messages.length, telemetryContext]);
-
-  const handleFollowUpClick = (
-    action: KangurAiTutorFollowUpAction,
-    messageIndex: number,
-    href: string
-  ): void => {
-    const targetLocation = resolveTutorFollowUpLocation(href);
-    const currentLocation = getCurrentTutorLocation();
-
-    if (targetLocation && currentLocation) {
-      persistPendingTutorFollowUp({
-        version: 1,
-        href,
-        pathname: targetLocation.pathname,
-        search: targetLocation.search,
-        actionId: action.id,
-        actionLabel: action.label,
-        actionReason: action.reason ?? null,
-        actionPage: action.page,
-        messageIndex,
-        hasQuery: Boolean(action.query && Object.keys(action.query).length > 0),
-        sourceSurface: telemetryContext.surface,
-        sourceContentId: telemetryContext.contentId,
-        sourceTitle: telemetryContext.title,
-        sourcePathname: currentLocation.pathname,
-        sourceSearch: currentLocation.search,
-        createdAt: new Date().toISOString(),
-      });
-    }
-
-    trackKangurClientEvent('kangur_ai_tutor_follow_up_clicked', {
-      ...telemetryContext,
-      actionId: action.id,
-      actionPage: action.page,
-      messageIndex,
-      hasQuery: Boolean(action.query && Object.keys(action.query).length > 0),
-    });
-  };
-
-  const handleMessageFeedback = useCallback(
-    (
-      messageIndex: number,
-      message: {
-        content: string;
-        coachingFrame?: { mode: string } | null;
-        followUpActions?: unknown[];
-        sources?: unknown[];
-      },
-      feedback: TutorMessageFeedback
-    ): void => {
-      const feedbackKey = getAssistantMessageFeedbackKey(tutorSessionKey, messageIndex, message);
-      let shouldTrack = false;
-
-      setMessageFeedbackByKey((current) => {
-        if (current[feedbackKey]) {
-          return current;
-        }
-
-        shouldTrack = true;
-        return {
-          ...current,
-          [feedbackKey]: feedback,
-        };
-      });
-
-      if (!shouldTrack) {
-        return;
-      }
-
-      trackKangurClientEvent('kangur_ai_tutor_feedback_submitted', {
-        ...telemetryContext,
-        feedback,
-        messageIndex,
-        coachingMode: message.coachingFrame?.mode ?? null,
-        hasFollowUpActions: Boolean(message.followUpActions?.length),
-        hasSources: Boolean(message.sources?.length),
-      });
+    tutorSessionKey,
+    widgetState: {
+      setDismissedSelectedText,
+      setHighlightedSection,
+      setInputValue,
+      setMessageFeedbackByKey,
+      setPersistedSelectionContainerRect,
+      setPersistedSelectionPageRect,
+      setPersistedSelectionRect,
+      setSectionResponseComplete,
+      setSectionResponsePending,
+      setSelectionResponseComplete,
     },
-    [telemetryContext, tutorSessionKey]
-  );
+  });
 
   const handleCloseGuidedCallout = useCallback((): void => {
     if (guidedMode === 'home_onboarding') {
@@ -5094,6 +3464,8 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     if (guidedMode === 'section') {
       setHighlightedSection(null);
       setHoveredSectionAnchorId(null);
+      setSectionResponsePending(null);
+      setSectionResponseComplete(null);
     }
 
     setGuidedTutorTarget(null);
@@ -5111,6 +3483,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   if (
     (!enabled &&
       !shouldRenderGuestIntroUi &&
+      !shouldRenderContextlessTutorUi &&
       !isGuidedTutorMode &&
       !askModalVisible &&
       !isAnonymousVisitor) ||
@@ -5119,15 +3492,61 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     return null;
   }
 
-  const guestTutorLabel = tutorName.trim() || 'Tutor';
   const guestIntroHeadline = guestIntroHelpVisible
-    ? 'Pokażę Ci, gdzie kliknąć.'
-    : 'Czy chcesz pomocy z logowaniem albo założeniem konta?';
+    ? tutorContent.guestIntro.help.headline
+    : tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = guestIntroHelpVisible
-    ? 'Jeśli masz już konto, pokażę Ci przycisk logowania. Jeśli jeszcze nie, pokażę Ci, gdzie założyć konto rodzica i jak potwierdzić e-mail.'
+    ? tutorContent.guestIntro.help.description
     : shouldRepeatGuestIntroOnEntry
-      ? 'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica.'
-      : 'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica. To pytanie pojawia się tylko raz przy pierwszej anonimowej wizycie na tym urządzeniu i łączu.';
+      ? tutorContent.guestIntro.repeated.description
+      : tutorContent.guestIntro.initial.description;
+  const panelBodyContextValue: KangurAiTutorPanelBodyContextValue = {
+    activeFocus,
+    activeSectionRect,
+    activeSelectedText,
+    activeSelectionPageRect,
+    askModalHelperText,
+    basePath,
+    bridgeQuickActionId: bridgeQuickAction?.id ?? null,
+    bridgeSummaryChipLabel,
+    canNarrateTutorText,
+    canSendMessages,
+    canStartHomeOnboardingManually,
+    emptyStateMessage,
+    focusChipLabel,
+    handleDetachHighlightedSection,
+    handleDetachSelectedFragment,
+    handleFocusHighlightedSection,
+    handleFocusSelectedFragment,
+    handleFollowUpClick,
+    handleKeyDown,
+    handleMessageFeedback,
+    handleQuickAction,
+    handleSend,
+    handleStartHomeOnboarding,
+    homeOnboardingReplayLabel,
+    inputPlaceholder,
+    isAskModalMode,
+    isLoading,
+    isSectionExplainPendingMode,
+    isSelectionExplainPendingMode,
+    isUsageLoading,
+    messages,
+    narratorSettings,
+    panelEmptyStateMessage,
+    remainingMessages,
+    selectedTextPreview,
+    shouldRenderAuxiliaryPanelControls,
+    showSectionExplainCompleteState,
+    showSelectionExplainCompleteState,
+    showSources,
+    tutorNarrationScript,
+    tutorNarratorContextRegistry,
+    tutorSessionKey,
+    usageSummary,
+    visibleProactiveNudge,
+    visibleQuickActions,
+  };
 
   return createPortal(
     <KangurAiTutorWidgetStateProvider value={widgetState}>
@@ -5147,7 +3566,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
           {shouldRenderGuestIntroUi ? (
             <KangurAiTutorGuestIntroPanel
               isAnonymousVisitor={isAnonymousVisitor}
-              guestTutorLabel={guestTutorLabel}
+              guestTutorLabel={guestTutorAssistantLabel}
               guestIntroHeadline={guestIntroHeadline}
               guestIntroDescription={guestIntroDescription}
               prefersReducedMotion={prefersReducedMotion ?? false}
@@ -5162,1178 +3581,141 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
           ) : null}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {guidedMode === 'selection' && selectionSpotlightStyle ? (
-            <motion.div
-              key='guided-selection-spotlight'
-              data-testid='kangur-ai-tutor-selection-spotlight'
-              initial={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.98 }
-              }
-              animate={reducedMotionTransitions.stableState}
-              exit={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.98 }
-              }
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
-              style={selectionSpotlightStyle}
-              className='pointer-events-none fixed z-[72] rounded-[22px] border-2 border-amber-400/85 bg-amber-100/20 shadow-[0_0_0_8px_rgba(251,191,36,0.18)]'
-            />
-          ) : null}
-        </AnimatePresence>
+        <KangurAiTutorSpotlightOverlays
+          guidedMode={guidedMode}
+          prefersReducedMotion={prefersReducedMotion ?? false}
+          reducedMotionTransitions={reducedMotionTransitions}
+          sectionContextSpotlightStyle={sectionContextSpotlightStyle}
+          sectionDropHighlightStyle={sectionDropHighlightStyle}
+          selectionContextSpotlightStyle={selectionContextSpotlightStyle}
+          selectionSpotlightStyle={selectionSpotlightStyle}
+        />
 
-        <AnimatePresence>
-          {selectionContextSpotlightStyle ? (
-            <motion.div
-              key={`selection-context-spotlight:${selectionContextSpotlightTick}`}
-              data-testid='kangur-ai-tutor-selection-context-spotlight'
-              initial={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              animate={reducedMotionTransitions.stableState}
-              exit={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
-              style={selectionContextSpotlightStyle}
-              className='pointer-events-none fixed z-[68] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
-            />
-          ) : null}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {sectionContextSpotlightStyle ? (
-            <motion.div
-              key={`section-context-spotlight:${highlightedSection?.anchorId ?? 'section'}:${viewportTick}`}
-              data-testid='kangur-ai-tutor-section-context-spotlight'
-              initial={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              animate={reducedMotionTransitions.stableState}
-              exit={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
-              style={sectionContextSpotlightStyle}
-              className='pointer-events-none fixed z-[68] rounded-[22px] border-2 border-amber-300/75 bg-amber-100/10 shadow-[0_0_0_6px_rgba(251,191,36,0.12)]'
-            />
-          ) : null}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {sectionDropHighlightStyle ? (
-            <motion.div
-              key={`section-drop-highlight:${hoveredSectionAnchorId ?? 'section'}`}
-              data-testid='kangur-ai-tutor-section-drop-highlight'
-              initial={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              animate={reducedMotionTransitions.stableState}
-              exit={
-                prefersReducedMotion
-                  ? reducedMotionTransitions.stableState
-                  : { opacity: 0, scale: 0.985 }
-              }
-              transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
-              style={sectionDropHighlightStyle}
-              className='pointer-events-none fixed z-[70] rounded-[22px] border-2 border-amber-400/85 bg-amber-100/14 shadow-[0_0_0_8px_rgba(251,191,36,0.18)]'
-            />
-          ) : null}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {!isTutorHidden &&
-        (isGuidedTutorMode || showSelectionGuidanceCallout) &&
-        guidedFocusRect &&
-        guidedCalloutStyle &&
-        (guidedMode === 'home_onboarding' ||
-          guidedMode === 'section' ||
-          showSelectionGuidanceCallout ||
-          isAnonymousVisitor) ? (
-              <>
-                <motion.div
-                  key={
-                    guidedMode === 'home_onboarding'
-                      ? `guided-callout:home:${homeOnboardingStep?.id ?? 'step'}`
-                      : guidedMode === 'section'
-                        ? `guided-callout:section:${guidedTutorTarget?.kind ?? 'section'}`
-                        : showSelectionGuidanceCallout
-                          ? 'guided-callout:selection'
-                          : `guided-callout:${isAuthGuidedTutorTarget(guidedTutorTarget) ? guidedTutorTarget.authMode : 'auth'}`
-                  }
-                  data-testid={
-                    guidedMode === 'home_onboarding'
-                      ? 'kangur-ai-tutor-home-onboarding'
-                      : guidedMode === 'section'
-                        ? 'kangur-ai-tutor-section-guided-callout'
-                        : showSelectionGuidanceCallout
-                          ? 'kangur-ai-tutor-selection-guided-callout'
-                          : 'kangur-ai-tutor-guided-login-help'
-                  }
-                  data-guidance-motion='gentle'
-                  data-guidance-placement={guidedCalloutLayout?.placement ?? 'top'}
-                  initial={
-                    prefersReducedMotion
-                      ? reducedMotionTransitions.stableState
-                      : { opacity: 0, y: 8, scale: 0.98 }
-                  }
-                  animate={reducedMotionTransitions.stableState}
-                  exit={
-                    prefersReducedMotion
-                      ? reducedMotionTransitions.stableState
-                      : { opacity: 0, y: 8, scale: 0.98 }
-                  }
-                  transition={
-                    prefersReducedMotion
-                      ? reducedMotionTransitions.instant
-                      : {
-                        duration: Math.max(0.34, motionProfile.guidedAvatarTransition.duration * 0.78),
-                        ease: motionProfile.guidedAvatarTransition.ease,
-                      }
-                  }
-                  style={guidedCalloutStyle}
-                  className='z-[73]'
-                >
-                  <KangurGlassPanel
-                    surface='warmGlow'
-                    variant='soft'
-                    padding='md'
-                    className='border-amber-200/80 shadow-[0_20px_48px_-30px_rgba(180,83,9,0.38)]'
-                  >
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='text-[10px] font-semibold tracking-[0.16em] text-amber-700'>
-                        {guidedMode === 'home_onboarding'
-                          ? 'Pomocnik AI · plan strony'
-                          : showSelectionGuidanceCallout
-                            ? `${tutorName.trim() || 'Tutor'} · wyjaśnienie`
-                            : guestTutorLabel}
-                      </div>
-                      {!showSelectionGuidanceCallout ? (
-                        <button
-                          data-testid='kangur-ai-tutor-guided-callout-close'
-                          type='button'
-                          onClick={handleCloseGuidedCallout}
-                          className='shrink-0 rounded-full border border-amber-200/80 bg-white/80 p-1 text-amber-900 transition-colors hover:bg-white'
-                          aria-label='Zamknij okno AI Tutora'
-                        >
-                          <X className='h-3.5 w-3.5' />
-                        </button>
-                      ) : null}
-                    </div>
-                    {guidedCalloutStepLabel ? (
-                      <div className='mt-1 text-[10px] font-semibold tracking-[0.16em] text-slate-500'>
-                        {guidedCalloutStepLabel}
-                      </div>
-                    ) : null}
-                    <div className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
-                      {guidedCalloutTitle}
-                    </div>
-                    <div className='mt-2 text-xs leading-relaxed text-slate-600'>
-                      {guidedCalloutDetail}
-                    </div>
-                    {guidedSelectionPreview ? (
-                      <div className='mt-3 rounded-2xl border border-amber-200/80 bg-white/80 px-3 py-2 text-xs italic leading-relaxed text-slate-700'>
-                      „{guidedSelectionPreview}”
-                        {isSelectionGuidedTutorTarget(guidedTutorTarget) &&
-                      guidedTutorTarget.selectedText.length > guidedSelectionPreview.length
-                          ? '…'
-                          : ''}
-                      </div>
-                    ) : guidedMode === 'section' && isSectionGuidedTutorTarget(guidedTutorTarget) ? (
-                      <div className='mt-3 rounded-2xl border border-amber-200/80 bg-white/80 px-3 py-2 text-xs leading-relaxed text-slate-700'>
-                      Sekcja: {guidedTutorTarget.label ?? guidedTutorTarget.kind}
-                      </div>
-                    ) : null}
-                    <div className='mt-3 flex flex-wrap justify-end gap-2'>
-                      {guidedMode === 'home_onboarding' ? (
-                        <>
-                          {homeOnboardingStepIndex !== null && homeOnboardingStepIndex > 0 ? (
-                            <KangurButton
-                              type='button'
-                              size='sm'
-                              variant='surface'
-                              onClick={handleHomeOnboardingBack}
-                            >
-                          Wstecz
-                            </KangurButton>
-                          ) : null}
-                          <KangurButton
-                            type='button'
-                            size='sm'
-                            variant='surface'
-                            onClick={handleHomeOnboardingFinishEarly}
-                          >
-                        Zakończ
-                          </KangurButton>
-                          <KangurButton
-                            type='button'
-                            size='sm'
-                            variant='primary'
-                            onClick={handleHomeOnboardingAdvance}
-                          >
-                        Rozumiem
-                          </KangurButton>
-                        </>
-                      ) : guidedMode === 'selection' ? (
-                        <div className='rounded-full border border-amber-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold text-amber-800'>
-                        Już przygotowuję wyjaśnienie…
-                        </div>
-                      ) : (
-                        <KangurButton
-                          type='button'
-                          size='sm'
-                          variant='surface'
-                          onClick={handleCloseGuidedCallout}
-                        >
-                      Rozumiem
-                        </KangurButton>
-                      )}
-                    </div>
-                  </KangurGlassPanel>
-                </motion.div>
-              </>
-            ) : null}
-        </AnimatePresence>
-
-        {showFloatingAvatar ? (
-          <motion.button
-            data-testid='kangur-ai-tutor-avatar'
-            data-anchor-kind={avatarAnchorKind}
-            data-avatar-placement={floatingAvatarPlacement}
-            data-guidance-target={
-              guidedMode === 'home_onboarding'
-                ? homeOnboardingStep?.kind ?? 'none'
-                : guidedTutorTarget?.kind ?? 'none'
+        <KangurAiTutorGuidedCallout
+          calloutKey={guidedCalloutKey}
+          calloutTestId={guidedCalloutTestId}
+          detail={guidedCalloutDetail}
+          headerLabel={guidedCalloutHeaderLabel}
+          mode={guidedMode}
+          onAction={(action): void => {
+            switch (action) {
+              case 'advance_home_onboarding':
+                handleHomeOnboardingAdvance();
+                return;
+              case 'finish_home_onboarding':
+                handleHomeOnboardingFinishEarly();
+                return;
+              case 'back_home_onboarding':
+                handleHomeOnboardingBack();
+                return;
+              case 'close':
+                handleCloseGuidedCallout();
+                return;
+              default:
+                return;
             }
-            data-guidance-avatar-placement={guidedAvatarLayout?.placement ?? 'dock'}
-            data-guidance-motion={isGuidedTutorMode ? 'gentle' : 'standard'}
-            data-guidance-pointer={guidedAvatarArrowhead ? 'rim-arrowhead' : 'none'}
-            data-guidance-interaction={isGuidedTutorMode ? 'suppressed' : 'interactive'}
-            data-is-dragging={isAvatarDragging ? 'true' : 'false'}
-            data-drag-visual={isAvatarDragging ? 'ghost' : 'solid'}
-            data-motion-preset={motionProfile.kind}
-            data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-            data-ui-mode={uiMode}
-            type='button'
-            onMouseDown={handleAvatarMouseDown}
-            onPointerDown={handleFloatingAvatarPointerDown}
-            onPointerMove={handleFloatingAvatarPointerMove}
-            onPointerUp={handleFloatingAvatarPointerUp}
-            onPointerCancel={handleFloatingAvatarPointerCancel}
-            onClick={handleAvatarClick}
-            initial={false}
-            animate={avatarStyle}
-            transition={
-              prefersReducedMotion
-                ? reducedMotionTransitions.instant
-                : isGuidedTutorMode || isAskModalMode
-                  ? motionProfile.guidedAvatarTransition
-                  : motionProfile.avatarTransition
-            }
-            whileHover={
-              prefersReducedMotion || isGuidedTutorMode || isAskModalMode
-                ? undefined
-                : { scale: motionProfile.hoverScale }
-            }
-            whileTap={
-              prefersReducedMotion || isGuidedTutorMode || isAskModalMode
-                ? undefined
-                : { scale: motionProfile.tapScale }
-            }
-            className={cn(
-              'fixed touch-none',
-              isAskModalMode ? 'z-[78]' : 'z-[74]',
-              isAskModalMode
-                ? 'pointer-events-none cursor-default'
-                : isAvatarDragging
-                  ? 'cursor-grabbing'
-                  : 'cursor-grab',
-              isAvatarDragging ? 'opacity-85 saturate-75' : null,
-              avatarButtonClassName
-            )}
-            style={avatarButtonStyle}
-            aria-label={isOpen ? 'Zamknij pomocnika' : 'Otwórz pomocnika AI'}
-          >
-            <TutorMoodAvatar
-              svgContent={tutorAvatarSvg}
-              avatarImageUrl={tutorAvatarImageUrl}
-              label={`${tutorName} avatar (${tutorMoodId})`}
-              className='relative z-[1] h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
-              svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
-              data-testid='kangur-ai-tutor-avatar-image'
-            />
-            <span
-              aria-hidden='true'
-              data-testid='kangur-ai-tutor-avatar-rim'
-              className='pointer-events-none absolute inset-0 z-[2] rounded-full border-2'
-              style={{ borderColor: FLOATING_TUTOR_AVATAR_RIM_COLOR }}
-            />
-            {guidedAvatarArrowhead ? (
-              <span
-                aria-hidden='true'
-                data-testid='kangur-ai-tutor-guided-arrowhead'
-                data-guidance-layer='below-rim'
-                data-guidance-anchor-avatar-left={guidedAvatarArrowhead.anchorAvatarLeft.toFixed(2)}
-                data-guidance-anchor-avatar-top={guidedAvatarArrowhead.anchorAvatarTop.toFixed(2)}
-                data-pointer-side={guidedAvatarArrowhead.side}
-                data-guidance-angle={guidedAvatarArrowhead.angle.toFixed(2)}
-                data-guidance-render-angle={guidedAvatarArrowheadDisplayAngleLabel}
-                data-guidance-quadrant={guidedAvatarArrowhead.quadrant}
-                data-guidance-rim-color={FLOATING_TUTOR_AVATAR_RIM_COLOR}
-                data-guidance-target-x={guidedAvatarArrowhead.targetX.toFixed(2)}
-                data-guidance-target-y={guidedAvatarArrowhead.targetY.toFixed(2)}
-                className='pointer-events-none absolute z-0 h-[18px] w-[18px]'
-                style={{
-                  left: guidedAvatarArrowhead.left,
-                  top: guidedAvatarArrowhead.top,
-                  transform: `rotate(${guidedAvatarArrowheadDisplayAngle ?? guidedAvatarArrowhead.angle}deg)`,
-                  transformOrigin: `${guidedAvatarArrowhead.anchorOffsetX}px ${guidedAvatarArrowhead.anchorOffsetY}px`,
-                  transition: guidedArrowheadTransition,
-                }}
-              >
-                <svg
-                  viewBox='0 0 18 18'
-                  className='h-[18px] w-[18px] overflow-visible drop-shadow-[0_1px_1px_rgba(15,23,42,0.18)]'
-                >
-                  <circle
-                    cx='12.5'
-                    cy='9'
-                    r='3.2'
-                    fill={FLOATING_TUTOR_AVATAR_RIM_COLOR}
-                  />
-                  <path
-                    d='M1.6 9 L12.4 3.2 L10 9 L12.4 14.8 Z'
-                    fill={FLOATING_TUTOR_AVATAR_RIM_COLOR}
-                  />
-                </svg>
-              </span>
-            ) : null}
-            {hasNewMessage && !isOpen && (
-              <span className='absolute top-1 right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white animate-pulse' />
-            )}
-          </motion.button>
-        ) : null}
+          }}
+          placement={guidedCalloutLayout?.placement ?? 'top'}
+          prefersReducedMotion={prefersReducedMotion ?? false}
+          reducedMotionTransitions={reducedMotionTransitions}
+          sectionGuidanceLabel={sectionGuidanceLabel}
+          sectionResponsePendingKind={sectionResponsePendingKind}
+          selectionPreview={guidedSelectionPreview}
+          shouldRender={shouldRenderGuidedCallout}
+          showSectionGuidanceCallout={showSectionGuidanceCallout}
+          showSelectionGuidanceCallout={showSelectionGuidanceCallout}
+          stepLabel={guidedCalloutStepLabel}
+          style={guidedCalloutStyle}
+          title={guidedCalloutTitle}
+          transitionDuration={guidedCalloutTransitionDuration}
+          transitionEase={
+            [...motionProfile.guidedAvatarTransition.ease] as [number, number, number, number]
+          }
+        />
 
-        <AnimatePresence>
-          {isOpen && !isTutorHidden && !isGuidedTutorMode && !shouldRenderGuestIntroUi && (
+        <KangurAiTutorFloatingAvatar
+          ariaLabel={
+            isOpen ? tutorContent.common.closeTutorAria : tutorContent.common.openTutorAria
+          }
+          avatarAnchorKind={avatarAnchorKind}
+          avatarButtonClassName={avatarButtonClassName}
+          avatarButtonStyle={avatarButtonStyle}
+          avatarStyle={avatarStyle}
+          floatingAvatarPlacement={floatingAvatarPlacement}
+          guidedArrowheadTransition={guidedArrowheadTransition}
+          guidedAvatarArrowhead={guidedAvatarArrowhead}
+          guidedAvatarArrowheadDisplayAngle={guidedAvatarArrowheadDisplayAngle}
+          guidedAvatarArrowheadDisplayAngleLabel={guidedAvatarArrowheadDisplayAngleLabel}
+          guidedAvatarPlacement={guidedAvatarLayout?.placement ?? 'dock'}
+          guidedTargetKind={
+            guidedMode === 'home_onboarding'
+              ? (homeOnboardingStep?.kind ?? 'none')
+              : (guidedTutorTarget?.kind ?? 'none')
+          }
+          isAskModalMode={isAskModalMode}
+          isGuidedTutorMode={isGuidedTutorMode}
+          isOpen={isOpen}
+          motionProfile={motionProfile}
+          onClick={handleAvatarClick}
+          onMouseDown={handleAvatarMouseDown}
+          onPointerCancel={handleFloatingAvatarPointerCancel}
+          onPointerDown={handleFloatingAvatarPointerDown}
+          onPointerMove={handleFloatingAvatarPointerMove}
+          onPointerUp={handleFloatingAvatarPointerUp}
+          prefersReducedMotion={prefersReducedMotion ?? false}
+          reducedMotionTransitions={reducedMotionTransitions}
+          rimColor={FLOATING_TUTOR_AVATAR_RIM_COLOR}
+          showFloatingAvatar={showFloatingAvatar}
+          uiMode={uiMode}
+        />
+
+        <KangurAiTutorPanelChrome
+          attachedAvatarStyle={attachedAvatarStyle}
+          attachedLaunchOffset={attachedLaunchOffset}
+          avatarAnchorKind={avatarAnchorKind}
+          avatarAttachmentSide={avatarAttachmentSide}
+          avatarButtonClassName={avatarButtonClassName}
+          avatarPointer={avatarPointer}
+          bubbleLaunchOrigin={bubblePlacement.launchOrigin}
+          bubbleMode={bubblePlacement.mode}
+          bubbleStrategy={bubblePlacement.strategy}
+          bubbleStyle={bubblePlacement.style}
+          bubbleTailPlacement={bubblePlacement.tailPlacement}
+          bubbleWidth={bubblePlacement.width}
+          compactDockedTutorPanelWidth={compactDockedTutorPanelWidth}
+          isAskModalMode={isAskModalMode}
+          isCompactDockedTutorPanel={isCompactDockedTutorPanel}
+          isGuidedTutorMode={isGuidedTutorMode}
+          isOpen={isOpen}
+          isTutorHidden={isTutorHidden}
+          motionProfile={motionProfile}
+          panelAvatarPlacement={panelAvatarPlacement}
+          panelEmptyStateMessage={panelEmptyStateMessage}
+          panelOpenAnimation={panelOpenAnimation}
+          panelTransition={panelTransition}
+          pointerMarkerId={pointerMarkerId}
+          prefersReducedMotion={prefersReducedMotion ?? false}
+          reducedMotionTransitions={reducedMotionTransitions}
+          sessionSurfaceLabel={sessionSurfaceLabel}
+          shouldRenderGuestIntroUi={shouldRenderGuestIntroUi}
+          showAttachedAvatarShell={showAttachedAvatarShell}
+          uiMode={uiMode}
+          onAttachedAvatarClick={() => handleCloseChat('toggle')}
+          onBackdropClose={handlePanelBackdropClose}
+          onClose={handlePanelHeaderClose}
+          onDisableTutor={handleDisableTutor}
+        >
+          <KangurAiTutorPanelBodyProvider value={panelBodyContextValue}>
             <>
-              {isAskModalMode || bubblePlacement.mode === 'sheet' ? (
-                <motion.button
-                  key={isAskModalMode ? 'ask-modal-backdrop' : 'chat-backdrop'}
-                  data-testid={
-                    isAskModalMode
-                      ? 'kangur-ai-tutor-ask-modal-backdrop'
-                      : 'kangur-ai-tutor-backdrop'
-                  }
-                  type='button'
-                  aria-label='Zamknij pomocnika'
-                  initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-                  transition={prefersReducedMotion ? reducedMotionTransitions.instant : { duration: 0.18 }}
-                  className={cn(
-                    'fixed inset-0 cursor-pointer',
-                    isAskModalMode ? 'z-[76] bg-slate-900/32 backdrop-blur-[2px]' : 'z-[62] bg-slate-900/18'
-                  )}
-                  onClick={(): void =>
-                    isAskModalMode ? handleCloseAskModal('outside') : handleCloseChat('outside')
-                  }
-                />
-              ) : null}
-              <motion.div
-                key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
-                ref={panelRef}
-                data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
-                data-layout={isAskModalMode ? 'modal' : bubblePlacement.mode}
-                data-avatar-placement={panelAvatarPlacement}
-                data-launch-origin={bubblePlacement.launchOrigin}
-                data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-                data-motion-preset={motionProfile.kind}
-                data-motion-state={panelMotionState}
-                data-open-animation={panelOpenAnimation}
-                data-placement-strategy={bubblePlacement.strategy}
-                data-has-pointer={!isAskModalMode && avatarPointer ? 'true' : 'false'}
-                data-pointer-side={!isAskModalMode ? avatarPointer?.side ?? 'none' : 'none'}
-                data-ui-mode={uiMode}
-                role={isAskModalMode ? 'dialog' : undefined}
-                aria-modal={isAskModalMode ? 'true' : undefined}
-                initial={
-                  isAskModalMode
-                    ? prefersReducedMotion
-                      ? reducedMotionTransitions.stableState
-                      : { opacity: 0, y: 18, scale: 0.98 }
-                    : prefersReducedMotion
-                      ? bubblePlacement.mode === 'sheet'
-                        ? reducedMotionTransitions.staticSheetState
-                        : reducedMotionTransitions.stableState
-                      : panelOpenAnimation === 'sheet'
-                        ? { opacity: 0, y: 28 }
-                        : panelOpenAnimation === 'fade'
-                          ? { opacity: 0 }
-                          : {
-                            opacity: 0,
-                            x: attachedLaunchOffset.x,
-                            y: attachedLaunchOffset.y,
-                            scale: 0.97,
-                          }
-                }
-                animate={
-                  isAskModalMode
-                    ? { opacity: 1, y: 0, scale: 1 }
-                    : {
-                      ...bubblePlacement.style,
-                      opacity: 1,
-                      x: 0,
-                      y: 0,
-                      ...(bubblePlacement.mode === 'sheet' ? {} : { scale: 1 }),
-                    }
-                }
-                exit={
-                  isAskModalMode
-                    ? prefersReducedMotion
-                      ? reducedMotionTransitions.stableState
-                      : { opacity: 0, y: 18, scale: 0.98 }
-                    : prefersReducedMotion
-                      ? bubblePlacement.mode === 'sheet'
-                        ? reducedMotionTransitions.staticSheetState
-                        : reducedMotionTransitions.stableState
-                      : panelOpenAnimation === 'sheet'
-                        ? { opacity: 0, y: 28 }
-                        : panelOpenAnimation === 'fade'
-                          ? { opacity: 0 }
-                          : {
-                            opacity: 0,
-                            x: attachedLaunchOffset.x * 0.18,
-                            y: attachedLaunchOffset.y * 0.18,
-                            scale: 0.97,
-                          }
-                }
-                transition={isAskModalMode ? motionProfile.bubbleTransition : panelTransition}
-                className={
-                  isAskModalMode
-                    ? 'fixed inset-0 z-[77] flex items-center justify-center px-4 pt-10 pb-6 pointer-events-none'
-                    : 'fixed z-[65]'
-                }
-                style={
-                  isAskModalMode
-                    ? undefined
-                    : bubblePlacement.width
-                      ? {
-                        width: isCompactDockedTutorPanel
-                          ? compactDockedTutorPanelWidth
-                          : bubblePlacement.width,
-                      }
-                      : undefined
-                }
-              >
-                {!isAskModalMode && avatarPointer ? (
-                  <svg
-                    aria-hidden='true'
-                    data-testid='kangur-ai-tutor-pointer'
-                    data-pointer-side={avatarPointer.side}
-                    className='pointer-events-none absolute z-0 overflow-visible'
-                    style={{
-                      left: avatarPointer.left,
-                      top: avatarPointer.top,
-                      width: avatarPointer.width,
-                      height: avatarPointer.height,
-                    }}
-                    viewBox={`0 0 ${avatarPointer.width} ${avatarPointer.height}`}
-                  >
-                    <defs>
-                      <marker
-                        id={pointerMarkerId}
-                        markerWidth='9'
-                        markerHeight='9'
-                        refX='7'
-                        refY='4.5'
-                        orient='auto'
-                        viewBox='0 0 9 9'
-                      >
-                        <path d='M0 0 L9 4.5 L0 9 Z' fill='#b45309' />
-                      </marker>
-                    </defs>
-                    <line
-                      x1={avatarPointer.start.x}
-                      y1={avatarPointer.start.y}
-                      x2={avatarPointer.end.x}
-                      y2={avatarPointer.end.y}
-                      stroke='#fff7cf'
-                      strokeLinecap='round'
-                      strokeWidth='6'
-                    />
-                    <line
-                      x1={avatarPointer.start.x}
-                      y1={avatarPointer.start.y}
-                      x2={avatarPointer.end.x}
-                      y2={avatarPointer.end.y}
-                      markerEnd={`url(#${pointerMarkerId})`}
-                      stroke='#b45309'
-                      strokeLinecap='round'
-                      strokeWidth='3'
-                    />
-                  </svg>
-                ) : null}
-                {!isAskModalMode && showAttachedAvatarShell ? (
-                  <motion.button
-                    data-testid='kangur-ai-tutor-avatar'
-                    data-anchor-kind={avatarAnchorKind}
-                    data-avatar-placement='attached'
-                    data-avatar-attachment-side={avatarAttachmentSide}
-                    data-motion-preset={motionProfile.kind}
-                    data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-                    data-ui-mode={uiMode}
-                    type='button'
-                    onClick={(): void => handleCloseChat('toggle')}
-                    whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
-                    whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
-                    className={cn('absolute z-10', avatarButtonClassName)}
-                    style={attachedAvatarStyle}
-                    aria-label='Zamknij pomocnika'
-                  >
-                    <TutorMoodAvatar
-                      svgContent={tutorAvatarSvg}
-                      avatarImageUrl={tutorAvatarImageUrl}
-                      label={`${tutorName} avatar (${tutorMoodId})`}
-                      className='h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
-                      svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
-                      data-testid='kangur-ai-tutor-avatar-image'
-                    />
-                  </motion.button>
-                ) : null}
-                <KangurGlassPanel
-                  data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal-surface' : undefined}
-                  surface='solid'
-                  variant='soft'
-                  className={cn(
-                    'relative flex flex-col overflow-hidden border-2 border-slate-900 bg-[#fffdf4]/95 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.16)]',
-                    isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
-                    isCompactDockedTutorPanel ? 'rounded-[24px]' : null,
-                    bubblePlacement.mode === 'sheet'
-                      ? 'rounded-[28px] rounded-b-[24px]'
-                      : 'rounded-[28px]'
-                  )}
-                  style={{
-                    maxHeight: isAskModalMode
-                      ? 'min(82vh, 720px)'
-                      : isCompactDockedTutorPanel
-                        ? 'min(58vh, 440px)'
-                        : bubblePlacement.mode === 'sheet'
-                          ? 'min(76vh, 680px)'
-                          : '70vh',
-                  }}
-                >
-                  {!isAskModalMode && !avatarPointer && bubblePlacement.tailPlacement !== 'dock' ? (
-                    <div
-                      aria-hidden='true'
-                      className={cn(
-                        'absolute left-8 h-4 w-4 rotate-45 border-2 border-slate-900 bg-[#fffdf4]',
-                        bubblePlacement.tailPlacement === 'top'
-                          ? '-top-2 border-b-0 border-r-0'
-                          : '-bottom-2 border-t-0 border-l-0'
-                      )}
-                    />
-                  ) : null}
-
-                  {!isAskModalMode && bubblePlacement.mode === 'sheet' ? (
-                    <div className='flex justify-center bg-[#fffdf4]/98 px-3 pt-3'>
-                      <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-slate-300' />
-                    </div>
-                  ) : null}
-
-                  <div
-                    data-testid='kangur-ai-tutor-header'
-                    className={cn(
-                      'flex items-center justify-between bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 px-4 py-3',
-                      isAskModalMode ? 'pt-8' : null,
-                      isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
-                      showAttachedAvatarShell && avatarAttachmentSide === 'left' ? 'pl-16' : null,
-                      showAttachedAvatarShell && avatarAttachmentSide === 'right' ? 'pr-16' : null
-                    )}
-                  >
-                    <div className='min-w-0 flex flex-col'>
-                      <span className='text-sm font-black uppercase tracking-[0.08em] text-white'>
-                        {tutorName}
-                      </span>
-                      <span
-                        data-testid='kangur-ai-tutor-mood-chip'
-                        data-mood-id={tutorBehaviorMoodId}
-                        className='mt-1 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/16 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-white/95'
-                      >
-                        Nastroj: {tutorBehaviorMoodLabel}
-                      </span>
-                      <span
-                        data-testid='kangur-ai-tutor-mood-description'
-                        className='mt-1 text-[11px] leading-relaxed text-white/88'
-                      >
-                        {isCompactDockedTutorPanel ? emptyStateMessage : tutorBehaviorMoodDescription}
-                      </span>
-                      {!isCompactDockedTutorPanel && (sessionContext?.title || sessionContext?.contentId) ? (
-                        <span className='text-[11px] text-white/85'>
-                          {sessionContext.surface === 'test'
-                            ? 'Test'
-                            : sessionContext.surface === 'game'
-                              ? 'Gra'
-                              : 'Lekcja'}
-                          :{' '}
-                          {sessionContext.title ?? sessionContext.contentId}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className='ml-3 flex items-center gap-2'>
-                      <button
-                        type='button'
-                        onClick={() => {
-                          trackKangurClientEvent('kangur_ai_tutor_hidden', {
-                            ...telemetryContext,
-                            isOpen,
-                            messageCount: messages.length,
-                          });
-                          setAskModalVisible(false);
-                          askModalReturnStateRef.current = null;
-                          setGuidedTutorTarget(null);
-                          setGuestIntroVisible(false);
-                          setGuestIntroHelpVisible(false);
-                          setHomeOnboardingStepIndex(null);
-                          setHasNewMessage(false);
-                          clearSelection();
-                          setHighlightedText(null);
-                          setPersistedSelectionRect(null);
-                          setPersistedSelectionContainerRect(null);
-                          closeChat();
-                          persistTutorVisibilityHidden(true);
-                        }}
-                        className='cursor-pointer rounded-full border border-white/28 bg-white/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-white/90 transition-colors hover:bg-white/18 hover:text-white'
-                        aria-label='Wyłącz AI Tutora'
-                      >
-                      Wyłącz
-                      </button>
-                      <button
-                        type='button'
-                        onClick={(): void =>
-                          isAskModalMode ? handleCloseAskModal('header') : handleCloseChat('header')
-                        }
-                        className='cursor-pointer text-white/80 transition-colors hover:text-white'
-                        aria-label='Zamknij'
-                      >
-                        <X className='h-4 w-4' />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div ref={tutorNarrationRootRef} className='flex min-h-0 flex-1 flex-col'>
-                    {isAskModalMode ? (
-                      <div
-                        data-testid='kangur-ai-tutor-ask-modal-helper'
-                        className='border-b border-slate-900/10 bg-[#fff7cf]/72 px-3 py-2 text-xs leading-relaxed text-slate-700'
-                      >
-                        {askModalHelperText}
-                      </div>
-                    ) : null}
-
-                    <div className='border-b border-slate-900/10 bg-[#fff7cf]/80 px-3 py-3'>
-                      {contextSwitchNotice ? (
-                        <div
-                          data-testid='kangur-ai-tutor-context-switch'
-                          className='mb-3 rounded-[20px] border-2 border-slate-900 bg-white px-3 py-2 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)]'
-                        >
-                          <div className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-600'>
-                            {contextSwitchNotice.title}
-                          </div>
-                          <div className='mt-1 text-sm font-semibold text-slate-900'>
-                            {contextSwitchNotice.target}
-                          </div>
-                          {contextSwitchNotice.detail ? (
-                            <div className='mt-1 text-[11px] leading-relaxed text-slate-600'>
-                              {contextSwitchNotice.detail}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                      <div className='flex flex-wrap items-start gap-2'>
-                        {focusChipLabel ? (
-                          <span
-                            data-testid='kangur-ai-tutor-focus-chip'
-                            className='rounded-full border border-slate-900 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-900'
-                          >
-                            {focusChipLabel}
-                          </span>
-                        ) : null}
-                        {activeFocus.label && activeFocus.kind !== 'selection' ? (
-                          <span className='rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700'>
-                            {activeFocus.label}
-                          </span>
-                        ) : null}
-                        {bridgeSummaryChipLabel ? (
-                          <span
-                            data-testid='kangur-ai-tutor-bridge-chip'
-                            data-bridge-action-id={bridgeQuickAction?.id ?? 'none'}
-                            className='rounded-full border border-emerald-200 bg-emerald-50/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-800'
-                          >
-                            {bridgeSummaryChipLabel}
-                          </span>
-                        ) : null}
-                      </div>
-                      {activeSelectedText ? (
-                        <div
-                          data-testid='kangur-ai-tutor-selected-text-preview'
-                          className='mt-2 rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-3 text-slate-700 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)]'
-                        >
-                          <div className='flex items-start justify-between gap-3'>
-                            <div className='min-w-0 flex-1'>
-                              <div className='text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700'>
-                            Wyjaśniany fragment
-                              </div>
-                              <div className='mt-2 text-xs italic leading-relaxed'>
-                            „{selectedTextPreview}”
-                                {activeSelectedText.length > (selectedTextPreview?.length ?? 0) ? '…' : ''}
-                              </div>
-                            </div>
-                            {activeSelectionPageRect ? (
-                              <KangurButton
-                                data-testid='kangur-ai-tutor-selected-text-refocus'
-                                type='button'
-                                size='sm'
-                                variant='surface'
-                                className='h-8 shrink-0 px-3 text-[11px]'
-                                onClick={handleFocusSelectedFragment}
-                              >
-                            Pokaż fragment
-                              </KangurButton>
-                            ) : null}
-                            <KangurButton
-                              data-testid='kangur-ai-tutor-selected-text-detach'
-                              type='button'
-                              size='sm'
-                              variant='surface'
-                              className='h-8 shrink-0 px-3 text-[11px]'
-                              onClick={handleDetachSelectedFragment}
-                            >
-                          Wróć do rozmowy
-                            </KangurButton>
-                          </div>
-                          <div className='mt-2 text-[11px] leading-relaxed text-slate-600'>
-                            {isSelectionExplainPendingMode
-                              ? 'Czekaj chwilę. Skupiam się teraz tylko na tym fragmencie i przygotowuję wyjaśnienie.'
-                              : showSelectionExplainCompleteState
-                                ? 'Wyjaśnienie jest już gotowe. Możesz dopytać albo wrócić do zwykłej rozmowy.'
-                                : 'Możesz wrócić do zwykłej rozmowy albo ponownie pokazać fragment na stronie.'}
-                          </div>
-                          {isSelectionExplainPendingMode ? (
-                            <div
-                              data-testid='kangur-ai-tutor-selected-text-pending-status'
-                              className='mt-2 rounded-2xl border border-amber-100 bg-amber-50/85 px-3 py-2 text-[11px] font-semibold text-amber-900'
-                            >
-                            Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.
-                            </div>
-                          ) : showSelectionExplainCompleteState ? (
-                            <div
-                              data-testid='kangur-ai-tutor-selected-text-complete-status'
-                              className='mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/85 px-3 py-2 text-[11px] font-semibold text-emerald-900'
-                            >
-                            Wyjaśnienie gotowe. Możesz teraz dopytać o szczegóły.
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : highlightedSection ? (
-                        <div
-                          data-testid='kangur-ai-tutor-section-preview'
-                          className='mt-2 rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-3 text-slate-700 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)]'
-                        >
-                          <div className='flex items-start justify-between gap-3'>
-                            <div className='min-w-0 flex-1'>
-                              <div className='text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700'>
-                              Wyjaśniana sekcja
-                              </div>
-                              <div className='mt-2 text-xs leading-relaxed font-semibold text-slate-800'>
-                                {highlightedSection.label ?? highlightedSection.kind}
-                              </div>
-                            </div>
-                            {activeSectionRect ? (
-                              <KangurButton
-                                data-testid='kangur-ai-tutor-section-refocus'
-                                type='button'
-                                size='sm'
-                                variant='surface'
-                                className='h-8 shrink-0 px-3 text-[11px]'
-                                onClick={handleFocusHighlightedSection}
-                              >
-                              Pokaż sekcję
-                              </KangurButton>
-                            ) : null}
-                            <KangurButton
-                              data-testid='kangur-ai-tutor-section-detach'
-                              type='button'
-                              size='sm'
-                              variant='surface'
-                              className='h-8 shrink-0 px-3 text-[11px]'
-                              onClick={handleDetachHighlightedSection}
-                            >
-                            Wróć do rozmowy
-                            </KangurButton>
-                          </div>
-                          <div className='mt-2 text-[11px] leading-relaxed text-slate-600'>
-                          Ta rozmowa jest teraz przypięta do tej części strony. Możesz pokazać sekcję ponownie albo wrócić do zwykłej rozmowy.
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {shouldRenderAuxiliaryPanelControls ? (
-                      <div
-                        className='flex flex-wrap gap-2 border-b border-slate-100 px-3 py-3'
-                        data-kangur-tts-ignore='true'
-                      >
-                        {canNarrateTutorText ? (
-                          <KangurNarratorControl
-                            className='w-auto'
-                            contextRegistry={tutorNarratorContextRegistry}
-                            docId='kangur_ai_tutor_narrator'
-                            engine={narratorSettings.engine}
-                            pauseLabel='Pauza'
-                            readLabel='Czytaj'
-                            resumeLabel='Wznow'
-                            script={tutorNarrationScript}
-                            shellTestId='kangur-ai-tutor-narrator-shell'
-                            voice={narratorSettings.voice}
-                          />
-                        ) : null}
-                        {canStartHomeOnboardingManually ? (
-                          <KangurButton
-                            data-testid='kangur-ai-tutor-home-onboarding-replay'
-                            type='button'
-                            size='sm'
-                            variant='surface'
-                            className='h-9 px-3 text-xs'
-                            onClick={handleStartHomeOnboarding}
-                          >
-                            {homeOnboardingReplayLabel}
-                          </KangurButton>
-                        ) : null}
-                        {usageSummary && usageSummary.dailyMessageLimit !== null ? (
-                          <div className='w-full rounded-2xl border border-amber-100 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-900'>
-                            <div className='flex items-center justify-between gap-3'>
-                              <span className='font-semibold'>
-                        Limit dzisiaj: {usageSummary.messageCount}/{usageSummary.dailyMessageLimit}
-                              </span>
-                              <span className='text-amber-700'>
-                                {isUsageLoading
-                                  ? 'Aktualizuję…'
-                                  : remainingMessages === 0
-                                    ? 'Limit wyczerpany'
-                                    : `Pozostało ${remainingMessages}`}
-                              </span>
-                            </div>
-                          </div>
-                        ) : null}
-                        {visibleProactiveNudge ? (
-                          <div
-                            data-testid='kangur-ai-tutor-proactive-nudge'
-                            data-nudge-mode={visibleProactiveNudge.mode}
-                            className={cn(
-                              'w-full rounded-2xl border px-3 py-3 shadow-sm',
-                              visibleProactiveNudge.mode === 'coach'
-                                ? 'border-sky-100 bg-sky-50/85'
-                                : 'border-emerald-100 bg-emerald-50/85'
-                            )}
-                          >
-                            <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
-                              {visibleProactiveNudge.title}
-                            </div>
-                            <div className='mt-1 text-sm font-semibold text-slate-800'>
-                              {visibleProactiveNudge.action.label}
-                            </div>
-                            <div className='mt-1 text-xs leading-relaxed text-slate-600'>
-                              {visibleProactiveNudge.description}
-                            </div>
-                            <KangurButton
-                              data-testid='kangur-ai-tutor-proactive-nudge-button'
-                              type='button'
-                              size='sm'
-                              variant='surface'
-                              className='mt-3 h-9 px-3 text-xs'
-                              disabled={isLoading || !canSendMessages}
-                              onClick={() =>
-                                void handleQuickAction(visibleProactiveNudge.action, {
-                                  source: 'proactive_nudge',
-                                })}
-                            >
-                            Spróbuj teraz
-                            </KangurButton>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-
-                    <div className='flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3'>
-                      {messages.length === 0 ? (
-                        <p className='text-center text-xs text-slate-500 py-4'>
-                          {isSelectionExplainPendingMode
-                            ? 'Czekaj, wyjaśniam zaznaczony fragment.'
-                            : isAskModalMode
-                              ? askModalHelperText
-                              : emptyStateMessage}
-                        </p>
-                      ) : (
-                        messages.map((msg, index) => {
-                          if (msg.role === 'user') {
-                            return (
-                              <div key={index} className='flex justify-end'>
-                                <div className='max-w-[80%] rounded-[22px] border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500 px-3 py-2 text-sm leading-relaxed text-white shadow-[0_16px_28px_-20px_rgba(249,115,22,0.58)]'>
-                                  {msg.content}
-                                </div>
-                              </div>
-                            );
-                          }
-
-                          const feedbackKey = getAssistantMessageFeedbackKey(tutorSessionKey, index, msg);
-                          const submittedFeedback = messageFeedbackByKey[feedbackKey] ?? null;
-
-                          return (
-                            <div key={index} className='flex justify-start'>
-                              <div className='w-full max-w-[90%] space-y-2'>
-                                {msg.coachingFrame ? (
-                                  <div
-                                    className='rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-left shadow-sm'
-                                    data-testid='kangur-ai-tutor-coaching-frame'
-                                    data-coaching-mode={msg.coachingFrame.mode}
-                                  >
-                                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-600'>
-                                      {msg.coachingFrame.label}
-                                    </div>
-                                    <div className='mt-1 text-xs font-medium leading-relaxed text-slate-700'>
-                                      {msg.coachingFrame.description}
-                                    </div>
-                                    {msg.coachingFrame.rationale ? (
-                                      <div className='mt-1 text-[11px] leading-relaxed text-slate-500'>
-                                        {msg.coachingFrame.rationale}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-                                <div className='rounded-[22px] border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 shadow-sm'>
-                                  {msg.content}
-                                </div>
-                                {msg.followUpActions?.length ? (
-                                  <div className='space-y-2'>
-                                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400'>
-                                      Kolejny krok
-                                    </div>
-                                    <div className='grid gap-2 sm:grid-cols-2'>
-                                      {msg.followUpActions.map((action) => {
-                                        const followUpHref = toFollowUpHref(basePath, action);
-
-                                        return (
-                                          <div
-                                            key={action.id}
-                                            className='rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-3'
-                                          >
-                                            {action.reason ? (
-                                              <div className='text-xs font-medium leading-relaxed text-slate-700'>
-                                                {action.reason}
-                                              </div>
-                                            ) : null}
-                                            <div
-                                              data-kangur-tts-ignore='true'
-                                              className={cn(action.reason ? 'mt-2' : 'mt-0')}
-                                            >
-                                              <KangurButton
-                                                asChild
-                                                size='sm'
-                                                variant='primary'
-                                                className='w-full'
-                                              >
-                                                <Link
-                                                  href={followUpHref}
-                                                  onClick={() =>
-                                                    handleFollowUpClick(action, index, followUpHref)}
-                                                  targetPageKey={action.page}
-                                                >
-                                                  {action.label}
-                                                </Link>
-                                              </KangurButton>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                ) : null}
-                                {showSources && msg.sources?.length ? (
-                                  <div className='space-y-2'>
-                                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400'>
-                                      Źródła
-                                    </div>
-                                    {msg.sources.slice(0, 3).map((source) => (
-                                      <div
-                                        key={`${source.collectionId}-${source.documentId}`}
-                                        className='rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-left shadow-sm'
-                                      >
-                                        <div className='text-[11px] font-semibold text-slate-700'>
-                                          {source.metadata?.title?.trim() || `[doc:${source.documentId}]`}
-                                        </div>
-                                        <div className='mt-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-400'>
-                                          {source.collectionId} · score {source.score.toFixed(3)}
-                                        </div>
-                                        {source.text?.trim() ? (
-                                          <div className='mt-1 text-xs leading-relaxed text-slate-600'>
-                                            {source.text.trim().slice(0, 180)}
-                                            {source.text.trim().length > 180 ? '…' : ''}
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : null}
-                                <div
-                                  data-testid={`kangur-ai-tutor-feedback-${index}`}
-                                  data-kangur-tts-ignore='true'
-                                  className='rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2'
-                                >
-                                  <div className='flex flex-wrap items-center gap-2'>
-                                    <span className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
-                                      Pomogło?
-                                    </span>
-                                    <KangurButton
-                                      data-testid={`kangur-ai-tutor-feedback-helpful-${index}`}
-                                      type='button'
-                                      size='sm'
-                                      variant='surface'
-                                      aria-pressed={submittedFeedback === 'helpful'}
-                                      disabled={submittedFeedback !== null}
-                                      className={cn(
-                                        'h-8 px-3 text-[11px]',
-                                        submittedFeedback === 'helpful'
-                                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                          : ''
-                                      )}
-                                      onClick={() => handleMessageFeedback(index, msg, 'helpful')}
-                                    >
-                                  Tak
-                                    </KangurButton>
-                                    <KangurButton
-                                      data-testid={`kangur-ai-tutor-feedback-not-helpful-${index}`}
-                                      type='button'
-                                      size='sm'
-                                      variant='surface'
-                                      aria-pressed={submittedFeedback === 'not_helpful'}
-                                      disabled={submittedFeedback !== null}
-                                      className={cn(
-                                        'h-8 px-3 text-[11px]',
-                                        submittedFeedback === 'not_helpful'
-                                          ? 'border-rose-200 bg-rose-50 text-rose-700'
-                                          : ''
-                                      )}
-                                      onClick={() => handleMessageFeedback(index, msg, 'not_helpful')}
-                                    >
-                                  Jeszcze nie
-                                    </KangurButton>
-                                  </div>
-                                  {submittedFeedback ? (
-                                    <div
-                                      data-testid={`kangur-ai-tutor-feedback-status-${index}`}
-                                      className='mt-2 text-[11px] leading-relaxed text-slate-500'
-                                    >
-                                      {submittedFeedback === 'helpful'
-                                        ? 'Dzięki. To pomaga dopasować kolejne odpowiedzi tutora.'
-                                        : 'Dzięki. Tutor spróbuje inaczej w kolejnej odpowiedzi.'}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                      {isLoading && (
-                        <div className='flex justify-start'>
-                          <div className='rounded-2xl border border-slate-200 bg-white px-3 py-2'>
-                            <span className='text-slate-400 text-xs animate-pulse'>Myślę…</span>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </div>
-
-                  <div
-                    className='border-t border-slate-100 px-3 py-3'
-                    data-testid='kangur-ai-tutor-composer-shell'
-                  >
-                    <div className='flex gap-2 items-center'>
-                      <KangurTextField
-                        ref={inputRef}
-                        value={inputValue}
-                        onChange={(event) => setInputValue(event.target.value)}
-                        onKeyDown={handleKeyDown}
-                        accent='amber'
-                        size='sm'
-                        className='flex-1'
-                        disabled={isLoading || !canSendMessages}
-                        placeholder={isAskModalMode ? 'Napisz pytanie do tutora' : inputPlaceholder}
-                        aria-label='Wpisz pytanie'
-                      />
-                      <KangurButton
-                        type='button'
-                        size='sm'
-                        variant='primary'
-                        onClick={() => void handleSend()}
-                        disabled={!inputValue.trim() || isLoading || !canSendMessages}
-                        aria-label='Wyślij'
-                      >
-                        <Send className='h-3.5 w-3.5' />
-                      </KangurButton>
-                    </div>
-                    {visibleQuickActions.length ? (
-                      <div
-                        className='mt-2 flex flex-wrap gap-2'
-                        data-kangur-tts-ignore='true'
-                        data-testid='kangur-ai-tutor-composer-pills'
-                      >
-                        {visibleQuickActions.map((action) => (
-                          <KangurButton
-                            key={action.id}
-                            data-testid={`kangur-ai-tutor-quick-action-${action.id}`}
-                            type='button'
-                            size='sm'
-                            variant='surface'
-                            className='h-8 rounded-full px-3 text-[11px]'
-                            disabled={isLoading || !canSendMessages}
-                            onClick={() => void handleQuickAction(action)}
-                          >
-                            {action.label}
-                          </KangurButton>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </KangurGlassPanel>
-              </motion.div>
+              <KangurAiTutorPanelContextSummary />
+              <KangurAiTutorPanelAuxiliaryControls />
+              <KangurAiTutorMessageList />
+              <KangurAiTutorComposer />
             </>
-          )}
-        </AnimatePresence>
+          </KangurAiTutorPanelBodyProvider>
+        </KangurAiTutorPanelChrome>
       </>
     </KangurAiTutorWidgetStateProvider>,
     document.body
   );
 }
-
-export const __testOnly = {
-  getAvatarRectFromPoint,
-  getFloatingTutorArrowheadGeometry,
-  getFloatingTutorArrowCorridorRect,
-  getGuidedCalloutLayout,
-};

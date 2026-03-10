@@ -199,6 +199,10 @@ export default function CalendarTrainingGame({
   };
 
   if (done) {
+    const handleFinishLesson = (): void => {
+      onFinish();
+    };
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -253,7 +257,12 @@ export default function CalendarTrainingGame({
             <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='surface'>
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
-            <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
+            <KangurButton
+              className='flex-1'
+              onClick={handleFinishLesson}
+              size='lg'
+              variant='primary'
+            >
               Zakończ lekcję ✅
             </KangurButton>
           </div>

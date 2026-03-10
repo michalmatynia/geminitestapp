@@ -115,7 +115,7 @@ export function KangurAssignmentSpotlight({
           fullWidth
           variant='primary'
         >
-          <Link href={buildKangurAssignmentHref(basePath, assignment)}>
+          <Link href={(() => buildKangurAssignmentHref(basePath, assignment))()}>
             {getKangurAssignmentActionLabel(assignment)}
           </Link>
         </KangurButton>

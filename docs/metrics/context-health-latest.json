@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-03-10T08:15:32.198Z",
-  "status": "warn",
+  "generatedAt": "2026-03-10T11:50:02.853Z",
+  "status": "passed",
   "summary": {
-    "total": 7,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 4,
-    "infoCount": 3,
-    "status": "warn",
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "passed",
     "contextFileCount": 241
   },
   "scope": {
@@ -17,97 +17,7 @@
     "providerValueFieldThreshold": 15,
     "oversizedLocThreshold": 500
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 502 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/ai/ai-paths/context/GraphContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 564 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurGameRuntimeContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 531 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/products/context/ProductStudioContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/shared/lib/ai-context-registry/page-context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "context-missing-split",
-      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
-      "file": "src/features/kangur/ui/context/KangurLessonNavigationContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "context-missing-split",
-      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
-      "file": "src/features/kangur/ui/context/KangurLoginModalContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "context-missing-split",
-      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
-      "file": "src/shared/lib/ai-context-registry/page-context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "context-oversized",
-      "errorCount": 0,
-      "warningCount": 3,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "context-generic-error",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "context-missing-split",
-      "errorCount": 0,
-      "warningCount": 0,
-      "infoCount": 3
-    }
-  ],
-  "durationMs": 196
+  "issues": [],
+  "rules": [],
+  "durationMs": 423
 }

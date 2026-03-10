@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ContextRegistryPageProvider,
+  useContextRegistryPageActions,
   useContextRegistryPageEnvelope,
+  useOptionalContextRegistryPageActions,
   useRegisterContextRegistryPageSource,
 } from '../page-context';
 
@@ -24,6 +26,23 @@ function RuntimeSourceRegistrar(): null {
 }
 
 describe('ContextRegistryPageProvider', () => {
+  it('exposes optional actions as null outside the provider', () => {
+    const { result } = renderHook(() => useOptionalContextRegistryPageActions());
+
+    expect(result.current).toBeNull();
+  });
+
+  it('exposes split actions hooks inside the provider', () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ContextRegistryPageProvider pageId='kangur:Game'>{children}</ContextRegistryPageProvider>
+    );
+
+    const { result } = renderHook(() => useContextRegistryPageActions(), { wrapper });
+
+    expect(typeof result.current.registerSource).toBe('function');
+    expect(typeof result.current.unregisterSource).toBe('function');
+  });
+
   it('merges base page roots with registered runtime refs', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <ContextRegistryPageProvider pageId='kangur:Game' title='Kangur Game' rootNodeIds={['page:kangur-game']}>

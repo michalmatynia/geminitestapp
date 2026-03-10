@@ -28,11 +28,10 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import {
-  buildKangurAssignmentHref,
   buildKangurAssignmentCatalog,
+  buildKangurAssignmentListItems,
   buildRecommendedKangurAssignmentCatalog,
   filterKangurAssignmentCatalog,
-  getKangurAssignmentActionLabel,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -55,6 +54,16 @@ type FilterOption = (typeof FILTER_OPTIONS)[number]['value'];
 type KangurAssignmentAttentionItem = {
   assignment: KangurAssignmentSnapshot;
   reason: string;
+};
+
+type KangurAssignmentAttentionView = {
+  id: string;
+  title: string;
+  reason: string;
+  progressPercent: number;
+  progressSummary: string;
+  actionHref: string;
+  actionLabel: string;
 };
 
 type KangurAssignmentTrackerSummary = {
@@ -199,7 +208,32 @@ export function KangurAssignmentManager({
       ),
     [assignments]
   );
+  const activeAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, activeAssignments),
+    [activeAssignments, basePath]
+  );
+  const completedAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, completedAssignments),
+    [basePath, completedAssignments]
+  );
   const trackerSummary = useMemo(() => buildTrackerSummary(assignments), [assignments]);
+  const trackerAttentionItems = useMemo<KangurAssignmentAttentionView[]>(
+    () =>
+      trackerSummary.attentionItems.map((item) => {
+        const assignmentItem = buildKangurAssignmentListItems(basePath, [item.assignment])[0];
+
+        return {
+          id: item.assignment.id,
+          title: item.assignment.title,
+          reason: item.reason,
+          progressPercent: item.assignment.progress.percent,
+          progressSummary: item.assignment.progress.summary,
+          actionHref: assignmentItem?.actionHref ?? '#',
+          actionLabel: assignmentItem?.actionLabel ?? item.assignment.title,
+        };
+      }),
+    [basePath, trackerSummary.attentionItems]
+  );
   const recommendedCatalog = useMemo(
     () =>
       suggestedCatalog.filter((item) => {
@@ -237,6 +271,7 @@ export function KangurAssignmentManager({
       ? appendKangurUrlParams(href, featuredDailyQuest.assignment.action.query, basePath)
       : href;
   }, [basePath, featuredDailyQuest]);
+  const featuredQuestTargetPage = featuredDailyQuest?.assignment.action.page ?? null;
   const featuredQuestAccent =
     featuredDailyQuest?.reward.status === 'claimed'
       ? 'emerald'
@@ -245,6 +280,8 @@ export function KangurAssignmentManager({
         : featuredDailyQuest?.progress.status === 'in_progress'
           ? 'indigo'
           : 'slate';
+  const featuredQuestRewardAccent =
+    featuredDailyQuest?.reward.status === 'claimed' ? 'emerald' : featuredQuestAccent;
 
   const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
     const status =
@@ -392,11 +429,7 @@ export function KangurAssignmentManager({
                       {featuredDailyQuest.progress.percent}%
                     </KangurStatusChip>
                     <KangurStatusChip
-                      accent={
-                        featuredDailyQuest.reward.status === 'claimed'
-                          ? 'emerald'
-                          : featuredQuestAccent
-                      }
+                      accent={featuredQuestRewardAccent}
                       className='text-[11px] uppercase tracking-[0.14em]'
                     >
                       {featuredDailyQuest.reward.label}
@@ -415,10 +448,7 @@ export function KangurAssignmentManager({
 
                 {featuredQuestHref ? (
                   <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
-                    <Link
-                      href={featuredQuestHref}
-                      targetPageKey={featuredDailyQuest.assignment.action.page}
-                    >
+                    <Link href={featuredQuestHref} targetPageKey={featuredQuestTargetPage ?? undefined}>
                       {featuredDailyQuest.assignment.action.label}
                     </Link>
                   </KangurButton>
@@ -607,7 +637,7 @@ export function KangurAssignmentManager({
           padding='lg'
           tone='accent'
         >
-          {trackerSummary.attentionItems.length === 0 ? (
+          {trackerAttentionItems.length === 0 ? (
             <KangurEmptyState
               accent='emerald'
               align='left'
@@ -618,35 +648,31 @@ export function KangurAssignmentManager({
             />
           ) : (
             <div className='mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2'>
-              {trackerSummary.attentionItems.slice(0, 4).map((item) => (
+              {trackerAttentionItems.slice(0, 4).map((item) => (
                 <KangurInfoCard
                   accent='amber'
-                  data-testid={`assignment-manager-attention-card-${item.assignment.id}`}
-                  key={item.assignment.id}
+                  data-testid={`assignment-manager-attention-card-${item.id}`}
+                  key={item.id}
                   padding='lg'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
-                      <div className='text-sm font-bold text-slate-900'>
-                        {item.assignment.title}
-                      </div>
+                      <div className='text-sm font-bold text-slate-900'>{item.title}</div>
                       <div className='mt-1 text-sm leading-6 text-amber-900'>{item.reason}</div>
                     </div>
                     <KangurStatusChip
                       accent='amber'
                       className='text-[11px] uppercase tracking-[0.14em]'
                     >
-                      {item.assignment.progress.percent}%
+                      {item.progressPercent}%
                     </KangurStatusChip>
                   </div>
                   <div className='mt-3 flex items-center justify-between gap-3'>
                     <div className='text-[11px] uppercase tracking-[0.14em] text-slate-500'>
-                      {item.assignment.progress.summary}
+                      {item.progressSummary}
                     </div>
                     <KangurButton asChild size='sm' variant='warning'>
-                      <Link href={buildKangurAssignmentHref(basePath, item.assignment)}>
-                        {getKangurAssignmentActionLabel(item.assignment)}
-                      </Link>
+                      <Link href={item.actionHref}>{item.actionLabel}</Link>
                     </KangurButton>
                   </div>
                 </KangurInfoCard>
@@ -657,16 +683,14 @@ export function KangurAssignmentManager({
       </KangurGlassPanel>
 
       <KangurAssignmentsList
-        assignments={activeAssignments}
-        basePath={basePath}
+        items={activeAssignmentItems}
         title='Aktywne zadania'
         emptyLabel='Brak aktywnych zadań dla ucznia.'
         onArchive={(assignmentId) => void handleArchive(assignmentId)}
       />
 
       <KangurAssignmentsList
-        assignments={completedAssignments}
-        basePath={basePath}
+        items={completedAssignmentItems}
         title='Ukończone zadania'
         emptyLabel='Uczeń nie zakończył jeszcze żadnych przypisanych zadań.'
         onArchive={(assignmentId) => void handleArchive(assignmentId)}

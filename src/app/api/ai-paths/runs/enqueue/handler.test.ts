@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 
 const {
   requireAiPathsRunAccessMock,
@@ -60,6 +64,105 @@ const parseResponseBody = async (response: Response): Promise<Record<string, unk
     throw new Error('Expected a JSON object response body.');
   }
   return parsed;
+};
+
+const buildLegacyStoredTranslationConfig = () => {
+  const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
+  if (!entry) throw new Error('Missing starter_translation_en_pl entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path-stale-translation-v2',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    name: 'Translation EN->PL Description + Parameters v2',
+    trigger: 'Product Modal - Translate EN->PL (Desc+Params)',
+    extensions: undefined,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            updatePayloadMode: 'custom',
+            updateTemplate:
+              '{\n  "$set": {\n    "description_pl": "{{value.description_pl}}",\n    "parameters": {{result.parameters}}\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+            mappings: [
+              {
+                targetPath: 'description_pl',
+                sourcePort: 'value',
+                sourcePath: 'description_pl',
+              },
+              {
+                targetPath: 'parameters',
+                sourcePort: 'result',
+                sourcePath: 'parameters',
+              },
+            ],
+          },
+        },
+      };
+    }),
+  };
+};
+
+const buildLegacyStoredParameterInferenceConfig = () => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path-stale-parameter-inference-v2',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    extensions: undefined,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'parser') {
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            parser: {
+              ...node.config?.parser,
+              mappings: {
+                ...(node.config?.parser?.mappings ?? {}),
+                title: '',
+                content_en: '',
+              },
+            },
+          },
+        };
+      }
+      if (node.type === 'database') {
+        const databaseConfig = node.config?.database;
+        if (databaseConfig?.operation !== 'query') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            database: {
+              ...databaseConfig,
+              query: {
+                ...databaseConfig.query,
+                queryTemplate: '{\n  "catalogId": "{{bundle.catalogId}}"\n}',
+              },
+            },
+          },
+        };
+      }
+      return node;
+    }),
+  };
 };
 
 describe('ai-paths runs enqueue handler', () => {
@@ -239,6 +342,38 @@ describe('ai-paths runs enqueue handler', () => {
       | { nodes?: Array<{ config?: { trigger?: { contextMode?: string } } }> }
       | undefined;
     expect(enqueueArgs?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+  });
+
+  it('repairs stale parameter inference v2 starter configs before enqueueing stored paths', async () => {
+    const config = buildLegacyStoredParameterInferenceConfig();
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        entityId: 'product-1',
+        entityType: 'product',
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | {
+        nodes?: Array<{
+          type?: string;
+          config?: { parser?: { mappings?: Record<string, string> } };
+        }>;
+      }
+      | undefined;
+    const parserNode = enqueueArgs?.nodes?.find((node) => node.type === 'parser');
+    expect(parserNode?.config?.parser?.mappings?.['title']).toBe('$.name_en');
+    expect(parserNode?.config?.parser?.mappings?.['content_en']).toBe('$.description_en');
   });
 
   it('normalizes context registry payloads into enqueue metadata', async () => {

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { type JSX, type ReactNode, useCallback } from 'react';
+import { createContext, type JSX, type ReactNode, useCallback, useContext } from 'react';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -22,11 +22,8 @@ import type {
   KangurObservabilityAlert,
   KangurObservabilityRange,
   KangurObservabilitySummary,
-  KangurPerformanceBaseline,
-  KangurRecentAnalyticsEvent,
   KangurRouteHealth,
   KangurRouteMetrics,
-  SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts';
 import { kangurObservabilityRangeSchema } from '@/shared/contracts';
 import {
@@ -129,6 +126,19 @@ const buildSystemLogsHref = (input: {
   if (input.to) params.set('to', input.to);
   const query = params.toString();
   return query ? `/admin/system/logs?${query}` : '/admin/system/logs';
+};
+
+const ObservabilitySummaryContext = createContext<{
+  range: KangurObservabilityRange;
+  summary: KangurObservabilitySummary;
+} | null>(null);
+
+const useObservabilitySummaryContext = () => {
+  const value = useContext(ObservabilitySummaryContext);
+  if (!value) {
+    throw new Error('Observability summary context is unavailable.');
+  }
+  return value;
 };
 
 function MetricCard({
@@ -238,7 +248,11 @@ function RouteMetricCard({
   );
 }
 
-function AlertsGrid({ alerts }: { alerts: KangurObservabilityAlert[] }): JSX.Element {
+function AlertsGrid(): JSX.Element {
+  const {
+    summary: { alerts },
+  } = useObservabilitySummaryContext();
+
   return (
     <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
       {alerts.map((alert) => (
@@ -316,10 +330,13 @@ function AnalyticsCountList({
   items: KangurAnalyticsCount[];
   emptyTitle: string;
 }): JSX.Element {
+  const sectionTitle = title;
+  const emptyStateTitle = emptyTitle;
+
   return (
-    <FormSection title={title} variant='subtle'>
+    <FormSection title={sectionTitle} variant='subtle'>
       {items.length === 0 ? (
-        <EmptyState title={emptyTitle} variant='compact' />
+        <EmptyState title={emptyStateTitle} variant='compact' />
       ) : (
         <div className='space-y-2'>
           {items.map((item) => (
@@ -339,11 +356,75 @@ function AnalyticsCountList({
   );
 }
 
-function RecentAnalyticsEvents({
-  events,
-}: {
-  events: KangurRecentAnalyticsEvent[];
-}): JSX.Element {
+function ImportantClientEventsSection(): JSX.Element {
+  const {
+    summary: {
+      analytics: { importantEvents },
+    },
+  } = useObservabilitySummaryContext();
+
+  return (
+    <AnalyticsCountList
+      title='Important Client Events'
+      items={importantEvents}
+      emptyTitle='No important Kangur client events'
+    />
+  );
+}
+
+function TopEventNamesSection(): JSX.Element {
+  const {
+    summary: {
+      analytics: { topEventNames },
+    },
+  } = useObservabilitySummaryContext();
+
+  return (
+    <AnalyticsCountList
+      title='Top Event Names'
+      items={topEventNames}
+      emptyTitle='No Kangur event names recorded'
+    />
+  );
+}
+
+function TopPathsSection(): JSX.Element {
+  const {
+    summary: {
+      analytics: { topPaths },
+    },
+  } = useObservabilitySummaryContext();
+
+  return (
+    <FormSection title='Top Paths' variant='subtle'>
+      {topPaths.length === 0 ? (
+        <EmptyState title='No top paths yet' variant='compact' />
+      ) : (
+        <div className='space-y-2'>
+          {topPaths.map((item) => (
+            <Card
+              key={item.path}
+              variant='subtle'
+              padding='sm'
+              className='flex items-center justify-between gap-3 border-border/60 bg-card/40'
+            >
+              <span className='min-w-0 truncate text-sm text-white'>{item.path}</span>
+              <StatusBadge status='info' label={formatNumber(item.count)} />
+            </Card>
+          ))}
+        </div>
+      )}
+    </FormSection>
+  );
+}
+
+function RecentAnalyticsEvents(): JSX.Element {
+  const {
+    summary: {
+      analytics: { recent: events },
+    },
+  } = useObservabilitySummaryContext();
+
   return (
     <div id='recent-analytics-events'>
       <FormSection title='Recent Analytics Events' variant='subtle'>
@@ -385,7 +466,13 @@ function RecentAnalyticsEvents({
   );
 }
 
-function RecentServerLogs({ logs }: { logs: SystemLogRecord[] }): JSX.Element {
+function RecentServerLogs(): JSX.Element {
+  const {
+    summary: {
+      serverLogs: { recent: logs },
+    },
+  } = useObservabilitySummaryContext();
+
   return (
     <FormSection title='Recent Server Logs' variant='subtle'>
       {logs.length === 0 ? (
@@ -425,11 +512,8 @@ function RecentServerLogs({ logs }: { logs: SystemLogRecord[] }): JSX.Element {
   );
 }
 
-function AiTutorBridgeMetrics({
-  summary,
-}: {
-  summary: KangurObservabilitySummary;
-}): JSX.Element {
+function AiTutorBridgeMetrics(): JSX.Element {
+  const { summary } = useObservabilitySummaryContext();
   const aiTutor = summary.analytics.aiTutor;
 
   return (
@@ -476,11 +560,11 @@ function AiTutorBridgeMetrics({
   );
 }
 
-function PerformanceBaselineCard({
-  baseline,
-}: {
-  baseline: KangurPerformanceBaseline | null;
-}): JSX.Element {
+function PerformanceBaselineCard(): JSX.Element {
+  const {
+    summary: { performanceBaseline: baseline },
+  } = useObservabilitySummaryContext();
+
   return (
     <div id='performance-baseline'>
       <FormSection title='Performance Baseline' variant='subtle'>
@@ -537,13 +621,8 @@ function PerformanceBaselineCard({
   );
 }
 
-function SummaryContent({
-  range,
-  summary,
-}: {
-  range: KangurObservabilityRange;
-  summary: KangurObservabilitySummary;
-}): JSX.Element {
+function SummaryContent(): JSX.Element {
+  const { range, summary } = useObservabilitySummaryContext();
   const alertById = new Map(summary.alerts.map((alert) => [alert.id, alert]));
   const allKangurLogsHref = buildSystemLogsHref({
     query: 'kangur.',
@@ -638,11 +717,11 @@ function SummaryContent({
         </div>
       </FormSection>
 
-      <AiTutorBridgeMetrics summary={summary} />
+      <AiTutorBridgeMetrics />
 
       <FormSection title='Alerts' variant='subtle'>
         <div data-doc-id='admin_observability_alerts'>
-          <AlertsGrid alerts={summary.alerts} />
+          <AlertsGrid />
         </div>
       </FormSection>
 
@@ -660,44 +739,18 @@ function SummaryContent({
           </div>
         </FormSection>
 
-        <PerformanceBaselineCard baseline={summary.performanceBaseline} />
+        <PerformanceBaselineCard />
       </div>
 
       <div className='grid gap-6 xl:grid-cols-3'>
-        <AnalyticsCountList
-          title='Important Client Events'
-          items={summary.analytics.importantEvents}
-          emptyTitle='No important Kangur client events'
-        />
-        <AnalyticsCountList
-          title='Top Event Names'
-          items={summary.analytics.topEventNames}
-          emptyTitle='No Kangur event names recorded'
-        />
-        <FormSection title='Top Paths' variant='subtle'>
-          {summary.analytics.topPaths.length === 0 ? (
-            <EmptyState title='No top paths yet' variant='compact' />
-          ) : (
-            <div className='space-y-2'>
-              {summary.analytics.topPaths.map((item) => (
-                <Card
-                  key={item.path}
-                  variant='subtle'
-                  padding='sm'
-                  className='flex items-center justify-between gap-3 border-border/60 bg-card/40'
-                >
-                  <span className='min-w-0 truncate text-sm text-white'>{item.path}</span>
-                  <StatusBadge status='info' label={formatNumber(item.count)} />
-                </Card>
-              ))}
-            </div>
-          )}
-        </FormSection>
+        <ImportantClientEventsSection />
+        <TopEventNamesSection />
+        <TopPathsSection />
       </div>
 
       <div className='grid gap-6 xl:grid-cols-2'>
-        <RecentAnalyticsEvents events={summary.analytics.recent} />
-        <RecentServerLogs logs={summary.serverLogs.recent} />
+        <RecentAnalyticsEvents />
+        <RecentServerLogs />
       </div>
 
       <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
@@ -851,7 +904,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
             }
           />
         ) : (
-          <SummaryContent range={range} summary={summary} />
+          <ObservabilitySummaryContext.Provider value={{ range, summary }}>
+            <SummaryContent />
+          </ObservabilitySummaryContext.Provider>
         )}
       </div>
     </KangurAdminContentShell>

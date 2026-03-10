@@ -25,6 +25,11 @@ import {
   type KangurAiTutorHomeOnboardingMode,
 } from '@/features/kangur/settings-ai-tutor';
 import {
+  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  parseKangurAiTutorContent,
+  type KangurAiTutorContent,
+} from '@/shared/contracts/kangur-ai-tutor-content';
+import {
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsProbeResponse,
   type KangurLessonTtsVoice,
@@ -44,6 +49,7 @@ import {
   FormSection,
   Input,
   SelectSimple,
+  Textarea,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -99,6 +105,10 @@ const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow
 const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
 const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
 const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
+const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
+
+const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
+  `${JSON.stringify(content, null, 2)}\n`;
 
 const areAiTutorAppSettingsEqual = (
   left: KangurAiTutorAppSettings,
@@ -161,19 +171,19 @@ function SettingsChoiceCard({
   hint,
   className,
 }: SettingsChoiceCardProps): React.JSX.Element {
+  const cardSelectionClassName = checked
+    ? 'border-primary/30 bg-card shadow-sm ring-1 ring-primary/15'
+    : 'hover:border-border hover:bg-card/60';
+  const selectionBadgeVariant = checked ? 'secondary' : 'outline';
+  const cardClassName = cn(
+    'h-full rounded-2xl border-border/60 bg-card/40 transition-all',
+    cardSelectionClassName,
+    className
+  );
+
   return (
     <label htmlFor={htmlFor} className='block cursor-pointer'>
-      <Card
-        variant='subtle'
-        padding='md'
-        className={cn(
-          'h-full rounded-2xl border-border/60 bg-card/40 transition-all',
-          checked
-            ? 'border-primary/30 bg-card shadow-sm ring-1 ring-primary/15'
-            : 'hover:border-border hover:bg-card/60',
-          className
-        )}
-      >
+      <Card variant='subtle' padding='md' className={cardClassName}>
         <div className='flex items-start justify-between gap-4'>
           <div className='flex min-w-0 items-start gap-3'>
             <div className='mt-0.5 shrink-0'>{children}</div>
@@ -182,7 +192,7 @@ function SettingsChoiceCard({
               <p className='mt-1 text-sm text-muted-foreground'>{description}</p>
             </div>
           </div>
-          <Badge variant={checked ? 'secondary' : 'outline'}>
+          <Badge variant={selectionBadgeVariant}>
             {checked ? 'Selected' : 'Option'}
           </Badge>
         </div>
@@ -241,6 +251,13 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   const [homeOnboardingMode, setHomeOnboardingMode] = useState<KangurAiTutorHomeOnboardingMode>(
     persistedAiTutorSettings.homeOnboardingMode
   );
+  const [aiTutorContentEditorValue, setAiTutorContentEditorValue] = useState<string>(() =>
+    stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT)
+  );
+  const [persistedAiTutorContentEditorValue, setPersistedAiTutorContentEditorValue] =
+    useState<string>(() => stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
+  const [isAiTutorContentLoading, setIsAiTutorContentLoading] = useState(true);
+  const [isAiTutorContentSaving, setIsAiTutorContentSaving] = useState(false);
   const [copyStatus, setCopyStatus] = useState('Copy text');
   const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
   const [isProbingNarrator, setIsProbingNarrator] = useState(false);
@@ -274,6 +291,40 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       String(persistedParentVerificationEmailSettings.resendCooldownSeconds)
     );
   }, [persistedParentVerificationEmailSettings]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      setIsAiTutorContentLoading(true);
+      try {
+        const content = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+          params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+          logError: false,
+        });
+        if (cancelled) {
+          return;
+        }
+        const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(content));
+        setAiTutorContentEditorValue(nextValue);
+        setPersistedAiTutorContentEditorValue(nextValue);
+      } catch (error) {
+        if (!cancelled) {
+          toast(error instanceof Error ? error.message : 'Failed to load AI Tutor content.', {
+            variant: 'error',
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsAiTutorContentLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   useEffect(
     () => () => {
@@ -421,6 +472,8 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   const parentVerificationEmailSettingsDirty =
     parentVerificationEmailDraft.resendCooldownSeconds !==
     persistedParentVerificationEmailSettings.resendCooldownSeconds;
+  const aiTutorContentDirty =
+    aiTutorContentEditorValue.trim() !== persistedAiTutorContentEditorValue.trim();
   const isDirty =
     narratorDirty || aiTutorSettingsDirty || parentVerificationEmailSettingsDirty;
 
@@ -474,6 +527,52 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetAiTutorContentToDefaults = (): void => {
+    setAiTutorContentEditorValue(stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
+  };
+
+  const handleReloadAiTutorContent = async (): Promise<void> => {
+    setIsAiTutorContentLoading(true);
+    try {
+      const content = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+        params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+        logError: false,
+      });
+      const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(content));
+      setAiTutorContentEditorValue(nextValue);
+      setPersistedAiTutorContentEditorValue(nextValue);
+      toast('Kangur AI tutor content reloaded.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsAiTutorContentLoading(false);
+    }
+  };
+
+  const handleSaveAiTutorContent = async (): Promise<void> => {
+    setIsAiTutorContentSaving(true);
+    try {
+      const parsed = parseKangurAiTutorContent(JSON.parse(aiTutorContentEditorValue) as unknown);
+      const saved = await api.post<KangurAiTutorContent>(
+        '/api/kangur/ai-tutor/content',
+        parsed,
+        { logError: false }
+      );
+      const nextValue = stringifyAiTutorContent(parseKangurAiTutorContent(saved));
+      setAiTutorContentEditorValue(nextValue);
+      setPersistedAiTutorContentEditorValue(nextValue);
+      toast('Kangur AI tutor content saved.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to save AI Tutor content.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsAiTutorContentSaving(false);
     }
   };
 
@@ -840,6 +939,82 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
             Shorter values increase retry attempts and email traffic. Longer values reduce request spam but
             also slow account confirmation.
           </Alert>
+        </FormSection>
+
+        <FormSection
+          title='AI Tutor Content'
+          description='Edit the Mongo-backed tutor copy pack used by onboarding, helper prompts, labels, narrator controls, and tutor explanations.'
+          className={SETTINGS_SECTION_CLASS_NAME}
+        >
+          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+              <div>
+                <div className='flex items-center gap-2'>
+                  <div className='text-sm font-semibold text-foreground'>Mongo content pack</div>
+                  <Badge variant='secondary'>Locale {AI_TUTOR_CONTENT_EDITOR_LOCALE}</Badge>
+                </div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Validation uses the shared Kangur AI Tutor content schema. Save writes directly
+                  to Mongo and the runtime loader reads the same document.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    void handleReloadAiTutorContent();
+                  }}
+                  disabled={isAiTutorContentLoading || isAiTutorContentSaving}
+                >
+                  {isAiTutorContentLoading ? 'Loading...' : 'Reload Mongo content'}
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={handleResetAiTutorContentToDefaults}
+                  disabled={isAiTutorContentSaving}
+                >
+                  Reset to defaults
+                </Button>
+                <Button
+                  size='sm'
+                  onClick={() => {
+                    void handleSaveAiTutorContent();
+                  }}
+                  disabled={
+                    isAiTutorContentLoading ||
+                    isAiTutorContentSaving ||
+                    !aiTutorContentDirty
+                  }
+                >
+                  {isAiTutorContentSaving ? 'Saving content...' : 'Save Mongo content'}
+                </Button>
+              </div>
+            </div>
+
+            <FormField
+              label='Tutor content JSON'
+              description='Malformed JSON or schema-invalid values will be rejected. Missing keys are backfilled from defaults when the document is loaded.'
+              className='mt-4'
+            >
+              <Textarea
+                value={aiTutorContentEditorValue}
+                onChange={(event) => setAiTutorContentEditorValue(event.target.value)}
+                rows={26}
+                spellCheck={false}
+                aria-label='Tutor content JSON'
+                className='font-mono text-xs leading-6'
+              />
+            </FormField>
+
+            <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <Badge variant={aiTutorContentDirty ? 'warning' : 'outline'}>
+                {aiTutorContentDirty ? 'Unsaved content changes' : 'Mongo content in sync'}
+              </Badge>
+              <span>Endpoint: /api/kangur/ai-tutor/content</span>
+            </div>
+          </Card>
         </FormSection>
 
         <FormSection

@@ -44,6 +44,12 @@ export default function ResultScreen({
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const stars = percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
   const operationLabel = operation ? OPERATION_LABELS[operation] ?? operation : 'Mieszane';
+  const handleRestartGame = (): void => {
+    onRestart();
+  };
+  const handleGoHome = (): void => {
+    onHome();
+  };
 
   const message =
     percent === 100
@@ -118,10 +124,10 @@ export default function ResultScreen({
       </KangurGlassPanel>
 
       <div className='flex gap-4'>
-        <KangurButton onClick={onRestart} size='lg' variant='primary'>
+        <KangurButton onClick={handleRestartGame} size='lg' variant='primary'>
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
-        <KangurButton onClick={onHome} size='lg' variant='surface'>
+        <KangurButton onClick={handleGoHome} size='lg' variant='surface'>
           <Home className='w-5 h-5' /> Strona glowna
         </KangurButton>
       </div>

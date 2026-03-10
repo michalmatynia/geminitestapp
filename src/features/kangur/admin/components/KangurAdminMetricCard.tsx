@@ -51,13 +51,10 @@ export function KangurAdminMetricCard({
   className,
 }: KangurAdminMetricCardProps): React.JSX.Element {
   const toneStyles = METRIC_TONE_STYLES[tone];
+  const cardClassName = cn('rounded-2xl border-border/60 bg-card/40 shadow-sm', className);
 
   return (
-    <Card
-      variant='subtle'
-      padding='md'
-      className={cn('rounded-2xl border-border/60 bg-card/40 shadow-sm', className)}
-    >
+    <Card variant='subtle' padding='md' className={cardClassName}>
       <div className='flex items-start justify-between gap-3'>
         <div>
           <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground'>

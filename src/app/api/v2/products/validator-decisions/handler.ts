@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { validationError } from '@/shared/errors/app-error';
 import { appendProductValidationDecision } from '@/shared/lib/products/services/validator-decision-log-service';
 
 export const createDecisionSchema = z.object({
@@ -17,7 +18,14 @@ export const createDecisionSchema = z.object({
 });
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const body = ctx.body as z.infer<typeof createDecisionSchema>;
+  const parsed = createDecisionSchema.safeParse(ctx.body);
+  if (!parsed.success) {
+    throw validationError('Validation failed', {
+      issues: parsed.error.flatten(),
+    });
+  }
+
+  const body = parsed.data;
   const record = await appendProductValidationDecision({
     action: body.action,
     productId: body.productId ?? null,

@@ -64,12 +64,14 @@ type Props = {
 export function KangurTestQuestionEditor(props: Props): React.JSX.Element {
   const runtime = useOptionalKangurQuestionsManagerRuntimeContext();
   const resolvedSuiteTitle = props.suiteTitle ?? runtime?.suite.title;
+  const editorDirtyState = props.isDirty;
+  const editorLocalDraftSavedAtLabel = props.localDraftSavedAtLabel;
 
   return (
     <KangurTestQuestionEditorProvider {...props} suiteTitle={resolvedSuiteTitle}>
       <KangurTestQuestionEditorContent
-        isDirty={props.isDirty}
-        localDraftSavedAtLabel={props.localDraftSavedAtLabel}
+        isDirty={editorDirtyState}
+        localDraftSavedAtLabel={editorLocalDraftSavedAtLabel}
       />
     </KangurTestQuestionEditorProvider>
   );

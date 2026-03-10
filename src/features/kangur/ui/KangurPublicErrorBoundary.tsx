@@ -13,7 +13,10 @@ type KangurPublicErrorBoundaryProps = {
 type KangurBoundaryError = Error & { digest?: string };
 
 const normalizeKangurBoundaryError = (error: unknown): KangurBoundaryError => {
-  if (error instanceof Error) return error as KangurBoundaryError;
+  if (error instanceof Error) {
+    return error as KangurBoundaryError;
+  }
+
   return new Error(
     typeof error === 'string' && error.trim().length > 0
       ? error
@@ -21,28 +24,20 @@ const normalizeKangurBoundaryError = (error: unknown): KangurBoundaryError => {
   );
 };
 
-function KangurPublicErrorFallback({
-  error,
-  homeHref,
-  resetErrorBoundary,
-}: FallbackProps & { homeHref: string }): JSX.Element {
-  return (
-    <KangurErrorFallback
-      error={normalizeKangurBoundaryError(error)}
-      homeHref={homeHref}
-      reset={resetErrorBoundary}
-      source='kangur-public-error-boundary'
-    />
-  );
-}
-
 export function KangurPublicErrorBoundary({
   children,
   homeHref,
 }: KangurPublicErrorBoundaryProps): JSX.Element {
   return (
     <ErrorBoundary
-      fallbackRender={(props) => <KangurPublicErrorFallback {...props} homeHref={homeHref} />}
+      fallbackRender={({ error, resetErrorBoundary }: FallbackProps) => (
+        <KangurErrorFallback
+          error={normalizeKangurBoundaryError(error)}
+          homeHref={homeHref}
+          reset={resetErrorBoundary}
+          source='kangur-public-error-boundary'
+        />
+      )}
     >
       {children}
     </ErrorBoundary>

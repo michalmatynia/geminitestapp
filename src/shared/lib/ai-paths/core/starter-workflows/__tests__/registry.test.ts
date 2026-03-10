@@ -114,6 +114,105 @@ const buildLegacyTranslationPathConfig = (args?: {
     ],
   }) as PathConfig;
 
+const buildStaleLiveTranslationPathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
+  if (!entry) throw new Error('Missing starter_translation_en_pl entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_translation_en_pl_v2_live',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    name: 'Translation EN->PL Description + Parameters v2',
+    trigger: 'Product Modal - Translate EN->PL (Desc+Params)',
+    extensions: undefined,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            updatePayloadMode: 'custom',
+            updateTemplate:
+              '{\n  "$set": {\n    "description_pl": "{{value.description_pl}}",\n    "parameters": {{result.parameters}}\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+            mappings: [
+              {
+                targetPath: 'description_pl',
+                sourcePort: 'value',
+                sourcePath: 'description_pl',
+              },
+              {
+                targetPath: 'parameters',
+                sourcePort: 'result',
+                sourcePath: 'parameters',
+              },
+            ],
+          },
+        },
+      };
+    }),
+  } as PathConfig;
+};
+
+const buildStaleLiveParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_parameter_inference_v2_live',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    name: 'Parameter Inference v2 No Param Add',
+    trigger: 'Product Modal - Infer Parameters',
+    extensions: undefined,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type === 'parser') {
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            parser: {
+              ...node.config?.parser,
+              mappings: {
+                ...(node.config?.parser?.mappings ?? {}),
+                title: '',
+                content_en: '',
+              },
+            },
+          },
+        };
+      }
+      if (node.type === 'database') {
+        const databaseConfig = node.config?.database;
+        if (databaseConfig?.operation !== 'query') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            database: {
+              ...databaseConfig,
+              query: {
+                ...databaseConfig.query,
+                queryTemplate: '{\n  "catalogId": "{{bundle.catalogId}}"\n}',
+              },
+            },
+          },
+        };
+      }
+      return node;
+    }),
+  } as PathConfig;
+};
+
 describe('starter workflow registry', () => {
   it('materializes template configs from the shared registry', () => {
     const template = PATH_TEMPLATES.find(
@@ -281,5 +380,37 @@ describe('starter workflow registry', () => {
 
     expect(upgraded.resolution).toBeNull();
     expect(upgraded.changed).toBe(false);
+  });
+
+  it('rehydrates starter provenance for canonical translation v2 configs without starter metadata', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveTranslationPathConfig());
+    const databaseNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(upgraded.resolution?.matchedBy).toBe('canonical_hash');
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.config.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        starterKey: 'translation_en_pl',
+      })
+    );
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('{{result.parameters}}');
+  });
+
+  it('upgrades stale parameter inference v2 configs with blank product_core parser mappings', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveParameterInferencePathConfig());
+    const parserNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'parser');
+    const parserMappings = parserNode?.config?.parser?.mappings as Record<string, string> | undefined;
+
+    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.config.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        starterKey: 'parameter_inference',
+      })
+    );
+    expect(parserMappings?.['title']).toBe('$.name_en');
+    expect(parserMappings?.['content_en']).toBe('$.description_en');
   });
 });

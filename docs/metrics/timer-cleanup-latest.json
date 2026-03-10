@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-10T08:15:32.686Z",
-  "status": "warn",
+  "generatedAt": "2026-03-10T11:50:03.629Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 2042
+    "status": "passed",
+    "fileCount": 2051
   },
   "scope": {
     "root": "src",
@@ -16,25 +16,7 @@
       "use*.ts"
     ]
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "settimeout-no-cleanup",
-      "message": "setTimeout() in a component with useEffect but no clearTimeout(). Consider cleaning up timers on unmount.",
-      "file": "src/features/ai/ai-paths/components/run-history-panel.tsx",
-      "line": 89,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "settimeout-no-cleanup",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 118
+  "issues": [],
+  "rules": [],
+  "durationMs": 239
 }

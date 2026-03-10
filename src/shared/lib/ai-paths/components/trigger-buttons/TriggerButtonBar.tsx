@@ -208,6 +208,7 @@ export function TriggerButtonBar({
   const showRunFeedback =
     entityType === 'product' && PRODUCT_RUN_FEEDBACK_LOCATIONS.has(location);
   const compactInlineLimit = resolveCompactInlineLimit(location);
+  const barClassName = cn('flex flex-wrap items-center gap-2', className);
 
   if (buttons.length === 0) return null;
 
@@ -215,6 +216,12 @@ export function TriggerButtonBar({
     compactInlineLimit === null ? buttons : buttons.slice(0, compactInlineLimit);
   const overflowButtons =
     compactInlineLimit === null ? [] : buttons.slice(compactInlineLimit);
+  const overflowTrigger = (
+    <span className='inline-flex items-center gap-1'>
+      <MoreHorizontal className='size-3.5' aria-hidden='true' />
+      <span>+{overflowButtons.length}</span>
+    </span>
+  );
   const latestOverflowRun = showRunFeedback
     ? overflowButtons
       .map((button) => lastRuns[button.id] ?? null)
@@ -293,7 +300,7 @@ export function TriggerButtonBar({
       return (
         <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>
           {control}
-          {lastRun ? <TriggerRunFeedback location={location} run={lastRun} /> : null}
+          {lastRun ? <TriggerRunFeedback location={(() => location)()} run={lastRun} /> : null}
         </div>
       );
     }
@@ -339,7 +346,7 @@ export function TriggerButtonBar({
     return (
       <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>
         {control}
-        {lastRun ? <TriggerRunFeedback location={location} run={lastRun} /> : null}
+        {lastRun ? <TriggerRunFeedback location={(() => location)()} run={lastRun} /> : null}
       </div>
     );
   };
@@ -384,7 +391,7 @@ export function TriggerButtonBar({
   };
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={barClassName}>
       {visibleButtons.map(renderInlineButton)}
       {overflowButtons.length > 0 ? (
         <div className='inline-flex min-w-0 flex-wrap items-center gap-2'>
@@ -394,16 +401,13 @@ export function TriggerButtonBar({
             variant='outline'
             ariaLabel={`Open ${overflowButtons.length} more AI actions`}
             triggerClassName='h-7 min-w-7 px-1.5 text-[10px] font-semibold text-gray-200'
-            trigger={
-              <span className='inline-flex items-center gap-1'>
-                <MoreHorizontal className='size-3.5' aria-hidden='true' />
-                <span>+{overflowButtons.length}</span>
-              </span>
-            }
+            trigger={overflowTrigger}
           >
             {overflowButtons.map(renderOverflowItem)}
           </ActionMenu>
-          {latestOverflowRun ? <TriggerRunFeedback location={location} run={latestOverflowRun} /> : null}
+          {latestOverflowRun ? (
+            <TriggerRunFeedback location={(() => location)()} run={latestOverflowRun} />
+          ) : null}
         </div>
       ) : null}
     </div>

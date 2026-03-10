@@ -11,11 +11,6 @@ import {
   type ReactNode,
 } from 'react';
 
-import {
-  getKangurInternalQueryParamName,
-  readKangurUrlParam,
-  type KangurInternalQueryParamKey,
-} from '@/features/kangur/config/routing';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -24,12 +19,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
-  claimCurrentKangurDailyQuestReward,
-  getCurrentKangurDailyQuest,
-} from '@/features/kangur/ui/services/daily-quests';
-import {
   mapKangurPracticeAssignmentsByOperation,
-  parseKangurMixedTrainingQuickStartParams,
   selectKangurPracticeAssignmentForScreen,
   selectKangurResultPracticeAssignment,
 } from '@/features/kangur/ui/services/delegated-assignments';
@@ -38,12 +28,6 @@ import {
   generateQuestions,
   generateTrainingQuestions,
 } from '@/features/kangur/ui/services/math-questions';
-import {
-  addXp,
-  createGameSessionReward,
-  getNextLockedBadge,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -57,17 +41,16 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 
 import {
-  isKangurDifficulty,
-  isKangurOperation,
-  TOTAL_QUESTIONS,
-} from './KangurGameRuntimeContext.shared';
+  buildKangurCompletedGameOutcome,
+  useKangurGameQuickStart,
+} from './KangurGameRuntimeContext.helpers';
+import { TOTAL_QUESTIONS } from './KangurGameRuntimeContext.shared';
 
 import type {
   KangurGameRuntimeActionsContextValue,
   KangurGameRuntimeContextValue,
   KangurGameRuntimeStateContextValue,
 } from './KangurGameRuntimeContext.shared';
-
 
 const kangurPlatform = getKangurPlatform();
 
@@ -89,7 +72,6 @@ export function KangurGameRuntimeProvider({
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
   const progress = useKangurProgressState();
-  const quickStartConsumedRef = useRef(false);
   const xpToastTimeoutRef = useRef<number | null>(null);
   const [screen, setScreen] = useState<KangurGameScreen>('home');
   const [sessionPlayerName, setSessionPlayerName] = useState('');
@@ -213,69 +195,17 @@ export function KangurGameRuntimeProvider({
     setScreen('playing');
   };
 
-  useEffect(() => {
-    if (
-      quickStartConsumedRef.current ||
-      screen !== 'home' ||
-      typeof window === 'undefined' ||
-      isLoadingAuth
-    ) {
-      return;
-    }
-
-    const url = new URL(window.location.href);
-    const quickStart = readKangurUrlParam(url.searchParams, 'quickStart', basePath);
-    if (!quickStart) {
-      return;
-    }
-
-    const clearQuickStartParams = (): void => {
-      (['quickStart', 'operation', 'categories', 'count', 'difficulty'] as const).forEach((key) => {
-        url.searchParams.delete(
-          getKangurInternalQueryParamName(key as KangurInternalQueryParamKey, basePath)
-        );
-      });
-      const nextHref = `${url.pathname}${url.search}${url.hash}`;
-      window.history.replaceState({}, '', nextHref);
-    };
-
-    if (quickStart === 'training') {
-      quickStartConsumedRef.current = true;
-      if (!user && playerName.trim().length === 0) {
-        setPlayerName('Gracz');
-      }
-
-      const trainingPreset = parseKangurMixedTrainingQuickStartParams(url.searchParams, basePath);
-      clearQuickStartParams();
-      if (trainingPreset) {
-        handleStartTraining(trainingPreset);
-        return;
-      }
-
-      setScreen('training');
-      return;
-    }
-
-    if (quickStart === 'operation') {
-      const requestedOperation = readKangurUrlParam(url.searchParams, 'operation', basePath);
-      const requestedDifficulty = readKangurUrlParam(url.searchParams, 'difficulty', basePath);
-      const nextOperation = isKangurOperation(requestedOperation) ? requestedOperation : null;
-      const nextDifficulty = isKangurDifficulty(requestedDifficulty)
-        ? requestedDifficulty
-        : 'medium';
-
-      quickStartConsumedRef.current = true;
-      if (!user && playerName.trim().length === 0) {
-        setPlayerName('Gracz');
-      }
-      clearQuickStartParams();
-      if (nextOperation) {
-        handleSelectOperation(nextOperation, nextDifficulty);
-      } else {
-        setScreen('operation');
-      }
-    }
-  }, [basePath, handleSelectOperation, handleStartTraining, isLoadingAuth, playerName, screen, user]);
+  useKangurGameQuickStart({
+    basePath,
+    isLoadingAuth,
+    playerName,
+    screen,
+    user,
+    setPlayerName,
+    setScreen,
+    handleSelectOperation,
+    handleStartTraining,
+  });
 
   const totalQuestions = questions.length > 0 ? questions.length : TOTAL_QUESTIONS;
   const currentQuestion = questions[currentQuestionIndex] ?? null;
@@ -290,80 +220,26 @@ export function KangurGameRuntimeProvider({
     if (currentQuestionIndex + 1 >= totalQuestions) {
       const nextPlayerName = ensureSessionPlayerName();
       const taken = Math.round((Date.now() - (startTime ?? Date.now())) / 1000);
-      const selectedOperation = operation ?? 'mixed';
-      const greatThreshold = Math.max(1, Math.ceil(totalQuestions * 0.8));
       setTimeTaken(taken);
       setScore(nextScore);
-      const storedProgress = loadProgress();
-      const sessionReward = createGameSessionReward(storedProgress, {
-        operation: selectedOperation,
+      const {
+        awardedXp,
+        awardedBadges,
+        awardedBreakdown,
+        dailyQuestToastHint,
+        nextBadgeToastHint,
+        recommendationToastHint,
+        selectedOperation,
+        isPerfect,
+        isGreat,
+      } = buildKangurCompletedGameOutcome({
+        activeSessionRecommendation,
         difficulty,
-        correctAnswers: nextScore,
-        followsRecommendation: Boolean(activeSessionRecommendation),
+        nextScore,
+        operation,
+        taken,
         totalQuestions,
-        durationSeconds: taken,
       });
-
-      const isPerfect = nextScore === totalQuestions;
-      const isGreat = nextScore >= greatThreshold;
-      const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, { persist: false });
-      const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
-      let awardedXp = sessionReward.xp;
-      let awardedBreakdown = [...(sessionReward.breakdown ?? [])];
-      let finalProgress = sessionRewardResult.updated;
-      const questClaim = claimCurrentKangurDailyQuestReward(finalProgress);
-      let awardedBadges = [...sessionRewardResult.newBadges];
-      let dailyQuestAfter = questClaim.quest;
-
-      if (questClaim.xpAwarded > 0) {
-        const questBonusResult = addXp(questClaim.xpAwarded, {
-          dailyQuestsCompleted: (finalProgress.dailyQuestsCompleted ?? 0) + 1,
-        });
-        awardedXp += questClaim.xpAwarded;
-        awardedBreakdown.push({
-          kind: 'daily_quest',
-          label: 'Misja dnia',
-          xp: questClaim.xpAwarded,
-        });
-        finalProgress = questBonusResult.updated;
-        awardedBadges = Array.from(
-          new Set([...awardedBadges, ...questBonusResult.newBadges])
-        );
-        dailyQuestAfter = questClaim.quest;
-      }
-
-      const nextBadge = getNextLockedBadge(finalProgress);
-      let nextBadgeToastHint: KangurXpToastState['nextBadge'] = null;
-      if (nextBadge) {
-        nextBadgeToastHint = {
-          emoji: nextBadge.emoji,
-          name: nextBadge.name,
-          summary: nextBadge.summary,
-        };
-      }
-      let dailyQuestToastHint: KangurXpToastState['dailyQuest'] = null;
-      if (
-        dailyQuestAfter?.progress.status === 'completed' &&
-        dailyQuestBefore?.progress.status !== 'completed'
-      ) {
-        dailyQuestToastHint = {
-          title: dailyQuestAfter.assignment.title,
-          summary: dailyQuestAfter.progress.summary,
-          xpAwarded: questClaim.xpAwarded,
-        };
-      }
-      const recommendationToastHint: KangurXpToastState['recommendation'] =
-        activeSessionRecommendation
-          ? {
-            label: activeSessionRecommendation.label,
-            title: activeSessionRecommendation.title,
-            summary: dailyQuestToastHint
-              ? 'Ten ruch domknal polecany kierunek i misje dnia.'
-              : nextBadgeToastHint
-                ? `Ten ruch najmocniej przybliza odznake ${nextBadgeToastHint.name}.`
-                : 'To byl najmocniejszy ruch dla biezacego postepu.',
-          }
-          : null;
 
       void kangurPlatform.score
         .create({

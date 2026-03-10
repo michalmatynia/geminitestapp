@@ -69,7 +69,9 @@ export function useKangurAiTutorWidgetState() {
   const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
   const [panelAnchorMode, setPanelAnchorMode] = useState<'contextual' | 'dock'>('contextual');
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
-  const [persistedSelectionPageRect, setPersistedSelectionPageRect] = useState<DOMRect | null>(null);
+  const [persistedSelectionPageRect, setPersistedSelectionPageRect] = useState<DOMRect | null>(
+    null
+  );
   const [persistedSelectionContainerRect, setPersistedSelectionContainerRect] =
     useState<DOMRect | null>(null);
   const [dismissedSelectedText, setDismissedSelectedText] = useState<string | null>(null);
@@ -80,6 +82,10 @@ export function useKangurAiTutorWidgetState() {
     useState<PendingSelectionResponse | null>(null);
   const [selectionResponseComplete, setSelectionResponseComplete] =
     useState<PendingSelectionResponse | null>(null);
+  const [sectionResponsePending, setSectionResponsePending] =
+    useState<SectionExplainContext | null>(null);
+  const [sectionResponseComplete, setSectionResponseComplete] =
+    useState<SectionExplainContext | null>(null);
   const [contextSwitchNotice, setContextSwitchNotice] = useState<{
     title: string;
     target: string;
@@ -106,6 +112,7 @@ export function useKangurAiTutorWidgetState() {
   const motionTimeoutRef = useRef<number | null>(null);
   const selectionExplainTimeoutRef = useRef<number | null>(null);
   const selectionResponseCompleteTimeoutRef = useRef<number | null>(null);
+  const sectionResponseCompleteTimeoutRef = useRef<number | null>(null);
   const guestIntroShownForCurrentEntryRef = useRef(false);
   const homeOnboardingShownForCurrentEntryRef = useRef(false);
   const avatarDragStateRef = useRef<TutorAvatarDragState | null>(null);
@@ -161,6 +168,9 @@ export function useKangurAiTutorWidgetState() {
     persistedSelectionRect,
     persistedSessionKey,
     previousSessionKeyRef,
+    sectionResponseComplete,
+    sectionResponseCompleteTimeoutRef,
+    sectionResponsePending,
     selectionContextSpotlightTick,
     selectionExplainTimeoutRef,
     selectionResponseComplete,
@@ -193,6 +203,8 @@ export function useKangurAiTutorWidgetState() {
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSectionResponseComplete,
+    setSectionResponsePending,
     setSelectionContextSpotlightTick,
     setSelectionResponseComplete,
     setSelectionResponsePending,

@@ -38,6 +38,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       <KangurHeroMilestoneSummary
         className='mb-3 w-full'
         dataTestIdPrefix='kangur-learner-profile-hero-milestone'
+        trackDataTestIdPrefix='kangur-learner-profile-hero-milestone-track'
         progress={progress}
       />
 

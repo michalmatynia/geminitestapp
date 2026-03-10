@@ -31,6 +31,16 @@ type KangurLoginModalContextValue = {
   openLoginModal: (callbackUrl?: string | null, options?: KangurLoginModalOpenOptions) => void;
 };
 
+type KangurLoginModalStateValue = Pick<
+  KangurLoginModalContextValue,
+  'authMode' | 'callbackUrl' | 'homeHref' | 'isOpen' | 'isRouteDriven'
+>;
+
+type KangurLoginModalActionsValue = Pick<
+  KangurLoginModalContextValue,
+  'closeLoginModal' | 'dismissLoginModal' | 'openLoginModal'
+>;
+
 type KangurLoginModalProviderProps = {
   children: ReactNode;
 };
@@ -153,11 +163,43 @@ export const KangurLoginModalProvider = ({
 };
 
 export const useKangurLoginModal = (): KangurLoginModalContextValue => {
+  const state = useKangurLoginModalState();
+  const actions = useKangurLoginModalActions();
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+};
+
+export const useKangurLoginModalState = (): KangurLoginModalStateValue => {
   const context = useContext(KangurLoginModalContext);
   if (!context) {
     throw internalError(
-      'useKangurLoginModal must be used within a KangurLoginModalProvider'
+      'useKangurLoginModalState must be used within a KangurLoginModalProvider'
     );
   }
-  return context;
+  return useMemo(
+    () => ({
+      authMode: context.authMode,
+      callbackUrl: context.callbackUrl,
+      homeHref: context.homeHref,
+      isOpen: context.isOpen,
+      isRouteDriven: context.isRouteDriven,
+    }),
+    [context]
+  );
+};
+
+export const useKangurLoginModalActions = (): KangurLoginModalActionsValue => {
+  const context = useContext(KangurLoginModalContext);
+  if (!context) {
+    throw internalError(
+      'useKangurLoginModalActions must be used within a KangurLoginModalProvider'
+    );
+  }
+  return useMemo(
+    () => ({
+      closeLoginModal: context.closeLoginModal,
+      dismissLoginModal: context.dismissLoginModal,
+      openLoginModal: context.openLoginModal,
+    }),
+    [context]
+  );
 };

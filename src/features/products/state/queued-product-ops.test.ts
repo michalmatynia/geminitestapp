@@ -22,6 +22,21 @@ describe('queued-product-ops', () => {
     expect(ops.getQueuedProductIds().size).toBe(0);
   });
 
+  it('tracks AI-run queued ids separately from legacy and offline sources', () => {
+    const updateSource = ops.buildQueuedProductOfflineMutationSource('update');
+    const aiRunSource = ops.buildQueuedProductAiRunSource('run-1');
+    if (!aiRunSource) throw new Error('Expected ai-run source');
+
+    ops.addQueuedProductId('product-legacy');
+    ops.addQueuedProductSource('product-offline', updateSource);
+    ops.addQueuedProductSource('product-run', aiRunSource);
+
+    expect(ops.getQueuedProductIds()).toEqual(
+      new Set(['product-legacy', 'product-offline', 'product-run'])
+    );
+    expect(ops.getQueuedAiRunProductIds()).toEqual(new Set(['product-run']));
+  });
+
   it('tracks legacy queued ids through the compatibility helpers', () => {
     ops.addQueuedProductId('product-1');
 
@@ -109,6 +124,7 @@ describe('queued-product-ops', () => {
 
     expect(freshOps.getQueuedProductIds()).toEqual(new Set(['product-seed']));
     expect(freshOps.getQueuedProductSources('product-seed')).toEqual(new Set(['legacy']));
+    expect(freshOps.getQueuedAiRunProductIds().size).toBe(0);
   });
 
   it('restores source-aware storage values and prunes expired sources', async () => {
@@ -166,6 +182,31 @@ describe('queued-product-ops', () => {
 
     act(() => {
       ops.removeQueuedProductSource('product-1', updateSource);
+    });
+    expect(result.current.size).toBe(0);
+  });
+
+  it('useQueuedAiRunProductIds reflects only ai-run source changes', async () => {
+    const { renderHook, act } = await import('@testing-library/react');
+    const updateSource = ops.buildQueuedProductOfflineMutationSource('update');
+    const aiRunSource = ops.buildQueuedProductAiRunSource('run-live');
+    if (!aiRunSource) throw new Error('Expected ai-run source');
+
+    const { result } = renderHook(() => ops.useQueuedAiRunProductIds());
+    expect(result.current.size).toBe(0);
+
+    act(() => {
+      ops.addQueuedProductSource('product-1', updateSource);
+    });
+    expect(result.current.size).toBe(0);
+
+    act(() => {
+      ops.addQueuedProductSource('product-1', aiRunSource);
+    });
+    expect(result.current).toEqual(new Set(['product-1']));
+
+    act(() => {
+      ops.removeQueuedProductSource('product-1', aiRunSource);
     });
     expect(result.current.size).toBe(0);
   });

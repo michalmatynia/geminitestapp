@@ -11,11 +11,13 @@ import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-
 
 const {
   invalidateProductsCountsAndDetailMock,
+  getRecentAiPathRunEnqueueMock,
   markQueuedProductSourceMock,
   removeQueuedProductSourceMock,
   subscribeToTrackedAiPathRunMock,
 } = vi.hoisted(() => ({
   invalidateProductsCountsAndDetailMock: vi.fn(),
+  getRecentAiPathRunEnqueueMock: vi.fn(),
   markQueuedProductSourceMock: vi.fn(),
   removeQueuedProductSourceMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
@@ -30,6 +32,10 @@ vi.mock('@/features/products/state/queued-product-ops', () => ({
   buildQueuedProductAiRunSource: (runId: string) => `ai-run:${runId.trim()}`,
   markQueuedProductSource: (...args: unknown[]) => markQueuedProductSourceMock(...args),
   removeQueuedProductSource: (...args: unknown[]) => removeQueuedProductSourceMock(...args),
+}));
+
+vi.mock('@/shared/lib/query-invalidation', () => ({
+  getRecentAiPathRunEnqueue: (...args: unknown[]) => getRecentAiPathRunEnqueueMock(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
@@ -86,11 +92,13 @@ describe('useProductAiPathsRunSync', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     invalidateProductsCountsAndDetailMock.mockReset();
+    getRecentAiPathRunEnqueueMock.mockReset();
     markQueuedProductSourceMock.mockReset();
     removeQueuedProductSourceMock.mockReset();
     subscribeToTrackedAiPathRunMock.mockReset();
     trackedRunListeners.clear();
     trackedRunUnsubscribes.clear();
+    getRecentAiPathRunEnqueueMock.mockReturnValue(null);
 
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (
@@ -162,6 +170,38 @@ describe('useProductAiPathsRunSync', () => {
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
     expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
+  });
+
+  it('replays the most recent product enqueue on mount so queued badges survive remounts', async () => {
+    getRecentAiPathRunEnqueueMock.mockReturnValue({
+      type: 'run-enqueued',
+      runId: 'run-recent',
+      entityType: 'product',
+      entityId: 'product-11',
+      at: Date.now(),
+    });
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+    await flushAsync();
+
+    expect(markQueuedProductSourceMock).toHaveBeenCalledWith(
+      'product-11',
+      'ai-run:run-recent',
+      30_000
+    );
+    expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+      'run-recent',
+      expect.any(Function),
+      expect.objectContaining({
+        initialSnapshot: expect.objectContaining({
+          entityId: 'product-11',
+          entityType: 'product',
+        }),
+      })
+    );
   });
 
   it('removes only the completed run source while another run for the same product remains queued', async () => {
@@ -374,6 +414,25 @@ describe('useProductAiPathsRunSync', () => {
           detail: { entityType: 'product', entityId: 'product-1' },
         })
       );
+    });
+    await flushAsync();
+
+    expect(markQueuedProductSourceMock).not.toHaveBeenCalled();
+    expect(subscribeToTrackedAiPathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('ignores the most recent enqueue replay when it is not for a product run', async () => {
+    getRecentAiPathRunEnqueueMock.mockReturnValue({
+      type: 'run-enqueued',
+      runId: 'run-note',
+      entityType: 'note',
+      entityId: 'note-1',
+      at: Date.now(),
+    });
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
     });
     await flushAsync();
 

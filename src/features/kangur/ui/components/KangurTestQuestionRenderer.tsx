@@ -21,7 +21,7 @@ import { cn, sanitizeSvg } from '@/shared/utils';
 
 import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
 import { KangurLessonNarrator } from './KangurLessonNarrator';
-import { KangurQuestionIllustrationRenderer } from './KangurQuestionIllustrationRenderer';
+import { renderKangurQuestionIllustration } from './KangurQuestionIllustrationRenderer';
 
 type Props = {
   question: KangurTestQuestion;
@@ -44,9 +44,12 @@ export function KangurTestQuestionRenderer({
 }: Props): React.JSX.Element {
   const runtime = useOptionalKangurTestSuiteRuntime();
   const presentation = question.presentation ?? { layout: 'classic', choiceStyle: 'list' };
+  const stemDocument = question.stemDocument;
+  const explanationDocument = question.explanationDocument;
   const resolvedTotalQuestions = totalQuestions ?? runtime?.totalQuestions;
   const isAnswered = selectedLabel !== null;
   const isCorrect = selectedLabel === question.correctChoiceLabel;
+  const choiceInteractionState = showAnswer ? 'locked' : 'interactive';
   const narrationSourceRef = React.useRef<HTMLDivElement | null>(null);
   const narratorLesson = React.useMemo<
     Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>
@@ -84,21 +87,26 @@ export function KangurTestQuestionRenderer({
     resolvedTotalQuestions,
     showAnswer,
   ]);
-  const renderRichStem = questionDocumentNeedsRichRenderer(question.stemDocument, question.prompt);
+  const renderRichStem = questionDocumentNeedsRichRenderer(stemDocument, question.prompt);
   const renderRichExplanation = questionDocumentNeedsRichRenderer(
-    question.explanationDocument,
+    explanationDocument,
     question.explanation ?? ''
   );
   const choiceGrid = presentation.choiceStyle === 'grid' || hasRichChoiceContent(question);
+  const handleChoiceSelect = (label: string): void => {
+    if (choiceInteractionState === 'interactive') {
+      onSelect(label);
+    }
+  };
 
-  const stemContent = renderRichStem && question.stemDocument ? (
-    <KangurLessonDocumentRenderer document={question.stemDocument} renderMode='lesson' />
+  const stemContent = renderRichStem && stemDocument ? (
+    <KangurLessonDocumentRenderer document={stemDocument} renderMode='lesson' />
   ) : (
     <p className='text-sm font-medium leading-relaxed text-slate-800'>{question.prompt}</p>
   );
 
   const illustrationContent = hasIllustration(question) ? (
-    <KangurQuestionIllustrationRenderer illustration={question.illustration} className='my-2' />
+    renderKangurQuestionIllustration(question.illustration, 'my-2')
   ) : null;
 
   const promptContent =
@@ -184,15 +192,13 @@ export function KangurTestQuestionRenderer({
               accent={accent}
               key={choice.label}
               type='button'
-              onClick={(): void => {
-                if (!showAnswer) onSelect(choice.label);
-              }}
+              onClick={(): void => handleChoiceSelect(choice.label)}
               data-testid={`kangur-test-question-choice-${index}`}
               className={cn(
                 'flex items-start gap-3 rounded-[24px] px-4 py-3 text-left text-sm font-semibold transition-all',
                 cardClassName,
                 choiceGrid && 'h-full min-h-[112px]',
-                showAnswer ? 'cursor-default' : 'cursor-pointer'
+                choiceInteractionState === 'locked' ? 'cursor-default' : 'cursor-pointer'
               )}
               emphasis={emphasis}
             >

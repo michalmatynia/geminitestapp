@@ -149,7 +149,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       variant={completed ? 'success' : 'surface'}
                     >
                       <Link
-                        href={buildAssignmentHref(basePath, assignment.action)}
+                        href={(() => buildAssignmentHref(basePath, assignment.action))()}
                         targetPageKey={assignment.action.page}
                       >
                         {assignment.action.label}

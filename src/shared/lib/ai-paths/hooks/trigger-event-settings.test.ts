@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -166,12 +170,28 @@ describe('loadPathConfigsFromSettings', () => {
 
   // ── config validation errors ──────────────────────────────────────────────
 
-  it('throws when a config referenced by the index is missing', async () => {
+  it('skips index entries whose config payload is missing and repairs the stored index', async () => {
     const data: Array<{ key: string; value: string }> = [
-      { key: PATH_INDEX_KEY, value: makeIndex([{ id: 'path-missing', name: 'Missing' }]) },
-      // intentionally no config entry
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([
+          { id: 'path-valid', name: 'Valid' },
+          { id: 'path-missing', name: 'Missing' },
+        ]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}path-valid`,
+        value: makeConfig('path-valid', 'Valid'),
+      },
     ];
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/missing config payload/i);
+    const result = await loadPathConfigsFromSettings(data);
+
+    expect(result.settingsPathOrder).toEqual(['path-valid']);
+    expect(Object.keys(result.configs)).toEqual(['path-valid']);
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      PATH_INDEX_KEY,
+      makeIndex([{ id: 'path-valid', name: 'Valid' }])
+    );
   });
 
   it('throws when a config value is invalid JSON', async () => {
@@ -261,6 +281,64 @@ describe('loadPathConfigsFromSettings', () => {
 
     const loaded = await loadPathConfigsFromSettings(data);
     expect(loaded.configs[config.id]?.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${config.id}`,
+      expect.any(String)
+    );
+  });
+
+  it('refreshes stale seeded starter workflow configs when trigger settings load them', async () => {
+    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!entry?.seedPolicy?.defaultPathId) {
+      throw new Error('Missing seeded default path id for starter_parameter_inference.');
+    }
+
+    const config = JSON.parse(
+      JSON.stringify(
+        materializeStarterWorkflowPathConfig(entry, {
+          pathId: entry.seedPolicy.defaultPathId,
+          seededDefault: true,
+        })
+      )
+    ) as ReturnType<typeof materializeStarterWorkflowPathConfig>;
+    const parserNode = config.nodes.find((node) => node.title === 'JSON Parser');
+    if (!parserNode?.config || !('parser' in parserNode.config)) {
+      throw new Error('Expected starter parameter inference parser node.');
+    }
+
+    (parserNode.config.parser as { mappings?: Record<string, string> }).mappings = {
+      ...(parserNode.config.parser as { mappings?: Record<string, string> }).mappings,
+      title: '$.title',
+    };
+    config.extensions = {
+      ...(config.extensions ?? {}),
+      aiPathsStarter: {
+        starterKey: entry.starterLineage.starterKey,
+        templateId: entry.templateId,
+        templateVersion: 12,
+        seededDefault: true,
+      },
+    };
+
+    const data: Array<{ key: string; value: string }> = [
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: config.id, name: config.name }]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}${config.id}`,
+        value: JSON.stringify(config),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const refreshedParserNode = loaded.configs[config.id]?.nodes.find(
+      (node) => node.title === 'JSON Parser'
+    );
+    const refreshedParserConfig = JSON.stringify(refreshedParserNode?.config ?? {});
+
+    expect(refreshedParserConfig).toContain('$.name_en');
+    expect(refreshedParserConfig).not.toContain('$.title');
     expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
       `${PATH_CONFIG_PREFIX}${config.id}`,
       expect.any(String)

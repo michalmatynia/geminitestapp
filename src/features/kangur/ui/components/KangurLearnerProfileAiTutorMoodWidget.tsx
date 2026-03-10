@@ -6,6 +6,7 @@ import {
   formatKangurProfileDateTime,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   KangurGlassPanel,
   KangurSectionHeading,
@@ -14,9 +15,12 @@ import {
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
   createDefaultKangurAiTutorLearnerMood,
-  getKangurTutorMoodPreset,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
+import {
+  formatKangurAiTutorTemplate,
+  getKangurAiTutorMoodCopy,
+} from '@/shared/contracts/kangur-ai-tutor-content';
 
 const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
   neutral: 'slate',
@@ -66,16 +70,17 @@ function LearnerMoodStat({
 }
 
 export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
+  const tutorContent = useKangurAiTutorContent();
   const { user } = useKangurLearnerProfileRuntime();
   const learner = user?.activeLearner ?? null;
   const learnerMood = learner?.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
-  const currentPreset = getKangurTutorMoodPreset(learnerMood.currentMoodId);
-  const baselinePreset = getKangurTutorMoodPreset(learnerMood.baselineMoodId);
+  const currentPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.currentMoodId);
+  const baselinePreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.baselineMoodId);
   const currentAccent = KANGUR_TUTOR_MOOD_ACCENTS[learnerMood.currentMoodId];
   const learnerName = learner?.displayName?.trim() ?? 'Tryb lokalny';
   const updatedLabel = learnerMood.lastComputedAt
     ? formatKangurProfileDateTime(learnerMood.lastComputedAt)
-    : 'Jeszcze nie obliczono';
+    : tutorContent.profileMoodWidget.updatedFallback;
 
   return (
     <KangurGlassPanel
@@ -92,13 +97,16 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
             align='left'
             description={
               learner
-                ? `To ustawienie nalezy do profilu ${learnerName} i zmienia sie wraz z postepem, zakresem zadania i historia rozmowy z tutorem.`
-                : 'W trybie lokalnym tutor dziala, ale nastroj nie zapisuje sie per uczen.'
+                ? formatKangurAiTutorTemplate(
+                    tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
+                    { learnerName }
+                  )
+                : tutorContent.profileMoodWidget.descriptionFallback
             }
             icon={<BrainCircuit className='h-5 w-5' />}
             iconAccent='teal'
             layout='inline'
-            title='Nastroj AI Tutora'
+            title={tutorContent.profileMoodWidget.title}
           />
 
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
@@ -118,20 +126,20 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
 
         <div className='grid w-full gap-3 sm:grid-cols-3 xl:max-w-3xl'>
           <LearnerMoodStat
-            description='Ton, do ktorego tutor wraca jako punktu wyjscia.'
-            label='Bazowy ton'
+            description={tutorContent.profileMoodWidget.baselineDescription}
+            label={tutorContent.profileMoodWidget.baselineLabel}
             testId='learner-profile-ai-tutor-mood-baseline'
             value={baselinePreset.label}
           />
           <LearnerMoodStat
-            description='Jak mocno sygnaly ucznia wspieraja obecny nastroj.'
-            label='Pewnosc'
+            description={tutorContent.profileMoodWidget.confidenceDescription}
+            label={tutorContent.profileMoodWidget.confidenceLabel}
             testId='learner-profile-ai-tutor-mood-confidence'
             value={formatMoodConfidence(learnerMood.confidence)}
           />
           <LearnerMoodStat
-            description='Ostatni zapis stanu w profilu ucznia.'
-            label='Aktualizacja'
+            description={tutorContent.profileMoodWidget.updatedDescription}
+            label={tutorContent.profileMoodWidget.updatedLabel}
             testId='learner-profile-ai-tutor-mood-updated'
             value={updatedLabel}
           />

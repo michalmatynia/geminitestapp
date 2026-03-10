@@ -19,6 +19,7 @@ import {
   isTrackedAiPathRunTerminal,
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
+import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
 
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
@@ -185,6 +186,8 @@ export function useProductAiPathsRunSync(): void {
     const handler = (event: Event): void => {
       handlePayload((event as CustomEvent<unknown>).detail);
     };
+
+    handlePayload(getRecentAiPathRunEnqueue());
 
     window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
 

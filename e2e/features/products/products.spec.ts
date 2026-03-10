@@ -34,7 +34,7 @@ test.describe('Products Management', () => {
     test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
 
     // Navigate to the products page
-    await page.goto('/admin/products');
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
   });
 
   const getCreateProductButton = (page: Page) =>

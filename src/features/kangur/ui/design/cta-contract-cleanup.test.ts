@@ -12,6 +12,22 @@ const kangurAiTutorWidgetPath = path.join(
   process.cwd(),
   'src/features/kangur/ui/components/KangurAiTutorWidget.tsx'
 );
+const kangurAiTutorPanelChromePath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx'
+);
+const kangurAiTutorPanelAuxiliaryControlsPath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorPanelAuxiliaryControls.tsx'
+);
+const kangurAiTutorMessageListPath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorMessageList.tsx'
+);
+const kangurAiTutorComposerPath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorComposer.tsx'
+);
 const kangurParentDashboardAiTutorWidgetPath = path.join(
   process.cwd(),
   'src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx'
@@ -29,6 +45,9 @@ type SourceEntry = {
   filePath: string;
   source: string;
 };
+
+const readSources = (paths: string[]): string =>
+  paths.map((filePath) => readFileSync(filePath, 'utf8')).join('\n');
 
 const collectSourceEntries = (directory: string): SourceEntry[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -85,7 +104,12 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('keeps the ai tutor runtime wrappers on the warm amber/orange palette', () => {
-    const source = readFileSync(kangurAiTutorWidgetPath, 'utf8');
+    const source = readSources([
+      kangurAiTutorPanelChromePath,
+      kangurAiTutorPanelAuxiliaryControlsPath,
+      kangurAiTutorMessageListPath,
+      kangurAiTutorComposerPath,
+    ]);
 
     expect(source).toContain('bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500');
     expect(source).toContain('border border-amber-100 bg-amber-50/80');

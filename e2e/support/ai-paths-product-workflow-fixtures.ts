@@ -47,6 +47,11 @@ type ProductApiRecord = {
   description_en?: string | null;
   description_pl?: string | null;
   description_de?: string | null;
+  parameters?: Array<{
+    parameterId: string;
+    value?: string | null;
+    valuesByLanguage?: Record<string, string>;
+  }>;
 };
 
 type ProductWorkflowFixtureOptions = {
@@ -66,6 +71,32 @@ type ProductWorkflowFixture = {
   triggerButton: AiTriggerButtonRecord;
   expectedValue: string;
   updateField: 'description_pl' | 'description_de';
+  cleanup: () => Promise<void>;
+};
+
+type ProductTranslationWorkflowFixtureOptions = {
+  location: Extract<AiTriggerButtonLocation, 'product_row' | 'product_modal'>;
+  triggerButtonName: string;
+  pathName: string;
+  expectedDescriptionPl: string;
+  initialParameters: Array<{
+    parameterId: string;
+    value?: string | null;
+    valuesByLanguage?: Record<string, string>;
+  }>;
+  translatedParameters: Array<{
+    parameterId: string;
+    value: string;
+  }>;
+};
+
+type ProductTranslationWorkflowFixture = {
+  product: ProductApiRecord;
+  searchTerm: string;
+  pathId: string;
+  pathName: string;
+  triggerButton: AiTriggerButtonRecord;
+  expectedDescriptionPl: string;
   cleanup: () => Promise<void>;
 };
 
@@ -329,7 +360,16 @@ const deleteTriggerButton = async (page: Page, triggerButtonId: string): Promise
 
 const createProduct = async (
   page: Page,
-  args: { sku: string; nameEn: string; descriptionEn: string }
+  args: {
+    sku: string;
+    nameEn: string;
+    descriptionEn: string;
+    parameters?: Array<{
+      parameterId: string;
+      value?: string | null;
+      valuesByLanguage?: Record<string, string>;
+    }>;
+  }
 ): Promise<ProductApiRecord> => {
   const response = await browserRequest<ProductApiRecord>(page, {
     method: 'POST',
@@ -340,6 +380,7 @@ const createProduct = async (
       name_pl: args.nameEn,
       description_en: args.descriptionEn,
       description_pl: args.descriptionEn,
+      ...(args.parameters ? { parameters: JSON.stringify(args.parameters) } : {}),
     },
   });
   return expectApiSuccess(response, '/api/v2/products');
@@ -560,6 +601,204 @@ const createDeterministicProductUpdatePathConfig = (args: {
   };
 };
 
+const createDeterministicParameterTranslationPathConfig = (args: {
+  pathId: string;
+  pathName: string;
+  triggerEventId: string;
+  expectedDescriptionPl: string;
+  translatedParameters: Array<{
+    parameterId: string;
+    value: string;
+  }>;
+  timestamp: string;
+}): PathConfig => {
+  const baseConfig = createDefaultPathConfig(args.pathId);
+  const triggerNodeId = `node-trigger-${randomSuffix()}`;
+  const descriptionNodeId = `node-description-${randomSuffix()}`;
+  const parametersNodeId = `node-parameters-${randomSuffix()}`;
+  const databaseNodeId = `node-database-${randomSuffix()}`;
+
+  const nodes: AiNode[] = [
+    {
+      id: triggerNodeId,
+      instanceId: triggerNodeId,
+      type: 'trigger',
+      title: 'Trigger',
+      description: 'Playwright translation workflow trigger',
+      position: { x: 80, y: 220 },
+      data: {},
+      inputs: [],
+      outputs: ['trigger'],
+      config: {
+        trigger: {
+          event: args.triggerEventId,
+          contextMode: 'trigger_only',
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    } as AiNode,
+    {
+      id: descriptionNodeId,
+      instanceId: descriptionNodeId,
+      type: 'constant',
+      title: 'Translated Description',
+      description: 'Deterministic Polish description payload',
+      position: { x: 360, y: 84 },
+      data: {},
+      inputs: ['trigger'],
+      outputs: ['value'],
+      config: {
+        constant: {
+          value: {
+            description_pl: args.expectedDescriptionPl,
+          },
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    } as AiNode,
+    {
+      id: parametersNodeId,
+      instanceId: parametersNodeId,
+      type: 'constant',
+      title: 'Translated Parameters',
+      description: 'Deterministic translated parameter payload',
+      position: { x: 360, y: 276 },
+      data: {},
+      inputs: ['trigger'],
+      outputs: ['value'],
+      config: {
+        constant: {
+          value: {
+            parameters: args.translatedParameters,
+          },
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    } as AiNode,
+    {
+      id: databaseNodeId,
+      instanceId: databaseNodeId,
+      type: 'database',
+      title: 'Persist Translation',
+      description: 'Writes translated description and merged parameter languages back to the product',
+      position: { x: 700, y: 220 },
+      data: {},
+      inputs: ['trigger', 'value', 'result'],
+      outputs: ['result', 'bundle', 'query', 'queryMode', 'querySource'],
+      config: {
+        database: {
+          operation: 'update',
+          entityType: 'product',
+          mode: 'replace',
+          updatePayloadMode: 'custom',
+          useMongoActions: true,
+          actionCategory: 'update',
+          action: 'updateOne',
+          query: {
+            provider: 'auto',
+            collection: 'products',
+            mode: 'custom',
+            preset: 'by_id',
+            field: 'id',
+            idType: 'string',
+            queryTemplate: '{"id":"{{entityId}}"}',
+            limit: 1,
+            sort: '',
+            projection: '',
+            single: true,
+          },
+          updateTemplate:
+            '{\n' +
+            '  "$set": {\n' +
+            '    "description_pl": "{{value.description_pl}}",\n' +
+            '    "parameters": {{result.parameters}}\n' +
+            '  },\n' +
+            '  "$unset": {\n' +
+            '    "__noop__": ""\n' +
+            '  }\n' +
+            '}',
+          mappings: [
+            {
+              sourcePort: 'value',
+              sourcePath: 'description_pl',
+              targetPath: 'description_pl',
+            },
+            {
+              sourcePort: 'result',
+              sourcePath: 'parameters',
+              targetPath: 'parameters',
+            },
+          ],
+          writeOutcomePolicy: {
+            onZeroAffected: 'fail',
+          },
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    } as AiNode,
+  ];
+
+  return {
+    ...baseConfig,
+    name: args.pathName,
+    description: 'Playwright deterministic translation parameter merge workflow',
+    strictFlowMode: true,
+    aiPathsValidation: { enabled: false },
+    nodes,
+    edges: [
+      {
+        id: `edge-trigger-description-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: descriptionNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-trigger-parameters-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: parametersNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-trigger-database-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: databaseNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-description-database-${randomSuffix()}`,
+        from: descriptionNodeId,
+        to: databaseNodeId,
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: `edge-parameters-database-${randomSuffix()}`,
+        from: parametersNodeId,
+        to: databaseNodeId,
+        fromPort: 'value',
+        toPort: 'result',
+      },
+    ],
+    updatedAt: args.timestamp,
+    runtimeState: { inputs: {}, outputs: {} },
+    parserSamples: {},
+    updaterSamples: {},
+    lastRunAt: null,
+    runCount: 0,
+    uiState: {
+      selectedNodeId: triggerNodeId,
+      configOpen: false,
+    },
+  };
+};
+
 const extractRunId = (payload: unknown): string | null => {
   if (!payload || typeof payload !== 'object') return null;
 
@@ -745,6 +984,104 @@ export async function createProductWorkflowFixture(
       triggerButton,
       expectedValue: options.expectedValue,
       updateField: options.updateField,
+      cleanup,
+    };
+  } catch (error) {
+    await cleanup();
+    throw error;
+  }
+}
+
+export async function createProductTranslationWorkflowFixture(
+  page: Page,
+  options: ProductTranslationWorkflowFixtureOptions
+): Promise<ProductTranslationWorkflowFixture> {
+  await openAdminProductsPage(page);
+  await cleanupStaleProductWorkflowFixtures(page);
+
+  const cleanupTasks: Array<() => Promise<void>> = [];
+  const cleanup = async (): Promise<void> => {
+    while (cleanupTasks.length > 0) {
+      const task = cleanupTasks.pop();
+      if (!task) continue;
+      await task().catch(() => undefined);
+    }
+  };
+
+  try {
+    const suffix = randomSuffix();
+    const shortSuffix = suffix.slice(-6).toUpperCase();
+    const timestamp = new Date().toISOString();
+    const sku = `${PLAYWRIGHT_AI_PATHS_PRODUCT_SKU_PREFIX}${suffix}`.toUpperCase();
+    const nameEn = `Playwright AI Paths Translation ${suffix}`;
+    const descriptionEn = `Playwright AI Paths translation source ${suffix}`;
+    const pathId = `${PLAYWRIGHT_AI_PATHS_PATH_ID_PREFIX}${suffix.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const pathName = `${options.pathName} ${shortSuffix}`;
+    const triggerButtonName = `${options.triggerButtonName} ${shortSuffix}`;
+    const placeholderTriggerEventId = `pending-${suffix}`;
+
+    const product = await createProduct(page, {
+      sku,
+      nameEn,
+      descriptionEn,
+      parameters: options.initialParameters,
+    });
+    cleanupTasks.push(async () => {
+      await deleteProduct(page, product.id);
+    });
+
+    const initialConfig = createDeterministicParameterTranslationPathConfig({
+      pathId,
+      pathName,
+      triggerEventId: placeholderTriggerEventId,
+      expectedDescriptionPl: options.expectedDescriptionPl,
+      translatedParameters: options.translatedParameters,
+      timestamp,
+    });
+
+    const { indexExisted } = await upsertPathConfig(page, {
+      pathId,
+      pathName,
+      config: initialConfig,
+    });
+    cleanupTasks.push(async () => {
+      await removePathConfig(page, { pathId, indexExisted });
+    });
+
+    const triggerButton = await createTriggerButton(page, {
+      name: triggerButtonName,
+      pathId,
+      location: options.location,
+    });
+    cleanupTasks.push(async () => {
+      await deleteTriggerButton(page, triggerButton.id);
+    });
+
+    const finalConfig = createDeterministicParameterTranslationPathConfig({
+      pathId,
+      pathName,
+      triggerEventId: triggerButton.id,
+      expectedDescriptionPl: options.expectedDescriptionPl,
+      translatedParameters: options.translatedParameters,
+      timestamp,
+    });
+
+    await upsertPathConfig(page, {
+      pathId,
+      pathName,
+      config: finalConfig,
+    });
+
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    await openAdminProductsPage(page);
+
+    return {
+      product,
+      searchTerm: nameEn,
+      pathId,
+      pathName,
+      triggerButton,
+      expectedDescriptionPl: options.expectedDescriptionPl,
       cleanup,
     };
   } catch (error) {

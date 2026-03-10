@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   type ProductValidationInstanceDenyBehaviorMap,
   updateProductValidatorSettingsSchema as updateValidatorSettingsSchema,
 } from '@/shared/contracts/products';
-export { updateValidatorSettingsSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
+
+export { updateValidatorSettingsSchema };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getValidationPatternRepository();

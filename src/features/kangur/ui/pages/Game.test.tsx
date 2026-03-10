@@ -89,6 +89,10 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
+  KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
   KangurPriorityAssignments: () => <div data-testid='kangur-priority-assignments-widget' />,
 }));
@@ -171,6 +175,7 @@ describe('Game page', () => {
 
     expect(screen.getByTestId('kangur-home-hero-widget')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-actions-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-quest-widget')).toBeInTheDocument();
     expect(homeHeroPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );

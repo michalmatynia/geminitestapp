@@ -89,7 +89,7 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
   'kangur_ai_tutor.chat': {
     key: 'kangur_ai_tutor.chat',
     feature: 'kangur_ai_tutor',
-    label: 'Kangur AI Tutor Chat',
+    label: 'StudiQ AI Tutor Chat',
     policy: 'model-only',
     modelFamily: 'chat',
   },

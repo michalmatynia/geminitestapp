@@ -30,11 +30,21 @@ describe('XpToast', () => {
   it('uses shared status chips for xp and badge rewards', () => {
     render(
       <XpToast
+        dailyQuest={{
+          title: '➗ Powtorka: Dzielenie',
+          summary: '82% / 75% opanowania',
+          xpAwarded: 55,
+        }}
         breakdown={[
           { kind: 'base', label: 'Ukonczenie rundy', xp: 10 },
           { kind: 'accuracy', label: 'Skutecznosc', xp: 15 },
         ]}
         newBadges={['first_game']}
+        nextBadge={{
+          emoji: '🌟',
+          name: 'Tysiacznik',
+          summary: '480/1000 XP',
+        }}
         visible
         xpGained={25}
       />
@@ -62,6 +72,12 @@ describe('XpToast', () => {
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(
       'Ukoncz pierwsza gre'
+    );
+    expect(screen.getByTestId('xp-toast-next-badge')).toHaveTextContent(
+      'Nastepna odznaka: 🌟 Tysiacznik · 480/1000 XP'
+    );
+    expect(screen.getByTestId('xp-toast-daily-quest')).toHaveTextContent(
+      'Misja dnia ukonczona: ➗ Powtorka: Dzielenie · 82% / 75% opanowania · +55 XP'
     );
   });
 

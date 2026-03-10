@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { namedDtoSchema } from '../base';
+import { namedDtoSchema } from '@/shared/contracts/base';
 
 export const integrationConnectionSchema = namedDtoSchema.extend({
   integrationId: z.string(),

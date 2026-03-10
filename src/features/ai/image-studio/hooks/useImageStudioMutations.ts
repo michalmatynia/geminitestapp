@@ -11,9 +11,6 @@ import {
   type RunStudioPayload,
   type RunStudioEnqueueResult,
 } from '@/shared/contracts/image-studio';
-
-export type { RunStudioPayload, RunStudioEnqueueResult };
-
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -33,6 +30,8 @@ import {
   normalizeStudioSlotId,
   resolveStudioSlotIdCandidates,
 } from '../components/center-preview/variant-thumbnails';
+
+export type { RunStudioPayload, RunStudioEnqueueResult };
 
 const DELETE_SLOT_TIMEOUT_MS = 30_000;
 const DELETE_VERIFY_ATTEMPTS = 15;

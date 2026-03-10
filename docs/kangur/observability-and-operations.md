@@ -138,8 +138,6 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Client events:
   - `kangur_ai_tutor_opened`
   - `kangur_ai_tutor_closed`
-  - `kangur_ai_tutor_selection_cta_shown`
-  - `kangur_ai_tutor_selection_cta_clicked`
   - `kangur_ai_tutor_anchor_changed`
   - `kangur_ai_tutor_motion_completed`
   - `kangur_ai_tutor_context_switched`

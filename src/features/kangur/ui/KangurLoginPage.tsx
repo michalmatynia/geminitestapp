@@ -187,19 +187,19 @@ const signInParentWithCredentials = async ({
 const getParentSignInErrorMessage = (errorCode?: string, fallbackMessage?: string): string => {
   switch (errorCode) {
     case 'EMAIL_UNVERIFIED':
-      return 'Potwierdz email rodzica, zanim sie zalogujesz. Sprawdz skrzynke i kliknij link potwierdzajacy.';
+      return 'Potwierdź e-mail rodzica, zanim się zalogujesz. Sprawdź skrzynkę i kliknij link potwierdzający.';
     case 'PASSWORD_SETUP_REQUIRED':
-      return 'To konto rodzica trzeba najpierw zabezpieczyc haslem. Ustaw haslo i wyslij email potwierdzajacy.';
+      return 'To konto rodzica trzeba najpierw zabezpieczyć hasłem. Ustaw hasło i wyślij e-mail potwierdzający.';
     case 'MFA_REQUIRED':
-      return 'To konto wymaga dodatkowej weryfikacji. Zaloguj sie przez glowny ekran konta.';
+      return 'To konto wymaga dodatkowej weryfikacji. Zaloguj się przez główny ekran konta.';
     case 'EMAIL_LOCKED':
     case 'IP_RATE_LIMIT':
-      return 'Za duzo prob logowania. Sprobuj ponownie za chwile.';
+      return 'Za dużo prób logowania. Spróbuj ponownie za chwilę.';
     case 'ACCOUNT_BANNED':
     case 'ACCOUNT_DISABLED':
-      return 'To konto rodzica jest niedostepne.';
+      return 'To konto rodzica jest niedostępne.';
     default:
-      return fallbackMessage?.trim() || 'Nie udalo sie zalogowac rodzica. Sprawdz email i hasło.';
+      return fallbackMessage?.trim() || 'Nie udało się zalogować rodzica. Sprawdź e-mail i hasło.';
   }
 };
 
@@ -234,7 +234,7 @@ const readApiErrorDetails = async (
 
   if (retryAfterMs) {
     return {
-      message: `Sprobuj ponownie za ${formatRetryAfterLabel(retryAfterMs)}.`,
+      message: `Spróbuj ponownie za ${formatRetryAfterLabel(retryAfterMs)}.`,
       retryAfterMs,
     };
   }
@@ -344,7 +344,7 @@ function KangurLoginPageContent({
         : 'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
   const visibleNotice = createdParentEmail ? null : notice;
   const createAccountConfirmationDetail =
-    notice?.trim() || 'Kliknij link potwierdzajacy w emailu. Potem zalogujesz sie tym samym emailem i haslem.';
+    notice?.trim() || 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.';
   const resendRetryAfterMs =
     typeof resendAvailableAtMs === 'number'
       ? Math.max(0, resendAvailableAtMs - resendCountdownNowMs)
@@ -363,8 +363,8 @@ function KangurLoginPageContent({
     .join(' ');
   const identifierAnchorLabel =
     isParentFlowVisible && parentAuthMode === 'create-account'
-      ? 'Pole emaila rodzica'
-      : 'Pole emaila rodzica albo nicku ucznia';
+      ? 'Pole e-maila rodzica'
+      : 'Pole e-maila rodzica albo nicku ucznia';
 
   useKangurTutorAnchor({
     id: 'kangur-auth-login-form',
@@ -503,13 +503,13 @@ function KangurLoginPageContent({
           setParentAuthMode('create-account');
           setPassword('');
           setNotice(
-            'To starsze konto rodzica nie ma jeszcze hasla. Ustaw haslo ponizej, a wyslemy email potwierdzajacy.'
+            'To starsze konto rodzica nie ma jeszcze hasła. Ustaw hasło poniżej, a wyślemy e-mail potwierdzający.'
           );
           return;
         }
         if (result.error === 'EMAIL_UNVERIFIED') {
           setCreatedParentEmail(email);
-          setNotice('Potwierdz email rodzica, zanim sie zalogujesz. Mozesz tez wyslac nowy email potwierdzajacy.');
+          setNotice('Potwierdź e-mail rodzica, zanim się zalogujesz. Możesz też wysłać nowy e-mail potwierdzający.');
           return;
         }
         setError(getParentSignInErrorMessage(result.error, result.message));
@@ -525,7 +525,7 @@ function KangurLoginPageContent({
         callbackUrl,
         reason: 'network_error',
       });
-      setError('Nie udalo sie zalogowac rodzica. Sprobuj ponownie.');
+      setError('Nie udało się zalogować rodzica. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -567,11 +567,11 @@ function KangurLoginPageContent({
           }
           setNotice(
             message ??
-              'Email potwierdzajacy zostal juz wyslany. Sprawdz skrzynke i sprobuj ponownie za chwile.'
+              'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
           );
           return;
         }
-        setError(message ?? 'Nie udalo sie utworzyc konta rodzica. Sprobuj ponownie.');
+        setError(message ?? 'Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
         return;
       }
 
@@ -595,14 +595,14 @@ function KangurLoginPageContent({
       setNotice(
         payload?.created === true
           ? null
-          : payload?.message?.trim() || 'To konto czeka na potwierdzenie emaila. Wyslalismy nowy link.'
+          : payload?.message?.trim() || 'To konto czeka na potwierdzenie e-maila. Wysłaliśmy nowy link.'
       );
     } catch {
       trackKangurClientEvent('kangur_parent_account_create_failed', {
         callbackUrl,
         reason: 'network_error',
       });
-      setError('Nie udalo sie utworzyc konta rodzica. Sprobuj ponownie.');
+      setError('Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -641,11 +641,11 @@ function KangurLoginPageContent({
           }
           setNotice(
             message ??
-              'Email potwierdzajacy zostal juz wyslany. Sprawdz skrzynke i sprobuj ponownie za chwile.'
+              'E-mail potwierdzający został już wysłany. Sprawdź skrzynkę i spróbuj ponownie za chwilę.'
           );
           return;
         }
-        setError(message ?? 'Nie udalo sie wyslac nowego emaila potwierdzajacego. Sprobuj ponownie.');
+        setError(message ?? 'Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.');
         return;
       }
 
@@ -662,13 +662,13 @@ function KangurLoginPageContent({
         debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
       );
       startResendCooldown(retryAfterMs);
-      setNotice(payload?.message?.trim() || 'Wyslalismy nowy link potwierdzajacy.');
+      setNotice(payload?.message?.trim() || 'Wysłaliśmy nowy link potwierdzający.');
     } catch {
       trackKangurClientEvent('kangur_parent_account_resend_failed', {
         callbackUrl,
         reason: 'network_error',
       });
-      setError('Nie udalo sie wyslac nowego emaila potwierdzajacego. Sprobuj ponownie.');
+      setError('Nie udało się wysłać nowego e-maila potwierdzającego. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -681,7 +681,7 @@ function KangurLoginPageContent({
 
     setIsSubmitting(true);
     setError(null);
-    setNotice('Sprawdzamy email...');
+    setNotice('Sprawdzamy e-mail...');
     setCreatedParentEmail(null);
     setVerificationDebugUrl(null);
 
@@ -719,7 +719,7 @@ function KangurLoginPageContent({
       setParentAuthMode('sign-in');
       setPassword('');
       setNotice(
-        payload?.message?.trim() || 'Email zostal zweryfikowany. Mozesz zalogowac sie emailem i haslem.'
+        payload?.message?.trim() || 'E-mail został zweryfikowany. Możesz zalogować się e-mailem i hasłem.'
       );
       await auth?.checkAppState?.();
 
@@ -731,7 +731,7 @@ function KangurLoginPageContent({
         callbackUrl,
         reason: 'network_error',
       });
-      setError('Nie udalo sie zweryfikowac emaila. Sprobuj ponownie.');
+      setError('Nie udało się zweryfikować e-maila. Spróbuj ponownie.');
       setNotice(null);
     } finally {
       setIsSubmitting(false);
@@ -773,7 +773,7 @@ function KangurLoginPageContent({
           callbackUrl,
           statusCode: response.status,
         });
-        setError(payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i hasło.');
+        setError(payload?.error?.message || 'Nie udało się zalogować ucznia. Sprawdź login i hasło.');
         return;
       }
 
@@ -789,7 +789,7 @@ function KangurLoginPageContent({
         callbackUrl,
         reason: 'network_error',
       });
-      setError('Nie udalo sie zalogowac ucznia. Sprobuj ponownie.');
+      setError('Nie udało się zalogować ucznia. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }
@@ -800,7 +800,7 @@ function KangurLoginPageContent({
 
     const normalizedIdentifier = identifier.trim();
     if (!normalizedIdentifier) {
-      setError('Wpisz email rodzica albo nick ucznia.');
+      setError('Wpisz e-mail rodzica albo nick ucznia.');
       return;
     }
 
@@ -840,7 +840,7 @@ function KangurLoginPageContent({
 
     setNotice(null);
     setError(
-      'Logowanie linkiem z emaila nie jest juz dostepne. Zaloguj sie emailem i haslem albo utworz konto.'
+      'Logowanie linkiem z e-maila nie jest już dostępne. Zaloguj się e-mailem i hasłem albo utwórz konto.'
     );
     clearOneTimeAuthParams();
   }, [isHydrated, magicLinkToken]);
@@ -1048,7 +1048,7 @@ function KangurLoginPageContent({
             surface='warmGlow'
             variant='soft'
           >
-            <p className='font-bold text-slate-900'>Sprawdz skrzynke: {createdParentEmail}</p>
+            <p className='font-bold text-slate-900'>Sprawdź skrzynkę: {createdParentEmail}</p>
             <p className='mt-1 leading-6'>{createAccountConfirmationDetail}</p>
             {resendAvailabilityMessage ? (
               <p className='mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500'>
@@ -1071,7 +1071,7 @@ function KangurLoginPageContent({
         ) : null}
         {verificationDebugUrl ? (
           <KangurButton asChild className='w-fit' size='sm' variant='surface'>
-            <a href={verificationDebugUrl}>Potwierdz email teraz</a>
+            <a href={verificationDebugUrl}>Potwierdź e-mail teraz</a>
           </KangurButton>
         ) : null}
 
@@ -1088,7 +1088,7 @@ function KangurLoginPageContent({
                 ? 'Tworzenie...'
                 : 'Logowanie...'
               : parentAuthMode === 'create-account'
-                ? 'Utworz konto rodzica'
+                ? 'Utwórz konto rodzica'
                 : loginKind === 'parent'
                   ? 'Zaloguj rodzica'
                   : 'Zaloguj sie'}
@@ -1112,7 +1112,7 @@ function KangurLoginPageContent({
 
 export function KangurLoginPage(props: KangurLoginPageProps): JSX.Element {
   return (
-    <Suspense fallback={<div className='sr-only'>Ladowanie logowania Kangur...</div>}>
+    <Suspense fallback={<div className='sr-only'>Ladowanie logowania StudiQ...</div>}>
       <KangurLoginPageContent {...props} />
     </Suspense>
   );

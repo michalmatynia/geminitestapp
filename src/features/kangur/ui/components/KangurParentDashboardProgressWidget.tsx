@@ -6,6 +6,7 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 
 export function KangurParentDashboardProgressWidget({
   displayMode = 'always',
@@ -22,5 +23,7 @@ export function KangurParentDashboardProgressWidget({
     return null;
   }
 
-  return <ProgressOverview progress={progress} />;
+  const dailyQuest = getCurrentKangurDailyQuest(progress);
+
+  return <ProgressOverview progress={progress} dailyQuest={dailyQuest} />;
 }

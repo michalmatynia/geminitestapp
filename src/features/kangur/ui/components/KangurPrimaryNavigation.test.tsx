@@ -209,13 +209,13 @@ describe('KangurPrimaryNavigation', () => {
     expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ala' }));
-    fireEvent.change(screen.getByPlaceholderText('Wpisz imie gracza...'), {
+    fireEvent.change(screen.getByPlaceholderText('Wpisz imię gracza...'), {
       target: { value: 'Ola' },
     });
-    fireEvent.keyDown(screen.getByPlaceholderText('Wpisz imie gracza...'), {
+    fireEvent.keyDown(screen.getByPlaceholderText('Wpisz imię gracza...'), {
       key: 'Enter',
     });
-    fireEvent.click(screen.getByRole('button', { name: /utworz konto/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto' }));
     fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
 
     expect(onGuestPlayerNameChange).toHaveBeenCalledWith('Ola');
@@ -272,13 +272,13 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
-    fireEvent.blur(screen.getByPlaceholderText('Wpisz imie gracza...'));
+    fireEvent.blur(screen.getByPlaceholderText('Wpisz imię gracza...'));
 
     expect(screen.getByRole('button', { name: 'Ola' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
 
-    expect(screen.getByPlaceholderText('Wpisz imie gracza...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
   });
 
   it('hides the parent dashboard link when auth resolves a student session', () => {

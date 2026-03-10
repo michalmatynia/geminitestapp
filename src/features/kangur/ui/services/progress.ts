@@ -23,6 +23,7 @@ type KangurBadge = {
   emoji: string;
   name: string;
   desc: string;
+  track: 'onboarding' | 'consistency' | 'mastery' | 'variety' | 'challenge' | 'xp' | 'quest';
   progress: (progress: KangurProgressState) => {
     current: number;
     target: number;
@@ -90,6 +91,28 @@ export type KangurBadgeProgress = {
 };
 
 export type KangurBadgeStatus = KangurBadge & KangurBadgeProgress;
+export type KangurBadgeTrackKey = KangurBadge['track'];
+
+export type KangurBadgeTrackSummary = {
+  key: KangurBadgeTrackKey;
+  label: string;
+  emoji: string;
+  unlockedCount: number;
+  totalCount: number;
+  progressPercent: number;
+  nextBadge: KangurBadgeStatus | null;
+  badges: KangurBadgeStatus[];
+};
+
+type KangurVisibleBadgeOptions = {
+  maxLocked?: number;
+  minimumLockedProgressPercent?: number;
+};
+
+type KangurBadgeTrackOptions = {
+  maxTracks?: number;
+  minimumTrackProgressPercent?: number;
+};
 
 export const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
 export const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'sprycio_progress_owner';
@@ -171,6 +194,12 @@ const DIFFICULTY_XP_BONUS: Record<string, number> = {
   pro: 6,
 };
 
+const MASTERY_STAGE_BONUSES = [
+  { threshold: 90, xp: 4 },
+  { threshold: 75, xp: 3 },
+  { threshold: 60, xp: 2 },
+] as const;
+
 const ACTIVITY_LABELS: Record<string, string> = {
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',
@@ -211,12 +240,23 @@ const CLOCK_TRAINING_SECTION_LABELS: Record<string, string> = {
   mixed: 'Mieszany trening',
 };
 
+const BADGE_TRACK_META: Record<KangurBadgeTrackKey, { label: string; emoji: string; order: number }> = {
+  onboarding: { label: 'Start', emoji: '🚀', order: 1 },
+  consistency: { label: 'Seria', emoji: '🔥', order: 2 },
+  mastery: { label: 'Mistrzostwo', emoji: '🏗️', order: 3 },
+  variety: { label: 'Roznorodnosc', emoji: '🎲', order: 4 },
+  challenge: { label: 'Wyzwania', emoji: '🎯', order: 5 },
+  xp: { label: 'XP', emoji: '⭐', order: 6 },
+  quest: { label: 'Misje', emoji: '🧭', order: 7 },
+};
+
 export const BADGES: KangurBadge[] = [
   {
     id: 'first_game',
     emoji: '🎮',
     name: 'Pierwsza gra',
     desc: 'Ukoncz pierwsza gre',
+    track: 'onboarding',
     progress: (progress) => ({
       current: progress.gamesPlayed,
       target: 1,
@@ -228,6 +268,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '💯',
     name: 'Idealny wynik',
     desc: 'Zdobadz pelny wynik w grze',
+    track: 'challenge',
     progress: (progress) => ({
       current: progress.perfectGames,
       target: 1,
@@ -239,6 +280,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '📚',
     name: 'Bohater lekcji',
     desc: 'Ukoncz pierwsza lekcje',
+    track: 'onboarding',
     progress: (progress) => ({
       current: progress.lessonsCompleted,
       target: 1,
@@ -250,6 +292,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🕐',
     name: 'Mistrz zegara',
     desc: 'Ukoncz trening zegara z 5/5',
+    track: 'mastery',
     progress: (progress) => ({
       current: progress.clockPerfect,
       target: 1,
@@ -261,6 +304,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '📅',
     name: 'Mistrz kalendarza',
     desc: 'Ukoncz trening kalendarza z pelnym wynikiem',
+    track: 'mastery',
     progress: (progress) => ({
       current: progress.calendarPerfect,
       target: 1,
@@ -272,6 +316,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🔷',
     name: 'Artysta figur',
     desc: 'Ukoncz trening figur geometrycznych na pelny wynik',
+    track: 'mastery',
     progress: (progress) => ({
       current: progress.geometryPerfect,
       target: 1,
@@ -283,6 +328,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🔥',
     name: 'Seria mocy',
     desc: 'Utrzymaj 3 mocne rundy z rzedu',
+    track: 'consistency',
     progress: (progress) => ({
       current: progress.bestWinStreak ?? 0,
       target: 3,
@@ -294,6 +340,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🎯',
     name: 'Celny umysl',
     desc: 'Utrzymaj srednio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach',
+    track: 'challenge',
     progress: (progress) => {
       const totalQuestionsAnswered = progress.totalQuestionsAnswered ?? 0;
       const averageAccuracy = getAverageAccuracyPercent(progress);
@@ -317,6 +364,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🔟',
     name: 'Dziesiatka',
     desc: 'Zagraj 10 gier',
+    track: 'consistency',
     progress: (progress) => ({
       current: progress.gamesPlayed,
       target: 10,
@@ -328,6 +376,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '⭐',
     name: 'Pol tysiaca XP',
     desc: 'Zdobadz 500 XP lacznie',
+    track: 'xp',
     progress: (progress) => ({
       current: progress.totalXp,
       target: 500,
@@ -339,6 +388,7 @@ export const BADGES: KangurBadge[] = [
     emoji: '🌟',
     name: 'Tysiacznik',
     desc: 'Zdobadz 1000 XP lacznie',
+    track: 'xp',
     progress: (progress) => ({
       current: progress.totalXp,
       target: 1000,
@@ -346,10 +396,50 @@ export const BADGES: KangurBadge[] = [
     }),
   },
   {
+    id: 'quest_starter',
+    emoji: '🧭',
+    name: 'Odkrywca misji',
+    desc: 'Ukoncz pierwsza misje dnia',
+    track: 'quest',
+    progress: (progress) => ({
+      current: progress.dailyQuestsCompleted ?? 0,
+      target: 1,
+      summary: `${Math.min(progress.dailyQuestsCompleted ?? 0, 1)}/1 misja`,
+    }),
+  },
+  {
+    id: 'quest_keeper',
+    emoji: '🎯',
+    name: 'Lowca misji',
+    desc: 'Ukoncz 3 misje dnia',
+    track: 'quest',
+    progress: (progress) => ({
+      current: progress.dailyQuestsCompleted ?? 0,
+      target: 3,
+      summary: `${Math.min(progress.dailyQuestsCompleted ?? 0, 3)}/3 misje`,
+    }),
+  },
+  {
+    id: 'mastery_builder',
+    emoji: '🏗️',
+    name: 'Budowniczy mistrzostwa',
+    desc: 'Doprowadz 3 lekcje do co najmniej 75% opanowania',
+    track: 'mastery',
+    progress: (progress) => {
+      const masteredLessons = getMasteredLessonCount(progress, 75);
+      return {
+        current: masteredLessons,
+        target: 3,
+        summary: `${Math.min(masteredLessons, 3)}/3 lekcje`,
+      };
+    },
+  },
+  {
     id: 'variety',
     emoji: '🎲',
     name: 'Wszechstronny',
     desc: 'Zagraj 5 roznych operacji',
+    track: 'variety',
     progress: (progress) => ({
       current: progress.operationsPlayed.length,
       target: 5,
@@ -502,6 +592,14 @@ export const getProgressBestAccuracy = (progress: KangurProgressState): number =
   return Math.max(...activityStats.map((entry) => entry.bestScorePercent));
 };
 
+export const getMasteredLessonCount = (
+  progress: KangurProgressState,
+  minimumMasteryPercent = 75
+): number =>
+  Object.values(progress.lessonMastery).filter(
+    (entry) => entry.masteryPercent >= clampPercent(minimumMasteryPercent)
+  ).length;
+
 export const getProgressTopActivities = (
   progress: KangurProgressState,
   limit = 3
@@ -558,6 +656,115 @@ export const getProgressBadges = (progress: KangurProgressState): KangurBadgeSta
     ...badge,
     ...getBadgeProgress(progress, badge),
   }));
+
+export const getVisibleProgressBadges = (
+  progress: KangurProgressState,
+  options: KangurVisibleBadgeOptions = {}
+): KangurBadgeStatus[] => {
+  const { maxLocked = 3, minimumLockedProgressPercent = 25 } = options;
+  const badgeStatuses = getProgressBadges(progress);
+  const visibleLockedBadgeIds = new Set(
+    badgeStatuses
+      .filter(
+        (badge) =>
+          !badge.isUnlocked &&
+          badge.current > 0 &&
+          badge.progressPercent >= minimumLockedProgressPercent
+      )
+      .sort((left, right) => {
+        if (left.progressPercent !== right.progressPercent) {
+          return right.progressPercent - left.progressPercent;
+        }
+
+        const leftRemaining = Math.max(0, left.target - left.current);
+        const rightRemaining = Math.max(0, right.target - right.current);
+        if (leftRemaining !== rightRemaining) {
+          return leftRemaining - rightRemaining;
+        }
+
+        return left.target - right.target;
+      })
+      .slice(0, Math.max(0, Math.floor(maxLocked)))
+      .map((badge) => badge.id)
+  );
+
+  return badgeStatuses.filter((badge) => badge.isUnlocked || visibleLockedBadgeIds.has(badge.id));
+};
+
+export const getProgressBadgeTrackSummaries = (
+  progress: KangurProgressState,
+  options: KangurBadgeTrackOptions = {}
+): KangurBadgeTrackSummary[] => {
+  const { maxTracks = 4, minimumTrackProgressPercent = 25 } = options;
+  const badgeStatuses = getProgressBadges(progress);
+  const trackSummaries = Object.entries(BADGE_TRACK_META)
+    .map(([key, meta]) => {
+      const badges = badgeStatuses.filter((badge) => badge.track === key);
+      const unlockedCount = badges.filter((badge) => badge.isUnlocked).length;
+      const nextBadge =
+        badges
+          .filter((badge) => !badge.isUnlocked)
+          .sort((left, right) => {
+            if (left.progressPercent !== right.progressPercent) {
+              return right.progressPercent - left.progressPercent;
+            }
+
+            const leftRemaining = Math.max(0, left.target - left.current);
+            const rightRemaining = Math.max(0, right.target - right.current);
+            if (leftRemaining !== rightRemaining) {
+              return leftRemaining - rightRemaining;
+            }
+
+            return left.target - right.target;
+          })[0] ?? null;
+      const progressPercent =
+        badges.length > 0
+          ? clampPercent(
+            badges.reduce((sum, badge) => sum + badge.progressPercent, 0) / badges.length
+          )
+          : 0;
+
+      return {
+        key: key as KangurBadgeTrackKey,
+        label: meta.label,
+        emoji: meta.emoji,
+        unlockedCount,
+        totalCount: badges.length,
+        progressPercent,
+        nextBadge,
+        badges,
+      };
+    })
+    .filter((track) => {
+      if (track.totalCount === 0) {
+        return false;
+      }
+
+      if (track.unlockedCount > 0) {
+        return true;
+      }
+
+      return Boolean(
+        track.nextBadge &&
+          track.nextBadge.current > 0 &&
+          track.nextBadge.progressPercent >= minimumTrackProgressPercent
+      );
+    })
+    .sort((left, right) => {
+      const leftMeta = BADGE_TRACK_META[left.key];
+      const rightMeta = BADGE_TRACK_META[right.key];
+
+      if (left.unlockedCount !== right.unlockedCount) {
+        return right.unlockedCount - left.unlockedCount;
+      }
+      if (left.progressPercent !== right.progressPercent) {
+        return right.progressPercent - left.progressPercent;
+      }
+      return leftMeta.order - rightMeta.order;
+    });
+
+  return trackSummaries.slice(0, Math.max(0, Math.floor(maxTracks)));
+};
 
 export const getNextLockedBadge = (progress: KangurProgressState): KangurBadgeStatus | null =>
   getProgressBadges(progress)
@@ -632,6 +839,70 @@ const getStreakBonus = (nextStreak: number): number => {
   return Math.min(8, (nextStreak - 1) * 2);
 };
 
+const getVarietyBonus = (
+  progress: KangurProgressState,
+  operation?: string | null,
+  countsAsGame?: boolean,
+  passedStrongThreshold?: boolean
+): number => {
+  if (!countsAsGame || !operation || !passedStrongThreshold) {
+    return 0;
+  }
+
+  return progress.operationsPlayed.includes(operation) ? 0 : 3;
+};
+
+const getActivityRepeatPenalty = (
+  progress: KangurProgressState,
+  activityKey: string,
+  countsAsGame?: boolean
+): { nextRepeatStreak: number; penalty: number } => {
+  if (!countsAsGame) {
+    return { nextRepeatStreak: progress.currentActivityRepeatStreak ?? 0, penalty: 0 };
+  }
+
+  const nextRepeatStreak =
+    progress.lastRewardedActivityKey === activityKey
+      ? Math.max(1, (progress.currentActivityRepeatStreak ?? 0) + 1)
+      : 1;
+
+  if (nextRepeatStreak < 3) {
+    return { nextRepeatStreak, penalty: 0 };
+  }
+
+  return {
+    nextRepeatStreak,
+    penalty: Math.min(6, (nextRepeatStreak - 2) * 2),
+  };
+};
+
+const getMasteryGainBonus = (
+  progress: KangurProgressState,
+  lessonKey: string | undefined,
+  nextLessonMastery: KangurProgressState['lessonMastery'],
+  passedStrongThreshold: boolean
+): number => {
+  const normalizedLessonKey = lessonKey?.trim();
+  if (!normalizedLessonKey || !passedStrongThreshold) {
+    return 0;
+  }
+
+  const currentMastery = progress.lessonMastery[normalizedLessonKey]?.masteryPercent ?? 0;
+  const nextMastery = nextLessonMastery[normalizedLessonKey]?.masteryPercent ?? currentMastery;
+
+  for (const stage of MASTERY_STAGE_BONUSES) {
+    if (currentMastery < stage.threshold && nextMastery >= stage.threshold) {
+      return stage.xp;
+    }
+  }
+
+  if (currentMastery > 0 && nextMastery >= currentMastery + 10) {
+    return 2;
+  }
+
+  return 0;
+};
+
 const buildRewardBreakdown = (
   config: KangurRewardProfileConfig,
   {
@@ -641,6 +912,9 @@ const buildRewardBreakdown = (
     streakBonus,
     firstActivityBonus,
     improvementBonus,
+    masteryBonus,
+    varietyBonus,
+    antiRepeatPenalty,
     perfectBonus,
     totalXp,
   }: {
@@ -650,6 +924,9 @@ const buildRewardBreakdown = (
     streakBonus: number;
     firstActivityBonus: number;
     improvementBonus: number;
+    masteryBonus: number;
+    varietyBonus: number;
+    antiRepeatPenalty: number;
     perfectBonus: number;
     totalXp: number;
   }
@@ -676,8 +953,17 @@ const buildRewardBreakdown = (
   if (improvementBonus > 0) {
     entries.push({ kind: 'improvement', label: 'Poprawa wyniku', xp: improvementBonus });
   }
+  if (masteryBonus > 0) {
+    entries.push({ kind: 'mastery', label: 'Postep opanowania', xp: masteryBonus });
+  }
+  if (varietyBonus > 0) {
+    entries.push({ kind: 'variety', label: 'Nowa sciezka', xp: varietyBonus });
+  }
   if (perfectBonus > 0) {
     entries.push({ kind: 'perfect', label: 'Pelny wynik', xp: perfectBonus });
+  }
+  if (antiRepeatPenalty > 0) {
+    entries.push({ kind: 'anti_repeat', label: 'Powtarzana aktywnosc', xp: -antiRepeatPenalty });
   }
 
   const breakdownTotal = entries.reduce((sum, entry) => sum + entry.xp, 0);
@@ -689,7 +975,7 @@ const buildRewardBreakdown = (
     });
   }
 
-  return entries.filter((entry) => entry.xp > 0);
+  return entries.filter((entry) => entry.xp !== 0);
 };
 
 const buildActivityStatsUpdate = (
@@ -775,6 +1061,9 @@ const createRewardOutcome = (
       ? (progress.currentWinStreak ?? 0) + 1
       : 0
     : (progress.currentWinStreak ?? 0);
+  const nextLessonMastery = lessonKey
+    ? buildLessonMasteryUpdate(progress, lessonKey, scorePercent, playedAt)
+    : progress.lessonMastery;
   const accuracyBonus = getAccuracyBonus(scorePercent);
   const difficultyBonus = getDifficultyBonus(difficulty);
   const speedBonus = config.allowsSpeedBonus ? getSpeedBonus(durationSeconds, safeTotalQuestions) : 0;
@@ -790,6 +1079,14 @@ const createRewardOutcome = (
     passedStrongThreshold
       ? config.improvementBonus
       : 0;
+  const masteryBonus = getMasteryGainBonus(
+    progress,
+    lessonKey,
+    nextLessonMastery,
+    passedStrongThreshold
+  );
+  const varietyBonus = getVarietyBonus(progress, operation, countsAsGame, passedStrongThreshold);
+  const repeatState = getActivityRepeatPenalty(progress, activityKey, countsAsGame);
 
   const xp = Math.max(
     config.minimumXp,
@@ -801,6 +1098,9 @@ const createRewardOutcome = (
         streakBonus +
         firstActivityBonus +
         improvementBonus +
+        masteryBonus +
+        varietyBonus +
+        -repeatState.penalty +
         (isPerfect ? config.perfectBonus : 0)
     )
   );
@@ -811,6 +1111,9 @@ const createRewardOutcome = (
     streakBonus,
     firstActivityBonus,
     improvementBonus,
+    masteryBonus,
+    varietyBonus,
+    antiRepeatPenalty: repeatState.penalty,
     perfectBonus: isPerfect ? config.perfectBonus : 0,
     totalXp: xp,
   });
@@ -822,6 +1125,8 @@ const createRewardOutcome = (
     bestWinStreak: config.allowsStreakBonus
       ? Math.max(progress.bestWinStreak ?? 0, nextGlobalWinStreak)
       : (progress.bestWinStreak ?? 0),
+    currentActivityRepeatStreak: repeatState.nextRepeatStreak,
+    lastRewardedActivityKey: activityKey,
     activityStats: buildActivityStatsUpdate(progress, activityKey, {
       scorePercent,
       correctAnswers: normalizedCorrectAnswers,
@@ -834,12 +1139,7 @@ const createRewardOutcome = (
   };
 
   if (lessonKey) {
-    progressUpdates.lessonMastery = buildLessonMasteryUpdate(
-      progress,
-      lessonKey,
-      scorePercent,
-      playedAt
-    );
+    progressUpdates.lessonMastery = nextLessonMastery;
   }
 
   if (countsAsGame) {
@@ -939,6 +1239,24 @@ export function mergeProgressStates(
     ...Object.keys(right.activityStats ?? {}),
   ]);
   const activityStats: KangurProgressState['activityStats'] = {};
+  const leftLatestActivityTimestamp = Math.max(
+    0,
+    ...Object.values(left.activityStats ?? {}).map((entry) =>
+      entry.lastPlayedAt ? Date.parse(entry.lastPlayedAt) || 0 : 0
+    )
+  );
+  const rightLatestActivityTimestamp = Math.max(
+    0,
+    ...Object.values(right.activityStats ?? {}).map((entry) =>
+      entry.lastPlayedAt ? Date.parse(entry.lastPlayedAt) || 0 : 0
+    )
+  );
+  const latestRepeatSide =
+    rightLatestActivityTimestamp > leftLatestActivityTimestamp
+      ? right
+      : leftLatestActivityTimestamp > rightLatestActivityTimestamp
+        ? left
+        : (right.lastRewardedActivityKey ? right : left);
 
   for (const key of lessonMasteryKeys) {
     const leftEntry = left.lessonMastery[key];
@@ -1033,8 +1351,11 @@ export function mergeProgressStates(
       left.totalQuestionsAnswered ?? 0,
       right.totalQuestionsAnswered ?? 0
     ),
+    dailyQuestsCompleted: Math.max(left.dailyQuestsCompleted ?? 0, right.dailyQuestsCompleted ?? 0),
     currentWinStreak: Math.max(left.currentWinStreak ?? 0, right.currentWinStreak ?? 0),
     bestWinStreak: Math.max(left.bestWinStreak ?? 0, right.bestWinStreak ?? 0),
+    currentActivityRepeatStreak: latestRepeatSide.currentActivityRepeatStreak ?? 0,
+    lastRewardedActivityKey: latestRepeatSide.lastRewardedActivityKey ?? null,
     activityStats,
   };
 }

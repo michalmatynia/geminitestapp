@@ -3,6 +3,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import {
   createProductWorkflowFixture,
+  createProductTranslationWorkflowFixture,
   fetchProductById,
   filterQueueByRunId,
   openAdminQueuePage,
@@ -119,6 +120,100 @@ test.describe('Products AI Paths workflow success', () => {
         expectedValue: fixture.expectedValue,
       });
       expect(updatedProduct.description_de).toBe(fixture.expectedValue);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('runs a modal translation workflow without removing English parameter values', async ({
+    page,
+  }) => {
+    const fixture = await createProductTranslationWorkflowFixture(page, {
+      location: 'product_modal',
+      triggerButtonName: 'Translate Parameter Languages',
+      pathName: 'E2E Product Modal Translation Parameter Preservation',
+      expectedDescriptionPl: `Playwright translated description ${Date.now()}`,
+      initialParameters: [
+        {
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: { en: 'Leather' },
+        },
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used' },
+        },
+        {
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: { en: '13 cm' },
+        },
+      ],
+      translatedParameters: [
+        { parameterId: 'material', value: 'Skora' },
+        { parameterId: 'condition', value: 'Uzywany' },
+      ],
+    });
+
+    try {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+        rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
+      });
+      await row.getByLabel('Open row actions').click();
+      await page.getByRole('menuitem', { name: 'Edit' }).click();
+
+      const modal = page.locator('[role="dialog"]').last();
+      await expect(modal).toBeVisible({ timeout: 15_000 });
+
+      const triggerButton = modal.getByRole('button', { name: fixture.triggerButton.name }).first();
+      await expect(triggerButton).toBeVisible({ timeout: 15_000 });
+
+      const runId = await triggerActionAndCaptureRunId(page, async () => {
+        await triggerButton.click();
+      });
+
+      const detail = await waitForRunToComplete(page, runId);
+      expect(detail.run.status).toBe('completed');
+
+      const updatedProduct = await fetchProductById(page, fixture.product.id);
+      expect(updatedProduct.description_pl).toBe(fixture.expectedDescriptionPl);
+
+      const parameters = Array.isArray(updatedProduct.parameters) ? updatedProduct.parameters : [];
+      const material = parameters.find((entry) => entry.parameterId === 'material');
+      const condition = parameters.find((entry) => entry.parameterId === 'condition');
+      const size = parameters.find((entry) => entry.parameterId === 'size');
+
+      expect(material).toEqual(
+        expect.objectContaining({
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Leather',
+            pl: 'Skora',
+          }),
+        })
+      );
+      expect(condition).toEqual(
+        expect.objectContaining({
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Used',
+            pl: 'Uzywany',
+          }),
+        })
+      );
+      expect(size).toEqual(
+        expect.objectContaining({
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: expect.objectContaining({
+            en: '13 cm',
+          }),
+        })
+      );
     } finally {
       await fixture.cleanup();
     }

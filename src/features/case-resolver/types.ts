@@ -27,6 +27,14 @@ import type {
   WorkspaceView,
   EditorDetailsTab,
 } from '@/shared/contracts/case-resolver';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
+import type { CountryOption } from '@/shared/contracts/internationalization';
+
+import type {
+  CaseResolverPromptExploderApplyUiDiagnostics,
+  CaseResolverPromptExploderPendingPayload,
+} from './hooks/useCaseResolverState.prompt-exploder-sync';
+import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
 
 export type {
   CaseResolverFile,
@@ -56,15 +64,6 @@ export type {
   WorkspaceView,
   EditorDetailsTab,
 };
-
-import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import type { CountryOption } from '@/shared/contracts/internationalization';
-
-import type {
-  CaseResolverPromptExploderApplyUiDiagnostics,
-  CaseResolverPromptExploderPendingPayload,
-} from './hooks/useCaseResolverState.prompt-exploder-sync';
-import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
 
 export type CaseResolverStateValue = {
   workspace: CaseResolverWorkspace;

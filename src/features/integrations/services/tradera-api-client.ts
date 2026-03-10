@@ -6,6 +6,7 @@ import type {
   TraderaAddShopItemInput,
   TraderaAddShopItemResult,
 } from '@/shared/contracts/integrations';
+import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 
 export type {
   TraderaApiCredentials,
@@ -13,8 +14,6 @@ export type {
   TraderaAddShopItemInput,
   TraderaAddShopItemResult,
 };
-
-import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 
 type TraderaSoapService = 'public' | 'restricted';
 

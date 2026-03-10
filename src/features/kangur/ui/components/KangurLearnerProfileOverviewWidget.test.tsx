@@ -3,7 +3,13 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { KangurProgressState } from '@/features/kangur/ui/types';
+import {
+  claimCurrentKangurDailyQuestReward,
+  getCurrentKangurDailyQuest,
+} from '@/features/kangur/ui/services/daily-quests';
 
 const { useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
@@ -14,6 +20,64 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
 }));
 
 import { KangurLearnerProfileOverviewWidget } from './KangurLearnerProfileOverviewWidget';
+
+const progressWithWeakLesson: KangurProgressState = {
+  totalXp: 540,
+  gamesPlayed: 12,
+  perfectGames: 3,
+  lessonsCompleted: 7,
+  clockPerfect: 1,
+  calendarPerfect: 1,
+  geometryPerfect: 0,
+  badges: ['first_game'],
+  operationsPlayed: ['addition', 'division'],
+  lessonMastery: {
+    division: {
+      attempts: 2,
+      completions: 2,
+      masteryPercent: 45,
+      bestScorePercent: 60,
+      lastScorePercent: 40,
+      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+    },
+    adding: {
+      attempts: 3,
+      completions: 3,
+      masteryPercent: 67,
+      bestScorePercent: 80,
+      lastScorePercent: 70,
+      lastCompletedAt: '2026-03-06T11:00:00.000Z',
+    },
+    clock: {
+      attempts: 4,
+      completions: 4,
+      masteryPercent: 92,
+      bestScorePercent: 100,
+      lastScorePercent: 90,
+      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+    },
+  },
+  totalCorrectAnswers: 48,
+  totalQuestionsAnswered: 60,
+  currentWinStreak: 2,
+  bestWinStreak: 2,
+  activityStats: {},
+};
+
+const progressAfterRecovery: KangurProgressState = {
+  ...progressWithWeakLesson,
+  gamesPlayed: 13,
+  lessonMastery: {
+    ...progressWithWeakLesson.lessonMastery,
+    division: {
+      ...progressWithWeakLesson.lessonMastery.division!,
+      masteryPercent: 82,
+      bestScorePercent: 90,
+      lastScorePercent: 90,
+      lastCompletedAt: '2026-03-10T11:00:00.000Z',
+    },
+  },
+};
 
 const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
   basePath: '/kangur',
@@ -74,13 +138,34 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
 describe('KangurLearnerProfileOverviewWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
+    window.localStorage.clear();
   });
 
-  it('shows the next locked badge milestone alongside the badge count', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows the next locked badge milestone alongside the default daily quest summary', () => {
     useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
 
     render(<KangurLearnerProfileOverviewWidget />);
 
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent('0%');
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      'Pierwsza lekcja startowa'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      '0/1 lekcja dzisiaj'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      'Nagroda +40 XP'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '0'
+    );
     expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveTextContent(
       '80%'
     );
@@ -93,5 +178,49 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     );
     expect(screen.getByTestId('learner-profile-overview-badges')).toHaveTextContent('2/11');
     expect(screen.getByText('Nastepna: Pol tysiaca XP · 480/500 XP')).toBeInTheDocument();
+  });
+
+  it('shows a ready daily quest reward when today progress completes the stored quest', () => {
+    getCurrentKangurDailyQuest(progressWithWeakLesson);
+
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        progress: progressAfterRecovery,
+      })
+    );
+
+    render(<KangurLearnerProfileOverviewWidget />);
+
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent('100%');
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      'Powtorka: Dzielenie'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      '82% / 75% opanowania'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      'Nagroda gotowa +55 XP'
+    );
+  });
+
+  it('shows a claimed daily quest reward after the quest bonus was already collected', () => {
+    getCurrentKangurDailyQuest(progressWithWeakLesson);
+    claimCurrentKangurDailyQuestReward(progressAfterRecovery);
+
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        progress: progressAfterRecovery,
+      })
+    );
+
+    render(<KangurLearnerProfileOverviewWidget />);
+
+    expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
+      'Nagroda odebrana +55 XP'
+    );
+    expect(screen.getByTestId('learner-profile-overview-daily-quest-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    );
   });
 });

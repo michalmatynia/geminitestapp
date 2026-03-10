@@ -198,6 +198,7 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
                   className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
                 >
                   <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={variant.imageSrc}
                       alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}

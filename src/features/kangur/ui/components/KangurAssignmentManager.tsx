@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
 
+import {
+  appendKangurUrlParams,
+  getKangurPageHref as createPageUrl,
+} from '@/features/kangur/config/routing';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
   KANGUR_LESSONS_SETTING_KEY,
@@ -7,6 +11,7 @@ import {
   parseKangurLessons,
 } from '@/features/kangur/settings';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -21,6 +26,7 @@ import {
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import {
   buildKangurAssignmentHref,
   buildKangurAssignmentCatalog,
@@ -32,6 +38,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 type KangurAssignmentManagerProps = {
   basePath: string;
+  featuredDailyQuest?: KangurDailyQuestState | null;
 };
 
 const FILTER_OPTIONS = [
@@ -148,6 +155,7 @@ const buildTrackerSummary = (
 
 export function KangurAssignmentManager({
   basePath,
+  featuredDailyQuest = null,
 }: KangurAssignmentManagerProps): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
@@ -195,6 +203,10 @@ export function KangurAssignmentManager({
   const recommendedCatalog = useMemo(
     () =>
       suggestedCatalog.filter((item) => {
+        if (item.id === featuredDailyQuest?.assignment.id) {
+          return false;
+        }
+
         const lessonTarget =
           item.createInput.target.type === 'lesson'
             ? item.createInput.target.lessonComponentId
@@ -213,8 +225,26 @@ export function KangurAssignmentManager({
           return false;
         });
       }),
-    [activeAssignments, suggestedCatalog]
+    [activeAssignments, featuredDailyQuest, suggestedCatalog]
   );
+  const featuredQuestHref = useMemo(() => {
+    if (!featuredDailyQuest) {
+      return null;
+    }
+
+    const href = createPageUrl(featuredDailyQuest.assignment.action.page, basePath);
+    return featuredDailyQuest.assignment.action.query
+      ? appendKangurUrlParams(href, featuredDailyQuest.assignment.action.query, basePath)
+      : href;
+  }, [basePath, featuredDailyQuest]);
+  const featuredQuestAccent =
+    featuredDailyQuest?.reward.status === 'claimed'
+      ? 'emerald'
+      : featuredDailyQuest?.progress.status === 'completed'
+        ? 'amber'
+        : featuredDailyQuest?.progress.status === 'in_progress'
+          ? 'indigo'
+          : 'slate';
 
   const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
     const status =
@@ -335,6 +365,85 @@ export function KangurAssignmentManager({
             </div>
           </KangurSummaryPanel>
         ) : null}
+
+        {featuredDailyQuest ? (
+          <KangurSummaryPanel
+            accent='violet'
+            className='mt-5'
+            data-testid='assignment-manager-daily-quest'
+            description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
+            label='Misja dnia ucznia'
+            padding='lg'
+          >
+            <div className='mt-3 flex flex-col gap-3 rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                <div className='min-w-0'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <KangurStatusChip
+                      accent='violet'
+                      className='text-[11px] uppercase tracking-[0.14em]'
+                    >
+                      {featuredDailyQuest.assignment.questLabel ?? 'Misja dnia'}
+                    </KangurStatusChip>
+                    <KangurStatusChip
+                      accent={featuredQuestAccent}
+                      className='text-[11px] uppercase tracking-[0.14em]'
+                    >
+                      {featuredDailyQuest.progress.percent}%
+                    </KangurStatusChip>
+                    <KangurStatusChip
+                      accent={
+                        featuredDailyQuest.reward.status === 'claimed'
+                          ? 'emerald'
+                          : featuredQuestAccent
+                      }
+                      className='text-[11px] uppercase tracking-[0.14em]'
+                    >
+                      {featuredDailyQuest.reward.label}
+                    </KangurStatusChip>
+                  </div>
+                  <div className='mt-3 text-sm font-bold text-slate-900'>
+                    {featuredDailyQuest.assignment.title}
+                  </div>
+                  <div className='mt-1 text-sm leading-6 text-slate-600'>
+                    {featuredDailyQuest.assignment.description}
+                  </div>
+                  <div className='mt-2 text-[11px] uppercase tracking-[0.14em] text-slate-500'>
+                    {featuredDailyQuest.progress.summary}
+                  </div>
+                </div>
+
+                {featuredQuestHref ? (
+                  <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+                    <Link
+                      href={featuredQuestHref}
+                      targetPageKey={featuredDailyQuest.assignment.action.page}
+                    >
+                      {featuredDailyQuest.assignment.action.label}
+                    </Link>
+                  </KangurButton>
+                ) : null}
+              </div>
+            </div>
+          </KangurSummaryPanel>
+        ) : null}
+
+        <KangurSummaryPanel
+          accent='indigo'
+          className='mt-5'
+          data-testid='assignment-manager-track-summary'
+          description='Najwazniejsze sciezki odznak, ktore aktualnie buduje uczen.'
+          label='Sciezki postepu ucznia'
+          padding='lg'
+        >
+          <div className='mt-3'>
+            <KangurBadgeTrackHighlights
+              dataTestIdPrefix='assignment-manager-track'
+              limit={3}
+              progress={progress}
+            />
+          </div>
+        </KangurSummaryPanel>
 
         <KangurTextField
           accent='indigo'

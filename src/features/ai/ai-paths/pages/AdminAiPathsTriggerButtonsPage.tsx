@@ -1,6 +1,6 @@
 'use client';
 
-import { MousePointer2, Plus } from 'lucide-react';
+import { MousePointer2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -57,6 +57,11 @@ type TriggerButtonPathRepair = {
   pathId: string;
   rawPayload: string;
   repairedConfig: PathConfig;
+};
+type TriggerButtonFixtureCleanupResult = {
+  removedTriggerButtons: number;
+  removedPathIndexEntries: number;
+  removedPathConfigs: number;
 };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
@@ -391,6 +396,43 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       void triggerButtonsQuery.refetch();
     },
   });
+  const cleanupFixturesMutation = createUpdateMutationV2<
+    TriggerButtonFixtureCleanupResult,
+    void
+  >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.cleanup-fixtures'),
+    mutationFn: async (): Promise<TriggerButtonFixtureCleanupResult> => {
+      const result = await triggerButtonsApi.cleanupFixtures();
+      if (!result.ok) throw new Error(result.error);
+      return result.data;
+    },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.cleanup-fixtures',
+      operation: 'update',
+      resource: 'ai-paths.trigger-buttons.cleanup-fixtures',
+      domain: 'ai_paths',
+      tags: ['ai-paths', 'trigger-buttons', 'cleanup'],
+      description: 'Removes leaked playwright fixture trigger buttons and path configs.',
+    },
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons(), QUERY_KEYS.ai.aiPaths.settings()],
+    onSuccess: (result: TriggerButtonFixtureCleanupResult): void => {
+      const summary =
+        result.removedTriggerButtons > 0 || result.removedPathConfigs > 0
+          ? `Removed ${result.removedTriggerButtons} fixture button${result.removedTriggerButtons === 1 ? '' : 's'} and ${result.removedPathConfigs} path config${result.removedPathConfigs === 1 ? '' : 's'}.`
+          : 'No Playwright fixtures found.';
+      toast(summary, { variant: 'success' });
+      void triggerButtonsQuery.refetch();
+      void aiPathsSettingsQuery.refetch();
+    },
+    onError: (error: unknown): void => {
+      logClientError(error, {
+        context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'cleanupTriggerButtonFixtures' },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to remove Playwright fixtures.', {
+        variant: 'error',
+      });
+    },
+  });
 
   const openCreate = (): void => {
     setDraft(normalizeDraft(null));
@@ -722,6 +764,16 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           void triggerButtonsQuery.refetch();
         }}
         actions={[
+          {
+            key: 'cleanup-fixtures',
+            label: 'Remove Playwright Fixtures',
+            icon: <Trash2 className='size-4' />,
+            onClick: (): void => {
+              cleanupFixturesMutation.mutate();
+            },
+            disabled: cleanupFixturesMutation.isPending,
+            tooltip: 'Remove leaked Playwright trigger buttons and matching path configs.',
+          },
           {
             key: 'create',
             label: 'New Trigger Button',

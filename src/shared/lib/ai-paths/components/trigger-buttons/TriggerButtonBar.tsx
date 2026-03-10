@@ -217,9 +217,9 @@ export function TriggerButtonBar({
     compactInlineLimit === null ? [] : buttons.slice(compactInlineLimit);
   const latestOverflowRun = showRunFeedback
     ? overflowButtons
-        .map((button) => lastRuns[button.id] ?? null)
-        .filter((run): run is TriggerButtonLastRun => Boolean(run))
-        .sort((left, right) => resolveRunRecency(right) - resolveRunRecency(left))[0] ?? null
+      .map((button) => lastRuns[button.id] ?? null)
+      .filter((run): run is TriggerButtonLastRun => Boolean(run))
+      .sort((left, right) => resolveRunRecency(right) - resolveRunRecency(left))[0] ?? null
     : null;
 
   const renderButtonIcon = (
@@ -254,7 +254,7 @@ export function TriggerButtonBar({
     const textOpacity = isRunning ? baseOpacity + (1 - baseOpacity) * progress : baseOpacity;
     const iconNode = button.iconId ? (
       (() => {
-        const Icon = ICON_LIBRARY_MAP[button.iconId!];
+        const Icon = ICON_LIBRARY_MAP[button.iconId];
         return Icon ? (
           <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
         ) : (

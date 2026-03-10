@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
 import { imageFileSchema, type ImageFileRecord } from './files';
-export type { ImageFileRecord };
 import {
   imageStudioCenterDetectionModeSchema,
   imageStudioCenterLayoutConfigSchema,
@@ -15,16 +15,14 @@ import {
   imageStudioUpscaleModeSchema,
   imageStudioUpscaleSmoothingQualitySchema,
   imageStudioUpscaleStrategySchema,
+  type ImageStudioCenterDetectionMode,
+  type ImageStudioCenterMode,
+  type ImageStudioCenterObjectBounds,
 } from './image-studio-transform-contracts';
-import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { promptValidationIssueSchema } from './prompt-engine';
 import { asset3DRecordSchema } from './viewer3d';
 
-import type {
-  ImageStudioCenterDetectionMode,
-  ImageStudioCenterMode,
-  ImageStudioCenterObjectBounds,
-} from './image-studio-transform-contracts';
+export type { ImageFileRecord };
 
 export type ImageStudioProjectListItem = {
   id: string;

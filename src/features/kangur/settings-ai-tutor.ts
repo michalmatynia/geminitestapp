@@ -13,6 +13,7 @@ export type KangurAiTutorUiMode = 'anchored' | 'static';
 export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
 export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 export type KangurAiTutorGuestIntroMode = 'first_visit' | 'every_visit';
+export type KangurAiTutorHomeOnboardingMode = 'off' | 'first_visit' | 'every_visit';
 
 export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<{
   id: Exclude<KangurAiTutorMotionPresetKind, 'default'>;
@@ -41,6 +42,7 @@ export type KangurAiTutorAppSettings = {
   motionPresetId: string | null;
   dailyMessageLimit: number | null;
   guestIntroMode: KangurAiTutorGuestIntroMode;
+  homeOnboardingMode: KangurAiTutorHomeOnboardingMode;
 };
 
 export type KangurAiTutorLearnerGuardrails = {
@@ -70,6 +72,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSett
   motionPresetId: null,
   dailyMessageLimit: null,
   guestIntroMode: 'first_visit',
+  homeOnboardingMode: 'first_visit',
 });
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
@@ -219,6 +222,17 @@ const normalizeGuestIntroMode = (value: unknown): KangurAiTutorGuestIntroMode =>
   }
 };
 
+const normalizeHomeOnboardingMode = (value: unknown): KangurAiTutorHomeOnboardingMode => {
+  switch (value) {
+    case 'off':
+    case 'every_visit':
+    case 'first_visit':
+      return value;
+    default:
+      return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode;
+  }
+};
+
 const normalizeKangurAiTutorAppSettingsFields = (
   input: Record<string, unknown>
 ): KangurAiTutorAppSettings => ({
@@ -229,6 +243,7 @@ const normalizeKangurAiTutorAppSettingsFields = (
     normalizeOptionalId(input['motionPresetId']) ?? normalizeOptionalId(input['playwrightPersonaId']),
   dailyMessageLimit: normalizeDailyMessageLimit(input['dailyMessageLimit']),
   guestIntroMode: normalizeGuestIntroMode(input['guestIntroMode']),
+  homeOnboardingMode: normalizeHomeOnboardingMode(input['homeOnboardingMode']),
 });
 
 export function normalizeKangurAiTutorAppSettings(raw: unknown): KangurAiTutorAppSettings {
@@ -264,6 +279,11 @@ function deriveLegacyKangurAiTutorAppSettings(
           resolved.guestIntroMode !== DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.guestIntroMode
             ? resolved.guestIntroMode
             : legacy.guestIntroMode,
+        homeOnboardingMode:
+          resolved.homeOnboardingMode !==
+          DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode
+            ? resolved.homeOnboardingMode
+            : legacy.homeOnboardingMode,
       };
     },
     { ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS }

@@ -50,6 +50,9 @@ describe('buildKangurAssignments', () => {
     expect(assignments[0]).toMatchObject({
       id: 'lesson-retry-division',
       priority: 'high',
+      progressLabel: 'Postep: 45% / 75%',
+      questLabel: 'Misja ratunkowa',
+      rewardXp: 55,
       action: {
         page: 'Lessons',
         query: {
@@ -68,7 +71,8 @@ describe('buildKangurAssignments', () => {
     });
     expect(assignments[2]).toMatchObject({
       id: 'mixed-practice',
-      title: 'Trening celowany',
+      questLabel: 'Misja dnia',
+      rewardXp: 36,
       action: {
         page: 'Game',
         query: {
@@ -91,6 +95,9 @@ describe('buildKangurAssignments', () => {
       'mixed-practice',
     ]);
     expect(assignments[0]).toMatchObject({
+      progressLabel: 'Postep: 0/1 lekcja',
+      questLabel: 'Misja startowa',
+      rewardXp: 40,
       action: {
         page: 'Lessons',
       },

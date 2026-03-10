@@ -1,23 +1,3 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  type ProductValidationPattern,
-  type ProductValidatorConfig,
-  type ProductValidatorSettings,
-  type CreateProductValidationPatternInput as CreateValidationPatternPayload,
-  type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
-  type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
-} from '@/shared/contracts/products/validation';
-
-export type {
-  CreateValidationPatternPayload,
-  UpdateValidationPatternPayload,
-  ReorderValidationPatternUpdatePayload,
-};
-
-
-export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
-export type ImportValidationPatternsResult = ProductValidatorImportResult;
-
 import {
   type Catalog,
   type CatalogRecord,
@@ -28,16 +8,31 @@ import {
   type ProductCategoryWithChildren,
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
-
-export type { ReorderCategoryPayload };
-
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { type ProductTag } from '@/shared/contracts/products/tags';
+import {
+  type ProductValidationPattern,
+  type ProductValidatorConfig,
+  type ProductValidatorSettings,
+  type CreateProductValidationPatternInput as CreateValidationPatternPayload,
+  type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
+} from '@/shared/contracts/products/validation';
 import {
   type ProductValidatorImportRequest,
   type ProductValidatorImportResult,
 } from '@/shared/contracts/validator-import';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+export type {
+  CreateValidationPatternPayload,
+  UpdateValidationPatternPayload,
+  ReorderValidationPatternUpdatePayload,
+};
+export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
+export type ImportValidationPatternsResult = ProductValidatorImportResult;
+export type { ReorderCategoryPayload };
 
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
 const CATALOGS_ENDPOINT = '/api/v2/products/entities/catalogs';

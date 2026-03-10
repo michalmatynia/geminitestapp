@@ -22,6 +22,7 @@ import {
   resolveKangurAiTutorMotionPresetKind,
   type KangurAiTutorAppSettings,
   type KangurAiTutorGuestIntroMode,
+  type KangurAiTutorHomeOnboardingMode,
 } from '@/features/kangur/settings-ai-tutor';
 import {
   KANGUR_TTS_VOICE_OPTIONS,
@@ -72,6 +73,27 @@ const AI_TUTOR_GUEST_INTRO_MODE_OPTIONS: Array<{
     description: 'Show the anonymous AI Tutor intro on every page entry.',
   },
 ];
+const AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS: Array<{
+  value: KangurAiTutorHomeOnboardingMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'first_visit',
+    label: 'Pierwsza wizyta',
+    description: 'Show the Game home walkthrough once for each learner on their first eligible visit.',
+  },
+  {
+    value: 'every_visit',
+    label: 'Każde wejście',
+    description: 'Show the Game home walkthrough on every eligible visit to the first page.',
+  },
+  {
+    value: 'off',
+    label: 'Tylko ręcznie',
+    description: 'Do not auto-open the walkthrough. Learners can still start it manually from the tutor.',
+  },
+];
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
@@ -85,7 +107,8 @@ const areAiTutorAppSettingsEqual = (
   left.agentPersonaId === right.agentPersonaId &&
   left.motionPresetId === right.motionPresetId &&
   left.dailyMessageLimit === right.dailyMessageLimit &&
-  left.guestIntroMode === right.guestIntroMode;
+  left.guestIntroMode === right.guestIntroMode &&
+  left.homeOnboardingMode === right.homeOnboardingMode;
 
 const parseAiTutorDailyMessageLimit = (value: string): number | null => {
   const parsed = Number.parseInt(value, 10);
@@ -215,6 +238,9 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
   const [guestIntroMode, setGuestIntroMode] = useState<KangurAiTutorGuestIntroMode>(
     persistedAiTutorSettings.guestIntroMode
   );
+  const [homeOnboardingMode, setHomeOnboardingMode] = useState<KangurAiTutorHomeOnboardingMode>(
+    persistedAiTutorSettings.homeOnboardingMode
+  );
   const [copyStatus, setCopyStatus] = useState('Copy text');
   const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
   const [isProbingNarrator, setIsProbingNarrator] = useState(false);
@@ -240,6 +266,7 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
         : ''
     );
     setGuestIntroMode(persistedAiTutorSettings.guestIntroMode);
+    setHomeOnboardingMode(persistedAiTutorSettings.homeOnboardingMode);
   }, [persistedAiTutorSettings]);
 
   useEffect(() => {
@@ -335,8 +362,9 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
       motionPresetId: motionPresetId || null,
       dailyMessageLimit: parseAiTutorDailyMessageLimit(dailyMessageLimitInput),
       guestIntroMode,
+      homeOnboardingMode,
     }),
-    [agentPersonaId, dailyMessageLimitInput, guestIntroMode, motionPresetId]
+    [agentPersonaId, dailyMessageLimitInput, guestIntroMode, homeOnboardingMode, motionPresetId]
   );
   const selectedAgentPersona = useMemo(
     () => agentPersonas.find((persona) => persona.id === agentPersonaId) ?? null,
@@ -684,6 +712,25 @@ export function AdminKangurSettingsPage(): React.JSX.Element {
                   onValueChange={(value) => setGuestIntroMode(value as KangurAiTutorGuestIntroMode)}
                   options={AI_TUTOR_GUEST_INTRO_MODE_OPTIONS}
                   ariaLabel='Anonimowy onboarding AI Tutora'
+                  variant='subtle'
+                />
+              </FormField>
+
+              <FormField
+                label='Onboarding pierwszej strony'
+                description='Control how the AI Tutor explains the Game home screen after the learner signs in.'
+                className='mt-4'
+              >
+                <SelectSimple
+                  value={
+                    homeOnboardingMode ||
+                    DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode
+                  }
+                  onValueChange={(value) =>
+                    setHomeOnboardingMode(value as KangurAiTutorHomeOnboardingMode)
+                  }
+                  options={AI_TUTOR_HOME_ONBOARDING_MODE_OPTIONS}
+                  ariaLabel='Onboarding pierwszej strony'
                   variant='subtle'
                 />
               </FormField>

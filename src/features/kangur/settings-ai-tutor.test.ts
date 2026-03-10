@@ -25,6 +25,7 @@ describe('kangur ai tutor settings', () => {
       agentPersonaId: 'persona-1',
       motionPresetId: null,
       guestIntroMode: 'first_visit',
+      homeOnboardingMode: 'first_visit',
       uiMode: 'anchored',
       allowCrossPagePersistence: true,
       rememberTutorContext: true,
@@ -137,6 +138,7 @@ describe('kangur ai tutor settings', () => {
         motionPresetId: 'motion-2',
         dailyMessageLimit: 12,
         guestIntroMode: 'every_visit',
+        homeOnboardingMode: 'first_visit',
       }),
       store
     );
@@ -146,12 +148,14 @@ describe('kangur ai tutor settings', () => {
       motionPresetId: 'motion-2',
       dailyMessageLimit: 12,
       guestIntroMode: 'every_visit',
+      homeOnboardingMode: 'first_visit',
     });
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toMatchObject({
       agentPersonaId: 'persona-1',
       motionPresetId: 'motion-2',
       dailyMessageLimit: 12,
       guestIntroMode: 'every_visit',
+      homeOnboardingMode: 'first_visit',
     });
   });
 
@@ -179,12 +183,14 @@ describe('kangur ai tutor settings', () => {
       motionPresetId: null,
       dailyMessageLimit: 9,
       guestIntroMode: 'first_visit',
+      homeOnboardingMode: 'first_visit',
     });
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toEqual(
       expect.objectContaining({
         agentPersonaId: 'persona-1',
         dailyMessageLimit: 9,
         guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
       })
     );
   });
@@ -202,6 +208,24 @@ describe('kangur ai tutor settings', () => {
       motionPresetId: null,
       dailyMessageLimit: null,
       guestIntroMode: 'every_visit',
+      homeOnboardingMode: 'first_visit',
+    });
+  });
+
+  it('normalizes the global home onboarding mode for the Game first-page walkthrough', () => {
+    const appSettings = resolveKangurAiTutorAppSettings(
+      JSON.stringify({
+        homeOnboardingMode: 'every_visit',
+      }),
+      {}
+    );
+
+    expect(appSettings).toEqual({
+      agentPersonaId: null,
+      motionPresetId: null,
+      dailyMessageLimit: null,
+      guestIntroMode: 'first_visit',
+      homeOnboardingMode: 'every_visit',
     });
   });
 
@@ -212,6 +236,7 @@ describe('kangur ai tutor settings', () => {
         agentPersonaId: null,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
         uiMode: 'anchored',
         allowCrossPagePersistence: true,
         rememberTutorContext: true,
@@ -245,6 +270,7 @@ describe('kangur ai tutor settings', () => {
         agentPersonaId: null,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
         uiMode: 'anchored',
         allowCrossPagePersistence: true,
         rememberTutorContext: true,
@@ -276,6 +302,7 @@ describe('kangur ai tutor settings', () => {
         agentPersonaId: null,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
         uiMode: 'anchored',
         allowCrossPagePersistence: true,
         rememberTutorContext: true,

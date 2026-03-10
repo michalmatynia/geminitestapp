@@ -29,11 +29,12 @@ import {
 } from '@/shared/contracts/image-studio';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { isObjectRecord } from '@/shared/utils/object-utils';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-export type { ImageStudioRunDispatchMode };
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+export type { ImageStudioRunDispatchMode };
 
 const LOG_SOURCE = 'image-studio-run-queue';
 

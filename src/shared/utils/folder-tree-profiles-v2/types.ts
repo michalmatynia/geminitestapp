@@ -1,3 +1,5 @@
+import { type MasterTreeNodeType, type MasterTreeTargetType } from '../master-folder-tree-contract';
+
 import type {
   FolderTreeBadgeSpec,
   FolderTreeIconSlot,
@@ -27,8 +29,6 @@ export type {
   FolderTreeSelectionBehavior,
   MasterTreeNodeStatus,
 };
-
-import { type MasterTreeNodeType, type MasterTreeTargetType } from '../master-folder-tree-contract';
 
 export const folderTreeInstanceValues = [
   'notes',

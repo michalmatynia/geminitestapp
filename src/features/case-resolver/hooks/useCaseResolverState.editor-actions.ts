@@ -17,7 +17,9 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { Toast } from '@/shared/contracts/ui';
 
+import { createCaseResolverFile } from '../settings';
 import { type CaseResolverFileEditDraft } from '../types';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
@@ -26,13 +28,9 @@ import {
   clearStoredEditorDraft,
   hasCaseResolverDraftMeaningfulChanges,
 } from './useCaseResolverState.helpers';
-import { createCaseResolverFile } from '../settings';
-
 type CaseResolverOpenFileEditorOptions = {
   nodeContext?: CaseResolverEditorNodeContext | null;
 };
-
-import { type Toast } from '@/shared/contracts/ui';
 
 export function useCaseResolverStateEditorActions({
   workspace,

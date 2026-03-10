@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
 import type { TemplateMapping as BaseFieldMapping } from './templates';
 
 /**
@@ -196,8 +197,6 @@ export const baseImportRunParamsSchema = z.object({
   requestId: z.string().optional(),
 });
 export type BaseImportRunParams = z.infer<typeof baseImportRunParamsSchema>;
-
-import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
 
 export type ExportToBaseVariables = {
   connectionId: string;

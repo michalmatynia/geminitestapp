@@ -18,10 +18,35 @@ import { promptExploderClampNumber } from '../helpers/formatting';
 import { buildPromptExploderParamEntries } from '../params-editor';
 import { updatePromptExploderDocument } from '../parser';
 import {
+  DocumentActionsContext,
+  type DocumentActions,
+  useDocumentActions as useDocumentActionsValue,
+} from './document/DocumentActionsContext';
+import {
+  DocumentCoreContext,
+  type DocumentCoreState,
+  useDocumentCore as useDocumentCoreValue,
+} from './document/DocumentCoreContext';
+import {
+  DocumentMetricsContext,
+  type DocumentMetricsState,
+  useDocumentMetrics as useDocumentMetricsValue,
+} from './document/DocumentMetricsContext';
+import {
+  DocumentParamsContext,
+  type DocumentParamsState,
+  useDocumentParams as useDocumentParamsValue,
+} from './document/DocumentParamsContext';
+import {
   DocumentPromptContext,
   type DocumentPromptState,
   useDocumentPrompt as useDocumentPromptValue,
 } from './document/DocumentPromptContext';
+import {
+  DocumentSelectionContext,
+  type DocumentSelectionState,
+  useDocumentSelection as useDocumentSelectionValue,
+} from './document/DocumentSelectionContext';
 import { useDocumentApplyAction } from './hooks/useDocumentApplyAction';
 import { useDocumentBridgeHydration } from './hooks/useDocumentBridgeHydration';
 import { useDocumentExplodeAction } from './hooks/useDocumentExplodeAction';
@@ -35,33 +60,6 @@ import type {
 } from '../types';
 
 export { DocumentPromptContext, type DocumentPromptState };
-import {
-  DocumentCoreContext,
-  type DocumentCoreState,
-  useDocumentCore as useDocumentCoreValue,
-} from './document/DocumentCoreContext';
-import {
-  DocumentSelectionContext,
-  type DocumentSelectionState,
-  useDocumentSelection as useDocumentSelectionValue,
-} from './document/DocumentSelectionContext';
-import {
-  DocumentParamsContext,
-  type DocumentParamsState,
-  useDocumentParams as useDocumentParamsValue,
-} from './document/DocumentParamsContext';
-import {
-  DocumentMetricsContext,
-  type DocumentMetricsState,
-  useDocumentMetrics as useDocumentMetricsValue,
-} from './document/DocumentMetricsContext';
-import {
-  DocumentActionsContext,
-  type DocumentActions,
-  useDocumentActions as useDocumentActionsValue,
-} from './document/DocumentActionsContext';
-
-
 export { DocumentActionsContext };
 export type { DocumentActions };
 

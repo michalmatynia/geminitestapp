@@ -542,7 +542,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
           checked={allowSelectedTextSupport}
           disabled={!enabled}
           label='Pozwól pytać o zaznaczony fragment'
-          description='Udostępnia akcję "Zapytaj o to" i tryb pracy na wskazanym fragmencie.'
+          description='Po otwarciu tutora może pracować na wskazanym fragmencie bez gubienia zaznaczenia.'
           onChange={setAllowSelectedTextSupport}
         />
         <TutorToggleField

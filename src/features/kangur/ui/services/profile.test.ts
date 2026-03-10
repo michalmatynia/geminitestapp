@@ -255,6 +255,21 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.unlockedBadges).toBeGreaterThanOrEqual(3);
   });
 
+  it('surfaces quest badges when daily missions were completed', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        badges: ['first_game'],
+        dailyQuestsCompleted: 1,
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-09T15:00:00.000Z'),
+    });
+
+    expect(snapshot.unlockedBadgeIds).toEqual(expect.arrayContaining(['quest_starter']));
+  });
+
   it('uses learner-friendly labels for calendar and geometry sessions in recent history', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       progress,

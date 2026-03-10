@@ -10,9 +10,6 @@ import type {
 
 import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
 import { pageBuilderReducer } from './page-builder/page-builder-reducer';
-
-export { pageBuilderReducer } from './page-builder/page-builder-reducer';
-
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
 import {
   PageSelectionContext,
@@ -28,6 +25,7 @@ import {
   VectorOverlayResult,
 } from './page-builder/VectorOverlayContext';
 
+export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 export { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection, useVectorOverlay };
 export type { VectorOverlayResult, VectorOverlayRequest };
 

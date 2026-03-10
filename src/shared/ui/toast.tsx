@@ -4,12 +4,11 @@ import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } fro
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
-
-export type { Toast, ToastVariant, ToastOptions };
-
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { Button } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+export type { Toast, ToastVariant, ToastOptions };
 
 type ToastItem = {
   id: string;

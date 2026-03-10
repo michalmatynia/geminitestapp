@@ -5,7 +5,7 @@ import type { Job } from '@/features/products/workers/product-ai-processors';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import { notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { resolveGraphModelPayloadSource } from '@/shared/lib/products/services/product-ai-graph-model-payload';
+import { normalizeGraphModelPayloadForDispatch } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -35,6 +35,13 @@ const isDatabaseSyncDirection = (
 
 const toDispatchJob = (job: ProductAiJobRecord): Job => {
   const source = isRecord(job.payload) ? job.payload : {};
+  if (job.type === 'graph_model') {
+    return {
+      ...job,
+      payload: normalizeGraphModelPayloadForDispatch(source),
+    };
+  }
+
   const payload: Job['payload'] = {};
 
   Object.entries(source).forEach(([key, value]) => {
@@ -64,12 +71,7 @@ const toDispatchJob = (job: ProductAiJobRecord): Job => {
   if (typeof source['vision'] === 'boolean') {
     payload.vision = source['vision'];
   }
-  const resolvedSource =
-    job.type === 'graph_model'
-      ? resolveGraphModelPayloadSource(source)
-      : typeof source['source'] === 'string'
-        ? source['source']
-        : null;
+  const resolvedSource = typeof source['source'] === 'string' ? source['source'] : null;
   if (typeof resolvedSource === 'string') {
     payload.source = resolvedSource;
   }
@@ -87,6 +89,71 @@ const toDispatchJob = (job: ProductAiJobRecord): Job => {
     ...job,
     payload,
   };
+};
+
+const runStoredProductAiJob = async (args: {
+  job: ProductAiJobRecord;
+  jobRepository: Awaited<ReturnType<typeof getProductAiJobRepository>>;
+  logSource: string;
+}): Promise<unknown> => {
+  const { job, jobRepository, logSource } = args;
+
+  if (job.status === 'pending') {
+    await jobRepository.updateJob(job.id, {
+      status: 'running',
+      startedAt: new Date(),
+      productId: job.productId,
+      type: job.type,
+      payload: job.payload,
+      createdAt: job.createdAt,
+    });
+  }
+
+  await logSystemEvent({
+    level: 'info',
+    source: logSource,
+    message: `Processing job ${job.id} of type "${job.type}"`,
+    context: { jobId: job.id, type: job.type },
+  });
+
+  try {
+    const typedJob = toDispatchJob(job);
+    const result = await dispatchProductAiJob(typedJob);
+    await jobRepository.updateJob(job.id, {
+      status: 'completed',
+      finishedAt: new Date(),
+      result,
+      productId: job.productId,
+      type: job.type,
+      payload: job.payload,
+      createdAt: job.createdAt,
+    });
+    await logSystemEvent({
+      level: 'info',
+      source: logSource,
+      message: `Job ${job.id} completed`,
+      context: { jobId: job.id },
+    });
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Job failed.';
+    await ErrorSystem.captureException(error, {
+      service: logSource,
+      jobId: job.id,
+      productId: job.productId,
+      jobType: job.type,
+    });
+    await jobRepository.updateJob(job.id, {
+      status: 'failed',
+      finishedAt: new Date(),
+      errorMessage: message,
+      productId: job.productId,
+      type: job.type,
+      payload: job.payload,
+      createdAt: job.createdAt,
+    });
+    throw error;
+  }
 };
 
 const queue = createManagedQueue<ProductAiJobData>({
@@ -131,62 +198,11 @@ const queue = createManagedQueue<ProductAiJobData>({
       return;
     }
 
-    if (job.status === 'pending') {
-      await jobRepository.updateJob(job.id, {
-        status: 'running',
-        startedAt: new Date(),
-        productId: job.productId,
-        type: job.type,
-        payload: job.payload,
-        createdAt: job.createdAt,
-      });
-    }
-
-    await logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: `Processing job ${job.id} of type "${job.type}"`,
-      context: { jobId: job.id, type: job.type },
+    return runStoredProductAiJob({
+      job,
+      jobRepository,
+      logSource: LOG_SOURCE,
     });
-
-    try {
-      const typedJob = toDispatchJob(job);
-      const result = await dispatchProductAiJob(typedJob);
-      await jobRepository.updateJob(job.id, {
-        status: 'completed',
-        finishedAt: new Date(),
-        result,
-        productId: job.productId,
-        type: job.type,
-        payload: job.payload,
-        createdAt: job.createdAt,
-      });
-      await logSystemEvent({
-        level: 'info',
-        source: LOG_SOURCE,
-        message: `Job ${job.id} completed`,
-        context: { jobId: job.id },
-      });
-      return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Job failed.';
-      await ErrorSystem.captureException(error, {
-        service: LOG_SOURCE,
-        jobId: job.id,
-        productId: job.productId,
-        jobType: job.type,
-      });
-      await jobRepository.updateJob(job.id, {
-        status: 'failed',
-        finishedAt: new Date(),
-        errorMessage: message,
-        productId: job.productId,
-        type: job.type,
-        payload: job.payload,
-        createdAt: job.createdAt,
-      });
-      throw error;
-    }
   },
 });
 
@@ -266,51 +282,9 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
     return;
   }
 
-  await jobRepository.updateJob(job.id, {
-    status: 'running',
-    startedAt: new Date(),
-    productId: job.productId,
-    type: job.type,
-    payload: job.payload,
-    createdAt: job.createdAt,
+  await runStoredProductAiJob({
+    job,
+    jobRepository,
+    logSource: SINGLE_LOG_SOURCE,
   });
-
-  try {
-    const typedJob = toDispatchJob(job);
-    const result = await dispatchProductAiJob(typedJob);
-
-    await jobRepository.updateJob(job.id, {
-      status: 'completed',
-      finishedAt: new Date(),
-      result,
-      productId: job.productId,
-      type: job.type,
-      payload: job.payload,
-      createdAt: job.createdAt,
-    });
-    await logSystemEvent({
-      level: 'info',
-      source: SINGLE_LOG_SOURCE,
-      message: `Job ${job.id} completed`,
-      context: { jobId: job.id },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Job failed.';
-    await ErrorSystem.captureException(error, {
-      service: SINGLE_LOG_SOURCE,
-      jobId: job.id,
-      productId: job.productId,
-      jobType: job.type,
-    });
-    await jobRepository.updateJob(job.id, {
-      status: 'failed',
-      finishedAt: new Date(),
-      errorMessage: message,
-      productId: job.productId,
-      type: job.type,
-      payload: job.payload,
-      createdAt: job.createdAt,
-    });
-    throw error;
-  }
 };

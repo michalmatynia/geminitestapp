@@ -201,45 +201,45 @@ export const getExportTemplatesQueryOptions = (): QueryDescriptorV2<ImportExport
 
 export const getActiveExportTemplateQueryOptions =
   (): QueryDescriptorV2<BaseActiveTemplatePreferenceResponse> => {
-  const queryKey = integrationKeys.activeExportTemplate();
-  return {
-    queryKey,
-    queryFn: () =>
-      api.get<BaseActiveTemplatePreferenceResponse>(
-        '/api/v2/integrations/exports/base/active-template'
-      ),
-    staleTime: 5 * 60 * 1000,
-    meta: {
-      source: 'integrations.queries.getActiveExportTemplateOptions',
-      operation: 'detail' as const,
-      resource: 'integrations.active-export-template',
-      domain: 'integrations' as const,
+    const queryKey = integrationKeys.activeExportTemplate();
+    return {
       queryKey,
-      tags: ['integrations', 'export-template', 'options'],
-    },
+      queryFn: () =>
+        api.get<BaseActiveTemplatePreferenceResponse>(
+          '/api/v2/integrations/exports/base/active-template'
+        ),
+      staleTime: 5 * 60 * 1000,
+      meta: {
+        source: 'integrations.queries.getActiveExportTemplateOptions',
+        operation: 'detail' as const,
+        resource: 'integrations.active-export-template',
+        domain: 'integrations' as const,
+        queryKey,
+        tags: ['integrations', 'export-template', 'options'],
+      },
+    };
   };
-};
 
 export const getDefaultExportInventoryQueryOptions =
   (): QueryDescriptorV2<BaseDefaultInventoryPreferenceResponse> => {
-  const queryKey = integrationKeys.defaultExportInventory();
-  return {
-    queryKey,
-    queryFn: () =>
-      api.get<BaseDefaultInventoryPreferenceResponse>(
-        '/api/v2/integrations/exports/base/default-inventory'
-      ),
-    staleTime: 5 * 60 * 1000,
-    meta: {
-      source: 'integrations.queries.getDefaultExportInventoryOptions',
-      operation: 'detail' as const,
-      resource: 'integrations.default-export-inventory',
-      domain: 'integrations' as const,
+    const queryKey = integrationKeys.defaultExportInventory();
+    return {
       queryKey,
-      tags: ['integrations', 'inventory', 'options'],
-    },
+      queryFn: () =>
+        api.get<BaseDefaultInventoryPreferenceResponse>(
+          '/api/v2/integrations/exports/base/default-inventory'
+        ),
+      staleTime: 5 * 60 * 1000,
+      meta: {
+        source: 'integrations.queries.getDefaultExportInventoryOptions',
+        operation: 'detail' as const,
+        resource: 'integrations.default-export-inventory',
+        domain: 'integrations' as const,
+        queryKey,
+        tags: ['integrations', 'inventory', 'options'],
+      },
+    };
   };
-};
 
 export const getBaseInventoriesQueryOptions = (
   connectionId: string,

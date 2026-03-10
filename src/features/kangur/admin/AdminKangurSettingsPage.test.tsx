@@ -344,7 +344,9 @@ describe('AdminKangurSettingsPage', () => {
       target: { value: 'TODO uzupelnic naglowek' },
     });
 
-    expect(await screen.findByText(/remove placeholder or unfinished onboarding copy/i)).toBeInTheDocument();
+    expect(
+      await screen.findAllByText(/remove placeholder or unfinished onboarding copy/i)
+    ).toHaveLength(2);
     expect(saveButton).toBeDisabled();
     expect(apiPostMock).not.toHaveBeenCalledWith(
       '/api/kangur/ai-tutor/content',

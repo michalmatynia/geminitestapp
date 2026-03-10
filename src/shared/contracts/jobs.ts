@@ -165,6 +165,16 @@ export const graphModelJobEnqueuePayloadSchema = graphModelJobPayloadSchema
 export type GraphModelJobEnqueuePayloadDto = z.infer<typeof graphModelJobEnqueuePayloadSchema>;
 export type GraphModelJobEnqueuePayload = GraphModelJobEnqueuePayloadDto;
 
+export const graphModelQueuedPayloadSchema = graphModelJobEnqueuePayloadSchema
+  .extend({
+    cacheKey: z.string().trim().min(1),
+    payloadHash: z.string().trim().min(1),
+  })
+  .passthrough();
+
+export type GraphModelQueuedPayloadDto = z.infer<typeof graphModelQueuedPayloadSchema>;
+export type GraphModelQueuedPayload = GraphModelQueuedPayloadDto;
+
 const genericProductAiJobPayloadSchema = z.record(z.string(), z.unknown());
 
 const nonGraphProductAiJobTypeSchema = productAiJobTypeSchema.refine(

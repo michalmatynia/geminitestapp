@@ -84,7 +84,9 @@
       "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new:*)",
       "Bash(test:*)",
       "Bash(xxd:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(for file:*)",
+      "Bash(do echo:*)"
     ]
   }
 }

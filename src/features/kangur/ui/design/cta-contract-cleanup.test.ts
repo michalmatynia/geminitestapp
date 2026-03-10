@@ -8,9 +8,9 @@ const kangurPrimitivesPath = path.join(
   process.cwd(),
   'src/features/kangur/ui/design/primitives.tsx'
 );
-const kangurAiTutorWidgetPath = path.join(
+const kangurAiTutorWidgetDisplayPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorWidget.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorWidget.coordinator-display.ts'
 );
 const kangurAiTutorPanelChromePath = path.join(
   process.cwd(),
@@ -95,9 +95,11 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('keeps the ai tutor launcher on the warm orange chrome instead of the old purple tint', () => {
-    const source = readFileSync(kangurAiTutorWidgetPath, 'utf8');
+    const source = readFileSync(kangurAiTutorWidgetDisplayPath, 'utf8');
 
-    expect(source).toContain('from-amber-300 via-orange-400 to-orange-500');
+    expect(source).toContain(
+      'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500'
+    );
     expect(source).toContain('focus-visible:ring-amber-300/70');
     expect(source).not.toContain('from-indigo-500 via-fuchsia-500 to-amber-400');
     expect(source).not.toContain('focus-visible:ring-indigo-400');
@@ -111,7 +113,10 @@ describe('Kangur CTA contract cleanup', () => {
       kangurAiTutorComposerPath,
     ]);
 
-    expect(source).toContain('bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500');
+    expect(source).toContain(
+      'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94'
+    );
+    expect(source).toContain('border-b border-amber-200/80 bg-[#fff7cf]/78');
     expect(source).toContain('border border-amber-100 bg-amber-50/80');
     expect(source).toContain('border border-amber-100 bg-amber-50/70');
     expect(source).toContain("accent='amber'");

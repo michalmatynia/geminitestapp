@@ -7,12 +7,14 @@ const {
   hydrateSystemLogRecordRuntimeContextMock,
   resolveObservabilityContextRegistryEnvelopeMock,
   generateLogInterpretationMock,
+  assertSettingsManageAccessMock,
 } = vi.hoisted(() => ({
   startAiInsightsQueueMock: vi.fn(),
   getSystemLogByIdMock: vi.fn(),
   hydrateSystemLogRecordRuntimeContextMock: vi.fn(),
   resolveObservabilityContextRegistryEnvelopeMock: vi.fn(),
   generateLogInterpretationMock: vi.fn(),
+  assertSettingsManageAccessMock: vi.fn(),
 }));
 
 vi.mock('@/features/jobs/server', () => ({
@@ -35,9 +37,14 @@ vi.mock('@/features/ai/insights/server', () => ({
   generateLogInterpretation: generateLogInterpretationMock,
 }));
 
+vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+  assertSettingsManageAccess: assertSettingsManageAccessMock,
+}));
+
 describe('system logs interpret handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
   });
 
   it('hydrates registry runtime context before generating the log interpretation', async () => {

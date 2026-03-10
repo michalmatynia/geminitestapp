@@ -696,10 +696,10 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
       return records.map((record: EnrichedProducerMapping) => toDetails(record));
     },
 
-  async bulkUpsert(
-    connectionId: string,
-    mappings: ProducerMappingAssignment[]
-  ): Promise<number> {
+    async bulkUpsert(
+      connectionId: string,
+      mappings: ProducerMappingAssignment[]
+    ): Promise<number> {
       const provider = await getAppDbProvider();
       if (provider === 'mongodb') {
         await ensureMongoProducerMappingIndexes();

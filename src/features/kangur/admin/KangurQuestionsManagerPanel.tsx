@@ -836,121 +836,121 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 {currentSuite.gradeLevel ? ` · ${currentSuite.gradeLevel}` : ''}
               </div>
               <div className='flex flex-wrap gap-2'>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
-              >
-                Ready {readyCount}
-              </Badge>
-              <Badge variant='outline' className='h-5 px-2 text-[10px]'>
-                Rich UI {richQuestionCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-amber-300 border-amber-400/40'
-              >
-                Needs review {needsReviewCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-rose-300 border-rose-400/40'
-              >
-                Needs fix {needsFixCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-violet-300 border-violet-400/40'
-              >
-                SVG {illustratedCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
-              >
-                Review queue {reviewQueueCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
-              >
-                Draft {draftCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-sky-300 border-sky-400/40'
-              >
-                Ready to publish {readyToPublishCount}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
-              >
-                Published {publishedCount}
-              </Badge>
-              {currentSuiteHealth.publishStatus === 'partial' ? (
-                <Badge
-                  variant='outline'
-                  className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
-                >
-                  Published {currentSuiteHealth.publishedQuestionCount}/{currentSuiteHealth.questionCount}
-                </Badge>
-              ) : null}
-              {currentSuiteHealth.publishStatus === 'unpublished' && currentSuiteHealth.questionCount > 0 ? (
-                <Badge
-                  variant='outline'
-                  className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
-                >
-                  Not published
-                </Badge>
-              ) : null}
-              {currentSuiteHealth.canGoLive ? (
                 <Badge
                   variant='outline'
                   className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
                 >
-                  Ready for live
+                Ready {readyCount}
                 </Badge>
-              ) : null}
-              {canPublishAndGoLiveCurrentSuite ? (
+                <Badge variant='outline' className='h-5 px-2 text-[10px]'>
+                Rich UI {richQuestionCount}
+                </Badge>
+                <Badge
+                  variant='outline'
+                  className='h-5 px-2 text-[10px] text-amber-300 border-amber-400/40'
+                >
+                Needs review {needsReviewCount}
+                </Badge>
+                <Badge
+                  variant='outline'
+                  className='h-5 px-2 text-[10px] text-rose-300 border-rose-400/40'
+                >
+                Needs fix {needsFixCount}
+                </Badge>
+                <Badge
+                  variant='outline'
+                  className='h-5 px-2 text-[10px] text-violet-300 border-violet-400/40'
+                >
+                SVG {illustratedCount}
+                </Badge>
                 <Badge
                   variant='outline'
                   className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
                 >
-                  Go live after publish
+                Review queue {reviewQueueCount}
                 </Badge>
-              ) : null}
-              {currentSuiteHealth.isLive ? (
                 <Badge
                   variant='outline'
-                  className='h-5 px-2 text-[10px] border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                  className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
                 >
-                  Live
+                Draft {draftCount}
                 </Badge>
-              ) : null}
-              {currentSuiteHealth.liveNeedsAttention ? (
                 <Badge
                   variant='outline'
-                  className='h-5 px-2 text-[10px] border-rose-400/40 bg-rose-500/10 text-rose-200'
-              >
+                  className='h-5 px-2 text-[10px] text-sky-300 border-sky-400/40'
+                >
+                Ready to publish {readyToPublishCount}
+                </Badge>
+                <Badge
+                  variant='outline'
+                  className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
+                >
+                Published {publishedCount}
+                </Badge>
+                {currentSuiteHealth.publishStatus === 'partial' ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
+                  >
+                  Published {currentSuiteHealth.publishedQuestionCount}/{currentSuiteHealth.questionCount}
+                  </Badge>
+                ) : null}
+                {currentSuiteHealth.publishStatus === 'unpublished' && currentSuiteHealth.questionCount > 0 ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
+                  >
+                  Not published
+                  </Badge>
+                ) : null}
+                {currentSuiteHealth.canGoLive ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
+                  >
+                  Ready for live
+                  </Badge>
+                ) : null}
+                {canPublishAndGoLiveCurrentSuite ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
+                  >
+                  Go live after publish
+                  </Badge>
+                ) : null}
+                {currentSuiteHealth.isLive ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                  >
+                  Live
+                  </Badge>
+                ) : null}
+                {currentSuiteHealth.liveNeedsAttention ? (
+                  <Badge
+                    variant='outline'
+                    className='h-5 px-2 text-[10px] border-rose-400/40 bg-rose-500/10 text-rose-200'
+                  >
                 Live needs attention
-              </Badge>
-              ) : null}
-            </div>
+                  </Badge>
+                ) : null}
+              </div>
             </div>
             <div className='flex w-full flex-wrap items-center gap-2.5 xl:w-auto xl:justify-end'>
-            {canPublishAndGoLiveCurrentSuite ? (
-              <Button
-                type='button'
-                size='sm'
-                className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
-                onClick={(): void => {
-                  void handlePublishAndGoLiveCurrentSuite();
-                }}
-                disabled={isSaving}
-              >
+              {canPublishAndGoLiveCurrentSuite ? (
+                <Button
+                  type='button'
+                  size='sm'
+                  className='h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:w-auto'
+                  onClick={(): void => {
+                    void handlePublishAndGoLiveCurrentSuite();
+                  }}
+                  disabled={isSaving}
+                >
                 Publish and go live
-              </Button>
-            ) : null}
+                </Button>
+              ) : null}
               <Button
                 type='button'
                 size='sm'
@@ -959,10 +959,10 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 onClick={(): void => {
                   void handlePublishReadyForCurrentSuite();
                 }}
-              disabled={isSaving || !canPublishReadyForCurrentSuite}
-            >
+                disabled={isSaving || !canPublishReadyForCurrentSuite}
+              >
               Publish ready questions
-            </Button>
+              </Button>
               <Button
                 type='button'
                 size='sm'
@@ -971,10 +971,10 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 onClick={(): void => {
                   void handleGoLiveCurrentSuite();
                 }}
-              disabled={isSaving || !currentSuiteHealth.canGoLive}
-            >
+                disabled={isSaving || !currentSuiteHealth.canGoLive}
+              >
               Go live for learners
-            </Button>
+              </Button>
               <Button
                 type='button'
                 size='sm'
@@ -983,10 +983,10 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 onClick={(): void => {
                   void handleTakeCurrentSuiteOffline();
                 }}
-              disabled={isSaving || !currentSuiteHealth.isLive}
-            >
+                disabled={isSaving || !currentSuiteHealth.isLive}
+              >
               Take suite offline
-            </Button>
+              </Button>
               <Button
                 type='button'
                 size='sm'
@@ -995,9 +995,9 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
                 onClick={openCreate}
                 disabled={isSaving}
               >
-              <Plus className='mr-1 size-3.5' />
+                <Plus className='mr-1 size-3.5' />
               Add question
-            </Button>
+              </Button>
               <Button
                 type='button'
                 size='sm'
@@ -1109,182 +1109,182 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
         {/* Question list */}
         <div className='flex-1 overflow-auto rounded-[28px] border border-border/60 bg-card/20 p-3 sm:p-4'>
           <div className='space-y-3 pr-1'>
-          {visibleQuestions.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground'>
-              {emptyFilterLabel}
-            </div>
-          ) : (
-            visibleQuestions.map((q, index) => {
-              const absoluteIndex = questions.findIndex((question) => question.id === q.id);
-              const canReorder = listFilter === 'all' && sortMode === 'manual';
-              const questionSummary = questionSummaries.get(q.id);
-              const workflowLabel = getQuestionWorkflowLabel(q.editorial.workflowStatus);
+            {visibleQuestions.length === 0 ? (
+              <div className='rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground'>
+                {emptyFilterLabel}
+              </div>
+            ) : (
+              visibleQuestions.map((q, index) => {
+                const absoluteIndex = questions.findIndex((question) => question.id === q.id);
+                const canReorder = listFilter === 'all' && sortMode === 'manual';
+                const questionSummary = questionSummaries.get(q.id);
+                const workflowLabel = getQuestionWorkflowLabel(q.editorial.workflowStatus);
 
-              return (
-                <div
-                  key={q.id}
-                  className='group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5'
-                >
-                  <div className='flex shrink-0 flex-row gap-1.5 rounded-xl border border-border/50 bg-background/25 p-1 sm:flex-col'>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='ghost'
-                      className='h-5 px-1'
-                      onClick={(): void => {
-                        if (canReorder) {
-                          void handleMove(absoluteIndex, absoluteIndex - 1);
-                        }
-                      }}
-                      disabled={!canReorder || absoluteIndex === 0 || isSaving}
-                      aria-label='Move up'
-                    >
-                      <ArrowUp className='size-3' />
-                    </Button>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='ghost'
-                      className='h-5 px-1'
-                      onClick={(): void => {
-                        if (canReorder) {
-                          void handleMove(absoluteIndex, absoluteIndex + 1);
-                        }
-                      }}
-                      disabled={!canReorder || absoluteIndex === questions.length - 1 || isSaving}
-                      aria-label='Move down'
-                    >
-                      <ArrowDown className='size-3' />
-                    </Button>
-                  </div>
-
-                  <div className='min-w-0 flex-1'>
-                    <div className='mb-2.5 flex flex-wrap items-center gap-1.5'>
-                      <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
-                      {listFilter !== 'all' && absoluteIndex >= 0 ? (
-                        <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
-                        Order {absoluteIndex + 1}
-                        </Badge>
-                      ) : null}
-                      {sortMode === 'review-queue' ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                        >
-                        Queue {index + 1}
-                        </Badge>
-                      ) : null}
-                      <Badge variant='outline' className='h-4 px-1 text-[9px]'>
-                        {q.pointValue}pt
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                return (
+                  <div
+                    key={q.id}
+                    className='group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5'
+                  >
+                    <div className='flex shrink-0 flex-row gap-1.5 rounded-xl border border-border/50 bg-background/25 p-1 sm:flex-col'>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='ghost'
+                        className='h-5 px-1'
+                        onClick={(): void => {
+                          if (canReorder) {
+                            void handleMove(absoluteIndex, absoluteIndex - 1);
+                          }
+                        }}
+                        disabled={!canReorder || absoluteIndex === 0 || isSaving}
+                        aria-label='Move up'
                       >
-                      ✓ {q.correctChoiceLabel}
-                      </Badge>
-                      {hasIllustration(q) ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
-                        >
-                        SVG
-                        </Badge>
-                      ) : null}
-                      {hasRichChoiceContent(q) ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-sky-300 border-sky-400/40'
-                        >
-                        Choice UI
-                        </Badge>
-                      ) : null}
-                      {usesRichQuestionPresentation(q) ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                        >
-                        Layout
-                        </Badge>
-                      ) : null}
-                      {questionSummary?.status === 'needs-review' ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-amber-300 border-amber-400/40'
-                        >
-                        Review
-                        </Badge>
-                      ) : null}
-                      {questionSummary?.status === 'needs-fix' ? (
-                        <Badge
-                          variant='outline'
-                          className='h-4 px-1 text-[9px] text-rose-300 border-rose-400/40'
-                        >
-                        Fix
-                        </Badge>
-                      ) : null}
-                      <Badge
-                        variant='outline'
-                        className={
-                          q.editorial.workflowStatus === 'published'
-                            ? 'h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
-                            : q.editorial.workflowStatus === 'ready'
-                              ? 'h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
-                              : 'h-4 px-1 text-[9px] text-slate-300 border-slate-400/40'
-                        }
+                        <ArrowUp className='size-3' />
+                      </Button>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='ghost'
+                        className='h-5 px-1'
+                        onClick={(): void => {
+                          if (canReorder) {
+                            void handleMove(absoluteIndex, absoluteIndex + 1);
+                          }
+                        }}
+                        disabled={!canReorder || absoluteIndex === questions.length - 1 || isSaving}
+                        aria-label='Move down'
                       >
-                        {workflowLabel}
-                      </Badge>
+                        <ArrowDown className='size-3' />
+                      </Button>
                     </div>
-                    <p className='line-clamp-2 text-sm leading-6 text-gray-200 sm:text-[15px]'>
-                      {q.prompt || '(empty prompt)'}
-                    </p>
-                  </div>
 
-                  <div className='flex shrink-0 items-center justify-end gap-1 rounded-xl border border-border/50 bg-background/25 p-1 sm:justify-start'>
-                    <button
-                      type='button'
-                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
-                      onClick={(): void => openEdit(q)}
-                      title='Edit question'
-                      disabled={isSaving}
-                    >
-                      <span className='sr-only'>Edit</span>
-                      <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type='button'
-                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white'
-                      onClick={(): void => {
-                        void handleDuplicate(q);
-                      }}
-                      title='Duplicate question'
-                      disabled={isSaving}
-                    >
-                      <Copy className='size-3.5' />
-                    </button>
-                    <button
-                      type='button'
-                      className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
-                      onClick={(): void => setQuestionToDelete(q)}
-                      title='Delete question'
-                      disabled={isSaving}
-                    >
-                      <Trash2 className='size-3.5' />
-                    </button>
+                    <div className='min-w-0 flex-1'>
+                      <div className='mb-2.5 flex flex-wrap items-center gap-1.5'>
+                        <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
+                        {listFilter !== 'all' && absoluteIndex >= 0 ? (
+                          <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
+                        Order {absoluteIndex + 1}
+                          </Badge>
+                        ) : null}
+                        {sortMode === 'review-queue' ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                          >
+                        Queue {index + 1}
+                          </Badge>
+                        ) : null}
+                        <Badge variant='outline' className='h-4 px-1 text-[9px]'>
+                          {q.pointValue}pt
+                        </Badge>
+                        <Badge
+                          variant='outline'
+                          className='h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                        >
+                      ✓ {q.correctChoiceLabel}
+                        </Badge>
+                        {hasIllustration(q) ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
+                          >
+                        SVG
+                          </Badge>
+                        ) : null}
+                        {hasRichChoiceContent(q) ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-sky-300 border-sky-400/40'
+                          >
+                        Choice UI
+                          </Badge>
+                        ) : null}
+                        {usesRichQuestionPresentation(q) ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                          >
+                        Layout
+                          </Badge>
+                        ) : null}
+                        {questionSummary?.status === 'needs-review' ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-amber-300 border-amber-400/40'
+                          >
+                        Review
+                          </Badge>
+                        ) : null}
+                        {questionSummary?.status === 'needs-fix' ? (
+                          <Badge
+                            variant='outline'
+                            className='h-4 px-1 text-[9px] text-rose-300 border-rose-400/40'
+                          >
+                        Fix
+                          </Badge>
+                        ) : null}
+                        <Badge
+                          variant='outline'
+                          className={
+                            q.editorial.workflowStatus === 'published'
+                              ? 'h-4 px-1 text-[9px] text-emerald-300 border-emerald-400/40'
+                              : q.editorial.workflowStatus === 'ready'
+                                ? 'h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
+                                : 'h-4 px-1 text-[9px] text-slate-300 border-slate-400/40'
+                          }
+                        >
+                          {workflowLabel}
+                        </Badge>
+                      </div>
+                      <p className='line-clamp-2 text-sm leading-6 text-gray-200 sm:text-[15px]'>
+                        {q.prompt || '(empty prompt)'}
+                      </p>
+                    </div>
+
+                    <div className='flex shrink-0 items-center justify-end gap-1 rounded-xl border border-border/50 bg-background/25 p-1 sm:justify-start'>
+                      <button
+                        type='button'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+                        onClick={(): void => openEdit(q)}
+                        title='Edit question'
+                        disabled={isSaving}
+                      >
+                        <span className='sr-only'>Edit</span>
+                        <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        type='button'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white'
+                        onClick={(): void => {
+                          void handleDuplicate(q);
+                        }}
+                        title='Duplicate question'
+                        disabled={isSaving}
+                      >
+                        <Copy className='size-3.5' />
+                      </button>
+                      <button
+                        type='button'
+                        className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300'
+                        onClick={(): void => setQuestionToDelete(q)}
+                        title='Delete question'
+                        disabled={isSaving}
+                      >
+                        <Trash2 className='size-3.5' />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 

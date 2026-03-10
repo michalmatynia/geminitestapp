@@ -730,7 +730,10 @@
           "skipEmpty": true,
           "trimStrings": true,
           "aiPrompt": "",
-          "validationRuleIds": []
+          "validationRuleIds": [],
+          "writeOutcomePolicy": {
+            "onZeroAffected": "pass"
+          }
         },
         "runtime": {
           "waitForInputs": true

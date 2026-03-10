@@ -283,7 +283,10 @@
               "sourcePort": "result",
               "targetPath": "parameters"
             }
-          ]
+          ],
+          "writeOutcomePolicy": {
+            "onZeroAffected": "pass"
+          }
         },
         "runtime": {
           "waitForInputs": true

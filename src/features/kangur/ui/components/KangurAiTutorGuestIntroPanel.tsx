@@ -16,10 +16,6 @@ type Props = {
   isAnonymousVisitor: boolean;
   onAccept: () => void;
   onClose: () => void;
-  onCreateAccount: () => void;
-  onDismiss: () => void;
-  onHelpClose: () => void;
-  onLogin: () => void;
   panelStyle: CSSProperties;
   prefersReducedMotion: boolean;
 };
@@ -109,10 +105,6 @@ export function KangurAiTutorGuestIntroPanel({
 }: Props): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
 
-  if (!isAnonymousVisitor) {
-    return null;
-  }
-
   return (
     <KangurAiTutorGuestIntroPanelContext.Provider
       value={{
@@ -131,6 +123,10 @@ export function KangurAiTutorGuestIntroPanel({
       <motion.div
         data-kangur-ai-tutor-root='true'
         key='guest-intro'
+        data-modal-actions='single-primary'
+        data-modal-card='warm-glow-soft'
+        data-modal-motion='fade-only'
+        data-modal-surface='canonical-onboarding'
         data-testid='kangur-ai-tutor-guest-intro'
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}

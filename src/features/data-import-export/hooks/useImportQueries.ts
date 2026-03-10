@@ -607,21 +607,21 @@ export function useSaveExportSettingsMutation(): MutationResult<
         api.post<BaseActiveTemplatePreferenceResponse>(
           '/api/v2/integrations/exports/base/active-template',
           {
-          templateId: normalizedTemplateId,
-          connectionId: normalizedConnectionId,
-          inventoryId: normalizedInventoryId,
+            templateId: normalizedTemplateId,
+            connectionId: normalizedConnectionId,
+            inventoryId: normalizedInventoryId,
           } satisfies BaseActiveTemplatePreferencePayload
         ),
         api.post<BaseDefaultInventoryPreferenceResponse>(
           '/api/v2/integrations/exports/base/default-inventory',
           {
-          inventoryId: normalizedInventoryId,
+            inventoryId: normalizedInventoryId,
           } satisfies BaseDefaultInventoryPreferencePayload
         ),
         api.post<BaseDefaultConnectionPreferenceResponse>(
           '/api/v2/integrations/exports/base/default-connection',
           {
-          connectionId: normalizedConnectionId,
+            connectionId: normalizedConnectionId,
           } satisfies BaseDefaultConnectionPreferencePayload
         ),
         api.post<BaseStockFallbackPreferenceResponse>(

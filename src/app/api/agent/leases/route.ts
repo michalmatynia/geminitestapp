@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError, z } from 'zod';
 
+import { AgentLeaseMutationRequestSchema } from '@/shared/contracts/agent-leases';
 import {
   SHARED_LEASE_LIMITATION,
   getAgentLeaseDiscoveryPayload,
@@ -13,7 +14,6 @@ import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import { AgentLeaseMutationRequestSchema } from '@/shared/contracts/agent-leases';
 
 export const querySchema = z.object({
   resourceId: optionalTrimmedQueryString(),

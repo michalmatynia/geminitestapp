@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 
 import {
   AVATAR_SIZE,
@@ -11,6 +10,7 @@ import {
 } from './KangurAiTutorWidget.shared';
 
 import type { TutorPoint } from './KangurAiTutorWidget.types';
+import type { CSSProperties } from 'react';
 
 const FLOATING_TUTOR_ARROWHEAD_ANCHOR_X = 12.5;
 const FLOATING_TUTOR_ARROWHEAD_ANCHOR_Y = 9;

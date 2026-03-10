@@ -192,7 +192,7 @@ describe('CanvasSvgNode trigger interactions', () => {
     if (!triggerActionRect) return;
 
     expect(triggerActionRect.getAttribute('data-trigger-blocked')).toBe('true');
-    expect(triggerActionRect.style.cursor).toBe('help');
+    expect(triggerActionRect.getAttribute('style')).toContain('pointer-events: all;');
     expect(getByText('Fix Wiring')).toBeTruthy();
   });
 });

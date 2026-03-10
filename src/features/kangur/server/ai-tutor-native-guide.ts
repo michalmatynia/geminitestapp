@@ -52,11 +52,11 @@ type KangurAiTutorNativeGuideResponse = {
 const normalizeMessage = (value: string | null | undefined): string =>
   typeof value === 'string'
     ? value
-        .toLocaleLowerCase()
-        .normalize('NFKD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
+      .toLocaleLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
     : '';
 
 const shouldUseNativeGuide = (input: {

@@ -154,14 +154,14 @@ export function useImportExportTemplateResources({
     );
   const { data: defaultExportInventoryPref } =
     useImportPreference<BaseDefaultInventoryPreferenceResponse>(
-    'default-inventory',
-    '/api/v2/integrations/exports/base/default-inventory'
-  );
+      'default-inventory',
+      '/api/v2/integrations/exports/base/default-inventory'
+    );
   const { data: defaultConnectionPref } =
     useImportPreference<BaseDefaultConnectionPreferenceResponse>(
-    'default-connection',
-    '/api/v2/integrations/exports/base/default-connection'
-  );
+      'default-connection',
+      '/api/v2/integrations/exports/base/default-connection'
+    );
   const { data: exportStockFallbackPref } = useImportPreference<BaseStockFallbackPreferenceResponse>(
     'stock-fallback',
     '/api/v2/integrations/exports/base/stock-fallback'

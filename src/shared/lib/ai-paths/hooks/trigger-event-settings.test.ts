@@ -455,7 +455,7 @@ describe('loadPathConfigsFromSettings', () => {
         };
       };
     };
-    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(14);
+    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(16);
   });
 
   it('derives a fallback name from the path id when both config and index names are empty', async () => {

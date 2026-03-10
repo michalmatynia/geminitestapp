@@ -15,6 +15,7 @@ type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 
 export function useKangurAiTutorAvatarShellActions(input: {
   closeChat: () => void;
+  enabled: boolean;
   guestIntroHelpVisible: boolean;
   guestIntroVisible: boolean;
   guidedMode: GuidedMode;
@@ -51,6 +52,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
 }) {
   const {
     closeChat,
+    enabled,
     guestIntroHelpVisible,
     guestIntroVisible,
     guidedMode,
@@ -82,6 +84,8 @@ export function useKangurAiTutorAvatarShellActions(input: {
     suppressAvatarClickRef,
   } = input;
 
+  const shouldOpenCanonicalOnboarding = isAnonymousVisitor || !enabled;
+
   const clearPendingGuidance = useCallback((): void => {
     if (selectionExplainTimeoutRef.current !== null) {
       window.clearTimeout(selectionExplainTimeoutRef.current);
@@ -109,7 +113,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     startGuidedSelectionExplanation(persistedSelectedText);
   }, [persistSelectionContext, startGuidedSelectionExplanation]);
 
-  const openAnonymousOnboarding = useCallback((): void => {
+  const openCanonicalOnboarding = useCallback((): void => {
     clearPendingGuidance();
     setHighlightedSection(null);
     setHoveredSectionAnchorId(null);
@@ -157,11 +161,6 @@ export function useKangurAiTutorAvatarShellActions(input: {
       return;
     }
 
-    if (isAnonymousVisitor) {
-      openAnonymousOnboarding();
-      return;
-    }
-
     if (guidedTutorTarget) {
       clearPendingGuidance();
       setHighlightedSection(null);
@@ -169,19 +168,33 @@ export function useKangurAiTutorAvatarShellActions(input: {
       setContextualTutorMode(null);
       setGuidedTutorTarget(null);
       if (!isOpen) {
-        handleOpenChat('toggle');
+        if (shouldOpenCanonicalOnboarding) {
+          openCanonicalOnboarding();
+        } else {
+          handleOpenChat('toggle');
+        }
       }
       return;
     }
 
     if (isOpen) {
-      handleCloseChat('toggle');
+      if (shouldOpenCanonicalOnboarding) {
+        openCanonicalOnboarding();
+      } else {
+        handleCloseChat('toggle');
+      }
+      return;
+    }
+
+    if (shouldOpenCanonicalOnboarding) {
+      openCanonicalOnboarding();
       return;
     }
 
     handleOpenChat('toggle');
   }, [
     clearPendingGuidance,
+    enabled,
     guestIntroHelpVisible,
     guestIntroVisible,
     guidedTutorTarget,
@@ -194,7 +207,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
-    openAnonymousOnboarding,
+    openCanonicalOnboarding,
     setContextualTutorMode,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -202,6 +215,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setHighlightedSection,
     setHoveredSectionAnchorId,
     suppressAvatarClickRef,
+    shouldOpenCanonicalOnboarding,
   ]);
 
   const handleCloseGuidedCallout = useCallback((): void => {

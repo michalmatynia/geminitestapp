@@ -8,9 +8,8 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
 import {
-  buildGraphModelQueuedPayload,
-  buildGraphModelJobEnqueueRequest,
   buildGraphModelJobPayload,
+  buildQueuedGraphModelJobEnqueueRequest,
   readEnqueuedGraphModelJobId,
 } from '@/shared/lib/ai-paths/core/runtime/graph-model-job';
 import { pollGraphJob } from '@/shared/lib/ai-paths/core/runtime/utils';
@@ -291,20 +290,16 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           context: sourceOutputs,
         },
       });
-      const enqueuePayload = buildGraphModelQueuedPayload({
+      const { request } = buildQueuedGraphModelJobEnqueueRequest({
+        productId:
+          (typeof sourceOutputs['productId'] === 'string' ? sourceOutputs['productId'] : '') ||
+          args.activePathId ||
+          'direct',
         payload,
         runId: payload.graph?.runId ?? `preview-${createRunId()}`,
       });
 
-      const res = await aiJobsApi.enqueue(
-        buildGraphModelJobEnqueueRequest({
-          productId:
-            (typeof sourceOutputs['productId'] === 'string' ? sourceOutputs['productId'] : '') ||
-            args.activePathId ||
-            'direct',
-          payload: enqueuePayload,
-        })
-      );
+      const res = await aiJobsApi.enqueue(request);
 
       if (!res.ok) throw new Error(res.error);
       directJobId = readEnqueuedGraphModelJobId(res);

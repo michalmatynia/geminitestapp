@@ -18,11 +18,11 @@ import {
   setKangurLearnerAiTutorState,
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
+import { resolveKangurAiTutorNativeGuideResponse } from '@/features/kangur/server/ai-tutor-native-guide';
 import {
   consumeKangurAiTutorDailyUsage,
   ensureKangurAiTutorDailyUsageAvailable,
 } from '@/features/kangur/server/ai-tutor-usage';
-import { resolveKangurAiTutorNativeGuideResponse } from '@/features/kangur/server/ai-tutor-native-guide';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,

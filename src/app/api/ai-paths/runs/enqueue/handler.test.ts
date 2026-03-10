@@ -523,7 +523,7 @@ describe('ai-paths runs enqueue handler', () => {
         outputs?: string[];
       }>;
     };
-    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(15);
+    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(16);
     const seedRouterNode = repairedConfig.nodes?.find((node) => node.type === 'router');
     expect(seedRouterNode).toBeDefined();
     expect(seedRouterNode?.inputs ?? []).not.toContain('prompt');

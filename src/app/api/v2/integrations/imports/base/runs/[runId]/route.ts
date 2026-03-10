@@ -1,8 +1,8 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { baseImportRunDetailQuerySchema } from '@/shared/contracts/integrations';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { GET_handler } from './handler';
 

@@ -3,7 +3,7 @@ common --color=yes
 common --curses=no
 common --disk_cache=.cache/bazel-disk
 common --repository_cache=.cache/bazel-repo
-common --experimental_guard_against_concurrent_changes
+common --guard_against_concurrent_changes
 
 build --keep_going
 build --remote_verify_downloads

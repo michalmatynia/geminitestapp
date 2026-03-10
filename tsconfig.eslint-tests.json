@@ -1,25 +1,34 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "incremental": false
   },
   "include": [
-    "__tests__/**/*.ts",
-    "__tests__/**/*.tsx",
-    "__tests__/**/*.js",
-    "__tests__/**/*.jsx",
-    "src/**/__tests__/**/*.ts",
-    "src/**/__tests__/**/*.tsx",
-    "src/**/__tests__/**/*.js",
-    "src/**/__tests__/**/*.jsx",
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
     "e2e/**/*.ts",
     "e2e/**/*.tsx",
     "e2e/**/*.js",
     "e2e/**/*.jsx",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.tsx"
+    "**/__tests__/**/*.ts",
+    "**/__tests__/**/*.tsx",
+    "**/__tests__/**/*.js",
+    "**/__tests__/**/*.jsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.test.js",
+    "**/*.test.jsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.spec.js",
+    "**/*.spec.jsx",
+    "types/**/*.d.ts",
+    "src/global.d.ts",
+    "src/shared/contracts/ambient.d.ts"
   ],
   "exclude": [
     "node_modules",

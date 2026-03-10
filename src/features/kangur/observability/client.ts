@@ -1,5 +1,6 @@
 'use client';
 
+import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-cookies';
 import {
   logClientError,
   setClientErrorBaseContext,
@@ -32,20 +33,6 @@ let currentKangurContext: {
   requestedPath: '',
 };
 
-const readCookie = (name: string): string | null => {
-  if (typeof document === 'undefined') return null;
-  const parts = document.cookie.split(';').map((part) => part.trim());
-  const match = parts.find((part) => part.startsWith(`${name}=`));
-  if (!match) return null;
-  return decodeURIComponent(match.slice(name.length + 1));
-};
-
-const setCookie = (name: string, value: string, days: number): void => {
-  if (typeof document === 'undefined') return;
-  const maxAgeSeconds = Math.floor(days * 24 * 60 * 60);
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
-};
-
 const generateId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -54,10 +41,10 @@ const generateId = (): string => {
 };
 
 const getOrCreateVisitorId = (): string => {
-  const existing = readCookie(VISITOR_COOKIE);
+  const existing = readClientCookie(VISITOR_COOKIE);
   if (existing) return existing;
   const created = generateId();
-  setCookie(VISITOR_COOKIE, created, 180);
+  setClientCookie(VISITOR_COOKIE, created, { maxAgeSeconds: 180 * 24 * 60 * 60 });
   return created;
 };
 

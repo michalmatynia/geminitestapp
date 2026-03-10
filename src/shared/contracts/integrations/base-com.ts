@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
 import { marketplaceConnectionRequestSchema } from './marketplace';
+
+import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
 import type { TemplateMapping as BaseFieldMapping } from './templates';
 
 /**

@@ -13,6 +13,7 @@ import {
   Type,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
   cloneKangurLessonGridItem,
   cloneKangurLessonPage,
@@ -47,6 +48,7 @@ import type {
 } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
 import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';

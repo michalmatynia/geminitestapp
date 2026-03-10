@@ -199,10 +199,10 @@ export function getTagMappingRepository(): TagMappingRepository {
       return records.map((record: EnrichedTagMapping) => toDetails(record));
     },
 
-  async bulkUpsert(
-    connectionId: string,
-    mappings: TagMappingAssignment[]
-  ): Promise<number> {
+    async bulkUpsert(
+      connectionId: string,
+      mappings: TagMappingAssignment[]
+    ): Promise<number> {
       let count = 0;
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const mapping of mappings) {

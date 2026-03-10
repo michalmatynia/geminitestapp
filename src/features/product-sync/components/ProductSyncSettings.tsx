@@ -12,6 +12,7 @@ import {
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
 } from '@/features/product-sync/hooks/useProductSyncSettings';
+import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
 import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
@@ -25,7 +26,6 @@ import type {
   ProductSyncProfileUpdatePayload,
   ProductSyncRelinkPayload,
 } from '@/shared/contracts/product-sync';
-import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   useDefaultExportConnection,

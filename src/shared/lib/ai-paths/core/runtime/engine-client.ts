@@ -12,9 +12,8 @@ import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-r
 import { evaluateGraphInternal } from './engine-core';
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 import {
-  buildGraphModelQueuedPayload,
-  buildGraphModelJobEnqueueRequest,
   buildGraphModelJobPayload,
+  buildQueuedGraphModelJobEnqueueRequest,
   readEnqueuedGraphModelJobId,
 } from './graph-model-job';
 import { handleAgent, handleLearnerAgent } from './handlers/agent';
@@ -164,11 +163,6 @@ const handleModel: NodeHandler = async ({
     runId,
     contextRegistry,
   });
-  const enqueuePayload = buildGraphModelQueuedPayload({
-    payload,
-    runId,
-  });
-
   const productIdInput =
     typeof nodeInputs['productId'] === 'string'
       ? nodeInputs['productId']
@@ -177,15 +171,15 @@ const handleModel: NodeHandler = async ({
         : typeof simulationEntityId === 'string'
           ? simulationEntityId
           : 'unknown';
+  const { request } = buildQueuedGraphModelJobEnqueueRequest({
+    productId: productIdInput,
+    payload,
+    runId,
+  });
   let enqueuedJobId: string | undefined;
 
   try {
-    const enqueueResult = await aiJobsApi.enqueue(
-      buildGraphModelJobEnqueueRequest({
-        productId: productIdInput,
-        payload: enqueuePayload,
-      })
-    );
+    const enqueueResult = await aiJobsApi.enqueue(request);
     if (!enqueueResult.ok) {
       throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
     }

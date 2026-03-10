@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { validateKangurAiTutorOnboardingStore } from '@/features/kangur/ai-tutor-onboarding-validation';
-import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import {
   getKangurAiTutorNativeGuideStore,
   upsertKangurAiTutorNativeGuideStore,
 } from '@/features/kangur/server/ai-tutor-native-guide-repository';
+import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import {
   parseKangurAiTutorNativeGuideStore,
   type KangurAiTutorNativeGuideStore,

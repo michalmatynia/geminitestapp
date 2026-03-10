@@ -14,6 +14,7 @@ import {
   useAdminLayoutState,
 } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { setClientCookie } from '@/shared/lib/browser/client-cookies';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
@@ -46,7 +47,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       // ignore storage failures
     }
     try {
-      document.cookie = `${ADMIN_MENU_COLLAPSED_COOKIE_KEY}=${collapsed ? '1' : '0'}; Path=/; Max-Age=31536000; SameSite=Lax`;
+      setClientCookie(ADMIN_MENU_COLLAPSED_COOKIE_KEY, collapsed ? '1' : '0', {
+        maxAgeSeconds: 31536000,
+      });
     } catch {
       // ignore cookie failures
     }

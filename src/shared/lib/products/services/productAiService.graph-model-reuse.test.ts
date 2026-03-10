@@ -15,6 +15,7 @@ const {
   deleteAllJobsMock,
   markStaleRunningJobsMock,
   getProductAiJobRepositoryMock,
+  getProductByIdMock,
   logSystemEventMock,
   errorSystemLogInfoMock,
 } = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ const {
   deleteAllJobsMock: vi.fn(),
   markStaleRunningJobsMock: vi.fn(),
   getProductAiJobRepositoryMock: vi.fn(),
+  getProductByIdMock: vi.fn(),
   logSystemEventMock: vi.fn(),
   errorSystemLogInfoMock: vi.fn(),
 }));
@@ -47,11 +49,11 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
-    getProductById: vi.fn(),
+    getProductById: getProductByIdMock,
   },
 }));
 
-import { enqueueProductAiJob } from './productAiService';
+import { enqueueProductAiJob, getProductAiJob, getProductAiJobs } from './productAiService';
 
 const createJobRecord = (overrides: Partial<ProductAiJobRecord> = {}): ProductAiJobRecord => {
   const now = new Date('2026-03-05T00:00:00.000Z');
@@ -90,6 +92,12 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
     vi.clearAllMocks();
     getProductAiJobRepositoryMock.mockResolvedValue(repositoryMock);
     findJobsMock.mockResolvedValue([]);
+    findJobByIdMock.mockResolvedValue(null);
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Product 1',
+      sku: 'SKU-1',
+    });
     createJobMock.mockImplementation(
       async (productId: string, type: string, payload: unknown): Promise<ProductAiJobRecord> =>
         createJobRecord({
@@ -308,5 +316,48 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
 
     expect(findJobsMock).not.toHaveBeenCalled();
     expect(createJobMock).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch products for legacy ai_paths graph_model jobs in list view when source is missing', async () => {
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        productId: 'product-1',
+        payload: {
+          prompt: 'Generate a title',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'model-node-1',
+          },
+        },
+      }),
+    ]);
+
+    const jobs = await getProductAiJobs();
+
+    expect(getProductByIdMock).not.toHaveBeenCalled();
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]?.product).toBeNull();
+  });
+
+  it('does not fetch products for legacy ai_paths graph_model jobs in detail view when source is missing', async () => {
+    findJobByIdMock.mockResolvedValue(
+      createJobRecord({
+        id: 'job-existing',
+        productId: 'product-1',
+        payload: {
+          prompt: 'Generate a title',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'model-node-1',
+          },
+        },
+      })
+    );
+
+    const job = await getProductAiJob('job-existing');
+
+    expect(getProductByIdMock).not.toHaveBeenCalled();
+    expect(job?.product).toBeNull();
   });
 });

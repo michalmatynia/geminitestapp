@@ -16,12 +16,12 @@ import {
   type KangurAiTutorTestAccessMode,
   type KangurAiTutorUiMode,
 } from '@/features/kangur/settings-ai-tutor';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -32,13 +32,13 @@ import {
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import {
-  createDefaultKangurAiTutorLearnerMood,
-  type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
-import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
 } from '@/shared/contracts/kangur-ai-tutor-content';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
 import { api } from '@/shared/lib/api-client';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
@@ -416,16 +416,16 @@ function AiTutorConfigPanel(): React.JSX.Element {
                     ? tutorContent.parentDashboard.usageError
                     : usageSummary.dailyMessageLimit === null
                       ? formatKangurAiTutorTemplate(
-                          tutorContent.parentDashboard.usageUnlimitedTemplate,
-                          { messageCount: usageSummary.messageCount }
-                        )
+                        tutorContent.parentDashboard.usageUnlimitedTemplate,
+                        { messageCount: usageSummary.messageCount }
+                      )
                       : formatKangurAiTutorTemplate(
-                          tutorContent.parentDashboard.usageLimitedTemplate,
-                          {
-                            messageCount: usageSummary.messageCount,
-                            dailyMessageLimit: usageSummary.dailyMessageLimit,
-                          }
-                        )}
+                        tutorContent.parentDashboard.usageLimitedTemplate,
+                        {
+                          messageCount: usageSummary.messageCount,
+                          dailyMessageLimit: usageSummary.dailyMessageLimit,
+                        }
+                      )}
               </div>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
@@ -435,9 +435,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
                   : usageSummary.remainingMessages === 0
                     ? tutorContent.parentDashboard.usageExhaustedBadge
                     : formatKangurAiTutorTemplate(
-                        tutorContent.parentDashboard.usageRemainingBadgeTemplate,
-                        { remainingMessages: usageSummary.remainingMessages }
-                      )}
+                      tutorContent.parentDashboard.usageRemainingBadgeTemplate,
+                      { remainingMessages: usageSummary.remainingMessages }
+                    )}
               </div>
             ) : null}
           </div>

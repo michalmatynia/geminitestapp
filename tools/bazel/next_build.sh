@@ -9,4 +9,6 @@ fi
 cd "${BUILD_WORKSPACE_DIRECTORY}"
 
 ./node_modules/.bin/prisma generate
-exec env NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/next build --webpack
+max_old_space_size="${BAZEL_NODE_MAX_OLD_SPACE_SIZE:-12288}"
+
+exec env NODE_OPTIONS=--max-old-space-size="${max_old_space_size}" ./node_modules/.bin/next build --webpack

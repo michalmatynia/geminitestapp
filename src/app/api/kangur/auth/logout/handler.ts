@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { authConfig } from '@/features/auth/auth.config';
+import { auth } from '@/features/auth/server';
 import { clearKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

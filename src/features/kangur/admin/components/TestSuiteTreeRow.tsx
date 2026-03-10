@@ -66,9 +66,7 @@ export function TestSuiteTreeRow(props: {
   if (!suite) {
     const isCategoryGroup = input.node.kind === 'kangur-test-suite-category-group';
     const categoryGroupMeta =
-      (input.node.metadata as Record<string, unknown> | undefined)?.[
-        'kangurTestSuiteCategoryGroup'
-      ] as Record<string, unknown> | undefined;
+      input.node.metadata?.['kangurTestSuiteCategoryGroup'] as Record<string, unknown> | undefined;
     const groupSuiteCount =
       typeof categoryGroupMeta?.['suiteCount'] === 'number' ? categoryGroupMeta['suiteCount'] : 0;
 

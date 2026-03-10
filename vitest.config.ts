@@ -38,6 +38,13 @@ const mongoIntegrationTestFiles = [
   'src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts',
 ];
 
+const bazelWorkspaceMirrorExcludes = [
+  'bazel-geminitestapp/**',
+  'bazel-bin/**',
+  'bazel-out/**',
+  'bazel-testlogs/**',
+];
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -63,6 +70,7 @@ export default defineConfig({
           include: configDefaults.include,
           exclude: [
             ...configDefaults.exclude,
+            ...bazelWorkspaceMirrorExcludes,
             'e2e/**',
             '.next/**',
             ...prismaIntegrationTestFiles,
@@ -79,7 +87,7 @@ export default defineConfig({
           setupFiles: ['./vitest.setup.prisma.ts'],
           fileParallelism: false,
           include: prismaIntegrationTestFiles,
-          exclude: [...configDefaults.exclude, 'e2e/**', '.next/**'],
+          exclude: [...configDefaults.exclude, ...bazelWorkspaceMirrorExcludes, 'e2e/**', '.next/**'],
           pool: 'forks',
           testTimeout: 30_000,
           hookTimeout: 30_000,
@@ -94,7 +102,7 @@ export default defineConfig({
           setupFiles: ['./vitest.setup.mongo.ts'],
           fileParallelism: false,
           include: mongoIntegrationTestFiles,
-          exclude: [...configDefaults.exclude, 'e2e/**', '.next/**'],
+          exclude: [...configDefaults.exclude, ...bazelWorkspaceMirrorExcludes, 'e2e/**', '.next/**'],
           pool: 'forks',
         },
       },

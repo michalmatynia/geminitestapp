@@ -91,10 +91,6 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleFocusSelectedFragment: KangurAiTutorPanelBodyContextValue['handleFocusSelectedFragment'];
   handleFollowUpClick: KangurAiTutorPanelBodyContextValue['handleFollowUpClick'];
   handleGuestIntroAccept: KangurAiTutorPortalContextValue['guestIntro']['onAccept'];
-  handleGuestIntroCreateAccount: KangurAiTutorPortalContextValue['guestIntro']['onCreateAccount'];
-  handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onDismiss'];
-  handleGuestIntroHelpClose: KangurAiTutorPortalContextValue['guestIntro']['onHelpClose'];
-  handleGuestIntroLogin: KangurAiTutorPortalContextValue['guestIntro']['onLogin'];
   handleHomeOnboardingAdvance: KangurAiTutorPortalContextValue['guidedCallout']['onAdvanceHomeOnboarding'];
   handleHomeOnboardingBack: KangurAiTutorPortalContextValue['guidedCallout']['onBackHomeOnboarding'];
   handleHomeOnboardingFinishEarly: KangurAiTutorPortalContextValue['guidedCallout']['onFinishHomeOnboarding'];
@@ -182,20 +178,13 @@ export function useKangurAiTutorPortalViewModel(
     input.showSectionGuidanceCallout;
   const hasContextualTutorLock = input.contextualTutorMode !== null;
 
-  const guestIntroHeadline = input.guestIntroHelpVisible
-    ? input.tutorContent.guestIntro.help.headline
-    : input.tutorContent.guestIntro.initial.headline;
-  const guestIntroDescription = input.guestIntroHelpVisible
-    ? input.tutorContent.guestIntro.help.description
-    : input.shouldRepeatGuestIntroOnEntry
-      ? input.tutorContent.guestIntro.repeated.description
-      : input.tutorContent.guestIntro.initial.description;
+  const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
+  const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
   const shouldRenderGuestIntro =
     input.shouldRenderGuestIntroUi &&
     !input.isAskModalMode &&
     !isGuidedAvatarMode &&
-    !hasContextualTutorLock &&
-    !input.isOpen;
+    !hasContextualTutorLock;
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
@@ -344,10 +333,6 @@ export function useKangurAiTutorPortalViewModel(
         shouldRender: shouldRenderGuestIntro,
         onAccept: input.handleGuestIntroAccept,
         onClose: input.handleCloseGuestIntroCard,
-        onCreateAccount: input.handleGuestIntroCreateAccount,
-        onDismiss: input.handleGuestIntroDismiss,
-        onHelpClose: input.handleGuestIntroHelpClose,
-        onLogin: input.handleGuestIntroLogin,
       },
       guidedCallout: {
         calloutKey: input.guidedCalloutKey,
@@ -399,7 +384,7 @@ export function useKangurAiTutorPortalViewModel(
         isOpen: input.isOpen,
         isTutorHidden: input.isTutorHidden,
         motionProfile: input.motionProfile,
-        onAttachedAvatarClick: () => input.handleCloseChat('toggle'),
+        onAttachedAvatarClick: input.handleAvatarClick,
         onBackdropClose: input.handlePanelBackdropClose,
         onClose: input.handlePanelHeaderClose,
         onDisableTutor: input.handleDisableTutor,
@@ -479,10 +464,6 @@ export function useKangurAiTutorPortalViewModel(
       input.handleFloatingAvatarPointerMove,
       input.handleFloatingAvatarPointerUp,
       input.handleGuestIntroAccept,
-      input.handleGuestIntroCreateAccount,
-      input.handleGuestIntroDismiss,
-      input.handleGuestIntroHelpClose,
-      input.handleGuestIntroLogin,
       input.handleHomeOnboardingAdvance,
       input.handleHomeOnboardingBack,
       input.handleHomeOnboardingFinishEarly,

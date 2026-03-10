@@ -5,10 +5,12 @@ const {
   startAiInsightsQueueMock,
   resolveObservabilityContextRegistryEnvelopeMock,
   generateLogsInsightMock,
+  assertSettingsManageAccessMock,
 } = vi.hoisted(() => ({
   startAiInsightsQueueMock: vi.fn(),
   resolveObservabilityContextRegistryEnvelopeMock: vi.fn(),
   generateLogsInsightMock: vi.fn(),
+  assertSettingsManageAccessMock: vi.fn(),
 }));
 
 vi.mock('@/features/jobs/server', () => ({
@@ -24,9 +26,14 @@ vi.mock('@/features/ai/insights/server', () => ({
   generateLogsInsight: generateLogsInsightMock,
 }));
 
+vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+  assertSettingsManageAccess: assertSettingsManageAccessMock,
+}));
+
 describe('system logs insights handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
   });
 
   it('resolves registry context before generating a logs insight', async () => {

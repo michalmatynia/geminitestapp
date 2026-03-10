@@ -91,6 +91,7 @@ export function EventStreamPanel(): React.JSX.Element {
               <Tooltip content={row.original.message} className='w-full'>
                 <span
                   className='block truncate rounded-sm text-sm font-medium text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                  tabIndex={0}
                   aria-label={row.original.message}
                   title={row.original.message}
                 >

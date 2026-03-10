@@ -8,11 +8,11 @@ import {
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import {
   enforceAiPathsRunRateLimit,
+  enqueuePathRun,
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
 import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
-import { enqueuePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';

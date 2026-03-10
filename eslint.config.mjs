@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import nextPlugin from '@next/eslint-plugin-next';
@@ -8,12 +10,15 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 const includeTestsFromEnv = process.env.ESLINT_INCLUDE_TESTS === '1';
+const workspaceRootDir = process.cwd();
+const sourceTsProject = path.join(workspaceRootDir, 'tsconfig.eslint-src.json');
+const testTsProject = path.join(workspaceRootDir, 'tsconfig.eslint-tests.json');
 
 const testFiles = [
-  '**/__tests__/**/*.{js,jsx,ts,tsx}',
+  'src/**/__tests__/**/*.{js,jsx,ts,tsx}',
   'e2e/**/*.{js,jsx,ts,tsx}',
-  '**/*.test.{js,jsx,ts,tsx}',
-  '**/*.spec.{js,jsx,ts,tsx}',
+  'src/**/*.test.{js,jsx,ts,tsx}',
+  'src/**/*.spec.{js,jsx,ts,tsx}',
 ];
 
 const sourceFiles = ['src/**/*.{js,jsx,ts,tsx}'];
@@ -23,12 +28,38 @@ const serverFiles = [
   'src/instrumentation.ts',
   'src/**/*.server.{ts,tsx,js,jsx}',
 ];
+const scannerScriptMjsFiles = [
+  'scripts/ai-paths/**/*.mjs',
+  'scripts/architecture/**/*.mjs',
+  'scripts/cleanup/**/*.mjs',
+  'scripts/canonical/**/*.mjs',
+  'scripts/db/**/*.mjs',
+  'scripts/docs/**/*.mjs',
+  'scripts/lib/**/*.mjs',
+  'scripts/observability/**/*.mjs',
+  'scripts/perf/**/*.mjs',
+  'scripts/quality/**/*.mjs',
+  'scripts/testing/**/*.mjs',
+];
+const scannerScriptTsFiles = [
+  'scripts/ai-paths/**/*.ts',
+  'scripts/architecture/**/*.test.ts',
+  'scripts/auth/**/*.ts',
+  'scripts/canonical/**/*.test.ts',
+  'scripts/cleanup/**/*.ts',
+  'scripts/db/**/*.ts',
+  'scripts/docs/**/*.ts',
+  'scripts/observability/**/*.test.ts',
+  'scripts/perf/**/*.ts',
+  'scripts/quality/**/*.test.ts',
+  'scripts/testing/**/*.ts',
+];
 
 const typedSourceLanguageOptions = {
   parser: tseslint.parser,
   parserOptions: {
-    project: './tsconfig.json',
-    tsconfigRootDir: import.meta.dirname,
+    project: sourceTsProject,
+    tsconfigRootDir: workspaceRootDir,
     ecmaFeatures: {
       jsx: true,
     },
@@ -38,8 +69,8 @@ const typedSourceLanguageOptions = {
 const typedTestLanguageOptions = {
   parser: tseslint.parser,
   parserOptions: {
-    project: './tsconfig.eslint-tests.json',
-    tsconfigRootDir: import.meta.dirname,
+    project: testTsProject,
+    tsconfigRootDir: workspaceRootDir,
     ecmaFeatures: {
       jsx: true,
     },
@@ -60,7 +91,7 @@ const sharedSettings = {
   },
   'import/resolver': {
     typescript: {
-      project: './tsconfig.json',
+      project: sourceTsProject,
     },
     node: true,
   },
@@ -164,9 +195,7 @@ export default defineConfig([
     'tmp/**',
     '__tests__/mocks/**/*',
     '*.cjs',
-    '*.mjs',
     'auto-keep-trying.js',
-    'scripts/**',
     'prisma/**',
     'extract_errors.cjs',
     'summarize_errors.cjs',
@@ -184,6 +213,58 @@ export default defineConfig([
   {
     linterOptions: {
       reportUnusedDisableDirectives: true,
+    },
+  },
+
+  {
+    files: scannerScriptMjsFiles,
+    ignores: ['scripts/architecture/debug-edges.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
+    },
+  },
+
+  {
+    files: scannerScriptTsFiles,
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parser: tseslint.parser,
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+        console: 'readonly',
+        process: 'readonly',
+        vi: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
@@ -329,6 +410,7 @@ export default defineConfig([
       'src/shared/lib/product-validator-admin.ts',
       'src/shared/ui/files.ts',
       'src/shared/utils/observability/error-system.ts',
+      'src/shared/lib/auth/settings-manage-access.ts',
     ],
     rules: {
       'import/no-restricted-paths': 'off',

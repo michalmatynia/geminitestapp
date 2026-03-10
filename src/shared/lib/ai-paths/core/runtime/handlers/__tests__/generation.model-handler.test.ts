@@ -247,6 +247,8 @@ describe('handleModel prompt routing', () => {
     expect(result['status']).toBe('queued');
     expect(enqueueArgs?.type).toBe('graph_model');
     expect(enqueueArgs?.payload).toMatchObject({
+      cacheKey: expect.any(String),
+      payloadHash: expect.any(String),
       modelId: 'gpt-4o-mini',
       graph: {
         requestedModelId: 'gpt-4o-mini',

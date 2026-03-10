@@ -12,9 +12,9 @@ import gemmaVisionObjectAnalyserApiAsset from './assets/gemma-vision-object-anal
 import gemmaVisionObjectAnalyserModelAsset from './assets/gemma-vision-object-analyser-model.canvas.json';
 import parameterInferenceAsset from './assets/parameter-inference.canvas.json';
 import translationEnPlAsset from './assets/translation-en-pl.canvas.json';
+import { resolvePortablePathInput } from '../../portable-engine/portable-engine-resolvers';
 import { deserializeSemanticCanvasToPathConfig } from '../semantic-grammar/deserialize';
 import { sanitizeEdges } from '../utils/graph';
-import { resolvePortablePathInput } from '../../portable-engine/portable-engine-resolvers';
 
 export type StarterWorkflowSeedPolicy = {
   autoSeed: boolean;
@@ -374,7 +374,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'parameter_inference',
-      templateVersion: 15,
+      templateVersion: 16,
       canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
     },
   },
@@ -405,7 +405,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'description_inference_lite',
-      templateVersion: 5,
+      templateVersion: 6,
       canonicalGraphHashes: [],
     },
   },
@@ -453,7 +453,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     starterLineage: {
       starterKey: 'translation_en_pl',
-      templateVersion: 5,
+      templateVersion: 6,
       canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
     },
   },
@@ -863,22 +863,25 @@ export const upgradeStarterWorkflowPathConfig = (
     hasCanonicalGraphHash(resolution.entry, currentGraphHash) ||
     resolution.matchedBy === 'legacy_alias' ||
     Boolean(
-      provenance &&
-        provenance.starterKey === resolution.entry.starterLineage.starterKey &&
-        provenance.templateVersion < resolution.entry.starterLineage.templateVersion &&
+      provenance?.starterKey === resolution.entry.starterLineage.starterKey &&
+        provenance?.templateVersion < resolution.entry.starterLineage.templateVersion &&
         (config.id === resolution.entry.seedPolicy?.defaultPathId ||
-          resolution.entry.starterLineage.starterKey === 'parameter_inference')
+          resolution.entry.starterLineage.starterKey === 'parameter_inference' ||
+          resolution.entry.starterLineage.starterKey === 'description_inference_lite' ||
+          resolution.entry.starterLineage.starterKey === 'translation_en_pl')
     );
 
   const overlaySource = selectStarterOverlaySource(config, latest);
+  const latestNodeCount = (overlaySource.nodes ?? []).length;
   const shouldReplaceGraphCompletely =
     resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
     hasParameterInferencePromptStructure(config) &&
-    countNodeIdOverlap(config, overlaySource) === 0;
+    countNodeIdOverlap(config, overlaySource) < latestNodeCount;
 
   // Allow full graph replacement even when safeToOverlay is false (e.g. provenance already
-  // bumped to current templateVersion by a prior overlay that touched no nodes). Paths with zero
-  // canonical node overlap cannot be repaired by overlay — they always need full replacement.
+  // bumped to current templateVersion by a prior overlay that touched no nodes). Paths with
+  // fewer canonical nodes than the latest template cannot be repaired by overlay alone —
+  // missing nodes are never injected by the overlay, so full replacement is always required.
   if (!safeToOverlay && !shouldReplaceGraphCompletely) {
     return { config, changed: false, resolution };
   }

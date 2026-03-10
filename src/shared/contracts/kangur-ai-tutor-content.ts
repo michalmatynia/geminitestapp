@@ -560,7 +560,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
           'sign up',
           'register',
           'parent account',
-          "don't have an account",
+          'don\'t have an account',
           'dont have an account',
           'konto rodzica',
           'nie mam konta',

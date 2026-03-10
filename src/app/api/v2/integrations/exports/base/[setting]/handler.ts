@@ -1,3 +1,4 @@
+import { z } from 'zod';
 
 import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
 import {
@@ -29,7 +30,6 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 import type { NextRequest } from 'next/server';
-import { z } from 'zod';
 
 export type { SettingParams };
 export const querySchema = z.object({

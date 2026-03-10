@@ -4,18 +4,17 @@ import { z } from 'zod';
 import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 const requestSchema = z.object({
   warehouseId: z.string().trim().min(1).nullable().optional(),
   inventoryId: z.string().trim().min(1),
 });
-const querySchema = z.object({
-  inventoryId: optionalTrimmedQueryString(),
-});
+type ExportWarehouseQuery = {
+  inventoryId?: string | null;
+};
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = (_ctx.query ?? {}) as ExportWarehouseQuery;
   const inventoryId = query.inventoryId ?? null;
   const warehouseId = await getExportWarehouseId(inventoryId);
   return NextResponse.json({ warehouseId });

@@ -3,12 +3,12 @@ import { z } from 'zod';
 
 import { listFileUploadEvents } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;

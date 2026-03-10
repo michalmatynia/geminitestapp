@@ -6,20 +6,14 @@ This repository now ships a first-wave Bazel bootstrap using Bazelisk.
 
 The current Bazel layer wraps the existing npm-based build, quality, and test entrypoints so CI can start converging on stable Bazel targets without rewriting the Next.js, Prisma, Vitest, and Playwright toolchains in one cut.
 
-Phase 2 adds source-aware dependency groups for selected JavaScript and TypeScript checks. These targets still invoke the existing npm scripts, but Bazel now has explicit input graphs for the highest-value CI checks instead of treating them as opaque shell commands.
+Phase 2 adds source-aware dependency groups for selected JavaScript and TypeScript checks. These targets still invoke the existing underlying Node toolchain, but Bazel now has explicit input graphs for the highest-value CI checks instead of treating them as opaque shell commands.
 
-The repo now also has a real Bazel-managed npm dependency graph:
+The current toolchain model is intentionally pragmatic:
 
-- `MODULE.bazel` loads:
-  - `rules_nodejs`
-  - `aspect_rules_js`
-- `npm_translate_lock` imports dependencies directly from [package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json)
-- [REPO.bazel](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/REPO.bazel) uses Bazel 8 `ignore_directories` for `node_modules`
-- [tools/js/BUILD.bazel](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/tools/js/BUILD.bazel) exposes package-backed binaries for:
-  - ESLint
-  - TypeScript `tsc`
-  - Vitest
-  - Next.js
+- Bazel is the execution/orchestration layer
+- npm remains the package installation source of truth through [package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json)
+- JS/TS tools execute through repo-owned Bazel runner scripts against local `node_modules/.bin/*`
+- deeper `rules_js`/lockfile-native modeling is deferred until the repo adopts a lockfile/toolchain shape that fits it cleanly
 
 The first direct Bazel-executed checks are now:
 
@@ -31,14 +25,21 @@ The first direct Bazel-executed checks are now:
 - `//:validator_docs_check` -> direct `tsx scripts/docs/check-validator-doc-coverage.ts`
 - `//:validator_docs_generate` -> direct `tsx scripts/docs/generate-validator-docs.ts`
 - `//:ai_paths_node_docs` -> direct docs verify + tooltip coverage execution
+- `//:canonical_sitewide` -> direct `node scripts/canonical/check-sitewide.mjs`
+- `//:ai_paths_canonical` -> direct `node scripts/ai-paths/check-canonical.mjs`
 - `//:architecture_collect_metrics` -> direct `node scripts/architecture/collect-metrics.mjs --ci`
 - `//:architecture_hotspots` -> direct `node scripts/perf/route-hotspots.mjs`
 - `//:architecture_critical_paths` -> direct `node scripts/perf/check-critical-path-performance.mjs --strict --ci`
 - `//:architecture_guardrails` -> direct `node scripts/architecture/check-guardrails.mjs`
+- `//:observability` -> direct `node scripts/observability/check-observability.mjs --mode=check`
+- `//:ui_consolidation` -> direct `node scripts/architecture/check-ui-consolidation.mjs`
 - `//:weekly_quality_report` -> direct `node scripts/quality/generate-weekly-report.mjs --strict --ci`
 - `//:weekly_trend_index` -> direct `node scripts/quality/generate-trend-index.mjs --ci --no-history`
 - `//:weekly_duration_budgets` -> direct `node scripts/quality/recalibrate-weekly-duration-budgets.mjs --ci --no-history`
 - `//:unit` -> `//tools/js:unit` via direct Vitest execution
+- `//:case_resolver_regression` -> direct Vitest regression bundle execution
+- `//:products_trigger_queue_unit` -> direct Vitest trigger-queue regression bundle execution
+- `//:unit_domain_timings` -> direct `node scripts/testing/run-unit-domain-timings.mjs --strict --ci`
 - `//:critical_flows` -> direct `node scripts/testing/run-critical-flow-tests.mjs --strict --ci`
 - `//:security_smoke` -> direct `node scripts/testing/run-security-smoke-tests.mjs --strict --ci`
 - `//:accessibility_smoke` -> direct `node scripts/testing/run-accessibility-smoke-tests.mjs --strict --ci`
@@ -58,10 +59,16 @@ npm install
 `npm_translate_lock` is still sourced from
 [package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json).
 
-For local Bun parity checks, use:
+For local toolchain and Bun parity checks, use:
 
 ```bash
+npm run sync:toolchain:mirrors
+npm run check:toolchain:contract:node
+npm run test:toolchain:contract
+bun run check:toolchain:contract
+bun run check:node:toolchain-sync
 bun run lock:bun:sync
+bun run test:bun:runtime
 bun install --frozen-lockfile
 bun run check:bun:compat
 ```
@@ -101,7 +108,7 @@ CI is wired so:
 
 If the cache variables are unset, Bazel falls back to local disk/repository caches only.
 
-Package-backed tool binaries are available for the next Bazel-native migration step:
+Tool targets are available through repo-owned Bazel wrappers:
 
 ```bash
 npm run bazel -- run //tools/js:eslint -- --version
@@ -147,7 +154,7 @@ npm run bazel -- run //tools/js:next -- --version
 ## Current rollout model
 
 - Bazel is the orchestration layer for the main CI checks.
-- Existing npm scripts remain the underlying implementation.
+- Existing npm scripts remain available for compatibility, but the Bazel targets no longer depend on the old Bazel-side npm wrapper layer.
 - Selected targets now carry explicit Bazel file dependencies:
   - `//:lint`
   - `//:typecheck`
@@ -157,14 +164,16 @@ npm run bazel -- run //tools/js:next -- --version
   - `//:ai_paths_node_docs`
   - `//:validator_docs_check`
   - `//:validator_docs_generate`
-- Bazel now owns the external npm dependency graph through `npm_translate_lock`.
-- `lint` and `typecheck` now execute through package-backed Bazel binaries rather than `npm run`.
+- `lint` and `typecheck` now execute through direct Bazel-owned JS tool wrappers rather than `npm run`.
 - `api_error_sources`, `docs_structure`, and `scanner_contracts` now execute directly instead of going through npm-script wrappers.
 - `validator_docs_check`, `validator_docs_generate`, and `ai_paths_node_docs` now also bypass the top-level npm wrapper layer.
 - `architecture_*` and `weekly_*` targets now execute directly and carry explicit Bazel input groups rather than npm wrapper indirection.
+- `observability`, `ui_consolidation`, and `unit_domain_timings` now also execute directly.
+- `canonical_sitewide` and `ai_paths_canonical` now also execute directly.
 - `unit`, `critical_flows`, `security_smoke`, and `accessibility_smoke` now also bypass the top-level npm wrapper layer.
+- `case_resolver_regression` and `products_trigger_queue_unit` now also bypass the wrapper layer.
 - `integration_prisma` and `integration_mongo` now also execute directly while preserving the existing CI service/env assumptions.
 - Playwright e2e gate targets now call the shared suite runner directly instead of routing through top-level npm scripts.
 - `next_build` now executes directly as a Bazel target while still preserving the existing Next.js + Prisma build contract.
 - Remote cache support is injected by the repo-owned Bazel wrapper rather than hard-coding provider-specific settings into `.bazelrc`.
-- The next migration step is to decide whether deeper `rules_js` / `nextjs_*` native modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.
+- The next migration step is to decide whether deeper Bazel-native JS dependency modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.

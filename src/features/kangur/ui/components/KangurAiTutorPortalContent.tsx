@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';
 import { KangurAiTutorFloatingAvatar } from './KangurAiTutorFloatingAvatar';
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
+import { KangurAiTutorGuidedCallout } from './KangurAiTutorGuidedCallout';
 import { KangurAiTutorMessageList } from './KangurAiTutorMessageList';
 import { KangurAiTutorPanelAuxiliaryControls } from './KangurAiTutorPanelAuxiliaryControls';
 import { KangurAiTutorPanelBodyProvider } from './KangurAiTutorPanelBody.context';
@@ -23,6 +24,7 @@ export function KangurAiTutorPortalContent() {
   const {
     avatar,
     guestIntro,
+    guidedCallout,
     panel,
     selectionAction,
     spotlights,
@@ -51,14 +53,47 @@ export function KangurAiTutorPortalContent() {
             prefersReducedMotion={guestIntro.prefersReducedMotion}
             panelStyle={guestIntro.panelStyle}
             onClose={guestIntro.onClose}
-            onLogin={guestIntro.onLogin}
-            onCreateAccount={guestIntro.onCreateAccount}
-            onHelpClose={guestIntro.onHelpClose}
             onAccept={guestIntro.onAccept}
-            onDismiss={guestIntro.onDismiss}
           />
         ) : null}
       </AnimatePresence>
+
+      <KangurAiTutorGuidedCallout
+        calloutKey={guidedCallout.calloutKey}
+        calloutTestId={guidedCallout.calloutTestId}
+        detail={guidedCallout.detail}
+        headerLabel={guidedCallout.headerLabel}
+        mode={guidedCallout.mode}
+        onAction={(action) => {
+          if (action === 'advance_home_onboarding') {
+            guidedCallout.onAdvanceHomeOnboarding();
+            return;
+          }
+          if (action === 'back_home_onboarding') {
+            guidedCallout.onBackHomeOnboarding();
+            return;
+          }
+          if (action === 'finish_home_onboarding') {
+            guidedCallout.onFinishHomeOnboarding();
+            return;
+          }
+          guidedCallout.onClose();
+        }}
+        placement={guidedCallout.placement}
+        prefersReducedMotion={guidedCallout.prefersReducedMotion}
+        reducedMotionTransitions={guidedCallout.reducedMotionTransitions}
+        sectionGuidanceLabel={guidedCallout.sectionGuidanceLabel}
+        sectionResponsePendingKind={guidedCallout.sectionResponsePendingKind}
+        selectionPreview={guidedCallout.selectionPreview}
+        shouldRender={guidedCallout.shouldRender}
+        showSectionGuidanceCallout={guidedCallout.showSectionGuidanceCallout}
+        showSelectionGuidanceCallout={guidedCallout.showSelectionGuidanceCallout}
+        stepLabel={guidedCallout.stepLabel}
+        style={guidedCallout.style}
+        title={guidedCallout.title}
+        transitionDuration={guidedCallout.transitionDuration}
+        transitionEase={guidedCallout.transitionEase}
+      />
 
       <KangurAiTutorSpotlightOverlays
         guidedMode={spotlights.guidedMode}

@@ -1,8 +1,12 @@
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type {
-  GraphModelJobEnqueuePayload,
-  GraphModelJobPayload,
-  ProductAiJobEnqueueRequest,
+import {
+  graphModelJobEnqueuePayloadSchema,
+  type GraphModelJobEnqueuePayload,
+  type GraphModelJobPayload,
+  graphModelQueuedPayloadSchema,
+  type GraphModelQueuedPayload,
+  productAiJobEnqueueRequestSchema,
+  type ProductAiJobEnqueueRequest,
 } from '@/shared/contracts/jobs';
 
 import { hashRuntimeValue } from '../utils';
@@ -28,11 +32,26 @@ export const buildGraphModelJobPayload = (input: {
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   extraPayload?: Record<string, unknown>;
 }): GraphModelJobEnqueuePayload => {
+  const prompt = toTrimmedNonEmptyString(input.prompt);
+  const nodeId = toTrimmedNonEmptyString(input.nodeId);
+  const runId = toTrimmedNonEmptyString(input.runId);
   const requestedModelId = toTrimmedNonEmptyString(input.modelId);
   const systemPrompt = toTrimmedNonEmptyString(input.systemPrompt);
+  const activePathId = toTrimmedNonEmptyString(input.activePathId);
+  const nodeTitle = toTrimmedNonEmptyString(input.nodeTitle);
 
-  return {
-    prompt: input.prompt,
+  if (!prompt) {
+    throw new Error('Graph model payload requires a non-empty prompt.');
+  }
+  if (!nodeId) {
+    throw new Error('Graph model payload requires a non-empty node id.');
+  }
+  if (!runId) {
+    throw new Error('Graph model payload requires a non-empty run id.');
+  }
+
+  return graphModelJobEnqueuePayloadSchema.parse({
+    prompt,
     ...(input.imageUrls !== undefined ? { imageUrls: input.imageUrls } : {}),
     ...(requestedModelId ? { modelId: requestedModelId } : {}),
     ...(typeof input.temperature === 'number' ? { temperature: input.temperature } : {}),
@@ -41,25 +60,32 @@ export const buildGraphModelJobPayload = (input: {
     ...(systemPrompt ? { systemPrompt } : {}),
     source: 'ai_paths',
     graph: {
-      pathId: input.activePathId ?? undefined,
-      nodeId: input.nodeId,
-      nodeTitle: input.nodeTitle ?? undefined,
+      pathId: activePathId ?? undefined,
+      nodeId,
+      nodeTitle: nodeTitle ?? undefined,
       ...(requestedModelId ? { requestedModelId } : {}),
-      runId: input.runId,
+      runId,
     },
     ...(input.contextRegistry ? { contextRegistry: input.contextRegistry } : {}),
     ...(input.extraPayload ?? {}),
-  };
+  });
 };
 
 export const buildGraphModelJobEnqueueRequest = (input: {
   productId: string;
   payload: GraphModelJobEnqueuePayload;
-}): ProductAiJobEnqueueRequest => ({
-  productId: input.productId,
-  type: 'graph_model',
-  payload: input.payload,
-});
+}): ProductAiJobEnqueueRequest => {
+  const productId = toTrimmedNonEmptyString(input.productId);
+  if (!productId) {
+    throw new Error('Graph model enqueue request requires a non-empty product id.');
+  }
+
+  return productAiJobEnqueueRequestSchema.parse({
+    productId,
+    type: 'graph_model',
+    payload: input.payload,
+  });
+};
 
 export const buildGraphModelJobCacheMetadata = (input: {
   payload: GraphModelJobPayload;
@@ -86,10 +112,35 @@ export const buildGraphModelQueuedPayload = (input: {
   payload: GraphModelJobEnqueuePayload;
   runId: string;
   runStartedAt?: string | number | Date | null;
-}): GraphModelJobEnqueuePayload => ({
-  ...input.payload,
-  ...buildGraphModelJobCacheMetadata(input),
-});
+}): GraphModelQueuedPayload =>
+  graphModelQueuedPayloadSchema.parse({
+    ...input.payload,
+    ...buildGraphModelJobCacheMetadata(input),
+  });
+
+export const buildQueuedGraphModelJobEnqueueRequest = (input: {
+  productId: string;
+  payload: GraphModelJobEnqueuePayload;
+  runId: string;
+  runStartedAt?: string | number | Date | null;
+}): {
+  payload: GraphModelQueuedPayload;
+  request: ProductAiJobEnqueueRequest;
+} => {
+  const payload = buildGraphModelQueuedPayload({
+    payload: input.payload,
+    runId: input.runId,
+    runStartedAt: input.runStartedAt,
+  });
+
+  return {
+    payload,
+    request: buildGraphModelJobEnqueueRequest({
+      productId: input.productId,
+      payload,
+    }),
+  };
+};
 
 export const readEnqueuedGraphModelJobId = (value: {
   data?: {

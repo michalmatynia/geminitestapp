@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { sanitizeHtml } from '@/shared/utils';
+
 export type UseMarkdownPreviewDebounceProps = {
   value: string;
   renderPreviewHtml: (value: string) => string;
@@ -16,8 +18,8 @@ export function useMarkdownPreviewDebounce({
   sanitizePreviewHtml,
   debounceMs = 150,
   enabled = true,
-}: UseMarkdownPreviewDebounceProps): { isDebouncing: boolean; debouncedHtml: string } {
-  const [debouncedHtml, setDebouncedHtml] = React.useState<string>('');
+}: UseMarkdownPreviewDebounceProps): { isDebouncing: boolean; sanitizedPreviewHtml: string } {
+  const [sanitizedPreviewHtml, setSanitizedPreviewHtml] = React.useState<string>('');
   const [isDebouncing, setIsDebouncing] = React.useState(false);
 
   React.useEffect((): void | (() => void) => {
@@ -26,12 +28,12 @@ export function useMarkdownPreviewDebounce({
     setIsDebouncing(true);
     const timer = window.setTimeout((): void => {
       const nextHtml = renderPreviewHtml(value);
-      setDebouncedHtml(sanitizePreviewHtml ? sanitizePreviewHtml(nextHtml) : nextHtml);
+      setSanitizedPreviewHtml((sanitizePreviewHtml ?? sanitizeHtml)(nextHtml));
       setIsDebouncing(false);
     }, debounceMs);
 
     return (): void => window.clearTimeout(timer);
   }, [debounceMs, renderPreviewHtml, sanitizePreviewHtml, enabled, value]);
 
-  return { isDebouncing, debouncedHtml };
+  return { isDebouncing, sanitizedPreviewHtml };
 }

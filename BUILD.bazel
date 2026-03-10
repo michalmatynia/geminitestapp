@@ -1,9 +1,4 @@
-load("//tools/bazel:npm_targets.bzl", "npm_script_target")
-load("@npm//:defs.bzl", "npm_link_all_packages")
-
 package(default_visibility = ["//visibility:public"])
-
-npm_link_all_packages(name = "node_modules")
 
 app_sources = glob([
     "src/**/*.ts",
@@ -13,7 +8,7 @@ app_sources = glob([
     "src/**/*.mjs",
     "src/**/*.cjs",
     "src/**/*.json",
-])
+], allow_empty = True)
 
 script_sources = glob([
     "scripts/**/*.ts",
@@ -23,7 +18,7 @@ script_sources = glob([
     "scripts/**/*.mjs",
     "scripts/**/*.cjs",
     "scripts/**/*.json",
-])
+], allow_empty = True)
 
 e2e_sources = glob([
     "e2e/**/*.ts",
@@ -33,7 +28,7 @@ e2e_sources = glob([
     "e2e/**/*.mjs",
     "e2e/**/*.cjs",
     "e2e/**/*.json",
-])
+], allow_empty = True)
 
 docs_sources = glob([
     "docs/**/*.md",
@@ -41,14 +36,14 @@ docs_sources = glob([
     "docs/**/*.json",
     "docs/**/*.ts",
     "docs/**/*.js",
-])
+], allow_empty = True)
 
 prisma_sources = glob([
     "prisma/**/*.prisma",
     "prisma/**/*.ts",
     "prisma/**/*.js",
     "prisma/**/*.sql",
-])
+], allow_empty = True)
 
 config_sources = glob([
     "*.config.ts",
@@ -59,7 +54,7 @@ config_sources = glob([
     "*.mjs",
     "*.js",
     "tsconfig*.json",
-]) + [
+], allow_empty = True) + [
     "package.json",
     "package-lock.json",
     "MODULE.bazel",
@@ -76,6 +71,14 @@ filegroup(
         "MODULE.bazel",
         ".bazelversion",
         ".bazelrc",
+    ],
+)
+
+filegroup(
+    name = "node_modules",
+    srcs = [
+        "package.json",
+        "package-lock.json",
     ],
 )
 
@@ -98,14 +101,14 @@ filegroup(
     name = "docs_structure_inputs",
     srcs = docs_sources + glob([
         ".github/workflows/docs-structure.yml",
-    ]) + script_sources + config_sources,
+    ], allow_empty = True) + script_sources + config_sources,
 )
 
 filegroup(
     name = "api_error_sources_inputs",
     srcs = app_sources + glob([
         "scripts/quality/check-api-error-sources.mjs",
-    ]) + config_sources,
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
@@ -119,7 +122,7 @@ filegroup(
         "scripts/docs/**/*",
         "docs/AI_PATHS.md",
         "docs/ai-paths/**/*",
-    ]) + config_sources,
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
@@ -133,7 +136,7 @@ filegroup(
         "src/features/admin/pages/validator-scope.ts",
         "scripts/docs/**/*",
         "docs/validator/**/*",
-    ]) + config_sources,
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
@@ -141,7 +144,22 @@ filegroup(
     srcs = app_sources + docs_sources + glob([
         "scripts/architecture/**/*",
         "scripts/perf/**/*",
-    ]) + config_sources,
+    ], allow_empty = True) + config_sources,
+)
+
+filegroup(
+    name = "observability_inputs",
+    srcs = app_sources + script_sources + docs_sources + config_sources,
+)
+
+filegroup(
+    name = "canonical_inputs",
+    srcs = app_sources + script_sources + docs_sources + config_sources,
+)
+
+filegroup(
+    name = "ai_paths_canonical_inputs",
+    srcs = app_sources + script_sources + docs_sources + config_sources,
 )
 
 filegroup(
@@ -173,7 +191,7 @@ filegroup(
 
 sh_binary(
     name = "ai_paths_node_docs",
-    srcs = ["tools/bazel/ai_paths_node_docs.sh"],
+    srcs = ["//tools/bazel:ai_paths_node_docs.sh"],
     data = [
         ":ai_paths_node_docs_inputs",
         ":node_modules",
@@ -181,19 +199,31 @@ sh_binary(
     ],
 )
 
-npm_script_target(
+sh_binary(
     name = "canonical_sitewide",
-    script = "canonical:check:sitewide",
+    srcs = ["//tools/bazel:node_script.sh"],
+    args = ["scripts/canonical/check-sitewide.mjs"],
+    data = [
+        ":canonical_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
 )
 
-npm_script_target(
+sh_binary(
     name = "ai_paths_canonical",
-    script = "ai-paths:check:canonical",
+    srcs = ["//tools/bazel:node_script.sh"],
+    args = ["scripts/ai-paths/check-canonical.mjs"],
+    data = [
+        ":ai_paths_canonical_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
 )
 
 sh_binary(
     name = "api_error_sources",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/quality/check-api-error-sources.mjs"],
     data = [
         ":api_error_sources_inputs",
@@ -202,14 +232,20 @@ sh_binary(
     ],
 )
 
-npm_script_target(
+sh_binary(
     name = "observability",
-    script = "observability:check",
+    srcs = ["//tools/bazel:node_script.sh"],
+    args = ["scripts/observability/check-observability.mjs", "--mode=check"],
+    data = [
+        ":observability_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
 )
 
 sh_binary(
     name = "architecture_collect_metrics",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/architecture/collect-metrics.mjs", "--ci"],
     data = [
         ":architecture_metrics_inputs",
@@ -220,7 +256,7 @@ sh_binary(
 
 sh_binary(
     name = "architecture_hotspots",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/perf/route-hotspots.mjs"],
     data = [
         ":architecture_metrics_inputs",
@@ -231,7 +267,7 @@ sh_binary(
 
 sh_binary(
     name = "architecture_critical_paths",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/perf/check-critical-path-performance.mjs", "--strict", "--ci"],
     data = [
         ":architecture_metrics_inputs",
@@ -242,7 +278,7 @@ sh_binary(
 
 sh_binary(
     name = "architecture_guardrails",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/architecture/check-guardrails.mjs"],
     data = [
         ":architecture_metrics_inputs",
@@ -251,14 +287,20 @@ sh_binary(
     ],
 )
 
-npm_script_target(
+sh_binary(
     name = "ui_consolidation",
-    script = "check:ui-consolidation",
+    srcs = ["//tools/bazel:node_script.sh"],
+    args = ["scripts/architecture/check-ui-consolidation.mjs"],
+    data = [
+        ":architecture_metrics_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
 )
 
 sh_binary(
     name = "docs_structure",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/docs/check-docs-structure.mjs"],
     data = [
         ":docs_structure_inputs",
@@ -269,7 +311,7 @@ sh_binary(
 
 sh_binary(
     name = "scanner_contracts",
-    srcs = ["tools/bazel/scanner_contracts.sh"],
+    srcs = ["//tools/bazel:scanner_contracts.sh"],
     data = [
         ":scanner_contracts_inputs",
         ":node_modules",
@@ -279,7 +321,7 @@ sh_binary(
 
 sh_binary(
     name = "validator_docs_check",
-    srcs = ["tools/bazel/tsx_script.sh"],
+    srcs = ["//tools/bazel:tsx_script.sh"],
     args = ["scripts/docs/check-validator-doc-coverage.ts"],
     data = [
         ":validator_docs_inputs",
@@ -290,7 +332,7 @@ sh_binary(
 
 sh_binary(
     name = "validator_docs_generate",
-    srcs = ["tools/bazel/tsx_script.sh"],
+    srcs = ["//tools/bazel:tsx_script.sh"],
     args = ["scripts/docs/generate-validator-docs.ts"],
     data = [
         ":validator_docs_inputs",
@@ -314,20 +356,25 @@ alias(
     actual = "//tools/js:unit",
 )
 
-npm_script_target(
+sh_binary(
     name = "unit_domain_timings",
-    script = "test:unit:domains:strict",
-    args = ["--ci"],
+    srcs = ["//tools/bazel:node_script.sh"],
+    args = ["scripts/testing/run-unit-domain-timings.mjs", "--strict", "--ci"],
+    data = [
+        ":testing_gate_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
 )
 
-npm_script_target(
+alias(
     name = "case_resolver_regression",
-    script = "test:case-resolver:regression",
+    actual = "//tools/js:case_resolver_regression",
 )
 
 sh_binary(
     name = "case_resolver_capture_mapping_e2e",
-    srcs = ["tools/bazel/playwright_suite.sh"],
+    srcs = ["//tools/bazel:playwright_suite.sh"],
     args = [
         "e2e/features/case-resolver/case-resolver.spec.ts",
         "--grep",
@@ -340,14 +387,14 @@ sh_binary(
     ],
 )
 
-npm_script_target(
+alias(
     name = "products_trigger_queue_unit",
-    script = "test:ai-paths:trigger-queue:unit",
+    actual = "//tools/js:products_trigger_queue_unit",
 )
 
 sh_binary(
     name = "products_trigger_queue_e2e",
-    srcs = ["tools/bazel/playwright_suite.sh"],
+    srcs = ["//tools/bazel:playwright_suite.sh"],
     args = [
         "e2e/features/products/products-trigger-queue-integration.spec.ts",
     ],
@@ -360,7 +407,7 @@ sh_binary(
 
 sh_binary(
     name = "critical_flows",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/testing/run-critical-flow-tests.mjs", "--strict", "--ci"],
     data = [
         ":testing_gate_inputs",
@@ -371,7 +418,7 @@ sh_binary(
 
 sh_binary(
     name = "security_smoke",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/testing/run-security-smoke-tests.mjs", "--strict", "--ci"],
     data = [
         ":testing_gate_inputs",
@@ -382,7 +429,7 @@ sh_binary(
 
 sh_binary(
     name = "accessibility_smoke",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/testing/run-accessibility-smoke-tests.mjs", "--strict", "--ci"],
     data = [
         ":testing_gate_inputs",
@@ -393,7 +440,7 @@ sh_binary(
 
 sh_binary(
     name = "weekly_quality_report",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/quality/generate-weekly-report.mjs", "--strict", "--ci"],
     data = [
         ":weekly_quality_inputs",
@@ -404,7 +451,7 @@ sh_binary(
 
 sh_binary(
     name = "weekly_trend_index",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/quality/generate-trend-index.mjs", "--ci", "--no-history"],
     data = [
         ":weekly_quality_inputs",
@@ -415,7 +462,7 @@ sh_binary(
 
 sh_binary(
     name = "weekly_duration_budgets",
-    srcs = ["tools/bazel/node_script.sh"],
+    srcs = ["//tools/bazel:node_script.sh"],
     args = ["scripts/quality/recalibrate-weekly-duration-budgets.mjs", "--ci", "--no-history"],
     data = [
         ":weekly_quality_inputs",
@@ -426,7 +473,7 @@ sh_binary(
 
 sh_binary(
     name = "integration_prisma",
-    srcs = ["tools/bazel/integration_prisma.sh"],
+    srcs = ["//tools/bazel:integration_prisma.sh"],
     data = [
         ":integration_gate_inputs",
         ":node_modules",
@@ -436,7 +483,7 @@ sh_binary(
 
 sh_binary(
     name = "integration_mongo",
-    srcs = ["tools/bazel/integration_mongo.sh"],
+    srcs = ["//tools/bazel:integration_mongo.sh"],
     data = [
         ":integration_gate_inputs",
         ":node_modules",
@@ -446,7 +493,7 @@ sh_binary(
 
 sh_binary(
     name = "next_build",
-    srcs = ["tools/bazel/next_build.sh"],
+    srcs = ["//tools/bazel:next_build.sh"],
     data = [
         ":next_build_inputs",
         ":node_modules",

@@ -392,6 +392,80 @@ const buildCustomModeRandomIdParameterInferencePathConfig = (): PathConfig => {
   } as PathConfig;
 };
 
+const buildV5TranslationPathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
+  if (!entry) throw new Error('Missing starter_translation_en_pl entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_translation_en_pl_v5',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      // Simulate stored v5 config: writeOutcomePolicy absent (implicit fail)
+      const { writeOutcomePolicy: _removed, ...databaseConfigWithoutPolicy } = databaseConfig as Record<string, unknown>;
+      void _removed;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: databaseConfigWithoutPolicy,
+        },
+      };
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'translation_en_pl',
+        templateId: 'starter_translation_en_pl',
+        templateVersion: 5,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
+const buildV5DescriptionInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_description_inference_lite');
+  if (!entry) throw new Error('Missing starter_description_inference_lite entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_descv3lite',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'update') return node;
+      // Simulate stored v5 config: writeOutcomePolicy absent (implicit fail)
+      const { writeOutcomePolicy: _removed, ...databaseConfigWithoutPolicy } = databaseConfig as Record<string, unknown>;
+      void _removed;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: databaseConfigWithoutPolicy,
+        },
+      };
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'description_inference_lite',
+        templateId: 'starter_description_inference_lite',
+        templateVersion: 5,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
 const buildV14ParameterInferencePathConfig = (): PathConfig => {
   const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
   if (!entry) throw new Error('Missing starter_parameter_inference entry');
@@ -423,6 +497,43 @@ const buildV14ParameterInferencePathConfig = (): PathConfig => {
         starterKey: 'parameter_inference',
         templateId: 'starter_parameter_inference',
         templateVersion: 14,
+        seededDefault: false,
+      },
+    },
+  } as PathConfig;
+};
+
+const buildV15ParameterInferencePathConfig = (): PathConfig => {
+  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+  if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+  const config = materializeStarterWorkflowPathConfig(entry, {
+    pathId: 'path_parameter_inference_v15',
+    seededDefault: false,
+  });
+
+  return {
+    ...config,
+    nodes: (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database') return node;
+      const databaseConfig = node.config?.database;
+      if (databaseConfig?.operation !== 'query') return node;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            writeOutcomePolicy: { onZeroAffected: 'fail' as const },
+          },
+        },
+      };
+    }),
+    extensions: {
+      aiPathsStarter: {
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+        templateVersion: 15,
         seededDefault: false,
       },
     },
@@ -525,7 +636,7 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(false);
   });
 
-  it('does not overlay non-canonical graphs even when starter provenance is present', () => {
+  it('overlays stale provenance translation configs preserving diverged nodes while fixing the database node', () => {
     const legacy = buildLegacyTranslationPathConfig({
       includeParamsRegex: true,
       paramsEdgeToPort: 'value',
@@ -542,8 +653,19 @@ describe('starter workflow registry', () => {
       },
     } as PathConfig);
 
-    expect(upgraded.changed).toBe(false);
+    const dbNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-db-update-translate-en-pl'
+    );
+    const extraRegexNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-regex-params-translate-en-pl'
+    );
+
+    expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    // Database node gets writeOutcomePolicy fix from latest canvas
+    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+    // Extra user node is preserved (not removed by overlay)
+    expect(extraRegexNode).toBeDefined();
   });
 
   it('does not upgrade divergent graphs that no longer match starter fingerprints', () => {
@@ -678,8 +800,98 @@ describe('starter workflow registry', () => {
     });
   });
 
+  it('upgrades v15 parameter inference configs to repair writeOutcomePolicy on the query node', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildV15ParameterInferencePathConfig());
+    const queryNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'query'
+    );
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(queryNode).toBeTruthy();
+    expect(queryNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+  });
+
+  it('fully replaces partial parameter inference graphs that are missing canonical nodes', () => {
+    // Simulate a stored config that has only a subset of canonical nodes (e.g., an old
+    // partial migration). The overlay cannot add missing nodes, so full replacement is required.
+    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+    const canonical = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_partial_overlap',
+      seededDefault: false,
+    });
+
+    // Keep a subset of canonical nodes — simulates a partially migrated config. Include the
+    // prompt node so hasParameterInferencePromptStructure returns true (realistic scenario).
+    const keepNodeIds = new Set([
+      'node-seed-params',
+      'node-update-params',
+      'node-parser-params',
+      'node-prompt-params',
+    ]);
+    const partialConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).filter((node) => keepNodeIds.has(node.id)),
+      edges: (canonical.edges ?? []).filter(
+        (edge) => keepNodeIds.has(edge.from) && keepNodeIds.has(edge.to)
+      ),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'parameter_inference',
+          templateId: 'starter_parameter_inference',
+          templateVersion: 14,
+          seededDefault: false,
+        },
+      },
+    } as PathConfig;
+
+    const upgraded = upgradeStarterWorkflowPathConfig(partialConfig);
+    const report = evaluateRunPreflight({
+      nodes: upgraded.config.nodes ?? [],
+      edges: upgraded.config.edges ?? [],
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(upgraded.changed).toBe(true);
+    // All canonical nodes are present after full replacement
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-router-seed-params')).toBe(true);
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-vp-template-params')).toBe(true);
+    expect(upgraded.config.nodes.some((node) => node.id === 'node-lc-template-params')).toBe(true);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('upgrades v5 translation configs to add writeOutcomePolicy pass on the update node', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildV5TranslationPathConfig());
+    const dbNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(dbNode).toBeTruthy();
+    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+  });
+
+  it('upgrades v5 description inference lite configs to add writeOutcomePolicy pass on the update node', () => {
+    const upgraded = upgradeStarterWorkflowPathConfig(buildV5DescriptionInferencePathConfig());
+    const dbNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(dbNode).toBeTruthy();
+    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
+  });
+
   it('fully replaces a partially-upgraded graph whose provenance is already at the current templateVersion but nodes were never updated', () => {
-    // Simulate a path that was partially upgraded: the overlay bumped provenance to v15
+    // Simulate a path that was partially upgraded: the overlay bumped provenance to v16
     // but couldn't update any nodes (zero ID overlap), leaving legacy random-ID nodes.
     const partiallyUpgraded: PathConfig = {
       ...buildCustomModeRandomIdParameterInferencePathConfig(),
@@ -687,7 +899,7 @@ describe('starter workflow registry', () => {
         aiPathsStarter: {
           starterKey: 'parameter_inference',
           templateId: 'starter_parameter_inference',
-          templateVersion: 15, // already at current — safeToOverlay is false via provenance path
+          templateVersion: 16, // already at current — safeToOverlay is false via provenance path
           seededDefault: false,
         },
       },

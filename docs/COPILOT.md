@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -82,7 +82,13 @@ npm run test
 npm run test:e2e
 npm run check:factory-meta
 npm run metrics:guardrails
+npm run sync:toolchain:mirrors
+npm run check:toolchain:contract:node
+npm run test:toolchain:contract
+bun run check:toolchain:contract
+bun run check:node:toolchain-sync
 bun run lock:bun:sync
+bun run test:bun:runtime
 bun run check:bun:compat
 ```
 
@@ -93,4 +99,4 @@ prefer `fetchQueryV2`, `prefetchQueryV2`, and `ensureQueryDataV2` over raw
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-03`.
+Aligned to the scanned repo structure on `2026-03-10`.

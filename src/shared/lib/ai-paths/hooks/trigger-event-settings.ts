@@ -236,29 +236,29 @@ export const loadPathConfigsFromSettings = async (
     const mergedConfig =
       resolvedConfig.ok
         ? ({
-            ...resolvedConfig.value.pathConfig,
-            ...(
-              parsedConfig &&
-              typeof parsedConfig === 'object' &&
-              !Array.isArray(parsedConfig) &&
-              (parsedConfig as { extensions?: unknown }).extensions &&
-              typeof (parsedConfig as { extensions?: unknown }).extensions === 'object' &&
-              !Array.isArray((parsedConfig as { extensions?: unknown }).extensions)
-                ? {
-                    extensions: {
-                      ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
-                      ...(
-                        resolvedConfig.value.pathConfig.extensions &&
-                        typeof resolvedConfig.value.pathConfig.extensions === 'object' &&
-                        !Array.isArray(resolvedConfig.value.pathConfig.extensions)
-                          ? resolvedConfig.value.pathConfig.extensions
-                          : {}
-                      ),
-                    },
-                  }
-                : {}
-            ),
-          } as PathConfig)
+          ...resolvedConfig.value.pathConfig,
+          ...(
+            parsedConfig &&
+            typeof parsedConfig === 'object' &&
+            !Array.isArray(parsedConfig) &&
+            (parsedConfig as { extensions?: unknown }).extensions &&
+            typeof (parsedConfig as { extensions?: unknown }).extensions === 'object' &&
+            !Array.isArray((parsedConfig as { extensions?: unknown }).extensions)
+              ? {
+                extensions: {
+                  ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
+                  ...(
+                    resolvedConfig.value.pathConfig.extensions &&
+                      typeof resolvedConfig.value.pathConfig.extensions === 'object' &&
+                      !Array.isArray(resolvedConfig.value.pathConfig.extensions)
+                      ? resolvedConfig.value.pathConfig.extensions
+                      : {}
+                  ),
+                },
+              }
+              : {}
+          ),
+        } as PathConfig)
         : parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
           ? ({
             ...baseConfig,

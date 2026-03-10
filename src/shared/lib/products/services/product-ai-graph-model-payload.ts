@@ -1,4 +1,10 @@
-import type { GraphModelJobPayload } from '@/shared/contracts/jobs';
+import {
+  graphModelJobEnqueuePayloadSchema,
+  type GraphModelJobPayload,
+  graphModelQueuedPayloadSchema,
+  type GraphModelQueuedPayload,
+} from '@/shared/contracts/jobs';
+import { hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 type GraphModelStringField = 'modelId' | 'nodeId' | 'nodeTitle' | 'requestedModelId' | 'runId';
 
@@ -41,6 +47,22 @@ export const resolveGraphModelRequestedModelId = (
   return null;
 };
 
+export const resolveGraphModelCacheKey = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): string | null => {
+  const record = asRecord(payload);
+  if (!record) return null;
+  return toTrimmedString(record['cacheKey']);
+};
+
+export const resolveGraphModelPayloadHash = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): string | null => {
+  const record = asRecord(payload);
+  if (!record) return null;
+  return toTrimmedString(record['payloadHash']);
+};
+
 export const readGraphModelAiPathsRunContext = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ): {
@@ -52,6 +74,13 @@ export const readGraphModelAiPathsRunContext = (
   nodeId: readGraphModelPayloadGraphString(payload, 'nodeId') || null,
   nodeTitle: readGraphModelPayloadGraphString(payload, 'nodeTitle') || null,
 });
+
+export const hasAiPathsGraphModelNodeContext = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): boolean => {
+  const context = readGraphModelAiPathsRunContext(payload);
+  return Boolean(context.runId && context.nodeId);
+};
 
 export const resolveGraphModelPayloadSource = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
@@ -71,4 +100,69 @@ export const resolveGraphModelPayloadSource = (
   ];
 
   return aiPathsGraphMarkers.some(Boolean) ? 'ai_paths' : null;
+};
+
+export const isAiPathsGraphModelPayload = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): boolean => {
+  const record = asRecord(payload);
+  if (!record) return false;
+  return resolveGraphModelPayloadSource(record) === 'ai_paths' && Boolean(asRecord(record['graph']));
+};
+
+export const normalizeGraphModelPayloadForDispatch = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): GraphModelQueuedPayload => {
+  const record = asRecord(payload);
+  if (!record) {
+    throw new Error('Graph model payload must be an object.');
+  }
+
+  const resolvedSource = resolveGraphModelPayloadSource(record);
+
+  const normalized = {
+    ...record,
+    ...(resolvedSource ? { source: resolvedSource } : {}),
+  };
+
+  const enqueuePayload = graphModelJobEnqueuePayloadSchema.parse(normalized);
+  const cacheKey = resolveGraphModelCacheKey(enqueuePayload) ?? hashRuntimeValue(enqueuePayload);
+  const payloadHash =
+    resolveGraphModelPayloadHash(enqueuePayload) ??
+    hashRuntimeValue({
+      payload: enqueuePayload,
+      runId: readGraphModelPayloadGraphString(enqueuePayload, 'runId'),
+    });
+
+  return graphModelQueuedPayloadSchema.parse({
+    ...enqueuePayload,
+    cacheKey,
+    payloadHash,
+  });
+};
+
+export const safeParseGraphModelJobEnqueuePayload = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+) => graphModelJobEnqueuePayloadSchema.safeParse(payload);
+
+export const summarizeGraphModelPayload = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): Record<string, unknown> | undefined => {
+  const record = asRecord(payload);
+  if (!record) return undefined;
+  const prompt = record['prompt'];
+  const imageUrls = Array.isArray(record['imageUrls']) ? record['imageUrls'] : [];
+
+  return {
+    source: resolveGraphModelPayloadSource(record),
+    modelId: record['modelId'],
+    requestedModelId: resolveGraphModelRequestedModelId(record),
+    vision: record['vision'],
+    promptLength: typeof prompt === 'string' ? prompt.length : null,
+    imageCount: imageUrls.length,
+    cacheKey:
+      typeof record['cacheKey'] === 'string' ? record['cacheKey'].slice(0, 12) : null,
+    payloadHash:
+      typeof record['payloadHash'] === 'string' ? record['payloadHash'].slice(0, 12) : null,
+  };
 };

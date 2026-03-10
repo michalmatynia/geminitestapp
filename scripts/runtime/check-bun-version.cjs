@@ -2,7 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const versionFile = path.resolve(__dirname, '..', '..', '.bun-version');
+const root = process.cwd();
+const versionFile = path.join(root, '.bun-version');
+const packageJsonFile = path.join(root, 'package.json');
 
 let expectedVersion = '';
 try {
@@ -17,6 +19,30 @@ try {
 
 if (expectedVersion.length === 0) {
   console.error('[runtime] .bun-version is empty.');
+  process.exit(1);
+}
+
+let packageJson = null;
+try {
+  packageJson = JSON.parse(fs.readFileSync(packageJsonFile, 'utf8'));
+} catch (error) {
+  console.error(`[runtime] Unable to read package.json at ${packageJsonFile}.`);
+  if (error instanceof Error && error.message) {
+    console.error(error.message);
+  }
+  process.exit(1);
+}
+
+const declaredBunEngine = packageJson?.engines?.bun;
+if (typeof declaredBunEngine !== 'string' || declaredBunEngine.trim().length === 0) {
+  console.error('[runtime] package.json must declare engines.bun.');
+  process.exit(1);
+}
+
+if (declaredBunEngine.trim() !== expectedVersion) {
+  console.error(
+    `[runtime] package.json engines.bun="${declaredBunEngine}" does not match the repo pin ${expectedVersion} from .bun-version.`
+  );
   process.exit(1);
 }
 
@@ -44,4 +70,4 @@ if (actualVersion !== expectedVersion) {
   process.exit(1);
 }
 
-console.log(`[runtime] Bun ${actualVersion} matches .bun-version.`);
+console.log(`[runtime] Bun ${actualVersion} matches .bun-version and package.json engines.bun.`);

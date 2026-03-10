@@ -508,7 +508,7 @@
           "useMongoActions": false,
           "mappings": [],
           "writeOutcomePolicy": {
-            "onZeroAffected": "fail"
+            "onZeroAffected": "pass"
           }
         },
         "runtime": {

@@ -1,10 +1,11 @@
 import { BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
-import type { JSX } from 'react';
+
 
 import { cn, sanitizeSvg } from '@/shared/utils';
 
 import type { TutorMoodAvatarProps } from './KangurAiTutorWidget.shared';
+import type { JSX } from 'react';
 
 export function KangurAiTutorMoodAvatar({
   svgContent,

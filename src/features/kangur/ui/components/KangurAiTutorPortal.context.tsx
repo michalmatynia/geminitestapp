@@ -103,10 +103,6 @@ export type KangurAiTutorPortalContextValue = {
     shouldRender: boolean;
     onAccept: () => void;
     onClose: () => void;
-    onCreateAccount: () => void;
-    onDismiss: () => void;
-    onHelpClose: () => void;
-    onLogin: () => void;
   };
   guidedCallout: {
     calloutKey: string;

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-10T20:22:32.923Z",
-  "durationMs": 759,
-  "status": "warn",
+  "generatedAt": "2026-03-10T21:35:24.553Z",
+  "durationMs": 772,
+  "status": "passed",
   "summary": {
     "fileCount": 68,
     "dialogCount": 4,
@@ -9,52 +9,8 @@
     "tabsListCount": 32,
     "tooltipCount": 73,
     "errorCount": 0,
-    "warningCount": 2
+    "warningCount": 0
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "tooltip-trigger-not-focusable",
-      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
-      "file": "src/features/data-import-export/components/imports/sections/ImportListPreviewSection.tsx",
-      "line": 158,
-      "column": 17,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "tooltip-trigger-not-focusable",
-      "message": "Tooltip wraps a non-focusable <span> trigger. Use a focusable trigger or add keyboard focus support.",
-      "file": "src/features/observability/components/EventStreamPanel.tsx",
-      "line": 92,
-      "column": 17,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "tabs-list-missing-label",
-      "message": "TabsList should set aria-label or aria-labelledby for a stable tablist name.",
-      "file": "src/features/ai/ai-context-registry/pages/AdminAiContextRegistryPage.tsx",
-      "line": 235,
-      "column": 9,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "tooltip-trigger-not-focusable",
-      "errorCount": 0,
-      "warningCount": 2,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "tabs-list-missing-label",
-      "errorCount": 0,
-      "warningCount": 0,
-      "infoCount": 1
-    }
-  ]
+  "issues": [],
+  "rules": []
 }

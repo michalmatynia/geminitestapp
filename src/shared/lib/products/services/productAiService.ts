@@ -1,13 +1,16 @@
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
-import { graphModelJobEnqueuePayloadSchema } from '@/shared/contracts/jobs';
 import { badRequestError, invalidStateError, notFoundError } from '@/shared/errors/app-error';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem, logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
-  resolveGraphModelPayloadSource,
+  isAiPathsGraphModelPayload,
+  resolveGraphModelCacheKey,
+  resolveGraphModelPayloadHash,
   resolveGraphModelRequestedModelId,
+  safeParseGraphModelJobEnqueuePayload,
+  summarizeGraphModelPayload,
 } from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
@@ -72,40 +75,6 @@ const toProductSummary = (product: Record<string, unknown> | null): ProductSumma
   return { name_en: name, sku };
 };
 
-const resolveGraphModelCacheKey = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== 'object') return null;
-  const raw = (payload as Record<string, unknown>)['cacheKey'];
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const resolveGraphModelPayloadHash = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== 'object') return null;
-  const raw = (payload as Record<string, unknown>)['payloadHash'];
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> | undefined => {
-  if (!payload || typeof payload !== 'object') return undefined;
-  const record = payload as Record<string, unknown>;
-  const prompt = record['prompt'];
-  const imageUrls = Array.isArray(record['imageUrls']) ? record['imageUrls'] : [];
-  return {
-    source: resolveGraphModelPayloadSource(payload),
-    modelId: record['modelId'],
-    requestedModelId: resolveGraphModelRequestedModelId(payload),
-    vision: record['vision'],
-    promptLength: typeof prompt === 'string' ? prompt.length : null,
-    imageCount: imageUrls.length,
-    cacheKey: typeof record['cacheKey'] === 'string' ? record['cacheKey'].slice(0, 12) : null,
-    payloadHash:
-      typeof record['payloadHash'] === 'string' ? record['payloadHash'].slice(0, 12) : null,
-  };
-};
-
 const canReuseGraphModelJob = (
   job: ProductAiJobRecord,
   cacheKey: string,
@@ -146,7 +115,7 @@ export async function enqueueProductAiJob(
   const normalizedPayload =
     type === 'graph_model'
       ? (() => {
-        const parsed = graphModelJobEnqueuePayloadSchema.safeParse(payload);
+        const parsed = safeParseGraphModelJobEnqueuePayload(payload);
         if (!parsed.success) {
           throw badRequestError('Invalid graph_model payload', {
             productId,
@@ -161,7 +130,6 @@ export async function enqueueProductAiJob(
       : payload;
 
   try {
-    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
       service: 'product-ai-service',
       productId,
@@ -197,7 +165,6 @@ export async function enqueueProductAiJob(
       );
       if (reusable) {
         try {
-          const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
           void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
             service: 'product-ai-service',
             productId,
@@ -220,7 +187,6 @@ export async function enqueueProductAiJob(
   const jobRecord = await jobRepository.createJob(productId, type, normalizedPayload);
 
   try {
-    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Job created', {
       service: 'product-ai-service',
       productId,
@@ -257,10 +223,8 @@ export async function getProductAiJobs(
       ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
         | string
         | undefined);
-    const source = resolveGraphModelPayloadSource(payload);
-    const graph = payload?.['graph'] as Record<string, unknown> | undefined;
     if (entityType && entityType !== 'product') return false;
-    if (source === 'ai_paths' && graph) return false;
+    if (isAiPathsGraphModelPayload(payload)) return false;
     if (job.productId.startsWith('path_')) return false;
     return true;
   };
@@ -279,7 +243,6 @@ export async function getProductAiJobs(
           return { id, product: isObjectRecord(product) ? product : null };
         } catch (error: unknown) {
           try {
-            const { logSystemError } = await import('@/shared/lib/observability/system-logger');
             await logSystemError({
               message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
               error,
@@ -336,15 +299,13 @@ export async function getProductAiJob(
     ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
       | string
       | undefined);
-  const source = resolveGraphModelPayloadSource(payload);
-  const graph = payload?.['graph'] as Record<string, unknown> | undefined;
   const shouldFetch =
     !!job.productId &&
     !job.productId.startsWith('path_') &&
     entityType !== 'note' &&
     entityType !== 'user' &&
     entityType !== 'system' &&
-    !(source === 'ai_paths' && graph) &&
+    !isAiPathsGraphModelPayload(payload) &&
     (entityType ? entityType === 'product' : true);
   if (shouldFetch && job.productId) {
     try {
@@ -352,7 +313,6 @@ export async function getProductAiJob(
       product = isObjectRecord(result) ? result : null;
     } catch (error: unknown) {
       try {
-        const { logSystemError } = await import('@/shared/lib/observability/system-logger');
         await logSystemError({
           message: '[product-ai-service] Failed to fetch product in getProductAiJob',
           error,

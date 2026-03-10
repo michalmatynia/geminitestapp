@@ -9,7 +9,6 @@ fi
 cd "${BUILD_WORKSPACE_DIRECTORY}"
 
 ./node_modules/.bin/eslint \
-  --config eslint.scanner-scripts.config.cjs \
   "scripts/ai-paths/**/*.{mjs,ts}" \
   "scripts/architecture/**/*.{mjs,ts}" \
   "scripts/auth/**/*.ts" \

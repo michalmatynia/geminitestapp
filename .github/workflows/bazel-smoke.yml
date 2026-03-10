@@ -1,0 +1,71 @@
+name: Bazel Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".bazelignore"
+      - ".bazelrc"
+      - ".bazelversion"
+      - ".github/workflows/bazel-smoke.yml"
+      - "BUILD.bazel"
+      - "MODULE.bazel"
+      - "REPO.bazel"
+      - "docs/build/**"
+      - "package-lock.json"
+      - "package.json"
+      - "tools/bazel/**"
+      - "tools/js/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".bazelignore"
+      - ".bazelrc"
+      - ".bazelversion"
+      - ".github/workflows/bazel-smoke.yml"
+      - "BUILD.bazel"
+      - "MODULE.bazel"
+      - "REPO.bazel"
+      - "docs/build/**"
+      - "package-lock.json"
+      - "package.json"
+      - "tools/bazel/**"
+      - "tools/js/**"
+
+permissions:
+  contents: read
+
+jobs:
+  bazel-smoke:
+    name: bazel-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bazel query smoke
+        run: npm run bazel -- query //:all
+
+      - name: Bazel lint smoke
+        run: npm run bazel -- run //:lint
+
+      - name: Bazel typecheck smoke
+        run: npm run bazel -- run //:typecheck
+
+      - name: Bazel runtime smoke
+        run: npm run bazel -- run //:api_error_sources

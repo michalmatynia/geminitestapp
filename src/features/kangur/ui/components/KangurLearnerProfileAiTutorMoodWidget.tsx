@@ -2,11 +2,11 @@
 
 import { BrainCircuit } from 'lucide-react';
 
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   formatKangurProfileDateTime,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import {
   KangurGlassPanel,
   KangurSectionHeading,
@@ -14,13 +14,13 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
-  createDefaultKangurAiTutorLearnerMood,
-  type KangurTutorMoodId,
-} from '@/shared/contracts/kangur-ai-tutor-mood';
-import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
 } from '@/shared/contracts/kangur-ai-tutor-content';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  type KangurTutorMoodId,
+} from '@/shared/contracts/kangur-ai-tutor-mood';
 
 const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
   neutral: 'slate',
@@ -98,9 +98,9 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
             description={
               learner
                 ? formatKangurAiTutorTemplate(
-                    tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
-                    { learnerName }
-                  )
+                  tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
+                  { learnerName }
+                )
                 : tutorContent.profileMoodWidget.descriptionFallback
             }
             icon={<BrainCircuit className='h-5 w-5' />}

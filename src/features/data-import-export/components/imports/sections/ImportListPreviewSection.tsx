@@ -157,6 +157,7 @@ export function ImportListPreviewSection(): React.JSX.Element {
               <Tooltip content={skuExistsTooltip}>
                 <span
                   className='cursor-help rounded-sm text-[10px] opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+                  tabIndex={0}
                   aria-label={skuExistsTooltip}
                   title={skuExistsTooltip}
                 >

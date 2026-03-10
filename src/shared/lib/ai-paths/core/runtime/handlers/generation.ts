@@ -14,9 +14,8 @@ import {
   renderTemplate,
 } from '../../utils';
 import {
-  buildGraphModelJobCacheMetadata,
-  buildGraphModelJobEnqueueRequest,
   buildGraphModelJobPayload,
+  buildQueuedGraphModelJobEnqueueRequest,
   readEnqueuedGraphModelJobId,
 } from '../graph-model-job';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
@@ -483,11 +482,13 @@ export const handleModel: NodeHandler = async ({
     simulationEntityId,
     activePathId
   );
-  const { cacheKey, payloadHash } = buildGraphModelJobCacheMetadata({
+  const { payload: enqueuePayload, request } = buildQueuedGraphModelJobEnqueueRequest({
+    productId,
     payload,
     runId,
     runStartedAt,
   });
+  const { cacheKey, payloadHash } = enqueuePayload;
 
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
@@ -500,7 +501,6 @@ export const handleModel: NodeHandler = async ({
   }
   let enqueuedJobId: string | undefined;
   try {
-    const enqueuePayload = { ...payload, cacheKey, payloadHash };
     let enqueueResult: Awaited<ReturnType<typeof aiJobsApi.enqueue>> | null = null;
     let enqueueErrorMessage: string | null = null;
     for (
@@ -508,12 +508,7 @@ export const handleModel: NodeHandler = async ({
       enqueueAttempt <= defaultModelEnqueueRetryAttempts;
       enqueueAttempt += 1
     ) {
-      enqueueResult = await aiJobsApi.enqueue(
-        buildGraphModelJobEnqueueRequest({
-          productId,
-          payload: enqueuePayload,
-        })
-      );
+      enqueueResult = await aiJobsApi.enqueue(request);
       if (enqueueResult.ok) {
         enqueueErrorMessage = null;
         break;

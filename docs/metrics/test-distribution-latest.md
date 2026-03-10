@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-10T20:22:25.524Z
+Generated at: 2026-03-10T21:35:17.706Z
 
 ## Summary
 
@@ -16,7 +16,7 @@ Generated at: 2026-03-10T20:22:25.524Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1312
+- Total test files: 1536
 - .only() occurrences: 0
 - .skip() occurrences: 26
 
@@ -24,10 +24,10 @@ Generated at: 2026-03-10T20:22:25.524Z
 
 | Feature | Test Files |
 | --- | ---: |
+| ai | 225 |
 | kangur | 223 |
-| ai | 222 |
+| products | 79 |
 | case-resolver | 78 |
-| products | 78 |
 | cms | 60 |
 | prompt-exploder | 47 |
 | integrations | 36 |

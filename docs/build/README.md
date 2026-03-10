@@ -22,8 +22,17 @@ shared toolchain surfaces.
 ## Current Docs
 
 - [`bazel.md`](./bazel.md)
+- [`bazel-buildbuddy.md`](./bazel-buildbuddy.md)
 
 ## Related Docs
 
 - Bun support and local package-manager parity:
   [`docs/platform/bun-support.md`](../platform/bun-support.md)
+- Shared toolchain mirror resync helper:
+  `npm run sync:toolchain:mirrors`
+- Shared npm-first toolchain contract checks:
+  `npm run check:toolchain:contract:node`
+- Shared npm-first toolchain contract test bundle:
+  `npm run test:toolchain:contract`
+- Shared Bun/npm/Node contract checks:
+  `bun run check:toolchain:contract`

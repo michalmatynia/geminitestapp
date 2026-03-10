@@ -2,9 +2,9 @@
 
 import { User } from 'lucide-react';
 
+import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/routing';
 
 type KangurProfileMenuProps = {
   profile?: {

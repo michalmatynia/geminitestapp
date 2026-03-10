@@ -78,7 +78,7 @@ const buildUi = (overrides?: Partial<CanvasBoardUIContextValue>): CanvasBoardUIC
   }) as CanvasBoardUIContextValue;
 
 describe('CanvasSvgNode trigger regression interactions', () => {
-  it('renders fire trigger chip with pointer cursor', () => {
+  it('renders fire trigger chip as an interactive trigger action', () => {
     const node = buildTriggerNode();
     const ui = buildUi({ nodes: [node] });
 
@@ -96,7 +96,8 @@ describe('CanvasSvgNode trigger regression interactions', () => {
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
-    expect(triggerActionRect.style.cursor).toBe('pointer');
+    expect(triggerActionRect.getAttribute('style')).toContain('pointer-events: all;');
+    expect(triggerActionRect.getAttribute('data-trigger-blocked')).toBe('false');
   });
 
   it('keeps node click selection separate from trigger quick action', () => {

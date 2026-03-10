@@ -232,7 +232,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
       />
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className='space-y-6'>
-        <TabsList className='grid w-full max-w-md grid-cols-3'>
+        <TabsList aria-label='Context registry views' className='grid w-full max-w-md grid-cols-3'>
           <TabsTrigger value='catalog'>Catalog</TabsTrigger>
           <TabsTrigger value='packs'>Packs</TabsTrigger>
           <TabsTrigger value='tools'>Tools</TabsTrigger>

@@ -12,7 +12,7 @@ import { renderMarkdownToHtml } from '../../utils';
 
 export function NoteCardContent(): React.JSX.Element {
   const { note } = useNoteCardHeaderRuntime();
-  const contentHtml = React.useMemo((): string => {
+  const sanitizedContentHtml = React.useMemo((): string => {
     let html =
       (note.editorType as string) === 'wysiwyg' ? note.content : renderMarkdownToHtml(note.content);
     // Remove image tags from preview to avoid duplication with thumbnail
@@ -42,7 +42,7 @@ export function NoteCardContent(): React.JSX.Element {
       )}
       <div
         className='mb-3 max-h-36 overflow-hidden text-sm prose prose-sm'
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
+        dangerouslySetInnerHTML={{ __html: sanitizedContentHtml }}
       />
       <div className='flex flex-wrap gap-2'>
         {note.tags?.map((nt: { tagId: string; tag: { color?: string | null; name?: string } }) => (

@@ -1,68 +1,109 @@
 package(default_visibility = ["//visibility:public"])
-
-load("@npm//:eslint/package_json.bzl", eslint_bin = "bin")
-load("@npm//:next/package_json.bzl", next_bin = "bin")
-load("@npm//:typescript/package_json.bzl", typescript_bin = "bin")
-load("@npm//:vitest/package_json.bzl", vitest_bin = "bin")
-
-eslint_bin.eslint_binary(
+sh_binary(
     name = "eslint",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = ["eslint"],
 )
 
-eslint_bin.eslint_binary(
+sh_binary(
     name = "lint",
+    srcs = ["//tools/bazel:node_bin.sh"],
     args = [
+        "eslint",
         "src",
         "--cache",
         "--cache-location",
         ".eslintcache",
         "--no-error-on-unmatched-pattern",
     ],
-    data = [
-        "//:lint_inputs",
-        "//:node_modules",
-        "//:package_metadata",
-    ],
+    data = ["//:lint_inputs", "//:node_modules", "//:package_metadata"],
 )
 
-next_bin.next_binary(
+sh_binary(
     name = "next",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = ["next"],
 )
 
-typescript_bin.tsc_binary(
+sh_binary(
     name = "tsc",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = ["tsc"],
 )
 
-typescript_bin.tsc_binary(
+sh_binary(
     name = "typecheck",
+    srcs = ["//tools/bazel:node_bin.sh"],
     args = [
+        "tsc",
         "--project",
         "tsconfig.json",
         "--noEmit",
         "--incremental",
         "false",
     ],
-    data = [
-        "//:typecheck_inputs",
-        "//:node_modules",
-        "//:package_metadata",
-    ],
+    data = ["//:typecheck_inputs", "//:node_modules", "//:package_metadata"],
 )
 
-vitest_bin.vitest_binary(
+sh_binary(
     name = "vitest",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = ["vitest"],
 )
 
-vitest_bin.vitest_binary(
+sh_binary(
     name = "unit",
+    srcs = ["//tools/bazel:node_bin.sh"],
     args = [
+        "vitest",
         "run",
         "--project",
         "unit",
     ],
-    data = [
-        "//:typecheck_inputs",
-        "//:node_modules",
-        "//:package_metadata",
+    data = ["//:typecheck_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "case_resolver_regression",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = [
+        "vitest",
+        "run",
+        "src/features/case-resolver/__tests__/workspace-persist-queue.test.ts",
+        "src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+        "src/features/case-resolver/__tests__/workspace-observability.test.ts",
+        "src/features/case-resolver/__tests__/ocr-queue-model-routing.test.ts",
+        "src/features/case-resolver/__tests__/ocr-runtime.test.ts",
+        "src/features/case-resolver/__tests__/ocr-observability.test.ts",
+        "src/features/case-resolver/__tests__/prompt-exploder-sync-target.test.ts",
+        "src/features/case-resolver/__tests__/prompt-exploder-capture-modal.test.tsx",
+        "src/features/case-resolver/__tests__/capture-mapping-apply-guard.test.ts",
+        "src/features/case-resolver-capture/__tests__/proposals.test.ts",
     ],
+    data = ["//:testing_gate_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "products_trigger_queue_unit",
+    srcs = ["//tools/bazel:node_bin.sh"],
+    args = [
+        "vitest",
+        "run",
+        "src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx",
+        "src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts",
+        "src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts",
+        "src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts",
+        "src/features/products/hooks/useProductAiPathsRunSync.test.tsx",
+        "src/features/products/state/queued-product-ops.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+    ],
+    data = ["//:testing_gate_inputs", "//:node_modules", "//:package_metadata"],
 )

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T20:22:25.524Z",
+  "generatedAt": "2026-03-10T21:35:17.706Z",
   "status": "passed",
   "summary": {
     "total": 26,
@@ -10,7 +10,7 @@
     "featureCount": 28,
     "featuresWithTestCount": 28,
     "featuresWithoutTestCount": 0,
-    "totalTestFiles": 1312,
+    "totalTestFiles": 1536,
     "onlyCount": 0,
     "skipCount": 26
   },
@@ -24,19 +24,19 @@
   },
   "featuresWithTests": [
     {
+      "feature": "ai",
+      "testCount": 225
+    },
+    {
       "feature": "kangur",
       "testCount": 223
     },
     {
-      "feature": "ai",
-      "testCount": 222
+      "feature": "products",
+      "testCount": 79
     },
     {
       "feature": "case-resolver",
-      "testCount": 78
-    },
-    {
-      "feature": "products",
       "testCount": 78
     },
     {
@@ -407,5 +407,5 @@
       "infoCount": 26
     }
   ],
-  "durationMs": 278
+  "durationMs": 138
 }

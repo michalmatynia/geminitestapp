@@ -388,10 +388,6 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const {
     handleGuestIntroAccept,
-    handleGuestIntroCreateAccount,
-    handleGuestIntroDismiss,
-    handleGuestIntroHelpClose,
-    handleGuestIntroLogin,
     startGuidedGuestLogin,
   } = useKangurAiTutorGuestIntroFlow({
     authState,
@@ -488,6 +484,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleCloseGuidedCallout,
   } = useKangurAiTutorAvatarShellActions({
     closeChat,
+    enabled,
     guestIntroHelpVisible,
     guestIntroVisible,
     guidedMode,
@@ -658,10 +655,6 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFocusSelectedFragment,
     handleFollowUpClick,
     handleGuestIntroAccept,
-    handleGuestIntroCreateAccount,
-    handleGuestIntroDismiss,
-    handleGuestIntroHelpClose,
-    handleGuestIntroLogin,
     handleHomeOnboardingAdvance,
     handleHomeOnboardingBack,
     handleHomeOnboardingFinishEarly,

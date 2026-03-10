@@ -29,6 +29,7 @@ import {
   shouldExposeAuthEmailDebug,
   validatePasswordStrength,
 } from '@/server/auth';
+import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   conflictError,
   forbiddenError,
@@ -36,7 +37,6 @@ import {
   rateLimitedError,
   validationError,
 } from '@/shared/errors/app-error';
-import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 type KangurParentAccountCreateResult = {

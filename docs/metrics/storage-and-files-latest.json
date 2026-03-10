@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T20:22:39.497Z",
+  "generatedAt": "2026-03-10T21:35:31.064Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 4591,
+    "fileCount": 4592,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -24953,6 +24953,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/browser/client-cookies.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/case-resolver-capture-adapter.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -27589,5 +27595,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 1954
+  "durationMs": 1938
 }

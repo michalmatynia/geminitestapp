@@ -17,6 +17,7 @@ const UNSAFE_CODE_ALLOWLIST = new Set([
   'src/shared/lib/ai-paths/core/runtime/handlers/function-node.ts',
 ]);
 const DOCUMENT_COOKIE_ALLOWLIST = new Set([
+  'src/shared/lib/browser/client-cookies.ts',
   'src/shared/lib/analytics/components/PageAnalyticsTracker.tsx',
   'src/shared/lib/security/csrf-client.ts',
 ]);

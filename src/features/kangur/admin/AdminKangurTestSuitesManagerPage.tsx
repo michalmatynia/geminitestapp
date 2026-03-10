@@ -1205,137 +1205,137 @@ export function AdminKangurTestSuitesManagerPage({
         header={
           <div className='space-y-4'>
             <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.95),rgba(19,38,61,0.86))] p-5 sm:p-6 shadow-[0_24px_90px_-52px_rgba(14,165,233,0.35)]'>
-            <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
-              <div className='max-w-3xl space-y-2'>
-                <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80'>
+              <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
+                <div className='max-w-3xl space-y-2'>
+                  <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80'>
                   Suite library
-                </div>
-                <div className='text-lg font-semibold text-white'>Test Suite Library</div>
-                <div className='text-sm leading-6 text-slate-300'>
+                  </div>
+                  <div className='text-lg font-semibold text-white'>Test Suite Library</div>
+                  <div className='text-sm leading-6 text-slate-300'>
                   Each suite contains questions with scoring and optional SVG illustrations.
+                  </div>
+                </div>
+                <div className='flex flex-wrap items-center gap-2.5 xl:justify-end'>
+                  <Button
+                    onClick={(): void => {
+                      void handleTakeLiveSuitesOffline();
+                    }}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-slate-200 hover:bg-slate-800/50 sm:w-auto'
+                    disabled={updateSetting.isPending || liveSuiteIds.length === 0}
+                  >
+                    <AlertTriangle className='mr-1 size-3.5' />
+                  Take live suites offline
+                  </Button>
+                  <Button
+                    onClick={(): void => {
+                      void handleGoLiveReadySuites();
+                    }}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
+                    disabled={updateSetting.isPending || liveReadySuiteIds.length === 0}
+                  >
+                    <Folders className='mr-1 size-3.5' />
+                  Go live ready suites
+                  </Button>
+                  <Button
+                    onClick={(): void => {
+                      void handlePublishReadyQueue();
+                    }}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
+                    disabled={updateSetting.isPending || totalPublishableQuestionCount === 0}
+                  >
+                    <WandSparkles className='mr-1 size-3.5' />
+                  Publish ready queue
+                  </Button>
+                  <Button
+                    onClick={handleOpenReviewQueue}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30 sm:w-auto'
+                    disabled={updateSetting.isPending || !firstSuiteNeedingAttention}
+                  >
+                    <ClipboardList className='mr-1 size-3.5' />
+                  Open review queue
+                  </Button>
+                  <Button
+                    onClick={handleOpenFirstFix}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-rose-200 hover:bg-rose-900/30 sm:w-auto'
+                    disabled={updateSetting.isPending || !firstFixQuestion}
+                  >
+                    <AlertTriangle className='mr-1 size-3.5' />
+                  Open first fix
+                  </Button>
+                  <Button
+                    onClick={(): void => {
+                      void handleImportLegacy();
+                    }}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
+                    disabled={updateSetting.isPending}
+                  >
+                    <Sparkles className='mr-1 size-3.5' />
+                  Import legacy data
+                  </Button>
+                  <Button
+                    onClick={openCreateGroupModal}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
+                    disabled={updateSetting.isPending}
+                  >
+                    <Folders className='mr-1 size-3.5' />
+                  Add group
+                  </Button>
+                  <Button
+                    onClick={openCreateModal}
+                    size='sm'
+                    variant='outline'
+                    className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
+                    disabled={updateSetting.isPending}
+                  >
+                    <Plus className='mr-1 size-3.5' />
+                  Add suite
+                  </Button>
                 </div>
               </div>
-              <div className='flex flex-wrap items-center gap-2.5 xl:justify-end'>
-                <Button
-                  onClick={(): void => {
-                    void handleTakeLiveSuitesOffline();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-slate-200 hover:bg-slate-800/50 sm:w-auto'
-                  disabled={updateSetting.isPending || liveSuiteIds.length === 0}
-                >
-                  <AlertTriangle className='mr-1 size-3.5' />
-                  Take live suites offline
-                </Button>
-                <Button
-                  onClick={(): void => {
-                    void handleGoLiveReadySuites();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
-                  disabled={updateSetting.isPending || liveReadySuiteIds.length === 0}
-                >
-                  <Folders className='mr-1 size-3.5' />
-                  Go live ready suites
-                </Button>
-                <Button
-                  onClick={(): void => {
-                    void handlePublishReadyQueue();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
-                  disabled={updateSetting.isPending || totalPublishableQuestionCount === 0}
-                >
-                  <WandSparkles className='mr-1 size-3.5' />
-                  Publish ready queue
-                </Button>
-                <Button
-                  onClick={handleOpenReviewQueue}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-cyan-200 hover:bg-cyan-900/30 sm:w-auto'
-                  disabled={updateSetting.isPending || !firstSuiteNeedingAttention}
-                >
-                  <ClipboardList className='mr-1 size-3.5' />
-                  Open review queue
-                </Button>
-                <Button
-                  onClick={handleOpenFirstFix}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-rose-200 hover:bg-rose-900/30 sm:w-auto'
-                  disabled={updateSetting.isPending || !firstFixQuestion}
-                >
-                  <AlertTriangle className='mr-1 size-3.5' />
-                  Open first fix
-                </Button>
-                <Button
-                  onClick={(): void => {
-                    void handleImportLegacy();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30 sm:w-auto'
-                  disabled={updateSetting.isPending}
-                >
-                  <Sparkles className='mr-1 size-3.5' />
-                  Import legacy data
-                </Button>
-                <Button
-                  onClick={openCreateGroupModal}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
-                  disabled={updateSetting.isPending}
-                >
-                  <Folders className='mr-1 size-3.5' />
-                  Add group
-                </Button>
-                <Button
-                  onClick={openCreateModal}
-                  size='sm'
-                  variant='outline'
-                  className='h-8 w-full rounded-full border px-3 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50 sm:w-auto'
-                  disabled={updateSetting.isPending}
-                >
-                  <Plus className='mr-1 size-3.5' />
-                  Add suite
-                </Button>
-              </div>
-            </div>
 
-            <div className='flex flex-wrap items-center gap-2.5'>
+              <div className='flex flex-wrap items-center gap-2.5'>
                 <Button
                   type='button'
                   size='sm'
                   variant='outline'
                   className={cn(
-                  'h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide',
-                  !isCatalogMode
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300 hover:bg-muted/40'
-                )}
-                onClick={(): void => setTreeMode('ordered')}
-                disabled={updateSetting.isPending}
-              >
-                <ListOrdered className='mr-1 size-3.5' />
+                    'h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide',
+                    !isCatalogMode
+                      ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
+                      : 'text-gray-300 hover:bg-muted/40'
+                  )}
+                  onClick={(): void => setTreeMode('ordered')}
+                  disabled={updateSetting.isPending}
+                >
+                  <ListOrdered className='mr-1 size-3.5' />
                 Ordered
-              </Button>
+                </Button>
                 <Button
                   type='button'
                   size='sm'
                   variant='outline'
                   className={cn(
-                  'h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide',
-                  isCatalogMode
-                    ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
-                    : 'text-gray-300 hover:bg-muted/40'
-                )}
-                onClick={(): void => setTreeMode('catalog')}
-                disabled={updateSetting.isPending}
+                    'h-8 rounded-full border px-3 text-[11px] font-semibold tracking-wide',
+                    isCatalogMode
+                      ? 'border-sky-300/70 bg-sky-500/20 text-sky-100'
+                      : 'text-gray-300 hover:bg-muted/40'
+                  )}
+                  onClick={(): void => setTreeMode('catalog')}
+                  disabled={updateSetting.isPending}
                 >
                   <Folders className='mr-1 size-3.5' />
                   Catalog

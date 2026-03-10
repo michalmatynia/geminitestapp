@@ -11,8 +11,15 @@ run vitest
 npm run test:e2e 
 
 npm audit fix
-
+npm run bazel -- run //:lint -- --fix
+npm run bazel -- run //:typecheck
+       - npm run bazel -- query //:all
+          - npm run bazel -- run //:api_error_sources
+          - npm run bazel -- run //:api_input_validation
+          - npm run bazel -- run //:api_contract_coverage
+          npm run bazel -- run //:unit
 SCANNERS
+bun run test:bun:runtime
 npm run check:quality:core
 npm run check:quality:extended
 npm run observability:scan

@@ -75,7 +75,7 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
   const finalSplitRef = splitRef ?? localSplitRef;
   const finalTextareaRef = textareaRef ?? localTextareaRef;
 
-  const { isDebouncing, debouncedHtml } = useMarkdownPreviewDebounce({
+  const { isDebouncing, sanitizedPreviewHtml } = useMarkdownPreviewDebounce({
     value,
     renderPreviewHtml,
     sanitizePreviewHtml,
@@ -194,7 +194,7 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
                 isDebouncing ? 'opacity-50' : 'opacity-100'
               }`}
               style={previewTypographyStyle}
-              dangerouslySetInnerHTML={{ __html: debouncedHtml }}
+              dangerouslySetInnerHTML={{ __html: sanitizedPreviewHtml }}
             />
           </div>
         </>

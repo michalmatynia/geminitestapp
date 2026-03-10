@@ -36,7 +36,6 @@ import {
   type AgentPersona,
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
-import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   kangurAiTutorCoachingFrameSchema,
   kangurAiTutorLearnerMemorySchema,
@@ -53,6 +52,7 @@ import {
   type KangurAiTutorUsageSummary,
   type KangurAiTutorUsageResponse,
 } from '@/shared/contracts/kangur-ai-tutor';
+import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,

@@ -24,7 +24,7 @@ describe('starter parameter inference workflow', () => {
     expect(parserConfig).toContain('$.catalogs[0].catalogId');
   });
 
-  it('uses pass policy for zero-affected rows on both update nodes', () => {
+  it('uses pass policy for zero-affected rows on all database nodes', () => {
     const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!entry) throw new Error('Missing starter_parameter_inference entry');
 
@@ -34,11 +34,16 @@ describe('starter parameter inference workflow', () => {
     const updateNodes = config.nodes.filter(
       (node) => node.type === 'database' && node.config?.database?.operation === 'update'
     );
+    const queryNode = config.nodes.find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'query'
+    );
 
     expect(updateNodes.length).toBeGreaterThanOrEqual(2);
     updateNodes.forEach((node) => {
       expect(node.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
     });
+    expect(queryNode).toBeTruthy();
+    expect(queryNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
   });
 
   it('materializes a strict-flow runnable graph', () => {

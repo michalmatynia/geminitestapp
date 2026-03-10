@@ -6,8 +6,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 
 const QUERY_TIMEOUT_MS = 30_000;
 const databaseExecuteRequestSchema = z.object({

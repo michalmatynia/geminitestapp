@@ -105,12 +105,6 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       return;
     }
 
-    if (authState.isAuthenticated) {
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      return;
-    }
-
     if (contextualTutorMode || guidedTutorTarget) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
@@ -118,6 +112,10 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     }
 
     if (guestIntroVisible || guestIntroHelpVisible) {
+      return;
+    }
+
+    if (authState.isAuthenticated) {
       return;
     }
 
@@ -239,16 +237,14 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     const nextRecord = persistGuestIntroRecord('accepted');
     setGuestIntroRecord(nextRecord);
     setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
     trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
       hasInteractiveTutor: enabled,
     });
 
     if (enabled) {
       handleOpenChat('toggle');
-      return;
     }
-
-    setGuestIntroHelpVisible(true);
   }, [enabled, handleOpenChat, setGuestIntroHelpVisible, setGuestIntroRecord, setGuestIntroVisible]);
 
   const handleGuestIntroHelpClose = useCallback((): void => {

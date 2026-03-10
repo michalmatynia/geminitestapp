@@ -1,11 +1,11 @@
 import 'server-only';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type KangurAiTutorContentDoc = {
   locale: string;

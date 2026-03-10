@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -336,7 +336,13 @@ npm run cleanup:cms-blocks
 npm run cleanup:category-mapping-duplicates
 npm run metrics:guardrails
 npm run check:factory-meta
+npm run sync:toolchain:mirrors
+npm run check:toolchain:contract:node
+npm run test:toolchain:contract
+bun run check:toolchain:contract
+bun run check:node:toolchain-sync
 bun run lock:bun:sync
+bun run test:bun:runtime
 bun run check:bun:compat
 ```
 
@@ -352,4 +358,4 @@ bun run check:bun:compat
 
 ## Last Updated
 
-Aligned to the scanned repo structure and documentation taxonomy on `2026-03-09`.
+Aligned to the scanned repo structure and documentation taxonomy on `2026-03-10`.

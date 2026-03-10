@@ -66,6 +66,7 @@ describe('Notes Advanced UI', () => {
   let notes: NoteWithRelations[] = [];
 
   beforeEach(() => {
+    vi.useRealTimers();
     window.localStorage.clear();
     notes = [
       makeNote({ id: 'note-1', title: 'Apple', createdAt: '2023-01-01T00:00:00.000Z' }),
@@ -121,6 +122,7 @@ describe('Notes Advanced UI', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('switches between grid and list views', async () => {

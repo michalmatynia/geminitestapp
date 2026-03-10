@@ -681,8 +681,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         });
       }
 
-      try {
-        await api.post<Record<string, unknown>>(
+      void api
+        .post<Record<string, unknown>>(
           '/api/v2/products/validator-decisions',
           {
             action: 'deny',
@@ -698,17 +698,17 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           {
             logError: false,
           }
-        );
-      } catch (error: unknown) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: {
-            source: 'ProductForm',
-            action: 'denyValidatorIssue',
-            fieldName,
-            patternId,
-          },
+        )
+        .catch((error: unknown) => {
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: {
+              source: 'ProductForm',
+              action: 'denyValidatorIssue',
+              fieldName,
+              patternId,
+            },
+          });
         });
-      }
     },
     [buildIssueDecisionKey, draft?.id, getIssueDenyBehavior, product?.id, validationSessionId]
   );
@@ -734,8 +734,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         return next;
       });
 
-      try {
-        await api.post<Record<string, unknown>>(
+      void api
+        .post<Record<string, unknown>>(
           '/api/v2/products/validator-decisions',
           {
             action: 'accept',
@@ -751,17 +751,17 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           {
             logError: false,
           }
-        );
-      } catch (error: unknown) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: {
-            source: 'ProductForm',
-            action: 'acceptValidatorIssue',
-            fieldName,
-            patternId,
-          },
+        )
+        .catch((error: unknown) => {
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: {
+              source: 'ProductForm',
+              action: 'acceptValidatorIssue',
+              fieldName,
+              patternId,
+            },
+          });
         });
-      }
     },
     [buildIssueDecisionKey, draft?.id, product?.id, validationSessionId]
   );

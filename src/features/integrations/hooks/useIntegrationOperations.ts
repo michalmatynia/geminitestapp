@@ -68,9 +68,9 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        return await api.post<ListingBadgesPayload>(
-          '/api/v2/integrations/product-listings',
-          { productIds: scopedProductIds },
+        const productIdsParam = encodeURIComponent(scopedProductIds.join(','));
+        return await api.get<ListingBadgesPayload>(
+          `/api/v2/integrations/product-listings?productIds=${productIdsParam}`,
           {
             cache: 'no-store',
           }

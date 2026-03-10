@@ -430,6 +430,104 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
+  it('merges translated parameter language updates for custom translation update documents without relying on mappings', async () => {
+    const templateInputs = {
+      entityId: 'product-1',
+      productId: 'product-1',
+      entityType: 'product',
+      value: {
+        description_pl: 'Opis produktu',
+      },
+      result: {
+        parameters: [{ parameterId: 'material', value: 'Skora' }],
+      },
+      context: {
+        entity: {
+          parameters: [
+            {
+              parameterId: 'material',
+              value: 'Leather',
+              valuesByLanguage: { en: 'Leather' },
+            },
+          ],
+        },
+      },
+    } as const;
+
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: templateInputs.value,
+        result: templateInputs.result,
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'custom',
+      } as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate:
+        '{"$set":{"description_pl":"{{value.description_pl}}","parameters":{{result.parameters}}}}',
+      templateInputs,
+      parseJsonTemplate: (template: string): unknown =>
+        parseJsonSafe(
+          renderJsonTemplate(
+            template,
+            templateInputs as unknown as Record<string, unknown>,
+            templateInputs['value']
+          )
+        ),
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
+    }
+
+    expect(result.plan.updates).toEqual({
+      description_pl: 'Opis produktu',
+      parameters: [
+        {
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: {
+            en: 'Leather',
+            pl: 'Skora',
+          },
+        },
+      ],
+    });
+  });
+
   it('merges translated parameters into existing product rows for legacy translation mappings', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();

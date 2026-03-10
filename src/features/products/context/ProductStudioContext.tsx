@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
-import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
@@ -11,22 +10,19 @@ import {
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import {
-  getImageStudioSlotImageSrc,
-  useStudioProjects,
-} from '@/shared/lib/image-studio-adapter';
+import { useStudioProjects } from '@/shared/lib/image-studio-adapter';
 import { useToast } from '@/shared/ui';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
+import { useProductStudioDerivedState } from './ProductStudioContext.derived';
 import {
   useSendToStudioMutation,
   useAcceptVariantMutation,
   useRotateImageSlotMutation,
 } from '../hooks/useProductStudioMutations';
-
 
 import type {
   ProductImageSlotPreview,
@@ -96,6 +92,7 @@ export function ProductStudioProvider({
   const { toast } = useToast();
   const { defaultProjectId, getImageExternalBaseUrl } = useProductSettings();
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
+  const productImagesExternalBaseUrl = getImageExternalBaseUrl();
 
   const sendToStudioMutation = useSendToStudioMutation();
   const acceptVariantMutation = useAcceptVariantMutation();
@@ -119,7 +116,6 @@ export function ProductStudioProvider({
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
-    const productImagesExternalBaseUrl = getImageExternalBaseUrl();
     return (imageSlots || [])
       .map((slot, index): ProductImageSlotPreview | null => {
         if (!slot) return null;
@@ -132,7 +128,7 @@ export function ProductStudioProvider({
         return { index, label: `Slot ${index + 1}`, src };
       })
       .filter((entry): entry is ProductImageSlotPreview => Boolean(entry));
-  }, [imageSlots]);
+  }, [imageSlots, productImagesExternalBaseUrl]);
 
   // Initial selection
   useEffect(() => {
@@ -336,74 +332,31 @@ export function ProductStudioProvider({
     }
   };
 
-  const variants = variantsData?.variants ?? [];
-  const selectedVariant =
-    variants.find((s) => s.id === selectedVariantSlotId) ?? variants[0] ?? null;
-  const selectedSourcePreview = useMemo(
-    () => imageSlotPreviews.find((p) => p.index === selectedImageIndex) ?? null,
-    [imageSlotPreviews, selectedImageIndex]
-  );
-  const productImagesExternalBaseUrl = getImageExternalBaseUrl();
-  const sourceImageSrc =
-    getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
-    selectedSourcePreview?.src ??
-    null;
-  const variantImageSrc = getImageStudioSlotImageSrc(selectedVariant, productImagesExternalBaseUrl);
-  const canCompareWithSource = Boolean(sourceImageSrc && variantImageSrc);
-
-  const sequenceReadiness = variantsData?.sequenceReadiness ?? null;
-  const sequenceReadinessMessage =
-    sequenceReadiness && !sequenceReadiness.ready
-      ? (sequenceReadiness.message ?? 'Not ready.')
-      : null;
-  const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
-
-  const activeRunBaselineVariantIdSet = useMemo(
-    () => new Set(activeRunBaselineVariantIds),
-    [activeRunBaselineVariantIds]
-  );
-  const variantsProducedForActiveRun = useMemo(
-    () => variants.filter((s) => s.id && !activeRunBaselineVariantIdSet.has(s.id)).length,
-    [activeRunBaselineVariantIdSet, variants]
-  );
-  const pendingVariantPlaceholderCount =
-    activeRunId && (runStatus === 'queued' || runStatus === 'running')
-      ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
-      : 0;
-  const registrySource = useMemo(
-    () =>
-      product?.id
-        ? {
-          label: 'Product Studio workspace state',
-          resolved: buildProductStudioWorkspaceContextBundle({
-            product,
-            studioProjectId,
-            selectedImageIndex,
-            imageSlotPreviews,
-            selectedVariantSlotId,
-            variantsData,
-            activeRunId,
-            runStatus,
-            pendingVariantPlaceholderCount,
-            sequenceReadinessMessage,
-            auditEntries,
-          }),
-        }
-        : null,
-    [
-      activeRunId,
-      auditEntries,
-      imageSlotPreviews,
-      pendingVariantPlaceholderCount,
-      product,
-      runStatus,
-      selectedImageIndex,
-      selectedVariantSlotId,
-      sequenceReadinessMessage,
-      studioProjectId,
-      variantsData,
-    ]
-  );
+  const {
+    variants,
+    selectedVariant,
+    selectedSourcePreview,
+    sourceImageSrc,
+    variantImageSrc,
+    canCompareWithSource,
+    sequenceReadinessMessage,
+    blockSendForSequenceReadiness,
+    pendingVariantPlaceholderCount,
+    registrySource,
+  } = useProductStudioDerivedState({
+    product,
+    studioProjectId,
+    selectedImageIndex,
+    imageSlotPreviews,
+    productImagesExternalBaseUrl,
+    selectedVariantSlotId,
+    variantsData,
+    activeRunId,
+    runStatus,
+    activeRunBaselineVariantIds,
+    pendingExpectedOutputs,
+    auditEntries,
+  });
 
   useRegisterContextRegistryPageSource('product-studio-workspace-state', registrySource);
 

@@ -6,46 +6,17 @@ import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+type AgentPersonaVisualsResult = Pick<UseQueryResult<AgentPersona[], Error>, 'data'>;
+
 const createServerFallbackResult = (
   normalizedPersonaId: string | null
-): UseQueryResult<AgentPersona[], Error> =>
-  ({
-    data: normalizedPersonaId ? undefined : [],
-    dataUpdatedAt: 0,
-    error: null,
-    errorUpdatedAt: 0,
-    failureCount: 0,
-    failureReason: null,
-    errorUpdateCount: 0,
-    fetchStatus: 'idle',
-    isError: false,
-    isFetched: normalizedPersonaId === null,
-    isFetchedAfterMount: false,
-    isFetching: false,
-    isInitialLoading: false,
-    isLoading: false,
-    isLoadingError: false,
-    isPaused: false,
-    isPending: normalizedPersonaId !== null,
-    isPlaceholderData: false,
-    isRefetchError: false,
-    isRefetching: false,
-    isStale: false,
-    isSuccess: normalizedPersonaId === null,
-    promise: Promise.resolve(normalizedPersonaId ? undefined : []),
-    refetch: async () =>
-      ({
-        data: normalizedPersonaId ? undefined : [],
-        error: null,
-        status: normalizedPersonaId ? 'pending' : 'success',
-        fetchStatus: 'idle',
-      }) as never,
-    status: normalizedPersonaId ? 'pending' : 'success',
-  }) as UseQueryResult<AgentPersona[], Error>;
+): AgentPersonaVisualsResult => ({
+  data: normalizedPersonaId ? undefined : [],
+});
 
 export function useAgentPersonaVisuals(
   personaId?: string | null
-): UseQueryResult<AgentPersona[], Error> {
+): AgentPersonaVisualsResult {
   const normalizedPersonaId =
     typeof personaId === 'string' && personaId.trim().length > 0 ? personaId.trim() : null;
 

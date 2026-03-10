@@ -52,6 +52,9 @@ export default function ProgressOverview({
         : dailyQuest?.progress.status === 'in_progress'
           ? 'indigo'
           : 'slate';
+  const dailyQuestProgressPercent = dailyQuest?.progress.percent ?? 0;
+  const dailyQuestProgressAccent =
+    dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
 
   const stats: ProgressStat[] = [
     { accent: 'indigo', label: 'Laczne XP', value: totalXp },
@@ -134,11 +137,11 @@ export default function ProgressOverview({
             </KangurStatusChip>
           </div>
           <KangurProgressBar
-            accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
+            accent={dailyQuestProgressAccent}
             className='mt-3'
             data-testid='progress-overview-daily-quest-bar'
             size='sm'
-            value={dailyQuest.progress.percent}
+            value={dailyQuestProgressPercent}
           />
         </KangurGlassPanel>
       ) : null}

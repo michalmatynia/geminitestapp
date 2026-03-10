@@ -452,7 +452,12 @@ export default function CalendarInteractiveGame({
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton
-              onClick={onFinish}
+              onClick={(() => {
+                const handleFinishSession = (): void => {
+                  onFinish();
+                };
+                return handleFinishSession;
+              })()}
               className='flex-1'
               size='lg'
               type='button'

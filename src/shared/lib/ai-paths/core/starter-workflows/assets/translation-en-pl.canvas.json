@@ -3,7 +3,7 @@
   "kind": "canvas",
   "path": {
     "id": "path_96708d",
-    "version": 4,
+    "version": 5,
     "name": "Translation EN->PL Description + Parameters",
     "description": "Translate English description and parameters to Polish and update the product.",
     "trigger": "Product Modal - Translate EN->PL",
@@ -88,7 +88,7 @@
       "config": {
         "parser": {
           "mappings": {
-            "title": "$.title",
+            "title": "$.name_en",
             "description_en": "$.description_en",
             "parameters": "$.parameters"
           },

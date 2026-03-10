@@ -33,6 +33,9 @@ const originalConsoleLog = console.log.bind(console);
 const originalConsoleInfo = console.info.bind(console);
 const originalConsoleWarn = console.warn.bind(console);
 const originalConsoleError = console.error.bind(console);
+const originalWindow = typeof window !== 'undefined' ? window : undefined;
+const originalLocalStorage = originalWindow?.localStorage;
+const originalSessionStorage = originalWindow?.sessionStorage;
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -713,6 +716,52 @@ afterEach(async () => {
   if ((prisma as any).$resetAll) {
     (prisma as any).$resetAll();
   }
+
+  if (originalWindow) {
+    if (globalThis.window !== originalWindow) {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        writable: true,
+        value: originalWindow,
+      });
+    }
+    if (originalLocalStorage && originalWindow.localStorage !== originalLocalStorage) {
+      Object.defineProperty(originalWindow, 'localStorage', {
+        configurable: true,
+        writable: true,
+        value: originalLocalStorage,
+      });
+    }
+    if (originalSessionStorage && originalWindow.sessionStorage !== originalSessionStorage) {
+      Object.defineProperty(originalWindow, 'sessionStorage', {
+        configurable: true,
+        writable: true,
+        value: originalSessionStorage,
+      });
+    }
+    try {
+      originalLocalStorage?.clear();
+    } catch {
+      // ignore storage cleanup failures
+    }
+    try {
+      originalSessionStorage?.clear();
+    } catch {
+      // ignore storage cleanup failures
+    }
+  }
+
+  try {
+    const { __resetQueuedProductOpsState } = await import(
+      '@/features/products/state/queued-product-ops'
+    );
+    __resetQueuedProductOpsState?.();
+  } catch {
+    // ignore cleanup for non-browser test environments
+  }
+
+  // Avoid leaking fake timers between tests.
+  vi.useRealTimers();
 });
 
 afterAll(() => {

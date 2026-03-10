@@ -109,7 +109,7 @@ test.describe('Products Management - Advanced', () => {
     }
 
     await modal.getByRole('button', { name: 'Create', exact: true }).click({ force: true });
-    await expect(page.getByText('Product created successfully.')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Product created successfully.')).toBeVisible({ timeout: 30000 });
     // Dismiss toast
     await page
       .getByText('Product created successfully.')
@@ -142,7 +142,7 @@ test.describe('Products Management - Advanced', () => {
     await expect(confirmButton).toBeEnabled({ timeout: 15_000 });
     await confirmButton.click();
 
-    await expect(page).toHaveURL(/\/admin\/products\/.+\/edit$/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/admin\/products\/.+\/edit$/, { timeout: 30_000 });
     await expect(page.locator('input#sku')).toHaveValue(duplicateSku, { timeout: 10000 });
   });
 

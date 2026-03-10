@@ -26,6 +26,7 @@ export * from './image-studio';
 export * from './integrations';
 export * from './jobs';
 export * from './kangur';
+export * from './kangur-ai-tutor-content';
 export * from './kangur-auth';
 export * from './kangur-observability';
 export * from './notes';

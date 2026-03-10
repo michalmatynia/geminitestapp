@@ -67,6 +67,11 @@ describe('RunHistoryPanel handoff action', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
   it('renders a handoff action for blocked runs and shows inline success feedback', async () => {
     render(<RunHistoryPanel />);
 
@@ -76,5 +81,19 @@ describe('RunHistoryPanel handoff action', () => {
     await waitFor(() => {
       expect(screen.getByText('Handoff requested. Refreshing status...')).toBeTruthy();
     });
+  });
+
+  it('cleans up the handoff reset timeout on unmount', async () => {
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+    const view = render(<RunHistoryPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark handoff-ready' }));
+
+    expect(await screen.findByText('Handoff requested. Refreshing status...')).toBeTruthy();
+
+    const callsBeforeUnmount = clearTimeoutSpy.mock.calls.length;
+    view.unmount();
+
+    expect(clearTimeoutSpy.mock.calls.length).toBeGreaterThan(callsBeforeUnmount);
   });
 });

@@ -1,5 +1,8 @@
 import { getAiPathsSetting } from '@/features/ai/ai-paths/server';
-import { AI_PATHS_INDEX_KEY } from '@/features/ai/ai-paths/server/settings-store.constants';
+import {
+  AI_PATHS_CONFIG_KEY_PREFIX,
+  AI_PATHS_INDEX_KEY,
+} from '@/features/ai/ai-paths/server/settings-store.constants';
 import { parsePathMetas } from '@/features/ai/ai-paths/server/settings-store.parsing';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -19,7 +22,16 @@ export const assertTriggerButtonPathExists = async (
   const metas = parsePathMetas(rawIndex);
 
   if (metas.some((meta) => meta.id === normalizedPathId)) {
-    return;
+    const rawConfig = await getAiPathsSetting(`${AI_PATHS_CONFIG_KEY_PREFIX}${normalizedPathId}`);
+    if (typeof rawConfig === 'string' && rawConfig.trim().length > 0) {
+      return;
+    }
+
+    throw badRequestError(`AI Path "${normalizedPathId}" is missing its config payload.`, {
+      source: 'ai_paths.trigger_buttons',
+      reason: 'missing_bound_path_config',
+      pathId: normalizedPathId,
+    });
   }
 
   throw badRequestError(`AI Path "${normalizedPathId}" does not exist.`, {

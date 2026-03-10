@@ -475,7 +475,17 @@ export default function AddingSynthesisGame({
                 <Sparkles className='h-4 w-4' />
                 Start synteze
               </KangurButton>
-              <KangurButton type='button' size='lg' variant='surface' onClick={onFinish}>
+              <KangurButton
+                type='button'
+                size='lg'
+                variant='surface'
+                onClick={(() => {
+                  const handleFinishLesson = (): void => {
+                    onFinish();
+                  };
+                  return handleFinishLesson;
+                })()}
+              >
                 Wroc do Dodawania
               </KangurButton>
             </div>

@@ -559,7 +559,17 @@ export default function GeometryDrawingGame({
                 <RefreshCw className='w-4 h-4' />
                 Jeszcze raz
               </KangurButton>
-              <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
+              <KangurButton
+                className='flex-1'
+                onClick={(() => {
+                  const handleFinishSession = (): void => {
+                    onFinish();
+                  };
+                  return handleFinishSession;
+                })()}
+                size='lg'
+                variant='primary'
+              >
                 Wróć
               </KangurButton>
             </div>

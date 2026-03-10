@@ -48,7 +48,12 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
   <KangurInfoCard accent='slate' padding='md' tone='muted'>
     <div className='text-xs font-bold uppercase tracking-wide text-slate-500'>{title}</div>
     {items.length === 0 ? (
-      <KangurEmptyState accent='slate' className='mt-3' description={emptyState} padding='md' />
+      <KangurEmptyState
+        accent='slate'
+        className='mt-3'
+        description={(() => emptyState)()}
+        padding='md'
+      />
     ) : (
       <div className='mt-3 flex flex-col gap-3'>
         {items.map((item) => (

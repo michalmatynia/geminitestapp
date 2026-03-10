@@ -13,10 +13,10 @@ type Props = {
   className?: string;
 };
 
-export function KangurQuestionIllustrationRenderer({
-  illustration,
-  className,
-}: Props): React.JSX.Element | null {
+export function renderKangurQuestionIllustration(
+  illustration: KangurQuestionIllustration,
+  className?: string
+): React.JSX.Element | null {
   if (illustration.type === 'none') return null;
 
   if (illustration.type === 'single') {
@@ -83,4 +83,11 @@ export function KangurQuestionIllustrationRenderer({
       ))}
     </div>
   );
+}
+
+export function KangurQuestionIllustrationRenderer({
+  illustration,
+  className,
+}: Props): React.JSX.Element | null {
+  return renderKangurQuestionIllustration(illustration, className);
 }

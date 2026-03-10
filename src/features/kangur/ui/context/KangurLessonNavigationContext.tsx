@@ -27,6 +27,16 @@ type KangurLessonNavigationContextValue = {
   secretLessonPill: KangurLessonSecretPill | null;
 };
 
+type KangurLessonNavigationStateValue = Pick<
+  KangurLessonNavigationContextValue,
+  'isSubsectionNavigationActive' | 'onBack' | 'secretLessonPill' | 'subsectionSummary'
+>;
+
+type KangurLessonNavigationActionsValue = Pick<
+  KangurLessonNavigationContextValue,
+  'registerSubsectionNavigation' | 'setSubsectionSummary'
+>;
+
 const KangurLessonNavigationContext = createContext<KangurLessonNavigationContextValue | null>(null);
 
 export function KangurLessonNavigationProvider({
@@ -101,42 +111,58 @@ export const useKangurLessonBackAction = (
 };
 
 export const useKangurLessonSubsectionNavigationActive = (): boolean =>
-  useContext(KangurLessonNavigationContext)?.isSubsectionNavigationActive ?? false;
+  useKangurLessonNavigationState().isSubsectionNavigationActive;
 
 export const useKangurLessonSubsectionSummary = (): KangurLessonSubsectionSummary | null =>
-  useContext(KangurLessonNavigationContext)?.subsectionSummary ?? null;
+  useKangurLessonNavigationState().subsectionSummary;
 
 export const useKangurLessonSecretPill = (): KangurLessonSecretPill | null =>
-  useContext(KangurLessonNavigationContext)?.secretLessonPill ?? null;
+  useKangurLessonNavigationState().secretLessonPill;
+
+export const useKangurLessonNavigationState = (): KangurLessonNavigationStateValue => {
+  const context = useContext(KangurLessonNavigationContext);
+  return useMemo(
+    () => ({
+      isSubsectionNavigationActive: context?.isSubsectionNavigationActive ?? false,
+      onBack: context?.onBack ?? (() => undefined),
+      secretLessonPill: context?.secretLessonPill ?? null,
+      subsectionSummary: context?.subsectionSummary ?? null,
+    }),
+    [context]
+  );
+};
+
+export const useKangurLessonNavigationActions = (): KangurLessonNavigationActionsValue => {
+  const context = useContext(KangurLessonNavigationContext);
+  return useMemo(
+    () => ({
+      registerSubsectionNavigation: context?.registerSubsectionNavigation ?? (() => () => undefined),
+      setSubsectionSummary: context?.setSubsectionSummary ?? (() => undefined),
+    }),
+    [context]
+  );
+};
 
 export const useKangurRegisterLessonSubsectionNavigation = (): (() => () => void) => {
-  const context = useContext(KangurLessonNavigationContext);
+  const { registerSubsectionNavigation } = useKangurLessonNavigationActions();
 
   return useCallback(() => {
-    if (!context) {
-      return () => undefined;
-    }
-
-    return context.registerSubsectionNavigation();
-  }, [context]);
+    return registerSubsectionNavigation();
+  }, [registerSubsectionNavigation]);
 };
 
 export const useKangurSyncLessonSubsectionSummary = (
   summary: KangurLessonSubsectionSummary | null
 ): void => {
-  const context = useContext(KangurLessonNavigationContext);
+  const { setSubsectionSummary } = useKangurLessonNavigationActions();
 
   useEffect(() => {
-    if (!context) {
-      return;
-    }
-
-    context.setSubsectionSummary(summary);
+    setSubsectionSummary(summary);
 
     return () => {
-      context.setSubsectionSummary(null);
+      setSubsectionSummary(null);
     };
-  }, [context, summary]);
+  }, [setSubsectionSummary, summary]);
 };
 
 export function KangurLessonSubsectionSummarySync({

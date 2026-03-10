@@ -9,5 +9,10 @@ export default function KangurErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }): React.JSX.Element {
-  return <KangurErrorFallback error={error} homeHref='/kangur' reset={reset} />;
+  const boundaryError = error;
+  const handleReset = (): void => {
+    reset();
+  };
+
+  return <KangurErrorFallback error={boundaryError} homeHref='/kangur' reset={handleReset} />;
 }

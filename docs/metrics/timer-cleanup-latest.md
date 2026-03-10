@@ -8,26 +8,23 @@ canonical: true
 ---
 # Timer Cleanup Check
 
-Generated at: 2026-03-10T08:15:32.686Z
+Generated at: 2026-03-10T11:50:03.629Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 2042
+- Status: PASSED
+- Files scanned: 2051
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| settimeout-no-cleanup | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | settimeout-no-cleanup | src/features/ai/ai-paths/components/run-history-panel.tsx:89 | setTimeout() in a component with useEffect but no clearTimeout(). Consider cleaning up timers on unmount. |
+All timers and event listeners have proper cleanup.
 
 ## Notes
 

@@ -36,6 +36,7 @@ import {
   type AgentPersona,
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
+import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   kangurAiTutorCoachingFrameSchema,
   kangurAiTutorLearnerMemorySchema,
@@ -54,7 +55,6 @@ import {
 } from '@/shared/contracts/kangur-ai-tutor';
 import {
   createDefaultKangurAiTutorLearnerMood,
-  getKangurTutorMoodPreset,
   type KangurAiTutorLearnerMood,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
@@ -66,6 +66,8 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
+import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
 
 export type ChatMessage = {
   role: 'user' | 'assistant';
@@ -690,17 +692,13 @@ const areSessionRegistrationsEqual = (
   );
 };
 
-export function KangurAiTutorSessionSyncInner({
+export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
-}: KangurAiTutorSessionSyncProps): JSX.Element | null {
+}: KangurAiTutorSessionSyncProps): void => {
   const registry = useContext(KangurAiTutorSessionRegistryContext);
-  if (!registry) {
-    return null;
-  }
-
   const tokenRef = useRef(Symbol('kangur-ai-tutor-session'));
-  const setRegistration = registry.setRegistration;
+  const setRegistration = registry?.setRegistration;
   const normalizedSessionContext = useMemo<KangurAiTutorConversationContext | null>(() => {
     if (!sessionContext) {
       return null;
@@ -750,7 +748,7 @@ export function KangurAiTutorSessionSyncInner({
   );
   const registrySource = useMemo(
     () =>
-      learnerId && normalizedSessionContext
+      registry && learnerId && normalizedSessionContext
         ? {
           label: 'Kangur AI tutor session',
           refs: buildKangurAiTutorContextRegistryRefs({
@@ -759,12 +757,16 @@ export function KangurAiTutorSessionSyncInner({
           }),
         }
         : null,
-    [learnerId, normalizedSessionContext]
+    [registry, learnerId, normalizedSessionContext]
   );
 
   useRegisterContextRegistryPageSource('kangur-ai-tutor-session', registrySource);
 
   useLayoutEffect(() => {
+    if (!setRegistration) {
+      return undefined;
+    }
+
     const registration =
       sessionKey === null
         ? null
@@ -781,11 +783,22 @@ export function KangurAiTutorSessionSyncInner({
       setRegistration((current) => (current?.token === tokenRef.current ? null : current));
     };
   }, [learnerId, normalizedSessionContext, sessionKey, setRegistration]);
+};
+
+export function KangurAiTutorSessionSyncInner({
+  learnerId,
+  sessionContext,
+}: KangurAiTutorSessionSyncProps): JSX.Element | null {
+  useKangurAiTutorSessionSync({
+    learnerId,
+    sessionContext,
+  });
 
   return null;
 }
 
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
+  const tutorContent = useKangurAiTutorContent();
   const settingsStore = useSettingsStore();
   const initialRuntimeStateRef = useRef<PersistedKangurAiTutorRuntimeState | null>(null);
   if (initialRuntimeStateRef.current === null) {
@@ -892,9 +905,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         : createDefaultKangurAiTutorLearnerMood(),
     [activeLearnerId, learnerMoodById]
   );
-  const tutorBehaviorMoodPreset = useMemo(
-    () => getKangurTutorMoodPreset(tutorBehaviorMood.currentMoodId),
-    [tutorBehaviorMood.currentMoodId]
+  const tutorBehaviorMoodCopy = useMemo(
+    () => getKangurAiTutorMoodCopy(tutorContent, tutorBehaviorMood.currentMoodId),
+    [tutorContent.moods, tutorBehaviorMood.currentMoodId]
   );
 
   const updateSessionState = useCallback(
@@ -1477,7 +1490,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
               content:
                 error instanceof ApiError && error.message.trim()
                   ? error.message
-                  : 'Przepraszam, coś poszło nie tak. Spróbuj ponownie.',
+                  : tutorContent.common.sendFailureFallback,
             },
           ],
         }));
@@ -1523,8 +1536,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorName,
       tutorMoodId,
       tutorBehaviorMoodId: tutorBehaviorMood.currentMoodId,
-      tutorBehaviorMoodLabel: tutorBehaviorMoodPreset.label,
-      tutorBehaviorMoodDescription: tutorBehaviorMoodPreset.description,
+      tutorBehaviorMoodLabel: tutorBehaviorMoodCopy.label,
+      tutorBehaviorMoodDescription: tutorBehaviorMoodCopy.description,
       tutorAvatarSvg,
       tutorAvatarImageUrl,
       sessionContext: activeSessionContext,
@@ -1558,8 +1571,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorAvatarImageUrl,
       tutorAvatarSvg,
       tutorBehaviorMood.currentMoodId,
-      tutorBehaviorMoodPreset.description,
-      tutorBehaviorMoodPreset.label,
+      tutorBehaviorMoodCopy.description,
+      tutorBehaviorMoodCopy.label,
       tutorMoodId,
       tutorName,
       tutorPersona,

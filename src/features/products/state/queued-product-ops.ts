@@ -31,6 +31,7 @@ const removalTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const normalizeProductId = (value: string): string => value.trim();
 const normalizeSource = (value: string): string => value.trim();
 const sourceTimerKey = (productId: string, source: string): string => `${productId}::${source}`;
+const isAiRunSource = (source: string): boolean => source.startsWith('ai-run:');
 
 const clearSourceTimer = (productId: string, source: string): void => {
   const timerKey = sourceTimerKey(productId, source);
@@ -227,6 +228,12 @@ const refreshFromStorage = (): void => {
   emitChange();
 };
 
+export const __resetQueuedProductOpsState = (): void => {
+  clearAllTimers();
+  cachedSources = null;
+  listeners.clear();
+};
+
 export const buildQueuedProductAiRunSource = (runId: string): string | null => {
   const normalizedRunId = normalizeSource(runId);
   if (!normalizedRunId) return null;
@@ -240,6 +247,19 @@ export const buildQueuedProductOfflineMutationSource = (
 export const getQueuedProductIds = (): Set<string> => {
   loadFromStorage();
   return new Set(Array.from(cachedSources?.keys() ?? []));
+};
+
+export const getQueuedAiRunProductIds = (): Set<string> => {
+  loadFromStorage();
+  if (!cachedSources) return new Set<string>();
+
+  return new Set(
+    Array.from(cachedSources.entries())
+      .filter(([, sources]: [string, Map<string, QueuedSourceState>]) =>
+        Array.from(sources.keys()).some((source: string) => isAiRunSource(source))
+      )
+      .map(([productId]: [string, Map<string, QueuedSourceState>]) => productId)
+  );
 };
 
 export const getQueuedProductSources = (id: string): Set<string> => {
@@ -306,6 +326,31 @@ export const useQueuedProductIds = (): Set<string> => {
   useEffect(() => {
     const handleChange = (): void => {
       setIds(getQueuedProductIds());
+    };
+
+    listeners.add(handleChange);
+    const handleStorage = (event: StorageEvent): void => {
+      if (event.key === STORAGE_KEY) {
+        refreshFromStorage();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return (): void => {
+      listeners.delete(handleChange);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  return ids;
+};
+
+export const useQueuedAiRunProductIds = (): Set<string> => {
+  const [ids, setIds] = useState<Set<string>>(() => getQueuedAiRunProductIds());
+
+  useEffect(() => {
+    const handleChange = (): void => {
+      setIds(getQueuedAiRunProductIds());
     };
 
     listeners.add(handleChange);

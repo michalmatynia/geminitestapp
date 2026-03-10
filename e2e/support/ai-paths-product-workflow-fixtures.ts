@@ -194,6 +194,13 @@ const browserRequest = async <T>(
   const csrfToken =
     args.method && args.method !== 'GET' ? await readOrCreateCsrfToken(page) : null;
   const headers: Record<string, string> = {};
+  const formData = args.form
+    ? Object.fromEntries(
+        Object.entries(args.form).filter(
+          (entry): entry is [string, string] => entry[1] !== undefined && entry[1] !== null
+        )
+      )
+    : undefined;
   if (csrfToken) {
     headers['x-csrf-token'] = csrfToken;
   }
@@ -201,11 +208,7 @@ const browserRequest = async <T>(
   const response = await page.request.fetch(args.url, {
     method: args.method ?? 'GET',
     headers,
-    form: args.form
-      ? Object.fromEntries(
-          Object.entries(args.form).filter(([, value]) => value !== undefined && value !== null)
-        )
-      : undefined,
+    form: formData,
     data: args.form ? undefined : args.json,
     failOnStatusCode: false,
   });
@@ -1316,9 +1319,17 @@ export async function searchForProductRow(
       await showFiltersButton.click();
     }
     const skuInput = page.locator('input[placeholder="Search by SKU..."]:visible').first();
-    await expect(skuInput).toBeVisible({ timeout: 15_000 });
-    await skuInput.fill(searchTerm);
-    await page.keyboard.press('Enter');
+    if (await skuInput.isVisible().catch(() => false)) {
+      await skuInput.fill(searchTerm);
+      await page.keyboard.press('Enter');
+    } else {
+      const fallbackSearch = page
+        .locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`)
+        .first();
+      await expect(fallbackSearch).toBeVisible({ timeout: 15_000 });
+      await fallbackSearch.fill(options?.rowText ?? searchTerm);
+      await page.keyboard.press('Enter');
+    }
   } else {
     const searchInput = page.locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`).first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });

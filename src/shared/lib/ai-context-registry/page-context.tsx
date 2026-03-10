@@ -13,6 +13,7 @@ import type {
   ContextRegistryConsumerEnvelope,
   ContextRegistryResolutionBundle,
 } from '@/shared/contracts/ai-context-registry';
+import { internalError } from '@/shared/errors/app-error';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -37,7 +38,20 @@ export type ContextRegistryPageState = {
   unregisterSource: (sourceId: string) => void;
 };
 
-const ContextRegistryPageContext = createContext<ContextRegistryPageState | null>(null);
+type ContextRegistryPageStateValue = Omit<
+  ContextRegistryPageState,
+  'registerSource' | 'unregisterSource'
+>;
+
+type ContextRegistryPageActionsValue = Pick<
+  ContextRegistryPageState,
+  'registerSource' | 'unregisterSource'
+>;
+
+const ContextRegistryPageStateContext = createContext<ContextRegistryPageStateValue | null>(null);
+const ContextRegistryPageActionsContext = createContext<ContextRegistryPageActionsValue | null>(
+  null
+);
 
 export function ContextRegistryPageProvider({
   pageId,
@@ -74,7 +88,7 @@ export function ContextRegistryPageProvider({
     });
   }, []);
 
-  const value = useMemo<ContextRegistryPageState>(() => {
+  const stateValue = useMemo<ContextRegistryPageStateValue>(() => {
     const baseSource: ContextRegistryPageSource = {
       sourceId: '__page__',
       label: title ?? pageId,
@@ -95,28 +109,60 @@ export function ContextRegistryPageProvider({
       title,
       sources,
       envelope,
+    };
+  }, [pageId, registeredSources, resolved, rootNodeIds, title]);
+
+  const actionsValue = useMemo<ContextRegistryPageActionsValue>(
+    () => ({
       registerSource,
       unregisterSource,
-    };
-  }, [pageId, registerSource, registeredSources, resolved, rootNodeIds, title, unregisterSource]);
+    }),
+    [registerSource, unregisterSource]
+  );
 
   return (
-    <ContextRegistryPageContext.Provider value={value}>
-      {children}
-    </ContextRegistryPageContext.Provider>
+    <ContextRegistryPageActionsContext.Provider value={actionsValue}>
+      <ContextRegistryPageStateContext.Provider value={stateValue}>
+        {children}
+      </ContextRegistryPageStateContext.Provider>
+    </ContextRegistryPageActionsContext.Provider>
   );
 }
 
 export function useContextRegistryPageState(): ContextRegistryPageState {
-  const context = useContext(ContextRegistryPageContext);
-  if (!context) {
-    throw new Error('useContextRegistryPageState must be used within ContextRegistryPageProvider');
+  const state = useContext(ContextRegistryPageStateContext);
+  const actions = useContext(ContextRegistryPageActionsContext);
+  if (!state || !actions) {
+    throw internalError(
+      'useContextRegistryPageState must be used within ContextRegistryPageProvider'
+    );
   }
-  return context;
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }
 
 export function useOptionalContextRegistryPageState(): ContextRegistryPageState | null {
-  return useContext(ContextRegistryPageContext);
+  const state = useContext(ContextRegistryPageStateContext);
+  const actions = useContext(ContextRegistryPageActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
+}
+
+export function useContextRegistryPageActions(): ContextRegistryPageActionsValue {
+  const actions = useContext(ContextRegistryPageActionsContext);
+  if (!actions) {
+    throw internalError(
+      'useContextRegistryPageActions must be used within ContextRegistryPageProvider'
+    );
+  }
+  return actions;
+}
+
+export function useOptionalContextRegistryPageActions(): ContextRegistryPageActionsValue | null {
+  return useContext(ContextRegistryPageActionsContext);
 }
 
 export function useContextRegistryPageEnvelope(): ContextRegistryConsumerEnvelope | null {
@@ -131,9 +177,9 @@ export function useRegisterContextRegistryPageSource(
   sourceId: string,
   source: Omit<ContextRegistryPageSource, 'sourceId'> | null | undefined
 ): void {
-  const context = useOptionalContextRegistryPageState();
-  const registerSource = context?.registerSource;
-  const unregisterSource = context?.unregisterSource;
+  const actions = useOptionalContextRegistryPageActions();
+  const registerSource = actions?.registerSource;
+  const unregisterSource = actions?.unregisterSource;
   const sourceSignature = source ? JSON.stringify(source) : null;
   const stableSource = useMemo(
     () =>

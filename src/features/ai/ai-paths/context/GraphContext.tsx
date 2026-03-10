@@ -60,10 +60,6 @@ export type {
   GraphState,
 } from './GraphContext.shared';
 
-// ---------------------------------------------------------------------------
-// Contexts (split for re-render optimization)
-// ---------------------------------------------------------------------------
-
 const GraphStateContext = createContext<GraphState | null>(null);
 const GraphActionsContext = createContext<GraphActions | null>(null);
 

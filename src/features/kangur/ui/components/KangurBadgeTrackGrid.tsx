@@ -32,6 +32,7 @@ export default function KangurBadgeTrackGrid({
   emptyTestId,
   progress,
 }: KangurBadgeTrackGridProps): React.JSX.Element {
+  const trackTestIdPrefix = dataTestIdPrefix;
   const tracks = getProgressBadgeTrackSummaries(progress);
 
   if (tracks.length === 0) {
@@ -49,7 +50,7 @@ export default function KangurBadgeTrackGrid({
         return (
           <div
             className='rounded-[26px] border border-slate-200/80 bg-white/80 px-4 py-3'
-            data-testid={`${dataTestIdPrefix}-${track.key}`}
+            data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
             <div className='flex items-start justify-between gap-3'>
@@ -73,7 +74,7 @@ export default function KangurBadgeTrackGrid({
             <KangurProgressBar
               accent={accent}
               className='mt-3'
-              data-testid={`${dataTestIdPrefix}-${track.key}-bar`}
+              data-testid={`${trackTestIdPrefix}-${track.key}-bar`}
               size='sm'
               value={track.progressPercent}
             />

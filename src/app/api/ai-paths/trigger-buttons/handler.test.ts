@@ -285,6 +285,41 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
+  it('POST rejects bound AI Paths whose config payload is missing', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_trigger_buttons') {
+        return '[]';
+      }
+      return null;
+    });
+
+    const request = new NextRequest('http://localhost/api/ai-paths/trigger-buttons', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Run Path',
+        pathId: 'path-live',
+        locations: ['product_modal'],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'AI Path "path-live" is missing its config payload.'
+    );
+
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+  });
+
   it('POST accepts existing bound AI Paths', async () => {
     getAiPathsSettingMock.mockImplementation(async (key: string) => {
       if (key === 'ai_paths_index') {
@@ -296,6 +331,14 @@ describe('ai-paths trigger-buttons GET handler', () => {
             updatedAt: '2026-03-03T00:00:00.000Z',
           },
         ]);
+      }
+      if (key === 'ai_paths_config_path-live') {
+        return JSON.stringify({
+          id: 'path-live',
+          name: 'Live Path',
+          nodes: [],
+          edges: [],
+        });
       }
       if (key === 'ai_paths_trigger_buttons') {
         return '[]';

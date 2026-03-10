@@ -7,5 +7,6 @@ describe('shared contracts index runtime smoke', () => {
     expect(contracts.databasePreviewRequestSchema).toBeDefined();
     expect(contracts.aiNodeSchema).toBeDefined();
     expect(contracts.kangurParentAccountCreateSchema).toBeDefined();
+    expect(contracts.kangurAiTutorContentSchema).toBeDefined();
   });
 });

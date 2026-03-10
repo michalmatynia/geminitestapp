@@ -103,6 +103,9 @@ function ExamQuestion({
 }: ExamQuestionProps): React.JSX.Element {
   const Illustration = ILLUSTRATIONS[q.id];
   const pointLabel = POINT_LABELS[q.id];
+  const questionNumber = qIndex + 1;
+  const progressValue = (qIndex / total) * 100;
+  const progressValueText = `Pytanie ${questionNumber} z ${total}`;
   const headingId = useId();
   const descriptionId = useId();
   const narrationSourceRef = useRef<HTMLDivElement | null>(null);
@@ -111,21 +114,24 @@ function ExamQuestion({
   >(
     () => ({
       id: `kangur-exam-question:${q.id}`,
-      title: `Pytanie ${qIndex + 1}`,
+      title: `Pytanie ${questionNumber}`,
       description: q.question,
       contentMode: 'component',
     }),
-    [q.id, q.question, qIndex]
+    [q.id, q.question, questionNumber]
   );
   const narrationText = useMemo(
     () =>
       [
-        `Pytanie ${qIndex + 1} z ${total}.`,
+        `Pytanie ${questionNumber} z ${total}.`,
         q.question,
         ...q.choices.map((choice, index) => `${String.fromCharCode(65 + index)}. ${choice}.`),
       ].join(' '),
-    [q.choices, q.question, qIndex, total]
+    [q.choices, q.question, questionNumber, total]
   );
+  const handleChoiceSelect = (choice: KangurQuestionChoice): void => {
+    onSelect(choice);
+  };
 
   return (
     <section aria-labelledby={headingId} className='flex flex-col gap-4 w-full'>
@@ -136,14 +142,14 @@ function ExamQuestion({
         <KangurProgressBar
           accent='amber'
           aria-label='Postep w tescie Kangur'
-          aria-valuetext={`Pytanie ${qIndex + 1} z ${total}`}
+          aria-valuetext={progressValueText}
           className='flex-1'
           data-testid='kangur-exam-progress-bar'
           size='sm'
-          value={(qIndex / total) * 100}
+          value={progressValue}
         />
         <span className='text-xs font-bold text-slate-400'>
-          {qIndex + 1}/{total}
+          {questionNumber}/{total}
         </span>
       </div>
 
@@ -155,7 +161,7 @@ function ExamQuestion({
       >
         <div className='mb-1 flex items-start justify-between gap-3'>
           <p id={headingId} className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
-            Pytanie {qIndex + 1}
+            Pytanie {questionNumber}
           </p>
           <div className='flex items-center gap-2'>
             <KangurLessonNarrator
@@ -221,7 +227,7 @@ function ExamQuestion({
                 )}
                 data-testid={`kangur-exam-choice-${index}`}
                 emphasis={emphasis}
-                onClick={() => onSelect(choice)}
+                onClick={() => handleChoiceSelect(choice)}
                 type='button'
               >
                 <span

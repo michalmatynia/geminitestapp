@@ -6,7 +6,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { settingsStoreMock, mutateAsyncMock, toastMock, useAgentPersonasMock, apiPostMock } =
+const { settingsStoreMock, mutateAsyncMock, toastMock, useAgentPersonasMock, apiGetMock, apiPostMock } =
   vi.hoisted(() => ({
     settingsStoreMock: {
       get: vi.fn<(key: string) => string | undefined>(),
@@ -14,6 +14,7 @@ const { settingsStoreMock, mutateAsyncMock, toastMock, useAgentPersonasMock, api
     mutateAsyncMock: vi.fn(),
     toastMock: vi.fn(),
     useAgentPersonasMock: vi.fn(),
+    apiGetMock: vi.fn(),
     apiPostMock: vi.fn(),
   }));
 
@@ -50,6 +51,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
+    get: apiGetMock,
     post: apiPostMock,
   },
 }));
@@ -70,6 +72,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
   KANGUR_HELP_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
@@ -98,6 +101,7 @@ describe('AdminKangurSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mutateAsyncMock.mockResolvedValue({});
+    apiGetMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
     apiPostMock.mockResolvedValue({
       ok: true,
       stage: 'ready',
@@ -247,6 +251,49 @@ describe('AdminKangurSettingsPage', () => {
     );
 
     expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor settings saved.', {
+      variant: 'success',
+    });
+  });
+
+  it('loads Mongo-backed AI tutor content and saves edited content JSON', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    await waitFor(() =>
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/content', {
+        params: { locale: 'pl' },
+        logError: false,
+      })
+    );
+
+    const contentEditor = await screen.findByLabelText(/tutor content json/i);
+    expect((contentEditor as HTMLTextAreaElement).value).toContain('"locale": "pl"');
+
+    const nextContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      navigation: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
+        restoreTutorLabel: 'Przywróć AI Tutora',
+      },
+    };
+    apiPostMock.mockResolvedValueOnce(nextContent);
+
+    fireEvent.change(contentEditor, {
+      target: {
+        value: `${JSON.stringify(nextContent, null, 2)}\n`,
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save mongo content/i }));
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/content',
+        nextContent,
+        { logError: false }
+      )
+    );
+
+    expect(toastMock).toHaveBeenCalledWith('Kangur AI tutor content saved.', {
       variant: 'success',
     });
   });

@@ -38,6 +38,7 @@ import {
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
+import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
 import {
   remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
@@ -137,7 +138,9 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
   if (resolvedConfig.value.pathConfig.id !== pathId) {
     throw badRequestError(`Stored AI Path config id mismatch for "${pathId}".`);
   }
-  return sanitizeTriggerPathConfig(resolvedConfig.value.pathConfig);
+  const sanitizedPathConfig = sanitizeTriggerPathConfig(resolvedConfig.value.pathConfig);
+  const upgradedPathConfig = upgradeStarterWorkflowPathConfig(sanitizedPathConfig).config;
+  return sanitizeTriggerPathConfig(upgradedPathConfig);
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

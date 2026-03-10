@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
@@ -31,6 +31,143 @@ type KangurActiveLessonHeaderProps = {
   backButtonLabel?: string;
 };
 
+type KangurActiveLessonHeaderContextValue = {
+  lesson: KangurLesson;
+  lessonDocument: KangurLessonDocument;
+  lessonContentRef: RefObject<HTMLElement | null>;
+  activeLessonAssignment?: KangurAssignmentSnapshot | null;
+  completedActiveLessonAssignment?: KangurAssignmentSnapshot | null;
+  assignmentRef?: RefObject<HTMLDivElement | null>;
+  headerActionsTestId: string;
+  iconTestId: string;
+  priorityChipTestId: string;
+  completedChipTestId: string;
+  onBack?: () => void;
+  backButtonLabel: string;
+  displayTitle: string;
+  displayDescription: string;
+  subsectionSummary: ReturnType<typeof useKangurLessonSubsectionSummary>;
+  subsectionTypeLabel: string;
+};
+
+const KangurActiveLessonHeaderContext = createContext<KangurActiveLessonHeaderContextValue | null>(null);
+
+const useKangurActiveLessonHeaderContext = () => {
+  const value = useContext(KangurActiveLessonHeaderContext);
+  if (!value) {
+    throw new Error('KangurActiveLessonHeader context is unavailable.');
+  }
+  return value;
+};
+
+function KangurActiveLessonHeaderActions(): React.JSX.Element {
+  const { onBack, backButtonLabel, lesson, lessonDocument, lessonContentRef, headerActionsTestId } =
+    useKangurActiveLessonHeaderContext();
+
+  return (
+    <div className='flex flex-wrap items-start gap-3 sm:items-center' data-testid={headerActionsTestId}>
+      {onBack ? (
+        <KangurButton onClick={onBack} size='sm' variant='surface'>
+          {backButtonLabel}
+        </KangurButton>
+      ) : null}
+      <KangurLessonNarrator
+        className='w-auto shrink-0'
+        lesson={lesson}
+        lessonDocument={lessonDocument}
+        lessonContentRef={lessonContentRef}
+        loadingLabel='Przygotowywanie...'
+        pauseLabel='Pauza'
+        readLabel='Czytaj'
+        resumeLabel='Wznow'
+      />
+      <KangurActiveLessonHeaderBody />
+      <KangurActiveLessonHeaderIcon />
+    </div>
+  );
+}
+
+function KangurActiveLessonHeaderBody(): React.JSX.Element {
+  const {
+    displayTitle,
+    displayDescription,
+    subsectionSummary,
+    subsectionTypeLabel,
+    activeLessonAssignment,
+    completedActiveLessonAssignment,
+    assignmentRef,
+    priorityChipTestId,
+    completedChipTestId,
+  } = useKangurActiveLessonHeaderContext();
+
+  return (
+    <div className='min-w-0 flex-1'>
+      {subsectionSummary ? (
+        <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
+          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 text-lg shadow-sm'>
+            {subsectionSummary.emoji}
+          </div>
+          <div className='min-w-0'>
+            <div className='flex min-w-0 flex-wrap items-center gap-2'>
+              <KangurStatusChip
+                accent={subsectionSummary.isGame ? 'amber' : 'sky'}
+                className='uppercase tracking-[0.12em]'
+                size='sm'
+              >
+                {subsectionTypeLabel}
+              </KangurStatusChip>
+              <KangurHeadline accent='slate' as='h2' size='sm'>
+                {displayTitle}
+              </KangurHeadline>
+            </div>
+            <p className='mt-0.5 text-xs text-slate-500'>{displayDescription}</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <KangurHeadline accent='slate' as='h2' size='md'>
+            {displayTitle}
+          </KangurHeadline>
+          <p className='mt-1 text-sm text-slate-500'>{displayDescription}</p>
+        </>
+      )}
+      {activeLessonAssignment ? (
+        <div ref={assignmentRef} className='mt-3 inline-flex'>
+          <KangurStatusChip
+            accent='rose'
+            className='uppercase tracking-[0.14em]'
+            data-testid={priorityChipTestId}
+            size='sm'
+          >
+            Priorytet Rodzica
+          </KangurStatusChip>
+        </div>
+      ) : completedActiveLessonAssignment ? (
+        <KangurStatusChip
+          accent='emerald'
+          className='mt-3 uppercase tracking-[0.14em]'
+          data-testid={completedChipTestId}
+          size='sm'
+        >
+          Ukonczone dla rodzica
+        </KangurStatusChip>
+      ) : null}
+    </div>
+  );
+}
+
+function KangurActiveLessonHeaderIcon(): React.JSX.Element {
+  const { iconTestId, lesson } = useKangurActiveLessonHeaderContext();
+
+  return (
+    <div className='ml-auto flex shrink-0 justify-end'>
+      <KangurGradientIconTile data-testid={iconTestId} gradientClass={lesson.color} size='lg'>
+        {lesson.emoji}
+      </KangurGradientIconTile>
+    </div>
+  );
+}
+
 export function KangurActiveLessonHeader({
   lesson,
   lessonDocument,
@@ -54,6 +191,24 @@ export function KangurActiveLessonHeader({
   const subsectionAnchorKey = subsectionSummary
     ? `${subsectionSummary.isGame ? 'game' : 'lesson'}:${subsectionSummary.title}:${subsectionSummary.description}`
     : null;
+  const contextValue: KangurActiveLessonHeaderContextValue = {
+    lesson,
+    lessonDocument,
+    lessonContentRef,
+    activeLessonAssignment,
+    completedActiveLessonAssignment,
+    assignmentRef,
+    headerActionsTestId,
+    iconTestId,
+    priorityChipTestId,
+    completedChipTestId,
+    onBack,
+    backButtonLabel,
+    displayTitle,
+    displayDescription,
+    subsectionSummary,
+    subsectionTypeLabel,
+  };
 
   useEffect(() => {
     if (!subsectionAnchorKey) {
@@ -74,95 +229,17 @@ export function KangurActiveLessonHeader({
 
   return (
     <div ref={headerAnchorRef} className='w-full'>
-      <KangurGlassPanel
-        className='w-full'
-        data-testid={headerTestId}
-        padding='md'
-        surface='mistStrong'
-        variant='soft'
-      >
-        <div
-          className='flex flex-wrap items-start gap-3 sm:items-center'
-          data-testid={headerActionsTestId}
+      <KangurActiveLessonHeaderContext.Provider value={contextValue}>
+        <KangurGlassPanel
+          className='w-full'
+          data-testid={(() => headerTestId)()}
+          padding='md'
+          surface='mistStrong'
+          variant='soft'
         >
-          {onBack ? (
-            <KangurButton onClick={onBack} size='sm' variant='surface'>
-              {backButtonLabel}
-            </KangurButton>
-          ) : null}
-          <KangurLessonNarrator
-            className='w-auto shrink-0'
-            lesson={lesson}
-            lessonDocument={lessonDocument}
-            lessonContentRef={lessonContentRef}
-            loadingLabel='Przygotowywanie...'
-            pauseLabel='Pauza'
-            readLabel='Czytaj'
-            resumeLabel='Wznow'
-          />
-          <div className='min-w-0 flex-1'>
-            {subsectionSummary ? (
-              <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
-                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 text-lg shadow-sm'>
-                  {subsectionSummary.emoji}
-                </div>
-                <div className='min-w-0'>
-                  <div className='flex min-w-0 flex-wrap items-center gap-2'>
-                    <KangurStatusChip
-                      accent={subsectionSummary.isGame ? 'amber' : 'sky'}
-                      className='uppercase tracking-[0.12em]'
-                      size='sm'
-                    >
-                      {subsectionTypeLabel}
-                    </KangurStatusChip>
-                    <KangurHeadline accent='slate' as='h2' size='sm'>
-                      {displayTitle}
-                    </KangurHeadline>
-                  </div>
-                  <p className='mt-0.5 text-xs text-slate-500'>{displayDescription}</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <KangurHeadline accent='slate' as='h2' size='md'>
-                  {displayTitle}
-                </KangurHeadline>
-                <p className='mt-1 text-sm text-slate-500'>{displayDescription}</p>
-              </>
-            )}
-            {activeLessonAssignment ? (
-              <div ref={assignmentRef} className='mt-3 inline-flex'>
-                <KangurStatusChip
-                  accent='rose'
-                  className='uppercase tracking-[0.14em]'
-                  data-testid={priorityChipTestId}
-                  size='sm'
-                >
-                Priorytet Rodzica
-                </KangurStatusChip>
-              </div>
-            ) : completedActiveLessonAssignment ? (
-              <KangurStatusChip
-                accent='emerald'
-                className='mt-3 uppercase tracking-[0.14em]'
-                data-testid={completedChipTestId}
-                size='sm'
-              >
-              Ukonczone dla rodzica
-              </KangurStatusChip>
-            ) : null}
-          </div>
-          <div className='ml-auto flex shrink-0 justify-end'>
-            <KangurGradientIconTile
-              data-testid={iconTestId}
-              gradientClass={lesson.color}
-              size='lg'
-            >
-              {lesson.emoji}
-            </KangurGradientIconTile>
-          </div>
-        </div>
-      </KangurGlassPanel>
+          <KangurActiveLessonHeaderActions />
+        </KangurGlassPanel>
+      </KangurActiveLessonHeaderContext.Provider>
     </div>
   );
 }

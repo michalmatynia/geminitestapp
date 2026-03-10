@@ -238,6 +238,88 @@ test.describe('Products AI Paths workflow success', () => {
     }
   });
 
+  test('runs a row translation workflow without removing English parameter values', async ({
+    page,
+  }) => {
+    const fixture = await createProductTranslationWorkflowFixture(page, {
+      location: 'product_row',
+      triggerButtonName: 'Translate Parameter Languages Row',
+      pathName: 'E2E Product Row Translation Parameter Preservation',
+      expectedDescriptionPl: `Playwright translated row description ${Date.now()}`,
+      initialParameters: [
+        {
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: { en: 'Leather' },
+        },
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used' },
+        },
+        {
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: { en: '13 cm' },
+        },
+      ],
+      translatedParameters: [
+        { parameterId: 'material', value: 'Skora' },
+        { parameterId: 'condition', value: 'Uzywany' },
+      ],
+    });
+
+    try {
+      const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+        rowText: fixture.product.sku ?? fixture.searchTerm,
+        mode: 'sku',
+      });
+      const runId = await runRowTriggerAction(page, row, fixture.triggerButton.name);
+      const detail = await waitForRunToComplete(page, runId);
+      expect(detail.run.status).toBe('completed');
+
+      const updatedProduct = await fetchProductById(page, fixture.product.id);
+      expect(updatedProduct.description_pl).toBe(fixture.expectedDescriptionPl);
+
+      const parameters = Array.isArray(updatedProduct.parameters) ? updatedProduct.parameters : [];
+      const material = parameters.find((entry) => entry.parameterId === 'material');
+      const condition = parameters.find((entry) => entry.parameterId === 'condition');
+      const size = parameters.find((entry) => entry.parameterId === 'size');
+
+      expect(material).toEqual(
+        expect.objectContaining({
+          parameterId: 'material',
+          value: 'Leather',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Leather',
+            pl: 'Skora',
+          }),
+        })
+      );
+      expect(condition).toEqual(
+        expect.objectContaining({
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: expect.objectContaining({
+            en: 'Used',
+            pl: 'Uzywany',
+          }),
+        })
+      );
+      expect(size).toEqual(
+        expect.objectContaining({
+          parameterId: 'size',
+          value: '13 cm',
+          valuesByLanguage: expect.objectContaining({
+            en: '13 cm',
+          }),
+        })
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   test('reruns a modal translation workflow without duplicating or erasing parameter language data', async ({
     page,
   }) => {

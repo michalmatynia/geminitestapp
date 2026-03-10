@@ -9,7 +9,7 @@ import { cn } from '@/shared/utils';
 
 type KangurBadgeTrackHighlightsProps = {
   className?: string;
-  dataTestIdPrefix: string;
+  dataTestIdPrefix?: string;
   limit?: number;
   progress: KangurProgressState;
 };
@@ -36,7 +36,7 @@ const TRACK_PRIORITY: Record<string, number> = {
 
 export default function KangurBadgeTrackHighlights({
   className,
-  dataTestIdPrefix,
+  dataTestIdPrefix = 'kangur-badge-track',
   limit = 3,
   progress,
 }: KangurBadgeTrackHighlightsProps): React.JSX.Element | null {

@@ -290,7 +290,7 @@ export default function KangurGameHomeMomentumWidget({
         </div>
         <KangurButton asChild className='shrink-0' size='sm' variant='primary'>
           <Link
-            href={buildAssignmentHref(basePath, recommendation.action)}
+            href={(() => buildAssignmentHref(basePath, recommendation.action))()}
             targetPageKey={recommendation.action.page}
           >
             {recommendation.action.label}

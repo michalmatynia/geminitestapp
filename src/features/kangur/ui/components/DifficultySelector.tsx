@@ -40,6 +40,9 @@ export default function DifficultySelector({
   const descriptionId = useId();
   const groupLabelId = showHeading ? headingId : undefined;
   const groupAriaLabel = showHeading ? undefined : 'Poziom trudnosci';
+  const handleDifficultySelect = (difficulty: KangurDifficulty): void => {
+    onSelect(difficulty);
+  };
 
   return (
     <section
@@ -85,7 +88,7 @@ export default function DifficultySelector({
                 data-testid={`difficulty-option-${difficulty.id}`}
                 emphasis={isSelected ? 'accent' : 'neutral'}
                 aria-pressed={isSelected}
-                onClick={() => onSelect(difficulty.id)}
+                onClick={() => handleDifficultySelect(difficulty.id)}
                 type='button'
               >
                 <KangurIconBadge

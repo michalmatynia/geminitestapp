@@ -45,11 +45,14 @@ export function KangurDocsTooltipEnhancer({
   enabled: boolean;
   rootId: string;
 }): React.JSX.Element {
+  const tooltipEnhancerEnabled = enabled;
+  const tooltipRootId = rootId;
+
   return (
     <DocumentationTooltipEnhancer
-      enabled={enabled}
+      enabled={tooltipEnhancerEnabled}
       moduleId={DOCUMENTATION_MODULE_IDS.kangur}
-      rootId={rootId}
+      rootId={tooltipRootId}
     />
   );
 }

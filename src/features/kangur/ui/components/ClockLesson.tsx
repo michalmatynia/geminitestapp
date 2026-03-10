@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
@@ -900,22 +901,29 @@ export default function ClockLesson(): React.JSX.Element {
     );
 
     return (
-      <LessonActivityStage
-        accent='indigo'
-        description={currentTrainingSection.description}
-        footerNavigation={trainingFooterNavigation}
-        headerTestId='clock-lesson-training-header'
-        icon='🕐'
-        maxWidthClassName='max-w-lg'
-        navigationPills={trainingPills}
-        navigationWarningModal={{
-          cancelText: 'Zostań',
-          confirmText: 'Opuść wyzwanie',
-          isOpen: pendingTrainingExitAction !== null,
-          message:
-            'Jeśli opuścisz Tryb Wyzwanie teraz, to wyzwanie zostanie niezaliczone.',
-          onClose: () => setPendingTrainingExitAction(null),
-          onConfirm: () => {
+      <>
+        <LessonActivityStage
+          accent='indigo'
+          description={currentTrainingSection.description}
+          footerNavigation={trainingFooterNavigation}
+          headerTestId='clock-lesson-training-header'
+          icon='🕐'
+          maxWidthClassName='max-w-lg'
+          navigationPills={trainingPills}
+          onBack={() => requestTrainingExitAction({ kind: 'hub' })}
+          sectionHeader={currentTrainingHeader}
+          shellTestId='clock-lesson-training-shell'
+          title={currentTrainingSection.title}
+        >
+          {trainingBody}
+        </LessonActivityStage>
+        <KangurConfirmModal
+          cancelText='Zostań'
+          confirmText='Opuść wyzwanie'
+          isOpen={pendingTrainingExitAction !== null}
+          message='Jeśli opuścisz Tryb Wyzwanie teraz, to wyzwanie zostanie niezaliczone.'
+          onClose={() => setPendingTrainingExitAction(null)}
+          onConfirm={() => {
             if (!pendingTrainingExitAction) {
               return;
             }
@@ -923,16 +931,10 @@ export default function ClockLesson(): React.JSX.Element {
             const action = pendingTrainingExitAction;
             setPendingTrainingExitAction(null);
             executeTrainingExitAction(action);
-          },
-          title: 'Opuścić wyzwanie?',
-        }}
-        onBack={() => requestTrainingExitAction({ kind: 'hub' })}
-        sectionHeader={currentTrainingHeader}
-        shellTestId='clock-lesson-training-shell'
-        title={currentTrainingSection.title}
-      >
-        {trainingBody}
-      </LessonActivityStage>
+          }}
+          title='Opuścić wyzwanie?'
+        />
+      </>
     );
   }
 

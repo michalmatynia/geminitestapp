@@ -143,18 +143,18 @@ function KangurHomeActionCard({
       <div className='home-action-featured-underlay' />
       {action.href ? (
         <Link
-          href={action.href}
+          href={(() => action.href)()}
           className={sharedClassName}
           data-doc-id={docId}
-          targetPageKey={action.targetPageKey}
+          targetPageKey={(() => action.targetPageKey)()}
         >
           {content}
         </Link>
       ) : (
         <button
           type='button'
-          onClick={action.onClick}
-          disabled={action.disabled}
+          onClick={(() => action.onClick)()}
+          disabled={(() => action.disabled)()}
           className={sharedClassName}
           data-doc-id={docId}
         >

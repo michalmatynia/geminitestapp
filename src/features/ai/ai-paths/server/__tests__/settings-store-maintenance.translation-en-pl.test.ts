@@ -323,7 +323,7 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(parsed.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
         templateId: 'starter_translation_en_pl',
-        templateVersion: 4,
+        templateVersion: 5,
       })
     );
     expect(report.shouldBlock).toBe(false);

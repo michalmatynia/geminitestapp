@@ -986,22 +986,32 @@ function DraggableClock({
         </span>
       </div>
 
-      <KangurButton
-        className={cn(
-          'disabled:opacity-100',
-          submitFeedback === 'correct' &&
-            'border-emerald-500 bg-emerald-500 text-white hover:border-emerald-500 hover:bg-emerald-500',
-          submitFeedback === 'wrong' &&
-            'border-rose-500 bg-rose-500 text-white hover:border-rose-500 hover:bg-rose-500'
-        )}
-        data-testid='clock-submit-button'
-        disabled={submitLocked}
-        onClick={() => onSubmit(displayHour, displayMinutes)}
-        size='xl'
-        variant='primary'
-      >
-        {submitButtonLabel}
-      </KangurButton>
+      {(() => {
+        const submitButtonTone = submitFeedback ?? 'idle';
+        const isSubmitDisabled = submitLocked;
+        const handleSubmitClick = (): void => {
+          onSubmit(displayHour, displayMinutes);
+        };
+
+        return (
+          <KangurButton
+            className={cn(
+              'disabled:opacity-100',
+              submitButtonTone === 'correct' &&
+                'border-emerald-500 bg-emerald-500 text-white hover:border-emerald-500 hover:bg-emerald-500',
+              submitButtonTone === 'wrong' &&
+                'border-rose-500 bg-rose-500 text-white hover:border-rose-500 hover:bg-rose-500'
+            )}
+            data-testid='clock-submit-button'
+            disabled={isSubmitDisabled}
+            onClick={handleSubmitClick}
+            size='xl'
+            variant='primary'
+          >
+            {submitButtonLabel}
+          </KangurButton>
+        );
+      })()}
       {submitFeedbackTitle ? (
         <div
           aria-live='polite'
@@ -1364,11 +1374,7 @@ export default function ClockTrainingGame({
             <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='surface'>
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
-            <KangurButton
-              onClick={onCompletionPrimaryAction ?? onFinish}
-              size='lg'
-              variant='primary'
-            >
+            <KangurButton onClick={completionAction} size='lg' variant='primary'>
               {completionPrimaryActionLabel}
             </KangurButton>
           </div>
@@ -1376,6 +1382,11 @@ export default function ClockTrainingGame({
       </motion.div>
     );
   }
+
+  const completionAction = onCompletionPrimaryAction ?? onFinish;
+  const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null;
+  const activeSection = section;
+  const timeDisplayEnabled = showTimeDisplay;
 
   return (
     <div className='flex flex-col items-center gap-4 w-full'>
@@ -1509,7 +1520,7 @@ export default function ClockTrainingGame({
         className='w-full max-w-md'
         label={trainingSectionContent.promptLabel}
         padding='md'
-        title={showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : null}
+        title={taskSummaryTitle}
         tone='accent'
       >
         <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
@@ -1522,8 +1533,8 @@ export default function ClockTrainingGame({
         showChallengeRing={gameMode === 'challenge'}
         challengeTimeLeft={challengeTimeLeft}
         challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
-        section={section}
-        showTimeDisplay={showTimeDisplay}
+        section={activeSection}
+        showTimeDisplay={timeDisplayEnabled}
         submitFeedback={feedback?.kind ?? (done && gameMode === 'practice' ? 'correct' : null)}
         submitFeedbackDetails={feedback?.details ?? null}
         submitFeedbackTitle={feedback?.title ?? null}

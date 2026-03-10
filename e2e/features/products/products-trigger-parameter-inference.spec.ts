@@ -41,6 +41,35 @@ const runModalInference = async (
   });
 };
 
+const runRowInference = async (
+  page: Page,
+  fixture: Awaited<ReturnType<typeof createProductParameterInferenceWorkflowFixture>>
+): Promise<string> => {
+  const row = await searchForProductRow(page, fixture.product.sku ?? fixture.searchTerm, {
+    rowText: fixture.product.sku ?? fixture.searchTerm,
+    mode: 'sku',
+  });
+
+  const inlineButton = row.getByRole('button', { name: fixture.triggerButton.name }).first();
+  if (await inlineButton.isVisible().catch(() => false)) {
+    return await triggerActionAndCaptureRunId(page, async () => {
+      await inlineButton.click();
+    });
+  }
+
+  const overflowToggle = row.getByRole('button', { name: /Open \d+ more AI actions/i }).first();
+  await expect(overflowToggle).toBeVisible({ timeout: 15_000 });
+  await overflowToggle.click();
+
+  const overflowItem = page.getByRole('menuitem', { name: fixture.triggerButton.name }).first();
+  await expect(overflowItem).toBeVisible({ timeout: 15_000 });
+
+  return await triggerActionAndCaptureRunId(page, async () => {
+    await overflowItem.click();
+    await page.keyboard.press('Escape').catch(() => undefined);
+  });
+};
+
 const expectParameterValue = (
   parameters: Array<{
     parameterId: string;
@@ -94,6 +123,47 @@ test.describe('Products AI Paths parameter inference', () => {
 
     try {
       const runId = await runModalInference(page, fixture);
+      const detail = await waitForRunToComplete(page, runId);
+      expect(detail.run.status).toBe('completed');
+
+      const updatedProduct = await fetchProductById(page, fixture.product.id);
+      const parameters = Array.isArray(updatedProduct.parameters) ? updatedProduct.parameters : [];
+
+      expect(parameters).toHaveLength(3);
+      expectParameterValue(parameters, fixture.parameterIdsByKey.material, 'Leather');
+      expectParameterValue(parameters, fixture.parameterIdsByKey.condition, 'Used');
+      expectParameterValue(parameters, fixture.parameterIdsByKey.size, '13 Cm');
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('fills blank parameter rows from the product row infer parameters trigger', async ({
+    page,
+  }) => {
+    const fixture = await createProductParameterInferenceWorkflowFixture(page, {
+      location: 'product_row',
+      triggerButtonName: 'Infer Parameters Row',
+      pathName: 'E2E Product Row Parameter Inference Fallback',
+      definitions: [
+        { key: 'material', nameEn: 'Material' },
+        { key: 'condition', nameEn: 'Condition' },
+        { key: 'size', nameEn: 'Size' },
+      ],
+      initialParameters: [
+        { parameterKey: 'material', value: '' },
+        { parameterKey: 'condition', value: '' },
+        { parameterKey: 'size', value: '' },
+      ],
+      inferredParameters: [
+        { parameterKey: 'material', value: 'Leather' },
+        { parameterKey: 'condition', value: 'Used' },
+        { parameterKey: 'size', value: '13 cm' },
+      ],
+    });
+
+    try {
+      const runId = await runRowInference(page, fixture);
       const detail = await waitForRunToComplete(page, runId);
       expect(detail.run.status).toBe('completed');
 

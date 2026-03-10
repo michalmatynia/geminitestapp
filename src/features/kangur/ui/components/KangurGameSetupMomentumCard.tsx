@@ -105,6 +105,7 @@ export default function KangurGameSetupMomentumCard({
   mode,
   progress,
 }: KangurGameSetupMomentumCardProps): React.JSX.Element | null {
+  const modeKey = mode;
   const focus = getSetupFocus(mode, progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const streak = progress.currentWinStreak ?? 0;
@@ -117,7 +118,7 @@ export default function KangurGameSetupMomentumCard({
     <KangurInfoCard
       accent={focus.accent}
       className='w-full max-w-3xl rounded-[28px]'
-      data-testid={`kangur-game-setup-momentum-${mode}`}
+      data-testid={`kangur-game-setup-momentum-${modeKey}`}
       padding='md'
       tone='accent'
     >
@@ -126,7 +127,7 @@ export default function KangurGameSetupMomentumCard({
           <KangurStatusChip
             accent={focus.accent}
             className='text-[11px] uppercase tracking-[0.16em]'
-            data-testid={`kangur-game-setup-momentum-label-${mode}`}
+            data-testid={`kangur-game-setup-momentum-label-${modeKey}`}
             size='sm'
           >
             {focus.label}
@@ -145,7 +146,7 @@ export default function KangurGameSetupMomentumCard({
         <div>
           <p
             className='text-base font-extrabold text-slate-800'
-            data-testid={`kangur-game-setup-momentum-title-${mode}`}
+            data-testid={`kangur-game-setup-momentum-title-${modeKey}`}
           >
             {focus.title}
           </p>

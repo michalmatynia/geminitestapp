@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-09T08:17:08.563Z
+Generated at: 2026-03-10T12:37:20.105Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,19 +16,19 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/agent/leases/route.ts` | 102 |
+| `src/app/api/agent/leases/route.ts` | 103 |
 | `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 83 |
 | `src/app/api/agent/resources/route.ts` | 57 |
-| `src/app/api/agent/approval-gates/route.ts` | 40 |
+| `src/app/api/agent/approval-gates/route.ts` | 41 |
 | `src/app/api/v2/products/[id]/studio/[action]/route.ts` | 40 |
 | `src/app/api/v2/products/[id]/route.ts` | 38 |
 | `src/app/api/marketplace/[resource]/route.ts` | 37 |
 | `src/app/api/v2/products/metadata/[type]/[id]/route.ts` | 32 |
 | `src/app/api/v2/products/metadata/[type]/route.ts` | 27 |
 | `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 27 |
+| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 25 |
+| `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 25 |
 | `src/app/api/v2/products/categories/[id]/route.ts` | 25 |
-| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 24 |
-| `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 24 |
 | `src/app/api/v2/products/categories/route.ts` | 24 |
 | `src/app/api/v2/products/parameters/route.ts` | 24 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |

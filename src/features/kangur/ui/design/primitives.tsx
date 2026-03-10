@@ -492,11 +492,13 @@ type KangurGlassPanelProps = React.HTMLAttributes<HTMLDivElement> &
 
 export const KangurGlassPanel = React.forwardRef<HTMLDivElement, KangurGlassPanelProps>(
   ({ className, padding, surface = 'mist', variant = 'soft', ...props }, ref) => (
-    <KangurPanel
+    <div
       ref={ref}
-      className={cn(KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES[surface], className)}
-      padding={padding}
-      variant={variant}
+      className={cn(
+        kangurPanelVariants({ padding, variant }),
+        KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES[surface],
+        className
+      )}
       {...props}
     />
   )
@@ -728,14 +730,23 @@ export function KangurFeatureHeader({
   title,
   ...props
 }: KangurFeatureHeaderProps): React.JSX.Element {
+  const HeadingComp = headingAs;
+
   return (
     <div className={cn('flex flex-col items-center gap-3 text-center', className)} {...props}>
-      <KangurIconBadge accent={badgeAccent ?? accent} size={badgeSize}>
+      <span
+        className={cn(
+          kangurIconBadgeVariants({ size: badgeSize }),
+          KANGUR_ACCENT_STYLES[badgeAccent ?? accent].icon
+        )}
+      >
         {icon}
-      </KangurIconBadge>
-      <KangurHeadline accent={accent} as={headingAs} size={headingSize}>
+      </span>
+      <HeadingComp
+        className={cn(kangurHeadlineVariants({ size: headingSize }), KANGUR_HEADLINE_CLASSNAMES[accent])}
+      >
         {title}
-      </KangurHeadline>
+      </HeadingComp>
       {description ? <p className='max-w-sm text-sm text-slate-500'>{description}</p> : null}
     </div>
   );
@@ -774,6 +785,7 @@ export function KangurSectionHeading({
 }: KangurSectionHeadingProps): React.JSX.Element {
   const isInline = layout === 'inline';
   const alignmentClassName = align === 'left' ? 'items-start text-left' : 'items-center text-center';
+  const HeadingComp = headingAs;
 
   return (
     <div
@@ -786,14 +798,22 @@ export function KangurSectionHeading({
       {...props}
     >
       {icon ? (
-        <KangurIconBadge accent={iconAccent ?? accent} size={iconSize}>
+        <span
+          className={cn(
+            kangurIconBadgeVariants({ size: iconSize }),
+            KANGUR_ACCENT_STYLES[iconAccent ?? accent].icon
+          )}
+        >
           {icon}
-        </KangurIconBadge>
+        </span>
       ) : null}
       <div className={cn('space-y-1', isInline ? 'min-w-0' : undefined)}>
-        <KangurHeadline accent={accent} as={headingAs} id={titleId} size={headingSize}>
+        <HeadingComp
+          className={cn(kangurHeadlineVariants({ size: headingSize }), KANGUR_HEADLINE_CLASSNAMES[accent])}
+          id={titleId}
+        >
           {title}
-        </KangurHeadline>
+        </HeadingComp>
         {description ? (
           <p className='text-sm text-slate-500' id={descriptionId}>
             {description}
@@ -1180,21 +1200,27 @@ export function KangurSummaryPanel({
   const centered = align === 'center';
 
   return (
-    <KangurInfoCard
-      accent={accent}
-      className={cn('space-y-2', centered && 'text-center', className)}
-      padding={padding}
-      tone={tone}
+    <div
+      className={cn(
+        kangurInfoCardVariants({ tone, padding }),
+        tone === 'accent' &&
+          cn(KANGUR_ACCENT_STYLES[accent].activeCard, KANGUR_ACCENT_STYLES[accent].activeText),
+        'space-y-2',
+        centered && 'text-center',
+        className
+      )}
       {...props}
     >
       {label ? (
-        <KangurStatusChip
-          accent={labelAccent ?? accent}
-          className={centered ? 'mx-auto' : undefined}
-          size='sm'
+        <span
+          className={cn(
+            kangurStatusChipVariants({ size: 'sm' }),
+            KANGUR_ACCENT_STYLES[labelAccent ?? accent].badge,
+            centered && 'mx-auto'
+          )}
         >
           {label}
-        </KangurStatusChip>
+        </span>
       ) : null}
       {title ? (
         <div
@@ -1218,7 +1244,7 @@ export function KangurSummaryPanel({
         </p>
       ) : null}
       {children}
-    </KangurInfoCard>
+    </div>
   );
 }
 
@@ -1281,23 +1307,40 @@ type KangurInlineFallbackProps = React.HTMLAttributes<HTMLDivElement> &
 export function KangurInlineFallback({
   accent = 'slate',
   align = 'center',
+  children,
   className,
   description,
   icon,
   title,
   ...props
 }: KangurInlineFallbackProps): React.JSX.Element {
+  const centered = align === 'center';
+
   return (
-    <KangurEmptyState
-      accent={accent}
-      align={align}
-      className={cn('w-full', className)}
-      description={description}
-      icon={icon}
-      padding='md'
-      title={title}
+    <div
+      className={cn(
+        kangurInfoCardVariants({ dashed: true, padding: 'md', tone: 'muted' }),
+        'w-full space-y-3',
+        centered && 'text-center',
+        className
+      )}
       {...props}
-    />
+    >
+      {icon ? (
+        <div
+          className={cn(
+            'flex h-12 w-12 items-center justify-center rounded-2xl',
+            KANGUR_ACCENT_STYLES[accent].icon,
+            centered && 'mx-auto'
+          )}
+        >
+          {icon}
+        </div>
+      ) : null}
+      <div className='text-base font-bold text-slate-700'>{title}</div>
+      {description ? <p className='text-sm leading-6 text-slate-500'>{description}</p> : null}
+      {children}
+    </div>
   );
 }
 

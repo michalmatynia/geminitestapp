@@ -15,6 +15,7 @@ import {
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
@@ -31,11 +32,11 @@ type KangurPrimaryNavigationPage =
   | 'LearnerProfile'
   | 'ParentDashboard';
 
-type NavActionProps = {
+type KangurNavActionConfig = {
   active?: boolean;
   ariaLabel?: string;
-  children: React.ReactNode;
   className?: string;
+  content: React.ReactNode;
   docId: string;
   elementRef?: React.Ref<HTMLButtonElement>;
   href?: string;
@@ -69,19 +70,20 @@ export type { KangurPrimaryNavigationProps };
 
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
 
-const NavAction = ({
-  active = false,
-  ariaLabel,
-  children,
-  className,
-  docId,
-  elementRef,
-  href,
-  onClick,
-  targetPageKey,
-  testId,
-  title,
-}: NavActionProps): React.JSX.Element => {
+const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
+  const {
+    active = false,
+    ariaLabel,
+    className,
+    content,
+    docId,
+    elementRef,
+    href,
+    onClick,
+    targetPageKey,
+    testId,
+    title,
+  } = config;
   const variant = active ? 'navigationActive' : 'navigation';
 
   if (href) {
@@ -98,7 +100,7 @@ const NavAction = ({
         variant={variant}
       >
         <Link href={href} targetPageKey={targetPageKey}>
-          {children}
+          {content}
         </Link>
       </KangurButton>
     );
@@ -118,7 +120,7 @@ const NavAction = ({
       type='button'
       variant={variant}
     >
-      {children}
+      {content}
     </KangurButton>
   );
 };
@@ -142,8 +144,15 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
+  const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
+  const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
+  const guestPlayerPlaceholderText = guestPlayerNamePlaceholder;
+  const navigationLabel = navLabel;
+  const topBarClassName = className;
+  const topBarContentClassName = contentClassName;
+  const learnerProfileIsActive = currentPage === 'LearnerProfile';
   const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
   const effectiveCanManageLearners = auth?.user
     ? Boolean(auth.user.canManageLearners)
@@ -162,6 +171,10 @@ export function KangurPrimaryNavigation({
     typeof guestPlayerName === 'string' &&
     typeof onGuestPlayerNameChange === 'function';
   const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
+  const homeHref = getKangurHomeHref(basePath);
+  const lessonsHref = createPageUrl('Lessons', basePath);
+  const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
+  const profileHref = createPageUrl('LearnerProfile', basePath);
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -175,6 +188,10 @@ export function KangurPrimaryNavigation({
       setIsEditingGuestPlayerName(true);
     }
   }, [hasGuestPlayerName, showGuestPlayerNameInput]);
+
+  const handleGuestPlayerNameChange = (value: string): void => {
+    onGuestPlayerNameChange?.(value);
+  };
 
   useKangurTutorAnchor({
     id: 'kangur-auth-create-account-action',
@@ -208,16 +225,23 @@ export function KangurPrimaryNavigation({
 
     const trimmedValue = guestPlayerName.trim();
     if (trimmedValue !== guestPlayerName) {
-      onGuestPlayerNameChange(trimmedValue);
+      handleGuestPlayerNameChange(trimmedValue);
     }
     setIsEditingGuestPlayerName(false);
   };
 
+  const logoutAction: KangurNavActionConfig = {
+    content: (
+      <>
+        <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span>Wyloguj</span>
+      </>
+    ),
+    docId: 'profile_logout',
+    onClick: onLogout,
+  };
   const authAction = effectiveIsAuthenticated ? (
-    <NavAction docId='profile_logout' onClick={onLogout}>
-      <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
-      <span>Wyloguj</span>
-    </NavAction>
+    renderNavAction(logoutAction)
   ) : onLogin || onCreateAccount ? (
     <>
       {showGuestPlayerNameInput ? (
@@ -233,17 +257,17 @@ export function KangurPrimaryNavigation({
               id='kangur-primary-nav-guest-player-name'
               maxLength={20}
               onBlur={commitGuestPlayerName}
-              onChange={(event) => onGuestPlayerNameChange(event.target.value)}
+              onChange={(event) => handleGuestPlayerNameChange(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault();
                   commitGuestPlayerName();
                 }
               }}
-              placeholder={guestPlayerNamePlaceholder}
+              placeholder={guestPlayerPlaceholderText}
               size='md'
               type='text'
-              value={guestPlayerName}
+              value={guestPlayerNameValue}
             />
           </div>
         ) : (
@@ -260,49 +284,59 @@ export function KangurPrimaryNavigation({
         )
       ) : null}
       {onCreateAccount ? (
-        <NavAction
-          className={mobileAuthActionClassName}
-          docId='profile_create_account'
-          elementRef={createAccountActionRef}
-          onClick={onCreateAccount}
-          testId='kangur-primary-nav-create-account'
-        >
-          <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
-          <span>Utwórz konto</span>
-        </NavAction>
+        renderNavAction({
+          className: mobileAuthActionClassName,
+          content: (
+            <>
+              <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
+              <span>Utwórz konto</span>
+            </>
+          ),
+          docId: 'profile_create_account',
+          elementRef: createAccountActionRef,
+          onClick: onCreateAccount,
+          testId: 'kangur-primary-nav-create-account',
+        })
       ) : null}
       {onLogin ? (
-        <NavAction
-          className={mobileAuthActionClassName}
-          docId='profile_login'
-          elementRef={loginActionRef}
-          onClick={onLogin}
-          testId='kangur-primary-nav-login'
-        >
-          <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
-          <span>Zaloguj się</span>
-        </NavAction>
+        renderNavAction({
+          className: mobileAuthActionClassName,
+          content: (
+            <>
+              <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
+              <span>Zaloguj się</span>
+            </>
+          ),
+          docId: 'profile_login',
+          elementRef: loginActionRef,
+          onClick: onLogin,
+          testId: 'kangur-primary-nav-login',
+        })
       ) : null}
     </>
   ) : null;
   const tutorRestoreAction =
     isTutorHidden && !isTutorExplicitlyDisabled ? (
-      <NavAction
-        ariaLabel='Włącz AI Tutora'
-        className='border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800'
-        docId='kangur-ai-tutor-restore'
-        onClick={(): void => {
+      renderNavAction({
+        ariaLabel: tutorContent.navigation.restoreTutorLabel,
+        className:
+          'border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800',
+        content: (
+          <>
+            <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span>{tutorContent.navigation.restoreTutorLabel}</span>
+          </>
+        ),
+        docId: 'kangur-ai-tutor-restore',
+        onClick: (): void => {
           persistTutorVisibilityHidden(false);
           if (tutor?.enabled) {
             tutor.openChat();
           }
-        }}
-        testId='kangur-ai-tutor-restore'
-        title='Włącz AI Tutora'
-      >
-        <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span>Włącz AI Tutora</span>
-      </NavAction>
+        },
+        testId: 'kangur-ai-tutor-restore',
+        title: tutorContent.navigation.restoreTutorLabel,
+      })
     ) : null;
   const utilityActions =
     rightAccessory || authAction ? (
@@ -312,62 +346,71 @@ export function KangurPrimaryNavigation({
       </div>
     ) : null;
 
+  const homeAction: KangurNavActionConfig = {
+    active: homeActive,
+    className: 'px-3 sm:px-4',
+    content: (
+      <>
+        <span
+          className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
+          data-testid='kangur-home-logo'
+        >
+          <KangurHomeLogo />
+        </span>
+        <span className='sr-only'>Strona glowna</span>
+      </>
+    ),
+    docId: 'top_nav_home',
+    href: onHomeClick ? undefined : homeHref,
+    onClick: onHomeClick,
+    targetPageKey: 'Game',
+    testId: 'kangur-primary-nav-home',
+  };
+  const lessonsAction: KangurNavActionConfig = {
+    active: currentPage === 'Lessons',
+    content: (
+      <>
+        <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span>Lekcje</span>
+      </>
+    ),
+    docId: 'top_nav_lessons',
+    href: lessonsHref,
+    targetPageKey: 'Lessons',
+    testId: 'kangur-primary-nav-lessons',
+  };
+  const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
+    ? {
+      active: currentPage === 'ParentDashboard',
+      content: (
+        <>
+          <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />
+          <span>Rodzic</span>
+        </>
+      ),
+      docId: 'top_nav_parent_dashboard',
+      href: parentDashboardHref,
+      targetPageKey: 'ParentDashboard',
+      testId: 'kangur-primary-nav-parent-dashboard',
+    }
+    : null;
+  const leftContent = (
+    <KangurTopNavGroup label={navigationLabel}>
+      {renderNavAction(homeAction)}
+      {renderNavAction(lessonsAction)}
+      {tutorRestoreAction}
+      {effectiveIsAuthenticated ? (
+        <KangurProfileMenu profile={{ href: profileHref, isActive: learnerProfileIsActive }} />
+      ) : null}
+      {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+    </KangurTopNavGroup>
+  );
+
   return (
     <KangurPageTopBar
-      className={className}
-      contentClassName={contentClassName}
-      left={
-        <KangurTopNavGroup label={navLabel}>
-          <NavAction
-            active={homeActive}
-            className='px-3 sm:px-4'
-            docId='top_nav_home'
-            href={onHomeClick ? undefined : getKangurHomeHref(basePath)}
-            onClick={onHomeClick}
-            targetPageKey='Game'
-            testId='kangur-primary-nav-home'
-          >
-            <span
-              className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
-              data-testid='kangur-home-logo'
-            >
-              <KangurHomeLogo />
-            </span>
-            <span className='sr-only'>Strona glowna</span>
-          </NavAction>
-
-          <NavAction
-            active={currentPage === 'Lessons'}
-            docId='top_nav_lessons'
-            href={createPageUrl('Lessons', basePath)}
-            targetPageKey='Lessons'
-            testId='kangur-primary-nav-lessons'
-          >
-            <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
-            <span>Lekcje</span>
-          </NavAction>
-          {tutorRestoreAction}
-          {effectiveIsAuthenticated ? (
-            <KangurProfileMenu
-              basePath={basePath}
-              isActive={currentPage === 'LearnerProfile'}
-            />
-          ) : null}
-
-          {effectiveShowParentDashboard ? (
-            <NavAction
-              active={currentPage === 'ParentDashboard'}
-              docId='top_nav_parent_dashboard'
-              href={createPageUrl('ParentDashboard', basePath)}
-              targetPageKey='ParentDashboard'
-              testId='kangur-primary-nav-parent-dashboard'
-            >
-              <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>Rodzic</span>
-            </NavAction>
-          ) : null}
-        </KangurTopNavGroup>
-      }
+      className={topBarClassName}
+      contentClassName={topBarContentClassName}
+      left={leftContent}
       right={utilityActions}
     />
   );

@@ -93,26 +93,36 @@ export function SvgCodeEditor({
   placeholder,
   className,
 }: SvgCodeEditorProps): React.JSX.Element {
-  const hasContent = value.trim().length > 0;
-  const isValid = !hasContent || looksLikeSvg(value);
-  const detectedViewBox = hasContent ? extractSvgViewBox(value) : null;
+  const editorValue = value;
+  const commitValue = useCallback(
+    (next: string): void => {
+      onChange(next);
+    },
+    [onChange]
+  );
+  const textareaPlaceholder =
+    placeholder ??
+    '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">\n  <!-- paste or write SVG here -->\n</svg>';
+  const hasContent = editorValue.trim().length > 0;
+  const isValid = !hasContent || looksLikeSvg(editorValue);
+  const detectedViewBox = hasContent ? extractSvgViewBox(editorValue) : null;
 
   const handleChange = useCallback(
     (next: string): void => {
-      onChange(next);
+      commitValue(next);
       if (onViewBoxDetected) {
         const vb = extractSvgViewBox(next);
         if (vb) onViewBoxDetected(vb);
       }
     },
-    [onChange, onViewBoxDetected]
+    [commitValue, onViewBoxDetected]
   );
 
   const handleSnippet = useCallback(
     (snippet: string): void => {
-      handleChange(insertSnippetIntoSvg(value, snippet));
+      handleChange(insertSnippetIntoSvg(editorValue, snippet));
     },
-    [value, handleChange]
+    [editorValue, handleChange]
   );
 
   const handlePasteFromClipboard = useCallback(async (): Promise<void> => {
@@ -184,7 +194,7 @@ export function SvgCodeEditor({
                   size='sm'
                   variant='ghost'
                   className='h-6 px-2 text-[10px] text-rose-400 hover:text-rose-300'
-                  onClick={(): void => onChange('')}
+                  onClick={(): void => commitValue('')}
                 >
                   <X className='mr-1 size-3' />
                   Clear
@@ -194,12 +204,9 @@ export function SvgCodeEditor({
           </div>
 
           <Textarea
-            value={value}
+            value={editorValue}
             onChange={(e): void => handleChange(e.target.value)}
-            placeholder={
-              placeholder ??
-              '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">\n  <!-- paste or write SVG here -->\n</svg>'
-            }
+            placeholder={textareaPlaceholder}
             className={cn('font-mono text-xs', textareaHeight)}
             spellCheck={false}
           />
@@ -227,7 +234,7 @@ export function SvgCodeEditor({
               /* admin-only: SVG authored by admin, rendered for instant preview */
               <div
                 className='max-h-full max-w-full'
-                dangerouslySetInnerHTML={{ __html: sanitizeSvg(value) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeSvg(editorValue) }}
               />
             ) : (
               <p className='text-center text-xs text-gray-300'>

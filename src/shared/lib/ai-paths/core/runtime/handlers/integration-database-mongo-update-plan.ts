@@ -74,6 +74,13 @@ const hasTranslationParameterMapping = (dbConfig: DatabaseConfig): boolean =>
 const isLegacyTranslationParameterUpdate = (dbConfig: DatabaseConfig): boolean =>
   hasTranslationDescriptionMapping(dbConfig) && hasTranslationParameterMapping(dbConfig);
 
+const isResolvedTranslationParameterUpdate = (
+  updates: Record<string, unknown>,
+  parameterTargetPath: string
+): boolean =>
+  Object.prototype.hasOwnProperty.call(updates, 'description_pl') &&
+  Object.prototype.hasOwnProperty.call(updates, parameterTargetPath);
+
 const pruneEmptyTranslationDescriptionUpdate = (
   updates: Record<string, unknown>
 ): {
@@ -250,7 +257,7 @@ export async function buildMongoUpdatePlan({
 
   const parameterTargetPath =
     normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
-  const isTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
+  const isConfiguredTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
 
   let updates: Record<string, unknown> = {};
   let updateDoc: unknown = null;
@@ -264,6 +271,9 @@ export async function buildMongoUpdatePlan({
       parameterTargetPath,
     });
     updates = mappingResult.updates;
+    const isTranslationParameterUpdate =
+      isConfiguredTranslationParameterUpdate ||
+      isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
 
     if (isTranslationParameterUpdate) {
       const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
@@ -423,6 +433,9 @@ export async function buildMongoUpdatePlan({
         return record;
       };
       updates = extractUpdates(updateDoc);
+      const isTranslationParameterUpdate =
+        isConfiguredTranslationParameterUpdate ||
+        isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
 
       if (isTranslationParameterUpdate) {
         const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);

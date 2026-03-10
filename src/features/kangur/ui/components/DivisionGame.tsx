@@ -163,6 +163,10 @@ export default function DivisionGame({
   const [confirmed, setConfirmed] = useState(false);
   const sessionStartedAtRef = useRef(Date.now());
 
+  const handleFinishGame = (): void => {
+    onFinish();
+  };
+
   const handleSelect = (choice: number): void => {
     if (confirmed) {
       return;
@@ -267,7 +271,7 @@ export default function DivisionGame({
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
             <KangurButton
-              onClick={onFinish}
+              onClick={handleFinishGame}
               className='flex-1'
               size='lg'
               type='button'

@@ -8,7 +8,10 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
+import {
+  buildKangurAssignmentListItems,
+  selectKangurPriorityAssignments,
+} from '@/features/kangur/ui/services/delegated-assignments';
 
 type KangurLearnerAssignmentsPanelProps = {
   basePath: string;
@@ -53,6 +56,14 @@ export function KangurLearnerAssignmentsPanel({
           return rightTime - leftTime;
         }),
     [assignments]
+  );
+  const activeAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, activeAssignments),
+    [activeAssignments, basePath]
+  );
+  const completedAssignmentItems = useMemo(
+    () => buildKangurAssignmentListItems(basePath, completedAssignments),
+    [basePath, completedAssignments]
   );
 
   const totalVisibleAssignments = assignments.filter((assignment) => !assignment.archived).length;
@@ -161,16 +172,14 @@ export function KangurLearnerAssignmentsPanel({
       </KangurGlassPanel>
 
       <KangurAssignmentsList
-        assignments={activeAssignments}
-        basePath={basePath}
+        items={activeAssignmentItems}
         title='Aktywne zadania od rodzica'
         emptyLabel='Brak aktywnych zadan przypisanych do tego profilu.'
         compact
       />
 
       <KangurAssignmentsList
-        assignments={completedAssignments}
-        basePath={basePath}
+        items={completedAssignmentItems}
         title='Historia ukonczonych zadan'
         emptyLabel='Nie masz jeszcze zakonczonych przydzielonych zadan.'
         compact

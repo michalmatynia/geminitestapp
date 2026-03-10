@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import {
   KANGUR_BASE_PATH,
@@ -9,12 +9,8 @@ import {
   normalizeKangurRequestedPath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
-import {
-  clearKangurClientObservabilityContext,
-  setKangurClientObservabilityContext,
-} from '@/features/kangur/observability/client';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 
 import type { JSX } from 'react';
 
@@ -69,16 +65,6 @@ export function KangurFeatureRouteShell({
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
   const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
 
-  useEffect(() => {
-    setKangurClientObservabilityContext({
-      pageKey,
-      requestedPath,
-    });
-    return () => {
-      clearKangurClientObservabilityContext();
-    };
-  }, [pageKey, requestedPath]);
-
   return (
     <div
       className='relative min-h-screen w-full kangur-premium-bg text-slate-800'
@@ -90,7 +76,7 @@ export function KangurFeatureRouteShell({
         basePath={normalizedBasePath}
         embedded={embedded}
       >
-        <KangurFeatureApp />
+        <KangurFeaturePageShell />
       </KangurRoutingProvider>
     </div>
   );

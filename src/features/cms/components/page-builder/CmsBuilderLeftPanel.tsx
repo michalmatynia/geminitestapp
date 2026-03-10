@@ -24,6 +24,98 @@ export function CmsBuilderLeftPanel({ variant = 'standard' }: CmsBuilderLeftPane
   );
 
   const isKangur = variant === 'kangur';
+  const headerActions = (
+    <div className='flex items-center gap-1'>
+      {!isKangur && (
+        <>
+          <Button
+            onClick={() => setLeftPanelMode('sections')}
+            size='icon'
+            variant='ghost'
+            className={`h-6 w-6 p-0 ${
+              leftPanelMode === 'sections'
+                ? 'text-gray-500/70'
+                : 'text-blue-300 hover:text-blue-200'
+            }`}
+            title='Back to sections'
+            aria-label='Back to sections'
+            disabled={leftPanelMode === 'sections'}
+          >
+            <ArrowLeft className='size-3.5' />
+          </Button>
+          <Button
+            onClick={() => setLeftPanelMode('menu')}
+            size='icon'
+            variant='ghost'
+            className={`h-6 w-6 p-0 ${
+              leftPanelMode === 'menu'
+                ? 'text-blue-300 hover:text-blue-200'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+            title='Menu settings'
+            aria-label='Menu settings'
+          >
+            <Menu className='size-3.5' />
+          </Button>
+          <Button
+            onClick={() => setLeftPanelMode('app-embeds')}
+            size='icon'
+            variant='ghost'
+            className={`h-6 w-6 p-0 ${
+              leftPanelMode === 'app-embeds'
+                ? 'text-blue-300 hover:text-blue-200'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+            title='App embeds'
+            aria-label='App embeds'
+          >
+            <AppWindow className='size-3.5' />
+          </Button>
+        </>
+      )}
+
+      {isKangur && (
+        <Button
+          onClick={() => setLeftPanelMode('structure')}
+          size='icon'
+          variant='ghost'
+          className={`h-6 w-6 p-0 ${
+            leftPanelMode === 'structure'
+              ? 'text-blue-300 hover:text-blue-200'
+              : 'text-gray-500 hover:text-gray-300'
+          }`}
+          title='Structure'
+          aria-label='Structure'
+        >
+          <Workflow className='size-3.5' />
+        </Button>
+      )}
+
+      <Button
+        onClick={() => setLeftPanelMode('theme')}
+        size='icon'
+        variant='ghost'
+        className={`h-6 w-6 p-0 ${
+          leftPanelMode === 'theme'
+            ? 'text-blue-300 hover:text-blue-200'
+            : 'text-gray-500 hover:text-gray-300'
+        }`}
+        title={isKangur ? 'Theme' : 'Theme settings'}
+        aria-label={isKangur ? 'Theme' : 'Theme settings'}
+      >
+        <Settings className='size-3.5' />
+      </Button>
+      <Button
+        onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
+        size='icon'
+        variant='ghost'
+        className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
+        aria-label='Hide left panel'
+      >
+        <PanelLeftClose className='size-3.5' />
+      </Button>
+    </div>
+  );
 
   const leftPanelLabel = React.useMemo(() => {
     if (leftPanelMode === 'sections') return 'Sections';
@@ -65,98 +157,7 @@ export function CmsBuilderLeftPanel({ variant = 'standard' }: CmsBuilderLeftPane
           title={leftPanelLabel}
           size='xs'
           className='p-3 border-b border-border'
-          actions={
-            <div className='flex items-center gap-1'>
-              {!isKangur && (
-                <>
-                  <Button
-                    onClick={() => setLeftPanelMode('sections')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'sections'
-                        ? 'text-gray-500/70'
-                        : 'text-blue-300 hover:text-blue-200'
-                    }`}
-                    title='Back to sections'
-                    aria-label='Back to sections'
-                    disabled={leftPanelMode === 'sections'}
-                  >
-                    <ArrowLeft className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => setLeftPanelMode('menu')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'menu'
-                        ? 'text-blue-300 hover:text-blue-200'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    title='Menu settings'
-                    aria-label='Menu settings'
-                  >
-                    <Menu className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => setLeftPanelMode('app-embeds')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'app-embeds'
-                        ? 'text-blue-300 hover:text-blue-200'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    title='App embeds'
-                    aria-label='App embeds'
-                  >
-                    <AppWindow className='size-3.5' />
-                  </Button>
-                </>
-              )}
-
-              {isKangur && (
-                <Button
-                  onClick={() => setLeftPanelMode('structure')}
-                  size='icon'
-                  variant='ghost'
-                  className={`h-6 w-6 p-0 ${
-                    leftPanelMode === 'structure'
-                      ? 'text-blue-300 hover:text-blue-200'
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  title='Structure'
-                  aria-label='Structure'
-                >
-                  <Workflow className='size-3.5' />
-                </Button>
-              )}
-
-              <Button
-                onClick={() => setLeftPanelMode('theme')}
-                size='icon'
-                variant='ghost'
-                className={`h-6 w-6 p-0 ${
-                  leftPanelMode === 'theme'
-                    ? 'text-blue-300 hover:text-blue-200'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-                title={isKangur ? 'Theme' : 'Theme settings'}
-                aria-label={isKangur ? 'Theme' : 'Theme settings'}
-              >
-                <Settings className='size-3.5' />
-              </Button>
-              <Button
-                onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
-                size='icon'
-                variant='ghost'
-                className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
-                aria-label='Hide left panel'
-              >
-                <PanelLeftClose className='size-3.5' />
-              </Button>
-            </div>
-          }
+          actions={headerActions}
         />
         {(leftPanelMode === 'sections' || leftPanelMode === 'structure') && <ComponentTreePanel />}
         {leftPanelMode === 'theme' && <ThemeSettingsPanel showHeader={false} />}

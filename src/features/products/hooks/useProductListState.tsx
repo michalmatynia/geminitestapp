@@ -11,7 +11,7 @@ import { useProductSync } from '@/features/products/hooks/useProductEnhancements
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
-import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
+import * as queuedProductOps from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
@@ -54,7 +54,12 @@ export function useProductListState(): ProductListContextType & {
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
-  const queuedProductIds = useQueuedProductIds();
+  const useQueuedAiRunProductIdsHook =
+    queuedProductOps.useQueuedAiRunProductIds ?? queuedProductOps.useQueuedProductIds;
+
+  const queuedProductIds = useQueuedAiRunProductIdsHook
+    ? useQueuedAiRunProductIdsHook()
+    : new Set<string>();
 
   useProductSync();
   useProductAiPathsRunSync();

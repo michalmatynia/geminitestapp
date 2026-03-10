@@ -82,6 +82,8 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
   const [selected, setSelected] = useState<KangurQuestionChoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const choices = q.choices ?? [];
+  const questionNumber = qIndex + 1;
+  const progressValue = (qIndex / total) * 100;
 
   const handleSelect = (choice: KangurQuestionChoice): void => {
     if (confirmed) {
@@ -98,6 +100,9 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
     const correct = selected === q.answer;
     setTimeout(() => onAnswer(correct), 1400);
   };
+  const handleChoiceConfirm = (choice: KangurQuestionChoice): void => {
+    handleSelect(choice);
+  };
 
   return (
     <div className='flex flex-col gap-4 w-full'>
@@ -107,10 +112,10 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           className='flex-1'
           data-testid='kangur-game-progress-bar'
           size='sm'
-          value={(qIndex / total) * 100}
+          value={progressValue}
         />
         <span className='text-xs font-bold text-slate-400'>
-          {qIndex + 1}/{total}
+          {questionNumber}/{total}
         </span>
       </div>
 
@@ -123,7 +128,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
       >
         <div className='flex items-center justify-between mb-1'>
           <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
-            Pytanie {qIndex + 1}
+            Pytanie {questionNumber}
           </p>
           {q.id.startsWith('2024_') && (
             <KangurStatusChip accent='emerald' data-testid='kangur-game-point-chip' size='sm'>
@@ -197,7 +202,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
                 )}
                 data-testid={`kangur-game-choice-${index}`}
                 emphasis={emphasis}
-                onClick={() => handleSelect(choice)}
+                onClick={() => handleChoiceConfirm(choice)}
                 state={state}
                 type='button'
               >
@@ -264,6 +269,10 @@ function ResultView({
   const { onBack } = useKangurGameContext();
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
+  const summaryBreakdown = rewardBreakdown;
+  const handleRestart = (): void => {
+    onRestart();
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='w-full'>
@@ -296,7 +305,7 @@ function ResultView({
         ) : null}
         <KangurRewardBreakdownChips
           accent='slate'
-          breakdown={rewardBreakdown}
+          breakdown={summaryBreakdown}
           className='justify-center'
           dataTestId='kangur-game-summary-breakdown'
           itemDataTestIdPrefix='kangur-game-summary-breakdown'
@@ -313,7 +322,7 @@ function ResultView({
           <KangurButton className='flex-1' onClick={onBack} size='lg' variant='surface'>
             Menu
           </KangurButton>
-          <KangurButton className='flex-1' onClick={onRestart} size='lg' variant='primary'>
+          <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='primary'>
             Spróbuj ponownie 🔁
           </KangurButton>
         </div>

@@ -33,6 +33,24 @@ export type KangurAssignmentCatalogItem = {
   keywords: string[];
 };
 
+export type KangurAssignmentListItem = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  priorityLabel: string;
+  priorityAccent: 'rose' | 'amber' | 'emerald';
+  statusLabel: string;
+  statusAccent: 'slate' | 'indigo' | 'emerald';
+  progressPercent: number;
+  progressSummary: string;
+  progressCountLabel: string;
+  lastActivityLabel: string | null;
+  actionHref: string;
+  actionLabel: string;
+  actionVariant: 'primary' | 'surface';
+};
+
 const ASSIGNMENT_PRIORITY_ORDER = {
   high: 0,
   medium: 1,
@@ -262,6 +280,73 @@ export const formatKangurAssignmentPriorityLabel = (
   if (priority === 'medium') return 'Priorytet sredni';
   return 'Priorytet niski';
 };
+
+export const formatKangurAssignmentStatusLabel = (
+  value: KangurAssignmentSnapshot['progress']['status']
+): string => {
+  if (value === 'completed') return 'Ukonczone';
+  if (value === 'in_progress') return 'W trakcie';
+  return 'Nowe';
+};
+
+const formatKangurAssignmentTimestamp = (value: string | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toLocaleString('pl-PL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
+
+const resolveKangurAssignmentPriorityAccent = (
+  priority: KangurAssignmentSnapshot['priority']
+): 'rose' | 'amber' | 'emerald' => {
+  if (priority === 'high') return 'rose';
+  if (priority === 'medium') return 'amber';
+  return 'emerald';
+};
+
+const resolveKangurAssignmentStatusAccent = (
+  status: KangurAssignmentSnapshot['progress']['status']
+): 'slate' | 'indigo' | 'emerald' => {
+  if (status === 'completed') return 'emerald';
+  if (status === 'in_progress') return 'indigo';
+  return 'slate';
+};
+
+export const buildKangurAssignmentListItem = (
+  basePath: string,
+  assignment: KangurAssignmentSnapshot
+): KangurAssignmentListItem => ({
+  id: assignment.id,
+  title: assignment.title,
+  description: assignment.description,
+  icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
+  priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
+  priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
+  statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status),
+  statusAccent: resolveKangurAssignmentStatusAccent(assignment.progress.status),
+  progressPercent: assignment.progress.percent,
+  progressSummary: assignment.progress.summary,
+  progressCountLabel: `${assignment.progress.attemptsCompleted}/${assignment.progress.attemptsRequired}`,
+  lastActivityLabel: formatKangurAssignmentTimestamp(assignment.progress.lastActivityAt),
+  actionHref: buildKangurAssignmentHref(basePath, assignment),
+  actionLabel: getKangurAssignmentActionLabel(assignment),
+  actionVariant: assignment.target.type === 'lesson' ? 'primary' : 'surface',
+});
+
+export const buildKangurAssignmentListItems = (
+  basePath: string,
+  assignments: KangurAssignmentSnapshot[]
+): KangurAssignmentListItem[] =>
+  assignments.map((assignment) => buildKangurAssignmentListItem(basePath, assignment));
 
 export const buildKangurAssignmentCatalog = (
   lessons: KangurLesson[]

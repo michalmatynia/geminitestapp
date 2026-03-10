@@ -6,7 +6,6 @@ import { createRequire } from 'module';
 import path from 'path';
 import vm from 'vm';
 
-import { buildAiPathsContextRegistrySystemPrompt } from '@/features/ai/ai-paths/context-registry/system-prompt';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import {
@@ -16,6 +15,7 @@ import {
   type PlaywrightSettings,
 } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { isObjectRecord } from '@/shared/utils/object-utils';

@@ -5,6 +5,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
 const { addXpMock, createLessonPracticeRewardMock } = vi.hoisted(() => ({
   addXpMock: vi.fn(),
   createLessonPracticeRewardMock: vi.fn(() => ({
@@ -52,22 +54,16 @@ vi.mock('@hello-pangea/dnd', () => ({
     }),
 }));
 
-vi.mock('@/features/kangur/ui/services/progress', () => ({
-  loadProgress: () => ({
-    totalXp: 0,
-    gamesPlayed: 0,
-    perfectGames: 0,
-    lessonsCompleted: 0,
-    clockPerfect: 0,
-    calendarPerfect: 0,
-    geometryPerfect: 0,
-    badges: [],
-    operationsPlayed: [],
-    lessonMastery: {},
-  }),
-  createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
-  addXp: (...args: unknown[]) => addXpMock(...args),
-}));
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+
+  return {
+    ...actual,
+    loadProgress: () => createDefaultKangurProgressState(),
+    createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
+    addXp: (...args: unknown[]) => addXpMock(...args),
+  };
+});
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 

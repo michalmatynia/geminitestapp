@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
+import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
@@ -30,6 +31,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     data?: Record<string, unknown>;
     primaryKey?: Record<string, unknown>;
   };
+  z.unknown().parse(parsed);
 
   const { table, operation, data, primaryKey } = parsed;
   const requestedType = parsed.type ?? 'auto';

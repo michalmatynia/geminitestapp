@@ -1,19 +1,79 @@
 {
-  "generatedAt": "2026-03-08T14:44:28.388Z",
+  "generatedAt": "2026-03-10T08:38:01.370Z",
   "status": "failed",
   "summary": {
-    "total": 429,
-    "errorCount": 39,
-    "warningCount": 242,
-    "infoCount": 148,
+    "total": 435,
+    "errorCount": 37,
+    "warningCount": 247,
+    "infoCount": 151,
     "status": "failed",
-    "routeFileCount": 330,
-    "methodCount": 474,
-    "methodsWithTests": 76,
-    "mutationValidationCount": 81,
+    "routeFileCount": 346,
+    "methodCount": 492,
+    "methodsWithTests": 91,
+    "mutationValidationCount": 89,
     "queryValidationCount": 10
   },
   "routes": [
+    {
+      "route": "agent/approval-gates",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": false,
+      "sourceFiles": [
+        "src/app/api/agent/approval-gates/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "agent/capabilities",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/agent/capabilities/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "agent/leases",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": false,
+      "sourceFiles": [
+        "src/app/api/agent/leases/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "agent/leases",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/agent/leases/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "agent/resources",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": false,
+      "sourceFiles": [
+        "src/app/api/agent/resources/route.ts"
+      ],
+      "testFiles": []
+    },
     {
       "route": "agentcreator/agent/[runId]/assets/[file]",
       "method": "GET",
@@ -149,7 +209,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/agentcreator/agent/route.ts",
@@ -197,8 +257,38 @@
       "testFiles": []
     },
     {
+      "route": "agentcreator/personas/[personaId]/visuals",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/agentcreator/personas/[personaId]/visuals/route.ts",
+        "src/app/api/agentcreator/personas/[personaId]/visuals/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/agentcreator/personas/[personaId]/visuals/handler.test.ts"
+      ]
+    },
+    {
       "route": "agentcreator/personas/avatar",
       "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/agentcreator/personas/avatar/route.ts",
+        "src/app/api/agentcreator/personas/avatar/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/agentcreator/personas/avatar/handler.test.ts"
+      ]
+    },
+    {
+      "route": "agentcreator/personas/avatar",
+      "method": "DELETE",
       "expectedAccess": "protected",
       "hasTests": true,
       "bodyValidated": null,
@@ -401,6 +491,19 @@
       "testFiles": [
         "src/app/api/ai/actions/propose/handler.test.ts"
       ]
+    },
+    {
+      "route": "ai/context/bundle",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/ai/context/bundle/route.ts",
+        "src/app/api/ai/context/bundle/handler.ts"
+      ],
+      "testFiles": []
     },
     {
       "route": "ai/context/related/[id]",
@@ -954,6 +1057,21 @@
       ]
     },
     {
+      "route": "ai-paths/trigger-buttons/cleanup-fixtures",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/route.ts",
+        "src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/handler.test.ts"
+      ]
+    },
+    {
       "route": "ai-paths/trigger-buttons/reorder",
       "method": "POST",
       "expectedAccess": "protected",
@@ -974,7 +1092,7 @@
       "expectedAccess": "protected",
       "hasTests": true,
       "bodyValidated": null,
-      "queryValidated": null,
+      "queryValidated": false,
       "sourceFiles": [
         "src/app/api/ai-paths/trigger-buttons/route.ts",
         "src/app/api/ai-paths/trigger-buttons/handler.ts"
@@ -1054,27 +1172,31 @@
       "route": "analytics/insights",
       "method": "GET",
       "expectedAccess": "session",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": true,
       "sourceFiles": [
         "src/app/api/analytics/insights/route.ts",
         "src/app/api/analytics/insights/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/analytics/insights/handler.test.ts"
+      ]
     },
     {
       "route": "analytics/insights",
       "method": "POST",
       "expectedAccess": "session",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/analytics/insights/route.ts",
         "src/app/api/analytics/insights/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/analytics/insights/handler.test.ts"
+      ]
     },
     {
       "route": "analytics/summary",
@@ -1366,14 +1488,16 @@
       "route": "auth/verify-credentials",
       "method": "POST",
       "expectedAccess": "public",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/auth/verify-credentials/route.ts",
         "src/app/api/auth/verify-credentials/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/auth/verify-credentials/handler.test.ts"
+      ]
     },
     {
       "route": "brain/models",
@@ -1603,7 +1727,7 @@
       "method": "POST",
       "expectedAccess": "protected",
       "hasTests": false,
-      "bodyValidated": false,
+      "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/chatbot/agent/route.ts",
@@ -3181,6 +3305,21 @@
       ]
     },
     {
+      "route": "kangur/ai-tutor/guest-intro",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/ai-tutor/guest-intro/route.ts",
+        "src/app/api/kangur/ai-tutor/guest-intro/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/ai-tutor/guest-intro/handler.test.ts"
+      ]
+    },
+    {
       "route": "kangur/ai-tutor/usage",
       "method": "GET",
       "expectedAccess": "actor",
@@ -3269,6 +3408,21 @@
       "testFiles": []
     },
     {
+      "route": "kangur/auth/logout",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/logout/route.ts",
+        "src/app/api/kangur/auth/logout/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/logout/handler.test.ts"
+      ]
+    },
+    {
       "route": "kangur/auth/me",
       "method": "GET",
       "expectedAccess": "actor",
@@ -3281,6 +3435,90 @@
       ],
       "testFiles": [
         "src/app/api/kangur/auth/me/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/auth/parent-account/create",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-account/create/route.ts",
+        "src/app/api/kangur/auth/parent-account/create/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/parent-account/create/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/auth/parent-account/resend",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-account/resend/route.ts",
+        "src/app/api/kangur/auth/parent-account/resend/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/parent-account/resend/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/auth/parent-email/verify",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-email/verify/route.ts",
+        "src/app/api/kangur/auth/parent-email/verify/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/parent-email/verify/handler.test.ts"
+      ]
+    },
+    {
+      "route": "kangur/auth/parent-magic-link/exchange",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "kangur/auth/parent-magic-link/request",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-magic-link/request/route.ts"
+      ],
+      "testFiles": []
+    },
+    {
+      "route": "kangur/auth/parent-password",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/parent-password/route.ts",
+        "src/app/api/kangur/auth/parent-password/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/parent-password/handler.test.ts"
       ]
     },
     {
@@ -4185,7 +4423,8 @@
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/settings/route.ts"
+        "src/app/api/settings/route.ts",
+        "src/app/api/settings/handler.ts"
       ],
       "testFiles": []
     },
@@ -4245,27 +4484,31 @@
       "route": "system/logs/insights",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": true,
       "sourceFiles": [
         "src/app/api/system/logs/insights/route.ts",
         "src/app/api/system/logs/insights/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/system/logs/insights/handler.test.ts"
+      ]
     },
     {
       "route": "system/logs/insights",
       "method": "POST",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/system/logs/insights/route.ts",
         "src/app/api/system/logs/insights/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/system/logs/insights/handler.test.ts"
+      ]
     },
     {
       "route": "system/logs/interpret",
@@ -5571,6 +5814,19 @@
       "testFiles": []
     },
     {
+      "route": "v2/products/ids",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": false,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/v2/products/ids/route.ts",
+        "src/app/api/v2/products/ids/handler.ts"
+      ],
+      "testFiles": []
+    },
+    {
       "route": "v2/products/images/base64/all",
       "method": "POST",
       "expectedAccess": "protected",
@@ -6221,14 +6477,16 @@
       "route": "v2/products/validator-runtime/evaluate",
       "method": "POST",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/v2/products/validator-runtime/evaluate/route.ts",
         "src/app/api/v2/products/validator-runtime/evaluate/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/v2/products/validator-runtime/evaluate/handler.test.ts"
+      ]
     },
     {
       "route": "v2/products/validator-settings",
@@ -6313,22 +6571,6 @@
     {
       "severity": "error",
       "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST agentcreator/agent reads request body data without explicit schema validation.",
-      "file": "src/app/api/agentcreator/agent/route.ts",
-      "line": 11,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/agentcreator/agent/route.ts",
-          "src/features/ai/agentcreator/api/agent/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
       "message": "POST ai-paths/portable-engine/remediation-webhook reads request body data without explicit schema validation.",
       "file": "src/app/api/ai-paths/portable-engine/remediation-webhook/route.ts",
       "line": 7,
@@ -6355,22 +6597,6 @@
         "sourceFiles": [
           "src/app/api/assets3d/[id]/route.ts",
           "src/app/api/assets3d/[id]/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "ruleId": "api-contract-mutation-missing-body-validation",
-      "message": "POST chatbot/agent reads request body data without explicit schema validation.",
-      "file": "src/app/api/chatbot/agent/route.ts",
-      "line": 11,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/chatbot/agent/route.ts",
-          "src/features/ai/agentcreator/api/agent/route.ts"
         ]
       }
     },
@@ -6937,6 +7163,57 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-query-route-missing-query-validation",
+      "message": "GET agent/approval-gates reads search params without a query schema or parse/safeParse guard.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 38,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected"
+      }
+    },
+    {
+      "severity": "warn",
+      "ruleId": "api-contract-query-route-missing-query-validation",
+      "message": "GET agent/leases reads search params without a query schema or parse/safeParse guard.",
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 95,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected"
+      }
+    },
+    {
+      "severity": "warn",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "POST agent/leases has no adjacent route/handler test coverage.",
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 99,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/agent/leases/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "warn",
+      "ruleId": "api-contract-query-route-missing-query-validation",
+      "message": "GET agent/resources reads search params without a query schema or parse/safeParse guard.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 54,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected"
+      }
+    },
+    {
+      "severity": "warn",
+      "ruleId": "api-contract-query-route-missing-query-validation",
       "message": "GET agentcreator/agent/[runId]/audits reads search params without a query schema or parse/safeParse guard.",
       "file": "src/app/api/agentcreator/agent/[runId]/audits/route.ts",
       "line": 6,
@@ -7309,6 +7586,18 @@
     },
     {
       "severity": "warn",
+      "ruleId": "api-contract-query-route-missing-query-validation",
+      "message": "GET ai-paths/trigger-buttons reads search params without a query schema or parse/safeParse guard.",
+      "file": "src/app/api/ai-paths/trigger-buttons/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected"
+      }
+    },
+    {
+      "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
       "message": "POST ai-paths/update has no adjacent route/handler test coverage.",
       "file": "src/app/api/ai-paths/update/route.ts",
@@ -7326,16 +7615,16 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "POST analytics/insights has no adjacent route/handler test coverage.",
-      "file": "src/app/api/analytics/insights/route.ts",
-      "line": 10,
+      "message": "POST ai/context/bundle has no adjacent route/handler test coverage.",
+      "file": "src/app/api/ai/context/bundle/route.ts",
+      "line": 7,
       "column": 14,
       "snippet": null,
       "context": {
-        "expectedAccess": "session",
+        "expectedAccess": "protected",
         "sourceFiles": [
-          "src/app/api/analytics/insights/route.ts",
-          "src/app/api/analytics/insights/handler.ts"
+          "src/app/api/ai/context/bundle/route.ts",
+          "src/app/api/ai/context/bundle/handler.ts"
         ]
       }
     },
@@ -8748,6 +9037,36 @@
     },
     {
       "severity": "warn",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "POST kangur/auth/parent-magic-link/exchange has no adjacent route/handler test coverage.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+      "line": 20,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "warn",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "POST kangur/auth/parent-magic-link/request has no adjacent route/handler test coverage.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+      "line": 20,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/kangur/auth/parent-magic-link/request/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "warn",
       "ruleId": "api-contract-query-route-missing-query-validation",
       "message": "GET kangur/observability/summary reads search params without a query schema or parse/safeParse guard.",
       "file": "src/app/api/kangur/observability/summary/route.ts",
@@ -9299,22 +9618,6 @@
         "sourceFiles": [
           "src/app/api/system/diagnostics/mongo-indexes/route.ts",
           "src/app/api/system/diagnostics/mongo-indexes/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "POST system/logs/insights has no adjacent route/handler test coverage.",
-      "file": "src/app/api/system/logs/insights/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/system/logs/insights/route.ts",
-          "src/app/api/system/logs/insights/handler.ts"
         ]
       }
     },
@@ -10701,22 +11004,6 @@
     {
       "severity": "warn",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "POST v2/products/validator-runtime/evaluate has no adjacent route/handler test coverage.",
-      "file": "src/app/api/v2/products/validator-runtime/evaluate/route.ts",
-      "line": 11,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/v2/products/validator-runtime/evaluate/route.ts",
-          "src/app/api/v2/products/validator-runtime/evaluate/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "warn",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "PUT v2/products/validator-settings has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/validator-settings/route.ts",
       "line": 16,
@@ -10775,6 +11062,66 @@
         "sourceFiles": [
           "src/app/api/v2/templates/[type]/route.ts",
           "src/app/api/v2/templates/handler.ts"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "GET agent/approval-gates has no adjacent route/handler test coverage.",
+      "file": "src/app/api/agent/approval-gates/route.ts",
+      "line": 38,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/agent/approval-gates/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "GET agent/capabilities has no adjacent route/handler test coverage.",
+      "file": "src/app/api/agent/capabilities/route.ts",
+      "line": 10,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/agent/capabilities/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "GET agent/leases has no adjacent route/handler test coverage.",
+      "file": "src/app/api/agent/leases/route.ts",
+      "line": 95,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/agent/leases/route.ts"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "ruleId": "api-contract-route-missing-tests",
+      "message": "GET agent/resources has no adjacent route/handler test coverage.",
+      "file": "src/app/api/agent/resources/route.ts",
+      "line": 54,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/agent/resources/route.ts"
         ]
       }
     },
@@ -11140,22 +11487,6 @@
         "sourceFiles": [
           "src/app/api/analytics/events/route.ts",
           "src/app/api/analytics/events/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET analytics/insights has no adjacent route/handler test coverage.",
-      "file": "src/app/api/analytics/insights/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "session",
-        "sourceFiles": [
-          "src/app/api/analytics/insights/route.ts",
-          "src/app/api/analytics/insights/handler.ts"
         ]
       }
     },
@@ -12304,7 +12635,8 @@
       "context": {
         "expectedAccess": "protected",
         "sourceFiles": [
-          "src/app/api/settings/route.ts"
+          "src/app/api/settings/route.ts",
+          "src/app/api/settings/handler.ts"
         ]
       }
     },
@@ -12337,22 +12669,6 @@
         "sourceFiles": [
           "src/app/api/system/diagnostics/mongo-indexes/route.ts",
           "src/app/api/system/diagnostics/mongo-indexes/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET system/logs/insights has no adjacent route/handler test coverage.",
-      "file": "src/app/api/system/logs/insights/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/system/logs/insights/route.ts",
-          "src/app/api/system/logs/insights/handler.ts"
         ]
       }
     },
@@ -12902,6 +13218,22 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
+      "message": "GET v2/products/ids has no adjacent route/handler test coverage.",
+      "file": "src/app/api/v2/products/ids/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": {
+        "expectedAccess": "protected",
+        "sourceFiles": [
+          "src/app/api/v2/products/ids/route.ts",
+          "src/app/api/v2/products/ids/handler.ts"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "ruleId": "api-contract-route-missing-tests",
       "message": "GET v2/products/metadata/[type]/[id] has no adjacent route/handler test coverage.",
       "file": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
       "line": 18,
@@ -13142,22 +13474,22 @@
   "rules": [
     {
       "ruleId": "api-contract-mutation-missing-body-validation",
-      "errorCount": 39,
+      "errorCount": 37,
       "warningCount": 0,
       "infoCount": 0
     },
     {
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
-      "warningCount": 238,
-      "infoCount": 148
+      "warningCount": 239,
+      "infoCount": 151
     },
     {
       "ruleId": "api-contract-query-route-missing-query-validation",
       "errorCount": 0,
-      "warningCount": 4,
+      "warningCount": 8,
       "infoCount": 0
     }
   ],
-  "durationMs": 295
+  "durationMs": 442
 }

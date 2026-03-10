@@ -55,7 +55,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     throw badRequestError('Chatbot job payload contains unsupported model override.');
   }
 
-  const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(
+  const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody(
     req,
     enqueueChatbotJobRequestSchema,
     {

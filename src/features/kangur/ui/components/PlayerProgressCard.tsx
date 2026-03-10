@@ -15,6 +15,7 @@ import {
   getProgressAverageAccuracy,
   getProgressAverageXpPerSession,
   getProgressTopActivities,
+  getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -36,6 +37,7 @@ export default function PlayerProgressCard({
   const bestWinStreak = progress.bestWinStreak ?? 0;
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   const nextBadge = getNextLockedBadge(progress);
+  const guidedMomentum = getRecommendedSessionMomentum(progress);
 
   return (
     <motion.div
@@ -153,6 +155,39 @@ export default function PlayerProgressCard({
               data-testid='player-progress-next-badge-bar'
               size='sm'
               value={nextBadge.progressPercent}
+            />
+          </div>
+        ) : null}
+
+        {guidedMomentum.completedSessions > 0 ? (
+          <div
+            className='rounded-[28px] border border-sky-200/80 bg-sky-50/80 px-4 py-4'
+            data-testid='player-progress-guided-momentum'
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div>
+                <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700/80'>
+                  Polecony kierunek
+                </p>
+                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                  {guidedMomentum.completedSessions} polecone rundy
+                </p>
+                <p className='mt-1 text-xs leading-5 text-slate-600'>
+                  {guidedMomentum.nextBadgeName
+                    ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                    : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
+                </p>
+              </div>
+              <KangurStatusChip accent='sky' className='shrink-0'>
+                {guidedMomentum.summary}
+              </KangurStatusChip>
+            </div>
+            <KangurProgressBar
+              accent='sky'
+              className='mt-3'
+              data-testid='player-progress-guided-momentum-bar'
+              size='sm'
+              value={guidedMomentum.progressPercent}
             />
           </div>
         ) : null}

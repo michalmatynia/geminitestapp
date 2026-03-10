@@ -1,4 +1,3 @@
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
@@ -9,6 +8,7 @@ import type {
   SystemLogMetricsDto as SystemLogMetrics,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export const SYSTEM_LOGS_CONTEXT_ROOT_IDS = [
   'page:system-logs',

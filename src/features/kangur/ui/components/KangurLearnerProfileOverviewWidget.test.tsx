@@ -124,6 +124,10 @@ const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
     todayXpEarned: 28,
     weeklyXpEarned: 112,
     averageXpPerSession: 120,
+    recommendedSessionsCompleted: 0,
+    recommendedSessionProgressPercent: 0,
+    recommendedSessionSummary: '0/1 runda',
+    recommendedSessionNextBadgeName: 'Pewny krok',
     operationPerformance: [],
     recentSessions: [],
     weeklyActivity: [],
@@ -178,6 +182,7 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     );
     expect(screen.getByTestId('learner-profile-overview-badges')).toHaveTextContent('2/11');
     expect(screen.getByText('Nastepna: Pol tysiaca XP · 480/500 XP')).toBeInTheDocument();
+    expect(screen.queryByTestId('learner-profile-overview-guided-rounds')).toBeNull();
   });
 
   it('shows a ready daily quest reward when today progress completes the stored quest', () => {
@@ -221,6 +226,31 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     expect(screen.getByTestId('learner-profile-overview-daily-quest-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'
+    );
+  });
+
+  it('shows guided-session momentum once the learner starts following recommended rounds', () => {
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        snapshot: {
+          ...buildRuntimeValue().snapshot,
+          recommendedSessionsCompleted: 2,
+          recommendedSessionProgressPercent: 67,
+          recommendedSessionSummary: '2/3 rundy',
+          recommendedSessionNextBadgeName: 'Trzymam kierunek',
+        },
+      })
+    );
+
+    render(<KangurLearnerProfileOverviewWidget />);
+
+    expect(screen.getByTestId('learner-profile-overview-guided-rounds')).toHaveTextContent('2');
+    expect(screen.getByTestId('learner-profile-overview-guided-rounds')).toHaveTextContent(
+      'Do odznaki: Trzymam kierunek · 2/3 rundy'
+    );
+    expect(screen.getByTestId('learner-profile-overview-guided-rounds-bar')).toHaveAttribute(
+      'aria-valuenow',
+      '67'
     );
   });
 });

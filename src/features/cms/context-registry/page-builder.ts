@@ -1,4 +1,3 @@
-import { PAGE_CONTEXT_ENGINE_VERSION } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import type {
   ContextRegistryRef,
   ContextRegistryResolutionBundle,
@@ -6,6 +5,7 @@ import type {
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
 import type { BlockInstance, PageBuilderState, SectionInstance } from '@/shared/contracts/cms';
+import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export const CMS_PAGE_BUILDER_RUNTIME_PROVIDER_ID = 'cms-page-builder-local';
 export const CMS_PAGE_BUILDER_RUNTIME_ENTITY_TYPE = 'cms_page_builder_state';

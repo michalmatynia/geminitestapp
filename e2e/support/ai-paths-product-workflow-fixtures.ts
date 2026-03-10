@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
+import { aiNodeSchema, type AiNode, type PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
@@ -19,7 +19,10 @@ const AI_PATHS_CONFIG_KEY_PREFIX = 'ai_paths_config_';
 const PRODUCTS_SEARCH_PLACEHOLDER = 'Search by product name...';
 const JOB_QUEUE_SEARCH_PLACEHOLDER = 'Run ID, path name, entity, error...';
 const DEFAULT_WAIT_TIMEOUT_MS = 120_000;
+const FIXTURE_STALE_MS = 60 * 60 * 1000;
 const playwrightFixtureJanitorRun = new WeakSet<Page>();
+
+const parseAiNode = (node: unknown): AiNode => aiNodeSchema.parse(node);
 
 type BrowserRequestResult<T> = {
   ok: boolean;
@@ -100,6 +103,54 @@ type ProductTranslationWorkflowFixture = {
   cleanup: () => Promise<void>;
 };
 
+type ProductParameterDefinitionRecord = {
+  id: string;
+  catalogId: string;
+  name_en?: string | null;
+  selectorType?: string | null;
+  optionLabels?: string[];
+};
+
+type ProductParameterDefinitionSeed = {
+  key: string;
+  nameEn: string;
+  selectorType?: string;
+  optionLabels?: string[];
+};
+
+type ProductParameterFixtureValue = {
+  parameterKey?: string;
+  parameterId?: string;
+  value?: string | null;
+  valuesByLanguage?: Record<string, string>;
+};
+
+type ProductParameterInferenceFixtureValue = {
+  parameterKey?: string;
+  parameterId?: string;
+  value: string;
+};
+
+type ProductParameterInferenceWorkflowFixtureOptions = {
+  location: Extract<AiTriggerButtonLocation, 'product_row' | 'product_modal'>;
+  triggerButtonName: string;
+  pathName: string;
+  definitions: ProductParameterDefinitionSeed[];
+  initialParameters: ProductParameterFixtureValue[];
+  inferredParameters: ProductParameterInferenceFixtureValue[];
+};
+
+type ProductParameterInferenceWorkflowFixture = {
+  product: ProductApiRecord;
+  searchTerm: string;
+  pathId: string;
+  pathName: string;
+  triggerButton: AiTriggerButtonRecord;
+  parameterDefinitions: ProductParameterDefinitionRecord[];
+  parameterIdsByKey: Record<string, string>;
+  cleanup: () => Promise<void>;
+};
+
 type AiPathRunDetailRecord = {
   run: Record<string, unknown>;
   nodes: Array<Record<string, unknown>>;
@@ -142,66 +193,39 @@ const browserRequest = async <T>(
 ): Promise<BrowserRequestResult<T>> => {
   const csrfToken =
     args.method && args.method !== 'GET' ? await readOrCreateCsrfToken(page) : null;
+  const headers: Record<string, string> = {};
+  if (csrfToken) {
+    headers['x-csrf-token'] = csrfToken;
+  }
 
-  return await page.evaluate(
-    async (request: {
-      method: 'GET' | 'POST' | 'DELETE';
-      url: string;
-      json?: unknown;
-      form?: Record<string, string | null | undefined>;
-      csrfToken: string | null;
-    }) => {
-      const headers = new Headers();
-      if (request.csrfToken) {
-        headers.set('x-csrf-token', request.csrfToken);
-      }
+  const response = await page.request.fetch(args.url, {
+    method: args.method ?? 'GET',
+    headers,
+    form: args.form
+      ? Object.fromEntries(
+          Object.entries(args.form).filter(([, value]) => value !== undefined && value !== null)
+        )
+      : undefined,
+    data: args.form ? undefined : args.json,
+    failOnStatusCode: false,
+  });
+  const text = await response.text();
 
-      let body: BodyInit | undefined;
-      if (request.form) {
-        const formData = new FormData();
-        Object.entries(request.form).forEach(([key, value]) => {
-          if (value === undefined || value === null) return;
-          formData.append(key, value);
-        });
-        body = formData;
-      } else if (request.json !== undefined) {
-        headers.set('Content-Type', 'application/json');
-        body = JSON.stringify(request.json);
-      }
-
-      const response = await fetch(request.url, {
-        method: request.method,
-        headers,
-        body,
-        cache: 'no-store',
-        credentials: 'include',
-      });
-      const text = await response.text();
-
-      let data: unknown = null;
-      if (text) {
-        try {
-          data = JSON.parse(text) as unknown;
-        } catch {
-          data = null;
-        }
-      }
-
-      return {
-        ok: response.ok,
-        status: response.status,
-        data: data as T | null,
-        text,
-      };
-    },
-    {
-      method: args.method ?? 'GET',
-      url: args.url,
-      ...(args.json !== undefined ? { json: args.json } : {}),
-      ...(args.form ? { form: args.form } : {}),
-      csrfToken,
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text) as unknown;
+    } catch {
+      data = null;
     }
-  );
+  }
+
+  return {
+    ok: response.ok(),
+    status: response.status(),
+    data: data as T | null,
+    text,
+  };
 };
 
 const expectApiSuccess = <T>(response: BrowserRequestResult<T>, url: string): T => {
@@ -346,6 +370,41 @@ const createTriggerButton = async (
   return expectApiSuccess(response, '/api/ai-paths/trigger-buttons');
 };
 
+const createTriggerButtonWithPathRetry = async (
+  page: Page,
+  args: {
+    pathId: string;
+    pathName: string;
+    config: PathConfig;
+    button: {
+      name: string;
+      pathId: string;
+      location: Extract<AiTriggerButtonLocation, 'product_row' | 'product_modal'>;
+    };
+  }
+): Promise<AiTriggerButtonRecord> => {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      return await createTriggerButton(page, args.button);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const missingBoundPath =
+        message.includes('missing_bound_path') || message.includes('does not exist');
+      if (!missingBoundPath || attempt === 5) {
+        throw error;
+      }
+      await upsertPathConfig(page, {
+        pathId: args.pathId,
+        pathName: args.pathName,
+        config: args.config,
+      });
+      await page.waitForTimeout(100 * (attempt + 1));
+    }
+  }
+
+  throw new Error(`Failed to create trigger button for AI Path "${args.pathId}".`);
+};
+
 const deleteTriggerButton = async (page: Page, triggerButtonId: string): Promise<void> => {
   const response = await browserRequest<{ success?: boolean }>(page, {
     method: 'DELETE',
@@ -354,6 +413,40 @@ const deleteTriggerButton = async (page: Page, triggerButtonId: string): Promise
   if (!response.ok && response.status !== 404) {
     throw new Error(
       `Request to delete trigger button ${triggerButtonId} failed with status ${response.status}: ${response.text || 'no body'}`
+    );
+  }
+};
+
+const createParameterDefinition = async (
+  page: Page,
+  args: {
+    catalogId: string;
+    nameEn: string;
+    selectorType?: string;
+    optionLabels?: string[];
+  }
+): Promise<ProductParameterDefinitionRecord> => {
+  const response = await browserRequest<ProductParameterDefinitionRecord>(page, {
+    method: 'POST',
+    url: '/api/v2/products/parameters',
+    json: {
+      name_en: args.nameEn,
+      catalogId: args.catalogId,
+      selectorType: args.selectorType ?? 'text',
+      optionLabels: args.optionLabels ?? [],
+    },
+  });
+  return expectApiSuccess(response, '/api/v2/products/parameters');
+};
+
+const deleteParameterDefinition = async (page: Page, parameterId: string): Promise<void> => {
+  const response = await browserRequest<unknown>(page, {
+    method: 'DELETE',
+    url: `/api/v2/products/parameters/${encodeURIComponent(parameterId)}`,
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new Error(
+      `Request to delete parameter ${parameterId} failed with status ${response.status}: ${response.text || 'no body'}`
     );
   }
 };
@@ -413,29 +506,37 @@ const listTriggerButtons = async (page: Page): Promise<AiTriggerButtonRecord[]> 
 const cleanupStaleProductWorkflowFixtures = async (page: Page): Promise<void> => {
   if (playwrightFixtureJanitorRun.has(page)) return;
 
-  const triggerButtons = await listTriggerButtons(page);
-  const fixtureButtons = triggerButtons.filter((button) =>
-    isPlaywrightAiPathsFixtureTriggerButton(button)
+  const { existed, entries } = await readAiPathsIndex(page);
+  const staleFixturePathIds = new Set<string>(
+    entries
+      .filter((entry) => {
+        if (!isPlaywrightAiPathsFixturePathId(entry.id)) return false;
+        const timestamp = Date.parse(entry.updatedAt || entry.createdAt || '');
+        return !Number.isFinite(timestamp) || timestamp < Date.now() - FIXTURE_STALE_MS;
+      })
+      .map((entry) => entry.id)
   );
-  const fixturePathIds = new Set<string>();
 
-  for (const button of fixtureButtons) {
-    if (button.pathId) {
-      fixturePathIds.add(button.pathId);
-    }
+  if (staleFixturePathIds.size === 0) {
+    playwrightFixtureJanitorRun.add(page);
+    return;
+  }
+
+  const triggerButtons = await listTriggerButtons(page);
+  const staleFixtureButtons = triggerButtons.filter(
+    (button) =>
+      isPlaywrightAiPathsFixtureTriggerButton(button) &&
+      typeof button.pathId === 'string' &&
+      staleFixturePathIds.has(button.pathId)
+  );
+
+  for (const button of staleFixtureButtons) {
     await deleteTriggerButton(page, button.id);
   }
 
-  const { existed, entries } = await readAiPathsIndex(page);
-  const remainingEntries = entries.filter((entry) => {
-    const isFixtureEntry = isPlaywrightAiPathsFixturePathId(entry.id);
-    if (isFixtureEntry) {
-      fixturePathIds.add(entry.id);
-    }
-    return !isFixtureEntry;
-  });
+  const remainingEntries = entries.filter((entry) => !staleFixturePathIds.has(entry.id));
 
-  if (fixturePathIds.size > 0) {
+  if (staleFixturePathIds.size > 0) {
     if (remainingEntries.length > 0 || existed) {
       await upsertAiPathsSetting(page, AI_PATHS_INDEX_KEY, JSON.stringify(remainingEntries));
     } else {
@@ -444,7 +545,7 @@ const cleanupStaleProductWorkflowFixtures = async (page: Page): Promise<void> =>
 
     await deleteAiPathsSettings(
       page,
-      Array.from(fixturePathIds, (pathId) => `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`)
+      Array.from(staleFixturePathIds, (pathId) => `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`)
     );
   }
   playwrightFixtureJanitorRun.add(page);
@@ -466,7 +567,7 @@ const createDeterministicProductUpdatePathConfig = (args: {
   const shouldForceZeroAffected = args.outcome === 'zero_affected_fail';
 
   const nodes: AiNode[] = [
-    {
+    parseAiNode({
       id: triggerNodeId,
       instanceId: triggerNodeId,
       type: 'trigger',
@@ -484,8 +585,8 @@ const createDeterministicProductUpdatePathConfig = (args: {
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
-    {
+    }),
+    parseAiNode({
       id: constantNodeId,
       instanceId: constantNodeId,
       type: 'constant',
@@ -502,8 +603,8 @@ const createDeterministicProductUpdatePathConfig = (args: {
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
-    {
+    }),
+    parseAiNode({
       id: databaseNodeId,
       instanceId: databaseNodeId,
       type: 'database',
@@ -553,7 +654,7 @@ const createDeterministicProductUpdatePathConfig = (args: {
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
+    }),
   ];
 
   return {
@@ -615,11 +716,13 @@ const createDeterministicParameterTranslationPathConfig = (args: {
   const baseConfig = createDefaultPathConfig(args.pathId);
   const triggerNodeId = `node-trigger-${randomSuffix()}`;
   const descriptionNodeId = `node-description-${randomSuffix()}`;
+  const descriptionRegexNodeId = `node-description-regex-${randomSuffix()}`;
   const parametersNodeId = `node-parameters-${randomSuffix()}`;
+  const parametersRegexNodeId = `node-parameters-regex-${randomSuffix()}`;
   const databaseNodeId = `node-database-${randomSuffix()}`;
 
   const nodes: AiNode[] = [
-    {
+    parseAiNode({
       id: triggerNodeId,
       instanceId: triggerNodeId,
       type: 'trigger',
@@ -637,8 +740,8 @@ const createDeterministicParameterTranslationPathConfig = (args: {
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
-    {
+    }),
+    parseAiNode({
       id: descriptionNodeId,
       instanceId: descriptionNodeId,
       type: 'constant',
@@ -650,15 +753,54 @@ const createDeterministicParameterTranslationPathConfig = (args: {
       outputs: ['value'],
       config: {
         constant: {
-          value: {
-            description_pl: args.expectedDescriptionPl,
-          },
+          value: JSON.stringify(
+            {
+              description_pl: args.expectedDescriptionPl,
+            },
+            null,
+            2
+          ),
+          valueType: 'json',
         },
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
-    {
+    }),
+    parseAiNode({
+      id: descriptionRegexNodeId,
+      instanceId: descriptionRegexNodeId,
+      type: 'regex',
+      title: 'Parse Description JSON',
+      description: 'Parse deterministic Polish description payload',
+      position: { x: 520, y: 84 },
+      data: {},
+      inputs: ['value', 'prompt', 'regexCallback'],
+      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+      config: {
+        regex: {
+          pattern: '\\{[\\s\\S]*\\}',
+          flags: '',
+          mode: 'extract_json',
+          matchMode: 'first_overall',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          sampleText: '',
+          aiPrompt: '',
+          aiAutoRun: false,
+          activeVariant: 'manual',
+          jsonIntegrityPolicy: 'repair',
+        },
+        runtime: {
+          waitForInputs: true,
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
       id: parametersNodeId,
       instanceId: parametersNodeId,
       type: 'constant',
@@ -670,15 +812,54 @@ const createDeterministicParameterTranslationPathConfig = (args: {
       outputs: ['value'],
       config: {
         constant: {
-          value: {
-            parameters: args.translatedParameters,
-          },
+          value: JSON.stringify(
+            {
+              parameters: args.translatedParameters,
+            },
+            null,
+            2
+          ),
+          valueType: 'json',
         },
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
-    {
+    }),
+    parseAiNode({
+      id: parametersRegexNodeId,
+      instanceId: parametersRegexNodeId,
+      type: 'regex',
+      title: 'Parse Parameters JSON',
+      description: 'Parse deterministic translated parameters payload',
+      position: { x: 520, y: 276 },
+      data: {},
+      inputs: ['value', 'prompt', 'regexCallback'],
+      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+      config: {
+        regex: {
+          pattern: '\\{[\\s\\S]*\\}',
+          flags: '',
+          mode: 'extract_json',
+          matchMode: 'first_overall',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          sampleText: '',
+          aiPrompt: '',
+          aiAutoRun: false,
+          activeVariant: 'manual',
+          jsonIntegrityPolicy: 'repair',
+        },
+        runtime: {
+          waitForInputs: true,
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
       id: databaseNodeId,
       instanceId: databaseNodeId,
       type: 'database',
@@ -739,7 +920,7 @@ const createDeterministicParameterTranslationPathConfig = (args: {
       },
       createdAt: args.timestamp,
       updatedAt: null,
-    } as AiNode,
+    }),
   ];
 
   return {
@@ -758,11 +939,25 @@ const createDeterministicParameterTranslationPathConfig = (args: {
         toPort: 'trigger',
       },
       {
+        id: `edge-description-regex-${randomSuffix()}`,
+        from: descriptionNodeId,
+        to: descriptionRegexNodeId,
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
         id: `edge-trigger-parameters-${randomSuffix()}`,
         from: triggerNodeId,
         to: parametersNodeId,
         fromPort: 'trigger',
         toPort: 'trigger',
+      },
+      {
+        id: `edge-parameters-regex-${randomSuffix()}`,
+        from: parametersNodeId,
+        to: parametersRegexNodeId,
+        fromPort: 'value',
+        toPort: 'value',
       },
       {
         id: `edge-trigger-database-${randomSuffix()}`,
@@ -773,17 +968,260 @@ const createDeterministicParameterTranslationPathConfig = (args: {
       },
       {
         id: `edge-description-database-${randomSuffix()}`,
-        from: descriptionNodeId,
+        from: descriptionRegexNodeId,
         to: databaseNodeId,
         fromPort: 'value',
         toPort: 'value',
       },
       {
         id: `edge-parameters-database-${randomSuffix()}`,
-        from: parametersNodeId,
+        from: parametersRegexNodeId,
         to: databaseNodeId,
         fromPort: 'value',
         toPort: 'result',
+      },
+    ],
+    updatedAt: args.timestamp,
+    runtimeState: { inputs: {}, outputs: {} },
+    parserSamples: {},
+    updaterSamples: {},
+    lastRunAt: null,
+    runCount: 0,
+    uiState: {
+      selectedNodeId: triggerNodeId,
+      configOpen: false,
+    },
+  };
+};
+
+const createDeterministicParameterInferencePathConfig = (args: {
+  pathId: string;
+  pathName: string;
+  triggerEventId: string;
+  parameterDefinitions: ProductParameterDefinitionRecord[];
+  inferredParameters: Array<{
+    parameterId: string;
+    value: string;
+  }>;
+  timestamp: string;
+}): PathConfig => {
+  const baseConfig = createDefaultPathConfig(args.pathId);
+  const triggerNodeId = `node-trigger-${randomSuffix()}`;
+  const definitionsNodeId = `node-definitions-${randomSuffix()}`;
+  const parametersNodeId = `node-parameters-${randomSuffix()}`;
+  const parametersRegexNodeId = `node-parameters-regex-${randomSuffix()}`;
+  const databaseNodeId = `node-database-${randomSuffix()}`;
+
+  const nodes: AiNode[] = [
+    parseAiNode({
+      id: triggerNodeId,
+      instanceId: triggerNodeId,
+      type: 'trigger',
+      title: 'Trigger',
+      description: 'Playwright parameter inference trigger',
+      position: { x: 80, y: 220 },
+      data: {},
+      inputs: [],
+      outputs: ['trigger'],
+      config: {
+        trigger: {
+          event: args.triggerEventId,
+          contextMode: 'trigger_only',
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
+      id: definitionsNodeId,
+      instanceId: definitionsNodeId,
+      type: 'constant',
+      title: 'Parameter Definitions',
+      description: 'Deterministic parameter definition payload',
+      position: { x: 360, y: 276 },
+      data: {},
+      inputs: ['trigger'],
+      outputs: ['value'],
+      config: {
+        constant: {
+          value: JSON.stringify(
+            args.parameterDefinitions.map((definition) => ({
+              id: definition.id,
+              catalogId: definition.catalogId,
+              name_en: definition.name_en ?? null,
+              selectorType: definition.selectorType ?? 'text',
+              optionLabels: definition.optionLabels ?? [],
+            })),
+            null,
+            2
+          ),
+          valueType: 'json',
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
+      id: parametersNodeId,
+      instanceId: parametersNodeId,
+      type: 'constant',
+      title: 'Inferred Parameters',
+      description: 'Deterministic inferred parameter payload',
+      position: { x: 360, y: 84 },
+      data: {},
+      inputs: ['trigger'],
+      outputs: ['value'],
+      config: {
+        constant: {
+          value: JSON.stringify(
+            {
+              parameters: args.inferredParameters,
+            },
+            null,
+            2
+          ),
+          valueType: 'json',
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
+      id: parametersRegexNodeId,
+      instanceId: parametersRegexNodeId,
+      type: 'regex',
+      title: 'Parse Inference JSON',
+      description: 'Parse deterministic inferred parameters payload',
+      position: { x: 540, y: 84 },
+      data: {},
+      inputs: ['value', 'prompt', 'regexCallback'],
+      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+      config: {
+        regex: {
+          pattern: '\\{[\\s\\S]*\\}',
+          flags: '',
+          mode: 'extract_json',
+          matchMode: 'first_overall',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          sampleText: '',
+          aiPrompt: '',
+          aiAutoRun: false,
+          activeVariant: 'manual',
+          jsonIntegrityPolicy: 'repair',
+        },
+        runtime: {
+          waitForInputs: true,
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+    parseAiNode({
+      id: databaseNodeId,
+      instanceId: databaseNodeId,
+      type: 'database',
+      title: 'Persist Inferred Parameters',
+      description: 'Writes merged inferred parameters back to the product',
+      position: { x: 760, y: 220 },
+      data: {},
+      inputs: ['trigger', 'value', 'result'],
+      outputs: ['result', 'bundle', 'query', 'queryMode', 'querySource'],
+      config: {
+        database: {
+          operation: 'update',
+          entityType: 'product',
+          mode: 'replace',
+          updatePayloadMode: 'custom',
+          useMongoActions: true,
+          actionCategory: 'update',
+          action: 'updateOne',
+          query: {
+            provider: 'auto',
+            collection: 'products',
+            mode: 'custom',
+            preset: 'by_id',
+            field: 'id',
+            idType: 'string',
+            queryTemplate: '{"id":"{{entityId}}"}',
+            limit: 1,
+            sort: '',
+            projection: '',
+            single: true,
+          },
+          updateTemplate:
+            '{\n' +
+            '  "$set": {\n' +
+            '    "parameters": {{value.parameters}}\n' +
+            '  }\n' +
+            '}',
+          parameterInferenceGuard: {
+            enabled: true,
+            targetPath: 'parameters',
+            definitionsPort: 'result',
+          },
+          writeOutcomePolicy: {
+            onZeroAffected: 'fail',
+          },
+        },
+      },
+      createdAt: args.timestamp,
+      updatedAt: null,
+    }),
+  ];
+
+  return {
+    ...baseConfig,
+    name: args.pathName,
+    description: 'Playwright deterministic parameter inference workflow',
+    strictFlowMode: true,
+    aiPathsValidation: { enabled: false },
+    nodes,
+    edges: [
+      {
+        id: `edge-trigger-definitions-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: definitionsNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-trigger-parameters-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: parametersNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-parameters-regex-${randomSuffix()}`,
+        from: parametersNodeId,
+        to: parametersRegexNodeId,
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: `edge-trigger-database-${randomSuffix()}`,
+        from: triggerNodeId,
+        to: databaseNodeId,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: `edge-definitions-database-${randomSuffix()}`,
+        from: definitionsNodeId,
+        to: databaseNodeId,
+        fromPort: 'value',
+        toPort: 'result',
+      },
+      {
+        id: `edge-regex-database-${randomSuffix()}`,
+        from: parametersRegexNodeId,
+        to: databaseNodeId,
+        fromPort: 'value',
+        toPort: 'value',
       },
     ],
     updatedAt: args.timestamp,
@@ -869,6 +1307,8 @@ export async function searchForProductRow(
   searchTerm: string,
   options?: { rowText?: string; mode?: 'name' | 'sku' }
 ) {
+  await openAdminProductsPage(page);
+
   const mode = options?.mode ?? 'name';
   if (mode === 'sku') {
     const showFiltersButton = page.getByRole('button', { name: /show filters/i });
@@ -948,10 +1388,15 @@ export async function createProductWorkflowFixture(
       await removePathConfig(page, { pathId, indexExisted });
     });
 
-    const triggerButton = await createTriggerButton(page, {
-      name: triggerButtonName,
+    const triggerButton = await createTriggerButtonWithPathRetry(page, {
       pathId,
-      location: options.location,
+      pathName,
+      config: initialConfig,
+      button: {
+        name: triggerButtonName,
+        pathId,
+        location: options.location,
+      },
     });
     cleanupTasks.push(async () => {
       await deleteTriggerButton(page, triggerButton.id);
@@ -1048,10 +1493,15 @@ export async function createProductTranslationWorkflowFixture(
       await removePathConfig(page, { pathId, indexExisted });
     });
 
-    const triggerButton = await createTriggerButton(page, {
-      name: triggerButtonName,
+    const triggerButton = await createTriggerButtonWithPathRetry(page, {
       pathId,
-      location: options.location,
+      pathName,
+      config: initialConfig,
+      button: {
+        name: triggerButtonName,
+        pathId,
+        location: options.location,
+      },
     });
     cleanupTasks.push(async () => {
       await deleteTriggerButton(page, triggerButton.id);
@@ -1082,6 +1532,151 @@ export async function createProductTranslationWorkflowFixture(
       pathName,
       triggerButton,
       expectedDescriptionPl: options.expectedDescriptionPl,
+      cleanup,
+    };
+  } catch (error) {
+    await cleanup();
+    throw error;
+  }
+}
+
+export async function createProductParameterInferenceWorkflowFixture(
+  page: Page,
+  options: ProductParameterInferenceWorkflowFixtureOptions
+): Promise<ProductParameterInferenceWorkflowFixture> {
+  await openAdminProductsPage(page);
+  await cleanupStaleProductWorkflowFixtures(page);
+
+  const cleanupTasks: Array<() => Promise<void>> = [];
+  const cleanup = async (): Promise<void> => {
+    while (cleanupTasks.length > 0) {
+      const task = cleanupTasks.pop();
+      if (!task) continue;
+      await task().catch(() => undefined);
+    }
+  };
+
+  try {
+    const suffix = randomSuffix();
+    const shortSuffix = suffix.slice(-6).toUpperCase();
+    const timestamp = new Date().toISOString();
+    const sku = `${PLAYWRIGHT_AI_PATHS_PRODUCT_SKU_PREFIX}${suffix}`.toUpperCase();
+    const nameEn = `Playwright AI Paths Parameter Inference ${suffix}`;
+    const descriptionEn = `Playwright AI Paths parameter inference source ${suffix}`;
+    const pathId = `${PLAYWRIGHT_AI_PATHS_PATH_ID_PREFIX}${suffix.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const pathName = `${options.pathName} ${shortSuffix}`;
+    const triggerButtonName = `${options.triggerButtonName} ${shortSuffix}`;
+    const placeholderTriggerEventId = `pending-${suffix}`;
+    const parameterCatalogId = `catalog-playwright-params-${suffix}`;
+    const parameterDefinitions: ProductParameterDefinitionRecord[] = [];
+    const parameterIdsByKey: Record<string, string> = {};
+
+    for (const definition of options.definitions) {
+      const parameter = await createParameterDefinition(page, {
+        catalogId: parameterCatalogId,
+        nameEn: definition.nameEn,
+        selectorType: definition.selectorType,
+        optionLabels: definition.optionLabels,
+      });
+      parameterDefinitions.push(parameter);
+      parameterIdsByKey[definition.key] = parameter.id;
+      cleanupTasks.push(async () => {
+        await deleteParameterDefinition(page, parameter.id);
+      });
+    }
+
+    const resolveParameterId = (value: {
+      parameterKey?: string;
+      parameterId?: string;
+    }): string => {
+      if (value.parameterId) return value.parameterId;
+      if (!value.parameterKey) {
+        throw new Error('Parameter fixture entries must provide parameterKey or parameterId.');
+      }
+      const resolved = parameterIdsByKey[value.parameterKey];
+      if (!resolved) {
+        throw new Error(`Missing parameter definition for key "${value.parameterKey}".`);
+      }
+      return resolved;
+    };
+
+    const product = await createProduct(page, {
+      sku,
+      nameEn,
+      descriptionEn,
+      parameters: options.initialParameters.map((entry) => ({
+        parameterId: resolveParameterId(entry),
+        ...(entry.value !== undefined ? { value: entry.value } : {}),
+        ...(entry.valuesByLanguage ? { valuesByLanguage: entry.valuesByLanguage } : {}),
+      })),
+    });
+    cleanupTasks.push(async () => {
+      await deleteProduct(page, product.id);
+    });
+
+    const inferredParameters = options.inferredParameters.map((entry) => ({
+      parameterId: resolveParameterId(entry),
+      value: entry.value,
+    }));
+
+    const initialConfig = createDeterministicParameterInferencePathConfig({
+      pathId,
+      pathName,
+      triggerEventId: placeholderTriggerEventId,
+      parameterDefinitions,
+      inferredParameters,
+      timestamp,
+    });
+
+    const { indexExisted } = await upsertPathConfig(page, {
+      pathId,
+      pathName,
+      config: initialConfig,
+    });
+    cleanupTasks.push(async () => {
+      await removePathConfig(page, { pathId, indexExisted });
+    });
+
+    const triggerButton = await createTriggerButtonWithPathRetry(page, {
+      pathId,
+      pathName,
+      config: initialConfig,
+      button: {
+        name: triggerButtonName,
+        pathId,
+        location: options.location,
+      },
+    });
+    cleanupTasks.push(async () => {
+      await deleteTriggerButton(page, triggerButton.id);
+    });
+
+    const finalConfig = createDeterministicParameterInferencePathConfig({
+      pathId,
+      pathName,
+      triggerEventId: triggerButton.id,
+      parameterDefinitions,
+      inferredParameters,
+      timestamp,
+    });
+
+    await upsertPathConfig(page, {
+      pathId,
+      pathName,
+      config: finalConfig,
+    });
+
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    await openAdminProductsPage(page);
+
+    return {
+      product,
+      searchTerm: nameEn,
+      pathId,
+      pathName,
+      triggerButton,
+      parameterDefinitions,
+      parameterIdsByKey,
       cleanup,
     };
   } catch (error) {
@@ -1135,6 +1730,7 @@ export async function waitForRunToReachTerminal(
 ): Promise<AiPathRunDetailRecord> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_WAIT_TIMEOUT_MS;
   const startedAt = Date.now();
+  let lastPollingError: string | null = null;
 
   while (Date.now() - startedAt < timeoutMs) {
     const url = `/api/ai-paths/runs/${encodeURIComponent(runId)}`;
@@ -1144,7 +1740,17 @@ export async function waitForRunToReachTerminal(
       events: unknown[];
       errorSummary?: Record<string, unknown> | null;
     }>(page, { url });
-    const detail = expectApiSuccess(response, url);
+    if (!response.ok || response.data === null) {
+      const errorMessage = `Request to ${url} failed with status ${response.status}: ${response.text || 'no body'}`;
+      if (response.status >= 500) {
+        lastPollingError = errorMessage;
+        await page.waitForTimeout(1_000);
+        continue;
+      }
+      throw new Error(errorMessage);
+    }
+    lastPollingError = null;
+    const detail = response.data;
     const status = readRecordString(detail.run, 'status') ?? 'unknown';
 
     if (status === 'completed') {
@@ -1158,7 +1764,11 @@ export async function waitForRunToReachTerminal(
     await page.waitForTimeout(1_000);
   }
 
-  throw new Error(`Timed out waiting for run ${runId} to reach a terminal status.`);
+  throw new Error(
+    lastPollingError
+      ? `Timed out waiting for run ${runId} to reach a terminal status. Last polling error: ${lastPollingError}`
+      : `Timed out waiting for run ${runId} to reach a terminal status.`
+  );
 }
 
 export async function waitForProductFieldValue(

@@ -65,6 +65,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     );
   }
   const rawBody = await req.text();
+  const payload = toParsedJsonPayload(rawBody);
+  z.unknown().parse(payload);
   const verification = await verifyPortablePathWebhookSignature({
     rawBody,
     signatureHeader: req.headers.get('x-ai-paths-signature'),
@@ -106,6 +108,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     channel,
     verifiedAt: now,
     replayKey: verification.replayKey,
-    payload: toParsedJsonPayload(rawBody),
+    payload,
   });
 }

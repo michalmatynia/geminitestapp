@@ -12,7 +12,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/ai/ai-context-registry/context/page-context', () => ({
+vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
   useOptionalContextRegistryPageEnvelope: useOptionalContextRegistryPageEnvelopeMock,
 }));
 

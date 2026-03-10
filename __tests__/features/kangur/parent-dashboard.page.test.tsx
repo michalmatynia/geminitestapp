@@ -114,7 +114,7 @@ describe('ParentDashboard page', () => {
     expect(screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania Kangura.'
+        'Ten widok pokazuje prywatne postepy ucznia, wiec wymaga konta rodzica. Jesli go jeszcze nie masz, zaloz je bez opuszczania StudiQ.'
       )
     ).toBeInTheDocument();
 

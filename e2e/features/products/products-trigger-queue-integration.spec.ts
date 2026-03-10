@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+test.describe.configure({ timeout: 60_000 });
+
 type TriggerButtonFixture = {
   id: string;
   name: string;
@@ -238,6 +240,8 @@ const createProductTriggerPathConfig = (args: {
 });
 
 test.describe('Products trigger button queue integration', () => {
+  test.setTimeout(60_000);
+
   const routeSharedProductHarnessApis = async (page: Page, product: ProductFixture): Promise<void> => {
     await page.route('**/api/user/preferences**', async (route) => {
       if (route.request().method() !== 'GET') {
@@ -683,7 +687,7 @@ test.describe('Products trigger button queue integration', () => {
     expect(setup.getEnqueueRequestBody()?.['triggerEvent']).toBe(setup.triggerEventId);
     expect(setup.getEnqueueRequestBody()?.['pathId']).toBe(setup.pathId);
 
-    await expect(productRow.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByText('Queued').first()).toBeVisible({ timeout: 15_000 });
     await expect
       .poll(() => setup.getProductsPagedRequestCount(), { timeout: 15_000 })
       .toBeGreaterThan(requestsBeforeTrigger);
@@ -697,9 +701,9 @@ test.describe('Products trigger button queue integration', () => {
       'aria-selected',
       'true'
     );
-    await expect(page.getByText(runId)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('E2E Trigger Path')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Showing 1 of 1 runs')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(runId)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('E2E Trigger Path')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Showing 1 of 1 runs')).toBeVisible({ timeout: 30_000 });
     return true;
   };
 

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-09T09:07:30.799Z
+Generated at: 2026-03-10T08:15:33.217Z
 
 ## Summary
 
@@ -16,18 +16,18 @@ Generated at: 2026-03-09T09:07:30.799Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1204
+- Total test files: 1276
 - .only() occurrences: 0
-- .skip() occurrences: 19
+- .skip() occurrences: 21
 
 ## Test Coverage by Feature
 
 | Feature | Test Files |
 | --- | ---: |
-| ai | 209 |
-| kangur | 178 |
+| ai | 221 |
+| kangur | 207 |
 | case-resolver | 78 |
-| products | 72 |
+| products | 75 |
 | cms | 60 |
 | prompt-exploder | 47 |
 | integrations | 34 |
@@ -36,7 +36,7 @@ Generated at: 2026-03-09T09:07:30.799Z
 | notesapp | 15 |
 | admin | 14 |
 | database | 12 |
-| auth | 8 |
+| auth | 9 |
 | viewer3d | 8 |
 | filemaker | 7 |
 | jobs | 6 |
@@ -57,7 +57,7 @@ Generated at: 2026-03-09T09:07:30.799Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| test-skip-left | 0 | 0 | 19 |
+| test-skip-left | 0 | 0 | 21 |
 
 ## Issues
 
@@ -72,15 +72,17 @@ Generated at: 2026-03-09T09:07:30.799Z
 | INFO | test-skip-left | e2e/features/case-resolver/case-resolver.spec.ts:524 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:141 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/products/products-freshness.spec.ts:182 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:696 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:711 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:727 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:734 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:751 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:767 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:785 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:742 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:757 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:773 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:780 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:797 | .skip() in test file. Consider removing or adding a TODO comment. |
-| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:814 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:813 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:831 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:843 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:860 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-queue-integration.spec.ts:912 | .skip() in test file. Consider removing or adding a TODO comment. |
+| INFO | test-skip-left | e2e/features/products/products-trigger-workflow-success.spec.ts:37 | .skip() in test file. Consider removing or adding a TODO comment. |
 | INFO | test-skip-left | e2e/features/products/products.spec.ts:34 | .skip() in test file. Consider removing or adding a TODO comment. |
 
 ## Notes

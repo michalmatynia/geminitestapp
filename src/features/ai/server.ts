@@ -1,5 +1,6 @@
 import 'server-only';
 
+export * from './ai-context-registry/server';
 export * from './ai-paths/workers/aiPathRunQueue';
 export * from './agent-runtime/workers/agentQueue';
 export * from './chatbot/workers/chatbotJobQueue';

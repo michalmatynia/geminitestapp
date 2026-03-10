@@ -44,4 +44,20 @@ describe('useKangurTrainingSetupState', () => {
       difficulty: 'hard',
     });
   });
+
+  it('uses the suggested selection as the initial training preset', () => {
+    const { result } = renderHook(() =>
+      useKangurTrainingSetupState({
+        suggestedSelection: {
+          categories: ['division'],
+          count: 15,
+          difficulty: 'hard',
+        },
+      })
+    );
+
+    expect(result.current.selectedCategories).toEqual(['division']);
+    expect(result.current.questionCount).toBe(15);
+    expect(result.current.difficulty).toBe('hard');
+  });
 });

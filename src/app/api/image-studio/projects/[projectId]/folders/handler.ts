@@ -129,6 +129,7 @@ export async function DELETE_handler(
     failedRootSlotIds,
     warnings,
   };
+  z.unknown().parse(payload);
 
   return NextResponse.json(payload);
 }

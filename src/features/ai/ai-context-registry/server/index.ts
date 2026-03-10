@@ -14,5 +14,5 @@ export const contextRegistryEngine = new ContextRegistryEngine(registryBackend, 
   kangurRuntimeContextProvider,
 ]);
 
-export * from '../services/proposal-store';
+export { getProposal, saveProposal, updateProposal } from '../services/proposal-store';
 export * from '../registry/context-packs';

@@ -4,10 +4,6 @@ import { Copy, Link2, SearchIcon, Trash2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 
 import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
-import {
   SystemLogsProvider,
   useSystemLogsActions,
   useSystemLogsState,
@@ -16,6 +12,10 @@ import {
   buildSystemLogsWorkspaceContextBundle,
   SYSTEM_LOGS_CONTEXT_ROOT_IDS,
 } from '@/features/observability/context-registry/workspace';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { type SystemLogFilterFormValues } from '@/shared/lib/observability/log-triage-presets';
 import { Button, PageLayout, CopyButton, Card, LoadingState } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';

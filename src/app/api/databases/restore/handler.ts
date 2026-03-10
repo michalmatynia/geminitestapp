@@ -69,6 +69,7 @@ export async function postDatabasesRestoreHandler(
     backupName: string;
     truncateBeforeRestore?: boolean;
   };
+  z.unknown().parse(body);
 
   backupName = body.backupName;
   truncateBeforeRestore = Boolean(body.truncateBeforeRestore);

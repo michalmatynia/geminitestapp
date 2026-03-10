@@ -5,6 +5,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
 const MONTHS = [
   'Styczeń',
   'Luty',
@@ -33,30 +35,24 @@ const { persistKangurSessionScoreMock } = vi.hoisted(() => ({
   persistKangurSessionScoreMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/ui/services/progress', () => ({
-  addXp: vi.fn(),
-  createTrainingReward: vi.fn(() => ({
-    breakdown: [
-      { kind: 'base', label: 'Ukonczenie rundy', xp: 14 },
-      { kind: 'accuracy', label: 'Skutecznosc', xp: 18 },
-    ],
-    xp: 32,
-    scorePercent: 100,
-    progressUpdates: {},
-  })),
-  loadProgress: () => ({
-    totalXp: 0,
-    gamesPlayed: 0,
-    perfectGames: 0,
-    lessonsCompleted: 0,
-    clockPerfect: 0,
-    calendarPerfect: 0,
-    geometryPerfect: 0,
-    badges: [],
-    operationsPlayed: [],
-    lessonMastery: {},
-  }),
-}));
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+
+  return {
+    ...actual,
+    addXp: vi.fn(),
+    createTrainingReward: vi.fn(() => ({
+      breakdown: [
+        { kind: 'base', label: 'Ukonczenie rundy', xp: 14 },
+        { kind: 'accuracy', label: 'Skutecznosc', xp: 18 },
+      ],
+      xp: 32,
+      scorePercent: 100,
+      progressUpdates: {},
+    })),
+    loadProgress: () => createDefaultKangurProgressState(),
+  };
+});
 
 vi.mock('@/features/kangur/ui/services/session-score', () => ({
   persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),

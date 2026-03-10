@@ -154,7 +154,7 @@ describe('KangurAssignmentManager', () => {
       'Sciezki postepu ucznia'
     );
     expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('Misje');
-    expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('1/2 odznak');
+    expect(screen.getByTestId('assignment-manager-track-quest')).toHaveTextContent('1/4 odznak');
     expect(screen.getByTestId('assignment-manager-track-mastery')).toHaveTextContent(
       'Mistrzostwo'
     );

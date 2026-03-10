@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
@@ -32,7 +33,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const contextRegistry = await resolveObservabilityContextRegistryEnvelope(
-    parsed.data.contextRegistry
+    parsed.data.contextRegistry,
+    contextRegistryEngine.resolveRefs.bind(contextRegistryEngine)
   );
   const insight = await generateLogsInsight({
     source: 'manual',

@@ -299,10 +299,10 @@
         "parser": {
           "mappings": {
             "catalogId": "$.catalogs[0].catalogId",
-            "content_en": "",
+            "content_en": "$.description_en",
             "images": "",
             "productId": "",
-            "title": ""
+            "title": "$.name_en"
           },
           "outputMode": "bundle",
           "presetId": "product_core"

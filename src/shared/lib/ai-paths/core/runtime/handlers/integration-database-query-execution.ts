@@ -4,6 +4,10 @@ import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
 import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
+import {
+  resolveParameterIdsFromInputs,
+  shouldRunParameterDefinitionFallback,
+} from './database-parameter-inference';
 import { parseJsonSafe } from '../../utils';
 
 interface DbQueryResult {
@@ -21,6 +25,7 @@ export type ExecuteDatabaseQueryInput = {
   query: Record<string, unknown>;
   querySource?: string;
   collectionMap?: AiPathsCollectionMap;
+  templateInputs?: RuntimePortValues;
   dryRun: boolean;
   aiPrompt: string;
 };
@@ -32,6 +37,7 @@ export async function executeDatabaseQuery({
   query,
   querySource,
   collectionMap,
+  templateInputs,
   dryRun,
   aiPrompt,
 }: ExecuteDatabaseQueryInput): Promise<RuntimePortValues> {
@@ -125,6 +131,71 @@ export async function executeDatabaseQuery({
   let count: number =
     (queryResultData['count'] as number) ??
     (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+  let fallback: Record<string, unknown> | undefined;
+
+  const fallbackParameterIds =
+    templateInputs && !queryConfig.single ? resolveParameterIdsFromInputs(templateInputs) : [];
+  if (
+    fallbackParameterIds.length > 0 &&
+    shouldRunParameterDefinitionFallback({
+      collection: queryConfig.collection,
+      query,
+      count,
+      queryTemplate: queryConfig.queryTemplate ?? '',
+    })
+  ) {
+    const parameterIds = Array.from(new Set(fallbackParameterIds));
+    const fallbackQuery = {
+      id: {
+        $in: parameterIds,
+      },
+    };
+    const fallbackQueryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({
+      provider: queryConfig.provider,
+      collection: queryConfig.collection,
+      filter: fallbackQuery,
+      projection,
+      sort,
+      limit: Math.max(queryConfig.limit ?? parameterIds.length, parameterIds.length),
+      single: false,
+      ...(collectionMap ? { collectionMap } : {}),
+      idType: queryConfig.idType as 'string' | 'objectId' | undefined,
+    });
+
+    if (!fallbackQueryResult.ok) {
+      reportAiPathsError(
+        new Error(fallbackQueryResult.error),
+        { action: 'dbQueryFallback', collection: queryConfig.collection, query: fallbackQuery },
+        'Database fallback query failed:'
+      );
+      fallback = {
+        strategy: 'parameterId',
+        query: fallbackQuery,
+        parameterIds,
+        error: 'Query failed',
+      };
+    } else {
+      const fallbackData = isObjectRecord(fallbackQueryResult.data)
+        ? fallbackQueryResult.data
+        : ({} as Record<string, unknown>);
+      const fallbackResult = fallbackData['items'] ?? [];
+      const fallbackCount =
+        (fallbackData['count'] as number) ??
+        (Array.isArray(fallbackResult) ? fallbackResult.length : fallbackResult ? 1 : 0);
+
+      fallback = {
+        strategy: 'parameterId',
+        query: fallbackQuery,
+        parameterIds,
+        count: fallbackCount,
+      };
+
+      if (fallbackCount > 0) {
+        result = fallbackResult;
+        count = fallbackCount;
+      }
+    }
+  }
 
   const collectionLabel =
     typeof queryConfig.collection === 'string' && queryConfig.collection.trim()
@@ -143,6 +214,7 @@ export async function executeDatabaseQuery({
       collection: queryConfig.collection,
       requestedProvider,
       resolvedProvider,
+      ...(fallback ? { fallback } : {}),
       ...(querySource ? { querySource } : {}),
     },
     aiPrompt,

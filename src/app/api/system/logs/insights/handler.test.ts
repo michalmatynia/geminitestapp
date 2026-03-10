@@ -78,10 +78,13 @@ describe('system logs insights handler', () => {
     const data = await response.json();
 
     expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
-    expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith({
-      refs: [{ id: 'page:system-logs', kind: 'static_node' }],
-      engineVersion: 'page-context:v1',
-    });
+    expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith(
+      {
+        refs: [{ id: 'page:system-logs', kind: 'static_node' }],
+        engineVersion: 'page-context:v1',
+      },
+      expect.any(Function)
+    );
     expect(generateLogsInsightMock).toHaveBeenCalledWith({
       source: 'manual',
       contextRegistry: expect.objectContaining({

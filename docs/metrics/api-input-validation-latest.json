@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-09T09:07:29.693Z",
+  "generatedAt": "2026-03-10T08:15:31.415Z",
   "status": "warn",
   "summary": {
-    "total": 11,
+    "total": 13,
     "errorCount": 0,
-    "warningCount": 11,
+    "warningCount": 13,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 691,
-    "totalHandlers": 665,
-    "validatedHandlers": 665,
+    "fileCount": 701,
+    "totalHandlers": 675,
+    "validatedHandlers": 675,
     "coveragePercent": 100
   },
   "scope": {
@@ -125,15 +125,35 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/agentcreator/personas/avatar/handler.ts",
+      "line": 130,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/ai-paths/trigger-buttons/handler.ts",
+      "line": 67,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
     {
       "ruleId": "query-param-unvalidated",
       "errorCount": 0,
-      "warningCount": 11,
+      "warningCount": 13,
       "infoCount": 0
     }
   ],
-  "durationMs": 58
+  "durationMs": 56
 }

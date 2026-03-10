@@ -59,8 +59,8 @@ describe('AdminFrontManagePage', () => {
     render(<AdminFrontManagePage />);
 
     expect(screen.getByRole('button', { name: /cms home/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /kangur/i })).toBeInTheDocument();
-    expect(screen.getByText(/kangur on home/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /studiq/i })).toBeInTheDocument();
+    expect(screen.getByText(/studiq on home/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open cms pages/i })).toHaveAttribute(
       'href',
       '/admin/cms/pages'
@@ -95,7 +95,7 @@ describe('AdminFrontManagePage', () => {
   it('saves the Kangur destination when selected', async () => {
     render(<AdminFrontManagePage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /kangur/i }));
+    fireEvent.click(screen.getByRole('button', { name: /studiq/i }));
     fireEvent.click(screen.getByRole('button', { name: /save selection/i }));
 
     await waitFor(() =>

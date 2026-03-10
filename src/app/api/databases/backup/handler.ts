@@ -16,7 +16,7 @@ import { logSystemError } from '@/shared/lib/observability/system-logger';
 const backupTypeSchema = z.enum(['mongodb', 'postgresql']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
   if (isProductionRuntime()) {
@@ -24,6 +24,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
+  const body = ctx.body ?? null;
+  z.unknown().parse(body);
 
   const { searchParams } = new URL(req.url);
   const parsedType = backupTypeSchema.safeParse(searchParams.get('type') ?? 'postgresql');

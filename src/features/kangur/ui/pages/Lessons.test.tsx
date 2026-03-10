@@ -7,6 +7,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const { settingsStoreMock, authState, assignmentsState, progressState, routerPushMock } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -152,6 +153,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
+  useOptionalKangurAiTutor: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -198,6 +200,20 @@ const createLesson = (overrides: Partial<Record<string, unknown>> = {}) => ({
   ...overrides,
 });
 
+const createProgressState = (
+  overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}
+) => {
+  const base = createDefaultKangurProgressState();
+  return {
+    ...base,
+    ...overrides,
+    lessonMastery: {
+      ...base.lessonMastery,
+      ...(overrides.lessonMastery ?? {}),
+    },
+  };
+};
+
 const setSettingsStore = ({
   lessons,
   documents,
@@ -233,9 +249,7 @@ describe('Lessons', () => {
     });
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
     assignmentsState.value = [];
-    progressState.value = {
-      lessonMastery: {},
-    };
+    progressState.value = createProgressState();
     authState.value = {
       user: null,
       canAccessParentAssignments: false,
@@ -301,11 +315,11 @@ describe('Lessons', () => {
         }),
       ],
     });
-    progressState.value = {
+    progressState.value = createProgressState({
       lessonMastery: {
         clock: { completions: 1 },
       },
-    };
+    });
 
     renderLessonsPage();
 
@@ -330,12 +344,12 @@ describe('Lessons', () => {
         }),
       ],
     });
-    progressState.value = {
+    progressState.value = createProgressState({
       lessonMastery: {
         clock: { completions: 1 },
         calendar: { completions: 1 },
       },
-    };
+    });
 
     renderLessonsPage();
 
@@ -651,7 +665,7 @@ describe('Lessons', () => {
         },
       },
     ];
-    progressState.value = {
+    progressState.value = createProgressState({
       lessonMastery: {
         clock: {
           attempts: 2,
@@ -662,7 +676,7 @@ describe('Lessons', () => {
           lastCompletedAt: '2026-03-06T09:00:00.000Z',
         },
       },
-    };
+    });
 
     setSettingsStore({
       lessons: [

@@ -7,6 +7,8 @@ import type {
   KangurOperation,
   KangurProgressState,
   KangurQuestion,
+  KangurSessionRecommendationHint,
+  KangurSessionStartOptions,
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
@@ -30,6 +32,7 @@ export type KangurGameRuntimeStateContextValue = {
   score: number;
   timeTaken: number;
   kangurMode: KangurMode | null;
+  activeSessionRecommendation: KangurSessionRecommendationHint | null;
   xpToast: KangurXpToastState;
   canStartFromHome: boolean;
   questionTimeLimit: number;
@@ -44,10 +47,17 @@ export type KangurGameRuntimeActionsContextValue = {
   setPlayerName: (value: string) => void;
   setScreen: (screen: KangurGameScreen) => void;
   handleStartGame: () => void;
-  handleStartTraining: (selection: KangurTrainingSelection) => void;
-  handleSelectOperation: (operation: KangurOperation, difficulty: KangurDifficulty) => void;
+  handleStartTraining: (
+    selection: KangurTrainingSelection,
+    options?: KangurSessionStartOptions
+  ) => void;
+  handleSelectOperation: (
+    operation: KangurOperation,
+    difficulty: KangurDifficulty,
+    options?: KangurSessionStartOptions
+  ) => void;
   handleAnswer: (correct: boolean) => void;
-  handleStartKangur: (mode: KangurMode) => void;
+  handleStartKangur: (mode: KangurMode, options?: KangurSessionStartOptions) => void;
   handleRestart: () => void;
   handleHome: () => void;
 };

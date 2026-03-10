@@ -1,9 +1,9 @@
+import { contextRegistryEngine } from '@/features/ai/server';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,
-} from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+} from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export const resolveKangurTtsContextRegistryEnvelope = async (
   contextRegistry: ContextRegistryConsumerEnvelope | null | undefined

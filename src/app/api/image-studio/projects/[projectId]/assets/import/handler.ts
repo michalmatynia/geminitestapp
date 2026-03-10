@@ -162,7 +162,8 @@ export async function POST_handler(
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
-  const parsed = importSchema.safeParse((await req.json().catch(() => null)) as unknown);
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = importSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }

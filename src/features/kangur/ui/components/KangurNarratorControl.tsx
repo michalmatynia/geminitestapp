@@ -3,6 +3,7 @@
 import { Loader2, Pause, Play, Volume2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { KangurNarratorEngine } from '@/features/kangur/settings';
 import { buildInlineVttTrackSrc } from '@/features/kangur/tts/captions';
 import { buildKangurLessonTtsEnvelopeSignature } from '@/features/kangur/tts/context-registry/instructions';
 import type {
@@ -12,12 +13,10 @@ import type {
   KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
 import { hasKangurLessonNarrationContent } from '@/features/kangur/tts/script';
-import type { KangurNarratorEngine } from '@/features/kangur/settings';
+import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/primitives';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/shared/utils';
-
-import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/primitives';
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 type PlaybackTransport = 'server' | 'client' | 'client-fallback' | null;

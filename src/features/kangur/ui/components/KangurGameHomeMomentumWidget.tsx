@@ -13,6 +13,7 @@ import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
+  getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/shared/contracts/kangur';
@@ -162,6 +163,31 @@ const getStreakRecommendation = (
   };
 };
 
+const getGuidedRecommendation = (
+  progress: KangurProgressState
+): KangurHomeRecommendation | null => {
+  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
+    return null;
+  }
+
+  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const action = buildPracticeRecommendationAction(
+    resolveActivityOperation(topActivity?.key ?? ''),
+    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
+  );
+
+  return {
+    accent: 'indigo',
+    action,
+    description: topActivity
+      ? `Masz juz ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} przybliza odznake ${guidedMomentum.nextBadgeName}.`
+      : `Masz juz ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliza odznake ${guidedMomentum.nextBadgeName}.`,
+    priorityLabel: 'Polecony kierunek',
+    title: `Dopnij: ${guidedMomentum.nextBadgeName}`,
+  };
+};
+
 const getTrackRecommendation = (
   progress: KangurProgressState
 ): KangurHomeRecommendation | null => {
@@ -216,6 +242,7 @@ const getHomeRecommendation = (
   progress: KangurProgressState
 ): KangurHomeRecommendation | null =>
   getWeakestLessonRecommendation(progress) ??
+  getGuidedRecommendation(progress) ??
   getStreakRecommendation(progress) ??
   getTrackRecommendation(progress) ??
   getFallbackRecommendation(progress);

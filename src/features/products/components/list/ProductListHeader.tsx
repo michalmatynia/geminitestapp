@@ -217,7 +217,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             </div>
 
             <div className='space-y-3'>
-              <div className='flex justify-center'>{renderPaginationControl()}</div>
+              <div className='relative z-10 flex justify-center'>{renderPaginationControl()}</div>
               <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
                 {renderSelectorsAndTriggers()}
               </div>
@@ -232,9 +232,9 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='mt-3'>{renderCreateActions()}</div>
             </div>
 
-            <div className='flex justify-center pt-1'>{renderPaginationControl()}</div>
+            <div className='relative z-10 flex justify-center pt-1'>{renderPaginationControl()}</div>
 
-            <div className='flex w-full flex-col gap-3 pt-1'>
+            <div className='relative z-0 flex w-full flex-col gap-3 pt-1'>
               <div className='flex w-full items-center justify-end gap-2 lg:flex-nowrap'>
                 {renderSelectorsAndTriggers()}
               </div>

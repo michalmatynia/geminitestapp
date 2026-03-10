@@ -376,6 +376,7 @@ export const kangurProgressStateSchema = z.object({
   currentWinStreak: kangurProgressCounterSchema.optional(),
   bestWinStreak: kangurProgressCounterSchema.optional(),
   dailyQuestsCompleted: kangurProgressCounterSchema.optional(),
+  recommendedSessionsCompleted: kangurProgressCounterSchema.optional(),
   currentActivityRepeatStreak: kangurProgressCounterSchema.optional(),
   lastRewardedActivityKey: z.string().trim().max(120).nullable().optional(),
   activityStats: kangurActivityStatsSchema.optional(),
@@ -494,6 +495,7 @@ export const createDefaultKangurProgressState = (): KangurProgressState => ({
   currentWinStreak: 0,
   bestWinStreak: 0,
   dailyQuestsCompleted: 0,
+  recommendedSessionsCompleted: 0,
   currentActivityRepeatStreak: 0,
   lastRewardedActivityKey: null,
   activityStats: {},
@@ -516,6 +518,8 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
       currentWinStreak: parsed.data.currentWinStreak ?? defaults.currentWinStreak,
       bestWinStreak: parsed.data.bestWinStreak ?? defaults.bestWinStreak,
       dailyQuestsCompleted: parsed.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+      recommendedSessionsCompleted:
+        parsed.data.recommendedSessionsCompleted ?? defaults.recommendedSessionsCompleted,
       currentActivityRepeatStreak:
         parsed.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
       lastRewardedActivityKey:
@@ -543,6 +547,8 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
     currentWinStreak: partial.data.currentWinStreak ?? defaults.currentWinStreak,
     bestWinStreak: partial.data.bestWinStreak ?? defaults.bestWinStreak,
     dailyQuestsCompleted: partial.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+    recommendedSessionsCompleted:
+      partial.data.recommendedSessionsCompleted ?? defaults.recommendedSessionsCompleted,
     currentActivityRepeatStreak:
       partial.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
     lastRewardedActivityKey:

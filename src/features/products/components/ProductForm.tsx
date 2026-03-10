@@ -4,10 +4,6 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
@@ -21,6 +17,10 @@ import {
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
 import { ProductFormFooter } from './form/ProductFormFooter';

@@ -80,7 +80,7 @@ describe('AdminFrontManagePage', () => {
     expect(chatbotButton).toHaveClass('border-blue-500/60');
   });
 
-  it('renders the Kangur option', () => {
+  it('renders the StudiQ option', () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isPending: false,
       data: new Map([['front_page_app', 'products']]),
@@ -90,7 +90,7 @@ describe('AdminFrontManagePage', () => {
 
     expect(
       screen.getByRole('button', {
-        name: /Kangur Mount Kangur at \/ and let it own the full public frontend/i,
+        name: /StudiQ Mount StudiQ at \/ and let it own the full public frontend/i,
       })
     ).toBeInTheDocument();
   });
@@ -122,7 +122,7 @@ describe('AdminFrontManagePage', () => {
     });
   });
 
-  it('allows selecting Kangur and saving', async () => {
+  it('allows selecting StudiQ and saving', async () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isPending: false,
       data: new Map([['front_page_app', 'products']]),
@@ -131,7 +131,7 @@ describe('AdminFrontManagePage', () => {
     renderPage();
 
     const kangurButton = screen.getByRole('button', {
-      name: /Kangur Mount Kangur at \/ and let it own the full public frontend/i,
+      name: /StudiQ Mount StudiQ at \/ and let it own the full public frontend/i,
     });
     fireEvent.click(kangurButton);
 

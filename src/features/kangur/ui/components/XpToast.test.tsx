@@ -45,6 +45,11 @@ describe('XpToast', () => {
           name: 'Tysiacznik',
           summary: '480/1000 XP',
         }}
+        recommendation={{
+          label: 'Misja dnia',
+          summary: 'Ten ruch domknal polecany kierunek i misje dnia.',
+          title: '➗ Powtorka: Dzielenie',
+        }}
         visible
         xpGained={25}
       />
@@ -61,6 +66,7 @@ describe('XpToast', () => {
       'bg-white/95'
     );
     expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByText('Swietnie, trzymasz polecany kierunek')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown-base')).toHaveTextContent(
       'Ukonczenie rundy +10'
@@ -78,6 +84,9 @@ describe('XpToast', () => {
     );
     expect(screen.getByTestId('xp-toast-daily-quest')).toHaveTextContent(
       'Misja dnia ukonczona: ➗ Powtorka: Dzielenie · 82% / 75% opanowania · +55 XP'
+    );
+    expect(screen.getByTestId('xp-toast-recommendation')).toHaveTextContent(
+      'Polecony kierunek: ➗ Powtorka: Dzielenie · Ten ruch domknal polecany kierunek i misje dnia.'
     );
   });
 

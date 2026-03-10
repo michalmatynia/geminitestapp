@@ -19,6 +19,7 @@ import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-
 import {
   getProgressAverageXpPerSession,
   getProgressBadgeTrackSummaries,
+  getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 
 type KangurGameHomeQuestWidgetProps = {
@@ -64,6 +65,7 @@ export function KangurGameHomeQuestWidget({
   const { basePath, progress, screen } = runtime;
   const quest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
   const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
+  const guidedMomentum = useMemo(() => getRecommendedSessionMomentum(progress), [progress]);
   const leadingTrack = useMemo(
     () => getProgressBadgeTrackSummaries(progress, { maxTracks: 1 })[0] ?? null,
     [progress]
@@ -167,43 +169,56 @@ export function KangurGameHomeQuestWidget({
             </KangurStatusChip>
           </div>
 
-          {currentWinStreak > 0 || averageXpPerSession > 0 || visibleLeadingTrack ? (
-            <div
-              className='mt-4 flex flex-wrap gap-2'
-              data-testid='kangur-home-quest-momentum'
-            >
-              {currentWinStreak > 0 ? (
-                <KangurStatusChip
-                  accent='rose'
-                  className='text-[11px] uppercase tracking-[0.14em]'
-                  data-testid='kangur-home-quest-streak'
-                  size='sm'
-                >
+          {currentWinStreak > 0 ||
+          averageXpPerSession > 0 ||
+          visibleLeadingTrack ||
+          guidedMomentum.completedSessions > 0 ? (
+              <div
+                className='mt-4 flex flex-wrap gap-2'
+                data-testid='kangur-home-quest-momentum'
+              >
+                {currentWinStreak > 0 ? (
+                  <KangurStatusChip
+                    accent='rose'
+                    className='text-[11px] uppercase tracking-[0.14em]'
+                    data-testid='kangur-home-quest-streak'
+                    size='sm'
+                  >
                   Seria: {currentWinStreak}
-                </KangurStatusChip>
-              ) : null}
-              {averageXpPerSession > 0 ? (
-                <KangurStatusChip
-                  accent='violet'
-                  className='text-[11px] uppercase tracking-[0.14em]'
-                  data-testid='kangur-home-quest-xp-rate'
-                  size='sm'
-                >
+                  </KangurStatusChip>
+                ) : null}
+                {averageXpPerSession > 0 ? (
+                  <KangurStatusChip
+                    accent='violet'
+                    className='text-[11px] uppercase tracking-[0.14em]'
+                    data-testid='kangur-home-quest-xp-rate'
+                    size='sm'
+                  >
                   Tempo: {averageXpPerSession} XP / gre
-                </KangurStatusChip>
-              ) : null}
-              {visibleLeadingTrack ? (
-                <KangurStatusChip
-                  accent='indigo'
-                  className='text-[11px] uppercase tracking-[0.14em]'
-                  data-testid='kangur-home-quest-track'
-                  size='sm'
-                >
+                  </KangurStatusChip>
+                ) : null}
+                {visibleLeadingTrack ? (
+                  <KangurStatusChip
+                    accent='indigo'
+                    className='text-[11px] uppercase tracking-[0.14em]'
+                    data-testid='kangur-home-quest-track'
+                    size='sm'
+                  >
                   Na fali: {visibleLeadingTrack.label}
-                </KangurStatusChip>
-              ) : null}
-            </div>
-          ) : null}
+                  </KangurStatusChip>
+                ) : null}
+                {guidedMomentum.completedSessions > 0 ? (
+                  <KangurStatusChip
+                    accent='sky'
+                    className='text-[11px] uppercase tracking-[0.14em]'
+                    data-testid='kangur-home-quest-guided'
+                    size='sm'
+                  >
+                  Kierunek: {guidedMomentum.summary}
+                  </KangurStatusChip>
+                ) : null}
+              </div>
+            ) : null}
 
           <KangurProgressBar
             accent={quest.progress.status === 'completed' ? 'emerald' : 'violet'}

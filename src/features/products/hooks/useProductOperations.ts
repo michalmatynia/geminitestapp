@@ -31,6 +31,7 @@ export function useProductOperations(
   actionError: string | null;
   setActionError: React.Dispatch<React.SetStateAction<string | null>>;
   handleOpenCreateModal: () => void;
+  handleOpenDuplicateModal: (product: ProductWithImages) => void;
   handleConfirmSku: (skuInput: string) => Promise<void>;
   handleOpenCreateFromDraft: (draft: ProductDraft) => void;
   handleCreateSuccess: (info?: { queued?: boolean }) => void;
@@ -47,15 +48,30 @@ export function useProductOperations(
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [initialSku, setInitialSku] = useState<string>('');
   const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
+  const [duplicateSourceProduct, setDuplicateSourceProduct] = useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleOpenCreateModal = (): void => {
     setActionError(null);
+    setEditingProduct(null);
+    setIsCreateOpen(false);
+    setInitialSku('');
+    setDuplicateSourceProduct(null);
+    setIsPromptOpen(true);
+  };
+
+  const handleOpenDuplicateModal = (product: ProductWithImages): void => {
+    setActionError(null);
+    setEditingProduct(null);
+    setIsCreateOpen(false);
+    setInitialSku('');
+    setDuplicateSourceProduct(product);
     setIsPromptOpen(true);
   };
 
   const handleConfirmSku = async (skuInput: string): Promise<void> => {
+    setActionError(null);
     const sku = skuInput.trim().toUpperCase();
     if (!sku) {
       setActionError('SKU is required.');
@@ -99,13 +115,13 @@ export function useProductOperations(
       });
     }
 
-    if (editingProduct) {
+    if (duplicateSourceProduct) {
       // Duplication Flow
       try {
-        const duplicated = await duplicateProduct({ id: editingProduct.id, sku });
+        const duplicated = await duplicateProduct({ id: duplicateSourceProduct.id, sku });
         setRefreshTrigger((prev: number): number => prev + 1);
         setIsPromptOpen(false);
-        setEditingProduct(null);
+        setDuplicateSourceProduct(null);
         toast('Product duplicated.', { variant: 'success' });
         router.push(`/admin/products/${duplicated.id}/edit`);
       } catch (error) {
@@ -113,6 +129,7 @@ export function useProductOperations(
       }
     } else {
       // Creation Flow
+      setDuplicateSourceProduct(null);
       setInitialSku(sku);
       setIsPromptOpen(false);
       setIsCreateOpen(true);
@@ -121,6 +138,7 @@ export function useProductOperations(
 
   const handleOpenCreateFromDraft = (draft: ProductDraft): void => {
     const draftSku = typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
+    setDuplicateSourceProduct(null);
     setInitialSku(draftSku);
     setIsCreateOpen(true);
   };
@@ -161,6 +179,7 @@ export function useProductOperations(
     actionError,
     setActionError,
     handleOpenCreateModal,
+    handleOpenDuplicateModal,
     handleConfirmSku,
     handleOpenCreateFromDraft,
     handleCreateSuccess,

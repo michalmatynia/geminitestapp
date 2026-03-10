@@ -87,7 +87,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
             {selectedAppOption.label} mounts inside this CMS page.
           </div>
           <div className='mt-1 text-gray-400'>
-            Leave Host page override blank to keep Kangur on the current page. To make it the first
+            Leave Host page override blank to keep StudiQ on the current page. To make it the first
             experience on HOME, add this block to the HOME page template zone.
           </div>
         </div>

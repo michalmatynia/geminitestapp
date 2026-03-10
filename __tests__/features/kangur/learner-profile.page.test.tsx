@@ -231,13 +231,8 @@ describe('LearnerProfile page', () => {
       'border-emerald-200',
       'bg-emerald-100'
     );
-    expect(screen.getByTestId('learner-profile-badge-first_game')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
-    );
-    expect(screen.getByTestId('learner-profile-badge-clock_master')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+    expect(screen.getByTestId('learner-profile-badge-track-onboarding')).toHaveTextContent(
+      'Start'
     );
     expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();

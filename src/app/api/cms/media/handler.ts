@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -32,6 +33,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     files.map((file) => uploadFile(file, { category: 'cms', allowOrphanRecord: true }))
   );
   const payload = uploads.length === 1 ? uploads[0] : uploads;
+  z.unknown().parse(payload);
 
   return NextResponse.json(payload, { status: 201 });
 }

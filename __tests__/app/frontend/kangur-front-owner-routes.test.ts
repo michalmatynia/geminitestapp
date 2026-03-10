@@ -105,7 +105,7 @@ describe('kangur public-owner frontend routes', () => {
         params: Promise.resolve({ slug: ['login'] }),
       })
     ).resolves.toEqual({
-      title: 'Kangur Login',
+      title: 'StudiQ Login',
     });
 
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();

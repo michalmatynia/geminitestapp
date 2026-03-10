@@ -5,6 +5,7 @@ import { useId, useState } from 'react';
 import {
   KangurButton,
   KangurGlassPanel,
+  KangurInfoCard,
   KangurIconBadge,
   KangurOptionCardButton,
   KangurSectionHeading,
@@ -32,6 +33,10 @@ type KangurEdition = {
 
 type KangurSetupProps = {
   onStart: (mode: KangurMode) => void;
+  recommendedDescription?: string;
+  recommendedLabel?: string;
+  recommendedMode?: KangurMode | null;
+  recommendedTitle?: string;
 };
 
 const EDITIONS: KangurEdition[] = [
@@ -83,7 +88,13 @@ const EDITIONS: KangurEdition[] = [
   },
 ];
 
-export default function KangurSetup({ onStart }: KangurSetupProps): React.JSX.Element {
+export default function KangurSetup({
+  onStart,
+  recommendedDescription,
+  recommendedLabel,
+  recommendedMode,
+  recommendedTitle,
+}: KangurSetupProps): React.JSX.Element {
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
   const editionsHeadingId = useId();
   const setsHeadingId = useId();
@@ -209,6 +220,41 @@ export default function KangurSetup({ onStart }: KangurSetupProps): React.JSX.El
           {selectedEdition.year}
         </KangurStatusChip>
 
+        {recommendedTitle ? (
+          <KangurInfoCard
+            accent='amber'
+            className='w-full rounded-[24px] text-left'
+            data-testid='kangur-setup-recommendation-card'
+            padding='md'
+            tone='accent'
+          >
+            <div className='flex flex-col gap-2'>
+              <KangurStatusChip
+                accent='amber'
+                className='w-fit text-[11px] uppercase tracking-[0.16em]'
+                data-testid='kangur-setup-recommendation-label'
+                size='sm'
+              >
+                {recommendedLabel ?? 'Polecamy teraz'}
+              </KangurStatusChip>
+              <p
+                className='text-sm font-extrabold text-slate-800'
+                data-testid='kangur-setup-recommendation-title'
+              >
+                {recommendedTitle}
+              </p>
+              {recommendedDescription ? (
+                <p
+                  className='text-xs text-slate-600'
+                  data-testid='kangur-setup-recommendation-description'
+                >
+                  {recommendedDescription}
+                </p>
+              ) : null}
+            </div>
+          </KangurInfoCard>
+        ) : null}
+
         <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
           {selectedEdition.sets.map((setItem) => (
             <motion.div
@@ -224,7 +270,7 @@ export default function KangurSetup({ onStart }: KangurSetupProps): React.JSX.El
                 className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
                 data-testid={`kangur-setup-set-${setItem.id}`}
                 disabled={!setItem.available}
-                emphasis={setItem.available ? 'accent' : 'neutral'}
+                emphasis={setItem.available || setItem.id === recommendedMode ? 'accent' : 'neutral'}
                 onClick={() => {
                   if (setItem.available) {
                     onStart(setItem.id);
@@ -238,6 +284,15 @@ export default function KangurSetup({ onStart }: KangurSetupProps): React.JSX.El
                   {!setItem.available ? (
                     <KangurStatusChip accent='slate' size='sm'>
                       <Lock className='h-3 w-3' /> Wkrotce dostepna
+                    </KangurStatusChip>
+                  ) : null}
+                  {setItem.id === recommendedMode ? (
+                    <KangurStatusChip
+                      accent='amber'
+                      data-testid={`kangur-setup-recommendation-chip-${setItem.id}`}
+                      size='sm'
+                    >
+                      {recommendedLabel ?? 'Polecamy teraz'}
                     </KangurStatusChip>
                   ) : null}
                 </span>

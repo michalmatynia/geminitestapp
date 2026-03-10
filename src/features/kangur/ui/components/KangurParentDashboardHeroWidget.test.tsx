@@ -173,7 +173,7 @@ describe('KangurParentDashboardHeroWidget', () => {
       'Misje'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-track-quest')).toHaveTextContent(
-      '1/2 odznak'
+      '1/4 odznak'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-track-mastery')).toHaveTextContent(
       'Mistrzostwo'

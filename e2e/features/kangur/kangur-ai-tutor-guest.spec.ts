@@ -2,10 +2,15 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY } from '@/features/kangur/ui/components/KangurAiTutorWidget.shared';
 
-import { mockKangurTutorEnvironment } from '../../support/kangur-tutor-fixtures';
+import {
+  installKangurNarratorSpeechRecorder,
+  mockKangurTutorEnvironment,
+  readKangurNarratorSpeechLog,
+} from '../../support/kangur-tutor-fixtures';
 
 type MockAnonymousGuestTutorIntroOptions = {
   shouldShow?: boolean;
+  narratorEngine?: 'server' | 'client';
 };
 
 const ROUTE_BOOT_TIMEOUT_MS = 45_000;
@@ -56,21 +61,16 @@ const readGuestIntroStatus = async (page: Page): Promise<string | null> =>
     }
   }, KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY);
 
-async function triggerAskModalBackdrop(page: Page): Promise<void> {
-  await page.getByTestId('kangur-ai-tutor-ask-modal-backdrop').evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
-}
-
 async function mockAnonymousGuestTutorIntro(
   page: Page,
   options: MockAnonymousGuestTutorIntroOptions = {}
 ): Promise<{ getGuestIntroChecks: () => number }> {
-  const { shouldShow = true } = options;
+  const { shouldShow = true, narratorEngine = 'server' } = options;
   let guestIntroChecks = 0;
 
   await mockKangurTutorEnvironment(page, {
     tutorPersonaImageUrl: '/uploads/agentcreator/personas/persona-mila/neutral/avatar.png',
+    narratorEngine,
   });
 
   await page.route('**/api/kangur/auth/me**', async (route) => {
@@ -116,7 +116,7 @@ test.describe('Kangur tutor guest intro', () => {
     await expect.poll(() => readGuestIntroStatus(page)).toBe('shown');
   });
 
-  test('closes the anonymous card with X and lets the avatar reopen a Zapytaj prompt', async ({
+  test('closes the anonymous card with X and lets the avatar reopen the compact tutor panel', async ({
     page,
   }) => {
     const { getGuestIntroChecks } = await mockAnonymousGuestTutorIntro(page);
@@ -133,30 +133,55 @@ test.describe('Kangur tutor guest intro', () => {
 
     await page.getByTestId('kangur-ai-tutor-avatar').click();
 
-    const launcherPrompt = page.getByTestId('kangur-ai-tutor-launcher-prompt');
-    await expect(launcherPrompt).toBeVisible();
-    await expect(launcherPrompt).toContainText('How could I help you today?');
-    await expect(launcherPrompt.getByRole('button', { name: 'Zapytaj' })).toBeVisible();
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+    await expect(tutorPanel).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-composer-pills')).toBeVisible();
     await expect.poll(() => getGuestIntroChecks()).toBe(1);
 
-    await launcherPrompt.getByTestId('kangur-ai-tutor-launcher-prompt-close').click();
+    await page
+      .getByTestId('kangur-ai-tutor-header')
+      .getByRole('button', { name: 'Zamknij' })
+      .click();
 
-    await expect(launcherPrompt).toHaveCount(0);
+    await expect(tutorPanel).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-avatar')).toBeVisible();
 
     await page.getByTestId('kangur-ai-tutor-avatar').click();
 
-    await expect(launcherPrompt).toBeVisible();
+    await expect(tutorPanel).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
+  });
 
-    await launcherPrompt.getByRole('button', { name: 'Zapytaj' }).click();
+  test('reads the compact tutor helper text without narrating panel controls', async ({ page }) => {
+    await installKangurNarratorSpeechRecorder(page);
+    await mockAnonymousGuestTutorIntro(page, {
+      narratorEngine: 'client',
+    });
 
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toBeVisible();
+    await gotoGuestTutorRoute(page);
 
-    await triggerAskModalBackdrop(page);
+    const guestIntro = page.getByTestId('kangur-ai-tutor-guest-intro');
+    await expect(guestIntro).toBeVisible();
+    await guestIntro.getByTestId('kangur-ai-tutor-guest-intro-close').click();
 
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
-    await expect(launcherPrompt).toBeVisible();
-    await expect(launcherPrompt).toContainText('How could I help you today?');
+    await page.getByTestId('kangur-ai-tutor-avatar').click();
+    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
+    await expect(tutorPanel).toBeVisible();
+    await tutorPanel.getByRole('button', { name: 'Czytaj' }).click();
+
+    await expect
+      .poll(async () => {
+        const utterances = await readKangurNarratorSpeechLog(page);
+        return utterances.at(-1) ?? '';
+      })
+      .toContain('Masz pytanie dotyczace gry? Popros o wyjasnienie albo nastepny krok.');
+
+    const spokenText = (await readKangurNarratorSpeechLog(page)).at(-1) ?? '';
+    expect(spokenText).not.toContain('Czytaj');
+    expect(spokenText).not.toContain('Wyślij');
+    expect(spokenText).not.toContain('Zapytaj');
+    expect(spokenText).not.toContain('Wyłącz');
   });
 
   test('dismisses the anonymous prompt and keeps it suppressed after reload', async ({ page }) => {
@@ -275,7 +300,7 @@ test.describe('Kangur tutor guest intro', () => {
     );
   });
 
-  test('opens the ask modal from guest onboarding without forcing auth navigation', async ({
+  test('opens the compact tutor panel from the docked anonymous avatar without forcing auth navigation', async ({
     page,
   }) => {
     await mockAnonymousGuestTutorIntro(page);
@@ -285,26 +310,23 @@ test.describe('Kangur tutor guest intro', () => {
     const guestIntro = page.getByTestId('kangur-ai-tutor-guest-intro');
 
     await expect(guestIntro).toBeVisible();
-    await expect(guestIntro.getByRole('button', { name: 'Zapytaj' })).toBeVisible();
+    await expect(guestIntro.getByRole('button', { name: 'Zapytaj' })).toHaveCount(0);
 
-    await guestIntro.getByRole('button', { name: 'Zapytaj' }).click();
+    await guestIntro.getByTestId('kangur-ai-tutor-guest-intro-close').click();
+    await page.getByTestId('kangur-ai-tutor-avatar').click();
 
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal-helper')).toContainText(
-      'Możesz zapytać o logowanie, konto rodzica albo korzystanie ze strony.'
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-mood-description')).toContainText(
+      'Masz pytanie dotyczace gry? Popros o wyjasnienie albo nastepny krok.'
     );
     await expect(page.getByRole('textbox', { name: 'Wpisz pytanie' })).toHaveAttribute(
       'placeholder',
-      'Napisz pytanie do tutora'
+      'Zapytaj o gre'
     );
     await expect(page.getByTestId('kangur-login-modal')).toHaveCount(0);
-
-    await triggerAskModalBackdrop(page);
-
-    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
   });
 
-  test('opens the ask modal from guided login help and restores the guidance after closing it', async ({
+  test('keeps guided login help focused on acknowledgement instead of opening a separate ask flow', async ({
     page,
   }) => {
     await mockAnonymousGuestTutorIntro(page);
@@ -324,27 +346,17 @@ test.describe('Kangur tutor guest intro', () => {
     const guidedHelp = page.getByTestId('kangur-ai-tutor-guided-login-help');
 
     await expect(guidedHelp).toBeVisible();
-    await expect(guidedHelp.getByRole('button', { name: 'Zapytaj' })).toBeVisible();
-
-    await guidedHelp.getByRole('button', { name: 'Zapytaj' }).click();
-
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-ask-modal-helper')).toContainText(
-      'Możesz zapytać o logowanie, konto rodzica albo kolejny krok na stronie.'
-    );
+    await expect(guidedHelp.getByRole('button', { name: 'Zapytaj' })).toHaveCount(0);
+    await expect(guidedHelp.getByRole('button', { name: 'Rozumiem' })).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
     await expect(page.getByTestId('kangur-login-modal')).toHaveCount(0);
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toHaveCount(0);
-
-    await triggerAskModalBackdrop(page);
-
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-guidance-target',
       'login_action'
     );
   });
 
-  test('closes guided login help with X and lets the avatar reopen the lightweight prompt', async ({
+  test('closes guided login help with X and lets the avatar reopen the compact tutor panel', async ({
     page,
   }) => {
     await mockAnonymousGuestTutorIntro(page);
@@ -375,10 +387,9 @@ test.describe('Kangur tutor guest intro', () => {
 
     await page.getByTestId('kangur-ai-tutor-avatar').click();
 
-    const launcherPrompt = page.getByTestId('kangur-ai-tutor-launcher-prompt');
-    await expect(launcherPrompt).toBeVisible();
-    await expect(launcherPrompt).toContainText('How could I help you today?');
-    await expect(launcherPrompt.getByRole('button', { name: 'Zapytaj' })).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-composer-pills')).toBeVisible();
   });
 
   test('guides create-account through the top navigation first and then into the form', async ({
@@ -478,7 +489,7 @@ test.describe('Kangur tutor guest intro', () => {
 
     await expect(guestIntro).toBeVisible();
     await expect(guestIntro).toContainText(
-      'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica. To okno pojawia się przy każdym anonimowym wejściu, gdy onboarding tutora jest włączony.'
+      'Mogę pokazać, gdzie się zalogować albo jak założyć konto rodzica.'
     );
     await expect.poll(() => readGuestIntroStatus(page)).toBe('shown');
     await expect.poll(() => guestIntroChecks).toBe(0);
@@ -512,20 +523,22 @@ test.describe('Kangur tutor guest intro', () => {
     await gotoGuestTutorRoute(page);
 
     const guestIntro = page.getByTestId('kangur-ai-tutor-guest-intro');
-    const guestIntroAvatar = guestIntro.locator('img[alt="Mila"]');
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar-image').locator('img');
 
     await expect(guestIntro).toBeVisible();
     await expect(guestIntro).toContainText('Mila');
-    await expect(guestIntroAvatar).toHaveAttribute(
+    await expect(tutorAvatar).toHaveAttribute(
       'src',
       /\/uploads\/agentcreator\/personas\/persona-mila\/neutral\/avatar\.png/
     );
 
+    await guestIntro.getByTestId('kangur-ai-tutor-guest-intro-close').click();
     await page.getByTestId('kangur-ai-tutor-avatar').click();
 
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-header')).toContainText('Mila');
     await expect(
-      page.getByTestId('kangur-ai-tutor-header-avatar-image').locator('img')
+      page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first()
     ).toHaveAttribute('src', /\/uploads\/agentcreator\/personas\/persona-mila\/neutral\/avatar\.png/);
   });
 });

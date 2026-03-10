@@ -4,10 +4,6 @@ import { Folders, ListOrdered, Plus, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
-import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
@@ -16,6 +12,10 @@ import {
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,

@@ -1,51 +1,58 @@
 npm run typecheck
+npm run lint - most general better run guided
 npm run lint:fix:app
-run npm build and address the issues one by one
-run vitest and address the issues ony by one
-npm audit fix
+npm run lint:fix:features
+npm run lint:fix:shared
+npm run lint:scanner-scripts
+npm run lint:fix:debug - for LIVE Linter
+
+run npm build
+run vitest
 npm run test:e2e 
 
-run:
+npm audit fix
 
-npm run lint:fix:app
+SCANNERS
+npm run check:quality:core
+npm run check:quality:extended
+npm run observability:scan
+npm run observability:check
+npm run check:security:static (and :strict)
+npm run check:security:authz-matrix (and :strict)
+npm run check:accessibility:component-policies (and :strict)
+npm run check:api-input-validation (and :strict)
+npm run check:import-boundaries (and :strict)
+npm run check:context-health (and :strict)
+npm run check:timer-cleanup (and :strict)
+npm run check:test-distribution (and :strict)
+npm run check:route-policies (and :strict)
+npm run check:api-contract-coverage (and :strict)
+npm run check:api-error-sources (and :strict)
+npm run check:unsafe-patterns (and :strict)
+npm run canonical:check:sitewide
+npm run check:factory-meta:strict
+npm run quality:weekly-report:strict
+npm run metrics:all
+npm run metrics:hotspots
+npm run metrics:type-clusters
+npm run metrics:prop-drilling
+npm run metrics:collect
+npm run observability:check
+npm run observability:scan
+npm run health:env-contract (and :strict)
+npm run health:storage-and-files (and :strict)
+npm run health:queue-runtime (and :strict)
 
-Then:
-
-npm run lint:fix:features
-
-Then:
-
-npm run lint:fix:shared
-
-If you want to watch what ESLint is doing live, use:
-
-npm run lint:fix:debug
-
+PERFORMANCE
+npm run perf:ops:weekly
 
 PRISMA
 npx prisma generate
 npx prisma migrate dev
 npx prisma migrate reset
 npx prisma db push
-npm run perf:ops:weekly
-    "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
-    "observability:scan": "node scripts/observability/check-observability.mjs --mode=scan",
-    "observability:check": "node scripts/observability/check-observability.mjs --mode=check",
-    "metrics:collect": "node scripts/architecture/collect-metrics.mjs",
-    "metrics:prop-drilling": "node scripts/architecture/scan-prop-drilling.mjs",
-    "metrics:type-clusters": "node scripts/architecture/scan-type-clusters.mjs",
-    "metrics:hotspots": "node scripts/perf/route-hotspots.mjs",
-    "metrics:all": "npm run metrics:collect && npm run metrics:hotspots && npm run metrics:guardrails",
-    "quality:weekly-report:strict": "node scripts/quality/generate-weekly-report.mjs --strict",
-    "check:factory-meta:strict": "CHECK_FACTORY_META_STRICT_ALIAS=1 node scripts/query/check-factory-meta.cjs",
-    "canonical:check:sitewide": "node scripts/canonical/check-sitewide.mjs",
- accessibility smoke, security smoke, critical flows, and
-  weekly quality rollups
-There are some general ones like health etc.
 
-  
-## address vitest Prisma mock issues
-
+--
 INVESTIGATION AN PLANNING
 -Carry out investigation into **_
 -I would like to introduce a new feature, prepare a plan, main concerns, areas of interest and fallback strategies for _**

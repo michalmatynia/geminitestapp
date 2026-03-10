@@ -105,6 +105,39 @@ describe('KangurGameHomeMomentumWidget', () => {
     );
   });
 
+  it('prioritizes guided momentum before generic track pressure when recommendation progress exists', () => {
+    render(
+      <KangurGameHomeMomentumWidget
+        basePath='/kangur'
+        progress={buildProgress({
+          currentWinStreak: 3,
+          recommendedSessionsCompleted: 2,
+          lessonMastery: {
+            division: {
+              attempts: 3,
+              completions: 3,
+              masteryPercent: 92,
+              bestScorePercent: 96,
+              lastScorePercent: 94,
+              lastCompletedAt: '2026-03-10T09:00:00.000Z',
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-home-momentum-label')).toHaveTextContent(
+      'Polecony kierunek'
+    );
+    expect(screen.getByTestId('kangur-home-momentum-title')).toHaveTextContent(
+      'Dopnij: Trzymam kierunek'
+    );
+    expect(screen.getByTestId('kangur-home-momentum-description')).toHaveTextContent(
+      'Masz juz 2/3 rundy w poleconym rytmie.'
+    );
+    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toBeInTheDocument();
+  });
+
   it('falls back to a track push when streak and lesson recovery are already stable', () => {
     render(
       <KangurGameHomeMomentumWidget

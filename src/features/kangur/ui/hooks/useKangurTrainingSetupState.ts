@@ -30,6 +30,7 @@ export type KangurTrainingSetupCountOption = {
 type UseKangurTrainingSetupStateOptions = {
   active?: boolean;
   onStart?: (selection: KangurTrainingSelection) => void;
+  suggestedSelection?: KangurTrainingSelection | null;
 };
 
 const ALL_CATEGORIES: Array<{ id: KangurOperation; label: string; emoji: string }> = [
@@ -59,26 +60,56 @@ const formatDifficultySummary = (difficulty: KangurDifficulty): string => {
   return 'sredni';
 };
 
+const sanitizeSuggestedSelection = (
+  selection?: KangurTrainingSelection | null
+): KangurTrainingSelection => {
+  if (!selection) {
+    return {
+      categories: DEFAULT_SELECTED_CATEGORIES,
+      count: DEFAULT_COUNT,
+      difficulty: DEFAULT_DIFFICULTY,
+    };
+  }
+
+  const categories = selection.categories.filter((category) =>
+    DEFAULT_SELECTED_CATEGORIES.includes(category)
+  );
+
+  return {
+    categories: categories.length > 0 ? categories : DEFAULT_SELECTED_CATEGORIES,
+    count: QUESTION_COUNTS.includes(selection.count as (typeof QUESTION_COUNTS)[number])
+      ? selection.count
+      : DEFAULT_COUNT,
+    difficulty:
+      selection.difficulty === 'easy' ||
+      selection.difficulty === 'medium' ||
+      selection.difficulty === 'hard'
+        ? selection.difficulty
+        : DEFAULT_DIFFICULTY,
+  };
+};
+
 export const useKangurTrainingSetupState = (
   options: UseKangurTrainingSetupStateOptions = {}
 ) => {
   const active = options.active ?? true;
   const onStart = options.onStart;
+  const suggestedSelection = sanitizeSuggestedSelection(options.suggestedSelection);
   const previousActiveRef = useRef(active);
   const [selectedCategories, setSelectedCategories] =
-    useState<KangurOperation[]>(DEFAULT_SELECTED_CATEGORIES);
-  const [questionCount, setQuestionCount] = useState<number>(DEFAULT_COUNT);
-  const [difficulty, setDifficulty] = useState<KangurDifficulty>(DEFAULT_DIFFICULTY);
+    useState<KangurOperation[]>(suggestedSelection.categories);
+  const [questionCount, setQuestionCount] = useState<number>(suggestedSelection.count);
+  const [difficulty, setDifficulty] = useState<KangurDifficulty>(suggestedSelection.difficulty);
 
   useEffect(() => {
     if (active && !previousActiveRef.current) {
-      setSelectedCategories(DEFAULT_SELECTED_CATEGORIES);
-      setQuestionCount(DEFAULT_COUNT);
-      setDifficulty(DEFAULT_DIFFICULTY);
+      setSelectedCategories(suggestedSelection.categories);
+      setQuestionCount(suggestedSelection.count);
+      setDifficulty(suggestedSelection.difficulty);
     }
 
     previousActiveRef.current = active;
-  }, [active]);
+  }, [active, suggestedSelection.categories, suggestedSelection.count, suggestedSelection.difficulty]);
 
   const toggleCategory = useCallback((id: KangurOperation): void => {
     setSelectedCategories((previous) => {
@@ -162,6 +193,7 @@ export const useKangurTrainingSetupState = (
     selectedCategories,
     setDifficulty,
     startTraining,
+    suggestedSelection,
     summaryLabel: `Wybrano ${selectedCategories.length} kategorii, ${questionCount} pytan, poziom ${formatDifficultySummary(
       difficulty
     )}.`,

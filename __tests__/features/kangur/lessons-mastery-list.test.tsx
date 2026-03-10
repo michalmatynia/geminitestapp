@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@/__tests__/test-utils';
 import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 const {
   useKangurRoutingMock,
@@ -48,6 +49,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
+  useOptionalKangurAiTutor: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -183,8 +185,11 @@ describe('Lessons page mastery list', () => {
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
     });
+    const baseProgress = createDefaultKangurProgressState();
     useKangurProgressStateMock.mockReturnValue({
+      ...baseProgress,
       lessonMastery: {
+        ...baseProgress.lessonMastery,
         clock: {
           attempts: 2,
           completions: 2,

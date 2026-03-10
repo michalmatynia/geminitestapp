@@ -301,7 +301,7 @@ describe('Kangur accessibility smoke', () => {
       'page'
     );
     expect(screen.getByRole('heading', { name: 'Ekran startowy' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Imie gracza' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Imię gracza' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Wybierz aktywnosc' })).toBeInTheDocument();
   });
 

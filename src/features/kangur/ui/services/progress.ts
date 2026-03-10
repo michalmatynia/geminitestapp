@@ -55,6 +55,7 @@ type KangurRewardInput = {
   strongThresholdPercent?: number;
   countsAsGame?: boolean;
   countsAsLessonCompletion?: boolean;
+  followsRecommendation?: boolean;
   perfectCounterKey?: KangurRewardCounterKey;
   playedAt?: string;
 };
@@ -102,6 +103,18 @@ export type KangurBadgeTrackSummary = {
   progressPercent: number;
   nextBadge: KangurBadgeStatus | null;
   badges: KangurBadgeStatus[];
+};
+
+export type KangurRecommendedSessionMomentum = {
+  completedSessions: number;
+  progressPercent: number;
+  summary: string;
+  nextBadgeName: string | null;
+};
+
+export type KangurRecommendedSessionProjection = {
+  current: KangurRecommendedSessionMomentum;
+  projected: KangurRecommendedSessionMomentum;
 };
 
 type KangurVisibleBadgeOptions = {
@@ -200,6 +213,8 @@ const MASTERY_STAGE_BONUSES = [
   { threshold: 60, xp: 2 },
 ] as const;
 
+const GUIDED_FOCUS_BONUS = 3;
+
 const ACTIVITY_LABELS: Record<string, string> = {
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',
@@ -249,6 +264,8 @@ const BADGE_TRACK_META: Record<KangurBadgeTrackKey, { label: string; emoji: stri
   xp: { label: 'XP', emoji: '⭐', order: 6 },
   quest: { label: 'Misje', emoji: '🧭', order: 7 },
 };
+
+const GUIDED_BADGE_IDS = new Set(['guided_step', 'guided_keeper']);
 
 export const BADGES: KangurBadge[] = [
   {
@@ -417,6 +434,30 @@ export const BADGES: KangurBadge[] = [
       current: progress.dailyQuestsCompleted ?? 0,
       target: 3,
       summary: `${Math.min(progress.dailyQuestsCompleted ?? 0, 3)}/3 misje`,
+    }),
+  },
+  {
+    id: 'guided_step',
+    emoji: '🪄',
+    name: 'Pewny krok',
+    desc: 'Ukoncz pierwsza runde zgodnie z rekomendacja',
+    track: 'quest',
+    progress: (progress) => ({
+      current: progress.recommendedSessionsCompleted ?? 0,
+      target: 1,
+      summary: `${Math.min(progress.recommendedSessionsCompleted ?? 0, 1)}/1 runda`,
+    }),
+  },
+  {
+    id: 'guided_keeper',
+    emoji: '🧭',
+    name: 'Trzymam kierunek',
+    desc: 'Ukoncz 3 rundy zgodnie z rekomendacja',
+    track: 'quest',
+    progress: (progress) => ({
+      current: progress.recommendedSessionsCompleted ?? 0,
+      target: 3,
+      summary: `${Math.min(progress.recommendedSessionsCompleted ?? 0, 3)}/3 rundy`,
     }),
   },
   {
@@ -783,6 +824,53 @@ export const getNextLockedBadge = (progress: KangurProgressState): KangurBadgeSt
       return left.target - right.target;
     })[0] ?? null;
 
+export const getRecommendedSessionMomentum = (
+  progress: KangurProgressState
+): KangurRecommendedSessionMomentum => {
+  const completedSessions = progress.recommendedSessionsCompleted ?? 0;
+  const guidedBadges = getProgressBadges(progress).filter((badge) => GUIDED_BADGE_IDS.has(badge.id));
+  const nextBadge = guidedBadges.find((badge) => !badge.isUnlocked) ?? null;
+  const maxTarget = guidedBadges.reduce(
+    (currentMax, badge) => Math.max(currentMax, badge.target),
+    0
+  );
+
+  if (nextBadge) {
+    return {
+      completedSessions,
+      progressPercent: nextBadge.progressPercent,
+      summary: nextBadge.summary,
+      nextBadgeName: nextBadge.name,
+    };
+  }
+
+  return {
+    completedSessions,
+    progressPercent: 100,
+    summary:
+      maxTarget > 0
+        ? `${Math.min(completedSessions, maxTarget)}/${maxTarget} rundy`
+        : `${completedSessions} sesje`,
+    nextBadgeName: null,
+  };
+};
+
+export const getRecommendedSessionProjection = (
+  progress: KangurProgressState,
+  additionalCompletedSessions = 1
+): KangurRecommendedSessionProjection => {
+  const safeAdditionalCompletedSessions = Math.max(0, Math.floor(additionalCompletedSessions));
+
+  return {
+    current: getRecommendedSessionMomentum(progress),
+    projected: getRecommendedSessionMomentum({
+      ...progress,
+      recommendedSessionsCompleted:
+        (progress.recommendedSessionsCompleted ?? 0) + safeAdditionalCompletedSessions,
+    }),
+  };
+};
+
 const getAccuracyBonus = (scorePercent: number): number => {
   if (scorePercent >= 100) {
     return 18;
@@ -914,6 +1002,7 @@ const buildRewardBreakdown = (
     improvementBonus,
     masteryBonus,
     varietyBonus,
+    guidedFocusBonus,
     antiRepeatPenalty,
     perfectBonus,
     totalXp,
@@ -926,6 +1015,7 @@ const buildRewardBreakdown = (
     improvementBonus: number;
     masteryBonus: number;
     varietyBonus: number;
+    guidedFocusBonus: number;
     antiRepeatPenalty: number;
     perfectBonus: number;
     totalXp: number;
@@ -958,6 +1048,9 @@ const buildRewardBreakdown = (
   }
   if (varietyBonus > 0) {
     entries.push({ kind: 'variety', label: 'Nowa sciezka', xp: varietyBonus });
+  }
+  if (guidedFocusBonus > 0) {
+    entries.push({ kind: 'guided_focus', label: 'Polecony kierunek', xp: guidedFocusBonus });
   }
   if (perfectBonus > 0) {
     entries.push({ kind: 'perfect', label: 'Pelny wynik', xp: perfectBonus });
@@ -1034,6 +1127,7 @@ const createRewardOutcome = (
     strongThresholdPercent = 70,
     countsAsGame = false,
     countsAsLessonCompletion = false,
+    followsRecommendation = false,
     perfectCounterKey,
     playedAt = new Date().toISOString(),
   }: KangurRewardInput
@@ -1086,6 +1180,8 @@ const createRewardOutcome = (
     passedStrongThreshold
   );
   const varietyBonus = getVarietyBonus(progress, operation, countsAsGame, passedStrongThreshold);
+  const guidedFocusBonus =
+    followsRecommendation && passedStrongThreshold && countsAsGame ? GUIDED_FOCUS_BONUS : 0;
   const repeatState = getActivityRepeatPenalty(progress, activityKey, countsAsGame);
 
   const xp = Math.max(
@@ -1100,6 +1196,7 @@ const createRewardOutcome = (
         improvementBonus +
         masteryBonus +
         varietyBonus +
+        guidedFocusBonus +
         -repeatState.penalty +
         (isPerfect ? config.perfectBonus : 0)
     )
@@ -1113,6 +1210,7 @@ const createRewardOutcome = (
     improvementBonus,
     masteryBonus,
     varietyBonus,
+    guidedFocusBonus,
     antiRepeatPenalty: repeatState.penalty,
     perfectBonus: isPerfect ? config.perfectBonus : 0,
     totalXp: xp,
@@ -1148,6 +1246,10 @@ const createRewardOutcome = (
     progressUpdates.operationsPlayed = operation
       ? mergeUniqueStrings([...(progress.operationsPlayed ?? []), operation])
       : progress.operationsPlayed;
+    if (followsRecommendation) {
+      progressUpdates.recommendedSessionsCompleted =
+        (progress.recommendedSessionsCompleted ?? 0) + 1;
+    }
   }
 
   if (countsAsLessonCompletion) {
@@ -1407,6 +1509,10 @@ export function mergeProgressStates(
     bestWinStreak: Math.max(left.bestWinStreak ?? 0, right.bestWinStreak ?? 0),
     currentActivityRepeatStreak: latestRepeatSide.currentActivityRepeatStreak ?? 0,
     lastRewardedActivityKey: latestRepeatSide.lastRewardedActivityKey ?? null,
+    recommendedSessionsCompleted: Math.max(
+      left.recommendedSessionsCompleted ?? 0,
+      right.recommendedSessionsCompleted ?? 0
+    ),
     activityStats,
   };
 }
@@ -1477,12 +1583,14 @@ export function createGameSessionReward(
     correctAnswers,
     totalQuestions,
     durationSeconds,
+    followsRecommendation = false,
   }: {
     operation: string;
     difficulty?: string | null;
     correctAnswers: number;
     totalQuestions: number;
     durationSeconds?: number | null;
+    followsRecommendation?: boolean;
   }
 ): KangurLessonPracticeReward {
   return createRewardOutcome(progress, {
@@ -1494,6 +1602,7 @@ export function createGameSessionReward(
     totalQuestions,
     durationSeconds,
     countsAsGame: true,
+    followsRecommendation,
     strongThresholdPercent: 70,
   });
 }

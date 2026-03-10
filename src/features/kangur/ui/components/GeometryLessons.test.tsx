@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
     <button type='button' onClick={onFinish}>
@@ -14,18 +16,20 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/services/progress', () => ({
-  addXp: vi.fn(),
-  createLessonCompletionReward: vi.fn(() => ({
-    xp: 28,
-    scorePercent: 100,
-    progressUpdates: {},
-  })),
-  loadProgress: vi.fn(() => ({
-    lessonsCompleted: 0,
-    lessonMastery: {},
-  })),
-}));
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+
+  return {
+    ...actual,
+    addXp: vi.fn(),
+    createLessonCompletionReward: vi.fn(() => ({
+      xp: 28,
+      scorePercent: 100,
+      progressUpdates: {},
+    })),
+    loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+  };
+});
 
 import GeometryBasicsLesson from '@/features/kangur/ui/components/GeometryBasicsLesson';
 import GeometryPerimeterLesson from '@/features/kangur/ui/components/GeometryPerimeterLesson';

@@ -10,7 +10,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'KangurPageTransitionSkeleton pageKey={pageKey ?? KANGUR_MAIN_PAGE} reason=\'boot\'',
+      'KangurAppLoader visible={isLoaderVisible}',
       'data-testid=\'kangur-route-content\'',
     ],
   },

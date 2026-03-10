@@ -187,10 +187,13 @@ describe('product validator runtime handler', () => {
     const data = await response.json();
     const call = runBrainChatCompletionMock.mock.calls[0]?.[0];
 
-    expect(resolveProductEditorContextRegistryEnvelopeMock).toHaveBeenCalledWith({
-      refs: [{ id: 'page:product-editor', kind: 'static_node' }],
-      engineVersion: 'page-context:v1',
-    });
+    expect(resolveProductEditorContextRegistryEnvelopeMock).toHaveBeenCalledWith(
+      {
+        refs: [{ id: 'page:product-editor', kind: 'static_node' }],
+        engineVersion: 'page-context:v1',
+      },
+      expect.any(Function)
+    );
     expect(call.messages[0]).toMatchObject({
       role: 'system',
     });

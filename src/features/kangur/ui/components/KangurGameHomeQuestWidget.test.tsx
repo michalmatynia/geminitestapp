@@ -21,6 +21,7 @@ const progress: KangurProgressState = {
   gamesPlayed: 12,
   perfectGames: 3,
   lessonsCompleted: 7,
+  recommendedSessionsCompleted: 2,
   clockPerfect: 1,
   calendarPerfect: 1,
   geometryPerfect: 0,
@@ -96,6 +97,9 @@ describe('KangurGameHomeQuestWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-quest-track')).toHaveTextContent(
       'Na fali: Start'
+    );
+    expect(screen.getByTestId('kangur-home-quest-guided')).toHaveTextContent(
+      'Kierunek: 2/3 rundy'
     );
     expect(screen.getByTestId('kangur-home-quest-progress-bar')).toHaveAttribute(
       'aria-valuenow',
@@ -187,6 +191,7 @@ describe('KangurGameHomeQuestWidget', () => {
         gamesPlayed: 0,
         perfectGames: 0,
         lessonsCompleted: 0,
+        recommendedSessionsCompleted: 0,
         clockPerfect: 0,
         calendarPerfect: 0,
         geometryPerfect: 0,

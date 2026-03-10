@@ -229,7 +229,8 @@ export async function POST_handler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) throw badRequestError('Slot id is required');
 
-  const parsed = payloadSchema.safeParse((await req.json().catch(() => null)) as unknown);
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }

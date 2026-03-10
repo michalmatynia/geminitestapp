@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
-import {
-  useOptionalContextRegistryPageEnvelope,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
+import {
+  useOptionalContextRegistryPageEnvelope,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import {
   getImageStudioSlotImageSrc,

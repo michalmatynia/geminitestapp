@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -153,6 +153,7 @@ export function KangurPrimaryNavigation({
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
+  const isTutorExplicitlyDisabled = tutor?.tutorSettings?.enabled === false;
   const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
     !(guestPlayerName?.trim() ?? '')
   );
@@ -285,19 +286,30 @@ export function KangurPrimaryNavigation({
     </>
   ) : null;
   const tutorRestoreAction =
-    isTutorHidden && (tutor?.enabled ?? true) ? (
+    isTutorHidden && !isTutorExplicitlyDisabled ? (
       <NavAction
         ariaLabel='Włącz AI Tutora'
         className='border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800'
         docId='kangur-ai-tutor-restore'
         onClick={(): void => {
           persistTutorVisibilityHidden(false);
+          if (tutor?.enabled) {
+            tutor.openChat();
+          }
         }}
         testId='kangur-ai-tutor-restore'
         title='Włącz AI Tutora'
       >
+        <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span>Włącz AI Tutora</span>
       </NavAction>
+    ) : null;
+  const utilityActions =
+    rightAccessory || authAction ? (
+      <div className='flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
+        {rightAccessory}
+        {authAction}
+      </div>
     ) : null;
 
   return (
@@ -334,9 +346,7 @@ export function KangurPrimaryNavigation({
             <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
             <span>Lekcje</span>
           </NavAction>
-
           {tutorRestoreAction}
-
           {effectiveIsAuthenticated ? (
             <KangurProfileMenu
               basePath={basePath}
@@ -356,15 +366,9 @@ export function KangurPrimaryNavigation({
               <span>Rodzic</span>
             </NavAction>
           ) : null}
-
-          {rightAccessory || authAction ? (
-            <div className='ml-auto flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
-              {rightAccessory}
-              {authAction}
-            </div>
-          ) : null}
         </KangurTopNavGroup>
       }
+      right={utilityActions}
     />
   );
 }

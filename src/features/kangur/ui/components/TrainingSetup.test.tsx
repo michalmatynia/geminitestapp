@@ -45,4 +45,34 @@ describe('TrainingSetup', () => {
     expect(twentyQuestionsButton).toHaveAttribute('aria-pressed', 'true');
     expect(twentyQuestionsButton).toHaveClass('text-indigo-700', 'ring-1');
   });
+
+  it('applies the suggested training preset and shows the recommendation card', () => {
+    render(
+      <TrainingSetup
+        onStart={vi.fn()}
+        suggestedSelection={{
+          categories: ['division'],
+          count: 15,
+          difficulty: 'hard',
+        }}
+        suggestionDescription='To najmocniej podbije dzisiejszy postep.'
+        suggestionLabel='Mocna passa'
+        suggestionTitle='Polecany trening: Dzielenie'
+      />
+    );
+
+    expect(screen.getByTestId('training-setup-suggestion-card')).toBeInTheDocument();
+    expect(screen.getByTestId('training-setup-suggestion-label')).toHaveTextContent('Mocna passa');
+    expect(screen.getByTestId('training-setup-suggestion-title')).toHaveTextContent(
+      'Polecany trening: Dzielenie'
+    );
+    expect(screen.getByTestId('training-setup-suggestion-description')).toHaveTextContent(
+      'To najmocniej podbije dzisiejszy postep.'
+    );
+    expect(screen.getByRole('button', { name: 'Dzielenie' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Dodawanie' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '15 pytan' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('group', { name: 'Poziom trudnosci' })).toBeInTheDocument();
+    expect(screen.getByTestId('difficulty-option-hard')).toHaveAttribute('aria-pressed', 'true');
+  });
 });

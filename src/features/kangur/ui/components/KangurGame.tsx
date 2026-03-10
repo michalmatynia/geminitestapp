@@ -20,6 +20,7 @@ import {
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
+import { useOptionalKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -325,6 +326,7 @@ function PracticeModeGame(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const { mode } = useKangurGameContext();
+  const runtime = useOptionalKangurGameRuntime();
   const questions = getKangurQuestions(mode);
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -346,6 +348,7 @@ function PracticeModeGame(): React.JSX.Element {
         operation: mode ?? 'mixed',
         difficulty: null,
         correctAnswers: newScore,
+        followsRecommendation: Boolean(runtime?.activeSessionRecommendation),
         totalQuestions: questions.length,
       });
 

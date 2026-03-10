@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import {
   areIssueMapsEquivalent,
   buildFieldIssues,
@@ -13,6 +12,7 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/contracts/products';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

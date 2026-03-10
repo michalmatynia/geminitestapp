@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { resolveProductEditorContextRegistryEnvelope } from '@/features/products/context-registry/server';
 import { buildProductEditorContextRegistrySystemPrompt } from '@/features/products/context-registry/system-prompt';
 import { parseRuntimeConfigForEvaluation } from '@/features/products/server';
@@ -711,7 +712,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   const body = ctx.body as z.infer<typeof evaluateRuntimeSchema>;
   assertRuntimePayloadBounds(body);
   const contextRegistry = await resolveProductEditorContextRegistryEnvelope(
-    body.contextRegistry ?? null
+    body.contextRegistry ?? null,
+    contextRegistryEngine.resolveRefs.bind(contextRegistryEngine)
   );
   const values = body.values;
   const latestProductValues = body.latestProductValues ?? null;

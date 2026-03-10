@@ -2,15 +2,15 @@
 
 import React from 'react';
 
-import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/features/ai/ai-context-registry/context/page-context';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import {
   buildProductStudioWorkspaceContextBundle,
   PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
 } from '@/features/products/context-registry/workspace';
+import {
+  ContextRegistryPageProvider,
+  useRegisterContextRegistryPageSource,
+} from '@/shared/lib/ai-context-registry/page-context';
 import { FormSection } from '@/shared/ui';
 
 import { StudioActionsBar } from './studio/StudioActionsBar';

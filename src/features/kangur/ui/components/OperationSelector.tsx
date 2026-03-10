@@ -19,15 +19,21 @@ export type OperationSelectorProps = {
   priorityAssignmentsByOperation?: Partial<
     Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }>
   >;
+  recommendedLabel?: string;
+  recommendedOperation?: KangurOperation | null;
 };
 
 export default function OperationSelector({
   onSelect,
   priorityAssignmentsByOperation = {},
+  recommendedLabel,
+  recommendedOperation,
 }: OperationSelectorProps): React.JSX.Element {
   const { difficulty, operations, setDifficulty } = useKangurOperationSelectorState({
     onSelect,
     priorityAssignmentsByOperation,
+    recommendedLabel,
+    recommendedOperation,
   });
   const headingId = useId();
   const descriptionId = useId();
@@ -61,6 +67,9 @@ export default function OperationSelector({
           const priorityElementId = operation.hasPriorityAssignment
             ? `operation-card-priority-${operation.id}`
             : null;
+          const recommendedElementId = operation.isRecommended
+            ? `operation-card-recommendation-${operation.id}`
+            : null;
 
           return (
             <motion.div
@@ -76,11 +85,16 @@ export default function OperationSelector({
                 accent={operation.accent}
                 className='flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5'
                 data-testid={`operation-card-${operation.id}`}
-                emphasis={operation.hasPriorityAssignment ? 'accent' : 'neutral'}
+                emphasis={operation.hasPriorityAssignment || operation.isRecommended ? 'accent' : 'neutral'}
                 aria-describedby={
-                  priorityElementId
-                    ? `${statusElementId} ${priorityElementId} ${descriptionElementId}`
-                    : `${statusElementId} ${descriptionElementId}`
+                  [
+                    statusElementId,
+                    priorityElementId,
+                    recommendedElementId,
+                    descriptionElementId,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
                 }
                 onClick={operation.select}
               >
@@ -102,14 +116,27 @@ export default function OperationSelector({
                   >
                     {operation.emoji}
                   </KangurIconBadge>
-                  <KangurStatusChip
-                    accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
-                    className='text-[11px] font-semibold'
-                    id={statusElementId}
-                    size='sm'
-                  >
-                    {operation.statusLabel}
-                  </KangurStatusChip>
+                  <div className='flex flex-col items-end gap-2'>
+                    <KangurStatusChip
+                      accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
+                      className='text-[11px] font-semibold'
+                      id={statusElementId}
+                      size='sm'
+                    >
+                      {operation.statusLabel}
+                    </KangurStatusChip>
+                    {operation.isRecommended ? (
+                      <KangurStatusChip
+                        accent={operation.accent}
+                        className='text-[11px] font-semibold'
+                        data-testid={`operation-card-recommendation-${operation.id}`}
+                        id={recommendedElementId ?? undefined}
+                        size='sm'
+                      >
+                        {operation.recommendedLabel}
+                      </KangurStatusChip>
+                    ) : null}
+                  </div>
                 </div>
                 <div className='space-y-1 text-left'>
                   <span className='block text-lg font-extrabold text-slate-800'>

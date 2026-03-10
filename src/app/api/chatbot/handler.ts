@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   buildPersonaChatMemoryContext,
@@ -33,6 +34,7 @@ const chatbotTempRoot = path.join(process.cwd(), 'public', 'uploads', 'chatbot',
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
+const chatbotRequestSchema = z.object({}).passthrough();
 
 let lastTempCleanupAt = 0;
 
@@ -257,7 +259,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         return parsed.response;
       }
 
-      const body = parsed.data as {
+      const body = chatbotRequestSchema.parse(parsed.data) as {
         messages?: IncomingChatMessage[];
         sessionId?: string;
         contextRegistry?: unknown;

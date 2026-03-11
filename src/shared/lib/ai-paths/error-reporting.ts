@@ -325,17 +325,29 @@ const toRunFallbackReport = (run: AiPathRunRecord): AiPathErrorReport | null => 
 const toNodeFallbackReports = (nodes: AiPathRunNodeRecord[], runId: string): AiPathErrorReport[] =>
   nodes
     .filter(
-      (node: AiPathRunNodeRecord): boolean => node.status === 'failed' || node.status === 'blocked'
+      (node: AiPathRunNodeRecord): boolean =>
+        node.status === 'failed' || node.status === 'blocked' || node.status === 'timeout'
     )
     .map(
       (node: AiPathRunNodeRecord): AiPathErrorReport => {
         const isBlocked = node.status === 'blocked';
+        const isTimeout = node.status === 'timeout';
+        const code = isBlocked
+          ? 'AI_PATHS_NODE_BLOCKED'
+          : isTimeout
+            ? 'AI_PATHS_NODE_TIMEOUT'
+            : 'AI_PATHS_NODE_FAILED';
+        const fallbackMessage = isBlocked
+          ? 'Node blocked without completing.'
+          : isTimeout
+            ? 'Node timed out without completing.'
+            : 'Node failed without an explicit error message.';
         return buildAiPathErrorReport({
           error:
             toNonEmptyString(node.errorMessage) ??
             toNonEmptyString(node.error) ??
-            (isBlocked ? 'Node blocked without completing.' : 'Node failed without an explicit error message.'),
-          code: isBlocked ? 'AI_PATHS_NODE_BLOCKED' : 'AI_PATHS_NODE_FAILED',
+            fallbackMessage,
+          code,
           category: 'runtime',
           severity: 'error',
           scope: 'node',

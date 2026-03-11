@@ -27,7 +27,7 @@ Use this directory for cross-feature or repo-wide:
 - [`fastcomet-storage-plan.md`](./fastcomet-storage-plan.md)
 - [`image-studio-object-layout-improvement-plan.md`](./image-studio-object-layout-improvement-plan.md)
 - [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
-- [`eslint-10-migration-blocker-2026-03-10.md`](./eslint-10-migration-blocker-2026-03-10.md)
+- [`eslint-10-migration-completed-2026-03-10.md`](./eslint-10-migration-completed-2026-03-10.md)
 - [`site-wide-canonical-migration-plan-2026-03-05.md`](./site-wide-canonical-migration-plan-2026-03-05.md)
 
 ## Structure Notes

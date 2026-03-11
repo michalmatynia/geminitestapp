@@ -57,6 +57,7 @@ export function useKangurAiTutorWidgetState() {
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [isTutorHidden, setIsTutorHidden] = useState(getInitialTutorHiddenState);
   const [launcherPromptVisible, setLauncherPromptVisible] = useState(false);
+  const [canonicalTutorModalVisible, setCanonicalTutorModalVisible] = useState(false);
   const [guestIntroVisible, setGuestIntroVisible] = useState(false);
   const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
   const [contextualTutorMode, setContextualTutorMode] = useState<
@@ -149,6 +150,7 @@ export function useKangurAiTutorWidgetState() {
     askModalReturnStateRef,
     askModalVisible,
     avatarDragStateRef,
+    canonicalTutorModalVisible,
     contextualTutorMode,
     contextSwitchNotice,
     dismissedSelectedText,
@@ -200,6 +202,7 @@ export function useKangurAiTutorWidgetState() {
     setAskEntrySource,
     setAskModalDockStyle,
     setAskModalVisible,
+    setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setContextSwitchNotice,
     setDismissedSelectedText,

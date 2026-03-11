@@ -23,6 +23,36 @@ const countMatches = (content, pattern) => {
   return total;
 };
 
+const IMPORT_SPECIFIER_PATTERNS = [
+  /from\s+['"]([^'"\n]+)['"]/g,
+  /import\(\s*['"]([^'"\n]+)['"]\s*\)/g,
+];
+
+const resolveImportTargetPath = (importerPath, specifier) => {
+  if (!specifier) return null;
+  if (specifier.startsWith('@/')) {
+    return `src/${specifier.slice(2)}`;
+  }
+  if (specifier.startsWith('./') || specifier.startsWith('../')) {
+    return toPosix(path.posix.normalize(path.posix.join(path.posix.dirname(importerPath), specifier)));
+  }
+  return null;
+};
+
+const countResolvedImportsToPrefix = (record, prefix) => {
+  let total = 0;
+  for (const pattern of IMPORT_SPECIFIER_PATTERNS) {
+    for (const match of record.content.matchAll(pattern)) {
+      const specifier = match[1];
+      const resolvedPath = resolveImportTargetPath(record.path, specifier);
+      if (resolvedPath?.startsWith(prefix)) {
+        total += 1;
+      }
+    }
+  }
+  return total;
+};
+
 const parseNamedImports = (content) => {
   const bindings = new Map();
   const importRegex = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]/g;
@@ -223,6 +253,14 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   );
 
   const featureRecords = sourceRecords.filter((record) => record.path.startsWith('src/features/'));
+  const featureToSharedTotalImports = featureRecords.reduce(
+    (sum, record) => sum + countResolvedImportsToPrefix(record, 'src/shared/'),
+    0
+  );
+  const featureToAppApiTotalImports = featureRecords.reduce(
+    (sum, record) => sum + countResolvedImportsToPrefix(record, 'src/app/api/'),
+    0
+  );
   const featureStatsMap = new Map();
   const crossFeatureEdgeMap = new Map();
 
@@ -351,6 +389,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     imports: {
       appFeatureBarrelImports,
       appFeatureDeepImports,
+      featureToSharedTotalImports,
+      featureToAppApiTotalImports,
       sharedToFeaturesStaticImports,
       sharedToFeaturesDynamicImports,
       sharedToFeaturesTotalImports: sharedToFeaturesStaticImports + sharedToFeaturesDynamicImports,
@@ -393,6 +433,9 @@ export const formatCompactSummary = (metrics) => {
   );
   lines.push(`Cross-feature edge pairs: ${metrics.architecture.crossFeatureEdgePairs}`);
   lines.push(`Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`);
+  lines.push(
+    `Forbidden feature imports: shared=${metrics.imports.featureToSharedTotalImports}, app/api=${metrics.imports.featureToAppApiTotalImports}`
+  );
   lines.push(`setInterval occurrences: ${metrics.runtime.setIntervalOccurrences}`);
   if (metrics.codeHealth) {
     lines.push(`Deep relative imports (3+ levels): ${metrics.codeHealth.deepRelativeImportCount}`);

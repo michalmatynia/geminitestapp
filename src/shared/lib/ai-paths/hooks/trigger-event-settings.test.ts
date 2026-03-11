@@ -7,11 +7,17 @@ import {
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  fetchAiPathsSettingsByKeysCached,
+  fetchAiPathsSettingsCached,
+  updateAiPathsSetting,
+} from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
+  buildSelectiveTriggerSettingsData,
   coerceSampleStateMap,
   loadPathConfigsFromSettings,
+  loadTriggerSettingsData,
   resolvePreferredPathId,
   resolveRuntimeStateHint,
 } from './trigger-event-settings';
@@ -23,6 +29,8 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   return {
     ...actual,
     updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
+    fetchAiPathsSettingsCached: vi.fn(async () => []),
+    fetchAiPathsSettingsByKeysCached: vi.fn(async () => []),
   };
 });
 
@@ -119,9 +127,13 @@ const makeBrokenLiveParameterInferenceConfig = (pathId: string): string => {
 };
 
 const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
+const mockedFetchByKeys = vi.mocked(fetchAiPathsSettingsByKeysCached);
+const mockedFetchAll = vi.mocked(fetchAiPathsSettingsCached);
 
 beforeEach(() => {
   mockedUpdateAiPathsSetting.mockClear();
+  mockedFetchByKeys.mockClear();
+  mockedFetchAll.mockClear();
 });
 
 // ── resolvePreferredPathId ────────────────────────────────────────────────────
@@ -469,5 +481,100 @@ describe('loadPathConfigsFromSettings', () => {
     const { configs } = await loadPathConfigsFromSettings(data);
     // normalizeLoadedPathName generates a name from the id when both are empty
     expect(configs['path-1']?.name).toBeTruthy();
+  });
+});
+
+// ── buildSelectiveTriggerSettingsData ─────────────────────────────────────────
+
+describe('buildSelectiveTriggerSettingsData', () => {
+  it('throws when the preferred path config record is missing', async () => {
+    mockedFetchByKeys.mockResolvedValue([
+      { key: PATH_INDEX_KEY, value: '[]' },
+    ]);
+
+    await expect(buildSelectiveTriggerSettingsData('path-missing')).rejects.toThrow(
+      /missing preferred path config/i
+    );
+  });
+
+  it('throws when the preferred path config record has an empty value', async () => {
+    mockedFetchByKeys.mockResolvedValue([
+      { key: `${PATH_CONFIG_PREFIX}path-empty`, value: '' },
+    ]);
+
+    await expect(buildSelectiveTriggerSettingsData('path-empty')).rejects.toThrow(
+      /missing preferred path config/i
+    );
+  });
+
+  it('returns records including a synthetic index entry containing only the preferred path', async () => {
+    const configValue = makeConfig('path-sel', 'Selective Path');
+    mockedFetchByKeys.mockResolvedValue([
+      { key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue },
+    ]);
+
+    const records = await buildSelectiveTriggerSettingsData('path-sel');
+
+    const indexRecord = records.find((r) => r.key === PATH_INDEX_KEY);
+    expect(indexRecord).toBeDefined();
+    const parsedIndex = JSON.parse(indexRecord!.value) as Array<{ id: string; name: string }>;
+    expect(parsedIndex).toHaveLength(1);
+    expect(parsedIndex[0]?.id).toBe('path-sel');
+    expect(parsedIndex[0]?.name).toBe('Selective Path');
+
+    const configRecord = records.find((r) => r.key === `${PATH_CONFIG_PREFIX}path-sel`);
+    expect(configRecord?.value).toBe(configValue);
+  });
+
+  it('derives path name from config when available, falling back to a short id-based name', async () => {
+    const malformedConfigWithNoName = JSON.stringify({ id: 'path-noname', nodes: [], edges: [] });
+    mockedFetchByKeys.mockResolvedValue([
+      { key: `${PATH_CONFIG_PREFIX}path-noname`, value: malformedConfigWithNoName },
+    ]);
+
+    const records = await buildSelectiveTriggerSettingsData('path-noname');
+    const indexRecord = records.find((r) => r.key === PATH_INDEX_KEY);
+    const parsedIndex = JSON.parse(indexRecord!.value) as Array<{ id: string; name: string }>;
+    // Fallback name is based on the first 6 chars of the id
+    expect(parsedIndex[0]?.name).toMatch(/path-n/);
+  });
+});
+
+// ── loadTriggerSettingsData ───────────────────────────────────────────────────
+
+describe('loadTriggerSettingsData', () => {
+  it('returns mode=full using fetchAiPathsSettingsCached when no preferredPathId', async () => {
+    const allSettings = settingsFor([{ id: 'path-1', name: 'Path One' }]);
+    mockedFetchAll.mockResolvedValue(allSettings);
+
+    const result = await loadTriggerSettingsData({});
+
+    expect(result.mode).toBe('full');
+    expect(mockedFetchAll).toHaveBeenCalledTimes(1);
+    expect(mockedFetchByKeys).not.toHaveBeenCalled();
+  });
+
+  it('returns mode=selective when preferredPathId resolves', async () => {
+    const configValue = makeConfig('path-pref', 'Preferred Path');
+    mockedFetchByKeys.mockResolvedValue([
+      { key: `${PATH_CONFIG_PREFIX}path-pref`, value: configValue },
+    ]);
+
+    const result = await loadTriggerSettingsData({ preferredPathId: 'path-pref' });
+
+    expect(result.mode).toBe('selective');
+    expect(mockedFetchByKeys).toHaveBeenCalledTimes(1);
+    expect(mockedFetchAll).not.toHaveBeenCalled();
+  });
+
+  it('falls back to mode=full when selective load throws', async () => {
+    mockedFetchByKeys.mockRejectedValue(new Error('Selective fetch failed'));
+    const allSettings = settingsFor([{ id: 'path-1', name: 'Path One' }]);
+    mockedFetchAll.mockResolvedValue(allSettings);
+
+    const result = await loadTriggerSettingsData({ preferredPathId: 'path-pref' });
+
+    expect(result.mode).toBe('full');
+    expect(mockedFetchAll).toHaveBeenCalledTimes(1);
   });
 });

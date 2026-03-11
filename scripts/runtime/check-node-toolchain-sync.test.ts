@@ -146,6 +146,62 @@ describe('Node toolchain sync check', () => {
     expect(result.stdout).toContain('Node toolchain pins are aligned');
   });
 
+  it('passes when package.json engines.bun contains surrounding whitespace', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'node-toolchain-sync-fixture',
+          engines: {
+            node: expectedNodeEngine,
+            bun: `  ${expectedBunVersion}  `,
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Node toolchain pins are aligned');
+  });
+
+  it('passes when package.json engines.node contains surrounding whitespace', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'node-toolchain-sync-fixture',
+          engines: {
+            node: `  ${expectedNodeEngine}  `,
+            bun: expectedBunVersion,
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Node toolchain pins are aligned');
+  });
+
   it('fails when .nvmrc is missing', () => {
     const root = createTempRoot();
     writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
@@ -252,6 +308,19 @@ describe('Node toolchain sync check', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('Missing required .tool-versions');
+  });
+
+  it('fails when package.json is missing', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Missing required package.json');
   });
 
   it('fails when .node-version drifts from .nvmrc', () => {

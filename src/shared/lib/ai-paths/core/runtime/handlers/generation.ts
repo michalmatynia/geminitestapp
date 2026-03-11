@@ -587,7 +587,6 @@ export const handleModel: NodeHandler = async ({
 
     const isNoModelConfigured =
       normalizedUnwrapped.includes('no model assigned') ||
-      normalizedUnwrapped.includes('ai brain') ||
       (normalizedUnwrapped.includes('model') && normalizedUnwrapped.includes('did not select'));
 
     let toastMessage: string;
@@ -595,7 +594,7 @@ export const handleModel: NodeHandler = async ({
       toastMessage = errorMessage;
     } else if (isNoModelConfigured) {
       toastMessage =
-        'No AI model configured: Set a default model in AI Brain, or select a model on this node.';
+        'No AI model configured: Select a model on the Model node in your AI Path.';
     } else if (connectionWrapperMatch) {
       toastMessage = `AI model job failed: ${unwrappedErrorMessage}`;
     } else {

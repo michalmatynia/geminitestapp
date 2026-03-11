@@ -51,7 +51,12 @@ const installFakeBun = (root: string) =>
       '}',
       'if (args[0] === "pm" && args[1] === "migrate" && args.includes("--force")) {',
       '  if (process.env.BUN_FAKE_MIGRATE_FAIL === "1") {',
-      '    process.stderr.write("forced migrate failure\\n");',
+      '    if (process.env.BUN_FAKE_MIGRATE_STDOUT) {',
+      '      process.stdout.write(process.env.BUN_FAKE_MIGRATE_STDOUT);',
+      '    }',
+      '    if (process.env.BUN_FAKE_MIGRATE_STDERR !== "0") {',
+      '      process.stderr.write("forced migrate failure\\n");',
+      '    }',
       '    process.exit(1);',
       '  }',
       '  if (process.env.BUN_FAKE_SKIP_LOCK_WRITE === "1") {',
@@ -126,6 +131,105 @@ describe('Bun runtime checks', () => {
       env: {
         PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
         BUN_FAKE_VERSION: expectedBunVersion,
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      `Bun ${expectedBunVersion} matches .bun-version and package.json engines.bun.`
+    );
+  });
+
+  it('passes when package.json engines.bun contains surrounding whitespace', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'bun-version-check-fixture',
+          engines: {
+            bun: `  ${expectedBunVersion}  `,
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const result = runNodeScript(versionScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_VERSION: expectedBunVersion,
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      `Bun ${expectedBunVersion} matches .bun-version and package.json engines.bun.`
+    );
+  });
+
+  it('passes when .bun-version contains surrounding whitespace', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+    writeFile(root, '.bun-version', `  ${expectedBunVersion}  \n`);
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'bun-version-check-fixture',
+          engines: {
+            bun: expectedBunVersion,
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const result = runNodeScript(versionScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_VERSION: expectedBunVersion,
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      `Bun ${expectedBunVersion} matches .bun-version and package.json engines.bun.`
+    );
+  });
+
+  it('passes when bun --version returns surrounding whitespace', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'bun-version-check-fixture',
+          engines: {
+            bun: expectedBunVersion,
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const result = runNodeScript(versionScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_VERSION: `  ${expectedBunVersion}  `,
       },
     });
 
@@ -307,6 +411,23 @@ describe('Bun runtime checks', () => {
     expect(result.stderr).toContain('Unable to read package.json');
   });
 
+  it('fails when package.json is missing for the Bun version check', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+
+    const result = runNodeScript(versionScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_VERSION: expectedBunVersion,
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Unable to read package.json');
+  });
+
   it('fails when package.json engines.bun drifts from .bun-version', () => {
     const root = createTempRoot();
     installFakeBun(root);
@@ -410,6 +531,29 @@ describe('Bun runtime checks', () => {
     writeFile(root, 'package-lock.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
     writeFile(root, 'bun.lock', lockContents);
     writeFile(root, 'bunfig.toml', '[install]\nlinker = "hoisted"\n');
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_LOCK_SOURCE: lockSource,
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('bun.lock matches package-lock.json.');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(lockContents);
+  });
+
+  it('passes when bun.lock matches package-lock.json without bunfig.toml present', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+
+    const lockContents = '{\n  "lockfileVersion": 1\n}\n';
+    const lockSource = writeFile(root, 'fixtures/generated-bun.lock', lockContents);
+    writeFile(root, 'package.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'package-lock.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'bun.lock', lockContents);
 
     const result = runNodeScript(lockSyncScript, {
       cwd: root,
@@ -544,6 +688,61 @@ describe('Bun runtime checks', () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('Bun lock sync check failed while regenerating bun.lock');
     expect(result.stderr).toContain('forced migrate failure');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(originalLock);
+  });
+
+  it('surfaces stdout when bun pm migrate fails with mixed output', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+
+    const originalLock = '{\n  "lockfileVersion": 1\n}\n';
+    const lockSource = writeFile(root, 'fixtures/generated-bun.lock', originalLock);
+    writeFile(root, 'package.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'package-lock.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'bun.lock', originalLock);
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_LOCK_SOURCE: lockSource,
+        BUN_FAKE_MIGRATE_FAIL: '1',
+        BUN_FAKE_MIGRATE_STDOUT: 'partial migrate output\n',
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Bun lock sync check failed while regenerating bun.lock');
+    expect(result.stderr).toContain('forced migrate failure');
+    expect(result.stderr).toContain('partial migrate output');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(originalLock);
+  });
+
+  it('surfaces stdout when bun pm migrate fails without stderr output', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+
+    const originalLock = '{\n  "lockfileVersion": 1\n}\n';
+    const lockSource = writeFile(root, 'fixtures/generated-bun.lock', originalLock);
+    writeFile(root, 'package.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'package-lock.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'bun.lock', originalLock);
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_LOCK_SOURCE: lockSource,
+        BUN_FAKE_MIGRATE_FAIL: '1',
+        BUN_FAKE_MIGRATE_STDOUT: 'stdout-only migrate failure\n',
+        BUN_FAKE_MIGRATE_STDERR: '0',
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Bun lock sync check failed while regenerating bun.lock');
+    expect(result.stderr).toContain('stdout-only migrate failure');
+    expect(result.stderr).not.toContain('forced migrate failure');
     expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(originalLock);
   });
 

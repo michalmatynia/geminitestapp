@@ -98,6 +98,18 @@ describe('Node version preflight', () => {
     expect(result.errors[0]).toContain(`recommended: Node ${expectedNodeVersion} LTS`);
   });
 
+  it('falls back to a generic repo-pinned label for too-old Node when .nvmrc cannot be read', () => {
+    const result = runScript({
+      nodeVersion: '19.9.0',
+      processVersion: 'v19.9.0',
+      nvmrc: null,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.errors[0]).toContain('is too old. Use Node 20.9+');
+    expect(result.errors[0]).toContain('recommended: the repo-pinned Node LTS release');
+  });
+
   it('uses the pinned .nvmrc major in the unsupported-node error', () => {
     const result = runScript({
       nodeVersion: '24.1.0',
@@ -145,6 +157,18 @@ describe('Node version preflight', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.warns[0]).toContain(`For better stability use Node ${expectedNodeVersion} LTS`);
+  });
+
+  it('does not warn for a non-LTS Node version when it matches the pinned major', () => {
+    const result = runScript({
+      nodeVersion: `${nonLtsNodeVersionMajor}.5.0`,
+      processVersion: `v${nonLtsNodeVersionMajor}.5.0`,
+      nvmrc: `${nonLtsNodeVersionMajor}\n`,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.errors).toEqual([]);
+    expect(result.warns).toEqual([]);
   });
 
   it('falls back to a generic repo-pinned message when .nvmrc cannot be read', () => {

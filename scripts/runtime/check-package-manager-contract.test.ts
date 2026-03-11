@@ -81,6 +81,26 @@ describe('Package manager contract check', () => {
     expect(result.stdout).toContain('Package manager contract is aligned');
   });
 
+  it('passes when packageManager and engines.npm contain surrounding whitespace', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'package-manager-contract-fixture',
+      packageManager: `  ${expectedPackageManager}  `,
+      engines: {
+        npm: `  ${expectedNpmEngine}  `,
+      },
+    });
+    writeJson(root, 'package-lock.json', {
+      name: 'package-manager-contract-fixture',
+      lockfileVersion: 3,
+    });
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Package manager contract is aligned');
+  });
+
   it('fails when packageManager is missing', () => {
     const root = createTempRoot();
     writeJson(root, 'package.json', {
@@ -293,6 +313,19 @@ describe('Package manager contract check', () => {
     expect(result.stderr).toContain('Unable to read package.json');
   });
 
+  it('fails when package.json is missing', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package-lock.json', {
+      name: 'package-manager-contract-fixture',
+      lockfileVersion: 3,
+    });
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Unable to read package.json');
+  });
+
   it('fails when package-lock.json cannot be parsed', () => {
     const root = createTempRoot();
     writeJson(root, 'package.json', {
@@ -303,6 +336,22 @@ describe('Package manager contract check', () => {
       },
     });
     writeFile(root, 'package-lock.json', '{\n');
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Unable to read package-lock.json');
+  });
+
+  it('fails when package-lock.json is missing', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'package-manager-contract-fixture',
+      packageManager: expectedPackageManager,
+      engines: {
+        npm: expectedNpmEngine,
+      },
+    });
 
     const result = runScript(root);
 

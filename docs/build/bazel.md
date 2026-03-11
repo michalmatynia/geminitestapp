@@ -83,6 +83,7 @@ npm run bazel -- run //:unit
 npm run bazel -- run //:next_build
 npm run bazel:smoke
 npm run bazel:regressions
+npm run bazel:ci
 ```
 
 The dedicated Bazel smoke workflow now exercises:
@@ -152,6 +153,22 @@ Validated direct Bazel gates:
 - `//:api_error_sources`
 - `//:case_resolver_regression`
 - `//:products_trigger_queue_unit`
+
+Unified local CI entrypoint:
+
+- command: `npm run bazel:ci`
+- includes:
+  - `npm run bazel:smoke`
+  - `npm run bazel:regressions`
+
+## Branch protection recommendation
+
+These checks should be required in GitHub branch protection:
+
+- `bazel-smoke`
+- `bazel-specialized-regressions`
+
+This repository can document those requirements, but GitHub branch protection itself must still be configured in repository settings.
 
 ## Optional remote cache
 

@@ -4,8 +4,6 @@ import { act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
-
 const { getAiPathRunMock, streamAiPathRunMock } = vi.hoisted(() => ({
   getAiPathRunMock: vi.fn(),
   streamAiPathRunMock: vi.fn(),
@@ -18,7 +16,10 @@ vi.mock('@/shared/lib/ai-paths/api/client', () => ({
 
 import {
   __resetTrackedAiPathRunClientStateForTests,
+  isTrackedAiPathRunTerminal,
+  readTrackedAiPathRunSnapshot,
   subscribeToTrackedAiPathRun,
+  type TrackedAiPathRunSnapshot,
 } from '../client-run-tracker';
 
 const flushAsync = async (): Promise<void> => {
@@ -336,6 +337,143 @@ describe('client-run-tracker', () => {
     ).toBe(false);
   });
 
+  it('returns a no-op unsubscribe for an empty runId', () => {
+    const listener = vi.fn();
+    const unsub = subscribeToTrackedAiPathRun('', listener);
+    expect(listener).not.toHaveBeenCalled();
+    expect(() => unsub()).not.toThrow();
+  });
+
+  it('returns a no-op unsubscribe for a whitespace-only runId', () => {
+    const listener = vi.fn();
+    const unsub = subscribeToTrackedAiPathRun('   ', listener);
+    expect(listener).not.toHaveBeenCalled();
+    expect(() => unsub()).not.toThrow();
+  });
+
+  it('surfaces errorSummary.primary.userMessage when run.errorMessage is absent', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: createRunRecord({
+          id: 'run-err-summary',
+          status: 'failed',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          errorMessage: null,
+        }),
+        errorSummary: {
+          primary: {
+            version: 1,
+            code: 'AI_PATHS_NODE_FAILED',
+            category: 'runtime',
+            severity: 'error',
+            scope: 'node',
+            message: 'Internal node error.',
+            userMessage: 'Database write affected 0 records for update.',
+            timestamp: '2026-03-09T12:00:05.000Z',
+            traceId: null,
+            runId: 'run-err-summary',
+            nodeId: 'node-1',
+            nodeType: 'database',
+            nodeTitle: 'DB Update',
+            attempt: 1,
+            iteration: null,
+            retryable: false,
+            retryAfterMs: null,
+            statusCode: null,
+            cause: null,
+            causeChain: [],
+            hints: [],
+            metadata: null,
+          },
+          totalErrors: 1,
+          reportCount: 1,
+          retryable: false,
+          lastErrorAt: '2026-03-09T12:00:05.000Z',
+          codes: [{ code: 'AI_PATHS_NODE_FAILED', count: 1 }],
+          nodeFailures: [],
+        },
+      },
+    });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-err-summary', (snapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit('done', new Event('done'));
+    });
+    await flushAsync();
+
+    expect(snapshots.at(-1)).toMatchObject({
+      status: 'failed',
+      trackingState: 'stopped',
+      errorMessage: 'Database write affected 0 records for update.',
+    });
+  });
+
+  it('clears errorMessage from snapshot for non-terminal run statuses', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: createRunRecord({
+          id: 'run-non-term-err',
+          status: 'running',
+          updatedAt: '2026-03-09T12:00:03.000Z',
+          errorMessage: 'Some transient warning',
+        }),
+      },
+    });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-non-term-err', (snapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit('done', new Event('done'));
+    });
+    await flushAsync();
+
+    const runningSnapshot = snapshots.find((s) => s.status === 'running');
+    expect(runningSnapshot?.errorMessage).toBeNull();
+  });
+
+  it('finalizes with trackingState=stopped after max consecutive poll failures', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock.mockResolvedValue({
+      ok: false,
+      error: 'Internal Server Error',
+    });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-maxfail', (snapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    // trigger stream error → switches to polling
+    act(() => {
+      eventSource.emit('error', new Event('error'));
+    });
+    // 3 poll failures (MAX_RUN_DETAIL_POLL_FAILURES = 3)
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        vi.advanceTimersByTime(2_000);
+        await Promise.resolve();
+      });
+    }
+
+    expect(snapshots.at(-1)?.trackingState).toBe('stopped');
+    expect(getAiPathRunMock.mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+
   it('finalizes terminal stream updates without surfacing transient detail timeouts', async () => {
     const eventSource = new MockEventSource();
     streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
@@ -381,4 +519,76 @@ describe('client-run-tracker', () => {
       finishedAt: '2026-03-09T12:00:12.000Z',
     });
   });
+});
+
+// ── readTrackedAiPathRunSnapshot ──────────────────────────────────────────────
+
+describe('readTrackedAiPathRunSnapshot', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getAiPathRunMock.mockReset();
+    streamAiPathRunMock.mockReset();
+    __resetTrackedAiPathRunClientStateForTests();
+    vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
+  });
+
+  afterEach(() => {
+    __resetTrackedAiPathRunClientStateForTests();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('returns null for an untracked runId', () => {
+    expect(readTrackedAiPathRunSnapshot('run-not-tracked')).toBeNull();
+  });
+
+  it('returns the current snapshot for an actively tracked runId', () => {
+    streamAiPathRunMock.mockReturnValue(new MockEventSource() as unknown as EventSource);
+    subscribeToTrackedAiPathRun('run-read', vi.fn(), {
+      initialSnapshot: { status: 'queued', entityId: 'product-42', entityType: 'product' },
+    });
+
+    const snapshot = readTrackedAiPathRunSnapshot('run-read');
+    expect(snapshot).not.toBeNull();
+    expect(snapshot!.runId).toBe('run-read');
+    expect(snapshot!.entityId).toBe('product-42');
+    expect(snapshot!.status).toBe('queued');
+  });
+
+  it('returns null after the last listener unsubscribes', () => {
+    streamAiPathRunMock.mockReturnValue(new MockEventSource() as unknown as EventSource);
+    const unsub = subscribeToTrackedAiPathRun('run-cleanup-read', vi.fn());
+    unsub();
+    expect(readTrackedAiPathRunSnapshot('run-cleanup-read')).toBeNull();
+  });
+});
+
+// ── isTrackedAiPathRunTerminal ────────────────────────────────────────────────
+
+describe('isTrackedAiPathRunTerminal', () => {
+  const makeSnapshot = (status: TrackedAiPathRunSnapshot['status']): TrackedAiPathRunSnapshot => ({
+    runId: 'run-1',
+    status,
+    updatedAt: null,
+    finishedAt: null,
+    errorMessage: null,
+    entityId: null,
+    entityType: null,
+    trackingState: 'active',
+  });
+
+  it.each(['completed', 'failed', 'canceled', 'dead_lettered'] as const)(
+    'returns true for terminal status %s',
+    (status) => {
+      expect(isTrackedAiPathRunTerminal(makeSnapshot(status))).toBe(true);
+    }
+  );
+
+  it.each(['queued', 'running', 'blocked_on_lease', 'paused', 'handoff_ready'] as const)(
+    'returns false for non-terminal status %s',
+    (status) => {
+      expect(isTrackedAiPathRunTerminal(makeSnapshot(status))).toBe(false);
+    }
+  );
 });

@@ -149,10 +149,54 @@ const normalizeGraphModelDispatchPayloadFromMetadata = (
   });
 };
 
-const readSummarizableGraphModelPayload = (
-  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+const resolveGraphModelExecutionPayloadFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): {
+  source: string | null;
+  payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
+} => {
+  const classification = metadata.classification;
+  if (!classification.record) {
+    return {
+      source: null,
+      payload: null,
+    };
+  }
+
+  if (
+    classification.source === 'ai_paths' &&
+    (classification.queuedPayload ||
+      classification.enqueuePayload ||
+      classification.hasLegacyAiPathsNodeContext)
+  ) {
+    return {
+      source: classification.source,
+      payload: normalizeGraphModelDispatchPayloadFromMetadata(metadata),
+    };
+  }
+
+  return {
+    source: classification.source,
+    payload: classification.record,
+  };
+};
+
+const resolveGraphModelReuseIdentityFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): {
+  cacheKey: string | null;
+  payloadHash: string | null;
+  requestedModelId: string | null;
+} => ({
+  cacheKey: metadata.cacheKey,
+  payloadHash: metadata.payloadHash,
+  requestedModelId: metadata.requestedModelId,
+});
+
+const readSummarizableGraphModelPayloadFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
 ): GraphModelQueuedPayload | GraphModelJobPayload | Record<string, unknown> | null => {
-  const classification = readGraphModelPayloadClassification(payload);
+  const classification = metadata.classification;
   if (classification.queuedPayload) return classification.queuedPayload;
   if (classification.enqueuePayload) return classification.enqueuePayload;
   if (classification.hasLegacyAiPathsNodeContext && classification.record) {
@@ -176,6 +220,28 @@ const readSummarizableGraphModelPayload = (
     };
   }
   return null;
+};
+
+const summarizeGraphModelPayloadFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): Record<string, unknown> | undefined => {
+  const record = readSummarizableGraphModelPayloadFromMetadata(metadata);
+  if (!record) return undefined;
+  const prompt = toTrimmedString(record['prompt']);
+  const imageCount = Array.isArray(record['imageUrls'])
+    ? record['imageUrls'].filter((value): value is string => typeof value === 'string').length
+    : 0;
+
+  return {
+    source: metadata.classification.source,
+    modelId: toTrimmedString(record['modelId']),
+    requestedModelId: metadata.requestedModelId,
+    vision: typeof record['vision'] === 'boolean' ? record['vision'] : null,
+    promptLength: prompt?.length ?? null,
+    imageCount,
+    cacheKey: metadata.cacheKey?.slice(0, 12) ?? null,
+    payloadHash: metadata.payloadHash?.slice(0, 12) ?? null,
+  };
 };
 
 export const readGraphModelPayloadGraphString = (
@@ -205,11 +271,23 @@ export const resolveGraphModelReuseIdentity = (
   cacheKey: string | null;
   payloadHash: string | null;
   requestedModelId: string | null;
-} => ({
-  cacheKey: resolveGraphModelCacheKey(payload),
-  payloadHash: resolveGraphModelPayloadHash(payload),
-  requestedModelId: resolveGraphModelRequestedModelId(payload),
-});
+} => resolveGraphModelReuseIdentityFromMetadata(readGraphModelPayloadMetadata(payload));
+
+export const matchesGraphModelReuseIdentity = (args: {
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+  identity: {
+    cacheKey: string;
+    payloadHash: string;
+    requestedModelId: string | null;
+  };
+}): boolean => {
+  const existingIdentity = resolveGraphModelReuseIdentity(args.payload);
+  return (
+    existingIdentity.cacheKey === args.identity.cacheKey &&
+    existingIdentity.payloadHash === args.identity.payloadHash &&
+    existingIdentity.requestedModelId === args.identity.requestedModelId
+  );
+};
 
 export const readGraphModelAiPathsRunContext = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
@@ -269,31 +347,7 @@ export const resolveGraphModelExecutionPayload = (
   source: string | null;
   payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
 } => {
-  const metadata = readGraphModelPayloadMetadata(payload);
-  const classification = metadata.classification;
-  if (!classification.record) {
-    return {
-      source: null,
-      payload: null,
-    };
-  }
-
-  if (
-    classification.source === 'ai_paths' &&
-    (classification.queuedPayload ||
-      classification.enqueuePayload ||
-      classification.hasLegacyAiPathsNodeContext)
-  ) {
-    return {
-      source: classification.source,
-      payload: normalizeGraphModelDispatchPayloadFromMetadata(metadata),
-    };
-  }
-
-  return {
-    source: classification.source,
-    payload: classification.record,
-  };
+  return resolveGraphModelExecutionPayloadFromMetadata(readGraphModelPayloadMetadata(payload));
 };
 
 export const resolveGraphModelExecutionContext = (
@@ -308,7 +362,7 @@ export const resolveGraphModelExecutionContext = (
   hasAiPathsNodeContext: boolean;
 } => {
   const metadata = readGraphModelPayloadMetadata(payload);
-  const execution = resolveGraphModelExecutionPayload(payload);
+  const execution = resolveGraphModelExecutionPayloadFromMetadata(metadata);
 
   return {
     source: execution.source,
@@ -321,19 +375,30 @@ export const resolveGraphModelExecutionContext = (
   };
 };
 
-export const resolveAiPathsGraphModelRequestedModelId = async (args: {
-  payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+type GraphModelExecutionContext = ReturnType<typeof resolveGraphModelExecutionContext>;
+
+export const resolveAiPathsGraphModelNodeSnapshotFromExecutionContext = async (args: {
+  executionContext: GraphModelExecutionContext;
   findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
-}): Promise<string> => {
-  const executionContext = resolveGraphModelExecutionContext(args.payload);
+}): Promise<{ requestedModelId: string; nodeTitle: string | null }> => {
+  const executionContext = args.executionContext;
   if (executionContext.source !== 'ai_paths') {
-    return executionContext.requestedModelId ?? '';
+    return {
+      requestedModelId: executionContext.requestedModelId ?? '',
+      nodeTitle: executionContext.nodeTitle,
+    };
   }
   if (executionContext.requestedModelId) {
-    return executionContext.requestedModelId;
+    return {
+      requestedModelId: executionContext.requestedModelId,
+      nodeTitle: executionContext.nodeTitle,
+    };
   }
   if (!executionContext.runId || !executionContext.nodeId) {
-    return '';
+    return {
+      requestedModelId: '',
+      nodeTitle: executionContext.nodeTitle,
+    };
   }
 
   try {
@@ -351,30 +416,76 @@ export const resolveAiPathsGraphModelRequestedModelId = async (args: {
         ? ((nodeRecord['config'] as Record<string, unknown>)['model'] as Record<string, unknown> | undefined)
         : undefined;
     const recoveredModelId = modelConfig?.['modelId'];
-    return typeof recoveredModelId === 'string' ? recoveredModelId.trim() : '';
+    const recoveredNodeTitle = toTrimmedString(nodeRecord?.['title']);
+    return {
+      requestedModelId: typeof recoveredModelId === 'string' ? recoveredModelId.trim() : '',
+      nodeTitle: executionContext.nodeTitle ?? recoveredNodeTitle ?? null,
+    };
   } catch {
-    return '';
+    return {
+      requestedModelId: '',
+      nodeTitle: executionContext.nodeTitle,
+    };
   }
 };
 
+export const resolveAiPathsGraphModelRequestedModelIdFromExecutionContext = async (args: {
+  executionContext: GraphModelExecutionContext;
+  findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
+}): Promise<string> =>
+  (
+    await resolveAiPathsGraphModelNodeSnapshotFromExecutionContext({
+      executionContext: args.executionContext,
+      findRunById: args.findRunById,
+    })
+  ).requestedModelId;
+
+export const resolveAiPathsGraphModelRequestedModelId = async (args: {
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+  findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
+}): Promise<string> =>
+  resolveAiPathsGraphModelRequestedModelIdFromExecutionContext({
+    executionContext: resolveGraphModelExecutionContext(args.payload),
+    findRunById: args.findRunById,
+  });
+
 export const summarizeGraphModelPayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): Record<string, unknown> | undefined => {
-  const record = readSummarizableGraphModelPayload(payload);
-  if (!record) return undefined;
-  const prompt = toTrimmedString(record['prompt']);
-  const imageCount = Array.isArray(record['imageUrls'])
-    ? record['imageUrls'].filter((value): value is string => typeof value === 'string').length
-    : 0;
+): Record<string, unknown> | undefined =>
+  summarizeGraphModelPayloadFromMetadata(readGraphModelPayloadMetadata(payload));
+
+export const prepareGraphModelEnqueuePayload = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+):
+  | {
+    success: true;
+    payload: GraphModelQueuedPayload;
+    reuseIdentity: {
+      cacheKey: string | null;
+      payloadHash: string | null;
+      requestedModelId: string | null;
+    };
+    summary: Record<string, unknown> | undefined;
+  }
+  | {
+    success: false;
+    error: NonNullable<ReturnType<typeof safeParseGraphModelJobEnqueuePayload>['error']>;
+  } => {
+  const parsed = safeParseGraphModelJobEnqueuePayload(payload);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error,
+    };
+  }
+
+  const queuedPayload = normalizeGraphModelPayloadForDispatch(parsed.data);
+  const metadata = readGraphModelPayloadMetadata(queuedPayload);
 
   return {
-    source: resolveGraphModelPayloadSource(record),
-    modelId: toTrimmedString(record['modelId']),
-    requestedModelId: resolveGraphModelRequestedModelId(record),
-    vision: typeof record['vision'] === 'boolean' ? record['vision'] : null,
-    promptLength: prompt?.length ?? null,
-    imageCount,
-    cacheKey: resolveGraphModelCacheKey(record)?.slice(0, 12) ?? null,
-    payloadHash: resolveGraphModelPayloadHash(record)?.slice(0, 12) ?? null,
+    success: true,
+    payload: queuedPayload,
+    reuseIdentity: resolveGraphModelReuseIdentityFromMetadata(metadata),
+    summary: summarizeGraphModelPayloadFromMetadata(metadata),
   };
 };

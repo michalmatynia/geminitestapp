@@ -102,9 +102,12 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleFloatingAvatarPointerDown: KangurAiTutorPortalContextValue['avatar']['onPointerDown'];
   handleFloatingAvatarPointerMove: KangurAiTutorPortalContextValue['avatar']['onPointerMove'];
   handleFloatingAvatarPointerUp: KangurAiTutorPortalContextValue['avatar']['onPointerUp'];
+  handleAuthenticatedOnboardingAccept: () => void;
+  handleAuthenticatedOnboardingDismiss: () => void;
   handleFocusHighlightedSection: KangurAiTutorPanelBodyContextValue['handleFocusHighlightedSection'];
   handleFocusSelectedFragment: KangurAiTutorPanelBodyContextValue['handleFocusSelectedFragment'];
   handleFollowUpClick: KangurAiTutorPanelBodyContextValue['handleFollowUpClick'];
+  handleWebsiteHelpTargetClick: KangurAiTutorPanelBodyContextValue['handleWebsiteHelpTargetClick'];
   handleGuestIntroAccept: KangurAiTutorPortalContextValue['guestIntro']['onAccept'];
   handleHomeOnboardingAdvance: KangurAiTutorPortalContextValue['guidedCallout']['onAdvanceHomeOnboarding'];
   handleHomeOnboardingBack: KangurAiTutorPortalContextValue['guidedCallout']['onBackHomeOnboarding'];
@@ -197,9 +200,20 @@ export function useKangurAiTutorPortalViewModel(
   const hasContextualTutorLock =
     input.tutorSurfaceMode === 'selection_guided' ||
     input.tutorSurfaceMode === 'section_guided';
-
-  const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
-  const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
+  const showAuthenticatedHomeOnboardingEntry =
+    !input.isAnonymousVisitor && input.canStartHomeOnboardingManually;
+  const guestIntroHeadline = showAuthenticatedHomeOnboardingEntry
+    ? input.tutorContent.homeOnboarding.entry.headline
+    : input.tutorContent.guestIntro.initial.headline;
+  const guestIntroDescription = showAuthenticatedHomeOnboardingEntry
+    ? input.tutorContent.homeOnboarding.entry.description
+    : input.tutorContent.guestIntro.initial.description;
+  const handleCanonicalOnboardingAccept = showAuthenticatedHomeOnboardingEntry
+    ? input.handleAuthenticatedOnboardingAccept
+    : input.handleGuestIntroAccept;
+  const handleCanonicalOnboardingDismiss = showAuthenticatedHomeOnboardingEntry
+    ? input.handleAuthenticatedOnboardingDismiss
+    : input.handleGuestIntroDismiss;
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&
     !hasContextualTutorLock &&
@@ -236,6 +250,7 @@ export function useKangurAiTutorPortalViewModel(
       handleFollowUpClick: input.handleFollowUpClick,
       handleKeyDown: input.handleKeyDown,
       handleMessageFeedback: input.handleMessageFeedback,
+      handleWebsiteHelpTargetClick: input.handleWebsiteHelpTargetClick,
       handleQuickAction: input.handleQuickAction,
       handleSend: input.handleSend,
       handleStartHomeOnboarding: input.handleStartHomeOnboarding,
@@ -288,6 +303,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleFollowUpClick,
       input.handleKeyDown,
       input.handleMessageFeedback,
+      input.handleWebsiteHelpTargetClick,
       input.handleQuickAction,
       input.handleSend,
       input.handleStartHomeOnboarding,
@@ -377,8 +393,8 @@ export function useKangurAiTutorPortalViewModel(
         panelStyle: getGuestIntroPanelStyle(input.viewport),
         prefersReducedMotion: prefersReducedMotionEnabled,
         shouldRender: shouldRenderGuestIntro,
-        onAccept: input.handleGuestIntroAccept,
-        onClose: input.handleGuestIntroDismiss,
+        onAccept: handleCanonicalOnboardingAccept,
+        onClose: handleCanonicalOnboardingDismiss,
       },
       guidedCallout: {
         calloutKey: input.guidedCalloutKey,
@@ -507,6 +523,8 @@ export function useKangurAiTutorPortalViewModel(
       input.handleAvatarMouseDown,
       input.handleAvatarMouseUp,
       input.handleCloseChat,
+      input.handleAuthenticatedOnboardingAccept,
+      input.handleAuthenticatedOnboardingDismiss,
       input.handleGuestIntroDismiss,
       input.handleCloseGuidedCallout,
       input.handleDisableTutor,
@@ -521,6 +539,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handlePanelBackdropClose,
       input.handlePanelHeaderClose,
       input.handleSelectionActionMouseDown,
+      input.canStartHomeOnboardingManually,
       input.homeOnboardingStep,
       input.isAnonymousVisitor,
       input.isAskModalMode,
@@ -560,9 +579,12 @@ export function useKangurAiTutorPortalViewModel(
       input.uiMode,
       input.viewport,
       hasContextualTutorLock,
+      handleCanonicalOnboardingAccept,
+      handleCanonicalOnboardingDismiss,
       isGuidedAvatarMode,
       panelBodyContextValue,
       prefersReducedMotionEnabled,
+      showAuthenticatedHomeOnboardingEntry,
     ]
   );
 

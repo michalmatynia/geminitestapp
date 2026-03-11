@@ -519,6 +519,14 @@ const getAnchorKindsForSurface = (
     return ['hero', 'navigation', 'screen'];
   }
 
+  if (surface === 'auth') {
+    if (contentId?.includes(':create-account')) {
+      return ['login_identifier_field', 'login_form', 'create_account_action'];
+    }
+
+    return ['login_identifier_field', 'login_form', 'login_action'];
+  }
+
   return [];
 };
 

@@ -62,6 +62,10 @@ export const kangurAiTutorFocusKindSchema = z.enum([
   'question',
   'review',
   'summary',
+  'login_action',
+  'create_account_action',
+  'login_identifier_field',
+  'login_form',
 ]);
 export type KangurAiTutorFocusKind = z.infer<typeof kangurAiTutorFocusKindSchema>;
 
@@ -81,6 +85,7 @@ export const kangurAiTutorSurfaceSchema = z.enum([
   'game',
   'profile',
   'parent_dashboard',
+  'auth',
 ]);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
@@ -180,11 +185,22 @@ export const kangurAiTutorCoachingFrameSchema = z.object({
 });
 export type KangurAiTutorCoachingFrame = z.infer<typeof kangurAiTutorCoachingFrameSchema>;
 
+export const kangurAiTutorWebsiteHelpTargetSchema = z.object({
+  nodeId: nonEmptyTrimmedString.max(160),
+  label: nonEmptyTrimmedString.max(160),
+  route: z.string().trim().max(240).nullable().optional(),
+  anchorId: z.string().trim().max(160).nullable().optional(),
+});
+export type KangurAiTutorWebsiteHelpTarget = z.infer<
+  typeof kangurAiTutorWebsiteHelpTargetSchema
+>;
+
 export const kangurAiTutorChatResponseSchema = z.object({
   message: z.string(),
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
   artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).default([]),
+  websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.optional(),
   coachingFrame: kangurAiTutorCoachingFrameSchema.optional(),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
   tutorMood: kangurAiTutorLearnerMoodSchema.optional(),

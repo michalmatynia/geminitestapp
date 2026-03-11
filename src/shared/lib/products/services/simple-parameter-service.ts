@@ -6,7 +6,6 @@ import type { ProductSimpleParameter } from '@/shared/contracts/products';
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
@@ -88,53 +87,33 @@ const parseSimpleParameters = (value: string | null): ProductSimpleParameter[] =
 };
 
 const readSimpleParametersRaw = async (): Promise<string | null> => {
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
-      .findOne(toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY));
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-
-  const setting = await prisma.setting.findUnique({
-    where: { key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY },
-    select: { value: true },
-  });
-  return setting?.value ?? null;
+  await getProductDataProvider();
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+    .findOne(toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY));
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSimpleParametersRaw = async (value: string): Promise<void> => {
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo
-      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
-      .updateOne(
-        toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
-        {
-          $set: {
-            key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
-            value,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: {
-            createdAt: new Date(),
-          },
+  await getProductDataProvider();
+  const mongo = await getMongoDb();
+  await mongo
+    .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+    .updateOne(
+      toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
+      {
+        $set: {
+          key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
+          value,
+          updatedAt: new Date(),
         },
-        { upsert: true }
-      );
-    return;
-  }
-
-  await prisma.setting.upsert({
-    where: { key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY },
-    update: { value },
-    create: {
-      key: PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
-      value,
-    },
-  });
+        $setOnInsert: {
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
 };
 
 const readSimpleParameters = async (): Promise<ProductSimpleParameter[]> =>

@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -16,6 +15,14 @@ import {
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
+const isLegacyPrismaSchemaMismatchError = (
+  error: unknown
+): error is { code: 'P2021' | 'P2022' } => {
+  if (!error || typeof error !== 'object') return false;
+  const { code } = error as { code?: unknown };
+  return code === 'P2021' || code === 'P2022';
+};
 
 export const listQuerySchema = z.object({
   status: optionalBooleanQuerySchema().default(false),
@@ -76,10 +83,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       }
     );
   } catch (error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === 'P2021' || error.code === 'P2022')
-    ) {
+    if (isLegacyPrismaSchemaMismatchError(error)) {
       await logSystemEvent({
         level: 'warn',
         message: '[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.',

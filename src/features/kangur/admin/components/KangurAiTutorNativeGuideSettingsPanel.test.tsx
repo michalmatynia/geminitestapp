@@ -73,4 +73,35 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     expect(screen.getByLabelText('Native guide entry title')).toHaveValue('Naglowek lekcji');
     expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
   });
+
+  it('shows a clean manifest coverage report for the seeded Mongo guide store', async () => {
+    render(<KangurAiTutorNativeGuideSettingsPanel />);
+
+    expect(
+      await screen.findByText('50 / 50 tracked sections covered')
+    ).toBeInTheDocument();
+    expect(screen.getByText('No manifest gaps')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Every tracked Kangur section is backed by an enabled Mongo native-guide entry.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('flags missing or disabled guide entries in the manifest coverage report', async () => {
+    const brokenStore = JSON.parse(
+      JSON.stringify(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE)
+    ) as KangurAiTutorNativeGuideStore;
+    brokenStore.entries = brokenStore.entries.filter((entry) => entry.id !== 'auth-login-action');
+    apiGetMock.mockResolvedValueOnce(brokenStore);
+
+    render(<KangurAiTutorNativeGuideSettingsPanel />);
+
+    expect(
+      await screen.findByText('49 / 50 tracked sections covered')
+    ).toBeInTheDocument();
+    expect(screen.getByText('1 section needs attention')).toBeInTheDocument();
+    expect(screen.getByText('SharedChrome: Akcja logowania w nawigacji')).toBeInTheDocument();
+    expect(screen.getByText('Missing guide ids: auth-login-action')).toBeInTheDocument();
+  });
 });

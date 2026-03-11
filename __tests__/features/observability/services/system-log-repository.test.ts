@@ -7,33 +7,16 @@ import {
   getSystemLogMetrics,
   clearSystemLogs,
 } from '@/shared/lib/observability/system-log-repository';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    systemLog: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
-      deleteMany: vi.fn(),
-      groupBy: vi.fn(),
-    },
-  },
-}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
-
 describe('system-log-repository', () => {
   const mockMongoCollection = {
     insertOne: vi.fn(),
+    findOne: vi.fn(),
     find: vi.fn().mockReturnThis(),
     sort: vi.fn().mockReturnThis(),
     skip: vi.fn().mockReturnThis(),
@@ -41,7 +24,7 @@ describe('system-log-repository', () => {
     toArray: vi.fn(),
     countDocuments: vi.fn(),
     deleteMany: vi.fn(),
-    aggregate: vi.fn().mockReturnThis(),
+    aggregate: vi.fn(),
     createIndex: vi.fn().mockResolvedValue('index_name'),
   };
 
@@ -54,76 +37,97 @@ describe('system-log-repository', () => {
     vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
   });
 
-  describe('createSystemLog', () => {
-    it('should create a log using Prisma when provider is prisma', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
-      vi.mocked(prisma.systemLog.create).mockResolvedValue({
-        id: '1',
+  it('creates a system log in MongoDB', async () => {
+    await createSystemLog({ message: 'test', level: 'info' });
+
+    expect(mockMongoCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
         level: 'info',
         message: 'test',
-        createdAt: new Date(),
-      } as any);
-
-      await createSystemLog({ message: 'test', level: 'info' });
-
-      expect(prisma.systemLog.create).toHaveBeenCalled();
-    });
-
-    it('should create a log using MongoDB when provider is mongodb', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
-
-      await createSystemLog({ message: 'test', level: 'info' });
-
-      expect(mockMongoCollection.insertOne).toHaveBeenCalled();
-    });
+      })
+    );
   });
 
-  describe('listSystemLogs', () => {
-    it('should list logs using Prisma when provider is prisma', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
-      vi.mocked(prisma.systemLog.count).mockResolvedValue(10);
-      vi.mocked(prisma.systemLog.findMany).mockResolvedValue([]);
+  it('lists logs using Mongo filters and pagination', async () => {
+    mockMongoCollection.countDocuments.mockResolvedValue(5);
+    mockMongoCollection.toArray.mockResolvedValue([]);
 
-      const result = await listSystemLogs({});
-
-      expect(prisma.systemLog.findMany).toHaveBeenCalled();
-      expect(result.total).toBe(10);
+    const result = await listSystemLogs({
+      page: 2,
+      pageSize: 10,
+      requestId: 'req-1',
+      statusCode: 500,
+      method: 'GET',
+      userId: 'user-1',
+      fingerprint: 'fp-123',
+      category: 'DATABASE',
     });
 
-    it('should list logs using MongoDB when provider is mongodb', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
-      mockMongoCollection.countDocuments.mockResolvedValue(5);
-      mockMongoCollection.toArray.mockResolvedValue([]);
-
-      const result = await listSystemLogs({});
-
-      expect(mockMongoCollection.find).toHaveBeenCalled();
-      expect(result.total).toBe(5);
-    });
+    expect(result.total).toBe(5);
+    expect(mockMongoCollection.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 500,
+        requestId: { $regex: 'req-1', $options: 'i' },
+        userId: { $regex: 'user-1', $options: 'i' },
+        method: { $regex: '^GET$', $options: 'i' },
+        'context.fingerprint': 'fp-123',
+        $and: expect.arrayContaining([
+          {
+            $or: [
+              { category: { $regex: '^DATABASE$', $options: 'i' } },
+              { 'context.category': 'DATABASE' },
+            ],
+          },
+        ]),
+      })
+    );
+    expect(mockMongoCollection.skip).toHaveBeenCalledWith(10);
+    expect(mockMongoCollection.limit).toHaveBeenCalledWith(10);
   });
 
-  describe('getSystemLogMetrics', () => {
-    it('should get metrics using Prisma', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
-      vi.mocked(prisma.systemLog.count).mockResolvedValue(100);
-      vi.mocked(prisma.systemLog.groupBy).mockResolvedValue([]);
-
-      const result = await getSystemLogMetrics({});
-
-      expect(result.total).toBe(100);
-      expect(prisma.systemLog.groupBy).toHaveBeenCalled();
+  it('computes metrics from Mongo aggregates', async () => {
+    mockMongoCollection.countDocuments
+      .mockResolvedValueOnce(10)
+      .mockResolvedValueOnce(7)
+      .mockResolvedValueOnce(3);
+    mockMongoCollection.aggregate.mockImplementation((pipeline: Array<Record<string, unknown>>) => {
+      const groupKey = (pipeline[1]?.['$group'] as { _id?: string } | undefined)?._id;
+      if (groupKey === '$level') {
+        return {
+          toArray: vi.fn().mockResolvedValue([
+            { _id: 'info', count: 7 },
+            { _id: 'error', count: 3 },
+          ]),
+        };
+      }
+      if (groupKey === '$source') {
+        return { toArray: vi.fn().mockResolvedValue([{ _id: 'web', count: 10 }]) };
+      }
+      if (groupKey === '$service') {
+        return { toArray: vi.fn().mockResolvedValue([{ _id: 'api', count: 8 }]) };
+      }
+      if (groupKey === '$path') {
+        return { toArray: vi.fn().mockResolvedValue([{ _id: '/api/test', count: 5 }]) };
+      }
+      return { toArray: vi.fn().mockResolvedValue([]) };
     });
+
+    const result = await getSystemLogMetrics({});
+
+    expect(result.total).toBe(10);
+    expect(result.levels.info).toBe(7);
+    expect(result.levels.error).toBe(3);
+    expect(result.topSources[0]).toEqual({ source: 'web', count: 10 });
+    expect(result.topServices[0]).toEqual({ service: 'api', count: 8 });
+    expect(result.topPaths[0]).toEqual({ path: '/api/test', count: 5 });
   });
 
-  describe('clearSystemLogs', () => {
-    it('should clear logs using Prisma', async () => {
-      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
-      vi.mocked(prisma.systemLog.deleteMany).mockResolvedValue({ count: 50 });
+  it('clears logs in MongoDB', async () => {
+    mockMongoCollection.deleteMany.mockResolvedValue({ deletedCount: 50 });
 
-      const result = await clearSystemLogs();
+    const result = await clearSystemLogs();
 
-      expect(prisma.systemLog.deleteMany).toHaveBeenCalled();
-      expect(result.deleted).toBe(50);
-    });
+    expect(mockMongoCollection.deleteMany).toHaveBeenCalledWith({});
+    expect(result.deleted).toBe(50);
   });
 });

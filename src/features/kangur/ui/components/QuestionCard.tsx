@@ -41,7 +41,14 @@ function AnalogClockSmall({
       height='140'
       className='drop-shadow-lg'
     >
-      <circle cx='100' cy='100' r='95' fill='white' stroke='#6366f1' strokeWidth='4' />
+      <circle
+        cx='100'
+        cy='100'
+        r='95'
+        fill='var(--kangur-soft-card-background)'
+        stroke='#6366f1'
+        strokeWidth='4'
+      />
       {Array.from({ length: 12 }, (_, index) => {
         const angle = (index * 30 - 90) * (Math.PI / 180);
         return (

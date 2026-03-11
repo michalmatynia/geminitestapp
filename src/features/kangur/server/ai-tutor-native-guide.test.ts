@@ -159,6 +159,69 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     );
   });
 
+  it('routes learner profile hero explains through the Mongo native guide store', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Powiedz mi o tej karcie.',
+      context: {
+        surface: 'profile',
+        promptMode: 'explain',
+        focusKind: 'hero',
+        focusId: 'kangur-profile-hero',
+        contentId: 'profile:learner-1',
+        title: 'Profil ucznia',
+        focusLabel: 'Hero profilu ucznia',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Hero profilu ucznia');
+    expect(response?.message).toContain(
+      'Hero profilu ucznia jest szybkim podsumowaniem'
+    );
+  });
+
+  it('routes parent dashboard assignment-tab explains through the Mongo native guide store', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Wyjasnij te zadania.',
+      context: {
+        surface: 'parent_dashboard',
+        promptMode: 'explain',
+        focusKind: 'assignment',
+        focusId: 'kangur-parent-dashboard-assignments',
+        contentId: 'parent-dashboard:learner-1:assign',
+        title: 'Panel rodzica: Zadania ucznia',
+        focusLabel: 'Zadania ucznia',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Zadania ucznia w dashboardzie rodzica');
+    expect(response?.message).toContain(
+      'Zakladka zadan w panelu rodzica sluzy do planowania najblizszej pracy ucznia.'
+    );
+  });
+
+  it('routes auth login-form explains through the Mongo native guide store', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Wyjasnij ten formularz.',
+      context: {
+        surface: 'auth',
+        promptMode: 'explain',
+        focusKind: 'login_form',
+        focusId: 'kangur-auth-login-form',
+        contentId: 'auth:login:sign-in',
+        title: 'Logowanie do Kangur',
+        focusLabel: 'Sekcja logowania',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Formularz logowania Kangur');
+    expect(response?.message).toContain(
+      'Formularz logowania laczy dwa tryby pracy: zwykle logowanie i zalozenie konta rodzica.'
+    );
+  });
+
   it('marks section-specific requests that fall back to an overview entry as a coverage gap', async () => {
     const resolution = await resolveKangurAiTutorNativeGuideResolution({
       latestUserMessage: 'Wyjasnij ten fragment.',

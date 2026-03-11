@@ -2,10 +2,7 @@ import type {
   SystemLogRecordDto as SystemLogRecord,
   Alert,
 } from '@/shared/contracts/observability';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
@@ -58,27 +55,11 @@ export const evaluateErrorSpike = async (): Promise<void> => {
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_ALERT_WINDOW_SECONDS * 1000);
-
-  const provider = await getAppDbProvider();
-  let recentErrorCount = 0;
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const col = mongo.collection('system_logs');
-    recentErrorCount = await col.countDocuments({
-      level: 'error',
-      createdAt: { $gte: windowStart },
-    });
-  } else {
-    recentErrorCount = await prisma.systemLog.count({
-      where: {
-        level: 'error',
-        createdAt: {
-          gte: windowStart,
-        },
-      },
-    });
-  }
+  const mongo = await getMongoDb();
+  const recentErrorCount = await mongo.collection('system_logs').countDocuments({
+    level: 'error',
+    createdAt: { $gte: windowStart },
+  });
 
   if (recentErrorCount < SYSTEM_LOG_ALERT_MIN_ERRORS) {
     return;
@@ -91,7 +72,6 @@ export const evaluateErrorSpike = async (): Promise<void> => {
 
   queueState.lastAlertAt = nowMs;
   const alertEvidence = await buildAlertEvidenceContext({
-    provider,
     query: {
       level: 'error',
       from: windowStart,
@@ -122,83 +102,30 @@ export const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_ALERT_WINDOW_SECONDS * 1000);
-
-  const provider = await getAppDbProvider();
   const nowMs = Date.now();
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const col = mongo.collection('system_logs');
-    const groups = await col
-      .aggregate<{ _id: string; count: number }>([
-        {
-          $match: {
-            level: 'error',
-            createdAt: { $gte: windowStart },
-            source: { $nin: [null, ''] },
-          },
-        },
-        { $group: { _id: '$source', count: { $sum: 1 } } },
-      ])
-      .toArray();
-
-    for (const row of groups) {
-      const source = row._id;
-      const count = row.count;
-      if (count < SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS) continue;
-      if (isPerSourceInCooldown(source, nowMs)) continue;
-      queueState.perSourceLastAlertAt[source] = nowMs;
-      const alertEvidence = await buildAlertEvidenceContext({
-        provider,
-        query: {
+  const mongo = await getMongoDb();
+  const groups = await mongo
+    .collection('system_logs')
+    .aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
           level: 'error',
-          sourceContains: source,
-          from: windowStart,
-          to: now,
+          createdAt: { $gte: windowStart },
+          source: { $nin: [null, ''] },
         },
-        matchedCount: count,
-        windowStart,
-      });
-
-      void logSystemEvent({
-        level: 'error',
-        source: 'system-log-alerts',
-        message: `Error spike for source "${source}": ${count} errors in the last ${SYSTEM_LOG_ALERT_WINDOW_SECONDS} seconds`,
-        critical: true,
-        context: {
-          alertType: 'error_volume_spike_per_source',
-          windowSeconds: SYSTEM_LOG_ALERT_WINDOW_SECONDS,
-          recentErrorCount: count,
-          minErrors: SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS,
-          source,
-          alertEvidence,
-        },
-      });
-    }
-    return;
-  }
-
-  const groups = await prisma.systemLog.groupBy({
-    by: ['source'],
-    _count: { _all: true },
-    where: {
-      level: 'error',
-      source: { not: null },
-      createdAt: {
-        gte: windowStart,
       },
-    },
-  });
+      { $group: { _id: '$source', count: { $sum: 1 } } },
+    ])
+    .toArray();
 
   for (const row of groups) {
-    const source = row.source;
+    const source = row._id;
     if (!source) continue;
-    const count = row._count._all ?? 0;
+    const count = row.count;
     if (count < SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS) continue;
     if (isPerSourceInCooldown(source, nowMs)) continue;
     queueState.perSourceLastAlertAt[source] = nowMs;
     const alertEvidence = await buildAlertEvidenceContext({
-      provider,
       query: {
         level: 'error',
         sourceContains: source,
@@ -232,10 +159,8 @@ export const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_ALERT_WINDOW_SECONDS * 1000);
-  const provider = await getAppDbProvider();
   const nowMs = Date.now();
   const logs = await listAlertEvidenceLogs(
-    provider,
     {
       level: 'error',
       from: windowStart,
@@ -266,7 +191,6 @@ export const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
     }
     queueState.perServiceLastAlertAt[service] = nowMs;
     const alertEvidence = await buildAlertEvidenceContext({
-      provider,
       query: {
         level: 'error',
         service,
@@ -301,10 +225,8 @@ export const evaluateSlowRequestSpikes = async (): Promise<void> => {
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS * 1000);
-  const provider = await getAppDbProvider();
   const nowMs = Date.now();
   const logs = await listAlertEvidenceLogs(
-    provider,
     {
       from: windowStart,
       to: now,
@@ -350,7 +272,6 @@ export const evaluateSlowRequestSpikes = async (): Promise<void> => {
 
     queueState.perSlowRouteLastAlertAt[cooldownKey] = nowMs;
     const alertEvidence = await buildAlertEvidenceContext({
-      provider,
       query: {
         service: item.service,
         pathPrefix: item.path === 'unknown-path' ? undefined : item.path,
@@ -385,36 +306,16 @@ export const evaluateTelemetrySilenceForCriticalServices = async (): Promise<voi
   if (!shouldCheckAlerts()) return;
   if (SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES.length === 0) return;
 
-  const provider = await getAppDbProvider();
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS * 1000);
   const nowMs = Date.now();
+  const mongo = await getMongoDb();
 
   for (const service of SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES) {
-    let count = 0;
-
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      count = await mongo.collection('system_logs').countDocuments({
-        createdAt: { $gte: windowStart },
-        $or: [{ service }, { 'context.service': service }],
-      });
-    } else {
-      count = await prisma.systemLog.count({
-        where: {
-          createdAt: { gte: windowStart },
-          OR: [
-            { service },
-            {
-              context: {
-                path: ['service'],
-                equals: service,
-              },
-            },
-          ],
-        },
-      });
-    }
+    const count = await mongo.collection('system_logs').countDocuments({
+      createdAt: { $gte: windowStart },
+      $or: [{ service }, { 'context.service': service }],
+    });
 
     if (count > 0) continue;
     if (
@@ -430,7 +331,6 @@ export const evaluateTelemetrySilenceForCriticalServices = async (): Promise<voi
 
     queueState.perServiceTelemetrySilenceLastAlertAt[service] = nowMs;
     const alertEvidence = await buildAlertEvidenceContext({
-      provider,
       query: {
         service,
         from: windowStart,
@@ -509,8 +409,8 @@ export const evaluateUserDefinedAlerts = async (): Promise<void> => {
   const alerts = await getSystemAlerts();
   if (!alerts.length) return;
 
-  const provider = await getAppDbProvider();
   const nowMs = Date.now();
+  const mongo = await getMongoDb();
 
   for (const alert of alerts) {
     if (!alert.enabled) continue;
@@ -526,56 +426,30 @@ export const evaluateUserDefinedAlerts = async (): Promise<void> => {
     }
 
     const windowStart = new Date(nowMs - windowSeconds * 1000);
-    let count = 0;
-
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const filter: Record<string, unknown> = {
-        createdAt: { $gte: windowStart },
-      };
-      if (cond.level) {
-        filter['level'] = cond.level;
-      }
-      if (cond.source) {
-        filter['source'] = { $regex: cond.source, $options: 'i' };
-      }
-      if (cond.pathPrefix) {
-        filter['path'] = { $regex: `^${cond.pathPrefix}`, $options: 'i' };
-      }
-      if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
-        const statusFilter: Record<string, unknown> = {};
-        if (cond.statusCodeMin !== undefined) statusFilter['$gte'] = cond.statusCodeMin;
-        if (cond.statusCodeMax !== undefined) statusFilter['$lte'] = cond.statusCodeMax;
-        filter['statusCode'] = statusFilter;
-      }
-      count = await mongo.collection('system_logs').countDocuments(filter);
-    } else {
-      const where: Prisma.SystemLogCountArgs['where'] = {
-        createdAt: { gte: windowStart },
-      };
-      if (cond.level) {
-        where['level'] = cond.level;
-      }
-      if (cond.source) {
-        where['source'] = { contains: cond.source, mode: 'insensitive' };
-      }
-      if (cond.pathPrefix) {
-        where['path'] = { startsWith: cond.pathPrefix, mode: 'insensitive' };
-      }
-      if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
-        where['statusCode'] = {
-          ...(cond.statusCodeMin !== undefined ? { gte: cond.statusCodeMin } : {}),
-          ...(cond.statusCodeMax !== undefined ? { lte: cond.statusCodeMax } : {}),
-        };
-      }
-      count = await prisma.systemLog.count({ where });
+    const filter: Record<string, unknown> = {
+      createdAt: { $gte: windowStart },
+    };
+    if (cond.level) {
+      filter['level'] = cond.level;
     }
+    if (cond.source) {
+      filter['source'] = { $regex: cond.source, $options: 'i' };
+    }
+    if (cond.pathPrefix) {
+      filter['path'] = { $regex: `^${cond.pathPrefix}`, $options: 'i' };
+    }
+    if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
+      const statusFilter: Record<string, unknown> = {};
+      if (cond.statusCodeMin !== undefined) statusFilter['$gte'] = cond.statusCodeMin;
+      if (cond.statusCodeMax !== undefined) statusFilter['$lte'] = cond.statusCodeMax;
+      filter['statusCode'] = statusFilter;
+    }
+    const count = await mongo.collection('system_logs').countDocuments(filter);
 
     if (count < threshold) continue;
 
     queueState.perAlertLastFiredAt[alert.id] = nowMs;
     const alertEvidence = await buildAlertEvidenceContext({
-      provider,
       query: {
         level: cond.level,
         sourceContains: cond.source,
@@ -612,25 +486,10 @@ export const evaluateLogSilence = async (): Promise<void> => {
 
   const now = new Date();
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_SILENCE_WINDOW_SECONDS * 1000);
-
-  const provider = await getAppDbProvider();
-  let recentCount = 0;
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const col = mongo.collection('system_logs');
-    recentCount = await col.countDocuments({
-      createdAt: { $gte: windowStart },
-    });
-  } else {
-    recentCount = await prisma.systemLog.count({
-      where: {
-        createdAt: {
-          gte: windowStart,
-        },
-      },
-    });
-  }
+  const mongo = await getMongoDb();
+  const recentCount = await mongo.collection('system_logs').countDocuments({
+    createdAt: { $gte: windowStart },
+  });
 
   if (recentCount > 0) {
     return;
@@ -643,7 +502,6 @@ export const evaluateLogSilence = async (): Promise<void> => {
 
   queueState.lastSilenceAlertAt = nowMs;
   const alertEvidence = await buildAlertEvidenceContext({
-    provider,
     query: {
       from: windowStart,
       to: now,

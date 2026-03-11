@@ -200,7 +200,7 @@ export const toDbSchemaSnapshot = (schema: SchemaData, syncedAt: string): DbSche
   }
 
   return {
-    provider: schema.provider === 'multi' ? 'multi' : 'mongodb',
+    provider: 'mongodb',
     collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };

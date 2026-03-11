@@ -434,8 +434,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       if (
         provider !== undefined &&
         provider !== 'auto' &&
-        provider !== 'mongodb' &&
-        provider !== 'prisma'
+        provider !== 'mongodb'
       ) {
         throw validationError('AI Path config contains invalid database query provider.', {
           source: 'ai_paths.path_config',

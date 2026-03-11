@@ -431,7 +431,7 @@ export default function CalendarInteractiveGame({
           >
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-slate-800'>
+          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
             Wynik: {score}/{TOTAL}
           </h2>
           <KangurProgressBar
@@ -441,7 +441,7 @@ export default function CalendarInteractiveGame({
             size='md'
             value={percent}
           />
-          <p className='text-slate-500'>
+          <p className='[color:var(--kangur-page-muted-text)]'>
             {getCalendarInteractiveSummaryMessage(section, percent)}
           </p>
           <div className='flex gap-3 w-full'>
@@ -480,12 +480,12 @@ export default function CalendarInteractiveGame({
           tone='accent'
         >
           <p
-            className='text-sm font-semibold text-slate-900'
+            className='text-sm font-semibold [color:var(--kangur-page-text)]'
             data-testid='calendar-interactive-guidance-title'
           >
             {trainingSectionContent.guidanceTitle}
           </p>
-          <p className='mt-2 text-sm font-normal leading-relaxed text-slate-900'>
+          <p className='mt-2 text-sm font-normal leading-relaxed [color:var(--kangur-page-text)]'>
             {trainingSectionContent.guidance}
           </p>
         </KangurInfoCard>
@@ -498,7 +498,7 @@ export default function CalendarInteractiveGame({
           size='sm'
           value={(round / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {round + 1}/{TOTAL}
         </span>
       </div>
@@ -543,7 +543,7 @@ export default function CalendarInteractiveGame({
               type='button'
               variant='surface'
             >
-              <ChevronLeft className='w-4 h-4 text-slate-500' />
+              <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
             </KangurButton>
             <p className='font-extrabold text-green-700 text-sm'>
               {monthData.name} {YEAR}
@@ -556,7 +556,7 @@ export default function CalendarInteractiveGame({
               type='button'
               variant='surface'
             >
-              <ChevronRight className='w-4 h-4 text-slate-500' />
+              <ChevronRight className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
             </KangurButton>
           </div>
 
@@ -564,7 +564,11 @@ export default function CalendarInteractiveGame({
             {DAY_LABELS.map((dayLabel, idx) => (
               <div
                 key={dayLabel}
-                className={`text-xs font-bold py-0.5 ${idx >= 5 ? 'text-red-400' : 'text-slate-400'}`}
+                className={`text-xs font-bold py-0.5 ${
+                  idx >= 5
+                    ? 'text-red-400'
+                    : '[color:var(--kangur-page-muted-text)]'
+                }`}
               >
                 {dayLabel}
               </div>
@@ -607,7 +611,7 @@ export default function CalendarInteractiveGame({
               let dayEmphasis: 'neutral' | 'accent' = 'neutral';
               let dayClassName = cn(
                 'h-10 rounded-[16px] p-0 text-xs font-semibold',
-                isWeekend ? 'text-rose-600' : 'text-slate-700',
+                isWeekend ? 'text-rose-600' : '[color:var(--kangur-page-text)]',
                 !isClickable && 'cursor-default hover:translate-y-0'
               );
 
@@ -686,7 +690,7 @@ export default function CalendarInteractiveGame({
                   ? KANGUR_ACCENT_STYLES.rose.activeText
                   : idx >= 5
                     ? 'text-rose-600'
-                    : 'text-slate-700',
+                    : '[color:var(--kangur-page-text)]',
               feedback !== null && 'cursor-default'
             );
 
@@ -720,7 +724,9 @@ export default function CalendarInteractiveGame({
           >
             📅 {task.monthName}
           </div>
-          <p className='text-xs text-slate-400'>Przeciągnij powyżej na właściwą porę roku ⬇️</p>
+          <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+            Przeciągnij powyżej na właściwą porę roku ⬇️
+          </p>
 
           <div className='grid grid-cols-2 gap-2 w-full'>
             {SEASONS.map((season, index) => {

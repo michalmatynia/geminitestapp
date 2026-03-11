@@ -59,9 +59,11 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
       for (let current = commonAncestor; current; current = current.parentElement) {
         const testId = current.getAttribute('data-testid');
         const isLessonBlock = testId?.startsWith('lesson-') && testId.includes('-block-');
-        const isQuestionAnchor = testId === 'kangur-test-question-anchor';
+        const isQuestionCardShell = testId === 'question-card-shell';
+        const isQuestionAnchor =
+          testId === 'kangur-test-question-anchor' || testId === 'kangur-game-question-anchor';
 
-        if (isLessonBlock || isQuestionAnchor) {
+        if (isLessonBlock || isQuestionCardShell || isQuestionAnchor) {
           return cloneDomRect(current.getBoundingClientRect());
         }
       }

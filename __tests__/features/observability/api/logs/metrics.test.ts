@@ -2,8 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET } from '@/app/api/system/logs/metrics/route';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import prisma from '@/shared/lib/db/prisma';
+import { getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
@@ -18,44 +17,25 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock Prisma
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    systemLog: {
-      count: vi.fn(),
-      groupBy: vi.fn(),
-    },
-  },
-}));
-
-// Mock provider
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  getSystemLogMetrics: vi.fn(),
 }));
 
 describe('System Logs Metrics API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
   });
 
   it('GET /api/system/logs/metrics should return log metrics', async () => {
-    vi.mocked(prisma.systemLog.count).mockResolvedValue(10);
-    vi.mocked(prisma.systemLog.groupBy).mockImplementation((args) => {
-      const by = args.by as string[];
-      if (by.includes('level')) {
-        return Promise.resolve([
-          { level: 'info', _count: { _all: 7 } },
-          { level: 'error', _count: { _all: 3 } },
-        ] as any);
-      }
-      if (by.includes('source')) {
-        return Promise.resolve([{ source: 'web', _count: { _all: 10 } }] as any);
-      }
-      if (by.includes('path')) {
-        return Promise.resolve([{ path: '/api/test', _count: { _all: 5 } }] as any);
-      }
-      return Promise.resolve([]);
+    vi.mocked(getSystemLogMetrics).mockResolvedValue({
+      total: 10,
+      levels: { info: 7, warn: 0, error: 3 },
+      last24Hours: 10,
+      last7Days: 10,
+      topSources: [{ source: 'web', count: 10 }],
+      topServices: [],
+      topPaths: [{ path: '/api/test', count: 5 }],
+      generatedAt: new Date().toISOString(),
     });
 
     const req = new NextRequest('http://localhost/api/system/logs/metrics');

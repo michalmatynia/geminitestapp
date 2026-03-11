@@ -20,6 +20,8 @@ import {
   type KangurKnowledgeNodeSource,
 } from '@/shared/contracts/kangur-knowledge-graph';
 
+import { buildKangurKnowledgeNodeSemanticText } from './semantic';
+
 type BuildKangurKnowledgeGraphOptions = {
   locale?: string;
   tutorContent?: KangurAiTutorContent;
@@ -197,7 +199,10 @@ const createNode = (
   nodes: Map<string, KangurKnowledgeGraphNode>,
   node: KangurKnowledgeGraphNode
 ): void => {
-  nodes.set(node.id, node);
+  nodes.set(node.id, {
+    ...node,
+    semanticText: buildKangurKnowledgeNodeSemanticText(node),
+  });
 };
 
 const createEdge = (
@@ -426,9 +431,27 @@ export const buildKangurKnowledgeGraph = (
       summary: entry.shortDescription,
       source: 'kangur_ai_tutor_native_guides',
       locale,
+      surface: entry.surface ?? undefined,
+      focusKind: entry.focusKind ?? undefined,
       sourceCollection: 'kangur_ai_tutor_native_guides',
       sourceRecordId: entry.id,
       sourcePath: `entry:${entry.id}`,
+      focusIdPrefixes: entry.focusIdPrefixes,
+      contentIdPrefixes: entry.contentIdPrefixes,
+      triggerPhrases: entry.triggerPhrases,
+      semanticText: [
+        entry.title,
+        entry.shortDescription,
+        entry.fullDescription,
+        entry.hints.length > 0 ? `Hints: ${entry.hints.join(' | ')}` : null,
+        entry.followUpActions.length > 0
+          ? `Follow up actions: ${entry.followUpActions.map((action) => `${action.label} -> ${action.page}`).join(' | ')}`
+          : null,
+        entry.relatedGames.length > 0 ? `Related games: ${entry.relatedGames.join(', ')}` : null,
+        entry.relatedTests.length > 0 ? `Related tests: ${entry.relatedTests.join(', ')}` : null,
+      ]
+        .filter((value): value is string => Boolean(value))
+        .join('\n'),
       tags: [
         'native-guide',
         ...(entry.surface ? [entry.surface] : []),

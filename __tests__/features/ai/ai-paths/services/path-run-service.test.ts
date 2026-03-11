@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/shared/lib/ai-paths/services/path-run-repository');
 
 const {
@@ -37,7 +36,8 @@ import type {
   AiPathRunEventRecord,
 } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import prisma from '@/shared/lib/db/prisma';
+
+import { installInMemoryMongoPathRunDb } from './path-run-mongo-test-helpers';
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: enqueuePathRunJobMock,
@@ -54,46 +54,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
     generateErrorReport: vi.fn(),
   },
 }));
-
-let canMutatePathRunTables = true;
-let supportsExtendedAiPathRunStatuses: boolean | null = null;
-const REQUIRED_AI_PATH_RUN_STATUSES = ['blocked_on_lease', 'handoff_ready'] as const;
-
 describe('PathRunService', () => {
-  const shouldSkipPathRunPrismaTests = (): boolean =>
-    !process.env['DATABASE_URL'] ||
-    !canMutatePathRunTables ||
-    supportsExtendedAiPathRunStatuses === false;
-
-  const refreshAiPathRunStatusEnumSupport = async (): Promise<void> => {
-    if (!process.env['DATABASE_URL']) {
-      supportsExtendedAiPathRunStatuses = false;
-      return;
-    }
-
-    try {
-      const rows = await prisma.$queryRaw<Array<{ enumlabel: string }>>`
-        SELECT e.enumlabel
-        FROM pg_enum e
-        JOIN pg_type t ON t.oid = e.enumtypid
-        WHERE t.typname = 'AiPathRunStatus'
-          AND e.enumlabel IN ('blocked_on_lease', 'handoff_ready')
-      `;
-      const labels = new Set(rows.map((row) => row.enumlabel));
-      supportsExtendedAiPathRunStatuses = REQUIRED_AI_PATH_RUN_STATUSES.every((status) =>
-        labels.has(status)
-      );
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutatePathRunTables = false;
-        supportsExtendedAiPathRunStatuses = false;
-        return;
-      }
-      throw error;
-    }
-  };
-
   let repo: AiPathRunRepository;
 
   beforeEach(async () => {
@@ -105,25 +66,8 @@ describe('PathRunService', () => {
     logInfoMock.mockReset().mockResolvedValue(undefined);
     logValidationErrorMock.mockReset().mockResolvedValue(undefined);
 
-    if (supportsExtendedAiPathRunStatuses === null) {
-      await refreshAiPathRunStatusEnumSupport();
-    }
-    if (shouldSkipPathRunPrismaTests()) return;
-
+    installInMemoryMongoPathRunDb();
     repo = await getPathRunRepository();
-    // Direct prisma cleanup since repo doesn't have deleteMany
-    try {
-      await prisma.aiPathRunEvent.deleteMany();
-      await prisma.aiPathRunNode.deleteMany();
-      await prisma.aiPathRun.deleteMany();
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutatePathRunTables = false;
-        return;
-      }
-      throw error;
-    }
   });
 
   const mockNodes: AiNode[] = [
@@ -186,7 +130,6 @@ describe('PathRunService', () => {
 
   describe('enqueuePathRun', () => {
     it('should create a new run and its nodes', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path',
         pathName: 'Test Path',
@@ -209,7 +152,6 @@ describe('PathRunService', () => {
     });
 
     it('should pass meta options like backoffMs to the run', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-meta',
         nodes: mockNodes,
@@ -227,7 +169,6 @@ describe('PathRunService', () => {
     });
 
     it('should block enqueue when disabled node policy is violated', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const previous = process.env['AI_PATHS_DISABLED_NODE_TYPES'];
       process.env['AI_PATHS_DISABLED_NODE_TYPES'] = 'trigger';
       try {
@@ -251,7 +192,6 @@ describe('PathRunService', () => {
     });
 
     it('should allow enqueue when compile checks fail but node validation is disabled', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-validation-disabled',
         nodes: disconnectedCompileNodes,
@@ -271,7 +211,6 @@ describe('PathRunService', () => {
     });
 
     it('should block enqueue when compile checks fail and node validation is enabled', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       await expect(
         enqueuePathRun({
           pathId: 'test-path-validation-enabled',
@@ -285,7 +224,6 @@ describe('PathRunService', () => {
     });
 
     it('should dedupe active runs by requestId', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const first = await enqueuePathRun({
         pathId: 'test-path-idempotency',
         userId: 'user-idempotent',
@@ -310,7 +248,6 @@ describe('PathRunService', () => {
     });
 
     it('should fail closed when run bootstrap fails', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const createRunNodesSpy = vi
         .spyOn(repo, 'createRunNodes')
         .mockRejectedValueOnce(new Error('bootstrap failed'));
@@ -337,7 +274,6 @@ describe('PathRunService', () => {
     });
 
     it('marks run as failed when queue dispatch fails after enqueue', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       enqueuePathRunJobMock.mockRejectedValueOnce(new Error('worker unavailable'));
 
       await expect(
@@ -367,7 +303,6 @@ describe('PathRunService', () => {
 
   describe('resumePathRun', () => {
     it('should reset run status to queued', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
@@ -386,7 +321,6 @@ describe('PathRunService', () => {
     });
 
     it('reverts run status when dispatch fails during resume', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-resume-dispatch-fail',
         nodes: mockNodes,
@@ -412,7 +346,6 @@ describe('PathRunService', () => {
 
   describe('cancelPathRun', () => {
     it('should set status to canceled and mark finishedAt', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
@@ -429,7 +362,6 @@ describe('PathRunService', () => {
     });
 
     it('should cancel using an explicit repository instance', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-explicit-repo',
         nodes: mockNodes,
@@ -443,7 +375,6 @@ describe('PathRunService', () => {
     });
 
     it('should mark in-flight cancellation metadata when canceling a running run', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-running-cancel',
         nodes: mockNodes,
@@ -470,7 +401,6 @@ describe('PathRunService', () => {
     });
 
     it('should still clear queued entries when run is already terminal', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-terminal-cancel',
         nodes: mockNodes,
@@ -486,7 +416,6 @@ describe('PathRunService', () => {
 
   describe('retryPathRunNode', () => {
     it('should reset specific node and re-queue the run', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
@@ -513,7 +442,6 @@ describe('PathRunService', () => {
     });
 
     it('reverts run status when dispatch fails during node retry', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-retry-dispatch-fail',
         nodes: mockNodes,
@@ -540,7 +468,6 @@ describe('PathRunService', () => {
 
   describe('delete run helpers', () => {
     it('should delete a single run and clean queue entries', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const run = await enqueuePathRun({
         pathId: 'test-path-delete-single',
         nodes: mockNodes,
@@ -554,7 +481,6 @@ describe('PathRunService', () => {
     });
 
     it('should delete filtered runs in bulk and clean queue entries', async () => {
-      if (shouldSkipPathRunPrismaTests()) return;
       const runA = await enqueuePathRun({
         pathId: 'test-path-delete-bulk',
         nodes: mockNodes,

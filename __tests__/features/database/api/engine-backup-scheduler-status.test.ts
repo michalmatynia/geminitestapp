@@ -62,20 +62,6 @@ const schedulerStatusPayload = {
       nextDueAt: '2026-02-11T02:00:00.000Z',
       dueNow: false,
     },
-    postgresql: {
-      enabled: false,
-      cadence: 'weekly' as const,
-      intervalDays: 7,
-      weekday: 0,
-      timeUtc: '03:30',
-      lastQueuedAt: null,
-      lastRunAt: null,
-      lastStatus: 'idle' as const,
-      lastJobId: null,
-      lastError: null,
-      nextDueAt: '2026-02-15T03:30:00.000Z',
-      dueNow: false,
-    },
   },
 };
 

@@ -981,7 +981,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('reopens the minimalist tutor modal from the docked Game avatar after home onboarding is dismissed', async () => {
+  it('reopens the authenticated home onboarding prompt from the docked Game avatar and restarts the guided page tour', async () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -1072,8 +1072,27 @@ describe('KangurAiTutorWidget', () => {
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    const onboardingPrompt = screen.getByTestId('kangur-ai-tutor-guest-intro');
+    expect(onboardingPrompt).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Czy chcesz, żebym pokazała główne przyciski oraz elementy wyniku i postępu?'
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        'Mogę przeprowadzić Cię po najważniejszych akcjach na stronie głównej oraz po miejscach, w których zobaczysz ranking, punkty i tempo nauki.'
+      )
+    ).toBeVisible();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tak' }));
+    rerender(buildTutorAnchorsTree(renderOptions));
+
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-ai-tutor-home-onboarding')).toBeInTheDocument();
+    expect(screen.getByText('Krok 1 z 4')).toBeVisible();
+    expect(screen.getByText('Tutaj wybierasz, jak chcesz zacząć.')).toBeVisible();
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -2042,6 +2061,76 @@ describe('KangurAiTutorWidget', () => {
       },
     });
   });
+  it('tracks clicks on graph-grounded website-help targets', () => {
+    window.history.pushState({}, '', '/kangur/lesson-1');
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Kliknij przycisk logowania w górnej nawigacji.',
+          websiteHelpTarget: {
+            nodeId: 'flow:kangur:sign-in',
+            label: 'Zaloguj się',
+            route: '/',
+            anchorId: 'kangur-primary-nav-login',
+          },
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      clearSelection: clearSelectionMock,
+    });
+    render(<KangurAiTutorWidget />);
+
+    const targetLink = screen.getByRole('link', { name: 'Przejdź do tego miejsca' });
+    expect(targetLink).toHaveAttribute('href', '/kangur#kangur-primary-nav-login');
+
+    fireEvent.click(targetLink);
+
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_website_help_target_clicked',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        messageIndex: 0,
+        href: '/kangur#kangur-primary-nav-login',
+        targetNodeId: 'flow:kangur:sign-in',
+        targetLabel: 'Zaloguj się',
+        targetRoute: '/',
+        targetAnchorId: 'kangur-primary-nav-login',
+      })
+    );
+  });
   it('tracks tutor follow-up completion after landing on the suggested route', async () => {
     window.sessionStorage.setItem(
       'kangur-ai-tutor-widget-v1',
@@ -2226,17 +2315,9 @@ describe('KangurAiTutorWidget', () => {
       width: '160px',
       height: '46px',
     });
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      'Wyjaśniam ten fragment.'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '„2 + 2”'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
-      'data-entry-direction',
-      'left'
-    );
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
+    ).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -2295,6 +2376,21 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      'Wyjaśniam ten fragment.'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '„2 + 2”'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+      'data-entry-direction',
+      'left'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+      'data-entry-animation',
+      'fade'
+    );
     expect(openChatMock).toHaveBeenCalledTimes(1);
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
@@ -2771,7 +2867,10 @@ describe('KangurAiTutorWidget', () => {
       'bottom'
     );
   });
-  it('keeps the guided selection avatar attached to the modal when the highlight is near the top edge', () => {
+  it('keeps the guided selection avatar attached to the modal when the highlight is near the top edge', async () => {
+    vi.useFakeTimers();
+    openChatMock.mockImplementation(() => {});
+    sendMessageMock.mockResolvedValue(undefined);
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
@@ -2809,38 +2908,48 @@ describe('KangurAiTutorWidget', () => {
       selectionContainerRect: null,
       clearSelection: clearSelectionMock,
     });
-    render(<KangurAiTutorWidget />);
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    const guidedAvatarPlacement = screen
-      .getByTestId('kangur-ai-tutor-avatar')
-      .getAttribute('data-guidance-avatar-placement');
-    const guidedCalloutPlacement = screen
-      .getByTestId('kangur-ai-tutor-selection-guided-callout')
-      .getAttribute('data-guidance-placement');
-    expect(
-      [
-        ['top', 'bottom'],
-        ['bottom', 'top'],
-        ['left', 'right'],
-        ['right', 'left'],
-      ]
-    ).toContainEqual([guidedAvatarPlacement, guidedCalloutPlacement]);
-    const topEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
-    expect(
-      Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
-    ).toBeGreaterThanOrEqual(220);
-    expect(
-      Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
-    ).toBeLessThanOrEqual(360);
-    expect(
-      Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
-    ).toBeGreaterThanOrEqual(32);
-    expect(
-      Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
-    ).toBeLessThanOrEqual(58);
+    try {
+      render(<KangurAiTutorWidget />);
+      fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      const guidedAvatarPlacement = screen
+        .getByTestId('kangur-ai-tutor-avatar')
+        .getAttribute('data-guidance-avatar-placement');
+      const guidedCalloutPlacement = screen
+        .getByTestId('kangur-ai-tutor-selection-guided-callout')
+        .getAttribute('data-guidance-placement');
+      expect(
+        [
+          ['top', 'bottom'],
+          ['bottom', 'top'],
+          ['left', 'right'],
+          ['right', 'left'],
+        ]
+      ).toContainEqual([guidedAvatarPlacement, guidedCalloutPlacement]);
+      const topEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
+      expect(
+        Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
+      ).toBeGreaterThanOrEqual(220);
+      expect(
+        Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
+      ).toBeLessThanOrEqual(360);
+      expect(
+        Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
+      ).toBeGreaterThanOrEqual(32);
+      expect(
+        Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
+      ).toBeLessThanOrEqual(58);
+    } finally {
+      vi.useRealTimers();
+    }
   });
-  it('keeps the selection guidance arrow anchored when the highlighted text is near the right edge', () => {
+  it('keeps the selection guidance arrow anchored when the highlighted text is near the right edge', async () => {
+    vi.useFakeTimers();
+    openChatMock.mockImplementation(() => {});
+    sendMessageMock.mockResolvedValue(undefined);
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
       tutorSettings: {
@@ -2878,38 +2987,49 @@ describe('KangurAiTutorWidget', () => {
       selectionContainerRect: null,
       clearSelection: clearSelectionMock,
     });
-    render(<KangurAiTutorWidget />);
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
-      'data-entry-direction',
-      'right'
-    );
-    const rightEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-left'))
-    ).toBeGreaterThanOrEqual(0);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-left'))
-    ).toBeLessThanOrEqual(56);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-top'))
-    ).toBeGreaterThanOrEqual(0);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-top'))
-    ).toBeLessThanOrEqual(56);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
-    ).toBeGreaterThanOrEqual(1140);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
-    ).toBeLessThanOrEqual(1250);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
-    ).toBeGreaterThanOrEqual(320);
-    expect(
-      Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
-    ).toBeLessThanOrEqual(346);
+    try {
+      render(<KangurAiTutorWidget />);
+      fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+        'data-entry-direction',
+        'right'
+      );
+      expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+        'data-entry-animation',
+        'fade'
+      );
+      const rightEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-left'))
+      ).toBeGreaterThanOrEqual(0);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-left'))
+      ).toBeLessThanOrEqual(56);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-top'))
+      ).toBeGreaterThanOrEqual(0);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-top'))
+      ).toBeLessThanOrEqual(56);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
+      ).toBeGreaterThanOrEqual(1140);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
+      ).toBeLessThanOrEqual(1250);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
+      ).toBeGreaterThanOrEqual(320);
+      expect(
+        Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-target-y'))
+      ).toBeLessThanOrEqual(346);
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('keeps the selection guidance arrow anchored for highlighted test-question text', () => {
     useKangurAiTutorMock.mockReturnValue({

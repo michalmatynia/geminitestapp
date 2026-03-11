@@ -1,36 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  getAppDbProviderMock,
   mongoCreateScoreMock,
   mongoListScoresMock,
-  prismaCreateScoreMock,
-  prismaListScoresMock,
   captureExceptionMock,
 } = vi.hoisted(() => ({
-  getAppDbProviderMock: vi.fn(),
   mongoCreateScoreMock: vi.fn(),
   mongoListScoresMock: vi.fn(),
-  prismaCreateScoreMock: vi.fn(),
-  prismaListScoresMock: vi.fn(),
   captureExceptionMock: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: getAppDbProviderMock,
 }));
 
 vi.mock('./mongo-kangur-score-repository', () => ({
   mongoKangurScoreRepository: {
     createScore: mongoCreateScoreMock,
     listScores: mongoListScoresMock,
-  },
-}));
-
-vi.mock('./prisma-kangur-score-repository', () => ({
-  prismaKangurScoreRepository: {
-    createScore: prismaCreateScoreMock,
-    listScores: prismaListScoresMock,
   },
 }));
 
@@ -48,7 +31,6 @@ describe('kangur score repository observability wrapper', () => {
   });
 
   it('delegates to MongoDB repository when app provider is mongodb', async () => {
-    getAppDbProviderMock.mockResolvedValue('mongodb');
     const createdScore = {
       id: 'mongo-1',
       player_name: 'Ada',
@@ -82,10 +64,9 @@ describe('kangur score repository observability wrapper', () => {
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
-  it('captures createScore failures with Kangur repository context before rethrowing', async () => {
-    getAppDbProviderMock.mockResolvedValue('prisma');
+  it('captures createScore failures with Mongo repository context before rethrowing', async () => {
     const failure = new Error('create failed');
-    prismaCreateScoreMock.mockRejectedValue(failure);
+    mongoCreateScoreMock.mockRejectedValue(failure);
 
     const repository = await getKangurScoreRepository();
 
@@ -106,7 +87,7 @@ describe('kangur score repository observability wrapper', () => {
       expect.objectContaining({
         service: 'kangur.score-repository',
         action: 'createScore',
-        provider: 'prisma',
+        provider: 'mongodb',
         operation: 'subtraction',
         score: 7,
         totalQuestions: 10,
@@ -115,10 +96,9 @@ describe('kangur score repository observability wrapper', () => {
     );
   });
 
-  it('captures listScores failures with query context before rethrowing', async () => {
-    getAppDbProviderMock.mockResolvedValue('prisma');
+  it('captures listScores failures with Mongo query context before rethrowing', async () => {
     const failure = new Error('list failed');
-    prismaListScoresMock.mockRejectedValue(failure);
+    mongoListScoresMock.mockRejectedValue(failure);
 
     const repository = await getKangurScoreRepository();
 
@@ -135,7 +115,7 @@ describe('kangur score repository observability wrapper', () => {
       expect.objectContaining({
         service: 'kangur.score-repository',
         action: 'listScores',
-        provider: 'prisma',
+        provider: 'mongodb',
         sort: '-created_date',
         limit: 25,
         hasFilters: true,

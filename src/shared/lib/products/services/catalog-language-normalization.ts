@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 
 type LanguageLookupRow = {
@@ -27,18 +26,12 @@ const buildLookupMap = (rows: LanguageLookupRow[]): Map<string, string> => {
 };
 
 const readLanguageRows = async (provider: ProductDbProvider): Promise<LanguageLookupRow[]> => {
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    return mongo
-      .collection<LanguageLookupRow>('languages')
-      .find({}, { projection: { id: 1, code: 1 } })
-      .toArray();
-  }
-
-  const rows = await prisma.language.findMany({
-    select: { id: true, code: true },
-  });
-  return rows;
+  void provider;
+  const mongo = await getMongoDb();
+  return mongo
+    .collection<LanguageLookupRow>('languages')
+    .find({}, { projection: { id: 1, code: 1 } })
+    .toArray();
 };
 
 export const normalizeCatalogLanguageSelection = async (params: {

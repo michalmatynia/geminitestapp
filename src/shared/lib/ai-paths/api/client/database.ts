@@ -2,8 +2,11 @@ import type { DatabaseBrowse, SchemaResponse } from '@/shared/contracts/database
 
 import { apiFetch, apiPost, ApiResponse } from './base';
 
+export type DbProvider = 'auto' | 'mongodb';
+export type DbSchemaProvider = DbProvider | 'all';
+
 export type DbActionPayload = {
-  provider?: 'auto' | 'mongodb' | 'prisma';
+  provider?: DbProvider;
   action: string;
   collection: string;
   collectionMap?: Record<string, string>;
@@ -22,7 +25,7 @@ export type DbActionPayload = {
 };
 
 export type DbQueryPayload = {
-  provider: string;
+  provider: DbProvider;
   collection: string;
   collectionMap?: Record<string, string>;
   filter: unknown;
@@ -34,7 +37,7 @@ export type DbQueryPayload = {
 };
 
 export type DbUpdatePayload = {
-  provider: string;
+  provider: DbProvider;
   collection: string;
   collectionMap?: Record<string, string>;
   filter: unknown;
@@ -67,6 +70,9 @@ const SERVER_DB_ACTION_TIMEOUT_MS =
   parsePositiveInt(process.env['AI_PATHS_DB_ACTION_TIMEOUT_MS']) ??
   DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS;
 
+const normalizeDbProvider = (provider: unknown): DbProvider | undefined =>
+  provider === 'auto' || provider === 'mongodb' ? provider : undefined;
+
 const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
   if (typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0) {
     return Math.max(1_000, Math.floor(timeoutMs));
@@ -81,10 +87,7 @@ export async function databaseAction<T>(
   payload: DbActionPayload,
   options?: DbRequestOptions
 ): Promise<ApiResponse<T>> {
-  const provider =
-    payload.provider === 'auto' || payload.provider === 'mongodb'
-      ? payload.provider
-      : undefined;
+  const provider = normalizeDbProvider(payload.provider);
   return apiPost<T>(
     '/api/ai-paths/db-action',
     {
@@ -110,17 +113,14 @@ export async function databaseAction<T>(
         : {}),
     },
     {
-    timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
-    ...(options?.signal ? { signal: options.signal } : {}),
+      timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
+      ...(options?.signal ? { signal: options.signal } : {}),
     }
   );
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
-  const provider =
-    payload.provider === 'auto' || payload.provider === 'mongodb'
-      ? payload.provider
-      : undefined;
+  const provider = normalizeDbProvider(payload.provider);
   return apiPost<T>('/api/ai-paths/db-action', {
     ...(provider ? { provider } : {}),
     collection: payload.collection,
@@ -135,10 +135,7 @@ export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResp
 }
 
 export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
-  const provider =
-    payload.provider === 'auto' || payload.provider === 'mongodb'
-      ? payload.provider
-      : undefined;
+  const provider = normalizeDbProvider(payload.provider);
   return apiPost<T>('/api/ai-paths/db-action', {
     ...(provider ? { provider } : {}),
     collection: payload.collection,
@@ -155,7 +152,7 @@ export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<Api
 }
 
 export async function fetchSchema(args?: {
-  provider?: string;
+  provider?: DbSchemaProvider;
   includeCounts?: boolean;
 }): Promise<ApiResponse<SchemaResponse>> {
   const params = new URLSearchParams();
@@ -167,7 +164,7 @@ export async function fetchSchema(args?: {
 }
 
 export async function browseDatabase(args: {
-  provider?: string;
+  provider?: DbProvider;
   collection: string;
   query?: string;
   limit?: number;

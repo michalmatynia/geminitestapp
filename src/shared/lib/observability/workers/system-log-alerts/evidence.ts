@@ -75,13 +75,11 @@ export const summarizeLogForAlertEvidence = async (
 };
 
 export const buildAlertEvidenceContext = async (input: {
-  provider: 'mongodb' | 'prisma';
   query: AlertEvidenceQuery;
   matchedCount: number;
   windowStart?: Date | null;
 }): Promise<AlertEvidenceContext> => {
   const logs = await listAlertEvidenceLogs(
-    input.provider,
     {
       ...input.query,
       limit: ALERT_EVIDENCE_SAMPLE_LIMIT,
@@ -99,11 +97,8 @@ export const buildAlertEvidenceContext = async (input: {
   };
 };
 
-export const buildLogSilenceEvidenceContext = async (
-  provider: 'mongodb' | 'prisma'
-): Promise<AlertEvidenceContext> => {
+export const buildLogSilenceEvidenceContext = async (): Promise<AlertEvidenceContext> => {
   const latest = await listAlertEvidenceLogs(
-    provider,
     {
       limit: 1,
     },

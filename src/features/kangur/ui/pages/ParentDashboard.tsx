@@ -12,6 +12,7 @@ import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/compon
 import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
 import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import {
   KangurParentDashboardRuntimeBoundary,
@@ -23,9 +24,18 @@ import {
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+
+const PARENT_TAB_LABELS: Record<KangurParentDashboardTabId, string> = {
+  progress: 'Postep ucznia',
+  scores: 'Wyniki ucznia',
+  assign: 'Zadania ucznia',
+  'ai-tutor': 'Tutor-AI dla rodzica',
+};
 
 function ParentDashboardContent(): React.JSX.Element {
   const {
+    activeLearner,
     activeTab,
     basePath,
     canAccessDashboard,
@@ -42,10 +52,133 @@ function ParentDashboardContent(): React.JSX.Element {
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);
   const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
+  const guestHeroAnchorRef = useRef<HTMLDivElement | null>(null);
+  const heroAnchorRef = useRef<HTMLDivElement | null>(null);
+  const learnerManagementAnchorRef = useRef<HTMLDivElement | null>(null);
+  const tabsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const progressAnchorRef = useRef<HTMLDivElement | null>(null);
+  const scoresAnchorRef = useRef<HTMLDivElement | null>(null);
+  const assignmentsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const aiTutorAnchorRef = useRef<HTMLDivElement | null>(null);
   const knownTabPanelHeightsRef = useRef<Partial<Record<KangurParentDashboardTabId, number>>>({});
   const pendingScrollSnapshotRef = useRef<number | null>(null);
   const restoreScrollAnimationFrameRef = useRef<number | null>(null);
   const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
+  const activeLearnerId = activeLearner?.id?.trim() || null;
+  const dashboardContentId = canAccessDashboard
+    ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}`
+    : 'parent-dashboard:guest';
+  const dashboardTitle = canAccessDashboard
+    ? `Panel rodzica: ${PARENT_TAB_LABELS[activeTab]}`
+    : 'Panel rodzica bez dostepu';
+
+  useKangurAiTutorSessionSync({
+    learnerId: activeLearnerId,
+    sessionContext: {
+      surface: 'parent_dashboard',
+      contentId: dashboardContentId,
+      title: dashboardTitle,
+      description: canAccessDashboard
+        ? 'Dashboard rodzica z postepem ucznia, wynikami, zadaniami i wsparciem Tutor-AI.'
+        : 'Widok ograniczonego dostepu do panelu rodzica.',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-guest-hero',
+    kind: 'hero',
+    ref: guestHeroAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: !canAccessDashboard,
+    priority: 90,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Hero dashboardu rodzica bez dostepu',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-hero',
+    kind: 'hero',
+    ref: heroAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard,
+    priority: 88,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Hero dashboardu rodzica',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-learner-management',
+    kind: 'screen',
+    ref: learnerManagementAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard,
+    priority: 86,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Zarzadzanie uczniami',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-tabs',
+    kind: 'navigation',
+    ref: tabsAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard,
+    priority: 84,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Zakladki dashboardu rodzica',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-progress',
+    kind: 'progress',
+    ref: progressAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard && activeTab === 'progress',
+    priority: 82,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Postep ucznia',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-scores',
+    kind: 'summary',
+    ref: scoresAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard && activeTab === 'scores',
+    priority: 80,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Wyniki ucznia',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-assignments',
+    kind: 'assignment',
+    ref: assignmentsAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard && activeTab === 'assign',
+    priority: 78,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Zadania ucznia',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-parent-dashboard-ai-tutor',
+    kind: 'screen',
+    ref: aiTutorAnchorRef,
+    surface: 'parent_dashboard',
+    enabled: canAccessDashboard && activeTab === 'ai-tutor',
+    priority: 76,
+    metadata: {
+      contentId: dashboardContentId,
+      label: 'Tutor-AI dla rodzica',
+    },
+  });
 
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') {
@@ -206,7 +339,12 @@ function ParentDashboardContent(): React.JSX.Element {
           enabled={docsTooltipsEnabled}
           rootId='kangur-parent-dashboard-page'
         />
-        <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className='w-full max-w-lg'>
+        <motion.div
+          ref={guestHeroAnchorRef}
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          className='w-full max-w-lg'
+        >
           <KangurParentDashboardHeroWidget />
         </motion.div>
       </KangurPageShell>
@@ -229,12 +367,14 @@ function ParentDashboardContent(): React.JSX.Element {
         id='kangur-parent-dashboard-main'
         className='max-w-2xl flex flex-col gap-6'
       >
-        <motion.div initial={false} animate={{ opacity: 1, y: 0 }}>
+        <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
           <KangurParentDashboardHeroWidget showActions={false} />
         </motion.div>
 
-        <KangurParentDashboardLearnerManagementWidget />
-        <div>
+        <div ref={learnerManagementAnchorRef}>
+          <KangurParentDashboardLearnerManagementWidget />
+        </div>
+        <div ref={tabsAnchorRef}>
           <KangurParentDashboardTabsWidget onBeforeTabChange={reservePanelHeightBeforeTabChange} />
         </div>
 
@@ -247,10 +387,18 @@ function ParentDashboardContent(): React.JSX.Element {
           }
         >
           <div ref={tabPanelsContentRef}>
-            <KangurParentDashboardProgressWidget displayMode='active-tab' />
-            <KangurParentDashboardScoresWidget displayMode='active-tab' />
-            <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
-            <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+            <div ref={progressAnchorRef}>
+              <KangurParentDashboardProgressWidget displayMode='active-tab' />
+            </div>
+            <div ref={scoresAnchorRef}>
+              <KangurParentDashboardScoresWidget displayMode='active-tab' />
+            </div>
+            <div ref={assignmentsAnchorRef}>
+              <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+            </div>
+            <div ref={aiTutorAnchorRef}>
+              <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+            </div>
           </div>
         </div>
       </KangurPageContainer>

@@ -577,7 +577,7 @@ export const dbApi = {
   fetchSchema,
   browse: async (
     collection: string,
-    args?: { provider?: string; limit?: number; skip?: number; query?: string }
+    args?: { provider?: 'auto' | 'mongodb'; limit?: number; skip?: number; query?: string }
   ) =>
     browseDatabase({
       collection,

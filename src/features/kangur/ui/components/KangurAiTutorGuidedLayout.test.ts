@@ -3,8 +3,10 @@ import {
   getAvatarRectFromPoint,
   getFloatingTutorArrowCorridorRect,
   getFloatingTutorArrowheadGeometry,
+  getGuidedCalloutClusterLayout,
   getGuidedCalloutLayout,
 } from './KangurAiTutorGuidedLayout';
+import { AVATAR_SIZE, GUIDED_AVATAR_SURFACE_GAP } from './KangurAiTutorWidget.shared';
 
 const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
   const overlapLeft = Math.max(left.left, right.left);
@@ -95,5 +97,31 @@ describe('KangurAiTutorGuidedLayout', () => {
       getRectSeparationDistance(getRectFromCalloutLayout(layoutWithoutAnchorBias), avatarRect)
     );
     expect(getRectOverlapArea(getRectFromCalloutLayout(layoutWithAnchorBias), focusRect)).toBe(0);
+  });
+
+  it('keeps the guided avatar next to the callout without intersecting it', () => {
+    const viewport = { width: 1280, height: 720 };
+    const focusRect = new DOMRect(480, 320, 140, 26);
+    const cluster = getGuidedCalloutClusterLayout(focusRect, viewport);
+
+    expect(getRectOverlapArea(cluster.calloutRect, cluster.avatarRect)).toBe(0);
+
+    if (cluster.avatarPlacement === 'left') {
+      expect(cluster.calloutRect.left - cluster.avatarRect.right).toBe(GUIDED_AVATAR_SURFACE_GAP);
+    } else if (cluster.avatarPlacement === 'right') {
+      expect(cluster.avatarRect.left - cluster.calloutRect.right).toBe(
+        GUIDED_AVATAR_SURFACE_GAP
+      );
+    } else if (cluster.avatarPlacement === 'top') {
+      expect(cluster.calloutRect.top - cluster.avatarRect.bottom).toBe(GUIDED_AVATAR_SURFACE_GAP);
+    } else {
+      expect(cluster.avatarRect.top - cluster.calloutRect.bottom).toBe(
+        GUIDED_AVATAR_SURFACE_GAP
+      );
+    }
+
+    expect(cluster.avatarRect.width).toBe(AVATAR_SIZE);
+    expect(cluster.avatarRect.height).toBe(AVATAR_SIZE);
+    expect(getRectOverlapArea(cluster.calloutRect, focusRect)).toBe(0);
   });
 });

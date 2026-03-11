@@ -62,7 +62,7 @@ describe('database engine settings parsing', () => {
       parseDatabaseEngineServiceRouteMapSetting(
         JSON.stringify({
           app: 'mongodb',
-          legacy: 'prisma',
+          legacy: 'legacy_provider',
         })
       )
     ).toThrowError(/invalid database engine service route map payload/i);
@@ -118,12 +118,12 @@ describe('database engine settings parsing', () => {
     });
   });
 
-  it('ignores legacy PostgreSQL scheduler payloads when normalizing settings', () => {
-    expect(
+  it('rejects legacy scheduler targets that are no longer supported', () => {
+    expect(() =>
       parseDatabaseEngineBackupScheduleSetting(
         JSON.stringify({
           ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
-          postgresql: {
+          legacyTarget: {
             enabled: true,
             cadence: 'weekly',
             intervalDays: 7,
@@ -138,7 +138,7 @@ describe('database engine settings parsing', () => {
           },
         })
       )
-    ).toEqual(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE);
+    ).toThrowError(/invalid database engine backup schedule settings payload/i);
   });
 
   it('rejects invalid backup schedule fields and operation controls', () => {

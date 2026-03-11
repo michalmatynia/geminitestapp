@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
 
 import {
@@ -49,6 +49,7 @@ const createPanelBodyContextValue = (
   handleFollowUpClick: vi.fn(),
   handleKeyDown: vi.fn(),
   handleMessageFeedback: vi.fn(),
+  handleWebsiteHelpTargetClick: vi.fn(),
   handleQuickAction: vi.fn().mockResolvedValue(undefined),
   handleSend: vi.fn().mockResolvedValue(undefined),
   handleStartHomeOnboarding: vi.fn(),
@@ -201,6 +202,71 @@ describe('KangurAiTutorMessageList', () => {
 
     expect(screen.queryByText('Źródła')).not.toBeInTheDocument();
     expect(screen.queryByText('Dodawanie podstawy')).not.toBeInTheDocument();
+  });
+
+  it('renders a website-help target link for graph-grounded assistant answers', () => {
+    render(
+      <MessageListHarness
+        bodyValue={createPanelBodyContextValue({
+          messages: [
+            {
+              role: 'assistant',
+              content: 'Kliknij przycisk logowania w górnej nawigacji.',
+              websiteHelpTarget: {
+                nodeId: 'flow:kangur:sign-in',
+                label: 'Zaloguj się',
+                route: '/',
+                anchorId: 'kangur-primary-nav-login',
+              },
+            },
+          ],
+        })}
+      />
+    );
+
+    expect(screen.getByText('Miejsce na stronie')).toBeInTheDocument();
+    expect(screen.getByText('Zaloguj się')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Przejdź do tego miejsca' })).toHaveAttribute(
+      'href',
+      '/kangur#kangur-primary-nav-login'
+    );
+  });
+
+  it('tracks clicks on website-help target links through the panel-body contract', () => {
+    const handleWebsiteHelpTargetClick = vi.fn();
+
+    render(
+      <MessageListHarness
+        bodyValue={createPanelBodyContextValue({
+          handleWebsiteHelpTargetClick,
+          messages: [
+            {
+              role: 'assistant',
+              content: 'Kliknij przycisk logowania w górnej nawigacji.',
+              websiteHelpTarget: {
+                nodeId: 'flow:kangur:sign-in',
+                label: 'Zaloguj się',
+                route: '/',
+                anchorId: 'kangur-primary-nav-login',
+              },
+            },
+          ],
+        })}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Przejdź do tego miejsca' }));
+
+    expect(handleWebsiteHelpTargetClick).toHaveBeenCalledWith(
+      {
+        nodeId: 'flow:kangur:sign-in',
+        label: 'Zaloguj się',
+        route: '/',
+        anchorId: 'kangur-primary-nav-login',
+      },
+      0,
+      '/kangur#kangur-primary-nav-login'
+    );
   });
 
   it('renders user messages in the warm orange tutor bubble styling', () => {

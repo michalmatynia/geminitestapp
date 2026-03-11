@@ -23,6 +23,7 @@ import {
 } from '@/features/kangur/services/kangur-active-learner';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   KangurButton,
@@ -404,6 +405,32 @@ function KangurLoginPageContent(): JSX.Element {
     isParentFlowVisible && parentAuthMode === 'create-account'
       ? 'Pole e-maila rodzica'
       : 'Pole e-maila rodzica albo nicku ucznia';
+  const authSessionTitle =
+    parentAuthMode === 'create-account'
+      ? 'Tworzenie konta rodzica'
+      : loginKind === 'student'
+        ? 'Logowanie ucznia'
+        : loginKind === 'parent'
+          ? 'Logowanie rodzica'
+          : 'Logowanie do Kangur';
+  const authSessionContentId =
+    parentAuthMode === 'create-account'
+      ? 'auth:login:create-account'
+      : loginKind === 'student'
+        ? 'auth:login:student'
+        : loginKind === 'parent'
+          ? 'auth:login:parent'
+          : 'auth:login:sign-in';
+
+  useKangurAiTutorSessionSync({
+    learnerId: auth?.user?.activeLearner?.id ?? null,
+    sessionContext: {
+      surface: 'auth',
+      contentId: authSessionContentId,
+      title: authSessionTitle,
+      description: introDescription,
+    },
+  });
 
   useKangurTutorAnchor({
     id: 'kangur-auth-login-form',

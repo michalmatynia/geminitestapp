@@ -91,7 +91,7 @@ describe('Database Engine backup scheduler actions', () => {
       checkedAt: '2026-02-10T10:00:00.000Z',
       schedulerEnabled: true,
       triggered: [{ dbType: 'mongodb', jobId: 'job-1' }],
-      skipped: [{ dbType: 'postgresql', reason: 'not_due' }],
+      skipped: [],
     });
     vi.mocked(getDatabaseBackupSchedulerStatus).mockResolvedValue({
       timestamp: '2026-02-10T10:00:00.000Z',
@@ -117,20 +117,6 @@ describe('Database Engine backup scheduler actions', () => {
           lastJobId: 'job-1',
           lastError: null,
           nextDueAt: '2026-02-11T02:00:00.000Z',
-          dueNow: false,
-        },
-        postgresql: {
-          enabled: true,
-          cadence: 'daily',
-          intervalDays: 1,
-          weekday: 1,
-          timeUtc: '02:00',
-          lastQueuedAt: null,
-          lastRunAt: null,
-          lastStatus: 'idle',
-          lastJobId: null,
-          lastError: null,
-          nextDueAt: '2026-02-10T02:00:00.000Z',
           dueNow: false,
         },
       },
@@ -161,18 +147,12 @@ describe('Database Engine backup scheduler actions', () => {
     expect(body.status.repeatEveryMs).toBe(DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS);
   });
 
-  it('POST /api/databases/engine/backup-scheduler/run-now queues backup jobs for all providers', async () => {
-    vi.mocked(enqueueProductAiJob)
-      .mockResolvedValueOnce({
-        id: 'job-mongo-1',
-        productId: 'system',
-        status: 'pending',
-      } as unknown as ProductAiJobDto)
-      .mockResolvedValueOnce({
-        id: 'job-pg-1',
-        productId: 'system',
-        status: 'pending',
-      } as unknown as ProductAiJobDto);
+  it('POST /api/databases/engine/backup-scheduler/run-now queues MongoDB backup jobs', async () => {
+    vi.mocked(enqueueProductAiJob).mockResolvedValue({
+      id: 'job-mongo-1',
+      productId: 'system',
+      status: 'pending',
+    } as unknown as ProductAiJobDto);
 
     const res = await POST_RUN_NOW(
       new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
@@ -186,16 +166,17 @@ describe('Database Engine backup scheduler actions', () => {
     expect(res.status).toBe(200);
     expect(body).toEqual({
       success: true,
-      queued: [
-        { dbType: 'mongodb', jobId: 'job-mongo-1' },
-        { dbType: 'postgresql', jobId: 'job-pg-1' },
-      ],
+      queued: [{ dbType: 'mongodb', jobId: 'job-mongo-1' }],
       inlineProcessed: [],
     });
-    expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
-    expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(2);
+    expect(enqueueProductAiJob).toHaveBeenCalledTimes(1);
+    expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(1);
     expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
-    expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
+    expect(enqueueProductAiJob).toHaveBeenCalledWith(
+      'system',
+      'db_backup',
+      expect.objectContaining({ dbType: 'mongodb' })
+    );
   });
 
   it('POST /api/databases/engine/backup-scheduler/tick returns forbidden when manual tick is disabled', async () => {

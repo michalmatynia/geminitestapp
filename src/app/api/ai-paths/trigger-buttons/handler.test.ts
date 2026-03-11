@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { authError } from '@/shared/errors/app-error';
 import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME,
@@ -89,36 +90,52 @@ describe('ai-paths trigger-buttons GET handler', () => {
   });
 
   it('hides playwright fixture trigger buttons by default', async () => {
-    getAiPathsSettingMock.mockResolvedValue(
-      JSON.stringify([
-        {
-          id: 'btn-live',
-          name: 'Run Path',
-          iconId: null,
-          pathId: 'path_live',
-          enabled: true,
-          locations: ['product_modal'],
-          mode: 'click',
-          display: 'icon',
-          createdAt: '2026-03-03T00:00:00.000Z',
-          updatedAt: '2026-03-03T00:00:00.000Z',
-          sortIndex: 0,
-        },
-        {
-          id: 'btn-fixture',
-          name: 'Generate Polish Copy 123',
-          iconId: null,
-          pathId: 'path_pw_products_abc123',
-          enabled: true,
-          locations: ['product_row'],
-          mode: 'click',
-          display: 'icon_label',
-          createdAt: '2026-03-03T00:00:00.000Z',
-          updatedAt: '2026-03-03T00:00:00.000Z',
-          sortIndex: 1,
-        },
-      ])
-    );
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-live',
+            name: 'Run Path',
+            iconId: null,
+            pathId: 'path_live',
+            enabled: true,
+            locations: ['product_modal'],
+            mode: 'click',
+            display: 'icon',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+          {
+            id: 'btn-fixture',
+            name: 'Generate Polish Copy 123',
+            iconId: null,
+            pathId: 'path_pw_products_abc123',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 1,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path_live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path_live') {
+        return JSON.stringify({ id: 'path_live', name: 'Live Path', nodes: [], edges: [] });
+      }
+      return null;
+    });
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
@@ -133,23 +150,44 @@ describe('ai-paths trigger-buttons GET handler', () => {
   });
 
   it('returns playwright fixture trigger buttons when explicitly requested', async () => {
-    getAiPathsSettingMock.mockResolvedValue(
-      JSON.stringify([
-        {
-          id: 'btn-fixture',
-          name: 'Generate Polish Copy 123',
-          iconId: null,
-          pathId: 'path_pw_products_abc123',
-          enabled: true,
-          locations: ['product_row'],
-          mode: 'click',
-          display: 'icon_label',
-          createdAt: '2026-03-03T00:00:00.000Z',
-          updatedAt: '2026-03-03T00:00:00.000Z',
-          sortIndex: 0,
-        },
-      ])
-    );
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-fixture',
+            name: 'Generate Polish Copy 123',
+            iconId: null,
+            pathId: 'path_pw_products_abc123',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path_pw_products_abc123',
+            name: 'Fixture Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path_pw_products_abc123') {
+        return JSON.stringify({
+          id: 'path_pw_products_abc123',
+          name: 'Fixture Path',
+          nodes: [],
+          edges: [],
+        });
+      }
+      return null;
+    });
 
     const cookieRequest = new NextRequest('http://localhost/api/ai-paths/trigger-buttons');
     Object.defineProperty(cookieRequest, 'cookies', {
@@ -186,6 +224,316 @@ describe('ai-paths trigger-buttons GET handler', () => {
     ]);
   });
 
+  it('hides buttons bound to missing AI Paths', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-live',
+            name: 'Live Path',
+            iconId: null,
+            pathId: 'path-live',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+          {
+            id: 'btn-missing',
+            name: 'Missing Path',
+            iconId: null,
+            pathId: 'path-missing',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 1,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path-live') {
+        return JSON.stringify({ id: 'path-live', name: 'Live Path', nodes: [], edges: [] });
+      }
+      return null;
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-live',
+      }),
+    ]);
+  });
+
+  it('hides buttons whose bound AI Path config payload is missing', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-live',
+            name: 'Live Path',
+            iconId: null,
+            pathId: 'path-live',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+          {
+            id: 'btn-missing-config',
+            name: 'Missing Config',
+            iconId: null,
+            pathId: 'path-missing-config',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 1,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+          {
+            id: 'path-missing-config',
+            name: 'Missing Config Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path-live') {
+        return JSON.stringify({ id: 'path-live', name: 'Live Path', nodes: [], edges: [] });
+      }
+      return null;
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-live',
+      }),
+    ]);
+  });
+
+  it('hides buttons whose bound AI Path config fails trigger preflight validation', async () => {
+    const brokenPathId = 'path-broken-trigger';
+    const brokenConfig = {
+      ...createDefaultPathConfig(brokenPathId),
+      name: 'Broken Trigger Path',
+      nodes: [
+        {
+          id: 'node-broken-trigger',
+          type: 'trigger',
+        },
+      ],
+      edges: [],
+    };
+
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-live',
+            name: 'Live Path',
+            iconId: null,
+            pathId: 'path-live',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+          {
+            id: 'btn-broken',
+            name: 'Broken Path',
+            iconId: null,
+            pathId: brokenPathId,
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 1,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+          {
+            id: brokenPathId,
+            name: 'Broken Trigger Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path-live') {
+        return JSON.stringify({ id: 'path-live', name: 'Live Path', nodes: [], edges: [] });
+      }
+      if (key === `ai_paths_config_${brokenPathId}`) {
+        return JSON.stringify(brokenConfig);
+      }
+      return null;
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-live',
+      }),
+    ]);
+  });
+
+  it('repairs and keeps BLWo starter buttons when the seeded default config is stale', async () => {
+    const brokenPathId = 'path_base_export_blwo_v1';
+    const brokenConfig = {
+      ...createDefaultPathConfig(brokenPathId),
+      name: 'Base Export Workflow (BLWo)',
+      nodes: [
+        {
+          id: 'node-broken-trigger',
+          type: 'trigger',
+        },
+      ],
+      edges: [],
+    };
+
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-blwo',
+            name: 'BLWo',
+            iconId: null,
+            pathId: brokenPathId,
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: brokenPathId,
+            name: 'Base Export Workflow (BLWo)',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === `ai_paths_config_${brokenPathId}`) {
+        return JSON.stringify(brokenConfig);
+      }
+      return null;
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-blwo',
+        pathId: brokenPathId,
+      }),
+    ]);
+    expect(upsertAiPathsSettingMock).toHaveBeenCalledWith(
+      `ai_paths_config_${brokenPathId}`,
+      expect.any(String)
+    );
+  });
+
+  it('fails open when the AI Paths index payload is malformed', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([
+          {
+            id: 'btn-blwo',
+            name: 'BLWo',
+            iconId: null,
+            pathId: 'path_base_export_blwo_v1',
+            enabled: true,
+            locations: ['product_row'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+        ]);
+      }
+      if (key === 'ai_paths_index') {
+        return 'not-json';
+      }
+      return null;
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-blwo',
+      }),
+    ]);
+  });
+
   it('returns an empty list for unauthorized access instead of throwing', async () => {
     requireAiPathsRunAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
@@ -200,16 +548,16 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
-  it('rejects malformed non-array stored payloads', async () => {
+  it('returns an empty list when stored trigger-button settings are malformed', async () => {
     getAiPathsSettingMock.mockResolvedValue('{"not":"an-array"}');
 
-    await expect(
-      GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-        createRequestContext()
-      )
-    ).rejects.toThrow('Invalid AI trigger button settings payload.');
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
 
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([]);
     expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });

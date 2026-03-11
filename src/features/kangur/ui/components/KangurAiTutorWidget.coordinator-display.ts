@@ -92,6 +92,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
     selectionConversationContext,
+    selectionGuidanceCalloutVisibleText,
     selectionGuidanceHandoffText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
@@ -186,6 +187,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     persistedSelectionPageRect,
     persistedSelectionRect,
     sectionResponsePending,
+    selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
     sessionContentId: sessionContext?.contentId,
     sessionSurface: sessionContext?.surface,
@@ -356,7 +358,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
       ? (homeOnboardingAnchor?.getRect() ?? null)
       : showSectionGuidanceCallout
         ? guidedSectionFocusRect
-        : showSelectionGuidanceCallout
+        : isSelectionGuidedTutorMode || showSelectionGuidanceCallout
           ? guidedSelectionRect
           : (guidedTargetAnchor?.getRect() ?? guidedFallbackRect);
 

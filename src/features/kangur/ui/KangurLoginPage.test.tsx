@@ -16,6 +16,7 @@ const {
   routerRefreshMock,
   signOutMock,
   trackKangurClientEventMock,
+  useKangurAiTutorSessionSyncMock,
   useOptionalKangurAuthMock,
   usePathnameMock,
   useRouterMock,
@@ -27,6 +28,7 @@ const {
   routerRefreshMock: vi.fn(),
   signOutMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
+  useKangurAiTutorSessionSyncMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
   usePathnameMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -49,6 +51,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
 }));
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
@@ -232,6 +238,16 @@ describe('KangurLoginPage', () => {
     expect(screen.queryByRole('tab', { name: 'Rodzic' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Uczen' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /magiczny link/i })).not.toBeInTheDocument();
+    expect(useKangurAiTutorSessionSyncMock).toHaveBeenCalledWith({
+      learnerId: null,
+      sessionContext: {
+        surface: 'auth',
+        contentId: 'auth:login:sign-in',
+        title: 'Logowanie do Kangur',
+        description:
+          'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.',
+      },
+    });
   });
 
   it('has no obvious accessibility violations in the login shell', async () => {

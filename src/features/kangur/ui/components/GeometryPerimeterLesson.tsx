@@ -20,14 +20,14 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Co to jest obwód?',
       content: (
         <div className='flex flex-col gap-4 text-center'>
-          <p className='text-slate-700'>
+          <p className='[color:var(--kangur-page-text)]'>
             <strong>Obwód</strong> to długosc całej krawędzi figury. Dodajemy wszystkie boki.
           </p>
           <KangurLessonCallout accent='amber'>
             <div className='mx-auto h-20 w-32 rounded border-4 border-amber-500' />
             <p className='mt-2 text-sm text-amber-700'>Idziemy dookoła figury i sumujemy.</p>
           </KangurLessonCallout>
-          <p className='text-sm text-slate-500'>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             Obwód mierzymy w centymetrach (cm), metrach (m) itp.
           </p>
         </div>
@@ -40,21 +40,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='space-y-3'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
-            <p className='text-slate-700'>Każdy bok ma 3 cm</p>
+            <p className='[color:var(--kangur-page-text)]'>Każdy bok ma 3 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 3 + 3 + 3 + 3 = 12 cm</p>
           </KangurLessonCallout>
           <KangurLessonCallout
             accent='amber'
-            className='text-center text-sm text-slate-700'
+            className='text-center text-sm [color:var(--kangur-page-text)]'
             padding='sm'
           >
             <p className='font-bold text-amber-700'>Wzór dla kwadratu:</p>
             <p className='text-lg font-extrabold mt-1'>O = 4 × a</p>
-            <p className='mt-1 text-xs text-slate-500'>
+            <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
               gdzie <b>a</b> to długosc boku
             </p>
           </KangurLessonCallout>
-          <p className='text-center text-sm text-slate-500'>
+          <p className='text-center text-sm [color:var(--kangur-page-muted-text)]'>
             Przykład: a = 5 cm → O = 4 × 5 = 20 cm
           </p>
         </div>
@@ -67,21 +67,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='space-y-3'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
-            <p className='text-slate-700'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
+            <p className='[color:var(--kangur-page-text)]'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 6 + 4 + 6 + 4 = 20 cm</p>
           </KangurLessonCallout>
           <KangurLessonCallout
             accent='amber'
-            className='text-center text-sm text-slate-700'
+            className='text-center text-sm [color:var(--kangur-page-text)]'
             padding='sm'
           >
             <p className='font-bold text-amber-700'>Wzór dla prostokata:</p>
             <p className='text-lg font-extrabold mt-1'>O = 2 × (a + b)</p>
-            <p className='mt-1 text-xs text-slate-500'>
+            <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
               gdzie <b>a</b> i <b>b</b> to długosci boków
             </p>
           </KangurLessonCallout>
-          <p className='text-center text-sm text-slate-500'>
+          <p className='text-center text-sm [color:var(--kangur-page-muted-text)]'>
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
           </p>
         </div>
@@ -103,7 +103,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <KangurLessonCallout
               key={text}
               accent='amber'
-              className='text-sm text-slate-700'
+              className='text-sm [color:var(--kangur-page-text)]'
               padding='sm'
             >
               ✅ {text}

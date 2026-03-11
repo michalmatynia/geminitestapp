@@ -115,12 +115,12 @@ describe('Database Engine operations jobs API', () => {
 
   it('POST /api/databases/engine/operations/jobs/[jobId]/cancel cancels db operation jobs', async () => {
     vi.mocked(getProductAiJob).mockResolvedValue({
-      id: 'job-db-sync-1',
+      id: 'job-db-backup-1',
       productId: 'system',
       status: 'running',
-      type: 'db_sync',
-      jobType: 'db_sync',
-      payload: { direction: 'mongo_to_prisma' },
+      type: 'db_backup',
+      jobType: 'db_backup',
+      payload: { dbType: 'mongodb' },
       result: null,
       errorMessage: null,
       error: null,
@@ -132,11 +132,11 @@ describe('Database Engine operations jobs API', () => {
       product: null,
     } as unknown as Awaited<ReturnType<typeof getProductAiJob>>);
     vi.mocked(cancelProductAiJob).mockResolvedValue({
-      id: 'job-db-sync-1',
+      id: 'job-db-backup-1',
       productId: 'system',
       status: 'cancelled',
-      type: 'db_sync',
-      jobType: 'db_sync',
+      type: 'db_backup',
+      jobType: 'db_backup',
       payload: {},
       result: null,
       errorMessage: null,
@@ -148,21 +148,21 @@ describe('Database Engine operations jobs API', () => {
     } as unknown as Awaited<ReturnType<typeof cancelProductAiJob>>);
 
     const req = new NextRequest(
-      'http://localhost/api/databases/engine/operations/jobs/job-db-sync-1/cancel',
+      'http://localhost/api/databases/engine/operations/jobs/job-db-backup-1/cancel',
       {
         method: 'POST',
       }
     );
 
     const res = await POST_CANCEL(req, {
-      params: Promise.resolve({ jobId: 'job-db-sync-1' }),
+      params: Promise.resolve({ jobId: 'job-db-backup-1' }),
     });
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(cancelProductAiJob).toHaveBeenCalledWith('job-db-sync-1');
+    expect(cancelProductAiJob).toHaveBeenCalledWith('job-db-backup-1');
     expect(body.success).toBe(true);
-    expect(body.job).toMatchObject({ id: 'job-db-sync-1', status: 'cancelled' });
+    expect(body.job).toMatchObject({ id: 'job-db-backup-1', status: 'cancelled' });
   });
 
   it('POST /api/databases/engine/operations/jobs/[jobId]/cancel returns forbidden when cancellation is disabled', async () => {
@@ -177,7 +177,7 @@ describe('Database Engine operations jobs API', () => {
     });
 
     const req = new NextRequest(
-      'http://localhost/api/databases/engine/operations/jobs/job-db-sync-1/cancel',
+      'http://localhost/api/databases/engine/operations/jobs/job-db-backup-1/cancel',
       {
         method: 'POST',
       }

@@ -84,6 +84,7 @@ export function KangurAiTutorGuidedCallout({
 }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const { guidedTutorTarget, homeOnboardingStepIndex } = useKangurAiTutorWidgetStateContext();
+  const usesDirectionalEntry = !showSelectionGuidanceCallout;
   const calloutTransition: Transition = prefersReducedMotion
     ? reducedMotionTransitions.instant
     : {
@@ -115,17 +116,27 @@ export function KangurAiTutorGuidedCallout({
           key={calloutKey}
           data-testid={calloutTestId}
           data-entry-direction={entryDirection}
+          data-entry-animation={usesDirectionalEntry ? 'directional' : 'fade'}
           data-guidance-motion='gentle'
           data-guidance-placement={placement}
           initial={
             prefersReducedMotion
               ? { ...reducedMotionTransitions.stableState, x: 0 }
-              : {
-                ...reducedMotionTransitions.stableState,
-                opacity: 0,
-                x: entryDirection === 'left' ? -GUIDED_CALLOUT_ENTRY_OFFSET_PX : GUIDED_CALLOUT_ENTRY_OFFSET_PX,
-                scale: 0.98,
-              }
+              : usesDirectionalEntry
+                ? {
+                  ...reducedMotionTransitions.stableState,
+                  opacity: 0,
+                  x:
+                    entryDirection === 'left'
+                      ? -GUIDED_CALLOUT_ENTRY_OFFSET_PX
+                      : GUIDED_CALLOUT_ENTRY_OFFSET_PX,
+                  scale: 0.98,
+                }
+                : {
+                  ...reducedMotionTransitions.stableState,
+                  opacity: 0,
+                  x: 0,
+                }
           }
           animate={{ ...reducedMotionTransitions.stableState, x: 0 }}
           exit={

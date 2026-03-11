@@ -35,7 +35,7 @@ const previewPayload = {
     allowAutomaticMigrations: false,
     strictProviderAvailability: true,
   },
-  appProvider: 'prisma' as const,
+  appProvider: 'mongodb' as const,
   appProviderError: null,
   collections: [
     {

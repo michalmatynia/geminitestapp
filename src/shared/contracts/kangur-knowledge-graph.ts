@@ -53,9 +53,18 @@ export interface KangurKnowledgeGraphNode {
   summary?: string | undefined;
   source: KangurKnowledgeNodeSource;
   locale?: string | undefined;
+  surface?: string | undefined;
+  focusKind?: string | undefined;
   route?: string | undefined;
   anchorId?: string | undefined;
   refId?: string | undefined;
+  focusIdPrefixes?: string[] | undefined;
+  contentIdPrefixes?: string[] | undefined;
+  triggerPhrases?: string[] | undefined;
+  semanticText?: string | undefined;
+  embedding?: number[] | undefined;
+  embeddingModel?: string | undefined;
+  embeddingDimensions?: number | undefined;
   sourceCollection?: KangurKnowledgeCanonicalSourceCollection | undefined;
   sourceRecordId?: string | undefined;
   sourcePath?: string | undefined;

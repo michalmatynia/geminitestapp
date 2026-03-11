@@ -133,6 +133,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   prefersReducedMotion: boolean;
   resetAskModalState: () => void;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
   sendMessage: KangurAiTutorContextValue['sendMessage'];
   setCanonicalTutorModalVisible: (value: boolean) => void;
   setContextualTutorMode: (value: 'selection_explain' | 'section_explain' | null) => void;
@@ -147,6 +148,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   setPersistedSelectionContainerRect: (value: DOMRect | null) => void;
   setPersistedSelectionPageRect: (value: DOMRect | null) => void;
   setPersistedSelectionRect: (value: DOMRect | null) => void;
+  setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
   setSelectionConversationContext: (value: SelectionConversationContext | null) => void;
   setSelectionGuidanceHandoffText: (value: string | null) => void;
   setSectionResponseComplete: (value: SectionExplainContext | null) => void;
@@ -169,6 +171,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     prefersReducedMotion,
     resetAskModalState,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     sendMessage,
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
@@ -183,6 +186,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSectionResponseComplete,
@@ -279,7 +283,12 @@ export function useKangurAiTutorGuidedFlow(input: {
         window.clearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
+      if (selectionGuidanceRevealTimeoutRef.current !== null) {
+        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        selectionGuidanceRevealTimeoutRef.current = null;
+      }
 
+      setSelectionGuidanceCalloutVisibleText(null);
       setSelectionGuidanceHandoffText(null);
       setCanonicalTutorModalVisible(false);
       setContextualTutorMode('section_explain');
@@ -344,6 +353,7 @@ export function useKangurAiTutorGuidedFlow(input: {
           focusLabel: sectionLabel ?? anchor.id,
           assignmentId: anchor.metadata?.assignmentId ?? null,
           interactionIntent: 'explain',
+          surface: anchor.surface,
         });
       }, guidanceDelayMs);
     },
@@ -356,6 +366,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       prefersReducedMotion,
       resetAskModalState,
       selectionExplainTimeoutRef,
+      selectionGuidanceRevealTimeoutRef,
       sendMessage,
       setCanonicalTutorModalVisible,
       setContextualTutorMode,
@@ -370,6 +381,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
+      setSelectionGuidanceCalloutVisibleText,
       setSelectionConversationContext,
       setSelectionGuidanceHandoffText,
       setSectionResponseComplete,
@@ -388,7 +400,12 @@ export function useKangurAiTutorGuidedFlow(input: {
         window.clearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
+      if (selectionGuidanceRevealTimeoutRef.current !== null) {
+        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        selectionGuidanceRevealTimeoutRef.current = null;
+      }
 
+      setSelectionGuidanceCalloutVisibleText(null);
       setSelectionGuidanceHandoffText(null);
       setCanonicalTutorModalVisible(false);
       setContextualTutorMode('selection_explain');
@@ -419,7 +436,11 @@ export function useKangurAiTutorGuidedFlow(input: {
 
       const guidanceDelayMs = prefersReducedMotion
         ? 0
-        : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000 * 0.9));
+        : Math.max(180, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
+      selectionGuidanceRevealTimeoutRef.current = window.setTimeout(() => {
+        selectionGuidanceRevealTimeoutRef.current = null;
+        setSelectionGuidanceCalloutVisibleText(selectionText);
+      }, guidanceDelayMs);
       selectionExplainTimeoutRef.current = window.setTimeout(() => {
         selectionExplainTimeoutRef.current = null;
         setSelectionGuidanceHandoffText(selectionText);
@@ -446,12 +467,14 @@ export function useKangurAiTutorGuidedFlow(input: {
       prefersReducedMotion,
       resetAskModalState,
       selectionExplainTimeoutRef,
+      selectionGuidanceRevealTimeoutRef,
       sendMessage,
       setCanonicalTutorModalVisible,
       setContextualTutorMode,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
       setSelectionConversationContext,
+      setSelectionGuidanceCalloutVisibleText,
       setSelectionGuidanceHandoffText,
       setGuidedTutorTarget,
       setHasNewMessage,

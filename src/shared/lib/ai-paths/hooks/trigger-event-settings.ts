@@ -1,6 +1,6 @@
 import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
-import { validationError } from '@/shared/errors/app-error';
+import { isAppError, validationError } from '@/shared/errors/app-error';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_UI_STATE_KEY,
@@ -8,14 +8,11 @@ import {
   PATH_INDEX_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import {
-  normalizeLoadedPathName,
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
@@ -56,7 +53,14 @@ export const buildSelectiveTriggerSettingsData = async (
   const configRecord =
     selectiveRecords.find((item: { key: string }) => item.key === preferredConfigKey) ?? null;
   if (!configRecord || typeof configRecord.value !== 'string' || configRecord.value.length === 0) {
-    throw new Error(`Missing preferred path config for ${preferredPathId}.`);
+    throw validationError(
+      `Trigger button is bound to missing AI Path "${preferredPathId}". Update the button configuration.`,
+      {
+        source: 'ai_paths.trigger_payload',
+        reason: 'preferred_path_config_missing',
+        preferredPathId,
+      }
+    );
   }
 
   let preferredPathName = `Path ${preferredPathId.slice(0, 6)}`;
@@ -108,6 +112,9 @@ export const loadTriggerSettingsData = async (args: {
       settingsData: await buildSelectiveTriggerSettingsData(preferredPathId),
     };
   } catch (error) {
+    if (isAppError(error)) {
+      throw error;
+    }
     logClientError(error, {
       context: {
         source: 'useAiPathTriggerEvent',
@@ -124,24 +131,6 @@ export const loadTriggerSettingsData = async (args: {
 
 export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig =>
   sanitizeTriggerPathConfig(config);
-
-const createStoredPathConfigFallback = (pathId: string): PathConfig => {
-  const baseConfig = createDefaultPathConfig(pathId);
-  return {
-    ...baseConfig,
-    nodes: [],
-    edges: [],
-    parserSamples: {},
-    updaterSamples: {},
-    runtimeState: { inputs: {}, outputs: {} },
-    uiState: {
-      selectedNodeId: null,
-      configOpen: false,
-    },
-    lastRunAt: null,
-    runCount: 0,
-  };
-};
 
 export const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
@@ -206,85 +195,13 @@ export const loadPathConfigsFromSettings = async (
       return;
     }
 
-    let parsedConfig: unknown;
-    try {
-      parsedConfig = JSON.parse(configRaw) as unknown;
-    } catch (error) {
-      throw validationError('Invalid AI Path config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_invalid_json',
-        pathId: meta.id,
-        cause: error instanceof Error ? error.message : 'unknown_error',
-      });
-    }
-
-    const rawParsedConfig =
-      parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
-        ? (parsedConfig as PathConfig)
-        : null;
-    const rawStarterUpgrade = rawParsedConfig ? upgradeStarterWorkflowPathConfig(rawParsedConfig) : null;
-    const configForResolution = rawStarterUpgrade?.config ?? parsedConfig;
-
-    const resolvedConfig = resolvePortablePathInput(configForResolution, {
-      repairIdentities: true,
-      includeConnections: false,
-      signingPolicyTelemetrySurface: 'product',
-      nodeCodeObjectHashVerificationMode: 'warn',
+    const resolvedConfig = materializeStoredTriggerPathConfig({
+      pathId: meta.id,
+      rawConfig: configRaw,
+      fallbackName: meta.name,
     });
-    const resolvedConfigError = resolvedConfig.ok ? null : resolvedConfig.error;
-    const baseConfig = createStoredPathConfigFallback(meta.id);
-    const mergedConfig =
-      resolvedConfig.ok
-        ? ({
-          ...resolvedConfig.value.pathConfig,
-          ...(
-            parsedConfig &&
-            typeof parsedConfig === 'object' &&
-            !Array.isArray(parsedConfig) &&
-            (parsedConfig as { extensions?: unknown }).extensions &&
-            typeof (parsedConfig as { extensions?: unknown }).extensions === 'object' &&
-            !Array.isArray((parsedConfig as { extensions?: unknown }).extensions)
-              ? {
-                extensions: {
-                  ...((parsedConfig as { extensions: Record<string, unknown> }).extensions ?? {}),
-                  ...(
-                    resolvedConfig.value.pathConfig.extensions &&
-                      typeof resolvedConfig.value.pathConfig.extensions === 'object' &&
-                      !Array.isArray(resolvedConfig.value.pathConfig.extensions)
-                      ? resolvedConfig.value.pathConfig.extensions
-                      : {}
-                  ),
-                },
-              }
-              : {}
-          ),
-        } as PathConfig)
-        : parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
-          ? ({
-            ...baseConfig,
-            ...(configForResolution as Partial<PathConfig>),
-            id:
-                typeof (configForResolution as { id?: unknown }).id === 'string' &&
-                (configForResolution as { id?: string }).id!.trim().length > 0
-                  ? (configForResolution as { id: string }).id.trim()
-                  : meta.id,
-            name:
-                typeof (configForResolution as { name?: unknown }).name === 'string'
-                  ? (configForResolution as { name: string }).name
-                  : baseConfig.name,
-          } as PathConfig)
-          : null;
-    if (!mergedConfig) {
-      throw validationError('Invalid AI Path config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_invalid_payload',
-        pathId: meta.id,
-        cause: resolvedConfigError,
-      });
-    }
-
-    const normalizedConfig = sanitizeLoadedPathConfig(mergedConfig);
-    if (rawStarterUpgrade?.changed) {
+    const normalizedConfig = resolvedConfig.config;
+    if (resolvedConfig.changed) {
       void updateAiPathsSetting(configKey, JSON.stringify(normalizedConfig)).catch(() => {
         // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
       });
@@ -292,35 +209,12 @@ export const loadPathConfigsFromSettings = async (
     void persistLegacyTriggerContextModeRepair({
       pathId: meta.id,
       rawPayload: configRaw,
-      repairedConfig: normalizedConfig,
+      repairedConfig: resolvedConfig.config,
       source: 'useAiPathTriggerEvent',
       action: 'persistLegacyTriggerContextModeRepair',
     });
-    const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
-    if (!normalizedId || normalizedId !== meta.id) {
-      throw validationError('AI Path config id does not match index entry.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_id_mismatch',
-        expectedPathId: meta.id,
-        actualPathId: normalizedId || null,
-      });
-    }
-    const normalizedName =
-      normalizeLoadedPathName(meta.id, normalizedConfig.name) ||
-      normalizeLoadedPathName(meta.id, meta.name);
-    if (!normalizedName) {
-      throw validationError('AI Path config name is required.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'missing_path_name',
-        pathId: meta.id,
-      });
-    }
 
-    configs[meta.id] = {
-      ...normalizedConfig,
-      id: meta.id,
-      name: normalizedName,
-    };
+    configs[meta.id] = normalizedConfig;
     retainedMetas.push(meta);
   });
 

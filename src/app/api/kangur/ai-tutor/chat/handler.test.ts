@@ -21,8 +21,8 @@ const {
   buildPersonaChatMemoryContextMock,
   persistAgentPersonaExchangeMemoryMock,
   chatbotSessionAddMessageMock,
-  prismaChatbotSessionFindFirstMock,
-  prismaChatbotSessionCreateMock,
+  chatbotSessionFindSessionIdByPersonaAndTitleMock,
+  chatbotSessionCreateMock,
   readStoredSettingValueMock,
   upsertStoredSettingValueMock,
   logKangurServerEventMock,
@@ -39,8 +39,8 @@ const {
   buildPersonaChatMemoryContextMock: vi.fn(),
   persistAgentPersonaExchangeMemoryMock: vi.fn(),
   chatbotSessionAddMessageMock: vi.fn(),
-  prismaChatbotSessionFindFirstMock: vi.fn(),
-  prismaChatbotSessionCreateMock: vi.fn(),
+  chatbotSessionFindSessionIdByPersonaAndTitleMock: vi.fn(),
+  chatbotSessionCreateMock: vi.fn(),
   readStoredSettingValueMock: vi.fn(),
   upsertStoredSettingValueMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
@@ -60,14 +60,8 @@ vi.mock('@/features/ai/agentcreator/server/persona-memory', () => ({
 vi.mock('@/features/ai/chatbot/server', () => ({
   chatbotSessionRepository: {
     addMessage: chatbotSessionAddMessageMock,
-  },
-}));
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    chatbotSession: {
-      findFirst: prismaChatbotSessionFindFirstMock,
-      create: prismaChatbotSessionCreateMock,
-    },
+    findSessionIdByPersonaAndTitle: chatbotSessionFindSessionIdByPersonaAndTitleMock,
+    create: chatbotSessionCreateMock,
   },
 }));
 vi.mock('@/features/ai/ai-context-registry/server', () => ({
@@ -93,6 +87,7 @@ vi.mock('@/features/kangur/server/ai-tutor-native-guide', () => ({
   resolveKangurAiTutorNativeGuideResolution: resolveKangurAiTutorNativeGuideResolutionMock,
 }));
 vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
+  resolveKangurAiTutorSemanticGraphContext: resolveKangurWebsiteHelpGraphContextMock,
   resolveKangurWebsiteHelpGraphContext: resolveKangurWebsiteHelpGraphContextMock,
 }));
 vi.unmock('@/features/kangur/settings-ai-tutor');
@@ -182,8 +177,8 @@ describe('kangur ai tutor chat handler', () => {
     });
     persistAgentPersonaExchangeMemoryMock.mockResolvedValue(undefined);
     chatbotSessionAddMessageMock.mockResolvedValue(null);
-    prismaChatbotSessionFindFirstMock.mockResolvedValue(null);
-    prismaChatbotSessionCreateMock.mockResolvedValue({
+    chatbotSessionFindSessionIdByPersonaAndTitleMock.mockResolvedValue(null);
+    chatbotSessionCreateMock.mockResolvedValue({
       id: 'kangur-persona-session-1',
     });
     upsertStoredSettingValueMock.mockResolvedValue(true);
@@ -202,6 +197,7 @@ describe('kangur ai tutor chat handler', () => {
     });
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'skipped',
+      queryMode: null,
       instructions: null,
       sources: [],
       nodeIds: [],
@@ -438,26 +434,19 @@ describe('kangur ai tutor chat handler', () => {
         }),
       })
     );
-    expect(prismaChatbotSessionFindFirstMock).toHaveBeenCalledWith({
-      where: {
-        personaId: 'persona-1',
+    expect(chatbotSessionFindSessionIdByPersonaAndTitleMock).toHaveBeenCalledWith(
+      'Kangur AI Tutor · Mila · learner:learner-1',
+      'persona-1'
+    );
+    expect(chatbotSessionCreateMock).toHaveBeenCalledWith({
         title: 'Kangur AI Tutor · Mila · learner:learner-1',
-      },
-      select: {
-        id: true,
-      },
-    });
-    expect(prismaChatbotSessionCreateMock).toHaveBeenCalledWith({
-      data: {
-        title: 'Kangur AI Tutor · Mila · learner:learner-1',
+        userId: null,
         personaId: 'persona-1',
+        messages: [],
+        messageCount: 0,
         settings: {
           personaId: 'persona-1',
         },
-      },
-      select: {
-        id: true,
-      },
     });
     expect(chatbotSessionAddMessageMock).toHaveBeenCalledTimes(2);
     expect(chatbotSessionAddMessageMock).toHaveBeenNthCalledWith(
@@ -795,6 +784,69 @@ describe('kangur ai tutor chat handler', () => {
     const body = await response.json();
     expect(body.message).toContain('Ekran lekcji');
   });
+
+  it('returns websiteHelpTarget for native-guide answers when graph retrieval resolves a target', async () => {
+    resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
+      status: 'hit',
+      message: 'Kliknij Zaloguj się w górnej nawigacji.',
+      followUpActions: [],
+      entryId: 'auth-login-help',
+      matchedSignals: ['surface', 'message'],
+      coverageLevel: 'exact',
+    });
+    resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
+      status: 'hit',
+      queryMode: 'website_help',
+      instructions:
+        'Kangur website-help graph context:\n- Sign in flow [flow]\n  Website target: / · anchor=kangur-primary-nav-login',
+      nodeIds: ['flow:kangur:sign-in'],
+      websiteHelpTarget: {
+        nodeId: 'flow:kangur:sign-in',
+        label: 'Sign in flow',
+        route: '/',
+        anchorId: 'kangur-primary-nav-login',
+      },
+      sourceCollections: ['kangur_ai_tutor_content'],
+      hydrationSources: ['kangur_ai_tutor_content'],
+      sources: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Jak sie zalogowac?' }],
+          context: {
+            surface: 'auth',
+            contentId: 'login',
+            promptMode: 'chat',
+            focusKind: 'login_action',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.websiteHelpTarget).toEqual({
+      nodeId: 'flow:kangur:sign-in',
+      label: 'Sign in flow',
+      route: '/',
+      anchorId: 'kangur-primary-nav-login',
+    });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.native-guide.completed',
+        context: expect.objectContaining({
+          websiteHelpGraphApplied: true,
+          websiteHelpGraphTargetNodeId: 'flow:kangur:sign-in',
+          websiteHelpGraphTargetRoute: '/',
+          websiteHelpGraphTargetAnchorId: 'kangur-primary-nav-login',
+        }),
+      })
+    );
+  });
+
   it('returns adaptive follow-up actions with the tutor response', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions:
@@ -1258,9 +1310,18 @@ describe('kangur ai tutor chat handler', () => {
   it('adds website-help graph context and sources when Neo4j retrieval resolves a Kangur website query', async () => {
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
+      queryMode: 'website_help',
       instructions:
         'Kangur website-help graph context:\n- Sign in flow [flow]\n  Website target: / · anchor=kangur-primary-nav-login',
       nodeIds: ['flow:kangur:sign-in'],
+      websiteHelpTarget: {
+        nodeId: 'flow:kangur:sign-in',
+        label: 'Sign in flow',
+        route: '/',
+        anchorId: 'kangur-primary-nav-login',
+      },
+      sourceCollections: ['kangur_ai_tutor_content'],
+      hydrationSources: ['kangur_ai_tutor_content'],
       sources: [
         {
           documentId: 'flow:kangur:sign-in',
@@ -1293,6 +1354,16 @@ describe('kangur ai tutor chat handler', () => {
     );
     const body = await response.json();
 
+    expect(resolveKangurWebsiteHelpGraphContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latestUserMessage: 'Jak się zalogować do Kangura?',
+        locale: 'pl',
+        runtimeDocuments: expect.arrayContaining([
+          expect.objectContaining({ entityType: 'kangur_learner_snapshot' }),
+          expect.objectContaining({ entityType: 'kangur_lesson_context' }),
+        ]),
+      })
+    );
     expect(runBrainChatCompletionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: expect.arrayContaining([
@@ -1311,11 +1382,114 @@ describe('kangur ai tutor chat handler', () => {
         }),
       ])
     );
+    expect(body.websiteHelpTarget).toEqual({
+      nodeId: 'flow:kangur:sign-in',
+      label: 'Sign in flow',
+      route: '/',
+      anchorId: 'kangur-primary-nav-login',
+    });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.completed',
         context: expect.objectContaining({
           websiteHelpGraphApplied: true,
+          websiteHelpGraphSourceCollections: ['kangur_ai_tutor_content'],
+          websiteHelpGraphHydrationSources: ['kangur_ai_tutor_content'],
+          websiteHelpGraphTargetNodeId: 'flow:kangur:sign-in',
+          websiteHelpGraphTargetRoute: '/',
+          websiteHelpGraphTargetAnchorId: 'kangur-primary-nav-login',
+        }),
+      })
+    );
+  });
+
+  it('adds semantic graph context for section-level Tutor-AI prompts and records the query mode', async () => {
+    resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
+      status: 'hit',
+      queryMode: 'semantic',
+      instructions:
+        'Kangur semantic graph context:\n- Ranking wynikow [guide]\n  Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+      nodeIds: ['guide:native:game-leaderboard'],
+      sourceCollections: ['kangur_ai_tutor_native_guides'],
+      hydrationSources: ['kangur_ai_tutor_native_guides'],
+      sources: [
+        {
+          documentId: 'guide:native:game-leaderboard',
+          collectionId: 'kangur_ai_tutor_native_guides',
+          text: 'Ranking wynikow (guide)\nSekcja rankingu pokazuje wyniki i pozycje ucznia.',
+          score: 0.94,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'guide:native:game-leaderboard',
+            title: 'Ranking wynikow',
+            description: 'Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+            tags: ['kangur-knowledge-graph', 'guide', 'game', 'leaderboard'],
+          },
+        },
+      ],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjaśnij ten panel' }],
+          context: {
+            surface: 'game',
+            contentId: 'game:practice:addition',
+            title: 'Podsumowanie gry',
+            promptMode: 'explain',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-result-leaderboard',
+            focusLabel: 'Ranking wyników',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+    const body = await response.json();
+
+    expect(resolveKangurWebsiteHelpGraphContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latestUserMessage: 'Wyjaśnij ten panel',
+        context: expect.objectContaining({
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusId: 'kangur-game-result-leaderboard',
+        }),
+      })
+    );
+    expect(runBrainChatCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('Kangur semantic graph context:'),
+          }),
+        ]),
+      })
+    );
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          documentId: 'guide:native:game-leaderboard',
+          collectionId: 'kangur_ai_tutor_native_guides',
+        }),
+      ])
+    );
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.completed',
+        context: expect.objectContaining({
+          knowledgeGraphApplied: true,
+          knowledgeGraphQueryMode: 'semantic',
+          knowledgeGraphSourceCollections: ['kangur_ai_tutor_native_guides'],
+          knowledgeGraphHydrationSources: ['kangur_ai_tutor_native_guides'],
+          websiteHelpGraphApplied: false,
+          websiteHelpGraphSourceCollections: [],
+          websiteHelpGraphHydrationSources: [],
+          websiteHelpGraphTargetNodeId: null,
+          websiteHelpGraphTargetRoute: null,
+          websiteHelpGraphTargetAnchorId: null,
         }),
       })
     );

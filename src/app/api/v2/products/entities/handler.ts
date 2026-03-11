@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
+import { deleteDraft, getDraft } from '@/features/drafter/server';
 import {
   getCatalogRepository,
   getProductDataProvider,
@@ -9,7 +10,6 @@ import { updateCatalogSchema } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
-import prisma from '@/shared/lib/db/prisma';
 
 export async function GET_products_entities_handler(
   req: NextRequest,
@@ -47,9 +47,7 @@ export async function GET_products_entity_handler(
   const { type, id } = params;
 
   if (type === 'drafts') {
-    const draft = await prisma.productDraft.findUnique({
-      where: { id },
-    });
+    const draft = await getDraft(id);
     if (!draft) throw notFoundError(`Draft not found: ${id}`);
     return NextResponse.json(draft);
   }
@@ -104,9 +102,9 @@ export async function DELETE_products_entity_handler(
   }
 
   if (type === 'drafts') {
-    await prisma.productDraft.delete({
-      where: { id },
-    });
+    if (!(await deleteDraft(id))) {
+      throw notFoundError(`Draft not found: ${id}`);
+    }
     return new Response(null, { status: 204 });
   }
 

@@ -9,6 +9,7 @@ import type {
   KangurAiTutorFollowUpAction,
   KangurAiTutorMessageArtifact,
   KangurAiTutorUsageSummary,
+  KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -29,6 +30,7 @@ export type TutorRenderedMessage = {
   artifacts?: KangurAiTutorMessageArtifact[];
   followUpActions?: KangurAiTutorFollowUpAction[];
   sources?: AgentTeachingChatSource[];
+  websiteHelpTarget?: KangurAiTutorWebsiteHelpTarget;
 };
 
 export type KangurAiTutorPanelBodyContextValue = {
@@ -54,6 +56,11 @@ export type KangurAiTutorPanelBodyContextValue = {
   handleFocusSelectedFragment: () => void;
   handleFollowUpClick: (
     action: KangurAiTutorFollowUpAction,
+    messageIndex: number,
+    href: string
+  ) => void;
+  handleWebsiteHelpTargetClick: (
+    target: KangurAiTutorWebsiteHelpTarget,
     messageIndex: number,
     href: string
   ) => void;

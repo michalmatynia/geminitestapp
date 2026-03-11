@@ -41,6 +41,7 @@ import {
   kangurAiTutorLearnerMemorySchema,
   kangurAiTutorMessageArtifactSchema,
   kangurAiTutorUsageSummarySchema,
+  kangurAiTutorWebsiteHelpTargetSchema,
   type KangurAiTutorChatResponse,
   type KangurAiTutorCoachingFrame,
   type KangurAiTutorConversationContext,
@@ -51,8 +52,10 @@ import {
   type KangurAiTutorMessageArtifact,
   type KangurAiTutorPromptMode,
   type KangurAiTutorRecoverySignal,
+  type KangurAiTutorSurface,
   type KangurAiTutorUsageSummary,
   type KangurAiTutorUsageResponse,
+  type KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
@@ -79,6 +82,7 @@ export type ChatMessage = {
   sources?: AgentTeachingChatSource[];
   followUpActions?: KangurAiTutorFollowUpAction[];
   coachingFrame?: KangurAiTutorCoachingFrame;
+  websiteHelpTarget?: KangurAiTutorWebsiteHelpTarget;
 };
 
 export type KangurAiTutorSessionState = {
@@ -137,6 +141,7 @@ export type KangurAiTutorContextValue = {
       focusLabel?: string | null;
       assignmentId?: string | null;
       interactionIntent?: KangurAiTutorInteractionIntent;
+      surface?: KangurAiTutorSurface;
     }
   ) => Promise<void>;
   recordFollowUpCompletion?: (input: {
@@ -430,6 +435,9 @@ const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
   }
 
   const coachingFrame = kangurAiTutorCoachingFrameSchema.safeParse(input['coachingFrame']).data;
+  const websiteHelpTarget = kangurAiTutorWebsiteHelpTargetSchema.safeParse(
+    input['websiteHelpTarget']
+  ).data;
   const drawingImageData =
     typeof input['drawingImageData'] === 'string' ? input['drawingImageData'] : null;
   const artifacts = normalizeMessageArtifacts(input['artifacts'], drawingImageData);
@@ -444,6 +452,7 @@ const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
       ? { followUpActions: input['followUpActions'] as KangurAiTutorFollowUpAction[] }
       : {}),
     ...(coachingFrame ? { coachingFrame } : {}),
+    ...(websiteHelpTarget ? { websiteHelpTarget } : {}),
   };
 };
 
@@ -1380,6 +1389,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         focusLabel?: string | null;
         assignmentId?: string | null;
         interactionIntent?: KangurAiTutorInteractionIntent;
+        surface?: KangurAiTutorSurface;
       }
     ): Promise<void> => {
       if (!text.trim() || !enabled || !activeSessionContext || !activeSessionKey) {
@@ -1407,7 +1417,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       const recentHintRecoverySignal =
         recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey] ?? null;
       const telemetryContext = {
-        surface: activeSessionContext?.surface ?? null,
+        surface: options?.surface ?? activeSessionContext?.surface ?? null,
         contentId: activeSessionContext?.contentId ?? null,
         promptMode: resolvedPromptMode,
         hasSelectedText: Boolean(resolvedSelectedText),
@@ -1435,6 +1445,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       try {
         const nextContext = omitUndefinedFields({
           ...activeSessionContext,
+          ...(options?.surface ? { surface: options.surface } : {}),
           promptMode: resolvedPromptMode,
           ...(resolvedSelectedText ? { selectedText: resolvedSelectedText } : {}),
           ...(options?.focusKind ? { focusKind: options.focusKind } : {}),
@@ -1470,6 +1481,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const followUpReporting = summarizeKangurAiTutorFollowUpActions(followUpActions);
         const coachingFrame =
           kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
+        const websiteHelpTarget =
+          kangurAiTutorWebsiteHelpTargetSchema.safeParse(result.websiteHelpTarget).data ?? null;
         const artifacts = normalizeMessageArtifacts(result.artifacts);
         trackKangurClientEvent('kangur_ai_tutor_message_succeeded', {
           ...telemetryContext,
@@ -1522,6 +1535,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
               sources,
               followUpActions,
               ...(coachingFrame ? { coachingFrame } : {}),
+              ...(websiteHelpTarget ? { websiteHelpTarget } : {}),
             },
           ],
           suggestedMoodId: result.suggestedMoodId ?? null,

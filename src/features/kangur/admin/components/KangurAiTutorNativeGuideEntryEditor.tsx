@@ -3,7 +3,7 @@ import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai
 import { Badge, Button, Card, FormField, Input, Textarea } from '@/shared/ui';
 
 const SURFACE_OPTIONS: Array<{
-  value: '' | 'lesson' | 'test' | 'game' | 'profile' | 'parent_dashboard';
+  value: '' | 'lesson' | 'test' | 'game' | 'profile' | 'parent_dashboard' | 'auth';
   label: string;
 }> = [
   { value: '', label: 'All surfaces' },
@@ -12,6 +12,7 @@ const SURFACE_OPTIONS: Array<{
   { value: 'game', label: 'Game' },
   { value: 'profile', label: 'Profile' },
   { value: 'parent_dashboard', label: 'Parent dashboard' },
+  { value: 'auth', label: 'Auth' },
 ];
 
 const FOCUS_KIND_OPTIONS = [
@@ -33,6 +34,10 @@ const FOCUS_KIND_OPTIONS = [
   { value: 'question', label: 'Question' },
   { value: 'review', label: 'Review' },
   { value: 'summary', label: 'Summary' },
+  { value: 'login_action', label: 'Login action' },
+  { value: 'create_account_action', label: 'Create account action' },
+  { value: 'login_identifier_field', label: 'Login identifier field' },
+  { value: 'login_form', label: 'Login form' },
 ] as const;
 
 const stringifyLineList = (items: string[]): string => items.join('\n');
@@ -187,7 +192,13 @@ export function KangurAiTutorNativeGuideEntryEditor({
                   updateSelectedEntry((entry) => ({
                     ...entry,
                     surface: event.target.value
-                      ? (event.target.value as 'lesson' | 'test' | 'game')
+                      ? (event.target.value as
+                          | 'lesson'
+                          | 'test'
+                          | 'game'
+                          | 'profile'
+                          | 'parent_dashboard'
+                          | 'auth')
                       : null,
                   }))
                 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback } from 'react';
+
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import type { KangurAuthContextValue } from '@/features/kangur/ui/context/KangurAuthContext';
 import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -117,6 +119,8 @@ export function useKangurAiTutorWidgetCoordinator({
     mounted,
     motionTimeoutRef,
     selectionExplainTimeoutRef,
+    selectionGuidanceCalloutVisibleText,
+    selectionGuidanceRevealTimeoutRef,
     selectionGuidanceHandoffText,
     setAskModalDockStyle,
     setAskModalVisible,
@@ -150,6 +154,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionConversationContext,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionContextSpotlightTick,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
@@ -418,6 +423,8 @@ export function useKangurAiTutorWidgetCoordinator({
     widgetState: {
       askModalReturnStateRef,
       avatarDragStateRef,
+      selectionExplainTimeoutRef,
+      selectionGuidanceRevealTimeoutRef,
       setAskModalDockStyle,
       setAskModalVisible,
       setCanonicalTutorModalVisible,
@@ -437,7 +444,9 @@ export function useKangurAiTutorWidgetCoordinator({
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
+      setSelectionGuidanceCalloutVisibleText,
       setSelectionConversationContext,
+      setSelectionGuidanceHandoffText,
       setSelectionResponseComplete,
       setSelectionResponsePending,
       suppressAvatarClickRef,
@@ -492,6 +501,7 @@ export function useKangurAiTutorWidgetCoordinator({
     prefersReducedMotion: Boolean(prefersReducedMotion),
     resetAskModalState,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     sendMessage,
     setCanonicalTutorModalVisible,
     setDismissedSelectedText,
@@ -506,6 +516,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSectionResponseComplete,
@@ -544,6 +555,16 @@ export function useKangurAiTutorWidgetCoordinator({
     shouldRepeatHomeOnboardingOnEntry,
   });
 
+  const handleAuthenticatedOnboardingDismiss = useCallback((): void => {
+    setCanonicalTutorModalVisible(false);
+    setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
+  }, [
+    setCanonicalTutorModalVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+  ]);
+
   const {
     handleAskAbout,
     handleAvatarClick,
@@ -565,6 +586,7 @@ export function useKangurAiTutorWidgetCoordinator({
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDraggedAvatarPoint,
@@ -575,6 +597,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setHoveredSectionAnchorId,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setSelectionGuidanceHandoffText,
@@ -597,11 +620,13 @@ export function useKangurAiTutorWidgetCoordinator({
     isAvatarDragging,
     isOpen: tutorRuntime.isOpen,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setDraggedAvatarPoint,
     setGuidedTutorTarget,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
     setIsAvatarDragging,
+    setSelectionGuidanceCalloutVisibleText,
     handleAvatarTap: handleAvatarClick,
     startGuidedSectionExplanation,
     suppressAvatarClickRef,
@@ -622,6 +647,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleQuickAction,
     handleSend,
     handleToggleDrawing,
+    handleWebsiteHelpTargetClick,
   } = useKangurAiTutorPanelActions({
     activeFocus,
     activeSectionRect,
@@ -733,6 +759,11 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFocusHighlightedSection,
     handleFocusSelectedFragment,
     handleFollowUpClick,
+    handleAuthenticatedOnboardingAccept: (): void => {
+      handleAuthenticatedOnboardingDismiss();
+      handleStartHomeOnboarding();
+    },
+    handleAuthenticatedOnboardingDismiss,
     handleGuestIntroAccept,
     handleGuestIntroDismiss,
     handleHomeOnboardingAdvance,
@@ -740,6 +771,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleHomeOnboardingFinishEarly,
     handleKeyDown,
     handleMessageFeedback,
+    handleWebsiteHelpTargetClick,
     handlePanelBackdropClose,
     handlePanelHeaderClose,
     handleQuickAction,
@@ -821,6 +853,7 @@ export function useKangurAiTutorWidgetCoordinator({
       tutorRuntime.isOpen ||
       guidedTutorTarget !== null ||
       contextualTutorMode !== null ||
+      selectionGuidanceCalloutVisibleText !== null ||
       selectionGuidanceHandoffText !== null ||
       selectionResponsePending !== null
     );

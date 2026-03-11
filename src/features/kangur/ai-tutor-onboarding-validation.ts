@@ -441,6 +441,16 @@ export function validateKangurAiTutorOnboardingContent({
     value: content.homeOnboarding.stepLabelTemplate,
     includeRuleIds: contentRuleIds,
   });
+  validatePath({
+    path: 'homeOnboarding.entry.headline',
+    value: content.homeOnboarding.entry.headline,
+    includeRuleIds: contentRuleIds,
+  });
+  validatePath({
+    path: 'homeOnboarding.entry.description',
+    value: content.homeOnboarding.entry.description,
+    includeRuleIds: contentRuleIds,
+  });
 
   for (const focusKind of REQUIRED_ONBOARDING_FOCUS_KINDS) {
     const step = content.homeOnboarding.steps[focusKind];

@@ -4,7 +4,6 @@ import { randomUUID } from 'crypto';
 
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
@@ -69,46 +68,31 @@ const toMongoSettingFilter = (key: string): Filter<Document> =>
   }) as Filter<Document>;
 
 const readDecisionLogValue = async (): Promise<string | null> => {
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne(toMongoSettingFilter(PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY));
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY },
-    select: { value: true },
-  });
-  return setting?.value ?? null;
+  await getProductDataProvider();
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection('settings')
+    .findOne(toMongoSettingFilter(PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY));
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const writeDecisionLogValue = async (value: string): Promise<void> => {
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      toMongoSettingFilter(PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY),
-      {
-        $set: {
-          key: PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY,
-          value,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          createdAt: new Date(),
-        },
+  await getProductDataProvider();
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    toMongoSettingFilter(PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY),
+    {
+      $set: {
+        key: PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY,
+        value,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY },
-    update: { value },
-    create: { key: PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY, value },
-  });
+      $setOnInsert: {
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
 };
 
 const normalizeTrimmedString = (value: string | null | undefined): string | null => {

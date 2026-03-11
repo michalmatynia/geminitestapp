@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { parseJsonBody } from '@/features/products/server';
+import { chatMessageRoleSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const messageSchema = z.object({
-  role: z.string().trim().min(1),
+  role: chatMessageRoleSchema,
   content: z.string().trim().min(1),
 });
 
@@ -20,21 +21,12 @@ export async function GET_handler(
   params: { sessionId: string }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
-    throw internalError('Chat sessions not initialized. Run prisma generate/db push.');
-  }
   const { sessionId } = params;
-  const session = await prisma.chatbotSession.findUnique({
-    where: { id: sessionId },
-    select: { id: true },
-  });
+  const session = await chatbotSessionRepository.findById(sessionId);
   if (!session) {
     throw notFoundError('Session not found.');
   }
-  const messages = await prisma.chatbotMessage.findMany({
-    where: { sessionId },
-    orderBy: { createdAt: 'asc' },
-  });
+  const messages = session.messages ?? [];
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
       level: 'info',
@@ -62,17 +54,7 @@ export async function POST_handler(
   params: { sessionId: string }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
-    throw internalError('Chat sessions not initialized. Run prisma generate/db push.');
-  }
   const { sessionId } = params;
-  const session = await prisma.chatbotSession.findUnique({
-    where: { id: sessionId },
-    select: { id: true },
-  });
-  if (!session) {
-    throw notFoundError('Session not found.');
-  }
   const parsed = await parseJsonBody(req, messageSchema, {
     logPrefix: 'chatbot.sessions.messages.POST',
   });
@@ -94,17 +76,17 @@ export async function POST_handler(
       },
     });
   }
-  const message = await prisma.chatbotMessage.create({
-    data: {
-      sessionId,
-      role: body.role,
-      content: body.content.trim(),
-    },
+  const updatedSession = await chatbotSessionRepository.addMessage(sessionId, {
+    role: body.role,
+    content: body.content.trim(),
   });
-  await prisma.chatbotSession.update({
-    where: { id: sessionId },
-    data: { updatedAt: new Date() },
-  });
+  if (!updatedSession) {
+    throw notFoundError('Session not found.');
+  }
+  const message = updatedSession.messages?.[updatedSession.messages.length - 1];
+  if (!message) {
+    throw internalError('Failed to create chatbot session message.');
+  }
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
       level: 'info',

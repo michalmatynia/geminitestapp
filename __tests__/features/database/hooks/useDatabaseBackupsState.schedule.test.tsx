@@ -73,16 +73,7 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     });
 
     vi.mocked(useSettingsMap).mockReturnValue({
-      data: createSettingsMap({
-        ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
-        postgresql: {
-          ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql,
-          enabled: false,
-          cadence: 'weekly',
-          weekday: 4,
-          timeUtc: '19:45',
-        },
-      }),
+      data: createSettingsMap(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE),
       refetch: settingsRefetch,
     } as unknown as ReturnType<typeof useSettingsMap>);
 
@@ -118,7 +109,7 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
   );
 
-  it('saves MongoDB daily 2:00 local schedule and keeps PostgreSQL target untouched', async () => {
+  it('saves MongoDB daily 2:00 local schedule', async () => {
     const { result } = renderHook(() => useDatabaseBackupsState(), { wrapper });
 
     act(() => {
@@ -140,7 +131,6 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     expect(payload.key).toBe(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
     const parsed = JSON.parse(payload.value) as Record<string, unknown>;
     const mongodb = parsed['mongodb'] as Record<string, unknown>;
-    const postgresql = parsed['postgresql'] as Record<string, unknown>;
     const expectedUtc = localHmToUtcHm('02:00', fixedNow);
 
     expect(parsed['schedulerEnabled']).toBe(true);
@@ -148,13 +138,12 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     expect(mongodb['cadence']).toBe('daily');
     expect(mongodb['intervalDays']).toBe(1);
     expect(mongodb['timeUtc']).toBe(expectedUtc);
-    expect(postgresql).toEqual({
-      ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql,
-      enabled: false,
-      cadence: 'weekly',
-      weekday: 4,
-      timeUtc: '19:45',
-    });
+    expect(Object.keys(parsed).sort()).toEqual([
+      'lastCheckedAt',
+      'mongodb',
+      'repeatTickEnabled',
+      'schedulerEnabled',
+    ]);
     expect(settingsRefetch).toHaveBeenCalledTimes(1);
     expect(global.fetch).toHaveBeenCalledWith('/api/databases/engine/backup-scheduler/status', {
       method: 'GET',
@@ -162,19 +151,19 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     });
   });
 
-  it('keeps PostgreSQL target unchanged when saving from MongoDB tab', async () => {
+  it('persists edited MongoDB schedule changes without legacy targets', async () => {
     const customSchedule = {
       ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
       schedulerEnabled: false,
       repeatTickEnabled: false,
-      postgresql: {
-        ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql,
+      mongodb: {
+        ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.mongodb,
         enabled: true,
-        cadence: 'weekly',
+        cadence: 'weekly' as const,
         weekday: 2,
         intervalDays: 7,
         timeUtc: '03:15',
-        lastStatus: 'success',
+        lastStatus: 'success' as const,
       },
     };
 
@@ -198,10 +187,22 @@ describe('useDatabaseBackupsState schedule persistence', () => {
 
     const payload = updateSettingMutateAsync.mock.calls[0]?.[0] as { value: string };
     const parsed = JSON.parse(payload.value) as {
-      postgresql: Record<string, unknown>;
+      mongodb: Record<string, unknown>;
     };
+    const expectedUtc = localHmToUtcHm('02:00', fixedNow);
 
-    expect(parsed.postgresql).toEqual(customSchedule.postgresql);
+    expect(parsed.mongodb).toEqual({
+      ...customSchedule.mongodb,
+      cadence: 'daily',
+      intervalDays: 1,
+      timeUtc: expectedUtc,
+    });
+    expect(Object.keys(parsed).sort()).toEqual([
+      'lastCheckedAt',
+      'mongodb',
+      'repeatTickEnabled',
+      'schedulerEnabled',
+    ]);
   });
 
   it('persists repeat tick toggle independently through schedule save payload', async () => {

@@ -89,13 +89,6 @@ export const databaseBackupResultSchema = z.object({
 
 export type DatabaseBackupResult = z.infer<typeof databaseBackupResultSchema>;
 
-export const fullDatabaseBackupResultSchema = z.object({
-  mongo: databaseBackupResultSchema,
-  postgres: databaseBackupResultSchema,
-});
-
-export type FullDatabaseBackupResult = z.infer<typeof fullDatabaseBackupResultSchema>;
-
 export const databaseBrowseParamsSchema = z.object({
   collection: z.string(),
   limit: z.number().optional(),
@@ -336,7 +329,7 @@ export interface CollectionSchema {
   fields: FieldInfo[];
   count?: number;
   documentCount?: number;
-  provider?: string;
+  provider?: SchemaProvider;
   relations?: string[];
   [key: string]: unknown;
 }
@@ -345,7 +338,7 @@ export const schemaProviderSchema = z.enum(['mongodb', 'multi']);
 export type SchemaProvider = z.infer<typeof schemaProviderSchema>;
 
 export interface MultiSchemaResponse {
-  provider: string;
+  provider: SchemaProvider;
   collections: CollectionSchema[];
   sources?: Record<string, Record<string, unknown>>;
 }

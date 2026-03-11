@@ -1,10 +1,9 @@
 import React from 'react';
 
 import {
+  AdminIntegrationsPageLayout,
   NavigationCard,
   NavigationCardGrid,
-  SectionHeader,
-  SectionHeaderBackLink,
 } from '@/shared/ui';
 
 const sections = [
@@ -22,18 +21,12 @@ const sections = [
 
 export default function AllegroMarketplacePage(): React.JSX.Element {
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
-        title='Allegro'
-        description='Configure Allegro integrations and listing workflows.'
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/integrations/marketplaces' arrow>
-            Marketplaces
-          </SectionHeaderBackLink>
-        }
-        className='mb-6'
-      />
-
+    <AdminIntegrationsPageLayout
+      title='Allegro'
+      current='Allegro'
+      parent={{ label: 'Marketplaces', href: '/admin/integrations/marketplaces' }}
+      description='Configure Allegro integrations and listing workflows.'
+    >
       <NavigationCardGrid className='md:grid-cols-2 xl:grid-cols-3'>
         {sections.map((section: { name: string; description: string; href: string }) => (
           <NavigationCard
@@ -46,6 +39,6 @@ export default function AllegroMarketplacePage(): React.JSX.Element {
           />
         ))}
       </NavigationCardGrid>
-    </div>
+    </AdminIntegrationsPageLayout>
   );
 }

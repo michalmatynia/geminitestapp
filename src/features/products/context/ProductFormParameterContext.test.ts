@@ -208,4 +208,97 @@ describe('ProductFormParameterProvider', () => {
       },
     ]);
   });
+
+  it('adopts refreshed product parameters when the modal receives updated product detail', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    let product = {
+      parameters: [],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+        },
+        children
+      );
+
+    const { result, rerender } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameterValues).toEqual([]);
+
+    product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Used',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    rerender();
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Used',
+      },
+    ]);
+  });
+
+  it('preserves local parameter edits when refreshed product detail arrives later', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    let product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: '',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(
+        ProductFormParameterProvider,
+        {
+          product,
+          selectedCatalogIds: ['catalog-1'],
+        },
+        children
+      );
+
+    const { result, rerender } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.updateParameterValue(0, 'Local draft');
+    });
+
+    product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Inferred',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    rerender();
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Local draft',
+      },
+    ]);
+  });
 });

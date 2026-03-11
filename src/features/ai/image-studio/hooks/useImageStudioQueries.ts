@@ -6,6 +6,7 @@ import type {
   StudioProjectsResponse,
   StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
+import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -92,8 +93,8 @@ export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
 export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsResponse> {
   const queryKey = studioKeys.slots(projectId);
   const queryFn = async (): Promise<StudioSlotsResponse> =>
-    api.get<StudioSlotsResponse>(
-      `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`
+    studioSlotsResponseSchema.parse(
+      await api.get<unknown>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`)
     );
 
   return createSingleQueryV2({

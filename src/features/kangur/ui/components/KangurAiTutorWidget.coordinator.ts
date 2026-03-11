@@ -64,9 +64,8 @@ export function useKangurAiTutorWidgetCoordinator({
     | 'idle_avatar'
     | 'onboarding'
     | 'selection_guided'
-    | 'selection_panel'
     | 'section_guided'
-    | 'section_panel';
+    ;
   const {
     enabled,
     messages,
@@ -329,7 +328,7 @@ export function useKangurAiTutorWidgetCoordinator({
           contextualTutorMode === 'selection_explain' ||
           isSelectionExplainPendingMode ||
           hasSelectionMinimalPanelSurface
-        ? 'selection_panel'
+        ? 'selection_guided'
         : guidedTutorTarget?.mode === 'section'
           ? 'section_guided'
             : highlightedSection !== null ||
@@ -337,11 +336,14 @@ export function useKangurAiTutorWidgetCoordinator({
                 contextualTutorMode === 'section_explain' ||
                 isSectionExplainPendingMode ||
                 hasSectionMinimalPanelSurface
-              ? 'section_panel'
+              ? 'section_guided'
               : canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible
                 ? 'onboarding'
               : 'idle_avatar';
-  const suppressPanelSurface = tutorSurfaceMode === 'onboarding';
+  const suppressPanelSurface =
+    tutorSurfaceMode === 'onboarding' ||
+    tutorSurfaceMode === 'selection_guided' ||
+    tutorSurfaceMode === 'section_guided';
 
   useKangurAiTutorTelemetryBridge({
     activeFocus,
@@ -470,6 +472,7 @@ export function useKangurAiTutorWidgetCoordinator({
     activeSelectionPageRect,
     clearSelection,
     handleOpenChat,
+    messageCount: messages.length,
     motionProfile,
     prefersReducedMotion: Boolean(prefersReducedMotion),
     resetAskModalState,
@@ -488,6 +491,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSectionResponseComplete,
     setSectionResponsePending,

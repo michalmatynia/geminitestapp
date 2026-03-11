@@ -422,6 +422,7 @@ test.describe('Products trigger button queue integration', () => {
     page: Page,
     options: {
       enqueueBody: Record<string, unknown>;
+      enqueueDelayMs?: number;
       pathConfigOverride?: Record<string, unknown>;
       pathName?: string;
       productId?: string;
@@ -547,6 +548,9 @@ test.describe('Products trigger button queue integration', () => {
 
     await page.route('**/api/ai-paths/runs/enqueue', async (route) => {
       enqueueRequestBody = route.request().postDataJSON() as Record<string, unknown>;
+      if ((options.enqueueDelayMs ?? 0) > 0) {
+        await new Promise((resolve) => setTimeout(resolve, options.enqueueDelayMs));
+      }
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -913,19 +917,47 @@ test.describe('Products trigger button queue integration', () => {
     await assertTriggerRunQueued(page, setup);
 
     const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    const tableHeaderRow = page.getByRole('row', { name: /Select all Image Name Price/i });
     await expect(productRow.getByText('Queued').first()).toBeVisible({ timeout: 15_000 });
     await expect(productRow.getByRole('link', { name: 'Job Queue' })).toBeVisible({ timeout: 15_000 });
     await expect(productRow.getByText('Just now')).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole('button', { name: 'Hide trigger run pills' }).click();
+    await tableHeaderRow.getByRole('button', { name: 'Hide trigger run pills' }).click();
     await expect(productRow.getByRole('link', { name: 'Job Queue' })).toHaveCount(0, {
       timeout: 15_000,
     });
     await expect(productRow.getByText('Just now')).toHaveCount(0, { timeout: 15_000 });
 
-    await page.getByRole('button', { name: 'Show trigger run pills' }).click();
+    await tableHeaderRow.getByRole('button', { name: 'Show trigger run pills' }).click();
     await expect(productRow.getByRole('link', { name: 'Job Queue' })).toBeVisible({ timeout: 15_000 });
     await expect(productRow.getByText('Just now')).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('shows waiting immediately before a trigger run becomes queued', async ({ page }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueDelayMs: 1_500,
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-waiting',
+          status: 'queued',
+        },
+      },
+    });
+
+    const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    await expect(productRow).toBeVisible({ timeout: 15_000 });
+
+    await productRow.getByRole('button', { name: setup.triggerButtonName }).click();
+
+    await expect(productRow.getByText('Waiting').first()).toBeVisible({ timeout: 5_000 });
+    await expect(productRow.getByRole('link', { name: 'Job Queue' })).toHaveCount(0);
+
+    await expect.poll(() => setup.getEnqueueRequestBody()).not.toBeNull();
+    await expect(productRow.getByText('Queued').first()).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByRole('link', { name: 'Job Queue' })).toBeVisible({ timeout: 15_000 });
   });
 
   test('does not show a permanent queued pill from stale legacy or offline queued storage', async ({
@@ -1234,6 +1266,51 @@ test.describe('Products trigger button queue integration', () => {
     );
     await expect(reopenedModal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
     await expect(reopenedModal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+      'href',
+      new RegExp(`query=${runId}.*runId=${runId}`)
+    );
+  });
+
+  test('shows a modal trigger status toggle and hides or restores modal run pills', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const runId = 'run-e2e-product-modal-trigger-visibility-toggle';
+    const setup = await setupProductModalTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: runId,
+          status: 'queued',
+        },
+      },
+    });
+
+    const hideStatusesButton = setup.modal.getByRole('button', { name: 'Hide trigger run pills' });
+    await expect(hideStatusesButton).toBeVisible({ timeout: 15_000 });
+    await expect(hideStatusesButton).toContainText('Hide Statuses');
+
+    await setup.modal.getByRole('button', { name: setup.triggerButtonName }).click();
+
+    await expect.poll(() => setup.getEnqueueRequestBody()).not.toBeNull();
+    await expect(setup.modal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(setup.modal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+      'href',
+      new RegExp(`query=${runId}.*runId=${runId}`)
+    );
+
+    await hideStatusesButton.click();
+    await expect(setup.modal.getByText('Queued')).toHaveCount(0);
+    await expect(setup.modal.getByRole('link', { name: 'Job Queue' })).toHaveCount(0);
+
+    const showStatusesButton = setup.modal.getByRole('button', { name: 'Show trigger run pills' });
+    await expect(showStatusesButton).toBeVisible({ timeout: 15_000 });
+    await expect(showStatusesButton).toContainText('Show Statuses');
+
+    await showStatusesButton.click();
+    await expect(setup.modal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(setup.modal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
       'href',
       new RegExp(`query=${runId}.*runId=${runId}`)
     );

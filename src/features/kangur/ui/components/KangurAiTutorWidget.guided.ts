@@ -27,6 +27,7 @@ import type {
   GuidedTutorSectionKind,
   GuidedTutorTarget,
   PendingSelectionResponse,
+  SelectionConversationContext,
   SectionExplainContext,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
@@ -60,18 +61,22 @@ const buildSectionExplainPrompt = (
 export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   activeFocusKind: string | null;
   activeSelectedText: string | null;
+  hasSelectionPanelReady: boolean;
   isLoading?: boolean;
   isOpen: boolean;
   panelMotionState: 'animating' | 'settled';
+  selectionConversationSelectedText: string | null;
   selectionGuidanceHandoffText: string | null;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
 }): void {
   const {
     activeFocusKind,
     activeSelectedText,
+    hasSelectionPanelReady,
     isLoading = false,
     isOpen,
     panelMotionState,
+    selectionConversationSelectedText,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
   } = input;
@@ -81,8 +86,10 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       !selectionGuidanceHandoffText ||
       isLoading ||
       !isOpen ||
+      !hasSelectionPanelReady ||
       activeFocusKind !== 'selection' ||
       panelMotionState !== 'settled' ||
+      selectionConversationSelectedText !== selectionGuidanceHandoffText ||
       (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
     ) {
       return;
@@ -96,9 +103,11 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   }, [
     activeFocusKind,
     activeSelectedText,
+    hasSelectionPanelReady,
     isLoading,
     isOpen,
     panelMotionState,
+    selectionConversationSelectedText,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
   ]);
@@ -113,6 +122,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       panelShellMode?: 'default' | 'minimal';
     }
   ) => void;
+  messageCount: number;
   motionProfile: Pick<TutorMotionProfile, 'guidedAvatarTransition'>;
   prefersReducedMotion: boolean;
   resetAskModalState: () => void;
@@ -131,6 +141,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   setPersistedSelectionContainerRect: (value: DOMRect | null) => void;
   setPersistedSelectionPageRect: (value: DOMRect | null) => void;
   setPersistedSelectionRect: (value: DOMRect | null) => void;
+  setSelectionConversationContext: (value: SelectionConversationContext | null) => void;
   setSelectionGuidanceHandoffText: (value: string | null) => void;
   setSectionResponseComplete: (value: SectionExplainContext | null) => void;
   setSectionResponsePending: (value: SectionExplainContext | null) => void;
@@ -147,6 +158,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     activeSelectionPageRect,
     clearSelection,
     handleOpenChat,
+    messageCount,
     motionProfile,
     prefersReducedMotion,
     resetAskModalState,
@@ -165,6 +177,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSectionResponseComplete,
     setSectionResponsePending,
@@ -285,6 +298,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setPersistedSelectionPageRect(null);
       setPersistedSelectionContainerRect(null);
       setDismissedSelectedText(null);
+      setSelectionConversationContext(null);
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
       setSectionResponsePending(nextSection);
@@ -331,6 +345,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       clearSelection,
       focusSectionRect,
       handleOpenChat,
+      messageCount,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
       resetAskModalState,
@@ -349,6 +364,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
+      setSelectionConversationContext,
       setSelectionGuidanceHandoffText,
       setSectionResponseComplete,
       setSectionResponsePending,
@@ -380,6 +396,10 @@ export function useKangurAiTutorGuidedFlow(input: {
       });
       focusSelectionPageRect(activeSelectionPageRect);
       setHasNewMessage(false);
+      setSelectionConversationContext({
+        messageStartIndex: messageCount,
+        selectedText: selectionText,
+      });
       setSelectionResponseComplete(null);
       setSelectionResponsePending({
         selectedText: selectionText,
@@ -415,6 +435,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       activeSelectionPageRect,
       focusSelectionPageRect,
       handleOpenChat,
+      messageCount,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
       resetAskModalState,
@@ -424,6 +445,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setContextualTutorMode,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
+      setSelectionConversationContext,
       setSelectionGuidanceHandoffText,
       setGuidedTutorTarget,
       setHasNewMessage,

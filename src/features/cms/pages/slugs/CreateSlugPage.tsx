@@ -10,7 +10,7 @@ import {
   useCreateSlug,
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
-import { AdminCmsBreadcrumbs, Alert, SectionHeader, useToast } from '@/shared/ui';
+import { AdminCmsPageLayout, Alert, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function CreateSlugPage(): React.JSX.Element {
@@ -53,18 +53,13 @@ export default function CreateSlugPage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10 max-w-2xl space-y-6'>
-      <SectionHeader
-        title='Create Route'
-        description='Register a new URL path for your content.'
-        eyebrow={
-          <AdminCmsBreadcrumbs
-            parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
-            current='Create'
-            className='mb-2'
-          />
-        }
-      />
+    <AdminCmsPageLayout
+      title='Create Route'
+      current='Create'
+      parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
+      description='Register a new URL path for your content.'
+      containerClassName='container mx-auto max-w-2xl space-y-6 py-10'
+    >
 
       {error && (
         <Alert variant='error' className='mb-6'>
@@ -80,6 +75,6 @@ export default function CreateSlugPage(): React.JSX.Element {
         domains={domains}
         initialData={domainId ? { slug: '', isDefault: false, domainIds: [domainId] } : undefined}
       />
-    </div>
+    </AdminCmsPageLayout>
   );
 }

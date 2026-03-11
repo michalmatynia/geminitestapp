@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   nextLinkPropsMock,
@@ -55,6 +55,14 @@ import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTran
 describe('KangurTransitionLink', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    startRouteTransitionMock.mockReturnValue({
+      acknowledgeMs: 0,
+      started: true,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('disables Next auto-scroll for internal Kangur route transitions', () => {
@@ -132,5 +140,38 @@ describe('KangurTransitionLink', () => {
     );
 
     expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
+  it('delays the router push until the button acknowledgement window ends', () => {
+    vi.useFakeTimers();
+    startRouteTransitionMock.mockReturnValueOnce({
+      acknowledgeMs: 110,
+      started: true,
+    });
+
+    render(
+      <KangurTransitionLink
+        href='/kangur/lessons'
+        targetPageKey='Lessons'
+        transitionAcknowledgeMs={110}
+        transitionSourceId='game-home-action:lessons'
+      >
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lekcje' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 110,
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+      sourceId: 'game-home-action:lessons',
+    });
+    expect(routerPushMock).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(110);
+
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
   });
 });

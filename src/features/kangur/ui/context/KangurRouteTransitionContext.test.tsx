@@ -13,15 +13,22 @@ import {
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 
 function RouteTransitionProbe({
+  acknowledgeMs,
+  sourceId,
   targetHref,
   targetPageKey,
 }: {
+  acknowledgeMs?: number;
+  sourceId?: string;
   targetHref: string;
   targetPageKey: string;
 }): React.JSX.Element {
   const {
+    isRouteAcknowledging,
     isRoutePending,
     isRouteRevealing,
+    transitionPhase,
+    activeTransitionSourceId,
     activeTransitionPageKey,
     pendingPageKey,
     startRouteTransition,
@@ -29,13 +36,23 @@ function RouteTransitionProbe({
 
   return (
     <div>
+      <div data-testid='route-transition-acknowledging'>{String(isRouteAcknowledging)}</div>
       <div data-testid='route-transition-pending'>{String(isRoutePending)}</div>
       <div data-testid='route-transition-revealing'>{String(isRouteRevealing)}</div>
+      <div data-testid='route-transition-phase'>{transitionPhase}</div>
+      <div data-testid='route-transition-source-id'>{activeTransitionSourceId ?? 'none'}</div>
       <div data-testid='route-transition-active-page-key'>{activeTransitionPageKey ?? 'none'}</div>
       <div data-testid='route-transition-page-key'>{pendingPageKey ?? 'none'}</div>
       <button
         type='button'
-        onClick={() => startRouteTransition({ href: targetHref, pageKey: targetPageKey })}
+        onClick={() =>
+          startRouteTransition({
+            ...(typeof acknowledgeMs === 'number' ? { acknowledgeMs } : {}),
+            ...(sourceId ? { sourceId } : {}),
+            href: targetHref,
+            pageKey: targetPageKey,
+          })
+        }
       >
         Start transition
       </button>
@@ -44,20 +61,29 @@ function RouteTransitionProbe({
 }
 
 function renderRouteTransitionHarness({
+  acknowledgeMs,
   pageKey,
   requestedPath,
+  sourceId,
   targetHref = '/kangur/lessons',
   targetPageKey = 'Lessons',
 }: {
+  acknowledgeMs?: number;
   pageKey: string;
   requestedPath: string;
+  sourceId?: string;
   targetHref?: string;
   targetPageKey?: string;
 }) {
   return render(
     <KangurRoutingProvider basePath='/kangur' pageKey={pageKey} requestedPath={requestedPath}>
       <KangurRouteTransitionProvider>
-        <RouteTransitionProbe targetHref={targetHref} targetPageKey={targetPageKey} />
+        <RouteTransitionProbe
+          acknowledgeMs={acknowledgeMs}
+          sourceId={sourceId}
+          targetHref={targetHref}
+          targetPageKey={targetPageKey}
+        />
       </KangurRouteTransitionProvider>
     </KangurRoutingProvider>
   );
@@ -92,6 +118,7 @@ describe('KangurRouteTransitionProvider', () => {
     });
 
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-acknowledging')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('Lessons');
 
@@ -115,6 +142,7 @@ describe('KangurRouteTransitionProvider', () => {
 
     expect(scrollToMock).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'auto' });
     expect(scrollToMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId('route-transition-acknowledging')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
     expect(screen.getByTestId('route-transition-active-page-key')).toHaveTextContent('Lessons');
@@ -146,5 +174,43 @@ describe('KangurRouteTransitionProvider', () => {
 
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('none');
+  });
+
+  it('keeps a source-aware transition in the acknowledgement phase before promoting it to pending', () => {
+    renderRouteTransitionHarness({
+      acknowledgeMs: 110,
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      sourceId: 'game-home-action:lessons',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+
+    expect(screen.getByTestId('route-transition-acknowledging')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('acknowledging');
+    expect(screen.getByTestId('route-transition-source-id')).toHaveTextContent(
+      'game-home-action:lessons'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(109);
+    });
+
+    expect(screen.getByTestId('route-transition-acknowledging')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('route-transition-acknowledging')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('pending');
+    expect(screen.getByTestId('route-transition-source-id')).toHaveTextContent(
+      'game-home-action:lessons'
+    );
   });
 });

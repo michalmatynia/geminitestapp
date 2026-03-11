@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { AllegroSubpageScaffold } from './AllegroSubpageScaffold';
 
 describe('AllegroSubpageScaffold', () => {
-  it('renders the shared Allegro back link and compact placeholder state', () => {
+  it('renders the shared integrations breadcrumb trail and compact placeholder state', () => {
     render(
       <AllegroSubpageScaffold
         title='Connections'
@@ -20,7 +20,12 @@ describe('AllegroSubpageScaffold', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: '← Allegro' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
+    expect(screen.getByRole('link', { name: 'Integrations' })).toHaveAttribute(
+      'href',
+      '/admin/integrations'
+    );
+    expect(screen.getByRole('link', { name: 'Allegro' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/allegro'
     );

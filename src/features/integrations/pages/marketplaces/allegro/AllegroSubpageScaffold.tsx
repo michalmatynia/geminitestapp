@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { EmptyState, SectionHeader, SectionHeaderBackLink } from '@/shared/ui';
+import { AdminIntegrationsPageLayout, EmptyState } from '@/shared/ui';
 
 type AllegroSubpageScaffoldProps = {
-  title: React.ReactNode;
-  description?: React.ReactNode;
+  title: string;
+  description?: string;
   emptyState?: {
     title: string;
     description?: string;
@@ -19,18 +19,12 @@ export function AllegroSubpageScaffold({
   children,
 }: AllegroSubpageScaffoldProps): React.JSX.Element {
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
-        title={title}
-        description={description}
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/integrations/marketplaces/allegro' arrow>
-            Allegro
-          </SectionHeaderBackLink>
-        }
-        className='mb-6'
-      />
-
+    <AdminIntegrationsPageLayout
+      title={title}
+      current={title}
+      parent={{ label: 'Allegro', href: '/admin/integrations/marketplaces/allegro' }}
+      description={description}
+    >
       {children ??
         (emptyState ? (
           <EmptyState
@@ -40,6 +34,6 @@ export function AllegroSubpageScaffold({
             className='border-dashed border-border/60 bg-card/40 py-8'
           />
         ) : null)}
-    </div>
+    </AdminIntegrationsPageLayout>
   );
 }

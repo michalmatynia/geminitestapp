@@ -9,13 +9,12 @@ import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/per
 import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
 import {
+  AdminAgentCreatorPageLayout,
   Button,
   Card,
   FormField,
   Hint,
   Input,
-  SectionHeader,
-  SectionHeaderBackLink,
   SelectSimple,
   StandardDataTablePanel,
   Tag,
@@ -168,23 +167,22 @@ export function AgentPersonaMemoryPage({
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10'>
-      <SectionHeader
-        title={persona ? `${persona.name} Memory Bank` : 'Persona Memory Bank'}
-        description='Search durable persona memories and the chat history stored in the same bank.'
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/agentcreator/personas'>
-            Back to personas
-          </SectionHeaderBackLink>
-        }
-        actions={
-          <Button variant='outline' size='sm' onClick={() => void memoryQuery.refetch()} loading={memoryQuery.isFetching}>
-            Refresh
-          </Button>
-        }
-        className='mb-6'
-      />
-
+    <AdminAgentCreatorPageLayout
+      title={persona ? `${persona.name} Memory Bank` : 'Persona Memory Bank'}
+      current='Memory'
+      parent={{ label: 'Personas', href: '/admin/agentcreator/personas' }}
+      description='Search durable persona memories and the chat history stored in the same bank.'
+      headerActions={
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => void memoryQuery.refetch()}
+          loading={memoryQuery.isFetching}
+        >
+          Refresh
+        </Button>
+      }
+    >
       <div className='mb-6 grid gap-4 md:grid-cols-4'>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/30'>
           <Hint size='xxs' uppercase>
@@ -365,6 +363,6 @@ export function AgentPersonaMemoryPage({
         )}
         expanded={expanded}
       />
-    </div>
+    </AdminAgentCreatorPageLayout>
   );
 }

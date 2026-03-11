@@ -13,6 +13,9 @@ type KangurProfileMenuProps = {
   };
   basePath?: string;
   isActive?: boolean;
+  isTransitionActive?: boolean;
+  transitionAcknowledgeMs?: number;
+  transitionSourceId?: string | null;
   triggerClassName?: string;
 };
 
@@ -21,12 +24,16 @@ export function KangurProfileMenu({
   triggerClassName,
   basePath,
   isActive,
+  isTransitionActive = false,
+  transitionAcknowledgeMs,
+  transitionSourceId,
 }: KangurProfileMenuProps): React.JSX.Element {
   const resolvedHref =
     profile?.href ??
     getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
   const navigationActive = isActive ?? profile?.isActive ?? false;
   const buttonClassName = triggerClassName;
+  const shouldRenderActiveState = navigationActive || isTransitionActive;
 
   return (
     <KangurButton
@@ -34,10 +41,16 @@ export function KangurProfileMenu({
       aria-current={navigationActive ? 'page' : undefined}
       className={buttonClassName}
       data-doc-id='top_nav_profile'
+      data-nav-state={isTransitionActive ? 'transitioning' : 'idle'}
       size='md'
-      variant={navigationActive ? 'navigationActive' : 'navigation'}
+      variant={shouldRenderActiveState ? 'navigationActive' : 'navigation'}
     >
-      <Link href={resolvedHref} targetPageKey='LearnerProfile'>
+      <Link
+        href={resolvedHref}
+        targetPageKey='LearnerProfile'
+        transitionAcknowledgeMs={transitionAcknowledgeMs}
+        transitionSourceId={transitionSourceId}
+      >
         <User className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
         <span>Profil</span>
       </Link>

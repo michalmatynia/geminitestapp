@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
@@ -18,8 +19,34 @@ type HomeAction = {
   tone: HomeActionTone;
   href?: string;
   targetPageKey?: string;
+  transitionAcknowledgeMs?: number;
+  transitionSourceId?: string;
   onClick?: () => void;
   disabled?: boolean;
+};
+
+type HomeActionNavigationState = 'idle' | 'pressed' | 'transitioning';
+
+const HOME_ACTION_TRANSITION_EASE = [0.22, 1, 0.36, 1] as const;
+
+const resolveHomeActionNavigationState = ({
+  activeTransitionSourceId,
+  transitionPhase,
+  transitionSourceId,
+}: {
+  activeTransitionSourceId?: string | null;
+  transitionPhase?: 'acknowledging' | 'idle' | 'pending' | 'revealing';
+  transitionSourceId?: string;
+}): HomeActionNavigationState => {
+  if (!transitionSourceId || transitionSourceId !== activeTransitionSourceId) {
+    return 'idle';
+  }
+
+  if (transitionPhase === 'acknowledging') {
+    return 'pressed';
+  }
+
+  return 'transitioning';
 };
 
 const HOME_ACTION_TONE_STYLES: Record<
@@ -64,17 +91,21 @@ const resolveHomeActionDocId = (actionId: string): string => {
 
 function KangurHomeActionCard({
   action,
+  navState,
   index,
 }: {
   action: HomeAction;
+  navState: HomeActionNavigationState;
   index: number;
 }): React.JSX.Element {
   const actionDisabled = action.disabled;
-  const actionHref = action.href;
   const actionId = action.id;
+  const actionHref = action.href;
   const actionLabel = action.label;
   const actionOnClick = action.onClick;
   const actionSymbol = action.symbol;
+  const actionTransitionAcknowledgeMs = action.transitionAcknowledgeMs;
+  const actionTransitionSourceId = action.transitionSourceId;
   const actionTargetPageKey = action.targetPageKey;
   const actionTone = action.tone;
   const actionTrailingSymbol = action.trailingSymbol;
@@ -83,6 +114,7 @@ function KangurHomeActionCard({
   const wrapperClassName = cn(
     'relative home-action-featured-shell',
     tone.shell,
+    navState !== 'idle' ? 'pointer-events-none' : null,
     actionDisabled ? 'pointer-events-none opacity-55' : null
   );
   const sharedClassName = cn(
@@ -144,10 +176,27 @@ function KangurHomeActionCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.06 * index }}
+      initial={{ opacity: 0, y: 16, scale: 1 }}
+      animate={
+        navState === 'idle'
+          ? { opacity: 1, scale: 1, y: 0 }
+          : { opacity: 1, scale: 0.985, y: 0 }
+      }
+      transition={
+        navState === 'idle'
+          ? {
+            delay: 0.06 * index,
+            duration: 0.28,
+            ease: HOME_ACTION_TRANSITION_EASE,
+          }
+          : {
+            duration: 0.12,
+            ease: HOME_ACTION_TRANSITION_EASE,
+          }
+      }
       className={wrapperClassName}
+      data-nav-state={navState}
+      data-testid={`kangur-home-action-${actionId}`}
     >
       <div className='home-action-featured-underlay' />
       {actionHref ? (
@@ -156,6 +205,8 @@ function KangurHomeActionCard({
           className={sharedClassName}
           data-doc-id={docId}
           targetPageKey={actionTargetPageKey}
+          transitionAcknowledgeMs={actionTransitionAcknowledgeMs}
+          transitionSourceId={actionTransitionSourceId}
         >
           {content}
         </Link>
@@ -181,6 +232,7 @@ type KangurGameHomeActionsWidgetProps = {
 export function KangurGameHomeActionsWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeActionsWidgetProps = {}): React.JSX.Element | null {
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
 
@@ -196,6 +248,8 @@ export function KangurGameHomeActionsWidget({
       tone: 'neutral',
       href: createPageUrl('Lessons', basePath),
       targetPageKey: 'Lessons',
+      transitionAcknowledgeMs: 110,
+      transitionSourceId: 'game-home-action:lessons',
     },
     {
       id: 'play',
@@ -238,7 +292,16 @@ export function KangurGameHomeActionsWidget({
         </h3>
         <div className='space-y-6 sm:space-y-7' data-testid='kangur-home-actions-list'>
           {actions.map((action, index) => (
-            <KangurHomeActionCard key={action.id} action={action} index={index} />
+            <KangurHomeActionCard
+              key={action.id}
+              action={action}
+              navState={resolveHomeActionNavigationState({
+                activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
+                transitionPhase: routeTransitionState?.transitionPhase,
+                transitionSourceId: action.transitionSourceId,
+              })}
+              index={index}
+            />
           ))}
         </div>
       </section>

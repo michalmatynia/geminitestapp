@@ -191,7 +191,7 @@ export function KangurAiTutorPanelChrome({
     <AnimatePresence>
       {isOpen &&
       !isTutorHidden &&
-      !isGuidedTutorMode &&
+      (!isGuidedTutorMode || isMinimalPanelMode) &&
       !suppressPanelSurface ? (
           <>
             {isAskModalMode || (!shouldUseMinimalPanelShell && bubbleMode === 'sheet') ? (

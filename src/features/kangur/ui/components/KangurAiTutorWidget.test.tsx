@@ -1072,8 +1072,8 @@ describe('KangurAiTutorWidget', () => {
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1210,9 +1210,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toBeVisible();
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    expect(openChatMock).toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -2369,7 +2369,7 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
@@ -2385,14 +2385,11 @@ describe('KangurAiTutorWidget', () => {
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
-      '„2 + 2”'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toHaveTextContent(
-      'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
-    );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
     );
     expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
     expect(
@@ -2414,16 +2411,8 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
-      'Wyjaśnienie jest już gotowe. Możesz dopytać albo wrócić do zwykłej rozmowy.'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-complete-status')).toHaveTextContent(
-      'Wyjaśnienie gotowe. Możesz teraz dopytać o szczegóły.'
-    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_ai_tutor_selection_guidance_completed',
       expect.objectContaining({
@@ -2509,7 +2498,7 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
@@ -2596,7 +2585,7 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -2606,10 +2595,10 @@ describe('KangurAiTutorWidget', () => {
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-pending-status')).toHaveTextContent(
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
     );
     vi.useRealTimers();
@@ -2715,8 +2704,7 @@ describe('KangurAiTutorWidget', () => {
       await Promise.resolve();
     });
     expect(sendMessageMock).toHaveBeenCalled();
-    expect(screen.getByText('Nowe wyjaśnienie fragmentu.')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
     );
     expect(
@@ -3140,13 +3128,13 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveClass('cursor-pointer');
     fireEvent.mouseDown(screen.getByTestId('kangur-ai-tutor-avatar'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
-    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-anchor-kind',
       'dock'
     );
-    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
     ).not.toBeInTheDocument();
@@ -3213,7 +3201,7 @@ describe('KangurAiTutorWidget', () => {
 
     expect(closeChatMock).toHaveBeenCalledTimes(1);
     expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_ai_tutor_closed',
       expect.objectContaining({
@@ -3389,24 +3377,12 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-section-guided-callout')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla tej części strony.'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-section-preview')).toHaveTextContent(
-      'Wyjaśniana sekcja'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-section-preview')).toHaveTextContent('Ranking');
-    expect(screen.getByTestId('kangur-ai-tutor-section-context-spotlight')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-section-preview')).toHaveTextContent(
-      'Czekaj chwilę. Skupiam się teraz tylko na tej sekcji i przygotowuję wyjaśnienie.'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-section-pending-status')).toHaveTextContent(
-      'Już przygotowuję wyjaśnienie dokładnie dla tej części strony.'
-    );
-    expect(screen.getByText('Czekaj, wyjaśniam wybraną sekcję.')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pokaż sekcję' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij sekcję rankingu. Powiedz, co oznaczają pozycje, punkty i jak poprawić wynik.',
       expect.objectContaining({
@@ -3622,8 +3598,10 @@ describe('KangurAiTutorWidget', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-section-preview')).toHaveTextContent('Ranking');
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-section-guided-callout')).toHaveTextContent(
+      'Wyjaśniam sekcję: Ranking'
+    );
     tutorState = {
       ...tutorState,
       isLoading: false,

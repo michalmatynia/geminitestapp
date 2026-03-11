@@ -3,9 +3,15 @@
 import React, { useState } from 'react';
 
 import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
-import { Button, Card, NavigationCard, NavigationCardGrid, SectionHeader, useToast } from '@/shared/ui';
+import {
+  AdminIntegrationsPageLayout,
+  Button,
+  Card,
+  NavigationCard,
+  NavigationCardGrid,
+  useToast,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
-
 
 const marketplaces = [
   {
@@ -41,13 +47,11 @@ export default function MarketplacesPage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
-        title='Marketplaces'
-        description='Configure and manage external marketplaces for product listings.'
-        className='mb-6'
-      />
-
+    <AdminIntegrationsPageLayout
+      title='Marketplaces'
+      current='Marketplaces'
+      description='Configure and manage external marketplaces for product listings.'
+    >
       <NavigationCardGrid className='md:grid-cols-2'>
         {marketplaces.map((marketplace: { name: string; description: string; href: string }) => (
           <NavigationCard
@@ -90,6 +94,6 @@ export default function MarketplacesPage(): React.JSX.Element {
         confirmText='Queue Sync'
         loading={syncMutation.isPending}
       />
-    </div>
+    </AdminIntegrationsPageLayout>
   );
 }

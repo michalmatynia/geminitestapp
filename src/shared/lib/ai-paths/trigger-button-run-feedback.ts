@@ -47,6 +47,10 @@ const RUN_FEEDBACK_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
   'dead_lettered',
 ]);
 
+const isTrackedRunStatus = (
+  status: TriggerButtonRunFeedbackStatus
+): status is AiPathRunRecord['status'] => status !== 'waiting';
+
 const canUseLocalStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
@@ -154,11 +158,13 @@ const pruneExpiredFeedback = (
 };
 
 const resolveFeedbackTtlMs = (status: TriggerButtonRunFeedbackSnapshot['status']): number =>
-  TERMINAL_RUN_STATUSES.has(status) ? TERMINAL_FEEDBACK_TTL_MS : ACTIVE_FEEDBACK_TTL_MS;
+  isTrackedRunStatus(status) && TERMINAL_RUN_STATUSES.has(status)
+    ? TERMINAL_FEEDBACK_TTL_MS
+    : ACTIVE_FEEDBACK_TTL_MS;
 
 export const isTriggerButtonRunFeedbackTerminal = (
   status: TriggerButtonRunFeedbackSnapshot['status']
-): boolean => TERMINAL_RUN_STATUSES.has(status);
+): boolean => isTrackedRunStatus(status) && TERMINAL_RUN_STATUSES.has(status);
 
 export const readTriggerButtonRunFeedback = (input: {
   buttonId: string;

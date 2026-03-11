@@ -6,12 +6,15 @@ import {
   isImageStudioSlotImageLocked,
   setImageStudioSlotImageLocked,
 } from '@/features/ai/image-studio/utils/slot-image-lock';
+import {
+  imageStudioEnsureSlotFromUploadResponseSchema,
+  studioSlotsResponseSchema,
+  type StudioSlotsResponse,
+  type UpdateImageStudioSlotDto,
+} from '@/shared/contracts/image-studio';
 import type {
-  ImageStudioEnsureSlotFromUploadResponse,
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
-  StudioSlotsResponse,
-  UpdateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -156,36 +159,42 @@ export function useConsumeTemporaryUpload({
               return patchedSelected;
             }
 
-            const created = await api.post<StudioSlotsResponse>(
-              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
-              {
-                slots: [
-                  {
-                    name: asset.filename?.trim() || `Card ${Date.now()}`,
-                    ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
-                    ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
-                    ...(normalizedTemporaryFilepath
-                      ? { imageUrl: normalizedTemporaryFilepath }
-                      : {}),
-                    imageBase64: null,
-                  },
-                ],
-              }
+            const created = studioSlotsResponseSchema.parse(
+              await api.post<unknown>(
+                `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+                {
+                  slots: [
+                    {
+                      name: asset.filename?.trim() || `Card ${Date.now()}`,
+                      ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
+                      ...(currentTemporaryUploadId
+                        ? { imageFileId: currentTemporaryUploadId }
+                        : {}),
+                      ...(normalizedTemporaryFilepath
+                        ? { imageUrl: normalizedTemporaryFilepath }
+                        : {}),
+                      imageBase64: null,
+                    },
+                  ],
+                }
+              )
             );
             return created.slots[0] ?? null;
           };
 
           let ensuredSlot: ImageStudioSlot | null = null;
           try {
-            const ensured = await api.post<ImageStudioEnsureSlotFromUploadResponse>(
-              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
-              {
-                uploadId: currentTemporaryUploadId || null,
-                filepath: normalizedTemporaryFilepath || null,
-                filename: asset.filename?.trim() || null,
-                folderPath: getFolderForNewSlot() || null,
-                selectedSlotId: currentObjectSlot?.id ?? null,
-              }
+            const ensured = imageStudioEnsureSlotFromUploadResponseSchema.parse(
+              await api.post<unknown>(
+                `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
+                {
+                  uploadId: currentTemporaryUploadId || null,
+                  filepath: normalizedTemporaryFilepath || null,
+                  filename: asset.filename?.trim() || null,
+                  folderPath: getFolderForNewSlot() || null,
+                  selectedSlotId: currentObjectSlot?.id ?? null,
+                }
+              )
             );
             ensuredSlot = ensured.slot ?? null;
           } catch {

@@ -7,12 +7,11 @@ import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrati
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/shared/contracts/integrations';
 import {
-  useToast,
+  AdminIntegrationsPageLayout,
   Button,
-  SectionHeader,
-  SectionHeaderBackLink,
   StatusBadge,
   SimpleSettingsList,
+  useToast,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -93,18 +92,11 @@ export default function AddIntegrationPage(): React.JSX.Element {
   }, [integrationsQuery.data]);
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
-        title='Add Integrations'
-        description='Select a marketplace connection to add to your map.'
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/integrations' arrow>
-            Back to integrations
-          </SectionHeaderBackLink>
-        }
-        className='mb-6'
-      />
-
+    <AdminIntegrationsPageLayout
+      title='Add Integrations'
+      current='Add'
+      description='Select a marketplace connection to add to your map.'
+    >
       <SimpleSettingsList
         items={AVAILABLE_INTEGRATIONS.map((integration) => ({
           id: integration.slug,
@@ -148,6 +140,6 @@ export default function AddIntegrationPage(): React.JSX.Element {
           </div>
         )}
       />
-    </div>
+    </AdminIntegrationsPageLayout>
   );
 }

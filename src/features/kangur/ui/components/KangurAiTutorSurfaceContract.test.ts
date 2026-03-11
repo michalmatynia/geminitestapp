@@ -18,7 +18,11 @@ describe('Kangur AI Tutor surface contract', () => {
     const portalViewSource = readTutorSource('KangurAiTutorWidget.portal-view.ts');
 
     expect(coordinatorSource).not.toContain("'regular_panel'");
+    expect(coordinatorSource).not.toContain("'selection_panel'");
+    expect(coordinatorSource).not.toContain("'section_panel'");
     expect(portalViewSource).not.toContain("'regular_panel'");
+    expect(portalViewSource).not.toContain("'selection_panel'");
+    expect(portalViewSource).not.toContain("'section_panel'");
     expect(portalViewSource).not.toContain('isRegularMinimalPanelMode');
   });
 
@@ -34,5 +38,11 @@ describe('Kangur AI Tutor surface contract', () => {
     const browserSpecSource = readTutorPlaywrightSource('kangur-ai-tutor.spec.ts');
 
     expect(browserSpecSource).not.toContain('openLegacyTutorPanelAfterAcceptingMinimalModal');
+  });
+
+  it('keeps the minimalist contextual panel renderable while guided avatar mode is still active', () => {
+    const panelChromeSource = readTutorSource('KangurAiTutorPanelChrome.tsx');
+
+    expect(panelChromeSource).toContain('(!isGuidedTutorMode || isMinimalPanelMode) &&');
   });
 });

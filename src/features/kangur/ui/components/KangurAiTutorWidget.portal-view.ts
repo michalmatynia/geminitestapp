@@ -22,9 +22,7 @@ type TutorSurfaceMode =
   | 'idle_avatar'
   | 'onboarding'
   | 'selection_guided'
-  | 'selection_panel'
-  | 'section_guided'
-  | 'section_panel';
+  | 'section_guided';
 
 type UseKangurAiTutorPortalViewModelInput = {
   activeFocus: KangurAiTutorPanelBodyContextValue['activeFocus'];
@@ -190,9 +188,7 @@ export function useKangurAiTutorPortalViewModel(
     input.showSectionGuidanceCallout;
   const hasContextualTutorLock =
     input.tutorSurfaceMode === 'selection_guided' ||
-    input.tutorSurfaceMode === 'selection_panel' ||
-    input.tutorSurfaceMode === 'section_guided' ||
-    input.tutorSurfaceMode === 'section_panel';
+    input.tutorSurfaceMode === 'section_guided';
 
   const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
@@ -200,8 +196,7 @@ export function useKangurAiTutorPortalViewModel(
     input.tutorSurfaceMode === 'onboarding' &&
     !hasContextualTutorLock &&
     (input.canonicalTutorModalVisible || (!input.isAskModalMode && !isGuidedAvatarMode));
-  const isContextualMinimalPanelMode =
-    input.tutorSurfaceMode === 'selection_panel' || input.tutorSurfaceMode === 'section_panel';
+  const isContextualMinimalPanelMode = false;
   const isMinimalPanelMode =
     !input.isAskModalMode &&
     (isContextualMinimalPanelMode || input.shouldRenderContextlessTutorUi);

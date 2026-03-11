@@ -26,8 +26,20 @@ vi.mock('@/shared/ui', () => ({
   ),
   ToggleRow: ({ label }: { label: string }) => <div>{label}</div>,
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  StatusBadge: ({ label, status }: { label?: string; status: string }) => (
-    <span>{label ?? status}</span>
+  StatusBadge: ({
+    label,
+    status,
+    variant,
+    className,
+  }: {
+    label?: string;
+    status: string;
+    variant?: string;
+    className?: string;
+  }) => (
+    <span data-status={status} data-variant={variant} data-class-name={className}>
+      {label ?? status}
+    </span>
   ),
   ActionMenu: ({
     children,
@@ -124,6 +136,7 @@ describe('TriggerButtonBar', () => {
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByTitle('run-product-feedback-123456')).toBeInTheDocument();
     expect(screen.getByText('5m ago')).toBeInTheDocument();
+    expect(screen.getByText('Failed')).toHaveAttribute('data-variant', 'error');
     // Error text appears in both the trigger preview button and the expanded dialog content
     expect(screen.getAllByText('Database write affected 0 records for update.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
@@ -190,8 +203,69 @@ describe('TriggerButtonBar', () => {
 
     expect(screen.getByText('Waiting')).toBeInTheDocument();
     expect(screen.getByText('Just now')).toBeInTheDocument();
+    expect(screen.getByText('Waiting')).toHaveAttribute('data-variant', 'neutral');
+    expect(screen.getByText('Waiting')).toHaveAttribute(
+      'data-class-name',
+      expect.stringContaining('border-slate-500/40')
+    );
     expect(screen.queryByRole('link', { name: 'Job Queue' })).not.toBeInTheDocument();
     expect(screen.queryByText(/waiting:button-product-row:1/i)).not.toBeInTheDocument();
+  });
+
+  it('uses distinct styling for queued and running feedback pills', () => {
+    useTriggerButtonsMock.mockReturnValueOnce({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-feedback-queued',
+          status: 'queued',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: null,
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    const { rerender } = render(
+      <TriggerButtonBar location='product_row' entityType='product' entityId='product-1' />
+    );
+
+    expect(screen.getByText('Queued')).toHaveAttribute('data-variant', 'pending');
+    expect(screen.getByText('Queued')).toHaveAttribute(
+      'data-class-name',
+      expect.stringContaining('border-amber-500/40')
+    );
+
+    useTriggerButtonsMock.mockReturnValueOnce({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-feedback-running',
+          status: 'running',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: null,
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    rerender(<TriggerButtonBar location='product_row' entityType='product' entityId='product-1' />);
+
+    expect(screen.getByText('Running')).toHaveAttribute('data-variant', 'processing');
+    expect(screen.getByText('Running')).toHaveAttribute(
+      'data-class-name',
+      expect.stringContaining('border-cyan-500/40')
+    );
   });
 
   it('does not render inline run feedback outside product row and modal locations', () => {

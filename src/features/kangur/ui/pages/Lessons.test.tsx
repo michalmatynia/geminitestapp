@@ -419,7 +419,9 @@ describe('Lessons', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
       expect(historyBackSpy).not.toHaveBeenCalled();
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur');
+      expect(routerPushMock).toHaveBeenCalledWith('/kangur', {
+        scroll: false,
+      });
     } finally {
       Object.defineProperty(window.history, 'length', {
         configurable: true,

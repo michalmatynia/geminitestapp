@@ -41,8 +41,15 @@ const NAVIGATION_SKELETON_DELAY_MS = 140;
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
-  const { isRoutePending, isRouteRevealing, pendingPageKey, activeTransitionPageKey } =
-    useKangurRouteTransitionState();
+  const {
+    isRouteAcknowledging,
+    isRoutePending,
+    isRouteRevealing,
+    transitionPhase,
+    activeTransitionSourceId,
+    pendingPageKey,
+    activeTransitionPageKey,
+  } = useKangurRouteTransitionState();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
@@ -51,7 +58,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
-  const isNavigationTransitionActive = isRoutePending || isRouteRevealing;
+  const isNavigationTransitionActive = isRouteAcknowledging || isRoutePending || isRouteRevealing;
+  const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = isBootLoading && !canRenderRouteWhileLoading;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(isBootLoading);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
@@ -100,6 +108,18 @@ const AuthenticatedApp = (): JSX.Element | null => {
       return;
     }
 
+    if (isRouteAcknowledging) {
+      navigationSkeletonShownRef.current = false;
+      setIsNavigationSkeletonVisible(false);
+      return;
+    }
+
+    if (isRoutePending && shouldSkipNavigationSkeletonDelay) {
+      navigationSkeletonShownRef.current = true;
+      setIsNavigationSkeletonVisible(true);
+      return;
+    }
+
     if (isRoutePending && navigationSkeletonShownRef.current) {
       setIsNavigationSkeletonVisible(true);
       return;
@@ -128,7 +148,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
 
     return undefined;
-  }, [isBootLoading, isNavigationTransitionActive, isRoutePending, isRouteRevealing]);
+  }, [
+    isBootLoading,
+    isNavigationTransitionActive,
+    isRouteAcknowledging,
+    isRoutePending,
+    isRouteRevealing,
+    shouldSkipNavigationSkeletonDelay,
+  ]);
 
   if (authErrorType === 'user_not_registered') {
     return <UserNotRegisteredError />;
@@ -162,7 +189,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
             {...routeContentMotionProps}
             aria-busy={isNavigationTransitionActive}
             className={cn(embedded ? 'min-h-full' : 'min-h-screen')}
+            data-route-transition-phase={transitionPhase}
             data-route-transition-key={routeTransitionKey}
+            data-route-transition-source-id={activeTransitionSourceId ?? undefined}
             data-testid='kangur-route-content'
           >
             {routeContent}

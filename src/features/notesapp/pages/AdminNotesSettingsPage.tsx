@@ -8,14 +8,13 @@ import {
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/shared/contracts/notes';
 import {
+  AdminNotesPageLayout,
   Button,
   SelectSimple,
   useToast,
   Label,
   RadioGroup,
   RadioGroupItem,
-  SectionHeader,
-  SectionHeaderBackLink,
   FormSection,
   FormField,
   ToggleRow,
@@ -87,18 +86,12 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
     settings.editorMode === DEFAULT_NOTE_SETTINGS.editorMode;
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
-        title='Note Settings'
-        description='Configure default view preferences for the Notes app.'
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/notes' arrow>
-            Back to notes
-          </SectionHeaderBackLink>
-        }
-        className='mb-6'
-      />
-
+    <AdminNotesPageLayout
+      title='Note Settings'
+      current='Settings'
+      description='Configure default view preferences for the Notes app.'
+      containerClassName='container mx-auto py-10'
+    >
       <div className='max-xl space-y-6'>
         {/* Sorting Settings */}
         <FormSection title='Sorting' className='p-6'>
@@ -323,6 +316,6 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           </div>
         </Card>
       </div>
-    </div>
+    </AdminNotesPageLayout>
   );
 }

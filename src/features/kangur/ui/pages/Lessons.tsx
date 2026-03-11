@@ -58,6 +58,7 @@ const LESSONS_CARD_TRANSITION = {
   ease: LESSONS_CARD_EASE,
 } as const;
 const LESSONS_CARD_STAGGER_DELAY = 0.06;
+const LESSONS_ROUTE_ACKNOWLEDGE_MS = 110;
 
 const LessonLoadingFallback = (): React.JSX.Element => (
   <LessonLoadingFallbackCard />
@@ -326,15 +327,11 @@ export default function Lessons() {
   const isSecretLessonHostActive =
     isSecretLessonActive && Boolean(secretHostLesson && activeLesson?.id === secretHostLesson.id);
   const handleGoBack = (): void => {
-    if (typeof window === 'undefined') return;
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-
-    const homeHref = getKangurHomeHref(basePath);
-    routeNavigator.push(homeHref, {
-      pageKey: 'Game',
+    routeNavigator.back({
+      acknowledgeMs: LESSONS_ROUTE_ACKNOWLEDGE_MS,
+      fallbackHref: getKangurHomeHref(basePath),
+      fallbackPageKey: 'Game',
+      sourceId: 'lessons:list-back',
     });
   };
 

@@ -31,14 +31,17 @@ type SessionContextTelemetry = {
 
 export function useKangurAiTutorGuidanceCompletionEffects(input: {
   activeSelectedText: string | null;
+  contextualTutorMode: string | null;
   highlightedSection: SectionExplainContext | null;
   isLoading: boolean;
   isOpen: boolean;
+  panelShellMode: string;
   isSectionGuidedMode: boolean;
   isSelectionGuidedMode: boolean;
   sectionResponseComplete: SectionExplainContext | null;
   sectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   sectionResponsePending: SectionExplainContext | null;
+  selectionConversationSelectedText: string | null;
   selectionResponseComplete: PendingSelectionResponse | null;
   selectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   selectionResponsePending: PendingSelectionResponse | null;
@@ -50,14 +53,17 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
 }): void {
   const {
     activeSelectedText,
+    contextualTutorMode,
     highlightedSection,
     isLoading,
     isOpen,
+    panelShellMode,
     isSectionGuidedMode,
     isSelectionGuidedMode,
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
+    selectionConversationSelectedText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -69,7 +75,18 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   } = input;
 
   useEffect(() => {
-    if (!selectionResponsePending || isLoading || isSelectionGuidedMode || !isOpen) {
+    const isSelectionContextStillOwningMinimalPanel =
+      contextualTutorMode === 'selection_explain' &&
+      panelShellMode === 'minimal' &&
+      selectionConversationSelectedText === selectionResponsePending?.selectedText;
+
+    if (
+      !selectionResponsePending ||
+      isLoading ||
+      isSelectionGuidedMode ||
+      !isOpen ||
+      isSelectionContextStillOwningMinimalPanel
+    ) {
       return;
     }
 
@@ -84,7 +101,10 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   }, [
     isLoading,
     isOpen,
+    panelShellMode,
+    contextualTutorMode,
     isSelectionGuidedMode,
+    selectionConversationSelectedText,
     selectionResponsePending,
     setSelectionResponseComplete,
     setSelectionResponsePending,

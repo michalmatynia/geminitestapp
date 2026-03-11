@@ -10,13 +10,24 @@ const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
 }));
 
-vi.mock('next/link', () => ({
-  default: ({
+const { useOptionalKangurRouteTransitionStateMock } = vi.hoisted(() => ({
+  useOptionalKangurRouteTransitionStateMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
+  KangurTransitionLink: ({
     children,
     href,
-    scroll: _scroll,
+    targetPageKey: _targetPageKey,
+    transitionAcknowledgeMs: _transitionAcknowledgeMs,
+    transitionSourceId: _transitionSourceId,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    targetPageKey?: string | null;
+    transitionAcknowledgeMs?: number;
+    transitionSourceId?: string | null;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -27,11 +38,16 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
+  useOptionalKangurRouteTransitionState: () => useOptionalKangurRouteTransitionStateMock(),
+}));
+
 import { KangurGameHomeActionsWidget } from './KangurGameHomeActionsWidget';
 
 describe('KangurGameHomeActionsWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
   });
 
   it('does not show the observability action on the Kangur admin home surface', () => {
@@ -124,5 +140,58 @@ describe('KangurGameHomeActionsWidget', () => {
 
     expect(screen.getByTestId('kangur-home-actions-shell')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /grajmy!/i })).toBeInTheDocument();
+  });
+
+  it('marks the lessons action as pressed during the acknowledgement phase', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      isRouteAcknowledging: true,
+      isRoutePending: false,
+      isRouteRevealing: false,
+      pendingPageKey: null,
+      transitionPhase: 'acknowledging',
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByTestId('kangur-home-action-lessons')).toHaveAttribute(
+      'data-nav-state',
+      'pressed'
+    );
+    expect(screen.getByTestId('kangur-home-action-play')).toHaveAttribute('data-nav-state', 'idle');
+  });
+
+  it('keeps the lessons action locked after the skeleton handoff starts', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteRevealing: false,
+      pendingPageKey: 'Lessons',
+      transitionPhase: 'pending',
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByTestId('kangur-home-action-lessons')).toHaveAttribute(
+      'data-nav-state',
+      'transitioning'
+    );
   });
 });

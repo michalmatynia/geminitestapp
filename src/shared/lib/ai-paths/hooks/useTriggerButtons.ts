@@ -32,6 +32,25 @@ type TriggerRunState = {
 
 export type TriggerButtonLastRun = TriggerButtonRunFeedbackSnapshot;
 
+const toTrackedRunInitialSnapshot = (
+  lastRun: TriggerButtonLastRun,
+  context: {
+    entityId: string | null;
+    entityType: 'product' | 'note' | 'custom';
+  }
+): Partial<TrackedAiPathRunSnapshot> | undefined => {
+  if (lastRun.status === 'waiting') return undefined;
+  return {
+    runId: lastRun.runId,
+    status: lastRun.status,
+    updatedAt: lastRun.updatedAt,
+    finishedAt: lastRun.finishedAt,
+    errorMessage: lastRun.errorMessage,
+    entityId: context.entityId,
+    entityType: context.entityType,
+  };
+};
+
 const readMapFromStorage = (key: string): Record<string, boolean> => {
   if (typeof window === 'undefined') return {};
   try {
@@ -226,18 +245,14 @@ export function useTriggerButtons({
         !runSubscriptionsRef.current.has(button.id) &&
         !isTriggerButtonRunFeedbackTerminal(restoredRun.status)
       ) {
+        const initialSnapshot = toTrackedRunInitialSnapshot(restoredRun, {
+          entityId: feedbackEntityId,
+          entityType,
+        });
         startRunSubscription(button.id, restoredRun.runId, {
           entityId: feedbackEntityId,
           entityType,
-          initialSnapshot: {
-            runId: restoredRun.runId,
-            status: restoredRun.status,
-            updatedAt: restoredRun.updatedAt,
-            finishedAt: restoredRun.finishedAt,
-            errorMessage: restoredRun.errorMessage,
-            entityId: feedbackEntityId,
-            entityType,
-          },
+          ...(initialSnapshot ? { initialSnapshot } : {}),
         });
       }
     });
@@ -342,13 +357,13 @@ export function useTriggerButtons({
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
           onSuccess: (runId: string): void => {
-            const queuedRun: TriggerButtonLastRun = {
+            const queuedRun = {
               runId,
               status: 'queued',
               updatedAt: new Date().toISOString(),
               finishedAt: null,
               errorMessage: null,
-            };
+            } satisfies TriggerButtonLastRun;
             persistTriggerButtonRunFeedback({
               buttonId: button.id,
               location,
@@ -360,14 +375,14 @@ export function useTriggerButtons({
               ...prev,
               [button.id]: queuedRun,
             }));
+            const initialSnapshot = toTrackedRunInitialSnapshot(queuedRun, {
+              entityId: resolvedEntityId,
+              entityType,
+            });
             startRunSubscription(button.id, runId, {
               entityId: resolvedEntityId,
               entityType,
-              initialSnapshot: {
-                ...queuedRun,
-                entityId: resolvedEntityId,
-                entityType,
-              },
+              ...(initialSnapshot ? { initialSnapshot } : {}),
             });
             onRunQueued?.({
               button,

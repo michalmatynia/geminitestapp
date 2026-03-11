@@ -28,6 +28,8 @@ import {
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 
+const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
+
 const buildAssignmentHref = (
   basePath: string,
   action: {
@@ -57,11 +59,17 @@ export function KangurParentDashboardHeroWidget({
     viewerRoleLabel,
   } = useKangurParentDashboardRuntime();
   const handleGoHome = (): void => {
-    routeNavigator.push(getKangurHomeHref(basePath), { pageKey: 'Game' });
+    routeNavigator.push(getKangurHomeHref(basePath), {
+      acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
+      pageKey: 'Game',
+      sourceId: 'parent-dashboard-hero:back-home',
+    });
   };
   const handleGoToProfile = (): void => {
     routeNavigator.push(createPageUrl('LearnerProfile', basePath), {
+      acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
       pageKey: 'LearnerProfile',
+      sourceId: 'parent-dashboard-hero:back-profile',
     });
   };
 
@@ -200,6 +208,8 @@ export function KangurParentDashboardHeroWidget({
               <Link
                 href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
                 targetPageKey={dailyQuest.assignment.action.page}
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-daily-quest'
               >
                 {dailyQuest.assignment.action.label}
               </Link>
@@ -229,17 +239,32 @@ export function KangurParentDashboardHeroWidget({
           <div className='flex w-full justify-center'>
             <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={getKangurHomeHref(basePath)} targetPageKey='Game'>
+                <Link
+                  href={getKangurHomeHref(basePath)}
+                  targetPageKey='Game'
+                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                  transitionSourceId='parent-dashboard-nav:home'
+                >
                   <Home className='h-4 w-4' /> Gra
                 </Link>
               </KangurButton>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('Lessons', basePath)} targetPageKey='Lessons'>
+                <Link
+                  href={createPageUrl('Lessons', basePath)}
+                  targetPageKey='Lessons'
+                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                  transitionSourceId='parent-dashboard-nav:lessons'
+                >
                   <BookOpen className='h-4 w-4' /> Lekcje
                 </Link>
               </KangurButton>
               <KangurButton asChild size='sm' variant='navigation'>
-                <Link href={createPageUrl('LearnerProfile', basePath)} targetPageKey='LearnerProfile'>
+                <Link
+                  href={createPageUrl('LearnerProfile', basePath)}
+                  targetPageKey='LearnerProfile'
+                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                  transitionSourceId='parent-dashboard-nav:profile'
+                >
                   <UserRound className='h-4 w-4' /> Profil
                 </Link>
               </KangurButton>
@@ -247,6 +272,8 @@ export function KangurParentDashboardHeroWidget({
                 <Link
                   href={createPageUrl('ParentDashboard', basePath)}
                   targetPageKey='ParentDashboard'
+                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                  transitionSourceId='parent-dashboard-nav:dashboard'
                 >
                   <LayoutGrid className='h-4 w-4' /> Rodzic
                 </Link>

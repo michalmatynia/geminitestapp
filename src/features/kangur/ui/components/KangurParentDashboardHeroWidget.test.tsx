@@ -5,8 +5,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { routerPushMock, useKangurParentDashboardRuntimeMock } = vi.hoisted(() => ({
-  routerPushMock: vi.fn(),
+const { routeNavigatorPushMock, useKangurParentDashboardRuntimeMock } = vi.hoisted(() => ({
+  routeNavigatorPushMock: vi.fn(),
   useKangurParentDashboardRuntimeMock: vi.fn(),
 }));
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
@@ -24,9 +24,11 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: routerPushMock,
+vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
+  useKangurRouteNavigator: () => ({
+    prefetch: vi.fn(),
+    push: routeNavigatorPushMock,
+    replace: vi.fn(),
   }),
 }));
 
@@ -76,7 +78,11 @@ describe('KangurParentDashboardHeroWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie' }));
     fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
-    expect(routerPushMock).toHaveBeenCalledWith('/kangur');
+    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur', {
+      acknowledgeMs: 110,
+      pageKey: 'Game',
+      sourceId: 'parent-dashboard-hero:back-home',
+    });
     expect(navigateToLogin).toHaveBeenCalledTimes(2);
     expect(navigateToLogin).toHaveBeenLastCalledWith({
       authMode: 'create-account',
@@ -189,6 +195,10 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
-    expect(routerPushMock).toHaveBeenCalledWith('/kangur/profile');
+    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/profile', {
+      acknowledgeMs: 110,
+      pageKey: 'LearnerProfile',
+      sourceId: 'parent-dashboard-hero:back-profile',
+    });
   });
 });

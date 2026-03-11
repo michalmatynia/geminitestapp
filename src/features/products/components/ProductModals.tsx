@@ -1,15 +1,19 @@
 'use client';
 
+import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React, { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
 
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
-import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
+import {
+  useProductListHeaderActionsContext,
+  useProductListModalsContext,
+} from '@/features/products/context/ProductListContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
-import { FormModal, Skeleton } from '@/shared/ui';
+import { Button, FormModal, Skeleton } from '@/shared/ui';
 const ProductForm = dynamic(() => import('./ProductForm'), {
   ssr: false,
   loading: () => <EditProductSkeletonContent />,
@@ -70,6 +74,68 @@ const ProductListingsModal = dynamic(
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
 
+const normalizeTriggerCatalogIds = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  value.forEach((entry: unknown) => {
+    const normalized =
+      typeof entry === 'string'
+        ? entry.trim()
+        : entry && typeof entry === 'object'
+          ? (typeof (entry as { catalogId?: unknown }).catalogId === 'string'
+              ? (entry as { catalogId: string }).catalogId.trim()
+              : typeof (entry as { id?: unknown }).id === 'string'
+                ? (entry as { id: string }).id.trim()
+                : '')
+          : '';
+    if (normalized) unique.add(normalized);
+  });
+  return Array.from(unique);
+};
+
+export const buildTriggeredProductEntityJson = (args: {
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  values: Record<string, unknown>;
+}): Record<string, unknown> => {
+  const base = args.product ?? args.draft ?? {};
+  const entityJson: Record<string, unknown> = {
+    ...base,
+    ...args.values,
+    ...(args.product?.id ? { id: args.product.id } : {}),
+  };
+  const catalogIds = normalizeTriggerCatalogIds(entityJson['catalogIds']);
+  if (catalogIds.length === 0) {
+    return entityJson;
+  }
+
+  const existingCatalogs: unknown[] = Array.isArray(entityJson['catalogs'])
+    ? (entityJson['catalogs'] as unknown[])
+    : [];
+  entityJson['catalogId'] = catalogIds[0] ?? entityJson['catalogId'];
+  entityJson['catalogs'] = catalogIds.map((catalogId: string) => {
+    const existing =
+      existingCatalogs.find(
+        (entry: unknown) =>
+          entry &&
+          typeof entry === 'object' &&
+          typeof (entry as { catalogId?: unknown }).catalogId === 'string' &&
+          (entry as { catalogId: string }).catalogId.trim() === catalogId
+      ) ?? null;
+    if (existing && typeof existing === 'object') {
+      return {
+        ...(existing as Record<string, unknown>),
+        catalogId,
+      };
+    }
+    return {
+      catalogId,
+      ...(args.product?.id ? { productId: args.product.id } : {}),
+    };
+  });
+  return entityJson;
+};
+
 function ProductFormModalBridge(props: {
   onIsSavingChange: (value: boolean) => void;
   onHasUnsavedChangesChange: (value: boolean) => void;
@@ -101,23 +167,39 @@ function ProductFormModalBody(props: {
 
   const { product, draft, getValues } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
+  const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-form';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
-    const values = getValues();
-    const base = product ?? draft ?? {};
-    return { ...base, ...values, ...(product?.id ? { id: product.id } : {}) };
+    return buildTriggeredProductEntityJson({
+      product,
+      draft,
+      values: getValues(),
+    });
   }, [getValues, product, draft]);
 
   return (
     <>
-      <div className='mb-3'>
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
         <TriggerButtonBar
           location='product_modal'
           entityType='product'
           entityId={product?.id ?? null}
           getEntityJson={getEntityJson}
+          showRunFeedback={showTriggerRunFeedback}
         />
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
+          aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+          title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+          className='h-8 shrink-0 gap-1.5 px-2 text-xs'
+        >
+          {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
+          <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
+        </Button>
       </div>
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />

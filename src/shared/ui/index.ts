@@ -1,6 +1,7 @@
 export * from './alert-dialog';
 export * from './alert';
 export * from './admin-agent-creator-breadcrumbs';
+export * from './admin-agent-creator-page-layout';
 export * from './admin-agent-teaching-breadcrumbs';
 export * from './admin-agent-teaching-page-layout';
 export * from './admin-ai-eyebrow';
@@ -14,6 +15,8 @@ export * from './admin-cms-page-layout';
 export * from './admin-database-breadcrumbs';
 export * from './admin-database-page-layout';
 export * from './admin-filemaker-breadcrumbs';
+export * from './admin-integrations-breadcrumbs';
+export * from './admin-integrations-page-layout';
 export * from './admin-notes-breadcrumbs';
 export * from './admin-notes-page-layout';
 export * from './admin-products-breadcrumbs';

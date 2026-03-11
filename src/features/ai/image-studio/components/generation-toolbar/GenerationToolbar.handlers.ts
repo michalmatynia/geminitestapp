@@ -1,6 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
-import { type ImageStudioSlotRecord, type StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import {
+  studioSlotsResponseSchema,
+  type ImageStudioSlotRecord,
+  type StudioSlotsResponse,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -25,8 +29,10 @@ export function useGenerationToolbarHandlers(
     async (id: string): Promise<ImageStudioSlotRecord[]> => {
       const data = await fetchQueryV2<StudioSlotsResponse>(queryClient, {
         queryKey: normalizeQueryKey(studioKeys.slots(id)),
-        queryFn: () =>
-          api.get<StudioSlotsResponse>(`/api/image-studio/projects/${id}/slots`),
+        queryFn: async () =>
+          studioSlotsResponseSchema.parse(
+            await api.get<unknown>(`/api/image-studio/projects/${id}/slots`)
+          ),
         staleTime: 0,
         meta: {
           source: 'imageStudio.toolbar.handlers.fetchProjectSlots',
@@ -35,7 +41,8 @@ export function useGenerationToolbarHandlers(
           domain: 'image_studio',
           queryKey: normalizeQueryKey(studioKeys.slots(id)),
           tags: ['image-studio', 'slots', 'fetch'],
-          description: 'Loads image studio slots.'},
+          description: 'Loads image studio slots.',
+        },
       })();
       return data?.slots ?? [];
     },

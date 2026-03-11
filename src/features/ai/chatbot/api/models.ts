@@ -1,3 +1,4 @@
+import type { BrainModelsResponse } from '@/shared/contracts/ai-brain';
 import { api } from '@/shared/lib/api-client';
 
 export const fetchOllamaModels = async (baseUrl: string): Promise<string[]> => {
@@ -9,6 +10,6 @@ export const fetchOllamaModels = async (baseUrl: string): Promise<string[]> => {
   return data.models?.map((model: { name: string }) => model.name) ?? [];
 };
 
-export const fetchChatbotModels = async (): Promise<unknown> => {
-  return api.get<unknown>('/api/brain/models');
+export const fetchChatbotModels = async (): Promise<BrainModelsResponse> => {
+  return api.get<BrainModelsResponse>('/api/brain/models');
 };

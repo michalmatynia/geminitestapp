@@ -18,6 +18,7 @@ import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/co
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  AdminCmsBreadcrumbs,
   Button,
   StandardDataTablePanel,
   ToggleRow,
@@ -27,7 +28,6 @@ import {
   StatusBadge,
   ActionMenu,
   DropdownMenuItem,
-  Breadcrumbs,
   FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -195,14 +195,7 @@ export default function SlugsPage(): React.JSX.Element {
           : 'Global route management. Domain zoning is currently disabled.'
       }
       eyebrow={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'CMS', href: '/admin/cms' },
-            { label: 'Slugs' },
-          ]}
-          className='mb-2'
-        />
+        <AdminCmsBreadcrumbs current='Slugs' className='mb-2' />
       }
       headerActions={
         <div className='flex items-center gap-3'>

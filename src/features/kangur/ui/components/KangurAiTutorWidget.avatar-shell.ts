@@ -8,6 +8,7 @@ import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
   SectionExplainContext,
+  TutorPanelShellMode,
   TutorPoint,
 } from './KangurAiTutorWidget.types';
 
@@ -26,7 +27,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   handleOpenChat: (
     reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal',
     options?: {
-      panelShellMode?: 'default' | 'minimal';
+      panelShellMode?: TutorPanelShellMode;
     }
   ) => void;
   homeOnboardingStepIndex: number | null;
@@ -56,8 +57,6 @@ export function useKangurAiTutorAvatarShellActions(input: {
   const {
     canonicalTutorModalVisible,
     closeChat,
-    guestIntroHelpVisible,
-    guestIntroVisible,
     guidedMode,
     guidedTutorTarget,
     handleCloseChat,
@@ -105,6 +104,26 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setSelectionResponsePending,
   ]);
 
+  const resetAvatarShellState = useCallback((): void => {
+    clearPendingGuidance();
+    setHighlightedSection(null);
+    setHoveredSectionAnchorId(null);
+    setContextualTutorMode(null);
+    setSelectionGuidanceHandoffText(null);
+    setGuidedTutorTarget(null);
+    setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
+  }, [
+    clearPendingGuidance,
+    setContextualTutorMode,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+    setGuidedTutorTarget,
+    setHighlightedSection,
+    setHoveredSectionAnchorId,
+    setSelectionGuidanceHandoffText,
+  ]);
+
   const handleAskAbout = useCallback((): void => {
     const persistedSelectedText = persistSelectionContext();
     if (!persistedSelectedText) {
@@ -115,14 +134,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   }, [persistSelectionContext, startGuidedSelectionExplanation]);
 
   const openCanonicalOnboarding = useCallback((): void => {
-    clearPendingGuidance();
-    setHighlightedSection(null);
-    setHoveredSectionAnchorId(null);
-    setContextualTutorMode(null);
-    setSelectionGuidanceHandoffText(null);
-    setGuidedTutorTarget(null);
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
+    resetAvatarShellState();
 
     if (isOpen) {
       handleCloseChat('toggle');
@@ -130,43 +142,10 @@ export function useKangurAiTutorAvatarShellActions(input: {
 
     setCanonicalTutorModalVisible(true);
   }, [
-    clearPendingGuidance,
     handleCloseChat,
     isOpen,
+    resetAvatarShellState,
     setCanonicalTutorModalVisible,
-    setContextualTutorMode,
-    setGuestIntroHelpVisible,
-    setGuestIntroVisible,
-    setGuidedTutorTarget,
-    setHighlightedSection,
-    setHoveredSectionAnchorId,
-    setSelectionGuidanceHandoffText,
-  ]);
-
-  const openMinimalTutorChat = useCallback((): void => {
-    clearPendingGuidance();
-    setHighlightedSection(null);
-    setHoveredSectionAnchorId(null);
-    setContextualTutorMode(null);
-    setSelectionGuidanceHandoffText(null);
-    setGuidedTutorTarget(null);
-    setCanonicalTutorModalVisible(false);
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
-    handleOpenChat('toggle', {
-      panelShellMode: 'minimal',
-    });
-  }, [
-    clearPendingGuidance,
-    handleOpenChat,
-    setCanonicalTutorModalVisible,
-    setContextualTutorMode,
-    setGuestIntroHelpVisible,
-    setGuestIntroVisible,
-    setGuidedTutorTarget,
-    setHighlightedSection,
-    setHoveredSectionAnchorId,
-    setSelectionGuidanceHandoffText,
   ]);
 
   const handleAvatarClick = useCallback((): void => {
@@ -177,6 +156,12 @@ export function useKangurAiTutorAvatarShellActions(input: {
 
     if (homeOnboardingStepIndex !== null) {
       handleHomeOnboardingFinishEarly();
+      if (isAnonymousVisitor) {
+        openCanonicalOnboarding();
+      } else {
+        resetAvatarShellState();
+        handleOpenChat('toggle', { panelShellMode: 'minimal' });
+      }
       return;
     }
 
@@ -184,43 +169,42 @@ export function useKangurAiTutorAvatarShellActions(input: {
       handleCloseLauncherPrompt();
     }
 
-    if (isOpen) {
-      setCanonicalTutorModalVisible(false);
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      handleCloseChat('toggle');
-      return;
-    }
-
-    if (isAnonymousVisitor && (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible)) {
-      return;
-    }
-
-    if (!isAnonymousVisitor) {
-      openMinimalTutorChat();
-      return;
-    }
-
-    if (guidedTutorTarget) {
+    if (isAnonymousVisitor) {
+      if (canonicalTutorModalVisible) {
+        setCanonicalTutorModalVisible(false);
+        setGuestIntroVisible(false);
+        setGuestIntroHelpVisible(false);
+        return;
+      }
       openCanonicalOnboarding();
       return;
     }
 
-    openCanonicalOnboarding();
+    // Authenticated user path: never show the guest intro panel.
+    if (isOpen) {
+      handleCloseChat('toggle');
+      return;
+    }
+
+    if (guidedTutorTarget) {
+      resetAvatarShellState();
+      return;
+    }
+
+    handleOpenChat('toggle', { panelShellMode: 'minimal' });
   }, [
     canonicalTutorModalVisible,
-    guestIntroHelpVisible,
-    guestIntroVisible,
     guidedTutorTarget,
+    handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleCloseChat,
+    handleOpenChat,
     homeOnboardingStepIndex,
     isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
-    openMinimalTutorChat,
     openCanonicalOnboarding,
+    resetAvatarShellState,
     setCanonicalTutorModalVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,

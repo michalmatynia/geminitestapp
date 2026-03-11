@@ -973,7 +973,7 @@ export const acquireRuntimeLease = async ({
       : await (async () => {
         try {
             return await allocatePort({ host });
-          } catch (error) {
+          } catch {
             serverHost = null;
             return await allocatePort({ host: null });
           }

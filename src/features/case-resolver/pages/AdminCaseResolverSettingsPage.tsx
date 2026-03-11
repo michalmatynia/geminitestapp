@@ -13,6 +13,8 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
+  AdminAiEyebrow,
+  AdminCaseResolverBreadcrumbs,
   Badge,
   Button,
   FormField,
@@ -22,7 +24,6 @@ import {
   SelectSimple,
   Textarea,
   useToast,
-  Breadcrumbs,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -154,14 +155,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
   const modelSummary = `${modelOptions.length} OCR-capable model(s) available`;
   const headerBreadcrumb = (
-    <Breadcrumbs
-      items={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Case Resolver', href: '/admin/case-resolver' },
-        { label: 'Settings' },
-      ]}
-      className='mt-1'
-    />
+    <AdminCaseResolverBreadcrumbs current='Settings' className='mt-1' />
   );
 
   const handleSave = async (): Promise<void> => {
@@ -202,7 +196,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     return (
       <div className='container mx-auto py-6'>
         <SectionHeader
-          eyebrow='AI · Case Resolver'
+          eyebrow={<AdminAiEyebrow section='Case Resolver' />}
           title='Case Resolver Settings'
           subtitle={headerBreadcrumb}
         />
@@ -213,7 +207,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   return (
     <div className='container mx-auto space-y-4 py-6'>
       <SectionHeader
-        eyebrow='AI · Case Resolver'
+        eyebrow={<AdminAiEyebrow section='Case Resolver' />}
         title='Case Resolver Settings'
         subtitle={headerBreadcrumb}
         actions={

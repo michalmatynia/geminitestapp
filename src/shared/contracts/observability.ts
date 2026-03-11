@@ -244,6 +244,29 @@ export const mongoCollectionIndexStatusSchema = z.object({
 export type MongoCollectionIndexStatus = z.infer<typeof mongoCollectionIndexStatusSchema>;
 export type MongoCollectionIndexStatusDto = MongoCollectionIndexStatus;
 
+export const mongoDiagnosticsResponseSchema = z.object({
+  generatedAt: z.string(),
+  collections: z.array(mongoCollectionIndexStatusSchema),
+});
+
+export type MongoDiagnosticsResponse = z.infer<typeof mongoDiagnosticsResponseSchema>;
+export type MongoDiagnosticsResponseDto = MongoDiagnosticsResponse;
+
+export const mongoCreatedIndexSchema = z.object({
+  collection: z.string(),
+  key: z.record(z.string(), z.unknown()),
+});
+
+export type MongoCreatedIndex = z.infer<typeof mongoCreatedIndexSchema>;
+export type MongoCreatedIndexDto = MongoCreatedIndex;
+
+export const mongoRebuildIndexesResponseSchema = mongoDiagnosticsResponseSchema.extend({
+  created: z.array(mongoCreatedIndexSchema),
+});
+
+export type MongoRebuildIndexesResponse = z.infer<typeof mongoRebuildIndexesResponseSchema>;
+export type MongoRebuildIndexesResponseDto = MongoRebuildIndexesResponse;
+
 export const clearLogsResponseSchema = z.object({
   deleted: z.number(),
 });

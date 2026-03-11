@@ -27,7 +27,10 @@ export type HandleDatabaseUpdateOperationInput = {
   dryRun: boolean;
   templateInputs: RuntimePortValues;
   aiPrompt: string;
-  ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  ensureExistingParameterTemplateContext: (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ) => Promise<void>;
 };
 
 const resolveCustomContentEnValue = (customUpdateDoc: unknown): string | undefined => {

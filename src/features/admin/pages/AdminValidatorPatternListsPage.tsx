@@ -8,6 +8,7 @@ import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/ad
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  AdminAiEyebrow,
   Badge,
   Button,
   EmptyState,
@@ -369,7 +370,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   return (
     <div className='container mx-auto space-y-6 py-10'>
       <SectionHeader
-        eyebrow='AI · Global Validator'
+        eyebrow={<AdminAiEyebrow section='Global Validator' />}
         title='Validation Pattern List Manager'
         description='Create, manage, and enter validation pattern lists.'
         actions={

@@ -1,8 +1,6 @@
 'use client';
 
 import { RotateCcw } from 'lucide-react';
-import Link from 'next/link';
-
 import {
   DEFAULT_NOTE_SETTINGS,
   useNoteSettingsActions,
@@ -17,6 +15,7 @@ import {
   RadioGroup,
   RadioGroupItem,
   SectionHeader,
+  SectionHeaderBackLink,
   FormSection,
   FormField,
   ToggleRow,
@@ -93,9 +92,9 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         title='Note Settings'
         description='Configure default view preferences for the Notes app.'
         eyebrow={
-          <Link href='/admin/notes' className='text-blue-300 hover:text-blue-200'>
-            ← Back to notes
-          </Link>
+          <SectionHeaderBackLink href='/admin/notes' arrow>
+            Back to notes
+          </SectionHeaderBackLink>
         }
         className='mb-6'
       />

@@ -1,5 +1,9 @@
+import 'dotenv/config';
+
 import fs from 'node:fs';
 import path from 'node:path';
+
+import { productService } from '@/shared/lib/products/services/productService';
 
 interface AuditProductRow {
   id?: string;
@@ -32,12 +36,11 @@ type ClassificationKey =
 interface ParsedArgs {
   auditReportPath: string;
   restoreReportPaths: string[];
-  apiBaseUrl: string;
 }
 
-const DEFAULT_AUDIT_REPORT_PATH = '/tmp/product-missing-parameters-audit-1773217463928.json';
-const DEFAULT_RESTORE_REPORT_PATH = '/tmp/product-parameter-name-restore-1773219321038.json';
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
+const DEFAULT_AUDIT_REPORT_PATH = '/tmp/product-missing-parameters-audit-latest.json';
+const DEFAULT_RESTORE_REPORT_PATHS: string[] = [];
+const LATEST_REPORT_PATH = '/tmp/product-parameter-recovery-classification-latest.json';
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -59,7 +62,7 @@ const parseArgs = (): ParsedArgs => {
   const restoreReportPaths =
     positionalPaths.length > 0
       ? positionalPaths
-      : (values.get('restore-report') || DEFAULT_RESTORE_REPORT_PATH)
+      : (values.get('restore-report') || DEFAULT_RESTORE_REPORT_PATHS.join(','))
           .split(',')
           .map((value: string) => value.trim())
           .filter(Boolean);
@@ -67,7 +70,6 @@ const parseArgs = (): ParsedArgs => {
   return {
     auditReportPath: values.get('audit-report') || DEFAULT_AUDIT_REPORT_PATH,
     restoreReportPaths,
-    apiBaseUrl: values.get('api-base-url') || DEFAULT_API_BASE_URL,
   };
 };
 
@@ -125,15 +127,6 @@ const classifyProduct = (
     : 'non-empty-but-mismatched-no-category';
 };
 
-const fetchProduct = async (
-  apiBaseUrl: string,
-  productId: string
-): Promise<Record<string, unknown> | null> => {
-  const response = await fetch(`${apiBaseUrl}/api/v2/products/${encodeURIComponent(productId)}`);
-  if (!response.ok) return null;
-  return (await response.json()) as Record<string, unknown>;
-};
-
 const main = async (): Promise<void> => {
   const parsed = parseArgs();
   const audit = readJson<AuditReport>(parsed.auditReportPath);
@@ -165,8 +158,8 @@ const main = async (): Promise<void> => {
     const productId = toTrimmedString(row.id);
     if (!productId) continue;
 
-    const product = await fetchProduct(parsed.apiBaseUrl, productId);
-    const key = classifyProduct(row, product);
+    const product = await productService.getProductById(productId);
+    const key = classifyProduct(row, (product ?? null) as Record<string, unknown> | null);
     counts.set(key, (counts.get(key) ?? 0) + 1);
 
     const bucket = samples.get(key) ?? [];
@@ -179,17 +172,20 @@ const main = async (): Promise<void> => {
     generatedAt: new Date().toISOString(),
     auditReportPath: parsed.auditReportPath,
     restoreReportPaths: parsed.restoreReportPaths,
-    apiBaseUrl: parsed.apiBaseUrl,
     unresolvedCount: unresolved.length,
     classifications: Object.fromEntries(
       [...counts.entries()].sort((left, right) => right[1] - left[1])
     ),
     sampleSkusByClassification: Object.fromEntries(samples.entries()),
     reportPath,
+    latestReportPath: LATEST_REPORT_PATH,
   };
 
-  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  const serializedReport = `${JSON.stringify(report, null, 2)}\n`;
+  fs.writeFileSync(reportPath, serializedReport, 'utf8');
+  fs.writeFileSync(LATEST_REPORT_PATH, serializedReport, 'utf8');
   console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
 };
 
 void main().catch((error: unknown) => {

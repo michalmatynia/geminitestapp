@@ -34,7 +34,6 @@ import {
 import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
 
 import type {
-  MongoDiagnosticsData,
   SystemLogsActionsContextValue,
   SystemLogsStateContextValue,
 } from './SystemLogsContext.shared';
@@ -289,12 +288,11 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const logs = useMemo(() => logsQuery.data?.logs ?? [], [logsQuery.data]);
   const total = logsQuery.data?.total ?? 0;
   const metrics = metricsQuery.data?.metrics ?? null;
-  const diagnostics = useMemo((): MongoCollectionIndexStatus[] => {
-    const data = mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined;
-    return data?.collections ?? [];
-  }, [mongoDiagnosticsQuery.data]);
-  const diagnosticsUpdatedAt =
-    (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
+  const diagnostics = useMemo(
+    (): MongoCollectionIndexStatus[] => mongoDiagnosticsQuery.data?.collections ?? [],
+    [mongoDiagnosticsQuery.data]
+  );
+  const diagnosticsUpdatedAt = mongoDiagnosticsQuery.data?.generatedAt ?? null;
   const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
 
   const totalPages: number = useMemo((): number => {

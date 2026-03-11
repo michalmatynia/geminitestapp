@@ -6,8 +6,7 @@ import React, { useState } from 'react';
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
-import type { CmsThemeCreateInput } from '@/shared/contracts/cms';
-import { PageLayout, Alert, Breadcrumbs } from '@/shared/ui';
+import { AdminCmsBreadcrumbs, Alert, PageLayout } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -25,11 +24,7 @@ export default function CreateThemePage(): React.JSX.Element {
 
     setError(null);
     try {
-      const input: CmsThemeCreateInput = {
-        ...validation.data,
-        isDefault: false,
-      };
-      await createTheme.mutateAsync(input);
+      await createTheme.mutateAsync(validation.data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
       logClientError(submitError, {
@@ -44,13 +39,9 @@ export default function CreateThemePage(): React.JSX.Element {
       title='Create Theme'
       description='Design a new visual system for your storefront.'
       eyebrow={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'CMS', href: '/admin/cms' },
-            { label: 'Themes', href: '/admin/cms/themes' },
-            { label: 'Create' },
-          ]}
+        <AdminCmsBreadcrumbs
+          parent={{ label: 'Themes', href: '/admin/cms/themes' }}
+          current='Create'
           className='mb-2'
         />
       }

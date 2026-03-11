@@ -4,11 +4,11 @@ import { Bot, Trash2, ExternalLink, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
+import type { ChatbotJob } from '@/shared/contracts/chatbot';
 import {
   JobsProvider,
   useJobsActions,
   useJobsState,
-  type ChatbotJob,
 } from '@/shared/lib/jobs/context/JobsContext';
 import {
   Button,
@@ -20,6 +20,9 @@ import {
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
+
+const getJobCreatedAtTime = (job: ChatbotJob): number =>
+  job.createdAt ? new Date(job.createdAt).getTime() : 0;
 
 function ChatbotJobsPageContent(): React.JSX.Element {
   const {
@@ -40,8 +43,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
   const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();
     const sorted = [...jobs].sort(
-      (a: ChatbotJob, b: ChatbotJob) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: ChatbotJob, b: ChatbotJob) => getJobCreatedAtTime(b) - getJobCreatedAtTime(a)
     );
     if (!term) return sorted;
     return sorted.filter((job: ChatbotJob) => {
@@ -118,7 +120,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
         header: 'Created',
         cell: ({ row }) => (
           <span className='text-xs text-gray-500'>
-            {new Date(row.original.createdAt).toLocaleString()}
+            {row.original.createdAt ? new Date(row.original.createdAt).toLocaleString() : '—'}
           </span>
         ),
       },

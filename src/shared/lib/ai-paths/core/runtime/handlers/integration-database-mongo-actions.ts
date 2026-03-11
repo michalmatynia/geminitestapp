@@ -33,7 +33,10 @@ export type HandleDatabaseMongoActionInput = {
   templateInputs: RuntimePortValues;
   templateContext: Record<string, unknown>;
   aiPrompt: string;
-  ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  ensureExistingParameterTemplateContext: (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ) => Promise<void>;
   strictFlowMode?: boolean;
 };
 

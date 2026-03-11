@@ -4,6 +4,7 @@ import { PlusIcon, FileUp, Link as LinkIcon, MessageSquareQuote, Save } from 'lu
 import React, { Suspense, useMemo, useCallback } from 'react';
 
 import {
+  AdminChatbotBreadcrumbs,
   Button,
   Tag,
   FileUploadTrigger,
@@ -140,11 +141,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         title='Chatbot Context'
         description='Define global instructions and reference material applied to every chat.'
         icon={<MessageSquareQuote className='size-4' />}
-        subtitle={
-          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200 ml-2'>
-            ← Back to chatbot
-          </a>
-        }
+        subtitle={<AdminChatbotBreadcrumbs current='Context' />}
         actions={[
           {
             key: 'create',

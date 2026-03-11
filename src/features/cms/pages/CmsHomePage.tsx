@@ -1,6 +1,32 @@
-import Link from 'next/link';
+import { NavigationCard, NavigationCardGrid, SectionHeader } from '@/shared/ui';
 
-import { SectionHeader, Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui';
+const cmsTools = [
+  {
+    title: 'Manage Slugs',
+    description: 'Create and manage URL slugs for your pages.',
+    href: '/admin/cms/slugs',
+  },
+  {
+    title: 'Zones (Domains)',
+    description: 'Map domains to their slug sets and defaults.',
+    href: '/admin/cms/zones',
+  },
+  {
+    title: 'Manage Pages',
+    description: 'Create and manage the content of your pages.',
+    href: '/admin/cms/pages',
+  },
+  {
+    title: 'Page Builder',
+    description: 'Visual editor for building pages with components.',
+    href: '/admin/cms/builder',
+  },
+  {
+    title: 'Themes',
+    description: 'Manage color palettes, typography, and spacing presets.',
+    href: '/admin/cms/themes',
+  },
+] as const;
 
 export default function CmsPage(): React.ReactNode {
   return (
@@ -14,58 +40,21 @@ export default function CmsPage(): React.ReactNode {
         <h2 id='cms-tools-heading' className='text-lg font-semibold tracking-tight'>
           CMS tools
         </h2>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          <Link href='/admin/cms/slugs'>
-            <Card className='h-full transition-colors hover:bg-gray-700/50'>
-              <CardHeader>
-                <CardTitle className='text-xl font-bold'>Manage Slugs</CardTitle>
-                <CardDescription className='mt-2 text-gray-400'>
-                  Create and manage URL slugs for your pages.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-          <Link href='/admin/cms/zones'>
-            <Card className='h-full transition-colors hover:bg-gray-700/50'>
-              <CardHeader>
-                <CardTitle className='text-xl font-bold'>Zones (Domains)</CardTitle>
-                <CardDescription className='mt-2 text-gray-400'>
-                  Map domains to their slug sets and defaults.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-          <Link href='/admin/cms/pages'>
-            <Card className='h-full transition-colors hover:bg-gray-700/50'>
-              <CardHeader>
-                <CardTitle className='text-xl font-bold'>Manage Pages</CardTitle>
-                <CardDescription className='mt-2 text-gray-400'>
-                  Create and manage the content of your pages.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-          <Link href='/admin/cms/builder'>
-            <Card className='h-full transition-colors hover:bg-gray-700/50'>
-              <CardHeader>
-                <CardTitle className='text-xl font-bold'>Page Builder</CardTitle>
-                <CardDescription className='mt-2 text-gray-400'>
-                  Visual editor for building pages with components.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-          <Link href='/admin/cms/themes'>
-            <Card className='h-full transition-colors hover:bg-gray-700/50'>
-              <CardHeader>
-                <CardTitle className='text-xl font-bold'>Themes</CardTitle>
-                <CardDescription className='mt-2 text-gray-400'>
-                  Manage color palettes, typography, and spacing presets.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        </div>
+        <NavigationCardGrid className='grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
+          {cmsTools.map((tool) => (
+            <NavigationCard
+              key={tool.href}
+              href={tool.href}
+              title={tool.title}
+              description={tool.description}
+              className='hover:bg-gray-700/50'
+              titleClassName='text-xl font-bold'
+              descriptionClassName='mt-2'
+              padding='none'
+              contentClassName='p-6'
+            />
+          ))}
+        </NavigationCardGrid>
       </section>
     </div>
   );

@@ -14,6 +14,7 @@ import {
 } from '@/features/cms/utils/slug-utils';
 import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import {
+  AdminCmsBreadcrumbs,
   Button,
   StatusBadge,
   SelectSimple,
@@ -22,7 +23,6 @@ import {
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  Breadcrumbs,
   StandardDataTablePanel,
   FilterPanel,
 } from '@/shared/ui';
@@ -239,14 +239,7 @@ export default function PagesPage(): React.ReactNode {
       title='Content Pages'
       description='Manage layouts and routes for your marketplace domains.'
       eyebrow={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'CMS', href: '/admin/cms' },
-            { label: 'Pages' },
-          ]}
-          className='mb-2'
-        />
+        <AdminCmsBreadcrumbs current='Pages' className='mb-2' />
       }
       actions={
         <div className='flex gap-2'>

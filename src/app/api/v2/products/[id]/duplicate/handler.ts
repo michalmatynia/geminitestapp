@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/server';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import {
+  productDuplicateRequestSchema,
+  type ProductWithImages,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
-
-const duplicateSchema = z.object({
-  sku: z.string().trim().optional(),
-});
 
 /**
  * POST /api/v2/products/[id]/duplicate
@@ -25,7 +23,7 @@ export async function POST_handler(
   if (!id) {
     throw badRequestError('Product id is required');
   }
-  const parsed = await parseJsonBody(req, duplicateSchema, {
+  const parsed = await parseJsonBody(req, productDuplicateRequestSchema, {
     logPrefix: 'products.DUPLICATE',
   });
   if (!parsed.ok) {

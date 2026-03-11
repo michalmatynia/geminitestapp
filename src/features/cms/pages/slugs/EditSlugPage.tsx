@@ -14,7 +14,7 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import type { Slug } from '@/shared/contracts/cms';
-import { SectionHeader, useToast, LoadingState, Alert } from '@/shared/ui';
+import { AdminCmsBreadcrumbs, Alert, LoadingState, SectionHeader, useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
@@ -117,7 +117,13 @@ function EditSlugForm({
       <SectionHeader
         title='Edit Route'
         description='Configure path behavior and cross-domain assignments.'
-        eyebrow='CMS · Routing'
+        eyebrow={
+          <AdminCmsBreadcrumbs
+            parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
+            current='Edit'
+            className='mb-2'
+          />
+        }
       />
 
       {error && (

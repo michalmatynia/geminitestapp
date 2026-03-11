@@ -1,0 +1,60 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-03-11T12:42:50.881Z",
+  "phase": "audit",
+  "executionMode": "executed",
+  "allowWrite": false,
+  "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
+    "repo-quality-baseline"
+  ],
+  "reportPath": "artifacts/improvements/audit-report.json",
+  "steps": [
+    {
+      "id": "products-parameter-audit",
+      "title": "Audit products with missing parameters",
+      "trackId": "products-parameter-integrity",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-missing-parameters-audit-*.json",
+        "/tmp/product-missing-parameters-audit-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:audit:missing-parameters",
+      "durationMs": 9265
+    },
+    {
+      "id": "repo-quality-api-error-sources",
+      "title": "Check API error source coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/api-error-sources-latest.json",
+        "docs/metrics/api-error-sources-latest.md"
+      ],
+      "instructions": [],
+      "script": "check:api-error-sources",
+      "durationMs": 263
+    },
+    {
+      "id": "repo-quality-canonical-sitewide",
+      "title": "Check canonical sitewide coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [],
+      "instructions": [],
+      "script": "canonical:check:sitewide",
+      "durationMs": 1352
+    }
+  ]
+}

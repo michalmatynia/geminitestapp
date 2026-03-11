@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 type ProposedParameter = {
   parameterId?: string | null;
@@ -29,18 +29,18 @@ type RecoveryBatch = {
 };
 
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function normalizeString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function sanitizeSignature(signature: string): string {
   return signature
-    .replace(/source-recovery:/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
+    .replace(/source-recovery:/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
     .toLowerCase();
 }
 
@@ -48,14 +48,14 @@ function getSignature(override: BatchOverride): string {
   const slotIds = (override.proposedParameters ?? [])
     .map((parameter) => normalizeString(parameter.parameterId))
     .filter(Boolean);
-  return slotIds.join("__");
+  return slotIds.join('__');
 }
 
 function main(): void {
   const batchPathArg = process.argv[2];
   if (!batchPathArg) {
     throw new Error(
-      "Usage: node --import tsx scripts/db/split-product-parameter-source-recovery-batch-by-slot-signature.ts <batch.json>",
+      'Usage: node --import tsx scripts/db/split-product-parameter-source-recovery-batch-by-slot-signature.ts <batch.json>',
     );
   }
 
@@ -93,7 +93,7 @@ function main(): void {
     const signatureLabel = sanitizeSignature(signature) || `variant_${variantIndex}`;
     const outputPath = path.join(
       parsed.dir,
-      `${parsed.name}--variant-${String(variantIndex).padStart(2, "0")}--${signatureLabel}.json`,
+      `${parsed.name}--variant-${String(variantIndex).padStart(2, '0')}--${signatureLabel}.json`,
     );
     const variantBatch: RecoveryBatch = {
       ...batch,
@@ -101,7 +101,7 @@ function main(): void {
       entryCount: overrides.length,
       overrides,
     };
-    fs.writeFileSync(outputPath, JSON.stringify(variantBatch, null, 2) + "\n");
+    fs.writeFileSync(outputPath, JSON.stringify(variantBatch, null, 2) + '\n');
     manifest.variants.push({
       signature,
       signatureLabel,
@@ -112,7 +112,7 @@ function main(): void {
   }
 
   const manifestPath = path.join(parsed.dir, `${parsed.name}--slot-signature-manifest.json`);
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
   process.stdout.write(`${manifestPath}\n`);
 }
 

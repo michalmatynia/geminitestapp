@@ -18,6 +18,8 @@ type MappingPack = {
   }>;
 };
 
+const DEFAULT_PACK_DIR = '/tmp/product-parameter-source-recovery-batches';
+
 function readJson<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
@@ -40,13 +42,28 @@ function parseArgs(argv: string[]) {
     packPaths.push(token);
   }
 
-  if (packPaths.length === 0) {
+  return { packPaths, outputPath };
+}
+
+function resolvePackPaths(argv: string[]) {
+  const { packPaths, outputPath } = parseArgs(argv);
+  if (packPaths.length > 0) {
+    return { packPaths, outputPath };
+  }
+
+  const packPathsFromDir = fs
+    .readdirSync(DEFAULT_PACK_DIR)
+    .filter((name) => name.endsWith('-mapping-pack.json'))
+    .sort((left, right) => left.localeCompare(right))
+    .map((name) => path.join(DEFAULT_PACK_DIR, name));
+
+  if (packPathsFromDir.length === 0) {
     throw new Error(
       'Usage: node --import tsx scripts/db/build-product-parameter-family-mapping-index.ts <pack.json> [...pack.json] [--out <index.json>]',
     );
   }
 
-  return { packPaths, outputPath };
+  return { packPaths: packPathsFromDir, outputPath };
 }
 
 function defaultOutputPath(firstPackPath: string): string {
@@ -54,7 +71,7 @@ function defaultOutputPath(firstPackPath: string): string {
 }
 
 function main(): void {
-  const { packPaths, outputPath } = parseArgs(process.argv.slice(2));
+  const { packPaths, outputPath } = resolvePackPaths(process.argv.slice(2));
   const absolutePackPaths = packPaths.map((packPath) => path.resolve(packPath));
   const packs = absolutePackPaths.map((packPath) => ({
     packPath,

@@ -152,6 +152,11 @@ const getFeaturedHomeAction = (label: string): HTMLElement => {
 describe('Game branding', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: vi.fn(),
+      writable: true,
+    });
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
     useKangurAssignmentsMock.mockReturnValue({

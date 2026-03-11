@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import type { NoteFileDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
+import type { NoteFileDocument } from '@/features/notesapp/contracts';
 import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/contracts/notes';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

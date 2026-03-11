@@ -22,4 +22,36 @@ describe('starter translation EN->PL workflow', () => {
     expect(parserConfig).toContain('$.description_en');
     expect(parserConfig).not.toContain('$.title');
   });
+
+  it('keeps the translation database node on the runtime merge-compatible parameter contract', () => {
+    const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
+    if (!entry) throw new Error('Missing starter_translation_en_pl entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_translation_en_pl_db_contract',
+    });
+    const databaseNode = config.nodes.find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+
+    expect(databaseNode).toBeTruthy();
+    expect(databaseNode?.config?.database).toEqual(
+      expect.objectContaining({
+        updatePayloadMode: 'custom',
+        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        mappings: expect.arrayContaining([
+          expect.objectContaining({
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          }),
+          expect.objectContaining({
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          }),
+        ]),
+      })
+    );
+  });
 });

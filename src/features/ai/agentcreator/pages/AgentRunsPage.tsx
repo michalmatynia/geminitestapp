@@ -6,15 +6,15 @@ import React, { useCallback } from 'react';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import {
-  Button,
-  MetadataItem,
-  Hint,
-  Breadcrumbs,
-  StatusBadge,
-  Badge,
+  AdminAgentCreatorBreadcrumbs,
   Alert,
-  ListPanel,
+  Badge,
+  Button,
   Card,
+  Hint,
+  ListPanel,
+  MetadataItem,
+  StatusBadge,
 } from '@/shared/ui';
 
 
@@ -50,14 +50,7 @@ function AgentRunsContent(): React.JSX.Element {
           isRefreshing: isAgentRunsFetching,
         }}
         eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Agent Creator', href: '/admin/agentcreator' },
-              { label: 'Runs' },
-            ]}
-            className='mb-2'
-          />
+          <AdminAgentCreatorBreadcrumbs current='Runs' className='mb-2' />
         }
         isLoading={isAgentRunsLoading}
         loadingMessage='Loading agent runs...'

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useIntegrationsSession } from '@/features/integrations/context/integrations/IntegrationsSessionContext';
-import type { SessionCookie } from '@/shared/contracts/integrations';
+import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Badge, StatusBadge, LoadingState, Card, Alert } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
@@ -14,7 +14,7 @@ interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   loading?: boolean;
   error?: string | null;
   cookies?: SessionCookie[];
-  origins?: string[];
+  origins?: SessionOrigin[];
   updatedAt?: string | null;
 }
 

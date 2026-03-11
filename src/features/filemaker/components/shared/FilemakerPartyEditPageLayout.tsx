@@ -1,6 +1,11 @@
 import React from 'react';
 
-import { Breadcrumbs, FormActions } from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs, FormActions } from '@/shared/ui';
+
+type FilemakerPartyEditPageLayoutParent = {
+  label: string;
+  href?: string;
+};
 
 export interface FilemakerPartyEditPageLayoutProps {
   itemName: string | null;
@@ -8,13 +13,14 @@ export interface FilemakerPartyEditPageLayoutProps {
   onSave: () => void;
   onCancel: () => void;
   isSaving: boolean;
+  parent?: FilemakerPartyEditPageLayoutParent;
   children: React.ReactNode;
 }
 
 export function FilemakerPartyEditPageLayout(
   props: FilemakerPartyEditPageLayoutProps
 ): React.JSX.Element {
-  const { itemName, notFoundMessage, onSave, onCancel, isSaving, children } = props;
+  const { itemName, notFoundMessage, onSave, onCancel, isSaving, parent, children } = props;
 
   if (!itemName) {
     return (
@@ -25,9 +31,7 @@ export function FilemakerPartyEditPageLayout(
   return (
     <div className='container mx-auto space-y-6 py-8'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
-        <Breadcrumbs
-          items={[{ label: 'Filemaker', href: '/admin/filemaker' }, { label: itemName }]}
-        />
+        <AdminFilemakerBreadcrumbs parent={parent} current={itemName} />
       </div>
 
       <div className='grid gap-6 lg:grid-cols-3'>

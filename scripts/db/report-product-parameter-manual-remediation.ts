@@ -1,5 +1,10 @@
+import 'dotenv/config';
+
 import fs from 'node:fs';
 import path from 'node:path';
+
+import { productService } from '@/shared/lib/products/services/productService';
+import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 
 interface ClassificationReport {
   sampleSkusByClassification?: Record<string, string[]>;
@@ -7,7 +12,6 @@ interface ClassificationReport {
 
 interface ParsedArgs {
   classificationReportPath: string;
-  apiBaseUrl: string;
 }
 
 type RemediationClass =
@@ -16,8 +20,8 @@ type RemediationClass =
   | 'no-rows-with-category';
 
 const DEFAULT_CLASSIFICATION_REPORT_PATH =
-  '/tmp/product-parameter-recovery-classification-1773220901738.json';
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
+  '/tmp/product-parameter-recovery-classification-latest.json';
+const LATEST_REPORT_PATH = '/tmp/product-parameter-manual-remediation-latest.json';
 
 const parseArgs = (): ParsedArgs => {
   const values = new Map<string, string>();
@@ -33,7 +37,6 @@ const parseArgs = (): ParsedArgs => {
   return {
     classificationReportPath:
       values.get('classification-report') || DEFAULT_CLASSIFICATION_REPORT_PATH,
-    apiBaseUrl: values.get('api-base-url') || DEFAULT_API_BASE_URL,
   };
 };
 
@@ -57,15 +60,10 @@ const remediationNoteByClass: Record<RemediationClass, string> = {
     'Reconstruct parameter rows from a known good peer product in the same category before assigning localized values.',
 };
 
-const fetchJson = async <T>(url: string): Promise<T | null> => {
-  const response = await fetch(url);
-  if (!response.ok) return null;
-  return (await response.json()) as T;
-};
-
 const main = async (): Promise<void> => {
   const parsed = parseArgs();
   const classification = readJson<ClassificationReport>(parsed.classificationReportPath);
+  const categoryRepository = await getCategoryRepository();
 
   const classes: RemediationClass[] = [
     'malformed-composite-values-with-category',
@@ -83,15 +81,13 @@ const main = async (): Promise<void> => {
   const entries = [];
 
   for (const target of targets) {
-    const paged = await fetchJson<{
-      products?: Array<Record<string, unknown>>;
-    }>(
-      `${parsed.apiBaseUrl}/api/v2/products/paged?page=1&pageSize=5&fresh=true&sku=${encodeURIComponent(
-        target.sku
-      )}`
-    );
+    const paged = await productService.getProductsWithCount({
+      page: 1,
+      pageSize: 5,
+      sku: target.sku,
+    });
     const product =
-      paged?.products?.find(
+      paged.products.find(
         (entry: Record<string, unknown>) => toTrimmedString(entry['sku']) === target.sku
       ) ?? null;
     if (!product) continue;
@@ -99,9 +95,7 @@ const main = async (): Promise<void> => {
     const categoryId = toTrimmedString(product['categoryId']);
     const category =
       categoryId.length > 0
-        ? await fetchJson<Record<string, unknown>>(
-            `${parsed.apiBaseUrl}/api/v2/products/categories/${encodeURIComponent(categoryId)}`
-          )
+        ? await categoryRepository.getCategoryById(categoryId)
         : null;
 
     const parameters = Array.isArray(product['parameters']) ? product['parameters'] : [];
@@ -131,16 +125,16 @@ const main = async (): Promise<void> => {
       recommendedAction: remediationNoteByClass[target.classification],
       category: {
         id: categoryId || null,
-        name: toTrimmedString(category?.['name_en']) || toTrimmedString(category?.['name']) || null,
+        name: toTrimmedString(category?.name_en) || toTrimmedString(category?.name) || null,
       },
       product: {
-        id: toTrimmedString(product['id']),
-        catalogId: toTrimmedString(product['catalogId']) || null,
-        name_en: product['name_en'] ?? null,
-        name_pl: product['name_pl'] ?? null,
+        id: toTrimmedString(product.id),
+        catalogId: toTrimmedString(product.catalogId) || null,
+        name_en: product.name_en ?? null,
+        name_pl: product.name_pl ?? null,
         nameSegments: {
-          en: splitPipeSegments(product['name_en']),
-          pl: splitPipeSegments(product['name_pl']),
+          en: splitPipeSegments(product.name_en),
+          pl: splitPipeSegments(product.name_pl),
         },
         parameters,
       },
@@ -152,14 +146,17 @@ const main = async (): Promise<void> => {
   const report = {
     generatedAt: new Date().toISOString(),
     classificationReportPath: parsed.classificationReportPath,
-    apiBaseUrl: parsed.apiBaseUrl,
     entryCount: entries.length,
     reportPath,
+    latestReportPath: LATEST_REPORT_PATH,
     entries,
   };
 
-  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  const serializedReport = `${JSON.stringify(report, null, 2)}\n`;
+  fs.writeFileSync(reportPath, serializedReport, 'utf8');
+  fs.writeFileSync(LATEST_REPORT_PATH, serializedReport, 'utf8');
   console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
 };
 
 void main().catch((error: unknown) => {

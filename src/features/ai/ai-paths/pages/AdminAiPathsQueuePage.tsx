@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
+import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
 import { FileUploadEventsPanel } from '@/shared/ui/files';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
@@ -68,12 +68,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
       <ListPanel
         title='Job Queue'
         eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'AI Paths', href: '/admin/ai-paths/queue' },
-              { label: activeTabMeta.label },
-            ]}
+          <AdminAiPathsBreadcrumbs
+            parent={{ label: 'Queue', href: '/admin/ai-paths/queue' }}
+            current={activeTabMeta.label}
             className='mb-2'
           />
         }

@@ -2,7 +2,12 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { UserPreferences, UserPreferencesUpdate } from '@/shared/contracts/auth';
+import {
+  type UserPreferences,
+  type UserPreferencesResponse,
+  type UserPreferencesUpdate,
+  userPreferencesUpdateSchema,
+} from '@/shared/contracts/auth';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -11,7 +16,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
-  userPreferencesUpdateSchema,
 } from '@/shared/validations/user-preferences';
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
@@ -43,8 +47,8 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
     queryKey: userPreferencesQueryKey,
     queryFn: ({ signal }) =>
       api
-        .get<unknown>('/api/user/preferences', { signal })
-        .then((data: unknown) => normalizeUserPreferencesResponse(data) as UserPreferences)
+        .get<UserPreferencesResponse>('/api/user/preferences', { signal })
+        .then((data: UserPreferencesResponse) => normalizeUserPreferencesResponse(data) as UserPreferences)
         .catch((error) => {
           logClientError(error instanceof Error ? error : new Error(String(error)), {
             context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' },
@@ -85,13 +89,12 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
       if (Object.keys(changedPayload).length === 0) {
         return Promise.resolve((current ?? {}) as UserPreferences);
       }
-      return api.patch<UserPreferences>('/api/user/preferences', changedPayload);
+      return api
+        .patch<UserPreferencesResponse>('/api/user/preferences', changedPayload)
+        .then((data: UserPreferencesResponse) => normalizeUserPreferencesResponse(data) as UserPreferences);
     },
     onSuccess: (data: UserPreferences): void => {
-      queryClient.setQueryData(
-        userPreferencesQueryKey,
-        normalizeUserPreferencesResponse(data) as UserPreferences
-      );
+      queryClient.setQueryData(userPreferencesQueryKey, data);
     },
     meta: {
       source: 'shared.hooks.useUpdateUserPreferences',

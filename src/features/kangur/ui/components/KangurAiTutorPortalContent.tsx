@@ -23,6 +23,7 @@ export { KangurAiTutorPortalProvider };
 export function KangurAiTutorPortalContent() {
   const {
     avatar,
+    diagnostics,
     guestIntro,
     guidedCallout,
     panel,
@@ -32,6 +33,20 @@ export function KangurAiTutorPortalContent() {
 
   return (
     <>
+      <div
+        hidden
+        data-testid='kangur-ai-tutor-surface-diagnostics'
+        data-canonical-modal-visible={String(diagnostics.canonicalTutorModalVisible)}
+        data-contextual-mode={diagnostics.contextualTutorMode ?? 'none'}
+        data-guided-mode={diagnostics.guidedMode ?? 'none'}
+        data-guest-intro-rendered={String(diagnostics.guestIntroShouldRender)}
+        data-is-minimal-panel={String(diagnostics.isMinimalPanelMode)}
+        data-is-open={String(diagnostics.isOpen)}
+        data-panel-shell-mode={diagnostics.panelShellMode}
+        data-suppress-panel-surface={String(diagnostics.suppressPanelSurface)}
+        data-tutor-surface={diagnostics.tutorSurfaceMode}
+      />
+
       <AnimatePresence>
         <KangurAiTutorSelectionAction
           shouldRender={selectionAction.shouldRender}
@@ -124,6 +139,7 @@ export function KangurAiTutorPortalContent() {
         motionProfile={avatar.motionProfile}
         onClick={avatar.onClick}
         onMouseDown={avatar.onMouseDown}
+        onMouseUp={avatar.onMouseUp}
         onPointerCancel={avatar.onPointerCancel}
         onPointerDown={avatar.onPointerDown}
         onPointerMove={avatar.onPointerMove}
@@ -165,7 +181,6 @@ export function KangurAiTutorPortalContent() {
         prefersReducedMotion={panel.prefersReducedMotion}
         reducedMotionTransitions={panel.reducedMotionTransitions}
         sessionSurfaceLabel={panel.sessionSurfaceLabel}
-        shouldRenderGuestIntroUi={panel.shouldRenderGuestIntroUi}
         showAttachedAvatarShell={panel.showAttachedAvatarShell}
         suppressPanelSurface={panel.suppressPanelSurface}
         uiMode={panel.uiMode}

@@ -47,7 +47,7 @@ const createGuestIntroFlowInput = (
 });
 
 describe('useKangurAiTutorGuestIntroFlow', () => {
-  it('clears stale guest intro state once auth resolves as authenticated', async () => {
+  it('clears stale guest intro flags once auth resolves as authenticated without clearing the explicit minimalist modal', async () => {
     const input = createGuestIntroFlowInput({
       authState: {
         isAuthenticated: true,
@@ -61,9 +61,10 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     renderHook(() => useKangurAiTutorGuestIntroFlow(input));
 
     await waitFor(() => {
-      expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
       expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
       expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
     });
+
+    expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
   });
 });

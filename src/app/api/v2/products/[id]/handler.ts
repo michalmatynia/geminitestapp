@@ -5,6 +5,8 @@ import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/server';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import {
+  type ProductPatchInput,
+  productPatchInputSchema,
   productUpdateInputSchema,
   type ProductRecord,
   type ProductWithImages,
@@ -160,11 +162,6 @@ export async function PUT_handler(
   return response;
 }
 
-const patchProductSchema = z.object({
-  price: z.number().min(0).optional(),
-  stock: z.number().int().min(0).optional(),
-});
-
 /**
  * PATCH /api/v2/products/[id]
  * Partially updates a product (for quick field edits like price/stock).
@@ -176,7 +173,7 @@ export async function PATCH_handler(
 ): Promise<Response> {
   const id = params.id;
 
-  const parsed = await parseJsonBody(req, patchProductSchema, {
+  const parsed = await parseJsonBody(req, productPatchInputSchema, {
     logPrefix: 'products.PATCH',
   });
   if (!parsed.ok) {
@@ -184,7 +181,7 @@ export async function PATCH_handler(
   }
   const data = parsed.data;
 
-  const updateData: { price?: number; stock?: number } = {};
+  const updateData: ProductPatchInput = {};
   if (data.price !== undefined) updateData.price = data.price;
   if (data.stock !== undefined) updateData.stock = data.stock;
 

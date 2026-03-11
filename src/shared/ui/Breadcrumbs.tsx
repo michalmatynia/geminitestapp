@@ -66,11 +66,24 @@ export function Breadcrumbs({
     el.scrollBy({ left: offset, behavior: getMotionSafeScrollBehavior('smooth') });
   };
 
+  const handleScrollableKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (!scrollable) return;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      handleScroll('left');
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      handleScroll('right');
+    }
+  };
+
   if (items.length === 0) return <></>;
 
   const content = (
     <nav
       aria-label='Breadcrumb'
+      tabIndex={scrollable ? 0 : undefined}
+      onKeyDown={handleScrollableKeyDown}
       className={cn(
         'flex items-center gap-1',
         size === 'xs' ? 'text-[10px]' : 'text-xs',

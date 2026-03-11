@@ -122,7 +122,6 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     }
 
     if (authState.isAuthenticated) {
-      setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       return;

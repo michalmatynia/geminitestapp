@@ -9,7 +9,7 @@ import type {
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { CategoryDocument, NoteDocument } from '../../types/mongo-note-types';
+import type { CategoryDocument, NoteDocument } from '@/features/notesapp/contracts';
 import type { Filter, UpdateFilter } from 'mongodb';
 
 

@@ -20,6 +20,7 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
     <FilemakerPartyEditPageLayout
       itemName={organization?.name ?? null}
       notFoundMessage='Organization not found.'
+      parent={{ label: 'Organizations', href: '/admin/filemaker/organizations' }}
       onSave={() => {
         void handleSave();
       }}

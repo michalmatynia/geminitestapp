@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   type Dispatch,
+  type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
   type SetStateAction,
@@ -233,6 +234,7 @@ export function useKangurAiTutorAvatarDrag(input: {
   setIsAvatarDragging: Dispatch<SetStateAction<boolean>>;
   startGuidedSectionExplanation: (anchor: SectionAnchor) => void;
   suppressAvatarClickRef: MutableRefObject<boolean>;
+  handleAvatarTap: () => void;
   tutorAnchorContext: TutorAnchorRegistry;
   viewport: { width: number; height: number };
 }) {
@@ -252,6 +254,7 @@ export function useKangurAiTutorAvatarDrag(input: {
     setIsAvatarDragging,
     startGuidedSectionExplanation,
     suppressAvatarClickRef,
+    handleAvatarTap,
     tutorAnchorContext,
     viewport,
   } = input;
@@ -425,10 +428,30 @@ export function useKangurAiTutorAvatarDrag(input: {
 
   const handleFloatingAvatarPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>): void => {
+      const dragState = avatarDragStateRef.current;
+      const shouldTreatAsTap =
+        dragState?.pointerId === event.pointerId && !dragState.moved && !isOpen;
+
       completeFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
       event.currentTarget.releasePointerCapture?.(event.pointerId);
+      if (shouldTreatAsTap) {
+        handleAvatarTap();
+        suppressAvatarClickRef.current = true;
+      }
     },
-    [completeFloatingAvatarDrag]
+    [avatarDragStateRef, completeFloatingAvatarDrag, handleAvatarTap, isOpen, suppressAvatarClickRef]
+  );
+
+  const handleFloatingAvatarMouseUp = useCallback(
+    (_event: ReactMouseEvent<HTMLButtonElement>): void => {
+      if (isOpen || suppressAvatarClickRef.current) {
+        return;
+      }
+
+      handleAvatarTap();
+      suppressAvatarClickRef.current = true;
+    },
+    [handleAvatarTap, isOpen, suppressAvatarClickRef]
   );
 
   const handleFloatingAvatarPointerCancel = useCallback(
@@ -479,6 +502,7 @@ export function useKangurAiTutorAvatarDrag(input: {
     handleFloatingAvatarPointerCancel,
     handleFloatingAvatarPointerDown,
     handleFloatingAvatarPointerMove,
+    handleFloatingAvatarMouseUp,
     handleFloatingAvatarPointerUp,
   };
 }

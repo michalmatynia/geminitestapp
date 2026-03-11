@@ -10,18 +10,18 @@ import {
 } from '@/shared/lib/files/constants';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import {
+  AdminSettingsBreadcrumbs,
+  Alert,
+  Card,
+  FormActions,
   FormField,
   FormSection,
+  Hint,
   Input,
   SectionHeader,
   SelectSimple,
-  useToast,
-  FormActions,
   ToggleRow,
-  Breadcrumbs,
-  Hint,
-  Card,
-  Alert,
+  useToast,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -144,16 +144,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       <SectionHeader
         title='File Storage'
         description='Choose whether files are served from local uploads or FastComet storage.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Settings', href: '/admin/settings' },
-              { label: 'File Storage' },
-            ]}
-            className='mb-2'
-          />
-        }
+        eyebrow={<AdminSettingsBreadcrumbs current='File Storage' />}
         className='mb-8'
       />
 

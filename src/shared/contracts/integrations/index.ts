@@ -148,6 +148,27 @@ export const sessionCookieSchema = z.object({
 
 export type SessionCookie = z.infer<typeof sessionCookieSchema>;
 
+export const sessionOriginLocalStorageEntrySchema = z.object({
+  name: z.string(),
+  value: z.string(),
+});
+
+export type SessionOriginLocalStorageEntry = z.infer<typeof sessionOriginLocalStorageEntrySchema>;
+
+export const sessionOriginSchema = z.object({
+  origin: z.string(),
+  localStorage: z.array(sessionOriginLocalStorageEntrySchema),
+});
+
+export type SessionOrigin = z.infer<typeof sessionOriginSchema>;
+
+export const playwrightStorageStateSchema = z.object({
+  cookies: z.array(sessionCookieSchema),
+  origins: z.array(sessionOriginSchema),
+});
+
+export type PlaywrightStorageState = z.infer<typeof playwrightStorageStateSchema>;
+
 /**
  * Image Diagnostic DTOs
  */
@@ -599,9 +620,7 @@ export type TraderaAddShopItemResult = z.infer<typeof traderaAddShopItemResultSc
  * Session & Payload DTOs
  */
 
-export const sessionPayloadSchema = z.object({
-  cookies: z.array(sessionCookieSchema).optional(),
-  origins: z.array(z.unknown()).optional(),
+export const sessionPayloadSchema = playwrightStorageStateSchema.partial().extend({
   updatedAt: z.string().optional(),
   error: z.string().optional(),
 });

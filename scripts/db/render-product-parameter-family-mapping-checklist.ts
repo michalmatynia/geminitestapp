@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 type MappingIndex = {
   generatedAt: string;
@@ -23,20 +23,17 @@ type MappingIndex = {
   }>;
 };
 
+const DEFAULT_INDEX_PATH = '/tmp/product-parameter-source-recovery-batches/family-mapping-index.json';
+
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function parseArgs(argv: string[]) {
-  const [indexPath, maybeOutFlag, maybeOutPath] = argv;
-  if (!indexPath) {
-    throw new Error(
-      "Usage: node --import tsx scripts/db/render-product-parameter-family-mapping-checklist.ts <family-mapping-index.json> [--out <checklist.md>]",
-    );
-  }
+  const [indexPath = DEFAULT_INDEX_PATH, maybeOutFlag, maybeOutPath] = argv;
 
-  let outputPath = "";
-  if (maybeOutFlag === "--out" && maybeOutPath) {
+  let outputPath = '';
+  if (maybeOutFlag === '--out' && maybeOutPath) {
     outputPath = maybeOutPath;
   }
 
@@ -51,41 +48,41 @@ function defaultOutputPath(indexPath: string): string {
 function render(index: MappingIndex): string {
   const lines: string[] = [];
 
-  lines.push("# Product parameter family mapping checklist");
-  lines.push("");
+  lines.push('# Product parameter family mapping checklist');
+  lines.push('');
   lines.push(`Generated: ${index.generatedAt}`);
   lines.push(`Pack count: ${index.packCount}`);
-  lines.push("");
-  lines.push("Fill `suggestedFinalParameterId` for each slot in the family mapping packs, then build curated overrides from those packs.");
-  lines.push("");
+  lines.push('');
+  lines.push('Fill `suggestedFinalParameterId` for each slot in the family mapping packs, then build curated overrides from those packs.');
+  lines.push('');
 
   for (const family of index.families) {
     lines.push(`## ${family.family} (${family.catalogId})`);
-    lines.push("");
+    lines.push('');
     lines.push(`- Entries: ${family.entryCount}`);
     lines.push(`- Source batch: \`${family.sourceBatchPath}\``);
     lines.push(`- Source pack: \`${family.sourcePackPath}\``);
-    lines.push("");
+    lines.push('');
 
     for (const slot of family.slots) {
       lines.push(`### ${slot.slotLabel} \`${slot.slotId}\``);
-      lines.push("");
+      lines.push('');
       lines.push(`- Occurrences: ${slot.occurrenceCount}`);
-      lines.push(`- Suggested final parameter id: ${slot.suggestedFinalParameterId ?? "(fill me)"}`);
-      lines.push(`- Suggested display name: ${slot.suggestedDisplayName ?? "(fill me)"}`);
+      lines.push(`- Suggested final parameter id: ${slot.suggestedFinalParameterId ?? '(fill me)'}`);
+      lines.push(`- Suggested display name: ${slot.suggestedDisplayName ?? '(fill me)'}`);
       for (const [language, values] of Object.entries(slot.uniqueValuesByLanguage).sort(([left], [right]) =>
         left.localeCompare(right),
       )) {
-        lines.push(`- Values (${language}): ${values.join(", ")}`);
+        lines.push(`- Values (${language}): ${values.join(', ')}`);
       }
       for (const note of slot.notes ?? []) {
         lines.push(`- Note: ${note}`);
       }
-      lines.push("");
+      lines.push('');
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 function main(): void {

@@ -8,6 +8,7 @@ import {
   useChatbotSession,
   useChatbotSettings,
   useChatbotModels,
+  useChatbotMemory,
 } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 
@@ -22,6 +23,7 @@ vi.mock('@/features/ai/chatbot/api', () => ({
   fetchChatbotSession: vi.fn(),
   fetchChatbotSettings: vi.fn(),
   fetchChatbotModels: vi.fn(),
+  fetchChatbotMemory: vi.fn(),
   fetchOllamaModels: vi.fn(),
 }));
 
@@ -74,13 +76,42 @@ describe('Chatbot Queries Hooks', () => {
 
   describe('useChatbotSettings', () => {
     it('fetches and returns settings', async () => {
-      const mockSettings = { settings: { settings: { model: 'gpt-4' } } };
+      const mockSettings = {
+        settings: {
+          id: 'settings-1',
+          key: 'general',
+          settings: { model: 'gpt-4' },
+          createdAt: '2026-03-11T10:00:00.000Z',
+          updatedAt: '2026-03-11T10:00:00.000Z',
+        },
+      };
       vi.mocked(chatbotApi.fetchChatbotSettings).mockResolvedValue(mockSettings);
 
       const { result } = renderHook(() => useChatbotSettings('general'), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data).toEqual(mockSettings);
+    });
+  });
+
+  describe('useChatbotMemory', () => {
+    it('fetches and returns memory items', async () => {
+      const mockItems = [
+        {
+          id: 'memory-1',
+          sessionId: 'session-1',
+          key: 'summary',
+          value: 'Stored memory',
+          createdAt: '2026-03-11T10:00:00.000Z',
+          updatedAt: '2026-03-11T10:00:00.000Z',
+        },
+      ];
+      vi.mocked(chatbotApi.fetchChatbotMemory).mockResolvedValue(mockItems);
+
+      const { result } = renderHook(() => useChatbotMemory('sessionId=session-1'), { wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data).toEqual(mockItems);
     });
   });
 

@@ -18,6 +18,8 @@ import {
   type ImportExportTemplate,
   integrationSchema,
   integrationConnectionSchema,
+  sessionPayloadSchema,
+  type SessionPayload,
 } from '@/shared/contracts/integrations';
 import type {
   Integration,
@@ -88,10 +90,12 @@ export function useIntegrationConnections(
 export function useConnectionSession(
   connectionId?: string,
   options?: { enabled?: boolean }
-): SingleQuery<unknown> {
+): SingleQuery<SessionPayload> {
   const queryKey = integrationKeys.connectionSession(connectionId);
-  const queryFn = async (): Promise<unknown> =>
-    api.get<unknown>(`/api/v2/integrations/connections/${connectionId}/session`);
+  const queryFn = async (): Promise<SessionPayload> => {
+    const data = await api.get<SessionPayload>(`/api/v2/integrations/connections/${connectionId}/session`);
+    return sessionPayloadSchema.parse(data);
+  };
 
   return createSingleQueryV2({
     id: connectionId,

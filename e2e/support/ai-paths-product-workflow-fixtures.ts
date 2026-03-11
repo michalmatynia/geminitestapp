@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { aiNodeSchema, type AiNode, type PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -1314,22 +1314,49 @@ export async function searchForProductRow(
 
   const mode = options?.mode ?? 'name';
   if (mode === 'sku') {
-    const showFiltersButton = page.getByRole('button', { name: /show filters/i });
-    if (await showFiltersButton.isVisible().catch(() => false)) {
-      await showFiltersButton.click();
-    }
-    const skuInput = page.locator('input[placeholder="Search by SKU..."]:visible').first();
-    if (await skuInput.isVisible().catch(() => false)) {
-      await skuInput.fill(searchTerm);
-      await page.keyboard.press('Enter');
-    } else {
+    const resolveSkuOrFallbackInput = async (): Promise<{
+      input: Locator;
+      value: string;
+    }> => {
+      const showFiltersButton = page.getByRole('button', { name: /show filters/i });
+      if (await showFiltersButton.isVisible().catch(() => false)) {
+        await showFiltersButton.click();
+      }
+
+      const skuInput = page.locator('input[placeholder="Search by SKU..."]:visible').first();
+      if (await skuInput.isVisible().catch(() => false)) {
+        return { input: skuInput, value: searchTerm };
+      }
+
       const fallbackSearch = page
         .locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`)
         .first();
-      await expect(fallbackSearch).toBeVisible({ timeout: 15_000 });
-      await fallbackSearch.fill(options?.rowText ?? searchTerm);
-      await page.keyboard.press('Enter');
-    }
+      if (await fallbackSearch.isVisible().catch(() => false)) {
+        return { input: fallbackSearch, value: options?.rowText ?? searchTerm };
+      }
+
+      await ensureAdminSession(page, '/admin/products');
+      await openAdminProductsPage(page);
+
+      if (await showFiltersButton.isVisible().catch(() => false)) {
+        await showFiltersButton.click();
+      }
+
+      const retrySkuInput = page.locator('input[placeholder="Search by SKU..."]:visible').first();
+      if (await retrySkuInput.isVisible().catch(() => false)) {
+        return { input: retrySkuInput, value: searchTerm };
+      }
+
+      const retryFallbackSearch = page
+        .locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`)
+        .first();
+      await expect(retryFallbackSearch).toBeVisible({ timeout: 15_000 });
+      return { input: retryFallbackSearch, value: options?.rowText ?? searchTerm };
+    };
+
+    const { input, value } = await resolveSkuOrFallbackInput();
+    await input.fill(value);
+    await page.keyboard.press('Enter');
   } else {
     const searchInput = page.locator(`input[placeholder="${PRODUCTS_SEARCH_PLACEHOLDER}"]:visible`).first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });

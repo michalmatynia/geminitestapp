@@ -16,13 +16,13 @@ import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  AdminCaseResolverBreadcrumbs,
   Button,
   EmptyState,
   FormSection,
   SectionHeader,
   Skeleton,
   useToast,
-  Breadcrumbs,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -402,15 +402,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Categories'
-        subtitle={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Categories' },
-            ]}
-          />
-        }
+        subtitle={<AdminCaseResolverBreadcrumbs current='Categories' />}
       />
 
       <div className='flex justify-start'>

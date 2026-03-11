@@ -1,7 +1,11 @@
 import 'server-only';
 
 import { decryptSecret } from '@/features/integrations/server';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import {
+  playwrightStorageStateSchema,
+  type IntegrationConnectionRecord,
+  type PlaywrightStorageState,
+} from '@/shared/contracts/integrations';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
@@ -12,6 +16,39 @@ import type { BrowserContextOptions } from 'playwright';
 export type PersistedStorageState = NonNullable<
   Exclude<BrowserContextOptions['storageState'], string>
 >;
+
+const toPlaywrightSameSite = (
+  value: PlaywrightStorageState['cookies'][number]['sameSite']
+): PersistedStorageState['cookies'][number]['sameSite'] => {
+  switch (value) {
+    case 'none':
+      return 'None';
+    case 'strict':
+      return 'Strict';
+    default:
+      return 'Lax';
+  }
+};
+
+const normalizeStorageState = (state: PlaywrightStorageState): PersistedStorageState => ({
+  cookies: state.cookies.map((cookie) => ({
+    name: cookie.name,
+    value: cookie.value,
+    domain: cookie.domain ?? '',
+    path: cookie.path ?? '/',
+    expires: cookie.expires ?? -1,
+    httpOnly: cookie.httpOnly ?? false,
+    secure: cookie.secure ?? false,
+    sameSite: toPlaywrightSameSite(cookie.sameSite),
+  })),
+  origins: state.origins.map((origin) => ({
+    origin: origin.origin,
+    localStorage: origin.localStorage.map((entry) => ({
+      name: entry.name,
+      value: entry.value,
+    })),
+  })),
+});
 
 export type TraderaPlaywrightRuntimeSettings = {
   headless: boolean;
@@ -32,18 +69,8 @@ export const parsePersistedStorageState = (
   if (!encryptedValue) return null;
   try {
     const raw = decryptSecret(encryptedValue);
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      Array.isArray((parsed as { cookies?: unknown[] }).cookies) &&
-      Array.isArray((parsed as { origins?: unknown[] }).origins)
-    ) {
-      return {
-        cookies: (parsed as PersistedStorageState).cookies,
-        origins: (parsed as PersistedStorageState).origins,
-      };
-    }
+    const parsed = playwrightStorageStateSchema.safeParse(JSON.parse(raw));
+    if (parsed.success) return normalizeStorageState(parsed.data);
   } catch {
     return null;
   }

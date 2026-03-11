@@ -326,6 +326,27 @@ describe('AI Paths maintenance forward-only action ids', () => {
         templateVersion: 6,
       })
     );
+    const databaseNode = parsed.nodes.find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
+    );
+    expect(databaseNode?.config?.database).toEqual(
+      expect.objectContaining({
+        updatePayloadMode: 'custom',
+        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        mappings: expect.arrayContaining([
+          expect.objectContaining({
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          }),
+          expect.objectContaining({
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          }),
+        ]),
+      })
+    );
     expect(report.shouldBlock).toBe(false);
     expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });

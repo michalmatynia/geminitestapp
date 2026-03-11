@@ -11,7 +11,15 @@ import {
   type FrontPageOption,
   type FrontPageSelectableApp,
 } from '@/shared/lib/front-page-app';
-import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
+import {
+  Button,
+  useToast,
+  SectionHeader,
+  SectionHeaderBackLink,
+  FormSection,
+  Badge,
+  LoadingState,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -66,9 +74,9 @@ function AdminFrontManageContent({
         title='Front Manage'
         description='Pick which app should own the public home route.'
         eyebrow={
-          <Link href='/admin' className='text-blue-300 hover:text-blue-200'>
-            ← Back to dashboard
-          </Link>
+          <SectionHeaderBackLink href='/admin' arrow>
+            Back to dashboard
+          </SectionHeaderBackLink>
         }
         className='mb-6'
       />

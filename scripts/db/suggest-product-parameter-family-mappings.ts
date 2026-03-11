@@ -1,9 +1,9 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { MongoClient } from "mongodb";
+import { MongoClient } from 'mongodb';
 
 type MappingIndex = {
   families: Array<{
@@ -36,11 +36,11 @@ type ProductDoc = {
 };
 
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function normalizeString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function timestamp(): string {
@@ -55,25 +55,25 @@ async function main(): Promise<void> {
   const indexPathArg = process.argv[2];
   if (!indexPathArg) {
     throw new Error(
-      "Usage: node --import tsx scripts/db/suggest-product-parameter-family-mappings.ts <family-mapping-index.json>",
+      'Usage: node --import tsx scripts/db/suggest-product-parameter-family-mappings.ts <family-mapping-index.json>',
     );
   }
 
   const indexPath = path.resolve(indexPathArg);
   const index = readJson<MappingIndex>(indexPath);
 
-  const uri = process.env["MONGODB_URI"]?.trim();
+  const uri = process.env['MONGODB_URI']?.trim();
   if (!uri) {
-    throw new Error("MONGODB_URI is required");
+    throw new Error('MONGODB_URI is required');
   }
-  const dbName = process.env["MONGODB_DB"]?.trim() || "app";
+  const dbName = process.env['MONGODB_DB']?.trim() || 'app';
 
   const client = new MongoClient(uri);
   await client.connect();
 
   try {
     const db = client.db(dbName);
-    const products = db.collection<ProductDoc>("products");
+    const products = db.collection<ProductDoc>('products');
 
     const suggestions = [];
 
@@ -82,8 +82,8 @@ async function main(): Promise<void> {
         .find(
           {
             sku: { $regex: `^${family.family}` },
-            categoryId: { $type: "string", $ne: "" },
-            parameters: { $type: "array", $ne: [] },
+            categoryId: { $type: 'string', $ne: '' },
+            parameters: { $type: 'array', $ne: [] },
           },
           {
             projection: {
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
     };
 
     const outputPath = getOutputPath(indexPath);
-    fs.writeFileSync(outputPath, JSON.stringify(output, null, 2) + "\n");
+    fs.writeFileSync(outputPath, JSON.stringify(output, null, 2) + '\n');
     process.stdout.write(`${outputPath}\n`);
   } finally {
     await client.close();

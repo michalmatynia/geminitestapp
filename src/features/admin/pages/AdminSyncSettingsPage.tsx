@@ -10,19 +10,19 @@ import {
   useBackgroundSyncState,
 } from '@/shared/providers/BackgroundSyncProvider';
 import {
+  AdminSettingsBreadcrumbs,
   Button,
-  Input,
-  SectionHeader,
-  useToast,
-  FormSection,
-  FormField,
-  ToggleRow,
-  Breadcrumbs,
-  FormActions,
-  MetadataItem,
-  Hint,
   Card,
+  FormActions,
+  FormField,
+  FormSection,
+  Hint,
+  Input,
+  MetadataItem,
+  SectionHeader,
   SimpleSettingsList,
+  ToggleRow,
+  useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -124,16 +124,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       <SectionHeader
         title='Background Sync'
         description='Control background synchronization and manage the offline mutation queue.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Settings', href: '/admin/settings' },
-              { label: 'Background Sync' },
-            ]}
-            className='mb-2'
-          />
-        }
+        eyebrow={<AdminSettingsBreadcrumbs current='Background Sync' />}
         className='mb-8'
       />
 

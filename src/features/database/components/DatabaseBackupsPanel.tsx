@@ -4,13 +4,13 @@ import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-
 
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
+  AdminDatabaseBreadcrumbs,
   Badge,
   Button,
   FileUploadButton,
   type FileUploadHelpers,
   Alert,
   SimpleSettingsList,
-  Breadcrumbs,
   StandardDataTablePanel,
   Card,
   ToggleRow,
@@ -107,13 +107,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='space-y-1'>
           <h2 className='text-2xl font-bold tracking-tight text-white'>Backup Center</h2>
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Databases', href: '/admin/databases/engine' },
-              { label: 'Backups' },
-            ]}
-          />
+          <AdminDatabaseBreadcrumbs current='Backups' />
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge variant='active' className='gap-1.5'>

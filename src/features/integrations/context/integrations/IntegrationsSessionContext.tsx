@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { SessionCookie } from '@/shared/contracts/integrations';
+import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
 export interface IntegrationsSession {
@@ -11,7 +11,7 @@ export interface IntegrationsSession {
   sessionLoading: boolean;
   sessionError: string | null;
   sessionCookies: SessionCookie[];
-  sessionOrigins: unknown[];
+  sessionOrigins: SessionOrigin[];
   sessionUpdatedAt: string | null;
 }
 

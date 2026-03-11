@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo, type ReactNode } from 'react';
 
+import type { ChatbotJob } from '@/shared/contracts/chatbot';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import type { TraderaQueueHealthResponse } from '@/shared/contracts/jobs';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { TraderaQueueHealthResponse } from '@/shared/lib/jobs/api';
 import {
   useCancelListingMutation,
   useChatbotJobMutation,
@@ -18,18 +19,6 @@ import {
 } from '@/shared/lib/jobs/hooks/useJobQueries';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-export type ChatbotJob = {
-  id: string;
-  sessionId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
-  model: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  payload?: unknown;
-};
 
 type SelectedListing = { job: ProductJob; listing: ListingJob } | null;
 
@@ -59,8 +48,8 @@ interface JobsStateContextType {
 }
 
 interface JobsActionsContextType {
-  refetchListingJobs: () => Promise<unknown>;
-  refetchChatbotJobs: () => Promise<unknown>;
+  refetchListingJobs: () => Promise<void>;
+  refetchChatbotJobs: () => Promise<void>;
   setQuery: (query: string) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
@@ -99,19 +88,15 @@ export const { Context: JobsActionsContext, useStrictContext: useJobsActions } =
 export function JobsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   // --- Product Listing Jobs ---
   const listingJobsQuery = useIntegrationJobs();
-  const listingJobs = useMemo(
-    () => (listingJobsQuery.data as ProductJob[]) || [],
-    [listingJobsQuery.data]
-  );
+  const listingJobs = useMemo(() => listingJobsQuery.data ?? [], [listingJobsQuery.data]);
   const traderaQueueHealthQuery = useTraderaQueueHealth();
   const cancelListingMutation = useCancelListingMutation();
 
   // --- Chatbot Jobs ---
   const chatbotJobsQuery = useChatbotJobs('all');
-  const chatbotJobs = useMemo((): ChatbotJob[] => {
-    const data = chatbotJobsQuery.data as { jobs?: ChatbotJob[] } | undefined;
-    return data?.jobs || [];
-  }, [chatbotJobsQuery.data]);
+  const chatbotJobs = useMemo((): ChatbotJob[] => chatbotJobsQuery.data?.jobs ?? [], [
+    chatbotJobsQuery.data,
+  ]);
 
   const chatbotMutation = useChatbotJobMutation();
   const clearChatbotMutation = useClearChatbotJobsMutation();

@@ -8,9 +8,9 @@ import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  AdminFilemakerBreadcrumbs,
   Badge,
   Button,
-  Breadcrumbs,
   Checkbox,
   FormActions,
   FormField,
@@ -42,18 +42,8 @@ import {
   resolveCountryId,
 } from './filemaker-page-utils';
 
+import type { EditableAddress } from '../hooks/editable-address';
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
-
-type EditableAddress = {
-  addressId: string;
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  countryId: string;
-  country: string;
-  isDefault: boolean;
-};
 
 const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -448,13 +438,9 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           title='Edit Event'
           description='The requested event record could not be found.'
           eyebrow={
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'Filemaker', href: '/admin/filemaker' },
-                { label: 'Events', href: '/admin/filemaker/events' },
-                { label: 'Edit' },
-              ]}
+            <AdminFilemakerBreadcrumbs
+              parent={{ label: 'Events', href: '/admin/filemaker/events' }}
+              current='Edit'
               className='mb-2'
             />
           }
@@ -473,17 +459,13 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Edit Event'
-        description='Update an event record and linked organizations.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Filemaker', href: '/admin/filemaker' },
-              { label: 'Events', href: '/admin/filemaker/events' },
-              { label: 'Edit' },
-            ]}
+        <SectionHeader
+          title='Edit Event'
+          description='Update an event record and linked organizations.'
+          eyebrow={
+          <AdminFilemakerBreadcrumbs
+            parent={{ label: 'Events', href: '/admin/filemaker/events' }}
+            current='Edit'
             className='mb-2'
           />
         }

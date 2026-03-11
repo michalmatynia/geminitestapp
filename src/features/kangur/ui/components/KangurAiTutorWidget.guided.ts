@@ -83,7 +83,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       !isOpen ||
       activeFocusKind !== 'selection' ||
       panelMotionState !== 'settled' ||
-      activeSelectedText !== selectionGuidanceHandoffText
+      (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
     ) {
       return;
     }
@@ -107,7 +107,12 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
   clearSelection: () => void;
-  handleOpenChat: (reason: 'section_explain' | 'selection_explain') => void;
+  handleOpenChat: (
+    reason: 'section_explain' | 'selection_explain',
+    options?: {
+      panelShellMode?: 'default' | 'minimal';
+    }
+  ) => void;
   motionProfile: Pick<TutorMotionProfile, 'guidedAvatarTransition'>;
   prefersReducedMotion: boolean;
   resetAskModalState: () => void;
@@ -309,7 +314,9 @@ export function useKangurAiTutorGuidedFlow(input: {
       selectionExplainTimeoutRef.current = window.setTimeout(() => {
         selectionExplainTimeoutRef.current = null;
         setGuidedTutorTarget((current) => (isSectionGuidedTutorTarget(current) ? null : current));
-        handleOpenChat('section_explain');
+        handleOpenChat('section_explain', {
+          panelShellMode: 'minimal',
+        });
         void sendMessage(buildSectionExplainPrompt(tutorContent, anchor), {
           promptMode: 'explain',
           focusKind: anchor.kind,
@@ -382,7 +389,7 @@ export function useKangurAiTutorGuidedFlow(input: {
         kind: 'selection_excerpt',
         selectedText: selectionText,
       });
-      suppressAvatarClickRef.current = false;
+      suppressAvatarClickRef.current = true;
 
       const guidanceDelayMs = prefersReducedMotion
         ? 0
@@ -390,7 +397,9 @@ export function useKangurAiTutorGuidedFlow(input: {
       selectionExplainTimeoutRef.current = window.setTimeout(() => {
         selectionExplainTimeoutRef.current = null;
         setSelectionGuidanceHandoffText(selectionText);
-        handleOpenChat('selection_explain');
+        handleOpenChat('selection_explain', {
+          panelShellMode: 'minimal',
+        });
         void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
           promptMode: 'selected_text',
           selectedText: selectionText,

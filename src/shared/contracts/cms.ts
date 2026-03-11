@@ -79,6 +79,29 @@ export type CmsThemeCreateInput = CreateCmsThemeDto;
 export type UpdateCmsThemeDto = Partial<CreateCmsThemeDto>;
 export type CmsThemeUpdateInput = UpdateCmsThemeDto;
 
+const cmsRequiredStringSchema = z.string().trim().min(1);
+const cmsIdArraySchema = z.array(cmsRequiredStringSchema);
+
+export const cmsThemeCreateSchema = z.object({
+  name: cmsRequiredStringSchema,
+  colors: cmsThemeColorsSchema,
+  typography: cmsThemeTypographySchema,
+  spacing: cmsThemeSpacingSchema,
+  customCss: z.string().optional(),
+});
+
+export type CmsThemeCreateRequestDto = z.infer<typeof cmsThemeCreateSchema>;
+
+export const cmsThemeUpdateSchema = z.object({
+  name: cmsRequiredStringSchema,
+  colors: cmsThemeColorsSchema.optional(),
+  typography: cmsThemeTypographySchema.optional(),
+  spacing: cmsThemeSpacingSchema.optional(),
+  customCss: z.string().nullable().optional(),
+});
+
+export type CmsThemeUpdateRequestDto = z.infer<typeof cmsThemeUpdateSchema>;
+
 /**
  * CMS Component Contract
  */
@@ -126,6 +149,16 @@ export const cmsPageComponentInputSchema = z
 export type CmsPageComponentInputDto = z.infer<typeof cmsPageComponentInputSchema>;
 export type PageComponentInput = CmsPageComponentInputDto;
 
+export const cmsPageComponentRequestSchema = z
+  .object({
+    type: cmsRequiredStringSchema,
+    order: z.number(),
+    content: cmsPageBuilderComponentContentSchema,
+  })
+  .strict();
+
+export type CmsPageComponentRequestDto = z.infer<typeof cmsPageComponentRequestSchema>;
+
 /**
  * CMS Slug Contract
  */
@@ -147,6 +180,25 @@ export const createCmsSlugSchema = cmsSlugSchema.omit({
 export type CreateCmsSlugDto = z.infer<typeof createCmsSlugSchema>;
 export type UpdateCmsSlugDto = Partial<CreateCmsSlugDto>;
 
+export const cmsSlugCreateSchema = z.object({
+  slug: cmsRequiredStringSchema,
+});
+
+export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
+
+export const cmsSlugUpdateSchema = z.object({
+  slug: cmsRequiredStringSchema,
+  isDefault: z.boolean().optional(),
+});
+
+export type CmsSlugUpdateRequestDto = z.infer<typeof cmsSlugUpdateSchema>;
+
+export const cmsSlugDomainsUpdateSchema = z.object({
+  domainIds: cmsIdArraySchema,
+});
+
+export type CmsSlugDomainsUpdateRequestDto = z.infer<typeof cmsSlugDomainsUpdateSchema>;
+
 /**
  * CMS Domain Contract
  */
@@ -166,6 +218,18 @@ export const createCmsDomainSchema = cmsDomainSchema.omit({
 
 export type CreateCmsDomainDto = z.infer<typeof createCmsDomainSchema>;
 export type UpdateCmsDomainDto = Partial<CreateCmsDomainDto>;
+
+export const cmsDomainCreateSchema = z.object({
+  domain: cmsRequiredStringSchema,
+});
+
+export type CmsDomainCreateRequestDto = z.infer<typeof cmsDomainCreateSchema>;
+
+export const cmsDomainUpdateSchema = z.object({
+  aliasOf: cmsRequiredStringSchema.nullable().optional(),
+});
+
+export type CmsDomainUpdateRequestDto = z.infer<typeof cmsDomainUpdateSchema>;
 
 /**
  * CMS Page SEO Contract
@@ -646,6 +710,31 @@ export const createCmsPageSchema = cmsPageSchema.omit({
 
 export type CreateCmsPageDto = z.infer<typeof createCmsPageSchema>;
 export type UpdateCmsPageDto = Partial<CreateCmsPageDto>;
+
+export const cmsPageCreateSchema = z.object({
+  name: cmsRequiredStringSchema,
+  slugIds: cmsIdArraySchema.optional(),
+  themeId: z.string().nullable().optional(),
+});
+
+export type CmsPageCreateRequestDto = z.infer<typeof cmsPageCreateSchema>;
+
+export const cmsPageUpdateSchema = z.object({
+  name: cmsRequiredStringSchema,
+  status: cmsPageStatusSchema.optional(),
+  publishedAt: z.string().nullable().optional(),
+  seoTitle: z.string().nullable().optional(),
+  seoDescription: z.string().nullable().optional(),
+  seoOgImage: z.string().nullable().optional(),
+  seoCanonical: z.string().nullable().optional(),
+  robotsMeta: z.string().nullable().optional(),
+  showMenu: z.boolean().optional(),
+  themeId: z.string().nullable().optional(),
+  slugIds: cmsIdArraySchema.optional(),
+  components: z.array(cmsPageComponentRequestSchema),
+});
+
+export type CmsPageUpdateRequestDto = z.infer<typeof cmsPageUpdateSchema>;
 
 /**
  * CMS AI Config Contract

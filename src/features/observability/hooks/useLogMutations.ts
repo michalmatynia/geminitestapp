@@ -1,7 +1,11 @@
 'use client';
 
 import type { AiInsightRecord } from '@/shared/contracts';
-import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
+import {
+  ClearLogsResponseDto as ClearLogsResponse,
+  MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
+  mongoRebuildIndexesResponseSchema,
+} from '@/shared/contracts/observability';
 import type { UpdateMutation } from '@/shared/contracts/ui';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
@@ -25,9 +29,12 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> 
   });
 }
 
-export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
+export function useRebuildIndexesMutation(): UpdateMutation<MongoRebuildIndexesResponse, void> {
   return createCreateMutationV2({
-    mutationFn: () => api.post<unknown>('/api/system/diagnostics/mongo-indexes'),
+    mutationFn: async () =>
+      mongoRebuildIndexesResponseSchema.parse(
+        await api.post<MongoRebuildIndexesResponse>('/api/system/diagnostics/mongo-indexes')
+      ),
     mutationKey: diagnosticsKeys.mongo(),
     meta: {
       source: 'observability.hooks.useRebuildIndexesMutation',

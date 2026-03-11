@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret } from '@/features/integrations/server';
+import { playwrightStorageStateSchema } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -31,14 +32,11 @@ export async function GET_handler(
   }
 
   const decrypted = decryptSecret(connection.playwrightStorageState);
-  const storageState = JSON.parse(decrypted) as {
-    cookies?: unknown[];
-    origins?: unknown[];
-  };
+  const storageState = playwrightStorageStateSchema.parse(JSON.parse(decrypted));
 
   return NextResponse.json({
-    cookies: storageState.cookies ?? [],
-    origins: storageState.origins ?? [],
+    cookies: storageState.cookies,
+    origins: storageState.origins,
     updatedAt: connection.playwrightStorageStateUpdatedAt,
   });
 }

@@ -7,18 +7,18 @@ import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
-import type { Slug } from '@/shared/contracts/cms';
+import type { CmsPageCreateRequestDto, Slug } from '@/shared/contracts/cms';
 import {
+  AdminCmsBreadcrumbs,
+  Alert,
+  FormActions,
+  FormField,
+  FormSection,
   Input,
   SectionHeader,
-  ToggleRow,
-  FormSection,
-  FormField,
-  Alert,
   StatusBadge,
-  FormActions,
-  Breadcrumbs,
   SearchableList,
+  ToggleRow,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -59,10 +59,11 @@ export default function CreatePagePage(): React.JSX.Element {
 
     setError(null);
     try {
-      await createPage.mutateAsync({
-        name: validation.data.name,
+      const input: CmsPageCreateRequestDto = {
+        ...validation.data,
         slugIds: validation.data.slugIds ?? [],
-      });
+      };
+      await createPage.mutateAsync(input);
       router.push('/admin/cms/pages');
     } catch (submitError: unknown) {
       logClientError(submitError, {
@@ -78,13 +79,9 @@ export default function CreatePagePage(): React.JSX.Element {
         title='Create Page'
         description='Provision a new content page and map it to URL routes.'
         eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'CMS', href: '/admin/cms' },
-              { label: 'Pages', href: '/admin/cms/pages' },
-              { label: 'Create' },
-            ]}
+          <AdminCmsBreadcrumbs
+            parent={{ label: 'Pages', href: '/admin/cms/pages' }}
+            current='Create'
             className='mb-2'
           />
         }

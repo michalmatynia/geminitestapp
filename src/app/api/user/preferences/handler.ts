@@ -8,7 +8,10 @@ import {
   warmUserPreferencesCache,
 } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
-import type { UpdateUserPreferencesInput as UserPreferencesData } from '@/shared/contracts/auth';
+import type {
+  UpdateUserPreferencesInput as UserPreferencesData,
+  UserPreferencesResponse,
+} from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -28,6 +31,15 @@ const USER_PREFERENCES_REPOSITORY_TIMEOUT_MS = parsePositiveInt(
   process.env['USER_PREFERENCES_REPOSITORY_TIMEOUT_MS'],
   3500
 );
+const normalizeProductListNameLocale = (
+  value: Partial<UserPreferencesData>['productListNameLocale']
+): NonNullable<UserPreferencesResponse['productListNameLocale']> => {
+  if (value === 'name_pl' || value === 'name_de') {
+    return value;
+  }
+
+  return 'name_en';
+};
 
 const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -51,8 +63,8 @@ const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> =
 const buildUserPreferencesResponse = (
   preferences: Partial<UserPreferencesData> | null | undefined,
   includeAdminMenu: boolean
-): Record<string, unknown> => ({
-  productListNameLocale: preferences?.productListNameLocale ?? 'name_en',
+): UserPreferencesResponse => ({
+  productListNameLocale: normalizeProductListNameLocale(preferences?.productListNameLocale),
   productListCatalogFilter: preferences?.productListCatalogFilter ?? 'all',
   productListCurrencyCode: preferences?.productListCurrencyCode ?? 'PLN',
   productListPageSize: normalizeProductPageSize(preferences?.productListPageSize, 12),

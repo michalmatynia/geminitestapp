@@ -33,7 +33,10 @@ export type HandleDatabaseMongoUpdateActionInput = {
   idType: unknown;
   updateTemplate: string;
   parseJsonTemplate: (template: string) => unknown;
-  ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  ensureExistingParameterTemplateContext: (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ) => Promise<void>;
   aiPrompt: string;
 };
 

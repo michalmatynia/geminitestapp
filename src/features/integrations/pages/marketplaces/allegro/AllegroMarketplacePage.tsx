@@ -1,7 +1,11 @@
-import Link from 'next/link';
 import React from 'react';
 
-import { SectionHeader } from '@/shared/ui';
+import {
+  NavigationCard,
+  NavigationCardGrid,
+  SectionHeader,
+  SectionHeaderBackLink,
+} from '@/shared/ui';
 
 const sections = [
   {
@@ -23,28 +27,25 @@ export default function AllegroMarketplacePage(): React.JSX.Element {
         title='Allegro'
         description='Configure Allegro integrations and listing workflows.'
         eyebrow={
-          <Link
-            href='/admin/integrations/marketplaces'
-            className='text-blue-300 hover:text-blue-200'
-          >
-            ← Marketplaces
-          </Link>
+          <SectionHeaderBackLink href='/admin/integrations/marketplaces' arrow>
+            Marketplaces
+          </SectionHeaderBackLink>
         }
         className='mb-6'
       />
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+      <NavigationCardGrid className='md:grid-cols-2 xl:grid-cols-3'>
         {sections.map((section: { name: string; description: string; href: string }) => (
-          <Link
+          <NavigationCard
             key={section.name}
             href={section.href}
-            className='rounded-md border border-border/60 bg-card/40 p-4 transition hover:bg-muted/40'
-          >
-            <h2 className='text-lg font-semibold text-white'>{section.name}</h2>
-            <p className='mt-1 text-sm text-gray-400'>{section.description}</p>
-          </Link>
+            className='border-border/60 bg-card/40 hover:bg-muted/40'
+            variant='outline'
+            title={section.name}
+            description={section.description}
+          />
         ))}
-      </div>
+      </NavigationCardGrid>
     </div>
   );
 }

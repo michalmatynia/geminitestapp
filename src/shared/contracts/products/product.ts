@@ -185,6 +185,25 @@ export const productBulkImagesBase64RequestSchema = z.object({
 
 export type ProductBulkImagesBase64Request = z.infer<typeof productBulkImagesBase64RequestSchema>;
 
+export const productImageBase64ResponseSchema = z.object({
+  status: z.literal('ok'),
+  productId: z.string(),
+  count: z.number().int().min(0),
+});
+
+export type ProductImageBase64Response = z.infer<typeof productImageBase64ResponseSchema>;
+
+export const productBulkImagesBase64ResponseSchema = z.object({
+  status: z.literal('ok'),
+  requested: z.number().int().min(1),
+  succeeded: z.number().int().min(0),
+  failed: z.number().int().min(0),
+});
+
+export type ProductBulkImagesBase64Response = z.infer<
+  typeof productBulkImagesBase64ResponseSchema
+>;
+
 /**
  * Product API Paged Result
  */

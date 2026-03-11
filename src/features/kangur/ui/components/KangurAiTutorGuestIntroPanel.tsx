@@ -120,31 +120,45 @@ export function KangurAiTutorGuestIntroPanel({
         prefersReducedMotion,
       }}
     >
-      <motion.div
-        data-kangur-ai-tutor-root='true'
-        key='guest-intro'
-        data-modal-actions='single-primary'
-        data-modal-card='warm-glow-soft'
-        data-modal-motion='fade-only'
-        data-modal-surface='canonical-onboarding'
-        data-testid='kangur-ai-tutor-guest-intro'
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : undefined}
-        style={panelStyle}
-        className='fixed z-[75]'
-      >
-        <KangurGlassPanel
-          surface='warmGlow'
-          variant='soft'
-          padding='lg'
-          className='border-amber-200/80 shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)]'
+      <>
+        <motion.button
+          key='guest-intro-backdrop'
+          data-testid='kangur-ai-tutor-guest-intro-backdrop'
+          type='button'
+          aria-label={tutorContent.guestIntro.closeAria}
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0 } : undefined}
+          onClick={onClose}
+          className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0'
+        />
+        <motion.div
+          data-kangur-ai-tutor-root='true'
+          key='guest-intro'
+          data-modal-actions='single-primary'
+          data-modal-card='warm-glow-soft'
+          data-modal-motion='fade-only'
+          data-modal-surface='canonical-onboarding'
+          data-testid='kangur-ai-tutor-guest-intro'
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0 } : undefined}
+          style={panelStyle}
+          className='fixed z-[75]'
         >
-          <KangurAiTutorGuestIntroHeader />
-          <KangurAiTutorGuestIntroActions />
-        </KangurGlassPanel>
-      </motion.div>
+          <KangurGlassPanel
+            surface='warmGlow'
+            variant='soft'
+            padding='lg'
+            className='border-amber-200/80 shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)]'
+          >
+            <KangurAiTutorGuestIntroHeader />
+            <KangurAiTutorGuestIntroActions />
+          </KangurGlassPanel>
+        </motion.div>
+      </>
     </KangurAiTutorGuestIntroPanelContext.Provider>
   );
 }

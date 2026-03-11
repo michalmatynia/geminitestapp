@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  AdminFilemakerBreadcrumbs,
   Badge,
-  Breadcrumbs,
   Checkbox,
   FormActions,
   FormField,
@@ -202,13 +202,9 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
           title='Edit Email'
           description='The requested email record could not be found.'
           eyebrow={
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'Filemaker', href: '/admin/filemaker' },
-                { label: 'Emails', href: '/admin/filemaker/emails' },
-                { label: 'Edit' },
-              ]}
+            <AdminFilemakerBreadcrumbs
+              parent={{ label: 'Emails', href: '/admin/filemaker/emails' }}
+              current='Edit'
               className='mb-2'
             />
           }
@@ -227,17 +223,13 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Edit Email'
-        description='Update email status and links to persons and organizations.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Filemaker', href: '/admin/filemaker' },
-              { label: 'Emails', href: '/admin/filemaker/emails' },
-              { label: 'Edit' },
-            ]}
+        <SectionHeader
+          title='Edit Email'
+          description='Update email status and links to persons and organizations.'
+          eyebrow={
+          <AdminFilemakerBreadcrumbs
+            parent={{ label: 'Emails', href: '/admin/filemaker/emails' }}
+            current='Edit'
             className='mb-2'
           />
         }

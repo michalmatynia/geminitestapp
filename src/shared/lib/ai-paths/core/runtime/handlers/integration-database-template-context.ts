@@ -102,7 +102,10 @@ export type PrepareDatabaseTemplateContextResult = {
   templateInputs: RuntimePortValues;
   templateContext: Record<string, unknown>;
   aiPrompt: string;
-  ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  ensureExistingParameterTemplateContext: (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ) => Promise<void>;
 };
 
 export function prepareDatabaseTemplateContext({
@@ -143,7 +146,10 @@ export function prepareDatabaseTemplateContext({
     ...placeholderContext,
   };
 
-  const ensureExistingParameterTemplateContext = async (targetPath: string): Promise<void> => {
+  const ensureExistingParameterTemplateContext = async (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ): Promise<void> => {
     if (!targetPath) return;
     const existingFromInputs = normalizeParameterEntries(
       resolveExistingParameterValueFromInputs(templateInputs, targetPath, {
@@ -151,18 +157,20 @@ export function prepareDatabaseTemplateContext({
       }),
       { allowEmptyValue: true }
     );
+    const forceHydrateRichParameters = options?.forceHydrateRichParameters === true;
     const shouldHydrateRichProductParameters =
       targetPath === 'parameters' &&
-      existingFromInputs.length > 0 &&
-      existingFromInputs.every((entry) => {
-        const valuesByLanguage = entry.raw['valuesByLanguage'];
-        return !(
-          valuesByLanguage &&
-          typeof valuesByLanguage === 'object' &&
-          !Array.isArray(valuesByLanguage) &&
-          Object.keys(valuesByLanguage as Record<string, unknown>).length > 0
-        );
-      });
+      (forceHydrateRichParameters ||
+        (existingFromInputs.length > 0 &&
+          existingFromInputs.every((entry) => {
+            const valuesByLanguage = entry.raw['valuesByLanguage'];
+            return !(
+              valuesByLanguage &&
+              typeof valuesByLanguage === 'object' &&
+              !Array.isArray(valuesByLanguage) &&
+              Object.keys(valuesByLanguage as Record<string, unknown>).length > 0
+            );
+          })));
     if (existingFromInputs.length > 0 && !shouldHydrateRichProductParameters) {
       return;
     }

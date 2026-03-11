@@ -154,6 +154,7 @@ export function useKangurAiTutorLifecycleEffects({
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
+    suppressAvatarClickRef,
     setViewportTick,
   } = widgetState;
 
@@ -253,6 +254,14 @@ export function useKangurAiTutorLifecycleEffects({
     setSelectionResponseComplete,
     setSelectionResponsePending,
   ]);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    suppressAvatarClickRef.current = false;
+  }, [mounted, routingPageKey, suppressAvatarClickRef]);
 
   useEffect(() => {
     if (!mounted) {

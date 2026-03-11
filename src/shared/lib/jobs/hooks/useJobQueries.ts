@@ -2,6 +2,7 @@
 
 import { type Query } from '@tanstack/react-query';
 
+import type { ChatbotJobsResponse } from '@/shared/contracts/chatbot';
 import type { ProductJob } from '@/shared/contracts/integrations';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -56,7 +57,7 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
 
 export { jobKeys };
 
-export function useChatbotJobs(scope: string = 'all'): SingleQuery<{ jobs: unknown[] }> {
+export function useChatbotJobs(scope: string = 'all'): SingleQuery<ChatbotJobsResponse> {
   const queryKey = jobKeys.chatbot(scope);
   return createSingleQueryV2({
     id: scope,

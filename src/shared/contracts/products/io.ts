@@ -124,6 +124,19 @@ export const productUpdateInputSchema = productCreateInputSchema.partial().exten
 export type UpdateProductInput = z.infer<typeof productUpdateInputSchema>;
 export type ProductUpdateInput = UpdateProductInput;
 
+export const productPatchInputSchema = z.object({
+  price: z.number().min(0).optional(),
+  stock: z.number().int().min(0).optional(),
+});
+
+export type ProductPatchInput = z.infer<typeof productPatchInputSchema>;
+
+export const productDuplicateRequestSchema = z.object({
+  sku: z.string().trim().optional(),
+});
+
+export type ProductDuplicateRequest = z.infer<typeof productDuplicateRequestSchema>;
+
 export const createProductSchema = productSchema.omit({
   id: true,
   createdAt: true,

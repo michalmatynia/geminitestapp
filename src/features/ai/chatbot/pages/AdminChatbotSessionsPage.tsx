@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import {
+  AdminChatbotBreadcrumbs,
   Button,
   Input,
   Checkbox,
@@ -181,11 +182,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       <SectionHeader
         title='Chat Sessions'
         description='History of conversations with AI agents.'
-        eyebrow={
-          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
-            ← Back to chatbot
-          </a>
-        }
+        eyebrow={<AdminChatbotBreadcrumbs current='Sessions' />}
         actions={
           <Button variant='outline' size='xs' onClick={refetch} disabled={isFetching}>
             {isFetching ? 'Refreshing...' : 'Refresh'}

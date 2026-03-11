@@ -10,16 +10,16 @@ import {
 } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  AdminSettingsBreadcrumbs,
+  FormActions,
+  FormField,
+  FormSection,
+  Hint,
+  LoadingState,
+  MetadataItem,
   SectionHeader,
   SelectSimple,
   useToast,
-  FormSection,
-  FormField,
-  Breadcrumbs,
-  FormActions,
-  LoadingState,
-  MetadataItem,
-  Hint,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -66,16 +66,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
       <SectionHeader
         title='Typography'
         description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Settings', href: '/admin/settings' },
-              { label: 'Typography' },
-            ]}
-            className='mb-2'
-          />
-        }
+        eyebrow={<AdminSettingsBreadcrumbs current='Typography' />}
         className='mb-8'
       />
 

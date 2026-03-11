@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import React, { useState } from 'react';
 
 import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
-import { Button, SectionHeader, useToast, Card } from '@/shared/ui';
+import { Button, Card, NavigationCard, NavigationCardGrid, SectionHeader, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 
@@ -49,20 +48,19 @@ export default function MarketplacesPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <NavigationCardGrid className='md:grid-cols-2'>
         {marketplaces.map((marketplace: { name: string; description: string; href: string }) => (
-          <Link key={marketplace.name} href={marketplace.href} className='block group'>
-            <Card
-              variant='subtle'
-              padding='md'
-              className='border-border bg-card/40 transition group-hover:border-primary/40 group-hover:bg-card/60 h-full'
-            >
-              <h2 className='text-lg font-semibold text-white'>{marketplace.name}</h2>
-              <p className='mt-1 text-sm text-gray-400'>{marketplace.description}</p>
-            </Card>
-          </Link>
+          <NavigationCard
+            key={marketplace.name}
+            href={marketplace.href}
+            title={marketplace.name}
+            description={marketplace.description}
+            variant='subtle'
+            linkClassName='group'
+            className='border-border bg-card/40 group-hover:border-primary/40 group-hover:bg-card/60'
+          />
         ))}
-      </div>
+      </NavigationCardGrid>
 
       <Card variant='subtle' padding='md' className='mt-6 border-border bg-card/40'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>

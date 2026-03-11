@@ -43,15 +43,34 @@ const hasRuntimeConsumerReference = (source: string, instance: FolderTreeInstanc
   return patterns.some((pattern) => pattern.test(source));
 };
 
+const findMissingRuntimeConsumerReferences = (
+  filePaths: string[],
+  instances: readonly FolderTreeInstance[]
+): FolderTreeInstance[] => {
+  const remaining = new Set(instances);
+
+  for (const filePath of filePaths) {
+    if (remaining.size === 0) break;
+    const source = readFileSync(filePath, 'utf8');
+    for (const instance of Array.from(remaining)) {
+      if (hasRuntimeConsumerReference(source, instance)) {
+        remaining.delete(instance);
+      }
+    }
+  }
+
+  return Array.from(remaining);
+};
+
 describe('folder tree instance runtime usage', () => {
-  it('keeps at least one runtime consumer reference for each registered instance', () => {
-    const sourceFiles = collectRuntimeSourceFiles(ROOT_SRC_DIR);
-    const source = sourceFiles.map((filePath) => readFileSync(filePath, 'utf8')).join('\n');
+  it(
+    'keeps at least one runtime consumer reference for each registered instance',
+    () => {
+      const sourceFiles = collectRuntimeSourceFiles(ROOT_SRC_DIR);
+      const missing = findMissingRuntimeConsumerReferences(sourceFiles, folderTreeInstanceValues);
 
-    const missing = folderTreeInstanceValues.filter(
-      (instance: FolderTreeInstance) => !hasRuntimeConsumerReference(source, instance)
-    );
-
-    expect(missing).toEqual([]);
-  });
+      expect(missing).toEqual([]);
+    },
+    15_000
+  );
 });

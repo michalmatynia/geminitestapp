@@ -25,7 +25,8 @@ interface ParsedArgs {
   reportPath: string;
 }
 
-const DEFAULT_REPORT_PATH = '/tmp/product-parameter-source-recovery-1773222002798.json';
+const DEFAULT_REPORT_PATH = '/tmp/product-parameter-source-recovery-latest.json';
+const LATEST_REPORT_PATH = '/tmp/product-parameter-source-recovery-summary-latest.json';
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -157,8 +158,16 @@ const main = async (): Promise<void> => {
   };
 
   const reportPath = `/tmp/product-parameter-source-recovery-summary-${Date.now()}.json`;
-  fs.writeFileSync(reportPath, `${JSON.stringify({ ...output, reportPath }, null, 2)}\n`, 'utf8');
-  console.log(JSON.stringify({ ...output, reportPath }, null, 2));
+  const payload = {
+    ...output,
+    reportPath,
+    latestReportPath: LATEST_REPORT_PATH,
+  };
+  const serializedPayload = `${JSON.stringify(payload, null, 2)}\n`;
+  fs.writeFileSync(reportPath, serializedPayload, 'utf8');
+  fs.writeFileSync(LATEST_REPORT_PATH, serializedPayload, 'utf8');
+  console.log(JSON.stringify(payload, null, 2));
+  process.exit(0);
 };
 
 void main().catch((error: unknown) => {

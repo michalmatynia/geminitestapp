@@ -1,9 +1,9 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { MongoClient } from "mongodb";
+import { MongoClient } from 'mongodb';
 
 type FamilySuggestionReport = {
   suggestions: Array<{
@@ -40,33 +40,33 @@ type ProductDoc = {
 };
 
 const TYPE_VALUES = new Set([
-  "brelok",
-  "keychain",
-  "pin",
-  "odznaka",
-  "przypinka",
-  "ring",
-  "pierścień",
-  "pendant",
-  "zawieszka",
+  'brelok',
+  'keychain',
+  'pin',
+  'odznaka',
+  'przypinka',
+  'ring',
+  'pierścień',
+  'pendant',
+  'zawieszka',
 ]);
 
 const MATERIAL_VALUES = new Set([
-  "metal",
-  "acrylic",
-  "akryl",
-  "resin",
-  "żywica",
-  "foam",
-  "pianka",
+  'metal',
+  'acrylic',
+  'akryl',
+  'resin',
+  'żywica',
+  'foam',
+  'pianka',
 ]);
 
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function normalizeString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function normalizeForMatch(value: string): string {
@@ -75,15 +75,15 @@ function normalizeForMatch(value: string): string {
 
 function isSizeLike(value: string): boolean {
   const normalized = normalizeForMatch(value);
-  return /^\d+(?:[.,]\d+)?\s*cm$/.test(normalized) || normalized.includes("adjustable size") || normalized.includes("regulowany rozmiar");
+  return /^\d+(?:[.,]\d+)?\s*cm$/.test(normalized) || normalized.includes('adjustable size') || normalized.includes('regulowany rozmiar');
 }
 
 function getValueShapeScore(slotLabel: string, value: string): number {
   const normalized = normalizeForMatch(value);
   if (!normalized) return 0;
-  if (slotLabel === "size" && isSizeLike(normalized)) return 2;
-  if (slotLabel === "type" && TYPE_VALUES.has(normalized)) return 2;
-  if (slotLabel === "material" && MATERIAL_VALUES.has(normalized)) return 2;
+  if (slotLabel === 'size' && isSizeLike(normalized)) return 2;
+  if (slotLabel === 'type' && TYPE_VALUES.has(normalized)) return 2;
+  if (slotLabel === 'material' && MATERIAL_VALUES.has(normalized)) return 2;
   return 0;
 }
 
@@ -95,25 +95,25 @@ async function main(): Promise<void> {
   const reportPathArg = process.argv[2];
   if (!reportPathArg) {
     throw new Error(
-      "Usage: node --import tsx scripts/db/infer-product-parameter-slot-mappings.ts <family-mapping-suggestions.json>",
+      'Usage: node --import tsx scripts/db/infer-product-parameter-slot-mappings.ts <family-mapping-suggestions.json>',
     );
   }
 
   const reportPath = path.resolve(reportPathArg);
   const report = readJson<FamilySuggestionReport>(reportPath);
 
-  const uri = process.env["MONGODB_URI"]?.trim();
+  const uri = process.env['MONGODB_URI']?.trim();
   if (!uri) {
-    throw new Error("MONGODB_URI is required");
+    throw new Error('MONGODB_URI is required');
   }
-  const dbName = process.env["MONGODB_DB"]?.trim() || "app";
+  const dbName = process.env['MONGODB_DB']?.trim() || 'app';
 
   const client = new MongoClient(uri);
   await client.connect();
 
   try {
     const db = client.db(dbName);
-    const products = db.collection<ProductDoc>("products");
+    const products = db.collection<ProductDoc>('products');
 
     const output = {
       generatedAt: new Date().toISOString(),
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
           catalogId: family.catalogId,
           candidateCategoryId: null,
           slotInference: [],
-          notes: ["No candidate category-backed sibling products were found for this family."],
+          notes: ['No candidate category-backed sibling products were found for this family.'],
         });
         continue;
       }
@@ -139,7 +139,7 @@ async function main(): Promise<void> {
           {
             sku: { $regex: `^${family.family}` },
             categoryId: topCategory.categoryId,
-            parameters: { $type: "array", $ne: [] },
+            parameters: { $type: 'array', $ne: [] },
           },
           {
             projection: {
@@ -171,7 +171,7 @@ async function main(): Promise<void> {
               if (normalized) bucket.add(normalized);
             }
           }
-          const scalarValue = normalizeForMatch(parameter?.value ?? "");
+          const scalarValue = normalizeForMatch(parameter?.value ?? '');
           if (scalarValue) bucket.add(scalarValue);
         }
       }
@@ -228,7 +228,7 @@ async function main(): Promise<void> {
     }
 
     const outputPath = getOutputPath(reportPath);
-    fs.writeFileSync(outputPath, JSON.stringify(output, null, 2) + "\n");
+    fs.writeFileSync(outputPath, JSON.stringify(output, null, 2) + '\n');
     process.stdout.write(`${outputPath}\n`);
   } finally {
     await client.close();

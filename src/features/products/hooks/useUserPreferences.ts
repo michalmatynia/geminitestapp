@@ -3,7 +3,10 @@
 import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import type { UserPreferences as SharedUserPreferences } from '@/shared/contracts/auth';
+import {
+  type UserPreferencesResponse,
+  userPreferencesUpdateSchema,
+} from '@/shared/contracts/auth';
 import type {
   ProductAdvancedFilterPreset,
   ProductListPreferences,
@@ -17,7 +20,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
-  userPreferencesUpdateSchema,
 } from '@/shared/validations/user-preferences';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
@@ -35,7 +37,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
 
 const mapProductListPreferences = (
-  data: SharedUserPreferences | null | undefined
+  data: UserPreferencesResponse | null | undefined
 ): ProductListPreferences => ({
   nameLocale:
     (data?.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) ||
@@ -50,10 +52,10 @@ const mapProductListPreferences = (
   appliedAdvancedFilterPresetId: data?.productListAppliedAdvancedFilterPresetId ?? null,
 });
 
-async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPreferences> {
+async function fetchUserPreferences(signal?: AbortSignal): Promise<UserPreferencesResponse> {
   const data = normalizeUserPreferencesResponse(
-    await api.get<unknown>('/api/user/preferences', { signal })
-  ) as SharedUserPreferences;
+    await api.get<UserPreferencesResponse>('/api/user/preferences', { signal })
+  );
   return data;
 }
 
@@ -115,7 +117,7 @@ export interface UserPreferencesHookResult {
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
-  const query = createSingleQueryV2<SharedUserPreferences, ProductListPreferences>({
+  const query = createSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
     queryFn: () => fetchUserPreferences(),

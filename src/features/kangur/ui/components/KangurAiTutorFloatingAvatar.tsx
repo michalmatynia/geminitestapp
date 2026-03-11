@@ -50,6 +50,7 @@ type Props = {
   motionProfile: TutorMotionProfile;
   onClick: () => void;
   onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
+  onMouseUp: (event: MouseEvent<HTMLButtonElement>) => void;
   onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
   onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
   onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
@@ -88,6 +89,7 @@ export function KangurAiTutorFloatingAvatar({
   motionProfile,
   onClick,
   onMouseDown,
+  onMouseUp,
   onPointerCancel,
   onPointerDown,
   onPointerMove,
@@ -131,6 +133,7 @@ export function KangurAiTutorFloatingAvatar({
       data-ui-mode={uiMode}
       type='button'
       onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

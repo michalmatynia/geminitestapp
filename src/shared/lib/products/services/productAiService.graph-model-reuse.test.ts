@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductAiJobRecord, ProductAiJobRepository } from '@/shared/contracts/jobs';
+import { normalizeGraphModelPayloadForDispatch } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 
 const {
   createJobMock,
@@ -284,6 +285,63 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
     expect(createJobMock).toHaveBeenCalledTimes(1);
   });
 
+  it('reuses a pending graph_model job when the caller omits cache metadata but the normalized payload matches', async () => {
+    const normalizedPayload = normalizeGraphModelPayloadForDispatch({
+      prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
+    });
+
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        status: 'pending',
+        payload: normalizedPayload,
+      }),
+    ]);
+
+    const result = await enqueueProductAiJob('product-1', 'graph_model', {
+      prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
+    });
+
+    expect(result.id).toBe('job-existing');
+    expect(createJobMock).not.toHaveBeenCalled();
+  });
+
+  it('stores normalized queued graph_model payloads with cache metadata', async () => {
+    await enqueueProductAiJob('product-1', 'graph_model', {
+      prompt: 'Generate a title',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'model-node-1',
+      },
+    });
+
+    expect(createJobMock).toHaveBeenCalledWith(
+      'product-1',
+      'graph_model',
+      expect.objectContaining({
+        prompt: 'Generate a title',
+        source: 'ai_paths',
+        cacheKey: expect.any(String),
+        payloadHash: expect.any(String),
+        graph: expect.objectContaining({
+          runId: 'run-1',
+          nodeId: 'model-node-1',
+        }),
+      })
+    );
+  });
+
   it('rejects graph_model payloads without explicit source', async () => {
     await expect(
       enqueueProductAiJob('product-1', 'graph_model', {
@@ -351,6 +409,45 @@ describe('enqueueProductAiJob graph_model reuse guard', () => {
             runId: 'run-1',
             nodeId: 'model-node-1',
           },
+        },
+      })
+    );
+
+    const job = await getProductAiJob('job-existing');
+
+    expect(getProductByIdMock).not.toHaveBeenCalled();
+    expect(job?.product).toBeNull();
+  });
+
+  it('does not fetch products for malformed explicit-source graph_model jobs in list view', async () => {
+    findJobsMock.mockResolvedValue([
+      createJobRecord({
+        id: 'job-existing',
+        productId: 'product-1',
+        payload: {
+          prompt: 'Generate a title',
+          source: 'ai_paths',
+          graph: {},
+        },
+      }),
+    ]);
+
+    const jobs = await getProductAiJobs();
+
+    expect(getProductByIdMock).not.toHaveBeenCalled();
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]?.product).toBeNull();
+  });
+
+  it('does not fetch products for malformed explicit-source graph_model jobs in detail view', async () => {
+    findJobByIdMock.mockResolvedValue(
+      createJobRecord({
+        id: 'job-existing',
+        productId: 'product-1',
+        payload: {
+          prompt: 'Generate a title',
+          source: 'ai_paths',
+          graph: {},
         },
       })
     );

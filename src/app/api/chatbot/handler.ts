@@ -20,7 +20,7 @@ import type {
   ChatbotChatResponseDto,
   ChatbotChatRequestDto,
 } from '@/shared/contracts/chatbot';
-import { chatbotChatRequestSchema } from '@/shared/contracts/chatbot';
+import { chatbotChatMessageSchema, chatbotChatRequestSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
@@ -36,8 +36,11 @@ const chatbotTempRoot = path.join(process.cwd(), 'public', 'uploads', 'chatbot',
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-const chatbotJsonRequestSchema = chatbotChatRequestSchema
-  .extend({
+const chatbotJsonRequestSchema = z
+  .object({
+    messages: z.array(chatbotChatMessageSchema).optional(),
+    sessionId: chatbotChatRequestSchema.shape.sessionId,
+    contextRegistry: chatbotChatRequestSchema.shape.contextRegistry,
     model: z.unknown().optional(),
   })
   .passthrough();

@@ -20,7 +20,6 @@ Packages already compatible with ESLint 10:
 - `@typescript-eslint/eslint-plugin@8.57.0`
 - `@typescript-eslint/parser@8.57.0`
 - `typescript-eslint@8.57.0`
-- `eslint-config-next@16.1.6`
 
 Packages still capped at ESLint 9 in their published peer ranges:
 
@@ -31,14 +30,8 @@ Packages still capped at ESLint 9 in their published peer ranges:
 
 ## Why this still blocks the upgrade
 
-`eslint-config-next@16.1.6` still depends on:
-
-- `eslint-plugin-react`
-- `eslint-plugin-import`
-- `eslint-plugin-jsx-a11y`
-- `eslint-plugin-react-hooks`
-
-So even if some of those could be reduced in local config, they still remain part of the active Next lint stack.
+The repo no longer depends directly on `eslint-config-next`.
+The remaining blocker is still the published ESLint 10 peer support of the plugin ecosystem the repo uses directly.
 
 ## Local dependency audit
 
@@ -50,6 +43,7 @@ Directly used in `eslint.config.mjs` for:
 
 - `import/order`
 - `import/no-restricted-paths`
+- `import/resolver.typescript` settings that still rely on the direct `eslint-import-resolver-typescript` package
 
 This repo also already uses separate architecture checks, so a future migration path exists:
 
@@ -60,30 +54,24 @@ But that is a policy change, not a drop-in ESLint 10 unblock.
 
 ### `eslint-plugin-react`
 
-Potentially removable from the repo's own flat config later, but not an ESLint 10 unblock today.
+No longer directly referenced by the repo's flat config.
 
-Direct local usage is only disabled rules:
-
-- `react/react-in-jsx-scope`
-- `react/display-name`
-- `react/prop-types`
-
-So the repo does not appear to rely on active React lint rules from this plugin directly.
-However, `eslint-config-next` still depends on it.
+The direct repo dependency has been removed because local usage was only dead `react/*` off-switches.
+That still does not unblock ESLint 10 by itself while the broader plugin ecosystem remains capped at ESLint 9.
 
 ### `eslint-plugin-react-hooks`
 
-Potentially removable from the repo's own flat config later, but not an ESLint 10 unblock today.
+No longer directly referenced by the repo's flat config.
 
-The current flat config includes the plugin in shared plugin wiring, but no direct `react-hooks/*` rules are configured in `eslint.config.mjs`.
-However, `eslint-config-next` still depends on it.
+The direct repo dependency has been removed after refactoring the remaining local `react-hooks/exhaustive-deps` suppressions out of `src/features/foldertree/v2/__tests__/runtime-provider.test.tsx`.
+That still does not unblock ESLint 10 by itself while the broader plugin ecosystem remains capped at ESLint 9.
 
 ### `eslint-plugin-jsx-a11y`
 
 Not directly referenced in `eslint.config.mjs`.
 
-This package appears to be present only because the Next lint stack depends on it.
-That means removing it from direct repo dependencies might be possible in a later cleanup, but it would not unblock ESLint 10 while `eslint-config-next` still pulls it.
+The direct repo dependency has been removed.
+That does not unblock ESLint 10 while the broader plugin ecosystem remains capped at ESLint 9.
 
 ## Recommended migration order
 
@@ -96,7 +84,5 @@ That means removing it from direct repo dependencies might be possible in a late
 
 If desired, the repo can still reduce local coupling before ESLint 10 is available:
 
-- remove direct `eslint-plugin-react` usage from `eslint.config.mjs` if disabled-rule references are also removed
-- remove direct `eslint-plugin-react-hooks` usage from `eslint.config.mjs` if no local rules are added back
-- evaluate whether `eslint-plugin-jsx-a11y` needs to stay as a direct dependency or can remain only transitively provided by Next
+- `patch-eslint.sh` is now a deprecated stub; it no longer generates config from `eslint-config-next/core-web-vitals`
 - evaluate whether `import/no-restricted-paths` should stay in ESLint or move entirely to the dedicated architecture checker

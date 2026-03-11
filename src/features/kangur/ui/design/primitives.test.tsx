@@ -175,7 +175,6 @@ describe('Kangur shared primitives', () => {
         <KangurMenuItem data-testid='kangur-menu-item'>Shared menu item</KangurMenuItem>
         <KangurMediaFrame accent='amber' data-testid='kangur-media-frame' mediaType='image'>
           {/* Intentional raw image element to assert frame styling without Next.js image behavior. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt='Example' src='/example.png' />
         </KangurMediaFrame>
         <KangurResultBadge data-testid='kangur-result-badge' tone='success'>

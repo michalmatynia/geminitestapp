@@ -5,6 +5,19 @@ import { GET } from '@/app/api/system/logs/metrics/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler:
+    (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
+}));
+
+vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {

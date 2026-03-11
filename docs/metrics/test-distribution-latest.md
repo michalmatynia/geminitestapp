@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-10T21:35:17.706Z
+Generated at: 2026-03-11T04:30:40.113Z
 
 ## Summary
 
@@ -16,7 +16,7 @@ Generated at: 2026-03-10T21:35:17.706Z
 - Total features: 28
 - Features with tests: 28
 - Features without tests: 0
-- Total test files: 1536
+- Total test files: 1538
 - .only() occurrences: 0
 - .skip() occurrences: 26
 

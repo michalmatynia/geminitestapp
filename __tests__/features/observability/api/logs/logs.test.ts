@@ -10,6 +10,19 @@ import {
   hydrateSystemLogRecordRuntimeContext,
 } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler:
+    (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
+}));
+
+vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {

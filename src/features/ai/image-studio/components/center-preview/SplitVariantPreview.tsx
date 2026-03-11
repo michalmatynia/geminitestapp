@@ -231,7 +231,6 @@ export function SplitVariantPreview(): React.JSX.Element {
             100%
           </Button>
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={leftImageSrc}
           alt='Source asset'
@@ -301,7 +300,6 @@ export function SplitVariantPreview(): React.JSX.Element {
             100%
           </Button>
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={rightImageSrc}
           alt='Generated variant'

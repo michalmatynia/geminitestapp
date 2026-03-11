@@ -18,6 +18,16 @@ npm run bazel -- run //:typecheck
           - npm run bazel -- run //:api_input_validation
           - npm run bazel -- run //:api_contract_coverage
           npm run bazel -- run //:unit
+npm run bazel:smoke
+          - query //:all
+          - //:lint
+          - //:typecheck
+          - //:unit
+          - //:integration_prisma
+          - //:integration_mongo
+          - //:next_build
+          - //:api_error_sources
+
 SCANNERS
 bun run test:bun:runtime
 npm run check:quality:core

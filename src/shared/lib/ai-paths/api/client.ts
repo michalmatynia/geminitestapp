@@ -661,17 +661,23 @@ const normalizeAiJobsPollPayload = (
   };
 };
 
+const AI_JOBS_ENQUEUE_TIMEOUT_MS =
+  typeof window === 'undefined' ? 60_000 : 15_000;
+
 export const aiJobsApi = {
   enqueue: async (payload: ProductAiJobEnqueueRequest) =>
-    apiPost<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', payload),
+    apiPost<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', payload, {
+      timeoutMs: AI_JOBS_ENQUEUE_TIMEOUT_MS,
+    }),
   poll: async (
     jobId: string,
-    options?: { signal?: AbortSignal }
+    options?: { signal?: AbortSignal; timeoutMs?: number }
   ): Promise<ApiResponse<{ status: string; result?: unknown; error?: string }>> => {
-    const response = await apiFetch<AiJobsPollPayload>(
-      `/api/v2/products/ai-jobs/${jobId}`,
-      options
-    );
+    const { timeoutMs, ...fetchOptions } = options ?? {};
+    const response = await apiFetch<AiJobsPollPayload>(`/api/v2/products/ai-jobs/${jobId}`, {
+      ...fetchOptions,
+      ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
+    });
     if (!response.ok) return response;
     return {
       ok: true,

@@ -21,6 +21,10 @@ vi.mock('@/shared/lib/db/services/database-engine-provider-preview', () => ({
   getDatabaseEngineProviderPreview: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/db/services/database-engine-access', () => ({
+  assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 const previewPayload = {
   timestamp: '2026-02-10T00:00:00.000Z',
   policy: {

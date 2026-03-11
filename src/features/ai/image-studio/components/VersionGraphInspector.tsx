@@ -78,7 +78,6 @@ export function VersionGraphInspector(): React.JSX.Element {
           )}
           <div className='size-[72px] overflow-hidden rounded border border-border/60 bg-card/30'>
             {getSlotImageSrc(selectedNode.slot) ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={getSlotImageSrc(selectedNode.slot)!}
                 alt={selectedNode.label}

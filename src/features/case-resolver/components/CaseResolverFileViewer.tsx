@@ -183,7 +183,6 @@ export function CaseResolverFileViewer(): React.JSX.Element {
               >
                 {showImagePreview ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={selectedAsset.filepath ?? ''}
                       alt={selectedAsset.name}

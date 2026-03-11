@@ -40,7 +40,7 @@ jobs:
   bazel-smoke:
     name: bazel-smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 75
     env:
       BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
       BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
@@ -54,18 +54,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Bazel query smoke
-        run: npm run bazel -- query //:all
-
-      - name: Bazel lint smoke
-        run: npm run bazel -- run //:lint
-
-      - name: Bazel typecheck smoke
-        run: npm run bazel -- run //:typecheck
-
-      - name: Bazel runtime smoke
-        run: npm run bazel -- run //:api_error_sources
+      - name: Bazel smoke suite
+        run: npm run bazel:smoke

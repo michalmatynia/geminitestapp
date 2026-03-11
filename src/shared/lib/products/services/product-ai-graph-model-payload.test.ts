@@ -1,16 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildGraphModelJobCacheMetadata } from '@/shared/lib/ai-paths/core/runtime/graph-model-job';
 import {
+  resolveAiPathsGraphModelRequestedModelId,
   hasAiPathsGraphModelNodeContext,
   isAiPathsGraphModelPayload,
   normalizeGraphModelPayloadForDispatch,
   readGraphModelAiPathsRunContext,
   readGraphModelPayloadGraphString,
+  resolveGraphModelExecutionPayload,
+  resolveGraphModelExecutionContext,
   resolveGraphModelCacheKey,
   resolveGraphModelPayloadHash,
   resolveGraphModelPayloadSource,
+  resolveGraphModelReuseIdentity,
   resolveGraphModelRequestedModelId,
   safeParseGraphModelJobEnqueuePayload,
+  safeParseGraphModelQueuedPayload,
   summarizeGraphModelPayload,
 } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 
@@ -41,6 +47,22 @@ describe('product-ai graph_model payload helpers', () => {
     expect(resolveGraphModelPayloadHash({ payloadHash: '  hash-1  ' })).toBe('hash-1');
     expect(resolveGraphModelCacheKey(null)).toBeNull();
     expect(resolveGraphModelPayloadHash(null)).toBeNull();
+  });
+
+  it('reads the graph_model reuse identity through one shared helper', () => {
+    expect(
+      resolveGraphModelReuseIdentity({
+        cacheKey: '  cache-key-1  ',
+        payloadHash: '  hash-1  ',
+        graph: {
+          requestedModelId: '  node-selected-model  ',
+        },
+      })
+    ).toEqual({
+      cacheKey: 'cache-key-1',
+      payloadHash: 'hash-1',
+      requestedModelId: 'node-selected-model',
+    });
   });
 
   it('reads trimmed graph string metadata safely', () => {
@@ -104,9 +126,10 @@ describe('product-ai graph_model payload helpers', () => {
     ).toBeNull();
   });
 
-  it('detects AI Paths graph_model payloads from explicit or inferred source plus graph metadata', () => {
+  it('detects AI Paths graph_model payloads from strict schemas or legacy inferred node context', () => {
     expect(
       isAiPathsGraphModelPayload({
+        prompt: 'Generate copy',
         source: 'ai_paths',
         graph: {
           runId: 'run-1',
@@ -131,9 +154,29 @@ describe('product-ai graph_model payload helpers', () => {
         },
       })
     ).toBe(false);
+    expect(
+      isAiPathsGraphModelPayload({
+        prompt: 'Generate copy',
+        source: 'ai_paths',
+        graph: {},
+      })
+    ).toBe(false);
   });
 
   it('normalizes legacy AI Paths payloads for dispatch by inferring source', () => {
+    const enqueuePayload = {
+      prompt: 'Generate copy',
+      source: 'ai_paths' as const,
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+      },
+    };
+    const expectedQueueMetadata = buildGraphModelJobCacheMetadata({
+      payload: enqueuePayload,
+      runId: 'run-1',
+    });
+
     expect(
       normalizeGraphModelPayloadForDispatch({
         prompt: 'Generate copy',
@@ -146,14 +189,35 @@ describe('product-ai graph_model payload helpers', () => {
       expect.objectContaining({
         prompt: 'Generate copy',
         source: 'ai_paths',
-        cacheKey: expect.any(String),
-        payloadHash: expect.any(String),
+        cacheKey: expectedQueueMetadata.cacheKey,
+        payloadHash: expectedQueueMetadata.payloadHash,
         graph: {
           runId: 'run-1',
           nodeId: 'node-1',
         },
       })
     );
+  });
+
+  it('preserves existing queue metadata when normalizing queued graph_model payloads', () => {
+    const queuedPayload = {
+      prompt: 'Generate copy',
+      source: 'ai_paths' as const,
+      cacheKey: 'cache-existing',
+      payloadHash: 'hash-existing',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+      },
+    };
+
+    expect(normalizeGraphModelPayloadForDispatch(queuedPayload)).toEqual(
+      expect.objectContaining({
+        cacheKey: 'cache-existing',
+        payloadHash: 'hash-existing',
+      })
+    );
+    expect(safeParseGraphModelQueuedPayload(queuedPayload).success).toBe(true);
   });
 
   it('rejects malformed graph_model dispatch payloads', () => {
@@ -209,17 +273,159 @@ describe('product-ai graph_model payload helpers', () => {
     ).toBe(false);
   });
 
+  it('resolves execution payloads by normalizing real AI Paths jobs', () => {
+    const resolved = resolveGraphModelExecutionPayload({
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+      },
+    });
+
+    expect(resolved.source).toBe('ai_paths');
+    expect(resolved.payload).toEqual(
+      expect.objectContaining({
+        prompt: 'Generate copy',
+        source: 'ai_paths',
+        cacheKey: expect.any(String),
+        payloadHash: expect.any(String),
+        graph: {
+          runId: 'run-1',
+          nodeId: 'node-1',
+        },
+      })
+    );
+  });
+
+  it('resolves malformed explicit-source payloads without normalizing them into AI Paths jobs', () => {
+    const payload = {
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {},
+    };
+
+    const resolved = resolveGraphModelExecutionPayload(payload);
+
+    expect(resolved.source).toBe('ai_paths');
+    expect(resolved.payload).toBe(payload);
+  });
+
+  it('resolves a shared execution context for real AI Paths graph_model payloads', () => {
+    const resolved = resolveGraphModelExecutionContext({
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+        nodeTitle: 'Model node',
+        requestedModelId: 'node-selected-model',
+      },
+    });
+
+    expect(resolved).toEqual(
+      expect.objectContaining({
+        source: 'ai_paths',
+        requestedModelId: 'node-selected-model',
+        runId: 'run-1',
+        nodeId: 'node-1',
+        nodeTitle: 'Model node',
+        hasAiPathsNodeContext: true,
+        payload: expect.objectContaining({
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+        }),
+      })
+    );
+  });
+
+  it('resolves a shared execution context for malformed explicit-source payloads without upgrading them', () => {
+    const payload = {
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {},
+    };
+
+    expect(resolveGraphModelExecutionContext(payload)).toEqual({
+      source: 'ai_paths',
+      requestedModelId: null,
+      runId: null,
+      nodeId: null,
+      nodeTitle: null,
+      hasAiPathsNodeContext: false,
+      payload,
+    });
+  });
+
+  it('resolves the requested AI Paths model id from graph context first and run fallback second', async () => {
+    await expect(
+      resolveAiPathsGraphModelRequestedModelId({
+        payload: {
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+            requestedModelId: 'node-selected-model',
+          },
+        },
+        findRunById: async () => ({
+          graph: {
+            nodes: [
+              {
+                id: 'node-1',
+                config: {
+                  model: {
+                    modelId: 'fallback-model',
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      })
+    ).resolves.toBe('node-selected-model');
+
+    await expect(
+      resolveAiPathsGraphModelRequestedModelId({
+        payload: {
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+          },
+        },
+        findRunById: async () => ({
+          graph: {
+            nodes: [
+              {
+                id: 'node-1',
+                config: {
+                  model: {
+                    modelId: 'fallback-model',
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      })
+    ).resolves.toBe('fallback-model');
+  });
+
   it('summarizes graph_model payloads through the shared helper', () => {
     expect(
       summarizeGraphModelPayload({
-        prompt: 'Generate collectible copy',
-        imageUrls: ['a', 'b'],
-        modelId: 'top-level-model',
+        prompt: '  Generate collectible copy  ',
+        imageUrls: ['a', 17, 'b'],
+        modelId: '  top-level-model  ',
         vision: true,
-        cacheKey: '1234567890abcdef',
-        payloadHash: 'fedcba0987654321',
+        cacheKey: ' 1234567890abcdef ',
+        payloadHash: ' fedcba0987654321 ',
         graph: {
-          requestedModelId: 'node-selected-model',
+          requestedModelId: ' node-selected-model ',
           runId: 'run-1',
           nodeId: 'node-1',
         },
@@ -234,5 +440,15 @@ describe('product-ai graph_model payload helpers', () => {
       cacheKey: '1234567890ab',
       payloadHash: 'fedcba098765',
     });
+  });
+
+  it('does not summarize malformed explicit-source payloads as AI Paths jobs', () => {
+    expect(
+      summarizeGraphModelPayload({
+        prompt: 'Generate collectible copy',
+        source: 'ai_paths',
+        graph: {},
+      })
+    ).toBeUndefined();
   });
 });

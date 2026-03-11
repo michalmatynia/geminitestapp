@@ -8,6 +8,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 const tempRoots: string[] = [];
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const scriptPath = path.join(repoRoot, 'scripts', 'runtime', 'sync-toolchain-mirrors.cjs');
+const expectedNodeVersion = fs.readFileSync(path.join(repoRoot, '.nvmrc'), 'utf8').trim();
+const expectedBunVersion = fs.readFileSync(path.join(repoRoot, '.bun-version'), 'utf8').trim();
+const mismatchedNodeVersion =
+  Number.parseInt(expectedNodeVersion, 10) === 21 ? '22' : String(Number.parseInt(expectedNodeVersion, 10) - 1);
+const mismatchedBunVersion = expectedBunVersion === '1.3.9' ? '1.3.8' : '1.3.9';
 
 const createTempRoot = () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toolchain-mirror-sync-'));
@@ -44,41 +49,122 @@ describe('sync toolchain mirrors', () => {
 
   it('rewrites mirrored version files from the canonical Node and Bun pins', () => {
     const root = createTempRoot();
-    writeFile(root, '.nvmrc', '22\n');
-    writeFile(root, '.bun-version', '1.3.10\n');
-    writeFile(root, '.node-version', '21\n');
-    writeFile(root, '.tool-versions', 'nodejs 21\nbun 1.3.9\n');
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${mismatchedNodeVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${mismatchedNodeVersion}\nbun ${mismatchedBunVersion}\n`);
 
     const result = runScript(root);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Synced toolchain mirror files: .node-version, .tool-versions.');
-    expect(readFile(root, '.node-version')).toBe('22\n');
-    expect(readFile(root, '.tool-versions')).toBe('nodejs 22\nbun 1.3.10\n');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
   });
 
   it('reports a no-op when mirror files are already aligned', () => {
     const root = createTempRoot();
-    writeFile(root, '.nvmrc', '22\n');
-    writeFile(root, '.bun-version', '1.3.10\n');
-    writeFile(root, '.node-version', '22\n');
-    writeFile(root, '.tool-versions', 'nodejs 22\nbun 1.3.10\n');
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
 
     const result = runScript(root);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Toolchain mirror files are already aligned.');
-    expect(readFile(root, '.node-version')).toBe('22\n');
-    expect(readFile(root, '.tool-versions')).toBe('nodejs 22\nbun 1.3.10\n');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('updates only .node-version when the combined toolchain file is already aligned', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${mismatchedNodeVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .node-version.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('updates only .tool-versions when .node-version is already aligned', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${mismatchedNodeVersion}\nbun ${mismatchedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .tool-versions.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('creates missing mirror files from the canonical pins', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .node-version, .tool-versions.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('creates only the missing combined toolchain file when .node-version is already aligned', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .tool-versions.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('creates only the missing .node-version file when .tool-versions is already aligned', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .node-version.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
   });
 
   it('fails when the canonical version pins are missing', () => {
     const root = createTempRoot();
-    writeFile(root, '.nvmrc', '22\n');
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
 
     const result = runScript(root);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('Missing required .bun-version');
+  });
+
+  it('fails when the canonical Node pin is missing', () => {
+    const root = createTempRoot();
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Missing required .nvmrc');
   });
 });

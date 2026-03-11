@@ -18,6 +18,14 @@ const DEFAULT_SCOPE_IDS = [
   'case-resolver-prompt-exploder',
   'case-resolver-plain-text',
   'ai-paths',
+  'kangur-ai-tutor-onboarding',
+] as const;
+
+const KANGUR_AI_TUTOR_ONBOARDING_PATTERN_IDS = [
+  'kangur.onboarding.no_placeholders',
+  'kangur.onboarding.no_raw_urls',
+  'kangur.onboarding.no_admin_tokens',
+  'kangur.onboarding.non_spoiler_hints',
 ] as const;
 
 const FALLBACK: ValidatorPatternList = {
@@ -35,7 +43,7 @@ const FALLBACK: ValidatorPatternList = {
 // ─── buildDefaultValidatorPatternLists ────────────────────────────────────────
 
 describe('buildDefaultValidatorPatternLists', () => {
-  it('returns exactly 6 lists covering all scopes', () => {
+  it('returns exactly 7 lists covering all scopes', () => {
     const lists = buildDefaultValidatorPatternLists();
     expect(lists.map((l) => l.id)).toEqual(DEFAULT_SCOPE_IDS);
   });
@@ -46,9 +54,16 @@ describe('buildDefaultValidatorPatternLists', () => {
     expect(lists.every((l) => l.deletionLocked)).toBe(true);
   });
 
-  it('every list has empty patterns array', () => {
+  it('keeps default lists empty except for the Kangur onboarding seed stack', () => {
     const lists = buildDefaultValidatorPatternLists();
-    expect(lists.every((l) => l.patterns.length === 0)).toBe(true);
+    expect(
+      lists
+        .filter((list) => list.id !== 'kangur-ai-tutor-onboarding')
+        .every((list) => list.patterns.length === 0)
+    ).toBe(true);
+    expect(
+      lists.find((list) => list.id === 'kangur-ai-tutor-onboarding')?.patterns
+    ).toEqual([...KANGUR_AI_TUTOR_ONBOARDING_PATTERN_IDS]);
   });
 
   it('returns a new array on every call (no shared state)', () => {
@@ -228,8 +243,8 @@ describe('parseValidatorPatternLists', () => {
   it('accepts canonical object payloads', () => {
     const defaults = parseValidatorPatternLists(null);
     const result = parseValidatorPatternLists(buildValidatorPatternListsPayload([defaults[0]!]));
-    expect(result).toHaveLength(1);
-    expect(result[0]?.id).toBe('products');
+    expect(result).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'products' })]));
+    expect(result.map((list) => list.id)).toEqual(DEFAULT_SCOPE_IDS);
   });
 
   it('accepts canonical JSON payload strings', () => {
@@ -241,9 +256,16 @@ describe('parseValidatorPatternLists', () => {
       JSON.stringify(buildValidatorPatternListsPayload([caseResolverList!]))
     );
 
-    expect(parsed).toHaveLength(1);
-    expect(parsed[0]?.id).toBe('case-resolver-prompt-exploder');
-    expect(parsed[0]?.scope).toBe('case-resolver-prompt-exploder');
+    expect(parsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'case-resolver-prompt-exploder',
+          scope: 'case-resolver-prompt-exploder',
+        }),
+      ])
+    );
+    expect(parsed).toHaveLength(DEFAULT_SCOPE_IDS.length);
+    expect(parsed.map((list) => list.id).sort()).toEqual([...DEFAULT_SCOPE_IDS].sort());
   });
 
   it('falls back to defaults for legacy direct array payloads', () => {

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-10T21:35:14.475Z",
+  "generatedAt": "2026-03-11T04:30:37.106Z",
   "status": "passed",
   "summary": {
-    "total": 21,
+    "total": 4,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 21,
+    "infoCount": 4,
     "status": "passed",
     "fileCount": 4612
   },
@@ -17,13 +17,12 @@
   "trendCounters": {
     "doubleAssertionCount": 0,
     "anyCount": 0,
-    "eslintDisableCount": 18,
+    "eslintDisableCount": 1,
     "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@next/next/no-img-element": 17,
     "import/order": 1
   },
   "issues": [
@@ -39,160 +38,10 @@
     },
     {
       "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
-      "line": 234,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
-      "line": 304,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx",
-      "line": 198,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx",
-      "line": 201,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
-      "line": 29,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
-      "line": 100,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditMasksTab.tsx",
-      "line": 35,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/VersionGraphComparePanel.tsx",
-      "line": 60,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/VersionGraphInspector.tsx",
-      "line": 81,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/ai/image-studio/components/VersionNodeDetailsModal.tsx",
-      "line": 323,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/case-resolver/components/CaseResolverFileViewer.tsx",
-      "line": 186,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx",
-      "line": 341,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/features/cms/context-registry/page-builder.ts",
       "line": 231,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx",
-      "line": 242,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
-      "line": 37,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/features/products/components/ProductImageSlot.tsx",
-      "line": 184,
       "column": null,
       "snippet": null,
       "context": null
@@ -216,26 +65,6 @@
       "column": null,
       "snippet": null,
       "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/shared/ui/AgentPersonaMoodAvatar.tsx",
-      "line": 42,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @next/next/no-img-element",
-      "file": "src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx",
-      "line": 12,
-      "column": null,
-      "snippet": null,
-      "context": null
     }
   ],
   "rules": [
@@ -243,7 +72,7 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 18
+      "infoCount": 1
     },
     {
       "ruleId": "non-null-assertion",
@@ -252,5 +81,5 @@
       "infoCount": 3
     }
   ],
-  "durationMs": 920
+  "durationMs": 948
 }

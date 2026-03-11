@@ -33,12 +33,8 @@ import {
 } from '@/shared/lib/product-integrations-server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import {
-  hasAiPathsGraphModelNodeContext,
-  isAiPathsGraphModelPayload,
-  normalizeGraphModelPayloadForDispatch,
-  readGraphModelAiPathsRunContext,
-  resolveGraphModelPayloadSource,
-  resolveGraphModelRequestedModelId,
+  resolveAiPathsGraphModelRequestedModelId,
+  resolveGraphModelExecutionContext,
 } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
@@ -110,10 +106,18 @@ export type Job = ProductAiJobRecord & {
   payload: JobPayload;
 };
 
-const enrichAiPathsConfigError = (error: unknown, payload: JobPayload, requestedModelId: string): never => {
+const enrichAiPathsConfigError = (
+  error: unknown,
+  args: {
+    requestedModelId: string;
+    runId: string | null;
+    nodeId: string | null;
+    nodeTitle: string | null;
+  }
+): never => {
   if (!(error instanceof Error)) throw error;
+  const { requestedModelId, runId, nodeId, nodeTitle } = args;
 
-  const { nodeId, nodeTitle, runId } = readGraphModelAiPathsRunContext(payload);
   const failingNodeLabel = nodeTitle
     ? nodeId
       ? `Failing AI Paths node "${nodeTitle}" <${nodeId}>`
@@ -130,28 +134,6 @@ const enrichAiPathsConfigError = (error: unknown, payload: JobPayload, requested
     error.message = `${error.message} ${detailParts.join(', ')}.`;
   }
   throw error;
-};
-
-const resolveRequestedAiPathsModelId = async (payload: JobPayload): Promise<string> => {
-  const resolvedModelId = resolveGraphModelRequestedModelId(payload);
-  if (resolvedModelId) return resolvedModelId;
-
-  const { runId, nodeId } = readGraphModelAiPathsRunContext(payload);
-  if (!runId || !nodeId) return '';
-
-  try {
-    const repository = await getPathRunRepository();
-    const run = await repository.findRunById(runId);
-    const node = run?.graph?.nodes.find((entry): boolean => entry.id === nodeId);
-    const modelConfig =
-      node?.config && typeof node.config === 'object' && !Array.isArray(node.config)
-        ? ((node.config as Record<string, unknown>)['model'] as Record<string, unknown> | undefined)
-        : undefined;
-    const recoveredModelId = modelConfig?.['modelId'];
-    return typeof recoveredModelId === 'string' ? recoveredModelId.trim() : '';
-  } catch {
-    return '';
-  }
 };
 
 const buildImageParts = async (
@@ -221,12 +203,9 @@ const buildImageParts = async (
 
 export async function processGraphModel(job: Job): Promise<Record<string, unknown>> {
   const { payload: rawPayload, productId } = job;
-  const source = resolveGraphModelPayloadSource(rawPayload);
-  const aiPathsPayload =
-    source === 'ai_paths' && isAiPathsGraphModelPayload(rawPayload)
-      ? normalizeGraphModelPayloadForDispatch(rawPayload)
-      : null;
-  const payload = aiPathsPayload ?? rawPayload;
+  const executionContext = resolveGraphModelExecutionContext(rawPayload);
+  const source = executionContext.source;
+  const payload = (executionContext.payload ?? rawPayload) as JobPayload;
   const rawPrompt = typeof payload.prompt === 'string' ? payload.prompt.trim() : '';
   if (!rawPrompt) {
     throw badRequestError('Graph model job missing prompt', { jobId: job.id });
@@ -234,8 +213,11 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   if (!source) {
     throw badRequestError('Graph model job missing source', { jobId: job.id });
   }
-  const directRequestedModelId = resolveGraphModelRequestedModelId(payload);
-  if (source === 'ai_paths' && !hasAiPathsGraphModelNodeContext(payload) && !directRequestedModelId) {
+  if (
+    source === 'ai_paths' &&
+    !executionContext.hasAiPathsNodeContext &&
+    !executionContext.requestedModelId
+  ) {
     throw badRequestError(
       'AI Paths graph_model payload requires graph.runId and graph.nodeId when no requested model is provided.',
       { jobId: job.id }
@@ -243,7 +225,13 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   }
   const requestedModelId =
     source === 'ai_paths'
-      ? await resolveRequestedAiPathsModelId(payload)
+      ? await resolveAiPathsGraphModelRequestedModelId({
+        payload,
+        findRunById: async (runId) => {
+          const repository = await getPathRunRepository();
+          return repository.findRunById(runId);
+        },
+      })
       : typeof payload.modelId === 'string'
         ? payload.modelId.trim()
         : '';
@@ -281,7 +269,14 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
       defaultMaxTokens: 800,
       defaultSystemPrompt: 'You are an AI assistant.',
       runtimeKind: payload.vision ? 'vision' : 'chat',
-    }).catch((error: unknown) => enrichAiPathsConfigError(error, payload, requestedModelId));
+    }).catch((error: unknown) =>
+      enrichAiPathsConfigError(error, {
+        requestedModelId,
+        runId: executionContext.runId,
+        nodeId: executionContext.nodeId,
+        nodeTitle: executionContext.nodeTitle,
+      })
+    );
     modelId = brainConfig.modelId;
     temperature = brainConfig.temperature;
     maxTokens = brainConfig.maxTokens;

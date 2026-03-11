@@ -353,6 +353,51 @@ describe('useTriggerButtons', () => {
     });
   });
 
+  it('toasts a warning and aborts the trigger when entity context resolves no id', async () => {
+    const getEntityJson = vi.fn(() => ({ name_en: 'No ID product' })); // no id/_id/productId
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        getEntityJson,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(fireAiPathTriggerEventMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Could not resolve entity ID for this AI Path trigger. Ensure the product has a valid ID.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('does not apply the null entity guard for custom entityType', async () => {
+    // 'custom' triggers are allowed to fire without a resolved entityId
+    const getEntityJson = vi.fn(() => ({ name_en: 'No ID custom entity' }));
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'custom',
+        getEntityJson,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalled();
+    expect(toastMock).not.toHaveBeenCalledWith(
+      expect.stringContaining('Could not resolve entity ID'),
+      expect.anything()
+    );
+  });
+
   it('surfaces the primary terminal failure summary from run details', async () => {
     const { result } = renderHook(() =>
       useTriggerButtons({

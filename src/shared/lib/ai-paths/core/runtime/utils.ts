@@ -337,13 +337,17 @@ export const resolveEntityIdFromInputs = (
   return '';
 };
 
+const POLL_REQUEST_TIMEOUT_MS =
+  typeof window === 'undefined' ? 60_000 : 15_000;
+
 export const pollGraphJob = async (
   jobId: string,
-  options?: { intervalMs?: number; maxAttempts?: number; signal?: AbortSignal }
+  options?: { intervalMs?: number; maxAttempts?: number; signal?: AbortSignal; pollRequestTimeoutMs?: number }
 ): Promise<string> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   const signal = options?.signal;
+  const pollRequestTimeoutMs = options?.pollRequestTimeoutMs ?? POLL_REQUEST_TIMEOUT_MS;
   const maxNotFoundGraceAttempts = Math.max(1, Math.min(maxAttempts, 3));
   let consecutiveNotFoundAttempts = 0;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -351,7 +355,10 @@ export const pollGraphJob = async (
       throw createAbortError();
     }
     try {
-      const pollResult = await aiJobsApi.poll(jobId, signal ? { signal } : {});
+      const pollResult = await aiJobsApi.poll(jobId, {
+        ...(signal ? { signal } : {}),
+        timeoutMs: pollRequestTimeoutMs,
+      });
       if (!pollResult.ok) {
         if (signal?.aborted) {
           throw createAbortError();

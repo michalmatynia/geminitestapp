@@ -56,6 +56,12 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Dialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div role='dialog'>{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode; className?: string }) => <p>{children}</p>,
 }));
 
 import { TriggerButtonBar } from './TriggerButtonBar';
@@ -113,7 +119,8 @@ describe('TriggerButtonBar', () => {
 
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByTitle('run-product-feedback-123456')).toBeInTheDocument();
-    expect(screen.getByText('Database write affected 0 records for update.')).toBeInTheDocument();
+    // Error text appears in both the trigger preview button and the expanded dialog content
+    expect(screen.getAllByText('Database write affected 0 records for update.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
       'href',
       '/admin/ai-paths/queue?tab=paths-all&query=run-product-feedback-123456&runId=run-product-feedback-123456&status=all'

@@ -207,6 +207,22 @@ export function useTriggerButtons({
       }));
       const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
 
+      // Guard: if the caller signals an entity context (via explicit entityId prop or getEntityJson)
+      // but resolution yields null, abort early rather than firing with no entity context.
+      // 'custom' entityType is exempt — those triggers intentionally have no entity.
+      if (
+        resolvedEntityId === null &&
+        entityType !== 'custom' &&
+        (entityId !== undefined || getEntityJson !== undefined)
+      ) {
+        toast(
+          'Could not resolve entity ID for this AI Path trigger. Ensure the product has a valid ID.',
+          { variant: 'warning' }
+        );
+        setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
+        return;
+      }
+
       try {
         await fireAiPathTriggerEvent({
           triggerEventId: button.id,

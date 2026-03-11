@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -34,5 +34,9 @@ shared toolchain surfaces.
   `npm run check:toolchain:contract:node`
 - Shared npm-first toolchain contract test bundle:
   `npm run test:toolchain:contract`
+- Shared Bun config contract check:
+  `bun run check:bun:config`
 - Shared Bun/npm/Node contract checks:
   `bun run check:toolchain:contract`
+- Shared Bun compatibility gate:
+  `bun run check:bun:compat`

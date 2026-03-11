@@ -2,11 +2,8 @@ import path from 'node:path';
 
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
-import nextPlugin from '@next/eslint-plugin-next';
 import globals from 'globals';
 import importPlugin from 'eslint-plugin-import';
-import reactPlugin from 'eslint-plugin-react';
-import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 const includeTestsFromEnv = process.env.ESLINT_INCLUDE_TESTS === '1';
@@ -79,10 +76,7 @@ const typedTestLanguageOptions = {
 
 const sharedPluginConfig = {
   '@typescript-eslint': tseslint.plugin,
-  react: reactPlugin,
-  'react-hooks': reactHooksPlugin,
   import: importPlugin,
-  '@next/next': nextPlugin,
 };
 
 const sharedSettings = {
@@ -99,7 +93,7 @@ const sharedSettings = {
 
 const commonRules = {
   ...js.configs.recommended.rules,
-  indent: ['error', 2, { SwitchCase: 1 }],
+  indent: 'off',
   'linebreak-style': ['error', 'unix'],
   quotes: ['error', 'single'],
   'jsx-quotes': ['error', 'prefer-single'],
@@ -136,10 +130,6 @@ const commonRules = {
   '@typescript-eslint/no-unnecessary-type-assertion': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',
   '@typescript-eslint/restrict-plus-operands': 'error',
-  'react/react-in-jsx-scope': 'off',
-  'react/display-name': 'off',
-  'react/prop-types': 'off',
-  '@next/next/no-img-element': 'warn',
   'import/order': [
     'warn',
     {

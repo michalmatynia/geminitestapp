@@ -18,7 +18,7 @@ the app.
 
 ## Prerequisites
 
-- Use Node 22 from `.nvmrc`.
+- Use the repo-pinned Node LTS version from `.nvmrc`.
 - Ensure `.env` is populated for the local stack.
 - Keep OpenTelemetry enabled when validating live telemetry:
   - `OTEL_ENABLED=true`

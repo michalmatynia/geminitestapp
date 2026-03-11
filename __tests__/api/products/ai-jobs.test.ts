@@ -64,7 +64,18 @@ describe('Product AI Jobs API', () => {
 
   describe('POST /api/products/ai-jobs/enqueue', () => {
     it('should enqueue a new job', async () => {
-      const payload = { productId: 'prod1', type: 'graph_model', payload: {} };
+      const payload = {
+        productId: 'prod1',
+        type: 'graph_model',
+        payload: {
+          prompt: 'Explain this product graph.',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+          },
+        },
+      };
       const res = await POST_ENQUEUE(
         new NextRequest('http://localhost/api/products/ai-jobs/enqueue', {
           method: 'POST',

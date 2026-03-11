@@ -11,6 +11,12 @@ import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   ActionMenu,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   DropdownMenuItem,
   StatusBadge,
   type StatusVariant,
@@ -76,9 +82,9 @@ const resolveRunFeedbackPresentation = (
     case 'running':
       return { label: 'Running', variant: 'processing' };
     case 'blocked_on_lease':
-      return { label: 'Waiting for lease', variant: 'warning' };
+      return { label: 'Awaiting resource', variant: 'warning' };
     case 'handoff_ready':
-      return { label: 'Handoff ready', variant: 'info' };
+      return { label: 'Ready for review', variant: 'info' };
     case 'paused':
       return { label: 'Paused', variant: 'warning' };
     case 'completed':
@@ -88,7 +94,7 @@ const resolveRunFeedbackPresentation = (
     case 'canceled':
       return { label: 'Canceled', variant: 'warning' };
     case 'dead_lettered':
-      return { label: 'Dead lettered', variant: 'error' };
+      return { label: 'Failed (max retries)', variant: 'error' };
     default:
       return { label: status, variant: 'neutral' };
   }
@@ -101,6 +107,54 @@ const resolveRunRecency = (run: TriggerButtonLastRun): number => {
   const timestamp = Date.parse(run.updatedAt ?? run.finishedAt ?? '');
   return Number.isFinite(timestamp) ? timestamp : 0;
 };
+
+function ErrorDetailDialog({
+  errorMessage,
+  messageClassName,
+}: {
+  errorMessage: string;
+  messageClassName: string;
+}): React.JSX.Element {
+  const [copied, setCopied] = React.useState(false);
+  const preview = errorMessage.length > 60 ? `${errorMessage.slice(0, 60)}…` : errorMessage;
+
+  const handleCopy = (): void => {
+    void navigator.clipboard.writeText(errorMessage).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type='button'
+          className={cn('min-w-0 truncate text-left hover:underline', messageClassName)}
+          title='Click to see full error'
+        >
+          {preview}
+        </button>
+      </DialogTrigger>
+      <DialogContent className='max-w-lg'>
+        <DialogHeader>
+          <DialogTitle className='text-sm'>Run Error Detail</DialogTitle>
+          <DialogDescription className='sr-only'>Full error message from the AI Path run</DialogDescription>
+        </DialogHeader>
+        <pre className='max-h-60 overflow-auto whitespace-pre-wrap break-words rounded bg-gray-900 p-3 font-mono text-[11px] text-red-300'>
+          {errorMessage}
+        </pre>
+        <button
+          type='button'
+          onClick={handleCopy}
+          className='self-start text-[11px] text-blue-300 hover:text-blue-200'
+        >
+          {copied ? 'Copied!' : 'Copy error'}
+        </button>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function TriggerRunFeedback(props: {
   location: AiTriggerButtonLocation;
@@ -139,9 +193,7 @@ function TriggerRunFeedback(props: {
         {truncateMiddle(run.runId)}
       </span>
       {run.errorMessage ? (
-        <span className={cn('truncate', messageClassName)} title={run.errorMessage}>
-          {run.errorMessage}
-        </span>
+        <ErrorDetailDialog errorMessage={run.errorMessage} messageClassName={messageClassName} />
       ) : null}
       <a
         href={queueHref}

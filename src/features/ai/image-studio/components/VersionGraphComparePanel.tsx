@@ -57,7 +57,6 @@ export function VersionGraphComparePanel(): React.JSX.Element {
             )}
             <div className='aspect-square w-full overflow-hidden rounded border border-border/60 bg-card/30'>
               {getSlotImageSrc(cNode.slot) ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={getSlotImageSrc(cNode.slot)!}
                   alt={cNode.label}

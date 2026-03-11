@@ -42,19 +42,23 @@ describe('aiJobsApi', () => {
     await aiJobsApi.get('job-1');
     await aiJobsApi.list();
 
-    expect(apiPostMock).toHaveBeenCalledWith('/api/v2/products/ai-jobs/enqueue', {
-      productId: 'p-1',
-      type: 'graph_model',
-      payload: {
-        prompt: 'x',
-        source: 'ai_paths',
-        graph: {
-          runId: 'run-1',
-          nodeId: 'node-1',
-          requestedModelId: 'gpt-4o-mini',
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/products/ai-jobs/enqueue',
+      {
+        productId: 'p-1',
+        type: 'graph_model',
+        payload: {
+          prompt: 'x',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+            requestedModelId: 'gpt-4o-mini',
+          },
         },
       },
-    });
+      expect.objectContaining({ timeoutMs: expect.any(Number) })
+    );
     expect(apiFetchMock).toHaveBeenNthCalledWith(1, '/api/v2/products/ai-jobs/job-1');
     expect(apiFetchMock).toHaveBeenNthCalledWith(2, '/api/v2/products/ai-jobs');
   });
@@ -73,7 +77,7 @@ describe('aiJobsApi', () => {
 
     const response = await aiJobsApi.poll('job-2');
 
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/v2/products/ai-jobs/job-2', undefined);
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/v2/products/ai-jobs/job-2', {});
     expect(response).toEqual({
       ok: true,
       data: {

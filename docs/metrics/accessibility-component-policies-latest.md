@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Accessibility Component Policy Report
 
-Generated at: 2026-03-10T21:35:24.553Z
+Generated at: 2026-03-11T04:30:46.779Z
 
 ## Summary
 
 - Status: PASSED
 - Files scanned: 68
-- Dialogs checked: 4
+- Dialogs checked: 5
 - Alert dialogs checked: 1
 - Tablists checked: 32
 - Tooltips checked: 73

@@ -59,6 +59,50 @@ describe('Bun config check', () => {
     expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
   });
 
+  it('passes when the install section contains comments and extra settings', () => {
+    const root = createTempRoot();
+    writeFile(
+      root,
+      'bunfig.toml',
+      ['[install]', '# keep Bun aligned with npm-style hoisting', 'optional = true', 'linker = "hoisted"', ''].join(
+        '\n'
+      )
+    );
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
+  });
+
+  it('passes when the install section is followed by another TOML section', () => {
+    const root = createTempRoot();
+    writeFile(
+      root,
+      'bunfig.toml',
+      ['[install]', 'linker = "hoisted"', '', '[workspace]', 'cache = true', ''].join('\n')
+    );
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
+  });
+
+  it('passes when the install section appears after another TOML section', () => {
+    const root = createTempRoot();
+    writeFile(
+      root,
+      'bunfig.toml',
+      ['[workspace]', 'cache = true', '', '[install]', 'linker = "hoisted"', ''].join('\n')
+    );
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
+  });
+
   it('fails when bunfig.toml is missing', () => {
     const root = createTempRoot();
 

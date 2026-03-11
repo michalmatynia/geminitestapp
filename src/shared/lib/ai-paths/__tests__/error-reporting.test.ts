@@ -106,6 +106,28 @@ describe('buildAiPathRunErrorSummary', () => {
     expect(result).toBeNull();
   });
 
+  it('includes timeout nodes in nodeFailures with AI_PATHS_NODE_TIMEOUT code', () => {
+    const run = buildRun();
+    const node = buildNode({ status: 'timeout', errorMessage: null });
+
+    const result = buildAiPathRunErrorSummary({ run, nodes: [node], events: NO_EVENTS });
+
+    expect(result).not.toBeNull();
+    expect(result!.nodeFailures[0]).toMatchObject({
+      nodeId: 'node-db-update',
+      code: 'AI_PATHS_NODE_TIMEOUT',
+    });
+  });
+
+  it('uses the default timeout message when timeout node has no errorMessage or error', () => {
+    const run = buildRun();
+    const node = buildNode({ status: 'timeout', errorMessage: null, error: null });
+
+    const result = buildAiPathRunErrorSummary({ run, nodes: [node], events: NO_EVENTS });
+
+    expect(result!.nodeFailures[0]?.message).toBe('Node timed out without completing.');
+  });
+
   it('aggregates both failed and blocked nodes in the same summary', () => {
     const run = buildRun();
     const failedNode = buildNode({

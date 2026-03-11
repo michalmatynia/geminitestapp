@@ -3,7 +3,6 @@ import path from 'node:path';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import globals from 'globals';
-import importPlugin from 'eslint-plugin-import';
 import tseslint from 'typescript-eslint';
 
 const includeTestsFromEnv = process.env.ESLINT_INCLUDE_TESTS === '1';
@@ -76,23 +75,22 @@ const typedTestLanguageOptions = {
 
 const sharedPluginConfig = {
   '@typescript-eslint': tseslint.plugin,
-  import: importPlugin,
 };
 
 const sharedSettings = {
   react: {
     version: 'detect',
   },
-  'import/resolver': {
-    typescript: {
-      project: sourceTsProject,
-    },
-    node: true,
-  },
+};
+
+const preservedLegacyCoreRuleOffs = {
+  'no-useless-assignment': 'off',
+  'preserve-caught-error': 'off',
 };
 
 const commonRules = {
   ...js.configs.recommended.rules,
+  ...preservedLegacyCoreRuleOffs,
   indent: 'off',
   'linebreak-style': ['error', 'unix'],
   quotes: ['error', 'single'],
@@ -130,32 +128,6 @@ const commonRules = {
   '@typescript-eslint/no-unnecessary-type-assertion': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',
   '@typescript-eslint/restrict-plus-operands': 'error',
-  'import/order': [
-    'warn',
-    {
-      groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'object', 'type'],
-      pathGroups: [
-        {
-          pattern: '@/**',
-          group: 'internal',
-        },
-      ],
-      'newlines-between': 'always',
-      alphabetize: {
-        order: 'asc',
-        caseInsensitive: true,
-      },
-    },
-  ],
-  'import/no-restricted-paths': [
-    'error',
-    {
-      zones: [
-        { target: './src/shared', from: './src/features' },
-        { target: './src/app/api', from: './src/features' },
-      ],
-    },
-  ],
   'no-restricted-imports': [
     'error',
     {
@@ -220,6 +192,7 @@ export default defineConfig([
     },
     rules: {
       ...js.configs.recommended.rules,
+      ...preservedLegacyCoreRuleOffs,
       quotes: ['error', 'single'],
       semi: ['error', 'always'],
     },
@@ -244,6 +217,7 @@ export default defineConfig([
     },
     rules: {
       ...js.configs.recommended.rules,
+      ...preservedLegacyCoreRuleOffs,
       quotes: ['error', 'single'],
       semi: ['error', 'always'],
       'no-unused-vars': 'off',
@@ -319,12 +293,6 @@ export default defineConfig([
     },
     rules: {
       'no-console': 'warn',
-      'import/no-restricted-paths': [
-        'error',
-        {
-          zones: [{ target: './src/shared', from: './src/features' }],
-        },
-      ],
     },
   },
 
@@ -345,7 +313,6 @@ export default defineConfig([
     settings: sharedSettings,
     rules: {
       ...commonRules,
-      'import/no-restricted-paths': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -402,9 +369,6 @@ export default defineConfig([
       'src/shared/utils/observability/error-system.ts',
       'src/shared/lib/auth/settings-manage-access.ts',
     ],
-    rules: {
-      'import/no-restricted-paths': 'off',
-    },
   },
 
   {

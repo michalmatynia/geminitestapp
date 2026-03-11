@@ -319,6 +319,41 @@ describe('processGraphModel AI Paths model selection', () => {
     expect(runBrainChatCompletion).not.toHaveBeenCalled();
   });
 
+  it('uses recovered run-graph node title in AI Paths config errors when payload nodeTitle is missing', async () => {
+    vi.mocked(getPathRunRepository).mockResolvedValue({
+      findRunById: vi.fn().mockResolvedValue({
+        graph: {
+          nodes: [
+            {
+              id: 'node-model-ctx',
+              title: 'Recovered Opis i Tytuł',
+              config: {
+                model: {},
+              },
+            },
+          ],
+        },
+      }),
+    } as never);
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockRejectedValue(
+      configurationError('AI Paths Model has no model assigned in AI Brain.')
+    );
+
+    await expect(
+      processGraphModel(
+        buildJob({
+          modelId: '',
+          graph: {
+            runId: 'run-ctx-1',
+            nodeId: 'node-model-ctx',
+          },
+        })
+      )
+    ).rejects.toThrow(
+      'AI Paths Model has no model assigned in AI Brain. Failing AI Paths node "Recovered Opis i Tytuł" <node-model-ctx>, run run-ctx-1, requested node model: none.'
+    );
+  });
+
   it('fails fast for ai_paths jobs without graph node context when no requested model can be resolved', async () => {
     await expect(
       processGraphModel(

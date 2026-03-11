@@ -33,7 +33,7 @@ import {
 } from '@/shared/lib/product-integrations-server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import {
-  resolveAiPathsGraphModelRequestedModelId,
+  resolveAiPathsGraphModelNodeSnapshotFromExecutionContext,
   resolveGraphModelExecutionContext,
 } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 
@@ -223,18 +223,20 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
       { jobId: job.id }
     );
   }
-  const requestedModelId =
+  const aiPathsNodeSnapshot =
     source === 'ai_paths'
-      ? await resolveAiPathsGraphModelRequestedModelId({
-        payload,
+      ? await resolveAiPathsGraphModelNodeSnapshotFromExecutionContext({
+        executionContext,
         findRunById: async (runId) => {
           const repository = await getPathRunRepository();
           return repository.findRunById(runId);
         },
       })
-      : typeof payload.modelId === 'string'
-        ? payload.modelId.trim()
-        : '';
+      : null;
+  const requestedModelId =
+    aiPathsNodeSnapshot?.requestedModelId ??
+    (typeof payload.modelId === 'string' ? payload.modelId.trim() : '');
+  const resolvedNodeTitle = aiPathsNodeSnapshot?.nodeTitle ?? executionContext.nodeTitle;
   const requestedTemperature =
     typeof payload.temperature === 'number' ? payload.temperature : undefined;
   const requestedMaxTokens = typeof payload.maxTokens === 'number' ? payload.maxTokens : undefined;
@@ -274,7 +276,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
         requestedModelId,
         runId: executionContext.runId,
         nodeId: executionContext.nodeId,
-        nodeTitle: executionContext.nodeTitle,
+        nodeTitle: resolvedNodeTitle,
       })
     );
     modelId = brainConfig.modelId;

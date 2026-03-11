@@ -77,6 +77,34 @@ describe('sync toolchain mirrors', () => {
     expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
   });
 
+  it('normalizes surrounding whitespace from the canonical pin files before writing mirrors', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `  ${expectedNodeVersion}  \n`);
+    writeFile(root, '.bun-version', `  ${expectedBunVersion}  \n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .node-version, .tool-versions.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
+  it('rewrites semantically aligned mirror files to the canonical newline-terminated format', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);
+    writeFile(root, '.bun-version', `${expectedBunVersion}\n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Synced toolchain mirror files: .node-version, .tool-versions.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
   it('updates only .node-version when the combined toolchain file is already aligned', () => {
     const root = createTempRoot();
     writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);

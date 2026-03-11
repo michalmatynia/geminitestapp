@@ -187,13 +187,12 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
     case ERROR_CATEGORY.AI:
       if (
         normalizedMessage.includes('no model assigned') ||
-        normalizedMessage.includes('ai brain') ||
         (normalizedMessage.includes('model') && normalizedMessage.includes('did not select'))
       ) {
         actions.push({
-          label: 'Configure AI Brain',
+          label: 'Select a model on the node',
           description:
-            'Open AI Brain settings and set a default model, or select a model directly on the Model node in your AI Path.',
+            'Open the Model node in your AI Path and select the AI model to use for this step.',
           actionType: 'CHECK_CONFIG',
         });
         break;

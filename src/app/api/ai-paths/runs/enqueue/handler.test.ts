@@ -714,4 +714,87 @@ describe('ai-paths runs enqueue handler', () => {
 
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
   });
+
+  it('throws a 503 service unavailable when the queue readiness check times out', async () => {
+    assertAiPathRunQueueReadyForEnqueueMock.mockRejectedValue(
+      new Error('queue_preflight_timeout after 10000ms')
+    );
+    const config = createDefaultPathConfig('path-queue-timeout');
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: { aiPathsValidation: { enabled: false } },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/queue readiness check timed out/i);
+
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('re-throws non-timeout queue readiness errors without wrapping them as 503', async () => {
+    const queueError = new Error('Redis connection refused');
+    assertAiPathRunQueueReadyForEnqueueMock.mockRejectedValue(queueError);
+    const config = createDefaultPathConfig('path-queue-error');
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: { aiPathsValidation: { enabled: false } },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow('Redis connection refused');
+
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves runId from a runId field in the enqueue response', async () => {
+    enqueuePathRunMock.mockResolvedValueOnce({ runId: 'run-runid-1', status: 'queued' });
+    const config = createDefaultPathConfig('path-runid-field');
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        meta: { aiPathsValidation: { enabled: false } },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    await expect(parseResponseBody(response)).resolves.toMatchObject({ runId: 'run-runid-1' });
+  });
+
+  it('repairs stale translation starter configs before enqueueing stored paths', async () => {
+    const config = buildLegacyStoredTranslationConfig();
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        entityId: 'product-1',
+        entityType: 'product',
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        key: `ai_paths_config_${config.id}`,
+      }),
+    ]);
+  });
 });

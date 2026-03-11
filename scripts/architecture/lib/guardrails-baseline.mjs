@@ -8,6 +8,8 @@ export const DEFAULT_GUARDRAIL_BASELINE_RELATIVE_PATH = path.join(
 );
 export const DEFAULT_GUARDRAIL_HARD_LIMITS = Object.freeze({
   sourceLargestFileLines: 4000,
+  'imports.featuresToSharedTotalImports': 0,
+  'imports.featuresToAppApiTotalImports': 0,
 });
 export const DEFAULT_INFORMATIONAL_GUARDRAIL_KEYS = Object.freeze(['api.delegatedServerRoutes']);
 export const UI_CONSOLIDATION_GUARDRAIL_RULES = Object.freeze([
@@ -55,6 +57,8 @@ export const buildArchitectureGuardrailSnapshot = (metrics, propDrilling, uiCons
   'api.routesWithoutExplicitCachePolicy': metrics.api.routesWithoutExplicitCachePolicy,
   'imports.appFeatureBarrelImports': metrics.imports.appFeatureBarrelImports,
   'imports.appFeatureDeepImports': metrics.imports.appFeatureDeepImports,
+  'imports.featuresToSharedTotalImports': metrics.imports.featureToSharedTotalImports,
+  'imports.featuresToAppApiTotalImports': metrics.imports.featureToAppApiTotalImports,
   'imports.sharedToFeaturesTotalImports': metrics.imports.sharedToFeaturesTotalImports,
   'architecture.crossFeatureEdgePairs': metrics.architecture.crossFeatureEdgePairs,
   'runtime.setIntervalOccurrences': metrics.runtime.setIntervalOccurrences,
@@ -160,23 +164,33 @@ export const compareGuardrailSnapshotAgainstBaseline = (
     rows.push({ label: key, current, max, status: 'OK' });
   }
 
-  const hardMaxLargestFile = Number(
-    baseline.hardLimits?.sourceLargestFileLines ?? DEFAULT_GUARDRAIL_HARD_LIMITS.sourceLargestFileLines
-  );
-  const currentLargest = snapshot['source.largestFileLines'] ?? 0;
-  if (currentLargest > hardMaxLargestFile) {
-    failed = true;
+  const hardLimits = {
+    ...DEFAULT_GUARDRAIL_HARD_LIMITS,
+    ...(baseline.hardLimits ?? {}),
+  };
+  for (const [hardLimitKey, hardLimitValue] of Object.entries(hardLimits).sort(([a], [b]) =>
+    a.localeCompare(b)
+  )) {
+    const snapshotKey =
+      hardLimitKey === 'sourceLargestFileLines' ? 'source.largestFileLines' : hardLimitKey;
+    const label = `${snapshotKey} (hard limit)`;
+    const max = Number(hardLimitValue);
+    const current = Number(snapshot[snapshotKey] ?? 0);
+    if (current > max) {
+      failed = true;
+      rows.push({
+        label,
+        current,
+        max,
+        status: 'FAIL',
+      });
+      continue;
+    }
+
     rows.push({
-      label: 'source.largestFileLines (hard limit)',
-      current: currentLargest,
-      max: hardMaxLargestFile,
-      status: 'FAIL',
-    });
-  } else {
-    rows.push({
-      label: 'source.largestFileLines (hard limit)',
-      current: currentLargest,
-      max: hardMaxLargestFile,
+      label,
+      current,
+      max,
       status: 'OK',
     });
   }

@@ -1,4 +1,3 @@
-/* eslint-disable import/order */
 import { z } from 'zod';
 import { namedDtoSchema } from '@/shared/contracts/base';
 import type {
@@ -45,7 +44,6 @@ import {
   type ProductListingWithDetails,
 } from './listings';
 import type { ImportTemplateParameterImport } from './templates';
-/* eslint-enable import/order */
 
 export * from './base';
 export * from './connections';

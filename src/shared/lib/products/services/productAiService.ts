@@ -5,10 +5,8 @@ import { ErrorSystem, logSystemError, logSystemEvent } from '@/shared/lib/observ
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
-  normalizeGraphModelPayloadForDispatch,
-  resolveGraphModelReuseIdentity,
-  safeParseGraphModelJobEnqueuePayload,
-  summarizeGraphModelPayload,
+  matchesGraphModelReuseIdentity,
+  prepareGraphModelEnqueuePayload,
 } from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
@@ -37,6 +35,11 @@ const GRAPH_MODEL_REUSE_SCAN_LIMIT = parseEnvMs(
   30,
   1
 );
+
+type PreparedGraphModelEnqueuePayload = Extract<
+  ReturnType<typeof prepareGraphModelEnqueuePayload>,
+  { success: true }
+>;
 
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
@@ -101,11 +104,16 @@ const canReuseGraphModelJob = (
   requestedModelId: string | null
 ): boolean => {
   if (job.type !== 'graph_model') return false;
-  const existingIdentity = resolveGraphModelReuseIdentity(job.payload);
-  if (existingIdentity.cacheKey !== cacheKey) return false;
-  if (existingIdentity.payloadHash !== payloadHash) return false;
-  const existingRequestedModelId = existingIdentity.requestedModelId;
-  if (requestedModelId !== existingRequestedModelId) {
+  if (
+    !matchesGraphModelReuseIdentity({
+      payload: job.payload,
+      identity: {
+        cacheKey,
+        payloadHash,
+        requestedModelId,
+      },
+    })
+  ) {
     // Reuse is only safe when both sides resolve to the same model or both sides
     // have no model hint at all. Legacy queued jobs without requestedModelId
     // should not be reused against newer node-scoped model jobs.
@@ -133,19 +141,21 @@ export async function enqueueProductAiJob(
   payload: unknown
 ): Promise<ProductAiJob> {
   let normalizedPayload = payload;
+  let graphModelPrepared: PreparedGraphModelEnqueuePayload | null = null;
 
   if (type === 'graph_model') {
-    const parsed = safeParseGraphModelJobEnqueuePayload(payload);
-    if (!parsed.success) {
+    const prepared = prepareGraphModelEnqueuePayload(payload);
+    if (!prepared.success) {
       throw badRequestError('Invalid graph_model payload', {
         productId,
-        issues: parsed.error.issues.map((issue) => ({
+        issues: prepared.error.issues.map((issue) => ({
           path: issue.path.join('.'),
           message: issue.message,
         })),
       });
     }
-    normalizedPayload = normalizeGraphModelPayloadForDispatch(parsed.data);
+    graphModelPrepared = prepared;
+    normalizedPayload = prepared.payload;
   }
 
   try {
@@ -154,8 +164,7 @@ export async function enqueueProductAiJob(
       productId,
       context: {
         type,
-        payloadSummary:
-          type === 'graph_model' ? summarizeGraphModelPayload(normalizedPayload) : undefined,
+        payloadSummary: type === 'graph_model' ? graphModelPrepared?.summary : undefined,
       },
     });
   } catch {
@@ -170,8 +179,10 @@ export async function enqueueProductAiJob(
   const jobRepository = await getProductAiJobRepository();
 
   if (type === 'graph_model') {
-    const { cacheKey, payloadHash, requestedModelId } =
-      resolveGraphModelReuseIdentity(normalizedPayload);
+    if (!graphModelPrepared) {
+      throw invalidStateError('graph_model enqueue preparation missing');
+    }
+    const { cacheKey, payloadHash, requestedModelId } = graphModelPrepared.reuseIdentity;
     if (cacheKey && payloadHash) {
       const existingJobs = await jobRepository.findJobs(productId, {
         type: 'graph_model',

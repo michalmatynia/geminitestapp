@@ -380,6 +380,7 @@ export const productListPreferencesSchema = z.object({
   pageSize: z.number(),
   thumbnailSource: z.enum(['file', 'link', 'base64']),
   filtersCollapsedByDefault: z.boolean(),
+  showTriggerRunFeedback: z.boolean(),
   advancedFilterPresets: z.array(productAdvancedFilterPresetSchema),
   appliedAdvancedFilter: z.string(),
   appliedAdvancedFilterPresetId: z.string().nullable(),

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   createExportTemplate,
@@ -11,31 +10,13 @@ import {
   updateExportTemplate,
   updateImportTemplate,
 } from '@/features/integrations/server';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  createImportExportTemplateSchema,
+  type ImportExportTemplateCreateInput,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-
-const mappingSchema = z.object({
-  sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1),
-});
-
-const parameterImportSchema = z.object({
-  enabled: z.boolean().optional(),
-  mode: z.enum(['all', 'mapped']).optional(),
-  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
-  createMissingParameters: z.boolean().optional(),
-  overwriteExistingValues: z.boolean().optional(),
-  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
-});
-
-const templateSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  mappings: z.array(mappingSchema).default([]),
-  exportImagesAsBase64: z.boolean().optional(),
-  parameterImport: parameterImportSchema.optional(),
-});
 
 export async function GET_templates_handler(
   _req: NextRequest,
@@ -60,13 +41,13 @@ export async function POST_templates_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const parsed = await parseJsonBody(req, templateSchema, {
+  const parsed = await parseJsonBody(req, createImportExportTemplateSchema, {
     logPrefix: `templates.${type}.POST`,
   });
   if (!parsed.ok) {
     return parsed.response;
   }
-  const data = parsed.data;
+  const data: ImportExportTemplateCreateInput = parsed.data;
 
   if (type === 'export') {
     const template = await createExportTemplate({
@@ -99,13 +80,13 @@ export async function PUT_templates_item_handler(
   params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const parsed = await parseJsonBody(req, templateSchema, {
+  const parsed = await parseJsonBody(req, createImportExportTemplateSchema, {
     logPrefix: `templates.${type}.PUT`,
   });
   if (!parsed.ok) {
     return parsed.response;
   }
-  const data = parsed.data;
+  const data: ImportExportTemplateCreateInput = parsed.data;
 
   if (type === 'export') {
     const template = await updateExportTemplate(id, {

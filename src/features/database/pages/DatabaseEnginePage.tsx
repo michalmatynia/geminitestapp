@@ -8,6 +8,7 @@ import type {
   DatabaseEngineWorkspaceView,
 } from '@/shared/contracts/database';
 import {
+  AdminDatabasePageLayout,
   Button,
   FormSection,
   StandardDataTablePanel,
@@ -21,7 +22,6 @@ import {
   MetadataItem,
   LoadingState,
   ToggleRow,
-  PageLayout,
   DocumentationList,
 } from '@/shared/ui';
 
@@ -279,8 +279,9 @@ function DatabaseEngineContent(): React.JSX.Element {
         : 'Operations Log';
 
   return (
-    <PageLayout
+    <AdminDatabasePageLayout
       title='Database Engine'
+      current='Engine'
       description='Control center for data provider routing, synchronization, and fallback policies.'
       refresh={{
         onRefresh: refetchAll,
@@ -353,7 +354,7 @@ function DatabaseEngineContent(): React.JSX.Element {
           />
         </div>
       )}
-    </PageLayout>
+    </AdminDatabasePageLayout>
   );
 }
 

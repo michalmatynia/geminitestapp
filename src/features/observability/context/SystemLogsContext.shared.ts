@@ -1,5 +1,9 @@
 
-import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type {
+  AiInsightRecord,
+  AiInsightResponse,
+  AiInsightsResponse,
+} from '@/shared/contracts/ai-insights';
 import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   MongoDiagnosticsResponseDto as MongoDiagnosticsResponse,
@@ -103,9 +107,9 @@ export type SystemLogsContextValue = {
   >;
   metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics | undefined }, Error>;
   mongoDiagnosticsQuery: UseQueryResult<MongoDiagnosticsResponse, Error>;
-  insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
-  interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
+  insightsQuery: UseQueryResult<AiInsightsResponse, Error>;
+  runInsightMutation: UseMutationResult<AiInsightResponse, Error, void>;
+  interpretLogMutation: UseMutationResult<AiInsightResponse, Error, string>;
   clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
   rebuildIndexesMutation: UseMutationResult<MongoRebuildIndexesResponse, Error, void>;
   confirmAction: (config: {

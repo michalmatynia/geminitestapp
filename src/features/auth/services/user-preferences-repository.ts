@@ -31,6 +31,7 @@ type UserPreferencesDocument = {
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
   productListFiltersCollapsedByDefault: boolean | null;
+  productListShowTriggerRunFeedback: boolean | null;
   productListAdvancedFilterPresets: UserPreferences['productListAdvancedFilterPresets'] | null;
   productListAppliedAdvancedFilter: string | null;
   productListAppliedAdvancedFilterPresetId: string | null;
@@ -143,6 +144,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListPageSize: doc.productListPageSize ?? 12,
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? false,
+  productListShowTriggerRunFeedback: doc.productListShowTriggerRunFeedback ?? true,
   productListAdvancedFilterPresets: doc.productListAdvancedFilterPresets ?? [],
   productListAppliedAdvancedFilter: doc.productListAppliedAdvancedFilter ?? null,
   productListAppliedAdvancedFilterPresetId: doc.productListAppliedAdvancedFilterPresetId ?? null,
@@ -183,6 +185,7 @@ const defaultPreferences = (
   productListPageSize: 12,
   productListThumbnailSource: 'file',
   productListFiltersCollapsedByDefault: false,
+  productListShowTriggerRunFeedback: true,
   productListAdvancedFilterPresets: [],
   productListAppliedAdvancedFilter: null,
   productListAppliedAdvancedFilterPresetId: null,

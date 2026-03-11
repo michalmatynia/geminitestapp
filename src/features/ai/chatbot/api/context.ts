@@ -1,15 +1,18 @@
-import type { ChatbotContextSegment } from '@/shared/contracts/chatbot';
+import {
+  chatbotContextUploadResponseSchema,
+  type ChatbotContextUploadResponse,
+} from '@/shared/contracts/chatbot';
 
 import { readErrorMessage } from './client';
 
 export const uploadChatbotContextPdf = async (
   file: File,
   onProgress?: (loaded: number, total?: number) => void
-): Promise<{ segments: ChatbotContextSegment[] }> => {
+): Promise<ChatbotContextUploadResponse> => {
   const formData = new FormData();
   formData.append('file', file, file.name);
   const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-  const result = await uploadWithProgress<{ segments: ChatbotContextSegment[] }>(
+  const result = await uploadWithProgress<unknown>(
     '/api/chatbot/context',
     {
       formData,
@@ -23,5 +26,5 @@ export const uploadChatbotContextPdf = async (
     );
     throw new Error(message);
   }
-  return result.data as { segments: ChatbotContextSegment[] };
+  return chatbotContextUploadResponseSchema.parse(result.data);
 };

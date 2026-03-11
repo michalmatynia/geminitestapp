@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useEffect, type ReactNode } from 'react';
+import { memo, useEffect, type ComponentProps, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -16,7 +16,11 @@ import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
 
-const TriggerButtonBar = dynamic(
+type TriggerButtonBarProps = ComponentProps<
+  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
+>;
+
+const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (
@@ -50,7 +54,13 @@ export const ProductListHeader = memo(function ProductListHeader({
 }: ProductListHeaderProps) {
   const { isMenuHidden } = useAdminLayoutState();
   const { setIsMenuHidden } = useAdminLayoutActions();
-  const { onCreateProduct, onCreateFromDraft, activeDrafts } = useProductListHeaderActionsContext();
+  const {
+    onCreateProduct,
+    onCreateFromDraft,
+    activeDrafts,
+    showTriggerRunFeedback,
+    setShowTriggerRunFeedback,
+  } = useProductListHeaderActionsContext();
   const {
     page,
     totalPages,
@@ -175,11 +185,25 @@ export const ProductListHeader = memo(function ProductListHeader({
         ariaLabel='Filter by catalog'
       />
 
-      <TriggerButtonBar
-        location='product_list'
-        entityType='product'
-        className='shrink-0 flex-nowrap'
-      />
+      <div className='inline-flex shrink-0 items-center gap-2'>
+        <TriggerButtonBar
+          location='product_list'
+          entityType='product'
+          className='shrink-0 flex-nowrap'
+        />
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
+          aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+          title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+          className='h-8 shrink-0 gap-1.5 px-2 text-xs'
+        >
+          {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
+          <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
+        </Button>
+      </div>
     </>
   );
 

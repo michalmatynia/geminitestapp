@@ -249,7 +249,7 @@ export function KangurPageTransitionSkeleton({
     <div
       className={cn(
         embedded ? 'absolute' : 'fixed',
-        'inset-0 z-30 cursor-progress overflow-hidden bg-white/44 backdrop-blur-[10px]'
+        'inset-0 z-30 cursor-progress overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(79,99,216,0.12),_transparent_34%),linear-gradient(180deg,_rgba(248,250,255,0.98)_0%,_rgba(240,244,255,0.99)_52%,_rgba(250,251,255,1)_100%)]'
       )}
       data-testid='kangur-page-transition-skeleton'
     >

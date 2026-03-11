@@ -2,8 +2,12 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
-import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
+import type {
+  AgentAuditLogRecordDto as AgentAuditLogRecord,
+  AgentBrowserLogRecordDto as AgentBrowserLogRecord,
+  AgentBrowserSnapshotRecordDto as AgentBrowserSnapshotRecord,
+  AgentRunRecord,
+} from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -17,7 +21,7 @@ import {
 // --- Granular Contexts ---
 
 export interface AgentRunListData {
-  agentRuns: AiPathRunRecord[];
+  agentRuns: AgentRunRecord[];
   isLoadingRuns: boolean;
   refetchRuns: () => Promise<unknown>;
   error: Error | null;
@@ -32,7 +36,7 @@ export const useAgentRunList = () => {
 export interface AgentRunSelectionData {
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (id: string | null) => void;
-  selectedAgentRun: AiPathRunRecord | null;
+  selectedAgentRun: AgentRunRecord | null;
 }
 const RunSelectionContext = createContext<AgentRunSelectionData | null>(null);
 export const useAgentRunSelection = () => {
@@ -42,9 +46,9 @@ export const useAgentRunSelection = () => {
 };
 
 export interface AgentRunDetailData {
-  agentSnapshots: AgentSnapshot[];
-  agentBrowserLogs: AgentBrowserLog[];
-  agentAuditLogs: AgentAuditLog[];
+  agentSnapshots: AgentBrowserSnapshotRecord[];
+  agentBrowserLogs: AgentBrowserLogRecord[];
+  agentAuditLogs: AgentAuditLogRecord[];
   agentStreamStatus: 'idle' | 'connecting' | 'live' | 'error';
   setAgentStreamStatus: (status: 'idle' | 'connecting' | 'live' | 'error') => void;
 }
@@ -79,7 +83,7 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
   const error = runsError || snapshotsError || logsError || auditsError || null;
 
   const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
+    () => agentRuns.find((run: AgentRunRecord) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
   );
 

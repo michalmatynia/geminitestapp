@@ -14,6 +14,7 @@ describe('auth user preferences contract runtime', () => {
         productListCurrencyCode: 'PLN',
         productListPageSize: 24,
         productListThumbnailSource: 'file',
+        productListShowTriggerRunFeedback: true,
         productListAppliedAdvancedFilter: '{"type":"group"}',
         productListAppliedAdvancedFilterPresetId: 'preset-1',
         cmsPreviewEnabled: false,
@@ -25,6 +26,7 @@ describe('auth user preferences contract runtime', () => {
     expect(
       userPreferencesUpdateSchema.parse({
         productListAppliedAdvancedFilter: '  {"type":"group"}  ',
+        productListShowTriggerRunFeedback: false,
         aiPathsActivePathId: ' path-1 ',
         cmsThemeOpenSections: ['hero', 'footer'],
       }).aiPathsActivePathId

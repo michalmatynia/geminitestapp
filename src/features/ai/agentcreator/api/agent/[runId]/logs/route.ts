@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import type {
+  AgentBrowserLogRecord,
+  AgentBrowserLogsResponse,
+} from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
 import {
   apiHandlerWithParams,
@@ -35,7 +39,17 @@ async function GET_handler(
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ logs });
+  const response: AgentBrowserLogsResponse = {
+    logs: logs.map(
+      (log): AgentBrowserLogRecord => ({
+        ...log,
+        stepId: log.stepId ?? null,
+        metadata: log.metadata ?? null,
+        createdAt: log.createdAt.toISOString(),
+      })
+    ),
+  };
+  return NextResponse.json(response);
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(

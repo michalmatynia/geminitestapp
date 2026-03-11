@@ -4,7 +4,10 @@ import { buildAgentTeachingContextRegistrySystemPrompt } from '@/features/ai/age
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
-import { agentTeachingChatRequestSchema } from '@/shared/contracts/agent-teaching';
+import {
+  agentTeachingChatRequestSchema,
+  type AgentTeachingChatResponse,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -35,5 +38,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     messages,
     additionalSystemPrompt,
   });
-  return NextResponse.json(result);
+  const response: AgentTeachingChatResponse = result;
+  return NextResponse.json(response);
 }

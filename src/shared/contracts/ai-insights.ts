@@ -67,6 +67,20 @@ export const aiInsightRecordSchema = namedDtoSchema.extend({
 
 export type AiInsightRecord = z.infer<typeof aiInsightRecordSchema>;
 
+export const aiInsightsResponseSchema = z.object({
+  insights: z.array(aiInsightRecordSchema),
+});
+
+export type AiInsightsResponseDto = z.infer<typeof aiInsightsResponseSchema>;
+export type AiInsightsResponse = AiInsightsResponseDto;
+
+export const aiInsightResponseSchema = z.object({
+  insight: aiInsightRecordSchema.nullable(),
+});
+
+export type AiInsightResponseDto = z.infer<typeof aiInsightResponseSchema>;
+export type AiInsightResponse = AiInsightResponseDto;
+
 export const aiInsightNotificationSchema = z.object({
   id: z.string().optional(),
   insightId: z.string(),

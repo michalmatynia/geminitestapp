@@ -94,6 +94,8 @@ export interface ProductListContextType {
   queuedProductIds: Set<string>;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
+  showTriggerRunFeedback: boolean;
+  setShowTriggerRunFeedback: (show: boolean) => void;
   imageExternalBaseUrl: string | null;
   isCreateOpen: boolean;
   isPromptOpen: boolean;
@@ -235,6 +237,8 @@ export interface ProductListHeaderActionsContextType {
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
   activeDrafts: ProductDraft[];
+  showTriggerRunFeedback: boolean;
+  setShowTriggerRunFeedback: (show: boolean) => void;
 }
 
 export interface ProductListRowActionsContextType {
@@ -258,6 +262,7 @@ export interface ProductListRowVisualsContextType {
   queuedProductIds: Set<string>;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
+  showTriggerRunFeedback: boolean;
   imageExternalBaseUrl: string | null;
 }
 

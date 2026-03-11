@@ -10,6 +10,8 @@ const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
 
 type RouteShellMonitorSample = {
   hasShell: boolean;
+  routeShellCount: number;
+  routeContentCount: number;
   backgroundImage: string | null;
   bodyBackgroundImage: string | null;
   appContentBackgroundImage: string | null;
@@ -171,12 +173,17 @@ const startRouteShellMonitor = async (page: Page): Promise<void> => {
 
     const sample = (): void => {
       const shell = document.querySelector('[data-testid="kangur-route-shell"]');
+      const routeShellCount = document.querySelectorAll('[data-testid="kangur-route-shell"]').length;
+      const routeContentCount =
+        document.querySelectorAll('[data-testid="kangur-route-content"]').length;
       const shellStyles = shell ? window.getComputedStyle(shell) : null;
       const bodyStyles = window.getComputedStyle(document.body);
       const appContent = document.getElementById('app-content');
       const appContentStyles = appContent ? window.getComputedStyle(appContent) : null;
       samples.push({
         hasShell: Boolean(shell),
+        routeShellCount,
+        routeContentCount,
         backgroundImage: shellStyles?.backgroundImage ?? null,
         bodyBackgroundImage: bodyStyles.backgroundImage ?? null,
         appContentBackgroundImage: appContentStyles?.backgroundImage ?? null,
@@ -218,6 +225,14 @@ const expectRouteShellContinuity = (
   expect(
     samples.every((sample) => sample.hasShell),
     `${stepLabel}: route shell disappeared during navigation`
+  ).toBe(true);
+  expect(
+    samples.every((sample) => sample.routeShellCount <= 1),
+    `${stepLabel}: duplicate Kangur route shells rendered during navigation`
+  ).toBe(true);
+  expect(
+    samples.every((sample) => sample.routeContentCount <= 1),
+    `${stepLabel}: duplicate Kangur route content wrappers rendered during navigation`
   ).toBe(true);
   expect(
     samples.every(

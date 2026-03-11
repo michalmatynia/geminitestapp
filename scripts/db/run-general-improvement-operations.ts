@@ -44,6 +44,18 @@ interface ImprovementExecutionReport {
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDirectory, '..', '..');
+const DEFAULT_CHILD_MAX_OLD_SPACE_SIZE_MB = 12_288;
+
+function ensureNodeHeapOption(nodeOptions: string | undefined): string {
+  const normalized = nodeOptions?.trim();
+  if (normalized && /--max-old-space-size(?:=|\s)\d+/u.test(normalized)) {
+    return normalized;
+  }
+
+  return [normalized, `--max-old-space-size=${DEFAULT_CHILD_MAX_OLD_SPACE_SIZE_MB}`]
+    .filter(Boolean)
+    .join(' ');
+}
 
 function parseArguments(argv: readonly string[]): {
   phase: ImprovementPhase;
@@ -133,7 +145,10 @@ async function runPackageScript(script: string): Promise<{
     const child = spawn(npmCommand, ['run', script], {
       cwd: repoRoot,
       stdio: 'inherit',
-      env: process.env,
+      env: {
+        ...process.env,
+        NODE_OPTIONS: ensureNodeHeapOption(process.env['NODE_OPTIONS']),
+      },
     });
 
     child.on('close', (code) => {

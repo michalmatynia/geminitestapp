@@ -4,6 +4,10 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { parseJsonSafe, renderJsonTemplate } from '../../utils';
 import { buildDbQueryPayload, resolveEntityIdFromInputs } from '../utils';
+import {
+  mergeTranslatedParameterUpdates,
+  normalizeNonEmptyString,
+} from './database-parameter-inference';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
 import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import {
@@ -43,6 +47,139 @@ const resolveCustomContentEnValue = (customUpdateDoc: unknown): string | undefin
   return typeof setValue === 'string' ? setValue : undefined;
 };
 
+const hasTranslationDescriptionMapping = (dbConfig: DatabaseConfig): boolean =>
+  (dbConfig.mappings ?? []).some(
+    (mapping): boolean =>
+      mapping.targetPath === 'description_pl' &&
+      mapping.sourcePort === 'value' &&
+      (mapping.sourcePath === 'description_pl' || !mapping.sourcePath)
+  );
+
+const hasTranslationParameterMapping = (dbConfig: DatabaseConfig): boolean =>
+  (dbConfig.mappings ?? []).some(
+    (mapping): boolean =>
+      mapping.targetPath === 'parameters' &&
+      (mapping.sourcePort === 'result' || mapping.sourcePort === 'value')
+  );
+
+const isLegacyTranslationParameterUpdate = (dbConfig: DatabaseConfig): boolean =>
+  hasTranslationDescriptionMapping(dbConfig) && hasTranslationParameterMapping(dbConfig);
+
+const isResolvedTranslationParameterUpdate = (
+  updates: Record<string, unknown>,
+  parameterTargetPath: string
+): boolean =>
+  Object.prototype.hasOwnProperty.call(updates, 'description_pl') &&
+  Object.prototype.hasOwnProperty.call(updates, parameterTargetPath);
+
+const pruneEmptyTranslationDescriptionUpdate = (
+  updates: Record<string, unknown>
+): {
+  updates: Record<string, unknown>;
+  pruned: boolean;
+} => {
+  if (!Object.prototype.hasOwnProperty.call(updates, 'description_pl')) {
+    return { updates, pruned: false };
+  }
+  const description = normalizeNonEmptyString(updates['description_pl']);
+  if (description) {
+    return { updates: { ...updates, description_pl: description }, pruned: false };
+  }
+  const nextUpdates = { ...updates };
+  delete nextUpdates['description_pl'];
+  return { updates: nextUpdates, pruned: true };
+};
+
+const patchTargetPathInUpdateDoc = (
+  value: unknown,
+  targetPath: string,
+  nextUpdates: Record<string, unknown>
+): unknown => {
+  if (!isObjectRecord(value)) return value;
+  const hasTarget = Object.prototype.hasOwnProperty.call(nextUpdates, targetPath);
+  const nextTargetValue = nextUpdates[targetPath];
+  const setDoc = value['$set'];
+  if (isObjectRecord(setDoc)) {
+    const nextSet: Record<string, unknown> = { ...setDoc };
+    if (hasTarget) {
+      nextSet[targetPath] = nextTargetValue;
+    } else {
+      delete nextSet[targetPath];
+    }
+    return { ...value, $set: nextSet };
+  }
+  const hasOperator = Object.keys(value).some((key: string): boolean => key.startsWith('$'));
+  if (hasOperator) return value;
+  const nextRecord: Record<string, unknown> = { ...value };
+  if (hasTarget) {
+    nextRecord[targetPath] = nextTargetValue;
+  } else {
+    delete nextRecord[targetPath];
+  }
+  return nextRecord;
+};
+
+const createTranslationNoUpdatesOutput = (args: {
+  error: string;
+  aiPrompt: string;
+  entityType: string;
+  collection: string;
+  filter: Record<string, unknown> | null;
+  unresolvedSourcePorts?: string[];
+  translationParameterMergeMeta?: Record<string, unknown>;
+  reportAiPathsError: HandleDatabaseUpdateOperationInput['reportAiPathsError'];
+  toast: HandleDatabaseUpdateOperationInput['toast'];
+  nodeId: string;
+  mode: 'mapping' | 'custom';
+}): RuntimePortValues => {
+  args.reportAiPathsError(
+    new Error(args.error),
+    {
+      action: 'dbTranslationUpdate',
+      nodeId: args.nodeId,
+      ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+        ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+        : {}),
+      ...(args.translationParameterMergeMeta
+        ? { translationParameterMerge: args.translationParameterMergeMeta }
+        : {}),
+    },
+    'Database update blocked:'
+  );
+  args.toast(args.error, { variant: 'error' });
+  return {
+    result: null,
+    bundle: {
+      error: args.error,
+      guardrail: 'translation-no-updates',
+      guardrailMeta: {
+        code: 'translation-no-updates',
+        severity: 'error',
+        message: args.error,
+        ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+          ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+          : {}),
+        ...(args.translationParameterMergeMeta
+          ? { translationParameterMerge: args.translationParameterMergeMeta }
+          : {}),
+      },
+    },
+    debugPayload: {
+      mode: args.mode,
+      entityType: args.entityType,
+      collection: args.collection || null,
+      ...(args.filter ? { filter: args.filter } : {}),
+      ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+        ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+        : {}),
+      ...(args.translationParameterMergeMeta
+        ? { translationParameterMerge: args.translationParameterMergeMeta }
+        : {}),
+    },
+    aiPrompt: args.aiPrompt,
+  };
+};
+
 export async function handleDatabaseUpdateOperation({
   node,
   nodeInputs,
@@ -59,7 +196,7 @@ export async function handleDatabaseUpdateOperation({
   dryRun,
   templateInputs,
   aiPrompt,
-  ensureExistingParameterTemplateContext: _ensureExistingParameterTemplateContext,
+  ensureExistingParameterTemplateContext,
 }: HandleDatabaseUpdateOperationInput): Promise<RuntimePortValues> {
   const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
 
@@ -79,15 +216,45 @@ export async function handleDatabaseUpdateOperation({
     simulationEntityType,
     simulationEntityId
   );
+  const parameterTargetPath =
+    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
+  const isConfiguredTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
 
   if (updatePayloadMode === 'mapping') {
-    const parameterTargetPath = dbConfig.parameterInferenceGuard?.targetPath ?? 'parameters';
     const mappingResult = resolveDatabaseUpdateMappings({
       dbConfig,
       nodeInputPorts,
       resolvedInputs,
       parameterTargetPath,
     });
+    const unresolvedSourcePorts = Array.from(mappingResult.unresolvedSourcePorts);
+    let updates: Record<string, unknown> = mappingResult.updates;
+    let translationParameterMergeMeta: Record<string, unknown> | undefined;
+    const isTranslationParameterUpdate =
+      isConfiguredTranslationParameterUpdate ||
+      isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
+
+    if (isTranslationParameterUpdate) {
+      const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
+      updates = descriptionPruneResult.updates;
+
+      if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
+        await ensureExistingParameterTemplateContext(parameterTargetPath, {
+          forceHydrateRichParameters: true,
+        });
+        const translationMergeResult = mergeTranslatedParameterUpdates({
+          targetPath: parameterTargetPath,
+          updates,
+          templateInputs,
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        });
+        if (translationMergeResult.applied) {
+          updates = translationMergeResult.updates;
+          translationParameterMergeMeta = translationMergeResult.meta;
+        }
+      }
+    }
 
     const debugPayload: Record<string, unknown> = {
       mode: 'mapping',
@@ -97,18 +264,37 @@ export async function handleDatabaseUpdateOperation({
       idField,
       entityId,
       mappings: mappingResult.mappings,
-      updates: mappingResult.updates,
-      unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+      updates,
+      unresolvedSourcePorts,
+      ...(translationParameterMergeMeta
+        ? { translationParameterMerge: translationParameterMergeMeta }
+        : {}),
     };
 
-    if (Object.keys(mappingResult.updates).length === 0) {
+    if (Object.keys(updates).length === 0) {
+      if (isTranslationParameterUpdate) {
+        return createTranslationNoUpdatesOutput({
+          error:
+            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+          aiPrompt,
+          entityType,
+          collection: configuredCollection,
+          filter: entityId ? { id: entityId } : null,
+          unresolvedSourcePorts,
+          translationParameterMergeMeta,
+          reportAiPathsError,
+          toast,
+          nodeId: node.id,
+          mode: 'mapping',
+        });
+      }
       return {
         ...prevOutputs,
         result: null,
         bundle: {
           skipped: true,
           reason: 'no_mapping_updates',
-          unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+          unresolvedSourcePorts,
         },
         debugPayload,
         aiPrompt,
@@ -124,7 +310,7 @@ export async function handleDatabaseUpdateOperation({
       resolvedInputs,
       dbConfig,
       queryConfig,
-      updates: mappingResult.updates,
+      updates,
       updateStrategy,
       entityType,
       shouldUseEntityUpdate,
@@ -149,7 +335,7 @@ export async function handleDatabaseUpdateOperation({
     return {
       content_en: (nodeInputs['content_en'] as string | undefined) ?? '',
       bundle: {
-        updates: mappingResult.updates,
+        updates,
         ...(executionResult.executionMeta ?? {}),
         ...(executionResult.writeOutcome ? { writeOutcome: executionResult.writeOutcome } : {}),
       },
@@ -286,7 +472,63 @@ export async function handleDatabaseUpdateOperation({
     };
   }
 
-  const customUpdateDoc: unknown = parsedUpdate;
+  let customUpdateDoc: unknown = parsedUpdate;
+  const extractUpdates = (value: unknown): Record<string, unknown> => {
+    if (!isObjectRecord(value)) return {};
+    const setDoc = value['$set'];
+    if (isObjectRecord(setDoc)) return setDoc;
+    const hasOperator = Object.keys(value).some((key: string): boolean => key.startsWith('$'));
+    if (hasOperator) return {};
+    return value;
+  };
+  let updates: Record<string, unknown> = extractUpdates(customUpdateDoc);
+  let translationParameterMergeMeta: Record<string, unknown> | undefined;
+  const isTranslationParameterUpdate =
+    isConfiguredTranslationParameterUpdate ||
+    isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
+
+  if (isTranslationParameterUpdate) {
+    const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
+    updates = descriptionPruneResult.updates;
+    if (descriptionPruneResult.pruned) {
+      customUpdateDoc = patchTargetPathInUpdateDoc(customUpdateDoc, 'description_pl', updates);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
+      await ensureExistingParameterTemplateContext(parameterTargetPath, {
+        forceHydrateRichParameters: true,
+      });
+      const translationMergeResult = mergeTranslatedParameterUpdates({
+        targetPath: parameterTargetPath,
+        updates,
+        templateInputs,
+        languageCode: 'pl',
+        requireFullCoverage: false,
+      });
+      if (translationMergeResult.applied) {
+        updates = translationMergeResult.updates;
+        translationParameterMergeMeta = translationMergeResult.meta;
+        customUpdateDoc = patchTargetPathInUpdateDoc(customUpdateDoc, parameterTargetPath, updates);
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return createTranslationNoUpdatesOutput({
+        error:
+          'Translation update blocked. No safe description or parameter translation updates were resolved.',
+        aiPrompt,
+        entityType,
+        collection: configuredCollection,
+        filter: customFilter,
+        translationParameterMergeMeta,
+        reportAiPathsError,
+        toast,
+        nodeId: node.id,
+        mode: 'custom',
+      });
+    }
+  }
+
   const debugPayload: Record<string, unknown> = {
     mode: 'custom',
     updateStrategy,
@@ -299,6 +541,9 @@ export async function handleDatabaseUpdateOperation({
     updateDoc: customUpdateDoc,
     queryTemplate: queryConfig.queryTemplate ?? '',
     updateTemplate: dbConfig.updateTemplate ?? '',
+    ...(translationParameterMergeMeta
+      ? { translationParameterMerge: translationParameterMergeMeta }
+      : {}),
   };
 
   const executionResult = await executeDatabaseUpdate({

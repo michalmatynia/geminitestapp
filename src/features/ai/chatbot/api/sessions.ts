@@ -1,8 +1,15 @@
-import type {
-  ChatMessageDto as ChatMessage,
-  ChatbotSessionDto as ChatSession,
+import {
+  chatbotSessionCreateResponseSchema,
+  chatbotSessionDeleteResponseSchema,
+  chatbotSessionIdsResponseSchema,
+  chatbotSessionResponseSchema,
+  chatbotSessionsResponseSchema,
+  type ChatMessageDto as ChatMessage,
+  type ChatbotSessionCreateResponse,
+  type ChatbotSessionDeleteResponse,
+  type ChatbotSessionDto as ChatSession,
+  type ChatbotSessionListItem,
 } from '@/shared/contracts/chatbot';
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 import { fetchWithTimeout, readErrorMessage, requestJson } from './client';
 
@@ -15,35 +22,42 @@ export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
   if (params?.query) searchParams.set('query', params.query);
   const query = searchParams.toString();
   const url = query ? `/api/chatbot/sessions?${query}` : '/api/chatbot/sessions';
-  return requestJson<{ sessions?: TSession[]; ids?: string[] }>(url, undefined, {
+  const data = await requestJson<unknown>(url, undefined, {
     fallbackMessage: 'Failed to load sessions.',
   });
+  if (params?.scope === 'ids') {
+    return chatbotSessionIdsResponseSchema.parse(data);
+  }
+  const parsed = chatbotSessionsResponseSchema.parse(data);
+  return {
+    ...(parsed.sessions ? { sessions: parsed.sessions as TSession[] } : {}),
+  };
 };
 
 export const fetchChatbotSessionIds = async (query?: string): Promise<string[]> => {
   const searchParams = new URLSearchParams({ scope: 'ids' });
   if (query) searchParams.set('query', query);
   const url = `/api/chatbot/sessions?${searchParams.toString()}`;
-  const data = await requestJson<{ ids?: string[] }>(url, undefined, {
+  const data = await requestJson<unknown>(url, undefined, {
     fallbackMessage: 'Failed to load session ids.',
   });
-  return Array.isArray(data.ids) ? data.ids : [];
+  return chatbotSessionIdsResponseSchema.parse(data).ids;
 };
 
 export const fetchChatbotSession = async (sessionId: string): Promise<ChatSession> => {
-  const data = await requestJson<{ session: ChatSession }>(
+  const data = await requestJson<unknown>(
     `/api/chatbot/sessions/${sessionId}`,
     undefined,
     { fallbackMessage: 'Failed to fetch session.' }
   );
-  return data.session;
+  return chatbotSessionResponseSchema.parse(data).session;
 };
 
 export const createChatbotSession = async (payload: {
   title?: string;
   settings?: ChatSession['settings'];
-}): Promise<{ sessionId: string; session?: ChatSession }> =>
-  requestJson<{ sessionId: string; session?: ChatSession }>(
+}): Promise<ChatbotSessionCreateResponse> => {
+  const data = await requestJson<unknown>(
     '/api/chatbot/sessions',
     {
       method: 'POST',
@@ -52,12 +66,14 @@ export const createChatbotSession = async (payload: {
     },
     { fallbackMessage: 'Failed to create session.' }
   );
+  return chatbotSessionCreateResponseSchema.parse(data);
+};
 
 export const updateChatbotSessionTitle = async (
   sessionId: string,
   title: string
 ): Promise<ChatbotSessionListItem> => {
-  const data = await requestJson<{ session: ChatbotSessionListItem }>(
+  const data = await requestJson<unknown>(
     '/api/chatbot/sessions',
     {
       method: 'PATCH',
@@ -66,11 +82,11 @@ export const updateChatbotSessionTitle = async (
     },
     { fallbackMessage: 'Failed to update session title.' }
   );
-  return data.session;
+  return chatbotSessionResponseSchema.parse(data).session;
 };
 
-export const deleteChatbotSession = async (sessionId: string): Promise<void> => {
-  await requestJson<{ success?: boolean }>(
+export const deleteChatbotSession = async (sessionId: string): Promise<ChatbotSessionDeleteResponse> => {
+  const data = await requestJson<unknown>(
     '/api/chatbot/sessions',
     {
       method: 'DELETE',
@@ -79,10 +95,13 @@ export const deleteChatbotSession = async (sessionId: string): Promise<void> => 
     },
     { fallbackMessage: 'Failed to delete session.' }
   );
+  return chatbotSessionDeleteResponseSchema.parse(data);
 };
 
-export const deleteChatbotSessions = async (sessionIds: string[]): Promise<void> => {
-  await requestJson<{ success?: boolean }>(
+export const deleteChatbotSessions = async (
+  sessionIds: string[]
+): Promise<ChatbotSessionDeleteResponse> => {
+  const data = await requestJson<unknown>(
     '/api/chatbot/sessions',
     {
       method: 'DELETE',
@@ -91,6 +110,7 @@ export const deleteChatbotSessions = async (sessionIds: string[]): Promise<void>
     },
     { fallbackMessage: 'Failed to delete sessions.' }
   );
+  return chatbotSessionDeleteResponseSchema.parse(data);
 };
 
 export const persistSessionMessage = async (

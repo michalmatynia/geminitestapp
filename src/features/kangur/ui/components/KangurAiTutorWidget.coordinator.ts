@@ -145,6 +145,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
+    selectionConversationContext,
     selectionResponsePending,
     setViewportTick,
     suppressAvatarClickRef,
@@ -308,23 +309,37 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const selectionTakeoverText =
     selectionGuidanceHandoffText ?? selectionResponsePending?.selectedText ?? null;
+  const hasSelectionMinimalPanelSurface =
+    tutorRuntime.isOpen &&
+    panelShellMode === 'minimal' &&
+    selectionConversationContext !== null &&
+    (selectionTakeoverText !== null ||
+      contextualTutorMode === 'selection_explain' ||
+      selectionConversationContext.selectedText.length > 0);
+  const hasSectionMinimalPanelSurface =
+    tutorRuntime.isOpen &&
+    panelShellMode === 'minimal' &&
+    (highlightedSection !== null ||
+      sectionResponsePending !== null ||
+      contextualTutorMode === 'section_explain');
   const tutorSurfaceMode: TutorSurfaceMode =
     guidedTutorTarget?.mode === 'selection'
       ? 'selection_guided'
       : selectionTakeoverText !== null ||
           contextualTutorMode === 'selection_explain' ||
-          isSelectionExplainPendingMode
+          isSelectionExplainPendingMode ||
+          hasSelectionMinimalPanelSurface
         ? 'selection_panel'
         : guidedTutorTarget?.mode === 'section'
           ? 'section_guided'
-          : highlightedSection !== null ||
-              sectionResponsePending !== null ||
-              contextualTutorMode === 'section_explain' ||
-              isSectionExplainPendingMode
-            ? 'section_panel'
-            : isAnonymousVisitor &&
-                (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible)
-              ? 'onboarding'
+            : highlightedSection !== null ||
+                sectionResponsePending !== null ||
+                contextualTutorMode === 'section_explain' ||
+                isSectionExplainPendingMode ||
+                hasSectionMinimalPanelSurface
+              ? 'section_panel'
+              : canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible
+                ? 'onboarding'
               : 'idle_avatar';
   const suppressPanelSurface = tutorSurfaceMode === 'onboarding';
 

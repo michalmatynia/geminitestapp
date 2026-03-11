@@ -5,7 +5,11 @@ import {
   listEmbeddingCollections,
   upsertEmbeddingCollection,
 } from '@/features/ai/agentcreator/server';
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingCollectionResponse,
+  AgentTeachingCollectionsResponse,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -17,7 +21,8 @@ const createCollectionSchema = z.object({
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const collections = await listEmbeddingCollections();
-  return NextResponse.json({ collections });
+  const response: AgentTeachingCollectionsResponse = { collections };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -31,5 +36,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     description: data.description ?? null,
     embeddingModel: data.embeddingModel,
   });
-  return NextResponse.json({ collection });
+  const response: AgentTeachingCollectionResponse = { collection };
+  return NextResponse.json(response);
 }

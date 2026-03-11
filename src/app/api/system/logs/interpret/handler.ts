@@ -9,6 +9,7 @@ import { generateLogInterpretation } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/features/observability/context-registry/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -76,5 +77,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         : {}),
     },
   });
-  return NextResponse.json({ insight });
+  const response: AiInsightResponse = { insight };
+  return NextResponse.json(response);
 }

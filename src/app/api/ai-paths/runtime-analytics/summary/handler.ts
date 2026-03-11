@@ -7,7 +7,10 @@ import {
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
+import type {
+  AiPathRuntimeAnalyticsRange,
+  AiPathRuntimeAnalyticsSummaryResponse,
+} from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
@@ -49,7 +52,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       isAppError(error) &&
       (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)
     ) {
-      return NextResponse.json({
+      const response: AiPathRuntimeAnalyticsSummaryResponse = {
         summary: {
           from: from.toISOString(),
           to: to.toISOString(),
@@ -152,7 +155,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
           },
           generatedAt: new Date().toISOString(),
         },
-      });
+      };
+      return NextResponse.json(response);
     }
     throw error;
   }
@@ -163,5 +167,6 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     to,
     range: rangeRaw,
   });
-  return NextResponse.json({ summary });
+  const response: AiPathRuntimeAnalyticsSummaryResponse = { summary };
+  return NextResponse.json(response);
 }

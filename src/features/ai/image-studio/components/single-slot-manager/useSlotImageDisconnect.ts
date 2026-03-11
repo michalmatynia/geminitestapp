@@ -3,8 +3,10 @@
 import { useCallback } from 'react';
 
 import type {
+  ImageStudioSlotResponse,
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
+  StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -86,7 +88,7 @@ export function useSlotImageDisconnect({
 
           if (projectId.trim() && slotIdCandidates.length > 0) {
             const candidateSet = new Set(slotIdCandidates);
-            queryClient.setQueryData<{ slots: ImageStudioSlot[] }>(
+            queryClient.setQueryData<StudioSlotsResponse>(
               studioKeys.slots(projectId),
               (current) => {
                 if (!current) return current;
@@ -110,7 +112,7 @@ export function useSlotImageDisconnect({
           const patchBySlotId = async (slotId: string): Promise<ImageStudioSlot | null> => {
             if (!slotId) return null;
             try {
-              const response = await api.patch<{ slot: ImageStudioSlot }>(
+              const response = await api.patch<ImageStudioSlotResponse>(
                 `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
                 clearPayload
               );
@@ -152,7 +154,7 @@ export function useSlotImageDisconnect({
 
           if (projectId.trim()) {
             const candidateSet = new Set(followupCandidateIds);
-            queryClient.setQueryData<{ slots: ImageStudioSlot[] }>(
+            queryClient.setQueryData<StudioSlotsResponse>(
               studioKeys.slots(projectId),
               (current) => {
                 if (!current) return current;

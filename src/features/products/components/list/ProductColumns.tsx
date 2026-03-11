@@ -1,14 +1,15 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpDown, Download } from 'lucide-react';
+import { ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo } from 'react';
+import { memo, type ComponentProps } from 'react';
 
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import {
+  useProductListHeaderActionsContext,
   useProductListRowActionsContext,
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
@@ -33,8 +34,11 @@ import {
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 
+type TriggerButtonBarProps = ComponentProps<
+  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
+>;
 
-const TriggerButtonBar = dynamic(
+const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (
@@ -366,6 +370,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
     integrationBadgeStatuses,
     traderaBadgeIds,
     traderaBadgeStatuses,
+    showTriggerRunFeedback,
   } = useProductListRowVisualsContext();
 
   const queryClient = useQueryClient();
@@ -425,6 +430,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         entityType='product'
         entityId={product.id}
         getEntityJson={(): Record<string, unknown> => product as Record<string, unknown>}
+        showRunFeedback={showTriggerRunFeedback}
         className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
       />
       {showTraderaBadge && (
@@ -434,6 +440,27 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
           onOpenListings={(): void => handleClick(product)}
         />
       )}
+    </div>
+  );
+});
+
+const TriggerRunFeedbackHeader: React.FC = memo(function TriggerRunFeedbackHeader() {
+  const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
+
+  return (
+    <div className='flex justify-center'>
+      <Button
+        type='button'
+        variant='ghost'
+        size='sm'
+        onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
+        aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+        title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
+        className='h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground'
+      >
+        {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
+        <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
+      </Button>
     </div>
   );
 });
@@ -530,7 +557,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
 
   {
     id: 'integrations',
-    header: () => <span className='sr-only'>Integrations</span>,
+    header: () => <TriggerRunFeedbackHeader />,
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <IntegrationsCell row={row} />
     ),

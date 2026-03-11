@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
+  AdminWidePageLayout,
   Button,
   Checkbox,
   DataTable,
@@ -13,7 +14,6 @@ import {
   FormSection,
   StatusBadge,
   Alert,
-  PanelHeader,
   PanelPagination,
   EmptyState,
   MetadataItem,
@@ -191,16 +191,15 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <PanelHeader
+    <AdminWidePageLayout
         title='Dead Letter Queue'
         description='Runs that exceeded retry limits or failed permanently.'
         icon={<AlertCircle className='size-4' />}
-        refreshable={true}
-        isRefreshing={isFetching}
-        onRefresh={refetch}
-      />
-
+        refresh={{
+          onRefresh: refetch,
+          isRefreshing: isFetching,
+        }}
+      >
       <StandardDataTablePanel
         filters={
           <FilterPanel
@@ -573,6 +572,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         isDangerous={false}
         loading={retryFailedPending}
       />
-    </div>
+    </AdminWidePageLayout>
   );
 }

@@ -1,20 +1,22 @@
 'use client';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import type { AiInsightRecord } from '@/shared/contracts';
+import type {
+  AiInsightRecord,
+  AiInsightResponse,
+  AiInsightsResponse,
+} from '@/shared/contracts/ai-insights';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-type InsightResponse = { insights: AiInsightRecord[] };
-
-export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightResponse> {
+export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, AiInsightsResponse> {
   const queryKey = QUERY_KEYS.ai.insights.analytics();
-  return createListQueryV2<AiInsightRecord, InsightResponse>({
+  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
-      api.get<InsightResponse>('/api/analytics/insights', {
+      api.get<AiInsightsResponse>('/api/analytics/insights', {
         params: { limit: 10 },
       }),
     meta: {
@@ -28,12 +30,12 @@ export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightR
   });
 }
 
-export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightResponse> {
+export function useLogInsightsQuery(): ListQuery<AiInsightRecord, AiInsightsResponse> {
   const queryKey = QUERY_KEYS.ai.insights.logs();
-  return createListQueryV2<AiInsightRecord, InsightResponse>({
+  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
-      api.get<InsightResponse>('/api/system/logs/insights', {
+      api.get<AiInsightsResponse>('/api/system/logs/insights', {
         params: { limit: 10 },
       }),
     meta: {
@@ -47,12 +49,15 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
   });
 }
 
-export function useRuntimeAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightResponse> {
+export function useRuntimeAnalyticsInsightsQuery(): ListQuery<
+  AiInsightRecord,
+  AiInsightsResponse
+> {
   const queryKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
-  return createListQueryV2<AiInsightRecord, InsightResponse>({
+  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
-      api.get<InsightResponse>('/api/ai-paths/runtime-analytics/insights', {
+      api.get<AiInsightsResponse>('/api/ai-paths/runtime-analytics/insights', {
         params: { limit: 10 },
       }),
     meta: {
@@ -71,10 +76,10 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
   const mutationKey = QUERY_KEYS.ai.insights.analytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/analytics/insights', {
+      const data = await api.post<AiInsightResponse>('/api/analytics/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
       });
-      return data?.insight ?? null;
+      return data.insight;
     },
     mutationKey,
     meta: {
@@ -94,10 +99,10 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
   const mutationKey = QUERY_KEYS.ai.insights.logs();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/system/logs/insights', {
+      const data = await api.post<AiInsightResponse>('/api/system/logs/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
       });
-      return data?.insight ?? null;
+      return data.insight;
     },
     mutationKey,
     meta: {
@@ -120,13 +125,10 @@ export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
   const mutationKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>(
-        '/api/ai-paths/runtime-analytics/insights',
-        {
-          ...(contextRegistry ? { contextRegistry } : {}),
-        }
-      );
-      return data?.insight ?? null;
+      const data = await api.post<AiInsightResponse>('/api/ai-paths/runtime-analytics/insights', {
+        ...(contextRegistry ? { contextRegistry } : {}),
+      });
+      return data.insight;
     },
     mutationKey,
     meta: {

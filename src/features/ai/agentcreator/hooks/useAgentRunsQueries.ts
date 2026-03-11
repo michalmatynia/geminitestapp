@@ -1,5 +1,9 @@
-import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
+import type {
+  AgentAuditLogRecordDto as AgentAuditLogRecord,
+  AgentBrowserLogRecordDto as AgentBrowserLogRecord,
+  AgentBrowserSnapshotRecordDto as AgentBrowserSnapshotRecord,
+  AgentRunRecord,
+} from '@/shared/contracts/agent-runtime';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
@@ -8,9 +12,9 @@ import * as api from '../api/client';
 
 export { agentRunsKeys };
 
-export function useAgentRuns(): ListQuery<AiPathRunRecord> {
+export function useAgentRuns(): ListQuery<AgentRunRecord> {
   const queryKey = agentRunsKeys.lists();
-  return createListQueryV2<AiPathRunRecord>({
+  return createListQueryV2<AgentRunRecord>({
     queryKey,
     queryFn: api.getAgentRuns,
     meta: {
@@ -24,9 +28,9 @@ export function useAgentRuns(): ListQuery<AiPathRunRecord> {
   });
 }
 
-export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot> {
+export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserSnapshotRecord> {
   const queryKey = agentRunsKeys.snapshots(runId || '');
-  return createListQueryV2<AgentSnapshot>({
+  return createListQueryV2<AgentBrowserSnapshotRecord>({
     queryKey,
     queryFn: () => api.getAgentSnapshots(runId!),
     enabled: !!runId,
@@ -44,9 +48,9 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
 export function useAgentLogs(
   runId: string | null,
   options?: { refetchInterval?: number | false }
-): ListQuery<AgentBrowserLog> {
+): ListQuery<AgentBrowserLogRecord> {
   const queryKey = agentRunsKeys.logs(runId || '');
-  return createListQueryV2<AgentBrowserLog>({
+  return createListQueryV2<AgentBrowserLogRecord>({
     queryKey,
     queryFn: () => api.getAgentLogs(runId!),
     enabled: !!runId,
@@ -65,9 +69,9 @@ export function useAgentLogs(
 export function useAgentAudits(
   runId: string | null,
   options?: { refetchInterval?: number | false }
-): ListQuery<AgentAuditLog> {
+): ListQuery<AgentAuditLogRecord> {
   const queryKey = agentRunsKeys.audits(runId || '');
-  return createListQueryV2<AgentAuditLog>({
+  return createListQueryV2<AgentAuditLogRecord>({
     queryKey,
     queryFn: () => api.getAgentAudits(runId!),
     enabled: !!runId,

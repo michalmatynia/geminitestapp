@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import type {
+  AgentAuditLogRecordDto,
+  AgentAuditLogRecordsResponse,
+} from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import {
@@ -60,7 +64,16 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
         durationMs: Date.now() - requestStart,
       });
     }
-    return NextResponse.json({ audits: filtered });
+    const response: AgentAuditLogRecordsResponse = {
+      audits: filtered.map(
+        (audit): AgentAuditLogRecordDto => ({
+          ...audit,
+          runId: audit.runId ?? null,
+          createdAt: audit.createdAt.toISOString(),
+        })
+      ),
+    };
+    return NextResponse.json(response);
   },
   {
     source: 'chatbot.agent.[runId].audits.GET',

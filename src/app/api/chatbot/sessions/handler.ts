@@ -3,9 +3,25 @@ import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { parseJsonBody } from '@/features/products/server';
-import type {
-  ChatbotSessionDto as ChatSession,
-  UpdateChatSessionDto as UpdateSessionInput,
+import {
+  chatbotSessionCreateRequestSchema,
+  chatbotSessionCreateResponseSchema,
+  chatbotSessionDeleteRequestSchema,
+  chatbotSessionDeleteResponseSchema,
+  chatbotSessionIdsResponseSchema,
+  chatbotSessionResponseSchema,
+  chatbotSessionsDeleteRequestSchema,
+  chatbotSessionsQuerySchema,
+  chatbotSessionsResponseSchema,
+  chatbotSessionUpdateRequestSchema,
+  type ChatbotSessionCreateResponse,
+  type ChatbotSessionDeleteRequest,
+  type ChatbotSessionDeleteResponse,
+  type ChatbotSessionDto as ChatSession,
+  type ChatbotSessionsDeleteRequest,
+  type ChatbotSessionsQuery,
+  type ChatbotSessionsResponse,
+  type UpdateChatSessionDto as UpdateSessionInput,
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
@@ -14,33 +30,19 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-type CreateSessionBody = {
-  title?: string;
-  settings?: ChatSession['settings'];
+type DeleteSessionBody = ChatbotSessionDeleteRequest | ChatbotSessionsDeleteRequest;
+
+const matchesSessionQuery = (session: ChatSession, query: string): boolean => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return (
+    session.id.toLowerCase().includes(normalizedQuery) ||
+    (session.title ?? '').toLowerCase().includes(normalizedQuery)
+  );
 };
-
-type UpdateSessionBody = {
-  sessionId: string;
-  title?: string;
-};
-
-type DeleteSessionBody = {
-  sessionId: string;
-};
-
-const createSessionSchema = z.object({
-  title: z.string().trim().optional(),
-  settings: z.record(z.string(), z['unknown']()).optional(),
-});
-
-const updateSessionSchema = z.object({
-  sessionId: z.string().trim().min(1),
-  title: z.string().trim().optional(),
-});
-
-const deleteSessionSchema = z.object({
-  sessionId: z.string().trim().min(1),
-});
 
 const parseBody = async <T>(
   req: NextRequest,
@@ -67,11 +69,16 @@ const parseBody = async <T>(
 // POST /api/chatbot/sessions - Create new session
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseBody(req, ctx, createSessionSchema, 'chatbot.sessions.POST');
+  const parsed = await parseBody(
+    req,
+    ctx,
+    chatbotSessionCreateRequestSchema,
+    'chatbot.sessions.POST'
+  );
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { title, settings } = parsed.data as CreateSessionBody;
+  const { title, settings } = parsed.data;
 
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
@@ -102,13 +109,21 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     });
   }
 
-  return NextResponse.json({ sessionId: session.id, session }, { status: 201 });
+  const response: ChatbotSessionCreateResponse = {
+    sessionId: session.id,
+    session,
+  };
+
+  return NextResponse.json(chatbotSessionCreateResponseSchema.parse(response), { status: 201 });
 }
 
 // GET /api/chatbot/sessions - List all sessions
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const sessions = await chatbotSessionRepository.findAll();
+  const query = chatbotSessionsQuerySchema.parse((ctx.query ?? {}) as ChatbotSessionsQuery);
+  const sessions = (await chatbotSessionRepository.findAll()).filter((session: ChatSession) =>
+    query.query ? matchesSessionQuery(session, query.query) : true
+  );
 
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
@@ -116,13 +131,28 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       message: '[chatbot][sessions][GET] Listed',
       context: {
         count: sessions.length,
+        scope: query.scope ?? 'list',
+        query: query.query ?? null,
         durationMs: Date.now() - requestStart,
       },
     });
   }
 
+  if (query.scope === 'ids') {
+    return NextResponse.json(
+      chatbotSessionIdsResponseSchema.parse({ ids: sessions.map((session: ChatSession) => session.id) }),
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
+  }
+
+  const response: ChatbotSessionsResponse = { sessions };
+
   return NextResponse.json(
-    { sessions },
+    chatbotSessionsResponseSchema.parse(response),
     {
       headers: {
         'Cache-Control': 'no-store',
@@ -134,11 +164,16 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 // PATCH /api/chatbot/sessions - Update session (title)
 export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseBody(req, ctx, updateSessionSchema, 'chatbot.sessions.PATCH');
+  const parsed = await parseBody(
+    req,
+    ctx,
+    chatbotSessionUpdateRequestSchema,
+    'chatbot.sessions.PATCH'
+  );
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { sessionId, title } = parsed.data as UpdateSessionBody;
+  const { sessionId, title } = parsed.data;
 
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
@@ -173,32 +208,49 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     });
   }
 
-  return NextResponse.json({ session: updated });
+  return NextResponse.json(chatbotSessionResponseSchema.parse({ session: updated }));
 }
 
 // DELETE /api/chatbot/sessions - Delete session
 export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseBody(req, ctx, deleteSessionSchema, 'chatbot.sessions.DELETE');
+  const parsed = await parseBody(
+    req,
+    ctx,
+    chatbotSessionDeleteRequestSchema.or(chatbotSessionsDeleteRequestSchema),
+    'chatbot.sessions.DELETE'
+  );
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { sessionId } = parsed.data as DeleteSessionBody;
+  const body = parsed.data as DeleteSessionBody;
 
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
       level: 'info',
       message: '[chatbot][sessions][DELETE] Request',
       context: {
-        sessionId,
+        sessionId: 'sessionId' in body ? body.sessionId : null,
+        sessionCount: 'sessionIds' in body ? body.sessionIds.length : 1,
       },
     });
   }
 
-  const deleted = await chatbotSessionRepository.delete(sessionId);
+  let deletedCount = 0;
 
-  if (!deleted) {
-    throw notFoundError('Session not found.', { sessionId });
+  if ('sessionIds' in body) {
+    deletedCount = await chatbotSessionRepository.deleteMany(body.sessionIds);
+    if (deletedCount === 0) {
+      throw notFoundError('Sessions not found.', { sessionIds: body.sessionIds });
+    }
+  } else {
+    const deleted = await chatbotSessionRepository.delete(body.sessionId);
+
+    if (!deleted) {
+      throw notFoundError('Session not found.', { sessionId: body.sessionId });
+    }
+
+    deletedCount = 1;
   }
 
   if (DEBUG_CHATBOT) {
@@ -206,11 +258,17 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
       level: 'info',
       message: '[chatbot][sessions][DELETE] Deleted',
       context: {
-        sessionId,
+        sessionId: 'sessionId' in body ? body.sessionId : null,
+        deletedCount,
         durationMs: Date.now() - requestStart,
       },
     });
   }
 
-  return NextResponse.json({ success: true });
+  const response: ChatbotSessionDeleteResponse = {
+    success: true,
+    deletedCount,
+  };
+
+  return NextResponse.json(chatbotSessionDeleteResponseSchema.parse(response));
 }

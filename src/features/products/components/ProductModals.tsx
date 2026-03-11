@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
 
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
@@ -26,7 +26,11 @@ const SelectIntegrationModal = dynamic(
   }
 );
 
-const TriggerButtonBar = dynamic(
+type TriggerButtonBarProps = ComponentProps<
+  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
+>;
+
+const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (

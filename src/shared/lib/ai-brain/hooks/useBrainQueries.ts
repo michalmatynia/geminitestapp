@@ -6,10 +6,17 @@ import type {
   BrainModelsResponse,
   InsightsSnapshot,
 } from '@/shared/contracts/ai-brain';
-import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AiInsightsResponse } from '@/shared/contracts/ai-insights';
+import {
+  aiPathRuntimeAnalyticsSummaryResponseSchema,
+  type AiPathRuntimeAnalyticsSummary,
+  type AiPathRuntimeAnalyticsSummaryResponse,
+} from '@/shared/contracts/ai-paths';
 import type { AnalyticsSummary } from '@/shared/contracts/analytics';
-import type { SystemLogMetrics } from '@/shared/contracts/observability';
+import type {
+  SystemLogMetrics,
+  SystemLogMetricsResponseDto as SystemLogMetricsResponse,
+} from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -18,35 +25,30 @@ import { brainKeys } from '@/shared/lib/query-key-exports';
 export { brainKeys };
 export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResponse };
 
-type InsightListResponse = { insights?: AiInsightRecord[] };
-
 const INSIGHTS_LIMIT = 5;
-
-const normalizeInsightList = (
-  payload: InsightListResponse | null | undefined
-): AiInsightRecord[] => (Array.isArray(payload?.insights) ? payload?.insights : []);
+const EMPTY_INSIGHTS_RESPONSE: AiInsightsResponse = { insights: [] };
 
 export async function fetchBrainInsightsSnapshot(): Promise<InsightsSnapshot> {
   const runtimeInsightsPromise = api
-    .get<InsightListResponse>('/api/ai-paths/runtime-analytics/insights', {
+    .get<AiInsightsResponse>('/api/ai-paths/runtime-analytics/insights', {
       params: { limit: INSIGHTS_LIMIT },
     })
-    .catch(() => ({ insights: [] }) satisfies InsightListResponse);
+    .catch(() => EMPTY_INSIGHTS_RESPONSE);
 
   const [analyticsData, logsData, runtimeData] = await Promise.all([
-    api.get<InsightListResponse>('/api/analytics/insights', {
+    api.get<AiInsightsResponse>('/api/analytics/insights', {
       params: { limit: INSIGHTS_LIMIT },
     }),
-    api.get<InsightListResponse>('/api/system/logs/insights', {
+    api.get<AiInsightsResponse>('/api/system/logs/insights', {
       params: { limit: INSIGHTS_LIMIT },
     }),
     runtimeInsightsPromise,
   ]);
 
   return {
-    analytics: normalizeInsightList(analyticsData),
-    runtimeAnalytics: normalizeInsightList(runtimeData),
-    logs: normalizeInsightList(logsData),
+    analytics: analyticsData.insights,
+    runtimeAnalytics: runtimeData.insights,
+    logs: logsData.insights,
   };
 }
 
@@ -127,7 +129,7 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
   return createSingleQueryV2<SystemLogMetrics>({
     queryKey,
     queryFn: async (): Promise<SystemLogMetrics> => {
-      const data = await api.get<{ metrics?: SystemLogMetrics }>('/api/system/logs/metrics', {
+      const data = await api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
         params: { level: 'error' },
       });
       if (!data.metrics) throw new Error('Missing metrics payload.');
@@ -173,13 +175,14 @@ export function useBrainRuntimeAnalytics(
   return createSingleQueryV2<AiPathRuntimeAnalyticsSummary>({
     queryKey,
     queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
-      const data = await api.get<{ summary?: AiPathRuntimeAnalyticsSummary }>(
-        '/api/ai-paths/runtime-analytics/summary',
-        {
-          params: { range: '24h' },
-        }
+      const data = aiPathRuntimeAnalyticsSummaryResponseSchema.parse(
+        await api.get<AiPathRuntimeAnalyticsSummaryResponse>(
+          '/api/ai-paths/runtime-analytics/summary',
+          {
+            params: { range: '24h' },
+          }
+        )
       );
-      if (!data.summary) throw new Error('Missing runtime analytics payload.');
       return data.summary;
     },
     id: 'runtime-analytics',

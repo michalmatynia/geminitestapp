@@ -65,6 +65,7 @@ export {
 export * from './base-com';
 export {
   importExportTemplateSchema,
+  createImportExportTemplateSchema,
   baseImportInventoriesPayloadSchema,
   baseImportInventoriesResponseSchema,
   baseImportWarehousesPayloadSchema,
@@ -85,6 +86,7 @@ export type {
   BaseImportParametersPayload,
   BaseImportParametersResponse,
   BaseImportParametersClearResponse,
+  ImportExportTemplateCreateInput,
   BaseImportWarehousesPayload,
   BaseImportWarehousesResponse,
   BaseImportWarehousesDebugPayload,
@@ -316,12 +318,17 @@ export type IntegrationDisconnectResponse = z.infer<typeof integrationDisconnect
 
 export const baseActiveTemplatePreferencePayloadSchema = z.object({
   templateId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type BaseTemplatePreferencePayload = z.infer<typeof baseActiveTemplatePreferencePayloadSchema>;
+
+export const baseScopedTemplatePreferencePayloadSchema = baseActiveTemplatePreferencePayloadSchema.extend({
   connectionId: z.string().trim().min(1).nullable().optional(),
   inventoryId: z.string().trim().min(1).nullable().optional(),
 });
 
 export type BaseActiveTemplatePreferencePayload = z.infer<
-  typeof baseActiveTemplatePreferencePayloadSchema
+  typeof baseScopedTemplatePreferencePayloadSchema
 >;
 
 export const baseActiveTemplatePreferenceResponseSchema = z.object({

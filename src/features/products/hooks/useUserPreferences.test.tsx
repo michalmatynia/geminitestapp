@@ -49,6 +49,7 @@ describe('useUserPreferences page size normalization', () => {
       productListPageSize: 96,
       productListThumbnailSource: 'file',
       productListFiltersCollapsedByDefault: false,
+      productListShowTriggerRunFeedback: true,
       productListAdvancedFilterPresets: [],
       productListAppliedAdvancedFilter: '',
       productListAppliedAdvancedFilterPresetId: null,
@@ -88,5 +89,26 @@ describe('useUserPreferences page size normalization', () => {
     });
 
     expect(mutateAsyncMock).toHaveBeenCalledWith({ pageSize: 48 });
+  });
+
+  it('loads and saves the trigger run feedback preference', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.preferences.showTriggerRunFeedback).toBe(true);
+
+    await act(async () => {
+      await result.current.setShowTriggerRunFeedback(false);
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith({ showTriggerRunFeedback: false });
   });
 });

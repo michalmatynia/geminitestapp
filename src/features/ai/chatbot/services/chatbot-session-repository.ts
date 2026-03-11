@@ -70,6 +70,7 @@ export interface ChatbotSessionRepository {
   create(input: CreateSessionInput): Promise<ChatSession>;
   update(id: string, input: UpdateSessionInput): Promise<ChatSession | null>;
   delete(id: string): Promise<boolean>;
+  deleteMany(ids: string[]): Promise<number>;
   addMessage(
     id: string,
     message: Partial<ChatMessage> & { role: ChatMessage['role']; content: string }
@@ -160,6 +161,22 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
     });
 
     return result.count > 0;
+  },
+
+  async deleteMany(ids: string[]): Promise<number> {
+    if (ids.length === 0) {
+      return 0;
+    }
+
+    const result = await prisma.chatbotSession.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return result.count;
   },
 
   async addMessage(

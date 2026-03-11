@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   Tabs,
@@ -18,7 +18,7 @@ import { formatDateTime } from '@/shared/utils';
 
 import { useAgentRunsContext } from '../context/AgentRunsContext';
 
-export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {}
+export interface AgentRunDetailModalProps extends EntityModalProps<AgentRunRecord> {}
 
 export function AgentRunDetailModal(props: AgentRunDetailModalProps): React.JSX.Element | null {
   const { isOpen, onClose } = props;

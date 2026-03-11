@@ -32,6 +32,7 @@ type TriggerButtonBarProps = {
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  showRunFeedback?: boolean | undefined;
   onRunQueued?:
     | ((args: {
         button: AiTriggerButtonRecord;
@@ -75,12 +76,30 @@ const resolveRunFeedbackPresentation = (
 ): {
   label: string;
   variant: StatusVariant;
+  badgeClassName?: string;
 } => {
   switch (status) {
+    case 'waiting':
+      return {
+        label: 'Waiting',
+        variant: 'neutral',
+        badgeClassName:
+          'border-slate-500/40 bg-slate-500/20 text-slate-200 hover:bg-slate-500/25',
+      };
     case 'queued':
-      return { label: 'Queued', variant: 'pending' };
+      return {
+        label: 'Queued',
+        variant: 'pending',
+        badgeClassName:
+          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+      };
     case 'running':
-      return { label: 'Running', variant: 'processing' };
+      return {
+        label: 'Running',
+        variant: 'processing',
+        badgeClassName:
+          'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+      };
     case 'blocked_on_lease':
       return { label: 'Awaiting resource', variant: 'warning' };
     case 'handoff_ready':
@@ -106,6 +125,29 @@ const resolveCompactInlineLimit = (location: AiTriggerButtonLocation): number | 
 const resolveRunRecency = (run: TriggerButtonLastRun): number => {
   const timestamp = Date.parse(run.updatedAt ?? run.finishedAt ?? '');
   return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const resolveRunTimestamp = (run: TriggerButtonLastRun): Date | null => {
+  const timestamp = Date.parse(run.finishedAt ?? run.updatedAt ?? '');
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp);
+};
+
+const formatRunTimestampLabel = (run: TriggerButtonLastRun, now = Date.now()): string | null => {
+  const timestamp = resolveRunTimestamp(run);
+  if (!timestamp) return null;
+
+  const elapsedMs = Math.max(0, now - timestamp.getTime());
+  if (elapsedMs < 60_000) return 'Just now';
+
+  const elapsedMinutes = Math.floor(elapsedMs / 60_000);
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h ago`;
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  return `${elapsedDays}d ago`;
 };
 
 function ErrorDetailDialog({
@@ -168,6 +210,9 @@ function TriggerRunFeedback(props: {
       ? 'text-amber-200'
       : 'text-gray-400';
   const summaryWidthClassName = location === 'product_row' ? 'max-w-[220px]' : 'max-w-[320px]';
+  const timestamp = resolveRunTimestamp(run);
+  const timestampLabel = formatRunTimestampLabel(run);
+  const showQueueLink = run.status !== 'waiting';
 
   return (
     <div
@@ -184,23 +229,35 @@ function TriggerRunFeedback(props: {
         label={presentation.label}
         variant={presentation.variant}
         size='sm'
-        className='shrink-0'
+        className={cn('shrink-0', presentation.badgeClassName)}
       />
-      <span
-        className='shrink-0 font-mono text-[9px] text-gray-400'
-        title={run.runId}
-      >
-        {truncateMiddle(run.runId)}
-      </span>
+      {showQueueLink ? (
+        <span
+          className='shrink-0 font-mono text-[9px] text-gray-400'
+          title={run.runId}
+        >
+          {truncateMiddle(run.runId)}
+        </span>
+      ) : null}
       {run.errorMessage ? (
         <ErrorDetailDialog errorMessage={run.errorMessage} messageClassName={messageClassName} />
       ) : null}
-      <a
-        href={queueHref}
-        className='shrink-0 text-blue-300 underline underline-offset-2 hover:text-blue-200'
-      >
-        Job Queue
-      </a>
+      {showQueueLink ? (
+        <a
+          href={queueHref}
+          className='shrink-0 text-blue-300 underline underline-offset-2 hover:text-blue-200'
+        >
+          Job Queue
+        </a>
+      ) : null}
+      {timestampLabel ? (
+        <span
+          className='shrink-0 text-[9px] text-gray-500'
+          title={timestamp?.toLocaleString() ?? undefined}
+        >
+          {timestampLabel}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -247,6 +304,7 @@ export function TriggerButtonBar({
   entityType,
   entityId,
   getEntityJson,
+  showRunFeedback,
   onRunQueued,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
@@ -258,8 +316,8 @@ export function TriggerButtonBar({
     onRunQueued,
   });
   const feedbackLocation = location;
-  const showRunFeedback =
-    entityType === 'product' && PRODUCT_RUN_FEEDBACK_LOCATIONS.has(location);
+  const shouldShowRunFeedback =
+    showRunFeedback ?? (entityType === 'product' && PRODUCT_RUN_FEEDBACK_LOCATIONS.has(location));
   const compactInlineLimit = resolveCompactInlineLimit(location);
   const barClassName = cn('flex flex-wrap items-center gap-2', className);
 
@@ -275,7 +333,7 @@ export function TriggerButtonBar({
       <span>+{overflowButtons.length}</span>
     </span>
   );
-  const latestOverflowRun = showRunFeedback
+  const latestOverflowRun = shouldShowRunFeedback
     ? overflowButtons
       .map((button) => lastRuns[button.id] ?? null)
       .filter((run): run is TriggerButtonLastRun => Boolean(run))
@@ -349,7 +407,7 @@ export function TriggerButtonBar({
       ) : (
         toggleControl
       );
-      const lastRun = showRunFeedback ? lastRuns[button.id] : undefined;
+      const lastRun = shouldShowRunFeedback ? lastRuns[button.id] : undefined;
       return (
         <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>
           {control}
@@ -394,7 +452,7 @@ export function TriggerButtonBar({
     );
 
     const control = !showLabel ? <Tooltip content={button.name}>{clickControl}</Tooltip> : clickControl;
-    const lastRun = showRunFeedback ? lastRuns[button.id] : undefined;
+    const lastRun = shouldShowRunFeedback ? lastRuns[button.id] : undefined;
 
     return (
       <div key={button.id} className='inline-flex min-w-0 flex-wrap items-center gap-2'>

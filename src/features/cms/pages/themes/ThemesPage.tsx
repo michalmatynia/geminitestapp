@@ -8,6 +8,7 @@ import React, { useMemo } from 'react';
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
 import {
+  AdminCmsPageLayout,
   Button,
   EmptyState,
   ActionMenu,
@@ -128,16 +129,19 @@ export default function ThemesPage(): React.ReactNode {
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
+    <AdminCmsPageLayout
+      title='Design Themes'
+      current='Themes'
+      description='Manage color palettes, typography and component style presets for your domains.'
+      icon={<Palette className='size-4' />}
+      headerActions={
+        <Button size='xs' className='h-8' onClick={() => router.push('/admin/cms/themes/create')}>
+          <Palette className='size-3.5 mr-2' />
+          Create Theme
+        </Button>
+      }
+    >
       <StandardDataTablePanel
-        title='Design Themes'
-        description='Manage color palettes, typography and component style presets for your domains.'
-        headerActions={
-          <Button size='xs' className='h-8' onClick={() => router.push('/admin/cms/themes/create')}>
-            <Palette className='size-3.5 mr-2' />
-            Create Theme
-          </Button>
-        }
         filters={
           <FilterPanel
             filters={[]}
@@ -184,6 +188,6 @@ export default function ThemesPage(): React.ReactNode {
           }
         }}
       />
-    </div>
+    </AdminCmsPageLayout>
   );
 }

@@ -118,6 +118,46 @@ const openAdminProductsPage = async (page: Page): Promise<void> => {
   await expect(productsHeading).toBeVisible({ timeout: 15_000 });
 };
 
+const openProductEditModal = async (
+  page: Page,
+  productSku: string,
+  options?: { dismissTransientOverlays?: boolean }
+): Promise<Locator> => {
+  const productRow = page.locator('tr').filter({ hasText: productSku }).first();
+  await expect(productRow).toBeVisible({ timeout: 15_000 });
+
+  if (options?.dismissTransientOverlays) {
+    await page.keyboard.press('Escape').catch(() => null);
+  }
+
+  await productRow.getByLabel('Open row actions').click({ force: true });
+  await page.getByRole('menuitem', { name: 'Edit' }).click({ force: true });
+
+  const modal = page.locator('[role="dialog"]').last();
+  await expect(modal).toBeVisible({ timeout: 15_000 });
+  return modal;
+};
+
+const openProductEditModalFromName = async (
+  page: Page,
+  productSku: string,
+  productName: string,
+  options?: { dismissTransientOverlays?: boolean }
+): Promise<Locator> => {
+  const productRow = page.locator('tr').filter({ hasText: productSku }).first();
+  await expect(productRow).toBeVisible({ timeout: 15_000 });
+
+  if (options?.dismissTransientOverlays) {
+    await page.keyboard.press('Escape').catch(() => null);
+  }
+
+  await productRow.getByRole('button', { name: productName, exact: true }).click();
+
+  const modal = page.locator('[role="dialog"]').last();
+  await expect(modal).toBeVisible({ timeout: 15_000 });
+  return modal;
+};
+
 const openAdminQueuePage = async (page: Page): Promise<boolean> => {
   const queueHeading = page.getByRole('heading', { name: 'Job Queue', exact: true });
   const signInHeading = page.getByRole('heading', { name: 'Sign in' });
@@ -723,13 +763,7 @@ test.describe('Products trigger button queue integration', () => {
 
     await openAdminProductsPage(page);
 
-    const productRow = page.locator('tr').filter({ hasText: productSku }).first();
-    await expect(productRow).toBeVisible({ timeout: 15_000 });
-    await productRow.getByLabel('Open row actions').click();
-    await page.getByRole('menuitem', { name: 'Edit' }).click();
-
-    const modal = page.locator('[role="dialog"]').last();
-    await expect(modal).toBeVisible({ timeout: 15_000 });
+    const modal = await openProductEditModal(page, productSku);
     await expect(modal.getByRole('button', { name: triggerButton.name })).toBeVisible({
       timeout: 15_000,
     });
@@ -737,6 +771,7 @@ test.describe('Products trigger button queue integration', () => {
     return {
       modal,
       triggerButtonName: triggerButton.name,
+      productName: 'Modal Trigger Product',
       productSku,
       pathId,
       productId,
@@ -860,6 +895,37 @@ test.describe('Products trigger button queue integration', () => {
       'run-e2e-product-trigger-queue'
     );
     test.skip(queueOpened === false, 'Admin AI Paths queue access is required for this e2e test.');
+  });
+
+  test('toggles product row trigger run pills globally from the products header', async ({ page }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-trigger-feedback-toggle',
+          status: 'queued',
+        },
+      },
+    });
+
+    await assertTriggerRunQueued(page, setup);
+
+    const productRow = page.locator('tr').filter({ hasText: setup.productSku }).first();
+    await expect(productRow.getByText('Queued').first()).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByRole('link', { name: 'Job Queue' })).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByText('Just now')).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('button', { name: 'Hide trigger run pills' }).click();
+    await expect(productRow.getByRole('link', { name: 'Job Queue' })).toHaveCount(0, {
+      timeout: 15_000,
+    });
+    await expect(productRow.getByText('Just now')).toHaveCount(0, { timeout: 15_000 });
+
+    await page.getByRole('button', { name: 'Show trigger run pills' }).click();
+    await expect(productRow.getByRole('link', { name: 'Job Queue' })).toBeVisible({ timeout: 15_000 });
+    await expect(productRow.getByText('Just now')).toBeVisible({ timeout: 15_000 });
   });
 
   test('does not show a permanent queued pill from stale legacy or offline queued storage', async ({
@@ -1128,5 +1194,87 @@ test.describe('Products trigger button queue integration', () => {
       sku: setup.productSku,
       name_en: 'Modal Trigger Product',
     });
+  });
+
+  test('keeps modal trigger run feedback visible after closing and reopening the product modal', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const runId = 'run-e2e-product-modal-trigger-persisted';
+    const setup = await setupProductModalTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: runId,
+          status: 'queued',
+        },
+      },
+    });
+
+    await setup.modal.getByRole('button', { name: setup.triggerButtonName }).click();
+
+    await expect.poll(() => setup.getEnqueueRequestBody()).not.toBeNull();
+    await expect(setup.modal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(setup.modal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+      'href',
+      new RegExp(`query=${runId}.*runId=${runId}`)
+    );
+
+    await page.keyboard.press('Escape');
+    await expect(setup.modal).not.toBeVisible({ timeout: 15_000 });
+
+    const reopenedModal = await openProductEditModalFromName(
+      page,
+      setup.productSku,
+      setup.productName,
+      {
+      dismissTransientOverlays: true,
+      }
+    );
+    await expect(reopenedModal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(reopenedModal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+      'href',
+      new RegExp(`query=${runId}.*runId=${runId}`)
+    );
+  });
+
+  test('keeps modal trigger run feedback visible after redirecting away and back to products', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const runId = 'run-e2e-product-modal-trigger-redirect-persisted';
+    const setup = await setupProductModalTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: runId,
+          status: 'queued',
+        },
+      },
+    });
+
+    await setup.modal.getByRole('button', { name: setup.triggerButtonName }).click();
+
+    await expect.poll(() => setup.getEnqueueRequestBody()).not.toBeNull();
+    await expect(setup.modal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+
+    await page.keyboard.press('Escape');
+    await expect(setup.modal).not.toBeVisible({ timeout: 15_000 });
+
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    await openAdminProductsPage(page);
+
+    const reopenedModal = await openProductEditModalFromName(
+      page,
+      setup.productSku,
+      setup.productName
+    );
+    await expect(reopenedModal.getByText('Queued')).toBeVisible({ timeout: 15_000 });
+    await expect(reopenedModal.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
+      'href',
+      new RegExp(`query=${runId}.*runId=${runId}`)
+    );
   });
 });

@@ -52,6 +52,9 @@ export const normalizeUserPreferencesUpdatePayload = (
   if (payload.productListFiltersCollapsedByDefault !== undefined) {
     normalized.productListFiltersCollapsedByDefault = payload.productListFiltersCollapsedByDefault;
   }
+  if (payload.productListShowTriggerRunFeedback !== undefined) {
+    normalized.productListShowTriggerRunFeedback = payload.productListShowTriggerRunFeedback;
+  }
   if (payload.productListAdvancedFilterPresets !== undefined) {
     normalized.productListAdvancedFilterPresets = payload.productListAdvancedFilterPresets ?? [];
   }

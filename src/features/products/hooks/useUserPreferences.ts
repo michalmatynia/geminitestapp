@@ -29,6 +29,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   pageSize: 12,
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
+  showTriggerRunFeedback: true,
   advancedFilterPresets: [],
   appliedAdvancedFilter: '',
   appliedAdvancedFilterPresetId: null,
@@ -47,6 +48,7 @@ const mapProductListPreferences = (
   pageSize: normalizeProductPageSize(data?.productListPageSize, 12),
   thumbnailSource: data?.productListThumbnailSource || 'file',
   filtersCollapsedByDefault: data?.productListFiltersCollapsedByDefault ?? false,
+  showTriggerRunFeedback: data?.productListShowTriggerRunFeedback ?? true,
   advancedFilterPresets: data?.productListAdvancedFilterPresets ?? [],
   appliedAdvancedFilter: data?.productListAppliedAdvancedFilter ?? '',
   appliedAdvancedFilterPresetId: data?.productListAppliedAdvancedFilterPresetId ?? null,
@@ -109,6 +111,7 @@ export interface UserPreferencesHookResult {
   setCatalogFilter: (filter: string) => Promise<void>;
   setCurrencyCode: (code: string) => Promise<void>;
   setPageSize: (size: number) => Promise<void>;
+  setShowTriggerRunFeedback: (show: boolean) => Promise<void>;
   setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
   setAppliedAdvancedFilterState: (state: {
     advancedFilter: string;
@@ -187,6 +190,13 @@ export function useUserPreferences(): UserPreferencesHookResult {
     [setPreference]
   );
 
+  const setShowTriggerRunFeedback = useCallback(
+    async (show: boolean) => {
+      await setPreference({ showTriggerRunFeedback: show });
+    },
+    [setPreference]
+  );
+
   const setAppliedAdvancedFilterState = useCallback(
     async (state: { advancedFilter: string; presetId: string | null }) => {
       await setPreference({
@@ -204,6 +214,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
     setCatalogFilter,
     setCurrencyCode,
     setPageSize,
+    setShowTriggerRunFeedback,
     setAdvancedFilterPresets,
     setAppliedAdvancedFilterState,
   };

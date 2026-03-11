@@ -7,10 +7,9 @@ import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  AdminCaseResolverBreadcrumbs,
+  AdminCaseResolverPageLayout,
   Button,
   FormSection,
-  SectionHeader,
   Skeleton,
   Tag as UiTag,
   useToast,
@@ -290,13 +289,10 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
   }, [caseIdentifierToDelete, caseIdentifiers, toast, updateSetting]);
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Case Resolver Case Identifiers'
-        subtitle={<AdminCaseResolverBreadcrumbs current='Case Identifiers' />}
-      />
-
-      <div className='flex justify-start'>
+    <AdminCaseResolverPageLayout
+      title='Case Resolver Case Identifiers'
+      current='Case Identifiers'
+      headerActions={
         <Button
           onClick={openCreateModal}
           variant='outline'
@@ -305,7 +301,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
           <Plus className='mr-2 size-4' />
           Add Case Identifier
         </Button>
-      </div>
+      }
+      containerClassName='container mx-auto py-8'
+    >
 
       <FormSection title='Case Identifiers' className='p-4'>
         <div className='mt-4'>
@@ -360,6 +358,6 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
           void handleSave();
         }}
       />
-    </div>
+    </AdminCaseResolverPageLayout>
   );
 }

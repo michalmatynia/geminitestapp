@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import {
   AdminAgentCreatorBreadcrumbs,
@@ -56,7 +56,7 @@ function AgentRunsContent(): React.JSX.Element {
         loadingMessage='Loading agent runs...'
       >
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {agentRuns.map((job: AiPathRunRecord) => (
+          {agentRuns.map((job: AgentRunRecord) => (
             <Card
               key={job.id}
               variant='subtle'

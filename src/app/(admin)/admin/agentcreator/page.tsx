@@ -1,8 +1,6 @@
-import Link from 'next/link';
 import { JSX } from 'react';
 
-import { Card, CardHeader, CardDescription } from '@/shared/ui/card';
-import { PageLayout } from '@/shared/ui/PageLayout';
+import { NavigationCard, NavigationCardGrid, PageLayout } from '@/shared/ui';
 
 export default function AgentCreatorPage(): JSX.Element {
   const cards = [
@@ -29,20 +27,17 @@ export default function AgentCreatorPage(): JSX.Element {
         <h2 id='agent-creator-sections-heading' className='text-lg font-semibold tracking-tight'>
           Agent Creator sections
         </h2>
-        <div className='grid gap-4 md:grid-cols-3'>
+        <NavigationCardGrid className='md:grid-cols-3'>
           {cards.map((card) => (
-            <Link key={card.href} href={card.href}>
-              <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
-                <CardHeader>
-                  <div className='text-lg font-semibold leading-none tracking-tight'>
-                    {card.title}
-                  </div>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
+            <NavigationCard
+              key={card.href}
+              href={card.href}
+              title={card.title}
+              description={card.description}
+              className='hover:border-gray-600 hover:bg-white/5'
+            />
           ))}
-        </div>
+        </NavigationCardGrid>
       </section>
     </PageLayout>
   );

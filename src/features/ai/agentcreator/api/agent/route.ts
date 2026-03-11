@@ -6,7 +6,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
 import { startAgentQueue } from '@/features/ai/server';
-import type { AgentRunStatusType } from '@/shared/contracts/agent-runtime';
+import type {
+  AgentRunEnqueueResponse,
+  AgentRunRecord,
+  AgentRunStatusType,
+  AgentRunsDeleteResponse,
+  AgentRunsResponse,
+} from '@/shared/contracts/agent-runtime';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
@@ -58,8 +64,18 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       durationMs: Date.now() - requestStart,
     });
   }
+  const response: AgentRunsResponse = {
+    runs: runs.map(
+      (run): AgentRunRecord => ({
+        ...run,
+        checkpointedAt: run.checkpointedAt ? run.checkpointedAt.toISOString() : null,
+        createdAt: run.createdAt.toISOString(),
+        updatedAt: run.updatedAt.toISOString(),
+      })
+    ),
+  };
   return NextResponse.json(
-    { runs },
+    response,
     {
       headers: {
         'Cache-Control': 'no-store',
@@ -216,7 +232,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   }
 
-  return NextResponse.json({ runId: run.id, status: run.status });
+  const response: AgentRunEnqueueResponse = { runId: run.id, status: run.status };
+  return NextResponse.json(response);
 }
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -241,7 +258,8 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   });
   const ids = runs.map((run) => run.id);
   if (ids.length === 0) {
-    return NextResponse.json({ deleted: 0 });
+    const response: AgentRunsDeleteResponse = { deleted: 0 };
+    return NextResponse.json(response);
   }
   await prisma.chatbotAgentRun.deleteMany({
     where: { id: { in: ids } },
@@ -261,7 +279,8 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ deleted: ids.length });
+  const response: AgentRunsDeleteResponse = { deleted: ids.length };
+  return NextResponse.json(response);
 }
 
 export const GET = apiHandler(GET_handler, {

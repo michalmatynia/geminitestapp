@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
+import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -82,5 +83,7 @@ export async function POST_handler(
   });
   if (!updated) throw notFoundError('Slot not found');
 
-  return NextResponse.json({ slot: updated, screenshot: imageFile });
+  return NextResponse.json(
+    imageStudioSlotScreenshotResponseSchema.parse({ slot: updated, screenshot: imageFile })
+  );
 }

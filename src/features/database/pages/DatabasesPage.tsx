@@ -2,10 +2,10 @@
 
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
+  AdminDatabasePageLayout,
   Button,
   FileUploadButton,
   type FileUploadHelpers,
-  PageLayout,
   Alert,
   StandardDataTablePanel,
 } from '@/shared/ui';
@@ -48,8 +48,9 @@ function DatabasesContentInner(): React.JSX.Element {
   } = useDatabaseBackupsActionsContext();
 
   return (
-    <PageLayout
+    <AdminDatabasePageLayout
       title={`Databases - ${activeTab === 'postgresql' ? 'PostgreSQL' : 'MongoDB'}`}
+      current='Backups'
       description={
         activeTab === 'postgresql'
           ? 'PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema.'
@@ -147,7 +148,7 @@ function DatabasesContentInner(): React.JSX.Element {
         sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         variant='flat'
       />
-    </PageLayout>
+    </AdminDatabasePageLayout>
   );
 }
 

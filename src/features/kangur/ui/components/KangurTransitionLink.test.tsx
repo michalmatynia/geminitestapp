@@ -10,11 +10,13 @@ const {
   nextLinkPropsMock,
   startRouteTransitionMock,
   routerPushMock,
+  routerReplaceMock,
   routerPrefetchMock,
 } = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
   routerPushMock: vi.fn(),
+  routerReplaceMock: vi.fn(),
   routerPrefetchMock: vi.fn(),
 }));
 
@@ -37,14 +39,13 @@ vi.mock('next/link', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
+    replace: routerReplaceMock,
     prefetch: routerPrefetchMock,
   }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
-  useOptionalKangurRouteTransition: () => ({
-    isRoutePending: false,
-    pendingPageKey: null,
+  useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
 }));

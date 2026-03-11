@@ -29,7 +29,7 @@ import type {
 } from '@/shared/contracts/database';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
-  AdminDatabaseBreadcrumbs,
+  AdminDatabasePageLayout,
   Badge,
   Button,
   Pagination,
@@ -46,7 +46,6 @@ import {
   MetadataItem,
   LoadingState,
   EmptyState,
-  PageLayout,
   Hint,
 } from '@/shared/ui';
 
@@ -469,17 +468,15 @@ function DatabasePreviewContent(): React.JSX.Element {
     stats,
   } = useDatabasePreviewState();
   return (
-    <PageLayout
+    <AdminDatabasePageLayout
       title='Database Preview'
+      current='Preview'
       description={
         mode === 'current'
           ? 'Source: Current database instance'
           : backupName
             ? `Source: ${backupName}`
             : 'No source selected.'
-      }
-      eyebrow={
-        <AdminDatabaseBreadcrumbs current='Preview' className='mb-2' />
       }
       refresh={{
         onRefresh: () => window.location.reload(),
@@ -676,7 +673,7 @@ function DatabasePreviewContent(): React.JSX.Element {
           )}
         </div>
       )}
-    </PageLayout>
+    </AdminDatabasePageLayout>
   );
 }
 

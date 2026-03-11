@@ -1,0 +1,58 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-03-11T13:35:40.387Z",
+  "phase": "dry-run",
+  "executionMode": "executed",
+  "allowWrite": false,
+  "selectedTrackIds": [
+    "products-category-schema-normalization"
+  ],
+  "reportPath": "artifacts/improvements/dry-run-report.json",
+  "steps": [
+    {
+      "id": "products-category-schema-curate-family-mappings",
+      "title": "Fill final parameter ids in the latest family mapping packs",
+      "trackId": "products-category-schema-normalization",
+      "phase": "dry-run",
+      "mode": "manual",
+      "writes": false,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Review /tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md.",
+        "Fill suggestedFinalParameterId in each *-mapping-pack.json only when the final category/schema mapping is approved."
+      ]
+    },
+    {
+      "id": "products-category-schema-build-ready-curated-overrides",
+      "title": "Build ready curated override bundle from completed family mapping packs",
+      "trackId": "products-category-schema-normalization",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-curated-build-latest.json",
+        "/tmp/product-parameter-curated-overrides-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:build:ready-parameter-curated-overrides",
+      "durationMs": 1183
+    },
+    {
+      "id": "products-category-schema-preview-ready-curated-overrides",
+      "title": "Preview the latest curated override bundle without applying writes",
+      "trackId": "products-category-schema-normalization",
+      "phase": "dry-run",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-curated-apply-*.json"
+      ],
+      "instructions": [],
+      "script": "products:apply:parameter-curated-overrides",
+      "durationMs": 2586
+    }
+  ]
+}

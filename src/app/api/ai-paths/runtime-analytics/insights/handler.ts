@@ -6,7 +6,11 @@ import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights
 import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { runtimeAnalyticsInsightRunRequestSchema } from '@/shared/contracts/ai-insights';
+import {
+  runtimeAnalyticsInsightRunRequestSchema,
+  type AiInsightResponse,
+  type AiInsightsResponse,
+} from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
@@ -31,7 +35,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const parsed = listSchema.parse(Object.fromEntries(getQueryParams(req).entries()));
   const insights = await listAiInsights('runtime_analytics', parsed.limit ?? 10);
-  return NextResponse.json({ insights });
+  const response: AiInsightsResponse = { insights };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -55,5 +60,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     range: resolveRange(parsed.data.range ?? query.range),
     contextRegistry,
   });
-  return NextResponse.json({ insight });
+  const response: AiInsightResponse = { insight };
+  return NextResponse.json(response);
 }

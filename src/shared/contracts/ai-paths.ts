@@ -419,6 +419,13 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   generatedAt: z.string(),
 });
 export type AiPathRuntimeAnalyticsSummary = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
+export const aiPathRuntimeAnalyticsSummaryResponseSchema = z.object({
+  summary: aiPathRuntimeAnalyticsSummarySchema,
+});
+export type AiPathRuntimeAnalyticsSummaryResponse = z.infer<
+  typeof aiPathRuntimeAnalyticsSummaryResponseSchema
+>;
+export type AiPathRuntimeAnalyticsSummaryResponseDto = AiPathRuntimeAnalyticsSummaryResponse;
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -2,6 +2,8 @@
 
 import type {
   ChatbotChatResponseDto,
+  ChatbotSessionCreateResponse,
+  ChatbotSessionDeleteResponse,
   ChatbotSettingsDto as ChatbotSettingsPayload,
   ChatbotSessionDto as ChatSession,
   ChatbotSessionListItem,
@@ -32,7 +34,7 @@ import {
  * Mutation hook for creating a new chatbot session
  */
 export function useCreateChatbotSession(): CreateMutation<
-  { sessionId: string; session?: ChatSession },
+  ChatbotSessionCreateResponse,
   { title?: string; settings?: ChatSession['settings'] }
   > {
   const mutationKey = chatbotQueryKeys.mutation('create-session');
@@ -83,7 +85,7 @@ export function useUpdateSessionTitle(): UpdateMutation<
 /**
  * Mutation hook for deleting a single session
  */
-export function useDeleteChatbotSession(): UpdateMutation<unknown, string> {
+export function useDeleteChatbotSession(): UpdateMutation<ChatbotSessionDeleteResponse, string> {
   const mutationKey = chatbotQueryKeys.mutation('delete-session');
 
   return createDeleteMutationV2({
@@ -107,7 +109,7 @@ export function useDeleteChatbotSession(): UpdateMutation<unknown, string> {
 /**
  * Mutation hook for deleting multiple sessions
  */
-export function useDeleteChatbotSessions(): UpdateMutation<unknown, string[]> {
+export function useDeleteChatbotSessions(): UpdateMutation<ChatbotSessionDeleteResponse, string[]> {
   const mutationKey = chatbotQueryKeys.mutation('delete-sessions');
 
   return createDeleteMutationV2({

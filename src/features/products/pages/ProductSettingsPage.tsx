@@ -33,7 +33,7 @@ import {
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { ProductSyncSettings } from '@/shared/lib/product-sync-adapter';
-import { AdminProductsBreadcrumbs, Button, PageLayout, useToast, Card } from '@/shared/ui';
+import { AdminProductsPageLayout, Button, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -251,7 +251,7 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   return (
     <InternationalizationProvider>
-      <PageLayout title='Product Settings' eyebrow={<AdminProductsBreadcrumbs current='Settings' />}>
+      <AdminProductsPageLayout title='Product Settings' current='Settings'>
         <Card variant='subtle-compact' padding='sm' className='mb-4 border-border/60 bg-card/30'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
@@ -361,7 +361,7 @@ export function ProductSettingsPage(): React.JSX.Element {
             setConfirmation(null);
           }}
         />
-      </PageLayout>
+      </AdminProductsPageLayout>
     </InternationalizationProvider>
   );
 }

@@ -5,12 +5,12 @@ import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 import {
+  AdminAgentTeachingBreadcrumbs,
   Button,
   StandardDataTablePanel,
   Badge,
   ConfirmModal,
   PanelHeader,
-  SectionHeaderBackLink,
 } from '@/shared/ui';
 
 import { DocumentAddForm } from '../components/DocumentAddForm';
@@ -125,13 +125,11 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         description='Manage documents (original text + embedding vectors).'
         icon={<BookOpen className='size-4' />}
         subtitle={
-          <SectionHeaderBackLink
-            href='/admin/agentcreator/teaching/collections'
-            arrow
+          <AdminAgentTeachingBreadcrumbs
+            parent={{ label: 'Embedding School', href: '/admin/agentcreator/teaching/collections' }}
+            current={collection ? collection.name : 'Collection'}
             className='ml-2'
-          >
-            Back to collections
-          </SectionHeaderBackLink>
+          />
         }
         actions={
           collection

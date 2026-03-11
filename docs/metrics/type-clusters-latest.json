@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-09T04:08:59.988Z",
+  "generatedAt": "2026-03-11T14:10:44.537Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -16,16 +16,315 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 5153,
-    "exportedDeclarationsScanned": 3965,
-    "candidateDeclarationsScanned": 3939,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 5744,
+    "exportedDeclarationsScanned": 4342,
+    "candidateDeclarationsScanned": 4316,
+    "exactShapeClusters": 3,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 8,
+    "declarationsInClusters": 16,
+    "highestRiskScore": 16
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "0d1fba558df3",
+        "memberCount": 1,
+        "preview": "'sign-in' | 'create-account'"
+      },
+      "declarations": [
+        {
+          "name": "KangurLoginModalAuthMode",
+          "kind": "type",
+          "path": "src/features/kangur/ui/context/KangurLoginModalContext.tsx",
+          "line": 18,
+          "domain": "feature:kangur",
+          "usageCount": 5
+        },
+        {
+          "name": "GuidedTutorAuthMode",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.types.ts",
+          "line": 14,
+          "domain": "feature:kangur",
+          "usageCount": 3
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "27b1b0b04d59",
+        "memberCount": 2,
+        "preview": "prop:x:number; prop:y:number"
+      },
+      "declarations": [
+        {
+          "name": "TutorPoint",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.types.ts",
+          "line": 7,
+          "domain": "feature:kangur",
+          "usageCount": 5
+        },
+        {
+          "name": "GeometryDrawPoint",
+          "kind": "type",
+          "path": "src/features/kangur/ui/services/geometry-drawing.ts",
+          "line": 9,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0004",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "5152d5035b29",
+        "memberCount": 5,
+        "preview": "prop:coachingFrame?:KangurAiTutorCoachingFrame | null; prop:content:string; prop:followUpActions?:KangurAiTutorFollowUpAction[]; prop:role:'user' | 'assistant'; prop:sources?:AgentTeachingChatSource[]"
+      },
+      "declarations": [
+        {
+          "name": "TutorRenderedMessage",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx",
+          "line": 23,
+          "domain": "feature:kangur",
+          "usageCount": 4
+        },
+        {
+          "name": "ChatMessage",
+          "kind": "type",
+          "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
+          "line": 72,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "a1045c16efbf",
+        "memberCount": 3,
+        "preview": "prop:status:'shown' | 'accepted' | 'dismissed'; prop:updatedAt:string; prop:version:1"
+      },
+      "declarations": [
+        {
+          "name": "KangurAiTutorGuestIntroRecord",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.storage.ts",
+          "line": 11,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "KangurAiTutorHomeOnboardingRecord",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.storage.ts",
+          "line": 17,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "0c11d1dbbe96",
+        "memberCount": 2,
+        "preview": "prop:id:string; prop:label:string"
+      },
+      "declarations": [
+        {
+          "name": "HistoryNodeOption",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/run-history-utils.ts",
+          "line": 3,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "QuestionAuthoringRepairAction",
+          "kind": "type",
+          "path": "src/features/kangur/admin/question-authoring-repairs.ts",
+          "line": 11,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2082338e0755",
+        "memberCount": 7,
+        "preview": "prop:answer:string; prop:choiceDescriptions?:string[]; prop:choices:string[]; prop:explanation?:string; prop:id:string; prop:image?:string | null; prop:question:string"
+      },
+      "declarations": [
+        {
+          "name": "KangurExamQuestion",
+          "kind": "type",
+          "path": "src/features/kangur/ui/types.ts",
+          "line": 48,
+          "domain": "feature:kangur",
+          "usageCount": 3
+        },
+        {
+          "name": "LegacyKangurQuestionLike",
+          "kind": "type",
+          "path": "src/features/kangur/test-suites/question-audit.ts",
+          "line": 8,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "ae5d346534f0",
+        "memberCount": 3,
+        "preview": "prop:parameterId:string; prop:value:string; prop:valuesByLanguage?:Record<string, string>"
+      },
+      "declarations": [
+        {
+          "name": "NormalizedSubmittedParameterValue",
+          "kind": "type",
+          "path": "src/features/products/hooks/useProductFormSubmit.ts",
+          "line": 54,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "ResolvedProductParameterValue",
+          "kind": "type",
+          "path": "src/shared/lib/products/utils/parameter-values.ts",
+          "line": 3,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0002",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "001b63c37efa",
+        "memberCount": 5,
+        "preview": "prop:blockingIssues:KangurAiTutorOnboardingValidationIssue[]; prop:issues:KangurAiTutorOnboardingValidationIssue[]; prop:listId:string; prop:listName:string; prop:ruleIds:string[]"
+      },
+      "declarations": [
+        {
+          "name": "KangurAiTutorOnboardingValidationResult",
+          "kind": "type",
+          "path": "src/features/kangur/ai-tutor-onboarding-validation.ts",
+          "line": 76,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurAiTutorOnboardingContentValidationResult",
+          "kind": "type",
+          "path": "src/features/kangur/ai-tutor-onboarding-validation.ts",
+          "line": 94,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

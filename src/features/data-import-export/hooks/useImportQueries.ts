@@ -1,6 +1,7 @@
 'use client';
 
 import type {
+  BaseActiveTemplatePreferencePayload,
   BaseImportInventoriesPayload,
   BaseImportInventoriesResponse,
   BaseImportListPayload,
@@ -10,7 +11,6 @@ import type {
   BaseImportParametersResponse,
   BaseImportWarehousesPayload,
   BaseImportWarehousesResponse,
-  BaseActiveTemplatePreferencePayload,
   BaseActiveTemplatePreferenceResponse,
   BaseDefaultConnectionPreferencePayload,
   BaseDefaultConnectionPreferenceResponse,
@@ -23,6 +23,7 @@ import type {
   BaseStockFallbackPreferencePayload,
   BaseStockFallbackPreferenceResponse,
   CatalogOption as CatalogRecord,
+  ImportExportTemplateCreateInput,
   BaseImportRunDetailResponse,
   BaseImportRunResumePayload,
   BaseImportRunStartPayload,
@@ -39,7 +40,7 @@ import type {
   ProductParameter,
   ProductSimpleParameter,
 } from '@/shared/contracts/products';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { DeleteResponse, ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -199,14 +200,19 @@ export function useImportPreference<T>(
 // --- Mutations ---
 
 export function useSavePreferenceMutation(): MutationResult<
-  unknown,
-  { endpoint: string; data: unknown }
+  BaseActiveTemplatePreferenceResponse,
+  { endpoint: string; data: BaseActiveTemplatePreferencePayload }
   > {
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
-    mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) =>
-      api.post<unknown>(endpoint, data),
+    mutationFn: ({
+      endpoint,
+      data,
+    }: {
+      endpoint: string;
+      data: BaseActiveTemplatePreferencePayload;
+    }) => api.post<BaseActiveTemplatePreferenceResponse>(endpoint, data),
     mutationKey,
     meta: {
       source: 'importExport.hooks.useSavePreferenceMutation',
@@ -229,7 +235,10 @@ export function useSavePreferenceMutation(): MutationResult<
 export function useTemplateMutation(
   scope: 'import' | 'export',
   id?: string
-): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
+): MutationResult<
+  Template | DeleteResponse,
+  { data?: ImportExportTemplateCreateInput; isDelete?: boolean }
+> {
   const endpoint = scope === 'import' ? '/api/v2/templates/import' : '/api/v2/templates/export';
   const mutationKey = importExportKeys.templates(scope);
 
@@ -238,12 +247,12 @@ export function useTemplateMutation(
       data,
       isDelete = false,
     }: {
-      data?: unknown;
+      data?: ImportExportTemplateCreateInput;
       isDelete?: boolean;
-    }): Promise<unknown> => {
+    }): Promise<Template | DeleteResponse> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
-      if (isDelete) return api.delete(url);
-      return id ? api.put(url, data) : api.post(url, data);
+      if (isDelete) return api.delete<DeleteResponse>(url);
+      return id ? api.put<Template>(url, data) : api.post<Template>(url, data);
     },
     mutationKey,
     meta: {

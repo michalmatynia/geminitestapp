@@ -1,6 +1,6 @@
 'use client';
 
-import type { AiInsightRecord } from '@/shared/contracts';
+import type { AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import type {
   SystemLogsResponseDto as SystemLogsResponse,
   SystemActivityResponseDto as SystemActivityResponse,
@@ -137,13 +137,13 @@ export function useMongoDiagnostics(): SingleQuery<MongoDiagnosticsResponse> {
 
 export function useLogInsights(
   options: { limit?: number; enabled?: boolean } = {}
-): SingleQuery<{ insights: AiInsightRecord[] }> {
+): SingleQuery<AiInsightsResponse> {
   const queryKey = logsKeys.insights(options.limit);
   return createSingleQueryV2({
     id: 'log-insights',
     queryKey,
     queryFn: () =>
-      api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
+      api.get<AiInsightsResponse>('/api/system/logs/insights', {
         params: { limit: options.limit ?? 5 },
       }),
     enabled: options.enabled ?? true,

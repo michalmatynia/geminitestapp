@@ -1,12 +1,13 @@
 'use client';
 
+import type { ProductCsvImportResponse } from '@/shared/contracts/products';
 import type { CreateMutation } from '@/shared/contracts/ui';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductsAndCounts } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useCsvImportMutation(): CreateMutation<
-  unknown,
+  ProductCsvImportResponse,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const mutationKey = QUERY_KEYS.products.all;
@@ -17,15 +18,18 @@ export function useCsvImportMutation(): CreateMutation<
     }: {
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
-    }): Promise<unknown> => {
+    }): Promise<ProductCsvImportResponse> => {
       const formData = new FormData();
       formData.append('file', file);
 
       const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-      const result = await uploadWithProgress<unknown>('/api/v2/products/import/csv', {
-        formData,
-        onProgress,
-      });
+      const result = await uploadWithProgress<ProductCsvImportResponse>(
+        '/api/v2/products/import/csv',
+        {
+          formData,
+          onProgress,
+        }
+      );
       if (!result.ok) throw new Error('Failed to import CSV');
       return result.data;
     },

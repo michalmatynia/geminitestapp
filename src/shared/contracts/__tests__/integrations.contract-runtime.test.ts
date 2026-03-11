@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  baseActiveTemplatePreferencePayloadSchema,
+  createImportExportTemplateSchema,
   playwrightStorageStateSchema,
   sessionPayloadSchema,
 } from '@/shared/contracts/integrations';
@@ -60,5 +62,24 @@ describe('integrations contract runtime', () => {
         ],
       })
     ).toThrow();
+  });
+
+  it('parses template preference and template save payloads used by import-export routes', () => {
+    expect(
+      baseActiveTemplatePreferencePayloadSchema.parse({
+        templateId: 'tpl-1',
+      }).templateId
+    ).toBe('tpl-1');
+
+    expect(
+      createImportExportTemplateSchema.parse({
+        name: 'Base Import',
+        mappings: [{ sourceKey: 'sku', targetField: 'sku' }],
+        parameterImport: {
+          enabled: true,
+          mode: 'mapped',
+        },
+      }).name
+    ).toBe('Base Import');
   });
 });

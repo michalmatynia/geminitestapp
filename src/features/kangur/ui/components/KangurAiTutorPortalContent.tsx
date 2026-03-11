@@ -30,6 +30,8 @@ export function KangurAiTutorPortalContent() {
     selectionAction,
     spotlights,
   } = useKangurAiTutorPortalContext();
+  void guestIntro;
+  void KangurAiTutorGuestIntroPanel;
 
   return (
     <>

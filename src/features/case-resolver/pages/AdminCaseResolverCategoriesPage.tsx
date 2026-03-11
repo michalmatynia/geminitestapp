@@ -16,11 +16,10 @@ import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  AdminCaseResolverBreadcrumbs,
+  AdminCaseResolverPageLayout,
   Button,
   EmptyState,
   FormSection,
-  SectionHeader,
   Skeleton,
   useToast,
 } from '@/shared/ui';
@@ -399,13 +398,10 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Case Resolver Categories'
-        subtitle={<AdminCaseResolverBreadcrumbs current='Categories' />}
-      />
-
-      <div className='flex justify-start'>
+    <AdminCaseResolverPageLayout
+      title='Case Resolver Categories'
+      current='Categories'
+      headerActions={
         <Button
           onClick={(): void => {
             openCreateModal(null);
@@ -416,7 +412,9 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
           <Plus className='mr-2 size-4' />
           Add Category
         </Button>
-      </div>
+      }
+      containerClassName='container mx-auto py-8'
+    >
 
       <FormSection title='Category Tree' className='p-4'>
         <div className='mt-4'>
@@ -472,6 +470,6 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
           void handleSaveCategory();
         }}
       />
-    </div>
+    </AdminCaseResolverPageLayout>
   );
 }

@@ -5,6 +5,10 @@ import {
   deleteImageStudioSlotCascade,
   updateImageStudioSlot,
 } from '@/features/ai/server';
+import {
+  imageStudioSlotDeleteResponseSchema,
+  imageStudioSlotResponseSchema,
+} from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
@@ -96,7 +100,7 @@ export async function PATCH_handler(
   }
   if (!updated) throw notFoundError('Slot not found');
 
-  return NextResponse.json({ slot: updated });
+  return NextResponse.json(imageStudioSlotResponseSchema.parse({ slot: updated }));
 }
 
 export async function DELETE_handler(
@@ -121,15 +125,19 @@ export async function DELETE_handler(
   }
   // Idempotent delete: stale client trees can request a slot that has already been removed.
   if (!deleted) {
-    return NextResponse.json({
-      ok: true,
-      deletedSlotIds: [],
-      ...(includeDebug ? { timingsMs: lastTimings } : {}),
-    });
+    return NextResponse.json(
+      imageStudioSlotDeleteResponseSchema.parse({
+        ok: true,
+        deletedSlotIds: [],
+        ...(includeDebug ? { timingsMs: lastTimings } : {}),
+      })
+    );
   }
-  return NextResponse.json({
-    ok: true,
-    deletedSlotIds,
-    ...(includeDebug ? { timingsMs: lastTimings } : {}),
-  });
+  return NextResponse.json(
+    imageStudioSlotDeleteResponseSchema.parse({
+      ok: true,
+      deletedSlotIds,
+      ...(includeDebug ? { timingsMs: lastTimings } : {}),
+    })
+  );
 }

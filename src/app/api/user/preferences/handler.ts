@@ -70,6 +70,7 @@ const buildUserPreferencesResponse = (
   productListPageSize: normalizeProductPageSize(preferences?.productListPageSize, 12),
   productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
+  productListShowTriggerRunFeedback: preferences?.productListShowTriggerRunFeedback ?? true,
   productListAdvancedFilterPresets: preferences?.productListAdvancedFilterPresets ?? [],
   productListAppliedAdvancedFilter: preferences?.productListAppliedAdvancedFilter ?? null,
   productListAppliedAdvancedFilterPresetId:

@@ -10,10 +10,10 @@ import {
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NotebookRecord } from '@/shared/contracts/notes';
 import {
+  AdminNotesPageLayout,
   Button,
   useToast,
   Input,
-  PageLayout,
   FormSection,
   FormField,
   LoadingState,
@@ -287,17 +287,22 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
 
   if (loading) {
     return (
-      <PageLayout title='Notebooks' description='Loading notebooks...'>
+      <AdminNotesPageLayout
+        title='Notebooks'
+        current='Notebooks'
+        description='Loading notebooks...'
+      >
         <div className='flex min-h-[400px] items-center justify-center'>
           <LoadingState message='Loading notebooks...' />
         </div>
-      </PageLayout>
+      </AdminNotesPageLayout>
     );
   }
 
   return (
-    <PageLayout
+    <AdminNotesPageLayout
       title='Notebooks'
+      current='Notebooks'
       description='Create and manage notebooks. Notes, folders, and tags are scoped per notebook.'
       refresh={{
         onRefresh: () => {
@@ -364,6 +369,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           }
         }}
       />
-    </PageLayout>
+    </AdminNotesPageLayout>
   );
 }

@@ -21,7 +21,7 @@ vi.mock('@/features/jobs/server', () => ({
 import { GET_handler } from '@/app/api/ai-paths/runtime-analytics/summary/handler';
 import { authError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeAnalyticsSummaryResponse } from '@/shared/contracts/ai-paths';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -45,7 +45,7 @@ describe('AI Paths runtime analytics summary handler', () => {
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
       mockContext
     );
-    const body = (await response.json()) as { summary: AiPathRuntimeAnalyticsSummary };
+    const body = (await response.json()) as AiPathRuntimeAnalyticsSummaryResponse;
 
     expect(response.status).toBe(200);
     expect(body.summary.storage).toBe('disabled');
@@ -166,7 +166,7 @@ describe('AI Paths runtime analytics summary handler', () => {
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
       mockContext
     );
-    const body = (await response.json()) as { summary: AiPathRuntimeAnalyticsSummary };
+    const body = (await response.json()) as AiPathRuntimeAnalyticsSummaryResponse;
 
     expect(response.status).toBe(200);
     expect(startAiPathRunQueueMock).toHaveBeenCalled();

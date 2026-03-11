@@ -1,10 +1,9 @@
 'use client';
 
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
 import type { MouseEvent } from 'react';
 
@@ -44,8 +43,7 @@ export function KangurTransitionLink({
   targetPageKey,
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
-  const router = useRouter();
-  const routeTransition = useOptionalKangurRouteTransition();
+  const routeNavigator = useKangurRouteNavigator();
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
@@ -53,12 +51,12 @@ export function KangurTransitionLink({
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
 
   useEffect(() => {
-    if (!managedLocalHref || typeof router.prefetch !== 'function') {
+    if (!managedLocalHref) {
       return;
     }
 
-    router.prefetch(managedLocalHref);
-  }, [managedLocalHref, router]);
+    routeNavigator.prefetch(managedLocalHref);
+  }, [managedLocalHref, routeNavigator]);
 
   return (
     <NextLink
@@ -70,16 +68,15 @@ export function KangurTransitionLink({
           onClick(event);
         }
 
-        if (!routeTransition || !shouldStartTransition(event, href, target)) {
+        if (!shouldStartTransition(event, href, target)) {
           return;
         }
 
         event.preventDefault();
-        routeTransition.startRouteTransition({
-          href,
+        routeNavigator.push(href, {
           pageKey: targetPageKey ?? null,
+          scroll: resolvedScroll ?? false,
         });
-        router.push(href, { scroll: resolvedScroll ?? false });
       }}
       {...props}
     />

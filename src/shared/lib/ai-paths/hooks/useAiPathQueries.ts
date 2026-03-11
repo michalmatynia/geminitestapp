@@ -1,6 +1,10 @@
 'use client';
 
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRuntimeAnalyticsSummaryResponseSchema,
+  type AiPathRuntimeAnalyticsSummary,
+  type AiPathRuntimeAnalyticsSummaryResponse,
+} from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -82,13 +86,12 @@ export function useAiPathRuntimeAnalytics(
   return createSingleQueryV2({
     queryKey,
     queryFn: async () => {
-      const response = await api.get<{ summary?: AiPathRuntimeAnalyticsSummary }>(
-        '/api/ai-paths/runtime-analytics/summary',
-        { params: { range } }
+      const response = aiPathRuntimeAnalyticsSummaryResponseSchema.parse(
+        await api.get<AiPathRuntimeAnalyticsSummaryResponse>(
+          '/api/ai-paths/runtime-analytics/summary',
+          { params: { range } }
+        )
       );
-      if (!response.summary) {
-        throw new Error('Missing runtime analytics payload.');
-      }
       return response.summary;
     },
     id: range,

@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import {
+  imageStudioUpscaleResponseSchema,
+  type ImageStudioUpscaleResponse,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
@@ -59,19 +62,21 @@ export function useUpscaleHandlers(
     try {
       const sourceDim = await resolveUpscaleSourceDimensions();
       setUpscaleStatus('processing');
-      const response = await api.post<{ slot: ImageStudioSlotRecord }>(
-        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-        {
-          mode: upscaleMode,
-          strategy: upscaleStrategy,
-          scale: upscaleScale,
-          smoothingQuality: upscaleSmoothingQuality,
-          targetWidth: upscaleTargetWidth,
-          targetHeight: upscaleTargetHeight,
-          sourceWidth: sourceDim.width,
-          sourceHeight: sourceDim.height,
-        },
-        { timeout: UPSCALE_REQUEST_TIMEOUT_MS }
+      const response = imageStudioUpscaleResponseSchema.parse(
+        await api.post<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
+          {
+            mode: upscaleMode,
+            strategy: upscaleStrategy,
+            scale: upscaleScale,
+            smoothingQuality: upscaleSmoothingQuality,
+            targetWidth: upscaleTargetWidth,
+            targetHeight: upscaleTargetHeight,
+            sourceWidth: sourceDim.width,
+            sourceHeight: sourceDim.height,
+          },
+          { timeout: UPSCALE_REQUEST_TIMEOUT_MS }
+        )
       );
 
       const normalizedProjectId = projectId?.trim() ?? '';

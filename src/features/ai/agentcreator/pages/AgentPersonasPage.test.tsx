@@ -54,6 +54,15 @@ vi.mock('@/shared/ui', () => ({
     latestItemLibraryProps = props;
     return <div data-testid='item-library' />;
   },
+  SectionHeaderBackLink: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
   useToast: () => ({ toast: toastMock }),
   Button: ({
     children,

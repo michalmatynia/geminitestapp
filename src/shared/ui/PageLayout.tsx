@@ -13,6 +13,7 @@ interface PageLayoutProps {
   title: string;
   description?: string | undefined;
   eyebrow?: ReactNode;
+  icon?: ReactNode;
   headerActions?: ReactNode;
   refresh?:
     | {
@@ -46,6 +47,7 @@ type PageLayoutRuntimeValue = {
   title: string;
   description?: string | undefined;
   eyebrow?: ReactNode;
+  icon?: ReactNode;
   headerActions?: ReactNode;
   refresh?:
     | {
@@ -97,13 +99,14 @@ function PageLayoutTabs(): JSX.Element | null {
 }
 
 function PageLayoutHeader(): JSX.Element {
-  const { title, description, eyebrow, headerActions, refresh } = usePageLayoutRuntime();
+  const { title, description, eyebrow, icon, headerActions, refresh } = usePageLayoutRuntime();
   return (
     <SectionHeader
       title={title}
       className='mb-6'
       description={description}
       eyebrow={eyebrow}
+      icon={icon}
       actions={headerActions}
       refresh={refresh}
     />
@@ -161,6 +164,7 @@ export function PageLayout({
   title,
   description,
   eyebrow,
+  icon,
   headerActions,
   refresh,
   children,
@@ -178,6 +182,7 @@ export function PageLayout({
       title,
       description,
       eyebrow,
+      icon,
       headerActions,
       refresh,
       children,
@@ -194,6 +199,7 @@ export function PageLayout({
       title,
       description,
       eyebrow,
+      icon,
       headerActions,
       refresh,
       children,

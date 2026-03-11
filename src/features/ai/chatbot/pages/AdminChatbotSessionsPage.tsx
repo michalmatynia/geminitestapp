@@ -6,12 +6,11 @@ import React, { useMemo } from 'react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import {
-  AdminChatbotBreadcrumbs,
+  AdminChatbotPageLayout,
   Button,
   Input,
   Checkbox,
   StandardDataTablePanel,
-  SectionHeader,
   EmptyState,
   SearchInput,
   FormActions,
@@ -178,19 +177,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10'>
-      <SectionHeader
-        title='Chat Sessions'
-        description='History of conversations with AI agents.'
-        eyebrow={<AdminChatbotBreadcrumbs current='Sessions' />}
-        actions={
-          <Button variant='outline' size='xs' onClick={refetch} disabled={isFetching}>
-            {isFetching ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        }
-        className='mb-6'
-      />
-
+    <AdminChatbotPageLayout
+      title='Chat Sessions'
+      current='Sessions'
+      description='History of conversations with AI agents.'
+      headerActions={
+        <Button variant='outline' size='xs' onClick={refetch} disabled={isFetching}>
+          {isFetching ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      }
+    >
       <StandardDataTablePanel
         variant='flat'
         alerts={error ? <p className='text-sm text-rose-400'>{error}</p> : null}
@@ -278,6 +274,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         confirmText='Delete All'
         isDangerous={true}
       />
-    </div>
+    </AdminChatbotPageLayout>
   );
 }

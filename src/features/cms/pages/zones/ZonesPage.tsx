@@ -11,13 +11,13 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import {
+  AdminCmsPageLayout,
   Button,
   Input,
   StandardDataTablePanel,
   useToast,
   SelectSimple,
   StatusBadge,
-  SectionHeader,
   FormField,
   FormSection,
   PanelFilters,
@@ -204,61 +204,63 @@ export default function ZonesPage(): React.JSX.Element {
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
-        title='Content Zones'
-        description='Map CMS content to specific hostnames. Zones allow you to serve different layouts or localized versions of your storefront.'
-      />
+    <AdminCmsPageLayout
+      title='Content Zones'
+      current='Zones'
+      description='Map CMS content to specific hostnames. Zones allow you to serve different layouts or localized versions of your storefront.'
+      icon={<Globe className='size-4' />}
+    >
+      <div className='space-y-6'>
+        <FormSection title='Provision New Zone' className='p-6'>
+          <form onSubmit={handleSubmit} className='flex items-end gap-4'>
+            <FormField label='Hostname / Domain' error={error} className='flex-1'>
+              <Input
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                placeholder='e.g. uk.storefront.com'
+                className='h-9'
+              />
+            </FormField>
+            <Button type='submit' size='sm' className='h-9' loading={createDomain.isPending}>
+              <PlusIcon className='size-3.5 mr-2' />
+              Add Zone
+            </Button>
+          </form>
+        </FormSection>
 
-      <FormSection title='Provision New Zone' className='p-6'>
-        <form onSubmit={handleSubmit} className='flex items-end gap-4'>
-          <FormField label='Hostname / Domain' error={error} className='flex-1'>
-            <Input
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              placeholder='e.g. uk.storefront.com'
-              className='h-9'
+        <StandardDataTablePanel
+          variant='flat'
+          columns={columns}
+          data={filteredDomains}
+          filters={
+            <PanelFilters
+              filters={[]}
+              values={{}}
+              search={search}
+              searchPlaceholder='Search zones by domain...'
+              onFilterChange={() => {}}
+              onSearchChange={setSearch}
+              onReset={() => setSearch('')}
+              compact
             />
-          </FormField>
-          <Button type='submit' size='sm' className='h-9' loading={createDomain.isPending}>
-            <PlusIcon className='size-3.5 mr-2' />
-            Add Zone
-          </Button>
-        </form>
-      </FormSection>
-
-      <StandardDataTablePanel
-        variant='flat'
-        columns={columns}
-        data={filteredDomains}
-        filters={
-          <PanelFilters
-            filters={[]}
-            values={{}}
-            search={search}
-            searchPlaceholder='Search zones by domain...'
-            onFilterChange={() => {}}
-            onSearchChange={setSearch}
-            onReset={() => setSearch('')}
-            compact
-          />
-        }
-        isLoading={domainsQuery.isLoading}
-      />
-
-      <ConfirmModal
-        isOpen={Boolean(zoneToDelete)}
-        onClose={() => setZoneToDelete(null)}
-        title='Remove Content Zone?'
-        message='Are you sure you want to remove this domain and its slug assignments? This action cannot be undone.'
-        confirmText='Destroy Zone'
-        isDangerous={true}
-        onConfirm={(): void => {
-          if (zoneToDelete) {
-            void handleDelete(zoneToDelete);
           }
-        }}
-      />
-    </div>
+          isLoading={domainsQuery.isLoading}
+        />
+
+        <ConfirmModal
+          isOpen={Boolean(zoneToDelete)}
+          onClose={() => setZoneToDelete(null)}
+          title='Remove Content Zone?'
+          message='Are you sure you want to remove this domain and its slug assignments? This action cannot be undone.'
+          confirmText='Destroy Zone'
+          isDangerous={true}
+          onConfirm={(): void => {
+            if (zoneToDelete) {
+              void handleDelete(zoneToDelete);
+            }
+          }}
+        />
+      </div>
+    </AdminCmsPageLayout>
   );
 }

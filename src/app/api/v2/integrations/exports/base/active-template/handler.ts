@@ -7,7 +7,7 @@ import {
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import {
-  baseActiveTemplatePreferencePayloadSchema,
+  baseScopedTemplatePreferencePayloadSchema,
   type BaseActiveTemplatePreferenceResponse,
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -29,7 +29,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, baseActiveTemplatePreferencePayloadSchema, {
+  const parsed = await parseJsonBody(req, baseScopedTemplatePreferencePayloadSchema, {
     logPrefix: 'exports.base.active-template.POST',
   });
   if (!parsed.ok) {

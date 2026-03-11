@@ -7,10 +7,9 @@ import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  AdminCaseResolverBreadcrumbs,
+  AdminCaseResolverPageLayout,
   Button,
   FormSection,
-  SectionHeader,
   Skeleton,
   Tag as UiTag,
   useToast,
@@ -240,13 +239,10 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
   }, [tagToDelete, tags, toast, updateSetting]);
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Case Resolver Tags'
-        subtitle={<AdminCaseResolverBreadcrumbs current='Tags' />}
-      />
-
-      <div className='flex justify-start'>
+    <AdminCaseResolverPageLayout
+      title='Case Resolver Tags'
+      current='Tags'
+      headerActions={
         <Button
           onClick={openCreateModal}
           variant='outline'
@@ -255,7 +251,9 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
           <Plus className='mr-2 size-4' />
           Add Tag
         </Button>
-      </div>
+      }
+      containerClassName='container mx-auto py-8'
+    >
 
       <FormSection title='Tags' className='p-4'>
         <div className='mt-4'>
@@ -310,6 +308,6 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
           void handleSave();
         }}
       />
-    </div>
+    </AdminCaseResolverPageLayout>
   );
 }

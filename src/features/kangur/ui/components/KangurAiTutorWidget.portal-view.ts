@@ -198,7 +198,7 @@ export function useKangurAiTutorPortalViewModel(
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&
-    input.isAnonymousVisitor &&
+    !hasContextualTutorLock &&
     (input.canonicalTutorModalVisible || (!input.isAskModalMode && !isGuidedAvatarMode));
   const isContextualMinimalPanelMode =
     input.tutorSurfaceMode === 'selection_panel' || input.tutorSurfaceMode === 'section_panel';

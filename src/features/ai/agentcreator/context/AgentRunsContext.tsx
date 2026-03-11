@@ -2,8 +2,12 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
+import type {
+  AgentAuditLogRecordDto as AgentAuditLogRecord,
+  AgentBrowserLogRecordDto as AgentBrowserLogRecord,
+  AgentBrowserSnapshotRecordDto as AgentBrowserSnapshotRecord,
+  AgentRunRecord,
+} from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
 
 import {
@@ -14,14 +18,14 @@ import {
 } from '../hooks/useAgentRunsQueries';
 
 export interface AgentRunsContextValue {
-  agentRuns: AiPathRunRecord[];
+  agentRuns: AgentRunRecord[];
   isAgentRunsLoading: boolean;
   isAgentRunsFetching: boolean;
   selectedAgentRunId: string | null;
-  selectedAgentRun: AiPathRunRecord | null;
-  agentSnapshots: AgentSnapshot[];
-  agentBrowserLogs: AgentBrowserLog[];
-  agentAuditLogs: AgentAuditLog[];
+  selectedAgentRun: AgentRunRecord | null;
+  agentSnapshots: AgentBrowserSnapshotRecord[];
+  agentBrowserLogs: AgentBrowserLogRecord[];
+  agentAuditLogs: AgentAuditLogRecord[];
   agentStreamStatus: string;
 }
 
@@ -46,7 +50,7 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
   } = agentRunsQuery;
 
   const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
+    () => agentRuns.find((run: AgentRunRecord) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
   );
 

@@ -329,6 +329,9 @@ test.describe('Kangur AI Tutor live lesson route', () => {
 
     const minimalistModal = page.getByTestId('kangur-ai-tutor-guest-intro');
     await expect(minimalistModal).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(minimalistModal).toHaveAttribute('data-modal-surface', 'canonical-onboarding');
+    await expect(minimalistModal).toHaveAttribute('data-modal-motion', 'fade-only');
+    await expect(minimalistModal).toHaveAttribute('data-modal-actions', 'single-primary');
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
 
     await expectDiagnostics(page, {
@@ -396,6 +399,11 @@ test.describe('Kangur AI Tutor live lesson route', () => {
     await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
+    await page.waitForTimeout(1_200);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import type {
+  AgentBrowserSnapshotRecord,
+  AgentBrowserSnapshotsResponse,
+} from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
 import {
   apiHandlerWithParams,
@@ -36,7 +40,23 @@ async function GET_handler(
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ snapshots });
+  const response: AgentBrowserSnapshotsResponse = {
+    snapshots: snapshots.map(
+      (snapshot): AgentBrowserSnapshotRecord => ({
+        ...snapshot,
+        title: snapshot.title ?? null,
+        screenshotData: snapshot.screenshotData ?? null,
+        screenshotPath: snapshot.screenshotPath ?? null,
+        stepId: snapshot.stepId ?? null,
+        mouseX: snapshot.mouseX ?? null,
+        mouseY: snapshot.mouseY ?? null,
+        viewportWidth: snapshot.viewportWidth ?? null,
+        viewportHeight: snapshot.viewportHeight ?? null,
+        createdAt: snapshot.createdAt.toISOString(),
+      })
+    ),
+  };
+  return NextResponse.json(response);
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(

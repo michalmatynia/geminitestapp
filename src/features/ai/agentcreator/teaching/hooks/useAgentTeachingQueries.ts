@@ -2,7 +2,9 @@
 
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingChatResponse,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingDocumentsResponse,
   AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingChatSourceDto as AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
@@ -73,12 +75,12 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
 }
 
 export function useTeachingChatMutation(): MutationResult<
-  { message: string; sources: AgentTeachingChatSource[] },
+  AgentTeachingChatResponse,
   { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   > {
   const mutationKey = agentTeachingKeys.agents();
   return createMutationV2<
-    { message: string; sources: AgentTeachingChatSource[] },
+    AgentTeachingChatResponse,
     { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   >({
     mutationFn: ({
@@ -219,7 +221,7 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { i
 
 export function useEmbeddingDocuments(
   collectionId: string | null
-): SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null> {
+): SingleQuery<AgentTeachingDocumentsResponse | null> {
   if (!collectionId) {
     return {
       data: null,
@@ -228,7 +230,7 @@ export function useEmbeddingDocuments(
       isError: false,
       error: null,
       refetch: async () => ({ data: null }),
-    } as SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null>;
+    } as SingleQuery<AgentTeachingDocumentsResponse | null>;
   }
 
   const queryKey = agentTeachingKeys.documents(collectionId);

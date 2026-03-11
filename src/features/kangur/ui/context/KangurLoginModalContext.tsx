@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   createContext,
   useCallback,
@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -72,7 +73,7 @@ const resolveAuthMode = (value: string | null | undefined): KangurLoginModalAuth
 export const KangurLoginModalProvider = ({
   children,
 }: KangurLoginModalProviderProps): React.JSX.Element => {
-  const router = useRouter();
+  const routeNavigator = useKangurRouteNavigator();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { basePath, requestedPath } = useKangurRouting();
@@ -127,12 +128,12 @@ export const KangurLoginModalProvider = ({
   const closeLoginModal = useCallback((): void => {
     if (isRouteDriven) {
       dismissLoginModal();
-      router.push(homeHref, { scroll: false });
+      routeNavigator.push(homeHref, { pageKey: 'Game', scroll: false });
       return;
     }
 
     dismissLoginModal();
-  }, [dismissLoginModal, homeHref, isRouteDriven, router]);
+  }, [dismissLoginModal, homeHref, isRouteDriven, routeNavigator]);
 
   const value = useMemo<KangurLoginModalContextValue>(
     () => ({

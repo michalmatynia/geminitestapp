@@ -77,7 +77,7 @@ const main = async (): Promise<void> => {
   const batches = [...grouped.entries()]
     .sort((left, right) => right[1].length - left[1].length || left[0].localeCompare(right[0]))
     .map(([key, batchOverrides]) => {
-      const [family, catalogId] = key.split('__');
+      const [family = 'UNKNOWN', catalogId = 'unknown-catalog'] = key.split('__');
       const filename = `${sanitizeFileToken(family)}__${sanitizeFileToken(catalogId)}.json`;
       const outputPath = path.join(parsed.outputDir, filename);
       const payload = {

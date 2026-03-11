@@ -600,10 +600,14 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).not.toContainText(staleReply);
   });
 
-  test('opens the minimalist tutor modal from the avatar for a logged-in learner instead of the deprecated panel flow', async ({
+  test('opens the minimalist tutor modal from the avatar for a logged-in learner without resurfacing onboarding', async ({
     page,
   }) => {
-    const { lessonTitle } = await mockKangurTutorEnvironment(page);
+    const { lessonTitle } = await mockKangurTutorEnvironment(page, {
+      proactiveNudges: 'off',
+      rememberTutorContext: false,
+      allowCrossPagePersistence: false,
+    });
 
     await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
@@ -616,15 +620,12 @@ test.describe('Kangur AI Tutor', () => {
 
     await triggerTutorAvatar(page);
 
-    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
-      'data-modal-surface',
-      'canonical-onboarding'
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-panel-style',
+      'minimal-card'
     );
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
-    await expect(
-      page.getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')
-    ).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
   });
 
@@ -1055,7 +1056,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'floating');
     await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'independent');
-    await expect(tutorPanel).toHaveAttribute('data-panel-style', 'guided-card');
+    await expect(tutorPanel).toHaveAttribute('data-panel-style', 'minimal-card');
     await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
     await expect(tutorPanel).toHaveAttribute('data-placement-strategy', 'dock');
     await expect(tutorPanel).toHaveAttribute('data-has-pointer', 'false');

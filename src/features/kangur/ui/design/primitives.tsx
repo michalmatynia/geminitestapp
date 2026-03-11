@@ -1495,16 +1495,24 @@ export const KangurPageTopBar = ({
   className?: string;
   contentClassName?: string;
 }): React.JSX.Element => (
-  <div className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}>
+  <div className={cn(KANGUR_TOP_BAR_CLASSNAME, className)} data-testid='kangur-page-top-bar'>
     <div
       className={cn(
         KANGUR_TOP_BAR_INNER_CLASSNAME,
         contentClassName,
         right ? 'justify-between' : 'justify-center'
       )}
+      data-testid='kangur-page-top-bar-content'
     >
       <div className='flex min-w-0 flex-1 items-center'>{left}</div>
-      {right ? <div className='flex shrink-0 items-center gap-3'>{right}</div> : null}
+      {right ? (
+        <div
+          className='ml-auto flex w-full items-center justify-end gap-3 sm:w-auto'
+          data-testid='kangur-page-top-bar-right'
+        >
+          {right}
+        </div>
+      ) : null}
     </div>
   </div>
 );

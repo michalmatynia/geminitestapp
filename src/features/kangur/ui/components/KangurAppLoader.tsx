@@ -60,7 +60,10 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
                 aria-hidden='true'
                 className='absolute inset-2 rounded-full border border-[rgba(124,82,255,0.1)]'
               />
-              <KangurHomeLogo className='relative h-[28px] sm:h-[30px] md:h-[34px]' />
+              <KangurHomeLogo
+                className='relative h-[28px] sm:h-[30px] md:h-[34px]'
+                idPrefix='kangur-app-loader-logo'
+              />
             </div>
             <div className='relative text-center'>
               <div className='text-[10px] font-semibold uppercase tracking-[0.32em] text-[#5a6df4]'>

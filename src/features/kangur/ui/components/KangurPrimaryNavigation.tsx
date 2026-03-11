@@ -239,6 +239,7 @@ export function KangurPrimaryNavigation({
     ),
     docId: 'profile_logout',
     onClick: onLogout,
+    testId: 'kangur-primary-nav-logout',
   };
   const authAction = effectiveIsAuthenticated ? (
     renderNavAction(logoutAction)
@@ -340,14 +341,6 @@ export function KangurPrimaryNavigation({
           : tutorContent.navigation.restoreTutorLabel,
       })
     ) : null;
-  const utilityActions =
-    rightAccessory || authAction ? (
-      <div className='flex w-full flex-wrap items-center justify-stretch gap-2 sm:w-auto sm:justify-end'>
-        {rightAccessory}
-        {authAction}
-      </div>
-    ) : null;
-
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
     className: 'px-3 sm:px-4',
@@ -357,7 +350,7 @@ export function KangurPrimaryNavigation({
           className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
           data-testid='kangur-home-logo'
         >
-          <KangurHomeLogo />
+          <KangurHomeLogo idPrefix='kangur-primary-nav-logo' />
         </span>
         <span className='sr-only'>Strona glowna</span>
       </>
@@ -396,6 +389,17 @@ export function KangurPrimaryNavigation({
       testId: 'kangur-primary-nav-parent-dashboard',
     }
     : null;
+  const utilityActions =
+    rightAccessory || parentDashboardAction || authAction ? (
+      <div
+        className='ml-auto flex flex-wrap items-center justify-end gap-2'
+        data-testid='kangur-primary-nav-utility-actions'
+      >
+        {rightAccessory}
+        {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+        {authAction}
+      </div>
+    ) : null;
   const leftContent = (
     <KangurTopNavGroup label={navigationLabel}>
       {renderNavAction(homeAction)}
@@ -404,7 +408,7 @@ export function KangurPrimaryNavigation({
       {effectiveIsAuthenticated ? (
         <KangurProfileMenu profile={{ href: profileHref, isActive: learnerProfileIsActive }} />
       ) : null}
-      {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+      {utilityActions}
     </KangurTopNavGroup>
   );
 
@@ -413,7 +417,6 @@ export function KangurPrimaryNavigation({
       className={topBarClassName}
       contentClassName={topBarContentClassName}
       left={leftContent}
-      right={utilityActions}
     />
   );
 }

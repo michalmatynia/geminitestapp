@@ -24,4 +24,12 @@ describe('KangurTreningWordmark', () => {
 
     expect(svg).toHaveClass('h-auto', 'w-full', 'max-w-[272px]', 'sm:max-w-[356px]');
   });
+
+  it('uses deterministic SVG IDs for gradients and filters', () => {
+    const { container } = render(<KangurTreningWordmark />);
+    const svg = container.querySelector('svg');
+
+    expect(svg?.querySelector('#kangur-trening-wordmark-word-grad')).not.toBeNull();
+    expect(svg?.querySelector('#kangur-trening-wordmark-shadow')).not.toBeNull();
+  });
 });

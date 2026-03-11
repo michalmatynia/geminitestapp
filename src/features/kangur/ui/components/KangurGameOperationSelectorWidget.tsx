@@ -425,7 +425,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         testId='kangur-game-operation-top-section'
         title='Grajmy!'
         visualTitle={
-          <KangurGrajmyWordmark className='mx-auto' data-testid='kangur-grajmy-heading-art' />
+          <KangurGrajmyWordmark
+            className='mx-auto'
+            data-testid='kangur-grajmy-heading-art'
+            idPrefix='kangur-game-operation-heading'
+          />
         }
       />
       {activePracticeAssignment ? (

@@ -374,7 +374,8 @@ export function useKangurAiTutorWidgetEnvironment({
   const isAnonymousVisitor = Boolean(
     mounted && authState && !authState.isLoadingAuth && !authState.isAuthenticated
   );
-  const shouldRenderGuestIntroUi = !isTutorHidden && (guestIntroVisible || guestIntroHelpVisible);
+  const shouldRenderGuestIntroUi =
+    !isTutorHidden && isAnonymousVisitor && (guestIntroVisible || guestIntroHelpVisible);
   const telemetryContext = {
     surface: sessionContext?.surface ?? null,
     contentId: sessionContext?.contentId ?? null,

@@ -27,7 +27,11 @@ export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
         testId='kangur-game-kangur-setup-top-section'
         title='Kangur'
         visualTitle={
-          <KangurKangurWordmark className='mx-auto' data-testid='kangur-kangur-heading-art' />
+          <KangurKangurWordmark
+            className='mx-auto'
+            data-testid='kangur-kangur-heading-art'
+            idPrefix='kangur-game-kangur-heading'
+          />
         }
       />
       <KangurGameSetupMomentumCard mode='kangur' progress={progress} />

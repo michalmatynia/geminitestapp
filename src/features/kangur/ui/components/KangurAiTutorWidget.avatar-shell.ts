@@ -24,7 +24,10 @@ export function useKangurAiTutorAvatarShellActions(input: {
   handleCloseLauncherPrompt: () => void;
   handleHomeOnboardingFinishEarly: () => void;
   handleOpenChat: (
-    reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
+    reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal',
+    options?: {
+      panelShellMode?: 'default' | 'minimal';
+    }
   ) => void;
   homeOnboardingStepIndex: number | null;
   isAnonymousVisitor: boolean;
@@ -122,14 +125,40 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setGuestIntroHelpVisible(false);
 
     if (isOpen) {
-      closeChat();
+      handleCloseChat('toggle');
     }
 
     setCanonicalTutorModalVisible(true);
   }, [
     clearPendingGuidance,
-    closeChat,
+    handleCloseChat,
     isOpen,
+    setCanonicalTutorModalVisible,
+    setContextualTutorMode,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+    setGuidedTutorTarget,
+    setHighlightedSection,
+    setHoveredSectionAnchorId,
+    setSelectionGuidanceHandoffText,
+  ]);
+
+  const openMinimalTutorChat = useCallback((): void => {
+    clearPendingGuidance();
+    setHighlightedSection(null);
+    setHoveredSectionAnchorId(null);
+    setContextualTutorMode(null);
+    setSelectionGuidanceHandoffText(null);
+    setGuidedTutorTarget(null);
+    setCanonicalTutorModalVisible(false);
+    setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
+    handleOpenChat('toggle', {
+      panelShellMode: 'minimal',
+    });
+  }, [
+    clearPendingGuidance,
+    handleOpenChat,
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setGuestIntroHelpVisible,
@@ -155,53 +184,46 @@ export function useKangurAiTutorAvatarShellActions(input: {
       handleCloseLauncherPrompt();
     }
 
-    if (guidedTutorTarget) {
-      openCanonicalOnboarding();
+    if (isOpen) {
+      setCanonicalTutorModalVisible(false);
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      handleCloseChat('toggle');
+      return;
+    }
+
+    if (isAnonymousVisitor && (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible)) {
       return;
     }
 
     if (!isAnonymousVisitor) {
-      if (isOpen) {
-        handleCloseChat('toggle');
-        return;
-      }
-
-      handleOpenChat('toggle');
+      openMinimalTutorChat();
       return;
     }
 
-    if (isOpen) {
+    if (guidedTutorTarget) {
       openCanonicalOnboarding();
-      return;
-    }
-
-    if (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible) {
       return;
     }
 
     openCanonicalOnboarding();
   }, [
     canonicalTutorModalVisible,
-    clearPendingGuidance,
     guestIntroHelpVisible,
     guestIntroVisible,
     guidedTutorTarget,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
+    handleCloseChat,
     homeOnboardingStepIndex,
     isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
+    openMinimalTutorChat,
     openCanonicalOnboarding,
-    setContextualTutorMode,
+    setCanonicalTutorModalVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
-    setGuidedTutorTarget,
-    setHighlightedSection,
-    setHoveredSectionAnchorId,
-    setSelectionGuidanceHandoffText,
-    setCanonicalTutorModalVisible,
     suppressAvatarClickRef,
   ]);
 

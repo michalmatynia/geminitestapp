@@ -149,8 +149,10 @@ export type KangurAiTutorPortalContextValue = {
     isAskModalMode: boolean;
     isCompactDockedTutorPanel: boolean;
     isGuidedTutorMode: boolean;
+    isMinimalPanelMode: boolean;
     isOpen: boolean;
     isTutorHidden: boolean;
+    minimalPanelStyle: CSSProperties;
     motionProfile: TutorMotionProfile;
     panelAvatarPlacement: string;
     panelBodyContextValue: KangurAiTutorPanelBodyContextValue;

@@ -152,8 +152,10 @@ export function KangurAiTutorPortalContent() {
         isAskModalMode={panel.isAskModalMode}
         isCompactDockedTutorPanel={panel.isCompactDockedTutorPanel}
         isGuidedTutorMode={panel.isGuidedTutorMode}
+        isMinimalPanelMode={panel.isMinimalPanelMode}
         isOpen={panel.isOpen}
         isTutorHidden={panel.isTutorHidden}
+        minimalPanelStyle={panel.minimalPanelStyle}
         motionProfile={panel.motionProfile}
         panelAvatarPlacement={panel.panelAvatarPlacement}
         panelEmptyStateMessage={panel.panelEmptyStateMessage}

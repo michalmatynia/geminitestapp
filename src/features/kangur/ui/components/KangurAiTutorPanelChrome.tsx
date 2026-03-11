@@ -66,8 +66,10 @@ type Props = {
   isAskModalMode: boolean;
   isCompactDockedTutorPanel: boolean;
   isGuidedTutorMode: boolean;
+  isMinimalPanelMode: boolean;
   isOpen: boolean;
   isTutorHidden: boolean;
+  minimalPanelStyle: CSSProperties;
   panelAvatarPlacement: string;
   panelEmptyStateMessage: string;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
@@ -112,8 +114,10 @@ export function KangurAiTutorPanelChrome({
   isAskModalMode,
   isCompactDockedTutorPanel,
   isGuidedTutorMode,
+  isMinimalPanelMode,
   isOpen,
   isTutorHidden,
+  minimalPanelStyle,
   motionProfile,
   panelAvatarPlacement,
   panelEmptyStateMessage,
@@ -136,16 +140,22 @@ export function KangurAiTutorPanelChrome({
   const tutor = useKangurAiTutor();
   const { panelMotionState, panelRef, tutorNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
+  const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
   const panelSurfaceTestId = isAskModalMode ? 'kangur-ai-tutor-ask-modal-surface' : undefined;
   const panelSurfaceClassName = cn(
-    'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94 shadow-[0_20px_48px_-30px_rgba(180,83,9,0.38)] backdrop-blur-[6px]',
+    'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94 backdrop-blur-[6px]',
+    shouldUseMinimalPanelShell
+      ? 'shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)] rounded-[28px]'
+      : 'shadow-[0_20px_48px_-30px_rgba(180,83,9,0.38)]',
     isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
     isCompactDockedTutorPanel ? 'rounded-[24px]' : null,
-    bubbleMode === 'sheet' ? 'rounded-[28px] rounded-b-[24px]' : 'rounded-[28px]'
+    !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? 'rounded-[28px] rounded-b-[24px]' : null
   );
   const panelSurfaceStyle = {
     maxHeight: isAskModalMode
       ? 'min(82vh, 720px)'
+      : shouldUseMinimalPanelShell
+        ? 'min(68vh, 560px)'
       : isCompactDockedTutorPanel
         ? 'min(58vh, 440px)'
         : bubbleMode === 'sheet'
@@ -153,7 +163,8 @@ export function KangurAiTutorPanelChrome({
           : '70vh',
   } satisfies CSSProperties;
   const panelHeaderClassName = cn(
-    'flex items-start justify-between gap-3 border-b border-amber-200/80 bg-[#fff7cf]/78 px-4 py-3',
+    'flex items-start justify-between gap-3 border-b border-amber-200/80 bg-[#fff7cf]/78',
+    shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
     showAttachedAvatarShell && avatarAttachmentSide === 'left' ? 'pl-16' : null,
@@ -167,7 +178,8 @@ export function KangurAiTutorPanelChrome({
     ? panelEmptyStateMessage
     : (tutor?.tutorBehaviorMoodDescription ?? panelEmptyStateMessage);
   const shouldRenderPanelMoodDescription =
-    isCompactDockedTutorPanel || panelMoodDescription !== panelEmptyStateMessage;
+    !shouldUseMinimalPanelShell &&
+    (isCompactDockedTutorPanel || panelMoodDescription !== panelEmptyStateMessage);
   const bubbleMotionTarget = {
     ...toMotionTarget(bubbleStyle),
     opacity: 1,
@@ -184,7 +196,7 @@ export function KangurAiTutorPanelChrome({
       !shouldRenderGuestIntroUi &&
       !suppressPanelSurface ? (
           <>
-            {isAskModalMode || bubbleMode === 'sheet' ? (
+            {isAskModalMode || (!shouldUseMinimalPanelShell && bubbleMode === 'sheet') ? (
               <motion.button
                 data-kangur-ai-tutor-root='true'
                 key={isAskModalMode ? 'ask-modal-backdrop' : 'chat-backdrop'}
@@ -222,24 +234,44 @@ export function KangurAiTutorPanelChrome({
               data-open-animation={panelOpenAnimation}
               data-placement-strategy={bubbleStrategy}
               data-launch-origin={bubbleLaunchOrigin}
-              data-panel-style='guided-card'
-              data-has-pointer={!isAskModalMode && avatarPointer ? 'true' : 'false'}
-              data-pointer-side={!isAskModalMode ? (avatarPointer?.side ?? 'none') : 'none'}
+              data-panel-style={shouldUseMinimalPanelShell ? 'minimal-card' : 'guided-card'}
+              data-has-pointer={
+                !isAskModalMode && !shouldUseMinimalPanelShell && avatarPointer ? 'true' : 'false'
+              }
+              data-pointer-side={
+                !isAskModalMode && !shouldUseMinimalPanelShell
+                  ? (avatarPointer?.side ?? 'none')
+                  : 'none'
+              }
               data-ui-mode={uiMode}
               role={isAskModalMode ? 'dialog' : undefined}
               aria-modal={isAskModalMode ? 'true' : undefined}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={isAskModalMode ? { opacity: 1 } : bubbleMotionTarget}
+              animate={
+                isAskModalMode
+                  ? { opacity: 1 }
+                  : shouldUseMinimalPanelShell
+                    ? { opacity: 1 }
+                    : bubbleMotionTarget
+              }
               exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              transition={isAskModalMode ? motionProfile.bubbleTransition : panelTransition}
+              transition={
+                isAskModalMode || shouldUseMinimalPanelShell
+                  ? motionProfile.bubbleTransition
+                  : panelTransition
+              }
               className={
                 isAskModalMode
                   ? 'fixed inset-0 z-[77] flex items-center justify-center px-4 pt-10 pb-6 pointer-events-none'
-                  : 'fixed z-[65]'
+                  : shouldUseMinimalPanelShell
+                    ? 'fixed z-[75]'
+                    : 'fixed z-[65]'
               }
               style={
                 isAskModalMode
                   ? undefined
+                  : shouldUseMinimalPanelShell
+                    ? minimalPanelStyle
                   : bubbleWidth
                     ? {
                       width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
@@ -247,7 +279,7 @@ export function KangurAiTutorPanelChrome({
                     : undefined
               }
             >
-              {!isAskModalMode && avatarPointer ? (
+              {!isAskModalMode && !shouldUseMinimalPanelShell && avatarPointer ? (
                 <svg
                   aria-hidden='true'
                   data-testid='kangur-ai-tutor-pointer'
@@ -296,7 +328,7 @@ export function KangurAiTutorPanelChrome({
                 </svg>
               ) : null}
 
-              {!isAskModalMode && showAttachedAvatarShell ? (
+              {!isAskModalMode && !shouldUseMinimalPanelShell && showAttachedAvatarShell ? (
                 <motion.button
                   data-testid='kangur-ai-tutor-avatar'
                   data-anchor-kind={avatarAnchorKind}
@@ -331,7 +363,10 @@ export function KangurAiTutorPanelChrome({
                 className={panelSurfaceClassName}
                 style={panelSurfaceStyle}
               >
-                {!isAskModalMode && !avatarPointer && bubbleTailPlacement !== 'dock' ? (
+                {!isAskModalMode &&
+                !shouldUseMinimalPanelShell &&
+                !avatarPointer &&
+                bubbleTailPlacement !== 'dock' ? (
                   <div
                     aria-hidden='true'
                     className={cn(
@@ -343,7 +378,7 @@ export function KangurAiTutorPanelChrome({
                   />
                 ) : null}
 
-                {!isAskModalMode && bubbleMode === 'sheet' ? (
+                {!isAskModalMode && !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? (
                   <div className='flex justify-center bg-white/92 px-3 pt-3'>
                     <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-amber-200' />
                   </div>
@@ -355,18 +390,20 @@ export function KangurAiTutorPanelChrome({
                 >
                   <div className='min-w-0 flex flex-1 flex-col'>
                     <span className='text-[10px] font-semibold tracking-[0.16em] text-amber-700'>
-                    AI Tutor
+                      AI Tutor
                     </span>
                     <span className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
                       {tutorDisplayName}
                     </span>
-                    <span
-                      data-testid='kangur-ai-tutor-mood-chip'
-                      data-mood-id={tutorBehaviorMoodId}
-                      className='mt-2 inline-flex w-fit items-center rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800'
-                    >
-                      {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
-                    </span>
+                    {!shouldUseMinimalPanelShell ? (
+                      <span
+                        data-testid='kangur-ai-tutor-mood-chip'
+                        data-mood-id={tutorBehaviorMoodId}
+                        className='mt-2 inline-flex w-fit items-center rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800'
+                      >
+                        {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
+                      </span>
+                    ) : null}
                     {shouldRenderPanelMoodDescription ? (
                       <span
                         data-testid='kangur-ai-tutor-mood-description'
@@ -376,18 +413,20 @@ export function KangurAiTutorPanelChrome({
                       </span>
                     ) : null}
                     {sessionSurfaceLabel ? (
-                      <span className='mt-1 text-[11px] text-slate-500'>{sessionSurfaceLabel}</span>
+                      <span className='mt-2 text-[11px] text-slate-500'>{sessionSurfaceLabel}</span>
                     ) : null}
                   </div>
                   <div className='ml-3 flex items-center gap-2 pt-0.5'>
-                    <button
-                      type='button'
-                      onClick={onDisableTutor}
-                      className='cursor-pointer rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-white'
-                      aria-label={tutorContent.common.disableTutorAria}
-                    >
-                      {tutorContent.common.disableTutorLabel}
-                    </button>
+                    {!shouldUseMinimalPanelShell ? (
+                      <button
+                        type='button'
+                        onClick={onDisableTutor}
+                        className='cursor-pointer rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-white'
+                        aria-label={tutorContent.common.disableTutorAria}
+                      >
+                        {tutorContent.common.disableTutorLabel}
+                      </button>
+                    ) : null}
                     <button
                       type='button'
                       onClick={onClose}

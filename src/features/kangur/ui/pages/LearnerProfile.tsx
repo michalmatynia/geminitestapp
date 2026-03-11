@@ -31,7 +31,6 @@ export default function LearnerProfile(): React.JSX.Element {
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
-      contentClassName: 'justify-center',
       currentPage: 'LearnerProfile' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),

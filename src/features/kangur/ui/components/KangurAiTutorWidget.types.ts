@@ -2,6 +2,7 @@ import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-
 import type { KangurAiTutorSurface } from '@/shared/contracts/kangur-ai-tutor';
 
 export type TutorSurface = KangurAiTutorSurface;
+export type TutorPanelShellMode = 'default' | 'minimal';
 
 export type TutorPoint = {
   x: number;

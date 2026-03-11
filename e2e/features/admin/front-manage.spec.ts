@@ -16,6 +16,15 @@ type BrowserFetchInit = {
   body?: string;
 };
 
+type KangurNavigationSample = {
+  hasAppLoader: boolean;
+  hasSkeleton: boolean;
+  hasRouteShell: boolean;
+  hasFeaturePageShell: boolean;
+};
+
+const KANGUR_NAVIGATION_MONITOR_KEY = '__kangurRootOwnerNavigationMonitor';
+
 async function fetchFromBrowser(
   page: Page,
   path: string,
@@ -122,6 +131,71 @@ async function saveFrontPageSelectionFromUi(
   await expect(page.getByText(FRONT_PAGE_UPDATED_TOAST)).toBeVisible({ timeout: 30_000 });
 }
 
+async function waitForRootOwnedKangurBoot(page: Page): Promise<void> {
+  await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  await expect(page.locator('[data-testid="kangur-route-content"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  await expect(page.locator('[data-testid="kangur-app-loader"]')).toHaveCount(0, {
+    timeout: 45_000,
+  });
+}
+
+async function startKangurNavigationMonitor(page: Page): Promise<void> {
+  await page.evaluate((monitorKey) => {
+    const globalWindow = window as Window & {
+      [key: string]:
+        | {
+            stop: () => KangurNavigationSample[];
+          }
+        | undefined;
+    };
+    const samples: KangurNavigationSample[] = [];
+    let running = true;
+
+    const sample = (): void => {
+      samples.push({
+        hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
+        hasSkeleton: Boolean(
+          document.querySelector('[data-testid="kangur-page-transition-skeleton"]')
+        ),
+        hasRouteShell: Boolean(document.querySelector('[data-testid="kangur-route-shell"]')),
+        hasFeaturePageShell: Boolean(
+          document.querySelector('[data-testid="kangur-feature-page-shell"]')
+        ),
+      });
+
+      if (running) {
+        window.requestAnimationFrame(sample);
+      }
+    };
+
+    window.requestAnimationFrame(sample);
+    globalWindow[monitorKey] = {
+      stop: () => {
+        running = false;
+        return samples;
+      },
+    };
+  }, KANGUR_NAVIGATION_MONITOR_KEY);
+}
+
+async function stopKangurNavigationMonitor(page: Page): Promise<KangurNavigationSample[]> {
+  return page.evaluate((monitorKey) => {
+    const globalWindow = window as Window & {
+      [key: string]:
+        | {
+            stop: () => KangurNavigationSample[];
+          }
+        | undefined;
+    };
+
+    return globalWindow[monitorKey]?.stop() ?? [];
+  }, KANGUR_NAVIGATION_MONITOR_KEY);
+}
+
 test.describe.serial('Front Manage', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     testInfo.setTimeout(120_000);
@@ -168,6 +242,52 @@ test.describe.serial('Front Manage', () => {
       await page.goto('/', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/$/);
       await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
+    } finally {
+      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      if (originalValue === 'products') {
+        await writeFrontPageAppSetting(page, originalValue);
+      } else {
+        await saveFrontPageSelectionFromUi(page, restoreOption);
+      }
+    }
+  });
+
+  test('should keep route navigation on skeleton loading instead of the app loader when Kangur owns root', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    const originalValue = await readFrontPageAppSetting(page);
+    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
+
+    try {
+      await saveFrontPageSelectionFromUi(page, 'kangur');
+
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect(page).toHaveURL(/\/$/);
+      await waitForRootOwnedKangurBoot(page);
+
+      await startKangurNavigationMonitor(page);
+      await page.getByTestId('kangur-primary-nav-lessons').click();
+
+      await expect(page).toHaveURL(/\/lessons$/);
+      await expect(page.locator('[data-testid="kangur-route-content"]')).toBeVisible({
+        timeout: 45_000,
+      });
+
+      const samples = await stopKangurNavigationMonitor(page);
+      expect(samples.length).toBeGreaterThan(0);
+      expect(samples.every((sample) => sample.hasRouteShell || sample.hasFeaturePageShell)).toBe(
+        true
+      );
+      expect(
+        samples.some((sample) => sample.hasSkeleton),
+        'expected root-owned Kangur navigation to surface the page skeleton during the transition'
+      ).toBe(true);
+      expect(
+        samples.every((sample) => !sample.hasAppLoader),
+        'expected root-owned Kangur navigation not to surface the global app loader after boot'
+      ).toBe(true);
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
       if (originalValue === 'products') {

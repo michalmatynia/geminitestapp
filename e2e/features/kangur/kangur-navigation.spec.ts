@@ -58,6 +58,22 @@ type RouteScrollMonitorSample = {
   hasAppLoader: boolean;
 };
 
+type TopNavLayoutSnapshot = {
+  viewportWidth: number;
+  topBarTop: number | null;
+  topBarWidth: number | null;
+  topBarPosition: string | null;
+  navTop: number | null;
+  navLeft: number | null;
+  navRight: number | null;
+  navWidth: number | null;
+  utilityLeft: number | null;
+  utilityRight: number | null;
+  lessonsRight: number | null;
+  parentRight: number | null;
+  logoutRight: number | null;
+};
+
 const expectGameRouteReady = async (page: Page, navTestId: string): Promise<void> => {
   await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
@@ -868,6 +884,40 @@ test.describe('Kangur navigation continuity', () => {
     });
   });
 
+const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot> =>
+  page.evaluate(() => {
+    const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
+    const nav = document.querySelector('nav[aria-label="Glowna nawigacja Kangur"]');
+    const utility = document.querySelector('[data-testid="kangur-primary-nav-utility-actions"]');
+    const lessons = document.querySelector('[data-testid="kangur-primary-nav-lessons"]');
+    const parent = document.querySelector('[data-testid="kangur-primary-nav-parent-dashboard"]');
+    const logout = document.querySelector('[data-testid="kangur-primary-nav-logout"]');
+
+    const topBarRect = topBar?.getBoundingClientRect() ?? null;
+    const navRect = nav?.getBoundingClientRect() ?? null;
+    const utilityRect = utility?.getBoundingClientRect() ?? null;
+    const lessonsRect = lessons?.getBoundingClientRect() ?? null;
+    const parentRect = parent?.getBoundingClientRect() ?? null;
+    const logoutRect = logout?.getBoundingClientRect() ?? null;
+    const topBarStyles = topBar ? window.getComputedStyle(topBar) : null;
+
+    return {
+      viewportWidth: window.innerWidth,
+      topBarTop: topBarRect?.top ?? null,
+      topBarWidth: topBarRect?.width ?? null,
+      topBarPosition: topBarStyles?.position ?? null,
+      navTop: navRect?.top ?? null,
+      navLeft: navRect?.left ?? null,
+      navRight: navRect?.right ?? null,
+      navWidth: navRect?.width ?? null,
+      utilityLeft: utilityRect?.left ?? null,
+      utilityRight: utilityRect?.right ?? null,
+      lessonsRight: lessonsRect?.right ?? null,
+      parentRight: parentRect?.right ?? null,
+      logoutRight: logoutRect?.right ?? null,
+    };
+  });
+
   test('keeps the persistent shell mounted across main-page navigation', async ({ page }) => {
     await page.route('**/api/kangur/auth/me', async (route) => {
       await route.fulfill({
@@ -1387,6 +1437,49 @@ test.describe('Kangur navigation continuity', () => {
       DOCUMENT_LOAD_COUNT_KEY
     );
     expect(documentLoadCount).toBe('1');
+  });
+
+  test('keeps the parent dashboard and logout actions inside a full-width sticky navbar', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildManagerUser()),
+      });
+    });
+
+    await gotoKangurPath(page, '/kangur/parent-dashboard');
+    await expectParentDashboardRouteReady(page);
+    await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toBeVisible();
+    await expect(page.getByTestId('kangur-primary-nav-logout')).toBeVisible();
+
+    const beforeScroll = await getTopNavLayoutSnapshot(page);
+
+    expect(beforeScroll.topBarPosition).toBe('sticky');
+    expect(beforeScroll.topBarWidth).not.toBeNull();
+    expect(beforeScroll.navWidth).not.toBeNull();
+    expect(beforeScroll.utilityLeft).not.toBeNull();
+    expect(beforeScroll.utilityRight).not.toBeNull();
+    expect(beforeScroll.lessonsRight).not.toBeNull();
+    expect(beforeScroll.navRight).not.toBeNull();
+    expect(beforeScroll.parentRight).not.toBeNull();
+    expect(beforeScroll.logoutRight).not.toBeNull();
+    expect(beforeScroll.topBarWidth as number).toBeGreaterThanOrEqual(beforeScroll.viewportWidth - 4);
+    expect(beforeScroll.navWidth as number).toBeGreaterThanOrEqual(beforeScroll.viewportWidth - 80);
+    expect(beforeScroll.utilityLeft as number).toBeGreaterThan(beforeScroll.lessonsRight as number);
+    expect((beforeScroll.navRight as number) - (beforeScroll.utilityRight as number)).toBeLessThanOrEqual(
+      28
+    );
+    expect((beforeScroll.parentRight as number) <= (beforeScroll.navRight as number)).toBe(true);
+    expect((beforeScroll.logoutRight as number) <= (beforeScroll.navRight as number)).toBe(true);
+
+    expect(beforeScroll.topBarTop).not.toBeNull();
+    expect(beforeScroll.navTop).not.toBeNull();
+    expect((beforeScroll.topBarTop as number) <= 16).toBe(true);
+    expect((beforeScroll.navTop as number) <= 36).toBe(true);
   });
 
   test('routes back to the learner profile from the parent-dashboard intro-card top section', async ({

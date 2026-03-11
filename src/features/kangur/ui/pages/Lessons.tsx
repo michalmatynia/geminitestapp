@@ -583,7 +583,6 @@ export default function Lessons() {
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
-      contentClassName: 'justify-center',
       currentPage: 'Lessons' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
@@ -640,6 +639,7 @@ export default function Lessons() {
                     <KangurLessonsWordmark
                       className='mx-auto'
                       data-testid='kangur-lessons-heading-art'
+                      idPrefix='kangur-lessons-page-heading'
                     />
                   }
                 />

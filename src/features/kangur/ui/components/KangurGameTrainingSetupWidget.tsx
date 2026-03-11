@@ -48,7 +48,11 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
         testId='kangur-game-training-top-section'
         title='Trening'
         visualTitle={
-          <KangurTreningWordmark className='mx-auto' data-testid='kangur-training-heading-art' />
+          <KangurTreningWordmark
+            className='mx-auto'
+            data-testid='kangur-training-heading-art'
+            idPrefix='kangur-game-training-heading'
+          />
         }
       />
       {activePracticeAssignment ? (

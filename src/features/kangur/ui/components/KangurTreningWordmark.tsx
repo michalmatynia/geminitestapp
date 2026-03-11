@@ -1,14 +1,15 @@
-import { useId } from 'react';
-
 import { cn } from '@/shared/utils';
 
-type KangurTreningWordmarkProps = React.SVGProps<SVGSVGElement>;
+type KangurTreningWordmarkProps = React.SVGProps<SVGSVGElement> & {
+  idPrefix?: string;
+};
 
 export function KangurTreningWordmark({
   className,
+  idPrefix = 'kangur-trening-wordmark',
   ...props
 }: KangurTreningWordmarkProps): React.JSX.Element {
-  const iconId = useId().replace(/:/g, '-');
+  const iconId = idPrefix.replace(/[^a-zA-Z0-9_-]/g, '-');
   const wordGradId = `${iconId}-word-grad`;
   const shadowId = `${iconId}-shadow`;
 

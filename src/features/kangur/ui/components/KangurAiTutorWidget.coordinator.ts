@@ -325,7 +325,8 @@ export function useKangurAiTutorWidgetCoordinator({
               contextualTutorMode === 'section_explain' ||
               isSectionExplainPendingMode
             ? 'section_panel'
-            : canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible
+            : canonicalTutorModalVisible ||
+                (isAnonymousVisitor && (guestIntroVisible || guestIntroHelpVisible))
               ? 'onboarding'
               : tutorRuntime.isOpen
                 ? 'regular_panel'
@@ -530,9 +531,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
     homeOnboardingStepIndex,
-    isAnonymousVisitor,
     isOpen: tutorRuntime.isOpen,
     launcherPromptVisible,
     persistSelectionContext,

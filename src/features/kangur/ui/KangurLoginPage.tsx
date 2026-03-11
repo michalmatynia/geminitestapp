@@ -894,7 +894,10 @@ function KangurLoginPageContent(): JSX.Element {
                 className='inline-flex items-center rounded-full border border-white/80 bg-white/78 px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
                 data-testid='kangur-login-hero-logo'
               >
-                <KangurHomeLogo className='h-[22px] sm:h-[24px]' />
+                <KangurHomeLogo
+                  className='h-[22px] sm:h-[24px]'
+                  idPrefix='kangur-login-page-logo'
+                />
               </div>
               <div className='text-[10px] font-black uppercase tracking-[0.28em] text-[#9a5418]'>
                 Konto StudiQ

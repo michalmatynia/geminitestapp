@@ -22,4 +22,13 @@ describe('KangurHomeLogo', () => {
 
     expect(svg).toHaveClass('h-[24px]', 'w-auto', 'sm:h-[28px]');
   });
+
+  it('uses deterministic SVG IDs so hydration does not depend on hook ordering', () => {
+    const { container } = render(<KangurHomeLogo idPrefix='loader logo' />);
+    const svg = container.querySelector('svg');
+
+    expect(svg?.querySelector('#loader-logo-word-grad')).not.toBeNull();
+    expect(svg?.querySelector('#loader-logo-shadow')).not.toBeNull();
+    expect(svg?.querySelector('g')).toHaveAttribute('filter', 'url(#loader-logo-shadow)');
+  });
 });

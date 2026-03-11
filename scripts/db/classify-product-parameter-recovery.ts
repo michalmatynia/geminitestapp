@@ -43,21 +43,30 @@ const toTrimmedString = (value: unknown): string => (typeof value === 'string' ?
 
 const parseArgs = (): ParsedArgs => {
   const values = new Map<string, string>();
+  const positionalPaths: string[] = [];
 
   for (const rawArg of process.argv.slice(2)) {
-    if (!rawArg.startsWith('--')) continue;
+    if (!rawArg.startsWith('--')) {
+      positionalPaths.push(rawArg);
+      continue;
+    }
     const normalized = rawArg.slice(2);
     const separatorIndex = normalized.indexOf('=');
     if (separatorIndex === -1) continue;
     values.set(normalized.slice(0, separatorIndex), normalized.slice(separatorIndex + 1));
   }
 
+  const restoreReportPaths =
+    positionalPaths.length > 0
+      ? positionalPaths
+      : (values.get('restore-report') || DEFAULT_RESTORE_REPORT_PATH)
+          .split(',')
+          .map((value: string) => value.trim())
+          .filter(Boolean);
+
   return {
     auditReportPath: values.get('audit-report') || DEFAULT_AUDIT_REPORT_PATH,
-    restoreReportPaths: (values.get('restore-report') || DEFAULT_RESTORE_REPORT_PATH)
-      .split(',')
-      .map((value: string) => value.trim())
-      .filter(Boolean),
+    restoreReportPaths,
     apiBaseUrl: values.get('api-base-url') || DEFAULT_API_BASE_URL,
   };
 };

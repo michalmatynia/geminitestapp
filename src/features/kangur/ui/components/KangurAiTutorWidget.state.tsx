@@ -30,6 +30,7 @@ import type {
   TutorAskEntrySource,
   TutorAvatarDragState,
   TutorMessageFeedback,
+  TutorPanelShellMode,
   TutorPoint,
 } from './KangurAiTutorWidget.types';
 
@@ -82,6 +83,7 @@ export function useKangurAiTutorWidgetState() {
   const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
   const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
   const [panelAnchorMode, setPanelAnchorMode] = useState<'contextual' | 'dock'>('contextual');
+  const [panelShellMode, setPanelShellMode] = useState<TutorPanelShellMode>('default');
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
   const [persistedSelectionPageRect, setPersistedSelectionPageRect] = useState<DOMRect | null>(
     null
@@ -183,6 +185,7 @@ export function useKangurAiTutorWidgetState() {
     panelMeasuredHeight,
     panelMotionState,
     panelAnchorMode,
+    panelShellMode,
     panelRef,
     persistedSelectionContainerRect,
     persistedSelectionPageRect,
@@ -225,6 +228,7 @@ export function useKangurAiTutorWidgetState() {
     setPanelMeasuredHeight,
     setPanelMotionState,
     setPanelAnchorMode,
+    setPanelShellMode,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,

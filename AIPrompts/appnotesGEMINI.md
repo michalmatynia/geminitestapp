@@ -13,7 +13,7 @@ npm run test:e2e
 npm audit fix
 npm run bazel -- run //:lint -- --fix
 npm run bazel -- run //:typecheck
-       - npm run bazel -- query //:all
+npm run bazel -- query //:all <-- List of queries
           - npm run bazel -- run //:api_error_sources
           - npm run bazel -- run //:api_input_validation
           - npm run bazel -- run //:api_contract_coverage

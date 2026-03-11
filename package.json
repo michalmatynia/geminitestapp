@@ -316,7 +316,16 @@
     "agentic:run-bundle": "tsx scripts/agentic/run-bundle.ts",
     "agentic:history": "tsx scripts/agentic/agent-history.ts",
     "agentic:history:diff": "tsx scripts/agentic/diff-history.ts",
-    "agentic:history:summary": "tsx scripts/agentic/render-history-diff-summary.ts"
+    "agentic:history:summary": "tsx scripts/agentic/render-history-diff-summary.ts",
+    "products:generate:parameter-family-mapping-pack": "node --import tsx scripts/db/generate-product-parameter-family-mapping-pack.ts",
+    "products:build:parameter-curated-overrides-from-family-pack": "node --import tsx scripts/db/build-product-parameter-curated-overrides-from-family-pack.ts",
+    "products:build:parameter-family-mapping-index": "node --import tsx scripts/db/build-product-parameter-family-mapping-index.ts",
+    "products:render:parameter-family-mapping-checklist": "node --import tsx scripts/db/render-product-parameter-family-mapping-checklist.ts",
+    "products:suggest:parameter-family-mappings": "node --import tsx scripts/db/suggest-product-parameter-family-mappings.ts",
+    "products:infer:parameter-slot-mappings": "node --import tsx scripts/db/infer-product-parameter-slot-mappings.ts",
+    "products:merge:parameter-slot-inference-into-family-packs": "node --import tsx scripts/db/merge-product-parameter-slot-inference-into-family-packs.ts",
+    "products:split:parameter-source-recovery-batch-by-slot-signature": "node --import tsx scripts/db/split-product-parameter-source-recovery-batch-by-slot-signature.ts",
+    "products:merge:parameter-curated-override-files": "node --import tsx scripts/db/merge-product-parameter-curated-override-files.ts"
   },
   "engines": {
     "node": ">=20.9 <24",

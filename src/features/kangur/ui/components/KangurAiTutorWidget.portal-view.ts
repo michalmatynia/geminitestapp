@@ -197,7 +197,16 @@ export function useKangurAiTutorPortalViewModel(
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&
     (input.canonicalTutorModalVisible ||
-      (input.shouldRenderGuestIntroUi && !input.isAskModalMode && !isGuidedAvatarMode));
+      (input.isAnonymousVisitor &&
+        input.shouldRenderGuestIntroUi &&
+        !input.isAskModalMode &&
+        !isGuidedAvatarMode));
+  const isMinimalPanelMode =
+    !input.isAnonymousVisitor &&
+    input.tutorSurfaceMode === 'regular_panel' &&
+    !input.isAskModalMode &&
+    !isGuidedAvatarMode;
+  const minimalPanelStyle = getGuestIntroPanelStyle(input.viewport);
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
@@ -394,8 +403,10 @@ export function useKangurAiTutorPortalViewModel(
         isAskModalMode: input.isAskModalMode,
         isCompactDockedTutorPanel: input.isCompactDockedTutorPanel,
         isGuidedTutorMode: input.isGuidedTutorMode,
+        isMinimalPanelMode,
         isOpen: input.isOpen,
         isTutorHidden: input.isTutorHidden,
+        minimalPanelStyle,
         motionProfile: input.motionProfile,
         onAttachedAvatarClick: input.handleAvatarClick,
         onBackdropClose: input.handlePanelBackdropClose,
@@ -488,8 +499,10 @@ export function useKangurAiTutorPortalViewModel(
       input.isAskModalMode,
       input.isCompactDockedTutorPanel,
       input.isGuidedTutorMode,
+      isMinimalPanelMode,
       input.isOpen,
       input.isTutorHidden,
+      minimalPanelStyle,
       input.motionProfile,
       input.panelAvatarPlacement,
       input.panelEmptyStateMessage,

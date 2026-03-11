@@ -31,7 +31,7 @@ export default async function Home(): Promise<JSX.Element> {
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    return <KangurPublicApp basePath='/' embedded />;
+    return <KangurPublicApp basePath='/' />;
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

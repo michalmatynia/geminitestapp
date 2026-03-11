@@ -181,8 +181,11 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
+    expect(screen.getByTestId('kangur-page-top-bar')).toHaveClass('sticky', 'top-0', 'w-full');
     expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveClass(
-      'w-full'
+      'w-full',
+      'rounded-[30px]',
+      'p-2'
     );
   });
 
@@ -201,6 +204,46 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        canManageLearners
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
+    const nav = screen.getByRole('navigation', { name: /glowna nawigacja kangur/i });
+
+    expect(utilityActions).toHaveClass('ml-auto', 'justify-end');
+    expect(nav).toContainElement(utilityActions);
+    expect(utilityActions).toContainElement(
+      screen.getByTestId('kangur-primary-nav-parent-dashboard')
+    );
+    expect(utilityActions).toContainElement(screen.getByTestId('kangur-primary-nav-logout'));
+    expect(nav).toContainElement(screen.getByTestId('kangur-primary-nav-parent-dashboard'));
+  });
+
+  it('does not split the parent dashboard and logout actions into a separate top-bar cluster', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        canManageLearners
+        currentPage='ParentDashboard'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('kangur-page-top-bar-right')).toBeNull();
+    expect(screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })).toContainElement(
+      screen.getByTestId('kangur-primary-nav-utility-actions')
+    );
   });
 
   it('shows login and create-account actions when the user is not authenticated', () => {

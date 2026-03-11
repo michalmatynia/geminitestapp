@@ -10,6 +10,7 @@ import {
 } from './KangurAiTutorWidget.storage';
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
+import type { TutorPanelShellMode } from './KangurAiTutorWidget.types';
 
 type TelemetryContext = {
   contentId: string | null;
@@ -54,6 +55,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setIsAvatarDragging'
     | 'setLauncherPromptVisible'
     | 'setPanelAnchorMode'
+    | 'setPanelShellMode'
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
     | 'setPersistedSelectionRect'
@@ -102,6 +104,7 @@ export function useKangurAiTutorPanelInteractions({
     setIsAvatarDragging,
     setLauncherPromptVisible,
     setPanelAnchorMode,
+    setPanelShellMode,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
@@ -163,7 +166,10 @@ export function useKangurAiTutorPanelInteractions({
 
   const handleOpenChat = useCallback(
     (
-      reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
+      reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal',
+      options?: {
+        panelShellMode?: TutorPanelShellMode;
+      }
     ): void => {
       if (reason !== 'ask_modal') {
         resetAskModalState();
@@ -179,6 +185,7 @@ export function useKangurAiTutorPanelInteractions({
         setContextualTutorMode(null);
       }
       setPanelAnchorMode(reason === 'toggle' ? 'dock' : 'contextual');
+      setPanelShellMode(options?.panelShellMode ?? 'default');
       trackKangurClientEvent('kangur_ai_tutor_opened', {
         ...telemetryContext,
         reason,
@@ -221,6 +228,7 @@ export function useKangurAiTutorPanelInteractions({
         setPersistedSelectionContainerRect(null);
       }
       setContextualTutorMode(null);
+      setPanelShellMode('default');
       closeChat();
     },
     [
@@ -232,6 +240,7 @@ export function useKangurAiTutorPanelInteractions({
       setHighlightedText,
       setContextualTutorMode,
       setHoveredSectionAnchorId,
+      setPanelShellMode,
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,

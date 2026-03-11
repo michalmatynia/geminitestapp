@@ -24,9 +24,7 @@ const createAvatarShellInput = (
   handleCloseChat: vi.fn(),
   handleCloseLauncherPrompt: vi.fn(),
   handleHomeOnboardingFinishEarly: vi.fn(),
-  handleOpenChat: vi.fn(),
   homeOnboardingStepIndex: null,
-  isAnonymousVisitor: true,
   isOpen: false,
   launcherPromptVisible: false,
   persistSelectionContext: vi.fn().mockReturnValue(null),
@@ -77,14 +75,14 @@ describe('useKangurAiTutorAvatarShellActions', () => {
       result.current.handleAvatarClick();
     });
 
-    expect(input.closeChat).toHaveBeenCalled();
-    expect(input.handleCloseChat).not.toHaveBeenCalled();
+    expect(input.handleCloseChat).toHaveBeenCalledWith('toggle');
+    expect(input.closeChat).not.toHaveBeenCalled();
     expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(true);
     expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
   });
 
-  it('opens the minimalist modal for a closed tutor instead of reopening the regular panel', () => {
+  it('ignores anonymous avatar clicks while the onboarding modal is already visible', () => {
     const input = createAvatarShellInput({
       canonicalTutorModalVisible: true,
       guestIntroVisible: true,
@@ -103,7 +101,7 @@ describe('useKangurAiTutorAvatarShellActions', () => {
     expect(input.setGuestIntroHelpVisible).not.toHaveBeenCalled();
   });
 
-  it('ignores avatar clicks while a minimalist modal is already visible', () => {
+  it('ignores avatar clicks while the anonymous onboarding modal is already visible', () => {
     const input = createAvatarShellInput({
       canonicalTutorModalVisible: true,
       guestIntroVisible: true,
@@ -122,9 +120,11 @@ describe('useKangurAiTutorAvatarShellActions', () => {
     expect(input.setGuestIntroHelpVisible).not.toHaveBeenCalled();
   });
 
-  it('opens the regular tutor panel for an authenticated visitor when the avatar is docked', () => {
+  it('opens the minimalist modal instead of the regular tutor panel', () => {
     const input = createAvatarShellInput({
-      isAnonymousVisitor: false,
+      canonicalTutorModalVisible: false,
+      guestIntroHelpVisible: false,
+      guestIntroVisible: false,
     });
 
     const { result } = renderHook(() => useKangurAiTutorAvatarShellActions(input));
@@ -133,14 +133,13 @@ describe('useKangurAiTutorAvatarShellActions', () => {
       result.current.handleAvatarClick();
     });
 
-    expect(input.handleOpenChat).toHaveBeenCalledWith('toggle');
     expect(input.handleCloseChat).not.toHaveBeenCalled();
-    expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
+    expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(true);
+    expect(input.closeChat).not.toHaveBeenCalled();
   });
 
-  it('closes the regular tutor panel for an authenticated visitor when it is already open', () => {
+  it('closes the regular tutor panel and reopens the minimalist modal when it is already open', () => {
     const input = createAvatarShellInput({
-      isAnonymousVisitor: false,
       isOpen: true,
     });
 
@@ -151,7 +150,31 @@ describe('useKangurAiTutorAvatarShellActions', () => {
     });
 
     expect(input.handleCloseChat).toHaveBeenCalledWith('toggle');
-    expect(input.handleOpenChat).not.toHaveBeenCalled();
-    expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
+    expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(true);
+  });
+
+  it('routes guided avatar clicks back into the minimalist modal instead of the regular tutor panel', () => {
+    const input = createAvatarShellInput({
+      canonicalTutorModalVisible: true,
+      guestIntroHelpVisible: true,
+      guestIntroVisible: true,
+      guidedTutorTarget: {
+        mode: 'selection',
+        kind: 'selection_excerpt',
+        selectedText: '2 + 2',
+      },
+    });
+
+    const { result } = renderHook(() => useKangurAiTutorAvatarShellActions(input));
+
+    act(() => {
+      result.current.handleAvatarClick();
+    });
+
+    expect(input.handleCloseChat).not.toHaveBeenCalled();
+    expect(input.setGuidedTutorTarget).toHaveBeenCalledWith(null);
+    expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(true);
+    expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
   });
 });

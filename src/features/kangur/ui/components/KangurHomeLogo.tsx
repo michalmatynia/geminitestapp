@@ -1,15 +1,17 @@
 'use client';
 
-import { useId } from 'react';
-
 import { cn } from '@/shared/utils';
 
 type KangurHomeLogoProps = {
   className?: string;
+  idPrefix?: string;
 };
 
-export function KangurHomeLogo({ className }: KangurHomeLogoProps): React.JSX.Element {
-  const iconId = useId().replace(/:/g, '-');
+export function KangurHomeLogo({
+  className,
+  idPrefix = 'kangur-home-logo',
+}: KangurHomeLogoProps): React.JSX.Element {
+  const iconId = idPrefix.replace(/[^a-zA-Z0-9_-]/g, '-');
   const wordGradId = `${iconId}-word-grad`;
   const ringGradId = `${iconId}-ring-grad`;
   const amberId = `${iconId}-amber`;

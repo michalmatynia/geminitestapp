@@ -20,7 +20,6 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
-      contentClassName: 'justify-center',
       currentPage: 'Game' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       homeActive: screen === 'home',

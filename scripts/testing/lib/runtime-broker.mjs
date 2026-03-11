@@ -107,10 +107,12 @@ const waitForHealthyServer = async ({
 
 const allocatePort = ({ host = DEFAULT_HOST } = {}) =>
   new Promise((resolve, reject) => {
+    const listenHost =
+      typeof host === 'string' && host.trim().length > 0 ? host : undefined;
     const server = net.createServer();
 
     server.on('error', reject);
-    server.listen(0, host, () => {
+    server.listen(0, listenHost, () => {
       const address = server.address();
       const port =
         address && typeof address === 'object' && typeof address.port === 'number'
@@ -764,7 +766,6 @@ const buildBrokerServerEnv = ({
 }) => {
   const nextEnv = {
     ...env,
-    HOST: host,
     PORT: String(port),
     NEXT_DIST_DIR: distDir,
     NEXT_PUBLIC_ENABLE_KANGUR_EVENT_ANALYTICS_IN_DEV:
@@ -776,6 +777,10 @@ const buildBrokerServerEnv = ({
     TEMP: runtimeTmpDir,
     PATH: prependBinToPath(preferredBrowserNodeBinDir, env['PATH']),
   };
+
+  if (typeof host === 'string' && host.length > 0) {
+    nextEnv.HOST = host;
+  }
 
   if (bundler) {
     nextEnv['NEXT_DEV_BUNDLER'] = bundler;
@@ -962,8 +967,19 @@ export const acquireRuntimeLease = async ({
     }
 
     const configuredBaseUrl = parseBaseUrl(env['PLAYWRIGHT_BASE_URL']);
-    const port = configuredBaseUrl?.port ? Number(configuredBaseUrl.port) : await allocatePort({ host });
-    const baseUrl = configuredBaseUrl?.toString() ?? `http://${host}:${port}`;
+    let serverHost = host;
+    const port = configuredBaseUrl?.port
+      ? Number(configuredBaseUrl.port)
+      : await (async () => {
+        try {
+            return await allocatePort({ host });
+          } catch (error) {
+            serverHost = null;
+            return await allocatePort({ host: null });
+          }
+        })();
+    const runtimeBaseHost = serverHost ?? DEFAULT_HOST;
+    const baseUrl = configuredBaseUrl?.toString() ?? `http://${runtimeBaseHost}:${port}`;
     const distDir =
       env['NEXT_DIST_DIR']?.trim() ||
       resolveBrokerManagedDistDir({
@@ -987,7 +1003,7 @@ export const acquireRuntimeLease = async ({
         cwd: resolvedRootDir,
         env: buildBrokerServerEnv({
           env,
-          host,
+          host: serverHost,
           port,
           distDir,
           bundler: resolvedBundler,
@@ -1012,7 +1028,7 @@ export const acquireRuntimeLease = async ({
       mode: resolvedMode,
       bundler: resolvedBundler,
       agentId: resolvedAgentId,
-      host,
+      host: runtimeBaseHost,
       port,
       baseUrl,
       pid: child.pid ?? null,

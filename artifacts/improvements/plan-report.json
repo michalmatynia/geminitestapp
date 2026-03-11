@@ -1,0 +1,43 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-03-11T12:37:31.140Z",
+  "phase": "plan",
+  "executionMode": "planned",
+  "allowWrite": false,
+  "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization"
+  ],
+  "reportPath": "artifacts/improvements/plan-report.json",
+  "steps": [
+    {
+      "id": "products-parameter-integrity-plan-review",
+      "title": "Review the refreshed parameter recovery workspace",
+      "trackId": "products-parameter-integrity",
+      "phase": "plan",
+      "mode": "manual",
+      "writes": false,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
+        "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
+      ]
+    },
+    {
+      "id": "products-category-schema-plan",
+      "title": "Plan category and schema normalization decisions",
+      "trackId": "products-category-schema-normalization",
+      "phase": "plan",
+      "mode": "manual",
+      "writes": false,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Assign missing categories only when a defensible family/category match exists.",
+        "Choose final parameter ids for the unresolved families before generating any curated override file.",
+        "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved."
+      ]
+    }
+  ]
+}

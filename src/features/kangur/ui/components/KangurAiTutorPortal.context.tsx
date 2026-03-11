@@ -88,10 +88,22 @@ export type KangurAiTutorPortalContextValue = {
     uiMode: string;
     onClick: () => void;
     onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
+    onMouseUp: (event: MouseEvent<HTMLButtonElement>) => void;
     onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
     onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
     onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
+  };
+  diagnostics: {
+    canonicalTutorModalVisible: boolean;
+    contextualTutorMode: string | null;
+    guidedMode: GuidedMode;
+    guestIntroShouldRender: boolean;
+    isMinimalPanelMode: boolean;
+    isOpen: boolean;
+    panelShellMode: string;
+    suppressPanelSurface: boolean;
+    tutorSurfaceMode: string;
   };
   guestIntro: {
     guestIntroDescription: string;
@@ -163,7 +175,6 @@ export type KangurAiTutorPortalContextValue = {
     prefersReducedMotion: boolean;
     reducedMotionTransitions: ReducedMotionTransitions;
     sessionSurfaceLabel: string | null;
-    shouldRenderGuestIntroUi: boolean;
     showAttachedAvatarShell: boolean;
     suppressPanelSurface: boolean;
     uiMode: string;

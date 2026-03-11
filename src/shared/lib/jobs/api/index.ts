@@ -1,5 +1,18 @@
+import type {
+  ChatbotJobActionResponse,
+  ChatbotJobsClearResponse,
+  ChatbotJobsResponse,
+} from '@/shared/contracts/chatbot';
 import type { ProductJob } from '@/shared/contracts/integrations';
-import type { ProductAiJob, TraderaQueueHealthResponse } from '@/shared/contracts/jobs';
+import type {
+  ProductAiJob,
+  ProductAiJobActionResponse,
+  ProductAiJobDeleteResponse,
+  ProductAiJobResponse,
+  ProductAiJobsClearResponse,
+  ProductAiJobsResponse,
+  TraderaQueueHealthResponse,
+} from '@/shared/contracts/jobs';
 import { api } from '@/shared/lib/api-client';
 
 export type { TraderaQueueHealthResponse };
@@ -14,8 +27,8 @@ export async function getIntegrationJobs(): Promise<ProductJob[]> {
 /**
  * Fetch product AI jobs with optional scope
  */
-export async function getProductAiJobs(scope: string = 'all'): Promise<{ jobs: ProductAiJob[] }> {
-  return api.get<{ jobs: ProductAiJob[] }>('/api/v2/products/ai-jobs', {
+export async function getProductAiJobs(scope: string = 'all'): Promise<ProductAiJobsResponse> {
+  return api.get<ProductAiJobsResponse>('/api/v2/products/ai-jobs', {
     params: { scope },
   });
 }
@@ -23,8 +36,8 @@ export async function getProductAiJobs(scope: string = 'all'): Promise<{ jobs: P
 /**
  * Fetch a single product AI job by ID
  */
-export async function getProductAiJob(jobId: string): Promise<{ job: ProductAiJob }> {
-  return api.get<{ job: ProductAiJob }>(`/api/v2/products/ai-jobs/${jobId}`);
+export async function getProductAiJob(jobId: string): Promise<ProductAiJobResponse> {
+  return api.get<ProductAiJobResponse>(`/api/v2/products/ai-jobs/${jobId}`);
 }
 
 /**
@@ -33,15 +46,15 @@ export async function getProductAiJob(jobId: string): Promise<{ job: ProductAiJo
 export async function performProductAiJobAction(
   jobId: string,
   action: 'retry' | 'cancel'
-): Promise<unknown> {
-  return api.post<unknown>(`/api/v2/products/ai-jobs/${jobId}`, { action });
+): Promise<ProductAiJobActionResponse> {
+  return api.post<ProductAiJobActionResponse>(`/api/v2/products/ai-jobs/${jobId}`, { action });
 }
 
 /**
  * Fetch chatbot jobs with optional scope
  */
-export async function getChatbotJobs(scope: string = 'all'): Promise<{ jobs: unknown[] }> {
-  return api.get<{ jobs: unknown[] }>('/api/chatbot/jobs', {
+export async function getChatbotJobs(scope: string = 'all'): Promise<ChatbotJobsResponse> {
+  return api.get<ChatbotJobsResponse>('/api/chatbot/jobs', {
     params: { scope },
   });
 }
@@ -52,18 +65,15 @@ export async function getChatbotJobs(scope: string = 'all'): Promise<{ jobs: unk
 export async function updateProductAiJob(
   jobId: string,
   data: Partial<ProductAiJob>
-): Promise<{ success: boolean; job: ProductAiJob }> {
-  return api.put<{ success: boolean; job: ProductAiJob }>(
-    `/api/v2/products/ai-jobs/${jobId}`,
-    data
-  );
+): Promise<ProductAiJobActionResponse> {
+  return api.put<ProductAiJobActionResponse>(`/api/v2/products/ai-jobs/${jobId}`, data);
 }
 
 /**
  * Delete a product AI job
  */
-export async function deleteProductAiJob(jobId: string): Promise<{ success: boolean }> {
-  return api.delete<{ success: boolean }>(`/api/v2/products/ai-jobs/${jobId}`);
+export async function deleteProductAiJob(jobId: string): Promise<ProductAiJobDeleteResponse> {
+  return api.delete<ProductAiJobDeleteResponse>(`/api/v2/products/ai-jobs/${jobId}`);
 }
 
 /**
@@ -71,8 +81,8 @@ export async function deleteProductAiJob(jobId: string): Promise<{ success: bool
  */
 export async function clearProductAiJobs(
   scope: string = 'all'
-): Promise<{ success: boolean; count: number }> {
-  return api.delete<{ success: boolean; count: number }>('/api/v2/products/ai-jobs', {
+): Promise<ProductAiJobsClearResponse> {
+  return api.delete<ProductAiJobsClearResponse>('/api/v2/products/ai-jobs', {
     params: { scope },
   });
 }
@@ -83,8 +93,8 @@ export async function clearProductAiJobs(
 export async function updateChatbotJob(
   jobId: string,
   action: 'retry' | 'cancel'
-): Promise<unknown> {
-  return api.post<unknown>(`/api/chatbot/jobs/${jobId}`, { action });
+): Promise<ChatbotJobActionResponse> {
+  return api.post<ChatbotJobActionResponse>(`/api/chatbot/jobs/${jobId}`, { action });
 }
 
 /**
@@ -101,8 +111,8 @@ export async function deleteChatbotJob(jobId: string, force?: boolean): Promise<
  */
 export async function clearChatbotJobs(
   scope: string = 'all'
-): Promise<{ success: boolean; count: number }> {
-  return api.delete<{ success: boolean; count: number }>('/api/chatbot/jobs', {
+): Promise<ChatbotJobsClearResponse> {
+  return api.delete<ChatbotJobsClearResponse>('/api/chatbot/jobs', {
     params: { scope },
   });
 }

@@ -26,13 +26,17 @@ import {
   updateTheme,
 } from '@/features/cms/api/themes';
 import type {
+  CmsDomainCreateRequestDto,
+  CmsDomainUpdateRequestDto,
+  CmsPageCreateRequestDto,
+  CmsPageUpdateRequestDto,
   Page,
   PageSummary,
   Slug,
   CmsDomain,
   CmsTheme,
-  CmsThemeCreateInput,
-  CmsThemeUpdateInput,
+  CmsThemeCreateRequestDto,
+  CmsThemeUpdateRequestDto,
 } from '@/shared/contracts/cms';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
@@ -90,9 +94,9 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
   });
 }
 
-export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: string[] }> {
+export function useCreatePage(): CreateMutation<Page, CmsPageCreateRequestDto> {
   return createCreateMutationV2({
-    mutationFn: (input: { name: string; slugIds: string[] }) =>
+    mutationFn: (input: CmsPageCreateRequestDto) =>
       createPage(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create page');
         return payload;
@@ -114,10 +118,10 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
 
 export function useUpdatePage(): UpdateMutation<
   Page,
-  { id: string; input: Page & { slugIds?: string[] } }
+  { id: string; input: CmsPageUpdateRequestDto }
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
+    mutationFn: ({ id, input }: { id: string; input: CmsPageUpdateRequestDto }) =>
       updatePage(id, input).then(({ ok, payload }) => {
         if (!ok) {
           const message = (payload as { error?: string }).error ?? 'Failed to update page';
@@ -353,9 +357,9 @@ export function useCmsDomains(): ListQuery<CmsDomain> {
   });
 }
 
-export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string }> {
+export function useCreateCmsDomain(): CreateMutation<CmsDomain, CmsDomainCreateRequestDto> {
   return createCreateMutationV2({
-    mutationFn: (input: { domain: string }) =>
+    mutationFn: (input: CmsDomainCreateRequestDto) =>
       createDomain(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create domain');
         return payload;
@@ -399,10 +403,10 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
 
 export function useUpdateCmsDomain(): UpdateMutation<
   CmsDomain,
-  { id: string; input: { aliasOf?: string | null } }
+  { id: string; input: CmsDomainUpdateRequestDto }
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) =>
+    mutationFn: ({ id, input }: { id: string; input: CmsDomainUpdateRequestDto }) =>
       updateDomain(id, input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update domain');
         return payload;
@@ -460,9 +464,9 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
   });
 }
 
-export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> {
+export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateRequestDto> {
   return createCreateMutationV2({
-    mutationFn: (input: CmsThemeCreateInput) =>
+    mutationFn: (input: CmsThemeCreateRequestDto) =>
       createTheme(input).then((result) => {
         if (!result.ok) throw new Error(result.error || 'Failed to create theme');
         return result.payload;
@@ -484,10 +488,10 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
 
 export function useUpdateTheme(): UpdateMutation<
   CmsTheme,
-  { id: string; input: CmsThemeUpdateInput }
+  { id: string; input: CmsThemeUpdateRequestDto }
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
+    mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateRequestDto }) =>
       updateTheme(id, input).then((result) => {
         if (!result.ok) throw new Error(result.error || 'Failed to update theme');
         return result.payload;

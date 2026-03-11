@@ -1,11 +1,17 @@
 'use client';
 
 import { Trash2, BookOpen } from 'lucide-react';
-import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
-import { Button, StandardDataTablePanel, Badge, ConfirmModal, PanelHeader } from '@/shared/ui';
+import {
+  Button,
+  StandardDataTablePanel,
+  Badge,
+  ConfirmModal,
+  PanelHeader,
+  SectionHeaderBackLink,
+} from '@/shared/ui';
 
 import { DocumentAddForm } from '../components/DocumentAddForm';
 import { SearchSimulator } from '../components/SearchSimulator';
@@ -119,12 +125,13 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         description='Manage documents (original text + embedding vectors).'
         icon={<BookOpen className='size-4' />}
         subtitle={
-          <Link
+          <SectionHeaderBackLink
             href='/admin/agentcreator/teaching/collections'
-            className='text-blue-300 hover:text-blue-200 transition-colors ml-2'
+            arrow
+            className='ml-2'
           >
-            ← Back to collections
-          </Link>
+            Back to collections
+          </SectionHeaderBackLink>
         }
         actions={
           collection

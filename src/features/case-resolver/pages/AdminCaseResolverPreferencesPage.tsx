@@ -9,6 +9,7 @@ import {
   useUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
 import {
+  AdminCaseResolverBreadcrumbs,
   Button,
   FormField,
   FormSection,
@@ -16,7 +17,6 @@ import {
   SelectSimple,
   useToast,
   LoadingState,
-  Breadcrumbs,
   FormActions,
 } from '@/shared/ui';
 
@@ -149,14 +149,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
         title='Case Resolver Preferences'
         description='Configure default view, sorting, and search behavior for Case Resolver cases.'
         eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Preferences' },
-            ]}
-            className='mb-2'
-          />
+          <AdminCaseResolverBreadcrumbs current='Preferences' className='mb-2' />
         }
         actions={
           <Button

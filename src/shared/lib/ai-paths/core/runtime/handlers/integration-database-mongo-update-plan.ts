@@ -52,7 +52,10 @@ export type BuildMongoUpdatePlanInput = {
   updateTemplate: string;
   templateInputs: RuntimePortValues;
   parseJsonTemplate: (template: string) => unknown;
-  ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  ensureExistingParameterTemplateContext: (
+    targetPath: string,
+    options?: { forceHydrateRichParameters?: boolean }
+  ) => Promise<void>;
   aiPrompt: string;
 };
 
@@ -284,7 +287,9 @@ export async function buildMongoUpdatePlan({
       isTranslationParameterUpdate &&
       Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)
     ) {
-      await ensureExistingParameterTemplateContext(parameterTargetPath);
+      await ensureExistingParameterTemplateContext(parameterTargetPath, {
+        forceHydrateRichParameters: true,
+      });
       const translationMergeResult = mergeTranslatedParameterUpdates({
         targetPath: parameterTargetPath,
         updates,
@@ -445,7 +450,9 @@ export async function buildMongoUpdatePlan({
         }
 
         if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
-          await ensureExistingParameterTemplateContext(parameterTargetPath);
+          await ensureExistingParameterTemplateContext(parameterTargetPath, {
+            forceHydrateRichParameters: true,
+          });
           const translationMergeResult = mergeTranslatedParameterUpdates({
             targetPath: parameterTargetPath,
             updates,

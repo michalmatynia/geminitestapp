@@ -192,6 +192,13 @@ export type FilemakerAddressFields = {
   countryId: string;
 };
 
+export type FilemakerEditableAddressDto = FilemakerAddressFields & {
+  addressId: string;
+  isDefault: boolean;
+};
+
+export type FilemakerEditableAddress = FilemakerEditableAddressDto;
+
 type FilemakerPatternRule = {
   id: string;
   pattern: string;

@@ -17,16 +17,16 @@ import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
+  AdminCmsBreadcrumbs,
+  Alert,
+  Button,
+  FormActions,
+  FormSection,
+  LoadingState,
   SectionHeader,
   ToggleRow,
-  FormSection,
-  Alert,
   StatusBadge,
-  LoadingState,
-  FormActions,
-  Breadcrumbs,
   SearchableList,
-  Button,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -222,7 +222,7 @@ function EditPageContent({
     setError(null);
     await updatePage.mutateAsync({
       id: pageId,
-      input: validation.data as Page & { slugIds?: string[] },
+      input: validation.data,
     });
     router.push('/admin/cms/pages');
   };
@@ -234,13 +234,9 @@ function EditPageContent({
           title={page.name}
           description='Map content to URL routes and manage cross-zone availability.'
           eyebrow={
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'CMS', href: '/admin/cms' },
-                { label: 'Pages', href: '/admin/cms/pages' },
-                { label: 'Edit' },
-              ]}
+            <AdminCmsBreadcrumbs
+              parent={{ label: 'Pages', href: '/admin/cms/pages' }}
+              current='Edit'
               className='mb-2'
             />
           }

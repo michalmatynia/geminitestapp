@@ -23,7 +23,7 @@ describe('aiJobsApi', () => {
   });
 
   it('uses v2 product ai-jobs endpoints', async () => {
-    apiPostMock.mockResolvedValueOnce({ ok: true, data: { jobId: 'job-1' } });
+    apiPostMock.mockResolvedValueOnce({ ok: true, data: { success: true, jobId: 'job-1' } });
     apiFetchMock.mockResolvedValue({ ok: true, data: { jobs: [] } });
 
     await aiJobsApi.enqueue({

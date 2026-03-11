@@ -16,6 +16,7 @@ import {
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
+  AdminAiEyebrow,
   FormField,
   FormActions,
   FormSection,
@@ -360,7 +361,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     return (
       <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
         <SectionHeader
-          eyebrow='AI · Prompt Exploder'
+          eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
           title='Prompt Exploder Settings'
           description='Persisted settings are invalid and cannot be loaded.'
         />
@@ -400,7 +401,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     return (
       <div id='prompt-exploder-settings-docs-root' className='container mx-auto py-6'>
         <SectionHeader
-          eyebrow='AI · Prompt Exploder'
+          eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
           title='Prompt Exploder Settings'
           description='Loading settings...'
         />
@@ -415,7 +416,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   return (
     <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
       <SectionHeader
-        eyebrow='AI · Prompt Exploder'
+        eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
         title='Prompt Exploder Settings'
         description='Configure runtime, learning, and AI execution defaults for Prompt Exploder operations.'
         actions={

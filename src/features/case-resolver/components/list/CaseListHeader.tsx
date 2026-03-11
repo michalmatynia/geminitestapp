@@ -5,7 +5,7 @@ import { memo, useMemo, type ReactNode } from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
+import { AdminCaseResolverBreadcrumbs, Button, Pagination } from '@/shared/ui';
 
 import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';
 
@@ -157,14 +157,7 @@ export const CaseListHeader = memo(function CaseListHeader({
         <div className='space-y-3 lg:hidden'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'Case Resolver', href: '/admin/case-resolver' },
-                { label: 'Cases' },
-              ]}
-              className='mt-1'
-            />
+            <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
             <div className='mt-3'>{renderCreateActions()}</div>
           </div>
           <div className='space-y-3'>
@@ -179,14 +172,7 @@ export const CaseListHeader = memo(function CaseListHeader({
         <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
-            <Breadcrumbs
-              items={[
-                { label: 'Admin', href: '/admin' },
-                { label: 'Case Resolver', href: '/admin/case-resolver' },
-                { label: 'Cases' },
-              ]}
-              className='mt-1'
-            />
+            <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
             <div className='mt-3'>{renderCreateActions()}</div>
           </div>
           <div className='flex justify-center pt-1'>

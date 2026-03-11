@@ -1,13 +1,19 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/shared/contracts/integrations';
-import { useToast, Button, SectionHeader, StatusBadge, SimpleSettingsList } from '@/shared/ui';
+import {
+  useToast,
+  Button,
+  SectionHeader,
+  SectionHeaderBackLink,
+  StatusBadge,
+  SimpleSettingsList,
+} from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const AVAILABLE_INTEGRATIONS = [
@@ -92,9 +98,9 @@ export default function AddIntegrationPage(): React.JSX.Element {
         title='Add Integrations'
         description='Select a marketplace connection to add to your map.'
         eyebrow={
-          <Link href='/admin/integrations' className='text-blue-300 hover:text-blue-200'>
-            ← Back to integrations
-          </Link>
+          <SectionHeaderBackLink href='/admin/integrations' arrow>
+            Back to integrations
+          </SectionHeaderBackLink>
         }
         className='mb-6'
       />

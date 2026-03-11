@@ -19,6 +19,7 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
     <FilemakerPartyEditPageLayout
       itemName={person ? `${person.firstName} ${person.lastName}` : null}
       notFoundMessage='Person not found.'
+      parent={{ label: 'Persons', href: '/admin/filemaker/persons' }}
       onSave={() => {
         void handleSave();
       }}

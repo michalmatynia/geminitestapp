@@ -25,7 +25,7 @@ import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   type AgentPersona,
 } from '@/shared/contracts/agents';
-import { ItemLibrary, useToast, Button } from '@/shared/ui';
+import { ItemLibrary, SectionHeaderBackLink, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function AgentPersonasPage(): React.JSX.Element {
@@ -156,14 +156,10 @@ export function AgentPersonasPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      headerActions={
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => window.location.assign('/admin/agentcreator')}
-        >
-          ← Back to agent creator
-        </Button>
+      backLink={
+        <SectionHeaderBackLink href='/admin/agentcreator' arrow>
+          Back to agent creator
+        </SectionHeaderBackLink>
       }
       buildDefaultItem={() => ({
         id: createAgentPersonaId(),

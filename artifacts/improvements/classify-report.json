@@ -1,0 +1,181 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-03-11T13:13:10.932Z",
+  "phase": "classify",
+  "executionMode": "executed",
+  "allowWrite": false,
+  "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
+    "repo-quality-baseline"
+  ],
+  "reportPath": "artifacts/improvements/classify-report.json",
+  "steps": [
+    {
+      "id": "products-parameter-recovery-classification",
+      "title": "Classify product parameter recovery state",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-recovery-classification-*.json",
+        "/tmp/product-parameter-recovery-classification-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:classify:parameter-recovery",
+      "durationMs": 4819
+    },
+    {
+      "id": "products-parameter-source-report",
+      "title": "Refresh source-recovery report for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-*.json",
+        "/tmp/product-parameter-source-recovery-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:report:parameter-source-recovery",
+      "durationMs": 4276
+    },
+    {
+      "id": "products-parameter-source-summary",
+      "title": "Summarize unresolved source-recovery products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-summary-*.json",
+        "/tmp/product-parameter-source-recovery-summary-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:summarize:parameter-source-recovery",
+      "durationMs": 357
+    },
+    {
+      "id": "products-parameter-source-template",
+      "title": "Generate source-recovery template for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-template-*.json",
+        "/tmp/product-parameter-source-recovery-template-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:generate:parameter-source-recovery-template",
+      "durationMs": 362
+    },
+    {
+      "id": "products-parameter-source-batch-split",
+      "title": "Split source-recovery template into family batches",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/manifest.json"
+      ],
+      "instructions": [],
+      "script": "products:split:parameter-source-recovery-template",
+      "durationMs": 363
+    },
+    {
+      "id": "products-parameter-family-mapping-packs",
+      "title": "Generate family mapping packs from the latest source-recovery batches",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json"
+      ],
+      "instructions": [],
+      "script": "products:generate:parameter-family-mapping-pack",
+      "durationMs": 304
+    },
+    {
+      "id": "products-parameter-family-mapping-index",
+      "title": "Build family mapping index for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json"
+      ],
+      "instructions": [],
+      "script": "products:build:parameter-family-mapping-index",
+      "durationMs": 313
+    },
+    {
+      "id": "products-parameter-family-mapping-checklist",
+      "title": "Render family mapping checklist for manual curation",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
+      ],
+      "instructions": [],
+      "script": "products:render:parameter-family-mapping-checklist",
+      "durationMs": 314
+    },
+    {
+      "id": "products-category-manual-remediation-report",
+      "title": "Report products requiring manual category or schema remediation",
+      "trackId": "products-category-schema-normalization",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-manual-remediation-*.json",
+        "/tmp/product-parameter-manual-remediation-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:report:parameter-remediation",
+      "durationMs": 1658
+    },
+    {
+      "id": "repo-quality-lint",
+      "title": "Run source lint baseline",
+      "trackId": "repo-quality-baseline",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [],
+      "instructions": [],
+      "script": "quality:baseline:lint",
+      "durationMs": 11337
+    },
+    {
+      "id": "repo-quality-typecheck",
+      "title": "Run typecheck baseline",
+      "trackId": "repo-quality-baseline",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "failed",
+      "outputs": [],
+      "instructions": [],
+      "script": "quality:baseline:typecheck",
+      "durationMs": 52331
+    }
+  ]
+}

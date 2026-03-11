@@ -21,7 +21,7 @@ async function openTutorFromSelection(page: Page): Promise<void> {
     // Fall back to the avatar launcher when the selection CTA is not rendered for this surface.
   }
 
-  await openTutorPanelFromAvatar(page);
+  await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 }
 
 async function expectTutorAvatarAttachedToPanel(page: Page): Promise<void> {
@@ -66,9 +66,7 @@ async function triggerOnboardingFinish(onboarding: Locator): Promise<void> {
 }
 
 async function triggerTutorAvatar(page: Page): Promise<void> {
-  await page.getByTestId('kangur-ai-tutor-avatar').evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await page.getByTestId('kangur-ai-tutor-avatar').click();
 }
 
 async function acceptMinimalistTutorModal(page: Page): Promise<boolean> {
@@ -92,7 +90,9 @@ async function acceptMinimalistTutorModal(page: Page): Promise<boolean> {
   return true;
 }
 
-async function openTutorPanelFromAvatar(page: Page): Promise<void> {
+// Legacy transitional helper for older post-accept tutor coverage.
+// Do not use this helper as the canonical avatar-click contract.
+async function openLegacyTutorPanelAfterAcceptingMinimalModal(page: Page): Promise<void> {
   const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
   const minimalistModal = page.getByTestId('kangur-ai-tutor-guest-intro');
 
@@ -348,7 +348,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toHaveCount(0);
 
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeVisible();
 
@@ -370,7 +370,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect.poll(() => readHomeOnboardingStatus(page)).toBe('shown');
   });
 
-  test('reopens the tutor panel from the docked Game tutor avatar after closing onboarding', async ({
+  test('reopens the minimalist tutor modal from the docked Game tutor avatar after closing onboarding', async ({
     page,
   }) => {
     await mockKangurTutorEnvironment(page);
@@ -390,11 +390,10 @@ test.describe('Kangur AI Tutor', () => {
     await expect(avatar).toHaveAttribute('data-anchor-kind', 'dock');
     await expect.poll(() => readHomeOnboardingStatus(page)).toBe('dismissed');
 
-    await openTutorPanelFromAvatar(page);
+    await avatar.click();
 
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-composer-pills')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeVisible();
   });
 
@@ -412,7 +411,7 @@ test.describe('Kangur AI Tutor', () => {
     await triggerOnboardingFinish(onboarding);
 
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toHaveCount(0);
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
 
     await page.getByRole('button', { name: 'Wyłącz AI Tutora' }).click();
@@ -444,7 +443,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(onboarding).toBeVisible();
     await triggerOnboardingFinish(onboarding);
 
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
 
     await page.getByRole('button', { name: 'Wyłącz AI Tutora' }).click();
@@ -551,7 +550,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(tutorPanel).toBeVisible();
     await tutorPanel.getByRole('textbox', { name: 'Wpisz pytanie' }).fill('Porozmawiajmy o czyms innym.');
     await tutorPanel.getByRole('button', { name: 'Wyślij' }).click();
@@ -600,7 +599,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).not.toContainText(staleReply);
   });
 
-  test('opens the minimalist tutor modal from the avatar for a logged-in learner without resurfacing onboarding', async ({
+  test('shows the minimalist tutor modal from the avatar for a logged-in learner without resurfacing onboarding', async ({
     page,
   }) => {
     const { lessonTitle } = await mockKangurTutorEnvironment(page, {
@@ -609,27 +608,32 @@ test.describe('Kangur AI Tutor', () => {
       allowCrossPagePersistence: false,
     });
 
+    await page.addInitScript(() => {
+      window.sessionStorage.removeItem('kangur-ai-tutor-widget-v1');
+      window.localStorage.removeItem('kangur-ai-tutor-guest-intro-v1');
+      window.localStorage.removeItem('kangur-ai-tutor-home-onboarding-v1');
+    });
+
     await gotoTutorRoute(page, '/kangur/lessons');
     await page.getByRole('button', { name: lessonTitle }).click();
-
-    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    if (await tutorPanel.isVisible().catch(() => false)) {
-      await tutorPanel.getByRole('button', { name: 'Zamknij' }).click();
-      await expect(tutorPanel).toHaveCount(0);
-    }
+    await dismissHomeOnboardingIfVisible(page);
 
     await triggerTutorAvatar(page);
 
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
-      'data-panel-style',
-      'minimal-card'
+    const diagnostics = page.getByTestId('kangur-ai-tutor-surface-diagnostics');
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
+      'data-modal-surface',
+      'canonical-onboarding'
     );
-    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
+    await expect(diagnostics).toHaveAttribute('data-tutor-surface', 'onboarding');
+    await expect(diagnostics).toHaveAttribute('data-canonical-modal-visible', 'true');
+    await expect(diagnostics).toHaveAttribute('data-guest-intro-rendered', 'true');
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-ask-modal')).toHaveCount(0);
   });
 
-  test('keeps the logged-in selection handoff on the regular tutor panel and never reopens onboarding', async ({
+  test('keeps the logged-in selection handoff on the minimalist contextual tutor surface and never reopens onboarding', async ({
     page,
   }) => {
     const {
@@ -657,6 +661,7 @@ test.describe('Kangur AI Tutor', () => {
     const guidedCallout = page.getByTestId('kangur-ai-tutor-selection-guided-callout');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     const guestIntro = page.getByTestId('kangur-ai-tutor-guest-intro');
+    const diagnostics = page.getByTestId('kangur-ai-tutor-surface-diagnostics');
 
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
     await expect(tutorAvatar).toHaveAttribute('data-guidance-target', 'selection_excerpt');
@@ -669,8 +674,13 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect(tutorPanel).toBeVisible();
     await waitForTutorPanelToSettle(tutorPanel);
-    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
-    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
+    await expect(diagnostics).toHaveAttribute('data-tutor-surface', 'selection_panel');
+    await expect(diagnostics).toHaveAttribute('data-contextual-mode', 'selection_explain');
+    await expect(diagnostics).toHaveAttribute('data-is-minimal-panel', 'true');
+    await expect(diagnostics).toHaveAttribute('data-guest-intro-rendered', 'false');
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
+    await expect(tutorAvatar).toHaveAttribute('data-guidance-pointer', 'rim-arrowhead');
+    await expect(tutorArrowhead).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-selected-text-preview')).toContainText(
       lessonSelectedText
@@ -825,7 +835,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
@@ -1048,7 +1058,7 @@ test.describe('Kangur AI Tutor', () => {
     const questionPrompt = await openDivisionQuestionFromGameHome(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     const questionAnchor = page.getByTestId('kangur-game-question-anchor');
@@ -1131,7 +1141,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('question-card-shell')).toBeVisible();
     await expect(tutorAvatar).toBeVisible();
 
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
@@ -1161,7 +1171,7 @@ test.describe('Kangur AI Tutor', () => {
     await openDivisionQuestionFromGameHome(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toContainText(
@@ -1194,7 +1204,7 @@ test.describe('Kangur AI Tutor', () => {
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
@@ -1219,7 +1229,7 @@ test.describe('Kangur AI Tutor', () => {
     await openDivisionQuestionFromGameHome(page);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(tutorPanel).toBeVisible();
     await expect(tutorPanel).toContainText('Poproś o wskazówkę do tego pytania.');
     await expect(tutorPanel).not.toContainText(lessonResponse);
@@ -1232,7 +1242,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
     await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);
@@ -1279,7 +1289,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
 
-    await openTutorPanelFromAvatar(page);
+    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
     await expect(tutorPanel).toBeVisible();
     await expect(tutorPanel).not.toContainText(lessonResponse);
     await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);

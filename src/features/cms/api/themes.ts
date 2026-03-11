@@ -1,4 +1,8 @@
-import type { CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
+import type {
+  CmsTheme,
+  CmsThemeCreateRequestDto,
+  CmsThemeUpdateRequestDto,
+} from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
 
 type ThemeMutationResult =
@@ -14,7 +18,7 @@ export const fetchTheme = async (id: string): Promise<CmsTheme> => {
 };
 
 export const createTheme = async (
-  input: CmsThemeCreateInput
+  input: CmsThemeCreateRequestDto
 ): Promise<ThemeMutationResult> => {
   try {
     const payload = await api.post<CmsTheme>('/api/cms/themes', input);
@@ -30,7 +34,7 @@ export const createTheme = async (
 
 export const updateTheme = async (
   id: string,
-  input: CmsThemeUpdateInput
+  input: CmsThemeUpdateRequestDto
 ): Promise<ThemeMutationResult> => {
   try {
     const payload = await api.put<CmsTheme>(`/api/cms/themes/${id}`, input);

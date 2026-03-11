@@ -14,7 +14,7 @@ import type { ProductDraft } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
-import { Button, SelectSimple, Pagination, Breadcrumbs } from '@/shared/ui';
+import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
 
 const TriggerButtonBar = dynamic(
   () =>
@@ -93,14 +93,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
-    <Breadcrumbs
-      items={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Products', href: '/admin/products' },
-        { label: 'Product List' },
-      ]}
-      className='mt-1'
-    />
+    <AdminProductsBreadcrumbs current='Product List' className='mt-1' />
   );
 
   const renderCreateActions = (): React.JSX.Element => (

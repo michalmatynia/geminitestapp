@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import type { ThemeDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
+import type { ThemeDocument } from '@/features/notesapp/contracts';
 import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

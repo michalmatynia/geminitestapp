@@ -3,7 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type {
+  ProductBulkImagesBase64Response,
+  ProductPatchInput,
+  ProductWithImages,
+} from '@/shared/contracts/products';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
@@ -25,6 +29,8 @@ interface UpdateProductPayload {
   id: string;
   data: Partial<ProductWithImages>;
 }
+
+type ProductQuickField = keyof ProductPatchInput;
 
 type ProductListCacheValue =
   | ProductWithImages[]
@@ -147,12 +153,15 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
   });
 }
 
-export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, string[]> {
+export function useBulkConvertImagesToBase64(): UpdateMutation<
+  ProductBulkImagesBase64Response,
+  string[]
+> {
   return createUpdateMutationV2({
-    mutationFn: async (productIds: string[]): Promise<{ ok: boolean }> => {
-      await api.post<unknown>('/api/v2/products/images/base64', { productIds });
-      return { ok: true };
-    },
+    mutationFn: async (productIds: string[]): Promise<ProductBulkImagesBase64Response> =>
+      await api.post<ProductBulkImagesBase64Response>('/api/v2/products/images/base64', {
+        productIds,
+      }),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useBulkConvertImagesToBase64',
@@ -167,10 +176,10 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, 
   });
 }
 
-export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: string; sku: string }> {
+export function useDuplicateProduct(): CreateMutation<ProductWithImages, { id: string; sku: string }> {
   return createCreateMutationV2({
-    mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
-      await api.post<{ id: string }>(`/api/v2/products/${id}/duplicate`, { sku }),
+    mutationFn: async ({ id, sku }): Promise<ProductWithImages> =>
+      await api.post<ProductWithImages>(`/api/v2/products/${id}/duplicate`, { sku }),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useDuplicateProduct',
@@ -188,27 +197,26 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
 }
 
 export function useUpdateProductField(): UpdateMutation<
-  void,
+  ProductWithImages,
   {
     id: string;
-    field: keyof ProductWithImages;
-    value: ProductWithImages[keyof ProductWithImages];
+    field: ProductQuickField;
+    value: number;
   }
   > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<
-    void,
+    ProductWithImages,
     {
       id: string;
-      field: keyof ProductWithImages;
-      value: ProductWithImages[keyof ProductWithImages];
+      field: ProductQuickField;
+      value: number;
     },
     { previousLists: unknown; previousDetail: unknown }
   >({
-    mutationFn: async ({ id, field, value }): Promise<void> => {
-      await api.patch<unknown>(`/api/v2/products/${id}`, { [field]: value });
-    },
+    mutationFn: async ({ id, field, value }): Promise<ProductWithImages> =>
+      await api.patch<ProductWithImages>(`/api/v2/products/${id}`, { [field]: value }),
     onMutate: async ({ id, field, value }) => {
       // Optimistically update the list and detail caches
       const listKey = QUERY_KEYS.products.lists();

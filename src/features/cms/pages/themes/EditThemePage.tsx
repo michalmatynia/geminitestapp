@@ -6,8 +6,8 @@ import React, { useMemo, useState } from 'react';
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
-import type { CmsTheme, CmsThemeUpdateInput } from '@/shared/contracts/cms';
-import { PageLayout, Alert, LoadingState, Breadcrumbs } from '@/shared/ui';
+import type { CmsTheme, CmsThemeUpdateRequestDto } from '@/shared/contracts/cms';
+import { AdminCmsBreadcrumbs, Alert, LoadingState, PageLayout } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -34,10 +34,9 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
 
     setError(null);
     try {
-      const validatedData = validation.data as CmsThemeUpdateInput;
-      const input: CmsThemeUpdateInput = {
-        ...validatedData,
-        customCss: validatedData.customCss ?? undefined,
+      const input: CmsThemeUpdateRequestDto = {
+        ...validation.data,
+        customCss: validation.data.customCss ?? undefined,
       };
       await updateTheme.mutateAsync({ id, input });
       router.push('/admin/cms/themes');
@@ -54,13 +53,9 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
       title='Edit Theme'
       description='Customize the visual design system for your storefront.'
       eyebrow={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'CMS', href: '/admin/cms' },
-            { label: 'Themes', href: '/admin/cms/themes' },
-            { label: 'Edit' },
-          ]}
+        <AdminCmsBreadcrumbs
+          parent={{ label: 'Themes', href: '/admin/cms/themes' }}
+          current='Edit'
           className='mb-2'
         />
       }

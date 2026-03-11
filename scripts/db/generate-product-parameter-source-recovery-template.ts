@@ -27,6 +27,7 @@ interface ParsedArgs {
 }
 
 const DEFAULT_REPORT_PATH = '/tmp/product-parameter-source-recovery-latest.json';
+const DEFAULT_LATEST_OUTPUT_PATH = '/tmp/product-parameter-source-recovery-template-latest.json';
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -73,23 +74,19 @@ const main = async (): Promise<void> => {
     notes: [],
   }));
 
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    sourceReportPath: parsed.reportPath,
+    entryCount: overrides.length,
+    overrides,
+  };
+
   const outputPath =
     parsed.outputPath || `/tmp/product-parameter-source-recovery-template-${Date.now()}.json`;
+  const latestOutputPath = DEFAULT_LATEST_OUTPUT_PATH;
 
-  fs.writeFileSync(
-    outputPath,
-    `${JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        sourceReportPath: parsed.reportPath,
-        entryCount: overrides.length,
-        overrides,
-      },
-      null,
-      2
-    )}\n`,
-    'utf8'
-  );
+  fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(latestOutputPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 
   console.log(
     JSON.stringify(
@@ -98,6 +95,7 @@ const main = async (): Promise<void> => {
         sourceReportPath: parsed.reportPath,
         entryCount: overrides.length,
         outputPath,
+        latestOutputPath,
       },
       null,
       2

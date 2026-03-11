@@ -18,10 +18,12 @@ type AuditReport = {
   scannedCount: number;
   suspiciousCount: number;
   reportPath: string;
+  latestReportPath: string;
   products: AuditRow[];
 };
 
 const DEFAULT_PAGE_SIZE = 200;
+const LATEST_REPORT_PATH = '/tmp/product-missing-parameters-audit-latest.json';
 
 const parsePageSize = (): number => {
   const value = process.argv
@@ -78,11 +80,18 @@ async function main(): Promise<void> {
     scannedCount,
     suspiciousCount: rows.length,
     reportPath,
+    latestReportPath: LATEST_REPORT_PATH,
     products: rows,
   };
 
-  await writeFile(reportPath, JSON.stringify(report, null, 2));
+  const serializedReport = `${JSON.stringify(report, null, 2)}\n`;
+  await writeFile(reportPath, serializedReport);
+  await writeFile(LATEST_REPORT_PATH, serializedReport);
   console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
 }
 
-void main();
+void main().catch((error: unknown) => {
+  console.error('[audit-products-missing-parameters] failed', error);
+  process.exit(1);
+});

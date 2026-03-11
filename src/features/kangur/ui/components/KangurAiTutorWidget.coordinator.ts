@@ -66,8 +66,7 @@ export function useKangurAiTutorWidgetCoordinator({
     | 'selection_guided'
     | 'selection_panel'
     | 'section_guided'
-    | 'section_panel'
-    | 'regular_panel';
+    | 'section_panel';
   const {
     enabled,
     messages,
@@ -132,6 +131,8 @@ export function useKangurAiTutorWidgetCoordinator({
     setLauncherPromptVisible,
     setMessageFeedbackByKey,
     setPanelAnchorMode,
+    panelShellMode,
+    setPanelShellMode,
     setPanelMotionState,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
@@ -307,10 +308,6 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const selectionTakeoverText =
     selectionGuidanceHandoffText ?? selectionResponsePending?.selectedText ?? null;
-  const hasReboundSelectedFragment =
-    selectionTakeoverText !== null &&
-    activeFocus.kind === 'selection' &&
-    activeSelectedText === selectionTakeoverText;
   const tutorSurfaceMode: TutorSurfaceMode =
     guidedTutorTarget?.mode === 'selection'
       ? 'selection_guided'
@@ -325,16 +322,11 @@ export function useKangurAiTutorWidgetCoordinator({
               contextualTutorMode === 'section_explain' ||
               isSectionExplainPendingMode
             ? 'section_panel'
-            : canonicalTutorModalVisible ||
-                (isAnonymousVisitor && (guestIntroVisible || guestIntroHelpVisible))
+            : isAnonymousVisitor &&
+                (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible)
               ? 'onboarding'
-              : tutorRuntime.isOpen
-                ? 'regular_panel'
-                : 'idle_avatar';
-  const suppressPanelSurface =
-    tutorSurfaceMode === 'selection_guided' &&
-    selectionTakeoverText !== null &&
-    !hasReboundSelectedFragment;
+              : 'idle_avatar';
+  const suppressPanelSurface = tutorSurfaceMode === 'onboarding';
 
   useKangurAiTutorTelemetryBridge({
     activeFocus,
@@ -409,6 +401,7 @@ export function useKangurAiTutorWidgetCoordinator({
       setIsAvatarDragging,
       setLauncherPromptVisible,
       setPanelAnchorMode,
+      setPanelShellMode,
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
@@ -531,7 +524,9 @@ export function useKangurAiTutorWidgetCoordinator({
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
+    handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen: tutorRuntime.isOpen,
     launcherPromptVisible,
     persistSelectionContext,
@@ -557,6 +552,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFloatingAvatarPointerCancel,
     handleFloatingAvatarPointerDown,
     handleFloatingAvatarPointerMove,
+    handleFloatingAvatarMouseUp,
     handleFloatingAvatarPointerUp,
   } = useKangurAiTutorAvatarDrag({
     avatarDragStateRef,
@@ -572,6 +568,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
     setIsAvatarDragging,
+    handleAvatarTap: handleAvatarClick,
     startGuidedSectionExplanation,
     suppressAvatarClickRef,
     tutorAnchorContext,
@@ -679,6 +676,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleAskAbout,
     handleAvatarClick,
     handleAvatarMouseDown,
+    handleAvatarMouseUp: handleFloatingAvatarMouseUp,
     handleCloseChat,
     handleCloseGuidedCallout,
     handleDetachHighlightedSection,
@@ -723,6 +721,7 @@ export function useKangurAiTutorWidgetCoordinator({
     panelAvatarPlacement,
     panelEmptyStateMessage,
     panelOpenAnimation,
+    panelShellMode,
     panelTransition,
     pointerMarkerId,
     prefersReducedMotion,
@@ -739,7 +738,7 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionSpotlightStyle,
     sessionSurfaceLabel,
     shouldRenderAuxiliaryPanelControls,
-    shouldRenderGuestIntroUi,
+    shouldRenderContextlessTutorUi,
     shouldRenderGuidedCallout,
     shouldRenderSelectionAction,
     shouldRepeatGuestIntroOnEntry,

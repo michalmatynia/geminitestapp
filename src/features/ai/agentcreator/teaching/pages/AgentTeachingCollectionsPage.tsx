@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import { Button, SectionHeader, StandardDataTablePanel } from '@/shared/ui';
+import { Button, SectionHeader, SectionHeaderBackLink, StandardDataTablePanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';
@@ -112,12 +112,9 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
         title='Embedding School'
         description='Knowledge base management for AI agents. Upload documents to create searchable vector embeddings.'
         eyebrow={
-          <Link
-            href='/admin/agentcreator/teaching'
-            className='text-blue-300 hover:text-blue-200 transition-colors'
-          >
-            ← Back to learners
-          </Link>
+          <SectionHeaderBackLink href='/admin/agentcreator/teaching' arrow>
+            Back to learners
+          </SectionHeaderBackLink>
         }
         actions={
           <Button onClick={openCreate} className='h-8 text-xs'>

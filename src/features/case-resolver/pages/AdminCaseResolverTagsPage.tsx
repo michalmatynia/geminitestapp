@@ -7,13 +7,13 @@ import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
+  AdminCaseResolverBreadcrumbs,
   Button,
   FormSection,
   SectionHeader,
   Skeleton,
   Tag as UiTag,
   useToast,
-  Breadcrumbs,
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -243,15 +243,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Tags'
-        subtitle={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Tags' },
-            ]}
-          />
-        }
+        subtitle={<AdminCaseResolverBreadcrumbs current='Tags' />}
       />
 
       <div className='flex justify-start'>

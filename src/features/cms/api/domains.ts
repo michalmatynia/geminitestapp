@@ -1,13 +1,17 @@
-import type { CmsDomain } from '@/shared/contracts/cms';
+import type {
+  CmsDomain,
+  CmsDomainCreateRequestDto,
+  CmsDomainUpdateRequestDto,
+} from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
 
 export const fetchDomains = async (): Promise<CmsDomain[]> => {
   return api.get<CmsDomain[]>('/api/cms/domains');
 };
 
-export const createDomain = async (input: {
-  domain: string;
-}): Promise<{ ok: boolean; payload: CmsDomain }> => {
+export const createDomain = async (
+  input: CmsDomainCreateRequestDto
+): Promise<{ ok: boolean; payload: CmsDomain }> => {
   try {
     const payload = await api.post<CmsDomain>('/api/cms/domains', input);
     return { ok: true, payload };
@@ -27,7 +31,7 @@ export const deleteDomain = async (id: string): Promise<{ ok: boolean }> => {
 
 export const updateDomain = async (
   id: string,
-  input: { aliasOf?: string | null }
+  input: CmsDomainUpdateRequestDto
 ): Promise<{ ok: boolean; payload: CmsDomain }> => {
   try {
     const payload = await api.put<CmsDomain>(`/api/cms/domains/${id}`, input);

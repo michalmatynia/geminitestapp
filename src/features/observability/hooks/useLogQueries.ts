@@ -5,8 +5,10 @@ import type {
   SystemLogsResponseDto as SystemLogsResponse,
   SystemActivityResponseDto as SystemActivityResponse,
   SystemLogMetricsResponseDto as SystemLogMetricsResponse,
+  MongoDiagnosticsResponseDto as MongoDiagnosticsResponse,
   ListSystemLogsInputDto as LogFilters,
 } from '@/shared/contracts/observability';
+import { mongoDiagnosticsResponseSchema } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -113,12 +115,15 @@ export function useSystemLogMetrics(
   });
 }
 
-export function useMongoDiagnostics(): SingleQuery<unknown> {
+export function useMongoDiagnostics(): SingleQuery<MongoDiagnosticsResponse> {
   const queryKey = diagnosticsKeys.mongo();
   return createSingleQueryV2({
     id: 'mongo-diagnostics',
     queryKey,
-    queryFn: () => api.get<unknown>('/api/system/diagnostics/mongo-indexes'),
+    queryFn: async () =>
+      mongoDiagnosticsResponseSchema.parse(
+        await api.get<MongoDiagnosticsResponse>('/api/system/diagnostics/mongo-indexes')
+      ),
     meta: {
       source: 'observability.hooks.useMongoDiagnostics',
       operation: 'detail',

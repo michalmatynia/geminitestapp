@@ -1,11 +1,12 @@
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
+  aiPathsMaintenanceApplyResultSchema,
+  aiPathsMaintenanceReportSchema,
   type AiPathsMaintenanceActionId,
-  type AiPathsMaintenanceActionReport,
   type AiPathsMaintenanceReport,
   type AiPathsMaintenanceApplyResult,
 } from '@/shared/contracts/ai-paths';
-import type { SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
+import { settingRecordSchema, type SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -13,7 +14,6 @@ export type { AiPathsSettingRecord };
 export { AI_PATHS_MAINTENANCE_ACTION_IDS };
 export type {
   AiPathsMaintenanceActionId,
-  AiPathsMaintenanceActionReport,
   AiPathsMaintenanceReport,
   AiPathsMaintenanceApplyResult,
 };
@@ -56,67 +56,7 @@ const dispatchAiPathsSettingsUpdatedEvent = (): void => {
   );
 };
 
-const isAiPathsMaintenanceActionId = (value: unknown): value is AiPathsMaintenanceActionId =>
-  typeof value === 'string' &&
-  (AI_PATHS_MAINTENANCE_ACTION_IDS as readonly string[]).includes(value);
-
-const normalizeAiPathsMaintenanceAction = (
-  value: unknown
-): AiPathsMaintenanceActionReport | null => {
-  if (!value || typeof value !== 'object') return null;
-  const item = value as Record<string, unknown>;
-  const id = item['id'];
-  const status = item['status'];
-  if (!isAiPathsMaintenanceActionId(id)) return null;
-  if (status !== 'pending' && status !== 'ready') return null;
-  return {
-    id,
-    title: typeof item['title'] === 'string' ? item['title'] : id,
-    description: typeof item['description'] === 'string' ? item['description'] : '',
-    blocking: item['blocking'] === true,
-    status,
-    affectedRecords:
-      typeof item['affectedRecords'] === 'number' && Number.isFinite(item['affectedRecords'])
-        ? Math.max(0, Math.trunc(item['affectedRecords']))
-        : 0,
-  };
-};
-
-const normalizeAiPathsMaintenanceReport = (value: unknown): AiPathsMaintenanceReport => {
-  if (!value || typeof value !== 'object') {
-    return {
-      scannedAt: new Date().toISOString(),
-      pendingActions: 0,
-      blockingActions: 0,
-      actions: [],
-    };
-  }
-  const payload = value as Record<string, unknown>;
-  const actionsRaw = Array.isArray(payload['actions']) ? payload['actions'] : [];
-  const actions = actionsRaw
-    .map((item: unknown): AiPathsMaintenanceActionReport | null =>
-      normalizeAiPathsMaintenanceAction(item)
-    )
-    .filter((item: AiPathsMaintenanceActionReport | null): item is AiPathsMaintenanceActionReport =>
-      Boolean(item)
-    );
-  const pendingActions = actions.filter((item) => item.status === 'pending');
-  return {
-    scannedAt:
-      typeof payload['scannedAt'] === 'string' && payload['scannedAt'].trim().length > 0
-        ? payload['scannedAt']
-        : new Date().toISOString(),
-    pendingActions:
-      typeof payload['pendingActions'] === 'number' && Number.isFinite(payload['pendingActions'])
-        ? Math.max(0, Math.trunc(payload['pendingActions']))
-        : pendingActions.length,
-    blockingActions:
-      typeof payload['blockingActions'] === 'number' && Number.isFinite(payload['blockingActions'])
-        ? Math.max(0, Math.trunc(payload['blockingActions']))
-        : pendingActions.filter((item) => item.blocking).length,
-    actions,
-  };
-};
+const aiPathsSettingRecordsSchema = settingRecordSchema.array();
 
 const readBackupSettings = (): AiPathsSettingRecord[] | null => {
   if (typeof window === 'undefined') return null;
@@ -134,15 +74,9 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     if (backupAgeMs > AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS) {
       return null;
     }
-    const normalized = parsedRecord.records
-      .map((item: unknown): AiPathsSettingRecord | null => {
-        if (!item || typeof item !== 'object') return null;
-        const key = (item as { key?: unknown }).key;
-        const value = (item as { value?: unknown }).value;
-        if (typeof key !== 'string' || typeof value !== 'string') return null;
-        return { key, value };
-      })
-      .filter((item: AiPathsSettingRecord | null): item is AiPathsSettingRecord => Boolean(item));
+    const parsedSettings = aiPathsSettingRecordsSchema.safeParse(parsedRecord.records);
+    if (!parsedSettings.success) return null;
+    const normalized = parsedSettings.data;
     return normalized.length > 0 ? normalized : null;
   } catch {
     return null;
@@ -258,17 +192,9 @@ const fetchAiPathsSettingsFromApi = async (options?: {
   if (!res.ok) {
     throw new Error(`Failed to load AI Paths settings (${res.status})`);
   }
-  const data = (await res.json()) as unknown;
-  if (!Array.isArray(data)) return [];
-  const normalized = data
-    .map((item: unknown): AiPathsSettingRecord | null => {
-      if (!item || typeof item !== 'object') return null;
-      const key = (item as { key?: unknown }).key;
-      const value = (item as { value?: unknown }).value;
-      if (typeof key !== 'string' || typeof value !== 'string') return null;
-      return { key, value };
-    })
-    .filter((item: AiPathsSettingRecord | null): item is AiPathsSettingRecord => Boolean(item));
+  const parsedSettings = aiPathsSettingRecordsSchema.safeParse(await res.json());
+  if (!parsedSettings.success) return [];
+  const normalized = parsedSettings.data;
   if (normalized.length > 0) {
     writeBackupSettings(normalized);
   }
@@ -453,9 +379,9 @@ export const updateAiPathsSettingsBulk = async (
   );
   if (payload.length === 0) return [];
 
-  let data: unknown;
+  let data: AiPathsSettingRecord[] | unknown;
   try {
-    data = await api.post<unknown>(
+    data = await api.post<AiPathsSettingRecord[]>(
       '/api/ai-paths/settings',
       { items: payload },
       {
@@ -470,25 +396,17 @@ export const updateAiPathsSettingsBulk = async (
   }
   invalidateAiPathsSettingsCache();
   dispatchAiPathsSettingsUpdatedEvent();
-  if (!Array.isArray(data)) return payload;
-  return data
-    .map((item: unknown): AiPathsSettingRecord | null => {
-      if (!item || typeof item !== 'object') return null;
-      const key = (item as { key?: unknown }).key;
-      const value = (item as { value?: unknown }).value;
-      if (typeof key !== 'string' || typeof value !== 'string') return null;
-      return { key, value };
-    })
-    .filter((item: AiPathsSettingRecord | null): item is AiPathsSettingRecord => Boolean(item));
+  const parsedSettings = aiPathsSettingRecordsSchema.safeParse(data);
+  return parsedSettings.success ? parsedSettings.data : payload;
 };
 
 export const updateAiPathsSetting = async (
   key: string,
   value: string
 ): Promise<AiPathsSettingRecord> => {
-  let data: unknown;
+  let data: AiPathsSettingRecord | unknown;
   try {
-    data = await api.post<unknown>(
+    data = await api.post<AiPathsSettingRecord>(
       '/api/ai-paths/settings',
       { key, value },
       {
@@ -503,13 +421,8 @@ export const updateAiPathsSetting = async (
   }
   invalidateAiPathsSettingsCache();
   dispatchAiPathsSettingsUpdatedEvent();
-  if (!data || typeof data !== 'object') return { key, value };
-  const nextKey = (data as { key?: unknown }).key;
-  const nextValue = (data as { value?: unknown }).value;
-  return {
-    key: typeof nextKey === 'string' ? nextKey : key,
-    value: typeof nextValue === 'string' ? nextValue : value,
-  };
+  const parsedSetting = settingRecordSchema.safeParse(data);
+  return parsedSetting.success ? parsedSetting.data : { key, value };
 };
 
 export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => {
@@ -537,9 +450,9 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
 };
 
 export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanceReport> => {
-  let data: unknown;
+  let data: AiPathsMaintenanceReport | unknown;
   try {
-    data = await api.get<unknown>('/api/ai-paths/settings/maintenance');
+    data = await api.get<AiPathsMaintenanceReport>('/api/ai-paths/settings/maintenance');
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(`Failed to load AI Paths maintenance report (${error.status})`, {
@@ -548,7 +461,7 @@ export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanc
     }
     throw error;
   }
-  return normalizeAiPathsMaintenanceReport(data);
+  return aiPathsMaintenanceReportSchema.parse(data);
 };
 
 export const applyAiPathsMaintenanceActions = async (
@@ -556,9 +469,9 @@ export const applyAiPathsMaintenanceActions = async (
 ): Promise<AiPathsMaintenanceApplyResult> => {
   const normalizedActionIds =
     actionIds && actionIds.length > 0 ? Array.from(new Set(actionIds)) : undefined;
-  let data: unknown;
+  let data: AiPathsMaintenanceApplyResult | unknown;
   try {
-    data = await api.post<unknown>('/api/ai-paths/settings/maintenance', {
+    data = await api.post<AiPathsMaintenanceApplyResult>('/api/ai-paths/settings/maintenance', {
       ...(normalizedActionIds ? { actionIds: normalizedActionIds } : {}),
     });
   } catch (error) {
@@ -570,17 +483,8 @@ export const applyAiPathsMaintenanceActions = async (
     throw error;
   }
 
-  const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-  const appliedActionIds = Array.isArray(payload['appliedActionIds'])
-    ? payload['appliedActionIds'].filter((value: unknown): value is AiPathsMaintenanceActionId =>
-      isAiPathsMaintenanceActionId(value)
-    )
-    : [];
-  const report = normalizeAiPathsMaintenanceReport(payload['report']);
+  const parsed = aiPathsMaintenanceApplyResultSchema.parse(data);
   invalidateAiPathsSettingsCache();
   dispatchAiPathsSettingsUpdatedEvent();
-  return {
-    appliedActionIds,
-    report,
-  };
+  return parsed;
 };

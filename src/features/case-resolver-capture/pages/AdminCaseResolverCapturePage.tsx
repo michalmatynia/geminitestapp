@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  AdminAiEyebrow,
   Button,
   FormSection,
   SectionHeader,
@@ -137,7 +138,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
     return (
       <div className='container mx-auto py-6'>
         <SectionHeader
-          eyebrow='AI · Case Resolver Capture'
+          eyebrow={<AdminAiEyebrow section='Case Resolver Capture' />}
           title='Case Resolver Capture'
           subtitle={headerBreadcrumb}
         />
@@ -148,7 +149,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
   return (
     <div className='container mx-auto space-y-4 py-6'>
       <SectionHeader
-        eyebrow='AI · Case Resolver Capture'
+        eyebrow={<AdminAiEyebrow section='Case Resolver Capture' />}
         title='Case Resolver Capture'
         subtitle={headerBreadcrumb}
         actions={

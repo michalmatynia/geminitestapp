@@ -1,7 +1,11 @@
 'use client';
 
 import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
+import type {
+  ChatbotMemoryItem,
+  ChatbotSessionListItem,
+  ChatbotSettingsResponse,
+} from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys, chatbotKeys } from '@/shared/lib/query-key-exports';
@@ -13,29 +17,6 @@ import {
   fetchChatbotMemory,
   fetchChatbotModels,
 } from '../api';
-
-const normalizeModelList = (payload: unknown): string[] => {
-  if (Array.isArray(payload)) {
-    return payload
-      .filter((item): item is string => typeof item === 'string')
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-  }
-
-  if (!payload || typeof payload !== 'object') {
-    return [];
-  }
-
-  const record = payload as Record<string, unknown>;
-  if ('models' in record) {
-    return normalizeModelList(record['models']);
-  }
-  if ('data' in record) {
-    return normalizeModelList(record['data']);
-  }
-
-  return [];
-};
 
 /**
  * Query hook for fetching all chatbot sessions
@@ -97,12 +78,12 @@ export function useChatbotSession(
 export function useChatbotSettings(
   key?: string,
   options?: { enabled?: boolean }
-): SingleQuery<{ settings?: { settings?: unknown } | null }> {
+): SingleQuery<ChatbotSettingsResponse> {
   const queryKey = chatbotKeys.settings.all(key);
   return createSingleQueryV2({
     id: key,
     queryKey,
-    queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> =>
+    queryFn: (): Promise<ChatbotSettingsResponse> =>
       key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     enabled: (options?.enabled ?? true) && !!key,
     meta: {
@@ -127,11 +108,9 @@ export function useChatbotModels(options?: {
   return createListQueryV2<string, string[]>({
     queryKey,
     queryFn: async (): Promise<string[]> => {
-      const raw = await fetchChatbotModels();
-      return normalizeModelList(raw);
+      const response = await fetchChatbotModels();
+      return response.models;
     },
-    // Guard against stale/hydrated cache payloads that may not be arrays yet.
-    select: (raw: string[]): string[] => normalizeModelList(raw as unknown),
     staleTime: options?.staleTime ?? 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
     refetchOnMount: false,
@@ -154,12 +133,12 @@ export function useChatbotModels(options?: {
 export function useChatbotMemory(
   query?: string,
   options?: { enabled?: boolean }
-): SingleQuery<unknown> {
+): SingleQuery<ChatbotMemoryItem[]> {
   const queryKey = chatbotKeys.memory(query);
   return createSingleQueryV2({
     id: query || 'global',
     queryKey,
-    queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ''),
+    queryFn: (): Promise<ChatbotMemoryItem[]> => fetchChatbotMemory(query ?? ''),
     enabled: options?.enabled ?? true,
     meta: {
       source: 'chatbot.hooks.useChatbotMemory',

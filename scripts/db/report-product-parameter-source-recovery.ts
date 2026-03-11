@@ -1,5 +1,10 @@
+import 'dotenv/config';
+
 import fs from 'node:fs';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+
+import { productService } from '@/shared/lib/products/services/productService';
 
 interface AuditProductRow {
   id?: string;
@@ -26,19 +31,15 @@ interface ParsedArgs {
   auditReportPath: string;
   classificationReportPath: string;
   restoreReportPaths: string[];
-  apiBaseUrl: string;
 }
 
-const DEFAULT_AUDIT_REPORT_PATH = '/tmp/product-missing-parameters-audit-1773217463928.json';
+const DEFAULT_AUDIT_REPORT_PATH = '/tmp/product-missing-parameters-audit-latest.json';
 const DEFAULT_CLASSIFICATION_REPORT_PATH =
-  '/tmp/product-parameter-recovery-classification-1773221889673.json';
-const DEFAULT_RESTORE_REPORT_PATHS = [
-  '/tmp/product-parameter-name-restore-1773219321038.json',
-  '/tmp/product-parameter-localized-restore-1773220722991.json',
-  '/tmp/product-parameter-curated-apply-1773221853211.json',
-];
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
-
+  '/tmp/product-parameter-recovery-classification-latest.json';
+const DEFAULT_RESTORE_REPORT_PATHS: string[] = [];
+const LATEST_REPORT_PATH = '/tmp/product-parameter-source-recovery-latest.json';
+const MAX_PRODUCT_FETCH_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000;
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const splitPipeSegments = (value: unknown): string[] =>
@@ -69,14 +70,41 @@ const parseArgs = (): ParsedArgs => {
       .split(',')
       .map((value: string) => value.trim())
       .filter(Boolean),
-    apiBaseUrl: values.get('api-base-url') || DEFAULT_API_BASE_URL,
   };
 };
 
-const fetchJson = async <T>(url: string): Promise<T | null> => {
-  const response = await fetch(url);
-  if (!response.ok) return null;
-  return (await response.json()) as T;
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const isRetryableMongoError = (error: unknown): boolean => {
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    message.includes('mongonetworktimeouterror') ||
+    message.includes('connect timed out') ||
+    message.includes('socket') ||
+    message.includes('timed out')
+  );
+};
+
+const getProductWithRetry = async (productId: string) => {
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= MAX_PRODUCT_FETCH_ATTEMPTS; attempt += 1) {
+    try {
+      return await productService.getProductById(productId);
+    } catch (error: unknown) {
+      lastError = error;
+      if (!isRetryableMongoError(error) || attempt === MAX_PRODUCT_FETCH_ATTEMPTS) {
+        throw error;
+      }
+      process.stderr.write(
+        `[report-product-parameter-source-recovery] retrying product ${productId} after transient error (${attempt}/${MAX_PRODUCT_FETCH_ATTEMPTS}): ${getErrorMessage(error)}\n`,
+      );
+      await delay(RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError;
 };
 
 const main = async (): Promise<void> => {
@@ -110,31 +138,29 @@ const main = async (): Promise<void> => {
     const productId = toTrimmedString(row.id);
     if (!productId) continue;
 
-    const product = await fetchJson<Record<string, unknown>>(
-      `${parsed.apiBaseUrl}/api/v2/products/${encodeURIComponent(productId)}`
-    );
+    const product = await getProductWithRetry(productId);
     if (!product) continue;
 
-    const categoryId = toTrimmedString(product['categoryId']);
-    const parameters = Array.isArray(product['parameters']) ? product['parameters'] : [];
+    const categoryId = toTrimmedString(product.categoryId);
+    const parameters = Array.isArray(product.parameters) ? product.parameters : [];
     if (categoryId || parameters.length > 0) continue;
 
     entries.push({
       productId,
-      sku: toTrimmedString(product['sku']) || toTrimmedString(row.sku),
-      catalogId: toTrimmedString(product['catalogId']) || null,
+      sku: toTrimmedString(product.sku) || toTrimmedString(row.sku),
+      catalogId: toTrimmedString(product.catalogId) || null,
       categoryId: null,
       names: {
-        name_en: product['name_en'] ?? null,
-        name_pl: product['name_pl'] ?? null,
-        name_de: product['name_de'] ?? null,
+        name_en: product.name_en ?? null,
+        name_pl: product.name_pl ?? null,
+        name_de: product.name_de ?? null,
       },
       nameSegments: {
-        en: splitPipeSegments(product['name_en']),
-        pl: splitPipeSegments(product['name_pl']),
-        de: splitPipeSegments(product['name_de']),
+        en: splitPipeSegments(product.name_en),
+        pl: splitPipeSegments(product.name_pl),
+        de: splitPipeSegments(product.name_de),
       },
-      imageCount: Array.isArray(product['images']) ? product['images'].length : 0,
+      imageCount: Array.isArray(product.images) ? product.images.length : 0,
       parameterCount: 0,
       recommendedAction:
         'Recover from source import or reconstruct manually. No category and no parameter rows remain.',
@@ -147,17 +173,20 @@ const main = async (): Promise<void> => {
     auditReportPath: parsed.auditReportPath,
     classificationReportPath: parsed.classificationReportPath,
     restoreReportPaths: parsed.restoreReportPaths,
-    apiBaseUrl: parsed.apiBaseUrl,
     expectedUnresolvedNoRowsNoCategory:
       classification.classifications?.['no-rows-no-category'] ?? null,
     entryCount: entries.length,
     sampleSkus: entries.slice(0, 10).map((entry) => entry.sku),
     reportPath,
+    latestReportPath: LATEST_REPORT_PATH,
     entries,
   };
 
-  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  const serializedReport = `${JSON.stringify(report, null, 2)}\n`;
+  fs.writeFileSync(reportPath, serializedReport, 'utf8');
+  fs.writeFileSync(LATEST_REPORT_PATH, serializedReport, 'utf8');
   console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
 };
 
 void main().catch((error: unknown) => {

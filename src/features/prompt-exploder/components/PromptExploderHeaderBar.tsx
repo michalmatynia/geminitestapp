@@ -4,7 +4,7 @@ import { RefreshCcw, Settings2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useMemo } from 'react';
 
-import { SectionHeader, Button } from '@/shared/ui';
+import { AdminAiEyebrow, Button, SectionHeader } from '@/shared/ui';
 
 import {
   PromptExploderDocsTooltipSwitchFromRuntime,
@@ -34,7 +34,7 @@ export function PromptExploderHeaderBar({
   return (
     <PromptExploderDocsTooltipSwitchRuntimeContext.Provider value={docsTooltipRuntimeValue}>
       <SectionHeader
-        eyebrow='AI · Prompt Exploder'
+        eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
         title='Prompt Exploder'
         description='Explode prompts into typed segments, edit structure, and reassemble with references intact.'
         actions={

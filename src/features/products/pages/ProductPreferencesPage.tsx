@@ -11,6 +11,7 @@ import {
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductListPreferences } from '@/shared/contracts/products';
 import {
+  AdminProductsBreadcrumbs,
   Button,
   SelectSimple,
   Input,
@@ -99,11 +100,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
     <PageLayout
       title='Product Preferences'
       description='Manage your product list display and navigation preferences'
-      headerActions={
-        <Button variant='outline' onClick={() => router.push('/admin/products')}>
-          Back to Products
-        </Button>
-      }
+      eyebrow={<AdminProductsBreadcrumbs current='Preferences' />}
     >
       <div className='space-y-6'>
         <FormSection title='Product List Settings' className='p-6'>

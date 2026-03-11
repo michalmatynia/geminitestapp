@@ -57,6 +57,30 @@ export type CreateChatbotSettingsDto = z.infer<typeof createChatbotSettingsSchem
 export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
 export type UpdateChatbotSettingsDto = ChatbotSettingsPayload;
 
+export const chatbotStoredSettingsSchema = dtoBaseSchema.extend({
+  key: z.string(),
+  settings: chatbotSettingsSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ChatbotStoredSettingsDto = z.infer<typeof chatbotStoredSettingsSchema>;
+export type ChatbotStoredSettings = ChatbotStoredSettingsDto;
+
+export const chatbotSettingsResponseSchema = z.object({
+  settings: chatbotStoredSettingsSchema.nullable(),
+});
+
+export type ChatbotSettingsResponseDto = z.infer<typeof chatbotSettingsResponseSchema>;
+export type ChatbotSettingsResponse = ChatbotSettingsResponseDto;
+
+export const chatbotSettingsSaveResponseSchema = z.object({
+  settings: chatbotStoredSettingsSchema,
+});
+
+export type ChatbotSettingsSaveResponseDto = z.infer<typeof chatbotSettingsSaveResponseSchema>;
+export type ChatbotSettingsSaveResponse = ChatbotSettingsSaveResponseDto;
+
 const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
   'memoryValidationModel',
   'plannerModel',
@@ -290,6 +314,46 @@ export const enqueueChatbotJobRequestSchema = z.object({
 
 export type EnqueueChatbotJobRequestDto = z.infer<typeof enqueueChatbotJobRequestSchema>;
 
+export const chatbotJobsResponseSchema = z.object({
+  jobs: z.array(chatbotJobSchema),
+});
+
+export type ChatbotJobsResponseDto = z.infer<typeof chatbotJobsResponseSchema>;
+export type ChatbotJobsResponse = ChatbotJobsResponseDto;
+
+export const chatbotJobEnqueueResponseSchema = z.object({
+  jobId: z.string(),
+  status: chatbotJobStatusSchema,
+  brainApplied: z.object({
+    modelId: z.string().optional(),
+    enforced: z.boolean().optional(),
+  }),
+});
+
+export type ChatbotJobEnqueueResponseDto = z.infer<typeof chatbotJobEnqueueResponseSchema>;
+export type ChatbotJobEnqueueResponse = ChatbotJobEnqueueResponseDto;
+
+export const chatbotJobActionResponseSchema = z.object({
+  status: chatbotJobStatusSchema.optional(),
+});
+
+export type ChatbotJobActionResponseDto = z.infer<typeof chatbotJobActionResponseSchema>;
+export type ChatbotJobActionResponse = ChatbotJobActionResponseDto;
+
+export const chatbotJobsClearResponseSchema = z.object({
+  deleted: z.number().int().nonnegative(),
+});
+
+export type ChatbotJobsClearResponseDto = z.infer<typeof chatbotJobsClearResponseSchema>;
+export type ChatbotJobsClearResponse = ChatbotJobsClearResponseDto;
+
+export const chatbotJobDeleteResponseSchema = z.object({
+  deleted: z.literal(true),
+});
+
+export type ChatbotJobDeleteResponseDto = z.infer<typeof chatbotJobDeleteResponseSchema>;
+export type ChatbotJobDeleteResponse = ChatbotJobDeleteResponseDto;
+
 /**
  * Chatbot Memory Contract
  */
@@ -302,6 +366,13 @@ export const chatbotMemoryItemSchema = dtoBaseSchema.extend({
 
 export type ChatbotMemoryItemDto = z.infer<typeof chatbotMemoryItemSchema>;
 export type ChatbotMemoryItem = ChatbotMemoryItemDto;
+
+export const chatbotMemoryResponseSchema = z.object({
+  items: z.array(chatbotMemoryItemSchema).optional(),
+});
+
+export type ChatbotMemoryResponseDto = z.infer<typeof chatbotMemoryResponseSchema>;
+export type ChatbotMemoryResponse = ChatbotMemoryResponseDto;
 
 export const createChatbotMemoryItemSchema = chatbotMemoryItemSchema.omit({
   id: true,

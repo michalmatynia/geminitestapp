@@ -14,11 +14,9 @@ import {
 import Link from 'next/link';
 
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   Button,
+  NavigationCard,
+  NavigationCardGrid,
   SectionHeader,
   FormSection,
 } from '@/shared/ui';
@@ -165,47 +163,37 @@ export function AdminSettingsHomePage(): React.ReactNode {
       />
 
       {/* Settings Grid */}
-      <div className='grid gap-4 md:grid-cols-2'>
+      <NavigationCardGrid className='md:grid-cols-2'>
         {settings.map((setting: SettingsOption) => {
           const Icon = setting.icon;
           const colors = colorClasses[setting['color']] || colorClasses['emerald']!;
 
           return (
-            <Link key={setting.id} href={setting.href}>
-              <Card
-                className={`group relative h-full cursor-pointer border-border bg-card transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}
-              >
-                <CardHeader className='flex flex-row items-start gap-4'>
-                  {/* Icon */}
-                  <div
-                    className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}
-                  >
-                    <Icon className={`size-6 ${colors.text}`} />
-                  </div>
-
-                  {/* Content */}
-                  <div className='min-w-0 flex-1 space-y-1.5'>
-                    <div className='flex items-start justify-between gap-2'>
-                      <div className='space-y-1'>
-                        <CardTitle className='text-lg font-semibold text-white transition-colors group-hover:text-gray-100'>
-                          {setting.title}
-                        </CardTitle>
-                        <CardDescription className='text-sm text-gray-400 group-hover:text-gray-300'>
-                          {setting.description}
-                        </CardDescription>
-                      </div>
-                      <ArrowRightIcon className='mt-1 size-4 flex-shrink-0 text-gray-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-gray-400' />
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Hover effect indicator */}
-                <div className='absolute inset-0 rounded-lg opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none' />
-              </Card>
-            </Link>
+            <NavigationCard
+              key={setting.id}
+              href={setting.href}
+              linkClassName='group'
+              className={`group relative border-border bg-card transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}
+              padding='none'
+              contentClassName='p-6'
+              leading={
+                <div
+                  className={`flex size-12 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}
+                >
+                  <Icon className={`size-6 ${colors.text}`} />
+                </div>
+              }
+              title={setting.title}
+              description={setting.description}
+              titleClassName='transition-colors group-hover:text-gray-100'
+              descriptionClassName='group-hover:text-gray-300'
+              trailing={
+                <ArrowRightIcon className='mt-1 size-4 text-gray-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-gray-400' />
+              }
+            />
           );
         })}
-      </div>
+      </NavigationCardGrid>
 
       {/* Help Section */}
       <FormSection title='Need Help?' className='mt-8'>

@@ -78,7 +78,6 @@ type Props = {
   prefersReducedMotion: boolean;
   reducedMotionTransitions: ReducedMotionTransitions;
   sessionSurfaceLabel: string | null;
-  shouldRenderGuestIntroUi: boolean;
   showAttachedAvatarShell: boolean;
   suppressPanelSurface: boolean;
   uiMode: string;
@@ -127,7 +126,6 @@ export function KangurAiTutorPanelChrome({
   prefersReducedMotion,
   reducedMotionTransitions,
   sessionSurfaceLabel,
-  shouldRenderGuestIntroUi,
   showAttachedAvatarShell,
   suppressPanelSurface,
   uiMode,
@@ -177,6 +175,7 @@ export function KangurAiTutorPanelChrome({
   const panelMoodDescription = isCompactDockedTutorPanel
     ? panelEmptyStateMessage
     : (tutor?.tutorBehaviorMoodDescription ?? panelEmptyStateMessage);
+  const resolvedPanelAvatarPlacement = shouldUseMinimalPanelShell ? 'independent' : panelAvatarPlacement;
   const shouldRenderPanelMoodDescription =
     !shouldUseMinimalPanelShell &&
     (isCompactDockedTutorPanel || panelMoodDescription !== panelEmptyStateMessage);
@@ -193,7 +192,6 @@ export function KangurAiTutorPanelChrome({
       {isOpen &&
       !isTutorHidden &&
       !isGuidedTutorMode &&
-      !shouldRenderGuestIntroUi &&
       !suppressPanelSurface ? (
           <>
             {isAskModalMode || (!shouldUseMinimalPanelShell && bubbleMode === 'sheet') ? (
@@ -227,7 +225,7 @@ export function KangurAiTutorPanelChrome({
               ref={panelRef}
               data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
               data-layout={isAskModalMode ? 'modal' : bubbleMode}
-              data-avatar-placement={panelAvatarPlacement}
+              data-avatar-placement={resolvedPanelAvatarPlacement}
               data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
               data-motion-preset={motionProfile.kind}
               data-motion-state={panelMotionState}

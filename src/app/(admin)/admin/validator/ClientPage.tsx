@@ -12,6 +12,7 @@ import {
 } from '@/features/admin/pages/validator-scope';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { formatAdminAiEyebrow } from '@/shared/ui';
 import {
   ValidatorDocsTooltipsProvider,
   ValidatorSettings,
@@ -61,7 +62,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
-            eyebrow='AI · Image Studio'
+            eyebrow={formatAdminAiEyebrow('Image Studio')}
             backLinkHref='/admin/image-studio'
             backLinkLabel='Back to Studio'
           />
@@ -77,7 +78,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
-            eyebrow='AI · Image Studio Prompt Exploder'
+            eyebrow={formatAdminAiEyebrow('Image Studio Prompt Exploder')}
             initialPatternTab='prompt_exploder'
             initialExploderSubTab='prompt_exploder_rules'
             lockedPatternTab='prompt_exploder'
@@ -95,7 +96,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
-            eyebrow='AI · Case Resolver Plain Text'
+            eyebrow={formatAdminAiEyebrow('Case Resolver Plain Text')}
             initialPatternTab='core'
             lockedPatternTab='core'
             initialScope='case_resolver_plain_text'
@@ -113,7 +114,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
-            eyebrow='AI · AI Paths'
+            eyebrow={formatAdminAiEyebrow('AI Paths')}
             initialPatternTab='core'
             lockedPatternTab='core'
             initialScope='ai_paths'
@@ -130,7 +131,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
         </FormSection>
         <AdminPromptEngineValidationPatternsPage
           embedded
-          eyebrow='AI · Case Resolver Prompt Exploder'
+          eyebrow={formatAdminAiEyebrow('Case Resolver Prompt Exploder')}
           initialPatternTab='prompt_exploder'
           initialExploderSubTab='case_resolver_rules'
           lockedPatternTab='prompt_exploder'

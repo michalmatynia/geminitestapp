@@ -242,6 +242,51 @@ export const updateProductAiJobSchema = createProductAiJobSchema.partial();
 
 export type UpdateProductAiJobDto = z.infer<typeof updateProductAiJobSchema>;
 
+export const productAiJobsResponseSchema = z.object({
+  jobs: z.array(productAiJobSchema),
+});
+
+export type ProductAiJobsResponseDto = z.infer<typeof productAiJobsResponseSchema>;
+export type ProductAiJobsResponse = ProductAiJobsResponseDto;
+
+export const productAiJobResponseSchema = z.object({
+  job: productAiJobSchema,
+});
+
+export type ProductAiJobResponseDto = z.infer<typeof productAiJobResponseSchema>;
+export type ProductAiJobResponse = ProductAiJobResponseDto;
+
+export const productAiJobActionResponseSchema = z.object({
+  success: z.boolean(),
+  job: productAiJobSchema,
+});
+
+export type ProductAiJobActionResponseDto = z.infer<typeof productAiJobActionResponseSchema>;
+export type ProductAiJobActionResponse = ProductAiJobActionResponseDto;
+
+export const productAiJobDeleteResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export type ProductAiJobDeleteResponseDto = z.infer<typeof productAiJobDeleteResponseSchema>;
+export type ProductAiJobDeleteResponse = ProductAiJobDeleteResponseDto;
+
+export const productAiJobsClearResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number().int().nonnegative(),
+});
+
+export type ProductAiJobsClearResponseDto = z.infer<typeof productAiJobsClearResponseSchema>;
+export type ProductAiJobsClearResponse = ProductAiJobsClearResponseDto;
+
+export const productAiJobEnqueueResponseSchema = z.object({
+  success: z.boolean(),
+  jobId: z.string(),
+});
+
+export type ProductAiJobEnqueueResponseDto = z.infer<typeof productAiJobEnqueueResponseSchema>;
+export type ProductAiJobEnqueueResponse = ProductAiJobEnqueueResponseDto;
+
 /**
  * Product AI Job Repository Types
  */

@@ -4,7 +4,7 @@ import type { TagRecord, TagCreateInput, TagUpdateInput } from '@/shared/contrac
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { TagDocument, NoteDocument } from '../../types/mongo-note-types';
+import type { TagDocument, NoteDocument } from '@/features/notesapp/contracts';
 import type { Filter, UpdateFilter } from 'mongodb';
 
 

@@ -19,7 +19,7 @@ interface ParsedArgs {
   outputDir: string;
 }
 
-const DEFAULT_INPUT_PATH = '/tmp/product-parameter-source-recovery-template-1773222016411.json';
+const DEFAULT_INPUT_PATH = '/tmp/product-parameter-source-recovery-template-latest.json';
 const DEFAULT_OUTPUT_DIR = '/tmp/product-parameter-source-recovery-batches';
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');

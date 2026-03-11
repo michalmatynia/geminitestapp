@@ -981,7 +981,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('reopens the tutor panel from the docked Game avatar after home onboarding is dismissed', async () => {
+  it('reopens the minimalist tutor modal from the docked Game avatar after home onboarding is dismissed', async () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -1071,10 +1071,9 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeInTheDocument();
-    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(openChatMock).not.toHaveBeenCalled();
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1151,7 +1150,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('keeps the tutor visible on authenticated pages without a live tutor context and opens the tutor panel from the avatar', () => {
+  it('keeps the tutor visible on authenticated pages without a live tutor context and opens the minimalist modal from the avatar', () => {
     let tutorState = {
       enabled: false,
       tutorSettings: {
@@ -1211,13 +1210,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toBeVisible();
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    expect(openChatMock).toHaveBeenCalledTimes(1);
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
-      'data-panel-style',
-      'minimal-card'
-    );
+    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({

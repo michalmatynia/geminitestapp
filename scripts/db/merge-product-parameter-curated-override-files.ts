@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 type CuratedOverrideFile = {
   generatedAt: string;
@@ -25,21 +25,21 @@ type CuratedOverrideFile = {
 };
 
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function parseArgs(argv: string[]) {
   const files: string[] = [];
-  let outputPath = "";
+  let outputPath = '';
 
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     const next = argv[index + 1];
-    if (typeof token !== "string") {
+    if (typeof token !== 'string') {
       continue;
     }
 
-    if (token === "--out" && typeof next === "string") {
+    if (token === '--out' && typeof next === 'string') {
       outputPath = next;
       index += 1;
       continue;
@@ -50,13 +50,13 @@ function parseArgs(argv: string[]) {
 
   if (files.length === 0) {
     throw new Error(
-      "Usage: node --import tsx scripts/db/merge-product-parameter-curated-override-files.ts <curated.json> [...curated.json] [--out <merged.json>]",
+      'Usage: node --import tsx scripts/db/merge-product-parameter-curated-override-files.ts <curated.json> [...curated.json] [--out <merged.json>]',
     );
   }
 
   return {
     files: files.map((file) => path.resolve(file)),
-    outputPath: outputPath ? path.resolve(outputPath) : "",
+    outputPath: outputPath ? path.resolve(outputPath) : '',
   };
 }
 
@@ -70,7 +70,7 @@ function main(): void {
   const firstFile = files[0];
 
   if (!firstFile) {
-    throw new Error("Expected at least one curated override file.");
+    throw new Error('Expected at least one curated override file.');
   }
 
   const mergedOverrides = parsed.flatMap(({ data }) => data.overrides);
@@ -82,7 +82,7 @@ function main(): void {
   };
 
   const resolvedOutputPath = outputPath || defaultOutputPath(firstFile);
-  fs.writeFileSync(resolvedOutputPath, JSON.stringify(merged, null, 2) + "\n");
+  fs.writeFileSync(resolvedOutputPath, JSON.stringify(merged, null, 2) + '\n');
   process.stdout.write(`${resolvedOutputPath}\n`);
 }
 

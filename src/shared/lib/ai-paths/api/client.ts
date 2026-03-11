@@ -18,7 +18,12 @@ import {
 } from '@/shared/contracts/ai-paths';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { SchemaResponse } from '@/shared/contracts/database';
-import type { ProductAiJobEnqueueRequest } from '@/shared/contracts/jobs';
+import type {
+  ProductAiJobEnqueueRequest,
+  ProductAiJobEnqueueResponse,
+  ProductAiJobResponse,
+  ProductAiJobsResponse,
+} from '@/shared/contracts/jobs';
 
 import {
   AgentEnqueuePayload,
@@ -666,7 +671,7 @@ const AI_JOBS_ENQUEUE_TIMEOUT_MS =
 
 export const aiJobsApi = {
   enqueue: async (payload: ProductAiJobEnqueueRequest) =>
-    apiPost<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', payload, {
+    apiPost<ProductAiJobEnqueueResponse>('/api/v2/products/ai-jobs/enqueue', payload, {
       timeoutMs: AI_JOBS_ENQUEUE_TIMEOUT_MS,
     }),
   poll: async (
@@ -684,8 +689,8 @@ export const aiJobsApi = {
       data: normalizeAiJobsPollPayload(response.data),
     };
   },
-  get: async (jobId: string) => apiFetch<{ job: unknown }>(`/api/v2/products/ai-jobs/${jobId}`),
-  list: async () => apiFetch<{ jobs: unknown[] }>('/api/v2/products/ai-jobs'),
+  get: async (jobId: string) => apiFetch<ProductAiJobResponse>(`/api/v2/products/ai-jobs/${jobId}`),
+  list: async () => apiFetch<ProductAiJobsResponse>('/api/v2/products/ai-jobs'),
 };
 
 export const agentApi = {

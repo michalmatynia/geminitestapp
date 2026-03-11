@@ -38,7 +38,11 @@ export async function PUT_handler(
   }
 
   const cmsRepository = await getCmsRepository();
-  const updated = await cmsRepository.updateTheme(id, parsed.data as Partial<UpdateCmsThemeDto>);
+  const input: Partial<UpdateCmsThemeDto> = {
+    ...parsed.data,
+    customCss: parsed.data.customCss ?? undefined,
+  };
+  const updated = await cmsRepository.updateTheme(id, input);
 
   if (!updated) {
     throw notFoundError('Theme not found');

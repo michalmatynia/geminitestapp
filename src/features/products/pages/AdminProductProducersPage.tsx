@@ -11,6 +11,7 @@ import {
 import type { Producer } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
+  AdminProductsBreadcrumbs,
   Button,
   EmptyState,
   useToast,
@@ -195,6 +196,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
         title='Producers'
         description='Manage producers and assign them in Product Edit.'
         icon={<Factory className='size-4' />}
+        subtitle={<AdminProductsBreadcrumbs current='Producers' />}
         actions={[
           {
             key: 'add',

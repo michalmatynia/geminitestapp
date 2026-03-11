@@ -45,7 +45,7 @@ export function KangurAiTutorContentProvider({
     const load = async (): Promise<void> => {
       setIsLoading(true);
       try {
-        const response = await api.get<unknown>(
+        const response = await api.get<KangurAiTutorContent>(
           `/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
           {
             cache: 'no-store',

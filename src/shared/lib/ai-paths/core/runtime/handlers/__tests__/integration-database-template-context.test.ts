@@ -201,4 +201,84 @@ describe('prepareDatabaseTemplateContext catalogId canonical wiring', () => {
       })
     );
   });
+
+  it('forces canonical product parameter rehydration for translation merges even when modal context carries localized rows', async () => {
+    const fetchEntityCached = vi.fn(async () => ({
+      id: 'product-1',
+      parameters: [
+        {
+          parameterId: 'color',
+          value: 'Blue',
+          valuesByLanguage: { en: 'Blue' },
+        },
+      ],
+    }));
+
+    const { templateInputs, ensureExistingParameterTemplateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        context: {
+          entity: {
+            parameters: [
+              {
+                parameterId: 'color',
+                value: 'Blue',
+                valuesByLanguage: { pl: 'Niebieski' },
+              },
+            ],
+          },
+          entityJson: {
+            parameters: [
+              {
+                parameterId: 'color',
+                value: 'Blue',
+                valuesByLanguage: { pl: 'Niebieski' },
+              },
+            ],
+          },
+        },
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+      },
+      dbConfig: {
+        operation: 'update',
+        entityType: 'product',
+      } as never,
+      aiPromptTemplate: '',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached,
+      schemaData: null,
+    });
+
+    await ensureExistingParameterTemplateContext('parameters', {
+      forceHydrateRichParameters: true,
+    });
+
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'product-1');
+    expect(templateInputs['context']).toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          parameters: [
+            {
+              parameterId: 'color',
+              value: 'Blue',
+              valuesByLanguage: { en: 'Blue' },
+            },
+          ],
+        }),
+        entityJson: expect.objectContaining({
+          parameters: [
+            {
+              parameterId: 'color',
+              value: 'Blue',
+              valuesByLanguage: { en: 'Blue' },
+            },
+          ],
+        }),
+      })
+    );
+  });
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ChatbotJobActionResponse } from '@/shared/contracts/chatbot';
 import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 
@@ -7,9 +8,9 @@ import { updateChatbotJob, clearChatbotJobs, cancelListing } from '../api';
 import { jobKeys } from './useJobQueries';
 
 export function useChatbotJobMutation(): UpdateMutation<
-  unknown,
+  ChatbotJobActionResponse,
   { jobId: string; action: 'retry' | 'cancel' }
-  > {
+> {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,

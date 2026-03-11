@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
+import { Breadcrumbs } from '@/shared/ui/Breadcrumbs';
 import { Drawer } from '@/shared/ui/Drawer';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { JsonViewer } from '@/shared/ui/JsonViewer';
@@ -10,6 +11,7 @@ import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { FileUploadTrigger } from '@/shared/ui/file-upload';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { StatusToggle } from '@/shared/ui/status-toggle';
+import { DocumentSearchPage } from '@/shared/ui/templates/DocumentSearchPage';
 import { Tooltip } from '@/shared/ui/tooltip';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPickerDropdown';
@@ -75,6 +77,49 @@ describe('shared accessibility primitives', () => {
     const jsonText = region.querySelector('pre');
     expect(jsonText).not.toBeNull();
     expect(jsonText).not.toHaveAttribute('aria-label');
+  });
+
+  it('renders scrollable Breadcrumbs as a keyboard-focusable nav and supports arrow key scrolling', () => {
+    render(
+      <Breadcrumbs
+        scrollable
+        items={[{ label: 'Library' }, { label: 'Notes' }, { label: 'Current note' }]}
+      />
+    );
+
+    const nav = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    const scrollBy = vi.fn();
+    Object.defineProperty(nav, 'scrollBy', {
+      value: scrollBy,
+      configurable: true,
+    });
+
+    expect(nav).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(nav, { key: 'ArrowRight' });
+    expect(scrollBy).toHaveBeenLastCalledWith({ left: 140, behavior: 'smooth' });
+
+    fireEvent.keyDown(nav, { key: 'ArrowLeft' });
+    expect(scrollBy).toHaveBeenLastCalledWith({ left: -140, behavior: 'smooth' });
+  });
+
+  it('renders DocumentSearchPage content as a focusable region', () => {
+    render(
+      <DocumentSearchPage
+        title='Notes'
+        loading={false}
+        hasResults
+        emptyState={<div>No results</div>}
+      >
+        <div>Results</div>
+      </DocumentSearchPage>
+    );
+
+    const region = screen.getByRole('region', { name: 'Notes content' });
+    expect(region).toHaveAttribute('tabindex', '0');
+
+    region.focus();
+    expect(region).toHaveFocus();
   });
 
   it('renders TreeCaret as a native button with expanded state', () => {

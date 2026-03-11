@@ -9,7 +9,7 @@ import type {
   NotebookDocument,
   TagDocument,
   ThemeDocument,
-} from '@/features/notesapp/services/notes/types/mongo-note-types';
+} from '@/features/notesapp/contracts';
 import type {
   CategoryRecord,
   CategoryWithChildren,

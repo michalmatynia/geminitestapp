@@ -205,6 +205,7 @@ export function useKangurAiTutorPanelInteractions({
       setGuestIntroVisible,
       setLauncherPromptVisible,
       setPanelAnchorMode,
+      setPanelShellMode,
       telemetryContext,
     ]
   );
@@ -217,6 +218,8 @@ export function useKangurAiTutorPanelInteractions({
         messageCount,
       });
       setCanonicalTutorModalVisible(false);
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
       setHoveredSectionAnchorId(null);
@@ -237,6 +240,8 @@ export function useKangurAiTutorPanelInteractions({
       closeChat,
       messageCount,
       setCanonicalTutorModalVisible,
+      setGuestIntroHelpVisible,
+      setGuestIntroVisible,
       setHighlightedText,
       setContextualTutorMode,
       setHoveredSectionAnchorId,

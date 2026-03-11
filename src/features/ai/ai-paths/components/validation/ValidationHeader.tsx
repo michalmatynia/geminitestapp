@@ -4,8 +4,8 @@ import { RefreshCw, Save, ShieldCheck } from 'lucide-react';
 import React from 'react';
 
 import {
+  AdminAiPathsBreadcrumbs,
   Badge,
-  Breadcrumbs,
   Button,
   Card,
   Label,
@@ -37,15 +37,7 @@ export function ValidationHeader(): React.JSX.Element {
     <>
       <PanelHeader
         title='AI-Paths Node Validator'
-        description={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'AI Paths', href: '/admin/ai-paths' },
-              { label: 'Node Validator', href: '/admin/ai-paths/validation' },
-            ]}
-          />
-        }
+        description={<AdminAiPathsBreadcrumbs current='Node Validator' />}
         icon={<ShieldCheck className='size-4' />}
         refreshable={true}
         isRefreshing={settingsQuery.isFetching}

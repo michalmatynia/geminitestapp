@@ -1,9 +1,16 @@
-import Link from 'next/link';
 import { useState, type ChangeEvent } from 'react';
 
 import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, useToast, Textarea, FormSection, FormField, PageLayout } from '@/shared/ui';
+import {
+  Button,
+  useToast,
+  Textarea,
+  FormSection,
+  FormField,
+  PageLayout,
+  SectionHeaderBackLink,
+} from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export function LoggingSettingsForm({
@@ -52,9 +59,9 @@ export function LoggingSettingsForm({
       title='Logging Settings'
       description='Configure client logging context shared with error reports.'
       eyebrow={
-        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-          ← Back to settings
-        </Link>
+        <SectionHeaderBackLink href='/admin/settings' arrow>
+          Back to settings
+        </SectionHeaderBackLink>
       }
     >
       <FormSection

@@ -224,6 +224,115 @@ export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   ])
 );
 
+export const USER_PREFERENCES_HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const nullableTrimmedStringSchema = z.string().trim().optional().nullable();
+const nullableIdSchema = z.union([z.string().trim().min(1), z.null()]).optional();
+const stringArraySchema = z.array(z.string().trim().min(1));
+
+export const userPreferencesUpdateSchema = z.object({
+  productListNameLocale: z.enum(['name_en', 'name_pl', 'name_de']).optional().nullable(),
+  productListCatalogFilter: nullableTrimmedStringSchema,
+  productListCurrencyCode: nullableTrimmedStringSchema,
+  productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
+  productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
+  productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+  productListAdvancedFilterPresets: z.array(productAdvancedFilterPresetSchema).optional().nullable(),
+  productListAppliedAdvancedFilter: nullableTrimmedStringSchema,
+  productListAppliedAdvancedFilterPresetId: nullableTrimmedStringSchema,
+  productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
+  productListDraftIconColor: z
+    .string()
+    .regex(USER_PREFERENCES_HEX_COLOR_PATTERN)
+    .optional()
+    .nullable(),
+  aiPathsActivePathId: nullableIdSchema,
+  imageStudioLastProjectId: nullableIdSchema,
+  caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
+  caseResolverCaseListSortBy: z
+    .enum(['updated', 'created', 'happeningDate', 'name', 'status', 'signature', 'locked', 'sent'])
+    .optional()
+    .nullable(),
+  caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+  caseResolverCaseListSearchScope: z
+    .enum(['all', 'name', 'folder', 'content'])
+    .optional()
+    .nullable(),
+  caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+  caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
+  adminMenuCollapsed: z.boolean().optional().nullable(),
+  adminMenuFavorites: stringArraySchema.optional().nullable(),
+  adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
+  adminMenuCustomEnabled: z.boolean().optional().nullable(),
+  adminMenuCustomNav: jsonValueSchema.optional().nullable(),
+  cmsLastPageId: nullableIdSchema,
+  cmsActiveDomainId: nullableIdSchema,
+  cmsThemeOpenSections: stringArraySchema.optional().nullable(),
+  cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
+  cmsThemeLogoUrl: nullableTrimmedStringSchema,
+  cmsPreviewEnabled: z.boolean().optional().nullable(),
+  cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
+});
+
+export type UserPreferencesUpdatePayload = z.infer<typeof userPreferencesUpdateSchema>;
+
+export const userPreferencesResponseSchema = z
+  .object({
+    productListNameLocale: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+    productListCatalogFilter: z.string().optional().nullable(),
+    productListCurrencyCode: z.string().optional().nullable(),
+    productListPageSize: z.number().int().optional().nullable(),
+    productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
+    productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+    productListAdvancedFilterPresets: z.array(productAdvancedFilterPresetSchema).optional(),
+    productListAppliedAdvancedFilter: z.string().optional().nullable(),
+    productListAppliedAdvancedFilterPresetId: z.string().optional().nullable(),
+    productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
+    productListDraftIconColor: z
+      .string()
+      .regex(USER_PREFERENCES_HEX_COLOR_PATTERN)
+      .optional()
+      .nullable(),
+    aiPathsActivePathId: z.string().optional().nullable(),
+    imageStudioLastProjectId: z.string().optional().nullable(),
+    caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
+    caseResolverCaseListSortBy: z
+      .enum([
+        'updated',
+        'created',
+        'happeningDate',
+        'name',
+        'status',
+        'signature',
+        'locked',
+        'sent',
+      ])
+      .optional()
+      .nullable(),
+    caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+    caseResolverCaseListSearchScope: z
+      .enum(['all', 'name', 'folder', 'content'])
+      .optional()
+      .nullable(),
+    caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+    caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
+    adminMenuCollapsed: z.boolean().optional().nullable(),
+    adminMenuFavorites: z.array(z.string()).optional(),
+    adminMenuSectionColors: z.record(z.string(), z.string()).optional(),
+    adminMenuCustomEnabled: z.boolean().optional().nullable(),
+    adminMenuCustomNav: jsonValueSchema.optional().nullable(),
+    cmsLastPageId: z.string().optional().nullable(),
+    cmsActiveDomainId: z.string().optional().nullable(),
+    cmsThemeOpenSections: z.array(z.string()).optional(),
+    cmsThemeLogoWidth: z.number().int().optional().nullable(),
+    cmsThemeLogoUrl: z.string().optional().nullable(),
+    cmsPreviewEnabled: z.boolean().optional().nullable(),
+    cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
+  })
+  .passthrough();
+
+export type UserPreferencesResponse = z.infer<typeof userPreferencesResponseSchema>;
+
 export const userPreferencesSchema = dtoBaseSchema.extend({
   userId: z.string(),
   productListNameLocale: z.string(),

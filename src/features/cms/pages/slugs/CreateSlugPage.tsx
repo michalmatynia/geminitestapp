@@ -10,7 +10,7 @@ import {
   useCreateSlug,
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
-import { SectionHeader, useToast, Alert } from '@/shared/ui';
+import { AdminCmsBreadcrumbs, Alert, SectionHeader, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function CreateSlugPage(): React.JSX.Element {
@@ -57,7 +57,13 @@ export default function CreateSlugPage(): React.JSX.Element {
       <SectionHeader
         title='Create Route'
         description='Register a new URL path for your content.'
-        eyebrow='CMS · Routing'
+        eyebrow={
+          <AdminCmsBreadcrumbs
+            parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
+            current='Create'
+            className='mb-2'
+          />
+        }
       />
 
       {error && (

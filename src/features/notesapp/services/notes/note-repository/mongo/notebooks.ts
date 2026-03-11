@@ -13,7 +13,7 @@ import type {
   NoteDocument,
   TagDocument,
   CategoryDocument,
-} from '../../types/mongo-note-types';
+} from '@/features/notesapp/contracts';
 import type { Filter, UpdateFilter } from 'mongodb';
 
 

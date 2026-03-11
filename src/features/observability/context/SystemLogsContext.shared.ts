@@ -2,6 +2,8 @@
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
+  MongoDiagnosticsResponseDto as MongoDiagnosticsResponse,
+  MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   SystemLogLevelDto as SystemLogLevel,
   SystemLogMetricsDto as SystemLogMetrics,
   SystemLogRecordDto as SystemLogRecord,
@@ -36,11 +38,6 @@ export const systemLogFilterFields: FilterField[] = [
   { key: 'fromDate', label: 'From', type: 'date' },
   { key: 'toDate', label: 'To', type: 'date' },
 ];
-
-export interface MongoDiagnosticsData {
-  collections?: MongoCollectionIndexStatus[];
-  generatedAt?: string;
-}
 
 export const formatDateParam = (value: string, endOfDay: boolean = false): string | null => {
   if (!value) return null;
@@ -105,12 +102,12 @@ export type SystemLogsContextValue = {
     Error
   >;
   metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics | undefined }, Error>;
-  mongoDiagnosticsQuery: UseQueryResult<unknown, Error>;
+  mongoDiagnosticsQuery: UseQueryResult<MongoDiagnosticsResponse, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
   runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
   interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
   clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
-  rebuildIndexesMutation: UseMutationResult<unknown, Error, void>;
+  rebuildIndexesMutation: UseMutationResult<MongoRebuildIndexesResponse, Error, void>;
   confirmAction: (config: {
     title: string;
     message: string;

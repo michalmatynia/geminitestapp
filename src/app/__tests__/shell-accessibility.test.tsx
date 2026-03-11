@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
@@ -19,11 +19,14 @@ vi.mock('@/app/(frontend)/home-helpers', () => ({
   shouldApplyFrontPageAppSelection: () => false,
 }));
 
-import AuthPublicLayout from '@/app/auth/layout';
-import FrontendLayout from '@/app/(frontend)/layout';
-
 describe('app shell accessibility', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
   it('renders a focusable main landmark in the frontend shell', async () => {
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
     const layout = await FrontendLayout({
       children: <div>Frontend content</div>,
     });
@@ -36,7 +39,8 @@ describe('app shell accessibility', () => {
     await expectNoAxeViolations(container);
   });
 
-  it('renders a focusable main landmark in the auth shell', () => {
+  it('renders a focusable main landmark in the auth shell', async () => {
+    const { default: AuthPublicLayout } = await import('@/app/auth/layout');
     const { container } = render(
       <AuthPublicLayout>
         <div>Auth content</div>
@@ -47,6 +51,6 @@ describe('app shell accessibility', () => {
     expect(main).toHaveAttribute('id', 'app-content');
     expect(main).toHaveAttribute('tabindex', '-1');
 
-    return expectNoAxeViolations(container);
+    await expectNoAxeViolations(container);
   });
 });

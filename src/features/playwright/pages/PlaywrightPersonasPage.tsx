@@ -10,7 +10,7 @@ import {
   createPlaywrightPersonaId,
 } from '@/features/playwright/utils/personas';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
-import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
+import { AdminSettingsBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { SetStateAction } from 'react';
@@ -85,16 +85,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      backLink={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Settings', href: '/admin/settings' },
-            { label: 'Personas' },
-          ]}
-          className='mb-2'
-        />
-      }
+      backLink={<AdminSettingsBreadcrumbs current='Personas' />}
       buildDefaultItem={() => ({
         name: '',
         description: '',

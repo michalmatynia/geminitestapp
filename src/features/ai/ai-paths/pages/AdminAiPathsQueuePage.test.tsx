@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
+  AdminAiPathsBreadcrumbs: () => <div>ai-paths-breadcrumbs</div>,
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
@@ -26,18 +27,24 @@ vi.mock('@/shared/ui', () => ({
     </button>
   ),
   ListPanel: ({
+    eyebrow,
     title,
+    headerActions,
     filters,
     actions,
     children,
   }: {
+    eyebrow?: React.ReactNode;
     title?: React.ReactNode;
+    headerActions?: React.ReactNode;
     filters?: React.ReactNode;
     actions?: React.ReactNode;
     children?: React.ReactNode;
   }) => (
     <div>
+      {eyebrow}
       <div>{title}</div>
+      {headerActions}
       {filters}
       {actions}
       {children}

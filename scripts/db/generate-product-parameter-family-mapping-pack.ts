@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 type LocalizedValues = Record<string, string>;
 
@@ -25,14 +25,16 @@ type RecoveryBatch = {
   overrides: BatchOverride[];
 };
 
-type SlotAccumulator = {
-  slotId: string;
-  occurrenceCount: number;
-  valuesByLanguage: Map<string, Set<string>>;
+type BatchManifest = {
+  batches?: Array<{
+    outputPath?: string;
+  }>;
 };
 
+const DEFAULT_MANIFEST_PATH = '/tmp/product-parameter-source-recovery-batches/manifest.json';
+
 function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 function ensureArray<T>(value: T[] | undefined | null): T[] {
@@ -40,7 +42,7 @@ function ensureArray<T>(value: T[] | undefined | null): T[] {
 }
 
 function normalizeString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function addLocalizedValue(
@@ -58,8 +60,31 @@ function addLocalizedValue(
   valuesByLanguage.get(language)?.add(normalized);
 }
 
+function resolveBatchPaths(argv: string[]): string[] {
+  if (argv.length > 0) {
+    return argv;
+  }
+
+  const manifest = readJson<BatchManifest>(DEFAULT_MANIFEST_PATH);
+  const batchPaths = ensureArray(manifest.batches)
+    .map((batch) => normalizeString(batch.outputPath))
+    .filter(Boolean);
+
+  if (batchPaths.length === 0) {
+    throw new Error(
+      'Usage: node --import tsx scripts/db/generate-product-parameter-family-mapping-pack.ts <batch.json> [...batch.json]',
+    );
+  }
+
+  return batchPaths;
+}
+
 function buildPack(batchPath: string, batch: RecoveryBatch) {
-  const slotAccumulators = new Map<string, SlotAccumulator>();
+  const slotAccumulators = new Map<string, {
+    slotId: string;
+    occurrenceCount: number;
+    valuesByLanguage: Map<string, Set<string>>;
+  }>();
 
   for (const override of ensureArray(batch.overrides)) {
     for (const proposed of ensureArray(override.proposedParameters)) {
@@ -84,7 +109,7 @@ function buildPack(batchPath: string, batch: RecoveryBatch) {
           addLocalizedValue(slot.valuesByLanguage, language, value);
         }
       } else {
-        addLocalizedValue(slot.valuesByLanguage, "en", proposed.value);
+        addLocalizedValue(slot.valuesByLanguage, 'en', proposed.value);
       }
     }
   }
@@ -93,8 +118,8 @@ function buildPack(batchPath: string, batch: RecoveryBatch) {
     .sort((left, right) => left.slotId.localeCompare(right.slotId))
     .map((slot) => ({
       slotId: slot.slotId,
-      slotLabel: slot.slotId.startsWith("source-recovery:")
-        ? slot.slotId.slice("source-recovery:".length)
+      slotLabel: slot.slotId.startsWith('source-recovery:')
+        ? slot.slotId.slice('source-recovery:'.length)
         : slot.slotId,
       suggestedFinalParameterId: null as string | null,
       suggestedDisplayName: null as string | null,
@@ -105,7 +130,7 @@ function buildPack(batchPath: string, batch: RecoveryBatch) {
           .map(([language, values]) => [language, Array.from(values).sort()]),
       ),
       notes: [
-        "Fill suggestedFinalParameterId with a real category-backed parameter id before generating curated overrides.",
+        'Fill suggestedFinalParameterId with a real category-backed parameter id before generating curated overrides.',
       ],
     }));
 
@@ -137,17 +162,14 @@ function getOutputPath(batchPath: string): string {
 }
 
 function main(): void {
-  const batchPaths = process.argv.slice(2);
-  if (batchPaths.length === 0) {
-    throw new Error("Usage: node --import tsx scripts/db/generate-product-parameter-family-mapping-pack.ts <batch.json> [...batch.json]");
-  }
+  const batchPaths = resolveBatchPaths(process.argv.slice(2));
 
   for (const batchPath of batchPaths) {
     const absoluteBatchPath = path.resolve(batchPath);
     const batch = readJson<RecoveryBatch>(absoluteBatchPath);
     const pack = buildPack(absoluteBatchPath, batch);
     const outputPath = getOutputPath(absoluteBatchPath);
-    fs.writeFileSync(outputPath, JSON.stringify(pack, null, 2) + "\n");
+    fs.writeFileSync(outputPath, JSON.stringify(pack, null, 2) + '\n');
     process.stdout.write(`${outputPath}\n`);
   }
 }

@@ -13,7 +13,7 @@ export function useIntegrationsSessionImpl(activeConnection: IntegrationConnecti
   const sessionQuery = useConnectionSession(activeConnection?.id, {
     enabled: showSessionModal,
   });
-  const sessionPayload = sessionQuery.data as SessionPayload | undefined;
+  const sessionPayload: SessionPayload | undefined = sessionQuery.data;
   const sessionCookies = sessionPayload?.cookies ?? [];
   const sessionOrigins = sessionPayload?.origins ?? [];
   const sessionUpdatedAt = sessionPayload?.updatedAt ?? null;

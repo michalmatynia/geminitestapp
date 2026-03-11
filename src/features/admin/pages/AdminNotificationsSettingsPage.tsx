@@ -3,18 +3,18 @@
 import React, { useState } from 'react';
 
 import {
+  AdminSettingsBreadcrumbs,
   Button,
-  SelectSimple,
-  useToast,
-  useToastSettings,
-  SectionHeader,
-  FormSection,
-  FormField,
-  Breadcrumbs,
   FormActions,
+  FormField,
+  FormSection,
   Hint,
   MetadataItem,
+  SectionHeader,
+  SelectSimple,
   Tooltip,
+  useToast,
+  useToastSettings,
 } from '@/shared/ui';
 
 const positionOptions = [
@@ -80,16 +80,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
       <SectionHeader
         title='Notifications'
         description='Customize toast position, accent color, and preview behavior.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Settings', href: '/admin/settings' },
-              { label: 'Notifications' },
-            ]}
-            className='mb-2'
-          />
-        }
+        eyebrow={<AdminSettingsBreadcrumbs current='Notifications' />}
         className='mb-8'
       />
 

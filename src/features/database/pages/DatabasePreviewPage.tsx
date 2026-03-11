@@ -29,6 +29,7 @@ import type {
 } from '@/shared/contracts/database';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
+  AdminDatabaseBreadcrumbs,
   Badge,
   Button,
   Pagination,
@@ -47,7 +48,6 @@ import {
   EmptyState,
   PageLayout,
   Hint,
-  Breadcrumbs,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -479,14 +479,7 @@ function DatabasePreviewContent(): React.JSX.Element {
             : 'No source selected.'
       }
       eyebrow={
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Databases', href: '/admin/databases/engine' },
-            { label: 'Preview' },
-          ]}
-          className='mb-2'
-        />
+        <AdminDatabaseBreadcrumbs current='Preview' className='mb-2' />
       }
       refresh={{
         onRefresh: () => window.location.reload(),

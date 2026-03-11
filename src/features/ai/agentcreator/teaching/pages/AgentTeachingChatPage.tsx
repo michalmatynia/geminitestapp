@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import React from 'react';
 
 import {
@@ -17,6 +16,7 @@ import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import {
   Button,
   SectionHeader,
+  SectionHeaderBackLink,
   Textarea,
   useToast,
   FormSection,
@@ -127,9 +127,9 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
         title='Learner Chat'
         description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
         eyebrow={
-          <Link href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
-            ← Back to learners
-          </Link>
+          <SectionHeaderBackLink href='/admin/agentcreator/teaching' arrow>
+            Back to learners
+          </SectionHeaderBackLink>
         }
       />
 

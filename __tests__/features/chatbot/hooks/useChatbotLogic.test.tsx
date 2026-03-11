@@ -97,7 +97,7 @@ describe('useChatbotLogic', () => {
     vi.clearAllMocks();
     vi.mocked(chatbotApi.fetchChatbotSessions).mockResolvedValue({ sessions: [] });
     vi.mocked(chatbotApi.fetchOllamaModels).mockResolvedValue(['model-1', 'model-2']);
-    vi.mocked(chatbotApi.fetchChatbotSettings).mockResolvedValue({ settings: {} });
+    vi.mocked(chatbotApi.fetchChatbotSettings).mockResolvedValue({ settings: null });
   });
 
   it('initializes with default values', async () => {

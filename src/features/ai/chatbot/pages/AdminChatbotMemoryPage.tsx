@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo } from 'react';
 
 import {
+  AdminChatbotBreadcrumbs,
   Button,
   Input,
   SectionHeader,
@@ -113,11 +114,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
       <SectionHeader
         title='Agent Long-Term Memory'
         description='Knowledge preserved by agents across conversations and runs.'
-        eyebrow={
-          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
-            ← Back to chatbot
-          </a>
-        }
+        eyebrow={<AdminChatbotBreadcrumbs current='Memory' />}
         actions={
           <Button variant='outline' size='xs' onClick={refetch} loading={isFetching}>
             Refresh

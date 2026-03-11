@@ -1,6 +1,11 @@
 import type {
-  ChatbotSettingsDto,
   CreateChatbotSettingsDto as ChatbotSettingsPayload,
+  ChatbotSettingsResponseDto as ChatbotSettingsResponse,
+  ChatbotSettingsSaveResponseDto as ChatbotSettingsSaveResponse,
+} from '@/shared/contracts/chatbot';
+import {
+  chatbotSettingsResponseSchema,
+  chatbotSettingsSaveResponseSchema,
 } from '@/shared/contracts/chatbot';
 import type { SettingRecord } from '@/shared/contracts/settings';
 
@@ -9,11 +14,13 @@ import { fetchWithTimeout, readErrorResponse, requestJson } from './client';
 export const fetchChatbotSettings = async (
   key: string,
   timeoutMs: number = 5000
-): Promise<{ settings?: { settings?: unknown } | null }> => {
-  return requestJson<{ settings?: { settings?: unknown } | null }>(
-    `/api/chatbot/settings?key=${encodeURIComponent(key)}`,
-    undefined,
-    { timeoutMs, fallbackMessage: 'Failed to load chatbot settings.' }
+): Promise<ChatbotSettingsResponse> => {
+  return chatbotSettingsResponseSchema.parse(
+    await requestJson<ChatbotSettingsResponse>(
+      `/api/chatbot/settings?key=${encodeURIComponent(key)}`,
+      undefined,
+      { timeoutMs, fallbackMessage: 'Failed to load chatbot settings.' }
+    )
   );
 };
 
@@ -21,7 +28,7 @@ export const saveChatbotSettings = async (
   key: string,
   settings: ChatbotSettingsPayload,
   timeoutMs: number = 5000
-): Promise<{ settings?: { settings?: ChatbotSettingsDto } }> => {
+): Promise<ChatbotSettingsSaveResponse> => {
   const res = await fetchWithTimeout(
     '/api/chatbot/settings',
     {
@@ -35,7 +42,7 @@ export const saveChatbotSettings = async (
     const error = await readErrorResponse(res);
     throw new Error(error.message);
   }
-  return (await res.json()) as { settings?: { settings?: ChatbotSettingsDto } };
+  return chatbotSettingsSaveResponseSchema.parse(await res.json());
 };
 
 export const fetchSettings = async (): Promise<SettingRecord[]> =>

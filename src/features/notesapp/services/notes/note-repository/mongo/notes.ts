@@ -22,7 +22,7 @@ import {
   NoteCategoryEmbedded,
   NoteRelationFromEmbedded,
   NoteRelationToEmbedded,
-} from '../../types/mongo-note-types';
+} from '@/features/notesapp/contracts';
 import {
   toNoteResponse,
   toNoteFileResponse,

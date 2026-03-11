@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { productBulkImagesBase64RequestSchema as bulkSchema } from '@/shared/contracts/products';
+import { parseJsonBody } from '@/features/products/server';
+import {
+  productBulkImagesBase64RequestSchema as bulkSchema,
+  type ProductBulkImagesBase64Response,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -35,10 +38,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  return NextResponse.json({
+  const response: ProductBulkImagesBase64Response = {
     status: 'ok',
     requested: productIds.length,
     succeeded,
     failed,
-  });
+  };
+
+  return NextResponse.json(response);
 }

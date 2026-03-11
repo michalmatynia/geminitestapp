@@ -1,7 +1,6 @@
 'use client';
 
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useAgentPersonaMemory } from '@/features/ai/agentcreator/hooks/useAgentPersonaMemory';
@@ -9,7 +8,18 @@ import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPerso
 import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
-import { Button, Card, FormField, Hint, Input, SectionHeader, SelectSimple, StandardDataTablePanel, Tag } from '@/shared/ui';
+import {
+  Button,
+  Card,
+  FormField,
+  Hint,
+  Input,
+  SectionHeader,
+  SectionHeaderBackLink,
+  SelectSimple,
+  StandardDataTablePanel,
+  Tag,
+} from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -163,9 +173,9 @@ export function AgentPersonaMemoryPage({
         title={persona ? `${persona.name} Memory Bank` : 'Persona Memory Bank'}
         description='Search durable persona memories and the chat history stored in the same bank.'
         eyebrow={
-          <Link href='/admin/agentcreator/personas' className='text-blue-300 hover:text-blue-200'>
+          <SectionHeaderBackLink href='/admin/agentcreator/personas'>
             Back to personas
-          </Link>
+          </SectionHeaderBackLink>
         }
         actions={
           <Button variant='outline' size='sm' onClick={() => void memoryQuery.refetch()} loading={memoryQuery.isFetching}>

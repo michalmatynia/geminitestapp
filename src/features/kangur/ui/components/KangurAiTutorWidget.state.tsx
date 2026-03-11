@@ -16,6 +16,7 @@ import {
   loadPersistedGuestIntroRecord,
   loadPersistedHomeOnboardingRecord,
   loadPersistedTutorAvatarPosition,
+  loadPersistedTutorPanelPosition,
   loadPersistedTutorSessionKey,
   loadPersistedTutorVisibilityHidden,
   type KangurAiTutorGuestIntroRecord,
@@ -30,9 +31,14 @@ import type {
   TutorAskEntrySource,
   TutorAvatarDragState,
   TutorMessageFeedback,
+  TutorPanelDragState,
   TutorPanelShellMode,
   TutorPoint,
 } from './KangurAiTutorWidget.types';
+import type {
+  TutorPanelPositionMode,
+  TutorPanelSnapState,
+} from './KangurAiTutorWidget.shared';
 
 const getInitialTutorHiddenState = (): boolean => loadPersistedTutorVisibilityHidden();
 
@@ -50,6 +56,38 @@ const getInitialDraggedAvatarPoint = (): TutorPoint | null => {
     x: persisted.left,
     y: persisted.top,
   };
+};
+
+const getInitialTutorPanelPoint = (): TutorPoint | null => {
+  if (loadPersistedTutorVisibilityHidden()) {
+    return null;
+  }
+
+  const persisted = loadPersistedTutorPanelPosition();
+  if (!persisted) {
+    return null;
+  }
+
+  return {
+    x: persisted.left,
+    y: persisted.top,
+  };
+};
+
+const getInitialTutorPanelSnapPreference = (): TutorPanelSnapState => {
+  if (loadPersistedTutorVisibilityHidden()) {
+    return 'free';
+  }
+
+  return loadPersistedTutorPanelPosition()?.snap ?? 'free';
+};
+
+const getInitialTutorPanelPositionMode = (): TutorPanelPositionMode => {
+  if (loadPersistedTutorVisibilityHidden()) {
+    return 'manual';
+  }
+
+  return loadPersistedTutorPanelPosition()?.mode ?? 'manual';
 };
 
 export function useKangurAiTutorWidgetState() {
@@ -77,6 +115,14 @@ export function useKangurAiTutorWidgetState() {
   const [draggedAvatarPoint, setDraggedAvatarPoint] =
     useState<TutorPoint | null>(getInitialDraggedAvatarPoint);
   const [isAvatarDragging, setIsAvatarDragging] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<TutorPoint | null>(getInitialTutorPanelPoint);
+  const [panelPositionMode, setPanelPositionMode] = useState<TutorPanelPositionMode>(
+    getInitialTutorPanelPositionMode
+  );
+  const [panelSnapPreference, setPanelSnapPreference] = useState<TutorPanelSnapState>(
+    getInitialTutorPanelSnapPreference
+  );
+  const [isPanelDragging, setIsPanelDragging] = useState(false);
   const [messageFeedbackByKey, setMessageFeedbackByKey] = useState<
     Record<string, TutorMessageFeedback>
   >({});
@@ -88,6 +134,7 @@ export function useKangurAiTutorWidgetState() {
   const [persistedSelectionPageRect, setPersistedSelectionPageRect] = useState<DOMRect | null>(
     null
   );
+  const [persistedSelectionPageRects, setPersistedSelectionPageRects] = useState<DOMRect[]>([]);
   const [persistedSelectionContainerRect, setPersistedSelectionContainerRect] =
     useState<DOMRect | null>(null);
   const [dismissedSelectedText, setDismissedSelectedText] = useState<string | null>(null);
@@ -142,6 +189,7 @@ export function useKangurAiTutorWidgetState() {
   const guestIntroShownForCurrentEntryRef = useRef(false);
   const homeOnboardingShownForCurrentEntryRef = useRef(false);
   const avatarDragStateRef = useRef<TutorAvatarDragState | null>(null);
+  const panelDragStateRef = useRef<TutorPanelDragState | null>(null);
   const suppressAvatarClickRef = useRef(false);
   const askModalReturnStateRef = useRef<{
     wasOpen: boolean;
@@ -180,6 +228,7 @@ export function useKangurAiTutorWidgetState() {
     inputRef,
     inputValue,
     isAvatarDragging,
+    isPanelDragging,
     isTutorHidden,
     lastTrackedFocusKeyRef,
     lastTrackedProactiveNudgeKeyRef,
@@ -192,10 +241,15 @@ export function useKangurAiTutorWidgetState() {
     panelMeasuredHeight,
     panelMotionState,
     panelAnchorMode,
+    panelDragStateRef,
+    panelPosition,
+    panelPositionMode,
+    panelSnapPreference,
     panelShellMode,
     panelRef,
     persistedSelectionContainerRect,
     persistedSelectionPageRect,
+    persistedSelectionPageRects,
     persistedSelectionRect,
     persistedSessionKey,
     previousSessionKeyRef,
@@ -232,6 +286,7 @@ export function useKangurAiTutorWidgetState() {
     setHoveredSectionAnchorId,
     setInputValue,
     setIsAvatarDragging,
+    setIsPanelDragging,
     setIsTutorHidden,
     setLauncherPromptVisible,
     setMessageFeedbackByKey,
@@ -239,9 +294,13 @@ export function useKangurAiTutorWidgetState() {
     setPanelMeasuredHeight,
     setPanelMotionState,
     setPanelAnchorMode,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
     setPanelShellMode,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSectionResponseComplete,
     setSectionResponsePending,

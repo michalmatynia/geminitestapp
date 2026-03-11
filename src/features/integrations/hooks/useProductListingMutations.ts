@@ -293,6 +293,7 @@ export function useDeleteFromBaseMutation(
     },
     invalidate: async (queryClient) => {
       await invalidateListingsBadgesAndQueues(queryClient, productId);
+      await invalidateProducts(queryClient);
     },
   });
 }

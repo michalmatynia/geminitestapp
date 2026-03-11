@@ -79,6 +79,7 @@ const buildHomeOnboardingStepDefinitions = (
 export function useKangurAiTutorGuidedDisplayState(input: {
   activeSectionRect: DOMRect | null;
   activeSelectionPageRect: DOMRect | null;
+  activeSelectionPageRects: DOMRect[];
   activeSelectionRect: DOMRect | null;
   askModalVisible: boolean;
   enabled: boolean;
@@ -99,6 +100,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     options?: { authMode?: GuidedTutorAuthMode }
   ) => void;
   persistedSelectionPageRect: DOMRect | null;
+  persistedSelectionPageRects: DOMRect[];
   persistedSelectionRect: DOMRect | null;
   sectionResponsePending: SectionExplainContext | null;
   selectionGuidanceCalloutVisibleText: string | null;
@@ -113,6 +115,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   const {
     activeSectionRect,
     activeSelectionPageRect,
+    activeSelectionPageRects,
     activeSelectionRect,
     askModalVisible,
     enabled,
@@ -128,6 +131,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     isTutorHidden,
     mounted,
     persistedSelectionPageRect,
+    persistedSelectionPageRects,
     persistedSelectionRect,
     sectionResponsePending,
     selectionGuidanceCalloutVisibleText,
@@ -303,6 +307,31 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
       ? cloneRect(guidedSelectionRect)
       : null;
+  const guidedSelectionGlowRects = useMemo(() => {
+    if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) {
+      return [];
+    }
+
+    const selectionPageRects =
+      activeSelectionPageRects.length > 0 ? activeSelectionPageRects : persistedSelectionPageRects;
+    const viewportRects = selectionPageRects
+      .map((rect) => getViewportRectFromPageRect(rect))
+      .filter((rect): rect is DOMRect => rect !== null)
+      .map((rect) => cloneRect(rect))
+      .filter((rect): rect is DOMRect => rect !== null);
+
+    if (viewportRects.length > 0) {
+      return viewportRects;
+    }
+
+    return guidedSelectionRect ? [cloneRect(guidedSelectionRect)].filter((rect): rect is DOMRect => rect !== null) : [];
+  }, [
+    activeSelectionPageRects,
+    guidedSelectionRect,
+    guidedTutorTarget,
+    persistedSelectionPageRects,
+    selectionResponsePending,
+  ]);
 
   const isSelectionGuidedTutorMode = isSelectionGuidedTutorTarget(guidedTutorTarget);
   const isSectionGuidedTutorMode = isSectionGuidedTutorTarget(guidedTutorTarget);
@@ -571,6 +600,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     guidedMode,
     guidedSectionFocusRect,
     guidedSelectionPreview,
+    guidedSelectionGlowRects,
     guidedSelectionRect,
     guidedSelectionSpotlightRect,
     guidedTargetAnchor,

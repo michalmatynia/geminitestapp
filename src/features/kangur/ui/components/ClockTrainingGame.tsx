@@ -788,7 +788,10 @@ function DraggableClock({
           </KangurButton>
         </div>
       ) : null}
-      <p className='text-xs text-slate-500' data-testid='clock-interaction-hint'>
+      <p
+        className='text-xs [color:var(--kangur-page-muted-text)]'
+        data-testid='clock-interaction-hint'
+      >
         {activeHand === 'hour'
           ? 'Przestawiasz krótką wskazówkę (godziny).'
           : activeHand === 'minute'
@@ -848,7 +851,14 @@ function DraggableClock({
             />
           </>
         )}
-        <circle cx='100' cy='100' r='95' fill='white' stroke='#6366f1' strokeWidth='4' />
+        <circle
+          cx='100'
+          cy='100'
+          r='95'
+          fill='var(--kangur-soft-card-background)'
+          stroke='#6366f1'
+          strokeWidth='4'
+        />
 
         {Array.from({ length: 12 }, (_, i) => {
           const angle = (i * 30 - 90) * (Math.PI / 180);
@@ -965,7 +975,7 @@ function DraggableClock({
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
 
-      <div className='flex gap-3 text-sm text-slate-500'>
+      <div className='flex gap-3 text-sm [color:var(--kangur-page-muted-text)]'>
         <span className='flex items-center gap-1'>
           <KangurAccentDot
             accent='rose'
@@ -1369,7 +1379,7 @@ export default function ClockTrainingGame({
             dataTestId='clock-training-summary-breakdown'
             itemDataTestIdPrefix='clock-training-summary-breakdown'
           />
-          <p className='max-w-xs text-center text-slate-500'>
+          <p className='max-w-xs text-center [color:var(--kangur-page-muted-text)]'>
             {getClockTrainingSummaryMessage(section, score, tasks.length)}
           </p>
           <div className='flex gap-3'>
@@ -1427,15 +1437,15 @@ export default function ClockTrainingGame({
           tone='accent'
         >
           <p
-            className='text-sm font-semibold text-slate-900'
+            className='text-sm font-semibold [color:var(--kangur-page-text)]'
             data-testid='clock-training-guidance-title'
           >
             {trainingSectionContent.guidanceTitle}
           </p>
-          <p className='mt-2 text-sm font-normal leading-relaxed text-slate-900'>
+          <p className='mt-2 text-sm font-normal leading-relaxed [color:var(--kangur-page-text)]'>
             {trainingSectionContent.guidance}
           </p>
-          <p className='mt-2 text-xs font-normal text-slate-700'>
+          <p className='mt-2 text-xs font-normal [color:var(--kangur-page-muted-text)]'>
             {trainingSectionContent.legend}
           </p>
         </KangurInfoCard>
@@ -1486,7 +1496,7 @@ export default function ClockTrainingGame({
       )}
       <div className='flex flex-col items-center gap-2' data-testid='clock-task-progress'>
         <p
-          className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'
+          className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'
           data-testid='clock-task-progress-label'
         >
           Zadanie {currentTaskNumber} z {tasks.length}

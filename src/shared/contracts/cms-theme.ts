@@ -547,7 +547,7 @@ export const DEFAULT_THEME: ThemeSettings = {
   customCssSelectors: '',
   customCss: '',
   themePreset: 'default',
-  darkMode: true,
+  darkMode: false,
 };
 
 export function normalizeThemeSettings(input?: Partial<ThemeSettings> | null): ThemeSettings {

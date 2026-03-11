@@ -14,6 +14,7 @@ import {
   buildKangurKnowledgeGraphSyncStatements,
   getKangurKnowledgeGraphSyncStatusFromNeo4j,
   summarizeKangurKnowledgeGraphSourceIntegrity,
+  syncKangurKnowledgeGraphToNeo4j,
 } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 
 describe('buildKangurKnowledgeGraphSyncPayload', () => {
@@ -172,6 +173,81 @@ describe('buildKangurKnowledgeGraphSyncPayload', () => {
     );
   });
 
+  it('runs schema bootstrap separately from write statements during live sync', async () => {
+    runNeo4jStatementsMock.mockResolvedValue([]);
+    const snapshot = buildKangurKnowledgeGraph();
+    const expectedNodeWriteCalls = Math.ceil(snapshot.nodes.length / 100);
+    const expectedEdgeWriteCalls = Math.ceil(snapshot.edges.length / 100);
+
+    await expect(syncKangurKnowledgeGraphToNeo4j(snapshot)).resolves.toEqual({
+      graphKey: snapshot.graphKey,
+      nodeCount: expect.any(Number),
+      edgeCount: expect.any(Number),
+    });
+
+    expect(runNeo4jStatementsMock).toHaveBeenCalledTimes(
+      1 + 1 + expectedNodeWriteCalls + expectedEdgeWriteCalls + 1
+    );
+    expect(runNeo4jStatementsMock.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'CREATE CONSTRAINT kangur_knowledge_node_identity IF NOT EXISTS'
+        ),
+      }),
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'CREATE CONSTRAINT kangur_knowledge_graph_meta_identity IF NOT EXISTS'
+        ),
+      }),
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'CREATE INDEX kangur_knowledge_node_graph_key IF NOT EXISTS'
+        ),
+      }),
+    ]);
+    expect(runNeo4jStatementsMock.mock.calls[1]?.[0]).toEqual([
+      expect.objectContaining({
+        statement: 'MATCH (n:KangurKnowledgeNode {graphKey: $graphKey}) DETACH DELETE n',
+        parameters: { graphKey: snapshot.graphKey },
+      }),
+    ]);
+    expect(runNeo4jStatementsMock.mock.calls[2]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'UNWIND $nodes AS node CREATE (n:KangurKnowledgeNode) SET n = node'
+        ),
+      })
+    );
+    expect(
+      runNeo4jStatementsMock.mock.calls[2 + expectedNodeWriteCalls]?.[0]?.[0]
+    ).toEqual(
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'UNWIND $edges AS edge'
+        ),
+      })
+    );
+    expect(runNeo4jStatementsMock.mock.calls.at(-1)?.[0]).toEqual([
+      expect.objectContaining({
+        statement: expect.stringContaining(
+          'MERGE (meta:KangurKnowledgeGraphMeta {graphKey: $graphKey})'
+        ),
+      }),
+    ]);
+  });
+
+  it('reports the sync stage when a Neo4j write batch fails', async () => {
+    const snapshot = buildKangurKnowledgeGraph();
+    runNeo4jStatementsMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error('fetch failed'));
+
+    await expect(syncKangurKnowledgeGraphToNeo4j(snapshot)).rejects.toThrow(
+      /sync failed during node batch 1\/\d+: fetch failed/
+    );
+  });
+
   it('reads live Kangur graph sync status from Neo4j metadata', async () => {
     runNeo4jStatementsMock.mockResolvedValue([
       {
@@ -187,6 +263,24 @@ describe('buildKangurKnowledgeGraphSyncPayload', () => {
             invalidCanonicalNodeCount: 0,
             liveNodeCount: 87,
             liveEdgeCount: 108,
+            semanticNodeCount: 87,
+            embeddingNodeCount: 87,
+            rawEmbeddingDimensions: [1536],
+            rawEmbeddingModels: ['text-embedding-3-small'],
+          },
+        ],
+      },
+      {
+        records: [
+          {
+            vectorIndexName: 'kangur_knowledge_node_embedding',
+            vectorIndexType: 'VECTOR',
+            vectorIndexState: 'ONLINE',
+            vectorIndexOptions: {
+              indexConfig: {
+                'vector.dimensions': 1536,
+              },
+            },
           },
         ],
       },
@@ -206,11 +300,23 @@ describe('buildKangurKnowledgeGraphSyncPayload', () => {
       canonicalNodeCount: 80,
       validCanonicalNodeCount: 80,
       invalidCanonicalNodeCount: 0,
+      semanticNodeCount: 87,
+      embeddingNodeCount: 87,
+      embeddingDimensions: 1536,
+      embeddingModels: ['text-embedding-3-small'],
+      vectorIndexPresent: true,
+      vectorIndexState: 'ONLINE',
+      vectorIndexType: 'VECTOR',
+      vectorIndexDimensions: 1536,
     });
     expect(runNeo4jStatementsMock).toHaveBeenCalledWith([
       expect.objectContaining({
         statement: expect.stringContaining('OPTIONAL MATCH (meta:KangurKnowledgeGraphMeta {graphKey: $graphKey})'),
         parameters: { graphKey: 'kangur-website-help-v1' },
+      }),
+      expect.objectContaining({
+        statement: expect.stringContaining('SHOW INDEXES'),
+        parameters: { indexName: 'kangur_knowledge_node_embedding' },
       }),
     ]);
   });

@@ -386,10 +386,10 @@ export default function AddingSynthesisGame({
 
             <div className='flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
               <div className='max-w-2xl'>
-                <h2 className='text-3xl font-extrabold tracking-[-0.03em] text-slate-900 sm:text-4xl'>
+                <h2 className='text-3xl font-extrabold tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-4xl'>
                   Synteza dodawania
                 </h2>
-                <p className='mt-3 text-base leading-7 text-slate-600'>
+                <p className='mt-3 text-base leading-7 [color:var(--kangur-page-muted-text)]'>
                   Licz w glowie, patrz jak dzialanie spada do linii i uderz w tor z poprawnym
                   wynikiem. Zaczynasz od prostych sum, potem przechodzisz przez 10 i konczysz na
                   dwoch cyfrach.
@@ -412,7 +412,7 @@ export default function AddingSynthesisGame({
                     >
                       Rytm gry
                     </KangurStatusChip>
-                    <p className='text-sm font-semibold text-slate-700'>
+                    <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
                       12 nut • 4 tory • szybka informacja zwrotna
                     </p>
                   </div>
@@ -432,8 +432,12 @@ export default function AddingSynthesisGame({
                   <div className='flex items-start gap-3'>
                     <div className='text-3xl leading-none'>{stage.icon}</div>
                     <div>
-                      <p className='text-sm font-extrabold text-slate-900'>{stage.title}</p>
-                      <p className='mt-1 text-sm leading-6 text-slate-600'>{stage.description}</p>
+                      <p className='text-sm font-extrabold [color:var(--kangur-page-text)]'>
+                        {stage.title}
+                      </p>
+                      <p className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                        {stage.description}
+                      </p>
                     </div>
                   </div>
                 </KangurInfoCard>
@@ -448,19 +452,19 @@ export default function AddingSynthesisGame({
               <div className='grid gap-3 sm:grid-cols-3'>
                 <div className='flex items-center gap-3'>
                   <Target className='h-5 w-5 text-amber-500' />
-                  <p className='text-sm text-slate-600'>
+                  <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.
                   </p>
                 </div>
                 <div className='flex items-center gap-3'>
                   <Gauge className='h-5 w-5 text-sky-500' />
-                  <p className='text-sm text-slate-600'>
+                  <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Im blizej linii trafisz, tym lepszy rytm.
                   </p>
                 </div>
                 <div className='flex items-center gap-3'>
                   <Zap className='h-5 w-5 text-violet-500' />
-                  <p className='text-sm text-slate-600'>
+                  <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Po kazdym bledzie dostajesz szybka podpowiedz.
                   </p>
                 </div>
@@ -515,10 +519,10 @@ export default function AddingSynthesisGame({
             />
 
             <div className='flex flex-col gap-2'>
-              <h2 className='text-3xl font-extrabold tracking-[-0.03em] text-slate-900 sm:text-4xl'>
+              <h2 className='text-3xl font-extrabold tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-4xl'>
                 Wynik {summary.score}/{summary.totalNotes}
               </h2>
-              <p className='text-base leading-7 text-slate-600'>
+              <p className='text-base leading-7 [color:var(--kangur-page-muted-text)]'>
                 {summary.accuracy >= 85
                   ? 'Bardzo mocna sesja. Dodawanie trzyma rytm i tempo.'
                   : summary.accuracy >= 60
@@ -675,7 +679,7 @@ export default function AddingSynthesisGame({
                       <p className='text-sm font-semibold uppercase tracking-[0.22em] text-amber-500'>
                         Uderz we wlasciwy tor
                       </p>
-                      <p className='mt-2 text-4xl font-extrabold tracking-[-0.04em] text-slate-900 sm:text-5xl'>
+                      <p className='mt-2 text-4xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] sm:text-5xl'>
                         {currentNote.left} + {currentNote.right}
                       </p>
                     </div>
@@ -723,13 +727,13 @@ export default function AddingSynthesisGame({
                       }}
                       type='button'
                     >
-                      <span className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400'>
+                      <span className='text-[11px] font-semibold uppercase tracking-[0.24em] [color:var(--kangur-page-muted-text)]'>
                         {laneIndex + 1}
                       </span>
                       <span className='mt-1 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl'>
                         {choice}
                       </span>
-                      <span className='mt-1 text-[11px] font-medium text-slate-400'>
+                      <span className='mt-1 text-[11px] font-medium [color:var(--kangur-page-muted-text)]'>
                         Wybierz tor
                       </span>
                     </KangurOptionCardButton>
@@ -745,8 +749,12 @@ export default function AddingSynthesisGame({
             <div className='flex flex-wrap items-center gap-2'>
               <KangurStatusChip accent='slate'>Dokladnosc {accuracy}%</KangurStatusChip>
             </div>
-            <p className='mt-3 text-sm leading-6 text-slate-600'>{currentStage.description}</p>
-            <p className='mt-3 text-sm font-medium text-slate-700'>{currentStage.coachingTip}</p>
+            <p className='mt-3 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+              {currentStage.description}
+            </p>
+            <p className='mt-3 text-sm font-medium [color:var(--kangur-page-text)]'>
+              {currentStage.coachingTip}
+            </p>
           </KangurSummaryPanel>
 
           <KangurSummaryPanel
@@ -758,9 +766,11 @@ export default function AddingSynthesisGame({
             tone={feedback ? 'accent' : 'neutral'}
           >
             {feedback ? (
-              <p className='mt-2 text-xs leading-6 text-slate-500'>{feedback.hint}</p>
+              <p className='mt-2 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
+                {feedback.hint}
+              </p>
             ) : currentNote ? (
-              <p className='mt-2 text-xs leading-6 text-slate-500'>
+              <p className='mt-2 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
                 Jesli wolisz klawiature, nacisnij 1, 2, 3 lub 4.
               </p>
             ) : null}
@@ -769,7 +779,7 @@ export default function AddingSynthesisGame({
           <KangurSummaryPanel accent='slate' label='Postep sesji' padding='lg'>
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <span className='text-sm font-bold text-slate-700'>
+                <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
                   {currentIndex + 1}/{notes.length}
                 </span>
               </div>

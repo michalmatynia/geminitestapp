@@ -136,6 +136,12 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveTextContent(
       '➗ Powtorka: Dzielenie'
     );
+    expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(operationSelectorPropsMock.mock.calls.at(-1)?.[0]).toEqual(
       expect.objectContaining({
         recommendedLabel: 'Misja dnia',

@@ -124,6 +124,18 @@ const buildLegacyStoredTranslationConfig = () => {
   };
 };
 
+const buildBrokenStoredBlwoConfig = () => ({
+  ...createDefaultPathConfig('path_base_export_blwo_v1'),
+  name: 'Base Export Workflow (BLWo)',
+  nodes: [
+    {
+      id: 'node-broken-trigger',
+      type: 'trigger',
+    },
+  ],
+  edges: [],
+});
+
 const buildLegacyStoredParameterInferenceConfig = () => {
   const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
   if (!entry) throw new Error('Missing starter_parameter_inference entry');
@@ -479,6 +491,41 @@ describe('ai-paths runs enqueue handler', () => {
     const parserNode = enqueueArgs?.nodes?.find((node) => node.type === 'parser');
     expect(parserNode?.config?.parser?.mappings?.['title']).toBe('$.name_en');
     expect(parserNode?.config?.parser?.mappings?.['content_en']).toBe('$.description_en');
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        key: `ai_paths_config_${config.id}`,
+      }),
+    ]);
+  });
+
+  it('repairs stale BLWo starter configs before enqueueing stored paths', async () => {
+    const config = buildBrokenStoredBlwoConfig();
+    getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        triggerEvent: 'manual',
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | {
+          pathId?: string;
+          pathName?: string;
+          nodes?: Array<{ type?: string }>;
+        }
+      | undefined;
+    expect(enqueueArgs?.pathId).toBe(config.id);
+    expect(enqueueArgs?.pathName).toBe('Base Export Workflow (BLWo)');
+    expect(enqueueArgs?.nodes?.some((node) => node.type === 'trigger')).toBe(true);
     expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
       expect.objectContaining({
         key: `ai_paths_config_${config.id}`,

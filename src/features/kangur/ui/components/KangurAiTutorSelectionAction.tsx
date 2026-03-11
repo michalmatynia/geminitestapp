@@ -59,7 +59,12 @@ export function KangurAiTutorSelectionAction({
         onMouseDown={handleSelectionActionMouseDown}
         onClick={handleAskAbout}
       >
-        <span aria-hidden='true' className='inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]'>?</span>
+        <span
+          aria-hidden='true'
+          className='inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_18%,rgba(255,255,255,0.16))]'
+        >
+          ?
+        </span>
         {tutorContent.common.askAboutSelectionLabel}
       </KangurButton>
     </motion.div>

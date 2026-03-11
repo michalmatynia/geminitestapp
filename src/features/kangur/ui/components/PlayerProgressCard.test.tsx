@@ -71,6 +71,9 @@ describe('PlayerProgressCard', () => {
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
       'Trening zegara: Godziny'
     );
+    expect(screen.getByTestId('player-progress-top-activity')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
+    );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('4 sesji');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('28 XP / gre');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
@@ -102,6 +105,9 @@ describe('PlayerProgressCard', () => {
     );
     expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveTextContent(
       'Wyzwania'
+    );
+    expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
     );
     expect(screen.getByTestId('player-progress-badge-track-challenge')).toHaveTextContent(
       '2/2 odznak'

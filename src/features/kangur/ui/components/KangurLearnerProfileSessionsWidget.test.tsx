@@ -94,6 +94,17 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     render(<KangurLearnerProfileSessionsWidget />);
 
     expect(screen.getByTestId('learner-profile-session-session-1')).toBeInTheDocument();
+    expect(screen.getByText('Ostatnie sesje')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText('Sciezki odznak')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText('Zegar')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('formatted:2026-03-08T10:00:00.000Z')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText('41s')).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('learner-profile-session-xp-session-1')).toHaveTextContent(
       '+28 XP'
     );

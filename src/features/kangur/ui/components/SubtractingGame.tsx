@@ -182,7 +182,7 @@ export default function SubtractingGame({
             itemDataTestIdPrefix='subtracting-game-summary-breakdown'
           />
           <KangurProgressBar accent='rose' animated size='md' value={percent} />
-          <p className='text-slate-500'>
+          <p className='[color:var(--kangur-page-muted-text)]'>
             {percent === 100
               ? 'Idealnie! Mistrz odejmowania!'
               : percent >= 60
@@ -232,7 +232,7 @@ export default function SubtractingGame({
           size='sm'
           value={(roundIndex / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {roundIndex + 1}/{TOTAL}
         </span>
       </div>
@@ -246,7 +246,8 @@ export default function SubtractingGame({
           variant='soft'
         >
           <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
-            {question.a} − {question.b} = <span className='text-slate-400'>?</span>
+            {question.a} − {question.b} ={' '}
+            <span className='[color:var(--kangur-page-muted-text)]'>?</span>
           </KangurEquationDisplay>
           <AppleVisual a={question.a} b={question.b} />
           <div className='grid grid-cols-2 gap-2 w-full'>
@@ -254,7 +255,7 @@ export default function SubtractingGame({
               let accent: KangurAccent = 'rose';
               let emphasis: 'neutral' | 'accent' = 'neutral';
               let state: 'default' | 'muted' = 'default';
-              let className = 'text-slate-700';
+              let className = '[color:var(--kangur-page-text)]';
               if (confirmed) {
                 if (choice === question.correct) {
                   accent = 'emerald';
@@ -307,7 +308,7 @@ export default function SubtractingGame({
                 ? selected === question.correct
                   ? 'bg-emerald-500 border-emerald-500 text-white'
                   : 'bg-rose-500 border-rose-500 text-white'
-                : 'bg-white'
+                : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
             )}
             disabled={selected === null || confirmed}
             onClick={handleConfirm}

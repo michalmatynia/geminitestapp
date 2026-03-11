@@ -135,7 +135,14 @@ export const kangurAiTutorContentSchema = z.object({
     restoreTutorLabel: tutorCopySchema,
   }),
   panelChrome: z.object({
+    detachFromContextAria: tutorCopySchema,
+    detachFromContextLabel: tutorCopySchema,
+    followingContextLabel: tutorCopySchema,
+    moveToContextAria: tutorCopySchema,
+    moveToContextLabel: tutorCopySchema,
     moodPrefix: tutorCopySchema,
+    resetPositionAria: tutorCopySchema,
+    resetPositionLabel: tutorCopySchema,
     surfaceLabels: z.object({
       test: tutorCopySchema,
       game: tutorCopySchema,
@@ -383,6 +390,8 @@ export const kangurAiTutorContentSchema = z.object({
   }),
   auxiliaryControls: z.object({
     dailyLimitTemplate: tutorCopySchema,
+    toolboxDescription: tutorCopySchema,
+    toolboxTitle: tutorCopySchema,
     usageRefreshing: tutorCopySchema,
     usageExhausted: tutorCopySchema,
     usageRemainingTemplate: tutorCopySchema,
@@ -459,6 +468,7 @@ export const kangurAiTutorContentSchema = z.object({
       uiModeLabel: tutorCopySchema,
       uiModeDescription: tutorCopySchema,
       uiModeAnchored: tutorCopySchema,
+      uiModeFreeform: tutorCopySchema,
       uiModeStatic: tutorCopySchema,
     }),
   }),
@@ -548,7 +558,14 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       restoreTutorLabel: 'Włącz AI Tutora',
     },
     panelChrome: {
+      detachFromContextAria: 'Zatrzymaj śledzenie bieżącej treści',
+      detachFromContextLabel: 'Odłącz',
+      followingContextLabel: 'Podąża za treścią',
+      moveToContextAria: 'Przesuń panel obok bieżącej treści',
+      moveToContextLabel: 'Przy treści',
       moodPrefix: 'Nastrój',
+      resetPositionAria: 'Przywróć domyślną pozycję panelu',
+      resetPositionLabel: 'Przywróć pozycję',
       surfaceLabels: {
         test: 'Test',
         game: 'Gra',
@@ -953,6 +970,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
     },
     auxiliaryControls: {
       dailyLimitTemplate: 'Limit dzisiaj: {count}/{limit}',
+      toolboxDescription: 'Skroty do wskazowek, rysowania i kolejnych krokow w biezacej rozmowie.',
+      toolboxTitle: 'Narzedzia tutora',
       usageRefreshing: 'Aktualizuję…',
       usageExhausted: 'Limit wyczerpany',
       usageRemainingTemplate: 'Pozostało {remaining}',
@@ -1041,8 +1060,9 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         proactiveNudgesCoach: 'Wyraznie proponuj dalsze cwiczenie',
         uiModeLabel: 'Tryb interfejsu tutora',
         uiModeDescription:
-          'Tryb ruchomy podąża za zaznaczeniem i aktywnym zadaniem. Tryb statyczny zachowuje chat w stałym miejscu, ale nadal używa bieżącego kontekstu lekcji lub testu.',
+          'Tryb ruchomy podąża za zaznaczeniem i aktywnym zadaniem. Tryb swobodny pozwala przeciągać otwarty panel po stronie. Tryb statyczny zachowuje chat w stałym miejscu, ale nadal używa bieżącego kontekstu lekcji lub testu.',
         uiModeAnchored: 'Ruchomy i zakotwiczony przy treści',
+        uiModeFreeform: 'Swobodny panel do przeciągania',
         uiModeStatic: 'Statyczny w rogu ekranu',
       },
     },

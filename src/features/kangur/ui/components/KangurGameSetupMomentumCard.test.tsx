@@ -85,9 +85,15 @@ describe('KangurGameSetupMomentumCard', () => {
     expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveTextContent(
       'Ta sesja przybliza misje dnia'
     );
+    expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
     expect(screen.getByTestId('kangur-game-setup-momentum-description-training')).toHaveTextContent(
       'Trening mieszany. 0/1 runda dzisiaj. Nagroda +36 XP.'
     );
+    expect(
+      screen.getByTestId('kangur-game-setup-momentum-description-training')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 
   it('falls back to the next badge on kangur setup', () => {

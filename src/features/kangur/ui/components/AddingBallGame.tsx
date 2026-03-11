@@ -333,7 +333,7 @@ function CompleteEquation({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-4 w-full'>
-        <p className='text-lg font-bold text-slate-700'>
+        <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Przeciągnij piłki tak, żeby uzupełnić równanie:
         </p>
         <div className='flex items-center gap-3 flex-wrap justify-center'>
@@ -344,7 +344,9 @@ function CompleteEquation({
             checked={checked}
             correct={correct}
           />
-          <span className='text-3xl font-extrabold text-slate-500'>+</span>
+          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>
+            +
+          </span>
           <SlotZone
             id='slotB'
             items={state.slotB}
@@ -352,7 +354,9 @@ function CompleteEquation({
             checked={checked}
             correct={correct}
           />
-          <span className='text-3xl font-extrabold text-slate-500'>= {round.target}</span>
+          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>
+            = {round.target}
+          </span>
         </div>
 
         <Droppable droppableId='pool' direction='horizontal'>
@@ -422,7 +426,9 @@ function SlotZone({ id, items, label, checked, correct }: SlotZoneProps): React.
 
         return (
           <div>
-            <p className='mb-1 text-center text-xs text-slate-400'>{label}</p>
+            <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+              {label}
+            </p>
             <KangurInfoCard
               ref={provided.innerRef}
               accent={surface.accent}
@@ -520,7 +526,7 @@ function GroupSum({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-4 w-full'>
-        <p className='text-lg font-bold text-slate-700'>
+        <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Podziel {total} piłek na dwie grupy sumujące się do{' '}
           <span className='text-orange-500'>{round.target}</span>
         </p>
@@ -542,7 +548,9 @@ function GroupSum({
 
                 return (
                   <div>
-                    <p className='mb-1 text-center text-xs text-slate-400'>{group.label}</p>
+                    <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+                      {group.label}
+                    </p>
                     <KangurInfoCard
                       ref={provided.innerRef}
                       accent={surface.accent}
@@ -664,10 +672,10 @@ function PickAnswer({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className='flex flex-col items-center gap-6 w-full'>
-        <p className='text-2xl font-extrabold text-slate-700'>
+        <p className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
           {round.a} + {round.b} = <span className='text-orange-400'>?</span>
         </p>
-        <p className='text-sm text-slate-500'>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
           Przeciągnij piłkę z właściwą odpowiedzią do pola poniżej
         </p>
 
@@ -696,7 +704,7 @@ function PickAnswer({
                     <span className='text-white font-extrabold text-xl'>{dropped.num}</span>
                   </div>
                 ) : (
-                  <span className='text-slate-300 text-3xl'>?</span>
+                  <span className='text-3xl [color:var(--kangur-page-muted-text)]'>?</span>
                 )}
                 {provided.placeholder}
               </KangurInfoCard>
@@ -821,7 +829,7 @@ export default function AddingBallGame({
           <KangurDisplayEmoji data-testid='adding-ball-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-slate-800'>
+          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
             Wynik: {score}/{TOTAL_ROUNDS}
           </h2>
           {xpEarned > 0 && (
@@ -837,7 +845,7 @@ export default function AddingBallGame({
             itemDataTestIdPrefix='adding-ball-summary-breakdown'
           />
           <KangurProgressBar accent='amber' animated size='md' value={percent} />
-          <p className='text-slate-500'>
+          <p className='[color:var(--kangur-page-muted-text)]'>
             {percent === 100
               ? 'Idealnie! Jesteś mistrzem dodawania!'
               : percent >= 60
@@ -892,7 +900,7 @@ export default function AddingBallGame({
           size='sm'
           value={(roundIdx / TOTAL_ROUNDS) * 100}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {roundIdx + 1}/{TOTAL_ROUNDS}
         </span>
       </div>

@@ -31,9 +31,11 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /wprowadzenie/i }));
 
-    expect(screen.getByText(/Myślenie logiczne to umiejętność/i)).toHaveClass('text-slate-700');
+    expect(screen.getByText(/Myślenie logiczne to umiejętność/i)).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
     expect(screen.getByText(/Logiczne myślenie pomaga:/i).parentElement).toHaveClass(
-      'text-slate-600'
+      '[color:var(--kangur-page-text)]'
     );
   });
 
@@ -42,12 +44,16 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /wzorce.*wprowadzenie/i }));
 
-    expect(screen.getByText(/Wzorce sa wszedzie:/i).parentElement).toHaveClass('text-slate-600');
+    expect(screen.getByText(/Wzorce sa wszedzie:/i).parentElement).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText('Wzorce kolorów i kształtów');
 
-    expect(screen.getByText(/^Wzorzec AB$/i)).toHaveClass('text-slate-400');
+    expect(screen.getByText(/^Wzorzec AB$/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 
   it('uses the lighter copy palette in the logical reasoning lesson', async () => {
@@ -56,13 +62,15 @@ describe('Logical lessons shared surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: /wnioskowanie.*jesli/i }));
 
     expect(screen.getByText(/Wnioskowanie to wyciaganie nowych wniosków/i)).toHaveClass(
-      'text-slate-700'
+      '[color:var(--kangur-page-text)]'
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText(/Jesli… to…/i);
 
-    expect(getParagraphByTextContent('NIE znaczy')).toHaveClass('text-slate-500');
+    expect(getParagraphByTextContent('NIE znaczy')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 
   it('uses the lighter copy palette in the logical classification lesson', async () => {
@@ -70,12 +78,16 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /klasyfikacja.*wstep/i }));
 
-    expect(screen.getByText(/Klasyfikacja to układanie rzeczy/i)).toHaveClass('text-slate-700');
+    expect(screen.getByText(/Klasyfikacja to układanie rzeczy/i)).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText(/Grupowanie według cech/i);
 
-    expect(screen.getByText(/Cecha: maja skrzydła/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/Cecha: maja skrzydła/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 
   it('uses the lighter copy palette in the logical analogies lesson', () => {
@@ -83,8 +95,12 @@ describe('Logical lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /analogia.*wstep/i }));
 
-    expect(screen.getByText('A : B = C : D')).toHaveClass('text-slate-700');
-    expect(screen.getByText(/„A do B tak jak C do D"/i)).toHaveClass('text-slate-500');
-    expect(screen.getByText(/Relacja: stworzenie/i)).toHaveClass('text-slate-600');
+    expect(screen.getByText('A : B = C : D')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText(/„A do B tak jak C do D"/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText(/Relacja: stworzenie/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 });

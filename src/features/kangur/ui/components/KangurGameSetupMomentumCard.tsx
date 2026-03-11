@@ -145,13 +145,13 @@ export default function KangurGameSetupMomentumCard({
         </div>
         <div>
           <p
-            className='text-base font-extrabold text-slate-800'
+            className='text-base font-extrabold [color:var(--kangur-page-text)]'
             data-testid={`kangur-game-setup-momentum-title-${modeKey}`}
           >
             {focus.title}
           </p>
           <p
-            className='mt-1 text-sm text-slate-600'
+            className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'
             data-testid={`kangur-game-setup-momentum-description-${mode}`}
           >
             {focus.description}

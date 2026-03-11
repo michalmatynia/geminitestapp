@@ -41,9 +41,18 @@ export interface KangurKnowledgeGraphSyncStatus {
   canonicalNodeCount: number | null;
   validCanonicalNodeCount: number | null;
   invalidCanonicalNodeCount: number | null;
+  semanticNodeCount: number;
+  embeddingNodeCount: number;
+  embeddingDimensions: number | null;
+  embeddingModels: string[];
+  vectorIndexPresent: boolean;
+  vectorIndexState: string | null;
+  vectorIndexType: string | null;
+  vectorIndexDimensions: number | null;
 }
 
 export const KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX = 'kangur_knowledge_node_embedding';
+const KANGUR_KNOWLEDGE_GRAPH_SYNC_BATCH_SIZE = 100;
 
 const serializeMetadata = (metadata: Record<string, unknown> | undefined): string | null =>
   metadata ? JSON.stringify(metadata) : null;
@@ -215,31 +224,35 @@ const buildVectorIndexStatements = (payload: Neo4jSyncPayload): Neo4jCypherState
   ];
 };
 
-export const buildKangurKnowledgeGraphSyncStatements = (
-  payload: Neo4jSyncPayload
-): Neo4jCypherStatement[] => [
-  ...buildSchemaStatements(),
+const buildDeleteStatements = (payload: Neo4jSyncPayload): Neo4jCypherStatement[] => [
   {
     statement: 'MATCH (n:KangurKnowledgeNode {graphKey: $graphKey}) DETACH DELETE n',
     parameters: { graphKey: payload.graphKey },
   },
-  {
-    statement: 'UNWIND $nodes AS node CREATE (n:KangurKnowledgeNode) SET n = node',
-    parameters: { nodes: payload.nodes },
-  },
-  {
-    statement: `
+];
+
+const buildNodeWriteStatement = (
+  nodes: Neo4jSyncPayload['nodes']
+): Neo4jCypherStatement => ({
+  statement: 'UNWIND $nodes AS node CREATE (n:KangurKnowledgeNode) SET n = node',
+  parameters: { nodes },
+});
+
+const buildEdgeWriteStatement = (
+  edges: Neo4jSyncPayload['edges']
+): Neo4jCypherStatement => ({
+  statement: `
       UNWIND $edges AS edge
       MATCH (source:KangurKnowledgeNode {graphKey: edge.graphKey, id: edge.from})
       MATCH (target:KangurKnowledgeNode {graphKey: edge.graphKey, id: edge.to})
       CREATE (source)-[relation:KANGUR_RELATION]->(target)
       SET relation = edge
     `,
-    parameters: { edges: payload.edges },
-  },
-  ...buildVectorIndexStatements(payload),
-  {
-    statement: `
+  parameters: { edges },
+});
+
+const buildMetaStatement = (payload: Neo4jSyncPayload): Neo4jCypherStatement => ({
+  statement: `
       MERGE (meta:KangurKnowledgeGraphMeta {graphKey: $graphKey})
       SET meta.locale = $locale,
           meta.syncedAt = $generatedAt,
@@ -249,23 +262,41 @@ export const buildKangurKnowledgeGraphSyncStatements = (
           meta.validCanonicalNodeCount = $validCanonicalNodeCount,
           meta.invalidCanonicalNodeCount = $invalidCanonicalNodeCount
     `,
-    parameters: {
-      graphKey: payload.graphKey,
-      locale: payload.locale,
-      generatedAt: payload.generatedAt,
-      nodeCount: payload.nodes.length,
-      edgeCount: payload.edges.length,
-      canonicalNodeCount: payload.sourceIntegrity.canonicalNodeCount,
-      validCanonicalNodeCount: payload.sourceIntegrity.validCanonicalNodeCount,
-      invalidCanonicalNodeCount: payload.sourceIntegrity.invalidCanonicalNodeCount,
-    },
+  parameters: {
+    graphKey: payload.graphKey,
+    locale: payload.locale,
+    generatedAt: payload.generatedAt,
+    nodeCount: payload.nodes.length,
+    edgeCount: payload.edges.length,
+    canonicalNodeCount: payload.sourceIntegrity.canonicalNodeCount,
+    validCanonicalNodeCount: payload.sourceIntegrity.validCanonicalNodeCount,
+    invalidCanonicalNodeCount: payload.sourceIntegrity.invalidCanonicalNodeCount,
   },
+});
+
+const chunkItems = <T>(items: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+};
+
+export const buildKangurKnowledgeGraphSyncStatements = (
+  payload: Neo4jSyncPayload
+): Neo4jCypherStatement[] => [
+  ...buildSchemaStatements(),
+  ...buildDeleteStatements(payload),
+  buildNodeWriteStatement(payload.nodes),
+  buildEdgeWriteStatement(payload.edges),
+  ...buildVectorIndexStatements(payload),
+  buildMetaStatement(payload),
 ];
 
 export async function getKangurKnowledgeGraphSyncStatusFromNeo4j(
   graphKey: string
 ): Promise<KangurKnowledgeGraphSyncStatus> {
-  const [result] = await runNeo4jStatements([
+  const [graphResult, indexResult] = await runNeo4jStatements([
     {
       statement: `
         OPTIONAL MATCH (meta:KangurKnowledgeGraphMeta {graphKey: $graphKey})
@@ -273,7 +304,36 @@ export async function getKangurKnowledgeGraphSyncStatusFromNeo4j(
         CALL {
           WITH $graphKey AS graphKey
           MATCH (n:KangurKnowledgeNode {graphKey: graphKey})
-          RETURN count(n) AS liveNodeCount
+          RETURN
+            count(n) AS liveNodeCount,
+            sum(
+              CASE
+                WHEN n.semanticText IS NOT NULL AND trim(toString(n.semanticText)) <> ''
+                THEN 1
+                ELSE 0
+              END
+            ) AS semanticNodeCount,
+            sum(
+              CASE
+                WHEN n.embedding IS NOT NULL AND size(n.embedding) > 0
+                THEN 1
+                ELSE 0
+              END
+            ) AS embeddingNodeCount,
+            collect(
+              DISTINCT CASE
+                WHEN n.embeddingDimensions IS NOT NULL
+                THEN toInteger(n.embeddingDimensions)
+                ELSE null
+              END
+            ) AS rawEmbeddingDimensions,
+            collect(
+              DISTINCT CASE
+                WHEN n.embeddingModel IS NOT NULL AND trim(toString(n.embeddingModel)) <> ''
+                THEN toString(n.embeddingModel)
+                ELSE null
+              END
+            ) AS rawEmbeddingModels
         }
         CALL {
           WITH $graphKey AS graphKey
@@ -290,18 +350,79 @@ export async function getKangurKnowledgeGraphSyncStatusFromNeo4j(
           meta.validCanonicalNodeCount AS validCanonicalNodeCount,
           meta.invalidCanonicalNodeCount AS invalidCanonicalNodeCount,
           liveNodeCount,
-          liveEdgeCount
+          liveEdgeCount,
+          semanticNodeCount,
+          embeddingNodeCount,
+          rawEmbeddingDimensions,
+          rawEmbeddingModels
       `,
       parameters: { graphKey },
     },
+    {
+      statement: `
+        SHOW INDEXES
+        YIELD name, type, state, options
+        WHERE name = $indexName
+        RETURN
+          name AS vectorIndexName,
+          type AS vectorIndexType,
+          state AS vectorIndexState,
+          options AS vectorIndexOptions
+      `,
+      parameters: { indexName: KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX },
+    },
   ]);
 
-  const record = result?.records[0] ?? {};
+  const record = graphResult?.records[0] ?? {};
   const liveNodeCount =
     typeof record['liveNodeCount'] === 'number' ? record['liveNodeCount'] : 0;
   const liveEdgeCount =
     typeof record['liveEdgeCount'] === 'number' ? record['liveEdgeCount'] : 0;
   const syncedAt = typeof record['syncedAt'] === 'string' ? record['syncedAt'] : null;
+  const semanticNodeCount =
+    typeof record['semanticNodeCount'] === 'number' ? record['semanticNodeCount'] : 0;
+  const embeddingNodeCount =
+    typeof record['embeddingNodeCount'] === 'number' ? record['embeddingNodeCount'] : 0;
+  const rawEmbeddingDimensions = Array.isArray(record['rawEmbeddingDimensions'])
+    ? record['rawEmbeddingDimensions']
+    : [];
+  const rawEmbeddingModels = Array.isArray(record['rawEmbeddingModels'])
+    ? record['rawEmbeddingModels']
+    : [];
+  const embeddingDimensions = Array.from(
+    new Set(
+      rawEmbeddingDimensions.filter(
+        (value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0
+      )
+    )
+  ).sort((left, right) => left - right);
+  const embeddingModels = Array.from(
+    new Set(
+      rawEmbeddingModels.filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      )
+    )
+  ).sort((left, right) => left.localeCompare(right));
+  const indexRecord = indexResult?.records[0] ?? {};
+  const vectorIndexOptions =
+    indexRecord['vectorIndexOptions'] &&
+    typeof indexRecord['vectorIndexOptions'] === 'object' &&
+    !Array.isArray(indexRecord['vectorIndexOptions'])
+      ? (indexRecord['vectorIndexOptions'] as Record<string, unknown>)
+      : null;
+  const vectorIndexConfig =
+    vectorIndexOptions?.['indexConfig'] &&
+    typeof vectorIndexOptions['indexConfig'] === 'object' &&
+    !Array.isArray(vectorIndexOptions['indexConfig'])
+      ? (vectorIndexOptions['indexConfig'] as Record<string, unknown>)
+      : vectorIndexOptions;
+  const rawVectorIndexDimensions = vectorIndexConfig?.['vector.dimensions'];
+  const vectorIndexDimensions =
+    typeof rawVectorIndexDimensions === 'number' && Number.isFinite(rawVectorIndexDimensions)
+      ? rawVectorIndexDimensions
+      : typeof rawVectorIndexDimensions === 'string' && Number.isFinite(Number(rawVectorIndexDimensions))
+        ? Number(rawVectorIndexDimensions)
+        : null;
 
   return {
     graphKey,
@@ -324,6 +445,18 @@ export async function getKangurKnowledgeGraphSyncStatusFromNeo4j(
       typeof record['invalidCanonicalNodeCount'] === 'number'
         ? record['invalidCanonicalNodeCount']
         : null,
+    semanticNodeCount,
+    embeddingNodeCount,
+    embeddingDimensions: embeddingDimensions.length === 1 ? (embeddingDimensions[0] ?? null) : null,
+    embeddingModels,
+    vectorIndexPresent:
+      typeof indexRecord['vectorIndexName'] === 'string' &&
+      indexRecord['vectorIndexName'] === KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX,
+    vectorIndexState:
+      typeof indexRecord['vectorIndexState'] === 'string' ? indexRecord['vectorIndexState'] : null,
+    vectorIndexType:
+      typeof indexRecord['vectorIndexType'] === 'string' ? indexRecord['vectorIndexType'] : null,
+    vectorIndexDimensions,
   };
 }
 
@@ -331,7 +464,50 @@ export async function syncKangurKnowledgeGraphToNeo4j(
   snapshot: KangurKnowledgeGraphSnapshot
 ): Promise<{ graphKey: string; nodeCount: number; edgeCount: number }> {
   const payload = buildKangurKnowledgeGraphSyncPayload(snapshot);
-  await runNeo4jStatements(buildKangurKnowledgeGraphSyncStatements(payload));
+  const schemaStatements = buildSchemaStatements();
+  const deleteStatements = buildDeleteStatements(payload);
+  const nodeStatements = chunkItems(payload.nodes, KANGUR_KNOWLEDGE_GRAPH_SYNC_BATCH_SIZE).map(
+    (chunk) => buildNodeWriteStatement(chunk)
+  );
+  const edgeStatements = chunkItems(payload.edges, KANGUR_KNOWLEDGE_GRAPH_SYNC_BATCH_SIZE).map(
+    (chunk) => buildEdgeWriteStatement(chunk)
+  );
+  const metaStatement = buildMetaStatement(payload);
+  const vectorIndexStatements = buildVectorIndexStatements(payload);
+  const runStage = async (label: string, statements: Neo4jCypherStatement[]): Promise<void> => {
+    if (statements.length === 0) {
+      return;
+    }
+    try {
+      await runNeo4jStatements(statements);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Kangur knowledge graph sync failed during ${label}: ${message}`);
+    }
+  };
+
+  if (schemaStatements.length > 0) {
+    await runStage('schema bootstrap', schemaStatements);
+  }
+
+  for (const [index, statement] of deleteStatements.entries()) {
+    await runStage(`delete batch ${index + 1}/${deleteStatements.length}`, [statement]);
+  }
+
+  for (const [index, statement] of nodeStatements.entries()) {
+    await runStage(`node batch ${index + 1}/${nodeStatements.length}`, [statement]);
+  }
+
+  for (const [index, statement] of edgeStatements.entries()) {
+    await runStage(`edge batch ${index + 1}/${edgeStatements.length}`, [statement]);
+  }
+
+  if (vectorIndexStatements.length > 0) {
+    await runStage('vector index bootstrap', vectorIndexStatements);
+  }
+
+  await runStage('metadata upsert', [metaStatement]);
+
   return {
     graphKey: snapshot.graphKey,
     nodeCount: payload.nodes.length,

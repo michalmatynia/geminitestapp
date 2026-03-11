@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-09T10:34:42.425Z",
+  "generatedAt": "2026-03-11T22:47:40.164Z",
   "strictMode": true,
   "summary": {
     "total": 6,
-    "passed": 6,
-    "failed": 0,
-    "totalDurationMs": 37611
+    "passed": 5,
+    "failed": 1,
+    "totalDurationMs": 23675
   },
   "results": [
     {
@@ -18,8 +18,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 5189,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 776ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  11:34:06\n   Duration  3.93s (transform 1.63s, setup 398ms, import 2.17s, tests 776ms, environment 427ms)"
+      "durationMs": 3228,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 788ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  23:47:17\n   Duration  2.48s (transform 776ms, setup 162ms, import 1.12s, tests 788ms, environment 303ms)"
     },
     {
       "id": "products-core-crud",
@@ -29,10 +29,10 @@
         "__tests__/features/products/services/getSettingValue.test.ts"
       ],
       "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 2142,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 9ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  11:34:11\n   Duration  926ms (transform 259ms, setup 263ms, import 191ms, tests 9ms, environment 304ms)"
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 1482,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests | 3 failed) 20ms\n     ✓ uses Mongo first when provider is mongodb 13ms\n     × uses Prisma first for non-AI keys when provider is prisma 2ms\n     ✓ uses Mongo first for AI keys even when provider is prisma 0ms\n     × falls back to Mongo when Prisma has no value 0ms\n     × falls back to Prisma when Mongo has no value in mongodb mode 1ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/products/services/getSettingValue.test.ts > getSettingValue > uses Prisma first for non-AI keys when provider is prisma\nAssertionError: expected 'mongo-value' to be 'prisma-value' // Object.is equality\n\nExpected: \"prisma-value\"\nReceived: \"mongo-value\"\n\n ❯ __tests__/features/products/services/getSettingValue.test.ts:59:19\n     57|     const value = await getSettingValue('site_name');\n     58| \n     59|     expect(value).toBe('prisma-value');\n       |                   ^\n     60|     expect(mocks.prismaFindUnique).toHaveBeenCalledWith({\n     61|       where: { key: 'site_name' },\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\n\n FAIL  |unit| __tests__/features/products/services/getSettingValue.test.ts > getSettingValue > falls back to Mongo when Prisma has no value\nAssertionError: expected \"vi.fn()\" to be called once, but got 0 times\n ❯ __tests__/features/products/services/getSettingValue.test.ts:87:36\n     85| \n     86|     expect(value).toBe('mongo-fallback');\n     87|     expect(mocks.prismaFindUnique).toHaveBeenCalledOnce();\n       |                                    ^\n     88|     expect(mocks.mongoFindOne).toHaveBeenCalledOnce();\n     89|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\n\n FAIL  |unit| __tests__/features/products/services/getSettingValue.test.ts > getSettingValue > falls back to Prisma when Mongo has no value in mongodb mode\nAssertionError: expected null to be 'prisma-fallback' // Object.is equality\n\n- Expected: \n\"prisma-fallback\"\n\n+ Received: \nnull\n\n ❯ __tests__/features/products/services/getSettingValue.test.ts:98:19\n     96|     const value = await getSettingValue('ai_brain_settings');\n     97| \n     98|     expect(value).toBe('prisma-fallback');\n       |                   ^\n     99|     expect(mocks.mongoFindOne).toHaveBeenCalledOnce();\n    100|     expect(mocks.prismaFindUnique).toHaveBeenCalledOnce();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\n\n\n Test Files  1 failed (1)\n      Tests  3 failed | 2 passed (5)\n   Start at  23:47:20\n   Duration  712ms (transform 137ms, setup 193ms, import 92ms, tests 20ms, environment 300ms)"
     },
     {
       "id": "image-studio-generate",
@@ -44,8 +44,8 @@
       "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1853,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 18ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  11:34:12\n   Duration  971ms (transform 133ms, setup 246ms, import 69ms, tests 18ms, environment 520ms)"
+      "durationMs": 1486,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 21ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  23:47:21\n   Duration  680ms (transform 118ms, setup 184ms, import 62ms, tests 21ms, environment 304ms)"
     },
     {
       "id": "ai-paths-runtime",
@@ -57,8 +57,8 @@
       "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 4243,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (20 tests) 138ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  11:34:14\n   Duration  3.40s (transform 1.98s, setup 239ms, import 2.54s, tests 138ms, environment 340ms)"
+      "durationMs": 3425,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (20 tests) 151ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  23:47:23\n   Duration  2.64s (transform 1.43s, setup 163ms, import 1.92s, tests 151ms, environment 303ms)"
     },
     {
       "id": "case-resolver-capture",
@@ -70,8 +70,8 @@
       "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3003,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (13 tests) 19ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  11:34:18\n   Duration  2.23s (transform 1.25s, setup 187ms, import 1.61s, tests 19ms, environment 307ms)"
+      "durationMs": 2659,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (13 tests) 20ms\n\n Test Files  1 passed (1)\n      Tests  13 passed (13)\n   Start at  23:47:26\n   Duration  1.87s (transform 964ms, setup 165ms, import 1.25s, tests 20ms, environment 316ms)"
     },
     {
       "id": "products-trigger-queue-integration",
@@ -97,8 +97,8 @@
       "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 21181,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/products/state/queued-product-ops.test.ts (15 tests) 751ms\n     ✓ useQueuedProductIds returns current ids and updates when ids change  467ms\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx (4 tests) 32ms\n ✓ |unit| src/features/products/hooks/useProductAiPathsRunSync.test.tsx (5 tests) 53ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts (13 tests) 23ms\n ✓ |unit| src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts (14 tests) 25ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts (18 tests) 23ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts (14 tests) 8ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts (12 tests) 10ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts (15 tests) 9ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts (4 tests) 10ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts (7 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts (6 tests) 8ms\n ✓ |unit| src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts (3 tests) 7ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts (20 tests) 9ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts (10 tests) 8ms\n\n Test Files  15 passed (15)\n      Tests  160 passed (160)\n   Start at  11:34:22\n   Duration  20.29s (transform 2.44s, setup 4.32s, import 3.81s, tests 984ms, environment 8.54s)"
+      "durationMs": 11395,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx (8 tests) 642ms\n     ✓ hydrates without a text mismatch when optimistic runs are already in client storage  608ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts (33 tests) 103ms\n ✓ |unit| src/features/products/state/queued-product-ops.test.ts (12 tests) 54ms\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > keeps active optimistic runs beyond the terminal default ttl\n[2026-03-11T22:47:33.481Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 1,\n  normalizedCount: 0,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > refreshes active optimistic runs when the server returns the same queued run\n[2026-03-11T22:47:33.483Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 1,\n  normalizedCount: 0,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > does not throw if localStorage setItem hits quota and keeps run in memory\n[2026-03-11T22:47:33.483Z] [WARN] [ai-paths-optimistic-run-queue] falling back to in-memory optimistic run queue {\n  event: 'fallback',\n  requestedCount: 1,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > keeps optimistic runs in memory during quota failures and persists once storage recovers\n[2026-03-11T22:47:33.484Z] [WARN] [ai-paths-optimistic-run-queue] falling back to in-memory optimistic run queue {\n  event: 'fallback',\n  requestedCount: 1,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > falls back to in-memory queue when localStorage read also throws\n[2026-03-11T22:47:33.486Z] [WARN] [ai-paths-optimistic-run-queue] falling back to in-memory optimistic run queue {\n  event: 'fallback',\n  requestedCount: 1,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > can remove queued runs while staying functional under storage write failures\n[2026-03-11T22:47:33.486Z] [WARN] [ai-paths-optimistic-run-queue] falling back to in-memory optimistic run queue {\n  event: 'fallback',\n  requestedCount: 1,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > logs trimmed telemetry when reduced variant size is needed to persist\n[2026-03-11T22:47:33.488Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 25,\n  normalizedCount: 50,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > persists with the minimum retry window when first two trim variants still fail\n[2026-03-11T22:47:33.490Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 10,\n  normalizedCount: 50,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > rewrites malformed legacy queue payload to a compact format and enforces queue bounds\n[2026-03-11T22:47:33.508Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 55,\n  normalizedCount: 50,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > drops expired stored runs and keeps only active entries\n[2026-03-11T22:47:33.509Z] [WARN] [ai-paths-optimistic-run-queue] normalized stored payload before persisting {\n  event: 'normalized',\n  persistedCount: 2,\n  normalizedCount: 1,\n  service: 'ai-paths-optimistic-run-queue'\n}\n\nstderr | src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts > optimistic-run-queue > ignores malformed localStorage payloads and clears storage\n[2026-03-11T22:47:33.509Z] [WARN] [ai-paths-optimistic-run-queue] invalid stored payload (non-array), clearing storage {\n  event: 'storage-invalid',\n  source: 'non-array-payload',\n  service: 'ai-paths-optimistic-run-queue'\n}\n\n ✓ |unit| src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts (30 tests) 48ms\n ✓ |unit| src/features/products/hooks/useProductAiPathsRunSync.test.tsx (10 tests) 36ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts (13 tests) 22ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts (15 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts (6 tests) 8ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts (12 tests) 12ms\n ✓ |unit| src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts (5 tests) 12ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts (14 tests) 8ms\n ✓ |unit| src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts (3 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts (7 tests) 8ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts (20 tests) 9ms\n ✓ |unit| src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts (10 tests) 8ms\n\n Test Files  15 passed (15)\n      Tests  198 passed (198)\n   Start at  23:47:29\n   Duration  10.52s (transform 1.12s, setup 1.48s, import 1.79s, tests 987ms, environment 4.72s)"
     }
   ]
 }

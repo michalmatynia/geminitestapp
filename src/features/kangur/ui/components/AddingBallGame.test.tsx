@@ -77,6 +77,10 @@ describe('AddingBallGame', () => {
     expect(screen.getByTestId('adding-ball-slotA')).toHaveClass('border');
     expect(screen.getByTestId('adding-ball-slotB')).toHaveClass('border');
     expect(screen.getByTestId('adding-ball-pool')).toHaveClass('soft-card');
+    expect(screen.getByText('Przeciągnij piłki tak, żeby uzupełnić równanie:')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByText('1/6')).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('adding-ball-round-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',

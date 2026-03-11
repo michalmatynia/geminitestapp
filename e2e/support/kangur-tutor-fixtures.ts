@@ -26,6 +26,20 @@ type TutorAnalyticsEvent = {
   meta: Record<string, unknown> | null;
 };
 
+type TutorWebsiteHelpTarget = {
+  nodeId: string;
+  label: string;
+  route: string | null;
+  anchorId?: string | null;
+};
+
+type TutorChatResponsePayload = {
+  message?: string;
+  sources?: unknown[];
+  followUpActions?: unknown[];
+  websiteHelpTarget?: TutorWebsiteHelpTarget | null;
+};
+
 export type MockKangurTutorEnvironment = {
   chatRequests: TutorChatRequest[];
   analyticsEvents: TutorAnalyticsEvent[];
@@ -48,6 +62,9 @@ type MockKangurTutorEnvironmentOptions = {
   tutorLearnerMoodId?: string | null;
   chatResponseDelayMs?: number;
   narratorEngine?: 'server' | 'client';
+  chatResponse?:
+    | TutorChatResponsePayload
+    | ((payload: TutorChatRequest) => TutorChatResponsePayload | null | undefined);
 };
 
 const NOW_ISO = '2026-03-07T12:00:00.000Z';
@@ -110,6 +127,7 @@ export async function mockKangurTutorEnvironment(
     tutorLearnerMoodId = null,
     chatResponseDelayMs = 0,
     narratorEngine = 'server',
+    chatResponse,
   } = options;
   const learner = {
     id: 'learner-ada',
@@ -389,15 +407,28 @@ export async function mockKangurTutorEnvironment(
       message = hintResponse;
     }
 
+    const overriddenResponse =
+      typeof chatResponse === 'function' ? chatResponse(payload) : (chatResponse ?? null);
+    const responseBody = overriddenResponse
+      ? {
+        message: overriddenResponse.message ?? message,
+        sources: overriddenResponse.sources ?? [],
+        followUpActions: overriddenResponse.followUpActions ?? [],
+        ...(overriddenResponse.websiteHelpTarget
+          ? { websiteHelpTarget: overriddenResponse.websiteHelpTarget }
+          : {}),
+      }
+      : {
+        message,
+        sources: [],
+        followUpActions: [],
+      };
+
     if (chatResponseDelayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, chatResponseDelayMs));
     }
 
-    await fulfillJson(route, {
-      message,
-      sources: [],
-      followUpActions: [],
-    });
+    await fulfillJson(route, responseBody);
   });
 
   await page.route('**/api/analytics/events', async (route) => {

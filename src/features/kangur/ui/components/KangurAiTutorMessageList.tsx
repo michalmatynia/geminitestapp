@@ -91,7 +91,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
           >
             <span className='text-lg'>?</span>
           </div>
-          <p className='max-w-[240px] text-center text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          <p className='max-w-[240px] text-center text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             {isSelectionExplainPendingMode || isSectionExplainPendingMode
               ? panelEmptyStateMessage
               : isAskModalMode
@@ -160,11 +160,11 @@ export function KangurAiTutorMessageList(): JSX.Element {
                         {msg.coachingFrame.label}
                       </span>
                     </div>
-                    <div className='mt-1.5 text-xs font-medium leading-relaxed [color:var(--kangur-page-text)]'>
+                    <div className='mt-1.5 text-xs font-medium leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                       {msg.coachingFrame.description}
                     </div>
                     {msg.coachingFrame.rationale ? (
-                      <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'>
+                      <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                         {msg.coachingFrame.rationale}
                       </div>
                     ) : null}
@@ -173,18 +173,18 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 {assistantDrawingArtifacts.map((artifact, artifactIndex) => (
                   <div
                     key={`${index}-${artifactIndex}`}
-                    className='soft-card overflow-hidden rounded-[22px] border border-slate-200/80 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.22)]'
+                    className='soft-card overflow-hidden rounded-[22px] border [border-color:var(--kangur-soft-card-border)] shadow-[0_12px_28px_-18px_rgba(15,23,42,0.22)]'
                     style={{
                       background:
                         'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 94%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(255,247,237,0.92)) 100%)',
                     }}
                     data-testid={`kangur-ai-tutor-assistant-drawing-message-${index}-${artifactIndex}`}
                   >
-                    <div className='flex items-center justify-between border-b border-slate-200/70 px-3 py-2'>
-                      <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+                    <div className='flex items-center justify-between border-b px-3 py-2 [border-color:var(--kangur-soft-card-border)]'>
+                      <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                         {artifact.title ?? 'Szkic tutora'}
                       </span>
-                      <span className='text-[10px] [color:var(--kangur-page-muted-text)]'>
+                      <span className='text-[10px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                         {drawingContent?.messageLabel ?? 'Narysowano'}
                       </span>
                     </div>
@@ -192,25 +192,25 @@ export function KangurAiTutorMessageList(): JSX.Element {
                       <div
                         role='img'
                         aria-label={artifact.alt ?? drawingContent?.previewAlt ?? 'Rysunek'}
-                        className='overflow-hidden rounded-2xl border border-amber-200/50 bg-white [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
+                        className='overflow-hidden rounded-2xl border border-amber-200/50 [background:var(--kangur-soft-card-background)] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
                         dangerouslySetInnerHTML={{
                           __html: sanitizeSvg(artifact.svgContent, { viewBox: '0 0 320 200' }),
                         }}
                       />
                       {artifact.caption ? (
-                        <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+                        <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                           {artifact.caption}
                         </div>
                       ) : null}
                     </div>
                   </div>
                 ))}
-                <div className='tutor-assistant-bubble rounded-[22px] border border-slate-200/80 px-3 py-2 text-sm leading-relaxed [color:var(--kangur-page-text)]'>
+                <div className='tutor-assistant-bubble rounded-[22px] border [border-color:var(--kangur-soft-card-border)] px-3 py-2 text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                   {msg.content}
                 </div>
                 {msg.followUpActions?.length ? (
                   <div className='space-y-2'>
-                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                       {tutorContent.messageList.followUpTitle}
                     </div>
                     <div className='grid gap-2 sm:grid-cols-2'>
@@ -229,7 +229,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                             }}
                           >
                             {action.reason ? (
-                              <div className='text-xs font-medium leading-relaxed [color:var(--kangur-page-text)]'>
+                              <div className='text-xs font-medium leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                                 {action.reason}
                               </div>
                             ) : null}
@@ -261,27 +261,27 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 ) : null}
                 {showSources && msg.sources?.length ? (
                   <div className='space-y-2'>
-                    <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
-                      <span className='inline-flex h-1 w-1 rounded-full bg-slate-300' />
+                    <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                      <span className='inline-flex h-1 w-1 rounded-full [background:var(--kangur-soft-card-border)]' />
                       {tutorContent.messageList.sourcesTitle}
                     </div>
                     {msg.sources.slice(0, 3).map((source) => (
                       <div
                         key={`${source.collectionId}-${source.documentId}`}
-                        className='soft-card rounded-2xl border border-slate-200/80 px-3 py-2 text-left shadow-[0_4px_12px_-8px_rgba(15,23,42,0.08)]'
+                        className='soft-card rounded-2xl border [border-color:var(--kangur-soft-card-border)] px-3 py-2 text-left shadow-[0_4px_12px_-8px_rgba(15,23,42,0.08)]'
                         style={{
                           background:
                             'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, var(--kangur-page-background)) 100%)',
                         }}
                       >
-                        <div className='text-[11px] font-semibold [color:var(--kangur-page-text)]'>
+                        <div className='text-[11px] font-semibold [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                           {source.metadata?.title?.trim() || `[doc:${source.documentId}]`}
                         </div>
-                        <div className='mt-0.5 text-[10px] uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
+                        <div className='mt-0.5 text-[10px] uppercase tracking-[0.14em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                           {source.collectionId} · score {source.score.toFixed(3)}
                         </div>
                         {source.text?.trim() ? (
-                          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+                          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                             {source.text.trim().slice(0, 180)}
                             {source.text.trim().length > 180 ? '…' : ''}
                           </div>
@@ -309,7 +309,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
                       Miejsce na stronie
                     </div>
-                    <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-text)]'>
+                    <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                       {msg.websiteHelpTarget.label}
                     </div>
                     <div className='mt-2'>
@@ -338,14 +338,14 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 <div
                   data-testid={`kangur-ai-tutor-feedback-${index}`}
                   data-kangur-tts-ignore='true'
-                  className='soft-card rounded-2xl border border-slate-200/70 px-3 py-2'
+                  className='soft-card rounded-2xl border [border-color:var(--kangur-soft-card-border)] px-3 py-2'
                   style={{
                     background:
                       'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 90%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 82%, var(--kangur-page-background)) 100%)',
                   }}
                 >
                   <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+                    <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                       {tutorContent.messageList.helpfulPrompt}
                     </span>
                     <KangurButton
@@ -386,7 +386,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                   {submittedFeedback ? (
                     <div
                       data-testid={`kangur-ai-tutor-feedback-status-${index}`}
-                      className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'
+                      className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
                     >
                       {submittedFeedback === 'helpful'
                         ? tutorContent.messageList.helpfulStatus
@@ -401,7 +401,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
       )}
       {isLoading ? (
         <div className='flex justify-start'>
-          <div className='tutor-assistant-bubble rounded-[22px] border border-slate-200/80 px-4 py-3'>
+          <div className='tutor-assistant-bubble rounded-[22px] border [border-color:var(--kangur-soft-card-border)] px-4 py-3'>
             <div className='flex items-center gap-1.5' aria-label={tutorContent.messageList.loadingLabel}>
               <span className='tutor-typing-dot' />
               <span className='tutor-typing-dot' />

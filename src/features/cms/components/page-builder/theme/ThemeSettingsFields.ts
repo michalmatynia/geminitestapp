@@ -1,4 +1,7 @@
+import React from 'react';
+
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
+import { SelectSimple } from '@/shared/ui';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export const getFieldsForSection = (
@@ -706,7 +709,26 @@ export const getFieldsForSection = (
     case 'Theme Style':
       return [
         { key: 'themePreset', label: 'Preset', type: 'select', options: themePresetOptions },
-        { key: 'darkMode', label: 'Dark mode', type: 'checkbox' },
+        {
+          key: 'darkMode',
+          label: 'Storefront appearance',
+          type: 'custom',
+          helperText:
+            'Default uses the darker public palette. Dark applies the global dark storefront palette.',
+          render: ({ value, onChange, disabled }) =>
+            React.createElement(SelectSimple, {
+              value: value === true ? 'dark' : 'default',
+              onValueChange: (nextValue: string) => onChange(nextValue === 'dark'),
+              disabled,
+              options: [
+                { label: 'Default', value: 'default' },
+                { label: 'Dark', value: 'dark' },
+              ],
+              placeholder: 'Choose storefront appearance',
+              ariaLabel: 'Storefront appearance',
+              variant: 'subtle',
+            }),
+        },
       ];
 
     default:

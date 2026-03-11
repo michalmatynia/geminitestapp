@@ -44,6 +44,21 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
 };
 
+const isMalformedPathIndexPayload = (raw: string | null): boolean => {
+  if (typeof raw !== 'string' || raw.trim().length === 0) {
+    return false;
+  }
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return true;
+    }
+    return parsed.some((item: unknown) => !item || typeof item !== 'object' || Array.isArray(item));
+  } catch {
+    return true;
+  }
+};
+
 const filterButtonsWithExistingPaths = async (
   buttons: AiTriggerButtonRecord[]
 ): Promise<AiTriggerButtonRecord[]> => {
@@ -55,6 +70,9 @@ const filterButtonsWithExistingPaths = async (
   }
 
   const pathIndexRaw = await getAiPathsSetting(AI_PATHS_INDEX_KEY);
+  if (isMalformedPathIndexPayload(pathIndexRaw)) {
+    return buttons;
+  }
   const indexedPathMetas = parsePathMetas(pathIndexRaw);
   const indexedPathIds = new Set(indexedPathMetas.map((meta) => meta.id));
   const pathNameById = new Map(indexedPathMetas.map((meta) => [meta.id, meta.name ?? null]));

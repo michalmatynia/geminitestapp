@@ -445,6 +445,62 @@
 }
 
 @layer components {
+  .kangur-premium-bg,
+  html.kangur-surface-active,
+  body.kangur-surface-active,
+  #app-content.kangur-surface-active,
+  .kangur-surface-active,
+  .glass-panel,
+  .soft-card,
+  .kangur-nav-group,
+  .kangur-segmented-control,
+  .kangur-nav-item,
+  .kangur-segmented-control-item,
+  .kangur-text-field,
+  [data-kangur-appearance],
+  [data-cms-appearance-scope='true'],
+  [data-cms-appearance-scope='true'] .cms-page,
+  [data-cms-appearance-scope='true'] .cms-appearance-surface,
+  [data-cms-appearance-scope='true'] .cms-appearance-subtle-surface,
+  [data-cms-appearance-scope='true'] .cms-appearance-muted-text,
+  [data-cms-appearance-scope='true'] .cms-appearance-input,
+  [data-cms-appearance-scope='true'] .cms-appearance-button-primary,
+  [data-cms-appearance-scope='true'] .cms-appearance-button-outline {
+    transition:
+      background 360ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 360ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 240ms ease,
+      border-color 240ms ease,
+      box-shadow 360ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 240ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kangur-premium-bg,
+    html.kangur-surface-active,
+    body.kangur-surface-active,
+    #app-content.kangur-surface-active,
+    .kangur-surface-active,
+    .glass-panel,
+    .soft-card,
+    .kangur-nav-group,
+    .kangur-segmented-control,
+    .kangur-nav-item,
+    .kangur-segmented-control-item,
+    .kangur-text-field,
+    [data-kangur-appearance],
+    [data-cms-appearance-scope='true'],
+    [data-cms-appearance-scope='true'] .cms-page,
+    [data-cms-appearance-scope='true'] .cms-appearance-surface,
+    [data-cms-appearance-scope='true'] .cms-appearance-subtle-surface,
+    [data-cms-appearance-scope='true'] .cms-appearance-muted-text,
+    [data-cms-appearance-scope='true'] .cms-appearance-input,
+    [data-cms-appearance-scope='true'] .cms-appearance-button-primary,
+    [data-cms-appearance-scope='true'] .cms-appearance-button-outline {
+      transition: none;
+    }
+  }
+
   .kangur-premium-bg {
     background: var(
       --kangur-page-background,
@@ -1199,10 +1255,15 @@
   }
 
   .primary-cta {
-    background: linear-gradient(90deg, #ffb347 0%, #ff7a45 100%);
-    box-shadow:
+    background: var(
+      --kangur-button-primary-background,
+      linear-gradient(90deg, #ffb347 0%, #ff7a45 100%)
+    );
+    box-shadow: var(
+      --kangur-button-primary-shadow,
       0 12px 24px rgba(255, 137, 77, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      inset 0 1px 0 rgba(255, 255, 255, 0.35)
+    );
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
       background 220ms ease,
@@ -1213,11 +1274,16 @@
 
   .primary-cta:hover,
   .primary-cta:focus-visible {
-    background: linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%);
-    box-shadow:
+    background: var(
+      --kangur-button-primary-hover-background,
+      linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%)
+    );
+    box-shadow: var(
+      --kangur-button-primary-hover-shadow,
       0 22px 34px -18px rgba(255, 137, 77, 0.36),
       0 14px 24px -18px rgba(255, 154, 95, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      inset 0 1px 0 rgba(255, 255, 255, 0.4)
+    );
     filter: saturate(1.03) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
   }
@@ -1247,14 +1313,19 @@
   }
 
   .soft-cta {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(240, 245, 255, 0.95) 100%
+    background: var(
+      --kangur-button-secondary-background,
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.98) 0%,
+        rgba(240, 245, 255, 0.95) 100%
+      )
     );
-    box-shadow:
+    box-shadow: var(
+      --kangur-button-secondary-shadow,
       0 16px 28px -24px rgba(85, 103, 196, 0.38),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      inset 0 1px 0 rgba(255, 255, 255, 0.92)
+    );
   }
 
   .kangur-step-pill-pending {
@@ -1281,25 +1352,35 @@
   }
 
   .surface-cta {
-    background: linear-gradient(
-      180deg,
-      rgba(246, 248, 255, 0.98) 0%,
-      rgba(232, 239, 255, 0.98) 100%
+    background: var(
+      --kangur-button-surface-background,
+      linear-gradient(
+        180deg,
+        rgba(246, 248, 255, 0.98) 0%,
+        rgba(232, 239, 255, 0.98) 100%
+      )
     );
-    box-shadow:
+    box-shadow: var(
+      --kangur-button-surface-shadow,
       0 16px 28px -24px rgba(85, 103, 196, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.88);
+      inset 0 1px 0 rgba(255, 255, 255, 0.88)
+    );
   }
 
   .warning-cta {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 246, 226, 0.98) 0%,
-      rgba(253, 235, 202, 0.98) 100%
+    background: var(
+      --kangur-button-warning-background,
+      linear-gradient(
+        180deg,
+        rgba(255, 246, 226, 0.98) 0%,
+        rgba(253, 235, 202, 0.98) 100%
+      )
     );
-    box-shadow:
+    box-shadow: var(
+      --kangur-button-warning-shadow,
       0 16px 28px -24px rgba(201, 142, 57, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.88);
+      inset 0 1px 0 rgba(255, 255, 255, 0.88)
+    );
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
       background 220ms ease,
@@ -1310,28 +1391,38 @@
 
   .warning-cta:hover,
   .warning-cta:focus-visible {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 247, 230, 0.99) 0%,
-      rgba(255, 232, 195, 0.96) 100%
+    background: var(
+      --kangur-button-warning-hover-background,
+      linear-gradient(
+        180deg,
+        rgba(255, 247, 230, 0.99) 0%,
+        rgba(255, 232, 195, 0.96) 100%
+      )
     );
-    box-shadow:
+    box-shadow: var(
+      --kangur-button-warning-hover-shadow,
       0 20px 32px -24px rgba(201, 142, 57, 0.42),
       0 14px 24px -24px rgba(255, 154, 95, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      inset 0 1px 0 rgba(255, 255, 255, 0.92)
+    );
     filter: saturate(1.02) brightness(1.01);
     transform: translateY(-1px) scale(1.014);
   }
 
   .success-cta {
-    background: linear-gradient(
-      180deg,
-      rgba(236, 253, 245, 0.98) 0%,
-      rgba(210, 250, 229, 0.98) 100%
+    background: var(
+      --kangur-button-success-background,
+      linear-gradient(
+        180deg,
+        rgba(236, 253, 245, 0.98) 0%,
+        rgba(210, 250, 229, 0.98) 100%
+      )
     );
-    box-shadow:
+    box-shadow: var(
+      --kangur-button-success-shadow,
       0 16px 28px -24px rgba(16, 185, 129, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.88);
+      inset 0 1px 0 rgba(255, 255, 255, 0.88)
+    );
   }
 }
 
@@ -1656,8 +1747,13 @@
   .tutor-assistant-bubble {
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(250, 251, 255, 0.96) 100%
+      color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 98%, #ffffff) 0%,
+      color-mix(
+          in srgb,
+          var(--kangur-soft-card-background, #ffffff) 90%,
+          var(--kangur-page-background, #f8fafc)
+        )
+        100%
     );
     box-shadow:
       0 10px 24px -16px rgba(15, 23, 42, 0.12),

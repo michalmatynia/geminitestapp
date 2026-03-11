@@ -1,0 +1,24 @@
+name: Geminitestapp CodeQL
+
+paths:
+  - src
+  - scripts
+  - server.cjs
+
+paths-ignore:
+  - .next
+  - .next-a11y
+  - .next-codex-build
+  - .next-dev
+  - .next-dev-products-fix
+  - coverage
+  - dist
+  - docs
+  - e2e
+  - logs
+  - tmp
+  - __tests__
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'

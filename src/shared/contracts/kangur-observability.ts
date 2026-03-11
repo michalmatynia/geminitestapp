@@ -41,15 +41,91 @@ export type KangurAnalyticsCount = z.infer<typeof kangurAnalyticsCountSchema>;
 
 export const kangurAiTutorAnalyticsSnapshotSchema = z.object({
   messageSucceededCount: z.number(),
+  knowledgeGraphAppliedCount: z.number(),
+  knowledgeGraphSemanticCount: z.number(),
+  knowledgeGraphWebsiteHelpCount: z.number(),
+  knowledgeGraphMetadataOnlyRecallCount: z.number(),
+  knowledgeGraphHybridRecallCount: z.number(),
+  knowledgeGraphVectorOnlyRecallCount: z.number(),
+  knowledgeGraphVectorRecallAttemptedCount: z.number(),
   bridgeSuggestionCount: z.number(),
   lessonToGameBridgeSuggestionCount: z.number(),
   gameToLessonBridgeSuggestionCount: z.number(),
   bridgeQuickActionClickCount: z.number(),
   bridgeFollowUpClickCount: z.number(),
   bridgeFollowUpCompletionCount: z.number(),
+  bridgeCompletionRatePercent: z.number().nullable().optional(),
+  knowledgeGraphCoverageRatePercent: z.number().nullable().optional(),
+  knowledgeGraphVectorAssistRatePercent: z.number().nullable().optional(),
 });
 export type KangurAiTutorAnalyticsSnapshot = z.infer<
   typeof kangurAiTutorAnalyticsSnapshotSchema
+>;
+
+export const kangurKnowledgeGraphSemanticReadinessSchema = z.enum([
+  'no_graph',
+  'no_semantic_text',
+  'metadata_only',
+  'embeddings_without_index',
+  'vector_index_pending',
+  'vector_ready',
+]);
+export type KangurKnowledgeGraphSemanticReadiness = z.infer<
+  typeof kangurKnowledgeGraphSemanticReadinessSchema
+>;
+
+const kangurKnowledgeGraphStatusModeSchema = z.object({
+  mode: z.literal('status'),
+  graphKey: z.string(),
+  present: z.boolean(),
+  locale: z.string().nullable(),
+  syncedAt: z.string().nullable(),
+  syncedNodeCount: z.number().nullable(),
+  syncedEdgeCount: z.number().nullable(),
+  liveNodeCount: z.number(),
+  liveEdgeCount: z.number(),
+  canonicalNodeCount: z.number().nullable(),
+  validCanonicalNodeCount: z.number().nullable(),
+  invalidCanonicalNodeCount: z.number().nullable(),
+  semanticNodeCount: z.number(),
+  embeddingNodeCount: z.number(),
+  embeddingDimensions: z.number().nullable(),
+  embeddingModels: z.array(z.string()),
+  vectorIndexPresent: z.boolean(),
+  vectorIndexState: z.string().nullable(),
+  vectorIndexType: z.string().nullable(),
+  vectorIndexDimensions: z.number().nullable(),
+  semanticCoverageRatePercent: z.number().nullable(),
+  embeddingCoverageRatePercent: z.number().nullable(),
+  semanticReadiness: kangurKnowledgeGraphSemanticReadinessSchema,
+});
+
+const kangurKnowledgeGraphStatusDisabledSchema = z.object({
+  mode: z.literal('disabled'),
+  graphKey: z.string(),
+  message: z.string(),
+});
+
+const kangurKnowledgeGraphStatusErrorSchema = z.object({
+  mode: z.literal('error'),
+  graphKey: z.string(),
+  message: z.string(),
+});
+
+export const kangurKnowledgeGraphStatusSnapshotSchema = z.discriminatedUnion('mode', [
+  kangurKnowledgeGraphStatusModeSchema,
+  kangurKnowledgeGraphStatusDisabledSchema,
+  kangurKnowledgeGraphStatusErrorSchema,
+]);
+export type KangurKnowledgeGraphStatusSnapshot = z.infer<
+  typeof kangurKnowledgeGraphStatusSnapshotSchema
+>;
+
+export const kangurKnowledgeGraphStatusResponseSchema = z.object({
+  status: kangurKnowledgeGraphStatusSnapshotSchema,
+});
+export type KangurKnowledgeGraphStatusResponse = z.infer<
+  typeof kangurKnowledgeGraphStatusResponseSchema
 >;
 
 export const kangurPerformanceBaselineSchema = z.object({
@@ -159,6 +235,7 @@ export const kangurObservabilitySummarySchema = z.object({
   }),
   routes: kangurRouteMetricsSchema,
   analytics: kangurAnalyticsSnapshotSchema,
+  knowledgeGraphStatus: kangurKnowledgeGraphStatusSnapshotSchema,
   performanceBaseline: kangurPerformanceBaselineSchema.nullable(),
   errors: z.record(z.string(), z.string()).nullable(),
 });

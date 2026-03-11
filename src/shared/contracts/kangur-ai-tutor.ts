@@ -195,12 +195,44 @@ export type KangurAiTutorWebsiteHelpTarget = z.infer<
   typeof kangurAiTutorWebsiteHelpTargetSchema
 >;
 
+export const kangurAiTutorKnowledgeGraphQueryModeSchema = z.enum([
+  'website_help',
+  'semantic',
+]);
+export type KangurAiTutorKnowledgeGraphQueryMode = z.infer<
+  typeof kangurAiTutorKnowledgeGraphQueryModeSchema
+>;
+
+export const kangurAiTutorKnowledgeGraphRecallStrategySchema = z.enum([
+  'metadata_only',
+  'vector_only',
+  'hybrid_vector',
+]);
+export type KangurAiTutorKnowledgeGraphRecallStrategy = z.infer<
+  typeof kangurAiTutorKnowledgeGraphRecallStrategySchema
+>;
+
+export const kangurAiTutorKnowledgeGraphSummarySchema = z.object({
+  applied: z.boolean(),
+  queryMode: kangurAiTutorKnowledgeGraphQueryModeSchema.nullable(),
+  recallStrategy: kangurAiTutorKnowledgeGraphRecallStrategySchema.nullable(),
+  lexicalHitCount: z.number().int().nonnegative(),
+  vectorHitCount: z.number().int().nonnegative(),
+  vectorRecallAttempted: z.boolean(),
+  websiteHelpApplied: z.boolean(),
+  websiteHelpTargetNodeId: z.string().trim().max(160).nullable(),
+});
+export type KangurAiTutorKnowledgeGraphSummary = z.infer<
+  typeof kangurAiTutorKnowledgeGraphSummarySchema
+>;
+
 export const kangurAiTutorChatResponseSchema = z.object({
   message: z.string(),
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
   artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).default([]),
   websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.optional(),
+  knowledgeGraph: kangurAiTutorKnowledgeGraphSummarySchema.optional(),
   coachingFrame: kangurAiTutorCoachingFrameSchema.optional(),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
   tutorMood: kangurAiTutorLearnerMoodSchema.optional(),

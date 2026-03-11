@@ -283,9 +283,11 @@ export async function buildBaseProductData(
 
   // Text fields (name, description, etc.) go in text_fields object
   if (!imagesOnly) {
+    const categoryId = typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
     const textFields: Record<string, string> = {};
     if (product.name_en) textFields['name'] = product.name_en;
     if (product.description_en) textFields['description'] = product.description_en;
+    if (categoryId) baseData['category_id'] = categoryId;
     if (Object.keys(textFields).length > 0) {
       baseData['text_fields'] = textFields;
     }

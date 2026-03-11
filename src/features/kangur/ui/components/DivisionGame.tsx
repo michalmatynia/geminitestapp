@@ -243,7 +243,7 @@ export default function DivisionGame({
             itemDataTestIdPrefix='division-game-summary-breakdown'
           />
           <KangurProgressBar accent='teal' animated size='md' value={percent} />
-          <p className='text-slate-500'>
+          <p className='[color:var(--kangur-page-muted-text)]'>
             {percent === 100
               ? 'Idealnie! Mistrz dzielenia!'
               : percent >= 60
@@ -295,7 +295,7 @@ export default function DivisionGame({
           size='sm'
           value={(roundIndex / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {roundIndex + 1}/{TOTAL}
         </span>
       </div>
@@ -330,7 +330,9 @@ export default function DivisionGame({
                 {question.a} = {question.b} × {question.quotient} +{' '}
                 <span className='font-extrabold text-lg'>?</span>
               </p>
-              <p className='mt-1 text-xs text-slate-500'>Ile zostaje po podzieleniu?</p>
+              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                Ile zostaje po podzieleniu?
+              </p>
             </KangurInfoCard>
           )}
 
@@ -339,7 +341,7 @@ export default function DivisionGame({
               let accent: KangurAccent = 'sky';
               let emphasis: 'neutral' | 'accent' = 'neutral';
               let state: 'default' | 'muted' = 'default';
-              let className = 'text-slate-700';
+              let className = '[color:var(--kangur-page-text)]';
               if (confirmed) {
                 if (choice === question.correct) {
                   accent = 'emerald';
@@ -393,7 +395,7 @@ export default function DivisionGame({
                 ? selected === question.correct
                   ? 'bg-emerald-500 border-emerald-500 text-white'
                   : 'bg-rose-500 border-rose-500 text-white'
-                : 'bg-white'
+                : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
             )}
             disabled={selected === null || confirmed}
             onClick={handleConfirm}

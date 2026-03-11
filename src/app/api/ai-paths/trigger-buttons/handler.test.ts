@@ -562,7 +562,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
-  it('rejects stored payloads that include non-canonical trigger button records', async () => {
+  it('returns an empty list when stored trigger-button records are non-canonical', async () => {
     getAiPathsSettingMock.mockResolvedValue(
       JSON.stringify([
         {
@@ -594,13 +594,13 @@ describe('ai-paths trigger-buttons GET handler', () => {
       ])
     );
 
-    await expect(
-      GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
-        createRequestContext()
-      )
-    ).rejects.toThrow('Invalid AI trigger button record payload.');
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
 
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([]);
     expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });

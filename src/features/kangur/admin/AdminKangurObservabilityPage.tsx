@@ -19,7 +19,9 @@ import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kan
 import { useKangurObservabilitySummary } from '@/features/kangur/observability/hooks';
 import type {
   KangurAnalyticsCount,
+  KangurKnowledgeGraphSemanticReadiness,
   KangurObservabilityAlert,
+  KangurKnowledgeGraphStatusSnapshot,
   KangurObservabilityRange,
   KangurObservabilitySummary,
   KangurRouteHealth,
@@ -111,6 +113,74 @@ const formatDateTime = (value: string | null | undefined): string => {
 const formatDuration = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return '—';
   return `${new Intl.NumberFormat().format(value)} ms`;
+};
+
+const formatKnowledgeGraphReadiness = (
+  readiness: KangurKnowledgeGraphSemanticReadiness
+): string => {
+  switch (readiness) {
+    case 'no_graph':
+      return 'No graph';
+    case 'no_semantic_text':
+      return 'No semantic text';
+    case 'metadata_only':
+      return 'Metadata only';
+    case 'embeddings_without_index':
+      return 'Embeddings without index';
+    case 'vector_index_pending':
+      return 'Vector index pending';
+    case 'vector_ready':
+      return 'Vector ready';
+    default:
+      return readiness;
+  }
+};
+
+const resolveKnowledgeGraphBadgeStatus = (
+  status: KangurKnowledgeGraphStatusSnapshot
+): 'ok' | 'warning' | 'critical' | 'insufficient_data' => {
+  if (status.mode === 'disabled') {
+    return 'insufficient_data';
+  }
+
+  if (status.mode === 'error') {
+    return 'critical';
+  }
+
+  switch (status.semanticReadiness) {
+    case 'vector_ready':
+      return 'ok';
+    case 'metadata_only':
+    case 'embeddings_without_index':
+    case 'vector_index_pending':
+      return 'warning';
+    case 'no_graph':
+    case 'no_semantic_text':
+      return 'critical';
+    default:
+      return 'insufficient_data';
+  }
+};
+
+const describeKnowledgeGraphStatus = (
+  status: Extract<KangurKnowledgeGraphStatusSnapshot, { mode: 'status' }>
+): string => {
+  switch (status.semanticReadiness) {
+    case 'vector_ready':
+      return 'Neo4j has semantic text, embeddings, and an online vector index for Kangur Tutor retrieval.';
+    case 'vector_index_pending':
+      return 'Embeddings are present, but the Neo4j vector index is still building or unavailable.';
+    case 'embeddings_without_index':
+      return 'Embeddings are stored on Kangur knowledge nodes, but the Neo4j vector index is missing.';
+    case 'metadata_only':
+      return 'The graph has semantic text but no embeddings yet, so Tutor retrieval is limited to metadata matching.';
+    case 'no_semantic_text':
+      return 'The graph is present, but semantic text has not been populated on Kangur knowledge nodes.';
+    case 'no_graph':
+      return 'Neo4j does not currently contain the Kangur knowledge graph snapshot.';
+    default:
+      return 'Kangur graph status is available.';
+  }
 };
 
 const buildSystemLogsHref = (input: {
@@ -517,48 +587,192 @@ function RecentServerLogs(): JSX.Element {
 function AiTutorBridgeMetrics(): JSX.Element {
   const { summary } = useObservabilitySummaryContext();
   const aiTutor = summary.analytics.aiTutor;
+  const bridgeCompletionRate = formatPercent(aiTutor.bridgeCompletionRatePercent);
+  const graphCoverageRate = formatPercent(aiTutor.knowledgeGraphCoverageRatePercent);
+  const vectorAssistRate = formatPercent(aiTutor.knowledgeGraphVectorAssistRatePercent);
+  const recallMix = [
+    `Metadata ${formatNumber(aiTutor.knowledgeGraphMetadataOnlyRecallCount)}`,
+    `Hybrid ${formatNumber(aiTutor.knowledgeGraphHybridRecallCount)}`,
+    `Vector-only ${formatNumber(aiTutor.knowledgeGraphVectorOnlyRecallCount)}`,
+  ].join(' / ');
 
   return (
-    <FormSection title='AI Tutor Bridge Snapshot' variant='subtle'>
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-        <MetricCard
-          title='Tutor Replies'
-          value={formatNumber(aiTutor.messageSucceededCount)}
-          hint='Successful learner-facing AI Tutor replies in the selected window.'
-          icon={<BotIcon className='size-3.5' />}
-        />
-        <MetricCard
-          title='Bridge Suggestions'
-          value={formatNumber(aiTutor.bridgeSuggestionCount)}
-          hint='Replies that suggested a lesson-to-game or game-to-lesson bridge.'
-          icon={<Repeat2Icon className='size-3.5' />}
-        />
-        <MetricCard
-          title='Lekcja -> Grajmy'
-          value={formatNumber(aiTutor.lessonToGameBridgeSuggestionCount)}
-          hint='Bridge suggestions moving the learner from lesson review into practice.'
-          icon={<ArrowUpRightIcon className='size-3.5' />}
-        />
-        <MetricCard
-          title='Grajmy -> Lekcja'
-          value={formatNumber(aiTutor.gameToLessonBridgeSuggestionCount)}
-          hint='Bridge suggestions moving the learner from practice back into a lesson.'
-          icon={<ArrowUpRightIcon className='size-3.5 rotate-180' />}
-        />
-        <MetricCard
-          title='Bridge CTA Clicks'
-          value={formatNumber(aiTutor.bridgeQuickActionClickCount)}
-          hint='Bridge quick actions accepted directly from the tutor widget.'
-          icon={<GaugeIcon className='size-3.5' />}
-        />
-        <MetricCard
-          title='Bridge Completions'
-          value={formatNumber(aiTutor.bridgeFollowUpCompletionCount)}
-          hint={`Opened: ${formatNumber(aiTutor.bridgeFollowUpClickCount)} bridge follow-ups. Completed: ${formatNumber(aiTutor.bridgeFollowUpCompletionCount)}.`}
-          icon={<Repeat2Icon className='size-3.5' />}
-        />
-      </div>
-    </FormSection>
+    <div id='ai-tutor-bridge'>
+      <FormSection title='AI Tutor Bridge Snapshot' variant='subtle'>
+        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+          <MetricCard
+            title='Tutor Replies'
+            value={formatNumber(aiTutor.messageSucceededCount)}
+            hint='Successful learner-facing AI Tutor replies in the selected window.'
+            icon={<BotIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Bridge Suggestions'
+            value={formatNumber(aiTutor.bridgeSuggestionCount)}
+            hint='Replies that suggested a lesson-to-game or game-to-lesson bridge.'
+            icon={<Repeat2Icon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Lekcja -> Grajmy'
+            value={formatNumber(aiTutor.lessonToGameBridgeSuggestionCount)}
+            hint='Bridge suggestions moving the learner from lesson review into practice.'
+            icon={<ArrowUpRightIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Grajmy -> Lekcja'
+            value={formatNumber(aiTutor.gameToLessonBridgeSuggestionCount)}
+            hint='Bridge suggestions moving the learner from practice back into a lesson.'
+            icon={<ArrowUpRightIcon className='size-3.5 rotate-180' />}
+          />
+          <MetricCard
+            title='Bridge CTA Clicks'
+            value={formatNumber(aiTutor.bridgeQuickActionClickCount)}
+            hint='Bridge quick actions accepted directly from the tutor widget.'
+            icon={<GaugeIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Bridge Completions'
+            value={formatNumber(aiTutor.bridgeFollowUpCompletionCount)}
+            hint={`Opened: ${formatNumber(aiTutor.bridgeFollowUpClickCount)} bridge follow-ups. Completed: ${formatNumber(aiTutor.bridgeFollowUpCompletionCount)}.`}
+            icon={<Repeat2Icon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Bridge Completion Rate'
+            value={bridgeCompletionRate}
+            hint={`Completed follow-ups as a share of ${formatNumber(aiTutor.bridgeSuggestionCount)} bridge suggestions.`}
+            icon={<GaugeIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Neo4j-backed Replies'
+            value={formatNumber(aiTutor.knowledgeGraphAppliedCount)}
+            hint='Replies that returned knowledge-graph retrieval diagnostics from the server.'
+            icon={<BotIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Graph Coverage'
+            value={graphCoverageRate}
+            hint={`Graph-backed share across ${formatNumber(aiTutor.messageSucceededCount)} Tutor replies.`}
+            icon={<GaugeIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Semantic Graph Replies'
+            value={formatNumber(aiTutor.knowledgeGraphSemanticCount)}
+            hint={`Website-help graph replies: ${formatNumber(aiTutor.knowledgeGraphWebsiteHelpCount)}.`}
+            icon={<GaugeIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Recall Mix'
+            value={recallMix}
+            hint={`Vector recall attempts: ${formatNumber(aiTutor.knowledgeGraphVectorRecallAttemptedCount)}.`}
+            icon={<RefreshCwIcon className='size-3.5' />}
+          />
+          <MetricCard
+            title='Vector Assist Rate'
+            value={vectorAssistRate}
+            hint={`Hybrid and vector-only recall as a share of ${formatNumber(aiTutor.knowledgeGraphSemanticCount)} semantic graph replies.`}
+            icon={<RefreshCwIcon className='size-3.5' />}
+          />
+        </div>
+      </FormSection>
+    </div>
+  );
+}
+
+function KnowledgeGraphStatusSection(): JSX.Element {
+  const {
+    summary: { knowledgeGraphStatus },
+  } = useObservabilitySummaryContext();
+
+  return (
+    <div id='knowledge-graph-status'>
+      <FormSection title='Knowledge Graph Status' variant='subtle'>
+        {knowledgeGraphStatus.mode === 'disabled' ? (
+          <EmptyState
+            title='Neo4j graph status disabled'
+            description={knowledgeGraphStatus.message}
+            variant='compact'
+          />
+        ) : knowledgeGraphStatus.mode === 'error' ? (
+          <Alert variant='warning'>
+            Failed to load live graph status for `{knowledgeGraphStatus.graphKey}`.{' '}
+            {knowledgeGraphStatus.message}
+          </Alert>
+        ) : (
+          <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-3'>
+                  <div className='text-sm font-semibold text-white'>Neo4j semantic retrieval graph</div>
+                  <StatusBadge status={resolveKnowledgeGraphBadgeStatus(knowledgeGraphStatus)} />
+                </div>
+                <p className='max-w-3xl text-xs leading-relaxed text-gray-400'>
+                  {describeKnowledgeGraphStatus(knowledgeGraphStatus)}
+                </p>
+              </div>
+              <div className='grid gap-3 sm:grid-cols-2'>
+                <MetadataItem label='Graph Key' value={knowledgeGraphStatus.graphKey} variant='card' mono />
+                <MetadataItem label='Synced' value={formatDateTime(knowledgeGraphStatus.syncedAt)} variant='card' />
+                <MetadataItem label='Locale' value={knowledgeGraphStatus.locale ?? '—'} variant='card' />
+                <MetadataItem label='Readiness' value={formatKnowledgeGraphReadiness(knowledgeGraphStatus.semanticReadiness)} variant='card' />
+              </div>
+            </div>
+
+            <div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <MetadataItem
+                label='Semantic Coverage'
+                value={formatPercent(knowledgeGraphStatus.semanticCoverageRatePercent)}
+                variant='card'
+              />
+              <MetadataItem
+                label='Embedding Coverage'
+                value={formatPercent(knowledgeGraphStatus.embeddingCoverageRatePercent)}
+                variant='card'
+              />
+              <MetadataItem
+                label='Vector Index'
+                value={
+                  knowledgeGraphStatus.vectorIndexPresent
+                    ? [knowledgeGraphStatus.vectorIndexState, knowledgeGraphStatus.vectorIndexType]
+                        .filter(Boolean)
+                        .join(' • ') || 'Present'
+                    : 'Missing'
+                }
+                variant='card'
+              />
+              <MetadataItem
+                label='Embedding Model'
+                value={knowledgeGraphStatus.embeddingModels.join(', ') || '—'}
+                variant='card'
+              />
+              <MetadataItem
+                label='Live Graph'
+                value={`${formatNumber(knowledgeGraphStatus.liveNodeCount)} nodes / ${formatNumber(knowledgeGraphStatus.liveEdgeCount)} edges`}
+                variant='card'
+              />
+              <MetadataItem
+                label='Synced Snapshot'
+                value={`${formatNumber(knowledgeGraphStatus.syncedNodeCount)} nodes / ${formatNumber(knowledgeGraphStatus.syncedEdgeCount)} edges`}
+                variant='card'
+              />
+              <MetadataItem
+                label='Canonical Integrity'
+                value={
+                  knowledgeGraphStatus.invalidCanonicalNodeCount === 0
+                    ? 'All canonical nodes valid'
+                    : `${formatNumber(knowledgeGraphStatus.invalidCanonicalNodeCount)} invalid`
+                }
+                variant='card'
+              />
+              <MetadataItem
+                label='Embedding Dimensions'
+                value={formatNumber(knowledgeGraphStatus.vectorIndexDimensions ?? knowledgeGraphStatus.embeddingDimensions)}
+                variant='card'
+              />
+            </div>
+          </Card>
+        )}
+      </FormSection>
+    </div>
   );
 }
 
@@ -720,6 +934,7 @@ function SummaryContent(): JSX.Element {
       </FormSection>
 
       <AiTutorBridgeMetrics />
+      <KnowledgeGraphStatusSection />
 
       <FormSection title='Alerts' variant='subtle'>
         <div data-doc-id='admin_observability_alerts'>

@@ -91,6 +91,7 @@ type UseKangurAiTutorPanelActionsInput = {
     | 'setMessageFeedbackByKey'
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
+    | 'setPersistedSelectionPageRects'
     | 'setPersistedSelectionRect'
     | 'setSelectionConversationContext'
     | 'setSectionResponseComplete'
@@ -138,6 +139,7 @@ export function useKangurAiTutorPanelActions({
     setMessageFeedbackByKey,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionConversationContext,
     setSectionResponseComplete,
@@ -303,6 +305,7 @@ export function useKangurAiTutorPanelActions({
     setSelectionResponseComplete(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionPageRect(null);
+    setPersistedSelectionPageRects([]);
     setPersistedSelectionContainerRect(null);
     trackKangurClientEvent('kangur_ai_tutor_selection_detached', {
       ...telemetryContext,
@@ -317,6 +320,7 @@ export function useKangurAiTutorPanelActions({
     setHighlightedText,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionConversationContext,
     setSelectionResponseComplete,

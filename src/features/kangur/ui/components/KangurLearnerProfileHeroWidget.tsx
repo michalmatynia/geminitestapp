@@ -26,7 +26,8 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       description={
         user ? (
           <>
-            Statystyki ucznia: <span className='font-semibold text-slate-700'>{displayName}</span>.
+            Statystyki ucznia:{' '}
+            <span className='font-semibold [color:var(--kangur-page-text)]'>{displayName}</span>.
           </>
         ) : (
           'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'

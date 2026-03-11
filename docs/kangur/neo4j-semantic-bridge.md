@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-12'
 status: 'active'
 doc_type: 'guide'
 scope: 'feature:kangur'
@@ -55,6 +55,11 @@ NEO4J_PASSWORD="neo4jdevpassword"
 NEO4J_DATABASE="neo4j"
 ```
 
+The standalone Neo4j helper scripts now load the repo `.env` automatically via
+`dotenv/config`, so local commands like `kangur:knowledge-graph:status`,
+`kangur:knowledge-graph:sync`, and `kangur:knowledge-graph:query` do not need a
+manual `set -a && source .env`.
+
 Stop the local service with:
 
 ```bash
@@ -101,7 +106,16 @@ npm run kangur:knowledge-graph:status
 ```
 
 That reports the currently synced locale, sync timestamp, stored node and edge
-counts, live graph counts, and canonical-source integrity counts.
+counts, live graph counts, canonical-source integrity counts, semantic and
+embedding node counts, vector-index state, and a derived `semanticReadiness`
+summary:
+
+- `vector_ready`: embeddings exist and the Neo4j vector index is online
+- `vector_index_pending`: embeddings exist but the vector index is still not online
+- `embeddings_without_index`: embeddings exist but no Kangur vector index is present
+- `metadata_only`: semantic text exists but the graph has no embeddings
+- `no_semantic_text`: the live graph exists but semantic fields are missing
+- `no_graph`: no live Kangur graph is present for the requested key
 
 You can also preview a real tutor-style question locally from the command line:
 
@@ -111,6 +125,8 @@ npm run kangur:knowledge-graph:query -- --message="Jak się zalogować?" --surfa
 
 The query preview prints:
 
+- a compact summary with retrieval status, query mode, recall strategy, and
+  lexical/vector hit counts
 - requested context-registry refs
 - runtime resolution mode and any resolved runtime document ids
 - Neo4j retrieval/hydration output

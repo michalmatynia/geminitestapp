@@ -64,15 +64,40 @@ describe('KangurGameHomeMomentumWidget', () => {
     );
 
     expect(screen.getByTestId('kangur-home-momentum-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-momentum-label')).toHaveTextContent(
-      'Priorytet wysoki'
-    );
+    expect(screen.getByTestId('kangur-home-momentum-label')).toHaveTextContent('Priorytet wysoki');
     expect(screen.getByTestId('kangur-home-momentum-title')).toHaveTextContent(
       'Dzis warto: Dzielenie'
     );
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
+    );
+  });
+
+  it('uses theme-aware accent surfaces for recommendation cards and chips', () => {
+    render(
+      <KangurGameHomeMomentumWidget
+        basePath='/kangur'
+        progress={buildProgress({
+          lessonMastery: {
+            division: {
+              attempts: 3,
+              completions: 3,
+              masteryPercent: 60,
+              bestScorePercent: 72,
+              lastScorePercent: 68,
+              lastCompletedAt: '2026-03-10T09:00:00.000Z',
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-home-momentum-widget').className).toContain(
+      'var(--kangur-soft-card-background)'
+    );
+    expect(screen.getByTestId('kangur-home-momentum-label').className).toContain(
+      'var(--kangur-soft-card-background)'
     );
   });
 

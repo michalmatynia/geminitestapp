@@ -146,6 +146,13 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     });
 
     expect(runNeo4jStatementsMock).toHaveBeenCalledTimes(1);
+    expect(runNeo4jStatementsMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        statement: expect.stringContaining(`WITH
+    n,
+    graphKey,`),
+      })
+    );
     expect(result).toMatchObject({
       status: 'hit',
       queryMode: 'website_help',
@@ -433,6 +440,238 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         }),
       ])
     );
+  });
+
+  it('boosts test-surface hits for website-help queries about tests', async () => {
+    process.env['NEO4J_ENABLED'] = 'true';
+    process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';
+    process.env['NEO4J_USERNAME'] = 'neo4j';
+    process.env['NEO4J_PASSWORD'] = 'secret';
+
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'auth-login-form',
+          title: 'Formularz logowania Kangur',
+          shortDescription: 'Ten formularz zbiera dane potrzebne do wejscia ucznia albo rodzica do aplikacji.',
+          fullDescription: 'Pelny opis formularza logowania.',
+          hints: [],
+          followUpActions: [],
+          surface: 'auth',
+          focusKind: 'login_form',
+          focusIdPrefixes: [],
+          contentIdPrefixes: [],
+          relatedGames: [],
+          relatedTests: [],
+          triggerPhrases: [],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'test-review',
+          title: 'Omowienie po tescie',
+          shortDescription: 'Omowienie pomaga zrozumiec blad i wyciagnac jeden nastepny wniosek.',
+          fullDescription: 'Pelny opis omowienia po tescie.',
+          hints: [],
+          followUpActions: [],
+          surface: 'test',
+          focusKind: 'review',
+          focusIdPrefixes: [],
+          contentIdPrefixes: [],
+          relatedGames: [],
+          relatedTests: [],
+          triggerPhrases: [],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    runNeo4jStatementsMock.mockResolvedValue([
+      {
+        records: [
+        {
+          id: 'page:kangur-tests',
+          kind: 'page',
+          title: 'Testy',
+          summary: 'Ekran testow i nawigacji po testach w Kangurze.',
+          surface: null,
+          focusKind: null,
+          route: '/tests',
+          anchorId: null,
+          sourceCollection: 'kangur_context_registry',
+          sourceRecordId: 'page:kangur-tests',
+          sourcePath: 'page:kangur-tests',
+          tags: ['kangur', 'page', 'testy'],
+          tokenHits: 2,
+          semanticScore: 24,
+          relations: [],
+        },
+        {
+          id: 'guide:native:auth-login-form',
+          kind: 'guide',
+          title: 'Formularz logowania Kangur',
+            summary: 'Ten formularz zbiera dane potrzebne do wejscia ucznia albo rodzica do aplikacji.',
+            surface: 'auth',
+            focusKind: 'login_form',
+            route: '/',
+            anchorId: null,
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'auth-login-form',
+            sourcePath: 'entry:auth-login-form',
+            tags: ['auth'],
+            tokenHits: 1,
+            semanticScore: 12,
+            relations: [],
+          },
+          {
+            id: 'guide:native:test-review',
+            kind: 'guide',
+            title: 'Omowienie po tescie',
+            summary: 'Omowienie pomaga zrozumiec blad i wyciagnac jeden nastepny wniosek.',
+            surface: 'test',
+            focusKind: 'review',
+            route: '/tests',
+            anchorId: null,
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'test-review',
+            sourcePath: 'entry:test-review',
+            tags: ['test'],
+            tokenHits: 1,
+            semanticScore: 12,
+            relations: [],
+          },
+        ],
+      },
+    ]);
+
+    const { previewKangurWebsiteHelpGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await previewKangurWebsiteHelpGraphContext({
+      latestUserMessage: 'Gdzie sa testy?',
+      context: undefined,
+      locale: 'pl',
+    });
+
+    expect(result.status).toBe('hit');
+    if (result.status !== 'hit') {
+      throw new Error('Expected graph context hit.');
+    }
+    expect(runNeo4jStatementsMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        parameters: expect.objectContaining({
+          limit: 8,
+        }),
+      })
+    );
+    expect(result.nodeIds[0]).toBe('page:kangur-tests');
+    expect(result.websiteHelpTarget).toEqual({
+      nodeId: 'page:kangur-tests',
+      label: 'Testy',
+      route: '/tests',
+      anchorId: null,
+    });
+    expect(result.hits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'guide:native:auth-login-form',
+          semanticScore: expect.any(Number),
+        }),
+      ])
+    );
+    const authHit = result.hits.find((hit) => hit.id === 'guide:native:auth-login-form');
+    expect(authHit?.semanticScore ?? 0).toBeLessThan(0);
+  });
+
+  it('prefers the neutral tests page for return-to-tests location queries', async () => {
+    process.env['NEO4J_ENABLED'] = 'true';
+    process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';
+    process.env['NEO4J_USERNAME'] = 'neo4j';
+    process.env['NEO4J_PASSWORD'] = 'secret';
+
+    runNeo4jStatementsMock.mockResolvedValue([
+      {
+        records: [
+          {
+            id: 'page:kangur-tests',
+            kind: 'page',
+            title: 'Testy',
+            summary: 'Ekran testow i nawigacji po testach w Kangurze.',
+            surface: null,
+            focusKind: null,
+            route: '/tests',
+            anchorId: null,
+            sourceCollection: 'kangur_context_registry',
+            sourceRecordId: 'page:kangur-tests',
+            sourcePath: 'page:kangur-tests',
+            tags: ['kangur', 'page', 'testy'],
+            tokenHits: 2,
+            semanticScore: 24,
+            relations: [],
+          },
+          {
+            id: 'guide:native:test-empty-state',
+            kind: 'guide',
+            title: 'Pusty zestaw testowy',
+            summary: 'Ten stan oznacza, ze wybrany zestaw nie ma jeszcze opublikowanych pytan do rozwiazania.',
+            surface: 'test',
+            focusKind: 'empty_state',
+            route: '/tests',
+            anchorId: null,
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'test-empty-state',
+            sourcePath: 'entry:test-empty-state',
+            tags: ['test'],
+            tokenHits: 2,
+            semanticScore: 24,
+            relations: [],
+          },
+          {
+            id: 'guide:native:test-question',
+            kind: 'guide',
+            title: 'Pytanie testowe',
+            summary: 'To miejsce do spokojnego przeczytania tresci i samodzielnej proby.',
+            surface: 'test',
+            focusKind: 'question',
+            route: '/tests',
+            anchorId: null,
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'test-question',
+            sourcePath: 'entry:test-question',
+            tags: ['test'],
+            tokenHits: 2,
+            semanticScore: 24,
+            relations: [],
+          },
+        ],
+      },
+    ]);
+
+    const { previewKangurWebsiteHelpGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await previewKangurWebsiteHelpGraphContext({
+      latestUserMessage: 'Jak wrocic do testow?',
+      context: undefined,
+      locale: 'pl',
+    });
+
+    expect(result.status).toBe('hit');
+    if (result.status !== 'hit') {
+      throw new Error('Expected graph context hit.');
+    }
+    expect(result.nodeIds[0]).toBe('page:kangur-tests');
+    expect(result.websiteHelpTarget).toEqual({
+      nodeId: 'page:kangur-tests',
+      label: 'Testy',
+      route: '/tests',
+      anchorId: null,
+    });
   });
 
   it('exposes node-level hydration debug data in preview mode', async () => {

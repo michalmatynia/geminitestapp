@@ -6,6 +6,8 @@ import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 
 import {
   clearPersistedTutorAvatarPosition,
+  clearPersistedTutorPanelPosition,
+  persistTutorPanelPosition,
   persistTutorVisibilityHidden,
 } from './KangurAiTutorWidget.storage';
 
@@ -25,6 +27,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
   bubblePlacementMode: string;
   clearSelection: () => void;
   closeChat: () => void;
+  freeformContextualPanelPoint: { x: number; y: number } | null;
   isAskModalMode: boolean;
   isOpen: boolean;
   isTargetWithinTutorUi: (target: EventTarget | null) => boolean;
@@ -56,10 +59,16 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setHoveredSectionAnchorId'
     | 'setIsAvatarDragging'
     | 'setLauncherPromptVisible'
+    | 'panelPosition'
+    | 'panelSnapPreference'
     | 'setPanelAnchorMode'
+    | 'setPanelPosition'
+    | 'setPanelPositionMode'
+    | 'setPanelSnapPreference'
     | 'setPanelShellMode'
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
+    | 'setPersistedSelectionPageRects'
     | 'setPersistedSelectionRect'
     | 'setSelectionGuidanceCalloutVisibleText'
     | 'setSelectionConversationContext'
@@ -77,6 +86,7 @@ export function useKangurAiTutorPanelInteractions({
   bubblePlacementMode,
   clearSelection,
   closeChat,
+  freeformContextualPanelPoint,
   isAskModalMode,
   isOpen,
   isTargetWithinTutorUi,
@@ -109,10 +119,16 @@ export function useKangurAiTutorPanelInteractions({
     setHoveredSectionAnchorId,
     setIsAvatarDragging,
     setLauncherPromptVisible,
+    panelPosition,
+    panelSnapPreference,
     setPanelAnchorMode,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
     setPanelShellMode,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
@@ -246,6 +262,7 @@ export function useKangurAiTutorPanelInteractions({
         setHighlightedText(null);
         setPersistedSelectionRect(null);
         setPersistedSelectionPageRect(null);
+        setPersistedSelectionPageRects([]);
         setPersistedSelectionContainerRect(null);
       }
       setContextualTutorMode(null);
@@ -266,6 +283,7 @@ export function useKangurAiTutorPanelInteractions({
       setPanelShellMode,
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
+      setPersistedSelectionPageRects,
       setPersistedSelectionRect,
       selectionExplainTimeoutRef,
       selectionGuidanceRevealTimeoutRef,
@@ -340,10 +358,16 @@ export function useKangurAiTutorPanelInteractions({
     setHomeOnboardingStepIndex(null);
     setHasNewMessage(false);
     setDraggedAvatarPoint(null);
+    setPanelPosition(null);
+    setPanelPositionMode('manual');
+    setPanelSnapPreference('free');
     clearSelection();
     clearPersistedTutorAvatarPosition();
+    clearPersistedTutorPanelPosition();
     setHighlightedText(null);
     setPersistedSelectionRect(null);
+    setPersistedSelectionPageRect(null);
+    setPersistedSelectionPageRects([]);
     setPersistedSelectionContainerRect(null);
     setSelectionGuidanceCalloutVisibleText(null);
     setSelectionConversationContext(null);
@@ -362,16 +386,105 @@ export function useKangurAiTutorPanelInteractions({
     setGuidedTutorTarget,
     setHasNewMessage,
     setDraggedAvatarPoint,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
     setContextualTutorMode,
     setHighlightedText,
     setHomeOnboardingStepIndex,
     setPersistedSelectionContainerRect,
+    setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     selectionExplainTimeoutRef,
     selectionGuidanceRevealTimeoutRef,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
+    telemetryContext,
+  ]);
+
+  const handleResetPanelPosition = useCallback((): void => {
+    trackKangurClientEvent('kangur_ai_tutor_panel_position_reset', {
+      ...telemetryContext,
+      hasSelectedText: Boolean(activeSelectedText),
+      isOpen,
+      messageCount,
+    });
+    setPanelPosition(null);
+    setPanelPositionMode('manual');
+    setPanelSnapPreference('free');
+    clearPersistedTutorPanelPosition();
+  }, [
+    activeSelectedText,
+    isOpen,
+    messageCount,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
+    telemetryContext,
+  ]);
+
+  const handleMovePanelToContext = useCallback((): void => {
+    if (!freeformContextualPanelPoint) {
+      return;
+    }
+
+    trackKangurClientEvent('kangur_ai_tutor_panel_moved_to_context', {
+      ...telemetryContext,
+      hasSelectedText: Boolean(activeSelectedText),
+      isOpen,
+      messageCount,
+    });
+    setPanelPosition(freeformContextualPanelPoint);
+    setPanelPositionMode('contextual');
+    setPanelSnapPreference('free');
+    persistTutorPanelPosition({
+      left: freeformContextualPanelPoint.x,
+      mode: 'contextual',
+      snap: 'free',
+      top: freeformContextualPanelPoint.y,
+    });
+  }, [
+    activeSelectedText,
+    freeformContextualPanelPoint,
+    isOpen,
+    messageCount,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
+    telemetryContext,
+  ]);
+
+  const handleDetachPanelFromContext = useCallback((): void => {
+    trackKangurClientEvent('kangur_ai_tutor_panel_detached_from_context', {
+      ...telemetryContext,
+      hasSelectedText: Boolean(activeSelectedText),
+      isOpen,
+      messageCount,
+    });
+    setPanelPositionMode('manual');
+
+    const persistedPoint = panelPosition ?? freeformContextualPanelPoint;
+    if (!persistedPoint) {
+      clearPersistedTutorPanelPosition();
+      return;
+    }
+
+    persistTutorPanelPosition({
+      left: persistedPoint.x,
+      mode: 'manual',
+      snap: panelSnapPreference,
+      top: persistedPoint.y,
+    });
+  }, [
+    activeSelectedText,
+    freeformContextualPanelPoint,
+    isOpen,
+    messageCount,
+    panelPosition,
+    panelSnapPreference,
+    setPanelPositionMode,
     telemetryContext,
   ]);
 
@@ -441,10 +554,13 @@ export function useKangurAiTutorPanelInteractions({
     handleCloseChat,
     handleCloseGuestIntroCard,
     handleCloseLauncherPrompt,
+    handleDetachPanelFromContext,
     handleDisableTutor,
+    handleMovePanelToContext,
     handleOpenChat,
     handlePanelBackdropClose,
     handlePanelHeaderClose,
+    handleResetPanelPosition,
     handleSelectionActionMouseDown,
     persistSelectionContext,
     resetAskModalState,

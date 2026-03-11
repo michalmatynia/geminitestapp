@@ -139,10 +139,13 @@ export default function OperationSelector({
                   </div>
                 </div>
                 <div className='space-y-1 text-left'>
-                  <span className='block text-lg font-extrabold text-slate-800'>
+                  <span className='block text-lg font-extrabold [color:var(--kangur-page-text)]'>
                     {operation.label}
                   </span>
-                  <span id={descriptionElementId} className='block text-sm text-slate-500'>
+                  <span
+                    id={descriptionElementId}
+                    className='block text-sm [color:var(--kangur-page-muted-text)]'
+                  >
                     {operation.description}
                   </span>
                 </div>

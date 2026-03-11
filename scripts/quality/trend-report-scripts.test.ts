@@ -88,6 +88,14 @@ describe('trend report scripts summary-json mode', () => {
           range: '7d',
           bridgeSuggestionCount: 6,
           bridgeCompletionRatePercent: 33.3,
+          messageSucceededCount: 9,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           bridgeQuickActionClickCount: 2,
           bridgeFollowUpClickCount: 2,
           bridgeFollowUpCompletionCount: 1,
@@ -207,6 +215,14 @@ describe('trend report scripts summary-json mode', () => {
           range: '7d',
           bridgeSuggestionCount: 6,
           bridgeCompletionRatePercent: 33.3,
+          messageSucceededCount: 9,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           bridgeQuickActionClickCount: 2,
           bridgeFollowUpClickCount: 2,
           bridgeFollowUpCompletionCount: 1,
@@ -321,7 +337,8 @@ describe('trend report scripts summary-json mode', () => {
       latestTotalDurationMs: 32_478,
       latestKangurAiTutorBridgeState: 'current',
       latestKangurAiTutorBridgeAlertStatus: 'warning',
-      latestKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+      latestKangurAiTutorBridgeSummaryText:
+        'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
       latestAvailableKangurAiTutorBridgeState: 'current',
       latestAvailableKangurAiTutorBridgeAgeMs: 0,
       latestAvailableKangurAiTutorBridgeAgeRuns: 0,
@@ -330,7 +347,7 @@ describe('trend report scripts summary-json mode', () => {
     expect(payload.details.runs[0].sourceFile).toBe('weekly-quality-latest.json');
     expect(payload.details.runs[0].checks.criticalFlows.structuredSummaryText).toBe('pass=5/6 fail=1');
     expect(payload.details.runs[0].kangurAiTutorBridgeSummaryText).toBe(
-      'bridge funnel degraded (33.3%)'
+      'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%'
     );
     expect(payload.details.runs[0].checks.guardrails.structuredSummaryText).toBe(
       'pass=10/14 fail=4 hard=4 warn=0 info=0 baseline=no'
@@ -361,6 +378,14 @@ describe('trend report scripts summary-json mode', () => {
           range: '7d',
           bridgeSuggestionCount: 6,
           bridgeCompletionRatePercent: 33.3,
+          messageSucceededCount: 9,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           bridgeQuickActionClickCount: 2,
           bridgeFollowUpClickCount: 2,
           bridgeFollowUpCompletionCount: 1,
@@ -406,7 +431,7 @@ describe('trend report scripts summary-json mode', () => {
     expect(markdown).toContain('Latest Kangur AI Tutor bridge state: current');
     expect(markdown).toContain('Latest Kangur AI Tutor bridge age: 0 runs');
     expect(markdown).toContain(
-      'Latest Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%)'
+      'Latest Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%) · graph=66.7% · vector=75%'
     );
     expect(markdown).toContain('## Kangur AI Tutor Bridge Snapshot');
   });
@@ -427,6 +452,14 @@ describe('trend report scripts summary-json mode', () => {
           range: '7d',
           bridgeSuggestionCount: 6,
           bridgeCompletionRatePercent: 33.3,
+          messageSucceededCount: 9,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           bridgeQuickActionClickCount: 2,
           bridgeFollowUpClickCount: 2,
           bridgeFollowUpCompletionCount: 1,
@@ -454,7 +487,8 @@ describe('trend report scripts summary-json mode', () => {
       latestKangurAiTutorBridgeAlertStatus: null,
       latestKangurAiTutorBridgeSummaryText: null,
       latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
-      latestAvailableKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+      latestAvailableKangurAiTutorBridgeSummaryText:
+        'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
       latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
       latestAvailableKangurAiTutorBridgeState: 'stale',
       latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
@@ -520,7 +554,8 @@ describe('trend report scripts summary-json mode', () => {
     writeJson(root, 'docs/metrics/weekly-quality-trend-latest.json', {
       generatedAt: '2026-03-09T11:00:00.000Z',
       summary: {
-        latestAvailableKangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+        latestAvailableKangurAiTutorBridgeSummaryText:
+          'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
         latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
         latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
         latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
@@ -555,7 +590,8 @@ describe('trend report scripts summary-json mode', () => {
       staleSignalCount: 1,
       absentSignalCount: 1,
       missingSignalStateCount: 1,
-      latestWeeklyLaneSignal: 'bridge funnel degraded (33.3%)',
+      latestWeeklyLaneSignal:
+        'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
       latestWeeklyLaneAlertStatus: 'warning',
       latestWeeklyLaneSignalRun: '2026-03-09T10:30:00.000Z',
       latestWeeklyLaneSignalState: 'stale',
@@ -568,7 +604,7 @@ describe('trend report scripts summary-json mode', () => {
         id: 'weekly-lane',
         status: 'ready',
         latestRun: '2026-03-09T11:30:00.000Z',
-        latestSignal: 'bridge funnel degraded (33.3%)',
+        latestSignal: 'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
         latestAlertStatus: 'warning',
         latestSignalRun: '2026-03-09T10:30:00.000Z',
         latestSignalState: 'stale',
@@ -597,6 +633,14 @@ describe('trend report scripts summary-json mode', () => {
           kangurAiTutorBridge: {
             bridgeSuggestionCount: 6,
             bridgeCompletionRatePercent: 33.3,
+            messageSucceededCount: 9,
+            knowledgeGraphAppliedCount: 6,
+            knowledgeGraphSemanticCount: 4,
+            knowledgeGraphWebsiteHelpCount: 2,
+            knowledgeGraphMetadataOnlyRecallCount: 1,
+            knowledgeGraphHybridRecallCount: 2,
+            knowledgeGraphVectorOnlyRecallCount: 1,
+            knowledgeGraphVectorRecallAttemptedCount: 3,
             bridgeQuickActionClickCount: 2,
             bridgeFollowUpClickCount: 2,
             bridgeFollowUpCompletionCount: 1,
@@ -623,7 +667,7 @@ describe('trend report scripts summary-json mode', () => {
       '| Trend | Status | Latest Run | Signal Run | Signal State | Signal Age | Runs Analyzed | Delta vs Prev | Alert | Latest Signal | JSON | Markdown |'
     );
     expect(markdown).toContain(
-      '| Weekly Lane Trend | READY | 2026-03-09T10:30:00.000Z | 2026-03-09T10:30:00.000Z | current | 0 runs | 1 | - | warning | bridge funnel degraded (33.3%) | `weekly-quality-trend-latest.json` | `weekly-quality-trend-latest.md` |'
+      '| Weekly Lane Trend | READY | 2026-03-09T10:30:00.000Z | 2026-03-09T10:30:00.000Z | current | 0 runs | 1 | - | warning | bridge funnel degraded (33.3%) · graph=66.7% · vector=75% | `weekly-quality-trend-latest.json` | `weekly-quality-trend-latest.md` |'
     );
     expect(markdown).toContain(
       'Weekly lane entries surface Kangur AI Tutor bridge alert severity when weekly trend artifacts include that signal.'

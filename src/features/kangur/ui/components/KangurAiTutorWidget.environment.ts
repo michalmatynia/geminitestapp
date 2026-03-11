@@ -238,8 +238,17 @@ export function useKangurAiTutorWidgetEnvironment({
 }: UseKangurAiTutorWidgetEnvironmentInput) {
   const settingsStore = useSettingsStore();
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
-  const { selectedText, selectionRect, selectionContainerRect, clearSelection } =
-    useKangurTextHighlight();
+  const textHighlightState = useKangurTextHighlight();
+  const {
+    activateSelectionGlow = () => false,
+    selectionLineRects = [],
+    selectedText,
+    selectionRect,
+    selectionContainerRect,
+    clearSelection,
+    clearSelectionGlow = () => {},
+    selectionGlowSupported = false,
+  } = textHighlightState;
   const tutorAnchorContext = useOptionalKangurTutorAnchors();
   const routing = useOptionalKangurRouting();
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
@@ -253,10 +262,12 @@ export function useKangurAiTutorWidgetEnvironment({
     mounted: widgetMounted,
     persistedSelectionContainerRect,
     persistedSelectionPageRect,
+    persistedSelectionPageRects,
     persistedSelectionRect,
     selectionConversationContext,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     viewportTick,
   } = widgetState;
@@ -307,6 +318,7 @@ export function useKangurAiTutorWidgetEnvironment({
   const shouldIgnoreLiveTutorSelection =
     allowSelectedTextSupport && selectedText !== null && isSelectionWithinTutorUi();
   const liveSelectedText = shouldIgnoreLiveTutorSelection ? null : selectedText;
+  const liveSelectionLineRects = shouldIgnoreLiveTutorSelection ? [] : selectionLineRects;
   const liveSelectionRect = shouldIgnoreLiveTutorSelection ? null : selectionRect;
   const liveSelectionContainerRect = shouldIgnoreLiveTutorSelection ? null : selectionContainerRect;
 
@@ -317,6 +329,9 @@ export function useKangurAiTutorWidgetEnvironment({
   const activeSelectedText =
     rawSelectedText && rawSelectedText === dismissedSelectedText ? null : rawSelectedText;
   const liveSelectionPageRect = liveSelectionRect ? getPageRect(liveSelectionRect) : null;
+  const liveSelectionPageRects = liveSelectionLineRects
+    .map((rect) => getPageRect(rect))
+    .filter((rect): rect is DOMRect => rect !== null);
   const activeSelectionRect = activeSelectedText
     ? (liveSelectionRect ??
       getViewportRectFromPageRect(persistedSelectionPageRect) ??
@@ -325,6 +340,9 @@ export function useKangurAiTutorWidgetEnvironment({
   const activeSelectionPageRect = activeSelectedText
     ? (liveSelectionPageRect ?? persistedSelectionPageRect)
     : null;
+  const activeSelectionPageRects = activeSelectedText
+    ? (liveSelectionPageRects.length > 0 ? liveSelectionPageRects : persistedSelectionPageRects)
+    : [];
   const activeSelectionContainerRect = activeSelectedText
     ? (liveSelectionContainerRect ?? persistedSelectionContainerRect)
     : null;
@@ -388,14 +406,18 @@ export function useKangurAiTutorWidgetEnvironment({
       setPersistedSelectionPageRect(getPageRect(liveSelectionRect));
     }
 
+    setPersistedSelectionPageRects(liveSelectionPageRects.map((rect) => cloneRect(rect) as DOMRect));
+
     if (liveSelectionContainerRect) {
       setPersistedSelectionContainerRect(cloneRect(liveSelectionContainerRect));
     }
   }, [
     liveSelectionContainerRect,
+    liveSelectionPageRects,
     liveSelectionRect,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
   ]);
 
@@ -429,13 +451,16 @@ export function useKangurAiTutorWidgetEnvironment({
     activeSelectedText,
     activeSelectionContainerRect,
     activeSelectionPageRect,
+    activeSelectionPageRects,
     activeSelectionProtectedRect,
     activeSelectionRect,
     allowCrossPagePersistence,
     allowSelectedTextSupport,
+    activateSelectionGlow,
     basePath,
     canSendMessages,
     clearSelection,
+    clearSelectionGlow,
     hasAssignmentSummary,
     hasCurrentQuestion,
     hintDepth,
@@ -450,6 +475,8 @@ export function useKangurAiTutorWidgetEnvironment({
     remainingMessages,
     resolveGuestLoginGuidanceIntentForContent,
     routing,
+    selectionGlowSupported,
+    selectionLineRects: liveSelectionLineRects,
     selectionContainerRect: liveSelectionContainerRect,
     selectedText: liveSelectedText,
     selectionRect: liveSelectionRect,

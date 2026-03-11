@@ -155,6 +155,13 @@ export type KangurKnowledgeGraphRecallStrategy =
   | 'vector_only'
   | 'hybrid_vector';
 
+type KangurKnowledgeGraphQueryIntent = {
+  preferredSurfaces: string[];
+  preferredRoutes: string[];
+  preferredFocusKinds: string[];
+  isLocationLookup: boolean;
+};
+
 const WEBSITE_HELP_PATTERNS = [
   /co to jest/u,
   /co robi/u,
@@ -213,6 +220,74 @@ const tokenizeQuery = (value: string): string[] =>
         .filter((segment) => segment.length >= 3)
     )
   ).slice(0, 12);
+
+const buildKnowledgeGraphQueryIntent = (value: string): KangurKnowledgeGraphQueryIntent => {
+  const normalized = normalizeText(value);
+  const preferredSurfaces = new Set<string>();
+  const preferredRoutes = new Set<string>();
+  const preferredFocusKinds = new Set<string>();
+
+  if (/(zalog|login|konto|uczen|rodzic)/u.test(normalized)) {
+    preferredSurfaces.add('auth');
+    preferredRoutes.add('/');
+    preferredFocusKinds.add('login_action');
+    preferredFocusKinds.add('login_form');
+    preferredFocusKinds.add('create_account_action');
+  }
+
+  if (/(lekcj)/u.test(normalized)) {
+    preferredSurfaces.add('lesson');
+    preferredRoutes.add('/lessons');
+  }
+
+  if (/(test)/u.test(normalized)) {
+    preferredSurfaces.add('test');
+    preferredRoutes.add('/tests');
+    if (/(pytan|pytanie|zadanie testowe)/u.test(normalized)) {
+      preferredFocusKinds.add('question');
+    }
+    if (/(omow|omowienie|bled|błąd|po tescie)/u.test(normalized)) {
+      preferredFocusKinds.add('review');
+    }
+    if (/(podsumow|wynik|rezultat|rezultaty)/u.test(normalized)) {
+      preferredFocusKinds.add('summary');
+    }
+    if (/(pusty zestaw|brak pytan|brak pytań|empty)/u.test(normalized)) {
+      preferredFocusKinds.add('empty_state');
+    }
+  }
+
+  if (/(zadani)/u.test(normalized)) {
+    preferredSurfaces.add('assignment');
+    preferredRoutes.add('/assignments');
+  }
+
+  if (/(profil)/u.test(normalized)) {
+    preferredSurfaces.add('profile');
+    preferredRoutes.add('/profile');
+  }
+
+  if (/(gra|grze|misja)/u.test(normalized)) {
+    preferredSurfaces.add('game');
+    preferredRoutes.add('/game');
+    preferredFocusKinds.add('home_quest');
+  }
+
+  if (/(panel rodzica|rodzic)/u.test(normalized)) {
+    preferredSurfaces.add('parent_dashboard');
+    preferredRoutes.add('/parent-dashboard');
+  }
+
+  return {
+    preferredSurfaces: Array.from(preferredSurfaces),
+    preferredRoutes: Array.from(preferredRoutes),
+    preferredFocusKinds: Array.from(preferredFocusKinds),
+    isLocationLookup:
+      /(gdzie|znajd|wrocic|wrócic|wroc|wróc|przejsc|przejść|otworzyc|otworzyć|wejsc|wejść)/u.test(
+        normalized
+      ),
+  };
+};
 
 const buildSemanticQuerySeed = (input: {
   latestUserMessage: string | null;
@@ -296,6 +371,7 @@ const GRAPH_QUERY = `
   MATCH (n:KangurKnowledgeNode {graphKey: graphKey})
   WITH
     n,
+    graphKey,
     tokens,
     querySurface,
     queryFocusKind,
@@ -884,24 +960,68 @@ const rerankKnowledgeGraphHits = (input: {
   hits: HydratedKnowledgeGraphHit[];
   queryEmbedding: number[] | null;
   queryMode: KangurKnowledgeGraphQueryMode;
+  intent: KangurKnowledgeGraphQueryIntent;
 }): HydratedKnowledgeGraphHit[] => {
-  if (input.queryMode !== 'semantic' || !input.queryEmbedding || input.queryEmbedding.length === 0) {
-    return input.hits;
-  }
-
-  const queryEmbedding = input.queryEmbedding;
-
   return input.hits
     .map((hit) => {
       const vectorScore =
+        input.queryMode === 'semantic' &&
+        input.queryEmbedding &&
+        input.queryEmbedding.length > 0 &&
         hit.embedding.length > 0 &&
-        (hit.embeddingDimensions === null || hit.embeddingDimensions === queryEmbedding.length)
-          ? cosineSimilarity(queryEmbedding, hit.embedding)
+        (hit.embeddingDimensions === null || hit.embeddingDimensions === input.queryEmbedding.length)
+          ? cosineSimilarity(input.queryEmbedding, hit.embedding)
           : 0;
+
+      const routeMatchesDirectly =
+        hit.route !== null && input.intent.preferredRoutes.includes(hit.route);
+      const routeMatchesRelation = hit.relations.some(
+        (relation) => relation.targetRoute && input.intent.preferredRoutes.includes(relation.targetRoute)
+      );
+      const surfaceMatches =
+        hit.surface !== null && input.intent.preferredSurfaces.includes(hit.surface);
+      const focusKindMatches =
+        hit.focusKind !== null && input.intent.preferredFocusKinds.includes(hit.focusKind);
+      const isGenericFocusedGuide =
+        input.intent.isLocationLookup &&
+        Boolean(hit.focusKind) &&
+        !focusKindMatches;
+
+      let intentScore = 0;
+      if (surfaceMatches) {
+        intentScore += 42;
+      }
+      if (routeMatchesDirectly) {
+        intentScore += 38;
+      }
+      if (routeMatchesRelation) {
+        intentScore += 18;
+      }
+      if (focusKindMatches) {
+        intentScore += 26;
+      }
+      if (
+        input.intent.isLocationLookup &&
+        !hit.focusKind &&
+        (hit.kind === 'page' || hit.kind === 'flow' || hit.kind === 'action' || hit.kind === 'guide') &&
+        (surfaceMatches || routeMatchesDirectly)
+      ) {
+        intentScore += 24;
+      }
+      if (input.intent.isLocationLookup && hit.kind === 'page' && routeMatchesDirectly) {
+        intentScore += 34;
+      }
+      if (input.intent.isLocationLookup && hit.kind === 'flow' && routeMatchesDirectly) {
+        intentScore += 18;
+      }
+      if (isGenericFocusedGuide) {
+        intentScore -= 28;
+      }
 
       return {
         ...hit,
-        semanticScore: hit.semanticScore + Math.round(Math.max(0, vectorScore) * 140),
+        semanticScore:
+          hit.semanticScore + Math.round(Math.max(0, vectorScore) * 140) + intentScore,
       };
     })
     .sort((left, right) => {
@@ -1042,6 +1162,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   }
 
   const tokens = tokenizeQuery(buildSemanticQuerySeed(input));
+  const queryIntent = buildKnowledgeGraphQueryIntent(buildSemanticQuerySeed(input));
   if (tokens.length === 0 && !hasSemanticContext(input.context)) {
     return {
       status: 'skipped',
@@ -1059,7 +1180,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
       ? await generateKangurKnowledgeGraphQueryEmbedding(buildSemanticQuerySeed(input)).catch(() => null)
       : null;
 
-  const lexicalLimit = queryMode === 'website_help' ? 3 : 8;
+  const lexicalLimit = queryMode === 'website_help' ? 8 : 8;
   const [lexicalResults, vectorHits] = await Promise.all([
     runNeo4jStatements([
       {
@@ -1111,6 +1232,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     hits: hydratedHits,
     queryEmbedding,
     queryMode,
+    intent: queryIntent,
   }).slice(0, queryMode === 'website_help' ? 3 : 4);
 
   return finalizeResolvedGraphContext(rerankedHits, tokens, queryMode, {

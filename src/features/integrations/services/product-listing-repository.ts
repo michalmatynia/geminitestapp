@@ -2,10 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 import {
   CreateProductListingInput,
@@ -72,13 +69,6 @@ type ProductListingDocument = {
   exportHistory?: ProductListingExportEvent[] | null | undefined;
   createdAt: Date;
   updatedAt: Date;
-};
-
-const toPrismaNullableJson = (
-  value: unknown
-): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput => {
-  if (value === null) return Prisma.DbNull;
-  return value as Prisma.InputJsonValue;
 };
 
 const normalizeLookupId = (value: unknown): string => {
@@ -187,216 +177,6 @@ const toListingRecord = (doc: ProductListingDocument): ProductListing => ({
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
 });
-
-type EnrichedPrismaListing = Prisma.ProductListingGetPayload<{
-  include: {
-    integration: { select: { id: true; name: true; slug: true } };
-    connection: { select: { id: true; name: true } };
-  };
-}>;
-
-const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDetails => ({
-  id: listing.id,
-  productId: listing.productId,
-  integrationId: listing.integrationId,
-  connectionId: listing.connectionId,
-  status: listing.status,
-  externalListingId: listing.externalListingId ?? null,
-  inventoryId: listing.inventoryId ?? null,
-  listedAt: normalizeIsoDate(listing.listedAt),
-  expiresAt: normalizeIsoDate(listing.expiresAt),
-  nextRelistAt: normalizeIsoDate(listing.nextRelistAt),
-  relistPolicy: (listing.relistPolicy ?? null) as ProductListingWithDetails['relistPolicy'],
-  relistAttempts: listing.relistAttempts ?? 0,
-  lastRelistedAt: normalizeIsoDate(listing.lastRelistedAt),
-  lastStatusCheckAt: normalizeIsoDate(listing.lastStatusCheckAt),
-  marketplaceData: (listing.marketplaceData ??
-    null) as ProductListingWithDetails['marketplaceData'],
-  failureReason: listing.failureReason ?? null,
-  exportHistory: toExportHistoryRecords(listing.exportHistory).map(
-    (event: ProductListingExportEventRecord) => ({
-      ...event,
-      exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
-      expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
-    })
-  ),
-  createdAt: listing.createdAt.toISOString(),
-  updatedAt: listing.updatedAt.toISOString(),
-  integration: listing.integration,
-  connection: listing.connection,
-});
-
-const prismaRepository: ProductListingRepository = {
-  getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
-    const listings = await prisma.productListing.findMany({
-      where: { productId },
-      include: {
-        integration: {
-          select: { id: true, name: true, slug: true },
-        },
-        connection: {
-          select: { id: true, name: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return (listings as EnrichedPrismaListing[]).map(toDetailsRecord);
-  },
-
-  getListingById: async (id: string): Promise<ProductListing | null> => {
-    const listing = await prisma.productListing.findUnique({ where: { id } });
-    if (!listing) return null;
-    return toListingRecord({ ...listing, _id: listing.id } as ProductListingDocument);
-  },
-
-  createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
-    const listing = await prisma.productListing.create({
-      data: {
-        productId: input.productId,
-        integrationId: input.integrationId,
-        connectionId: input.connectionId,
-        status: input.status ?? 'pending',
-        externalListingId: input.externalListingId || null,
-        inventoryId: input.inventoryId || null,
-        expiresAt: input.expiresAt ?? null,
-        nextRelistAt: input.nextRelistAt ?? null,
-        ...(input.relistPolicy !== undefined
-          ? { relistPolicy: toPrismaNullableJson(input.relistPolicy) }
-          : {}),
-        relistAttempts: input.relistAttempts ?? 0,
-        lastRelistedAt: input.lastRelistedAt ?? null,
-        lastStatusCheckAt: input.lastStatusCheckAt ?? null,
-        ...(input.marketplaceData !== undefined
-          ? { marketplaceData: toPrismaNullableJson(input.marketplaceData) }
-          : {}),
-        failureReason: input.failureReason ?? null,
-        ...(input.exportHistory !== undefined
-          ? { exportHistory: toPrismaNullableJson(input.exportHistory) }
-          : {}),
-      },
-      include: {
-        integration: {
-          select: { id: true, name: true, slug: true },
-        },
-        connection: {
-          select: { id: true, name: true },
-        },
-      },
-    });
-    return toDetailsRecord(listing as EnrichedPrismaListing);
-  },
-
-  updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
-    await prisma.productListing.update({
-      where: { id },
-      data: { externalListingId },
-    });
-  },
-
-  updateListingStatus: async (id: string, status: string): Promise<void> => {
-    await prisma.productListing.update({
-      where: { id },
-      data: { status },
-    });
-  },
-
-  updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
-    await prisma.productListing.update({
-      where: { id },
-      data: {
-        status: input.status,
-        externalListingId: input.externalListingId,
-        inventoryId: input.inventoryId,
-        expiresAt: input.expiresAt,
-        nextRelistAt: input.nextRelistAt,
-        ...(input.relistPolicy !== undefined
-          ? { relistPolicy: toPrismaNullableJson(input.relistPolicy) }
-          : {}),
-        relistAttempts: input.relistAttempts,
-        lastRelistedAt: input.lastRelistedAt,
-        lastStatusCheckAt: input.lastStatusCheckAt,
-        ...(input.marketplaceData !== undefined
-          ? { marketplaceData: toPrismaNullableJson(input.marketplaceData) }
-          : {}),
-        failureReason: input.failureReason,
-        ...(input.exportHistory !== undefined
-          ? { exportHistory: toPrismaNullableJson(input.exportHistory) }
-          : {}),
-      } as Prisma.ProductListingUpdateInput,
-    });
-  },
-  updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
-    await prisma.productListing.update({
-      where: { id },
-      data: { inventoryId },
-    });
-  },
-
-  appendExportHistory: async (
-    id: string,
-    event: ProductListingExportEventRecord
-  ): Promise<void> => {
-    const listing = await prisma.productListing.findUnique({ where: { id } });
-    if (!listing) return;
-    const history = (listing.exportHistory as ProductListingExportEvent[] | null) ?? [];
-
-    const normalizedEvent: ProductListingExportEvent = {
-      ...event,
-      exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
-      expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
-    };
-
-    await prisma.productListing.update({
-      where: { id },
-      data: {
-        exportHistory: toPrismaNullableJson([normalizedEvent, ...history].slice(0, 50)),
-      },
-    });
-  },
-
-  deleteListing: async (id: string): Promise<void> => {
-    await prisma.productListing.delete({ where: { id } });
-  },
-
-  listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
-    const count = await prisma.productListing.count({
-      where: { productId, connectionId },
-    });
-    return count > 0;
-  },
-
-  getListingsByProductIds: async (productIds: string[]): Promise<ProductListing[]> => {
-    if (productIds.length === 0) return [];
-    const listings = await prisma.productListing.findMany({
-      where: { productId: { in: productIds } },
-    });
-    return listings.map((l: any) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
-  },
-
-  getListingsByConnection: async (connectionId: string): Promise<ProductListing[]> => {
-    const listings = await prisma.productListing.findMany({
-      where: { connectionId },
-    });
-    return listings.map((l: any) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
-  },
-
-  listAllListings: async (): Promise<
-    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
-  > => {
-    const listings = await prisma.productListing.findMany({
-      select: {
-        productId: true,
-        status: true,
-        integrationId: true,
-        marketplaceData: true,
-      },
-    });
-    return listings.map((l: any) => ({
-      ...l,
-      marketplaceData: l.marketplaceData as ProductListing['marketplaceData'],
-    }));
-  },
-};
 
 const mongoRepository: ProductListingRepository = {
   getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
@@ -639,32 +419,20 @@ const mongoRepository: ProductListingRepository = {
 };
 
 export async function getProductListingRepository(): Promise<ProductListingRepository> {
-  const provider = await getAppDbProvider();
-  return provider === 'mongodb' ? mongoRepository : prismaRepository;
+  return mongoRepository;
 }
 
 /**
- * Utility functions that check both providers.
- * Used during transition or for robust lookup when active provider might not have the data.
+ * Legacy cross-provider helpers now resolve against MongoDB only.
  */
 
 export async function findProductListingByIdAcrossProviders(id: string): Promise<{
   listing: ProductListing;
   repository: ProductListingRepository;
 } | null> {
-  // Check active provider first for performance
-  const provider = await getAppDbProvider();
-  const activeRepo = provider === 'mongodb' ? mongoRepository : prismaRepository;
-  const otherRepo = provider === 'mongodb' ? prismaRepository : mongoRepository;
-
-  const activeResult = await activeRepo.getListingById(id);
-  if (activeResult) {
-    return { listing: activeResult, repository: activeRepo };
-  }
-
-  const otherResult = await otherRepo.getListingById(id);
-  if (otherResult) {
-    return { listing: otherResult, repository: otherRepo };
+  const listing = await mongoRepository.getListingById(id);
+  if (listing) {
+    return { listing, repository: mongoRepository };
   }
 
   return null;
@@ -677,17 +445,10 @@ export async function findProductListingByProductAndConnectionAcrossProviders(
   listing: ProductListing;
   repository: ProductListingRepository;
 } | null> {
-  const providers = [
-    { repo: prismaRepository, name: 'prisma' },
-    { repo: mongoRepository, name: 'mongodb' },
-  ];
-
-  for (const { repo } of providers) {
-    const listings = await repo.getListingsByProductId(productId);
-    const matched = listings.find((l) => l.connectionId === connectionId);
-    if (matched) {
-      return { listing: matched, repository: repo };
-    }
+  const listings = await mongoRepository.getListingsByProductId(productId);
+  const matched = listings.find((l) => l.connectionId === connectionId);
+  if (matched) {
+    return { listing: matched, repository: mongoRepository };
   }
   return null;
 }
@@ -702,19 +463,12 @@ export async function findProductListingsByProductsAndConnectionAcrossProviders(
   >();
   if (productIds.length === 0) return result;
 
-  const providers = [
-    { repo: prismaRepository, name: 'prisma' },
-    { repo: mongoRepository, name: 'mongodb' },
-  ];
-
-  for (const { repo } of providers) {
-    const listings = await repo.getListingsByProductIds(productIds);
-    listings.forEach((listing) => {
-      if (listing.connectionId === connectionId) {
-        result.set(listing.productId, { listing, repository: repo });
-      }
-    });
-  }
+  const listings = await mongoRepository.getListingsByProductIds(productIds);
+  listings.forEach((listing) => {
+    if (listing.connectionId === connectionId) {
+      result.set(listing.productId, { listing, repository: mongoRepository });
+    }
+  });
 
   return result;
 }
@@ -722,19 +476,7 @@ export async function findProductListingsByProductsAndConnectionAcrossProviders(
 export async function listProductListingsByProductIdAcrossProviders(
   productId: string
 ): Promise<ProductListingWithDetails[]> {
-  const [prismaListings, mongoListings] = await Promise.all([
-    prismaRepository.getListingsByProductId(productId),
-    mongoRepository.getListingsByProductId(productId),
-  ]);
-
-  // Combine and deduplicate by ID
-  const combined = [...prismaListings, ...mongoListings];
-  const seen = new Set<string>();
-  return combined.filter((l) => {
-    if (seen.has(l.id)) return false;
-    seen.add(l.id);
-    return true;
-  });
+  return mongoRepository.getListingsByProductId(productId);
 }
 
 export async function listProductListingsByProductIdsAcrossProviders(
@@ -747,12 +489,8 @@ export async function listProductListingsByProductIdsAcrossProviders(
   );
   if (uniqueProductIds.length === 0) return [];
 
-  const [prismaListings, mongoListings] = await Promise.all([
-    prismaRepository.getListingsByProductIds(uniqueProductIds),
-    mongoRepository.getListingsByProductIds(uniqueProductIds),
-  ]);
-
-  return [...prismaListings, ...mongoListings].map((listing) => ({
+  const mongoListings = await mongoRepository.getListingsByProductIds(uniqueProductIds);
+  return mongoListings.map((listing) => ({
     productId: listing.productId,
     status: listing.status,
     integrationId: listing.integrationId,
@@ -763,22 +501,12 @@ export async function listProductListingsByProductIdsAcrossProviders(
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > {
-  const [prismaListings, mongoListings] = await Promise.all([
-    prismaRepository.listAllListings(),
-    mongoRepository.listAllListings(),
-  ]);
-
-  return [...prismaListings, ...mongoListings];
+  return mongoRepository.listAllListings();
 }
 
 export async function listingExistsAcrossProviders(
   productId: string,
   connectionId: string
 ): Promise<boolean> {
-  const [prismaExists, mongoExists] = await Promise.all([
-    prismaRepository.listingExists(productId, connectionId),
-    mongoRepository.listingExists(productId, connectionId),
-  ]);
-
-  return prismaExists || mongoExists;
+  return mongoRepository.listingExists(productId, connectionId);
 }

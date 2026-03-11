@@ -114,7 +114,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           size='sm'
           value={progressValue}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {questionNumber}/{total}
         </span>
       </div>
@@ -136,7 +136,9 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             </KangurStatusChip>
           )}
         </div>
-        <p className='font-semibold leading-relaxed text-slate-800'>{q.question}</p>
+        <p className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+          {q.question}
+        </p>
         {ILLUSTRATIONS[q.id] &&
           (() => {
             const Illustration = ILLUSTRATIONS[q.id];
@@ -162,7 +164,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           let accent: KangurAccent = 'slate';
           let emphasis: 'neutral' | 'accent' = 'neutral';
           let state: 'default' | 'muted' = 'default';
-          let style = 'text-slate-700';
+          let style = '[color:var(--kangur-page-text)]';
           let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
           if (confirmed) {
             if (choice === q.answer) {
@@ -286,10 +288,10 @@ function ResultView({
         <KangurDisplayEmoji data-testid='kangur-game-summary-emoji' size='lg'>
           {emoji}
         </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold text-slate-800'>
+        <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
           Wynik: {score}/{total}
         </h2>
-        <p className='text-slate-500'>
+        <p className='[color:var(--kangur-page-muted-text)]'>
           {pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
@@ -317,7 +319,9 @@ function ResultView({
           size='lg'
           value={pct}
         />
-        <p className='text-sm text-slate-400'>{pct}% poprawnych odpowiedzi</p>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          {pct}% poprawnych odpowiedzi
+        </p>
         <div className='flex w-full gap-3'>
           <KangurButton className='flex-1' onClick={onBack} size='lg' variant='surface'>
             Menu

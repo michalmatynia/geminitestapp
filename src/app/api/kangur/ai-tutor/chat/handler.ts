@@ -334,6 +334,26 @@ const extractTutorDrawingArtifactsFromResponse = (value: string): {
   };
 };
 
+const buildKnowledgeGraphResponseSummary = (input: {
+  knowledgeGraphApplied: boolean;
+  knowledgeGraphQueryMode: 'website_help' | 'semantic' | null;
+  knowledgeGraphRecallStrategy: 'metadata_only' | 'vector_only' | 'hybrid_vector' | null;
+  knowledgeGraphLexicalHitCount: number;
+  knowledgeGraphVectorHitCount: number;
+  knowledgeGraphVectorRecallAttempted: boolean;
+  websiteHelpGraphApplied: boolean;
+  websiteHelpGraphTargetNodeId: string | null;
+}) => ({
+  applied: input.knowledgeGraphApplied,
+  queryMode: input.knowledgeGraphQueryMode,
+  recallStrategy: input.knowledgeGraphRecallStrategy,
+  lexicalHitCount: input.knowledgeGraphLexicalHitCount,
+  vectorHitCount: input.knowledgeGraphVectorHitCount,
+  vectorRecallAttempted: input.knowledgeGraphVectorRecallAttempted,
+  websiteHelpApplied: input.websiteHelpGraphApplied,
+  websiteHelpTargetNodeId: input.websiteHelpGraphTargetNodeId,
+});
+
 const resolvePersonaInstructions = async (agentPersonaId: string | null): Promise<string> => {
   if (!agentPersonaId) return '';
   try {
@@ -764,6 +784,11 @@ export async function postKangurAiTutorChatHandler(
   let adaptiveCoachingMode: KangurAiTutorCoachingMode | null = null;
   let knowledgeGraphApplied = false;
   let knowledgeGraphQueryMode: 'website_help' | 'semantic' | null = null;
+  let knowledgeGraphRecallStrategy: 'metadata_only' | 'vector_only' | 'hybrid_vector' | null =
+    null;
+  let knowledgeGraphLexicalHitCount = 0;
+  let knowledgeGraphVectorHitCount = 0;
+  let knowledgeGraphVectorRecallAttempted = false;
   let websiteHelpGraphApplied = false;
   const latestUserMessage =
     [...messages].reverse().find((message) => message.role === 'user')?.content ?? null;
@@ -951,6 +976,18 @@ export async function postKangurAiTutorChatHandler(
     knowledgeGraphQueryMode = knowledgeGraphContext.status === 'hit'
       ? knowledgeGraphContext.queryMode
       : null;
+    knowledgeGraphRecallStrategy = knowledgeGraphContext.status === 'hit'
+      ? knowledgeGraphContext.recallStrategy
+      : null;
+    knowledgeGraphLexicalHitCount = knowledgeGraphContext.status === 'hit'
+      ? knowledgeGraphContext.lexicalHitCount
+      : 0;
+    knowledgeGraphVectorHitCount = knowledgeGraphContext.status === 'hit'
+      ? knowledgeGraphContext.vectorHitCount
+      : 0;
+    knowledgeGraphVectorRecallAttempted = knowledgeGraphContext.status === 'hit'
+      ? knowledgeGraphContext.vectorRecallAttempted
+      : false;
     websiteHelpGraphApplied = knowledgeGraphQueryMode === 'website_help';
     const knowledgeGraphNodeIds =
       knowledgeGraphContext.status === 'hit' ? knowledgeGraphContext.nodeIds : [];
@@ -1016,6 +1053,10 @@ export async function postKangurAiTutorChatHandler(
             nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
             knowledgeGraphApplied,
             knowledgeGraphQueryMode,
+            knowledgeGraphRecallStrategy,
+            knowledgeGraphLexicalHitCount,
+            knowledgeGraphVectorHitCount,
+            knowledgeGraphVectorRecallAttempted,
             knowledgeGraphNodeIds,
             knowledgeGraphSourceCollections,
             knowledgeGraphHydrationSources,
@@ -1070,6 +1111,10 @@ export async function postKangurAiTutorChatHandler(
           nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
           knowledgeGraphApplied,
           knowledgeGraphQueryMode,
+          knowledgeGraphRecallStrategy,
+          knowledgeGraphLexicalHitCount,
+          knowledgeGraphVectorHitCount,
+          knowledgeGraphVectorRecallAttempted,
           knowledgeGraphNodeIds,
           knowledgeGraphSourceCollections,
           knowledgeGraphHydrationSources,
@@ -1110,6 +1155,16 @@ export async function postKangurAiTutorChatHandler(
         sources: responseSources,
         followUpActions: nativeGuideResolution.followUpActions,
         artifacts: nativeGuideResponse.artifacts,
+        knowledgeGraph: buildKnowledgeGraphResponseSummary({
+          knowledgeGraphApplied,
+          knowledgeGraphQueryMode,
+          knowledgeGraphRecallStrategy,
+          knowledgeGraphLexicalHitCount,
+          knowledgeGraphVectorHitCount,
+          knowledgeGraphVectorRecallAttempted,
+          websiteHelpGraphApplied,
+          websiteHelpGraphTargetNodeId: knowledgeGraphWebsiteHelpTargetNodeId,
+        }),
         ...(knowledgeGraphContext.status === 'hit' && knowledgeGraphContext.websiteHelpTarget
           ? { websiteHelpTarget: knowledgeGraphContext.websiteHelpTarget }
           : {}),
@@ -1140,6 +1195,10 @@ export async function postKangurAiTutorChatHandler(
           nativeGuideApplied: false,
           knowledgeGraphApplied,
           knowledgeGraphQueryMode,
+          knowledgeGraphRecallStrategy,
+          knowledgeGraphLexicalHitCount,
+          knowledgeGraphVectorHitCount,
+          knowledgeGraphVectorRecallAttempted,
           knowledgeGraphNodeIds,
           knowledgeGraphSourceCollections,
           knowledgeGraphHydrationSources,
@@ -1370,6 +1429,10 @@ export async function postKangurAiTutorChatHandler(
         adaptiveGuidanceApplied,
         knowledgeGraphApplied,
         knowledgeGraphQueryMode,
+        knowledgeGraphRecallStrategy,
+        knowledgeGraphLexicalHitCount,
+        knowledgeGraphVectorHitCount,
+        knowledgeGraphVectorRecallAttempted,
         knowledgeGraphNodeIds,
         knowledgeGraphSourceCollections,
         knowledgeGraphHydrationSources,
@@ -1420,6 +1483,16 @@ export async function postKangurAiTutorChatHandler(
       sources: responseSources,
       followUpActions: adaptiveGuidance.followUpActions,
       artifacts: parsedTutorResponse.artifacts,
+      knowledgeGraph: buildKnowledgeGraphResponseSummary({
+        knowledgeGraphApplied,
+        knowledgeGraphQueryMode,
+        knowledgeGraphRecallStrategy,
+        knowledgeGraphLexicalHitCount,
+        knowledgeGraphVectorHitCount,
+        knowledgeGraphVectorRecallAttempted,
+        websiteHelpGraphApplied,
+        websiteHelpGraphTargetNodeId: knowledgeGraphWebsiteHelpTargetNodeId,
+      }),
       ...(knowledgeGraphContext.status === 'hit' && knowledgeGraphContext.websiteHelpTarget
         ? { websiteHelpTarget: knowledgeGraphContext.websiteHelpTarget }
         : {}),
@@ -1459,6 +1532,10 @@ export async function postKangurAiTutorChatHandler(
         adaptiveGuidanceApplied,
         knowledgeGraphApplied,
         knowledgeGraphQueryMode,
+        knowledgeGraphRecallStrategy,
+        knowledgeGraphLexicalHitCount,
+        knowledgeGraphVectorHitCount,
+        knowledgeGraphVectorRecallAttempted,
         websiteHelpGraphApplied,
         contextRegistryRefCount: requestedContextRegistryRefs.length,
         coachingMode: adaptiveCoachingMode,

@@ -78,6 +78,19 @@ describe('buildKangurKnowledgeGraphPreviewResult', () => {
           expect.stringContaining('runtime:kangur:lesson:'),
         ]),
         runtimeDocumentIds: ['runtime:kangur:learner:learner-1'],
+        summary: expect.objectContaining({
+          requestedRefCount: 3,
+          runtimeDocumentCount: 1,
+          retrievalStatus: 'hit',
+          queryMode: 'website_help',
+          recallStrategy: 'metadata_only',
+          nodeCount: 1,
+          sourceCount: 0,
+          lexicalHitCount: 1,
+          vectorHitCount: 0,
+          vectorRecallAttempted: false,
+          websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+        }),
         retrieval: expect.objectContaining({
           status: 'hit',
           websiteHelpTarget: expect.objectContaining({
@@ -114,6 +127,19 @@ describe('buildKangurKnowledgeGraphPreviewResult', () => {
         'runtime:kangur:login-activity:preview-learner',
       ],
       runtimeDocumentIds: [],
+      summary: {
+        requestedRefCount: 2,
+        runtimeDocumentCount: 0,
+        retrievalStatus: 'hit',
+        queryMode: 'website_help',
+        recallStrategy: 'metadata_only',
+        nodeCount: 1,
+        sourceCount: 0,
+        lexicalHitCount: 1,
+        vectorHitCount: 0,
+        vectorRecallAttempted: false,
+        websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+      },
     });
   });
 });

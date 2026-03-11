@@ -4,9 +4,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 import { darkenCssColor } from '@/shared/utils/color-utils';
 
-export const CMS_STOREFRONT_APPEARANCE_STORAGE_KEY = 'cms.storefront.appearance.v1';
-
-export type CmsStorefrontAppearanceMode = 'default' | 'darker' | 'dark';
+export type CmsStorefrontAppearanceMode = 'default' | 'dark';
 
 export type CmsAppearanceTone = {
   background?: string;
@@ -20,7 +18,10 @@ type CmsStorefrontAppearanceContextValue = {
   setMode: React.Dispatch<React.SetStateAction<CmsStorefrontAppearanceMode>>;
 };
 
-type CmsStorefrontAppearanceProviderProps = { children: React.ReactNode };
+type CmsStorefrontAppearanceProviderProps = {
+  children: React.ReactNode;
+  initialMode?: CmsStorefrontAppearanceMode;
+};
 
 type CmsStorefrontAppearanceButtonsProps = {
   tone?: CmsAppearanceTone;
@@ -36,7 +37,7 @@ const DEFAULT_TONE: Required<CmsAppearanceTone> = {
   accent: '#2563eb',
 };
 
-const VALID_MODES = new Set<CmsStorefrontAppearanceMode>(['default', 'darker', 'dark']);
+const VALID_MODES = new Set<CmsStorefrontAppearanceMode>(['default', 'dark']);
 
 const CmsStorefrontAppearanceContext =
   createContext<CmsStorefrontAppearanceContextValue | null>(null);
@@ -61,14 +62,6 @@ export const resolveStorefrontAppearanceTone = (
 ): Required<CmsAppearanceTone> => {
   const baseTone = withFallbackTone(tone);
 
-  if (mode === 'darker') {
-    return {
-      ...baseTone,
-      background: darkenCssColor(baseTone.background, 8),
-      border: darkenCssColor(baseTone.border, 6),
-    };
-  }
-
   if (mode === 'dark') {
     return {
       ...baseTone,
@@ -78,7 +71,11 @@ export const resolveStorefrontAppearanceTone = (
     };
   }
 
-  return baseTone;
+  return {
+    ...baseTone,
+    background: darkenCssColor(baseTone.background, 8),
+    border: darkenCssColor(baseTone.border, 6),
+  };
 };
 
 export const resolveStorefrontAppearanceColorSchemes = (
@@ -181,6 +178,15 @@ export const resolveCmsStorefrontAppearance = (
     },
     mode
   );
+  const resolvedPrimaryButtonTone =
+    mode === 'dark'
+      ? {
+          ...primaryButtonTone,
+          background: darkenCssColor(theme.btnPrimaryBg || accent, 28),
+          border: darkenCssColor(theme.btnPrimaryBg || accent, 36),
+          text: '#f8fafc',
+        }
+      : primaryButtonTone;
 
   const subtleSurface =
     mode === 'dark'
@@ -198,7 +204,7 @@ export const resolveCmsStorefrontAppearance = (
     subtleSurface,
     mutedText,
     inputTone,
-    primaryButtonTone,
+    primaryButtonTone: resolvedPrimaryButtonTone,
     vars: {
       '--cms-appearance-page-background': pageTone.background,
       '--cms-appearance-page-text': pageTone.text,
@@ -212,9 +218,9 @@ export const resolveCmsStorefrontAppearance = (
       '--cms-appearance-input-background': inputTone.background,
       '--cms-appearance-input-text': inputTone.text,
       '--cms-appearance-input-border': inputTone.border,
-      '--cms-appearance-button-primary-background': primaryButtonTone.background,
-      '--cms-appearance-button-primary-text': primaryButtonTone.text,
-      '--cms-appearance-button-primary-border': primaryButtonTone.border,
+      '--cms-appearance-button-primary-background': resolvedPrimaryButtonTone.background,
+      '--cms-appearance-button-primary-text': resolvedPrimaryButtonTone.text,
+      '--cms-appearance-button-primary-border': resolvedPrimaryButtonTone.border,
     },
   };
 };
@@ -226,51 +232,6 @@ export const resolveKangurStorefrontAppearance = (
   tone: Required<CmsAppearanceTone>;
   vars: Record<string, string>;
 } => {
-  if (mode === 'darker') {
-    return {
-      background:
-        'radial-gradient(circle at top, #f7f0f4 0%, #ede7ef 46%, #e4e0ef 100%)',
-      tone: {
-        background: '#f1e8f0',
-        text: '#475569',
-        border: 'rgba(255,255,255,0.78)',
-        accent: '#4f46e5',
-      },
-      vars: {
-        '--kangur-page-background':
-          'radial-gradient(circle at top, #f7f0f4 0%, #ede7ef 46%, #e4e0ef 100%)',
-        '--kangur-glass-panel-background':
-          'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(247,240,244,0.78) 100%)',
-        '--kangur-glass-panel-border': 'rgba(255,255,255,0.82)',
-        '--kangur-glass-panel-shadow': '0 20px 60px rgba(126, 118, 154, 0.22)',
-        '--kangur-soft-card-background': 'rgba(252,248,251,0.94)',
-        '--kangur-soft-card-border': 'rgba(230,223,237,0.96)',
-        '--kangur-soft-card-shadow': '0 14px 36px rgba(70, 82, 126, 0.1)',
-        '--kangur-soft-card-text': '#334155',
-        '--kangur-nav-group-background':
-          'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(247,240,244,0.72) 100%)',
-        '--kangur-nav-group-border': 'rgba(255,255,255,0.82)',
-        '--kangur-nav-item-text': '#52627d',
-        '--kangur-nav-item-hover-background': 'rgba(255,255,255,0.82)',
-        '--kangur-nav-item-hover-border': 'rgba(255,255,255,0.88)',
-        '--kangur-nav-item-hover-text': '#334155',
-        '--kangur-nav-item-active-background':
-          'linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(237,233,254,0.94) 100%)',
-        '--kangur-nav-item-active-border': 'rgba(224,231,255,0.92)',
-        '--kangur-nav-item-active-text': '#4338ca',
-        '--kangur-text-field-background': 'rgba(252,248,251,0.94)',
-        '--kangur-text-field-border': 'rgba(230,223,237,0.96)',
-        '--kangur-text-field-text': '#334155',
-        '--kangur-text-field-placeholder': '#64748b',
-        '--kangur-text-field-disabled-background': 'rgba(241,235,242,0.92)',
-        '--kangur-text-field-disabled-border': 'rgba(222,215,231,0.96)',
-        '--kangur-progress-track': 'rgba(226,232,240,0.92)',
-        '--kangur-page-text': '#334155',
-        '--kangur-page-muted-text': '#64748b',
-      },
-    };
-  }
-
   if (mode === 'dark') {
     return {
       background:
@@ -312,70 +273,122 @@ export const resolveKangurStorefrontAppearance = (
         '--kangur-progress-track': 'rgba(51,65,85,0.92)',
         '--kangur-page-text': '#e2e8f0',
         '--kangur-page-muted-text': '#94a3b8',
+        '--kangur-button-primary-background':
+          'linear-gradient(90deg, #d97706 0%, #9a3412 100%)',
+        '--kangur-button-primary-hover-background':
+          'linear-gradient(90deg, #ea8a0d 0%, #b45309 56%, #9a3412 100%)',
+        '--kangur-button-primary-shadow':
+          '0 12px 24px rgba(154, 52, 18, 0.32), inset 0 1px 0 rgba(255, 247, 237, 0.14)',
+        '--kangur-button-primary-hover-shadow':
+          '0 22px 34px -18px rgba(154, 52, 18, 0.4), 0 14px 24px -18px rgba(180, 83, 9, 0.24), inset 0 1px 0 rgba(255, 250, 245, 0.18)',
+        '--kangur-button-secondary-background':
+          'linear-gradient(180deg, rgba(51,65,85,0.98) 0%, rgba(15,23,42,0.96) 100%)',
+        '--kangur-button-secondary-hover-background':
+          'linear-gradient(180deg, rgba(71,85,105,0.98) 0%, rgba(30,41,59,0.98) 100%)',
+        '--kangur-button-secondary-shadow':
+          '0 16px 28px -24px rgba(2, 6, 23, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+        '--kangur-button-secondary-text': '#dbe7f6',
+        '--kangur-button-secondary-hover-text': '#f8fafc',
+        '--kangur-button-surface-background':
+          'linear-gradient(180deg, rgba(30,41,59,0.98) 0%, rgba(17,24,39,0.98) 100%)',
+        '--kangur-button-surface-shadow':
+          '0 16px 28px -24px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(191, 219, 254, 0.08)',
+        '--kangur-button-surface-text': '#bfdbfe',
+        '--kangur-button-surface-hover-text': '#eff6ff',
+        '--kangur-button-warning-background':
+          'linear-gradient(180deg, rgba(120,53,15,0.96) 0%, rgba(68,26,6,0.96) 100%)',
+        '--kangur-button-warning-hover-background':
+          'linear-gradient(180deg, rgba(146,64,14,0.98) 0%, rgba(92,33,6,0.98) 100%)',
+        '--kangur-button-warning-shadow':
+          '0 16px 28px -24px rgba(120, 53, 15, 0.48), inset 0 1px 0 rgba(255, 247, 237, 0.1)',
+        '--kangur-button-warning-hover-shadow':
+          '0 20px 32px -24px rgba(120, 53, 15, 0.56), 0 14px 24px -24px rgba(180, 83, 9, 0.18), inset 0 1px 0 rgba(255, 247, 237, 0.14)',
+        '--kangur-button-warning-text': '#fde68a',
+        '--kangur-button-warning-hover-text': '#fef3c7',
+        '--kangur-button-success-background':
+          'linear-gradient(180deg, rgba(6,78,59,0.96) 0%, rgba(2,44,34,0.96) 100%)',
+        '--kangur-button-success-shadow':
+          '0 16px 28px -24px rgba(4, 120, 87, 0.44), inset 0 1px 0 rgba(236, 253, 245, 0.1)',
+        '--kangur-button-success-text': '#d1fae5',
+        '--kangur-button-success-hover-text': '#ecfdf5',
+        '--kangur-chat-panel-background':
+          'linear-gradient(180deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.97) 100%)',
+        '--kangur-chat-panel-border': 'rgba(251, 191, 36, 0.2)',
+        '--kangur-chat-panel-shadow':
+          '0 20px 48px -30px rgba(2, 6, 23, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+        '--kangur-chat-header-background':
+          'linear-gradient(180deg, rgba(69,26,3,0.54) 0%, rgba(30,41,59,0.94) 100%)',
+        '--kangur-chat-header-border': 'rgba(251, 191, 36, 0.18)',
+        '--kangur-chat-panel-text': '#f8fafc',
+        '--kangur-chat-muted-text': '#d7e1ee',
+        '--kangur-chat-kicker-text': '#fde68a',
+        '--kangur-chat-kicker-dot': '#f59e0b',
+        '--kangur-chat-chip-background':
+          'linear-gradient(135deg, rgba(92,33,6,0.84), rgba(69,26,3,0.78))',
+        '--kangur-chat-chip-border': 'rgba(251, 191, 36, 0.22)',
+        '--kangur-chat-chip-text': '#fff7ed',
+        '--kangur-chat-control-background':
+          'linear-gradient(180deg, rgba(69,26,3,0.72) 0%, rgba(51,22,6,0.7) 100%)',
+        '--kangur-chat-control-hover-background':
+          'linear-gradient(180deg, rgba(92,33,6,0.84) 0%, rgba(68,28,7,0.82) 100%)',
+        '--kangur-chat-control-border': 'rgba(251, 191, 36, 0.22)',
+        '--kangur-chat-control-text': '#fff7ed',
       },
     };
   }
 
   return {
-    background: 'radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)',
+    background: 'radial-gradient(circle at top, #ece3e9 0%, #ddd6e3 48%, #cec9dd 100%)',
     tone: {
-      background: '#fffdfd',
-      text: '#475569',
-      border: 'rgba(255,255,255,0.78)',
+      background: '#e3d9e2',
+      text: '#415066',
+      border: 'rgba(255,255,255,0.68)',
       accent: '#4f46e5',
     },
     vars: {
       '--kangur-page-background':
-        'radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)',
+        'radial-gradient(circle at top, #ece3e9 0%, #ddd6e3 48%, #cec9dd 100%)',
       '--kangur-glass-panel-background':
-        'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.58) 100%)',
-      '--kangur-glass-panel-border': 'rgba(255,255,255,0.78)',
-      '--kangur-glass-panel-shadow': '0 20px 60px rgba(168, 175, 216, 0.18)',
-      '--kangur-soft-card-background': '#ffffff',
-      '--kangur-soft-card-border': '#eef1f7',
-      '--kangur-soft-card-shadow': '0 10px 28px rgba(33, 49, 91, 0.08)',
-      '--kangur-soft-card-text': '#334155',
+        'linear-gradient(180deg, rgba(246,241,245,0.78) 0%, rgba(226,219,231,0.86) 100%)',
+      '--kangur-glass-panel-border': 'rgba(248,244,248,0.74)',
+      '--kangur-glass-panel-shadow': '0 20px 60px rgba(101, 92, 131, 0.24)',
+      '--kangur-soft-card-background': 'rgba(240,234,241,0.95)',
+      '--kangur-soft-card-border': 'rgba(216,208,226,0.94)',
+      '--kangur-soft-card-shadow': '0 16px 38px rgba(65, 76, 116, 0.12)',
+      '--kangur-soft-card-text': '#324055',
       '--kangur-nav-group-background':
-        'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.58) 100%)',
-      '--kangur-nav-group-border': 'rgba(255,255,255,0.78)',
-      '--kangur-nav-item-text': '#64748b',
-      '--kangur-nav-item-hover-background': 'rgba(255,255,255,0.78)',
-      '--kangur-nav-item-hover-border': 'rgba(255,255,255,0.8)',
-      '--kangur-nav-item-hover-text': '#334155',
+        'linear-gradient(180deg, rgba(246,241,245,0.84) 0%, rgba(228,221,234,0.76) 100%)',
+      '--kangur-nav-group-border': 'rgba(248,244,248,0.76)',
+      '--kangur-nav-item-text': '#4a5971',
+      '--kangur-nav-item-hover-background': 'rgba(242,237,244,0.9)',
+      '--kangur-nav-item-hover-border': 'rgba(248,244,248,0.8)',
+      '--kangur-nav-item-hover-text': '#324055',
       '--kangur-nav-item-active-background':
-        'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(238,242,255,0.92) 100%)',
-      '--kangur-nav-item-active-border': 'rgba(224,231,255,0.9)',
+        'linear-gradient(180deg, rgba(245,241,247,0.98) 0%, rgba(225,220,248,0.95) 100%)',
+      '--kangur-nav-item-active-border': 'rgba(214,220,248,0.92)',
       '--kangur-nav-item-active-text': '#4338ca',
-      '--kangur-text-field-background': 'rgba(255,255,255,0.92)',
-      '--kangur-text-field-border': 'rgba(226,232,240,0.92)',
-      '--kangur-text-field-text': '#334155',
-      '--kangur-text-field-placeholder': '#94a3b8',
-      '--kangur-text-field-disabled-background': 'rgba(241,245,249,0.92)',
-      '--kangur-text-field-disabled-border': 'rgba(226,232,240,0.92)',
-      '--kangur-progress-track': 'rgba(241,245,249,0.95)',
-      '--kangur-page-text': '#334155',
-      '--kangur-page-muted-text': '#64748b',
+      '--kangur-text-field-background': 'rgba(240,234,241,0.95)',
+      '--kangur-text-field-border': 'rgba(216,208,226,0.94)',
+      '--kangur-text-field-text': '#324055',
+      '--kangur-text-field-placeholder': '#5e6d85',
+      '--kangur-text-field-disabled-background': 'rgba(229,222,232,0.94)',
+      '--kangur-text-field-disabled-border': 'rgba(208,200,219,0.94)',
+      '--kangur-progress-track': 'rgba(212,217,231,0.92)',
+      '--kangur-page-text': '#324055',
+      '--kangur-page-muted-text': '#5e6d85',
     },
   };
 };
 
 export function CmsStorefrontAppearanceProvider({
   children,
+  initialMode = 'default',
 }: CmsStorefrontAppearanceProviderProps): React.JSX.Element {
-  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>('default');
-  const [hydrated, setHydrated] = useState(false);
+  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(normalizeMode(initialMode));
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedMode = normalizeMode(window.localStorage.getItem(CMS_STOREFRONT_APPEARANCE_STORAGE_KEY));
-    setMode(storedMode);
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated || typeof window === 'undefined') return;
-    window.localStorage.setItem(CMS_STOREFRONT_APPEARANCE_STORAGE_KEY, mode);
-  }, [hydrated, mode]);
+    setMode(normalizeMode(initialMode));
+  }, [initialMode]);
 
   const value = useMemo(
     () => ({
@@ -409,6 +422,11 @@ export function CmsStorefrontAppearanceButtons({
 
   const { mode, setMode } = appearance;
   const resolvedTone = withFallbackTone(tone);
+  const isDarkMode = mode === 'dark';
+  const nextMode: CmsStorefrontAppearanceMode = isDarkMode ? 'default' : 'dark';
+  const buttonLabel = isDarkMode ? 'Default' : 'Dark';
+  const buttonAriaLabel = isDarkMode ? 'Switch to Default theme' : 'Switch to Dark theme';
+  const buttonAccentWeight = isDarkMode ? '11%' : '16%';
   const wrapperClassName = ['inline-flex flex-wrap items-center gap-2', className]
     .filter(Boolean)
     .join(' ');
@@ -417,54 +435,19 @@ export function CmsStorefrontAppearanceButtons({
     <div className={wrapperClassName} role='group' aria-label={label} data-testid={testId}>
       <button
         type='button'
-        aria-label='Default background'
-        aria-pressed={mode === 'default'}
-        onClick={() => setMode('default')}
-        className='inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors'
+        aria-label={buttonAriaLabel}
+        aria-pressed={isDarkMode}
+        onClick={() => setMode(nextMode)}
+        title={buttonAriaLabel}
+        className='inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
         style={{
           border: `1px solid ${resolvedTone.border}`,
-          backgroundColor:
-            mode === 'default'
-              ? `color-mix(in srgb, ${resolvedTone.accent} 18%, ${resolvedTone.background})`
-              : 'transparent',
-          color: mode === 'default' ? resolvedTone.accent : resolvedTone.text,
+          backgroundColor: `color-mix(in srgb, ${resolvedTone.accent} ${buttonAccentWeight}, ${resolvedTone.background})`,
+          color: isDarkMode ? '#f8fafc' : resolvedTone.accent,
+          boxShadow: `0 14px 24px -20px ${isDarkMode ? 'rgba(15,23,42,0.45)' : resolvedTone.accent}`,
         }}
       >
-        Default
-      </button>
-      <button
-        type='button'
-        aria-label='Slightly darker background'
-        aria-pressed={mode === 'darker'}
-        onClick={() => setMode('darker')}
-        className='inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors'
-        style={{
-          border: `1px solid ${resolvedTone.border}`,
-          backgroundColor:
-            mode === 'darker'
-              ? `color-mix(in srgb, ${resolvedTone.accent} 18%, ${resolvedTone.background})`
-              : 'transparent',
-          color: mode === 'darker' ? resolvedTone.accent : resolvedTone.text,
-        }}
-      >
-        Darker
-      </button>
-      <button
-        type='button'
-        aria-label='Dark mode'
-        aria-pressed={mode === 'dark'}
-        onClick={() => setMode('dark')}
-        className='inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors'
-        style={{
-          border: `1px solid ${resolvedTone.border}`,
-          backgroundColor:
-            mode === 'dark'
-              ? `color-mix(in srgb, ${resolvedTone.accent} 18%, ${resolvedTone.background})`
-              : 'transparent',
-          color: mode === 'dark' ? resolvedTone.accent : resolvedTone.text,
-        }}
-      >
-        Dark
+        {buttonLabel}
       </button>
     </div>
   );

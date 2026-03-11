@@ -230,9 +230,9 @@ describe('KangurPrimaryNavigation', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('renders storefront appearance controls inside the Kangur navbar when the public provider is present', () => {
+  it('renders storefront appearance controls inside the Kangur navbar and updates the mode', () => {
     render(
-      <CmsStorefrontAppearanceProvider>
+      <CmsStorefrontAppearanceProvider initialMode='default'>
         <KangurPrimaryNavigation
           basePath='/kangur'
           currentPage='Lessons'
@@ -243,16 +243,19 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
-    const darkModeButton = screen.getByRole('button', { name: 'Dark mode' });
+    const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dark theme' });
 
     expect(utilityActions).toContainElement(
       screen.getByTestId('kangur-primary-nav-appearance-controls')
     );
-    expect(darkModeButton).toHaveAttribute('aria-pressed', 'false');
+    expect(themeToggleButton).toHaveAttribute('aria-pressed', 'false');
 
-    fireEvent.click(darkModeButton);
+    fireEvent.click(themeToggleButton);
 
-    expect(darkModeButton).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {

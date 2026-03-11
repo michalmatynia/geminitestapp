@@ -35,6 +35,7 @@ function GuidedDisplayHarness({
   const guidedState = useKangurAiTutorGuidedDisplayState({
     activeSectionRect: null,
     activeSelectionPageRect: new DOMRect(120, 180, 140, 26),
+    activeSelectionPageRects: [new DOMRect(120, 180, 140, 26)],
     activeSelectionRect: new DOMRect(120, 180, 140, 26),
     askModalVisible: true,
     enabled: true,
@@ -52,6 +53,7 @@ function GuidedDisplayHarness({
     mounted: true,
     openLoginModal,
     persistedSelectionPageRect: null,
+    persistedSelectionPageRects: [],
     persistedSelectionRect: null,
     sectionResponsePending: null,
     selectionGuidanceCalloutVisibleText,

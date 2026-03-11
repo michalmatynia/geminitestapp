@@ -213,7 +213,7 @@ export default function ProgressOverview({
             {topActivities.map((activity) => (
               <div
                 key={activity.key}
-                className='soft-card flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 px-4 py-3'
+                className='soft-card flex items-center justify-between gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3'
                 data-testid={`progress-overview-activity-${activity.key}`}
               >
                 <div className='min-w-0'>

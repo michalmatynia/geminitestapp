@@ -24,7 +24,10 @@ describe('DivisionGame', () => {
     expect(screen.getByTestId('division-game-equation')).toHaveClass('text-3xl', 'text-blue-600');
     expect(screen.getByRole('button', { name: 'Sprawdź ✓' })).toHaveClass(
       'kangur-cta-pill',
-      'primary-cta'
+      'primary-cta',
+      '[background:var(--kangur-soft-card-background)]',
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[color:var(--kangur-page-text)]'
     );
   });
 

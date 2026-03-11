@@ -9,7 +9,7 @@ export const KANGUR_AI_TUTOR_SETTINGS_KEY = 'kangur_ai_tutor_settings';
 export { KANGUR_AI_TUTOR_APP_SETTINGS_KEY };
 
 export type KangurAiTutorTestAccessMode = 'disabled' | 'guided' | 'review_after_answer';
-export type KangurAiTutorUiMode = 'anchored' | 'static';
+export type KangurAiTutorUiMode = 'anchored' | 'static' | 'freeform';
 export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
 export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 export type KangurAiTutorGuestIntroMode = 'first_visit' | 'every_visit';
@@ -125,6 +125,7 @@ const normalizeTestAccessMode = (value: unknown): KangurAiTutorTestAccessMode =>
 const normalizeUiMode = (value: unknown): KangurAiTutorUiMode => {
   switch (value) {
     case 'static':
+    case 'freeform':
     case 'anchored':
       return value;
     default:

@@ -42,14 +42,14 @@ export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
               </KangurStatusChip>
             </div>
             <div
-              className='text-sm font-semibold text-slate-900'
+              className='text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='kangur-kangur-session-recommendation-title'
             >
               {activeSessionRecommendation.title}
             </div>
             {activeSessionRecommendation.description ? (
               <div
-                className='text-xs leading-6 text-slate-700'
+                className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
                 data-testid='kangur-kangur-session-recommendation-description'
               >
                 {activeSessionRecommendation.description}

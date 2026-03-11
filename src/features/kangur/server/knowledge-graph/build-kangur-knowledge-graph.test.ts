@@ -19,6 +19,7 @@ describe('buildKangurKnowledgeGraph', () => {
         }),
         expect.objectContaining({
           id: 'anchor:kangur:login',
+          route: '/',
           anchorId: 'kangur-primary-nav-login',
         }),
         expect.objectContaining({
@@ -28,16 +29,47 @@ describe('buildKangurKnowledgeGraph', () => {
         expect.objectContaining({
           id: 'page:kangur-lessons',
           kind: 'page',
+          title: 'Lekcje',
+          route: '/lessons',
+          triggerPhrases: expect.arrayContaining(['gdzie sa lekcje']),
+        }),
+        expect.objectContaining({
+          id: 'page:kangur-tests',
+          kind: 'page',
+          title: 'Testy',
+          route: '/tests',
+          triggerPhrases: expect.arrayContaining(['gdzie sa testy', 'wroc do testow']),
         }),
         expect.objectContaining({
           id: 'guide:native:lesson-overview',
           kind: 'guide',
           surface: 'lesson',
+          route: '/lessons',
           sourceCollection: 'kangur_ai_tutor_native_guides',
           sourceRecordId: 'lesson-overview',
           sourcePath: 'entry:lesson-overview',
           contentIdPrefixes: ['lesson-', 'lesson:list'],
           semanticText: expect.stringContaining('Ekran lekcji prowadzi ucznia'),
+        }),
+        expect.objectContaining({
+          id: 'action:native:lesson-overview:lesson-open-library',
+          kind: 'action',
+          route: '/lessons',
+          sourceCollection: 'kangur_ai_tutor_native_guides',
+          sourceRecordId: 'lesson-overview',
+          sourcePath: 'entry:lesson-overview.followUpAction:lesson-open-library',
+        }),
+        expect.objectContaining({
+          id: 'guide:native:auth-login-action',
+          kind: 'guide',
+          route: '/',
+          anchorId: 'kangur-primary-nav-login',
+        }),
+        expect.objectContaining({
+          id: 'guide:native:test-question',
+          kind: 'guide',
+          route: '/tests',
+          anchorId: undefined,
         }),
       ])
     );
@@ -57,6 +89,16 @@ describe('buildKangurKnowledgeGraph', () => {
           kind: 'HAS_REFERENCE',
           from: 'root:kangur:lessonContext',
           to: 'page:kangur-lessons',
+        }),
+        expect.objectContaining({
+          kind: 'LEADS_TO',
+          from: 'guide:native:lesson-overview',
+          to: 'action:native:lesson-overview:lesson-open-library',
+        }),
+        expect.objectContaining({
+          kind: 'LEADS_TO',
+          from: 'guide:native:auth-login-action',
+          to: 'anchor:kangur:login',
         }),
       ])
     );

@@ -33,13 +33,12 @@ import {
   normalizeAiPathsValidationConfig,
   PATH_CONFIG_PREFIX,
   palette,
-  resolvePortablePathInput,
   sanitizeEdges,
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
+import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
 import {
   remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
@@ -121,36 +120,19 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
   }
 
-  let parsedPayload: unknown = raw;
-  try {
-    parsedPayload = JSON.parse(raw);
-  } catch {
-    parsedPayload = raw;
-  }
-
-  const resolvedConfig = resolvePortablePathInput(parsedPayload, {
-    repairIdentities: true,
-    includeConnections: false,
-    signingPolicyTelemetrySurface: 'api',
-    nodeCodeObjectHashVerificationMode: 'warn',
+  const resolved = materializeStoredTriggerPathConfig({
+    pathId,
+    rawConfig: raw,
+    fallbackName: pathId,
   });
-  if (!resolvedConfig.ok) {
-    throw badRequestError(resolvedConfig.error);
-  }
-  if (resolvedConfig.value.pathConfig.id !== pathId) {
-    throw badRequestError(`Stored AI Path config id mismatch for "${pathId}".`);
-  }
-  const sanitizedPathConfig = sanitizeTriggerPathConfig(resolvedConfig.value.pathConfig);
-  const starterUpgrade = upgradeStarterWorkflowPathConfig(sanitizedPathConfig);
-  const upgradedPathConfig = sanitizeTriggerPathConfig(starterUpgrade.config);
-  if (starterUpgrade.changed) {
+  if (resolved.changed) {
     try {
-      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(upgradedPathConfig) }]);
+      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(resolved.config) }]);
     } catch {
       // Best-effort persistence only. The repaired config is still safe to execute for this request.
     }
   }
-  return upgradedPathConfig;
+  return resolved.config;
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

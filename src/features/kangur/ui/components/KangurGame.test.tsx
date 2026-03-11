@@ -63,6 +63,7 @@ describe('KangurGame', () => {
       'border-white/88',
       'bg-white/94'
     );
+    expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-game-illustration-shell')).toHaveClass(
       'soft-card',
       'border'
@@ -88,6 +89,9 @@ describe('KangurGame', () => {
       'glass-panel',
       'border-white/88',
       'bg-white/94'
+    );
+    expect(screen.getByText('0% poprawnych odpowiedzi')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('+10 XP ✨')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByTestId('kangur-game-summary-breakdown')).toHaveTextContent(

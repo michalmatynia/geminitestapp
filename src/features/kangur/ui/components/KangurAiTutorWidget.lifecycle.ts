@@ -7,13 +7,20 @@ import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
-import { AVATAR_SIZE, EDGE_GAP } from './KangurAiTutorWidget.shared';
+import {
+  AVATAR_SIZE,
+  EDGE_GAP,
+  applyTutorPanelSnapState,
+  clampTutorPanelPoint,
+} from './KangurAiTutorWidget.shared';
 import {
   clearPersistedTutorAvatarPosition,
+  clearPersistedTutorPanelPosition,
   clearPersistedPendingTutorFollowUp,
   clearPersistedTutorSessionKey,
   loadPersistedPendingTutorFollowUp,
   persistTutorAvatarPosition,
+  persistTutorPanelPosition,
   persistTutorSessionKey,
   subscribeToTutorVisibilityChanges,
 } from './KangurAiTutorWidget.storage';
@@ -63,6 +70,7 @@ type UseKangurAiTutorLifecycleEffectsInput = {
   authIsAuthenticated: boolean | undefined;
   clearSelection: () => void;
   closeChat: () => void;
+  contextualFreeformPanelPoint: TutorPoint | null;
   getContextSwitchNotice: (input: {
     assignmentId: string | null | undefined;
     assignmentSummary?: string | null | undefined;
@@ -86,6 +94,7 @@ type UseKangurAiTutorLifecycleEffectsInput = {
   setHighlightedText: (value: string | null) => void;
   tutorContent: KangurAiTutorContent;
   tutorSessionKey: string | null;
+  uiMode: 'anchored' | 'freeform' | 'static';
   viewport: {
     width: number;
     height: number;
@@ -99,6 +108,7 @@ export function useKangurAiTutorLifecycleEffects({
   authIsAuthenticated,
   clearSelection,
   closeChat,
+  contextualFreeformPanelPoint,
   getContextSwitchNotice,
   getCurrentLocation,
   isOpen,
@@ -111,6 +121,7 @@ export function useKangurAiTutorLifecycleEffects({
   setHighlightedText,
   tutorContent,
   tutorSessionKey,
+  uiMode,
   viewport,
   widgetState,
 }: UseKangurAiTutorLifecycleEffectsInput): void {
@@ -126,6 +137,9 @@ export function useKangurAiTutorLifecycleEffects({
     messagesEndRef,
     mounted,
     panelRef,
+    panelPosition,
+    panelPositionMode,
+    panelSnapPreference,
     previousSessionKeyRef,
     selectionExplainTimeoutRef,
     selectionGuidanceRevealTimeoutRef,
@@ -146,8 +160,12 @@ export function useKangurAiTutorLifecycleEffects({
     setMounted,
     setPanelAnchorMode,
     setPanelMeasuredHeight,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSectionResponseComplete,
     setSectionResponsePending,
@@ -201,6 +219,99 @@ export function useKangurAiTutorLifecycleEffects({
   }, [draggedAvatarPoint, setDraggedAvatarPoint, viewport]);
 
   useEffect(() => {
+    if (
+      !contextualFreeformPanelPoint ||
+      !isOpen ||
+      askModalVisible ||
+      uiMode !== 'freeform' ||
+      panelPositionMode !== 'contextual'
+    ) {
+      return;
+    }
+
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    if (!panelRect || panelRect.width <= 0 || panelRect.height <= 0) {
+      return;
+    }
+
+    const nextPoint = clampTutorPanelPoint(contextualFreeformPanelPoint, viewport, {
+      width: panelRect.width,
+      height: panelRect.height,
+    });
+    const shouldPersist =
+      panelPosition?.x !== nextPoint.x ||
+      panelPosition?.y !== nextPoint.y ||
+      panelSnapPreference !== 'free';
+    if (!shouldPersist) {
+      return;
+    }
+
+    setPanelPosition(nextPoint);
+    setPanelSnapPreference('free');
+    persistTutorPanelPosition({
+      left: nextPoint.x,
+      mode: 'contextual',
+      snap: 'free',
+      top: nextPoint.y,
+    });
+  }, [
+    askModalVisible,
+    contextualFreeformPanelPoint,
+    isOpen,
+    panelPosition,
+    panelPositionMode,
+    panelRef,
+    panelSnapPreference,
+    setPanelPosition,
+    setPanelSnapPreference,
+    uiMode,
+    viewport,
+  ]);
+
+  useEffect(() => {
+    if (!panelPosition || !isOpen || askModalVisible || uiMode !== 'freeform') {
+      return;
+    }
+
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    if (!panelRect || panelRect.width <= 0 || panelRect.height <= 0) {
+      return;
+    }
+
+    const nextPoint =
+      panelSnapPreference === 'free'
+        ? clampTutorPanelPoint(panelPosition, viewport, {
+            width: panelRect.width,
+            height: panelRect.height,
+          })
+        : applyTutorPanelSnapState(panelPosition, panelSnapPreference, viewport, {
+            width: panelRect.width,
+            height: panelRect.height,
+          });
+    if (nextPoint.x === panelPosition.x && nextPoint.y === panelPosition.y) {
+      return;
+    }
+
+    setPanelPosition(nextPoint);
+    persistTutorPanelPosition({
+      left: nextPoint.x,
+      mode: panelPositionMode,
+      snap: panelSnapPreference,
+      top: nextPoint.y,
+    });
+  }, [
+    askModalVisible,
+    isOpen,
+    panelPosition,
+    panelPositionMode,
+    panelRef,
+    panelSnapPreference,
+    setPanelPosition,
+    uiMode,
+    viewport,
+  ]);
+
+  useEffect(() => {
     if (!isTutorHidden) {
       return;
     }
@@ -214,7 +325,11 @@ export function useKangurAiTutorLifecycleEffects({
     setHasNewMessage(false);
     setDismissedSelectedText(null);
     setDraggedAvatarPoint(null);
+    setPanelPosition(null);
+    setPanelPositionMode('manual');
+    setPanelSnapPreference('free');
     clearPersistedTutorAvatarPosition();
+    clearPersistedTutorPanelPosition();
     setAskModalDockStyle(null);
     if (selectionGuidanceRevealTimeoutRef.current !== null) {
       window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
@@ -226,6 +341,7 @@ export function useKangurAiTutorLifecycleEffects({
     setHoveredSectionAnchorId(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionPageRect(null);
+    setPersistedSelectionPageRects([]);
     setPersistedSelectionContainerRect(null);
     setSelectionResponsePending(null);
     setSelectionResponseComplete(null);
@@ -251,8 +367,12 @@ export function useKangurAiTutorLifecycleEffects({
     setHighlightedText,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     selectionGuidanceRevealTimeoutRef,
     setSectionResponseComplete,
@@ -490,6 +610,7 @@ export function useKangurAiTutorLifecycleEffects({
       setSelectionGuidanceHandoffText(null);
       setPersistedSelectionRect(null);
       setPersistedSelectionPageRect(null);
+      setPersistedSelectionPageRects([]);
       setPersistedSelectionContainerRect(null);
       setContextSwitchNotice(null);
     }
@@ -500,6 +621,7 @@ export function useKangurAiTutorLifecycleEffects({
     setPanelAnchorMode,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
@@ -519,6 +641,7 @@ export function useKangurAiTutorLifecycleEffects({
       setSelectionGuidanceHandoffText(null);
       setPersistedSelectionRect(null);
       setPersistedSelectionPageRect(null);
+      setPersistedSelectionPageRects([]);
       setPersistedSelectionContainerRect(null);
       setContextSwitchNotice(
         isOpen
@@ -558,6 +681,7 @@ export function useKangurAiTutorLifecycleEffects({
     setInputValue,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,

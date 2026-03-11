@@ -8,12 +8,22 @@ const createAnalyticsSnapshot = (overrides?: {
   progressSyncFailure?: number;
   aiTutor?: {
     messageSucceededCount?: number;
+    knowledgeGraphAppliedCount?: number;
+    knowledgeGraphSemanticCount?: number;
+    knowledgeGraphWebsiteHelpCount?: number;
+    knowledgeGraphMetadataOnlyRecallCount?: number;
+    knowledgeGraphHybridRecallCount?: number;
+    knowledgeGraphVectorOnlyRecallCount?: number;
+    knowledgeGraphVectorRecallAttemptedCount?: number;
     bridgeSuggestionCount?: number;
     lessonToGameBridgeSuggestionCount?: number;
     gameToLessonBridgeSuggestionCount?: number;
     bridgeQuickActionClickCount?: number;
     bridgeFollowUpClickCount?: number;
     bridgeFollowUpCompletionCount?: number;
+    bridgeCompletionRatePercent?: number | null;
+    knowledgeGraphCoverageRatePercent?: number | null;
+    knowledgeGraphVectorAssistRatePercent?: number | null;
   };
 }): {
   totals: { events: number; pageviews: number };
@@ -24,15 +34,35 @@ const createAnalyticsSnapshot = (overrides?: {
   importantEvents: Array<{ name: string; count: number }>;
   aiTutor: {
     messageSucceededCount: number;
+    knowledgeGraphAppliedCount: number;
+    knowledgeGraphSemanticCount: number;
+    knowledgeGraphWebsiteHelpCount: number;
+    knowledgeGraphMetadataOnlyRecallCount: number;
+    knowledgeGraphHybridRecallCount: number;
+    knowledgeGraphVectorOnlyRecallCount: number;
+    knowledgeGraphVectorRecallAttemptedCount: number;
     bridgeSuggestionCount: number;
     lessonToGameBridgeSuggestionCount: number;
     gameToLessonBridgeSuggestionCount: number;
     bridgeQuickActionClickCount: number;
     bridgeFollowUpClickCount: number;
     bridgeFollowUpCompletionCount: number;
+    bridgeCompletionRatePercent: number | null;
+    knowledgeGraphCoverageRatePercent: number | null;
+    knowledgeGraphVectorAssistRatePercent: number | null;
   };
   recent: never[];
-} => ({
+} => {
+  const messageSucceededCount = overrides?.aiTutor?.messageSucceededCount ?? 0;
+  const knowledgeGraphAppliedCount = overrides?.aiTutor?.knowledgeGraphAppliedCount ?? 0;
+  const knowledgeGraphSemanticCount = overrides?.aiTutor?.knowledgeGraphSemanticCount ?? 0;
+  const knowledgeGraphHybridRecallCount = overrides?.aiTutor?.knowledgeGraphHybridRecallCount ?? 0;
+  const knowledgeGraphVectorOnlyRecallCount =
+    overrides?.aiTutor?.knowledgeGraphVectorOnlyRecallCount ?? 0;
+  const bridgeSuggestionCount = overrides?.aiTutor?.bridgeSuggestionCount ?? 0;
+  const bridgeFollowUpCompletionCount = overrides?.aiTutor?.bridgeFollowUpCompletionCount ?? 0;
+
+  return {
   totals: { events: 0, pageviews: 0 },
   visitors: 0,
   sessions: 0,
@@ -53,16 +83,47 @@ const createAnalyticsSnapshot = (overrides?: {
     },
   ],
   aiTutor: {
-    messageSucceededCount: overrides?.aiTutor?.messageSucceededCount ?? 0,
-    bridgeSuggestionCount: overrides?.aiTutor?.bridgeSuggestionCount ?? 0,
+    messageSucceededCount,
+    knowledgeGraphAppliedCount,
+    knowledgeGraphSemanticCount,
+    knowledgeGraphWebsiteHelpCount: overrides?.aiTutor?.knowledgeGraphWebsiteHelpCount ?? 0,
+    knowledgeGraphMetadataOnlyRecallCount:
+      overrides?.aiTutor?.knowledgeGraphMetadataOnlyRecallCount ?? 0,
+    knowledgeGraphHybridRecallCount,
+    knowledgeGraphVectorOnlyRecallCount,
+    knowledgeGraphVectorRecallAttemptedCount:
+      overrides?.aiTutor?.knowledgeGraphVectorRecallAttemptedCount ?? 0,
+    bridgeSuggestionCount,
     lessonToGameBridgeSuggestionCount: overrides?.aiTutor?.lessonToGameBridgeSuggestionCount ?? 0,
     gameToLessonBridgeSuggestionCount: overrides?.aiTutor?.gameToLessonBridgeSuggestionCount ?? 0,
     bridgeQuickActionClickCount: overrides?.aiTutor?.bridgeQuickActionClickCount ?? 0,
     bridgeFollowUpClickCount: overrides?.aiTutor?.bridgeFollowUpClickCount ?? 0,
-    bridgeFollowUpCompletionCount: overrides?.aiTutor?.bridgeFollowUpCompletionCount ?? 0,
+    bridgeFollowUpCompletionCount,
+    bridgeCompletionRatePercent:
+      overrides?.aiTutor?.bridgeCompletionRatePercent ??
+      (bridgeSuggestionCount > 0
+        ? Number(((bridgeFollowUpCompletionCount / bridgeSuggestionCount) * 100).toFixed(1))
+        : null),
+    knowledgeGraphCoverageRatePercent:
+      overrides?.aiTutor?.knowledgeGraphCoverageRatePercent ??
+      (messageSucceededCount > 0
+        ? Number(((knowledgeGraphAppliedCount / messageSucceededCount) * 100).toFixed(1))
+        : null),
+    knowledgeGraphVectorAssistRatePercent:
+      overrides?.aiTutor?.knowledgeGraphVectorAssistRatePercent ??
+      (knowledgeGraphSemanticCount > 0
+        ? Number(
+            (
+              ((knowledgeGraphHybridRecallCount + knowledgeGraphVectorOnlyRecallCount) /
+                knowledgeGraphSemanticCount) *
+              100
+            ).toFixed(1)
+          )
+        : null),
   },
   recent: [],
-});
+  };
+};
 
 const createServerLogMetrics = (input: {
   total: number;
@@ -134,6 +195,85 @@ const createRouteMetrics = (overrides?: {
   learnersPost: createRouteHealth('kangur.learners.POST'),
   ttsPost: createRouteHealth('kangur.tts.POST'),
 });
+
+const createKnowledgeGraphStatus = (
+  overrides?: Partial<{
+    mode: 'status' | 'disabled' | 'error';
+    graphKey: string;
+    message: string;
+    present: boolean;
+    locale: string | null;
+    syncedAt: string | null;
+    syncedNodeCount: number | null;
+    syncedEdgeCount: number | null;
+    liveNodeCount: number;
+    liveEdgeCount: number;
+    canonicalNodeCount: number | null;
+    validCanonicalNodeCount: number | null;
+    invalidCanonicalNodeCount: number | null;
+    semanticNodeCount: number;
+    embeddingNodeCount: number;
+    embeddingDimensions: number | null;
+    embeddingModels: string[];
+    vectorIndexPresent: boolean;
+    vectorIndexState: string | null;
+    vectorIndexType: string | null;
+    vectorIndexDimensions: number | null;
+    semanticCoverageRatePercent: number | null;
+    embeddingCoverageRatePercent: number | null;
+    semanticReadiness:
+      | 'no_graph'
+      | 'no_semantic_text'
+      | 'metadata_only'
+      | 'embeddings_without_index'
+      | 'vector_index_pending'
+      | 'vector_ready';
+  }>
+) => {
+  if (overrides?.mode === 'disabled') {
+    return {
+      mode: 'disabled' as const,
+      graphKey: overrides.graphKey ?? 'kangur-website-help-v1',
+      message:
+        overrides.message ??
+        'Neo4j is not enabled. Set NEO4J_* env vars before checking live graph status.',
+    };
+  }
+
+  if (overrides?.mode === 'error') {
+    return {
+      mode: 'error' as const,
+      graphKey: overrides.graphKey ?? 'kangur-website-help-v1',
+      message: overrides.message ?? 'Neo4j query failed.',
+    };
+  }
+
+  return {
+    mode: 'status' as const,
+    graphKey: overrides?.graphKey ?? 'kangur-website-help-v1',
+    present: overrides?.present ?? true,
+    locale: overrides?.locale ?? 'pl',
+    syncedAt: overrides?.syncedAt ?? '2026-03-07T12:00:00.000Z',
+    syncedNodeCount: overrides?.syncedNodeCount ?? 87,
+    syncedEdgeCount: overrides?.syncedEdgeCount ?? 108,
+    liveNodeCount: overrides?.liveNodeCount ?? 87,
+    liveEdgeCount: overrides?.liveEdgeCount ?? 108,
+    canonicalNodeCount: overrides?.canonicalNodeCount ?? 80,
+    validCanonicalNodeCount: overrides?.validCanonicalNodeCount ?? 80,
+    invalidCanonicalNodeCount: overrides?.invalidCanonicalNodeCount ?? 0,
+    semanticNodeCount: overrides?.semanticNodeCount ?? 87,
+    embeddingNodeCount: overrides?.embeddingNodeCount ?? 87,
+    embeddingDimensions: overrides?.embeddingDimensions ?? 1536,
+    embeddingModels: overrides?.embeddingModels ?? ['text-embedding-3-small'],
+    vectorIndexPresent: overrides?.vectorIndexPresent ?? true,
+    vectorIndexState: overrides?.vectorIndexState ?? 'ONLINE',
+    vectorIndexType: overrides?.vectorIndexType ?? 'VECTOR',
+    vectorIndexDimensions: overrides?.vectorIndexDimensions ?? 1536,
+    semanticCoverageRatePercent: overrides?.semanticCoverageRatePercent ?? 100,
+    embeddingCoverageRatePercent: overrides?.embeddingCoverageRatePercent ?? 100,
+    semanticReadiness: overrides?.semanticReadiness ?? 'vector_ready',
+  };
+};
 
 describe('kangur observability alerts', () => {
   it('flags sign-in failure rate warnings when enough attempts exist', () => {
@@ -285,6 +425,123 @@ describe('kangur observability alerts', () => {
     });
   });
 
+  it('flags low Neo4j graph coverage across successful tutor replies', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot({
+        aiTutor: {
+          messageSucceededCount: 12,
+          knowledgeGraphAppliedCount: 3,
+        },
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const graphCoverageAlert = alerts.find(
+      (alert) => alert.id === 'kangur-ai-tutor-graph-coverage-rate'
+    );
+    expect(graphCoverageAlert?.status).toBe('critical');
+    expect(graphCoverageAlert?.value).toBe(25);
+    expect(graphCoverageAlert?.investigation).toEqual({
+      label: 'Open AI Tutor graph metrics',
+      href: '/admin/kangur/observability?range=24h#ai-tutor-bridge',
+    });
+  });
+
+  it('flags knowledge graph readiness when the vector index is missing', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot(),
+      knowledgeGraphStatus: createKnowledgeGraphStatus({
+        semanticReadiness: 'embeddings_without_index',
+        vectorIndexPresent: false,
+        vectorIndexState: null,
+        vectorIndexType: null,
+        vectorIndexDimensions: null,
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const graphReadinessAlert = alerts.find(
+      (alert) => alert.id === 'kangur-knowledge-graph-readiness'
+    );
+    expect(graphReadinessAlert?.status).toBe('critical');
+    expect(graphReadinessAlert?.summary).toContain('vector index is missing');
+    expect(graphReadinessAlert?.investigation).toEqual({
+      label: 'Open graph status',
+      href: '/admin/kangur/observability?range=24h#knowledge-graph-status',
+    });
+  });
+
+  it('treats disabled knowledge graph status as insufficient data', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot(),
+      knowledgeGraphStatus: createKnowledgeGraphStatus({
+        mode: 'disabled',
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const graphReadinessAlert = alerts.find(
+      (alert) => alert.id === 'kangur-knowledge-graph-readiness'
+    );
+    expect(graphReadinessAlert?.status).toBe('insufficient_data');
+    expect(graphReadinessAlert?.summary).toContain('Neo4j is not enabled');
+  });
+
+  it('flags low vector-assisted recall across semantic tutor replies', () => {
+    const alerts = __testables.buildKangurObservabilityAlerts({
+      range: '24h',
+      from: new Date('2026-03-06T12:00:00.000Z'),
+      to: new Date('2026-03-07T12:00:00.000Z'),
+      serverLogMetrics: createServerLogMetrics({ total: 50, errors: 0 }),
+      routeMetrics: createRouteMetrics(),
+      analytics: createAnalyticsSnapshot({
+        aiTutor: {
+          knowledgeGraphSemanticCount: 8,
+          knowledgeGraphHybridRecallCount: 1,
+          knowledgeGraphVectorOnlyRecallCount: 0,
+        },
+      }),
+      ttsRequestCount: 20,
+      ttsGenerationFailureCount: 0,
+      ttsFallbackCount: 0,
+      performanceBaseline: null,
+    });
+
+    const vectorAssistAlert = alerts.find(
+      (alert) => alert.id === 'kangur-ai-tutor-vector-assist-rate'
+    );
+    expect(vectorAssistAlert?.status).toBe('critical');
+    expect(vectorAssistAlert?.value).toBe(12.5);
+    expect(vectorAssistAlert?.investigation).toEqual({
+      label: 'Open AI Tutor graph metrics',
+      href: '/admin/kangur/observability?range=24h#ai-tutor-bridge',
+    });
+  });
+
   it('flags neural narration generation failures independently of fallback rate', () => {
     const alerts = __testables.buildKangurObservabilityAlerts({
       range: '24h',
@@ -332,6 +589,10 @@ describe('kangur ai tutor bridge analytics summary', () => {
         {
           name: 'kangur_ai_tutor_message_succeeded',
           meta: {
+            knowledgeGraphApplied: true,
+            knowledgeGraphQueryMode: 'website_help',
+            knowledgeGraphRecallStrategy: 'metadata_only',
+            knowledgeGraphVectorRecallAttempted: false,
             hasBridgeFollowUpAction: true,
             bridgeFollowUpDirection: 'lesson_to_game',
           },
@@ -339,6 +600,10 @@ describe('kangur ai tutor bridge analytics summary', () => {
         {
           name: 'kangur_ai_tutor_message_succeeded',
           meta: {
+            knowledgeGraphApplied: true,
+            knowledgeGraphQueryMode: 'semantic',
+            knowledgeGraphRecallStrategy: 'hybrid_vector',
+            knowledgeGraphVectorRecallAttempted: true,
             hasBridgeFollowUpAction: true,
             bridgeFollowUpDirection: 'game_to_lesson',
           },
@@ -364,12 +629,22 @@ describe('kangur ai tutor bridge analytics summary', () => {
       ])
     ).toEqual({
       messageSucceededCount: 2,
+      knowledgeGraphAppliedCount: 2,
+      knowledgeGraphSemanticCount: 1,
+      knowledgeGraphWebsiteHelpCount: 1,
+      knowledgeGraphMetadataOnlyRecallCount: 1,
+      knowledgeGraphHybridRecallCount: 1,
+      knowledgeGraphVectorOnlyRecallCount: 0,
+      knowledgeGraphVectorRecallAttemptedCount: 1,
       bridgeSuggestionCount: 2,
       lessonToGameBridgeSuggestionCount: 1,
       gameToLessonBridgeSuggestionCount: 1,
       bridgeQuickActionClickCount: 1,
       bridgeFollowUpClickCount: 1,
       bridgeFollowUpCompletionCount: 1,
+      bridgeCompletionRatePercent: 50,
+      knowledgeGraphCoverageRatePercent: 100,
+      knowledgeGraphVectorAssistRatePercent: 100,
     });
   });
 });

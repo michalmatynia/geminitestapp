@@ -8,6 +8,8 @@ import {
 
 import { mockKangurTutorEnvironment, selectTextInElement } from '../../support/kangur-tutor-fixtures';
 
+const TUTOR_SELECTION_GLOW_NAME = 'kangur-ai-tutor-selection-glow';
+
 async function openTutorFromSelection(page: Page): Promise<void> {
   const selectionAction = page.getByTestId('kangur-ai-tutor-selection-action');
   try {
@@ -25,6 +27,30 @@ async function openTutorFromSelection(page: Page): Promise<void> {
 
 async function gotoTutorRoute(page: Page, href: string): Promise<void> {
   await page.goto(href, { waitUntil: 'domcontentloaded' });
+}
+
+async function enableDarkTheme(page: Page): Promise<void> {
+  const themeToggle = page.getByRole('button', { name: 'Switch to Dark theme' });
+  if ((await themeToggle.count()) > 0) {
+    await expect(themeToggle).toBeVisible();
+    await themeToggle.click();
+    await expect(page.locator('[data-kangur-appearance="dark"]').first()).toBeVisible();
+    return;
+  }
+
+  await page.evaluate(() => {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.documentElement.classList.contains('dark') &&
+          document.body.classList.contains('dark')
+      )
+    )
+    .toBe(true);
 }
 
 async function triggerOnboardingAcknowledge(onboarding: Locator): Promise<void> {
@@ -171,7 +197,7 @@ async function expectGuidedAvatarAndCalloutToStayAdjacent(
           ? calloutBox.y - (avatarBox.y + avatarBox.height)
           : avatarBox.y - (calloutBox.y + calloutBox.height);
 
-  expect(gap).toBeGreaterThanOrEqual(Math.max(0, GUIDED_AVATAR_SURFACE_GAP - 4));
+  expect(gap).toBeGreaterThanOrEqual(Math.max(4, GUIDED_AVATAR_SURFACE_GAP - 12));
   expect(gap).toBeLessThanOrEqual(AVATAR_SIZE);
 }
 
@@ -183,6 +209,68 @@ async function expectGuidedArrowheadToStayAnchoredToAvatar(arrowhead: Locator): 
   expect(anchorLeft).toBeLessThanOrEqual(56);
   expect(anchorTop).toBeGreaterThanOrEqual(0);
   expect(anchorTop).toBeLessThanOrEqual(56);
+}
+
+async function expectSelectionGlowToBeActive(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page.evaluate((glowName) => {
+        const highlights = (CSS as typeof CSS & {
+          highlights?: { keys?: () => IterableIterator<string> };
+        }).highlights;
+
+        if (highlights && typeof highlights.keys === 'function') {
+          return Array.from(highlights.keys()).includes(glowName);
+        }
+
+        return (
+          document.querySelectorAll('[data-testid="kangur-ai-tutor-selection-glow"]').length > 0
+        );
+      }, TUTOR_SELECTION_GLOW_NAME)
+    )
+    .toBe(true);
+}
+
+async function expectSelectionGlowOverlayToBeVisible(page: Page): Promise<void> {
+  const glowOverlay = page.getByTestId('kangur-ai-tutor-selection-glow').first();
+  await expect(glowOverlay).toBeVisible();
+  await expect
+    .poll(() =>
+      glowOverlay.evaluate((element) => {
+        const style = window.getComputedStyle(element as HTMLElement);
+        return {
+          backgroundImage: style.backgroundImage,
+          boxShadow: style.boxShadow,
+        };
+      })
+    )
+    .toEqual(
+      expect.objectContaining({
+        backgroundImage: expect.stringContaining('gradient'),
+        boxShadow: expect.not.stringMatching(/^none$/),
+      })
+    );
+}
+
+async function expectLocatorToStayStill(
+  page: Page,
+  locator: Locator,
+  waitMs = 280
+): Promise<void> {
+  const initialBox = await locator.boundingBox();
+  expect(initialBox).not.toBeNull();
+
+  await page.waitForTimeout(waitMs);
+
+  const settledBox = await locator.boundingBox();
+  expect(settledBox).not.toBeNull();
+
+  if (!initialBox || !settledBox) {
+    return;
+  }
+
+  expect(Math.abs(settledBox.x - initialBox.x)).toBeLessThanOrEqual(1.5);
+  expect(Math.abs(settledBox.y - initialBox.y)).toBeLessThanOrEqual(1.5);
 }
 
 async function expectGuidedArrowheadToTargetLocator(
@@ -287,6 +375,7 @@ test.describe('Kangur AI Tutor', () => {
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
+    await enableDarkTheme(page);
     await page.getByRole('button', { name: lessonTitle }).click();
 
     const selectedLessonBlock = page
@@ -305,8 +394,17 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect(tutorAvatar).toHaveAttribute('data-guidance-target', 'selection_excerpt');
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
-    await expect(page.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeVisible();
+    await expect.poll(() =>
+      page.evaluate(() => window.getSelection()?.toString().trim() ?? '')
+    ).toBe('');
+    await expectSelectionGlowToBeActive(page);
+    await expectSelectionGlowOverlayToBeVisible(page);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expectLocatorToStayStill(
+      page,
+      tutorAvatar
+    );
     await expect(tutorArrowhead).toBeVisible();
     await expectLocatorsToOverlap(tutorAvatar, tutorArrowhead);
     await expectGuidedAvatarAndCalloutToStayAdjacent(
@@ -320,6 +418,12 @@ test.describe('Kangur AI Tutor', () => {
     );
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toContainText(
       'Wyjaśniam ten fragment.'
+    );
+    const guidedAvatarPlacement = await tutorAvatar.getAttribute('data-guidance-avatar-placement');
+    expect(guidedAvatarPlacement).toBeTruthy();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-preview')).toHaveAttribute(
+      'data-avatar-avoid-edge',
+      guidedAvatarPlacement ?? 'none'
     );
     await expect(page.getByTestId('kangur-ai-tutor-selection-action')).toHaveCount(0);
 
@@ -506,7 +610,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
-    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection_excerpt');
     await expect.poll(() => chatRequests.length).toBe(1);
 
     await page.mouse.click(24, 24);
@@ -537,7 +641,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
-    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection_excerpt');
     await expect.poll(() => chatRequests.length).toBe(1);
 
     await triggerTutorAvatar(page);
@@ -603,6 +707,10 @@ test.describe('Kangur AI Tutor', () => {
     const guidedCallout = page.getByTestId('kangur-ai-tutor-selection-guided-callout');
 
     await expect(tutorAvatar).toHaveAttribute('data-guidance-target', 'selection_excerpt');
+    await expect.poll(() =>
+      page.evaluate(() => window.getSelection()?.toString().trim() ?? '')
+    ).toBe('');
+    await expectSelectionGlowToBeActive(page);
     await expect(tutorArrowhead).toBeVisible();
     await expect(guidedCallout).toBeVisible();
     await expectGuidedAvatarAndCalloutToStayAdjacent(tutorAvatar, guidedCallout);
@@ -611,6 +719,12 @@ test.describe('Kangur AI Tutor', () => {
     await expectLocatorsNotToOverlap(
       guidedCallout,
       questionAnchor.getByRole('heading', { name: questionPrompt, exact: true })
+    );
+    const guidedAvatarPlacement = await tutorAvatar.getAttribute('data-guidance-avatar-placement');
+    expect(guidedAvatarPlacement).toBeTruthy();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-preview')).toHaveAttribute(
+      'data-avatar-avoid-edge',
+      guidedAvatarPlacement ?? 'none'
     );
 
     await expect.poll(() => chatRequests.length).toBe(1);

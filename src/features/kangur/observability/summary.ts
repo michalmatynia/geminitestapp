@@ -3,11 +3,13 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 import { getKangurAiTutorBridgeFollowUpDirection } from '@/features/kangur/ai-tutor/follow-up-reporting';
+import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
 import type {
   KangurAiTutorAnalyticsSnapshot,
   KangurAnalyticsCount,
   KangurAnalyticsEventType,
   KangurAnalyticsSnapshot,
+  KangurKnowledgeGraphStatusSnapshot,
   KangurObservabilityAlert,
   KangurObservabilityRange,
   KangurObservabilityStatus,
@@ -106,12 +108,22 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   })),
   aiTutor: {
     messageSucceededCount: 0,
+    knowledgeGraphAppliedCount: 0,
+    knowledgeGraphSemanticCount: 0,
+    knowledgeGraphWebsiteHelpCount: 0,
+    knowledgeGraphMetadataOnlyRecallCount: 0,
+    knowledgeGraphHybridRecallCount: 0,
+    knowledgeGraphVectorOnlyRecallCount: 0,
+    knowledgeGraphVectorRecallAttemptedCount: 0,
     bridgeSuggestionCount: 0,
     lessonToGameBridgeSuggestionCount: 0,
     gameToLessonBridgeSuggestionCount: 0,
     bridgeQuickActionClickCount: 0,
     bridgeFollowUpClickCount: 0,
     bridgeFollowUpCompletionCount: 0,
+    bridgeCompletionRatePercent: null,
+    knowledgeGraphCoverageRatePercent: null,
+    knowledgeGraphVectorAssistRatePercent: null,
   },
   recent: [],
 });
@@ -229,6 +241,23 @@ const rateStatus = (
   if (value >= options.warningThreshold) return 'warning';
   return 'ok';
 };
+const minimumRateStatus = (
+  value: number | null,
+  options: {
+    warningThreshold: number;
+    criticalThreshold: number;
+    minSample?: number;
+    sampleSize?: number;
+  }
+): KangurObservabilityStatus => {
+  if (value === null) return 'insufficient_data';
+  if ((options.sampleSize ?? 0) < (options.minSample ?? 0)) {
+    return 'insufficient_data';
+  }
+  if (value <= options.criticalThreshold) return 'critical';
+  if (value <= options.warningThreshold) return 'warning';
+  return 'ok';
+};
 const valueStatus = (
   value: number | null,
   options: {
@@ -340,8 +369,8 @@ const buildKangurAnalyticsMatch = (from: Date, to: Date): Record<string, unknown
 });
 const summarizeKangurAiTutorAnalytics = (
   docs: AnalyticsEventMongoDoc[]
-): KangurAiTutorAnalyticsSnapshot =>
-  docs.reduce<KangurAiTutorAnalyticsSnapshot>(
+): KangurAiTutorAnalyticsSnapshot => {
+  const summary = docs.reduce<KangurAiTutorAnalyticsSnapshot>(
     (summary, doc) => {
       const name = doc.name;
       const meta = doc.meta;
@@ -352,6 +381,27 @@ const summarizeKangurAiTutorAnalytics = (
       const bridgeDirectionFromAction = getKangurAiTutorBridgeFollowUpDirection(actionId);
       if (name === 'kangur_ai_tutor_message_succeeded') {
         summary.messageSucceededCount += 1;
+        if (meta?.['knowledgeGraphApplied'] === true) {
+          summary.knowledgeGraphAppliedCount += 1;
+        }
+        if (meta?.['knowledgeGraphQueryMode'] === 'semantic') {
+          summary.knowledgeGraphSemanticCount += 1;
+        }
+        if (meta?.['knowledgeGraphQueryMode'] === 'website_help') {
+          summary.knowledgeGraphWebsiteHelpCount += 1;
+        }
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'metadata_only') {
+          summary.knowledgeGraphMetadataOnlyRecallCount += 1;
+        }
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'hybrid_vector') {
+          summary.knowledgeGraphHybridRecallCount += 1;
+        }
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'vector_only') {
+          summary.knowledgeGraphVectorOnlyRecallCount += 1;
+        }
+        if (meta?.['knowledgeGraphVectorRecallAttempted'] === true) {
+          summary.knowledgeGraphVectorRecallAttemptedCount += 1;
+        }
         if (meta?.['hasBridgeFollowUpAction'] === true) {
           summary.bridgeSuggestionCount += 1;
         }
@@ -375,14 +425,44 @@ const summarizeKangurAiTutorAnalytics = (
     },
     {
       messageSucceededCount: 0,
+      knowledgeGraphAppliedCount: 0,
+      knowledgeGraphSemanticCount: 0,
+      knowledgeGraphWebsiteHelpCount: 0,
+      knowledgeGraphMetadataOnlyRecallCount: 0,
+      knowledgeGraphHybridRecallCount: 0,
+      knowledgeGraphVectorOnlyRecallCount: 0,
+      knowledgeGraphVectorRecallAttemptedCount: 0,
       bridgeSuggestionCount: 0,
       lessonToGameBridgeSuggestionCount: 0,
       gameToLessonBridgeSuggestionCount: 0,
       bridgeQuickActionClickCount: 0,
       bridgeFollowUpClickCount: 0,
       bridgeFollowUpCompletionCount: 0,
+      bridgeCompletionRatePercent: null,
+      knowledgeGraphCoverageRatePercent: null,
+      knowledgeGraphVectorAssistRatePercent: null,
     }
   );
+
+  const vectorAssistCount =
+    summary.knowledgeGraphHybridRecallCount + summary.knowledgeGraphVectorOnlyRecallCount;
+
+  return {
+    ...summary,
+    bridgeCompletionRatePercent: toPercent(
+      summary.bridgeFollowUpCompletionCount,
+      summary.bridgeSuggestionCount
+    ),
+    knowledgeGraphCoverageRatePercent: toPercent(
+      summary.knowledgeGraphAppliedCount,
+      summary.messageSucceededCount
+    ),
+    knowledgeGraphVectorAssistRatePercent: toPercent(
+      vectorAssistCount,
+      summary.knowledgeGraphSemanticCount
+    ),
+  };
+};
 const loadKangurAnalyticsSnapshot = async (
   range: KangurObservabilityRange
 ): Promise<KangurAnalyticsSnapshot> => {
@@ -593,6 +673,66 @@ const loadRouteMetrics = async (
 };
 const eventCount = (analytics: KangurAnalyticsSnapshot, name: string): number =>
   analytics.importantEvents.find((entry: KangurAnalyticsCount) => entry.name === name)?.count ?? 0;
+
+const resolveKnowledgeGraphAlertStatus = (
+  knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot | undefined
+): KangurObservabilityStatus => {
+  if (!knowledgeGraphStatus || knowledgeGraphStatus.mode === 'disabled') {
+    return 'insufficient_data';
+  }
+
+  if (knowledgeGraphStatus.mode === 'error') {
+    return 'critical';
+  }
+
+  switch (knowledgeGraphStatus.semanticReadiness) {
+    case 'vector_ready':
+      return 'ok';
+    case 'metadata_only':
+    case 'vector_index_pending':
+      return 'warning';
+    case 'embeddings_without_index':
+    case 'no_graph':
+    case 'no_semantic_text':
+      return 'critical';
+    default:
+      return 'insufficient_data';
+  }
+};
+
+const buildKnowledgeGraphAlertSummary = (
+  knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot | undefined
+): string => {
+  if (!knowledgeGraphStatus) {
+    return 'Live Neo4j knowledge graph status is unavailable for this summary window.';
+  }
+
+  if (knowledgeGraphStatus.mode === 'disabled') {
+    return knowledgeGraphStatus.message;
+  }
+
+  if (knowledgeGraphStatus.mode === 'error') {
+    return `Failed to load Neo4j knowledge graph status for ${knowledgeGraphStatus.graphKey}: ${knowledgeGraphStatus.message}`;
+  }
+
+  switch (knowledgeGraphStatus.semanticReadiness) {
+    case 'vector_ready':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} is vector-ready with ${knowledgeGraphStatus.liveNodeCount} nodes, ${knowledgeGraphStatus.liveEdgeCount} edges, and an online vector index.`;
+    case 'vector_index_pending':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} has embeddings, but the vector index is ${knowledgeGraphStatus.vectorIndexState ?? 'not online'}, so vector recall is still degraded.`;
+    case 'embeddings_without_index':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} has embeddings on knowledge nodes, but the vector index is missing.`;
+    case 'metadata_only':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} has semantic text but no embeddings yet, so Tutor retrieval is limited to metadata matching.`;
+    case 'no_semantic_text':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} is present, but semantic text has not been populated on Kangur knowledge nodes.`;
+    case 'no_graph':
+      return `Neo4j graph ${knowledgeGraphStatus.graphKey} is not present in the configured database.`;
+    default:
+      return 'Live Neo4j knowledge graph status is unavailable for this summary window.';
+  }
+};
+
 const buildKangurObservabilityAlerts = (input: {
   range: KangurObservabilityRange;
   from: Date;
@@ -600,6 +740,7 @@ const buildKangurObservabilityAlerts = (input: {
   serverLogMetrics: SystemLogMetrics | null;
   routeMetrics: KangurRouteMetrics;
   analytics: KangurAnalyticsSnapshot;
+  knowledgeGraphStatus?: KangurKnowledgeGraphStatusSnapshot;
   ttsRequestCount: number;
   ttsGenerationFailureCount: number;
   ttsFallbackCount: number;
@@ -614,13 +755,24 @@ const buildKangurObservabilityAlerts = (input: {
   const serverTotalCount = input.serverLogMetrics?.total ?? 0;
   const aiTutorBridgeSuggestionCount = input.analytics.aiTutor.bridgeSuggestionCount;
   const aiTutorBridgeCompletionCount = input.analytics.aiTutor.bridgeFollowUpCompletionCount;
+  const aiTutorReplyCount = input.analytics.aiTutor.messageSucceededCount;
+  const aiTutorGraphCoverageCount = input.analytics.aiTutor.knowledgeGraphAppliedCount;
+  const aiTutorSemanticGraphCount = input.analytics.aiTutor.knowledgeGraphSemanticCount;
+  const aiTutorVectorAssistCount =
+    input.analytics.aiTutor.knowledgeGraphHybridRecallCount +
+    input.analytics.aiTutor.knowledgeGraphVectorOnlyRecallCount;
   const serverErrorRatePercent = toPercent(serverErrorCount, serverTotalCount);
   const signInFailureRatePercent = toPercent(signInFailureCount, signInAttemptCount);
   const ttsFallbackRatePercent = toPercent(input.ttsFallbackCount, input.ttsRequestCount);
-  const aiTutorBridgeCompletionRatePercent = toPercent(
-    aiTutorBridgeCompletionCount,
-    aiTutorBridgeSuggestionCount
-  );
+  const aiTutorGraphCoverageRatePercent =
+    input.analytics.aiTutor.knowledgeGraphCoverageRatePercent ??
+    toPercent(aiTutorGraphCoverageCount, aiTutorReplyCount);
+  const aiTutorBridgeCompletionRatePercent =
+    input.analytics.aiTutor.bridgeCompletionRatePercent ??
+    toPercent(aiTutorBridgeCompletionCount, aiTutorBridgeSuggestionCount);
+  const aiTutorVectorAssistRatePercent =
+    input.analytics.aiTutor.knowledgeGraphVectorAssistRatePercent ??
+    toPercent(aiTutorVectorAssistCount, aiTutorSemanticGraphCount);
   const progressWarningThreshold = scaleCountThreshold(input.range, 3);
   const progressCriticalThreshold = scaleCountThreshold(input.range, 10);
   const ttsGenerationWarningThreshold = scaleCountThreshold(input.range, 1);
@@ -628,6 +780,11 @@ const buildKangurObservabilityAlerts = (input: {
   const recentAnalyticsHref = buildKangurObservabilitySectionHref(
     input.range,
     'recent-analytics-events'
+  );
+  const aiTutorBridgeHref = buildKangurObservabilitySectionHref(input.range, 'ai-tutor-bridge');
+  const knowledgeGraphStatusHref = buildKangurObservabilitySectionHref(
+    input.range,
+    'knowledge-graph-status'
   );
   const performanceBaselineHref = buildKangurObservabilitySectionHref(
     input.range,
@@ -651,6 +808,20 @@ const buildKangurObservabilityAlerts = (input: {
           ? 'warning'
           : 'ok';
   return [
+    {
+      id: 'kangur-knowledge-graph-readiness',
+      title: 'Knowledge Graph Readiness',
+      status: resolveKnowledgeGraphAlertStatus(input.knowledgeGraphStatus),
+      value: null,
+      unit: 'status',
+      warningThreshold: null,
+      criticalThreshold: null,
+      summary: buildKnowledgeGraphAlertSummary(input.knowledgeGraphStatus),
+      investigation: {
+        label: 'Open graph status',
+        href: knowledgeGraphStatusHref,
+      },
+    },
     {
       id: 'kangur-server-error-rate',
       title: 'Kangur Server Error Rate',
@@ -795,6 +966,50 @@ const buildKangurObservabilityAlerts = (input: {
       },
     },
     {
+      id: 'kangur-ai-tutor-graph-coverage-rate',
+      title: 'AI Tutor Graph Coverage Rate',
+      status: minimumRateStatus(aiTutorGraphCoverageRatePercent, {
+        warningThreshold: 60,
+        criticalThreshold: 30,
+        minSample: 10,
+        sampleSize: aiTutorReplyCount,
+      }),
+      value: aiTutorGraphCoverageRatePercent,
+      unit: '%',
+      warningThreshold: 60,
+      criticalThreshold: 30,
+      summary:
+        aiTutorReplyCount < 10
+          ? 'Insufficient AI Tutor reply volume to evaluate Neo4j graph coverage reliably.'
+          : `${aiTutorGraphCoverageCount} Neo4j-backed Tutor replies out of ${aiTutorReplyCount} successful Tutor replies in the selected window.`,
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: aiTutorBridgeHref,
+      },
+    },
+    {
+      id: 'kangur-ai-tutor-vector-assist-rate',
+      title: 'AI Tutor Vector Assist Rate',
+      status: minimumRateStatus(aiTutorVectorAssistRatePercent, {
+        warningThreshold: 40,
+        criticalThreshold: 15,
+        minSample: 5,
+        sampleSize: aiTutorSemanticGraphCount,
+      }),
+      value: aiTutorVectorAssistRatePercent,
+      unit: '%',
+      warningThreshold: 40,
+      criticalThreshold: 15,
+      summary:
+        aiTutorSemanticGraphCount < 5
+          ? 'Insufficient semantic Tutor reply volume to evaluate vector-assisted Neo4j recall reliably.'
+          : `${aiTutorVectorAssistCount} semantic Tutor replies used hybrid or vector-only recall out of ${aiTutorSemanticGraphCount} semantic graph replies.`,
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: aiTutorBridgeHref,
+      },
+    },
+    {
       id: 'kangur-ai-tutor-bridge-completion-rate',
       title: 'AI Tutor Bridge Completion Rate',
       status: aiTutorBridgeCompletionStatus,
@@ -850,42 +1065,58 @@ export const getKangurObservabilitySummary = async (input: {
   const range = input.range ?? '24h';
   const { from, to } = resolveKangurObservabilityRangeWindow(range);
   const errors: Record<string, string> = {};
-  const [serverLogMetrics, recentKangurLogs, routeMetrics, analytics, performanceBaseline] =
-    await Promise.all([
-      getSystemLogMetrics({ source: 'kangur.', from, to }).catch((error: unknown) => {
-        errors['serverLogs.metrics'] =
-          error instanceof Error ? error.message : 'Failed to load Kangur log metrics.';
-        return null;
+  const [
+    serverLogMetrics,
+    recentKangurLogs,
+    routeMetrics,
+    analytics,
+    knowledgeGraphStatus,
+    performanceBaseline,
+  ] = await Promise.all([
+    getSystemLogMetrics({ source: 'kangur.', from, to }).catch((error: unknown) => {
+      errors['serverLogs.metrics'] =
+        error instanceof Error ? error.message : 'Failed to load Kangur log metrics.';
+      return null;
+    }),
+    listSystemLogs({
+      page: 1,
+      pageSize: 25,
+      source: 'kangur.',
+      from,
+      to,
+    })
+      .then((result) => result.logs)
+      .catch((error: unknown) => {
+        errors['serverLogs.recent'] =
+          error instanceof Error ? error.message : 'Failed to load recent Kangur logs.';
+        return [];
       }),
-      listSystemLogs({
-        page: 1,
-        pageSize: 25,
-        source: 'kangur.',
-        from,
-        to,
-      })
-        .then((result) => result.logs)
-        .catch((error: unknown) => {
-          errors['serverLogs.recent'] =
-            error instanceof Error ? error.message : 'Failed to load recent Kangur logs.';
-          return [];
-        }),
-      loadRouteMetrics(from, to).catch((error: unknown) => {
-        errors['routes'] =
-          error instanceof Error ? error.message : 'Failed to load Kangur route metrics.';
-        return emptyRouteMetrics();
-      }),
-      loadKangurAnalyticsSnapshot(range).catch((error: unknown) => {
-        errors['analytics'] =
-          error instanceof Error ? error.message : 'Failed to load Kangur analytics snapshot.';
-        return emptyAnalyticsSnapshot();
-      }),
-      loadKangurPerformanceBaseline().catch((error: unknown) => {
-        errors['performanceBaseline'] =
-          error instanceof Error ? error.message : 'Failed to load Kangur performance baseline.';
-        return null;
-      }),
-    ]);
+    loadRouteMetrics(from, to).catch((error: unknown) => {
+      errors['routes'] =
+        error instanceof Error ? error.message : 'Failed to load Kangur route metrics.';
+      return emptyRouteMetrics();
+    }),
+    loadKangurAnalyticsSnapshot(range).catch((error: unknown) => {
+      errors['analytics'] =
+        error instanceof Error ? error.message : 'Failed to load Kangur analytics snapshot.';
+      return emptyAnalyticsSnapshot();
+    }),
+    loadKangurKnowledgeGraphStatusSnapshot().catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : 'Failed to load Kangur knowledge graph status.';
+      errors['knowledgeGraphStatus'] = message;
+      return {
+        mode: 'error' as const,
+        graphKey: KANGUR_KNOWLEDGE_GRAPH_KEY,
+        message,
+      };
+    }),
+    loadKangurPerformanceBaseline().catch((error: unknown) => {
+      errors['performanceBaseline'] =
+        error instanceof Error ? error.message : 'Failed to load Kangur performance baseline.';
+      return null;
+    }),
+  ]);
   const ttsRequestCount = routeMetrics.ttsPost.metrics?.total ?? 0;
   const ttsGenerationFailureCount =
     (await getSystemLogMetrics({ source: 'kangur.tts.generationFailed', from, to }).catch(
@@ -912,6 +1143,7 @@ export const getKangurObservabilitySummary = async (input: {
     serverLogMetrics,
     routeMetrics,
     analytics,
+    knowledgeGraphStatus,
     ttsRequestCount,
     ttsGenerationFailureCount,
     ttsFallbackCount,
@@ -948,6 +1180,7 @@ export const getKangurObservabilitySummary = async (input: {
     },
     routes: routeMetrics,
     analytics,
+    knowledgeGraphStatus,
     performanceBaseline,
     errors: Object.keys(errors).length > 0 ? errors : null,
   };

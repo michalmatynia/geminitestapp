@@ -153,6 +153,18 @@ export const formatDuration = (ms) => {
   return `${(sec / 60).toFixed(1)}m`;
 };
 
+const resolvePercentMetric = (directValue, numerator, denominator) => {
+  if (Number.isFinite(directValue)) {
+    return Number(directValue);
+  }
+
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || Number(denominator) <= 0) {
+    return null;
+  }
+
+  return Number(((Number(numerator) / Number(denominator)) * 100).toFixed(1));
+};
+
 export const summarizeKangurAiTutorBridgeSignal = (bridgeSnapshot) => {
   if (!bridgeSnapshot || typeof bridgeSnapshot !== 'object') {
     return null;
@@ -164,21 +176,44 @@ export const summarizeKangurAiTutorBridgeSignal = (bridgeSnapshot) => {
     Number.isFinite(bridgeSnapshot.bridgeCompletionRatePercent)
       ? Number(bridgeSnapshot.bridgeCompletionRatePercent)
       : null;
+  const graphCoverageRate = resolvePercentMetric(
+    bridgeSnapshot.knowledgeGraphCoverageRatePercent,
+    bridgeSnapshot.knowledgeGraphAppliedCount,
+    bridgeSnapshot.messageSucceededCount
+  );
+  const vectorAssistCount =
+    (Number.isFinite(bridgeSnapshot.knowledgeGraphHybridRecallCount)
+      ? Number(bridgeSnapshot.knowledgeGraphHybridRecallCount)
+      : 0) +
+    (Number.isFinite(bridgeSnapshot.knowledgeGraphVectorOnlyRecallCount)
+      ? Number(bridgeSnapshot.knowledgeGraphVectorOnlyRecallCount)
+      : 0);
+  const vectorAssistRate = resolvePercentMetric(
+    bridgeSnapshot.knowledgeGraphVectorAssistRatePercent,
+    vectorAssistCount,
+    bridgeSnapshot.knowledgeGraphSemanticCount
+  );
+
+  const suffixParts = [
+    graphCoverageRate === null ? null : `graph=${graphCoverageRate}%`,
+    vectorAssistRate === null ? null : `vector=${vectorAssistRate}%`,
+  ].filter(Boolean);
+  const suffix = suffixParts.length > 0 ? ` · ${suffixParts.join(' · ')}` : '';
 
   if (alertStatus === 'critical') {
-    return `bridge funnel critical${completionRate === null ? '' : ` (${completionRate}%)`}`;
+    return `bridge funnel critical${completionRate === null ? '' : ` (${completionRate}%)`}${suffix}`;
   }
 
   if (alertStatus === 'warning') {
-    return `bridge funnel degraded${completionRate === null ? '' : ` (${completionRate}%)`}`;
+    return `bridge funnel degraded${completionRate === null ? '' : ` (${completionRate}%)`}${suffix}`;
   }
 
   if (alertStatus === 'ok') {
-    return `bridge funnel healthy${completionRate === null ? '' : ` (${completionRate}%)`}`;
+    return `bridge funnel healthy${completionRate === null ? '' : ` (${completionRate}%)`}${suffix}`;
   }
 
   if (alertStatus === 'insufficient_data') {
-    return 'bridge funnel insufficient data';
+    return `bridge funnel insufficient data${suffix}`;
   }
 
   return null;
@@ -484,12 +519,40 @@ export const toWeeklyLaneTrendMarkdown = (payload) => {
   if (includesKangurAiTutorBridge) {
     lines.push('## Kangur AI Tutor Bridge Snapshot');
     lines.push('');
-    lines.push('| Run | Suggestions | Completion Rate | CTA Clicks | Opens | Completions | Alert |');
-    lines.push('| --- | ---: | ---: | ---: | ---: | ---: | --- |');
+    lines.push(
+      '| Run | Suggestions | Completion Rate | Graph Coverage | Vector Assist | Recall Mix | CTA Clicks | Opens | Completions | Alert |'
+    );
+    lines.push(
+      '| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |'
+    );
     for (const run of payload.runs) {
       const bridge = run.kangurAiTutorBridge;
+      const graphCoverage =
+        resolvePercentMetric(
+          bridge?.knowledgeGraphCoverageRatePercent,
+          bridge?.knowledgeGraphAppliedCount,
+          bridge?.messageSucceededCount
+        ) ?? '-';
+      const vectorAssist =
+        resolvePercentMetric(
+          bridge?.knowledgeGraphVectorAssistRatePercent,
+          (Number.isFinite(bridge?.knowledgeGraphHybridRecallCount)
+            ? Number(bridge?.knowledgeGraphHybridRecallCount)
+            : 0) +
+            (Number.isFinite(bridge?.knowledgeGraphVectorOnlyRecallCount)
+              ? Number(bridge?.knowledgeGraphVectorOnlyRecallCount)
+              : 0),
+          bridge?.knowledgeGraphSemanticCount
+        ) ?? '-';
+      const recallMix = bridge
+        ? [
+            `m=${bridge.knowledgeGraphMetadataOnlyRecallCount ?? '-'}`,
+            `h=${bridge.knowledgeGraphHybridRecallCount ?? '-'}`,
+            `v=${bridge.knowledgeGraphVectorOnlyRecallCount ?? '-'}`,
+          ].join(' ')
+        : '-';
       lines.push(
-        `| ${run.generatedAt} | ${bridge?.bridgeSuggestionCount ?? '-'} | ${bridge?.bridgeCompletionRatePercent ?? '-'} | ${bridge?.bridgeQuickActionClickCount ?? '-'} | ${bridge?.bridgeFollowUpClickCount ?? '-'} | ${bridge?.bridgeFollowUpCompletionCount ?? '-'} | ${bridge?.alertStatus ?? '-'} |`
+        `| ${run.generatedAt} | ${bridge?.bridgeSuggestionCount ?? '-'} | ${bridge?.bridgeCompletionRatePercent ?? '-'} | ${graphCoverage} | ${vectorAssist} | ${recallMix} | ${bridge?.bridgeQuickActionClickCount ?? '-'} | ${bridge?.bridgeFollowUpClickCount ?? '-'} | ${bridge?.bridgeFollowUpCompletionCount ?? '-'} | ${bridge?.alertStatus ?? '-'} |`
       );
     }
     lines.push('');

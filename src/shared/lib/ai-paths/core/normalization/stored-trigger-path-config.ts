@@ -111,10 +111,57 @@ const createStoredPathConfigFallback = (pathId: string): PathConfig => {
   };
 };
 
+const resolveStoredUiState = (args: {
+  parsedConfig: Record<string, unknown> | null;
+  resolvedUiState: PathConfig['uiState'] | undefined;
+  baseUiState: PathConfig['uiState'];
+}): PathConfig['uiState'] => {
+  const { parsedConfig, resolvedUiState, baseUiState } = args;
+  const rawUiState =
+    parsedConfig?.['uiState'] && typeof parsedConfig['uiState'] === 'object' && !Array.isArray(parsedConfig['uiState'])
+      ? (parsedConfig['uiState'] as Record<string, unknown>)
+      : null;
+  const rawSelectedNodeId =
+    typeof rawUiState?.['selectedNodeId'] === 'string'
+      ? rawUiState['selectedNodeId'].trim() || null
+      : rawUiState?.['selectedNodeId'] === null
+        ? null
+        : undefined;
+  const rawConfigOpen = typeof rawUiState?.['configOpen'] === 'boolean' ? rawUiState['configOpen'] : undefined;
+
+  return {
+    ...(resolvedUiState && typeof resolvedUiState === 'object' ? resolvedUiState : {}),
+    selectedNodeId: rawSelectedNodeId ?? baseUiState.selectedNodeId ?? null,
+    configOpen: rawConfigOpen ?? resolvedUiState?.configOpen ?? baseUiState.configOpen ?? false,
+  };
+};
+
 const normalizeOptionalText = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const resolveSelectedNodeIdOverride = (
+  parsedConfig: Record<string, unknown> | null
+): string | null | undefined => {
+  if (!parsedConfig) {
+    return undefined;
+  }
+  const rawUiState =
+    parsedConfig['uiState'] && typeof parsedConfig['uiState'] === 'object' && !Array.isArray(parsedConfig['uiState'])
+      ? (parsedConfig['uiState'] as Record<string, unknown>)
+      : null;
+  if (!rawUiState) {
+    return null;
+  }
+  if (typeof rawUiState['selectedNodeId'] === 'string') {
+    return rawUiState['selectedNodeId'].trim() || null;
+  }
+  if (rawUiState['selectedNodeId'] === null) {
+    return null;
+  }
+  return null;
 };
 
 const resolveSeededStarterFallbackConfig = (args: {
@@ -162,6 +209,7 @@ const normalizeResolvedTriggerConfig = (args: {
   pathId: string;
   fallbackName?: string | null | undefined;
   config: PathConfig;
+  selectedNodeIdOverride?: string | null | undefined;
 }): PathConfig => {
   const resolvedConfig = resolvePortablePathInput(args.config, {
     repairIdentities: true,
@@ -192,10 +240,35 @@ const normalizeResolvedTriggerConfig = (args: {
     });
   }
 
+  const selectedNodeIdOverride =
+    args.selectedNodeIdOverride === undefined
+      ? undefined
+      : typeof args.selectedNodeIdOverride === 'string'
+        ? args.selectedNodeIdOverride.trim() || null
+        : null;
+  const normalizedSelectedNodeId =
+    selectedNodeIdOverride === undefined
+      ? undefined
+      : selectedNodeIdOverride &&
+          (normalizedConfig.nodes ?? []).some((node: AiNode): boolean => node.id === selectedNodeIdOverride)
+        ? selectedNodeIdOverride
+        : null;
+
   return {
     ...normalizedConfig,
     id: args.pathId,
     name: normalizedName,
+    ...(normalizedSelectedNodeId === undefined
+      ? {}
+      : {
+          uiState: {
+            ...(normalizedConfig.uiState && typeof normalizedConfig.uiState === 'object'
+              ? normalizedConfig.uiState
+              : {}),
+            selectedNodeId: normalizedSelectedNodeId,
+            configOpen: normalizedConfig.uiState?.configOpen ?? false,
+          },
+        }),
   };
 };
 
@@ -243,6 +316,11 @@ export const materializeStoredTriggerPathConfig = (args: {
       resolvedConfig.ok
         ? ({
             ...resolvedConfig.value.pathConfig,
+            uiState: resolveStoredUiState({
+              parsedConfig: rawParsedConfig ? (rawParsedConfig as Record<string, unknown>) : null,
+              resolvedUiState: resolvedConfig.value.pathConfig.uiState,
+              baseUiState: baseConfig.uiState,
+            }),
             ...(
               parsedConfig &&
               typeof parsedConfig === 'object' &&
@@ -295,6 +373,7 @@ export const materializeStoredTriggerPathConfig = (args: {
         pathId,
         fallbackName,
         config: mergedConfig,
+        selectedNodeIdOverride: resolveSelectedNodeIdOverride(rawParsedConfig as Record<string, unknown> | null),
       }),
       changed: Boolean(rawStarterUpgrade?.changed || providerAliasRepair?.changed),
     };

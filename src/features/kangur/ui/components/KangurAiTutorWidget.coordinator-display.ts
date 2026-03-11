@@ -21,10 +21,12 @@ import {
 } from './KangurAiTutorWidget.effects';
 import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
+  getTutorBubblePlacement,
   useKangurAiTutorBubblePlacementState,
   useKangurAiTutorFocusLayoutState,
 } from './KangurAiTutorWidget.focus-layout';
 import { useKangurAiTutorSelectionGuidanceHandoffEffect } from './KangurAiTutorWidget.guided';
+import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelDerivedState } from './KangurAiTutorWidget.panel-derived';
@@ -82,11 +84,15 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     hoveredSectionAnchorId,
     isAvatarDragging,
     isTutorHidden,
+    isPanelDragging,
     mounted,
     panelAnchorMode,
+    panelPosition,
+    panelSnapPreference,
     panelShellMode,
     panelMeasuredHeight,
     persistedSelectionPageRect,
+    persistedSelectionPageRects,
     persistedSelectionRect,
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
@@ -112,6 +118,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeSectionRect,
     activeSelectedText,
     activeSelectionPageRect,
+    activeSelectionPageRects,
     activeSelectionProtectedRect,
     activeSelectionRect,
     allowSelectedTextSupport,
@@ -124,6 +131,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     proactiveNudges,
     reducedMotionTransitions,
     selectedText,
+    selectionGlowSupported,
     selectionRect,
     shouldRenderContextlessTutorUi,
     shouldRenderGuestIntroUi,
@@ -147,6 +155,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     guidedFallbackRect,
     guidedMode,
     guidedSectionFocusRect,
+    guidedSelectionGlowRects,
     guidedSelectionPreview,
     guidedSelectionRect,
     guidedSelectionSpotlightRect,
@@ -168,6 +177,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   } = useKangurAiTutorGuidedDisplayState({
     activeSectionRect,
     activeSelectionPageRect,
+    activeSelectionPageRects,
     activeSelectionRect,
     askModalVisible,
     enabled,
@@ -185,6 +195,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     mounted,
     openLoginModal,
     persistedSelectionPageRect,
+    persistedSelectionPageRects,
     persistedSelectionRect,
     sectionResponsePending,
     selectionGuidanceCalloutVisibleText,
@@ -243,6 +254,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     displayFocusRect,
     isAnchoredUiMode,
     isContextualPanelAnchor,
+    isFreeformUiMode,
     isMobileSheet,
     isStaticUiMode,
     selectionActionLayout,
@@ -353,6 +365,55 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     visibleProactiveNudge: Boolean(visibleProactiveNudge),
   });
 
+  const contextualFreeformPanelPoint = useMemo(() => {
+    if (!activeFocus.rect || isMobileSheet) {
+      return null;
+    }
+
+    const estimatedBubbleHeight = Math.max(
+      panelMeasuredHeight ?? 0,
+      getEstimatedBubbleHeight(
+        viewport,
+        (visibleProactiveNudge ? 108 : 0) + (visibleQuickActions.length > 2 ? 24 : 0)
+      )
+    );
+    const contextualPlacement = getTutorBubblePlacement(
+      activeFocus.rect,
+      viewport,
+      'bubble',
+      {
+        desktop: motionProfile.desktopBubbleWidth,
+        mobile: motionProfile.mobileBubbleWidth,
+      },
+      {
+        estimatedHeight: estimatedBubbleHeight,
+        protectedRects: [
+          ...(activeSelectionProtectedRect ? [activeSelectionProtectedRect] : []),
+          ...(activeSectionProtectedRect ? [activeSectionProtectedRect] : []),
+        ],
+      }
+    );
+
+    return typeof contextualPlacement.style.left === 'number' &&
+      typeof contextualPlacement.style.top === 'number'
+      ? {
+          x: contextualPlacement.style.left,
+          y: contextualPlacement.style.top,
+        }
+      : null;
+  }, [
+    activeFocus.rect,
+    activeSectionProtectedRect,
+    activeSelectionProtectedRect,
+    isMobileSheet,
+    motionProfile.desktopBubbleWidth,
+    motionProfile.mobileBubbleWidth,
+    panelMeasuredHeight,
+    viewport,
+    visibleProactiveNudge,
+    visibleQuickActions.length,
+  ]);
+
   const guidedFocusRect =
     guidedMode === 'home_onboarding'
       ? (homeOnboardingAnchor?.getRect() ?? null)
@@ -375,6 +436,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isGuidedTutorMode,
     sectionContextSpotlightStyle,
     sectionDropHighlightStyle,
+    selectionGlowStyles,
     selectionContextSpotlightStyle,
     selectionSpotlightStyle,
     shouldRenderGuidedCallout,
@@ -384,6 +446,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeSelectionProtectedRect,
     guidedFocusRect,
     guidedMode,
+    guidedSelectionGlowRects,
     guidedSelectionSpotlightRect,
     hoveredSectionProtectedRect,
     isAnonymousVisitor,
@@ -391,6 +454,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isAvatarDragging,
     isContextualPanelAnchor,
     isOpen,
+    selectionGlowSupported,
     isTutorHidden,
     motionProfile,
     prefersReducedMotion: Boolean(prefersReducedMotion),
@@ -460,8 +524,12 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     avatarPointer,
     avatarStyle,
     floatingAvatarPlacement,
+    isPanelDraggable,
+    isPanelDragging: isPanelCurrentlyDragging,
+    panelBubbleStyle,
     panelAvatarPlacement,
     panelOpenAnimation,
+    panelSnapState,
     panelTransition,
     pointerMarkerId,
     showAttachedAvatarShell,
@@ -470,6 +538,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeFocusKind: activeFocus.kind,
     askModalDockStyle: widgetState.askModalDockStyle,
     bubblePlacement,
+    compactDockedTutorPanelWidth,
     displayFocusRect,
     draggedAvatarPoint,
     guidedAvatarStyle,
@@ -483,13 +552,19 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     homeOnboardingStepKind: homeOnboardingStep?.kind ?? null,
     isAnchoredUiMode,
     isAvatarDragging,
+    isCompactDockedTutorPanel,
     isAskModalMode,
     isContextualPanelAnchor,
+    isFreeformUiMode,
     isGuidedTutorMode,
     isOpen,
+    isPanelDragging,
     isStaticUiMode,
     isTutorHidden,
     motionProfile,
+    panelMeasuredHeight,
+    panelPosition,
+    panelSnapPreference,
     prefersReducedMotion: prefersReducedMotion ?? false,
     reducedMotionTransitions,
     showSectionGuidanceCallout,
@@ -534,6 +609,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     canNarrateTutorText,
     canStartHomeOnboardingManually,
     compactDockedTutorPanelWidth,
+    contextualFreeformPanelPoint,
     conversationFocusChipLabel,
     conversationMessages,
     emptyStateMessage,
@@ -564,11 +640,15 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isContextualPanelAnchor,
     isEligibleForHomeOnboarding,
     isGuidedTutorMode,
+    isPanelDraggable,
+    isPanelDragging: isPanelCurrentlyDragging,
     isSectionExplainPendingMode,
     isSelectionExplainPendingMode,
     panelAvatarPlacement,
+    panelBubbleStyle,
     panelEmptyStateMessage,
     panelOpenAnimation,
+    panelSnapState,
     panelTransition,
     pointerMarkerId,
     sectionContextSpotlightStyle,
@@ -578,6 +658,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectedTextPreview,
     selectionActionLayout,
     selectionActionStyle,
+    selectionGlowStyles,
     selectionContextSpotlightStyle,
     selectionSpotlightStyle,
     sessionSurfaceLabel,

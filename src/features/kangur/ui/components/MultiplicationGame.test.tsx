@@ -33,6 +33,11 @@ describe('MultiplicationGame', () => {
       'text-3xl',
       'text-purple-600'
     );
+    expect(screen.getByRole('button', { name: 'Sprawdź ✓' })).toHaveClass(
+      '[background:var(--kangur-soft-card-background)]',
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[color:var(--kangur-page-text)]'
+    );
     const firstChoice = screen.getByTestId('multiplication-game-choice-0');
 
     expect(firstChoice).toHaveClass('soft-card', 'rounded-[24px]');

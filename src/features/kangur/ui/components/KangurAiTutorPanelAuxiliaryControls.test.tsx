@@ -49,9 +49,11 @@ const createPanelBodyContextValue = (
   handleFollowUpClick: vi.fn(),
   handleKeyDown: vi.fn(),
   handleMessageFeedback: vi.fn(),
+  handleWebsiteHelpTargetClick: vi.fn(),
   handleQuickAction: vi.fn().mockResolvedValue(undefined),
   handleSend: vi.fn().mockResolvedValue(undefined),
   handleStartHomeOnboarding: vi.fn(),
+  handleToggleDrawing: vi.fn(),
   homeOnboardingReplayLabel: 'Pokaż jeszcze raz',
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
@@ -67,6 +69,7 @@ const createPanelBodyContextValue = (
   panelEmptyStateMessage: 'Czekaj chwilę…',
   remainingMessages: null,
   selectedTextPreview: null,
+  showToolboxLayout: false,
   shouldRenderAuxiliaryPanelControls: true,
   showSectionExplainCompleteState: false,
   showSelectionExplainCompleteState: false,
@@ -149,5 +152,52 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
 
     expect(screen.queryByTestId('kangur-ai-tutor-proactive-nudge')).not.toBeInTheDocument();
+  });
+
+  it('renders the freeform toolbox actions without relying on the composer pills', () => {
+    const handleQuickAction = vi.fn().mockResolvedValue(undefined);
+    const handleToggleDrawing = vi.fn();
+
+    render(
+      <KangurAiTutorPanelBodyProvider
+        value={createPanelBodyContextValue({
+          handleQuickAction,
+          handleToggleDrawing,
+          shouldRenderAuxiliaryPanelControls: false,
+          showToolboxLayout: true,
+          visibleQuickActions: [
+            {
+              id: 'hint',
+              label: 'Podpowiedź',
+              prompt: 'Daj mi małą podpowiedź.',
+              promptMode: 'hint',
+              interactionIntent: 'hint',
+            },
+            {
+              id: 'next-step',
+              label: 'Co dalej?',
+              prompt: 'Powiedz, co dalej.',
+              promptMode: 'chat',
+              interactionIntent: 'next_step',
+            },
+          ],
+        })}
+      >
+        <KangurAiTutorPanelAuxiliaryControls />
+      </KangurAiTutorPanelBodyProvider>
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent('Narzedzia tutora');
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-drawing-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-action-hint'));
+
+    expect(handleToggleDrawing).toHaveBeenCalledTimes(1);
+    expect(handleQuickAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'hint',
+        label: 'Podpowiedź',
+      })
+    );
   });
 });

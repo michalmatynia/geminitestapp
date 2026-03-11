@@ -767,6 +767,10 @@ describe('kangur ai tutor chat handler', () => {
           focusId: 'lesson-question-1',
           nativeGuideCoverageLevel: 'overview_fallback',
           nativeGuideEntryId: 'lesson-overview',
+          knowledgeGraphRecallStrategy: null,
+          knowledgeGraphLexicalHitCount: 0,
+          knowledgeGraphVectorHitCount: 0,
+          knowledgeGraphVectorRecallAttempted: false,
         }),
       })
     );
@@ -776,6 +780,10 @@ describe('kangur ai tutor chat handler', () => {
         context: expect.objectContaining({
           nativeGuideCoverageLevel: 'overview_fallback',
           nativeGuideEntryId: 'lesson-overview',
+          knowledgeGraphRecallStrategy: null,
+          knowledgeGraphLexicalHitCount: 0,
+          knowledgeGraphVectorHitCount: 0,
+          knowledgeGraphVectorRecallAttempted: false,
         }),
       })
     );
@@ -797,6 +805,10 @@ describe('kangur ai tutor chat handler', () => {
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
       queryMode: 'website_help',
+      recallStrategy: 'metadata_only',
+      lexicalHitCount: 1,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
       instructions:
         'Kangur website-help graph context:\n- Sign in flow [flow]\n  Website target: / · anchor=kangur-primary-nav-login',
       nodeIds: ['flow:kangur:sign-in'],
@@ -834,10 +846,24 @@ describe('kangur ai tutor chat handler', () => {
       route: '/',
       anchorId: 'kangur-primary-nav-login',
     });
+    expect(body.knowledgeGraph).toEqual({
+      applied: true,
+      queryMode: 'website_help',
+      recallStrategy: 'metadata_only',
+      lexicalHitCount: 1,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
+      websiteHelpApplied: true,
+      websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+    });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.native-guide.completed',
         context: expect.objectContaining({
+          knowledgeGraphRecallStrategy: 'metadata_only',
+          knowledgeGraphLexicalHitCount: 1,
+          knowledgeGraphVectorHitCount: 0,
+          knowledgeGraphVectorRecallAttempted: false,
           websiteHelpGraphApplied: true,
           websiteHelpGraphTargetNodeId: 'flow:kangur:sign-in',
           websiteHelpGraphTargetRoute: '/',
@@ -1311,6 +1337,10 @@ describe('kangur ai tutor chat handler', () => {
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
       queryMode: 'website_help',
+      recallStrategy: 'metadata_only',
+      lexicalHitCount: 1,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
       instructions:
         'Kangur website-help graph context:\n- Sign in flow [flow]\n  Website target: / · anchor=kangur-primary-nav-login',
       nodeIds: ['flow:kangur:sign-in'],
@@ -1388,10 +1418,24 @@ describe('kangur ai tutor chat handler', () => {
       route: '/',
       anchorId: 'kangur-primary-nav-login',
     });
+    expect(body.knowledgeGraph).toEqual({
+      applied: true,
+      queryMode: 'website_help',
+      recallStrategy: 'metadata_only',
+      lexicalHitCount: 1,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
+      websiteHelpApplied: true,
+      websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+    });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.completed',
         context: expect.objectContaining({
+          knowledgeGraphRecallStrategy: 'metadata_only',
+          knowledgeGraphLexicalHitCount: 1,
+          knowledgeGraphVectorHitCount: 0,
+          knowledgeGraphVectorRecallAttempted: false,
           websiteHelpGraphApplied: true,
           websiteHelpGraphSourceCollections: ['kangur_ai_tutor_content'],
           websiteHelpGraphHydrationSources: ['kangur_ai_tutor_content'],
@@ -1407,6 +1451,10 @@ describe('kangur ai tutor chat handler', () => {
     resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
       queryMode: 'semantic',
+      recallStrategy: 'hybrid_vector',
+      lexicalHitCount: 2,
+      vectorHitCount: 3,
+      vectorRecallAttempted: true,
       instructions:
         'Kangur semantic graph context:\n- Ranking wynikow [guide]\n  Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
       nodeIds: ['guide:native:game-leaderboard'],
@@ -1476,12 +1524,26 @@ describe('kangur ai tutor chat handler', () => {
         }),
       ])
     );
+    expect(body.knowledgeGraph).toEqual({
+      applied: true,
+      queryMode: 'semantic',
+      recallStrategy: 'hybrid_vector',
+      lexicalHitCount: 2,
+      vectorHitCount: 3,
+      vectorRecallAttempted: true,
+      websiteHelpApplied: false,
+      websiteHelpTargetNodeId: null,
+    });
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.ai-tutor.chat.completed',
         context: expect.objectContaining({
           knowledgeGraphApplied: true,
           knowledgeGraphQueryMode: 'semantic',
+          knowledgeGraphRecallStrategy: 'hybrid_vector',
+          knowledgeGraphLexicalHitCount: 2,
+          knowledgeGraphVectorHitCount: 3,
+          knowledgeGraphVectorRecallAttempted: true,
           knowledgeGraphSourceCollections: ['kangur_ai_tutor_native_guides'],
           knowledgeGraphHydrationSources: ['kangur_ai_tutor_native_guides'],
           websiteHelpGraphApplied: false,

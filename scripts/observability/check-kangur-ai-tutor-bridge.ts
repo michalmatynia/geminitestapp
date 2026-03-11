@@ -19,12 +19,21 @@ type KangurAiTutorBridgeSnapshot = {
   range: KangurObservabilityRange;
   overallStatus: 'ok' | 'warning' | 'critical' | 'insufficient_data';
   messageSucceededCount: number;
+  knowledgeGraphAppliedCount: number;
+  knowledgeGraphSemanticCount: number;
+  knowledgeGraphWebsiteHelpCount: number;
+  knowledgeGraphMetadataOnlyRecallCount: number;
+  knowledgeGraphHybridRecallCount: number;
+  knowledgeGraphVectorOnlyRecallCount: number;
+  knowledgeGraphVectorRecallAttemptedCount: number;
   bridgeSuggestionCount: number;
   lessonToGameBridgeSuggestionCount: number;
   gameToLessonBridgeSuggestionCount: number;
   bridgeQuickActionClickCount: number;
   bridgeFollowUpClickCount: number;
   bridgeFollowUpCompletionCount: number;
+  knowledgeGraphCoverageRatePercent: number | null;
+  knowledgeGraphVectorAssistRatePercent: number | null;
   bridgeCompletionRatePercent: number | null;
   alertStatus: 'ok' | 'warning' | 'critical' | 'insufficient_data';
 };
@@ -91,6 +100,34 @@ export const summarizeKangurAiTutorBridgeEvents = (
       if (name === 'kangur_ai_tutor_message_succeeded') {
         summary.messageSucceededCount += 1;
 
+        if (meta?.['knowledgeGraphApplied'] === true) {
+          summary.knowledgeGraphAppliedCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphQueryMode'] === 'semantic') {
+          summary.knowledgeGraphSemanticCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphQueryMode'] === 'website_help') {
+          summary.knowledgeGraphWebsiteHelpCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'metadata_only') {
+          summary.knowledgeGraphMetadataOnlyRecallCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'hybrid_vector') {
+          summary.knowledgeGraphHybridRecallCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphRecallStrategy'] === 'vector_only') {
+          summary.knowledgeGraphVectorOnlyRecallCount += 1;
+        }
+
+        if (meta?.['knowledgeGraphVectorRecallAttempted'] === true) {
+          summary.knowledgeGraphVectorRecallAttemptedCount += 1;
+        }
+
         if (meta?.['hasBridgeFollowUpAction'] === true) {
           summary.bridgeSuggestionCount += 1;
         }
@@ -120,6 +157,13 @@ export const summarizeKangurAiTutorBridgeEvents = (
     },
     {
       messageSucceededCount: 0,
+      knowledgeGraphAppliedCount: 0,
+      knowledgeGraphSemanticCount: 0,
+      knowledgeGraphWebsiteHelpCount: 0,
+      knowledgeGraphMetadataOnlyRecallCount: 0,
+      knowledgeGraphHybridRecallCount: 0,
+      knowledgeGraphVectorOnlyRecallCount: 0,
+      knowledgeGraphVectorRecallAttemptedCount: 0,
       bridgeSuggestionCount: 0,
       lessonToGameBridgeSuggestionCount: 0,
       gameToLessonBridgeSuggestionCount: 0,
@@ -132,6 +176,14 @@ export const summarizeKangurAiTutorBridgeEvents = (
   const bridgeCompletionRatePercent = toPercent(
     counts.bridgeFollowUpCompletionCount,
     counts.bridgeSuggestionCount
+  );
+  const knowledgeGraphCoverageRatePercent = toPercent(
+    counts.knowledgeGraphAppliedCount,
+    counts.messageSucceededCount
+  );
+  const knowledgeGraphVectorAssistRatePercent = toPercent(
+    counts.knowledgeGraphHybridRecallCount + counts.knowledgeGraphVectorOnlyRecallCount,
+    counts.knowledgeGraphSemanticCount
   );
 
   const alertStatus: KangurAiTutorBridgeSnapshot['alertStatus'] =
@@ -147,6 +199,8 @@ export const summarizeKangurAiTutorBridgeEvents = (
     range,
     overallStatus: alertStatus,
     ...counts,
+    knowledgeGraphCoverageRatePercent,
+    knowledgeGraphVectorAssistRatePercent,
     bridgeCompletionRatePercent,
     alertStatus,
   };
@@ -211,12 +265,21 @@ const buildFailedSnapshot = (range: KangurObservabilityRange): KangurAiTutorBrid
   range,
   overallStatus: 'insufficient_data',
   messageSucceededCount: 0,
+  knowledgeGraphAppliedCount: 0,
+  knowledgeGraphSemanticCount: 0,
+  knowledgeGraphWebsiteHelpCount: 0,
+  knowledgeGraphMetadataOnlyRecallCount: 0,
+  knowledgeGraphHybridRecallCount: 0,
+  knowledgeGraphVectorOnlyRecallCount: 0,
+  knowledgeGraphVectorRecallAttemptedCount: 0,
   bridgeSuggestionCount: 0,
   lessonToGameBridgeSuggestionCount: 0,
   gameToLessonBridgeSuggestionCount: 0,
   bridgeQuickActionClickCount: 0,
   bridgeFollowUpClickCount: 0,
   bridgeFollowUpCompletionCount: 0,
+  knowledgeGraphCoverageRatePercent: null,
+  knowledgeGraphVectorAssistRatePercent: null,
   bridgeCompletionRatePercent: null,
   alertStatus: 'insufficient_data',
 });
@@ -224,6 +287,21 @@ const buildFailedSnapshot = (range: KangurObservabilityRange): KangurAiTutorBrid
 const printHumanSummary = (snapshot: KangurAiTutorBridgeSnapshot): void => {
   console.log(`Kangur AI Tutor bridge snapshot (${snapshot.range})`);
   console.log(`- Tutor replies: ${snapshot.messageSucceededCount}`);
+  console.log(`- Neo4j-backed replies: ${snapshot.knowledgeGraphAppliedCount}`);
+  console.log(
+    `- Graph coverage rate: ${snapshot.knowledgeGraphCoverageRatePercent === null ? 'n/a' : `${snapshot.knowledgeGraphCoverageRatePercent.toFixed(1)}%`}`
+  );
+  console.log(`- Semantic graph replies: ${snapshot.knowledgeGraphSemanticCount}`);
+  console.log(`- Website-help graph replies: ${snapshot.knowledgeGraphWebsiteHelpCount}`);
+  console.log(
+    `- Recall split: metadata=${snapshot.knowledgeGraphMetadataOnlyRecallCount} | hybrid=${snapshot.knowledgeGraphHybridRecallCount} | vector-only=${snapshot.knowledgeGraphVectorOnlyRecallCount}`
+  );
+  console.log(
+    `- Vector assist rate: ${snapshot.knowledgeGraphVectorAssistRatePercent === null ? 'n/a' : `${snapshot.knowledgeGraphVectorAssistRatePercent.toFixed(1)}%`}`
+  );
+  console.log(
+    `- Vector recall attempts: ${snapshot.knowledgeGraphVectorRecallAttemptedCount}`
+  );
   console.log(`- Bridge suggestions: ${snapshot.bridgeSuggestionCount}`);
   console.log(`- Lekcja -> Grajmy: ${snapshot.lessonToGameBridgeSuggestionCount}`);
   console.log(`- Grajmy -> Lekcja: ${snapshot.gameToLessonBridgeSuggestionCount}`);

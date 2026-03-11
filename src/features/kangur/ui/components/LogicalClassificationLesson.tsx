@@ -18,11 +18,14 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Co to jest klasyfikacja?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porzadku w
             mysleniu i w zyciu!
           </p>
-          <KangurLessonCallout accent='teal' className='w-full text-sm text-slate-600'>
+          <KangurLessonCallout
+            accent='teal'
+            className='w-full text-sm [color:var(--kangur-page-muted-text)]'
+          >
             <p className='font-semibold text-teal-700 mb-2'>Klasyfikujemy według:</p>
             <ul className='space-y-1'>
               <li>
@@ -49,29 +52,37 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Grupowanie według cech',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Patrz na wszystkie cechy i wybierz te, która jest wspólna dla całej grupy.
           </p>
           <div className='grid grid-cols-2 gap-3 w-full'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
               <p className='font-bold text-green-700 text-xs mb-1'>Zwierzeta latajace</p>
               <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
-              <p className='mt-1 text-xs text-slate-500'>Cecha: maja skrzydła</p>
+              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                Cecha: maja skrzydła
+              </p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
               <p className='font-bold text-blue-700 text-xs mb-1'>Zwierzeta wodne</p>
               <p className='text-2xl'>🐟 🐬 🦈 🐙</p>
-              <p className='mt-1 text-xs text-slate-500'>Cecha: zyja w wodzie</p>
+              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                Cecha: zyja w wodzie
+              </p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
               <p className='font-bold text-orange-700 text-xs mb-1'>Liczby parzyste</p>
               <p className='text-2xl font-extrabold text-orange-600'>2 4 6 8</p>
-              <p className='mt-1 text-xs text-slate-500'>Cecha: dziela sie przez 2</p>
+              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                Cecha: dziela sie przez 2
+              </p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
               <p className='font-bold text-rose-700 text-xs mb-1'>Liczby nieparzyste</p>
               <p className='text-2xl font-extrabold text-rose-600'>1 3 5 7</p>
-              <p className='mt-1 text-xs text-slate-500'>Cecha: nie dziela sie przez 2</p>
+              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                Cecha: nie dziela sie przez 2
+              </p>
             </KangurLessonCallout>
           </div>
         </div>
@@ -83,7 +94,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Wiele cech naraz',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Czasem trzeba wziac pod uwage dwie cechy jednoczesnie. To trudniejsze, ale daje
             precyzyjniejszy podział.
           </p>
@@ -99,12 +110,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 ['Małe niebieskie', '🔵'],
               ].map(([label, icon]) => (
                 <KangurLessonInset key={label} accent='teal' padding='sm'>
-                  <p className='text-xs text-slate-400'>{label}</p>
+                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>{label}</p>
                   <p className='text-2xl'>{icon}</p>
                 </KangurLessonInset>
               ))}
             </div>
-            <p className='mt-2 text-center text-xs text-slate-500'>
+            <p className='mt-2 text-center text-xs [color:var(--kangur-page-muted-text)]'>
               2 cechy × 2 wartosci = 4 rózne grupy
             </p>
           </KangurLessonCallout>
@@ -115,12 +126,14 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Diagram Venna',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Diagram Venna pokazuje, co nalezy do jednej grupy, do drugiej, lub do obu jednoczesnie —
             to czesc wspólna (przeciecie).
           </p>
           <KangurLessonCallout accent='sky' className='w-full'>
-            <p className='mb-3 text-center text-xs text-slate-500'>Kocha sport vs. kocha muzyke</p>
+            <p className='mb-3 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+              Kocha sport vs. kocha muzyke
+            </p>
             <div className='flex justify-center items-center gap-0'>
               <div className='w-32 h-24 rounded-full bg-sky-200/70 border-2 border-sky-400 flex flex-col items-start justify-center pl-3'>
                 <p className='text-xs font-bold text-sky-700'>Tylko sport</p>
@@ -145,7 +158,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Znajdz intruza — poziom 1',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Jeden element nie pasuje do grupy. Znajdz go i wyjasnij, dlaczego wyłamuje sie z reguły.
           </p>
           <div className='flex flex-col gap-3 w-full'>
@@ -167,7 +180,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Znajdz intruza — poziom 2',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Trudniejsze zagadki — intruz moze byc ukryty pod nieoczywista cecha.
           </p>
           <div className='flex flex-col gap-3 w-full'>
@@ -183,7 +196,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               },
             ].map(({ items, answer }) => (
               <KangurLessonCallout key={items} accent='amber' className='text-center' padding='sm'>
-                <p className='mb-1 text-lg font-bold text-slate-800'>{items}</p>
+                <p className='mb-1 text-lg font-bold [color:var(--kangur-page-text)]'>{items}</p>
                 <p className='text-amber-700 font-bold text-sm mt-1'>{answer}</p>
               </KangurLessonCallout>
             ))}
@@ -198,7 +211,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='w-full'>
-            <ul className='space-y-2 text-sm text-slate-700'>
+            <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
                 🗂️ <b>Klasyfikacja</b> — grupuj według jednej wspólnej cechy
               </li>

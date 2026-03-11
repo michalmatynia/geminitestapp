@@ -37,6 +37,10 @@ const hasStockMismatch = (message: string | undefined): boolean =>
   typeof message === 'string' &&
   (message.toLowerCase().includes('stock') || message.toLowerCase().includes('quantity'));
 
+const hasMissingExistingProduct = (message: string | undefined): boolean =>
+  typeof message === 'string' &&
+  message.toLowerCase().includes('no product with id');
+
 const collectExportFields = (exportData: BaseExportPayload): string[] =>
   Object.keys(exportData).flatMap((key) => {
     const value = exportData[key];
@@ -96,6 +100,7 @@ export async function executeBaseExport(args: {
   } = args;
   let { effectiveMappings, warehouseId, exportImagesAsBase64, imageBase64Mode, imageTransform } =
     args;
+  let existingProductIdForWrite = listingExternalId;
 
   const buildSharedOptions = (
     includeStockWithoutWarehouse: boolean
@@ -117,7 +122,7 @@ export async function executeBaseExport(args: {
     includeStockWithoutWarehouse: boolean
   ): ExportProductToBaseOptions => ({
     ...buildSharedOptions(includeStockWithoutWarehouse),
-    ...(listingExternalId ? { existingProductId: listingExternalId } : {}),
+    ...(existingProductIdForWrite ? { existingProductId: existingProductIdForWrite } : {}),
   });
 
   const buildImageExportOptions = (): ExportProductImagesToBaseOptions => ({
@@ -179,6 +184,27 @@ export async function executeBaseExport(args: {
       );
     }
   } else {
+    result = await exportProductToBase(
+      token,
+      targetInventoryId,
+      exportProduct,
+      effectiveMappings,
+      warehouseId,
+      buildExportOptions(includeStockWithoutWarehouse)
+    );
+  }
+
+  if (!imagesOnly && !result.success && hasMissingExistingProduct(result.error) && existingProductIdForWrite) {
+    await ErrorSystem.logWarning(
+      '[export-to-base] Existing Base.com product id is stale, retrying export as create',
+      {
+        productId: product.id,
+        inventoryId: targetInventoryId,
+        staleExternalListingId: existingProductIdForWrite,
+        error: result.error,
+      }
+    );
+    existingProductIdForWrite = null;
     result = await exportProductToBase(
       token,
       targetInventoryId,

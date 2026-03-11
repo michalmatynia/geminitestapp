@@ -95,7 +95,9 @@ function LessonActivityStageHeader(): React.JSX.Element {
         <KangurHeadline accent={accent} as='h2' size='sm'>
           {title}
         </KangurHeadline>
-        {description ? <p className='mt-1 text-sm text-slate-500'>{description}</p> : null}
+        {description ? (
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
+        ) : null}
       </div>
       <div className='ml-auto flex shrink-0 justify-end'>
         <KangurIconBadge accent={accent} size='md'>

@@ -245,11 +245,20 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
       'Trening godzin'
     );
+    expect(screen.getByTestId('clock-training-guidance-title')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
     expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
     expect(screen.getByTestId('clock-interaction-hint')).toHaveTextContent(
       'Długa wskazówka jest zablokowana na 12.'
     );
+    expect(screen.getByTestId('clock-interaction-hint')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(
+      container.querySelector("circle[fill='var(--kangur-soft-card-background)']")
+    ).not.toBeNull();
 
     dragHandToAngle(minuteHand, 180);
     await waitFor(() => {
@@ -470,6 +479,9 @@ describe('ClockTrainingGame drag interactions', () => {
     const hourHand = getHourHand(container);
 
     expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 1 z 2');
+    expect(screen.getByTestId('clock-task-progress-label')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-500');
     expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass(
       'kangur-step-pill-pending'
@@ -701,6 +713,9 @@ describe('ClockTrainingGame drag interactions', () => {
 
     expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
     expect(screen.getByText('Wynik: 0/1')).toBeInTheDocument();
+    expect(
+      screen.getByText('Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' }));

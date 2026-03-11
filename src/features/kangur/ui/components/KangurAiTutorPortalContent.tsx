@@ -76,6 +76,7 @@ export function KangurAiTutorPortalContent() {
       </AnimatePresence>
 
       <KangurAiTutorGuidedCallout
+        avatarPlacement={guidedCallout.avatarPlacement}
         calloutKey={guidedCallout.calloutKey}
         calloutTestId={guidedCallout.calloutTestId}
         detail={guidedCallout.detail}
@@ -119,6 +120,7 @@ export function KangurAiTutorPortalContent() {
         reducedMotionTransitions={spotlights.reducedMotionTransitions}
         sectionContextSpotlightStyle={spotlights.sectionContextSpotlightStyle}
         sectionDropHighlightStyle={spotlights.sectionDropHighlightStyle}
+        selectionGlowStyles={spotlights.selectionGlowStyles}
         selectionContextSpotlightStyle={spotlights.selectionContextSpotlightStyle}
         selectionSpotlightStyle={spotlights.selectionSpotlightStyle}
       />
@@ -168,18 +170,25 @@ export function KangurAiTutorPortalContent() {
         bubbleStyle={panel.bubbleStyle}
         bubbleTailPlacement={panel.bubbleTailPlacement}
         bubbleWidth={panel.bubbleWidth}
+        canDetachPanelFromContext={panel.canDetachPanelFromContext}
+        canMovePanelToContext={panel.canMovePanelToContext}
+        canResetPanelPosition={panel.canResetPanelPosition}
         compactDockedTutorPanelWidth={panel.compactDockedTutorPanelWidth}
         isAskModalMode={panel.isAskModalMode}
         isCompactDockedTutorPanel={panel.isCompactDockedTutorPanel}
         isGuidedTutorMode={panel.isGuidedTutorMode}
         isMinimalPanelMode={panel.isMinimalPanelMode}
         isOpen={panel.isOpen}
+        isPanelDraggable={panel.isPanelDraggable}
+        isPanelDragging={panel.isPanelDragging}
+        isFollowingContext={panel.isFollowingContext}
         isTutorHidden={panel.isTutorHidden}
         minimalPanelStyle={panel.minimalPanelStyle}
         motionProfile={panel.motionProfile}
         panelAvatarPlacement={panel.panelAvatarPlacement}
         panelEmptyStateMessage={panel.panelEmptyStateMessage}
         panelOpenAnimation={panel.panelOpenAnimation}
+        panelSnapState={panel.panelSnapState}
         panelTransition={panel.panelTransition}
         pointerMarkerId={panel.pointerMarkerId}
         prefersReducedMotion={panel.prefersReducedMotion}
@@ -191,7 +200,14 @@ export function KangurAiTutorPortalContent() {
         onAttachedAvatarClick={panel.onAttachedAvatarClick}
         onBackdropClose={panel.onBackdropClose}
         onClose={panel.onClose}
+        onDetachPanelFromContext={panel.onDetachPanelFromContext}
         onDisableTutor={panel.onDisableTutor}
+        onMovePanelToContext={panel.onMovePanelToContext}
+        onResetPanelPosition={panel.onResetPanelPosition}
+        onHeaderPointerCancel={panel.onHeaderPointerCancel}
+        onHeaderPointerDown={panel.onHeaderPointerDown}
+        onHeaderPointerMove={panel.onHeaderPointerMove}
+        onHeaderPointerUp={panel.onHeaderPointerUp}
       >
         <KangurAiTutorPanelBodyProvider value={panel.panelBodyContextValue}>
           <>

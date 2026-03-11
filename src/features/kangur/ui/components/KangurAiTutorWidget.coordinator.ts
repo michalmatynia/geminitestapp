@@ -60,6 +60,14 @@ export function useKangurAiTutorWidgetCoordinator({
   portalContentValue: KangurAiTutorPortalContextValue;
   shouldRender: boolean;
 } {
+  type TutorSurfaceMode =
+    | 'idle_avatar'
+    | 'onboarding'
+    | 'selection_guided'
+    | 'selection_panel'
+    | 'section_guided'
+    | 'section_panel'
+    | 'regular_panel';
   const {
     enabled,
     messages,
@@ -128,6 +136,7 @@ export function useKangurAiTutorWidgetCoordinator({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    sectionResponsePending,
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionConversationContext,
@@ -302,8 +311,29 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionTakeoverText !== null &&
     activeFocus.kind === 'selection' &&
     activeSelectedText === selectionTakeoverText;
+  const tutorSurfaceMode: TutorSurfaceMode =
+    guidedTutorTarget?.mode === 'selection'
+      ? 'selection_guided'
+      : selectionTakeoverText !== null ||
+          contextualTutorMode === 'selection_explain' ||
+          isSelectionExplainPendingMode
+        ? 'selection_panel'
+        : guidedTutorTarget?.mode === 'section'
+          ? 'section_guided'
+          : highlightedSection !== null ||
+              sectionResponsePending !== null ||
+              contextualTutorMode === 'section_explain' ||
+              isSectionExplainPendingMode
+            ? 'section_panel'
+            : canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible
+              ? 'onboarding'
+              : tutorRuntime.isOpen
+                ? 'regular_panel'
+                : 'idle_avatar';
   const suppressPanelSurface =
-    contextualTutorMode === null && selectionTakeoverText !== null && !hasReboundSelectedFragment;
+    tutorSurfaceMode === 'selection_guided' &&
+    selectionTakeoverText !== null &&
+    !hasReboundSelectedFragment;
 
   useKangurAiTutorTelemetryBridge({
     activeFocus,
@@ -365,6 +395,7 @@ export function useKangurAiTutorWidgetCoordinator({
       avatarDragStateRef,
       setAskModalDockStyle,
       setAskModalVisible,
+      setCanonicalTutorModalVisible,
       setContextualTutorMode,
       setDismissedSelectedText,
       setDraggedAvatarPoint,
@@ -408,7 +439,9 @@ export function useKangurAiTutorWidgetCoordinator({
     isOpen: tutorRuntime.isOpen,
     isTutorHidden,
     mounted,
+    selectionGuidanceHandoffText,
     selectionExplainTimeoutRef,
+    selectionResponsePending,
     setCanonicalTutorModalVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
@@ -433,6 +466,7 @@ export function useKangurAiTutorWidgetCoordinator({
     resetAskModalState,
     selectionExplainTimeoutRef,
     sendMessage,
+    setCanonicalTutorModalVisible,
     setDismissedSelectedText,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -496,7 +530,9 @@ export function useKangurAiTutorWidgetCoordinator({
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
+    handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen: tutorRuntime.isOpen,
     launcherPromptVisible,
     persistSelectionContext,
@@ -720,6 +756,7 @@ export function useKangurAiTutorWidgetCoordinator({
     tutorNarrationScript,
     tutorNarratorContextRegistry,
     tutorSessionKey,
+    tutorSurfaceMode,
     uiMode,
     usageSummary,
     viewport,

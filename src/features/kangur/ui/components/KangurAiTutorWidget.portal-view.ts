@@ -17,6 +17,14 @@ import type {
 
 type GuidedMode = KangurAiTutorPortalContextValue['guidedCallout']['mode'];
 type ReducedMotionTransitions = KangurAiTutorPortalContextValue['avatar']['reducedMotionTransitions'];
+type TutorSurfaceMode =
+  | 'idle_avatar'
+  | 'onboarding'
+  | 'selection_guided'
+  | 'selection_panel'
+  | 'section_guided'
+  | 'section_panel'
+  | 'regular_panel';
 
 type UseKangurAiTutorPortalViewModelInput = {
   activeFocus: KangurAiTutorPanelBodyContextValue['activeFocus'];
@@ -156,6 +164,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   tutorNarrationScript: KangurAiTutorPanelBodyContextValue['tutorNarrationScript'];
   tutorNarratorContextRegistry: KangurAiTutorPanelBodyContextValue['tutorNarratorContextRegistry'];
   tutorSessionKey: KangurAiTutorPanelBodyContextValue['tutorSessionKey'];
+  tutorSurfaceMode: TutorSurfaceMode;
   uiMode: string;
   usageSummary: KangurAiTutorPanelBodyContextValue['usageSummary'];
   viewport: {
@@ -177,16 +186,18 @@ export function useKangurAiTutorPortalViewModel(
     input.isGuidedTutorMode ||
     input.showSelectionGuidanceCallout ||
     input.showSectionGuidanceCallout;
-  const hasContextualTutorLock = input.contextualTutorMode !== null;
+  const hasContextualTutorLock =
+    input.tutorSurfaceMode === 'selection_guided' ||
+    input.tutorSurfaceMode === 'selection_panel' ||
+    input.tutorSurfaceMode === 'section_guided' ||
+    input.tutorSurfaceMode === 'section_panel';
 
   const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
   const shouldRenderGuestIntro =
-    input.canonicalTutorModalVisible ||
-    (input.shouldRenderGuestIntroUi &&
-      !input.isAskModalMode &&
-      !isGuidedAvatarMode &&
-      !hasContextualTutorLock);
+    input.tutorSurfaceMode === 'onboarding' &&
+    (input.canonicalTutorModalVisible ||
+      (input.shouldRenderGuestIntroUi && !input.isAskModalMode && !isGuidedAvatarMode));
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({

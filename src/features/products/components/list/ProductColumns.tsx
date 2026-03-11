@@ -25,10 +25,10 @@ import { cn } from '@/shared/utils';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import {
-  getProductNameValue,
+  getProductListDisplayName,
   getProductDisplayName,
   getImageFilepath,
-  resolveProductCategoryId,
+  resolveProductCategoryLabel,
 } from './columns/product-column-utils';
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
@@ -197,29 +197,22 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
   );
 });
 
-const OPAQUE_CATEGORY_ID_PATTERN =
-  /^(?:[a-f0-9]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
-
 const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
   const product: ProductWithImages = row.original;
   const { onProductNameClick } = useProductListRowActionsContext();
   const { productNameKey, queuedProductIds, categoryNameById } = useProductListRowVisualsContext();
 
   const nameKey = productNameKey ?? 'name_en';
-  const nameValue =
-    getProductNameValue(product, nameKey) ??
-    getProductNameValue(product, 'name_en') ??
-    getProductNameValue(product, 'name_pl') ??
-    getProductNameValue(product, 'name_de');
+  const nameValue = getProductListDisplayName(product, nameKey);
 
   const isImported: boolean = !!product.baseProductId;
   const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
   const normalizedSku = (product.sku ?? '').trim();
-  const normalizedCategoryId = resolveProductCategoryId(product);
-  const rawCategoryLabel = normalizedCategoryId ? (categoryNameById.get(normalizedCategoryId) ?? '') : '';
-  const categoryLabel = normalizedCategoryId
-    ? (rawCategoryLabel.trim() || (OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId))
-    : 'Unassigned';
+  const categoryLabel = resolveProductCategoryLabel(
+    product,
+    categoryNameById,
+    productNameKey ?? 'name_en'
+  );
 
   return (
     <div>

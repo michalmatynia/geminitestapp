@@ -23,7 +23,11 @@ export function useKangurAiTutorAvatarShellActions(input: {
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
   handleCloseLauncherPrompt: () => void;
   handleHomeOnboardingFinishEarly: () => void;
+  handleOpenChat: (
+    reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
+  ) => void;
   homeOnboardingStepIndex: number | null;
+  isAnonymousVisitor: boolean;
   isOpen: boolean;
   launcherPromptVisible: boolean;
   persistSelectionContext: (options?: { prefillInput?: boolean }) => string | null;
@@ -56,7 +60,9 @@ export function useKangurAiTutorAvatarShellActions(input: {
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
+    handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
     persistSelectionContext,
@@ -116,13 +122,13 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setGuestIntroHelpVisible(false);
 
     if (isOpen) {
-      handleCloseChat('toggle');
+      closeChat();
     }
 
     setCanonicalTutorModalVisible(true);
   }, [
     clearPendingGuidance,
-    handleCloseChat,
+    closeChat,
     isOpen,
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
@@ -145,27 +151,31 @@ export function useKangurAiTutorAvatarShellActions(input: {
       return;
     }
 
-    if (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible) {
-      return;
-    }
-
     if (launcherPromptVisible) {
       handleCloseLauncherPrompt();
     }
 
     if (guidedTutorTarget) {
-      clearPendingGuidance();
-      setHighlightedSection(null);
-      setHoveredSectionAnchorId(null);
-      setContextualTutorMode(null);
-      setSelectionGuidanceHandoffText(null);
-      setGuidedTutorTarget(null);
       openCanonicalOnboarding();
+      return;
+    }
+
+    if (!isAnonymousVisitor) {
+      if (isOpen) {
+        handleCloseChat('toggle');
+        return;
+      }
+
+      handleOpenChat('toggle');
       return;
     }
 
     if (isOpen) {
       openCanonicalOnboarding();
+      return;
+    }
+
+    if (canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible) {
       return;
     }
 
@@ -178,15 +188,20 @@ export function useKangurAiTutorAvatarShellActions(input: {
     guidedTutorTarget,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
+    handleOpenChat,
     homeOnboardingStepIndex,
+    isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
     openCanonicalOnboarding,
     setContextualTutorMode,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
     setGuidedTutorTarget,
     setHighlightedSection,
     setHoveredSectionAnchorId,
     setSelectionGuidanceHandoffText,
+    setCanonicalTutorModalVisible,
     suppressAvatarClickRef,
   ]);
 

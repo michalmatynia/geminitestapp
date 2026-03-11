@@ -19,6 +19,7 @@ type KangurRouteTransitionState = {
   href: string | null;
   pageKey: string | null;
   startedAt: number;
+  phase: 'pending' | 'revealing';
 };
 
 type KangurRouteTransitionContextValue = {
@@ -40,6 +41,7 @@ type KangurRouteTransitionActionsContextValue = Pick<
 >;
 
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
+const ROUTE_TRANSITION_REVEAL_MS = 220;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
 
 const KangurRouteTransitionStateContext =
@@ -60,7 +62,6 @@ export function KangurRouteTransitionProvider({
   useEffect(() => {
     const previousRequestedPath = previousRequestedPathRef.current;
     let animationFrameId: number | null = null;
-    let clearTransitionTimeoutId: number | null = null;
     let remainingFrameCount = ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT;
 
     const commitTransition = (): void => {
@@ -80,11 +81,18 @@ export function KangurRouteTransitionProvider({
       }
 
       shouldResetScrollOnCommitRef.current = false;
-      setTransitionState(null);
+      setTransitionState((currentState) =>
+        currentState
+          ? {
+            ...currentState,
+            phase: 'revealing',
+          }
+          : null
+      );
     };
 
     if (
-      transitionState &&
+      transitionState?.phase === 'pending' &&
       previousRequestedPath !== undefined &&
       requestedPath !== previousRequestedPath
     ) {
@@ -97,14 +105,11 @@ export function KangurRouteTransitionProvider({
       if (animationFrameId !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameId);
       }
-      if (clearTransitionTimeoutId !== null && typeof window !== 'undefined') {
-        window.clearTimeout(clearTransitionTimeoutId);
-      }
     };
   }, [requestedPath, transitionState]);
 
   useEffect(() => {
-    if (!transitionState || typeof window === 'undefined') {
+    if (transitionState?.phase !== 'pending' || typeof window === 'undefined') {
       return;
     }
 
@@ -112,6 +117,22 @@ export function KangurRouteTransitionProvider({
       shouldResetScrollOnCommitRef.current = false;
       setTransitionState(null);
     }, ROUTE_TRANSITION_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [transitionState]);
+
+  useEffect(() => {
+    if (transitionState?.phase !== 'revealing' || typeof window === 'undefined') {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setTransitionState((currentState) =>
+        currentState?.phase === 'revealing' ? null : currentState
+      );
+    }, ROUTE_TRANSITION_REVEAL_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -138,6 +159,7 @@ export function KangurRouteTransitionProvider({
           href: normalizedHref,
           pageKey: nextPageKey,
           startedAt: Date.now(),
+          phase: 'pending',
         });
       });
     },
@@ -146,10 +168,10 @@ export function KangurRouteTransitionProvider({
 
   const stateValue = useMemo<KangurRouteTransitionStateContextValue>(
     () => ({
-      isRoutePending: transitionState !== null,
-      isRouteRevealing: false,
+      isRoutePending: transitionState?.phase === 'pending',
+      isRouteRevealing: transitionState?.phase === 'revealing',
       activeTransitionPageKey: transitionState?.pageKey ?? null,
-      pendingPageKey: transitionState?.pageKey ?? null,
+      pendingPageKey: transitionState?.phase === 'pending' ? transitionState.pageKey ?? null : null,
     }),
     [transitionState]
   );

@@ -219,16 +219,7 @@ const TestsSkeleton = (): React.JSX.Element => (
   </div>
 );
 
-const NavigationSkeleton = (): React.JSX.Element => <GameSkeleton />;
-
-const renderPageSkeleton = (
-  pageKey: KangurSkeletonPageKey,
-  reason: 'boot' | 'navigation'
-): React.JSX.Element => {
-  if (reason === 'navigation') {
-    return <NavigationSkeleton />;
-  }
-
+const renderPageSkeleton = (pageKey: KangurSkeletonPageKey): React.JSX.Element => {
   switch (pageKey) {
     case 'Lessons':
       return <LessonsSkeleton />;
@@ -271,7 +262,7 @@ export function KangurPageTransitionSkeleton({
       >
         <div className='w-full'>
           <KangurPageContainer className='flex flex-col gap-6 pt-24 sm:pt-28'>
-            {renderPageSkeleton(resolvedPageKey, reason)}
+            {renderPageSkeleton(resolvedPageKey)}
           </KangurPageContainer>
         </div>
       </KangurPageShell>

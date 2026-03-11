@@ -91,6 +91,12 @@ describe('agentic history snapshot', () => {
         planPath: 'artifacts/agent-bundle-plan.json',
         previousHistoryPath: 'artifacts/agent-history/previous.json',
         selectedBundles: ['product_data_pipeline'],
+        attemptedSuppressions: [
+          {
+            bundle: 'product_data_pipeline',
+            reason: 'unchanged-high-risk-retained',
+          },
+        ],
         skippedBundles: [],
       }),
       'utf8',
@@ -118,6 +124,9 @@ describe('agentic history snapshot', () => {
         .relative(agenticRepoRoot, executionReportPath)
         .replace(/\\/g, '/'),
       bundlePlanPath: path.relative(agenticRepoRoot, bundlePlanPath).replace(/\\/g, '/'),
+      bundleSelectionPath: path
+        .relative(agenticRepoRoot, bundleSelectionPath)
+        .replace(/\\/g, '/'),
       bundleReportDirectory: path
         .relative(agenticRepoRoot, bundleReportDirectory)
         .replace(/\\/g, '/'),
@@ -133,6 +142,12 @@ describe('agentic history snapshot', () => {
     ]);
     expect(snapshot.bundleSelection).toEqual({
       selectedBundles: ['product_data_pipeline'],
+      attemptedSuppressions: [
+        {
+          bundle: 'product_data_pipeline',
+          reason: 'unchanged-high-risk-retained',
+        },
+      ],
       skippedBundles: [],
     });
     expect(snapshot.bundleReports).toEqual([
@@ -214,6 +229,7 @@ describe('agentic history snapshot', () => {
 
     expect(snapshot.bundleSelection).toEqual({
       selectedBundles: ['product_data_pipeline', 'admin_experience'],
+      attemptedSuppressions: [],
       skippedBundles: [],
     });
   });

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const DEFAULT_PATH_LABEL = 'Home';
 const DEFAULT_ANNOUNCEMENT_LABEL = 'Current page';
-const DEFAULT_DOCUMENT_TITLE = 'Create Next App';
+const DEFAULT_DOCUMENT_TITLE = 'StudiQ';
 
 const trimText = (value: string | null | undefined): string => value?.replace(/\s+/g, ' ').trim() ?? '';
 

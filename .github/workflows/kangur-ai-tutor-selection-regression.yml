@@ -1,0 +1,63 @@
+name: kangur-ai-tutor-selection-regression
+
+on:
+  pull_request:
+    paths:
+      - 'src/features/kangur/**'
+      - 'src/app/api/kangur/**'
+      - 'e2e/features/kangur/kangur-ai-tutor.spec.ts'
+      - 'e2e/support/kangur-tutor-fixtures.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/kangur-ai-tutor-selection-regression.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/features/kangur/**'
+      - 'src/app/api/kangur/**'
+      - 'e2e/features/kangur/kangur-ai-tutor.spec.ts'
+      - 'e2e/support/kangur-tutor-fixtures.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/kangur-ai-tutor-selection-regression.yml'
+
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+jobs:
+  kangur_ai_tutor_selection_handoff_e2e:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Kangur AI Tutor selection handoff e2e gate
+        run: npm run bazel -- run //:kangur_ai_tutor_selection_handoff_e2e
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kangur-ai-tutor-selection-playwright-artifacts
+          if-no-files-found: warn
+          path: |
+            playwright-report/**
+            test-results/**

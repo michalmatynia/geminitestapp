@@ -42,7 +42,7 @@ export interface AgenticHistorySnapshot {
   bundlePlan: AgenticBundlePlan['bundles'];
   bundleSelection: Pick<
     AgenticBundleSelection,
-    'selectedBundles' | 'skippedBundles'
+    'selectedBundles' | 'attemptedSuppressions' | 'skippedBundles'
   > | null;
   bundleReports: AgenticBundleHistoryEntry[];
 }
@@ -65,6 +65,7 @@ export async function collectAgenticHistorySnapshot(
     workOrderPath?: string;
     executionReportPath?: string;
     bundlePlanPath?: string;
+    bundleSelectionPath?: string;
     bundleReportDirectory?: string;
   },
 ): Promise<AgenticHistorySnapshot> {
@@ -83,8 +84,10 @@ export async function collectAgenticHistorySnapshot(
   const executionReport =
     await readJsonIfPresent<WorkOrderExecutionReport>(executionReportPath);
   const bundlePlan = await readJsonIfPresent<AgenticBundlePlan>(bundlePlanPath);
+  const bundleSelectionPath =
+    options?.bundleSelectionPath ?? 'artifacts/agent-bundle-selection.json';
   const bundleSelection =
-    await readJsonIfPresent<AgenticBundleSelection>('artifacts/agent-bundle-selection.json');
+    await readJsonIfPresent<AgenticBundleSelection>(bundleSelectionPath);
 
   const resolvedBundleReportDirectory = path.join(agenticRepoRoot, bundleReportDirectory);
   let bundleReports: AgenticBundleHistoryEntry[] = [];
@@ -149,11 +152,13 @@ export async function collectAgenticHistorySnapshot(
     bundleSelection: bundleSelection
       ? {
           selectedBundles: bundleSelection.selectedBundles,
+          attemptedSuppressions: bundleSelection.attemptedSuppressions,
           skippedBundles: bundleSelection.skippedBundles,
         }
       : bundlePlan
         ? {
             selectedBundles: bundlePlan.bundles.map((entry) => entry.bundle),
+            attemptedSuppressions: [],
             skippedBundles: [],
           }
         : null,

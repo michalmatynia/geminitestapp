@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCategoryNameById,
+  resolveProductCatalogId,
+  resolveProductCategoryId,
   resolveProductCategoryDisplayLabel,
 } from '@/features/products/hooks/product-list-state-utils';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 describe('product-list-state-utils category guards', () => {
   it('builds category labels from runtime category payloads that expose _id instead of id', () => {
@@ -40,5 +43,52 @@ describe('product-list-state-utils category guards', () => {
     );
 
     expect(label).toBe('Accessories');
+  });
+
+  it('resolves the category id from an embedded category record when the top-level id is missing', () => {
+    const product = {
+      categoryId: null,
+      catalogId: 'catalog-1',
+      category: {
+        id: 'category-1',
+        catalogId: 'catalog-1',
+        name_en: 'Keychains',
+      },
+    } as ProductWithImages;
+
+    expect(resolveProductCategoryId(product)).toBe('category-1');
+  });
+
+  it('resolves the catalog id from an embedded category record when the top-level catalog id is missing', () => {
+    const product = {
+      categoryId: null,
+      catalogId: '',
+      category: {
+        id: 'category-1',
+        catalogId: 'catalog-1',
+        name_en: 'Keychains',
+      },
+      catalogs: [],
+    } as ProductWithImages;
+
+    expect(resolveProductCatalogId(product)).toBe('catalog-1');
+  });
+
+  it('prefers canonical product catalogs over a stale top-level catalog id', () => {
+    const product = {
+      categoryId: null,
+      catalogId: 'default',
+      catalogs: [
+        {
+          catalogId: 'catalog-mentios',
+          catalog: {
+            id: 'catalog-mentios',
+            name: 'Mentios',
+          },
+        },
+      ],
+    } as ProductWithImages;
+
+    expect(resolveProductCatalogId(product)).toBe('catalog-mentios');
   });
 });

@@ -12,6 +12,10 @@ export interface AgenticBundleSelection {
   planPath: string;
   previousHistoryPath: string | null;
   selectedBundles: ImpactBundle[];
+  attemptedSuppressions: Array<{
+    bundle: ImpactBundle;
+    reason: 'unchanged-high-risk-retained';
+  }>;
   skippedBundles: Array<{
     bundle: ImpactBundle;
     reason: 'unchanged';
@@ -45,6 +49,7 @@ export function buildAgenticBundleSelection(
       planPath,
       previousHistoryPath,
       selectedBundles: dedupe(bundlePlan.bundles.map((entry) => entry.bundle)),
+      attemptedSuppressions: [],
       skippedBundles: [],
     };
   }
@@ -54,6 +59,7 @@ export function buildAgenticBundleSelection(
   );
 
   const selectedBundles: ImpactBundle[] = [];
+  const attemptedSuppressions: AgenticBundleSelection['attemptedSuppressions'] = [];
   const skippedBundles: AgenticBundleSelection['skippedBundles'] = [];
 
   for (const bundleEntry of bundlePlan.bundles) {
@@ -64,6 +70,15 @@ export function buildAgenticBundleSelection(
       previousEntry.priority === bundleEntry.priority &&
       sameTargets(previousEntry.targets, bundleEntry.targets)
     ) {
+      if (bundleEntry.priority === 'high') {
+        selectedBundles.push(bundleEntry.bundle);
+        attemptedSuppressions.push({
+          bundle: bundleEntry.bundle,
+          reason: 'unchanged-high-risk-retained',
+        });
+        continue;
+      }
+
       skippedBundles.push({
         bundle: bundleEntry.bundle,
         reason: 'unchanged',
@@ -80,6 +95,7 @@ export function buildAgenticBundleSelection(
     planPath,
     previousHistoryPath,
     selectedBundles: dedupe(selectedBundles),
+    attemptedSuppressions,
     skippedBundles,
   };
 }

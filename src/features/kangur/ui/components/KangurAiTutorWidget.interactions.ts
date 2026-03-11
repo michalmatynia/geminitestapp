@@ -41,6 +41,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'avatarDragStateRef'
     | 'setAskModalDockStyle'
     | 'setAskModalVisible'
+    | 'setCanonicalTutorModalVisible'
     | 'setContextualTutorMode'
     | 'setDismissedSelectedText'
     | 'setDraggedAvatarPoint'
@@ -88,6 +89,7 @@ export function useKangurAiTutorPanelInteractions({
     avatarDragStateRef,
     setAskModalDockStyle,
     setAskModalVisible,
+    setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
@@ -167,6 +169,7 @@ export function useKangurAiTutorPanelInteractions({
         resetAskModalState();
       }
 
+      setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       setLauncherPromptVisible(false);
@@ -189,6 +192,7 @@ export function useKangurAiTutorPanelInteractions({
       messageCount,
       openChat,
       resetAskModalState,
+      setCanonicalTutorModalVisible,
       setContextualTutorMode,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
@@ -205,6 +209,7 @@ export function useKangurAiTutorPanelInteractions({
         reason,
         messageCount,
       });
+      setCanonicalTutorModalVisible(false);
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
       setHoveredSectionAnchorId(null);
@@ -223,6 +228,7 @@ export function useKangurAiTutorPanelInteractions({
       clearSelection,
       closeChat,
       messageCount,
+      setCanonicalTutorModalVisible,
       setHighlightedText,
       setContextualTutorMode,
       setHoveredSectionAnchorId,

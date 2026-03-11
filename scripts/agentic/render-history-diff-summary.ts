@@ -8,6 +8,14 @@ import type { AgenticHistoryDiff } from './diff-history';
 export function renderAgenticHistoryDiffSummary(diff: AgenticHistoryDiff): string {
   const lines: string[] = ['## Agentic history diff'];
 
+  if (diff.newlyAttemptedHighRiskSuppressions.length > 0) {
+    lines.push('');
+    lines.push('### Warning: attempted suppression prevented for high-risk bundles');
+    for (const bundle of diff.newlyAttemptedHighRiskSuppressions) {
+      lines.push(`- \`${bundle}\``);
+    }
+  }
+
   if (diff.newlyHighRiskBundles.length > 0) {
     lines.push('');
     lines.push('### Newly introduced high-risk bundles');
@@ -56,6 +64,7 @@ export function renderAgenticHistoryDiffSummary(diff: AgenticHistoryDiff): strin
   }
 
   if (
+    diff.newlyAttemptedHighRiskSuppressions.length === 0 &&
     diff.newlyHighRiskBundles.length === 0 &&
     diff.riskEscalations.length === 0 &&
     diff.addedBundles.length === 0 &&

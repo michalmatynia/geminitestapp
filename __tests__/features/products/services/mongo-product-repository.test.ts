@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   productAggregate: vi.fn(),
   tagToArray: vi.fn(),
   producerToArray: vi.fn(),
+  catalogToArray: vi.fn(),
   imageFilesToArray: vi.fn(),
   integrationToArray: vi.fn(),
   listingDistinct: vi.fn(),
@@ -78,6 +79,13 @@ describe('mongoProductRepository.replaceProductCategory', () => {
             }),
           };
         }
+        if (name === 'catalogs') {
+          return {
+            find: vi.fn().mockReturnValue({
+              toArray: mocks.catalogToArray,
+            }),
+          };
+        }
         if (name === 'image_files') {
           return {
             find: vi.fn().mockReturnValue({
@@ -138,6 +146,42 @@ describe('mongoProductRepository.replaceProductCategory', () => {
             assignedAt: expect.any(String),
           },
         ],
+        updatedAt: expect.any(Date),
+      },
+    });
+  });
+
+  it('syncs scalar catalogId when replacing product catalogs', async () => {
+    const catalogId = 'catalog-1';
+    mocks.catalogToArray.mockResolvedValue([
+      {
+        _id: catalogId,
+        id: catalogId,
+        name: 'Mentios',
+        description: null,
+        isDefault: false,
+        defaultLanguageId: null,
+        defaultPriceGroupId: null,
+        createdAt: new Date('2026-03-11T10:00:00.000Z'),
+        updatedAt: new Date('2026-03-11T10:00:00.000Z'),
+        languageIds: [],
+        priceGroupIds: [],
+      },
+    ]);
+
+    await mongoProductRepository.replaceProductCatalogs('product-1', [catalogId]);
+
+    expect(mocks.productUpdateOne).toHaveBeenCalledWith(expect.any(Object), {
+      $set: {
+        catalogs: [
+          {
+            productId: 'product-1',
+            catalogId,
+            assignedAt: expect.any(String),
+            catalog: { id: catalogId },
+          },
+        ],
+        catalogId,
         updatedAt: expect.any(Date),
       },
     });

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   acquireRuntimeLease,
@@ -20,7 +20,13 @@ import {
 
 const cleanupTargets: string[] = [];
 
+beforeEach(() => {
+  vi.useRealTimers();
+});
+
 afterEach(async () => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   await Promise.all(
     cleanupTargets.splice(0).map(async (rootDir) => {
       await cleanupBrokerRuntimeLeases({
@@ -111,7 +117,7 @@ describe('resolveBrokerManagedDistDir', () => {
         mode: 'dev',
         agentId: 'Agent 4',
       })
-    ).toBe('.next-dev-web-dev-agent-4');
+    ).toBe('.next-dev-playwright-broker-web-dev-agent-4');
   });
 
   it('includes the resolved bundler in managed dev dist dirs', () => {
@@ -122,7 +128,7 @@ describe('resolveBrokerManagedDistDir', () => {
         bundler: 'turbopack',
         agentId: 'Agent 4',
       })
-    ).toBe('.next-dev-web-dev-turbopack-agent-4');
+    ).toBe('.next-dev-playwright-broker-web-dev-turbopack-agent-4');
   });
 });
 
@@ -171,7 +177,7 @@ describe('buildBrokeredPlaywrightEnv', () => {
       preferredBrowserNodeBinDir: '/opt/node22/bin',
       agentId: 'agent-1',
       leaseKey: 'web-dev-agent-1-deadbeef',
-      distDir: '.next-dev-web-dev-agent-1',
+      distDir: '.next-dev-playwright-broker-web-dev-agent-1',
     });
 
     expect(env).toEqual(
@@ -185,7 +191,7 @@ describe('buildBrokeredPlaywrightEnv', () => {
         PLAYWRIGHT_JUNIT_OUTPUT_FILE: artifacts.junitOutputFile,
         PLAYWRIGHT_RUNTIME_RUN_ID: 'run-a',
         PLAYWRIGHT_RUNTIME_LEASE_KEY: 'web-dev-agent-1-deadbeef',
-        NEXT_DIST_DIR: '.next-dev-web-dev-agent-1',
+        NEXT_DIST_DIR: '.next-dev-playwright-broker-web-dev-agent-1',
         AI_AGENT_ID: 'agent-1',
         PATH: `/opt/node22/bin${path.delimiter}/usr/bin`,
       })
@@ -328,7 +334,7 @@ describe('acquireRuntimeLease', () => {
 
     expect(lease.bundler).toBe('turbopack');
     expect(lease.leaseKey).toMatch(/^web-dev-turbopack-agent-bundler-[a-f0-9]{8}$/);
-    expect(lease.distDir).toBe('.next-dev-web-dev-turbopack-agent-bundler');
+    expect(lease.distDir).toBe('.next-dev-playwright-broker-web-dev-turbopack-agent-bundler');
     expect(spawnedEnvs).toHaveLength(1);
     expect(spawnedArgs).toEqual([['run', 'dev:playwright-broker']]);
     expect(spawnedEnvs[0]?.NEXT_DEV_BUNDLER).toBe('turbopack');
@@ -417,6 +423,110 @@ describe('acquireRuntimeLease', () => {
       expect(lease.reused).toBe(true);
       expect(spawnImpl).not.toHaveBeenCalled();
       expect(healthChecks).toBeGreaterThanOrEqual(2);
+    } finally {
+      killSpy.mockRestore();
+    }
+  });
+
+  it('starts a fresh runtime when stale-lease termination is denied and the existing runtime stays unhealthy', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-eperm-fallback-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-eperm-fallback';
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+    });
+    const brokerDir = path.join(rootDir, 'tmp', 'playwright-runtime-broker');
+    const leaseFilePath = path.join(brokerDir, 'leases', `${leaseKey}.json`);
+    const logFilePath = path.join(brokerDir, 'logs', `${leaseKey}.log`);
+    const existingLease = {
+      source: 'broker',
+      managed: true,
+      reused: false,
+      rootDir,
+      appId,
+      mode,
+      agentId,
+      host: '127.0.0.1',
+      port: 43176,
+      baseUrl: 'http://127.0.0.1:43176',
+      pid: 43211,
+      distDir: resolveBrokerManagedDistDir({ appId, mode, agentId }),
+      runtimeTmpDir: resolveBrokerManagedRuntimeTmpDir({ leaseKey }),
+      managedRuntimeTmpDir: true,
+      leaseKey,
+      startedAt: new Date().toISOString(),
+    };
+
+    await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
+    await fs.mkdir(path.dirname(logFilePath), { recursive: true });
+    await fs.writeFile(leaseFilePath, `${JSON.stringify(existingLease, null, 2)}\n`, 'utf8');
+
+    const healthyBaseUrls = new Set<string>();
+    const fetchImpl = async (candidate: string) => {
+      const url = new URL(candidate);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      if (baseUrl === existingLease.baseUrl) {
+        throw new Error('runtime not ready');
+      }
+      if (healthyBaseUrls.has(baseUrl)) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const spawnImpl = vi.fn((_command: string, _args: string[], options: { env: Record<string, string> }) => {
+      const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+
+      const baseUrl = `http://${options.env.HOST}:${options.env.PORT}`;
+      setTimeout(() => {
+        healthyBaseUrls.add(baseUrl);
+      }, 50);
+
+      return child;
+    });
+
+    const originalKill = process.kill;
+    const killSpy = vi.spyOn(process, 'kill').mockImplementation((pid, signal) => {
+      if (pid === existingLease.pid && signal === 0) {
+        return true;
+      }
+      if (pid === existingLease.pid && signal === 'SIGTERM') {
+        const error = new Error('operation not permitted');
+        error.code = 'EPERM';
+        throw error;
+      }
+      return originalKill(pid, signal);
+    });
+
+    try {
+      const lease = await acquireRuntimeLease({
+        rootDir,
+        appId,
+        mode,
+        agentId,
+        env: {
+          PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:43177',
+        },
+        fetchImpl,
+        spawnImpl,
+        startupTimeoutMs: 3_000,
+        reuseTimeoutMs: 0,
+      });
+
+      expect(lease.baseUrl).not.toBe(existingLease.baseUrl);
+      expect(lease.reused).toBe(false);
+      expect(spawnImpl).toHaveBeenCalledTimes(1);
     } finally {
       killSpy.mockRestore();
     }

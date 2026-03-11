@@ -57,6 +57,7 @@ The first direct Bazel-executed checks are now:
 - `//:integration_prisma` -> direct Prisma integration baseline runner with metrics artifact output
 - `//:integration_mongo` -> direct Mongo integration baseline runner with metrics artifact output
 - `//:case_resolver_capture_mapping_e2e` -> direct Playwright suite runner for the Case Resolver capture-mapping flow
+- `//:products_list_category_e2e` -> direct Playwright suite runner for the Products List category-label flow
 - `//:products_trigger_queue_e2e` -> direct Playwright suite runner for the product trigger-queue flow
 - `//:next_build` -> direct Prisma generate + Next.js production build execution
 - `//:toolchain_contract` -> direct Bun-backed toolchain contract execution
@@ -190,6 +191,22 @@ Repo regression lane:
 - targets:
   - `//:repo_regressions`
 
+Dedicated product-list Playwright regression:
+
+- workflow: `products-list-regression`
+- command: `npm run bazel -- run //:products_list_category_e2e`
+- package script: `npm run test:products:list:e2e`
+- targets:
+  - `//:products_list_category_e2e`
+
+Dedicated Kangur AI Tutor selection-handoff Playwright regression:
+
+- workflow: `kangur-ai-tutor-selection-regression`
+- command: `npm run bazel -- run //:kangur_ai_tutor_selection_handoff_e2e`
+- package script: `npm run test:kangur:ai-tutor:selection-handoff:e2e`
+- targets:
+  - `//:kangur_ai_tutor_selection_handoff_e2e`
+
 Repo toolchain lane:
 
 - workflow: `bazel-toolchain`
@@ -207,6 +224,8 @@ Validated direct Bazel gates:
 - `//:next_build`
 - `//:api_error_sources`
 - `//:case_resolver_regression`
+- `//:kangur_ai_tutor_selection_handoff_e2e`
+- `//:products_list_category_e2e`
 - `//:products_trigger_queue_unit`
 
 Unified local CI entrypoint:

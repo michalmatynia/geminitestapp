@@ -311,7 +311,7 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByText('Image block has no source yet.').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-amber-200/80'
+      '[border-color:var(--kangur-soft-card-border)]'
     );
   });
 });

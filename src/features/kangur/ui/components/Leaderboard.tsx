@@ -42,7 +42,7 @@ export default function Leaderboard(): React.JSX.Element {
     >
       <div className='flex items-center gap-2 mb-4'>
         <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' />
-        <h3 className='text-xl font-extrabold text-slate-800'>Najlepsze wyniki</h3>
+        <h3 className='text-xl font-extrabold [color:var(--kangur-page-text)]'>Najlepsze wyniki</h3>
       </div>
 
       <div className='mb-4 flex flex-col gap-2'>
@@ -120,13 +120,15 @@ export default function Leaderboard(): React.JSX.Element {
                   {item.isMedal ? (
                     item.rankLabel
                   ) : (
-                    <span className='text-sm font-bold text-slate-400'>{item.rankLabel}</span>
+                    <span className='text-sm font-bold [color:var(--kangur-page-muted-text)]'>
+                      {item.rankLabel}
+                    </span>
                   )}
                 </span>
 
                 <div className='flex-1 min-w-0'>
                   <div className='flex items-center gap-1 flex-wrap'>
-                    <span className='max-w-[120px] truncate font-bold text-slate-700 sm:max-w-none'>
+                    <span className='max-w-[120px] truncate font-bold [color:var(--kangur-page-text)] sm:max-w-none'>
                       {item.playerName}
                     </span>
                     {item.isRegistered ? (
@@ -158,7 +160,7 @@ export default function Leaderboard(): React.JSX.Element {
                       </KangurStatusChip>
                     )}
                   </div>
-                  <div className='text-xs text-slate-500'>
+                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>
                     {item.operationEmoji} {item.operationLabel}
                   </div>
                 </div>
@@ -167,7 +169,7 @@ export default function Leaderboard(): React.JSX.Element {
                   <div className='text-sm font-extrabold text-indigo-700 sm:text-base'>
                     {item.scoreLabel}
                   </div>
-                  <div className='text-xs text-slate-500'>{item.timeLabel}</div>
+                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>{item.timeLabel}</div>
                   {item.xpLabel ? (
                     <div
                       className='text-[11px] font-semibold text-violet-600'

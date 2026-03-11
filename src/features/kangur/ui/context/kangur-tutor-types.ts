@@ -1,6 +1,11 @@
 'use client';
 
 export type KangurTutorAnchorKind =
+  | 'hero'
+  | 'screen'
+  | 'library'
+  | 'empty_state'
+  | 'navigation'
   | 'lesson_header'
   | 'assignment'
   | 'document'
@@ -17,7 +22,13 @@ export type KangurTutorAnchorKind =
   | 'login_identifier_field'
   | 'login_form';
 
-export type KangurTutorAnchorSurface = 'lesson' | 'test' | 'game' | 'auth';
+export type KangurTutorAnchorSurface =
+  | 'lesson'
+  | 'test'
+  | 'game'
+  | 'profile'
+  | 'parent_dashboard'
+  | 'auth';
 
 export type KangurTutorAnchorMetadata = {
   contentId?: string | null;

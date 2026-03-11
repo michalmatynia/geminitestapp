@@ -145,14 +145,24 @@ export default function KangurSetup({
                 >
                   <KangurIconBadge
                     accent={edition.available ? 'amber' : 'slate'}
-                    className={edition.available ? undefined : 'bg-slate-200 text-slate-500'}
+                    className={edition.available ? undefined : '[color:var(--kangur-page-muted-text)]'}
+                    style={
+                      edition.available
+                        ? undefined
+                        : {
+                            background:
+                              'color-mix(in srgb, var(--kangur-soft-card-background) 78%, #cbd5e1)',
+                          }
+                    }
                     data-testid={`kangur-setup-edition-icon-${edition.year}`}
                     size='xl'
                   >
                     {edition.emoji}
                   </KangurIconBadge>
                   <div className='flex flex-1 flex-col'>
-                    <span className='text-lg font-extrabold text-slate-800'>{edition.label}</span>
+                    <span className='text-lg font-extrabold [color:var(--kangur-page-text)]'>
+                      {edition.label}
+                    </span>
                     <span
                       id={`kangur-setup-edition-status-${edition.year}`}
                       className='mt-1 flex flex-wrap items-center gap-2'
@@ -238,14 +248,14 @@ export default function KangurSetup({
                 {recommendedLabel ?? 'Polecamy teraz'}
               </KangurStatusChip>
               <p
-                className='text-sm font-extrabold text-slate-800'
+                className='text-sm font-extrabold [color:var(--kangur-page-text)]'
                 data-testid='kangur-setup-recommendation-title'
               >
                 {recommendedTitle}
               </p>
               {recommendedDescription ? (
                 <p
-                  className='text-xs text-slate-600'
+                  className='text-xs [color:var(--kangur-page-muted-text)]'
                   data-testid='kangur-setup-recommendation-description'
                 >
                   {recommendedDescription}
@@ -301,7 +311,7 @@ export default function KangurSetup({
                       </KangurStatusChip>
                     ) : null}
                   </span>
-                  <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
+                  <span className='flex items-center gap-2 text-base font-extrabold [color:var(--kangur-page-text)]'>
                     {setItem.label}
                     {!setItem.available && <Lock className='h-3.5 w-3.5' />}
                   </span>
@@ -309,7 +319,9 @@ export default function KangurSetup({
                     id={`kangur-setup-set-description-${setItem.id}`}
                     className={cn(
                       'text-xs',
-                      setItem.available ? 'text-slate-500' : 'text-slate-400'
+                      setItem.available
+                        ? '[color:var(--kangur-page-muted-text)]'
+                        : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_82%,white)]'
                     )}
                   >
                     {setItem.desc}

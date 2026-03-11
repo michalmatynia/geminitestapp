@@ -53,6 +53,11 @@ export const normalizeConversationFocusKind = (
 ): KangurAiTutorFocusKind | undefined => {
   switch (focusKind) {
     case 'selection':
+    case 'hero':
+    case 'screen':
+    case 'library':
+    case 'empty_state':
+    case 'navigation':
     case 'lesson_header':
     case 'assignment':
     case 'document':
@@ -99,6 +104,46 @@ export const getCurrentTutorLocation = (): { pathname: string; search: string } 
   };
 };
 
+export const getTutorSurfaceLabel = (
+  surface: TutorSurface | null | undefined,
+  tutorContent: KangurAiTutorContent
+): string => {
+  switch (surface) {
+    case 'test':
+      return tutorContent.panelChrome.surfaceLabels.test;
+    case 'game':
+      return tutorContent.panelChrome.surfaceLabels.game;
+    case 'lesson':
+      return tutorContent.panelChrome.surfaceLabels.lesson;
+    case 'profile':
+      return 'Profil';
+    case 'parent_dashboard':
+      return 'Panel rodzica';
+    default:
+      return tutorContent.panelChrome.surfaceLabels.lesson;
+  }
+};
+
+export const getTutorContextFallbackTarget = (
+  surface: TutorSurface | null | undefined,
+  tutorContent: KangurAiTutorContent
+): string => {
+  switch (surface) {
+    case 'test':
+      return tutorContent.panelChrome.contextFallbackTargets.test;
+    case 'game':
+      return tutorContent.panelChrome.contextFallbackTargets.game;
+    case 'lesson':
+      return tutorContent.panelChrome.contextFallbackTargets.lesson;
+    case 'profile':
+      return 'Nowy panel profilu';
+    case 'parent_dashboard':
+      return 'Nowy panel rodzica';
+    default:
+      return tutorContent.panelChrome.contextFallbackTargets.lesson;
+  }
+};
+
 export const getContextSwitchNotice = (input: {
   tutorContent: KangurAiTutorContent;
   surface: TutorSurface | null | undefined;
@@ -117,21 +162,12 @@ export const getContextSwitchNotice = (input: {
     return null;
   }
 
-  const surfaceLabel =
-    input.surface === 'test'
-      ? input.tutorContent.panelChrome.surfaceLabels.test
-      : input.surface === 'game'
-        ? input.tutorContent.panelChrome.surfaceLabels.game
-        : input.tutorContent.panelChrome.surfaceLabels.lesson;
+  const surfaceLabel = getTutorSurfaceLabel(input.surface, input.tutorContent);
   const targetLabel = input.title?.trim()
     ? `${surfaceLabel}: ${input.title.trim()}`
     : input.contentId?.trim()
       ? `${surfaceLabel}: ${input.contentId.trim()}`
-      : input.surface === 'test'
-        ? input.tutorContent.panelChrome.contextFallbackTargets.test
-        : input.surface === 'game'
-          ? input.tutorContent.panelChrome.contextFallbackTargets.game
-          : input.tutorContent.panelChrome.contextFallbackTargets.lesson;
+      : getTutorContextFallbackTarget(input.surface, input.tutorContent);
   const detail = input.questionProgressLabel?.trim()
     ? input.questionProgressLabel.trim()
     : input.questionId?.trim()

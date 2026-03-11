@@ -4,9 +4,11 @@ import {
   BUBBLE_MAX_HEIGHT,
   BUBBLE_MIN_HEIGHT,
   EDGE_GAP,
+  type TutorEntryDirection,
   type TutorMotionPosition,
   type TutorMotionProfile,
   type TutorPointerSide,
+  getTutorEntryDirection,
 } from './KangurAiTutorWidget.shared';
 
 import type { TutorPoint } from './KangurAiTutorWidget.types';
@@ -239,7 +241,11 @@ export const getGuidedCalloutLayout = (
   options?: {
     anchorRect?: DOMRect | null;
   }
-): { style: CSSProperties; placement: 'top' | 'bottom' | 'left' | 'right' } => {
+): {
+  entryDirection: TutorEntryDirection;
+  style: CSSProperties;
+  placement: 'top' | 'bottom' | 'left' | 'right';
+} => {
   const width = Math.min(280, Math.max(220, viewport.width * 0.24));
   const height = GUIDED_CALLOUT_HEIGHT;
   const gap = 18;
@@ -247,6 +253,7 @@ export const getGuidedCalloutLayout = (
   const maxTop = viewport.height - EDGE_GAP - height;
   const centeredLeft = rect.left + rect.width / 2 - width / 2;
   const centeredTop = rect.top + rect.height / 2 - height / 2;
+  const entryDirection = getTutorEntryDirection(rect, viewport.width);
   const candidates: Array<{
     placement: 'top' | 'bottom' | 'left' | 'right';
     left: number;
@@ -347,6 +354,7 @@ export const getGuidedCalloutLayout = (
   };
 
   return {
+    entryDirection,
     placement: bestCandidate.placement,
     style: {
       position: 'fixed',

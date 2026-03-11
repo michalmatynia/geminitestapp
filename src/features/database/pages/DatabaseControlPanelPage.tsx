@@ -12,11 +12,9 @@ import {
   RefreshButton,
   SelectSimple,
   FormField,
-  Alert,
   LoadingState,
   CollapsibleSection,
 } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -26,95 +24,53 @@ import {
 import { LogModal } from '../components/LogModal';
 import {
   useAllCollectionsSchema,
-  useCopyCollectionMutation,
   useCreateJsonBackupMutation,
   useRestoreJsonBackupMutation,
   useJsonBackups,
 } from '../hooks/useDatabaseQueries';
-
-type CopyAction = {
-  collection: string;
-  direction: 'mongo_to_prisma' | 'prisma_to_mongo';
-  label: string;
-};
 
 export default function DatabaseControlPanelPage(): React.JSX.Element {
   const { toast } = useToast();
   const schemaQuery = useAllCollectionsSchema();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
-  const copyMutation = useCopyCollectionMutation();
   const createJsonBackup = useCreateJsonBackupMutation();
   const restoreJsonBackup = useRestoreJsonBackupMutation();
   const jsonBackupsQuery = useJsonBackups();
 
-  const [pendingCopy, setPendingCopy] = useState<CopyAction | null>(null);
   const [logModalContent, setLogModalContent] = useState<string | null>(null);
   const [selectedJsonBackup, setSelectedJsonBackup] = useState<string>('');
 
   // Parse per-collection provider map from settings
-  const providerMap = useMemo<Record<string, 'mongodb' | 'prisma'>>(() => {
+  const providerMap = useMemo<Record<string, 'mongodb' | 'redis'>>(() => {
     const raw = settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
     if (!raw) return {};
     try {
-      return JSON.parse(raw) as Record<string, 'mongodb' | 'prisma'>;
+      return JSON.parse(raw) as Record<string, 'mongodb' | 'redis'>;
     } catch {
       return {};
     }
   }, [settingsQuery.data]);
 
-  // Build unified collection rows from both providers' schemas
+  // Build unified collection rows from the active Mongo-backed schema
   const rows = useMemo<UnifiedCollectionRow[]>(() => {
     const data = schemaQuery.data;
     if (!data) return [];
 
-    const byName = new Map<string, UnifiedCollectionRow>();
-
-    for (const coll of data.collections) {
-      const existing = byName.get(coll.name);
-      if (coll.provider === 'mongodb') {
-        if (existing) {
-          existing.existsInMongo = true;
-          existing.mongoFieldCount = coll.fields.length;
-          existing.mongoDocumentCount = coll.documentCount ?? null;
-        } else {
-          byName.set(coll.name, {
-            name: coll.name,
-            existsInMongo: true,
-            existsInPrisma: false,
-            mongoFieldCount: coll.fields.length,
-            prismaFieldCount: null,
-            mongoDocumentCount: coll.documentCount ?? null,
-            prismaRowCount: null,
-            assignedProvider: providerMap[coll.name] ?? 'auto',
-          });
-        }
-      } else if (coll.provider === 'prisma') {
-        if (existing) {
-          existing.existsInPrisma = true;
-          existing.prismaFieldCount = coll.fields.length;
-          existing.prismaRowCount = coll.documentCount ?? null;
-        } else {
-          byName.set(coll.name, {
-            name: coll.name,
-            existsInMongo: false,
-            existsInPrisma: true,
-            mongoFieldCount: null,
-            prismaFieldCount: coll.fields.length,
-            mongoDocumentCount: null,
-            prismaRowCount: coll.documentCount ?? null,
-            assignedProvider: providerMap[coll.name] ?? 'auto',
-          });
-        }
-      }
-    }
-
-    return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return [...data.collections]
+      .map((coll): UnifiedCollectionRow => ({
+        name: coll.name,
+        existsInMongo: true,
+        mongoFieldCount: coll.fields.length,
+        mongoDocumentCount: coll.documentCount ?? null,
+        assignedProvider: providerMap[coll.name] ?? 'auto',
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [schemaQuery.data, providerMap]);
 
   // Handle provider assignment change
   const handleProviderChange = useCallback(
-    (collectionName: string, provider: 'mongodb' | 'prisma' | 'auto') => {
+    (collectionName: string, provider: 'mongodb' | 'redis' | 'auto') => {
       const newMap = { ...providerMap };
       if (provider === 'auto') {
         delete newMap[collectionName];
@@ -137,44 +93,6 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
     },
     [providerMap, updateSetting, toast]
   );
-
-  // Copy handlers
-  const handleCopyToMongo = useCallback((name: string) => {
-    setPendingCopy({ collection: name, direction: 'prisma_to_mongo', label: 'Prisma → MongoDB' });
-  }, []);
-
-  const handleCopyToPrisma = useCallback((name: string) => {
-    setPendingCopy({ collection: name, direction: 'mongo_to_prisma', label: 'MongoDB → Prisma' });
-  }, []);
-
-  const handleConfirmCopy = useCallback(async () => {
-    if (!pendingCopy) return;
-    setPendingCopy(null);
-
-    try {
-      const result = await copyMutation.mutateAsync({
-        collection: pendingCopy.collection,
-        direction: pendingCopy.direction,
-      });
-
-      if (result.status === 'completed') {
-        const msg = `Copied ${result.sourceCount} items. Inserted: ${result.targetInserted}, Deleted: ${result.targetDeleted}`;
-        toast(msg, { variant: 'success' });
-      } else if (result.status === 'skipped') {
-        toast(
-          `Collection "${pendingCopy.collection}" was skipped: ${result.warnings?.join(', ') ?? 'unknown reason'}`,
-          { variant: 'warning' }
-        );
-      } else {
-        toast(`Copy failed: ${result.error ?? 'Unknown error'}`, { variant: 'error' });
-      }
-    } catch (error: unknown) {
-      logClientError(error, {
-        context: { source: 'ControlPanel', action: 'copyCollection', ...pendingCopy },
-      });
-      toast('An error occurred during copy.', { variant: 'error' });
-    }
-  }, [pendingCopy, copyMutation, toast]);
 
   // JSON backup handlers
   const handleCreateJsonBackup = useCallback(async () => {
@@ -208,11 +126,9 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   const columns = useMemo(
     () =>
       getControlPanelColumns({
-        onCopyToMongo: handleCopyToMongo,
-        onCopyToPrisma: handleCopyToPrisma,
         onProviderChange: handleProviderChange,
       }),
-    [handleCopyToMongo, handleCopyToPrisma, handleProviderChange]
+    [handleProviderChange]
   );
 
   const jsonBackups = jsonBackupsQuery.data?.backups ?? [];
@@ -221,7 +137,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
     <AdminDatabasePageLayout
       title='Database Control Panel'
       current='Control Panel'
-      description='View and manage collections across MongoDB and PostgreSQL. Copy data between providers and assign per-collection provider routing.'
+      description='Review MongoDB collection metadata, assign per-collection routing, and manage JSON backups for the active document store.'
     >
       {logModalContent !== null && (
         <LogModal
@@ -230,20 +146,6 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
           onClose={(): void => setLogModalContent(null)}
         />
       )}
-
-      <ConfirmModal
-        isOpen={!!pendingCopy}
-        onClose={() => setPendingCopy(null)}
-        onConfirm={handleConfirmCopy}
-        title='Copy Collection'
-        message={
-          pendingCopy
-            ? `Copy "${pendingCopy.collection}" (${pendingCopy.label})? This will overwrite the target collection.`
-            : ''
-        }
-        confirmText='Copy'
-        isDangerous={true}
-      />
 
       {/* Collections Table */}
       <StandardDataTablePanel
@@ -262,13 +164,6 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         initialSorting={[{ id: 'name', desc: false }]}
         sortingStorageKey='stardb:control-panel:sorting'
         variant='flat'
-        alerts={
-          copyMutation.isPending && (
-            <Alert variant='info' className='mb-3 px-3 py-2 text-xs'>
-              Copying collection... This may take a moment.
-            </Alert>
-          )
-        }
         emptyState={
           schemaQuery.isError ? (
             <p className='py-4 text-center text-red-300 text-sm'>
@@ -280,8 +175,8 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
 
       {/* JSON Backup & Restore */}
       <CollapsibleSection
-        title='JSON Backup & Restore (Prisma)'
-        description='Export all Prisma tables as JSON. No external tools (pg_dump) required.'
+        title='JSON Backup & Restore'
+        description='Export and restore MongoDB-backed collections as JSON without external database tools.'
         variant='default'
         className='mt-6'
       >

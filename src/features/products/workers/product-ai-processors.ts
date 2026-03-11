@@ -3,7 +3,6 @@ import 'server-only';
 import fs from 'fs/promises';
 
 import { getProductRepository } from '@/features/products/server';
-import { type DatabaseSyncDirection } from '@/shared/contracts';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { GraphModelJobPayload, ProductAiJobRecord } from '@/shared/contracts/jobs';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
@@ -97,7 +96,6 @@ const resolveGraphModelRetryConfig = (args: {
 });
 
 export type JobPayload = GraphModelJobPayload & {
-  direction?: DatabaseSyncDirection;
   skipAuthCollections?: boolean;
 };
 
@@ -348,10 +346,8 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
 }
 
 export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
-  const direction = job.payload.direction ?? 'mongo_to_prisma';
-  return runDatabaseSync(direction, {
-    skipAuthCollections: Boolean(job.payload.skipAuthCollections),
-  });
+  void job;
+  return runDatabaseSync();
 }
 
 export async function processDatabaseBackup(job: Job): Promise<Record<string, unknown>> {
@@ -362,9 +358,12 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
       dbType,
     });
   }
+  const schedulerDbType = dbType === 'mongodb' ? dbType : null;
 
   try {
-    await markDatabaseBackupJobRunning(dbType, job.id);
+    if (schedulerDbType) {
+      await markDatabaseBackupJobRunning(schedulerDbType, job.id);
+    }
   } catch {
     // Backup execution should continue even if scheduler metadata persistence fails.
   }
@@ -381,18 +380,22 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
     }
 
     const result = await createPostgresBackup();
-    try {
-      await markDatabaseBackupJobSucceeded(dbType, job.id);
-    } catch {
-      // Keep backup result successful if status persistence fails.
+    if (schedulerDbType) {
+      try {
+        await markDatabaseBackupJobSucceeded(schedulerDbType, job.id);
+      } catch {
+        // Keep backup result successful if status persistence fails.
+      }
     }
     return { ...result, dbType };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    try {
-      await markDatabaseBackupJobFailed(dbType, job.id, message);
-    } catch {
-      // Keep original backup failure as the primary error path.
+    if (schedulerDbType) {
+      try {
+        await markDatabaseBackupJobFailed(schedulerDbType, job.id, message);
+      } catch {
+        // Keep original backup failure as the primary error path.
+      }
     }
     throw error;
   }

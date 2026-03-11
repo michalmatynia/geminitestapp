@@ -38,7 +38,7 @@ export const useDatabasePagination = () => {
 
 export function DatabaseProvider({
   children,
-  defaultDbType = 'postgresql',
+  defaultDbType = 'mongodb',
   mode = 'current',
   backupName,
 }: {

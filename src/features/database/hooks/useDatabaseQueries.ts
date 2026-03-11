@@ -3,7 +3,6 @@ import { type QueryClient } from '@tanstack/react-query';
 import type {
   DatabaseBackupFile as DatabaseInfoResponse,
   DatabaseBackupResponse,
-  CollectionCopyResult,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
@@ -36,7 +35,6 @@ import {
 import { dbKeys } from '@/shared/lib/query-key-exports';
 
 import {
-  copyCollectionBetweenProviders,
   createDatabaseBackup,
   createJsonBackup,
   deleteDatabaseBackup,
@@ -202,7 +200,7 @@ export function useDatabasePreview(input: {
       const result = await fetchDatabasePreview({
         backupName,
         mode: mode ?? 'current',
-        type: type ?? 'postgresql',
+        type: type ?? 'mongodb',
         page,
         pageSize,
       });
@@ -388,35 +386,6 @@ export function useDatabaseEngineProviderPreview(
 
       tags: ['database', 'engine', 'provider-preview'],
       description: 'Polls system databases engine provider preview.'},
-  });
-}
-
-export function useCopyCollectionMutation(): MutationResult<
-  CollectionCopyResult,
-  { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
-  > {
-  const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
-    mutationFn: async (variables: {
-      collection: string;
-      direction: 'mongo_to_prisma' | 'prisma_to_mongo';
-    }): Promise<CollectionCopyResult> => {
-      const result = await copyCollectionBetweenProviders(
-        variables.collection,
-        variables.direction
-      );
-      return unwrapMutationResult(result, 'Failed to copy collection between providers.');
-    },
-    mutationKey,
-    meta: {
-      source: 'database.hooks.useCopyCollectionMutation',
-      operation: 'create',
-      resource: 'system.databases.copy-collection',
-      domain: 'database',
-      mutationKey,
-      tags: ['database', 'copy-collection'],
-      description: 'Creates system databases copy collection.'},
-    invalidateKeys: [dbKeys.schema({ provider: 'all', includeCounts: true })],
   });
 }
 

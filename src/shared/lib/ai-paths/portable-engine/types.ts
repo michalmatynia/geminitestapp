@@ -40,45 +40,6 @@ export type PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary = {
   diagnostics: PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic[];
 };
 
-export type PrismaSettingClient = {
-  setting?: {
-    findUnique: (input: {
-      where: { key: string };
-      select: { value: true };
-    }) => Promise<{ value: string | null } | null>;
-    upsert: (input: {
-      where: { key: string };
-      create: { key: string; value: string };
-      update: { value: string };
-    }) => Promise<unknown>;
-  };
-};
-
-export type PrismaSettingDelegate = NonNullable<PrismaSettingClient['setting']>;
-
-const isPrismaSettingDelegate = (value: unknown): value is PrismaSettingDelegate => {
-  if (!value || typeof value !== 'object') return false;
-  return (
-    typeof Reflect.get(value, 'findUnique') === 'function' &&
-    typeof Reflect.get(value, 'upsert') === 'function'
-  );
-};
-
-export const getPrismaSettingDelegate = (
-  prismaClient: unknown
-): PrismaSettingDelegate | null => {
-  if (!process.env['DATABASE_URL'] || !prismaClient || typeof prismaClient !== 'object') {
-    return null;
-  }
-  const prismaClientRecord = prismaClient as Record<string, unknown>;
-  const setting = prismaClientRecord['setting'];
-  return isPrismaSettingDelegate(setting) ? setting : null;
-};
-
-export const canUsePrismaSettings = (
-  prismaClient: unknown
-): boolean => getPrismaSettingDelegate(prismaClient) !== null;
-
 export type PortablePathAuditSinkStartupHealthState = {
   consecutiveFailureCount: number;
   lastFailureAt: string | null;

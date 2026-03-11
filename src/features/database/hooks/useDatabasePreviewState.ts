@@ -75,7 +75,17 @@ export function useDatabasePreviewState() {
 
   const handleQueryTable = useCallback(
     (tableName: string) => {
-      setConsoleSql(`SELECT * FROM "${tableName}" LIMIT 20`);
+      setConsoleSql(
+        JSON.stringify(
+          {
+            collection: tableName,
+            operation: 'find',
+            filter: {},
+          },
+          null,
+          2
+        )
+      );
       setShowConsole(true);
       scrollToConsole();
     },

@@ -118,8 +118,12 @@ describe('KangurGameQuestionWidget', () => {
 
     render(<KangurGameQuestionWidget />);
 
-    expect(screen.getByText(/⭐ Wynik:/i)).toHaveClass('text-slate-500');
-    expect(screen.getByText(/🟢 Latwy/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/⭐ Wynik:/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText(/🟢 Latwy/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('kangur-game-question-momentum')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-game-question-accuracy')).toHaveTextContent(
       'Skutecznosc rundy: 100%'

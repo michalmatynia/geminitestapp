@@ -416,6 +416,10 @@ export function resolveKangurAiTutorAvailability(
       : { allowed: false, reason: 'games_disabled' };
   }
 
+  if (context.surface === 'profile' || context.surface === 'parent_dashboard') {
+    return { allowed: true };
+  }
+
   if (settings.testAccessMode === 'disabled') {
     return { allowed: false, reason: 'tests_disabled' };
   }

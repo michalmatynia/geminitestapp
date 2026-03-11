@@ -1,6 +1,5 @@
 import 'server-only';
 
-import type { DatabaseSyncCollectionResult, DatabaseSyncDirection } from '@/shared/contracts/database';
 import { operationFailedError } from '@/shared/errors/app-error';
 
 const DATABASE_COLLECTION_COPY_REMOVED_MESSAGE =
@@ -10,9 +9,6 @@ export function getSupportedCollections(): string[] {
   return [];
 }
 
-export async function copyCollection(
-  _collection: string,
-  _direction: DatabaseSyncDirection
-): Promise<DatabaseSyncCollectionResult> {
+export async function copyCollection(): Promise<never> {
   throw operationFailedError(DATABASE_COLLECTION_COPY_REMOVED_MESSAGE);
 }

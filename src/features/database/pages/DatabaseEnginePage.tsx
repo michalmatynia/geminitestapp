@@ -69,17 +69,6 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         ),
       },
       {
-        accessorKey: 'prismaRowCount',
-        header: 'Prisma',
-        cell: ({ row }) => (
-          <span className='text-gray-400'>
-            {row.original.existsInPrisma
-              ? (row.original.prismaRowCount ?? 0).toLocaleString()
-              : '—'}
-          </span>
-        ),
-      },
-      {
         id: 'provider',
         header: 'Assigned Provider',
         cell: ({ row }: { row: { original: DatabaseCollectionRow } }) => (
@@ -92,7 +81,6 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
             options={[
               { value: 'auto', label: 'Auto' },
               { value: 'mongodb', label: 'MongoDB' },
-              { value: 'prisma', label: 'Prisma' },
               { value: 'redis', label: 'Redis' },
             ]}
             className='h-7 w-28 text-[10px]'
@@ -186,16 +174,6 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
 
         <FormSection title='Resource Health' className='p-6'>
           <div className='space-y-3'>
-            <MetadataItem
-              variant='minimal'
-              label='Prisma (SQL)'
-              value={
-                <StatusBadge
-                  status={engineStatus?.providers.prismaConfigured ? 'success' : 'error'}
-                />
-              }
-              className='flex items-center justify-between'
-            />
             <MetadataItem
               variant='minimal'
               label='MongoDB'

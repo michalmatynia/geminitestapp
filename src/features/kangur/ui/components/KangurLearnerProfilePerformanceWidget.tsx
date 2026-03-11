@@ -27,7 +27,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Aktywnosc 7 dni
         </div>
         <div className='mb-4 flex flex-wrap gap-2'>
@@ -64,7 +64,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   title={`${point.games} gier, srednia ${point.averageAccuracy}%`}
                   value={heightPercent}
                 />
-                <div className='text-[11px] text-slate-500'>{point.label}</div>
+                <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>{point.label}</div>
               </div>
             );
           })}
@@ -72,7 +72,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Wyniki wg operacji
         </div>
         <div className='flex flex-col gap-3'>
@@ -88,7 +88,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           ) : (
             snapshot.operationPerformance.map((item) => (
               <div key={item.operation}>
-                <div className='mb-1 flex items-center justify-between gap-2 text-sm text-slate-600'>
+                <div className='mb-1 flex items-center justify-between gap-2 text-sm [color:var(--kangur-page-muted-text)]'>
                   <span className='font-semibold'>
                     {item.emoji} {item.label}
                   </span>
@@ -118,7 +118,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   size='sm'
                   value={item.averageAccuracy}
                 />
-                <div className='mt-1 text-[11px] text-slate-500'>
+                <div className='mt-1 text-[11px] [color:var(--kangur-page-muted-text)]'>
                   Proby: {item.attempts} · XP / sesje: {item.averageXpPerSession} · Lacznie:{' '}
                   {item.totalXpEarned} XP · Najlepsza skutecznosc: {item.bestScore}%
                 </div>

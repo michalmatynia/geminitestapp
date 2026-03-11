@@ -398,6 +398,7 @@
     "docs/kangur/admin-content-authoring.md",
     "docs/kangur/learner-navigation.md",
     "docs/kangur/lessons-and-activities.md",
+    "docs/kangur/neo4j-semantic-bridge.md",
     "docs/kangur/observability-and-operations.md",
     "docs/kangur/profile-and-parent-dashboard.md",
     "docs/kangur/settings-and-narration.md",

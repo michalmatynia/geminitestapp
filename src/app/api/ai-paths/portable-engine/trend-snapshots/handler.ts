@@ -73,6 +73,10 @@ type TrendSnapshotCursorPayload = {
   to: string | null;
 };
 
+type PortablePathTrendSnapshot = Awaited<
+  ReturnType<typeof loadPortablePathSigningPolicyTrendSnapshots>
+>[number];
+
 const parseTrendSnapshotLimit = (value: string | null): number => {
   if (!value) return DEFAULT_TREND_SNAPSHOT_LIMIT;
   const numeric = Number(value);
@@ -345,7 +349,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const fromTime = from?.getTime() ?? null;
   const toTime = to?.getTime() ?? null;
-  const filteredSnapshots = snapshots.filter((snapshot) => {
+  const filteredSnapshots = snapshots.filter((snapshot: PortablePathTrendSnapshot) => {
     if (trigger && snapshot.trigger !== trigger) return false;
     if (fromTime === null && toTime === null) return true;
     const snapshotTime = Date.parse(snapshot.at);
@@ -358,7 +362,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const cursorFilteredSnapshots =
     cursorBeforeTime === null
       ? filteredSnapshots
-      : filteredSnapshots.filter((snapshot) => {
+      : filteredSnapshots.filter((snapshot: PortablePathTrendSnapshot) => {
         const snapshotTime = Date.parse(snapshot.at);
         if (Number.isNaN(snapshotTime)) return false;
         return snapshotTime < cursorBeforeTime;
@@ -367,14 +371,17 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const snapshotCount = pageSnapshots.length;
   const hasMore = cursorFilteredSnapshots.length > pageSnapshots.length;
   const driftAlertsTotal = pageSnapshots.reduce(
-    (sum, snapshot) =>
+    (sum: number, snapshot: PortablePathTrendSnapshot) =>
       sum + (Array.isArray(snapshot.driftAlerts) ? snapshot.driftAlerts.length : 0),
     0
   );
-  const sinkWritesFailedTotal = pageSnapshots.reduce((sum, snapshot) => {
+  const sinkWritesFailedTotal = pageSnapshots.reduce(
+    (sum: number, snapshot: PortablePathTrendSnapshot) => {
     const sinkTotals = snapshot.sinkTotals as { writesFailed?: number };
     return sum + (sinkTotals?.writesFailed ?? 0);
-  }, 0);
+    },
+    0
+  );
   const lastSnapshot = snapshotCount > 0 ? pageSnapshots[snapshotCount - 1] : null;
   const latestSnapshotAt = lastSnapshot ? lastSnapshot.at : null;
   const firstSnapshot = snapshotCount > 0 ? pageSnapshots[0] : null;

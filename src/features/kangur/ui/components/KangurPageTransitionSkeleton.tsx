@@ -26,8 +26,22 @@ const SKELETON_TONE_BY_PAGE: Record<
   Tests: 'learn',
 };
 
-const SkeletonBlock = ({ className }: { className?: string }): React.JSX.Element => (
-  <div aria-hidden='true' className={cn('animate-pulse bg-slate-200/80', className)} />
+const SkeletonBlock = ({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}): React.JSX.Element => (
+  <div
+    aria-hidden='true'
+    className={cn('animate-pulse', className)}
+    style={{
+      background:
+        'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
+      ...style,
+    }}
+  />
 );
 
 const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => (
@@ -36,6 +50,12 @@ const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element 
       'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
       className
     )}
+    style={{
+      background:
+        'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, transparent)',
+      borderColor: 'var(--kangur-glass-panel-border, rgba(255,255,255,0.78))',
+      boxShadow: '0 18px 36px -28px rgba(91,106,170,0.24)',
+    }}
   />
 );
 
@@ -51,13 +71,19 @@ const SkeletonPanel = ({
       'rounded-[30px] border border-white/75 bg-white/78 p-5 shadow-[0_28px_60px_-34px_rgba(97,108,162,0.24)] backdrop-blur-xl sm:p-6',
       className
     )}
+    style={{
+      background:
+        'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 90%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, var(--kangur-page-background, #f8fafc)) 100%)',
+      borderColor: 'var(--kangur-glass-panel-border, rgba(255,255,255,0.78))',
+      boxShadow: '0 28px 60px -34px rgba(97,108,162,0.24)',
+    }}
   >
     {children}
   </div>
 );
 
 const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => (
-  <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', className)} />
+  <SkeletonBlock className={cn('h-4 rounded-full', className)} />
 );
 
 const GameHomeSkeleton = (): React.JSX.Element => (
@@ -329,10 +355,14 @@ export function KangurPageTransitionSkeleton({
     <div
       className={cn(
         embedded ? 'absolute' : 'fixed',
-        'inset-0 z-30 cursor-progress overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(79,99,216,0.12),_transparent_34%),linear-gradient(180deg,_rgba(248,250,255,0.98)_0%,_rgba(240,244,255,0.99)_52%,_rgba(250,251,255,1)_100%)]'
+        'inset-0 z-30 cursor-progress overflow-hidden'
       )}
       data-kangur-skeleton-variant={resolvedVariant}
       data-testid='kangur-page-transition-skeleton'
+      style={{
+        background:
+          'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+      }}
     >
       <div className='sr-only' role='status' aria-live='polite'>
         {reason === 'boot' ? 'Loading Kangur app' : 'Loading Kangur page'}

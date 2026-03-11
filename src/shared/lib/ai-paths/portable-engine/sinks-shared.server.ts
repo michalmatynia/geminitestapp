@@ -129,31 +129,9 @@ export const toPortablePathEnvelopeVerificationMongoDocument = (
     ? {}
     : {
       snapshot: createPortablePathEnvelopeVerificationSnapshotReference(event, snapshot),
-    }),
+  }),
   createdAt: new Date(event.at),
 });
-
-export const createPortablePathEnvelopeVerificationPrismaContext = (
-  event: PortablePathEnvelopeVerificationAuditEvent,
-  snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot,
-  includeSnapshot = true
-): Record<string, unknown> => ({
-  kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND,
-  event,
-  ...(includeSnapshot
-    ? {
-      snapshot: createPortablePathEnvelopeVerificationSnapshotReference(event, snapshot),
-    }
-    : {}),
-});
-
-export const toPrismaJson = (value: Record<string, unknown>): Record<string, unknown> =>
-  JSON.parse(
-    JSON.stringify(value, (_key: string, current: unknown) => {
-      if (typeof current === 'bigint') return current.toString();
-      return current;
-    })
-  ) as Record<string, unknown>;
 
 export const createPortablePathEnvelopeVerificationAuditSinkHealthSystemLogInput = (
   sinkId: string,

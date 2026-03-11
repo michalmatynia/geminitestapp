@@ -79,7 +79,9 @@ export function PageNotFound(): React.JSX.Element {
       <div className='max-w-md w-full'>
         <div className='text-center space-y-6'>
           <div className='space-y-2'>
-            <h1 className='text-7xl font-light text-slate-300'>404</h1>
+            <h1 className='text-7xl font-light [color:color-mix(in_srgb,var(--kangur-page-muted-text)_54%,white)]'>
+              404
+            </h1>
             <KangurDivider
               accent='slate'
               className='mx-auto'
@@ -89,10 +91,10 @@ export function PageNotFound(): React.JSX.Element {
           </div>
 
           <div className='space-y-3'>
-            <h2 className='text-2xl font-medium text-slate-800'>Page Not Found</h2>
-            <p className='text-slate-600 leading-relaxed'>
-              The page <span className='font-medium text-slate-700'>"{pageName}"</span> could not be
-              found in this application.
+            <h2 className='text-2xl font-medium [color:var(--kangur-page-text)]'>Page Not Found</h2>
+            <p className='leading-relaxed [color:var(--kangur-page-muted-text)]'>
+              The page <span className='font-medium [color:var(--kangur-page-text)]'>"{pageName}"</span>{' '}
+              could not be found in this application.
             </p>
           </div>
 

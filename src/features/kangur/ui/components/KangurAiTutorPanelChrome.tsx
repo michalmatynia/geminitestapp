@@ -11,7 +11,7 @@ import { cn } from '@/shared/utils';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type { TutorEntryDirection, TutorMotionProfile } from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, ReactNode } from 'react';
 
 type ReducedMotionTransitions = {
@@ -55,6 +55,7 @@ type Props = {
   avatarAttachmentSide: 'left' | 'right';
   avatarButtonClassName: string;
   avatarPointer: AvatarPointer | null;
+  bubbleEntryDirection: TutorEntryDirection;
   bubbleMode: 'bubble' | 'sheet';
   bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
   bubbleStrategy: string;
@@ -88,6 +89,8 @@ type Props = {
   motionProfile: TutorMotionProfile;
 };
 
+const CONTEXTUAL_PANEL_ENTRY_OFFSET_PX = 84;
+
 function toMotionTarget(
   style: Record<string, number | string | undefined>
 ): TargetAndTransition {
@@ -102,6 +105,7 @@ export function KangurAiTutorPanelChrome({
   avatarAttachmentSide,
   avatarButtonClassName,
   avatarPointer,
+  bubbleEntryDirection,
   bubbleMode,
   bubbleLaunchOrigin,
   bubbleStrategy,
@@ -186,6 +190,22 @@ export function KangurAiTutorPanelChrome({
     y: 0,
     ...(bubbleMode === 'sheet' ? {} : { scale: 1 }),
   } satisfies TargetAndTransition;
+  const directionalPanelInitialState =
+    prefersReducedMotion
+      ? { opacity: 1 }
+      : isAskModalMode || shouldUseMinimalPanelShell
+        ? { opacity: 0 }
+        : panelOpenAnimation === 'dock-launch'
+          ? {
+            ...bubbleMotionTarget,
+            opacity: 0,
+            x:
+              bubbleEntryDirection === 'left'
+                ? -CONTEXTUAL_PANEL_ENTRY_OFFSET_PX
+                : CONTEXTUAL_PANEL_ENTRY_OFFSET_PX,
+            ...(bubbleMode === 'sheet' ? {} : { scale: 0.985 }),
+          }
+          : { opacity: 0 };
 
   return (
     <AnimatePresence>
@@ -230,6 +250,7 @@ export function KangurAiTutorPanelChrome({
               data-motion-preset={motionProfile.kind}
               data-motion-state={panelMotionState}
               data-open-animation={panelOpenAnimation}
+              data-entry-direction={bubbleEntryDirection}
               data-placement-strategy={bubbleStrategy}
               data-launch-origin={bubbleLaunchOrigin}
               data-panel-style={shouldUseMinimalPanelShell ? 'minimal-card' : 'guided-card'}
@@ -244,7 +265,7 @@ export function KangurAiTutorPanelChrome({
               data-ui-mode={uiMode}
               role={isAskModalMode ? 'dialog' : undefined}
               aria-modal={isAskModalMode ? 'true' : undefined}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              initial={directionalPanelInitialState}
               animate={
                 isAskModalMode
                   ? { opacity: 1 }

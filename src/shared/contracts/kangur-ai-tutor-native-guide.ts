@@ -37,7 +37,7 @@ export type KangurAiTutorNativeGuideEntry = z.infer<
 
 export const kangurAiTutorNativeGuideStoreSchema = z.object({
   locale: nonEmptyTrimmedString.max(16).default('pl'),
-  version: z.number().int().positive().default(2),
+  version: z.number().int().positive().default(4),
   entries: z.array(kangurAiTutorNativeGuideEntrySchema).max(200).default([]),
 });
 export type KangurAiTutorNativeGuideStore = z.infer<
@@ -78,12 +78,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
   Object.freeze(
     kangurAiTutorNativeGuideStoreSchema.parse({
       locale: 'pl',
-      version: 2,
+      version: 4,
       entries: [
         createGuideEntry({
           id: 'lesson-overview',
           surface: 'lesson',
-          contentIdPrefixes: ['lesson-'],
+          contentIdPrefixes: ['lesson-', 'lesson:list'],
           title: 'Ekran lekcji',
           shortDescription: 'To tutaj uczen przechodzi przez temat krok po kroku.',
           fullDescription:
@@ -160,6 +160,105 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           followUpActions: [{ id: 'lesson-assignment-game', label: 'Uruchom trening', page: 'Game' }],
           triggerPhrases: ['zadanie', 'co dalej po lekcji', 'nastepny krok po lekcji'],
           sortOrder: 40,
+        }),
+        createGuideEntry({
+          id: 'lesson-list-intro',
+          surface: 'lesson',
+          focusKind: 'hero',
+          focusIdPrefixes: ['kangur-lessons-list-intro'],
+          contentIdPrefixes: ['lesson:list'],
+          title: 'Wprowadzenie do lekcji',
+          shortDescription: 'To karta startowa, ktora wyjasnia, jak korzystac z biblioteki lekcji.',
+          fullDescription:
+            'Wprowadzenie do lekcji ustawia ucznia przed wyborem tematu. Pokazuje, ze tutaj wybiera sie obszar do nauki i przechodzi od razu do praktyki lub powtorki. To dobre miejsce, gdy trzeba zrozumiec, po co sa lekcje i jak rozpoczac kolejny temat.',
+          hints: [
+            'Najpierw przeczytaj opis pod tytulem, zeby wiedziec, czego dotyczy ten ekran.',
+            'Potem wybierz jeden temat z biblioteki zamiast przeskakiwac miedzy wieloma lekcjami naraz.',
+          ],
+          followUpActions: [{ id: 'lesson-list-intro-open', label: 'Przegladaj lekcje', page: 'Lessons' }],
+          triggerPhrases: ['lekcje', 'biblioteka lekcji', 'jak zaczac lekcje', 'ekran lekcji start'],
+          sortOrder: 45,
+        }),
+        createGuideEntry({
+          id: 'lesson-library',
+          surface: 'lesson',
+          focusKind: 'library',
+          focusIdPrefixes: ['kangur-lessons-library'],
+          contentIdPrefixes: ['lesson:list'],
+          title: 'Biblioteka lekcji',
+          shortDescription: 'To lista tematow, z ktorej wybierasz nastepna lekcje do przerobienia.',
+          fullDescription:
+            'Biblioteka lekcji zbiera wszystkie aktywne tematy i pokazuje, ktore z nich sa najwazniejsze teraz. Na kartach widac poziom opanowania, priorytety od rodzica i dodatkowe oznaczenia, dzieki czemu latwiej zdecydowac, od czego zaczac.',
+          hints: [
+            'Zacznij od tematu z najwyzszym priorytetem albo najslabszym opanowaniem.',
+            'Nie wybieraj losowo. Najwiecej zyskasz, gdy karta lekcji pasuje do tego, co bylo cwiczone ostatnio.',
+          ],
+          followUpActions: [{ id: 'lesson-library-open', label: 'Wybierz temat', page: 'Lessons' }],
+          triggerPhrases: ['lista lekcji', 'biblioteka', 'karty lekcji', 'ktora lekcje wybrac'],
+          sortOrder: 46,
+        }),
+        createGuideEntry({
+          id: 'lesson-empty-state',
+          surface: 'lesson',
+          focusKind: 'empty_state',
+          focusIdPrefixes: ['kangur-lessons-list-empty-state', 'kangur-lesson-empty-document'],
+          contentIdPrefixes: ['lesson:list'],
+          title: 'Brak dostepnej zawartosci lekcji',
+          shortDescription:
+            'Ten komunikat pokazuje, ze w tym miejscu nie ma jeszcze aktywnej tresci do przerobienia.',
+          fullDescription:
+            'Pusty stan lekcji nie oznacza bledu ucznia. Informuje tylko, ze nie ma jeszcze aktywnych lekcji albo dokument dla tej lekcji nie zostal zapisany. Tutor moze wtedy wskazac, czy trzeba wrocic do listy tematow, czy poczekac na uzupelnienie materialu.',
+          hints: [
+            'Sprawdz, czy sa inne aktywne tematy na liscie lekcji.',
+            'Jesli to pusta tresc dokumentu, najlepszy ruch to wrocic do innej lekcji lub treningu.',
+          ],
+          followUpActions: [
+            { id: 'lesson-empty-state-open-list', label: 'Wroc do listy', page: 'Lessons' },
+            { id: 'lesson-empty-state-open-game', label: 'Przejdz do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['brak aktywnych lekcji', 'pusta lekcja', 'nie ma tresci', 'dlaczego nic tu nie ma'],
+          sortOrder: 47,
+        }),
+        createGuideEntry({
+          id: 'lesson-screen',
+          surface: 'lesson',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-lesson-screen-secret'],
+          contentIdPrefixes: ['lesson-'],
+          title: 'Specjalna plansza lekcji',
+          shortDescription:
+            'To dodatkowa plansza lekcji, ktora wyjasnia szczegolny stan albo ukryte zakonczenie.',
+          fullDescription:
+            'Specjalna plansza lekcji pojawia sie zamiast zwyklej tresci, gdy uczen trafia do szczegolnego stanu, na przyklad ukrytego finiszu. To miejsce bardziej podsumowuje droge przez temat i pokazuje, co zostalo odblokowane, niz prowadzi przez nowy material krok po kroku.',
+          hints: [
+            'Przeczytaj ten panel jak nagrode albo specjalne zakonczenie, a nie jak kolejny rozdzial z teoria.',
+            'Po obejrzeniu planszy wroc do listy lekcji albo przejdz do treningu, by utrwalic caly cykl.',
+          ],
+          followUpActions: [
+            { id: 'lesson-screen-open-list', label: 'Wroc do lekcji', page: 'Lessons' },
+            { id: 'lesson-screen-open-game', label: 'Przejdz do gry', page: 'Game' },
+          ],
+          triggerPhrases: ['specjalna plansza', 'ukryty finisz', 'co oznacza ten panel', 'sekret odblokowany'],
+          sortOrder: 48,
+        }),
+        createGuideEntry({
+          id: 'lesson-navigation',
+          surface: 'lesson',
+          focusKind: 'navigation',
+          focusIdPrefixes: ['kangur-lesson-navigation'],
+          contentIdPrefixes: ['lesson-'],
+          title: 'Nawigacja lekcji',
+          shortDescription:
+            'Ta sekcja pomaga przejsc do poprzedniej albo nastepnej lekcji bez wracania do calej listy.',
+          fullDescription:
+            'Nawigacja lekcji porzadkuje ruch po materiale. Uczen moze szybko wracac do poprzedniego tematu albo przechodzic dalej, kiedy aktualna lekcja jest juz zrozumiala. To dobry moment, by zatrzymac sie i sprawdzic, czy warto isc dalej, czy jeszcze zostac przy obecnym temacie.',
+          hints: [
+            'Przejdz dalej dopiero wtedy, gdy aktualna lekcja jest juz w miare jasna.',
+            'Jesli temat dalej jest niepewny, zostan jeszcze chwile na tej lekcji albo wroc do dokumentu.',
+          ],
+          followUpActions: [{ id: 'lesson-navigation-open', label: 'Przegladaj lekcje', page: 'Lessons' }],
+          triggerPhrases: ['nawigacja lekcji', 'poprzednia lekcja', 'nastepna lekcja', 'jak przejsc dalej'],
+          sortOrder: 49,
         }),
         createGuideEntry({
           id: 'shared-progress',
@@ -278,8 +377,32 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           sortOrder: 100,
         }),
         createGuideEntry({
+          id: 'game-home-hero',
+          surface: 'game',
+          focusKind: 'hero',
+          focusIdPrefixes: ['kangur-game-home-hero'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Wprowadzenie do gry',
+          shortDescription:
+            'To gorna karta startowa, ktora ustawia ucznia przed wybraniem aktywnosci.',
+          fullDescription:
+            'Wprowadzenie do gry zbiera glowny kontekst ekranu startowego: po co jest ten widok, jak wyglada szybki start i gdzie uczen przechodzi dalej. To miejsce pomaga zorientowac sie, zanim wybierze sie konkretna aktywnosc albo zadanie.',
+          hints: [
+            'Najpierw przeczytaj naglowek i glowny opis, a dopiero potem wybierz kolejny ruch.',
+            'Jesli nie wiesz, od czego zaczac, po wprowadzeniu przejdz od razu do szybkich akcji albo misji dnia.',
+          ],
+          followUpActions: [
+            { id: 'game-home-hero-open-actions', label: 'Wybierz aktywnosc', page: 'Game' },
+            { id: 'game-home-hero-open-lessons', label: 'Przejdz do lekcji', page: 'Lessons' },
+          ],
+          triggerPhrases: ['wprowadzenie do gry', 'gorna karta', 'start gry', 'o czym jest ten ekran'],
+          sortOrder: 102,
+        }),
+        createGuideEntry({
           id: 'game-training-setup',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-training-setup'],
           contentIdPrefixes: ['game:training-setup'],
           title: 'Konfiguracja treningu',
           shortDescription:
@@ -305,6 +428,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-operation-selector',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-operation-selector'],
           contentIdPrefixes: ['game:operation-selector'],
           title: 'Wybor rodzaju gry',
           shortDescription:
@@ -329,6 +454,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-kangur-setup',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-kangur-setup'],
           contentIdPrefixes: ['game:kangur:setup'],
           title: 'Konfiguracja sesji Kangura Matematycznego',
           shortDescription:
@@ -352,6 +479,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-kangur-session',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-kangur-session'],
           contentIdPrefixes: ['game:kangur:'],
           title: 'Sesja Kangura Matematycznego',
           shortDescription:
@@ -375,6 +504,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-calendar-quiz',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-calendar-quiz'],
           contentIdPrefixes: ['game:calendar_quiz'],
           title: 'Cwiczenia z kalendarzem',
           shortDescription:
@@ -399,6 +530,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-geometry-quiz',
           surface: 'game',
+          focusKind: 'screen',
+          focusIdPrefixes: ['kangur-game-geometry-quiz'],
           contentIdPrefixes: ['game:geometry_quiz'],
           title: 'Cwiczenia z figurami',
           shortDescription:
@@ -424,6 +557,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'game-assignment',
           surface: 'game',
           focusKind: 'assignment',
+          focusIdPrefixes: ['kangur-game-assignment-banner'],
           contentIdPrefixes: ['game:assignment:'],
           title: 'Zadanie treningowe',
           shortDescription:
@@ -475,6 +609,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'game-review',
           surface: 'game',
           focusKind: 'review',
+          focusIdPrefixes: ['kangur-game-result-summary'],
           contentIdPrefixes: ['game:assignment:', 'game:practice:'],
           title: 'Omowienie wyniku gry',
           shortDescription:
@@ -496,6 +631,28 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
             'jak czytac ten wynik',
           ],
           sortOrder: 114,
+        }),
+        createGuideEntry({
+          id: 'game-result-leaderboard',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-result-leaderboard'],
+          contentIdPrefixes: ['game:assignment:', 'game:practice:'],
+          title: 'Ranking po rundzie gry',
+          shortDescription:
+            'Ta sekcja pokazuje pozycje po zakonczonej rundzie i pozwala porownac wynik z innymi probami.',
+          fullDescription:
+            'Ranking po rundzie jest dodatkiem do wyniku gry. Pomaga zobaczyc, jak dana proba wypada na tle innych, ale jego najwieksza wartosc polega na motywowaniu do regularnej poprawy, a nie do pogoni za pojedynczym miejscem.',
+          hints: [
+            'Najpierw przeczytaj wlasny wynik, a dopiero potem patrz na pozycje w rankingu.',
+            'Jesli pozycja jest nizsza niz oczekiwana, potraktuj to jako wskazowke do spokojnej powtorki, nie jako porazke.',
+          ],
+          followUpActions: [
+            { id: 'game-result-leaderboard-retry', label: 'Sprobuj jeszcze raz', page: 'Game' },
+            { id: 'game-result-leaderboard-profile', label: 'Zobacz profil', page: 'LearnerProfile' },
+          ],
+          triggerPhrases: ['ranking po grze', 'pozycja po rundzie', 'tablica wynikow po grze'],
+          sortOrder: 115,
         }),
         createGuideEntry({
           id: 'game-summary',
@@ -529,6 +686,32 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           relatedTests: ['Powtorka po lekcji', 'Sprawdzenie rozumienia tematu'],
           triggerPhrases: ['test', 'ekran testu', 'jak dziala ten test', 'na czym polega ten test'],
           sortOrder: 120,
+        }),
+        createGuideEntry({
+          id: 'test-empty-state',
+          surface: 'test',
+          focusKind: 'empty_state',
+          focusIdPrefixes: ['kangur-test-empty-state:'],
+          title: 'Pusty zestaw testowy',
+          shortDescription:
+            'Ten stan oznacza, ze wybrany zestaw nie ma jeszcze opublikowanych pytan do rozwiazania.',
+          fullDescription:
+            'Pusty zestaw testowy pojawia sie wtedy, gdy zestaw zostal utworzony, ale nie ma w nim jeszcze opublikowanych pytan. To nie jest blad ucznia ani sygnal, ze cos zrobil zle. Po prostu w tym miejscu nie ma jeszcze materialu do przejscia, wiec najlepiej wrocic do innego testu, lekcji albo gry.',
+          hints: [
+            'Jesli spodziewasz sie pytan, wybierz inny zestaw albo wroc pozniej, gdy material zostanie opublikowany.',
+            'To dobry moment, by przejsc do lekcji lub krotkiej gry zamiast czekac bez celu.',
+          ],
+          followUpActions: [
+            { id: 'test-empty-state-lessons', label: 'Wroc do lekcji', page: 'Lessons' },
+            { id: 'test-empty-state-game', label: 'Przejdz do gry', page: 'Game' },
+          ],
+          triggerPhrases: [
+            'pusty test',
+            'brak pytan w tescie',
+            'co oznacza ten pusty stan',
+            'dlaczego test jest pusty',
+          ],
+          sortOrder: 125,
         }),
         createGuideEntry({
           id: 'test-summary',

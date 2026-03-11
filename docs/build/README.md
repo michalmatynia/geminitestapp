@@ -26,6 +26,7 @@ shared toolchain surfaces.
 - [`bazel.md`](./bazel.md)
 - [`bazel-buildbuddy.md`](./bazel-buildbuddy.md)
 - [`bun.md`](./bun.md)
+- [`general-improvements.md`](./general-improvements.md)
 
 ## Canonical Repo Lanes
 

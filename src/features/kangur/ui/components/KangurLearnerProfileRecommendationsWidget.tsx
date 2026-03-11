@@ -22,10 +22,10 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className='mb-3 flex flex-col gap-1'>
-        <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Plan na dzis
         </div>
-        <div className='text-sm text-slate-500'>
+        <div className='text-sm [color:var(--kangur-page-muted-text)]'>
           Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.
         </div>
       </div>

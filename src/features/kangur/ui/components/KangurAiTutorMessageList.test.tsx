@@ -36,18 +36,23 @@ const createPanelBodyContextValue = (
   canNarrateTutorText: false,
   canSendMessages: true,
   canStartHomeOnboardingManually: false,
+  drawingImageData: null,
+  drawingMode: false,
   emptyStateMessage: 'Pytaj…',
   focusChipLabel: null,
+  handleClearDrawing: vi.fn(),
   handleDetachHighlightedSection: vi.fn(),
   handleDetachSelectedFragment: vi.fn(),
   handleFocusHighlightedSection: vi.fn(),
   handleFocusSelectedFragment: vi.fn(),
+  handleDrawingComplete: vi.fn(),
   handleFollowUpClick: vi.fn(),
   handleKeyDown: vi.fn(),
   handleMessageFeedback: vi.fn(),
   handleQuickAction: vi.fn().mockResolvedValue(undefined),
   handleSend: vi.fn().mockResolvedValue(undefined),
   handleStartHomeOnboarding: vi.fn(),
+  handleToggleDrawing: vi.fn(),
   homeOnboardingReplayLabel: 'Pokaż jeszcze raz',
   inputPlaceholder: 'Pytaj…',
   isAskModalMode: false,
@@ -154,10 +159,10 @@ describe('KangurAiTutorMessageList', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
-    expect(screen.getByText('Powtorz lekcje: Dodawanie').parentElement).toHaveClass(
-      'border-amber-100',
-      'bg-amber-50/70'
-    );
+    expect(screen.getByText('Powtorz lekcje: Dodawanie').parentElement).toHaveStyle({
+      background:
+        'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,243,199,0.92)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(255,237,213,0.82)) 100%)',
+    });
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=adding'
@@ -208,11 +213,59 @@ describe('KangurAiTutorMessageList', () => {
     );
 
     expect(screen.getByText('Jak mam to policzyc?')).toHaveClass(
-      'border-orange-400',
-      'bg-gradient-to-br',
-      'from-orange-400',
-      'to-amber-500'
+      'tutor-user-bubble',
+      'border-orange-400/60',
+      'text-white'
     );
+  });
+
+  it('renders learner drawing attachments and assistant drawing sketches in the thread', () => {
+    render(
+      <MessageListHarness
+        bodyValue={createPanelBodyContextValue({
+          messages: [
+            {
+              role: 'user',
+              content: 'Wyjasnij to rysunkiem.',
+              artifacts: [
+                {
+                  type: 'user_drawing',
+                  imageDataUrl: 'data:image/png;base64,AAA',
+                  alt: 'Szkic ucznia',
+                },
+              ],
+            },
+            {
+              role: 'assistant',
+              content: 'Policz najpierw lewa pare, potem prawa.',
+              artifacts: [
+                {
+                  type: 'assistant_drawing',
+                  title: 'Dwie pary',
+                  caption: 'Kazda para ma po dwa elementy.',
+                  alt: 'Dwie pary kropek ustawione obok siebie.',
+                  svgContent:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
+                },
+              ],
+            },
+          ],
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-drawing-message-0')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAA'
+    );
+    expect(
+      screen.getByTestId('kangur-ai-tutor-assistant-drawing-message-1-0')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Dwie pary')).toBeInTheDocument();
+    expect(screen.getByText('Kazda para ma po dwa elementy.')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Dwie pary kropek ustawione obok siebie.')
+    ).toBeInTheDocument();
   });
 
   it('locks assistant feedback controls after feedback was already submitted', () => {

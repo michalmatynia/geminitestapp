@@ -208,7 +208,6 @@ export async function tickDatabaseBackupScheduler(
   let nextSchedule: DatabaseEngineBackupSchedule = {
     ...schedule,
     mongodb: { ...schedule.mongodb },
-    postgresql: { ...schedule.postgresql },
   };
   const result: DatabaseBackupSchedulerTickResult = {
     checkedAt,
@@ -307,8 +306,7 @@ const updateBackupScheduleForTarget = async (
   const nextSchedule: DatabaseEngineBackupSchedule = {
     ...schedule,
     lastCheckedAt: checkedAt,
-    mongodb: dbType === 'mongodb' ? nextTarget : { ...schedule.mongodb },
-    postgresql: dbType === 'postgresql' ? nextTarget : { ...schedule.postgresql },
+    mongodb: nextTarget,
   };
 
   if (JSON.stringify(nextSchedule) === JSON.stringify(schedule)) return;
@@ -377,7 +375,6 @@ export async function getDatabaseBackupSchedulerStatus(
 ): Promise<DatabaseEngineBackupSchedulerStatus> {
   const schedule = await getDatabaseEngineBackupSchedule();
   const mongoEvaluation = evaluateBackupTargetSchedule(schedule.mongodb, now);
-  const postgresEvaluation = evaluateBackupTargetSchedule(schedule.postgresql, now);
 
   return {
     timestamp: now.toISOString(),
@@ -395,12 +392,6 @@ export async function getDatabaseBackupSchedulerStatus(
         ...schedule.mongodb,
         nextDueAt: mongoEvaluation.nextDueAt,
         dueNow: schedule.schedulerEnabled && schedule.mongodb.enabled && mongoEvaluation.dueNow,
-      },
-      postgresql: {
-        ...schedule.postgresql,
-        nextDueAt: postgresEvaluation.nextDueAt,
-        dueNow:
-          schedule.schedulerEnabled && schedule.postgresql.enabled && postgresEvaluation.dueNow,
       },
     },
   };

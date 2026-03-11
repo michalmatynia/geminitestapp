@@ -39,13 +39,6 @@ type BackupDatabaseOption = {
 
 const BACKUP_DATABASE_OPTIONS: BackupDatabaseOption[] = [
   {
-    id: 'postgresql',
-    value: 'postgresql',
-    label: 'PostgreSQL',
-    description: 'Uses pg_dump/pg_restore data backups.',
-    extension: '.dump',
-  },
-  {
     id: 'mongodb',
     value: 'mongodb',
     label: 'MongoDB',
@@ -172,7 +165,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         }))}
         selectedId={activeTab}
         onSelect={(item) => setActiveTab(item.original.value)}
-        columns={2}
+        columns={1}
         padding='md'
       />
 
@@ -191,7 +184,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         <ToggleRow
           variant='switch'
           label='Enable Scheduled Backups'
-          description='Global scheduler switch for all backup targets.'
+          description='Global scheduler switch for MongoDB backup automation.'
           checked={schedulerEnabledDraft}
           disabled={isBackupScheduleSaving || settingsValidationErrors.length > 0}
           onCheckedChange={handleSchedulerEnabledDraftChange}
@@ -199,8 +192,8 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         />
         <ToggleRow
           variant='switch'
-          label='Enable schedule for selected source'
-          description={`Applies to ${selectedDatabase.label} only.`}
+          label='Enable MongoDB backup schedule'
+          description='Applies to the active MongoDB backup target.'
           checked={activeTargetEnabledDraft}
           disabled={
             isBackupScheduleSaving || !schedulerEnabledDraft || settingsValidationErrors.length > 0
@@ -256,7 +249,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           padding='sm'
           className='border-border/60 bg-card/20 text-[11px] text-gray-300'
         >
-          Changes apply only to the selected source tab ({activeTargetKey}).
+          Changes apply to the MongoDB backup target ({activeTargetKey}).
         </Card>
         <Button
           size='sm'
@@ -306,7 +299,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
           handleUpload(files, helpers)
         }
-        accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
+        accept='.archive'
         disabled={isProd || !backupMaintenanceAllowed}
         title={
           isProd

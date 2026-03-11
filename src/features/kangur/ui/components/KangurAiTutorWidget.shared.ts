@@ -29,6 +29,8 @@ export type TutorMotionPosition = {
   bottom?: number | string;
 };
 
+export type TutorEntryDirection = 'left' | 'right';
+
 export type TutorAvatarAttachmentSide = 'left' | 'right';
 export type TutorPointerSide = TutorAvatarAttachmentSide;
 export type TutorBubblePlacementStrategy =
@@ -102,4 +104,16 @@ export type TutorRecommendation = {
   interactionIntent: TutorQuickAction['interactionIntent'];
   href?: string;
   followUpAction?: KangurAiTutorFollowUpAction | null;
+};
+
+export const getTutorEntryDirection = (
+  rect: Pick<DOMRect, 'left' | 'width'> | null,
+  viewportWidth: number
+): TutorEntryDirection => {
+  if (!rect) {
+    return 'right';
+  }
+
+  const centerX = rect.left + rect.width / 2;
+  return centerX <= viewportWidth / 2 ? 'left' : 'right';
 };

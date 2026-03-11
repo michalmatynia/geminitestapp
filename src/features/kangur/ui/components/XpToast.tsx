@@ -53,7 +53,7 @@ export default function XpToast({
                 <KangurStatusChip accent='indigo' className='text-sm font-bold'>
                   +{xpGained} XP
                 </KangurStatusChip>
-                <span className='text-sm font-bold text-slate-900'>
+                <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
                   {recommendation
                     ? 'Swietnie, trzymasz polecany kierunek'
                     : 'Swietnie, zdobywasz kolejne punkty'}
@@ -69,7 +69,7 @@ export default function XpToast({
               />
               {nextBadge ? (
                 <p
-                  className='mt-2 text-xs font-medium text-slate-600'
+                  className='mt-2 text-xs font-medium [color:var(--kangur-page-muted-text)]'
                   data-testid='xp-toast-next-badge'
                 >
                   Nastepna odznaka: {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
@@ -105,9 +105,14 @@ export default function XpToast({
                   <KangurStatusChip accent='amber' className='text-sm font-bold'>
                     {badge.emoji} Nowa odznaka
                   </KangurStatusChip>
-                  <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
+                  <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
+                    {badge.name}
+                  </span>
                 </div>
-                <p className='text-xs font-medium text-slate-600' data-testid={`xp-toast-badge-desc-${badge.id}`}>
+                <p
+                  className='text-xs font-medium [color:var(--kangur-page-muted-text)]'
+                  data-testid={`xp-toast-badge-desc-${badge.id}`}
+                >
                   {badge.desc}
                 </p>
               </div>

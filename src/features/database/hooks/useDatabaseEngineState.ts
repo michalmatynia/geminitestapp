@@ -47,7 +47,7 @@ import {
 } from '../hooks/useDatabaseQueries';
 
 export interface DatabaseCollectionRow extends UnifiedCollection {
-  assignedProvider: 'mongodb' | 'prisma' | 'auto';
+  assignedProvider: 'mongodb' | 'redis' | 'auto';
 }
 
 export interface UseDatabaseEngineStateReturn {
@@ -216,36 +216,22 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const rows = useMemo<DatabaseCollectionRow[]>(() => {
     const data = schemaQuery.data;
     if (!data) return [];
-    const byName = new Map<string, DatabaseCollectionRow>();
-    data.collections.forEach((collection: CollectionSchema) => {
-      const existing = byName.get(collection.name);
-      const isMongo = collection.provider === 'mongodb';
-      if (existing) {
-        if (isMongo) {
-          existing.existsInMongo = true;
-          existing.mongoDocumentCount = collection.documentCount ?? null;
-          existing.mongoFieldCount = collection.fields.length;
-        } else {
-          existing.existsInPrisma = true;
-          existing.prismaRowCount = collection.documentCount ?? null;
-          existing.prismaFieldCount = collection.fields.length;
-        }
-      } else {
-        const newRow: DatabaseCollectionRow = {
+    return [...data.collections]
+      .map((collection: CollectionSchema): DatabaseCollectionRow => {
+        const configuredProvider = collectionRouteMap[collection.name];
+        return {
           name: collection.name,
-          existsInMongo: isMongo,
-          existsInPrisma: !isMongo,
-          mongoDocumentCount: isMongo ? (collection.documentCount ?? null) : null,
-          prismaRowCount: isMongo ? null : (collection.documentCount ?? null),
-          mongoFieldCount: isMongo ? collection.fields.length : null,
-          prismaFieldCount: isMongo ? null : collection.fields.length,
-          assignedProvider: 'auto',
+          existsInMongo: true,
+          mongoDocumentCount: collection.documentCount ?? null,
+          mongoFieldCount: collection.fields.length,
+          assignedProvider:
+            configuredProvider === 'mongodb' || configuredProvider === 'redis'
+              ? configuredProvider
+              : 'auto',
         };
-        byName.set(collection.name, newRow);
-      }
-    });
-    return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [schemaQuery.data]);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [collectionRouteMap, schemaQuery.data]);
 
   const handleSave = async () => {
     try {

@@ -9,6 +9,7 @@ import {
   getCollectionProvider,
   getCollectionRouteMap,
 } from '@/shared/lib/db/collection-provider-map';
+import type { DatabaseEnginePrimaryProvider } from '@/shared/lib/db/database-engine-constants';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -31,7 +32,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
     getDatabaseEngineStatus(),
   ]);
 
-  let appProvider: 'mongodb' | 'prisma' | null = null;
+  let appProvider: DatabaseEnginePrimaryProvider | null = null;
   let appProviderError: string | null = null;
   try {
     appProvider = await getAppDbProvider();
@@ -55,7 +56,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
   const items: DatabaseEngineCollectionProviderPreviewItem[] = await Promise.all(
     candidates.map(async (collection) => {
       const configuredProvider = routeMap[collection] ?? null;
-      if (configuredProvider === 'mongodb' || configuredProvider === 'prisma') {
+      if (configuredProvider === 'mongodb') {
         return {
           collection,
           configuredProvider,
@@ -72,7 +73,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
           source: 'error' as const,
           error:
             `Collection "${collection}" is routed to Redis; ` +
-            'this operation path supports only MongoDB/Prisma.',
+            'this operation path supports only MongoDB.',
         };
       }
 

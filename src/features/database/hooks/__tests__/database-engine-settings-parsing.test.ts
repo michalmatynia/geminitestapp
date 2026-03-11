@@ -96,8 +96,35 @@ describe('database engine settings parsing', () => {
             lastError: null,
             nextDueAt: null,
           },
+        })
+      )
+    ).toEqual({
+      schedulerEnabled: true,
+      repeatTickEnabled: false,
+      lastCheckedAt: '2026-03-03T12:00:00.000Z',
+      mongodb: {
+        enabled: true,
+        cadence: 'daily',
+        intervalDays: 3,
+        weekday: 1,
+        timeUtc: '02:00',
+        lastQueuedAt: null,
+        lastRunAt: null,
+        lastStatus: 'idle',
+        lastJobId: null,
+        lastError: null,
+        nextDueAt: null,
+      },
+    });
+  });
+
+  it('ignores legacy PostgreSQL scheduler payloads when normalizing settings', () => {
+    expect(
+      parseDatabaseEngineBackupScheduleSetting(
+        JSON.stringify({
+          ...DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
           postgresql: {
-            enabled: false,
+            enabled: true,
             cadence: 'weekly',
             intervalDays: 7,
             weekday: 2,
@@ -111,18 +138,7 @@ describe('database engine settings parsing', () => {
           },
         })
       )
-    ).toMatchObject({
-      schedulerEnabled: true,
-      repeatTickEnabled: false,
-      mongodb: {
-        enabled: true,
-        timeUtc: '02:00',
-      },
-      postgresql: {
-        enabled: false,
-        timeUtc: '03:30',
-      },
-    });
+    ).toEqual(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE);
   });
 
   it('rejects invalid backup schedule fields and operation controls', () => {

@@ -29,7 +29,7 @@ import {
 } from '../hooks/useDatabaseQueries';
 
 export function useDatabaseBackupsState() {
-  const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
+  const [activeTab, setActiveTab] = useState<DatabaseType>('mongodb');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
@@ -97,8 +97,7 @@ export function useDatabaseBackupsState() {
   const schedulerEnabled = backupSchedule.schedulerEnabled;
   const repeatSchedulerTickEnabled = backupSchedule.repeatTickEnabled;
   const isBackupScheduleSaving = updateSetting.isPending;
-  const activeTargetKey: DatabaseEngineBackupType =
-    activeTab === 'mongodb' ? 'mongodb' : 'postgresql';
+  const activeTargetKey: DatabaseEngineBackupType = 'mongodb';
   const activeTargetSchedule = backupSchedule[activeTargetKey];
   const activeTargetTimeLocalCurrent = useMemo(
     () => utcHmToLocalHm(activeTargetSchedule.timeUtc) ?? activeTargetSchedule.timeUtc,
@@ -380,20 +379,12 @@ ${String(error)}`);
       intervalDays: 1,
       timeUtc: nextTimeUtc,
     };
-    const nextSchedule =
-      activeTargetKey === 'mongodb'
-        ? {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          mongodb: activeTargetNext,
-        }
-        : {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          postgresql: activeTargetNext,
-        };
+    const nextSchedule = {
+      ...backupSchedule,
+      schedulerEnabled: schedulerEnabledDraft,
+      repeatTickEnabled: repeatTickEnabledDraft,
+      mongodb: activeTargetNext,
+    };
 
     try {
       await updateSetting.mutateAsync({

@@ -2,19 +2,8 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 
-export const databaseTypeSchema = z.enum(['postgresql', 'mongodb']);
+export const databaseTypeSchema = z.literal('mongodb');
 export type DatabaseType = z.infer<typeof databaseTypeSchema>;
-
-export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
-export type DatabaseSyncDirection = z.infer<typeof databaseSyncDirectionSchema>;
-
-export const databaseSyncRequestSchema = z.object({
-  direction: databaseSyncDirectionSchema,
-  skipAuthCollections: z.boolean().optional(),
-  manual: z.boolean().optional(),
-});
-
-export type DatabaseSyncRequest = z.infer<typeof databaseSyncRequestSchema>;
 
 export const databasePreviewModeSchema = z.enum([
   'full',
@@ -117,7 +106,7 @@ export const databaseBrowseParamsSchema = z.object({
 export type DatabaseBrowseParams = z.infer<typeof databaseBrowseParamsSchema>;
 
 export const databaseBrowseSchema = z.object({
-  provider: z.enum(['mongodb', 'postgresql', 'prisma']),
+  provider: z.literal('mongodb'),
   collection: z.string(),
   documents: z.array(z.record(z.string(), z.unknown())),
   total: z.number(),
@@ -158,16 +147,6 @@ export type DatabaseRestoreResponse = z.infer<typeof databaseRestoreOperationRes
  * Database Sync DTOs
  */
 
-export const databaseSyncOptionsSchema = z.object({
-  skipCollections: z.array(z.string()).optional(),
-  skipAuthCollections: z.boolean().optional(),
-  includeCollections: z.array(z.string()).optional(),
-  dryRun: z.boolean().optional(),
-  verbose: z.boolean().optional(),
-});
-
-export type DatabaseSyncOptions = z.infer<typeof databaseSyncOptionsSchema>;
-
 export const databaseSyncCollectionResultSchema = z.object({
   name: z.string(),
   status: z.enum(['completed', 'failed', 'skipped']),
@@ -180,24 +159,14 @@ export const databaseSyncCollectionResultSchema = z.object({
 
 export type DatabaseSyncCollectionResult = z.infer<typeof databaseSyncCollectionResultSchema>;
 
-export const databaseSyncResultSchema = z.object({
-  direction: databaseSyncDirectionSchema,
-  startedAt: z.string(),
-  finishedAt: z.string(),
-  backups: z.unknown().optional(),
-  collections: z.array(databaseSyncCollectionResultSchema),
-});
-
-export type DatabaseSyncResult = z.infer<typeof databaseSyncResultSchema>;
-
 /**
  * Database Engine DTOs
  */
 
-export const databaseEngineProviderSchema = z.enum(['mongodb', 'prisma', 'redis']);
+export const databaseEngineProviderSchema = z.enum(['mongodb', 'redis']);
 export type DatabaseEngineProvider = z.infer<typeof databaseEngineProviderSchema>;
 
-export const databaseEnginePrimaryProviderSchema = z.enum(['mongodb', 'prisma']);
+export const databaseEnginePrimaryProviderSchema = z.literal('mongodb');
 export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimaryProviderSchema>;
 
 export const databaseEngineServiceSchema = z.enum([
@@ -255,7 +224,6 @@ export const databaseEngineBackupScheduleSchema = z.object({
   repeatTickEnabled: z.boolean(),
   lastCheckedAt: z.string().nullable(),
   mongodb: databaseEngineBackupTargetScheduleSchema,
-  postgresql: databaseEngineBackupTargetScheduleSchema,
 });
 
 export type DatabaseEngineBackupSchedule = z.infer<typeof databaseEngineBackupScheduleSchema>;
@@ -281,7 +249,7 @@ export const crudOperationSchema = z.enum(['create', 'read', 'update', 'delete']
 export type CrudOperation = z.infer<typeof crudOperationSchema>;
 
 export const crudRequestSchema = z.object({
-  provider: z.enum(['mongodb', 'prisma', 'postgresql']),
+  provider: z.literal('mongodb'),
   collection: z.string(),
   operation: crudOperationSchema,
   filter: z.record(z.string(), z.unknown()).optional(),
@@ -373,7 +341,7 @@ export interface CollectionSchema {
   [key: string]: unknown;
 }
 
-export const schemaProviderSchema = z.enum(['prisma', 'mongodb', 'multi']);
+export const schemaProviderSchema = z.enum(['mongodb', 'multi']);
 export type SchemaProvider = z.infer<typeof schemaProviderSchema>;
 
 export interface MultiSchemaResponse {
@@ -425,12 +393,9 @@ export type DatabaseEngineWorkspaceView =
 export interface UnifiedCollection {
   name: string;
   existsInMongo: boolean;
-  existsInPrisma: boolean;
   mongoDocumentCount: number | null;
-  prismaRowCount: number | null;
   mongoFieldCount: number | null;
-  prismaFieldCount: number | null;
-  assignedProvider: 'mongodb' | 'prisma' | 'auto';
+  assignedProvider: 'mongodb' | 'redis' | 'auto';
 }
 
 export const databaseEngineCollectionProviderPreviewItemSchema = z.object({
@@ -470,7 +435,7 @@ export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProvide
 export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowRequestSchema = z.object({
-  dbType: z.enum(['mongodb', 'postgresql', 'all']).default('all'),
+  dbType: z.enum(['mongodb', 'all']).default('all'),
 });
 
 export type DatabaseEngineBackupRunNowRequest = z.infer<
@@ -481,13 +446,13 @@ export const databaseEngineBackupRunNowResponseSchema = z.object({
   success: z.boolean(),
   queued: z.array(
     z.object({
-      dbType: z.enum(['mongodb', 'postgresql']),
+      dbType: z.literal('mongodb'),
       jobId: z.string(),
     })
   ),
   inlineProcessed: z.array(
     z.object({
-      dbType: z.enum(['mongodb', 'postgresql']),
+      dbType: z.literal('mongodb'),
       jobId: z.string(),
     })
   ),
@@ -581,7 +546,6 @@ export const databaseEngineStatusSchema = z.object({
   timestamp: z.string(),
   policy: databaseEnginePolicySchema,
   providers: z.object({
-    prismaConfigured: z.boolean(),
     mongodbConfigured: z.boolean(),
     redisConfigured: z.boolean(),
   }),

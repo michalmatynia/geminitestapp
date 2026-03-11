@@ -2,16 +2,26 @@ import type { KangurAiTutorOnboardingValidationField, KangurAiTutorOnboardingVal
 import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { Badge, Button, Card, FormField, Input, Textarea } from '@/shared/ui';
 
-const SURFACE_OPTIONS: Array<{ value: '' | 'lesson' | 'test' | 'game'; label: string }> = [
+const SURFACE_OPTIONS: Array<{
+  value: '' | 'lesson' | 'test' | 'game' | 'profile' | 'parent_dashboard';
+  label: string;
+}> = [
   { value: '', label: 'All surfaces' },
   { value: 'lesson', label: 'Lesson' },
   { value: 'test', label: 'Test' },
   { value: 'game', label: 'Game' },
+  { value: 'profile', label: 'Profile' },
+  { value: 'parent_dashboard', label: 'Parent dashboard' },
 ];
 
 const FOCUS_KIND_OPTIONS = [
   { value: '', label: 'Whole surface' },
   { value: 'selection', label: 'Selection' },
+  { value: 'hero', label: 'Hero' },
+  { value: 'screen', label: 'Screen' },
+  { value: 'library', label: 'Library' },
+  { value: 'empty_state', label: 'Empty state' },
+  { value: 'navigation', label: 'Navigation' },
   { value: 'lesson_header', label: 'Lesson header' },
   { value: 'assignment', label: 'Assignment' },
   { value: 'document', label: 'Document' },

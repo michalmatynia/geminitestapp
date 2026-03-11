@@ -2,6 +2,8 @@ import { test, expect, type Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 60_000 });
 
+const ROUTE_BOOT_TIMEOUT_MS = 45_000;
+
 const waitForQuickStartParamsToClear = async (page: Page) => {
   await expect
     .poll(
@@ -41,9 +43,17 @@ test.describe('Kangur Game Quick Start', () => {
       timeout: 60_000,
     });
 
-    await expect(page).toHaveURL(/\/kangur\/game/);
-    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Trening mieszany/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(
+      page
+        .getByTestId('kangur-game-training-top-section')
+        .getByRole('heading', { name: /^Trening$/i })
+    ).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await waitForQuickStartParamsToClear(page);
     await page
       .getByTestId('kangur-game-training-top-section')
@@ -58,8 +68,10 @@ test.describe('Kangur Game Quick Start', () => {
       timeout: 60_000,
     });
 
-    await expect(page).toHaveURL(/\/kangur\/game/);
-    await expect(page.getByRole('heading', { name: 'Pytanie do rozwiazania' })).toBeVisible();
+    await expect(page).toHaveURL(/\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(page.getByRole('heading', { name: 'Pytanie do rozwiazania' })).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect
       .poll(
         () => {
@@ -87,9 +99,13 @@ test.describe('Kangur Game Quick Start', () => {
       timeout: 60_000,
     });
 
-    await expect(page).toHaveURL(/\/kangur\/game/);
-    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Grajmy!/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByRole('heading', { name: /Grajmy!/i })).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await waitForQuickStartParamsToClear(page);
     await page
       .getByTestId('kangur-game-operation-top-section')

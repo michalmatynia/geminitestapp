@@ -1,52 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
-import type { DatabaseSyncDirection } from '@/shared/contracts/database';
 import { badRequestError } from '@/shared/errors/app-error';
-import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
-import {
-  copyCollection,
-  getSupportedCollections,
-} from '@/shared/lib/db/services/database-collection-copy';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
-import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
-
-const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 export async function POST_handler(req: NextRequest): Promise<Response> {
   await assertDatabaseEngineManageAccess();
-
-  const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'databases.copy-collection',
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-
-  const body = parsed.data as {
-    collection?: string;
-    direction?: DatabaseSyncDirection;
-  };
-  z.unknown().parse(body);
-
-  const { collection, direction } = body;
-
-  if (!collection || !SAFE_NAME_RE.test(collection)) {
-    throw badRequestError('A valid collection name is required.');
-  }
-
-  if (direction !== 'mongo_to_prisma' && direction !== 'prisma_to_mongo') {
-    throw badRequestError('Direction must be "mongo_to_prisma" or "prisma_to_mongo".');
-  }
-
-  await assertDatabaseEngineOperationEnabled('allowManualCollectionSync');
-
-  const result = await copyCollection(collection, direction);
-  return NextResponse.json(result);
+  void req;
+  throw badRequestError(
+    'Collection copy is no longer supported. MongoDB is the only active database provider.'
+  );
 }
 
 export async function GET_handler(): Promise<Response> {
   await assertDatabaseEngineManageAccess();
-  const collections = getSupportedCollections();
-  return NextResponse.json({ collections });
+  return NextResponse.json({
+    collections: [],
+    deprecated: true,
+    message: 'Collection copy is no longer supported. MongoDB is the only active database provider.',
+  });
 }

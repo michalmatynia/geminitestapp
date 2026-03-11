@@ -39,6 +39,7 @@ import {
 import {
   kangurAiTutorCoachingFrameSchema,
   kangurAiTutorLearnerMemorySchema,
+  kangurAiTutorMessageArtifactSchema,
   kangurAiTutorUsageSummarySchema,
   type KangurAiTutorChatResponse,
   type KangurAiTutorCoachingFrame,
@@ -47,6 +48,7 @@ import {
   type KangurAiTutorFollowUpAction,
   type KangurAiTutorInteractionIntent,
   type KangurAiTutorLearnerMemory,
+  type KangurAiTutorMessageArtifact,
   type KangurAiTutorPromptMode,
   type KangurAiTutorRecoverySignal,
   type KangurAiTutorUsageSummary,
@@ -72,6 +74,8 @@ import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
 export type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
+  artifacts?: KangurAiTutorMessageArtifact[];
+  drawingImageData?: string | null;
   sources?: AgentTeachingChatSource[];
   followUpActions?: KangurAiTutorFollowUpAction[];
   coachingFrame?: KangurAiTutorCoachingFrame;
@@ -127,6 +131,7 @@ export type KangurAiTutorContextValue = {
     options?: {
       promptMode?: KangurAiTutorPromptMode;
       selectedText?: string | null;
+      drawingImageData?: string | null;
       focusKind?: KangurAiTutorFocusKind;
       focusId?: string | null;
       focusLabel?: string | null;
@@ -377,6 +382,41 @@ const resolveHintRecoverySignal = (input: {
   return null;
 };
 
+const buildUserDrawingArtifacts = (
+  drawingImageData: string | null | undefined
+): KangurAiTutorMessageArtifact[] | undefined => {
+  const normalized = typeof drawingImageData === 'string' ? drawingImageData.trim() : '';
+  if (!normalized) {
+    return undefined;
+  }
+
+  return [
+    {
+      type: 'user_drawing',
+      imageDataUrl: normalized,
+    },
+  ];
+};
+
+const normalizeMessageArtifacts = (
+  value: unknown,
+  fallbackDrawingImageData?: unknown
+): KangurAiTutorMessageArtifact[] | undefined => {
+  const normalizedArtifacts = Array.isArray(value)
+    ? value
+      .map((artifact) => kangurAiTutorMessageArtifactSchema.safeParse(artifact).data ?? null)
+      .filter((artifact): artifact is KangurAiTutorMessageArtifact => artifact !== null)
+    : [];
+
+  if (normalizedArtifacts.length > 0) {
+    return normalizedArtifacts;
+  }
+
+  return buildUserDrawingArtifacts(
+    typeof fallbackDrawingImageData === 'string' ? fallbackDrawingImageData : null
+  );
+};
+
 const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -390,10 +430,15 @@ const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
   }
 
   const coachingFrame = kangurAiTutorCoachingFrameSchema.safeParse(input['coachingFrame']).data;
+  const drawingImageData =
+    typeof input['drawingImageData'] === 'string' ? input['drawingImageData'] : null;
+  const artifacts = normalizeMessageArtifacts(input['artifacts'], drawingImageData);
 
   return {
     role,
     content,
+    ...(artifacts ? { artifacts } : {}),
+    ...(drawingImageData ? { drawingImageData } : {}),
     ...(Array.isArray(input['sources']) ? { sources: input['sources'] as AgentTeachingChatSource[] } : {}),
     ...(Array.isArray(input['followUpActions'])
       ? { followUpActions: input['followUpActions'] as KangurAiTutorFollowUpAction[] }
@@ -1329,6 +1374,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       options?: {
         promptMode?: KangurAiTutorPromptMode;
         selectedText?: string | null;
+        drawingImageData?: string | null;
         focusKind?: KangurAiTutorFocusKind;
         focusId?: string | null;
         focusLabel?: string | null;
@@ -1340,7 +1386,13 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         return;
       }
 
-      const userMessage: ChatMessage = { role: 'user', content: text.trim() };
+      const userDrawingArtifacts = buildUserDrawingArtifacts(options?.drawingImageData);
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: text.trim(),
+        ...(userDrawingArtifacts ? { artifacts: userDrawingArtifacts } : {}),
+        ...(options?.drawingImageData ? { drawingImageData: options.drawingImageData } : {}),
+      };
       const outgoingMessages: ChatMessage[] = [...messages, userMessage];
       const requestedPromptMode = options?.promptMode ?? 'chat';
       const resolvedPromptMode =
@@ -1363,6 +1415,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         contextRegistryRefCount: pageContextRegistry?.refs.length ?? 0,
         focusKind: options?.focusKind ?? null,
         interactionIntent: options?.interactionIntent ?? null,
+        hasDrawingAttachment: Boolean(userDrawingArtifacts?.length),
         messageCount: outgoingMessages.length,
         isRepeatedQuestion: repeatCount > 0,
         repeatCount,
@@ -1389,6 +1442,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
           ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
           ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
+          ...(options?.drawingImageData
+            ? { drawingImageData: options.drawingImageData.trim() }
+            : {}),
           ...(repeatCount > 0 ? { repeatedQuestionCount: repeatCount } : {}),
           ...(recentHintRecoverySignal
             ? { recentHintRecoverySignal }
@@ -1401,6 +1457,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           messages: outgoingMessages.map((message) => ({
             role: message.role,
             content: message.content,
+            ...(message.artifacts?.length ? { artifacts: message.artifacts } : {}),
           })),
           context: nextContext,
           ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
@@ -1413,6 +1470,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const followUpReporting = summarizeKangurAiTutorFollowUpActions(followUpActions);
         const coachingFrame =
           kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
+        const artifacts = normalizeMessageArtifacts(result.artifacts);
         trackKangurClientEvent('kangur_ai_tutor_message_succeeded', {
           ...telemetryContext,
           sourcesCount: sources.length,
@@ -1424,6 +1482,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           bridgeFollowUpActionCount: followUpReporting.bridgeFollowUpActionCount,
           bridgeFollowUpDirection: followUpReporting.bridgeFollowUpDirection,
           coachingMode: coachingFrame?.mode ?? null,
+          hasDrawingArtifact: Boolean(artifacts?.length),
         });
         if (resolvedPromptMode === 'hint') {
           pendingHintRecoveryBySessionKeyRef.current[activeSessionKey] = buildHintRecoveryCandidate({
@@ -1459,6 +1518,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
             {
               role: 'assistant',
               content: result.message,
+              ...(artifacts ? { artifacts } : {}),
               sources,
               followUpActions,
               ...(coachingFrame ? { coachingFrame } : {}),

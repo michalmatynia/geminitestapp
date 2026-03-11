@@ -79,6 +79,7 @@ export function KangurAiTutorPortalContent() {
         calloutKey={guidedCallout.calloutKey}
         calloutTestId={guidedCallout.calloutTestId}
         detail={guidedCallout.detail}
+        entryDirection={guidedCallout.entryDirection}
         headerLabel={guidedCallout.headerLabel}
         mode={guidedCallout.mode}
         onAction={(action) => {
@@ -160,6 +161,7 @@ export function KangurAiTutorPortalContent() {
         avatarAttachmentSide={panel.avatarAttachmentSide}
         avatarButtonClassName={panel.avatarButtonClassName}
         avatarPointer={panel.avatarPointer}
+        bubbleEntryDirection={panel.bubbleEntryDirection}
         bubbleLaunchOrigin={panel.bubbleLaunchOrigin}
         bubbleMode={panel.bubbleMode}
         bubbleStrategy={panel.bubbleStrategy}

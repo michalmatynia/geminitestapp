@@ -175,6 +175,32 @@ function SelectedTextHarness(): React.JSX.Element {
   );
 }
 
+function DrawingHarness(): React.JSX.Element {
+  const { messages, sendMessage } = useKangurAiTutor();
+
+  return (
+    <div>
+      <button
+        type='button'
+        onClick={() =>
+          void sendMessage('Wyjasnij to rysunkiem.', {
+            promptMode: 'explain',
+            drawingImageData: 'data:image/png;base64,AAA',
+          })
+        }
+      >
+        Send drawing
+      </button>
+      <div data-testid='drawing-messages'>
+        {messages.map((message) => message.content).join(' | ')}
+      </div>
+      <div data-testid='drawing-artifacts'>
+        {JSON.stringify(messages.map((message) => message.artifacts ?? []))}
+      </div>
+    </div>
+  );
+}
+
 function TutorAvailabilityHarness(): React.JSX.Element {
   const { enabled, tutorSettings, sessionContext } = useKangurAiTutor();
 
@@ -414,6 +440,96 @@ describe('KangurAiTutorContext', () => {
       'hint_ladder:Jeden trop'
     );
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
+  });
+
+  it('sends learner drawings as artifacts and stores assistant drawing replies', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'Najpierw policz lewa strone, potem prawa.',
+      artifacts: [
+        {
+          type: 'assistant_drawing',
+          title: 'Dwie pary',
+          caption: 'Kazda para ma po dwa elementy.',
+          alt: 'Dwie pary kropek ustawione obok siebie.',
+          svgContent:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /><circle cx="190" cy="90" r="18" fill="#fb7185" /><circle cx="230" cy="90" r="18" fill="#fb7185" /></svg>',
+        },
+      ],
+      sources: [],
+      followUpActions: [],
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: null,
+        remainingMessages: null,
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-2',
+          title: 'Dodawanie obrazkami',
+        }}
+      >
+        <DrawingHarness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send drawing' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
+      messages: [
+        {
+          role: 'user',
+          content: 'Wyjasnij to rysunkiem.',
+          artifacts: [
+            {
+              type: 'user_drawing',
+              imageDataUrl: 'data:image/png;base64,AAA',
+            },
+          ],
+        },
+      ],
+      context: {
+        surface: 'lesson',
+        contentId: 'lesson-2',
+        title: 'Dodawanie obrazkami',
+        promptMode: 'explain',
+        drawingImageData: 'data:image/png;base64,AAA',
+      },
+    });
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor_message_sent',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-2',
+        promptMode: 'explain',
+        hasDrawingAttachment: true,
+      })
+    );
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      2,
+      'kangur_ai_tutor_message_succeeded',
+      expect.objectContaining({
+        surface: 'lesson',
+        contentId: 'lesson-2',
+        promptMode: 'explain',
+        hasDrawingArtifact: true,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('drawing-messages')).toHaveTextContent(
+        'Wyjasnij to rysunkiem. | Najpierw policz lewa strone, potem prawa.'
+      )
+    );
+    expect(screen.getByTestId('drawing-artifacts')).toHaveTextContent('user_drawing');
+    expect(screen.getByTestId('drawing-artifacts')).toHaveTextContent('assistant_drawing');
+    expect(screen.getByTestId('drawing-artifacts')).toHaveTextContent('Dwie pary');
   });
 
   it('reads global AI tutor app settings from the settings store', () => {

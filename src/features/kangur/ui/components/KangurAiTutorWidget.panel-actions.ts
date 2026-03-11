@@ -32,6 +32,7 @@ type UseKangurAiTutorPanelActionsInput = {
   bridgeQuickActionId: string | null;
   canSendMessages: boolean;
   clearSelection: () => void;
+  drawingImageData: string | null;
   focusSectionRect: (
     rect: DOMRect,
     options?: { forceScroll?: boolean; spotlight?: boolean }
@@ -68,6 +69,7 @@ type UseKangurAiTutorPanelActionsInput = {
       focusLabel: string | null;
       assignmentId: string | null;
       interactionIntent?: 'hint' | 'explain' | 'review' | 'next_step';
+      drawingImageData?: string | null;
     }
   ) => Promise<void>;
   startGuidedGuestLogin: (
@@ -79,6 +81,8 @@ type UseKangurAiTutorPanelActionsInput = {
   widgetState: Pick<
     KangurAiTutorWidgetState,
     | 'setDismissedSelectedText'
+    | 'setDrawingImageData'
+    | 'setDrawingMode'
     | 'setHighlightedSection'
     | 'setInputValue'
     | 'setMessageFeedbackByKey'
@@ -101,6 +105,7 @@ export function useKangurAiTutorPanelActions({
   bridgeQuickActionId,
   canSendMessages,
   clearSelection,
+  drawingImageData,
   focusSectionRect,
   focusSelectionPageRect,
   getCurrentTutorLocation,
@@ -123,6 +128,8 @@ export function useKangurAiTutorPanelActions({
 }: UseKangurAiTutorPanelActionsInput) {
   const {
     setDismissedSelectedText,
+    setDrawingImageData,
+    setDrawingMode,
     setHighlightedSection,
     setInputValue,
     setMessageFeedbackByKey,
@@ -137,7 +144,7 @@ export function useKangurAiTutorPanelActions({
 
   const handleSend = useCallback(async (): Promise<void> => {
     const text = inputValue.trim();
-    if (!text || isLoading || !canSendMessages) {
+    if ((!text && !drawingImageData) || isLoading || !canSendMessages) {
       return;
     }
 
@@ -150,10 +157,15 @@ export function useKangurAiTutorPanelActions({
     }
 
     setInputValue('');
+    const currentDrawingData = drawingImageData;
+    if (currentDrawingData) {
+      setDrawingImageData(null);
+      setDrawingMode(false);
+    }
     if (activeSelectedText) {
       persistSelectionGeometry();
     }
-    await sendMessage(text, {
+    await sendMessage(text || (currentDrawingData ? '[rysunek]' : ''), {
       promptMode: activeSelectedText ? 'selected_text' : 'chat',
       selectedText: activeSelectedText,
       focusKind: normalizeConversationFocusKind(activeFocus.kind),
@@ -166,6 +178,7 @@ export function useKangurAiTutorPanelActions({
             ? 'review'
             : 'explain'
           : undefined,
+      drawingImageData: currentDrawingData,
     });
     if (activeSelectedText) {
       clearSelection();
@@ -179,6 +192,7 @@ export function useKangurAiTutorPanelActions({
     activeSelectedText,
     canSendMessages,
     clearSelection,
+    drawingImageData,
     highlightedSection,
     inputValue,
     isAnonymousVisitor,
@@ -187,6 +201,8 @@ export function useKangurAiTutorPanelActions({
     persistSelectionGeometry,
     resolveGuestLoginGuidanceIntent,
     sendMessage,
+    setDrawingImageData,
+    setDrawingMode,
     setHighlightedText,
     setInputValue,
     startGuidedGuestLogin,
@@ -409,9 +425,27 @@ export function useKangurAiTutorPanelActions({
     [setMessageFeedbackByKey, telemetryContext, tutorSessionKey]
   );
 
+  const handleToggleDrawing = useCallback((): void => {
+    setDrawingMode((prev) => !prev);
+  }, [setDrawingMode]);
+
+  const handleDrawingComplete = useCallback(
+    (dataUrl: string): void => {
+      setDrawingImageData(dataUrl);
+      setDrawingMode(false);
+    },
+    [setDrawingImageData, setDrawingMode]
+  );
+
+  const handleClearDrawing = useCallback((): void => {
+    setDrawingImageData(null);
+  }, [setDrawingImageData]);
+
   return {
+    handleClearDrawing,
     handleDetachHighlightedSection,
     handleDetachSelectedFragment,
+    handleDrawingComplete,
     handleFocusHighlightedSection,
     handleFocusSelectedFragment,
     handleFollowUpClick,
@@ -419,5 +453,6 @@ export function useKangurAiTutorPanelActions({
     handleMessageFeedback,
     handleQuickAction,
     handleSend,
+    handleToggleDrawing,
   };
 }

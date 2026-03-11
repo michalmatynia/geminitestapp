@@ -22,7 +22,10 @@ describe('ResultScreen', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Swietna robota, Maja!' })).toBeInTheDocument();
-    expect(screen.getByTestId('result-screen-title')).toHaveClass('text-3xl', 'text-slate-800');
+    expect(screen.getByTestId('result-screen-title')).toHaveClass(
+      'text-3xl',
+      '[color:var(--kangur-page-text)]'
+    );
     expect(screen.getByText('Dodawanie')).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('result-screen-shell')).toHaveClass(

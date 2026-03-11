@@ -103,10 +103,6 @@ export const normalizeDatabaseEngineBackupSchedule = (
       asRecord(parsed?.['mongodb']),
       DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.mongodb
     ),
-    postgresql: normalizeTarget(
-      asRecord(parsed?.['postgresql']),
-      DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql
-    ),
   };
 };
 

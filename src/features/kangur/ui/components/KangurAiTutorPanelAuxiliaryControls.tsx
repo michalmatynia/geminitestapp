@@ -33,7 +33,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
 
   return (
     <div
-      className='flex flex-wrap gap-2 border-b px-3 py-3 [border-color:var(--kangur-soft-card-border)]'
+      className='flex flex-wrap gap-2 border-b px-3 py-3 [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_80%,rgba(245,158,11,0.15))]'
       data-kangur-tts-ignore='true'
     >
       {shouldRenderNarratorControl ? (
@@ -96,7 +96,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           data-testid='kangur-ai-tutor-proactive-nudge'
           data-nudge-mode={visibleProactiveNudge.mode}
-          className='w-full rounded-2xl border px-3 py-3 shadow-sm'
+          className='w-full rounded-2xl border px-3 py-3 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.1)]'
           style={{
             background:
               visibleProactiveNudge.mode === 'coach'
@@ -108,7 +108,8 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 : 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(110 231 183))',
           }}
         >
-          <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+          <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+            <span className='inline-flex h-1.5 w-1.5 rounded-full bg-current opacity-50' />
             {visibleProactiveNudge.title}
           </div>
           <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>

@@ -9,6 +9,11 @@ import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai
 import { getKangurAiTutorNativeGuideStore } from './ai-tutor-native-guide-repository';
 
 const ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS = new Set([
+  'hero',
+  'screen',
+  'library',
+  'empty_state',
+  'navigation',
   'home_actions',
   'home_quest',
   'priority_assignments',

@@ -45,7 +45,7 @@ export const DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS: DatabaseEngineOperation
 };
 
 export type DatabaseEngineBackupCadence = 'daily' | 'every_n_days' | 'weekly';
-export type DatabaseEngineBackupType = 'mongodb' | 'postgresql';
+export type DatabaseEngineBackupType = 'mongodb';
 export type DatabaseEngineBackupStatus = 'idle' | 'queued' | 'running' | 'success' | 'failed';
 
 const DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE: DatabaseEngineBackupTargetSchedule = {
@@ -67,5 +67,4 @@ export const DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE: DatabaseEngineBackupSchedu
   repeatTickEnabled: false,
   lastCheckedAt: null,
   mongodb: { ...DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE },
-  postgresql: { ...DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE },
 };

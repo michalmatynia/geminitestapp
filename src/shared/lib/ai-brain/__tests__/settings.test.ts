@@ -63,6 +63,14 @@ describe('ai-brain settings helpers', () => {
     );
   });
 
+  it('exposes a dedicated Kangur tutor drawing analysis capability', () => {
+    expect(getDefaultCapabilityForFeature('kangur_ai_tutor')).toBe('kangur_ai_tutor.chat');
+    expect(getBrainCapabilityDefinition('kangur_ai_tutor.drawing_analysis')).toMatchObject({
+      feature: 'kangur_ai_tutor',
+      modelFamily: 'vision_extract',
+    });
+  });
+
   it('coerces invalid providers to the allowed provider set', () => {
     const sanitized = sanitizeBrainAssignmentForProviders(
       {

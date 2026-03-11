@@ -18,19 +18,27 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
           key='kangur-app-loader'
           aria-busy='true'
           aria-live='polite'
-          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(124,82,255,0.14),_transparent_34%),linear-gradient(180deg,_#f6f8ff_0%,_#edf2ff_52%,_#f9fbff_100%)] px-4'
+          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
           data-testid='kangur-app-loader'
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
           exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+          style={{
+            background:
+              'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+          }}
         >
           <div
             aria-hidden='true'
-            className='absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(79,99,248,0.12)_0%,_rgba(124,82,255,0.05)_46%,_transparent_74%)] blur-3xl'
+            className='absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
+            style={{
+              background:
+                'radial-gradient(circle, color-mix(in srgb, var(--kangur-soft-card-border, #cbd5e1) 34%, transparent) 0%, transparent 74%)',
+            }}
           />
           <motion.div
-            className='relative flex flex-col items-center justify-center gap-4 rounded-[40px] border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(247,249,255,0.88)_100%)] px-12 py-11 shadow-[0_32px_84px_-42px_rgba(68,87,215,0.28)] backdrop-blur-xl'
+            className='relative flex flex-col items-center justify-center gap-4 rounded-[40px] border px-12 py-11 backdrop-blur-xl'
             data-loader-layout='expanded-card'
             data-testid='kangur-app-loader-panel'
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0.94, scale: 0.98 }}
@@ -48,19 +56,40 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
                   repeat: Number.POSITIVE_INFINITY,
                 }
             }
+            style={{
+              background:
+                'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, transparent) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, var(--kangur-page-background, #f8fafc)) 100%)',
+              borderColor: 'var(--kangur-glass-panel-border, rgba(255,255,255,0.78))',
+              boxShadow: 'var(--kangur-glass-panel-shadow, 0 32px 84px -42px rgba(68,87,215,0.28))',
+            }}
           >
             <div
               aria-hidden='true'
-              className='absolute inset-[10px] rounded-[30px] border border-[rgba(79,99,248,0.08)]'
+              className='absolute inset-[10px] rounded-[30px] border'
+              style={{ borderColor: 'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 56%, transparent)' }}
             />
             <div
               aria-hidden='true'
-              className='absolute -right-2 -top-2 h-14 w-14 rounded-full bg-[radial-gradient(circle,_rgba(255,213,96,0.82)_0%,_rgba(255,154,53,0.18)_54%,_transparent_76%)] blur-md'
+              className='absolute -right-2 -top-2 h-14 w-14 rounded-full blur-md'
+              style={{
+                background:
+                  'radial-gradient(circle, rgba(255,213,96,0.82) 0%, rgba(255,154,53,0.18) 54%, transparent 76%)',
+              }}
             />
-            <div className='relative flex h-24 w-24 items-center justify-center rounded-full border border-[rgba(79,99,248,0.12)] bg-[radial-gradient(circle_at_32%_28%,_rgba(255,255,255,0.98),_rgba(241,245,255,0.9)_58%,_rgba(236,241,255,0.78)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_18px_32px_-24px_rgba(68,87,215,0.26)]'>
+            <div
+              className='relative flex h-24 w-24 items-center justify-center rounded-full border'
+              style={{
+                background:
+                  'radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 96%, white), color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, var(--kangur-page-background, #eef2ff)) 58%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 80%, var(--kangur-page-background, #e2e8f0)) 100%)',
+                borderColor: 'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 58%, transparent)',
+                boxShadow:
+                  'inset 0 1px 0 rgba(255,255,255,0.72), 0 18px 32px -24px rgba(68,87,215,0.26)',
+              }}
+            >
               <div
                 aria-hidden='true'
-                className='absolute inset-2.5 rounded-full border border-[rgba(124,82,255,0.1)]'
+                className='absolute inset-2.5 rounded-full border'
+                style={{ borderColor: 'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 48%, transparent)' }}
               />
               <KangurHomeLogo
                 className='relative h-[32px] sm:h-[34px] md:h-[38px]'
@@ -71,10 +100,10 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
               className='relative text-center'
               data-testid='kangur-app-loader-copy'
             >
-              <div className='text-[11px] font-semibold uppercase tracking-[0.32em] text-[#5a6df4]'>
+              <div className='text-[11px] font-semibold uppercase tracking-[0.32em] [color:var(--kangur-nav-item-active-text)]'>
                 StudiQ
               </div>
-              <div className='mt-1 text-sm font-medium tracking-[0.08em] text-slate-400'>
+              <div className='mt-1 text-sm font-medium tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
                 Loading
               </div>
             </div>

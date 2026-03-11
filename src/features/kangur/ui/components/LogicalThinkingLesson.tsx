@@ -20,11 +20,11 @@ const INTRO_SLIDES: LessonSlide[] = [
     title: 'Co to jest myślenie logiczne? 🧠',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i wyciągania
           wniosków krok po kroku.
         </p>
-        <KangurLessonCallout accent='violet' className='w-full text-sm text-slate-600'>
+        <KangurLessonCallout accent='violet' className='w-full text-sm [color:var(--kangur-page-text)]'>
           <p className='mb-2 font-semibold text-violet-700'>Logiczne myślenie pomaga:</p>
           <ul className='space-y-1'>
             <li>🔍 Znajdować wzorce i ciągi</li>
@@ -43,18 +43,18 @@ const PATTERN_SLIDES: LessonSlide[] = [
     title: 'Wzorce i ciągi 🔢',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!
         </p>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
-          <p className='mb-2 text-sm text-slate-500'>Co jest dalej?</p>
+          <p className='mb-2 text-sm [color:var(--kangur-page-muted-text)]'>Co jest dalej?</p>
           <p className='text-3xl tracking-widest'>🔴 🔵 🔴 🔵 🔴 ❓</p>
           <p className='mt-2 font-bold text-blue-600'>
             Odpowiedź: 🔵 (wzorzec: czerwony – niebieski)
           </p>
         </KangurLessonCallout>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
-          <p className='mb-2 text-sm text-slate-500'>Ciąg liczbowy – co dalej?</p>
+          <p className='mb-2 text-sm [color:var(--kangur-page-muted-text)]'>Ciąg liczbowy – co dalej?</p>
           <p className='text-2xl font-extrabold text-blue-700'>2, 4, 6, 8, ❓</p>
           <p className='mt-2 font-bold text-blue-600'>Odpowiedź: 10 (co 2 w górę)</p>
         </KangurLessonCallout>
@@ -68,7 +68,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
     title: 'Klasyfikacja – grupowanie 📦',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.
         </p>
         <div className='grid w-full grid-cols-2 gap-3'>
@@ -99,17 +99,17 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
     title: 'Znajdź intruza 🔎',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           W każdej grupie jeden element do niej nie pasuje. Znajdź go i wyjaśnij dlaczego!
         </p>
         <KangurLessonCallout accent='rose' className='w-full text-center'>
           <p className='mb-2 text-3xl'>🍎 🍌 🥕 🍇</p>
-          <p className='text-sm text-slate-500'>Który nie pasuje?</p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>Który nie pasuje?</p>
           <p className='mt-2 font-bold text-rose-600'>🥕 – to warzywo, reszta to owoce</p>
         </KangurLessonCallout>
         <KangurLessonCallout accent='rose' className='w-full text-center'>
-          <p className='mb-2 text-2xl font-extrabold text-slate-800'>2, 4, 7, 8, 10</p>
-          <p className='text-sm text-slate-500'>Która liczba nie pasuje?</p>
+          <p className='mb-2 text-2xl font-extrabold [color:var(--kangur-page-text)]'>2, 4, 7, 8, 10</p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>Która liczba nie pasuje?</p>
           <p className='mt-2 font-bold text-rose-600'>7 – tylko ona jest nieparzysta</p>
         </KangurLessonCallout>
       </div>
@@ -122,7 +122,7 @@ const REASONING_SLIDES: LessonSlide[] = [
     title: 'Wnioskowanie: jeśli... to... 💡',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...
         </p>
         <div className='flex w-full flex-col gap-3'>
@@ -154,23 +154,23 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
     title: 'Analogie – co pasuje? 🔗',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-center text-slate-700'>
+        <p className='text-center [color:var(--kangur-page-text)]'>
           Analogia to podobna relacja między różnymi parami. Uzupełnij brakujące ogniwo!
         </p>
         <div className='flex w-full flex-col gap-3'>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-sm text-slate-700'>
+            <p className='text-sm [color:var(--kangur-page-text)]'>
               Ptak lata, ryba... <span className='font-bold text-purple-700'>pływa 🐟</span>
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-sm text-slate-700'>
+            <p className='text-sm [color:var(--kangur-page-text)]'>
               Dzień jest do słońca, jak noc jest do...{' '}
               <span className='font-bold text-purple-700'>księżyca 🌙</span>
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-sm text-slate-700'>
+            <p className='text-sm [color:var(--kangur-page-text)]'>
               2 jest do 4, jak 3 jest do...{' '}
               <span className='font-bold text-purple-700'>6 (×2)</span>
             </p>
@@ -187,7 +187,7 @@ const SUMMARY_SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col items-center gap-4'>
         <KangurLessonCallout accent='amber' className='w-full'>
-          <ul className='space-y-2 text-sm text-slate-700'>
+            <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
             <li>
               🔁 <b>Wzorzec</b> – znajdź regułę i przewiduj, co dalej
             </li>

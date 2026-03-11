@@ -329,6 +329,12 @@ export default function Lessons() {
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
   const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
+  const lessonListIntroRef = useRef<HTMLDivElement | null>(null);
+  const lessonLibraryRef = useRef<HTMLDivElement | null>(null);
+  const lessonListEmptyStateRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonSecretPanelRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonEmptyDocumentRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
   const handleOpenSecretLesson = useCallback((): void => {
     if (!isSecretLessonUnlocked || !secretHostLesson) {
       return;
@@ -395,6 +401,42 @@ export default function Lessons() {
     };
   }, [activeLesson?.id]);
   useKangurTutorAnchor({
+    id: 'kangur-lessons-list-intro',
+    kind: 'hero',
+    ref: lessonListIntroRef,
+    surface: 'lesson',
+    enabled: !activeLesson,
+    priority: 120,
+    metadata: {
+      contentId: 'lesson:list',
+      label: 'Wprowadzenie do lekcji',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-lessons-library',
+    kind: 'library',
+    ref: lessonLibraryRef,
+    surface: 'lesson',
+    enabled: !activeLesson && isDeferredContentReady && orderedLessons.length > 0,
+    priority: 110,
+    metadata: {
+      contentId: 'lesson:list',
+      label: 'Biblioteka lekcji',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-lessons-list-empty-state',
+    kind: 'empty_state',
+    ref: lessonListEmptyStateRef,
+    surface: 'lesson',
+    enabled: !activeLesson && isDeferredContentReady && orderedLessons.length === 0,
+    priority: 115,
+    metadata: {
+      contentId: 'lesson:list',
+      label: 'Brak aktywnych lekcji',
+    },
+  });
+  useKangurTutorAnchor({
     id: activeLesson ? `kangur-lesson-header:${activeLesson.id}` : 'kangur-lesson-header',
     kind: 'lesson_header',
     ref: activeLessonHeaderRef,
@@ -431,13 +473,50 @@ export default function Lessons() {
       label: activeLesson?.title ?? null,
     },
   });
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-screen-secret:${activeLesson.id}` : 'kangur-lesson-screen-secret',
+    kind: 'screen',
+    ref: activeLessonSecretPanelRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson && isSecretLessonHostActive),
+    priority: 70,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLesson ? `Ukryty finisz - ${activeLesson.title}` : 'Ukryty finisz',
+    },
+  });
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-empty-document:${activeLesson.id}` : 'kangur-lesson-empty-document',
+    kind: 'empty_state',
+    ref: activeLessonEmptyDocumentRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson?.contentMode === 'document' && !hasActiveLessonDocumentContent),
+    priority: 60,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLesson?.title ?? 'Brak zawartosci lekcji',
+    },
+  });
+  useKangurTutorAnchor({
+    id: activeLesson ? `kangur-lesson-navigation:${activeLesson.id}` : 'kangur-lesson-navigation',
+    kind: 'navigation',
+    ref: activeLessonNavigationRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson),
+    priority: 20,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLesson?.title ?? 'Nawigacja lekcji',
+    },
+  });
   const lessonTutorContext = useMemo(
     () => ({
       surface: 'lesson' as const,
-      contentId: activeLesson?.id,
+      contentId: activeLesson?.id ?? 'lesson:list',
+      title: activeLesson?.title ?? 'Lekcje',
       assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
     }),
-    [activeLesson?.id, activeLessonAssignment?.id, completedActiveLessonAssignment?.id]
+    [activeLesson?.id, activeLesson?.title, activeLessonAssignment?.id, completedActiveLessonAssignment?.id]
   );
   const navigation = useMemo(
     () => ({
@@ -484,39 +563,44 @@ export default function Lessons() {
                 className='flex w-full max-w-md flex-col items-center gap-4'
                 data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
-                <KangurPageIntroCard
-                  description={
-                    isDeferredContentReady
-                      ? 'Wybierz temat i przejdz od razu do praktyki lub powtorki.'
-                      : 'Lekcje zaraz beda gotowe.'
-                  }
-                  headingAs='h1'
-                  headingTestId='kangur-lessons-list-heading'
-                  onBack={handleGoBack}
-                  testId='lessons-list-intro-card'
-                  title='Lekcje'
-                  visualTitle={
-                    <KangurLessonsWordmark
-                      className='mx-auto'
-                      data-testid='kangur-lessons-heading-art'
-                      idPrefix='kangur-lessons-page-heading'
-                    />
-                  }
-                />
+                <div ref={lessonListIntroRef} className='w-full'>
+                  <KangurPageIntroCard
+                    description={
+                      isDeferredContentReady
+                        ? 'Wybierz temat i przejdz od razu do praktyki lub powtorki.'
+                        : 'Lekcje zaraz beda gotowe.'
+                    }
+                    headingAs='h1'
+                    headingTestId='kangur-lessons-list-heading'
+                    onBack={handleGoBack}
+                    testId='lessons-list-intro-card'
+                    title='Lekcje'
+                    visualTitle={
+                      <KangurLessonsWordmark
+                        className='mx-auto'
+                        data-testid='kangur-lessons-heading-art'
+                        idPrefix='kangur-lessons-page-heading'
+                      />
+                    }
+                  />
+                </div>
                 {isDeferredContentReady ? (
                   <motion.div
+                    ref={orderedLessons.length === 0 ? undefined : lessonLibraryRef}
                     key='list-content'
                     {...lessonContentReadyMotionProps}
                     className='flex w-full flex-col gap-4'
                   >
                     {orderedLessons.length === 0 ? (
-                      <KangurEmptyState
-                        accent='indigo'
-                        className='w-full'
-                        description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
-                        padding='xl'
-                        title='Brak aktywnych lekcji'
-                      />
+                      <div ref={lessonListEmptyStateRef}>
+                        <KangurEmptyState
+                          accent='indigo'
+                          className='w-full'
+                          description='Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
+                          padding='xl'
+                          title='Brak aktywnych lekcji'
+                        />
+                      </div>
                     ) : (
                       orderedLessons.map((lesson, index) => {
                         const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
@@ -676,37 +760,39 @@ export default function Lessons() {
                     className='w-full flex flex-col items-center gap-4'
                   >
                     {isSecretLessonHostActive ? (
-                      <KangurGlassPanel
-                        className='flex w-full max-w-3xl flex-col items-center gap-4 text-center'
-                        data-testid='lessons-secret-panel'
-                        padding='xl'
-                        surface='solid'
-                      >
-                        <KangurStatusChip
-                          accent='amber'
-                          className='border-amber-300/90 bg-amber-200/90 text-amber-950'
-                          data-testid='lessons-secret-pill-chip'
-                          size='sm'
+                      <div ref={activeLessonSecretPanelRef} className='w-full flex justify-center'>
+                        <KangurGlassPanel
+                          className='flex w-full max-w-3xl flex-col items-center gap-4 text-center'
+                          data-testid='lessons-secret-panel'
+                          padding='xl'
+                          surface='solid'
                         >
-                          Sekret odblokowany
-                        </KangurStatusChip>
-                        <div className='text-6xl' aria-hidden='true'>
-                          🏆
-                        </div>
-                        <div className='space-y-2'>
-                          <h2 className='text-2xl font-black text-slate-800'>Ukryty finisz</h2>
-                          <p
-                            className='text-sm font-semibold uppercase tracking-[0.18em] text-amber-700'
-                            data-testid='lessons-secret-host-label'
+                          <KangurStatusChip
+                            accent='amber'
+                            className='border-amber-300/90 bg-amber-200/90 text-amber-950'
+                            data-testid='lessons-secret-pill-chip'
+                            size='sm'
                           >
-                            {activeLesson.title}
-                          </p>
-                          <p className='max-w-xl text-sm leading-relaxed text-slate-600'>
-                            Złota pigułka odblokowała finał na samym końcu ostatniej lekcji w
-                            kolejce. Trafiłeś od razu do ukrytego zakończenia.
-                          </p>
-                        </div>
-                      </KangurGlassPanel>
+                            Sekret odblokowany
+                          </KangurStatusChip>
+                          <div className='text-6xl' aria-hidden='true'>
+                            🏆
+                          </div>
+                          <div className='space-y-2'>
+                            <h2 className='text-2xl font-black text-slate-800'>Ukryty finisz</h2>
+                            <p
+                              className='text-sm font-semibold uppercase tracking-[0.18em] text-amber-700'
+                              data-testid='lessons-secret-host-label'
+                            >
+                              {activeLesson.title}
+                            </p>
+                            <p className='max-w-xl text-sm leading-relaxed text-slate-600'>
+                              Złota pigułka odblokowała finał na samym końcu ostatniej lekcji w
+                              kolejce. Trafiłeś od razu do ukrytego zakończenia.
+                            </p>
+                          </div>
+                        </KangurGlassPanel>
+                      </div>
                     ) : shouldRenderLessonDocument && activeLessonDocument ? (
                       <div className='w-full max-w-5xl space-y-4'>
                         <KangurSummaryPanel
@@ -724,18 +810,20 @@ export default function Lessons() {
                       </div>
                     ) : activeLesson?.contentMode === 'document' &&
                       !hasActiveLessonDocumentContent ? (
-                        <KangurSummaryPanel
-                          accent='amber'
-                          align='center'
-                          className='w-full max-w-3xl'
-                          data-testid='lessons-empty-document-summary'
-                          description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
-                          label='Lesson document'
-                          labelAccent='amber'
-                          padding='xl'
-                          title={activeLesson.title}
-                          tone='accent'
-                        />
+                        <div ref={activeLessonEmptyDocumentRef} className='w-full flex justify-center'>
+                          <KangurSummaryPanel
+                            accent='amber'
+                            align='center'
+                            className='w-full max-w-3xl'
+                            data-testid='lessons-empty-document-summary'
+                            description='This lesson is set to use custom document content, but no document blocks have been saved yet.'
+                            label='Lesson document'
+                            labelAccent='amber'
+                            padding='xl'
+                            title={activeLesson.title}
+                            tone='accent'
+                          />
+                        </div>
                       ) : ActiveLessonComponent ? (
                         <ActiveLessonComponent
                           onReady={() => {
@@ -744,11 +832,13 @@ export default function Lessons() {
                         />
                       ) : null}
 
-                    <KangurLessonNavigationWidget
-                      nextLesson={next}
-                      onSelectLesson={handleSelectLesson}
-                      prevLesson={prev}
-                    />
+                    <div ref={activeLessonNavigationRef} className='w-full'>
+                      <KangurLessonNavigationWidget
+                        nextLesson={next}
+                        onSelectLesson={handleSelectLesson}
+                        prevLesson={prev}
+                      />
+                    </div>
                   </div>
                 </KangurLessonNavigationProvider>
               </motion.div>

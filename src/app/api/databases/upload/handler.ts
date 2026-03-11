@@ -4,9 +4,6 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  pgBackupsDir,
-  ensurePgBackupsDir,
-  assertValidPgBackupName,
   mongoBackupsDir,
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
@@ -31,17 +28,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('No file provided');
   }
 
-  const dbType = type === 'mongodb' ? 'mongodb' : 'postgresql';
-  const backupsDir = dbType === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
-  if (dbType === 'mongodb') {
-    assertValidMongoBackupName(file.name);
-    await ensureMongoBackupsDir();
-  } else {
-    assertValidPgBackupName(file.name);
-    await ensurePgBackupsDir();
+  if (type && type !== 'mongodb') {
+    throw badRequestError('Only MongoDB backup uploads are supported.');
   }
+  assertValidMongoBackupName(file.name);
+  await ensureMongoBackupsDir();
 
-  const backupPath = path.join(backupsDir, file.name);
+  const backupPath = path.join(mongoBackupsDir, file.name);
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   await fs.writeFile(backupPath, fileBuffer);

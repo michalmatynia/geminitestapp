@@ -98,8 +98,12 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
             <KangurStatusChip accent='amber' className='text-[11px] uppercase tracking-[0.16em]'>
               {banner.priorityLabel}
             </KangurStatusChip>
-            <div className='mt-3 text-base font-extrabold text-slate-900'>{banner.title}</div>
-            <div className='mt-1 text-sm leading-6 text-slate-600'>{banner.description}</div>
+            <div className='mt-3 text-base font-extrabold [color:var(--kangur-page-text)]'>
+              {banner.title}
+            </div>
+            <div className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+              {banner.description}
+            </div>
           </div>
           <KangurStatusChip accent='amber' className='text-sm font-bold text-amber-800'>
             {banner.progressPercent}%
@@ -151,9 +155,13 @@ export function KangurPracticeAssignmentBanner({
     <KangurPracticeAssignmentBannerContext.Provider value={banner}>
       <KangurSurfacePanel
         accent='amber'
-        className='w-full max-w-md bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
+        className='w-full max-w-md'
         data-testid='kangur-practice-assignment-shell'
         padding='lg'
+        style={{
+          background:
+            'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 78%, rgba(254,243,199,0.96)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(255,237,213,0.92)) 55%, color-mix(in srgb, var(--kangur-soft-card-background) 84%, rgba(254,205,211,0.88)) 100%)',
+        }}
       >
         <KangurPracticeAssignmentBannerBody />
       </KangurSurfacePanel>

@@ -577,12 +577,45 @@ export const handleModel: NodeHandler = async ({
       normalizedErrorMessage.includes('ai job timed out') ||
       normalizedErrorMessage.includes('connection error after') ||
       normalizedErrorMessage.includes('job not found');
+
+    // Unwrap "Connection error after N attempts: [real cause]" so the real cause is surfaced.
+    const connectionWrapperMatch = errorMessage.match(
+      /^connection error after \d+ attempts[^:]*:\s*(.+)$/is
+    );
+    const unwrappedErrorMessage = connectionWrapperMatch?.[1]?.trim() || errorMessage;
+    const normalizedUnwrapped = unwrappedErrorMessage.toLowerCase();
+
+    const isNoModelConfigured =
+      normalizedUnwrapped.includes('no model assigned') ||
+      normalizedUnwrapped.includes('ai brain') ||
+      (normalizedUnwrapped.includes('model') && normalizedUnwrapped.includes('did not select'));
+
+    let toastMessage: string;
+    if (isOllamaConnectionError) {
+      toastMessage = errorMessage;
+    } else if (isNoModelConfigured) {
+      toastMessage =
+        'No AI model configured: Set a default model in AI Brain, or select a model on this node.';
+    } else if (connectionWrapperMatch) {
+      toastMessage = `AI model job failed: ${unwrappedErrorMessage}`;
+    } else {
+      toastMessage = errorMessage.length > 0 ? errorMessage : 'AI model job failed.';
+    }
+
+    // Use the unwrapped error for classification so the toast shows the right suggested action.
+    const errorForClassification =
+      connectionWrapperMatch && !(error instanceof Error && error.message === unwrappedErrorMessage)
+        ? new Error(unwrappedErrorMessage)
+        : error instanceof Error
+          ? error
+          : new Error(errorMessage);
+
     reportAiPathsError(
       error,
       { action: 'graphModel', nodeId: node.id, ...(enqueuedJobId ? { jobId: enqueuedJobId } : {}) },
       'AI model job failed:'
     );
-    toast(isOllamaConnectionError ? errorMessage : 'AI model job failed.', { variant: 'error' });
+    toast(toastMessage, { variant: 'error', error: errorForClassification });
     executed.ai.add(node.id);
     if (isHardFailure) {
       throw error instanceof Error ? error : new Error(errorMessage);

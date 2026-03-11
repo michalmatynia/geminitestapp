@@ -16,6 +16,28 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
+const RealDate = Date;
+const FIXED_NOW = '2026-03-10T09:00:00.000Z';
+const FIXED_LOCAL_DATE_KEY = '2026-03-10';
+
+const stubSystemDate = (iso: string): void => {
+  const fixed = new RealDate(iso);
+  class MockDate extends RealDate {
+    constructor(value?: string | number | Date) {
+      super(value ?? fixed);
+    }
+
+    static now(): number {
+      return fixed.getTime();
+    }
+
+    static parse = RealDate.parse;
+    static UTC = RealDate.UTC;
+  }
+
+  globalThis.Date = MockDate as unknown as DateConstructor;
+};
+
 const progress: KangurProgressState = {
   totalXp: 540,
   gamesPlayed: 12,
@@ -60,7 +82,13 @@ const progress: KangurProgressState = {
 describe('KangurGameHomeQuestWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    stubSystemDate(FIXED_NOW);
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    globalThis.Date = RealDate;
   });
 
   it('shows the top learner quest with reward preview on the game home screen', () => {
@@ -128,11 +156,11 @@ describe('KangurGameHomeQuestWidget', () => {
       'kangur_daily_quest_v1',
       JSON.stringify({
         version: 1,
-        dateKey: '2026-03-10',
+        dateKey: FIXED_LOCAL_DATE_KEY,
         ownerKey: null,
-        createdAt: '2026-03-10T08:00:00.000Z',
-        expiresAt: '2026-03-10T23:59:59.999Z',
-        claimedAt: '2026-03-10T10:15:00.000Z',
+        createdAt: `${FIXED_LOCAL_DATE_KEY}T08:00:00.000Z`,
+        expiresAt: `${FIXED_LOCAL_DATE_KEY}T23:59:59.999Z`,
+        claimedAt: `${FIXED_LOCAL_DATE_KEY}T10:15:00.000Z`,
         baselineGamesPlayed: 12,
         baselineLessonsCompleted: 7,
         assignment: {
@@ -143,11 +171,11 @@ describe('KangurGameHomeQuestWidget', () => {
           priority: 'high',
           questLabel: 'Misja ratunkowa',
           rewardXp: 55,
-          questMetric: {
-            kind: 'lesson_mastery',
-            lessonComponentId: 'division',
-            targetPercent: 75,
-          },
+        questMetric: {
+          kind: 'lesson_mastery',
+          lessonComponentId: 'division',
+          targetPercent: 40,
+        },
           action: {
             label: 'Otworz lekcje',
             page: 'Lessons',

@@ -32,6 +32,10 @@ vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
   getDatabaseBackupSchedulerQueueStatus: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/db/services/database-engine-access', () => ({
+  assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 const schedulerStatusPayload = {
   timestamp: '2026-02-10T10:00:00.000Z',
   schedulerEnabled: true,

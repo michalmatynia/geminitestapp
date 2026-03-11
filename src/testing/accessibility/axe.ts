@@ -1,8 +1,47 @@
-import axe from 'axe-core';
+import * as axe from 'axe-core';
 
-import type { Result, RunOptions } from 'axe-core';
+type AxeNode = {
+  target: string[];
+  failureSummary?: string | null;
+};
 
-const DEFAULT_COMPONENT_RULES: NonNullable<RunOptions['rules']> = {
+type AxeViolation = {
+  impact?: string | null;
+  id: string;
+  help: string;
+  description: string;
+  helpUrl: string;
+  nodes: AxeNode[];
+};
+
+type AxeResultsLike = {
+  violations: AxeViolation[];
+};
+
+type AxeRunOptions = Record<string, unknown> & {
+  rules?: Record<string, unknown>;
+};
+
+type AxeApi = {
+  run: (context: Element | Document, options?: AxeRunOptions) => Promise<AxeResultsLike>;
+};
+
+const isAxeApi = (value: unknown): value is AxeApi => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as { run?: unknown };
+  return typeof candidate.run === 'function';
+};
+
+if (!isAxeApi(axe)) {
+  throw new Error('axe-core API is missing run()');
+}
+
+const axeApi: AxeApi = axe;
+
+const DEFAULT_COMPONENT_RULES: NonNullable<AxeRunOptions['rules']> = {
   'color-contrast': { enabled: false },
   bypass: { enabled: false },
   region: { enabled: false },
@@ -10,11 +49,11 @@ const DEFAULT_COMPONENT_RULES: NonNullable<RunOptions['rules']> = {
   'page-has-heading-one': { enabled: false },
 };
 
-const formatAxeViolations = (violations: Result[]): string =>
+const formatAxeViolations = (violations: AxeViolation[]): string =>
   violations
-    .map((violation: Result) => {
+    .map((violation: AxeViolation) => {
       const nodes = violation.nodes
-        .map((node) => {
+        .map((node: AxeNode) => {
           const target = node.target.join(' > ') || '(unknown target)';
           const summary = node.failureSummary ?? 'No failure summary provided.';
           return `- ${target}\n${summary}`;
@@ -32,9 +71,9 @@ const formatAxeViolations = (violations: Result[]): string =>
 
 export async function runAxe(
   context: Element | Document = document.body,
-  options: RunOptions = {}
-): Promise<axe.AxeResults> {
-  return axe.run(context, {
+  options: AxeRunOptions = {}
+): Promise<AxeResultsLike> {
+  return axeApi.run(context, {
     ...options,
     rules: {
       ...DEFAULT_COMPONENT_RULES,
@@ -45,7 +84,7 @@ export async function runAxe(
 
 export async function expectNoAxeViolations(
   context: Element | Document = document.body,
-  options: RunOptions = {}
+  options: AxeRunOptions = {}
 ): Promise<void> {
   const results = await runAxe(context, options);
   if (results.violations.length === 0) return;

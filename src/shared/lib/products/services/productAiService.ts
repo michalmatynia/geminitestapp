@@ -5,10 +5,8 @@ import { ErrorSystem, logSystemError, logSystemEvent } from '@/shared/lib/observ
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
-  isAiPathsGraphModelPayload,
-  resolveGraphModelCacheKey,
-  resolveGraphModelPayloadHash,
-  resolveGraphModelRequestedModelId,
+  normalizeGraphModelPayloadForDispatch,
+  resolveGraphModelReuseIdentity,
   safeParseGraphModelJobEnqueuePayload,
   summarizeGraphModelPayload,
 } from './product-ai-graph-model-payload';
@@ -75,6 +73,27 @@ const toProductSummary = (product: Record<string, unknown> | null): ProductSumma
   return { name_en: name, sku };
 };
 
+const readJobEntityType = (payload: Record<string, unknown> | null): string | undefined =>
+  (payload?.['entityType'] as string | undefined) ??
+  ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
+    | string
+    | undefined);
+
+const shouldFetchProductForJob = (job: ProductAiJob): boolean => {
+  if (!job.productId) return false;
+  if (job.type === 'graph_model') return false;
+  if (job.productId.startsWith('path_')) return false;
+
+  const payload =
+    job.payload && typeof job.payload === 'object'
+      ? (job.payload as Record<string, unknown>)
+      : null;
+  const entityType = readJobEntityType(payload);
+  if (entityType && entityType !== 'product') return false;
+
+  return true;
+};
+
 const canReuseGraphModelJob = (
   job: ProductAiJobRecord,
   cacheKey: string,
@@ -82,9 +101,10 @@ const canReuseGraphModelJob = (
   requestedModelId: string | null
 ): boolean => {
   if (job.type !== 'graph_model') return false;
-  if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
-  if (resolveGraphModelPayloadHash(job.payload) !== payloadHash) return false;
-  const existingRequestedModelId = resolveGraphModelRequestedModelId(job.payload);
+  const existingIdentity = resolveGraphModelReuseIdentity(job.payload);
+  if (existingIdentity.cacheKey !== cacheKey) return false;
+  if (existingIdentity.payloadHash !== payloadHash) return false;
+  const existingRequestedModelId = existingIdentity.requestedModelId;
   if (requestedModelId !== existingRequestedModelId) {
     // Reuse is only safe when both sides resolve to the same model or both sides
     // have no model hint at all. Legacy queued jobs without requestedModelId
@@ -112,22 +132,21 @@ export async function enqueueProductAiJob(
   type: ProductAiJobType,
   payload: unknown
 ): Promise<ProductAiJob> {
-  const normalizedPayload =
-    type === 'graph_model'
-      ? (() => {
-        const parsed = safeParseGraphModelJobEnqueuePayload(payload);
-        if (!parsed.success) {
-          throw badRequestError('Invalid graph_model payload', {
-            productId,
-            issues: parsed.error.issues.map((issue) => ({
-              path: issue.path.join('.'),
-              message: issue.message,
-            })),
-          });
-        }
-        return parsed.data;
-      })()
-      : payload;
+  let normalizedPayload = payload;
+
+  if (type === 'graph_model') {
+    const parsed = safeParseGraphModelJobEnqueuePayload(payload);
+    if (!parsed.success) {
+      throw badRequestError('Invalid graph_model payload', {
+        productId,
+        issues: parsed.error.issues.map((issue) => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+        })),
+      });
+    }
+    normalizedPayload = normalizeGraphModelPayloadForDispatch(parsed.data);
+  }
 
   try {
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
@@ -151,9 +170,8 @@ export async function enqueueProductAiJob(
   const jobRepository = await getProductAiJobRepository();
 
   if (type === 'graph_model') {
-    const cacheKey = resolveGraphModelCacheKey(normalizedPayload);
-    const payloadHash = resolveGraphModelPayloadHash(normalizedPayload);
-    const requestedModelId = resolveGraphModelRequestedModelId(normalizedPayload);
+    const { cacheKey, payloadHash, requestedModelId } =
+      resolveGraphModelReuseIdentity(normalizedPayload);
     if (cacheKey && payloadHash) {
       const existingJobs = await jobRepository.findJobs(productId, {
         type: 'graph_model',
@@ -212,26 +230,9 @@ export async function getProductAiJobs(
   const jobRecords = await jobRepository.findJobs(productId);
   const jobs = jobRecords.map(toProductAiJob);
 
-  const shouldFetchProduct = (job: ProductAiJob): boolean => {
-    if (!job.productId) return false;
-    const payload =
-      job.payload && typeof job.payload === 'object'
-        ? (job.payload as Record<string, unknown>)
-        : null;
-    const entityType =
-      (payload?.['entityType'] as string | undefined) ??
-      ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
-        | string
-        | undefined);
-    if (entityType && entityType !== 'product') return false;
-    if (isAiPathsGraphModelPayload(payload)) return false;
-    if (job.productId.startsWith('path_')) return false;
-    return true;
-  };
-
   // Batch fetch products - deduplicate IDs to avoid redundant queries
   const uniqueProductIds = [
-    ...new Set(jobs.filter(shouldFetchProduct).map((j: ProductAiJob) => j.productId)),
+    ...new Set(jobs.filter(shouldFetchProductForJob).map((j: ProductAiJob) => j.productId)),
   ].filter((id): id is string => typeof id === 'string');
 
   // Fetch all unique products in parallel
@@ -290,24 +291,7 @@ export async function getProductAiJob(
   const job = toProductAiJob(jobRecord);
 
   let product: Record<string, unknown> | null = null;
-  const payload =
-    job.payload && typeof job.payload === 'object'
-      ? (job.payload as Record<string, unknown>)
-      : null;
-  const entityType =
-    (payload?.['entityType'] as string | undefined) ??
-    ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
-      | string
-      | undefined);
-  const shouldFetch =
-    !!job.productId &&
-    !job.productId.startsWith('path_') &&
-    entityType !== 'note' &&
-    entityType !== 'user' &&
-    entityType !== 'system' &&
-    !isAiPathsGraphModelPayload(payload) &&
-    (entityType ? entityType === 'product' : true);
-  if (shouldFetch && job.productId) {
+  if (shouldFetchProductForJob(job) && job.productId) {
     try {
       const result = await productService.getProductById(job.productId);
       product = isObjectRecord(result) ? result : null;

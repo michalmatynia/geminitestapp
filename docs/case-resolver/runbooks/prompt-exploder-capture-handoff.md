@@ -122,7 +122,7 @@ Action:
 - `npx vitest run src/features/case-resolver/__tests__/prompt-exploder-transfer-lifecycle.test.ts`
 - `npx vitest run src/features/case-resolver/__tests__/prompt-exploder-sync-target.test.ts`
 - `npm run test:case-resolver:regression`
-- `npx playwright test e2e/features/case-resolver/case-resolver.spec.ts` (Node 22 runtime required)
+- `npx playwright test e2e/features/case-resolver/case-resolver.spec.ts` (repo-pinned Node LTS runtime required; see `.nvmrc`)
 
 ## Rollback Criteria
 

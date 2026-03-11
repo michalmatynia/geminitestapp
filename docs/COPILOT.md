@@ -85,6 +85,7 @@ npm run metrics:guardrails
 npm run sync:toolchain:mirrors
 npm run check:toolchain:contract:node
 npm run test:toolchain:contract
+bun run check:bun:config
 bun run check:toolchain:contract
 bun run check:node:toolchain-sync
 bun run lock:bun:sync

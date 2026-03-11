@@ -125,7 +125,6 @@ vi.mock('next/image', () => ({
     fill?: boolean;
     unoptimized?: boolean;
   }) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt} {...props} />
   ),
 }));
@@ -151,7 +150,6 @@ vi.mock('./KangurAiTutorMoodAvatar', () => ({
   }) => (
     <div aria-label={label} className={className} data-testid={dataTestId} role='img'>
       {avatarImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img alt={label} className={imgClassName} src={avatarImageUrl} />
       ) : svgContent ? (
         <div className={svgClassName} dangerouslySetInnerHTML={{ __html: svgContent }} />
@@ -1291,7 +1289,7 @@ describe('KangurAiTutorWidget', () => {
     );
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
-  it('reopens the canonical onboarding modal after closing the generic panel from the docked anonymous avatar', async () => {
+  it('keeps the anonymous avatar docked after closing the generic panel from the docked anonymous avatar', async () => {
     let tutorState = {
       enabled: false,
       tutorSettings: null,
@@ -1361,8 +1359,7 @@ describe('KangurAiTutorWidget', () => {
     );
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    const guestIntro = await screen.findByTestId('kangur-ai-tutor-guest-intro');
-    expect(guestIntro).toHaveAttribute('data-modal-surface', 'canonical-onboarding');
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(openChatMock).not.toHaveBeenCalled();
     expect(closeChatMock).toHaveBeenCalledTimes(1);

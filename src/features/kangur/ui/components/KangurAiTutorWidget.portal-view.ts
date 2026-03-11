@@ -78,7 +78,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleAvatarClick: KangurAiTutorPortalContextValue['avatar']['onClick'];
   handleAvatarMouseDown: KangurAiTutorPortalContextValue['avatar']['onMouseDown'];
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
-  handleCloseGuestIntroCard: KangurAiTutorPortalContextValue['guestIntro']['onClose'];
+  handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onClose'];
   handleCloseGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['onClose'];
   handleDetachHighlightedSection: KangurAiTutorPanelBodyContextValue['handleDetachHighlightedSection'];
   handleDetachSelectedFragment: KangurAiTutorPanelBodyContextValue['handleDetachSelectedFragment'];
@@ -332,7 +332,7 @@ export function useKangurAiTutorPortalViewModel(
         prefersReducedMotion: prefersReducedMotionEnabled,
         shouldRender: shouldRenderGuestIntro,
         onAccept: input.handleGuestIntroAccept,
-        onClose: input.handleCloseGuestIntroCard,
+        onClose: input.handleGuestIntroDismiss,
       },
       guidedCallout: {
         calloutKey: input.guidedCalloutKey,
@@ -456,7 +456,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleAvatarClick,
       input.handleAvatarMouseDown,
       input.handleCloseChat,
-      input.handleCloseGuestIntroCard,
+      input.handleGuestIntroDismiss,
       input.handleCloseGuidedCallout,
       input.handleDisableTutor,
       input.handleFloatingAvatarPointerCancel,

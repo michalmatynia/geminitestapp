@@ -1,0 +1,73 @@
+name: Bazel Specialized Regressions
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".bazelignore"
+      - ".bazelrc"
+      - ".bazelversion"
+      - ".github/workflows/bazel-specialized-regressions.yml"
+      - "BUILD.bazel"
+      - "MODULE.bazel"
+      - "REPO.bazel"
+      - "docs/build/**"
+      - "package-lock.json"
+      - "package.json"
+      - "src/features/case-resolver/**"
+      - "src/features/case-resolver-capture/**"
+      - "src/features/products/**"
+      - "src/shared/contracts/**"
+      - "src/shared/lib/ai-paths/**"
+      - "tools/bazel/**"
+      - "tools/js/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".bazelignore"
+      - ".bazelrc"
+      - ".bazelversion"
+      - ".github/workflows/bazel-specialized-regressions.yml"
+      - "BUILD.bazel"
+      - "MODULE.bazel"
+      - "REPO.bazel"
+      - "docs/build/**"
+      - "package-lock.json"
+      - "package.json"
+      - "src/features/case-resolver/**"
+      - "src/features/case-resolver-capture/**"
+      - "src/features/products/**"
+      - "src/shared/contracts/**"
+      - "src/shared/lib/ai-paths/**"
+      - "tools/bazel/**"
+      - "tools/js/**"
+
+permissions:
+  contents: read
+
+jobs:
+  bazel-specialized-regressions:
+    name: bazel-specialized-regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Specialized regression suite
+        run: npm run bazel:regressions

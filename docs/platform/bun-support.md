@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -50,6 +50,7 @@ Recommended local Bun commands:
 
 ```bash
 npm run sync:toolchain:mirrors
+bun run check:bun:config
 bun run check:bun:version
 bun run check:bun:lock-sync
 bun run check:package-manager-contract
@@ -102,19 +103,21 @@ intentional for now; Bun support is additive, not a package-manager cutover.
 - `bun run check:node:toolchain-sync` verifies that `.nvmrc`,
   `.node-version`, `.tool-versions`, `.bun-version`, and
   `package.json#engines.node` and `package.json#engines.bun` stay aligned.
-- `npm run check:toolchain:contract:node` runs the npm/package-lock and Node
-  pin checks without requiring Bun, so canonical Node-first CI can enforce the
-  core toolchain contract too.
+- `npm run check:toolchain:contract:node` runs the npm/package-lock, Node pin,
+  and Bun config checks without requiring Bun, so canonical Node-first CI can
+  enforce the static toolchain contract too.
 - `npm run test:toolchain:contract` runs the focused runtime contract tests
   without requiring Bun on the command path.
 - `bunfig.toml` pins Bun to a hoisted install layout to stay closer to the
   current npm dependency shape.
+- `bun run check:bun:config` enforces that `bunfig.toml` exists and keeps
+  `linker = "hoisted"` in the `[install]` section.
 - `bun run check:bun:version` enforces that the installed Bun binary matches
   `.bun-version` and that `package.json#engines.bun` matches the same pin.
 - `bun run check:bun:lock-sync` verifies that `bun.lock` still matches the
   canonical `package-lock.json` without mutating the worktree.
-- `bun run check:toolchain:contract` runs the repo-level package-manager,
-  Node toolchain, Bun version, and Bun lockfile contract checks together.
+- `bun run check:toolchain:contract` runs the repo-level static toolchain
+  contract plus the Bun version and Bun lockfile checks together.
 - `bun run lock:bun:sync` refreshes `bun.lock` from the canonical
   `package-lock.json` after dependency changes.
 - `bun run test:bun:runtime` runs the focused regression suite for the Bun
@@ -130,7 +133,8 @@ intentional for now; Bun support is additive, not a package-manager cutover.
 - The Node-side toolchain jobs cache npm dependencies against the canonical
   `package-lock.json` explicitly instead of relying on implicit lockfile
   discovery, and that same explicit cache contract now applies to the other
-  `.nvmrc`-based Node workflows that restore npm dependencies.
+  repo workflows that restore npm dependencies, including the older Node 20
+  regression and docs jobs.
 - A lightweight `.github/workflows/toolchain-contract.yml` workflow now enforces
   the npm/package-lock and Node pin contract directly through Node as a manual
   fallback workflow, and runs the same focused toolchain contract test bundle
@@ -140,15 +144,30 @@ intentional for now; Bun support is additive, not a package-manager cutover.
   run representative repo commands.
 - That workflow resolves Node from [`.nvmrc`](../../.nvmrc) and Bun from
   [`.bun-version`](../../.bun-version) instead of hardcoding tool versions.
-- The repo workflows that intentionally follow the standard Node 22 toolchain
+- Any workflow that resolves Bun should also read it from
+  [`.bun-version`](../../.bun-version) instead of hardcoding a Bun release.
+- The repo workflows that intentionally follow the repo-pinned Node toolchain
   now also resolve Node from [`.nvmrc`](../../.nvmrc) instead of repeating a
-  hardcoded `22`.
+  hardcoded major version.
+- Any path-filtered workflow that resolves Node from [`.nvmrc`](../../.nvmrc)
+  should also include `.nvmrc` in its trigger paths so Node pin bumps rerun the
+  affected check.
+- Any path-filtered workflow that runs `npm ci` should also include
+  `package.json` and `package-lock.json` in its trigger paths so dependency
+  changes rerun the affected check.
 - That compatibility workflow now runs on normal pull requests and pushes,
   rather than only on Bun-specific file edits.
 - It caches Bun's global package cache under `~/.bun/install/cache` to reduce
   repeated dependency downloads.
-- That cache key follows the repo Node and Bun version files as well as both
-  lockfiles, so toolchain pin changes invalidate the Bun cache cleanly.
+- Any workflow that caches Bun under `~/.bun/install/cache` should key that
+  cache from [`.nvmrc`](../../.nvmrc), [`.node-version`](../../.node-version),
+  [`.tool-versions`](../../.tool-versions),
+  [`.bun-version`](../../.bun-version), [`bunfig.toml`](../../bunfig.toml),
+  [`package-lock.json`](../../package-lock.json), and
+  [`bun.lock`](../../bun.lock).
+- That cache key follows the repo Node and Bun version files, `bunfig.toml`,
+  and both lockfiles, so toolchain or Bun install-layout changes invalidate
+  the Bun cache cleanly.
 - The shared repo entrypoint for that validation is `bun run check:bun:compat`.
 - That check is intentionally non-mutating and should not refresh generated
   metrics in a local worktree.

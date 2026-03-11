@@ -65,6 +65,7 @@ For local toolchain and Bun parity checks, use:
 npm run sync:toolchain:mirrors
 npm run check:toolchain:contract:node
 npm run test:toolchain:contract
+bun run check:bun:config
 bun run check:toolchain:contract
 bun run check:node:toolchain-sync
 bun run lock:bun:sync
@@ -80,7 +81,77 @@ npm run bazel -- run //:lint
 npm run bazel -- run //:typecheck
 npm run bazel -- run //:unit
 npm run bazel -- run //:next_build
+npm run bazel:smoke
+npm run bazel:regressions
 ```
+
+The dedicated Bazel smoke workflow now exercises:
+
+- `bazel query //:all`
+- `//:lint`
+- `//:typecheck`
+- `//:unit`
+- `//:integration_prisma`
+- `//:integration_mongo`
+- `//:next_build`
+- `//:api_error_sources`
+
+The workflow and local smoke path now use the same repo-owned entrypoint:
+
+```bash
+npm run bazel:smoke
+```
+
+The specialized regression bundles stay outside the smoke lane on purpose:
+
+- `//:case_resolver_regression`
+- `//:products_trigger_queue_unit`
+
+The workflow and local specialized-regression path now use the same repo-owned entrypoint:
+
+```bash
+npm run bazel:regressions
+```
+
+They run in a separate workflow:
+
+- [bazel-specialized-regressions.yml](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/.github/workflows/bazel-specialized-regressions.yml)
+
+## CI validation matrix
+
+Shared smoke lane:
+
+- workflow: `bazel-smoke`
+- command: `npm run bazel:smoke`
+- targets:
+  - `bazel query //:all`
+  - `//:lint`
+  - `//:typecheck`
+  - `//:unit`
+  - `//:integration_prisma`
+  - `//:integration_mongo`
+  - `//:next_build`
+  - `//:api_error_sources`
+
+Specialized regression lane:
+
+- workflow: `bazel-specialized-regressions`
+- command: `npm run bazel:regressions`
+- targets:
+  - `//:case_resolver_regression`
+  - `//:products_trigger_queue_unit`
+
+Validated direct Bazel gates:
+
+- `//:lint`
+- `//:typecheck`
+- `//:unit`
+- `//:integration_prisma`
+- `//:integration_mongo`
+- `//:next_build`
+- `//:api_error_sources`
+- `//:case_resolver_regression`
+- `//:products_trigger_queue_unit`
 
 ## Optional remote cache
 

@@ -18,6 +18,7 @@ export const handleTrigger: NodeHandler = async ({
   triggerEvent,
   triggerContext,
   fetchEntityCached,
+  reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (triggerNodeId && node.id !== triggerNodeId) {
     return {};
@@ -33,11 +34,17 @@ export const handleTrigger: NodeHandler = async ({
     (pickString(triggerContextRecord?.['productId']) ? 'product' : null);
 
   let resolvedEntity: Record<string, unknown> | null = null;
+  let entityFetchError: string | null = null;
   if (entityId && entityType) {
     try {
       resolvedEntity = await fetchEntityCached(entityType, entityId);
-    } catch {
-      resolvedEntity = null;
+    } catch (error) {
+      entityFetchError = error instanceof Error ? error.message : 'Entity fetch failed.';
+      reportAiPathsError(
+        error,
+        { action: 'triggerEntityFetch', nodeId: node.id },
+        'Trigger entity fetch failed:'
+      );
     }
   }
 
@@ -52,11 +59,16 @@ export const handleTrigger: NodeHandler = async ({
       ...(entityId ? { entityId } : {}),
       ...(entityType ? { entityType } : {}),
       ...(resolvedEntity ? { entityJson: resolvedEntity } : {}),
+      ...(entityFetchError ? { entityFetchFailed: true, entityFetchError } : {}),
     };
   }
   if (entityId) output['entityId'] = entityId;
   if (entityType) output['entityType'] = entityType;
   if (resolvedEntity) output['entityJson'] = resolvedEntity;
+  if (entityFetchError) {
+    output['entityFetchFailed'] = true;
+    output['entityFetchError'] = entityFetchError;
+  }
 
   return output;
 };

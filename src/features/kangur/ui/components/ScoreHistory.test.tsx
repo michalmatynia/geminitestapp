@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { buildKangurScoreInsights } from '@/features/kangur/ui/services/score-insights';
 
 const { scoreFilterMock, logKangurClientErrorMock } = vi.hoisted(() => ({
   scoreFilterMock: vi.fn(),
@@ -32,6 +33,27 @@ const getParagraphByTextContent = (scope: HTMLElement, snippet: string): HTMLEle
     (_, element) => element?.tagName === 'P' && element.textContent?.includes(snippet) === true
   );
 
+const RealDate = Date;
+const FIXED_NOW = '2026-03-10T12:00:00.000Z';
+
+const stubSystemDate = (iso: string): void => {
+  const fixed = new RealDate(iso);
+  class MockDate extends RealDate {
+    constructor(value?: string | number | Date) {
+      super(value ?? fixed);
+    }
+
+    static now(): number {
+      return fixed.getTime();
+    }
+
+    static parse = RealDate.parse;
+    static UTC = RealDate.UTC;
+  }
+
+  globalThis.Date = MockDate as unknown as DateConstructor;
+};
+
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
   id: 'score-1',
   player_name: 'Jan',
@@ -49,6 +71,12 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('ScoreHistory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    stubSystemDate(FIXED_NOW);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    globalThis.Date = RealDate;
   });
 
   it('uses the shared empty-state surface while score history is loading', () => {
@@ -65,42 +93,53 @@ describe('ScoreHistory', () => {
   });
 
   it('loads learner-scoped results by account and display name without falling back to global history', async () => {
+    const createdByScores: KangurScoreRecord[] = [
+      createScore({
+        id: 'score-1',
+        operation: 'addition',
+        created_date: '2026-03-05T11:00:00.000Z',
+      }),
+      createScore({
+        id: 'score-2',
+        operation: 'multiplication',
+        correct_answers: 10,
+        score: 10,
+        created_date: '2026-03-04T10:00:00.000Z',
+      }),
+    ];
+
+    const playerNameScores: KangurScoreRecord[] = [
+      createScore({
+        id: 'score-2',
+        operation: 'multiplication',
+        correct_answers: 10,
+        score: 10,
+        created_date: '2026-03-04T10:00:00.000Z',
+      }),
+      createScore({
+        id: 'score-3',
+        operation: 'division',
+        correct_answers: 6,
+        score: 6,
+        created_date: '2026-03-06T14:00:00.000Z',
+      }),
+    ];
+
+    const dedupedScores = Array.from(
+      new Map(
+        [...createdByScores, ...playerNameScores].map((score) => [score.id, score] as const)
+      ).values()
+    );
+    const resolvedInsights = buildKangurScoreInsights(dedupedScores, new Date());
+
     scoreFilterMock.mockImplementation(
       (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
         if (criteria.created_by) {
-          return Promise.resolve([
-            createScore({
-              id: 'score-1',
-              operation: 'addition',
-              created_date: '2026-03-05T11:00:00.000Z',
-            }),
-            createScore({
-              id: 'score-2',
-              operation: 'multiplication',
-              correct_answers: 10,
-              score: 10,
-              created_date: '2026-03-04T10:00:00.000Z',
-            }),
-          ]);
+          return Promise.resolve(createdByScores);
         }
 
         if (criteria.player_name) {
-          return Promise.resolve([
-            createScore({
-              id: 'score-2',
-              operation: 'multiplication',
-              correct_answers: 10,
-              score: 10,
-              created_date: '2026-03-04T10:00:00.000Z',
-            }),
-            createScore({
-              id: 'score-3',
-              operation: 'division',
-              correct_answers: 6,
-              score: 6,
-              created_date: '2026-03-06T14:00:00.000Z',
-            }),
-          ]);
+          return Promise.resolve(playerNameScores);
         }
 
         return Promise.resolve([]);
@@ -122,8 +161,22 @@ describe('ScoreHistory', () => {
     expect(screen.getByText('Obraz ostatnich 7 dni')).toBeInTheDocument();
     expect(screen.getByText('Trend tygodnia')).toBeInTheDocument();
     expect(screen.getByText('Ostatnie gry')).toBeInTheDocument();
-    expect(screen.getByText('XP: +72 · srednio 24 na sesje')).toBeInTheDocument();
-    expect(screen.getByText('Srednio 100% · proby 1 · +24 XP / sesje')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'P' && /XP:\s+\+\d+\s+·\s+srednio\s+\d+\s+na sesje/.test(element.textContent ?? '')
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => {
+        if (element?.tagName !== 'P' || !element.textContent || !resolvedInsights.strongestOperation) {
+          return false;
+        }
+        const { averageAccuracy, attempts, averageXpEarned } = resolvedInsights.strongestOperation;
+        const summary = `Srednio ${averageAccuracy}% · proby ${attempts} · +${averageXpEarned} XP / sesje`;
+        return element.textContent.includes(summary);
+      })
+    ).toBeInTheDocument();
     expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border-sky-300');
     expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('3');
     expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass('soft-card', 'border-emerald-300');

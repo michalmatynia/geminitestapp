@@ -239,7 +239,6 @@ function renderImageBlock(
         >
           {hasSource ? (
             // Dynamic lesson document images can point at arbitrary uploads, so this stays on img.
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={block.src} alt={altText} className='rounded-[18px]' loading='lazy' />
           ) : (
             <KangurInlineFallback

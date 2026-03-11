@@ -332,7 +332,6 @@ export function useKangurAiTutorWidgetCoordinator({
   const {
     handleAvatarMouseDown,
     handleCloseChat,
-    handleCloseGuestIntroCard,
     handleCloseLauncherPrompt,
     handleDisableTutor,
     handleOpenChat,
@@ -387,6 +386,7 @@ export function useKangurAiTutorWidgetCoordinator({
   });
 
   const {
+    handleGuestIntroDismiss,
     handleGuestIntroAccept,
     startGuidedGuestLogin,
   } = useKangurAiTutorGuestIntroFlow({
@@ -486,11 +486,11 @@ export function useKangurAiTutorWidgetCoordinator({
     closeChat,
     enabled,
     guestIntroHelpVisible,
+    guestIntroRecord,
     guestIntroVisible,
     guidedMode,
     guidedTutorTarget,
     handleCloseChat,
-    handleCloseGuestIntroCard,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
     handleOpenChat,
@@ -642,7 +642,6 @@ export function useKangurAiTutorWidgetCoordinator({
     handleAvatarClick,
     handleAvatarMouseDown,
     handleCloseChat,
-    handleCloseGuestIntroCard,
     handleCloseGuidedCallout,
     handleDetachHighlightedSection,
     handleDetachSelectedFragment,
@@ -655,6 +654,7 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFocusSelectedFragment,
     handleFollowUpClick,
     handleGuestIntroAccept,
+    handleGuestIntroDismiss,
     handleHomeOnboardingAdvance,
     handleHomeOnboardingBack,
     handleHomeOnboardingFinishEarly,

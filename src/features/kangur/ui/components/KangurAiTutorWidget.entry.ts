@@ -120,6 +120,9 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     }
 
     if (isOpen) {
+      if (!guestIntroRecord) {
+        guestIntroCheckStartedRef.current = true;
+      }
       return;
     }
 

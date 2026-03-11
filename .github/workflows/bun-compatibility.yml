@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-install-cache-${{ hashFiles('.nvmrc', '.node-version', '.tool-versions', '.bun-version', 'package-lock.json', 'bun.lock') }}
+          key: ${{ runner.os }}-bun-install-cache-${{ hashFiles('.nvmrc', '.node-version', '.tool-versions', '.bun-version', 'bunfig.toml', 'package-lock.json', 'bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-install-cache-
 

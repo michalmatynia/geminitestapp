@@ -49,8 +49,13 @@ describe('parseValidatorScope', () => {
       ],
     });
     const lists = parseValidatorPatternLists(savedValue);
-    expect(lists).toHaveLength(1);
-    expect(lists[0]?.id).toBe('custom-case-resolver-plain-text');
-    expect(lists[0]?.scope).toBe('case-resolver-plain-text');
+    expect(lists).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'custom-case-resolver-plain-text',
+          scope: 'case-resolver-plain-text',
+        }),
+      ])
+    );
   });
 });

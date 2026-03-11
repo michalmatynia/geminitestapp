@@ -185,6 +185,28 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.AI:
+      if (
+        normalizedMessage.includes('no model assigned') ||
+        normalizedMessage.includes('ai brain') ||
+        (normalizedMessage.includes('model') && normalizedMessage.includes('did not select'))
+      ) {
+        actions.push({
+          label: 'Configure AI Brain',
+          description:
+            'Open AI Brain settings and set a default model, or select a model directly on the Model node in your AI Path.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
+      if (normalizedMessage.includes('ollama') || normalizedMessage.includes('could not connect')) {
+        actions.push({
+          label: 'Check Ollama Connection',
+          description:
+            'Ensure the Ollama server is running and reachable at the configured URL in your environment settings.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
       actions.push({
         label: 'Adjust Prompt',
         description:

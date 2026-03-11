@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 
@@ -85,32 +85,36 @@ describe('MasterFolderTreeRuntimeProvider', () => {
 
     const MultiUndoProbe = () => {
       const runtime = useMasterFolderTreeRuntime();
+      const runtimeRef = useRef(runtime);
+      const undoCallsRef = useRef(undoCalls);
+
+      runtimeRef.current = runtime;
+      undoCallsRef.current = undoCalls;
+
       useEffect(() => {
-        const unregisterAlpha = runtime.registerInstance({
+        const currentRuntime = runtimeRef.current;
+        const unregisterAlpha = currentRuntime.registerInstance({
           id: 'undo-alpha',
           getNodeCount: () => 1,
           canUndo: () => true,
           undo: () => {
-            undoCalls.push('alpha');
+            undoCallsRef.current.push('alpha');
           },
         });
-        const unregisterBeta = runtime.registerInstance({
+        const unregisterBeta = currentRuntime.registerInstance({
           id: 'undo-beta',
           getNodeCount: () => 1,
           canUndo: () => true,
           undo: () => {
-            undoCalls.push('beta');
+            undoCallsRef.current.push('beta');
           },
         });
-        runtime.setFocusedInstance('undo-alpha');
+        currentRuntime.setFocusedInstance('undo-alpha');
 
         return (): void => {
           unregisterAlpha();
           unregisterBeta();
         };
-        // Keep registration stable for this test; re-registering on focus updates
-        // would reset focus to alpha and mask target-routing behavior.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
 
       return (
@@ -152,23 +156,37 @@ describe('MasterFolderTreeRuntimeProvider', () => {
 
     const KeyboardProbe = () => {
       const runtime = useMasterFolderTreeRuntime();
+      const runtimeRef = useRef(runtime);
+      const alphaHandlerRef = useRef(alphaHandler);
+      const betaHandlerRef = useRef(betaHandler);
+
+      runtimeRef.current = runtime;
+      alphaHandlerRef.current = alphaHandler;
+      betaHandlerRef.current = betaHandler;
 
       useEffect(() => {
-        const unregisterAlpha = runtime.registerInstance({
+        const currentRuntime = runtimeRef.current;
+        const unregisterAlpha = currentRuntime.registerInstance({
           id: 'keyboard-alpha',
           getNodeCount: () => 1,
         });
-        const unregisterBeta = runtime.registerInstance({
+        const unregisterBeta = currentRuntime.registerInstance({
           id: 'keyboard-beta',
           getNodeCount: () => 1,
         });
-        const unregisterAlphaHandler = runtime.registerKeyboardHandler('keyboard-alpha', () => {
-          alphaHandler();
-        });
-        const unregisterBetaHandler = runtime.registerKeyboardHandler('keyboard-beta', () => {
-          betaHandler();
-        });
-        runtime.setFocusedInstance('keyboard-alpha');
+        const unregisterAlphaHandler = currentRuntime.registerKeyboardHandler(
+          'keyboard-alpha',
+          () => {
+            alphaHandlerRef.current();
+          }
+        );
+        const unregisterBetaHandler = currentRuntime.registerKeyboardHandler(
+          'keyboard-beta',
+          () => {
+            betaHandlerRef.current();
+          }
+        );
+        currentRuntime.setFocusedInstance('keyboard-alpha');
 
         return (): void => {
           unregisterAlphaHandler();
@@ -176,9 +194,6 @@ describe('MasterFolderTreeRuntimeProvider', () => {
           unregisterAlpha();
           unregisterBeta();
         };
-        // Keep registration stable for this test; re-registering on focus updates
-        // would re-focus alpha and invalidate the target dispatch assertion.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
 
       return (

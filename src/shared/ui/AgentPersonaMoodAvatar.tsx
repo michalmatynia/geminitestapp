@@ -39,7 +39,6 @@ export function AgentPersonaMoodAvatar({
       role='img'
     >
       {hasImage && isInlineImageDataUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={normalizedImageUrl}
           alt={label}

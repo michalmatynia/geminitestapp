@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -31,6 +31,21 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 - UI/data stack: Tailwind 4, local shared UI, TanStack Query, TanStack Table
 - AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
   AI insights, product AI flows
+
+## Canonical Repo Lanes
+
+Use these as the primary cross-cutting execution lanes before reaching for
+older helper scripts:
+
+- Bazel repo toolchain lane: `npm run bazel:toolchain`
+- Bazel repo smoke lane: `npm run bazel:smoke`
+- Bazel repo quality lane: `npm run bazel:quality`
+- Bazel repo regression lane: `npm run bazel:regressions`
+- Bazel repo CI lane: `npm run bazel:ci`
+- Bun repo toolchain lane: `bun run bun:repo:toolchain`
+- Bun repo smoke lane: `bun run bun:repo:smoke`
+- Bun repo quality lane: `bun run bun:repo:quality`
+- Bun repo CI lane: `bun run bun:repo:ci`
 
 ## Documentation Placement Rules
 
@@ -336,6 +351,10 @@ npm run cleanup:cms-blocks
 npm run cleanup:category-mapping-duplicates
 npm run metrics:guardrails
 npm run check:factory-meta
+npm run test:coverage:high-risk
+npm run check:coverage:high-risk
+npm run check:test-distribution
+npm run check:test-quality
 npm run sync:toolchain:mirrors
 npm run check:toolchain:contract:node
 npm run test:toolchain:contract

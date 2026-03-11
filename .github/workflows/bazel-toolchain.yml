@@ -1,4 +1,4 @@
-name: Bazel Specialized Regressions
+name: Bazel Toolchain
 
 on:
   workflow_dispatch:
@@ -7,18 +7,21 @@ on:
       - ".bazelignore"
       - ".bazelrc"
       - ".bazelversion"
-      - ".github/workflows/bazel-specialized-regressions.yml"
+      - ".bun-version"
+      - ".github/workflows/bazel-toolchain.yml"
+      - ".node-version"
+      - ".nvmrc"
+      - ".tool-versions"
       - "BUILD.bazel"
       - "MODULE.bazel"
       - "REPO.bazel"
+      - "bun.lock"
+      - "bunfig.toml"
       - "docs/build/**"
+      - "docs/platform/bun-support.md"
       - "package-lock.json"
       - "package.json"
-      - "src/features/case-resolver/**"
-      - "src/features/case-resolver-capture/**"
-      - "src/features/products/**"
-      - "src/shared/contracts/**"
-      - "src/shared/lib/ai-paths/**"
+      - "scripts/runtime/**"
       - "tools/bazel/**"
       - "tools/js/**"
   push:
@@ -28,18 +31,21 @@ on:
       - ".bazelignore"
       - ".bazelrc"
       - ".bazelversion"
-      - ".github/workflows/bazel-specialized-regressions.yml"
+      - ".bun-version"
+      - ".github/workflows/bazel-toolchain.yml"
+      - ".node-version"
+      - ".nvmrc"
+      - ".tool-versions"
       - "BUILD.bazel"
       - "MODULE.bazel"
       - "REPO.bazel"
+      - "bun.lock"
+      - "bunfig.toml"
       - "docs/build/**"
+      - "docs/platform/bun-support.md"
       - "package-lock.json"
       - "package.json"
-      - "src/features/case-resolver/**"
-      - "src/features/case-resolver-capture/**"
-      - "src/features/products/**"
-      - "src/shared/contracts/**"
-      - "src/shared/lib/ai-paths/**"
+      - "scripts/runtime/**"
       - "tools/bazel/**"
       - "tools/js/**"
 
@@ -47,8 +53,8 @@ permissions:
   contents: read
 
 jobs:
-  bazel-specialized-regressions:
-    name: bazel-specialized-regressions
+  bazel-toolchain:
+    name: bazel-toolchain
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -66,8 +72,13 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: '.bun-version'
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Specialized regression suite
-        run: npm run bazel:regressions
+      - name: Bazel repo toolchain lane
+        run: npm run bazel:toolchain

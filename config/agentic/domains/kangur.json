@@ -1,0 +1,23 @@
+{
+  "id": "kangur",
+  "label": "Kangur learner and admin surfaces",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/kangur",
+    "src/app/api/kangur"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "learner_experience"
+  ]
+}

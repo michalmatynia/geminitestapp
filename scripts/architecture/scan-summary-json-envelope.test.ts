@@ -116,6 +116,18 @@ const qualityTestDistributionScriptPath = path.join(
   'quality',
   'check-test-distribution.mjs'
 );
+const qualityHighRiskCoverageScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'quality',
+  'check-high-risk-coverage.mjs'
+);
+const testingQualitySnapshotScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'quality',
+  'generate-test-quality-snapshot.mjs'
+);
 
 const createTempRoot = (): string => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scan-envelope-'));
@@ -189,6 +201,51 @@ const seedQualitySources = (root: string): void => {
       '}',
       '',
     ].join('\n')
+  );
+};
+
+const seedHighRiskCoverageSummary = (root: string): void => {
+  const absoluteApiRoutePath = path.join(root, 'src', 'app', 'api', 'products', 'route.ts');
+  writeFile(
+    root,
+    'coverage/coverage-summary.json',
+    `${JSON.stringify(
+      {
+        total: {},
+        [absoluteApiRoutePath]: {
+          lines: { total: 10, covered: 9, skipped: 0, pct: 90 },
+          statements: { total: 10, covered: 9, skipped: 0, pct: 90 },
+          functions: { total: 10, covered: 9, skipped: 0, pct: 90 },
+          branches: { total: 10, covered: 8, skipped: 0, pct: 80 },
+        },
+        'src/shared/contracts/auth.ts': {
+          lines: { total: 10, covered: 10, skipped: 0, pct: 100 },
+          statements: { total: 10, covered: 10, skipped: 0, pct: 100 },
+          functions: { total: 10, covered: 10, skipped: 0, pct: 100 },
+          branches: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        },
+        'src/shared/lib/api/handler.ts': {
+          lines: { total: 20, covered: 16, skipped: 0, pct: 80 },
+          statements: { total: 20, covered: 16, skipped: 0, pct: 80 },
+          functions: { total: 20, covered: 16, skipped: 0, pct: 80 },
+          branches: { total: 20, covered: 14, skipped: 0, pct: 70 },
+        },
+        'src/features/kangur/ui/widget.tsx': {
+          lines: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          statements: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          functions: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          branches: { total: 10, covered: 7, skipped: 0, pct: 70 },
+        },
+        'src/features/ai/ai-paths/runtime/engine.ts': {
+          lines: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          statements: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          functions: { total: 10, covered: 8, skipped: 0, pct: 80 },
+          branches: { total: 10, covered: 7, skipped: 0, pct: 70 },
+        },
+      },
+      null,
+      2
+    )}\n`
   );
 };
 
@@ -1244,6 +1301,17 @@ describe('scanner summary-json envelope', () => {
       '--no-write',
       '--no-history',
     ]);
+    seedHighRiskCoverageSummary(root);
+    const highRiskCoverage = runSummaryJson(root, qualityHighRiskCoverageScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+    const testingQualitySnapshot = runSummaryJson(root, testingQualitySnapshotScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
 
     expect(apiErrorSources.scanner).toMatchObject({
       name: 'api-error-sources',
@@ -1273,10 +1341,14 @@ describe('scanner summary-json envelope', () => {
     expect(testDistribution.summary).toMatchObject({
       featureCount: expect.any(Number),
       totalTestFiles: expect.any(Number),
+      featuresWithoutFastTestCount: expect.any(Number),
+      featuresWithoutNegativeTestCount: expect.any(Number),
     });
     expect(testDistribution.details).toMatchObject({
       featuresWithTests: expect.any(Array),
       featuresWithoutTests: expect.any(Array),
+      featuresWithoutFastTests: expect.any(Array),
+      featuresWithoutNegativeTests: expect.any(Array),
       issues: expect.any(Array),
     });
     expect(testDistribution.paths).toBeNull();
@@ -1286,6 +1358,87 @@ describe('scanner summary-json envelope', () => {
       strictMode: false,
     });
     expect(testDistribution.notes).toContain('test-distribution quality check result');
+
+    expect(highRiskCoverage.scanner).toMatchObject({
+      name: 'high-risk-coverage',
+      version: '1.0.0',
+    });
+    expect(highRiskCoverage.summary).toMatchObject({
+      targetCount: expect.any(Number),
+      matchedTargetCount: expect.any(Number),
+      passingTargetCount: expect.any(Number),
+      failingTargetCount: expect.any(Number),
+      uncoveredTargetCount: expect.any(Number),
+      errorCount: expect.any(Number),
+      warningCount: expect.any(Number),
+      infoCount: expect.any(Number),
+    });
+    expect(highRiskCoverage.details).toMatchObject({
+      coverageSummaryPath: expect.any(String),
+      targets: expect.any(Array),
+      issues: expect.any(Array),
+      rules: expect.any(Array),
+    });
+    expect(highRiskCoverage.paths).toBeNull();
+    expect(highRiskCoverage.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      strictMode: false,
+    });
+    expect(highRiskCoverage.notes).toContain('high-risk-coverage quality check result');
+
+    expect(testingQualitySnapshot.scanner).toMatchObject({
+      name: 'testing-quality-snapshot',
+      version: '1.0.0',
+    });
+    expect(testingQualitySnapshot.summary).toMatchObject({
+      repoTestFileCount: expect.any(Number),
+      e2eTestFileCount: expect.any(Number),
+      featuresWithoutTestCount: expect.any(Number),
+      featuresWithoutFastTestCount: expect.any(Number),
+      featuresWithoutNegativeTestCount: expect.any(Number),
+      failingBaselineCount: expect.any(Number),
+      missingBaselineCount: expect.any(Number),
+      requiredFailingBaselineCount: expect.any(Number),
+      requiredMissingBaselineCount: expect.any(Number),
+      todoCount: expect.any(Number),
+    });
+    expect(testingQualitySnapshot.details).toMatchObject({
+      inventory: expect.objectContaining({
+        repoTestFileCount: expect.any(Number),
+        e2eTestFileCount: expect.any(Number),
+        scriptTestFileCount: expect.any(Number),
+        featureCoverage: expect.objectContaining({
+          featureCount: expect.any(Number),
+          featuresWithTestCount: expect.any(Number),
+          featuresWithoutTestCount: expect.any(Number),
+          featuresWithoutTests: expect.any(Array),
+          featuresWithoutFastTests: expect.any(Array),
+          featuresWithoutNegativeTests: expect.any(Array),
+        }),
+        hygiene: expect.objectContaining({
+          onlyCount: expect.any(Number),
+          skipCount: expect.any(Number),
+          todoCount: expect.any(Number),
+        }),
+      }),
+      baselines: expect.any(Array),
+      slowestSuites: expect.any(Array),
+      featureCoverage: expect.objectContaining({
+        withTests: expect.any(Array),
+        withoutTests: expect.any(Array),
+        withoutFastTests: expect.any(Array),
+        withoutNegativeTests: expect.any(Array),
+      }),
+    });
+    expect(testingQualitySnapshot.paths).toBeNull();
+    expect(testingQualitySnapshot.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: true,
+      strictMode: false,
+      ci: false,
+    });
+    expect(testingQualitySnapshot.notes).toContain('testing quality snapshot result');
   });
 
   it('wraps AI-Paths canonical checks in the shared scan envelope', () => {

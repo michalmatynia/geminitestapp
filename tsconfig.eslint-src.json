@@ -9,5 +9,16 @@
     "src/**/*.mts",
     "src/**/*.cts",
     "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".next-dev",
+    ".next-dev-*",
+    "bazel-*",
+    "bazel-bin",
+    "bazel-out",
+    "bazel-testlogs",
+    "tmp"
   ]
 }

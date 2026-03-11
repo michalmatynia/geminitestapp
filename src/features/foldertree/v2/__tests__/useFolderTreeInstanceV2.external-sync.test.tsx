@@ -55,7 +55,7 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
               })
             ),
             commit: vi.fn(async () => undefined),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           } as any,
         })
       )

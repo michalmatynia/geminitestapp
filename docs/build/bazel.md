@@ -13,7 +13,18 @@ The current toolchain model is intentionally pragmatic:
 - Bazel is the execution/orchestration layer
 - npm remains the package installation source of truth through [package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json)
 - JS/TS tools execute through repo-owned Bazel runner scripts against local `node_modules/.bin/*`
+- Bun remains a separate repo-supported runtime lane; Bazel does not own Bun support, it only exposes some Bun-backed checks as Bazel targets too
 - deeper `rules_js`/lockfile-native modeling is deferred until the repo adopts a lockfile/toolchain shape that fits it cleanly
+
+`MODULE.bazel` is now an explicit Bzlmod entrypoint instead of a placeholder
+stub. The repo currently declares:
+
+- `bazel_skylib` for future Starlark utility expansion
+- `rules_shell` for the shell-heavy repo orchestration layer
+
+That does not mean the repo has migrated to full Bazel-managed JS dependencies
+yet. It means the Bazel module layer is now explicit and versioned instead of
+empty.
 
 The first direct Bazel-executed checks are now:
 
@@ -43,11 +54,22 @@ The first direct Bazel-executed checks are now:
 - `//:critical_flows` -> direct `node scripts/testing/run-critical-flow-tests.mjs --strict --ci`
 - `//:security_smoke` -> direct `node scripts/testing/run-security-smoke-tests.mjs --strict --ci`
 - `//:accessibility_smoke` -> direct `node scripts/testing/run-accessibility-smoke-tests.mjs --strict --ci`
-- `//:integration_prisma` -> direct Prisma preflight + `tsx` DB check + Vitest integration project
-- `//:integration_mongo` -> direct `vitest run --project integration-mongo`
+- `//:integration_prisma` -> direct Prisma integration baseline runner with metrics artifact output
+- `//:integration_mongo` -> direct Mongo integration baseline runner with metrics artifact output
 - `//:case_resolver_capture_mapping_e2e` -> direct Playwright suite runner for the Case Resolver capture-mapping flow
 - `//:products_trigger_queue_e2e` -> direct Playwright suite runner for the product trigger-queue flow
 - `//:next_build` -> direct Prisma generate + Next.js production build execution
+- `//:toolchain_contract` -> direct Bun-backed toolchain contract execution
+- `//:bun_runtime_contract` -> direct Bun-backed runtime contract execution
+- `//:bun_compat` -> direct Bun-backed compatibility lane execution
+
+The main repo aggregation lanes are now:
+
+- `//:repo_toolchain` -> repo-level toolchain and Bun contract lane
+- `//:repo_smoke` -> repo smoke lane
+- `//:repo_quality` -> repo quality/documentation/canonical lane
+- `//:repo_regressions` -> repo regression bundles
+- `//:repo_ci` -> full repo lane composed from the four lanes above
 
 ## Install
 
@@ -81,21 +103,49 @@ npm run bazel -- run //:lint
 npm run bazel -- run //:typecheck
 npm run bazel -- run //:unit
 npm run bazel -- run //:next_build
+npm run bazel:toolchain
+npm run bazel:quality
 npm run bazel:smoke
 npm run bazel:regressions
 npm run bazel:ci
 ```
 
-The dedicated Bazel smoke workflow now exercises:
+For the Bun execution model itself, see [bun.md](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/docs/build/bun.md).
 
-- `bazel query //:all`
-- `//:lint`
-- `//:typecheck`
-- `//:unit`
-- `//:integration_prisma`
-- `//:integration_mongo`
-- `//:next_build`
-- `//:api_error_sources`
+## Canonical entrypoints
+
+Use these as the repo-facing Bazel commands:
+
+- `npm run bazel:toolchain`
+- `npm run bazel:smoke`
+- `npm run bazel:quality`
+- `npm run bazel:regressions`
+- `npm run bazel:ci`
+
+Use these as the companion repo-facing Bun commands:
+
+- `bun run bun:repo:toolchain`
+- `bun run bun:repo:smoke`
+- `bun run bun:repo:quality`
+- `bun run bun:repo:ci`
+
+The shell scripts under `tools/bazel/` still exist, but they are now
+compatibility shims around the root Bazel lanes rather than the canonical
+interface.
+
+The Bun-specific Bazel targets still exist for teams that want them inside the
+Bazel graph, but they are secondary surfaces. Invoke them through the generic
+entrypoint when needed, for example:
+
+```bash
+npm run bazel -- run //:bun_contracts
+npm run bazel -- run //:bun_runtime_contract
+npm run bazel -- run //:bun_compat
+```
+
+The dedicated Bazel smoke workflow now exercises the repo smoke lane:
+
+- `//:repo_smoke`
 
 The workflow and local smoke path now use the same repo-owned entrypoint:
 
@@ -103,10 +153,9 @@ The workflow and local smoke path now use the same repo-owned entrypoint:
 npm run bazel:smoke
 ```
 
-The specialized regression bundles stay outside the smoke lane on purpose:
+The repo regression bundles stay outside the smoke lane on purpose and live under:
 
-- `//:case_resolver_regression`
-- `//:products_trigger_queue_unit`
+- `//:repo_regressions`
 
 The workflow and local specialized-regression path now use the same repo-owned entrypoint:
 
@@ -116,7 +165,7 @@ npm run bazel:regressions
 
 They run in a separate workflow:
 
-- [bazel-specialized-regressions.yml](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/.github/workflows/bazel-specialized-regressions.yml)
+- [bazel-regressions.yml](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/.github/workflows/bazel-regressions.yml)
 
 ## CI validation matrix
 
@@ -125,22 +174,28 @@ Shared smoke lane:
 - workflow: `bazel-smoke`
 - command: `npm run bazel:smoke`
 - targets:
-  - `bazel query //:all`
-  - `//:lint`
-  - `//:typecheck`
-  - `//:unit`
-  - `//:integration_prisma`
-  - `//:integration_mongo`
-  - `//:next_build`
-  - `//:api_error_sources`
+  - `//:repo_smoke`
 
-Specialized regression lane:
+Repo quality lane:
 
-- workflow: `bazel-specialized-regressions`
+- workflow: `bazel-quality`
+- command: `npm run bazel:quality`
+- targets:
+  - `//:repo_quality`
+
+Repo regression lane:
+
+- workflow: `bazel-regressions`
 - command: `npm run bazel:regressions`
 - targets:
-  - `//:case_resolver_regression`
-  - `//:products_trigger_queue_unit`
+  - `//:repo_regressions`
+
+Repo toolchain lane:
+
+- workflow: `bazel-toolchain`
+- command: `npm run bazel:toolchain`
+- targets:
+  - `//:repo_toolchain`
 
 Validated direct Bazel gates:
 
@@ -158,15 +213,16 @@ Unified local CI entrypoint:
 
 - command: `npm run bazel:ci`
 - includes:
-  - `npm run bazel:smoke`
-  - `npm run bazel:regressions`
+  - `//:repo_ci`
 
 ## Branch protection recommendation
 
 These checks should be required in GitHub branch protection:
 
+- `bazel-toolchain`
 - `bazel-smoke`
-- `bazel-specialized-regressions`
+- `bazel-quality`
+- `bazel-regressions`
 
 This repository can document those requirements, but GitHub branch protection itself must still be configured in repository settings.
 
@@ -238,6 +294,18 @@ npm run bazel -- run //tools/js:next -- --version
 - `//:integration_prisma`
 - `//:integration_mongo`
 - `//:next_build`
+- `//:toolchain_contract`
+- `//:bun_config`
+- `//:bun_version`
+- `//:bun_lock_check`
+- `//:bun_runtime_contract`
+- `//:bun_compat`
+- `//:bun_contracts`
+- `//:repo_toolchain`
+- `//:repo_smoke`
+- `//:repo_quality`
+- `//:repo_regressions`
+- `//:repo_ci`
 
 ## Current rollout model
 
@@ -258,6 +326,9 @@ npm run bazel -- run //tools/js:next -- --version
 - `architecture_*` and `weekly_*` targets now execute directly and carry explicit Bazel input groups rather than npm wrapper indirection.
 - `observability`, `ui_consolidation`, and `unit_domain_timings` now also execute directly.
 - `canonical_sitewide` and `ai_paths_canonical` now also execute directly.
+- repo aggregate lanes now live as root Bazel targets instead of only Bash wrapper scripts.
+- Bun-backed toolchain and compatibility lanes remain available as Bazel targets, but Bun repo support is documented separately in [bun.md](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/docs/build/bun.md).
+- the Bun runtime/compatibility and core canonical/observability lanes now use narrower Bazel input groups instead of inheriting broad repo-wide filegroups.
 - `unit`, `critical_flows`, `security_smoke`, and `accessibility_smoke` now also bypass the top-level npm wrapper layer.
 - `case_resolver_regression` and `products_trigger_queue_unit` now also bypass the wrapper layer.
 - `integration_prisma` and `integration_mongo` now also execute directly while preserving the existing CI service/env assumptions.
@@ -265,3 +336,23 @@ npm run bazel -- run //tools/js:next -- --version
 - `next_build` now executes directly as a Bazel target while still preserving the existing Next.js + Prisma build contract.
 - Remote cache support is injected by the repo-owned Bazel wrapper rather than hard-coding provider-specific settings into `.bazelrc`.
 - The next migration step is to decide whether deeper Bazel-native JS dependency modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.
+
+## Agentic engineering entrypoints
+
+The Bazel lanes are now paired with repo-owned agentic routing commands:
+- `npm run agentic:classify -- <changed files...>`
+- `npm run agentic:preflight -- <changed files...>`
+
+Those commands read `config/agentic/domains/*.json`, derive the impacted doc generators, scanners, and validation targets, and write `artifacts/agent-work-order.json` for downstream agent runs.
+
+See [agentic-engineering.md](./agentic-engineering.md) for the routing contract.
+
+## Agentic engineering entrypoints
+
+The Bazel lanes are now paired with repo-owned agentic routing commands:
+- `npm run agentic:classify -- <changed files...>`
+- `npm run agentic:preflight -- <changed files...>`
+
+Those commands read `config/agentic/domains/*.json`, derive the impacted doc generators, scanners, and validation targets, and write `artifacts/agent-work-order.json` for downstream agent runs.
+
+See [agentic-engineering.md](./agentic-engineering.md) for the routing contract.

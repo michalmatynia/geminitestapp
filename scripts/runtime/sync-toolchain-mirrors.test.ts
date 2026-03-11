@@ -90,6 +90,21 @@ describe('sync toolchain mirrors', () => {
     expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
   });
 
+  it('reports a no-op when canonical pin files contain whitespace but mirrors are already canonical', () => {
+    const root = createTempRoot();
+    writeFile(root, '.nvmrc', `  ${expectedNodeVersion}  \n`);
+    writeFile(root, '.bun-version', `  ${expectedBunVersion}  \n`);
+    writeFile(root, '.node-version', `${expectedNodeVersion}\n`);
+    writeFile(root, '.tool-versions', `nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Toolchain mirror files are already aligned.');
+    expect(readFile(root, '.node-version')).toBe(`${expectedNodeVersion}\n`);
+    expect(readFile(root, '.tool-versions')).toBe(`nodejs ${expectedNodeVersion}\nbun ${expectedBunVersion}\n`);
+  });
+
   it('rewrites semantically aligned mirror files to the canonical newline-terminated format', () => {
     const root = createTempRoot();
     writeFile(root, '.nvmrc', `${expectedNodeVersion}\n`);

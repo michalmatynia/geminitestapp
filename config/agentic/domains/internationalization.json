@@ -1,0 +1,24 @@
+{
+  "id": "internationalization",
+  "label": "Internationalization settings, fallbacks, and locale runtime behavior",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/internationalization"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [
+    "//:canonical_sitewide"
+  ],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "localization_surface"
+  ]
+}

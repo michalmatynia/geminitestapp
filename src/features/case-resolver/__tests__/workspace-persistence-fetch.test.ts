@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
-  createCaseResolverAssetFile,
   createCaseResolverFile,
   createDefaultCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
@@ -15,9 +14,6 @@ import {
   fetchCaseResolverWorkspaceRecord,
   fetchCaseResolverWorkspaceIfStale,
   fetchCaseResolverWorkspaceSnapshot,
-  getCaseResolverWorkspaceRevision,
-  persistCaseResolverWorkspaceSnapshot,
-  stampCaseResolverWorkspaceMutation,
 } from '@/features/case-resolver/workspace-persistence';
 
 const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1 =

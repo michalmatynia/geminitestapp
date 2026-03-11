@@ -1,0 +1,23 @@
+{
+  "id": "admin",
+  "label": "Admin shell, settings pages, and operational control surfaces",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/admin"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:accessibility_smoke"
+  ],
+  "impactBundles": [
+    "admin_experience"
+  ]
+}

@@ -9,6 +9,8 @@ const enforceAiPathsActionRateLimitMock = vi.hoisted(() => vi.fn());
 const canAccessGlobalAiPathRunsMock = vi.hoisted(() => vi.fn());
 
 const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
+const resolvePathRunRepositoryMock = vi.hoisted(() => vi.fn());
+const resolveAlternatePathRunRepositoryMock = vi.hoisted(() => vi.fn());
 const listRunsMock = vi.hoisted(() => vi.fn());
 const deletePathRunsWithRepositoryMock = vi.hoisted(() => vi.fn());
 
@@ -27,9 +29,17 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
-}));
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/shared/lib/ai-paths/services/path-run-repository')>();
+
+  return {
+    ...actual,
+    getPathRunRepository: getPathRunRepositoryMock,
+    resolvePathRunRepository: resolvePathRunRepositoryMock,
+    resolveAlternatePathRunRepository: resolveAlternatePathRunRepositoryMock,
+  };
+});
 
 import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/handler';
 
@@ -51,9 +61,16 @@ describe('AI Paths runs list handler', () => {
     resolveAiPathsStaleRunningMaxAgeMsMock.mockReturnValue(30 * 60 * 1000);
     recoverStaleRunningRunsMock.mockResolvedValue(0);
     listRunsMock.mockResolvedValue({ runs: [], total: 0 });
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: listRunsMock,
+    getPathRunRepositoryMock.mockResolvedValue({ listRuns: listRunsMock });
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: listRunsMock,
+      },
     });
+    resolveAlternatePathRunRepositoryMock.mockResolvedValue(null);
   });
 
   it('passes nodeId filter through to repository list options', async () => {

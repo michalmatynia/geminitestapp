@@ -1,0 +1,24 @@
+{
+  "id": "notesapp",
+  "label": "Notes application, notebooks, tags, and note editing flows",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/notesapp",
+    "src/app/api/notes"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:accessibility_smoke"
+  ],
+  "impactBundles": [
+    "notes_authoring"
+  ]
+}

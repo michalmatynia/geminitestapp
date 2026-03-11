@@ -117,6 +117,12 @@ describe('guardrails baseline helpers', () => {
         status: 'FAIL',
       },
       {
+        label: 'imports.featuresToAppApiTotalImports (hard limit)',
+        current: 0,
+        max: 0,
+        status: 'OK',
+      },
+      {
         label: 'source.largestFileLines (hard limit)',
         current: 3075,
         max: 3000,

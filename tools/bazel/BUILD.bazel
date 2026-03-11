@@ -1,10 +1,12 @@
 exports_files([
+    "bun_bin.sh",
     "integration_mongo.sh",
     "integration_prisma.sh",
     "next_build.sh",
     "node_bin.sh",
     "node_script.sh",
     "playwright_suite.sh",
+    "repo_lane.sh",
     "run-bazel.sh",
     "scanner_contracts.sh",
     "tsx_script.sh",

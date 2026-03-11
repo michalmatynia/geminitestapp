@@ -1,0 +1,27 @@
+{
+  "id": "products",
+  "label": "Products domain and product automation flows",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/products",
+    "src/shared/lib/products",
+    "src/app/api/v2/products"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:integration_prisma",
+    "//:integration_mongo",
+    "//:products_trigger_queue_unit"
+  ],
+  "impactBundles": [
+    "product_data_pipeline"
+  ]
+}

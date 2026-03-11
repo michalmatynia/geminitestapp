@@ -6,16 +6,11 @@ import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 import type { CanvasBoardState } from '../CanvasBoard.types';
 import type { ConnectorInfo } from '../canvas-board-connectors';
-import type {
-  SvgConnectorTooltipState,
-  SvgNodeDiagnosticsTooltipState,
-} from '../CanvasBoard.utils';
 import { CanvasBoard } from '../canvas-board';
 
 const useCanvasBoardStateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../useCanvasBoardState', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useCanvasBoardState: (...args: unknown[]) => useCanvasBoardStateMock(...args),
 }));
 

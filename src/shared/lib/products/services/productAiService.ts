@@ -1,12 +1,14 @@
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
-import { badRequestError, invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem, logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
+  type PreparedGraphModelEnqueuePayload,
+  type PreparedGraphModelReuseIdentity,
   matchesGraphModelReuseIdentity,
-  prepareGraphModelEnqueuePayload,
+  prepareGraphModelEnqueuePayloadOrThrow,
 } from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
@@ -35,11 +37,6 @@ const GRAPH_MODEL_REUSE_SCAN_LIMIT = parseEnvMs(
   30,
   1
 );
-
-type PreparedGraphModelEnqueuePayload = Extract<
-  ReturnType<typeof prepareGraphModelEnqueuePayload>,
-  { success: true }
->;
 
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
@@ -99,19 +96,13 @@ const shouldFetchProductForJob = (job: ProductAiJob): boolean => {
 
 const canReuseGraphModelJob = (
   job: ProductAiJobRecord,
-  cacheKey: string,
-  payloadHash: string,
-  requestedModelId: string | null
+  identity: PreparedGraphModelReuseIdentity
 ): boolean => {
   if (job.type !== 'graph_model') return false;
   if (
     !matchesGraphModelReuseIdentity({
       payload: job.payload,
-      identity: {
-        cacheKey,
-        payloadHash,
-        requestedModelId,
-      },
+      identity,
     })
   ) {
     // Reuse is only safe when both sides resolve to the same model or both sides
@@ -144,18 +135,8 @@ export async function enqueueProductAiJob(
   let graphModelPrepared: PreparedGraphModelEnqueuePayload | null = null;
 
   if (type === 'graph_model') {
-    const prepared = prepareGraphModelEnqueuePayload(payload);
-    if (!prepared.success) {
-      throw badRequestError('Invalid graph_model payload', {
-        productId,
-        issues: prepared.error.issues.map((issue) => ({
-          path: issue.path.join('.'),
-          message: issue.message,
-        })),
-      });
-    }
-    graphModelPrepared = prepared;
-    normalizedPayload = prepared.payload;
+    graphModelPrepared = prepareGraphModelEnqueuePayloadOrThrow({ payload, productId });
+    normalizedPayload = graphModelPrepared.payload;
   }
 
   try {
@@ -180,36 +161,34 @@ export async function enqueueProductAiJob(
 
   if (type === 'graph_model') {
     if (!graphModelPrepared) {
-      throw invalidStateError('graph_model enqueue preparation missing');
+      throw new Error('graph_model enqueue preparation missing');
     }
-    const { cacheKey, payloadHash, requestedModelId } = graphModelPrepared.reuseIdentity;
-    if (cacheKey && payloadHash) {
-      const existingJobs = await jobRepository.findJobs(productId, {
-        type: 'graph_model',
-        statuses: ['pending', 'running', 'completed'],
-        limit: GRAPH_MODEL_REUSE_SCAN_LIMIT,
-      });
-      const reusable = existingJobs.find((job: ProductAiJobRecord) =>
-        canReuseGraphModelJob(job, cacheKey, payloadHash, requestedModelId)
-      );
-      if (reusable) {
-        try {
-          void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
-            service: 'product-ai-service',
-            productId,
-            jobId: reusable.id,
-            context: { type, cacheKey, payloadHash, status: reusable.status },
-          });
-        } catch {
-          void logSystemEvent({
-            level: 'info',
-            source: LOG_SOURCE,
-            message: 'Reusing graph_model job',
-            context: { jobId: reusable.id, status: reusable.status, cacheKey, payloadHash },
-          });
-        }
-        return toProductAiJob(reusable);
+    const { cacheKey, payloadHash } = graphModelPrepared.reuseIdentity;
+    const existingJobs = await jobRepository.findJobs(productId, {
+      type: 'graph_model',
+      statuses: ['pending', 'running', 'completed'],
+      limit: GRAPH_MODEL_REUSE_SCAN_LIMIT,
+    });
+    const reusable = existingJobs.find((job: ProductAiJobRecord) =>
+      canReuseGraphModelJob(job, graphModelPrepared.reuseIdentity)
+    );
+    if (reusable) {
+      try {
+        void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
+          service: 'product-ai-service',
+          productId,
+          jobId: reusable.id,
+          context: { type, cacheKey, payloadHash, status: reusable.status },
+        });
+      } catch {
+        void logSystemEvent({
+          level: 'info',
+          source: LOG_SOURCE,
+          message: 'Reusing graph_model job',
+          context: { jobId: reusable.id, status: reusable.status, cacheKey, payloadHash },
+        });
       }
+      return toProductAiJob(reusable);
     }
   }
 

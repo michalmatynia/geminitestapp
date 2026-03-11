@@ -49,6 +49,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunIdRef = useRef<string | null>(null);
   const currentRunStartedAtRef = useRef<string | null>(null);
   const currentRunStartedAtMsRef = useRef<number | null>(null);
+  const stopServerRunStreamRef = useRef<() => void>(() => {});
   const fetchEntityByTypeRef = useRef<
     (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>
       >(async () => null);
@@ -104,6 +105,10 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     currentRunStartedAtRef,
     setCurrentRunId: runtimeContextActions.setCurrentRunId,
   });
+
+  useEffect(() => {
+    stopServerRunStreamRef.current = server.stopServerRunStream;
+  }, [server.stopServerRunStream]);
 
   // 3. Local execution engine
   const local = useAiPathsLocalExecution({
@@ -167,15 +172,15 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   }, [runtimeContextActions, state.nodeDurations]);
 
   // Cleanup only on unmount. Depending on the whole `server` object causes
-  // cleanup to fire on normal rerenders, which aborts active local runs.
+  // cleanup to fire on normal rerenders, which aborts active local/server runs.
   useEffect(() => {
     return () => {
-      server.stopServerRunStream();
+      stopServerRunStreamRef.current();
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [server.stopServerRunStream]);
+  }, []);
 
   // Additional High-level Handlers
   const handleFireTrigger = useCallback(

@@ -15,6 +15,8 @@ const repoPackageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.
 const expectedBunVersion = fs.readFileSync(path.join(repoRoot, '.bun-version'), 'utf8').trim();
 const expectedPackageManager = repoPackageJson.packageManager;
 const expectedNpmEngine = repoPackageJson.engines?.npm;
+const expectedPackageManagerVersion = expectedPackageManager?.split('@')[1];
+const expectedPackageManagerVersionParts = expectedPackageManagerVersion?.split('.');
 
 if (typeof expectedPackageManager !== 'string' || expectedPackageManager.trim().length === 0) {
   throw new Error('package.json must declare packageManager for the package manager contract test.');
@@ -22,6 +24,18 @@ if (typeof expectedPackageManager !== 'string' || expectedPackageManager.trim().
 
 if (typeof expectedNpmEngine !== 'string' || expectedNpmEngine.trim().length === 0) {
   throw new Error('package.json must declare engines.npm for the package manager contract test.');
+}
+
+if (typeof expectedPackageManagerVersion !== 'string' || expectedPackageManagerVersion.trim().length === 0) {
+  throw new Error('package.json must declare a pinned packageManager version for the package manager contract test.');
+}
+
+if (
+  !Array.isArray(expectedPackageManagerVersionParts) ||
+  expectedPackageManagerVersionParts.length < 2 ||
+  expectedPackageManagerVersionParts.some((part) => part.trim().length === 0)
+) {
+  throw new Error('package.json must declare a full semver packageManager version for the package manager contract test.');
 }
 
 const createTempRoot = () => {
@@ -88,6 +102,66 @@ describe('Package manager contract check', () => {
       packageManager: `  ${expectedPackageManager}  `,
       engines: {
         npm: `  ${expectedNpmEngine}  `,
+      },
+    });
+    writeJson(root, 'package-lock.json', {
+      name: 'package-manager-contract-fixture',
+      lockfileVersion: 3,
+    });
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Package manager contract is aligned');
+  });
+
+  it('passes when engines.npm is pinned to the exact packageManager version', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'package-manager-contract-fixture',
+      packageManager: expectedPackageManager,
+      engines: {
+        npm: expectedPackageManagerVersion,
+      },
+    });
+    writeJson(root, 'package-lock.json', {
+      name: 'package-manager-contract-fixture',
+      lockfileVersion: 3,
+    });
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Package manager contract is aligned');
+  });
+
+  it('passes when engines.npm uses an explicit = comparator', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'package-manager-contract-fixture',
+      packageManager: expectedPackageManager,
+      engines: {
+        npm: `=${expectedPackageManagerVersion}`,
+      },
+    });
+    writeJson(root, 'package-lock.json', {
+      name: 'package-manager-contract-fixture',
+      lockfileVersion: 3,
+    });
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Package manager contract is aligned');
+  });
+
+  it('passes when engines.npm uses a partial semver comparator', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'package-manager-contract-fixture',
+      packageManager: expectedPackageManager,
+      engines: {
+        npm: `>=${expectedPackageManagerVersionParts[0]}.${expectedPackageManagerVersionParts[1]}`,
       },
     });
     writeJson(root, 'package-lock.json', {

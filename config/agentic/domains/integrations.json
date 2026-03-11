@@ -1,0 +1,23 @@
+{
+  "id": "integrations",
+  "label": "Third-party integrations and synchronization surfaces",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/integrations",
+    "src/shared/lib/integrations"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "external_integrations"
+  ]
+}

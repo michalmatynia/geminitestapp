@@ -10,6 +10,7 @@ const canAccessGlobalAiPathRunsMock = vi.hoisted(() => vi.fn());
 
 const findRunByIdMock = vi.hoisted(() => vi.fn());
 const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
+const resolvePathRunRepositoryMock = vi.hoisted(() => vi.fn());
 
 const deletePathRunWithRepositoryMock = vi.hoisted(() => vi.fn());
 const deletePathRunsWithRepositoryMock = vi.hoisted(() => vi.fn());
@@ -31,9 +32,16 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
-}));
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/shared/lib/ai-paths/services/path-run-repository')>();
+
+  return {
+    ...actual,
+    getPathRunRepository: getPathRunRepositoryMock,
+    resolvePathRunRepository: resolvePathRunRepositoryMock,
+  };
+});
 
 import { DELETE_handler as deleteRunHandler } from '@/app/api/ai-paths/runs/[runId]/handler';
 import { DELETE_handler as clearRunsHandler } from '@/app/api/ai-paths/runs/handler';
@@ -57,6 +65,12 @@ describe('AI Paths run delete handlers', () => {
     assertAiPathRunAccessMock.mockReturnValue(undefined);
     canAccessGlobalAiPathRunsMock.mockReturnValue(false);
     getPathRunRepositoryMock.mockResolvedValue(repoMock);
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: repoMock,
+    });
     recoverStaleRunningRunsMock.mockResolvedValue(0);
     resolveAiPathsStaleRunningCleanupIntervalMsMock.mockReturnValue(120_000);
     resolveAiPathsStaleRunningMaxAgeMsMock.mockReturnValue(30 * 60 * 1000);

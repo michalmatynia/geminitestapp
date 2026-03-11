@@ -10,11 +10,11 @@ canonical: true
 # Bun Support
 
 This repository now supports Bun as an optional local tool for installs and
-selected script execution.
+selected repo script execution.
 
 ## Current Contract
 
-- Bun is supported for local development workflows.
+- Bun is supported for selected repo workflows and script domains.
 - Node remains the required runtime for the application server and build flows.
 - npm remains the canonical package manager for CI and existing composite repo
   scripts.
@@ -62,6 +62,10 @@ bun run lock:bun:sync
 bun run test:bun:runtime
 bun install --frozen-lockfile
 bun run check:bun:compat
+bun run bun:repo:toolchain
+bun run bun:repo:smoke
+bun run bun:repo:quality
+bun run bun:repo:ci
 ```
 
 Safe examples that already work in this repo:
@@ -69,6 +73,12 @@ Safe examples that already work in this repo:
 ```bash
 bun run check:unsafe-patterns
 bun run lint -- --help
+bun run bun:check:docs-structure
+bun run bun:check:api-error-sources
+bun run bun:check:canonical-sitewide
+bun run bun:check:observability
+bun run bun:check:architecture-guardrails
+bun run bun:check:ui-consolidation
 ```
 
 ## Constraints
@@ -82,6 +92,18 @@ These flows should remain Node-first unless explicitly migrated and verified:
 
 Many composite scripts in `package.json` still chain through `npm run`. That is
 intentional for now; Bun support is additive, not a package-manager cutover.
+
+The current direct Bun repo lanes are intentionally limited to deterministic
+script domains:
+
+- docs checks
+- canonical checks
+- observability checks
+- architecture guardrails
+- UI consolidation
+- Bun/toolchain contract checks
+- an explicit repo toolchain lane through `bun run bun:repo:toolchain`
+- a single repo CI lane through `bun run bun:repo:ci`
 
 ## Lockfiles
 
@@ -116,6 +138,12 @@ intentional for now; Bun support is additive, not a package-manager cutover.
   `.bun-version` and that `package.json#engines.bun` matches the same pin.
 - `bun run check:bun:lock-sync` verifies that `bun.lock` still matches the
   canonical `package-lock.json` without mutating the worktree.
+- when `bun pm migrate --force` hits the current known Bun wasm resolver bug,
+  that check falls back to validating the root workspace dependency and
+  devDependency contract between `package-lock.json` and `bun.lock` instead of
+  mutating the worktree.
+- that fallback path is now part of the supported repo contract and is used by
+  the canonical `bun run bun:repo:toolchain` and `bun run bun:repo:ci` lanes.
 - `bun run check:toolchain:contract` runs the repo-level static toolchain
   contract plus the Bun version and Bun lockfile checks together.
 - `bun run lock:bun:sync` refreshes `bun.lock` from the canonical
@@ -140,8 +168,8 @@ intentional for now; Bun support is additive, not a package-manager cutover.
   fallback workflow, and runs the same focused toolchain contract test bundle
   after `npm ci`, without depending on Bun setup.
 - A separate lightweight workflow at
-  `.github/workflows/bun-compatibility.yml` validates that Bun can install and
-  run representative repo commands.
+  `.github/workflows/bun-repo-ci.yml` validates that Bun can install and run
+  the repo-level Bun CI lane.
 - That workflow resolves Node from [`.nvmrc`](../../.nvmrc) and Bun from
   [`.bun-version`](../../.bun-version) instead of hardcoding tool versions.
 - Any workflow that resolves Bun should also read it from
@@ -155,7 +183,7 @@ intentional for now; Bun support is additive, not a package-manager cutover.
 - Any path-filtered workflow that runs `npm ci` should also include
   `package.json` and `package-lock.json` in its trigger paths so dependency
   changes rerun the affected check.
-- That compatibility workflow now runs on normal pull requests and pushes,
+- That Bun repo CI workflow now runs on normal pull requests and pushes,
   rather than only on Bun-specific file edits.
 - It caches Bun's global package cache under `~/.bun/install/cache` to reduce
   repeated dependency downloads.
@@ -168,7 +196,10 @@ intentional for now; Bun support is additive, not a package-manager cutover.
 - That cache key follows the repo Node and Bun version files, `bunfig.toml`,
   and both lockfiles, so toolchain or Bun install-layout changes invalidate
   the Bun cache cleanly.
-- The shared repo entrypoint for that validation is `bun run check:bun:compat`.
+- The shared repo entrypoints for that validation are:
+  - `bun run check:bun:compat`
+  - `bun run bun:repo:toolchain`
+  - `bun run bun:repo:ci`
 - That check is intentionally non-mutating and should not refresh generated
   metrics in a local worktree.
 - It also enforces that `bun.lock` remains in sync with `package-lock.json`.

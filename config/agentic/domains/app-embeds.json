@@ -1,0 +1,23 @@
+{
+  "id": "app-embeds",
+  "label": "Embedded application surfaces and admin embed management",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/app-embeds"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:accessibility_smoke"
+  ],
+  "impactBundles": [
+    "embedded_surfaces"
+  ]
+}

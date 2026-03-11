@@ -9,7 +9,7 @@ import {
   buildAnalyticsInsightContextRegistrySystemPrompt,
   buildRuntimeAnalyticsInsightContextRegistrySystemPrompt,
 } from '@/features/ai/insights/context-registry/system-prompt';
-import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/server';
+import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/context-registry/system-prompt';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiInsightRecord,
@@ -43,8 +43,6 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
-
-
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,

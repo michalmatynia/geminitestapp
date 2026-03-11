@@ -214,6 +214,26 @@ export const resolveConfiguredRequiredInputPorts = (
   return explicitRequired;
 };
 
+const PROMPT_TEMPLATE_TOKEN_PATTERN = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
+
+const resolvePromptTemplateRequiredPorts = (
+  template: string,
+  connectedPorts: Set<string>
+): string[] => {
+  if (!template.trim()) return [];
+
+  const requiredPorts = new Set<string>();
+  for (const match of template.matchAll(PROMPT_TEMPLATE_TOKEN_PATTERN)) {
+    const rawToken = String(match[1] ?? match[2] ?? '').trim();
+    if (!rawToken) continue;
+    const topLevelToken = normalizePortName(rawToken.split('.')[0] ?? rawToken);
+    if (!topLevelToken || !connectedPorts.has(topLevelToken)) continue;
+    requiredPorts.add(topLevelToken);
+  }
+
+  return Array.from(requiredPorts);
+};
+
 export const buildWaitingOnDetails = (
   _node: AiNode,
   waitingPorts: Set<string>,
@@ -391,9 +411,30 @@ export const evaluateInputReadiness = (
   if (node.type === 'prompt' && explicitRequiredPorts.length === 0) {
     const promptTemplate =
       typeof node.config?.prompt?.template === 'string' ? node.config.prompt.template.trim() : '';
+    const templateRequiredPorts = resolvePromptTemplateRequiredPorts(
+      promptTemplate,
+      connectedPorts
+    );
     const hasDynamicTemplateToken = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/.test(
       promptTemplate
     );
+    if (templateRequiredPorts.length > 0) {
+      const requiredPortSet = new Set<string>(templateRequiredPorts);
+      const optionalPorts = connectedPortList.filter(
+        (port: string): boolean => !requiredPortSet.has(port)
+      );
+      const waitingOnPorts = templateRequiredPorts.filter(
+        (port: string): boolean => rawInputs[port] === undefined
+      );
+      return {
+        ready: waitingOnPorts.length === 0,
+        requiredPorts: templateRequiredPorts,
+        optionalPorts,
+        waitingOnPorts,
+        waitingOnDetails: buildWaitingDetails(new Set(waitingOnPorts)),
+      };
+    }
+
     const hasAnyConnectedValue = connectedPortList.some((port: string): boolean =>
       hasMeaningfulValue(coerceInput(rawInputs[port]))
     );

@@ -73,7 +73,7 @@ describe('CMS API', () => {
     await cmsRepository.createSlug({ slug: 'test-slug-1' });
     await cmsRepository.createSlug({ slug: 'test-slug-2' });
 
-    const res = await GET(new NextRequest('http://localhost/api/cms/slugs'));
+    const res = await GET(new NextRequest('http://localhost/api/cms/slugs?scope=all'));
     const data = (await res.json()) as Slug[];
 
     expect(res.status).toBe(200);

@@ -31,20 +31,6 @@ const createPromptNode = (id: string): AiNode => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
-const createTemplateNode = (id: string, template: string): AiNode => ({
-  id,
-  type: 'template',
-  title: id,
-  description: '',
-  inputs: ['input'],
-  outputs: ['output'],
-  position: { x: 0, y: 0 },
-  config: { template: { template } },
-  data: {},
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-});
-
 const createCanonicalTextPromptNode = (
   id: string,
   role: 'text_note' | 'explanatory' = 'text_note'

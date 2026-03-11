@@ -1,0 +1,25 @@
+{
+  "id": "cms",
+  "label": "CMS models, page builder, and content delivery",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/cms",
+    "src/app/api/cms",
+    "src/shared/lib/cms"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:critical_flows"
+  ],
+  "impactBundles": [
+    "content_management"
+  ]
+}

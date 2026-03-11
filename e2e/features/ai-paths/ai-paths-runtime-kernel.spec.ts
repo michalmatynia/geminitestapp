@@ -100,8 +100,7 @@ test.describe('AI Paths runtime kernel settings', () => {
             ? (payload as RuntimeSettingsBulkPayload)
             : null;
         if (
-          parsed &&
-          parsed.items.some(
+          parsed?.items.some(
             (item) =>
               item.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY ||
               item.key === AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY

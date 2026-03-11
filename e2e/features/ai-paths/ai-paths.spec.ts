@@ -183,15 +183,6 @@ const ensureCanvasHasNodes = async (page: Page): Promise<void> => {
   await fitCanvasToNodes(page);
 };
 
-const readActiveWiresCount = async (page: Page): Promise<number> => {
-  const activeWires = page.getByText(/Active wires: \d+/).first();
-  await expect(activeWires).toBeVisible();
-  const text = (await activeWires.textContent()) ?? '';
-  const match = text.match(/Active wires:\s*(\d+)/);
-  if (!match) return 0;
-  return Number.parseInt(match[1] ?? '0', 10);
-};
-
 const readEdgeHitCount = async (page: Page): Promise<number> => {
   return page.locator('[data-canvas-edge-hit="true"]').count();
 };

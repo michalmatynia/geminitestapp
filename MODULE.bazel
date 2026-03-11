@@ -1,4 +1,15 @@
 module(
     name = "libapp2",
     version = "0.1.0",
+    compatibility_level = 1,
 )
+
+# Keep Bzlmod explicit even while the repo still executes most JS/TS tooling
+# through local package-manager installs and repo-owned shell wrappers.
+#
+# `bazel_skylib` is the standard utility layer for future Starlark expansion.
+# `rules_shell` establishes an explicit module dependency for the shell-heavy
+# repo lanes and helper tooling that now make up the Bazel orchestration layer.
+
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "rules_shell", version = "0.6.1")

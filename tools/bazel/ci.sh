@@ -5,5 +5,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-bash ./tools/bazel/smoke.sh
-bash ./tools/bazel/specialized-regressions.sh
+# Compatibility shim. The canonical repo entrypoint is `npm run bazel:ci`,
+# which resolves to the root Bazel lane `//:repo_ci`.
+./tools/bazel/run-bazel.sh run //:repo_ci

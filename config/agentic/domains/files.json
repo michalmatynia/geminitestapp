@@ -1,0 +1,29 @@
+{
+  "id": "files",
+  "label": "File management, upload flows, and storage settings",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/files",
+    "src/app/api/files",
+    "src/shared/lib/files"
+  ],
+  "ownedDocs": [
+    "docs/plans/fastcomet-storage-plan.md"
+  ],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [
+    "docs/plans/fastcomet-storage-plan.md"
+  ],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:security_smoke"
+  ],
+  "impactBundles": [
+    "file_storage"
+  ]
+}

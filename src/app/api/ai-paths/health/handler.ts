@@ -14,7 +14,7 @@ import {
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';
@@ -82,15 +82,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   const errors: Record<string, string> = {};
 
-  const aiPathsProvider = process.env['DATABASE_URL']
-    ? 'prisma'
-    : process.env['MONGODB_URI']
-      ? 'mongodb'
-      : 'unknown';
-
   const aiPaths = await (async () => {
     try {
-      const repo = await getPathRunRepository();
+      const repoSelection = await resolvePathRunRepository();
+      const repo = repoSelection.repo;
       const byStatusEntries = await Promise.all(
         AI_PATH_STATUSES.map(async (status) => {
           const result = await repo.listRuns({ status, limit: 1, offset: 0 });
@@ -108,7 +103,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         }
         : null;
       return {
-        provider: aiPathsProvider,
+        provider: repoSelection.provider,
+        routeMode: repoSelection.routeMode,
+        collection: repoSelection.collection,
         total: all.total,
         byStatus,
         latest,
@@ -117,7 +114,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       errors['aiPaths'] =
         error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
       return {
-        provider: aiPathsProvider,
+        provider: 'unknown',
+        routeMode: 'fallback',
+        collection: 'ai_path_runs',
         total: null,
         byStatus: {} as Record<AiPathRunStatus, number>,
         latest: null,

@@ -8,7 +8,6 @@ export const DEFAULT_GUARDRAIL_BASELINE_RELATIVE_PATH = path.join(
 );
 export const DEFAULT_GUARDRAIL_HARD_LIMITS = Object.freeze({
   sourceLargestFileLines: 4000,
-  'imports.featuresToSharedTotalImports': 0,
   'imports.featuresToAppApiTotalImports': 0,
 });
 export const DEFAULT_INFORMATIONAL_GUARDRAIL_KEYS = Object.freeze(['api.delegatedServerRoutes']);

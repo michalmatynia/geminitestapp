@@ -1,0 +1,22 @@
+{
+  "id": "document-editor",
+  "label": "Document editing, markdown split view, and rich text editing",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/document-editor"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "document_authoring"
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-11'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -90,8 +90,17 @@ npm run test
 npm run test:e2e
 npm run check:factory-meta
 npm run metrics:guardrails
+npm run bazel:toolchain
+npm run bazel:smoke
+npm run bazel:quality
+npm run bazel:regressions
+npm run bazel:ci
+bun run bun:repo:toolchain
+bun run bun:repo:smoke
+bun run bun:repo:quality
+bun run bun:repo:ci
 ```
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-02`.
+Aligned to the scanned repo structure on `2026-03-11`.

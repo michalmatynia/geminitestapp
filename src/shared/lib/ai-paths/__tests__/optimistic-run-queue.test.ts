@@ -50,10 +50,12 @@ const resetOptimisticQueueForTests = () => {
 
 describe('optimistic-run-queue', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     resetOptimisticQueueForTests();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     resetOptimisticQueueForTests();
   });
 
@@ -95,7 +97,7 @@ describe('optimistic-run-queue', () => {
     expect(listOptimisticAiPathRuns()).toHaveLength(1);
   });
 
-  it('deduplicates optimistic runs once the server returns the same run id', () => {
+  it('does not duplicate optimistic runs in the visible queue once the server returns the same run id', () => {
     const run = buildRun();
     rememberOptimisticAiPathRun(run);
 
@@ -109,7 +111,7 @@ describe('optimistic-run-queue', () => {
 
     expect(merged.total).toBe(1);
     expect(merged.runs).toEqual([run]);
-    expect(listOptimisticAiPathRuns()).toEqual([]);
+    expect(listOptimisticAiPathRuns()).toEqual([expect.objectContaining({ id: run.id })]);
   });
 
   it('patches queued count only when the server still reports zero queued runs', () => {
@@ -196,6 +198,54 @@ describe('optimistic-run-queue', () => {
     const results = listOptimisticAiPathRuns({ query: 'generate' });
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe('run-abc');
+  });
+
+  it('keeps active optimistic runs beyond the terminal default ttl', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-03-11T07:10:00.000Z'));
+
+      rememberOptimisticAiPathRun(buildRun({ id: 'run-active-ttl', status: 'queued' }));
+
+      vi.advanceTimersByTime(61_000);
+
+      expect(listOptimisticAiPathRuns({ status: 'queued' })).toEqual([
+        expect.objectContaining({
+          id: 'run-active-ttl',
+          status: 'queued',
+        }),
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('refreshes active optimistic runs when the server returns the same queued run', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-03-11T07:20:00.000Z'));
+
+      const run = buildRun({ id: 'run-refresh-active', status: 'queued' });
+      rememberOptimisticAiPathRun(run, { ttlMs: 1_000 });
+
+      mergeAiPathQueuePayloadWithOptimisticRuns(
+        { runs: [run], total: 1 },
+        {
+          limit: 25,
+          offset: 0,
+          status: 'all',
+        }
+      );
+
+      vi.advanceTimersByTime(2_000);
+
+      expect(previewAiPathQueuePayloadWithOptimisticRuns({ runs: [], total: 0 })).toMatchObject({
+        total: 1,
+        runs: [expect.objectContaining({ id: 'run-refresh-active', status: 'queued' })],
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not throw if localStorage setItem hits quota and keeps run in memory', () => {
@@ -338,7 +388,7 @@ describe('optimistic-run-queue', () => {
         throw quotaError;
       })
       .mockImplementation(function (key: string, value: string) {
-        return originalSetItem.call(this, key, value);
+        originalSetItem.call(this, key, value);
       });
     const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
 
@@ -377,7 +427,7 @@ describe('optimistic-run-queue', () => {
         if (setItemCalls <= 2) {
           throw quotaError;
         }
-        return originalSetItem.call(this, key, value);
+        originalSetItem.call(this, key, value);
       });
     const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
 

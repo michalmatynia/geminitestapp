@@ -46,6 +46,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   canNarrateTutorText: KangurAiTutorPanelBodyContextValue['canNarrateTutorText'];
   canSendMessages: KangurAiTutorPanelBodyContextValue['canSendMessages'];
   canStartHomeOnboardingManually: KangurAiTutorPanelBodyContextValue['canStartHomeOnboardingManually'];
+  canonicalTutorModalVisible: boolean;
   compactDockedTutorPanelWidth: KangurAiTutorPortalContextValue['panel']['compactDockedTutorPanelWidth'];
   contextualTutorMode: 'selection_explain' | 'section_explain' | null;
   emptyStateMessage: KangurAiTutorPanelBodyContextValue['emptyStateMessage'];
@@ -181,10 +182,11 @@ export function useKangurAiTutorPortalViewModel(
   const guestIntroHeadline = input.tutorContent.guestIntro.initial.headline;
   const guestIntroDescription = input.tutorContent.guestIntro.initial.description;
   const shouldRenderGuestIntro =
-    input.shouldRenderGuestIntroUi &&
-    !input.isAskModalMode &&
-    !isGuidedAvatarMode &&
-    !hasContextualTutorLock;
+    input.canonicalTutorModalVisible ||
+    (input.shouldRenderGuestIntroUi &&
+      !input.isAskModalMode &&
+      !isGuidedAvatarMode &&
+      !hasContextualTutorLock);
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({

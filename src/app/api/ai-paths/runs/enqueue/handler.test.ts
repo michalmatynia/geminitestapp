@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
@@ -16,6 +16,7 @@ const {
   assertAiPathRunQueueReadyForEnqueueMock,
   logSystemEventMock,
   contextRegistryResolveRefsMock,
+  resolvePathRunRepositoryMock,
 } = vi.hoisted(() => ({
   requireAiPathsRunAccessMock: vi.fn(),
   enforceAiPathsRunRateLimitMock: vi.fn(),
@@ -25,6 +26,7 @@ const {
   assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
   logSystemEventMock: vi.fn(),
   contextRegistryResolveRefsMock: vi.fn(),
+  resolvePathRunRepositoryMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -50,6 +52,10 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   contextRegistryEngine: {
     resolveRefs: contextRegistryResolveRefsMock,
   },
+}));
+
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
+  resolvePathRunRepository: resolvePathRunRepositoryMock,
 }));
 
 import { POST_handler } from './handler';
@@ -259,6 +265,7 @@ const buildMappingModeStoredParameterInferenceConfig = () => {
 
 describe('ai-paths runs enqueue handler', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
     enforceAiPathsRunRateLimitMock.mockReset().mockResolvedValue(undefined);
     getAiPathsSettingMock.mockReset().mockResolvedValue(null);
@@ -266,6 +273,12 @@ describe('ai-paths runs enqueue handler', () => {
     upsertAiPathsSettingsMock.mockReset().mockResolvedValue(undefined);
     assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
+    resolvePathRunRepositoryMock.mockReset().mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {},
+    });
     contextRegistryResolveRefsMock.mockReset().mockResolvedValue({
       refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
       nodes: [
@@ -289,6 +302,10 @@ describe('ai-paths runs enqueue handler', () => {
       truncated: false,
       engineVersion: 'registry:test',
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('rejects legacy node identities before enqueueing the run', async () => {
@@ -667,6 +684,25 @@ describe('ai-paths runs enqueue handler', () => {
       run: { _id: 'run-legacy-1', status: 'queued' },
       runId: 'run-legacy-1',
     });
+  });
+
+  it('returns repository provider headers on successful enqueue responses', async () => {
+    const config = createDefaultPathConfig('path-provider-headers');
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        meta: { aiPathsValidation: { enabled: false } },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('mongodb');
+    expect(response.headers.get('X-Ai-Paths-Run-Route-Mode')).toBe('explicit');
   });
 
   it('rejects enqueue responses that do not expose any run identifier', async () => {

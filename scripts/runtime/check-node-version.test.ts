@@ -110,6 +110,18 @@ describe('Node version preflight', () => {
     expect(result.errors[0]).toContain('recommended: the repo-pinned Node LTS release');
   });
 
+  it('falls back to a generic repo-pinned label for too-old Node when .nvmrc is invalid', () => {
+    const result = runScript({
+      nodeVersion: '19.9.0',
+      processVersion: 'v19.9.0',
+      nvmrc: 'lts/*\n',
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.errors[0]).toContain('is too old. Use Node 20.9+');
+    expect(result.errors[0]).toContain('recommended: the repo-pinned Node LTS release');
+  });
+
   it('uses the pinned .nvmrc major in the unsupported-node error', () => {
     const result = runScript({
       nodeVersion: '24.1.0',
@@ -146,6 +158,38 @@ describe('Node version preflight', () => {
     expect(result.exitCode).toBe(0);
     expect(result.warns[0]).toContain(`Switch to Node ${expectedNodeVersion} LTS`);
     expect(result.warns[0]).toContain('Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1');
+  });
+
+  it('uses the generic repo-pinned label when unsupported Node is allowed and .nvmrc cannot be read', () => {
+    const result = runScript({
+      nodeVersion: '24.1.0',
+      processVersion: 'v24.1.0',
+      nvmrc: null,
+      env: {
+        ALLOW_UNSUPPORTED_NODE_DEV: '1',
+      },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.warns[0]).toContain('Switch to the repo-pinned Node LTS release.');
+    expect(result.warns[0]).toContain('Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1');
+    expect(result.warns[0]).not.toContain('nvm use');
+  });
+
+  it('uses the generic repo-pinned label when unsupported Node is allowed and .nvmrc is invalid', () => {
+    const result = runScript({
+      nodeVersion: '24.1.0',
+      processVersion: 'v24.1.0',
+      nvmrc: 'lts/*\n',
+      env: {
+        ALLOW_UNSUPPORTED_NODE_DEV: '1',
+      },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.warns[0]).toContain('Switch to the repo-pinned Node LTS release.');
+    expect(result.warns[0]).toContain('Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1');
+    expect(result.warns[0]).not.toContain('nvm use');
   });
 
   it('uses the pinned .nvmrc major in the non-LTS warning', () => {

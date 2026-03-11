@@ -7,4 +7,4 @@ if [[ -z "${BUILD_WORKSPACE_DIRECTORY:-}" ]]; then
 fi
 
 cd "${BUILD_WORKSPACE_DIRECTORY}"
-exec ./node_modules/.bin/vitest run --project integration-mongo
+exec node scripts/testing/run-integration-mongo-baseline.mjs --strict --ci

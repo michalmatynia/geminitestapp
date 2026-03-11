@@ -34,6 +34,8 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
   } = useCanvasBoardUI();
 
   const svgRef = React.useRef<SVGSVGElement | null>(null);
+  const zoomScaleRef = React.useRef(view.scale);
+  const onZoomToRef = React.useRef(onZoomTo);
   const [dragState, setDragState] = React.useState<
     | {
         mode: 'navigate';
@@ -47,6 +49,14 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
       }
     | null
   >(null);
+
+  React.useEffect(() => {
+    zoomScaleRef.current = view.scale;
+  }, [view.scale]);
+
+  React.useEffect(() => {
+    onZoomToRef.current = onZoomTo;
+  }, [onZoomTo]);
 
   const viewportRect = React.useMemo((): {
     x: number;
@@ -92,6 +102,23 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
     });
   }, [nodes]);
 
+  React.useEffect(() => {
+    const element = svgRef.current;
+    if (!element) return;
+
+    const handleNativeWheel = (event: WheelEvent): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      const zoomFactor = Math.exp(-event.deltaY * 0.0018);
+      onZoomToRef.current(clampScale(zoomScaleRef.current * zoomFactor));
+    };
+
+    element.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      element.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
+
   return (
     <div
       className='absolute right-4 top-4 z-20 rounded-md border border-border/60 bg-card/45 p-1.5 backdrop-blur'
@@ -105,12 +132,6 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
         width={MINIMAP_WIDTH_PX}
         height={MINIMAP_HEIGHT_PX}
         viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-        onWheel={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const zoomFactor = Math.exp(-event.deltaY * 0.0018);
-          onZoomTo(clampScale(view.scale * zoomFactor));
-        }}
         onPointerDown={(event) => {
           event.preventDefault();
           event.stopPropagation();

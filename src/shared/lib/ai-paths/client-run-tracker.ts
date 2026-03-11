@@ -8,6 +8,7 @@ const RUN_DETAIL_POLL_INTERVAL_MS = 2_000;
 const RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS = 5_000;
 const RUN_DETAIL_REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RUN_DETAIL_POLL_FAILURES = 3;
+const RUN_DETAIL_NOT_FOUND_GRACE_MS = 15_000;
 
 const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'completed',
@@ -59,6 +60,7 @@ type TrackRecord = {
   snapshot: TrackedAiPathRunSnapshot;
   listeners: Set<TrackedAiPathRunListener>;
   started: boolean;
+  trackedAtMs: number;
   pollFailures: number;
   pollTimerId: ReturnType<typeof setTimeout> | null;
   eventSource: EventSource | null;
@@ -161,6 +163,19 @@ const isTransientRunDetailError = (message: string | null | undefined): boolean 
   return /\btimeout\b|failed to fetch|network request failed|connection|temporarily unavailable/i.test(
     message
   );
+};
+
+const isRunDetailNotFoundError = (message: string | null | undefined): boolean => {
+  if (typeof message !== 'string') return false;
+  return /\brun not found\b|\bnot found\b|status 404\b/i.test(message);
+};
+
+const shouldRetryMissingRunDetail = (
+  record: TrackRecord,
+  message: string | null | undefined
+): boolean => {
+  if (!isRunDetailNotFoundError(message)) return false;
+  return Date.now() - record.trackedAtMs < RUN_DETAIL_NOT_FOUND_GRACE_MS;
 };
 
 export const isTrackedAiPathRunTerminal = (snapshot: TrackedAiPathRunSnapshot): boolean =>
@@ -378,6 +393,10 @@ const pollRecord = async (runId: string): Promise<void> => {
         schedulePoll(record, RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS);
         return;
       }
+      if (shouldRetryMissingRunDetail(record, response.error)) {
+        schedulePoll(record, RUN_DETAIL_POLL_INTERVAL_MS);
+        return;
+      }
       handlePollFailure(record, response.error || 'Failed to load AI Path run details.');
       return;
     }
@@ -396,13 +415,18 @@ const pollRecord = async (runId: string): Promise<void> => {
   } catch (error) {
     const activeRecord = trackRecords.get(runId);
     if (activeRecord !== record) return;
-    if (isTransientRunDetailError(error instanceof Error ? error.message : null)) {
+    const errorMessage = error instanceof Error ? error.message : null;
+    if (isTransientRunDetailError(errorMessage)) {
       schedulePoll(record, RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS);
+      return;
+    }
+    if (shouldRetryMissingRunDetail(record, errorMessage)) {
+      schedulePoll(record, RUN_DETAIL_POLL_INTERVAL_MS);
       return;
     }
     handlePollFailure(
       record,
-      error instanceof Error ? error.message : 'Failed to load AI Path run details.'
+      errorMessage ?? 'Failed to load AI Path run details.'
     );
   }
 };
@@ -470,6 +494,7 @@ const ensureRecord = (
     snapshot: createInitialSnapshot(runId, initialSnapshot),
     listeners: new Set<TrackedAiPathRunListener>(),
     started: false,
+    trackedAtMs: Date.now(),
     pollFailures: 0,
     pollTimerId: null,
     eventSource: null,

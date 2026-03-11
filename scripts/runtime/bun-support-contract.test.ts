@@ -25,7 +25,7 @@ const bunCacheWorkflowPaths = workflowPaths.filter((workflowPath) =>
 const expectedBunVersion = readRepoFile('.bun-version').trim();
 const expectedNodeVersion = readRepoFile('.nvmrc').trim();
 const mirroredNodeVersion = readRepoFile('.node-version').trim();
-const bunCompatibilityWorkflowText = readRepoFile('.github/workflows/bun-compatibility.yml');
+const bunRepoCiWorkflowText = readRepoFile('.github/workflows/bun-repo-ci.yml');
 const bunSupportDocText = readRepoFile('docs/platform/bun-support.md');
 const buildReadmeText = readRepoFile('docs/build/README.md');
 const buildBazelDocText = readRepoFile('docs/build/bazel.md');
@@ -34,11 +34,13 @@ const copilotDocText = readRepoFile('docs/COPILOT.md');
 const vitestConfigText = readRepoFile('vitest.config.ts');
 
 describe('Bun support contract', () => {
-  it('keeps the shared Bun compatibility script composed from repo-level subcommands', () => {
+  it('keeps the shared Bun repo toolchain and CI scripts composed from repo-level subcommands', () => {
     const nodeToolchainContractScript = packageJson.scripts?.['check:toolchain:contract:node'];
     const toolchainContractTestScript = packageJson.scripts?.['test:toolchain:contract'];
     const toolchainContractScript = packageJson.scripts?.['check:toolchain:contract'];
     const compatibilityScript = packageJson.scripts?.['check:bun:compat'];
+    const repoToolchainScript = packageJson.scripts?.['bun:repo:toolchain'];
+    const repoCiScript = packageJson.scripts?.['bun:repo:ci'];
     const runtimeSuiteScript = packageJson.scripts?.['test:bun:runtime'];
     const syncMirrorsScript = packageJson.scripts?.['sync:toolchain:mirrors'];
     const bunConfigScript = packageJson.scripts?.['check:bun:config'];
@@ -66,11 +68,15 @@ describe('Bun support contract', () => {
     expect(compatibilityScript).toContain('bun run test:bun:runtime');
     expect(compatibilityScript).toContain('bun run lint -- --help');
     expect(compatibilityScript).toContain('bun run check:unsafe-patterns -- --no-write');
+    expect(repoToolchainScript).toBe('bun run check:bun:compat');
+    expect(repoCiScript).toContain('bun run bun:repo:toolchain');
+    expect(repoCiScript).toContain('bun run bun:repo:smoke');
+    expect(repoCiScript).toContain('bun run bun:repo:quality');
 
     expect(runtimeSuiteScript).toContain('bun run test:toolchain:contract');
   });
 
-  it('keeps Bun workflows pinned to the repo version file and the shared compatibility entrypoint', () => {
+  it('keeps Bun workflows pinned to the repo version file and the shared repo CI entrypoint', () => {
     expect(mirroredNodeVersion).toBe(expectedNodeVersion);
     expect(bunWorkflowPaths.length).toBeGreaterThan(0);
 
@@ -79,9 +85,9 @@ describe('Bun support contract', () => {
       expect(workflowText).toContain("bun-version-file: '.bun-version'");
     }
 
-    expect(bunCompatibilityWorkflowText).toContain("node-version-file: '.nvmrc'");
-    expect(bunCompatibilityWorkflowText).toContain('run: bun install --frozen-lockfile');
-    expect(bunCompatibilityWorkflowText).toContain('run: bun run check:bun:compat');
+    expect(bunRepoCiWorkflowText).toContain("node-version-file: '.nvmrc'");
+    expect(bunRepoCiWorkflowText).toContain('run: bun install --frozen-lockfile');
+    expect(bunRepoCiWorkflowText).toContain('run: bun run bun:repo:ci');
   });
 
   it('pins Bun cache restoration to the repo toolchain, config, and lockfiles anywhere workflows cache Bun', () => {
@@ -114,17 +120,19 @@ describe('Bun support contract', () => {
     expect(bunSupportDocText).not.toContain('bun run check:toolchain:contract:node');
   });
 
-  it('keeps the other build and agent docs aligned to the shared toolchain commands', () => {
+  it('keeps the other build and agent docs aligned to the canonical repo lanes', () => {
     const docSurfaces = [buildReadmeText, buildBazelDocText, agentsDocText, copilotDocText];
 
     for (const surface of docSurfaces) {
-      expect(surface).toContain('npm run sync:toolchain:mirrors');
-      expect(surface).toContain('npm run check:toolchain:contract:node');
-      expect(surface).toContain('npm run test:toolchain:contract');
-      expect(surface).toContain('bun run check:bun:config');
-      expect(surface).toContain('bun run check:toolchain:contract');
-      expect(surface).toContain('bun run check:bun:compat');
-      expect(surface).not.toContain('bun run check:toolchain:contract:node');
+      expect(surface).toContain('npm run bazel:toolchain');
+      expect(surface).toContain('npm run bazel:smoke');
+      expect(surface).toContain('npm run bazel:quality');
+      expect(surface).toContain('npm run bazel:regressions');
+      expect(surface).toContain('npm run bazel:ci');
+      expect(surface).toContain('bun run bun:repo:toolchain');
+      expect(surface).toContain('bun run bun:repo:smoke');
+      expect(surface).toContain('bun run bun:repo:quality');
+      expect(surface).toContain('bun run bun:repo:ci');
     }
   });
 });

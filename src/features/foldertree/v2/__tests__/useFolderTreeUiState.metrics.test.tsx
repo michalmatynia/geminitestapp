@@ -77,7 +77,7 @@ describe('useFolderTreeUiState metrics', () => {
     settingsStoreMock.get.mockReset();
     settingsStoreMock.get.mockReturnValue(undefined);
     mutateAsyncMock.mockReset();
-    mutateAsyncMock.mockImplementation(async () => undefined);
+    mutateAsyncMock.mockResolvedValue(undefined);
     logClientErrorMock.mockReset();
   });
 

@@ -327,7 +327,7 @@ export async function mockKangurTutorEnvironment(
     const match = requestUrl.pathname.match(/\/api\/agentcreator\/personas\/([^/]+)\/visuals$/);
     const requestedPersonaId = match?.[1] ? decodeURIComponent(match[1]) : null;
 
-    if (!tutorPersona || requestedPersonaId !== tutorPersona.id) {
+    if (requestedPersonaId !== tutorPersona?.id) {
       await fulfillJson(route, { error: 'Agent persona not found.' }, 404);
       return;
     }

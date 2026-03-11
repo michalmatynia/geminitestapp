@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildFilemakerPartyOptions,
-  decodeFilemakerPartyReference,
-  encodeFilemakerPartyReference,
   extractFilemakerEmailsFromText,
-  getFilemakerAddressById,
-  getFilemakerAddressLinksForOwner,
   getFilemakerAddressesForOwner,
   getFilemakerDefaultAddressForOwner,
   getFilemakerEmailsForParty,
@@ -28,7 +23,6 @@ import {
   removeFilemakerPartyEmailLinks,
   removeFilemakerPartyPhoneNumberLinks,
   removeFilemakerPhoneNumber,
-  resolveFilemakerPartyLabel,
   setFilemakerDefaultAddressForOwner,
   unlinkFilemakerAddressFromOwner,
   unlinkFilemakerEventFromOrganization,

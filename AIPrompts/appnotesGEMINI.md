@@ -28,6 +28,20 @@ npm run bazel:smoke
           - //:next_build
           - //:api_error_sources
 
+
+            - Bazel repo lanes:
+      - npm run bazel:toolchain
+      - npm run bazel:smoke
+      - npm run bazel:quality
+      - npm run bazel:regressions
+      - npm run bazel:ci
+  - Bun repo lanes:
+      - bun run bun:repo:toolchain
+      - bun run bun:repo:smoke
+      - bun run bun:repo:quality
+      - bun run bun:repo:ci
+
+
 SCANNERS
 bun run test:bun:runtime
 npm run check:quality:core

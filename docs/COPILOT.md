@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-10'
+last_reviewed: '2026-03-11'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -82,15 +82,28 @@ npm run test
 npm run test:e2e
 npm run check:factory-meta
 npm run metrics:guardrails
+npm run test:coverage:high-risk
+npm run check:coverage:high-risk
+npm run check:test-distribution
+npm run check:test-quality
 npm run sync:toolchain:mirrors
 npm run check:toolchain:contract:node
 npm run test:toolchain:contract
+npm run bazel:toolchain
+npm run bazel:smoke
+npm run bazel:quality
+npm run bazel:regressions
+npm run bazel:ci
 bun run check:bun:config
 bun run check:toolchain:contract
 bun run check:node:toolchain-sync
 bun run lock:bun:sync
 bun run test:bun:runtime
 bun run check:bun:compat
+bun run bun:repo:toolchain
+bun run bun:repo:smoke
+bun run bun:repo:quality
+bun run bun:repo:ci
 ```
 
 `npm run check:factory-meta` also enforces the manual-query helper rule:
@@ -100,4 +113,4 @@ prefer `fetchQueryV2`, `prefetchQueryV2`, and `ensureQueryDataV2` over raw
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-10`.
+Aligned to the scanned repo structure on `2026-03-11`.

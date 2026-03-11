@@ -45,6 +45,7 @@ type LoginModalState = {
 
 export function useKangurAiTutorGuestIntroFlow(input: {
   authState: AuthState;
+  canonicalTutorModalVisible: boolean;
   enabled: boolean;
   guestIntroCheckStartedRef: MutableRefObject<boolean>;
   guestIntroHelpVisible: boolean;
@@ -60,6 +61,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   isTutorHidden: boolean;
   mounted: boolean;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  setCanonicalTutorModalVisible: (value: boolean) => void;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setGuestIntroHelpVisible: (value: boolean) => void;
   setGuestIntroRecord: (value: KangurAiTutorGuestIntroRecord | null) => void;
@@ -70,6 +72,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
 }) {
   const {
     authState,
+    canonicalTutorModalVisible,
     enabled,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
@@ -85,6 +88,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     isTutorHidden,
     mounted,
     selectionExplainTimeoutRef,
+    setCanonicalTutorModalVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
@@ -96,12 +100,17 @@ export function useKangurAiTutorGuestIntroFlow(input: {
 
   useEffect(() => {
     if (isTutorHidden) {
+      setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       return;
     }
 
     if (!mounted || !authState || authState.isLoadingAuth) {
+      return;
+    }
+
+    if (canonicalTutorModalVisible) {
       return;
     }
 
@@ -217,11 +226,13 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
+    canonicalTutorModalVisible,
     contextualTutorMode,
     guidedTutorTarget,
     isTutorHidden,
     isOpen,
     mounted,
+    setCanonicalTutorModalVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,
@@ -230,14 +241,21 @@ export function useKangurAiTutorGuestIntroFlow(input: {
 
   const handleGuestIntroDismiss = useCallback((): void => {
     const nextRecord = persistGuestIntroRecord('dismissed');
+    setCanonicalTutorModalVisible(false);
     setGuestIntroRecord(nextRecord);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
     trackKangurClientEvent('kangur_ai_tutor_guest_intro_dismissed');
-  }, [setGuestIntroHelpVisible, setGuestIntroRecord, setGuestIntroVisible]);
+  }, [
+    setCanonicalTutorModalVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroRecord,
+    setGuestIntroVisible,
+  ]);
 
   const handleGuestIntroAccept = useCallback((): void => {
     const nextRecord = persistGuestIntroRecord('accepted');
+    setCanonicalTutorModalVisible(false);
     setGuestIntroRecord(nextRecord);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
@@ -248,7 +266,14 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     if (enabled) {
       handleOpenChat('toggle');
     }
-  }, [enabled, handleOpenChat, setGuestIntroHelpVisible, setGuestIntroRecord, setGuestIntroVisible]);
+  }, [
+    enabled,
+    handleOpenChat,
+    setCanonicalTutorModalVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroRecord,
+    setGuestIntroVisible,
+  ]);
 
   const handleGuestIntroHelpClose = useCallback((): void => {
     setGuestIntroHelpVisible(false);
@@ -268,6 +293,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
         window.clearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
+      setCanonicalTutorModalVisible(false);
       if (isOpen) {
         handleCloseChat('toggle');
       }
@@ -283,6 +309,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       handleCloseChat,
       isOpen,
       selectionExplainTimeoutRef,
+      setCanonicalTutorModalVisible,
       setGuidedTutorTarget,
       setHasNewMessage,
       suppressAvatarClickRef,

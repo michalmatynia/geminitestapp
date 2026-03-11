@@ -6,14 +6,15 @@ import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 import {
   buildSimulationOutputsFromContext,
+  hasEntityReference,
   normalizeEntityType,
   readEntityIdFromContext,
   readEntityTypeFromContext,
+  resolveFetcherSourceMode,
 } from '../useAiPathsLocalExecution.helpers';
 import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
-
 
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
@@ -139,6 +140,39 @@ export function useLocalExecutionTriggers(
     []
   );
 
+  const resolveConnectedSimulationBridgeForTrigger = useCallback(
+    async (
+      triggerNode: AiNode,
+      contextFallback?: Record<string, unknown> | null
+    ): Promise<{
+      contextOverride: Record<string, unknown> | null;
+      simulationOutputs: Record<string, RuntimePortValues>;
+    }> => {
+      const connectedSimulationNodes = getConnectedSimulationNodesForTrigger(triggerNode.id);
+      let contextOverride = contextFallback ? { ...contextFallback } : null;
+      const simulationOutputs: Record<string, RuntimePortValues> = {};
+
+      for (const simulationNode of connectedSimulationNodes) {
+        const context = await resolveSimulationContextForNode(
+          simulationNode,
+          contextOverride ?? contextFallback ?? null
+        );
+        if (!context) continue;
+        contextOverride = {
+          ...(contextOverride ?? {}),
+          ...context,
+        };
+        simulationOutputs[simulationNode.id] = buildSimulationOutputsFromContext(context);
+      }
+
+      return {
+        contextOverride,
+        simulationOutputs,
+      };
+    },
+    [getConnectedSimulationNodesForTrigger, resolveSimulationContextForNode]
+  );
+
   const runGraphForTrigger = useCallback(
     async (
       triggerNode: AiNode,
@@ -168,7 +202,6 @@ export function useLocalExecutionTriggers(
         activeTrigger: args.activeTrigger,
       };
       const baseTriggerContext = buildTriggerContext(triggerContextArgs);
-      const simulationSeedOutputs: Record<string, RuntimePortValues> = {};
       const localSecurityIssues = evaluateLocalExecutionSecurity(args.normalizedNodes);
       if (args.executionMode === 'local' && localSecurityIssues.length > 0) {
         const timestamp = new Date().toISOString();
@@ -206,13 +239,27 @@ export function useLocalExecutionTriggers(
         args.toast(message, { variant: 'error' });
         return;
       }
+      const {
+        contextOverride: resolvedContextOverride,
+        simulationOutputs: simulationSeedOutputs,
+      } = await resolveConnectedSimulationBridgeForTrigger(triggerNode, contextOverride ?? null);
+      const preflightRuntimeState =
+        Object.keys(simulationSeedOutputs).length > 0
+          ? {
+              ...args.runtimeStateRef.current,
+              outputs: {
+                ...(args.runtimeStateRef.current.outputs ?? {}),
+                ...simulationSeedOutputs,
+              },
+            }
+          : args.runtimeStateRef.current;
       const runPreflight = evaluateRunPreflight({
         nodes: args.normalizedNodes,
         edges: args.sanitizedEdges,
         aiPathsValidation: args.aiPathsValidation,
         strictFlowMode: args.strictFlowMode,
         triggerNodeId: triggerNode.id,
-        runtimeState: args.runtimeStateRef.current,
+        runtimeState: preflightRuntimeState,
         parserSamples: args.parserSamples,
         updaterSamples: args.updaterSamples,
         mode: 'full',
@@ -502,8 +549,53 @@ export function useLocalExecutionTriggers(
 
       const triggerContext = {
         ...baseTriggerContext,
-        ...(contextOverride ?? {}),
+        ...(resolvedContextOverride ?? {}),
       };
+      const connectedFetcherNodes = getConnectedFetcherNodesForTrigger(triggerNode.id);
+      const requiresLiveEntityContext = connectedFetcherNodes.some(
+        (fetcherNode: AiNode): boolean => resolveFetcherSourceMode(fetcherNode) === 'live_context'
+      );
+      if (requiresLiveEntityContext && !hasEntityReference(triggerContext)) {
+        const timestamp = new Date().toISOString();
+        const fetcherTitles = connectedFetcherNodes
+          .filter(
+            (fetcherNode: AiNode): boolean =>
+              resolveFetcherSourceMode(fetcherNode) === 'live_context'
+          )
+          .map((fetcherNode: AiNode): string => fetcherNode.title ?? fetcherNode.id);
+        const blockedMessage =
+          'Canvas run blocked: connected Fetcher nodes require entity context. Connect a Simulation node or run this workflow from the product surface.';
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_blocked',
+          level: 'warn',
+          timestamp,
+          message: blockedMessage,
+          nodeId: triggerNode.id,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          metadata: {
+            reason: 'missing_entity_context',
+            fetcherNodeTitles: fetcherTitles,
+          },
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'blocked',
+          source: 'local',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_status',
+          level: 'warn',
+          message: blockedMessage,
+          metadata: {
+            reason: 'missing_entity_context',
+            fetcherNodeTitles: fetcherTitles,
+          },
+        });
+        args.toast(blockedMessage, { variant: 'error' });
+        return;
+      }
 
       if (args.serverRunActiveRef.current) {
         args.stopServerRunStream();
@@ -664,6 +756,7 @@ export function useLocalExecutionTriggers(
     [
       getConnectedSimulationNodesForTrigger,
       getConnectedFetcherNodesForTrigger,
+      resolveConnectedSimulationBridgeForTrigger,
       resolveSimulationContextForNode,
     ]
   );

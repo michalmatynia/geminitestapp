@@ -1,13 +1,54 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const listAiPathRunsMock = vi.hoisted(() => vi.fn());
 const getAiPathRunMock = vi.hoisted(() => vi.fn());
 const cancelAiPathRunMock = vi.hoisted(() => vi.fn());
 const resumeAiPathRunMock = vi.hoisted(() => vi.fn());
 const retryAiPathRunNodeMock = vi.hoisted(() => vi.fn());
+const eventSourceInstances = vi.hoisted((): MockEventSource[] => []);
+
+class MockEventSource {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
+
+  readonly url: string;
+  readonly close = vi.fn(() => {
+    this.readyState = MockEventSource.CLOSED;
+  });
+  readonly listeners = new Map<string, Array<(event: Event) => void>>();
+  readyState = MockEventSource.OPEN;
+  onerror: ((this: EventSource, ev: Event) => unknown) | null = null;
+
+  constructor(url: string | URL) {
+    this.url = String(url);
+    eventSourceInstances.push(this);
+  }
+
+  addEventListener(type: string, listener: (event: Event) => void): void {
+    const existing = this.listeners.get(type) ?? [];
+    existing.push(listener);
+    this.listeners.set(type, existing);
+  }
+
+  removeEventListener(type: string, listener: (event: Event) => void): void {
+    const existing = this.listeners.get(type) ?? [];
+    this.listeners.set(
+      type,
+      existing.filter((candidate) => candidate !== listener)
+    );
+  }
+
+  dispatch(type: string, payload: unknown): void {
+    const event = new MessageEvent(type, {
+      data: JSON.stringify(payload),
+    });
+    (this.listeners.get(type) ?? []).forEach((listener) => listener(event));
+  }
+}
 
 vi.mock('@/shared/lib/ai-paths', async () => {
   const actual =
@@ -64,6 +105,12 @@ const useHarness = (): {
 };
 
 describe('useAiPathsRunHistory run coercion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    eventSourceInstances.length = 0;
+    vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
+  });
+
   it('keeps legacy runs visible by coercing _id and cancelled status', async () => {
     listAiPathRunsMock.mockResolvedValue({
       ok: true,
@@ -133,5 +180,67 @@ describe('useAiPathsRunHistory run coercion', () => {
 
     expect(retryAiPathRunNodeMock).toHaveBeenCalledWith('run-retry-1', 'node-failed');
     expect(toastMock).toHaveBeenCalledWith('Node retry queued.', { variant: 'success' });
+  });
+
+  it('does not recreate the run detail stream when streamed events are merged', async () => {
+    listAiPathRunsMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runs: [],
+        total: 0,
+      },
+    });
+
+    const { result } = renderHook(() => useHarness(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(listAiPathRunsMock).toHaveBeenCalled();
+    });
+
+    act(() => {
+      result.current.actions.setRunDetail({
+        run: {
+          id: 'run-stream-1',
+          status: 'running',
+          createdAt: '2026-03-11T08:00:00.000Z',
+          updatedAt: '2026-03-11T08:00:00.000Z',
+        },
+        nodes: [],
+        events: [],
+        errorSummary: null,
+      });
+      result.current.actions.setRunDetailOpen(true);
+    });
+
+    await waitFor(() => {
+      expect(eventSourceInstances).toHaveLength(1);
+    });
+
+    const activeSource = eventSourceInstances[0];
+    expect(activeSource?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      activeSource?.dispatch('events', {
+        events: [
+          {
+            id: 'evt-1',
+            level: 'info',
+            message: 'stream event',
+            createdAt: '2026-03-11T08:00:01.000Z',
+          },
+        ],
+        overflow: false,
+        limit: 200,
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.runDetail?.events).toHaveLength(1);
+    });
+
+    expect(eventSourceInstances).toHaveLength(1);
+    expect(activeSource?.close).not.toHaveBeenCalled();
   });
 });

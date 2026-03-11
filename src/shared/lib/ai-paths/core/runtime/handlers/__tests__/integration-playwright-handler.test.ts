@@ -35,7 +35,7 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
         script:
           'export default async function run({ page, input, emit }) {\n' +
           '  await page.goto(input?.prompt || "https://example.com");\n' +
-          "  emit('result', 'ok');\n" +
+          '  emit(\'result\', \'ok\');\n' +
           '  return { ok: true };\n' +
           '}',
         waitForResult: true,
@@ -108,7 +108,7 @@ describe('handlePlaywright', () => {
     pollMock.mockReset();
     artifactUrlFromPathMock.mockReset();
     artifactUrlFromPathMock.mockImplementation(
-      (relativePath: string) =>
+      (_relativePath: string) =>
         `/api/ai-paths/playwright/${encodeURIComponent('run-100')}/artifacts/${encodeURIComponent('final.png')}`
     );
   });
@@ -198,7 +198,6 @@ describe('handlePlaywright', () => {
       expect.objectContaining({
         jobId: 'run-queued-1',
         status: 'queued',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         bundle: expect.objectContaining({
           runId: 'run-queued-1',
           status: 'queued',

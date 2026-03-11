@@ -23,9 +23,6 @@ export function useKangurAiTutorAvatarShellActions(input: {
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
   handleCloseLauncherPrompt: () => void;
   handleHomeOnboardingFinishEarly: () => void;
-  handleOpenChat: (
-    reason: 'toggle' | 'selection' | 'selection_explain' | 'section_explain' | 'ask_modal'
-  ) => void;
   homeOnboardingStepIndex: number | null;
   isOpen: boolean;
   launcherPromptVisible: boolean;
@@ -59,7 +56,6 @@ export function useKangurAiTutorAvatarShellActions(input: {
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
     homeOnboardingStepIndex,
     isOpen,
     launcherPromptVisible,
@@ -155,7 +151,6 @@ export function useKangurAiTutorAvatarShellActions(input: {
 
     if (launcherPromptVisible) {
       handleCloseLauncherPrompt();
-      return;
     }
 
     if (guidedTutorTarget) {

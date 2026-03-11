@@ -1,0 +1,23 @@
+{
+  "id": "product-sync",
+  "label": "Product synchronization workers, scheduling, and sync settings",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/product-sync"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:integration_prisma"
+  ],
+  "impactBundles": [
+    "product_sync"
+  ]
+}

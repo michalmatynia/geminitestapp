@@ -25,7 +25,7 @@ import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   type AgentPersona,
 } from '@/shared/contracts/agents';
-import { ItemLibrary, SectionHeaderBackLink, useToast } from '@/shared/ui';
+import { AdminAgentCreatorBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function AgentPersonasPage(): React.JSX.Element {
@@ -156,11 +156,7 @@ export function AgentPersonasPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      backLink={
-        <SectionHeaderBackLink href='/admin/agentcreator' arrow>
-          Back to agent creator
-        </SectionHeaderBackLink>
-      }
+      backLink={<AdminAgentCreatorBreadcrumbs current='Personas' className='mb-2' />}
       buildDefaultItem={() => ({
         id: createAgentPersonaId(),
         name: '',

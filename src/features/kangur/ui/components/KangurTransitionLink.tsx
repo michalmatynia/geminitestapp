@@ -9,6 +9,8 @@ import type { MouseEvent } from 'react';
 
 type KangurTransitionLinkProps = React.ComponentProps<typeof NextLink> & {
   targetPageKey?: string | null;
+  transitionAcknowledgeMs?: number;
+  transitionSourceId?: string | null;
 };
 
 const shouldStartTransition = (
@@ -41,6 +43,8 @@ export function KangurTransitionLink({
   scroll,
   target,
   targetPageKey,
+  transitionAcknowledgeMs,
+  transitionSourceId,
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
@@ -74,8 +78,10 @@ export function KangurTransitionLink({
 
         event.preventDefault();
         routeNavigator.push(href, {
+          ...(typeof transitionAcknowledgeMs === 'number' ? { acknowledgeMs: transitionAcknowledgeMs } : {}),
           pageKey: targetPageKey ?? null,
           scroll: resolvedScroll ?? false,
+          ...(transitionSourceId ? { sourceId: transitionSourceId } : {}),
         });
       }}
       {...props}

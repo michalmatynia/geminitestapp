@@ -12,6 +12,8 @@ import {
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
+const HERO_BACK_TRANSITION_ACKNOWLEDGE_MS = 110;
+
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath, user, navigateToLogin, progress } = useKangurLearnerProfileRuntime();
@@ -33,7 +35,9 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       headingAs='h1'
       onBack={() =>
         routeNavigator.push(getKangurHomeHref(basePath), {
+          acknowledgeMs: HERO_BACK_TRANSITION_ACKNOWLEDGE_MS,
           pageKey: 'Game',
+          sourceId: 'learner-profile-hero:back',
         })
       }
       testId='kangur-learner-profile-hero'

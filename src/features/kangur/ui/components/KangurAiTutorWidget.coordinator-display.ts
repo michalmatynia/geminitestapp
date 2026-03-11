@@ -77,6 +77,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     isTutorHidden,
     mounted,
     panelAnchorMode,
+    panelShellMode,
     panelMeasuredHeight,
     persistedSelectionPageRect,
     persistedSelectionRect,
@@ -195,17 +196,26 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   const effectiveSelectionRect = effectiveSelectedText
     ? activeSelectionRect ?? guidedSelectionRect
     : activeSelectionRect;
+  const hasSelectionPanelReady =
+    isOpen &&
+    panelShellMode === 'minimal' &&
+    contextualTutorMode === 'selection_explain' &&
+    selectionConversationContext !== null &&
+    selectionConversationContext.selectedText === effectiveSelectedText;
 
   useKangurAiTutorGuidanceCompletionEffects({
     activeSelectedText: effectiveSelectedText,
+    contextualTutorMode,
     highlightedSection,
     isLoading,
     isOpen,
+    panelShellMode,
     isSectionGuidedMode: isSectionGuidedTutorMode,
     isSelectionGuidedMode: isSelectionGuidedTutorMode,
     sectionResponseComplete,
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
+    selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -259,9 +269,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
 
   useKangurAiTutorSelectionGuidanceHandoffEffect({
     activeFocusKind: activeFocus.kind,
-    activeSelectedText,
+    activeSelectedText: effectiveSelectedText,
+    hasSelectionPanelReady,
     isOpen,
     panelMotionState: tutorPanelMotionState,
+    selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionGuidanceHandoffText,
     setGuidedTutorTarget,
   });

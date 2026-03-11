@@ -1,9 +1,6 @@
 import { useCallback } from 'react';
 
-import {
-  imageStudioCropResponseSchema,
-  type ImageStudioCropResponse,
-} from '@/shared/contracts/image-studio';
+import { imageStudioCropResponseSchema } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

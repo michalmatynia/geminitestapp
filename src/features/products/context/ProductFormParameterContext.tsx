@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   ProductParameter,
@@ -51,6 +51,28 @@ export const resolvePrimaryParameterValue = (
   fallbackValue: string = ''
 ): string => resolveStoredParameterValue(valuesByLanguage, fallbackValue);
 
+const normalizeSourceParameterValues = (
+  sourceParams: ProductParameterValue[] | null | undefined
+): ProductParameterValue[] => {
+  if (!Array.isArray(sourceParams)) return [];
+
+  return sourceParams.map((entry: ProductParameterValue) => {
+    const valuesByLanguage = normalizeParameterValuesByLanguage(entry?.valuesByLanguage);
+    const directValue = typeof entry?.value === 'string' ? entry.value : '';
+    const fallbackValue = resolveStoredParameterValue(valuesByLanguage, directValue);
+
+    return {
+      parameterId: decodeSimpleParameterStorageId(
+        typeof entry?.parameterId === 'string' ? entry.parameterId : ''
+      ),
+      value: fallbackValue,
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+    };
+  });
+};
+
+const serializeParameterValues = (value: ProductParameterValue[]): string => JSON.stringify(value);
+
 export function ProductFormParameterProvider({
   children,
   product,
@@ -66,25 +88,31 @@ export function ProductFormParameterProvider({
 }) {
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const parametersQuery = useParameters(primaryCatalogId);
+  const sourceParameterValues = useMemo(
+    (): ProductParameterValue[] => normalizeSourceParameterValues(product?.parameters ?? draft?.parameters),
+    [draft?.parameters, product?.parameters]
+  );
+  const sourceParameterValuesKey = useMemo(
+    (): string => serializeParameterValues(sourceParameterValues),
+    [sourceParameterValues]
+  );
 
-  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(() => {
-    const sourceParams = product?.parameters ?? draft?.parameters;
-    if (!Array.isArray(sourceParams)) return [];
+  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(sourceParameterValues);
+  const adoptedParameterValuesKeyRef = useRef<string>(sourceParameterValuesKey);
 
-    return sourceParams.map((entry: ProductParameterValue) => {
-      const valuesByLanguage = normalizeParameterValuesByLanguage(entry?.valuesByLanguage);
-      const directValue = typeof entry?.value === 'string' ? entry.value : '';
-      const fallbackValue = resolveStoredParameterValue(valuesByLanguage, directValue);
+  useEffect(() => {
+    const previousAdoptedKey = adoptedParameterValuesKeyRef.current;
+    if (sourceParameterValuesKey === previousAdoptedKey) return;
 
-      return {
-        parameterId: decodeSimpleParameterStorageId(
-          typeof entry?.parameterId === 'string' ? entry.parameterId : ''
-        ),
-        value: fallbackValue,
-        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-      };
+    setParameterValues((current: ProductParameterValue[]): ProductParameterValue[] => {
+      const currentKey = serializeParameterValues(current);
+      if (currentKey !== previousAdoptedKey) {
+        return current;
+      }
+      adoptedParameterValuesKeyRef.current = sourceParameterValuesKey;
+      return sourceParameterValues;
     });
-  });
+  }, [sourceParameterValues, sourceParameterValuesKey]);
 
   const value = useMemo((): ProductFormParameterContextType => {
     const addParameterValue = (): void => {

@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
-import { AdminCmsBreadcrumbs, Alert, PageLayout } from '@/shared/ui';
+import { AdminCmsPageLayout, Alert } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -35,16 +35,11 @@ export default function CreateThemePage(): React.JSX.Element {
   };
 
   return (
-    <PageLayout
+    <AdminCmsPageLayout
       title='Create Theme'
+      current='Create'
+      parent={{ label: 'Themes', href: '/admin/cms/themes' }}
       description='Design a new visual system for your storefront.'
-      eyebrow={
-        <AdminCmsBreadcrumbs
-          parent={{ label: 'Themes', href: '/admin/cms/themes' }}
-          current='Create'
-          className='mb-2'
-        />
-      }
     >
       {error ? (
         <Alert variant='error' className='mb-6'>
@@ -57,6 +52,6 @@ export default function CreateThemePage(): React.JSX.Element {
         onCancel={() => router.push('/admin/cms/themes')}
         submitText='Create Theme'
       />
-    </PageLayout>
+    </AdminCmsPageLayout>
   );
 }

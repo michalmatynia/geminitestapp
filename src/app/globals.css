@@ -626,7 +626,10 @@
     );
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) {
+  .home-action-featured-shell[data-nav-state='pressed'],
+  .home-action-featured-shell[data-nav-state='transitioning'],
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within),
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) {
     --home-action-face-offset: -5px;
     --home-action-depth: 14px;
     --home-action-accent-opacity: 1;
@@ -677,7 +680,10 @@
     transition-delay: 0s, 0s;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured {
     color: var(--home-action-active-text-color);
   }
 
@@ -743,11 +749,17 @@
     transition: opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-face::before {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured-face::before,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-face::before,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-face::before,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-face::before {
     opacity: 1;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-face {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured-face,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-face,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-face,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-face {
     border-color: rgba(220, 227, 255, 0.78);
     box-shadow:
       0 24px 52px rgba(var(--home-action-accent-shadow-rgb), 0.16),
@@ -817,7 +829,10 @@
     transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-accent {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured-accent,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-accent,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-accent,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-accent {
     box-shadow:
       0 34px 70px rgba(var(--home-action-accent-shadow-rgb), 0.38),
       inset 0 7px 16px rgba(255, 255, 255, 0.28),
@@ -870,7 +885,10 @@
     transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-underlay {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured-underlay,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-underlay,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-underlay,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-underlay {
     opacity: var(--home-action-underlay-opacity);
     box-shadow: 0 20px 36px rgba(var(--home-action-underlay-shadow-rgb), 0.34);
     filter: saturate(1.05);
@@ -888,22 +906,32 @@
     transition-delay: 0s, 0s, 0s;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-sparkle {
+  .home-action-featured-shell[data-nav-state='pressed'] .home-action-featured-sparkle,
+  .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-sparkle,
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-sparkle,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-sparkle {
     opacity: 0.84;
     transform: scale(1);
     filter: blur(0);
+  }
+
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-sparkle,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-sparkle {
     animation: home-action-featured-sparkle-twinkle 1.8s ease-in-out infinite;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-sparkle-1 {
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-sparkle-1,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-sparkle-1 {
     animation-delay: 0s;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-sparkle-2 {
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-sparkle-2,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-sparkle-2 {
     animation-delay: 0.32s;
   }
 
-  .home-action-featured-shell:is(:hover, :focus-within) .home-action-featured-sparkle-3 {
+  .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-sparkle-3,
+  .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-sparkle-3 {
     animation-delay: 0.68s;
   }
 

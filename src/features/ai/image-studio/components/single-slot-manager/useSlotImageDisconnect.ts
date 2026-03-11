@@ -3,11 +3,11 @@
 import { useCallback } from 'react';
 
 import type {
-  ImageStudioSlotResponse,
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
   StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
+import { imageStudioSlotResponseSchema } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
@@ -112,9 +112,11 @@ export function useSlotImageDisconnect({
           const patchBySlotId = async (slotId: string): Promise<ImageStudioSlot | null> => {
             if (!slotId) return null;
             try {
-              const response = await api.patch<ImageStudioSlotResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
-                clearPayload
+              const response = imageStudioSlotResponseSchema.parse(
+                await api.patch<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+                  clearPayload
+                )
               );
               return response.slot ?? null;
             } catch {

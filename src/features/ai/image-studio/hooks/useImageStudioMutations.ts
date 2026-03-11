@@ -5,6 +5,7 @@ import { useRef } from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {
+  studioSlotsResponseSchema,
   imageStudioSlotDeleteResponseSchema,
   imageStudioSlotResponseSchema,
   type ImageStudioProjectRecord,
@@ -244,10 +245,12 @@ export function useCreateStudioSlots(
   projectId: string
 ): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
   return createCreateMutationV2({
-    mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) =>
-      api.post<StudioSlotsResponse>(
-        `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
-        { slots }
+    mutationFn: async (slots: Array<Partial<ImageStudioSlotRecord>>) =>
+      studioSlotsResponseSchema.parse(
+        await api.post<unknown>(
+          `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+          { slots }
+        )
       ),
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
@@ -282,10 +285,7 @@ export function useUpdateStudioSlot(
     }): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
       const response = imageStudioSlotResponseSchema.parse(
-        await api.patch<unknown>(
-          `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
-          data
-        )
+        await api.patch<unknown>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data)
       );
       return response.slot;
     },
@@ -422,13 +422,15 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       for (let attempt = 0; attempt < DELETE_VERIFY_ATTEMPTS; attempt += 1) {
         applyOptimisticDeleteFilter(qc, candidateIds);
         try {
-          const response = await api.get<StudioSlotsResponse>(
-            `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
-            {
-              cache: 'no-store',
-              logError: false,
-              timeout: 15_000,
-            }
+          const response = studioSlotsResponseSchema.parse(
+            await api.get<unknown>(
+              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+              {
+                cache: 'no-store',
+                logError: false,
+                timeout: 15_000,
+              }
+            )
           );
           patchImageStudioSlotsCache(qc, normalizedProjectId, () => response);
         } catch {

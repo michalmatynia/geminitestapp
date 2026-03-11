@@ -14,7 +14,7 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import type { Slug } from '@/shared/contracts/cms';
-import { AdminCmsBreadcrumbs, Alert, LoadingState, SectionHeader, useToast } from '@/shared/ui';
+import { AdminCmsPageLayout, Alert, LoadingState, useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
@@ -113,18 +113,13 @@ function EditSlugForm({
   };
 
   return (
-    <div className='container mx-auto py-10 max-w-2xl space-y-6'>
-      <SectionHeader
-        title='Edit Route'
-        description='Configure path behavior and cross-domain assignments.'
-        eyebrow={
-          <AdminCmsBreadcrumbs
-            parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
-            current='Edit'
-            className='mb-2'
-          />
-        }
-      />
+    <AdminCmsPageLayout
+      title='Edit Route'
+      current='Edit'
+      parent={{ label: 'Slugs', href: '/admin/cms/slugs' }}
+      description='Configure path behavior and cross-domain assignments.'
+      containerClassName='container mx-auto max-w-2xl space-y-6 py-10'
+    >
 
       {error && (
         <Alert variant='error' className='mb-6'>
@@ -140,6 +135,6 @@ function EditSlugForm({
         submitText='Save Changes'
         domains={domains}
       />
-    </div>
+    </AdminCmsPageLayout>
   );
 }

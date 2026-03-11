@@ -4,10 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import type {
-  ImageStudioSlotScreenshotResponse,
-  ImageStudioSlotRecord,
-  SlotGenerationMetadata,
+import {
+  imageStudioSlotScreenshotResponseSchema,
+  type ImageStudioSlotRecord,
+  type SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -666,12 +666,14 @@ export function CenterPreviewInner(): React.JSX.Element {
         /[^a-zA-Z0-9_-]/g,
         '_'
       );
-      await api.post<ImageStudioSlotScreenshotResponse>(
-        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`,
-        {
-          dataUrl,
-          filename: `${baseName}-${Date.now()}.png`,
-        }
+      imageStudioSlotScreenshotResponseSchema.parse(
+        await api.post<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`,
+          {
+            dataUrl,
+            filename: `${baseName}-${Date.now()}.png`,
+          }
+        )
       );
       void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });

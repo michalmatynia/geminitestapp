@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 
-const { useProductListModalsContextMock } = vi.hoisted(() => ({
+const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({
+  useProductListHeaderActionsContextMock: vi.fn(),
   useProductListModalsContextMock: vi.fn(),
 }));
 
@@ -31,6 +32,7 @@ const {
 });
 
 vi.mock('@/features/products/context/ProductListContext', () => ({
+  useProductListHeaderActionsContext: useProductListHeaderActionsContextMock,
   useProductListModalsContext: useProductListModalsContextMock,
 }));
 
@@ -61,6 +63,15 @@ vi.mock('@/features/products/context/ProductFormImageContext', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
+  Button: ({
+    children,
+    onClick,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+    <button type='button' onClick={onClick} {...props}>
+      {children}
+    </button>
+  ),
   FormModal: ({
     children,
     isSaveDisabled,
@@ -110,7 +121,7 @@ vi.mock('@/shared/lib/product-integrations-adapter', () => ({
   default: () => null,
 }));
 
-import { ProductModals } from './ProductModals';
+import { ProductModals, buildTriggeredProductEntityJson } from './ProductModals';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -202,6 +213,10 @@ describe('ProductModals edit hydration guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetProviderInstanceCounterMock();
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      showTriggerRunFeedback: true,
+      setShowTriggerRunFeedback: vi.fn(),
+    });
     useProductFormCoreMock.mockReturnValue({
       handleSubmit: vi.fn(),
       uploading: false,
@@ -273,6 +288,61 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     // Save button is enabled when form is loaded
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
+  });
+
+  it('renders a show or hide statuses button next to modal trigger buttons', () => {
+    const hydrated = markEditingProductHydrated(createProduct());
+    const setShowTriggerRunFeedback = vi.fn();
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      showTriggerRunFeedback: true,
+      setShowTriggerRunFeedback,
+    });
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: hydrated,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    });
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        editingProduct: hydrated,
+      })
+    );
+
+    render(<ProductModals />);
+
+    expect(screen.getByRole('button', { name: 'Hide trigger run pills' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Hide trigger run pills' }));
+
+    expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
+    expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
+  });
+
+  it('normalizes trigger entity catalogs from current form catalogIds', () => {
+    const hydrated = markEditingProductHydrated(
+      createProduct({
+        catalogId: 'catalog-base',
+        catalogs: [{ productId: 'product-1', catalogId: 'catalog-base', assignedAt: '2026-01-01' }],
+      })
+    );
+
+    const entityJson = buildTriggeredProductEntityJson({
+      product: hydrated,
+      draft: null,
+      values: {
+        catalogIds: ['catalog-form'],
+      },
+    });
+
+    expect(entityJson['catalogId']).toBe('catalog-form');
+    expect(entityJson['catalogs']).toEqual([
+      expect.objectContaining({
+        catalogId: 'catalog-form',
+        productId: 'product-1',
+      }),
+    ]);
   });
 
   it('keeps the same edit provider instance after save refreshes updatedAt', () => {

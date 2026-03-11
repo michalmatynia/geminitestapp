@@ -1,9 +1,6 @@
 import { useCallback } from 'react';
 
-import {
-  imageStudioUpscaleResponseSchema,
-  type ImageStudioUpscaleResponse,
-} from '@/shared/contracts/image-studio';
+import { imageStudioUpscaleResponseSchema } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

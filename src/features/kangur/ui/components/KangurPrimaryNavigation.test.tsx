@@ -71,6 +71,7 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
+  useOptionalKangurRouteTransitionState: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -146,8 +147,10 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: /lekcje/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 110,
       href: '/kangur/lessons',
       pageKey: 'Lessons',
+      sourceId: 'kangur-primary-nav:lessons',
     });
   });
 
@@ -164,8 +167,30 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: /strona glowna/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 110,
       href: '/kangur',
       pageKey: 'Game',
+      sourceId: 'kangur-primary-nav:home',
+    });
+  });
+
+  it('starts the managed handoff when opening the learner profile from the navbar', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: /profil/i }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 110,
+      href: '/kangur/profile',
+      pageKey: 'LearnerProfile',
+      sourceId: 'kangur-primary-nav:profile',
     });
   });
 

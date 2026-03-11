@@ -399,20 +399,25 @@ test.describe('Kangur AI Tutor live lesson route', () => {
     await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible({
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
     await page.waitForTimeout(1_200);
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible({
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
 
     await expectDiagnostics(page, {
-      'data-tutor-surface': 'selection_panel',
+      'data-tutor-surface': 'selection_guided',
       'data-contextual-mode': 'selection_explain',
-      'data-is-minimal-panel': 'true',
+      'data-is-minimal-panel': 'false',
       'data-guest-intro-rendered': 'false',
     });
   });

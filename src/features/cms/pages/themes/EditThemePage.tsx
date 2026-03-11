@@ -7,7 +7,7 @@ import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/T
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import type { CmsTheme, CmsThemeUpdateRequestDto } from '@/shared/contracts/cms';
-import { AdminCmsBreadcrumbs, Alert, LoadingState, PageLayout } from '@/shared/ui';
+import { AdminCmsPageLayout, Alert, LoadingState } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -49,16 +49,11 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
   };
 
   return (
-    <PageLayout
+    <AdminCmsPageLayout
       title='Edit Theme'
+      current='Edit'
+      parent={{ label: 'Themes', href: '/admin/cms/themes' }}
       description='Customize the visual design system for your storefront.'
-      eyebrow={
-        <AdminCmsBreadcrumbs
-          parent={{ label: 'Themes', href: '/admin/cms/themes' }}
-          current='Edit'
-          className='mb-2'
-        />
-      }
     >
       {error ? (
         <Alert variant='error' className='mb-6'>
@@ -72,7 +67,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
         onCancel={() => router.push('/admin/cms/themes')}
         submitText='Save Changes'
       />
-    </PageLayout>
+    </AdminCmsPageLayout>
   );
 }
 
@@ -83,19 +78,29 @@ export default function EditThemePage(): React.JSX.Element {
 
   if (themeQuery.isLoading) {
     return (
-      <PageLayout title='Edit Theme' description='Loading theme configuration...'>
+      <AdminCmsPageLayout
+        title='Edit Theme'
+        current='Edit'
+        parent={{ label: 'Themes', href: '/admin/cms/themes' }}
+        description='Loading theme configuration...'
+      >
         <LoadingState message='Loading theme...' className='py-20' />
-      </PageLayout>
+      </AdminCmsPageLayout>
     );
   }
 
   if (!themeQuery.data) {
     return (
-      <PageLayout title='Edit Theme' description='Theme not found.'>
+      <AdminCmsPageLayout
+        title='Edit Theme'
+        current='Edit'
+        parent={{ label: 'Themes', href: '/admin/cms/themes' }}
+        description='Theme not found.'
+      >
         <Alert variant='error' className='mt-10'>
           Theme not found. It might have been deleted or the ID is invalid.
         </Alert>
-      </PageLayout>
+      </AdminCmsPageLayout>
     );
   }
 

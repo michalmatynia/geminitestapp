@@ -18,6 +18,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
   KangurPageTopBar,
@@ -44,6 +45,9 @@ type KangurNavActionConfig = {
   targetPageKey?: KangurPrimaryNavigationPage;
   testId?: string;
   title?: string;
+  transitionActive?: boolean;
+  transitionAcknowledgeMs?: number;
+  transitionSourceId?: string;
 };
 
 type KangurPrimaryNavigationProps = {
@@ -69,6 +73,23 @@ type KangurPrimaryNavigationProps = {
 export type { KangurPrimaryNavigationProps };
 
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
+const NAVIGATION_TRANSITION_ACKNOWLEDGE_MS = 110;
+
+const isTransitionSourceActive = ({
+  activeTransitionSourceId,
+  transitionPhase,
+  transitionSourceId,
+}: {
+  activeTransitionSourceId?: string | null;
+  transitionPhase?: 'acknowledging' | 'idle' | 'pending' | 'revealing';
+  transitionSourceId?: string;
+}): boolean =>
+  Boolean(
+    transitionSourceId &&
+      activeTransitionSourceId === transitionSourceId &&
+      transitionPhase &&
+      transitionPhase !== 'idle'
+  );
 
 const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
   const {
@@ -83,8 +104,11 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
     targetPageKey,
     testId,
     title,
+    transitionActive = false,
+    transitionAcknowledgeMs,
+    transitionSourceId,
   } = config;
-  const variant = active ? 'navigationActive' : 'navigation';
+  const variant = active || transitionActive ? 'navigationActive' : 'navigation';
 
   if (href) {
     return (
@@ -94,12 +118,18 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
         aria-label={ariaLabel}
         className={className}
         data-doc-id={docId}
+        data-nav-state={transitionActive ? 'transitioning' : 'idle'}
         data-testid={testId}
         size='md'
         title={title}
         variant={variant}
       >
-        <Link href={href} targetPageKey={targetPageKey}>
+        <Link
+          href={href}
+          targetPageKey={targetPageKey}
+          transitionAcknowledgeMs={transitionAcknowledgeMs}
+          transitionSourceId={transitionSourceId}
+        >
           {content}
         </Link>
       </KangurButton>
@@ -112,6 +142,7 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
       aria-label={ariaLabel}
       className={className}
       data-doc-id={docId}
+      data-nav-state={transitionActive ? 'transitioning' : 'idle'}
       data-testid={testId}
       onClick={onClick}
       ref={elementRef}
@@ -147,6 +178,7 @@ export function KangurPrimaryNavigation({
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
   const guestPlayerPlaceholderText = guestPlayerNamePlaceholder;
   const navigationLabel = navLabel;
@@ -175,6 +207,12 @@ export function KangurPrimaryNavigation({
   const lessonsHref = createPageUrl('Lessons', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
   const profileHref = createPageUrl('LearnerProfile', basePath);
+  const transitionPhase = routeTransitionState?.transitionPhase ?? 'idle';
+  const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
+  const homeTransitionSourceId = 'kangur-primary-nav:home';
+  const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
+  const profileTransitionSourceId = 'kangur-primary-nav:profile';
+  const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -360,6 +398,13 @@ export function KangurPrimaryNavigation({
     onClick: onHomeClick,
     targetPageKey: 'Game',
     testId: 'kangur-primary-nav-home',
+    transitionActive: isTransitionSourceActive({
+      activeTransitionSourceId,
+      transitionPhase,
+      transitionSourceId: homeTransitionSourceId,
+    }),
+    transitionAcknowledgeMs: onHomeClick ? undefined : NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+    transitionSourceId: onHomeClick ? undefined : homeTransitionSourceId,
   };
   const lessonsAction: KangurNavActionConfig = {
     active: currentPage === 'Lessons',
@@ -373,6 +418,13 @@ export function KangurPrimaryNavigation({
     href: lessonsHref,
     targetPageKey: 'Lessons',
     testId: 'kangur-primary-nav-lessons',
+    transitionActive: isTransitionSourceActive({
+      activeTransitionSourceId,
+      transitionPhase,
+      transitionSourceId: lessonsTransitionSourceId,
+    }),
+    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+    transitionSourceId: lessonsTransitionSourceId,
   };
   const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
     ? {
@@ -387,6 +439,13 @@ export function KangurPrimaryNavigation({
       href: parentDashboardHref,
       targetPageKey: 'ParentDashboard',
       testId: 'kangur-primary-nav-parent-dashboard',
+      transitionActive: isTransitionSourceActive({
+        activeTransitionSourceId,
+        transitionPhase,
+        transitionSourceId: parentDashboardTransitionSourceId,
+      }),
+      transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+      transitionSourceId: parentDashboardTransitionSourceId,
     }
     : null;
   const utilityActions =
@@ -406,7 +465,16 @@ export function KangurPrimaryNavigation({
       {renderNavAction(lessonsAction)}
       {tutorRestoreAction}
       {effectiveIsAuthenticated ? (
-        <KangurProfileMenu profile={{ href: profileHref, isActive: learnerProfileIsActive }} />
+        <KangurProfileMenu
+          isTransitionActive={isTransitionSourceActive({
+            activeTransitionSourceId,
+            transitionPhase,
+            transitionSourceId: profileTransitionSourceId,
+          })}
+          profile={{ href: profileHref, isActive: learnerProfileIsActive }}
+          transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
+          transitionSourceId={profileTransitionSourceId}
+        />
       ) : null}
       {utilityActions}
     </KangurTopNavGroup>

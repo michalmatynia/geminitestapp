@@ -459,32 +459,14 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
     expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
 
-    await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'selection');
-    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
-    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
-    await expect(tutorPanel).toHaveAttribute('data-has-pointer', 'true');
-    await expect(tutorPanel).toHaveAttribute('data-pointer-side', 'left');
-    await expect(page.getByTestId('kangur-ai-tutor-pointer')).toHaveAttribute(
-      'data-pointer-side',
-      'left'
-    );
-    await expect(tutorPanel).toHaveAttribute('data-launch-origin', 'dock-bottom-right');
-    await waitForTutorPanelToSettle(tutorPanel);
-    await expect(tutorPanel).toContainText(lessonSelectedText);
-    await expect(page.getByTestId('kangur-ai-tutor-selected-text-preview')).toContainText(
-      'Wyjaśniany fragment'
-    );
-    await expect(page.getByTestId('kangur-ai-tutor-selected-text-refocus')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Wróć do rozmowy' })).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-quick-action-selected-text')).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
+    await expect(tutorPanel).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible();
     await expect(
       selectedLessonBlock.getByText(lessonSelectedText, { exact: true })
     ).toBeVisible();
-    await expectTutorAvatarAttachedToPanel(page);
-    await expectTutorPanelWithinViewport(page);
-    await expect(tutorPanel).toContainText(lessonResponse);
   });
 
   test.fixme('legacy panel-first remembered-thread flow must be rewritten to the minimalist tutor contract', async ({
@@ -626,20 +608,16 @@ test.describe('Kangur AI Tutor', () => {
       page.getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')
     ).toHaveCount(0);
 
-    await expect(tutorPanel).toBeVisible();
-    await waitForTutorPanelToSettle(tutorPanel);
-    await expect(diagnostics).toHaveAttribute('data-tutor-surface', 'selection_panel');
+    await expect(tutorPanel).toHaveCount(0);
+    await expect(diagnostics).toHaveAttribute('data-tutor-surface', 'selection_guided');
     await expect(diagnostics).toHaveAttribute('data-contextual-mode', 'selection_explain');
-    await expect(diagnostics).toHaveAttribute('data-is-minimal-panel', 'true');
+    await expect(diagnostics).toHaveAttribute('data-is-minimal-panel', 'false');
     await expect(diagnostics).toHaveAttribute('data-guest-intro-rendered', 'false');
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
     await expect(tutorAvatar).toHaveAttribute('data-guidance-pointer', 'rim-arrowhead');
     await expect(tutorArrowhead).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-selected-text-preview')).toContainText(
-      lessonSelectedText
-    );
-    await expect(tutorPanel).toContainText(lessonResponse);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-composer-shell')).toHaveCount(0);
     await expect(guestIntro).toHaveCount(0);
     await expect(
       page.getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')
@@ -683,24 +661,11 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    await expect(tutorPanel).toBeVisible();
-    await waitForTutorPanelToSettle(tutorPanel);
-    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'attached');
+    await expect(tutorPanel).toHaveCount(0);
+    await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'guided');
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'home_quest');
-    await expect(tutorPanel).toHaveAttribute('data-avatar-placement', 'attached');
-    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toHaveCount(0);
-    await expect(page.getByTestId('kangur-ai-tutor-section-preview')).toContainText(
-      'Wyjaśniana sekcja'
-    );
-    await expect(page.getByTestId('kangur-ai-tutor-section-preview')).toContainText(
-      'Misja dla ucznia'
-    );
-    await expect(
-      page.getByTestId('kangur-ai-tutor-section-context-spotlight').first()
-    ).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-section-refocus')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Wróć do rozmowy' })).toBeVisible();
-    await expect(tutorPanel).toContainText(hintResponse);
+    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-section-guided-callout')).toBeVisible();
   });
 
   test('keeps the selection guidance arrow attached to the avatar on a narrow lesson viewport', async ({
@@ -1075,7 +1040,8 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests[0]?.context?.surface).toBe('game');
     expect(chatRequests[0]?.context?.selectedText).toBe(questionPrompt);
     expect(chatRequests[0]?.context?.focusKind).toBe('selection');
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toContainText(hintResponse);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
   });
 
   test.fixme('legacy panel-first active game-question flow must be rewritten to the minimalist tutor contract', async ({ page }) => {

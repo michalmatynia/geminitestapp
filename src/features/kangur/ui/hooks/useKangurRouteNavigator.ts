@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   KANGUR_BASE_PATH,
@@ -14,6 +14,16 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 type KangurRouteNavigationOptions = {
   pageKey?: string | null;
   scroll?: boolean;
+  sourceId?: string | null;
+  acknowledgeMs?: number;
+};
+
+type KangurBackNavigationOptions = Pick<
+  KangurRouteNavigationOptions,
+  'acknowledgeMs' | 'pageKey' | 'scroll' | 'sourceId'
+> & {
+  fallbackHref?: string | null;
+  fallbackPageKey?: string | null;
 };
 
 const isManagedLocalHref = (href: string): boolean => href.startsWith('/') && !href.startsWith('//');
@@ -76,6 +86,7 @@ const resolveManagedPageKeyFromHref = (href: string, basePath: string): string |
 };
 
 export function useKangurRouteNavigator(): {
+  back: (options?: KangurBackNavigationOptions) => void;
   prefetch: (href: string) => void;
   push: (href: string, options?: KangurRouteNavigationOptions) => void;
   replace: (href: string, options?: KangurRouteNavigationOptions) => void;
@@ -84,19 +95,80 @@ export function useKangurRouteNavigator(): {
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const queuedNavigationTimeoutRef = useRef<number | null>(null);
 
   const startManagedTransition = useCallback(
-    (href: string, pageKey?: string | null): void => {
-      if (!routeTransitionActions || !isManagedLocalHref(href)) {
-        return;
+    (
+      href: string | null,
+      {
+        acknowledgeMs,
+        pageKey,
+        sourceId,
+      }: Pick<KangurRouteNavigationOptions, 'acknowledgeMs' | 'pageKey' | 'sourceId'> = {}
+    ): { acknowledgeMs: number; started: boolean } => {
+      if (!routeTransitionActions || (href !== null && !isManagedLocalHref(href))) {
+        return {
+          acknowledgeMs: 0,
+          started: true,
+        };
       }
 
-      routeTransitionActions.startRouteTransition({
-        href,
-        pageKey: pageKey ?? resolveManagedPageKeyFromHref(href, basePath),
+      const resolvedPageKey =
+        pageKey ?? (href ? resolveManagedPageKeyFromHref(href, basePath) : null);
+      const transitionResult = routeTransitionActions.startRouteTransition({
+        ...(href ? { href } : {}),
+        ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
+        ...(sourceId?.trim() ? { sourceId: sourceId.trim() } : {}),
+        ...(typeof acknowledgeMs === 'number' && acknowledgeMs > 0 ? { acknowledgeMs } : {}),
       });
+
+      if (
+        transitionResult &&
+        typeof transitionResult === 'object' &&
+        'started' in transitionResult &&
+        'acknowledgeMs' in transitionResult
+      ) {
+        return transitionResult;
+      }
+
+      return {
+        acknowledgeMs: 0,
+        started: true,
+      };
     },
     [basePath, routeTransitionActions]
+  );
+
+  const clearQueuedNavigation = useCallback((): void => {
+    if (queuedNavigationTimeoutRef.current === null || typeof window === 'undefined') {
+      return;
+    }
+
+    window.clearTimeout(queuedNavigationTimeoutRef.current);
+    queuedNavigationTimeoutRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearQueuedNavigation();
+    };
+  }, [clearQueuedNavigation]);
+
+  const scheduleManagedNavigation = useCallback(
+    (acknowledgeMs: number, navigate: () => void): boolean => {
+      if (acknowledgeMs <= 0 || typeof window === 'undefined') {
+        return false;
+      }
+
+      clearQueuedNavigation();
+      queuedNavigationTimeoutRef.current = window.setTimeout(() => {
+        queuedNavigationTimeoutRef.current = null;
+        navigate();
+      }, acknowledgeMs);
+
+      return true;
+    },
+    [clearQueuedNavigation]
   );
 
   const prefetch = useCallback(
@@ -112,30 +184,94 @@ export function useKangurRouteNavigator(): {
 
   const push = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      startManagedTransition(href, options.pageKey);
-      router.push(href, {
-        scroll: options.scroll ?? false,
-      });
+      const transitionResult = startManagedTransition(href, options);
+      if (!transitionResult.started) {
+        return;
+      }
+
+      const performPush = (): void => {
+        router.push(href, {
+          scroll: options.scroll ?? false,
+        });
+      };
+
+      if (scheduleManagedNavigation(transitionResult.acknowledgeMs, performPush)) {
+        return;
+      }
+
+      performPush();
     },
-    [router, startManagedTransition]
+    [router, scheduleManagedNavigation, startManagedTransition]
   );
 
   const replace = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      startManagedTransition(href, options.pageKey);
-      router.replace(href, {
-        scroll: options.scroll ?? false,
-      });
+      const transitionResult = startManagedTransition(href, options);
+      if (!transitionResult.started) {
+        return;
+      }
+
+      const performReplace = (): void => {
+        router.replace(href, {
+          scroll: options.scroll ?? false,
+        });
+      };
+
+      if (scheduleManagedNavigation(transitionResult.acknowledgeMs, performReplace)) {
+        return;
+      }
+
+      performReplace();
     },
-    [router, startManagedTransition]
+    [router, scheduleManagedNavigation, startManagedTransition]
+  );
+
+  const back = useCallback(
+    (options: KangurBackNavigationOptions = {}): void => {
+      const fallbackHref =
+        typeof options.fallbackHref === 'string' && options.fallbackHref.trim().length > 0
+          ? options.fallbackHref.trim()
+          : null;
+
+      if (typeof window === 'undefined' || window.history.length <= 1) {
+        if (!fallbackHref) {
+          return;
+        }
+
+        push(fallbackHref, {
+          acknowledgeMs: options.acknowledgeMs,
+          pageKey: options.fallbackPageKey ?? options.pageKey ?? null,
+          scroll: options.scroll,
+          sourceId: options.sourceId,
+        });
+        return;
+      }
+
+      const transitionResult = startManagedTransition(null, options);
+      if (!transitionResult.started) {
+        return;
+      }
+
+      const performBack = (): void => {
+        window.history.back();
+      };
+
+      if (scheduleManagedNavigation(transitionResult.acknowledgeMs, performBack)) {
+        return;
+      }
+
+      performBack();
+    },
+    [push, scheduleManagedNavigation, startManagedTransition]
   );
 
   return useMemo(
     () => ({
+      back,
       prefetch,
       push,
       replace,
     }),
-    [prefetch, push, replace]
+    [back, prefetch, push, replace]
   );
 }

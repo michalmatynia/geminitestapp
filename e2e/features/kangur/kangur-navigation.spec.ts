@@ -7,6 +7,7 @@ const ROUTE_LAYOUT_MONITOR_KEY = '__kangurRouteLayoutMonitor';
 const ROUTE_SCROLL_MONITOR_KEY = '__kangurRouteScrollMonitor';
 const ROUTE_BOOT_TIMEOUT_MS = 45_000;
 const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
+const HOME_LESSONS_ACTION_SOURCE_ID = 'game-home-action:lessons';
 
 type RouteShellMonitorSample = {
   hasShell: boolean;
@@ -58,6 +59,9 @@ type RouteScrollMonitorSample = {
   scrollY: number;
   hasSkeleton: boolean;
   hasAppLoader: boolean;
+  transitionPhase: string | null;
+  activeTransitionSourceId: string | null;
+  homeLessonsNavState: string | null;
 };
 
 type TopNavLayoutSnapshot = {
@@ -586,11 +590,17 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
     let running = true;
 
     const sample = (): void => {
+      const routeContent = document.querySelector('[data-testid="kangur-route-content"]');
+      const homeLessonsAction = document.querySelector('[data-testid="kangur-home-action-lessons"]');
       samples.push({
         path: `${window.location.pathname}${window.location.search}`,
         scrollY: window.scrollY,
         hasSkeleton: Boolean(document.querySelector('[data-testid="kangur-page-transition-skeleton"]')),
         hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
+        transitionPhase: routeContent?.getAttribute('data-route-transition-phase') ?? null,
+        activeTransitionSourceId:
+          routeContent?.getAttribute('data-route-transition-source-id') ?? null,
+        homeLessonsNavState: homeLessonsAction?.getAttribute('data-nav-state') ?? null,
       });
 
       if (running) {
@@ -653,6 +663,47 @@ const expectNoAppLoaderFlash = (
     samples.some((sample) => sample.hasAppLoader),
     `${stepLabel}: navigation showed the global app loader instead of staying in-shell`
   ).toBe(false);
+};
+
+const expectHomeActionSkeletonHandoff = (
+  samples: RouteScrollMonitorSample[],
+  targetPath: string,
+  stepLabel: string
+): void => {
+  const pressedIndex = samples.findIndex((sample) => sample.homeLessonsNavState === 'pressed');
+  const transitioningIndex = samples.findIndex(
+    (sample) =>
+      sample.homeLessonsNavState === 'transitioning' ||
+      sample.activeTransitionSourceId === HOME_LESSONS_ACTION_SOURCE_ID ||
+      sample.transitionPhase === 'pending'
+  );
+  const skeletonIndex = samples.findIndex((sample) => sample.hasSkeleton);
+  const targetRouteIndex = samples.findIndex((sample) => sample.path === targetPath);
+
+  expect(
+    pressedIndex,
+    `${stepLabel}: clicked action never entered the pressed acknowledgement state`
+  ).toBeGreaterThan(-1);
+  expect(
+    skeletonIndex,
+    `${stepLabel}: navigation never handed off through the page skeleton`
+  ).toBeGreaterThan(-1);
+  expect(targetRouteIndex, `${stepLabel}: route never committed to the target page`).toBeGreaterThan(-1);
+  expect(
+    skeletonIndex,
+    `${stepLabel}: page skeleton appeared before the pressed acknowledgement state`
+  ).toBeGreaterThan(pressedIndex);
+  expect(
+    targetRouteIndex,
+    `${stepLabel}: target route committed before the page skeleton handoff appeared`
+  ).toBeGreaterThanOrEqual(skeletonIndex);
+
+  if (transitioningIndex > -1) {
+    expect(
+      transitioningIndex,
+      `${stepLabel}: transition never advanced beyond the pressed acknowledgement state`
+    ).toBeGreaterThanOrEqual(pressedIndex);
+  }
 };
 
 const waitForAnimationFrames = async (page: Page, frameCount: number): Promise<void> => {
@@ -1087,6 +1138,29 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     expectRouteToResetScrollAfterCommit(samples, '/kangur/lessons', 'game -> lessons');
     expectNoRouteSkeletonFlash(samples, 'game -> lessons');
     expectNoAppLoaderFlash(samples, 'game -> lessons');
+  });
+
+  test('hands the home lessons action off through a pressed state and page skeleton before reveal', async ({
+    page,
+  }) => {
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-home');
+    await expect(page.getByTestId('kangur-home-action-lessons')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
+
+    await startRouteScrollMonitor(page);
+    await page.locator('[data-doc-id="home_lessons_action"]').click();
+    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
+    await page.waitForTimeout(120);
+
+    const samples = await stopRouteScrollMonitor(page);
+
+    expectHomeActionSkeletonHandoff(samples, '/kangur/lessons', 'home lessons action -> lessons');
+    expectNoAppLoaderFlash(samples, 'home lessons action -> lessons');
   });
 
   test('animates the lessons surface smoothly on entry and when opening a lesson', async ({

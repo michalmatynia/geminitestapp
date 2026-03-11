@@ -477,6 +477,10 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         data: uniqueIds.map((catalogId) => ({ productId, catalogId })),
       });
     }
+    await tx.product.update({
+      where: { id: productId },
+      data: { catalogId: uniqueIds[0] ?? null },
+    });
   },
 
   replaceProductCategory: async (productId, categoryId) => {
@@ -543,6 +547,10 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         skipDuplicates: true,
       });
     }
+    await tx.product.updateMany({
+      where: { id: { in: productIds } },
+      data: { catalogId: validCatalogIds[0] ?? null },
+    });
   },
 
   bulkAddProductCatalogs: async (productIds, catalogIds) => {

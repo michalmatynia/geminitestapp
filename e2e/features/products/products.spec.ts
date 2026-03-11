@@ -62,6 +62,356 @@ test.describe('Products Management', () => {
     await expect(getCreateProductButton(page)).toBeVisible();
   });
 
+  test('should render parameter values in the product list row summary', async ({ page }) => {
+    await page.route('**/api/v2/products/paged*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          products: [
+            {
+              id: 'product-1',
+              sku: 'KEYCHA1212',
+              baseProductId: null,
+              defaultPriceGroupId: null,
+              ean: null,
+              gtin: null,
+              asin: null,
+              name: { en: 'Keychain', pl: null, de: null },
+              description: { en: '', pl: null, de: null },
+              name_en: 'Keychain',
+              name_pl: null,
+              name_de: null,
+              description_en: null,
+              description_pl: null,
+              description_de: null,
+              supplierName: null,
+              supplierLink: null,
+              priceComment: null,
+              stock: 1,
+              price: 10,
+              sizeLength: null,
+              sizeWidth: null,
+              weight: null,
+              length: null,
+              published: false,
+              categoryId: 'category-1',
+              category: {
+                id: 'category-1',
+                catalogId: 'catalog-1',
+                name_en: 'Keychains',
+              },
+              catalogId: 'catalog-1',
+              tags: [],
+              producers: [],
+              images: [],
+              catalogs: [],
+              parameters: [
+                {
+                  parameterId: 'size',
+                  value: '13 cm',
+                },
+                {
+                  parameterId: 'material',
+                  value: '',
+                  valuesByLanguage: {
+                    en: 'Faux Leather',
+                  },
+                },
+              ],
+              imageLinks: [],
+              imageBase64s: [],
+              noteIds: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          total: 1,
+        }),
+      });
+    });
+
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
+
+    await expect(
+      page.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+    ).toBeVisible();
+  });
+
+  test('should render Polish product names with English parameter fallback in the product list row summary', async ({
+    page,
+  }) => {
+    await page.route('**/api/user/preferences', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          productListNameLocale: 'name_pl',
+        }),
+      });
+    });
+
+    await page.route('**/api/v2/products/paged*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          products: [
+            {
+              id: 'product-1',
+              sku: 'KEYCHA1212',
+              baseProductId: null,
+              defaultPriceGroupId: null,
+              ean: null,
+              gtin: null,
+              asin: null,
+              name: { en: 'Keychain', pl: 'Brelok', de: null },
+              description: { en: '', pl: null, de: null },
+              name_en: 'Keychain',
+              name_pl: 'Brelok',
+              name_de: null,
+              description_en: null,
+              description_pl: null,
+              description_de: null,
+              supplierName: null,
+              supplierLink: null,
+              priceComment: null,
+              stock: 1,
+              price: 10,
+              sizeLength: null,
+              sizeWidth: null,
+              weight: null,
+              length: null,
+              published: false,
+              categoryId: 'category-1',
+              category: {
+                id: 'category-1',
+                catalogId: 'catalog-1',
+                name_en: 'Keychains',
+                name_pl: 'Breloki',
+              },
+              catalogId: 'catalog-1',
+              tags: [],
+              producers: [],
+              images: [],
+              catalogs: [],
+              parameters: [
+                {
+                  parameterId: 'size',
+                  value: '',
+                  valuesByLanguage: {
+                    pl: '13 cm',
+                  },
+                },
+                {
+                  parameterId: 'material',
+                  value: '',
+                  valuesByLanguage: {
+                    en: 'Faux Leather',
+                  },
+                },
+              ],
+              imageLinks: [],
+              imageBase64s: [],
+              noteIds: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          total: 1,
+        }),
+      });
+    });
+
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
+
+    await expect(page.getByRole('button', { name: 'Brelok | 13 cm | Faux Leather' })).toBeVisible();
+  });
+
+  test('should fall back to English product and parameter values when the Polish locale is selected', async ({
+    page,
+  }) => {
+    await page.route('**/api/user/preferences', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          productListNameLocale: 'name_pl',
+        }),
+      });
+    });
+
+    await page.route('**/api/v2/products/paged*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          products: [
+            {
+              id: 'product-2',
+              sku: 'KEYCHA1313',
+              baseProductId: null,
+              defaultPriceGroupId: null,
+              ean: null,
+              gtin: null,
+              asin: null,
+              name: { en: 'Keychain', pl: null, de: null },
+              description: { en: '', pl: null, de: null },
+              name_en: 'Keychain',
+              name_pl: null,
+              name_de: null,
+              description_en: null,
+              description_pl: null,
+              description_de: null,
+              supplierName: null,
+              supplierLink: null,
+              priceComment: null,
+              stock: 1,
+              price: 10,
+              sizeLength: null,
+              sizeWidth: null,
+              weight: null,
+              length: null,
+              published: false,
+              categoryId: 'category-1',
+              category: {
+                id: 'category-1',
+                catalogId: 'catalog-1',
+                name_en: 'Keychains',
+                name_pl: 'Breloki',
+              },
+              catalogId: 'catalog-1',
+              tags: [],
+              producers: [],
+              images: [],
+              catalogs: [],
+              parameters: [
+                {
+                  parameterId: 'size',
+                  value: '',
+                  valuesByLanguage: {
+                    en: '13 cm',
+                  },
+                },
+                {
+                  parameterId: 'material',
+                  value: '',
+                  valuesByLanguage: {
+                    en: 'Faux Leather',
+                  },
+                },
+              ],
+              imageLinks: [],
+              imageBase64s: [],
+              noteIds: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          total: 1,
+        }),
+      });
+    });
+
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
+
+    await expect(
+      page.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+    ).toBeVisible();
+  });
+
+  test('should preserve the parameter summary after a full products page reload', async ({ page }) => {
+    await page.route('**/api/user/preferences', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          productListNameLocale: 'name_en',
+        }),
+      });
+    });
+
+    await page.route('**/api/v2/products/paged*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          products: [
+            {
+              id: 'product-3',
+              sku: 'KEYCHA1414',
+              baseProductId: null,
+              defaultPriceGroupId: null,
+              ean: null,
+              gtin: null,
+              asin: null,
+              name: { en: 'Keychain', pl: null, de: null },
+              description: { en: '', pl: null, de: null },
+              name_en: 'Keychain',
+              name_pl: null,
+              name_de: null,
+              description_en: null,
+              description_pl: null,
+              description_de: null,
+              supplierName: null,
+              supplierLink: null,
+              priceComment: null,
+              stock: 1,
+              price: 10,
+              sizeLength: null,
+              sizeWidth: null,
+              weight: null,
+              length: null,
+              published: false,
+              categoryId: 'category-1',
+              category: {
+                id: 'category-1',
+                catalogId: 'catalog-1',
+                name_en: 'Keychains',
+              },
+              catalogId: 'catalog-1',
+              tags: [],
+              producers: [],
+              images: [],
+              catalogs: [],
+              parameters: [
+                {
+                  parameterId: 'size',
+                  value: '13 cm',
+                },
+                {
+                  parameterId: 'material',
+                  value: '',
+                  valuesByLanguage: {
+                    en: 'Faux Leather',
+                  },
+                },
+              ],
+              imageLinks: [],
+              imageBase64s: [],
+              noteIds: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          total: 1,
+        }),
+      });
+    });
+
+    await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
+
+    await expect(
+      page.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+    ).toBeVisible();
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    await expect(
+      page.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+    ).toBeVisible();
+  });
+
   test('should open the create product modal after entering SKU', async ({ page }) => {
     const testSku = `TEST${Date.now()}`;
     const modal = await openCreateProductForm(page, testSku);

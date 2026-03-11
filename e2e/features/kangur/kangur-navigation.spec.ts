@@ -55,6 +55,7 @@ type RouteScrollMonitorSample = {
   path: string;
   scrollY: number;
   hasSkeleton: boolean;
+  hasAppLoader: boolean;
 };
 
 const expectGameRouteReady = async (page: Page, navTestId: string): Promise<void> => {
@@ -125,7 +126,9 @@ const expectKangurLoginReady = async (page: Page): Promise<void> => {
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expect(
-    page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
+    page
+      .getByTestId('kangur-login-form')
+      .getByLabel(/Email rodzica (albo|lub) nick ucznia/i)
   ).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
@@ -556,6 +559,7 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
         path: `${window.location.pathname}${window.location.search}`,
         scrollY: window.scrollY,
         hasSkeleton: Boolean(document.querySelector('[data-testid="kangur-page-transition-skeleton"]')),
+        hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
       });
 
       if (running) {
@@ -607,6 +611,16 @@ const expectNoRouteSkeletonFlash = (
   expect(
     samples.some((sample) => sample.hasSkeleton),
     `${stepLabel}: navigation showed the blocking route skeleton during a fast route hop`
+  ).toBe(false);
+};
+
+const expectNoAppLoaderFlash = (
+  samples: RouteScrollMonitorSample[],
+  stepLabel: string
+): void => {
+  expect(
+    samples.some((sample) => sample.hasAppLoader),
+    `${stepLabel}: navigation showed the global app loader instead of staying in-shell`
   ).toBe(false);
 };
 
@@ -818,16 +832,6 @@ const buildManagerUserWithLearnerMood = (
   };
 };
 
-const buildCredentialsProviderResponse = (origin: string) => ({
-  credentials: {
-    id: 'credentials',
-    name: 'Credentials',
-    type: 'credentials',
-    signinUrl: `${origin}/api/auth/signin/credentials`,
-    callbackUrl: `${origin}/api/auth/callback/credentials`,
-  },
-});
-
 test.describe('Kangur navigation continuity', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -865,8 +869,19 @@ test.describe('Kangur navigation continuity', () => {
   });
 
   test('keeps the persistent shell mounted across main-page navigation', async ({ page }) => {
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildLearnerUser()),
+      });
+    });
+
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
 
     const routeShell = page.getByTestId('kangur-route-shell');
 
@@ -894,12 +909,12 @@ test.describe('Kangur navigation continuity', () => {
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'lessons -> home');
 
     await startRouteShellMonitor(page);
-    await page.getByTestId('kangur-primary-nav-tests').click();
-    await expect(page).toHaveURL(/\/kangur\/tests$/);
+    await page.getByRole('link', { name: /profil/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/profile$/);
     await expectRouteShellMarker(page);
-    await expect(page.getByRole('heading', { name: /Testy Kangur/i })).toBeVisible();
+    await expectLearnerProfileRouteReady(page);
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'home -> tests');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'home -> profile');
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-home').click();
@@ -907,7 +922,7 @@ test.describe('Kangur navigation continuity', () => {
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'tests -> home');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'profile -> home');
 
     const documentLoadCount = await page.evaluate(
       (storageKey) => window.localStorage.getItem(storageKey),
@@ -916,21 +931,26 @@ test.describe('Kangur navigation continuity', () => {
     expect(documentLoadCount).toBe('1');
   });
 
-  test('routes back home from the tests intro-card top section without remounting the shell', async ({
+  test('routes back home from the learner-profile intro-card top section without remounting the shell', async ({
     page,
   }) => {
-    await gotoKangurPath(page, '/kangur/game');
-    await expectGameRouteReady(page, 'kangur-primary-nav-tests');
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildLearnerUser()),
+      });
+    });
+
+    await gotoKangurPath(page, '/kangur/profile');
+    await expectLearnerProfileRouteReady(page);
     await markRouteShellAsPersistent(page);
 
-    await page.getByTestId('kangur-primary-nav-tests').click();
-    await expect(page).toHaveURL(/\/kangur\/tests$/);
-    await expect(page.getByTestId('kangur-tests-list-top-section')).toBeVisible();
     await expectRouteShellMarker(page);
 
     await startRouteShellMonitor(page);
     await page
-      .getByTestId('kangur-tests-list-top-section')
+      .getByTestId('kangur-learner-profile-hero')
       .getByRole('button', { name: 'Wróć do poprzedniej strony' })
       .click();
     await expect(page).toHaveURL(/\/kangur$/);
@@ -938,14 +958,25 @@ test.describe('Kangur navigation continuity', () => {
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
 
-    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'tests back button -> home');
+    expectRouteShellContinuity(await stopRouteShellMonitor(page), 'profile back button -> home');
   });
 
   test('keeps the viewport width stable during main-page navigation transitions', async ({
     page,
   }) => {
+    await page.route('**/api/kangur/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildLearnerUser()),
+      });
+    });
+
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
 
     await startRouteLayoutMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
@@ -955,23 +986,24 @@ test.describe('Kangur navigation continuity', () => {
     expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'game -> lessons');
 
     await startRouteLayoutMonitor(page);
-    await page.getByTestId('kangur-primary-nav-tests').click();
-    await expect(page).toHaveURL(/\/kangur\/tests$/);
-    await expect(page.getByRole('heading', { name: /Testy Kangur/i })).toBeVisible();
+    await page.getByRole('link', { name: /profil/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/profile$/);
+    await expectLearnerProfileRouteReady(page);
     await page.waitForTimeout(250);
-    expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'lessons -> tests');
+    expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'lessons -> profile');
 
     await startRouteLayoutMonitor(page);
     await page.getByTestId('kangur-primary-nav-home').click();
     await expect(page).toHaveURL(/\/kangur$/);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
-    expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'tests -> home');
+    expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'profile -> home');
   });
 
   test('keeps the lessons route hop on-page without flashing the blocking transition skeleton', async ({ page }) => {
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+    await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
 
     await startRouteScrollMonitor(page);
@@ -989,6 +1021,7 @@ test.describe('Kangur navigation continuity', () => {
 
     expectRouteToResetScrollAfterCommit(samples, '/kangur/lessons', 'game -> lessons');
     expectNoRouteSkeletonFlash(samples, 'game -> lessons');
+    expectNoAppLoaderFlash(samples, 'game -> lessons');
   });
 
   test('animates the lessons surface smoothly on entry and when opening a lesson', async ({
@@ -1099,6 +1132,7 @@ test.describe('Kangur navigation continuity', () => {
     await page.setViewportSize({ width: 1280, height: 560 });
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+    await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
 
     await startRouteScrollMonitor(page);
@@ -1111,6 +1145,7 @@ test.describe('Kangur navigation continuity', () => {
 
     expectRouteToResetScrollAfterCommit(gameToLessonsSamples, '/kangur/lessons', 'game -> lessons');
     expectNoRouteSkeletonFlash(gameToLessonsSamples, 'game -> lessons');
+    expectNoAppLoaderFlash(gameToLessonsSamples, 'game -> lessons');
 
     await page.evaluate(() => window.scrollTo({ top: 420, left: 0, behavior: 'auto' }));
     await expect
@@ -1120,6 +1155,7 @@ test.describe('Kangur navigation continuity', () => {
       .toBeGreaterThan(140);
 
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
     await startRouteScrollMonitor(page);
     await page.getByTestId('kangur-primary-nav-home').click();
     await expect(page).toHaveURL(/\/kangur$/);
@@ -1130,6 +1166,7 @@ test.describe('Kangur navigation continuity', () => {
 
     expectRouteToResetScrollAfterCommit(lessonsToHomeSamples, '/kangur', 'lessons -> home');
     expectNoRouteSkeletonFlash(lessonsToHomeSamples, 'lessons -> home');
+    expectNoAppLoaderFlash(lessonsToHomeSamples, 'lessons -> home');
   });
 
   test('keeps game entry screens and quick-practice flows on the same route with consistent back navigation', async ({
@@ -1296,15 +1333,15 @@ test.describe('Kangur navigation continuity', () => {
     });
 
     await gotoKangurPath(page, '/kangur/game');
-    await expectGameRouteReady(page, 'kangur-primary-nav-tests');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
     await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toHaveCount(0);
 
-    await page.getByTestId('kangur-primary-nav-tests').click();
-    await expect(page).toHaveURL(/\/kangur\/tests$/);
-    await expect(page.getByRole('heading', { name: /testy kangur/i })).toBeVisible();
+    await page.getByRole('link', { name: /profil/i }).click();
+    await expect(page).toHaveURL(/\/kangur\/profile$/);
+    await expectLearnerProfileRouteReady(page);
     await expect(page.getByRole('link', { name: /profil/i })).toBeVisible();
     await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toHaveCount(0);
   });
@@ -1407,17 +1444,7 @@ test.describe('Kangur navigation continuity', () => {
     }, tabTop);
 
     const beforeScrollY = await page.evaluate(() => window.scrollY);
-
-    const scoresTabBox = await scoresTab.boundingBox();
-    expect(scoresTabBox).not.toBeNull();
-    if (!scoresTabBox) {
-      return;
-    }
-
-    await page.mouse.click(
-      scoresTabBox.x + scoresTabBox.width / 2,
-      scoresTabBox.y + scoresTabBox.height / 2
-    );
+    await scoresTab.click();
 
     await expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('Brak zapisanych wynikow.')).toBeVisible();
@@ -1427,17 +1454,7 @@ test.describe('Kangur navigation continuity', () => {
 
     const progressTab = page.getByRole('button', { name: /postep/i });
     const beforeProgressScrollY = await page.evaluate(() => window.scrollY);
-
-    const progressTabBox = await progressTab.boundingBox();
-    expect(progressTabBox).not.toBeNull();
-    if (!progressTabBox) {
-      return;
-    }
-
-    await page.mouse.click(
-      progressTabBox.x + progressTabBox.width / 2,
-      progressTabBox.y + progressTabBox.height / 2
-    );
+    await progressTab.click();
 
     await expect(progressTab).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText(/Poziom i doswiadczenie/i)).toBeVisible();
@@ -1528,10 +1545,7 @@ test.describe('Kangur navigation continuity', () => {
     await expectGameRouteReady(page, 'kangur-primary-nav-home');
 
     await startKangurSurfaceMonitor(page);
-    await page
-      .getByLabel('Glowna nawigacja Kangur')
-      .getByRole('button', { name: 'Zaloguj się' })
-      .click();
+    await page.getByTestId('kangur-primary-nav-login').click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expectKangurLoginReady(page);
     await page.waitForTimeout(250);
@@ -1561,7 +1575,7 @@ test.describe('Kangur navigation continuity', () => {
     await expectKangurLoginReady(page);
     await expectKangurAppShellVisible(page, ROUTE_BOOT_TIMEOUT_MS);
     await expect(page.getByTestId('kangur-primary-nav-home')).toBeVisible();
-    await expect(page.getByLabel('Email rodzica lub nick ucznia')).toBeVisible();
+    await expect(page.getByLabel(/Email rodzica (albo|lub) nick ucznia/i)).toBeVisible();
 
     const [bodyBackgroundImage, appContentBackgroundImage] = await page.evaluate(() => {
       const bodyStyles = window.getComputedStyle(document.body);
@@ -1592,20 +1606,23 @@ test.describe('Kangur navigation continuity', () => {
   }) => {
     let callbackPayload: URLSearchParams | null = null;
 
-    await page.route('**/api/auth/providers**', async (route) => {
-      const origin = new URL(route.request().url()).origin;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(buildCredentialsProviderResponse(origin)),
-      });
-    });
-
     await page.route('**/api/auth/csrf**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ csrfToken: 'kangur-parent-csrf' }),
+      });
+    });
+
+    await page.route('**/api/auth/verify-credentials**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          challengeId: 'kangur-parent-challenge',
+          mfaRequired: false,
+        }),
       });
     });
 
@@ -1627,148 +1644,55 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
+    await page.route('**/api/auth/signout**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ url: '/login' }),
+      });
+    });
+
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent');
     await expectKangurLoginReady(page);
 
     const identifierField = page
       .getByTestId('kangur-login-form')
-      .getByLabel('Email rodzica lub nick ucznia');
-    const parentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Haslo');
+      .getByLabel(/Email rodzica (albo|lub) nick ucznia/i);
+    const parentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Hasło');
 
     await identifierField.fill('parent@example.com');
     await parentPasswordField.fill('secret123');
     await expect(identifierField).toHaveValue('parent@example.com');
     await expect(parentPasswordField).toHaveValue('secret123');
     await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'parent');
-    await page.getByRole('button', { name: 'Zaloguj haslem' }).click();
+    await page.getByRole('button', { name: 'Zaloguj rodzica' }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=parent$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     expect(callbackPayload?.get('email')).toBe('parent@example.com');
-    expect(callbackPayload?.get('password')).toBe('secret123');
+    expect(callbackPayload?.get('challengeId')).toBe('kangur-parent-challenge');
     expect(callbackPayload?.get('callbackUrl')).toBe('/kangur?login=parent');
   });
 
-  test('prompts a magic-link-created parent to set a password before completing login', async ({
+  test('shows the legacy parent magic-link entry as a password-based fallback prompt', async ({
     page,
   }) => {
-    let exchangePayload: { token?: string } | null = null;
-    let callbackPayload: URLSearchParams | null = null;
-    let parentPasswordPayload: { password?: string } | null = null;
-    let parentSignedIn = false;
-
-    await page.route('**/api/auth/providers**', async (route) => {
-      const origin = new URL(route.request().url()).origin;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(buildCredentialsProviderResponse(origin)),
-      });
-    });
-
-    await page.route('**/api/auth/csrf**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ csrfToken: 'kangur-magic-parent-csrf' }),
-      });
-    });
-
-    await page.route('**/api/kangur/auth/learner-signout**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ ok: true }),
-      });
-    });
-
-    await page.route('**/api/kangur/auth/parent-magic-link/exchange**', async (route) => {
-      exchangePayload = JSON.parse(route.request().postData() ?? '{}') as { token?: string };
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: true,
-          email: 'parent@example.com',
-          challengeId: 'magic-challenge-1',
-          callbackUrl: '/kangur?login=magic-parent',
-          emailVerified: false,
-          hasPassword: false,
-        }),
-      });
-    });
-
-    await page.route('**/api/auth/callback/credentials**', async (route) => {
-      callbackPayload = new URLSearchParams(route.request().postData() ?? '');
-      parentSignedIn = true;
-      const origin = new URL(route.request().url()).origin;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ url: `${origin}/kangur?login=magic-parent` }),
-      });
-    });
-
-    await page.route('**/api/kangur/auth/parent-password**', async (route) => {
-      parentPasswordPayload = JSON.parse(route.request().postData() ?? '{}') as {
-        password?: string;
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: true,
-          email: 'parent@example.com',
-          hasPassword: true,
-          message:
-            'Haslo rodzica zostalo ustawione. Od teraz mozesz logowac sie emailem i haslem.',
-        }),
-      });
-    });
-
-    await page.route('**/api/kangur/auth/me**', async (route) => {
-      if (!parentSignedIn) {
-        await route.fulfill({
-          status: 401,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: {
-              message: 'Authentication required.',
-            },
-          }),
-        });
-        return;
-      }
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(buildManagerUserWithLearnerMood('learner-001')),
-      });
-    });
-
     await gotoKangurPath(
       page,
       '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent&magicLinkToken=magic-link-1'
     );
 
     await expect(page.getByTestId('kangur-login-modal')).toBeVisible();
-    await expect(page.getByText('Ustaw haslo rodzica')).toBeVisible();
-    await expect(page.getByText('parent@example.com')).toBeVisible();
-
-    await page.getByLabel('Nowe haslo').fill('Magic123!');
-    await page.getByLabel('Powtorz haslo').fill('Magic123!');
-    await page.getByRole('button', { name: 'Ustaw haslo i przejdz dalej' }).click();
-
-    await expect(page).toHaveURL(/\/kangur\?login=magic-parent$/);
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
-    expect(exchangePayload?.token).toBe('magic-link-1');
-    expect(callbackPayload?.get('challengeId')).toBe('magic-challenge-1');
-    expect(callbackPayload?.get('email')).toBe('parent@example.com');
-    expect(callbackPayload?.get('callbackUrl')).toBe('/kangur?login=magic-parent');
-    expect(parentPasswordPayload).toEqual({
-      password: 'Magic123!',
-    });
+    await expect(
+      page.getByText(
+        'Logowanie linkiem z e-maila nie jest już dostępne. Zaloguj się e-mailem i hasłem albo utwórz konto.'
+      )
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('kangur-login-form').getByLabel(/Email rodzica (albo|lub) nick ucznia/i)
+    ).toBeVisible();
+    await expect(page.getByTestId('kangur-login-form').getByLabel('Hasło')).toBeVisible();
+    await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent$/);
   });
 
   test('submits student nickname credentials from the unified Kangur login page and returns to the callback route', async ({
@@ -1837,8 +1761,8 @@ test.describe('Kangur navigation continuity', () => {
 
     const studentNicknameField = page
       .getByTestId('kangur-login-form')
-      .getByLabel('Email rodzica lub nick ucznia');
-    const studentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Haslo');
+      .getByLabel(/Email rodzica (albo|lub) nick ucznia/i);
+    const studentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Hasło');
 
     await studentNicknameField.fill('janek123');
     await studentPasswordField.fill('secret123');
@@ -1848,7 +1772,7 @@ test.describe('Kangur navigation continuity', () => {
       'data-login-kind',
       'student'
     );
-    await page.getByRole('button', { name: 'Zaloguj sie' }).click();
+    await page.getByRole('button', { name: 'Zaloguj ucznia' }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=student$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();

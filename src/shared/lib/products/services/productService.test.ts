@@ -9,6 +9,7 @@ const {
   validateProductCreateMock,
   validateProductUpdateMock,
   logActivityMock,
+  logWarningMock,
 } = vi.hoisted(() => ({
   repositoryMock: {
     createProduct: vi.fn(),
@@ -26,6 +27,7 @@ const {
   validateProductCreateMock: vi.fn(),
   validateProductUpdateMock: vi.fn(),
   logActivityMock: vi.fn(),
+  logWarningMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -43,6 +45,12 @@ vi.mock('@/shared/lib/products/validations', () => ({
 
 vi.mock('@/shared/utils/observability/activity-service', () => ({
   logActivity: logActivityMock,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    logWarning: logWarningMock,
+  },
 }));
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
@@ -112,6 +120,7 @@ describe('productService parameter normalization', () => {
     repositoryMock.replaceProductTags.mockResolvedValue(undefined);
     repositoryMock.replaceProductProducers.mockResolvedValue(undefined);
     repositoryMock.replaceProductNotes.mockResolvedValue(undefined);
+    logWarningMock.mockResolvedValue(undefined);
   });
 
   it('preserves parameters when update payload omits parameters', async () => {
@@ -132,7 +141,7 @@ describe('productService parameter normalization', () => {
     expect(Object.prototype.hasOwnProperty.call(updatePayload, 'parameters')).toBe(false);
   });
 
-  it('allows explicit parameter clearing when parameters is an empty array', async () => {
+  it('preserves existing parameters when an empty array arrives without explicit clear intent', async () => {
     validateProductUpdateMock.mockResolvedValue({
       success: true,
       data: { parameters: [] },
@@ -146,16 +155,42 @@ describe('productService parameter normalization', () => {
       Record<string, unknown>,
     ];
 
-    expect(updatePayload).toEqual(expect.objectContaining({ parameters: [] }));
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        parameters: [{ parameterId: 'param-1', value: 'value-1' }],
+      })
+    );
+    expect(logWarningMock).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves explicit parameter clearing through the FormData update path', async () => {
+  it('allows explicit parameter clearing when an override flag is present', async () => {
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: { parameters: [] },
+    });
+
+    await productService.updateProduct('product-1', {
+      parameters: [],
+      forceClearParameters: true,
+    });
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(expect.objectContaining({ parameters: [] }));
+    expect(logWarningMock).not.toHaveBeenCalled();
+  });
+
+  it('preserves implicit empty parameter clearing through the FormData update path', async () => {
     validateProductUpdateMock.mockImplementation(async (data: unknown) => {
       expect(data).toEqual(expect.objectContaining({ parameters: '[]' }));
       return {
-      success: true,
-      data: { parameters: [] },
-    };
+        success: true,
+        data: { parameters: [] },
+      };
     });
 
     const formData = new FormData();
@@ -171,7 +206,39 @@ describe('productService parameter normalization', () => {
       Record<string, unknown>,
     ];
 
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        parameters: [{ parameterId: 'param-1', value: 'value-1' }],
+      })
+    );
+    expect(logWarningMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows explicit parameter clearing through the FormData update path', async () => {
+    validateProductUpdateMock.mockImplementation(async (data: unknown) => {
+      expect(data).toEqual(expect.objectContaining({ parameters: '[]' }));
+      return {
+        success: true,
+        data: { parameters: [] },
+      };
+    });
+
+    const formData = new FormData();
+    formData.append('parameters', '[]');
+    formData.append('forceClearParameters', 'true');
+
+    await productService.updateProduct('product-1', formData);
+
+    expect(validateProductUpdateMock).toHaveBeenCalledTimes(1);
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
     expect(updatePayload).toEqual(expect.objectContaining({ parameters: [] }));
+    expect(logWarningMock).not.toHaveBeenCalled();
   });
 
   it('defaults create payload parameters to an empty array when omitted', async () => {

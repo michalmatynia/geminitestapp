@@ -4,6 +4,7 @@ import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
 import { imageFileRecordSchema } from '../files';
 import { catalogSchema } from './catalogs';
 import { priceGroupSchema } from './catalogs';
+import { productCategorySchema } from './categories';
 import { producerSchema } from './producers';
 import { productTagSchema } from './tags';
 
@@ -153,6 +154,7 @@ export const productSchema = dtoBaseSchema.extend({
   published: z.boolean(),
   categoryId: z.string().nullable(),
   catalogId: z.string(),
+  category: productCategorySchema.optional(),
   tags: z.array(productTagRelationSchema).optional(),
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),

@@ -981,7 +981,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('reopens canonical onboarding from the docked Game avatar after home onboarding is dismissed', async () => {
+  it('reopens the tutor panel from the docked Game avatar after home onboarding is dismissed', async () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -1071,12 +1071,10 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
-      'data-modal-surface',
-      'canonical-onboarding'
-    );
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeInTheDocument();
+    expect(openChatMock).toHaveBeenCalledTimes(1);
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1153,7 +1151,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('keeps the tutor visible on authenticated pages without a live tutor context and opens the canonical onboarding modal from the avatar', () => {
+  it('keeps the tutor visible on authenticated pages without a live tutor context and opens the tutor panel from the avatar', () => {
     let tutorState = {
       enabled: false,
       tutorSettings: {
@@ -1213,13 +1211,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toBeVisible();
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
-      'data-modal-surface',
-      'canonical-onboarding'
-    );
-    expect(screen.getByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')).toBeVisible();
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1362,13 +1356,13 @@ describe('KangurAiTutorWidget', () => {
     );
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
       'data-modal-surface',
       'canonical-onboarding'
     );
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-anchor-kind', 'dock');
-    expect(openChatMock).not.toHaveBeenCalled();
     expect(closeChatMock).toHaveBeenCalledTimes(1);
   });
   it('does not request the guest intro when a local suppression record already exists', () => {
@@ -2450,6 +2444,88 @@ describe('KangurAiTutorWidget', () => {
     );
     vi.useRealTimers();
   });
+  it('keeps the guided selection surface visible while the contextual explanation is still loading after the selected fragment rebounds', async () => {
+    vi.useFakeTimers();
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 620, 140, 26),
+      selectionContainerRect: new DOMRect(80, 580, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+    const { rerender } = render(<KangurAiTutorWidget />);
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      rerender(<KangurAiTutorWidget />);
+    });
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+        isLoading: true,
+        highlightedText: '2 + 2',
+      };
+      rerender(<KangurAiTutorWidget />);
+      return new Promise<void>(() => {});
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '„2 + 2”'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Czy chcesz pomocy z logowaniem albo założeniem konta?')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
   it('retargets the reopened tutor to the new selected fragment instead of resurfacing the previous conversation', async () => {
     vi.useFakeTimers();
     let tutorState = {
@@ -3015,7 +3091,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
     getSelectionSpy.mockRestore();
   });
-  it('opens canonical onboarding from the launcher even with an active lesson selection', async () => {
+  it('opens the tutor panel from the launcher for an authenticated learner even with an active lesson selection', async () => {
     let tutorState = {
       enabled: true,
       tutorSettings: {
@@ -3065,23 +3141,86 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveClass('cursor-pointer');
     fireEvent.mouseDown(screen.getByTestId('kangur-ai-tutor-avatar'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
-    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
-      'data-modal-surface',
-      'canonical-onboarding'
-    );
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-anchor-kind',
       'dock'
     );
-    expect(openChatMock).not.toHaveBeenCalled();
+    expect(openChatMock).toHaveBeenCalledTimes(1);
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
     ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-context-spotlight')
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-action')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
+  });
+  it('closes the open tutor when an authenticated learner clicks the avatar again', async () => {
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: null,
+      selectionRect: null,
+      selectionContainerRect: null,
+      clearSelection: clearSelectionMock,
+    });
+    closeChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: false,
+      };
+    });
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
+    rerender(<KangurAiTutorWidget />);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument()
+    );
+
+    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_closed',
+      expect.objectContaining({
+        reason: 'toggle',
+      })
+    );
   });
   it('persists a dragged launcher position without opening the tutor', () => {
     useKangurTextHighlightMock.mockReturnValue({

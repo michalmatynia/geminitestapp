@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -19,11 +19,19 @@ function RouteTransitionProbe({
   targetHref: string;
   targetPageKey: string;
 }): React.JSX.Element {
-  const { isRoutePending, pendingPageKey, startRouteTransition } = useKangurRouteTransition();
+  const {
+    isRoutePending,
+    isRouteRevealing,
+    activeTransitionPageKey,
+    pendingPageKey,
+    startRouteTransition,
+  } = useKangurRouteTransition();
 
   return (
     <div>
       <div data-testid='route-transition-pending'>{String(isRoutePending)}</div>
+      <div data-testid='route-transition-revealing'>{String(isRouteRevealing)}</div>
+      <div data-testid='route-transition-active-page-key'>{activeTransitionPageKey ?? 'none'}</div>
       <div data-testid='route-transition-page-key'>{pendingPageKey ?? 'none'}</div>
       <button
         type='button'
@@ -61,54 +69,63 @@ describe('KangurRouteTransitionProvider', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('resets scroll after a Kangur route transition commits to a new requested path', () => {
+  it('resets scroll after a Kangur route transition commits to a new requested path', async () => {
     const scrollToMock = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
-    const requestAnimationFrameMock = vi
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((callback: FrameRequestCallback): number => {
-        callback(0);
-        return 1;
-      });
-    const cancelAnimationFrameMock = vi
-      .spyOn(window, 'cancelAnimationFrame')
-      .mockImplementation(() => undefined);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback): number => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
 
     const { rerender } = renderRouteTransitionHarness({
       pageKey: 'Game',
       requestedPath: '/kangur',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
-
-    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
-    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('Lessons');
-
-    rerender(
-      <KangurRoutingProvider
-        basePath='/kangur'
-        pageKey='Lessons'
-        requestedPath='/kangur/lessons'
-      >
-        <KangurRouteTransitionProvider>
-          <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
-        </KangurRouteTransitionProvider>
-      </KangurRoutingProvider>
-    );
-
-    act(() => {
-      vi.advanceTimersByTime(560);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 
-    expect(scrollToMock).toHaveBeenNthCalledWith(1, { left: 0, top: 0, behavior: 'auto' });
-    expect(scrollToMock).toHaveBeenNthCalledWith(2, { left: 0, top: 0, behavior: 'auto' });
-    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('Lessons');
 
-    scrollToMock.mockRestore();
-    requestAnimationFrameMock.mockRestore();
-    cancelAnimationFrameMock.mockRestore();
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(scrollToMock).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'auto' });
+    expect(scrollToMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-active-page-key')).toHaveTextContent('Lessons');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('none');
+
+    act(() => {
+      vi.advanceTimersByTime(220);
+    });
+
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
   });
 
   it('clears a pending transition if the navigation takes too long', () => {

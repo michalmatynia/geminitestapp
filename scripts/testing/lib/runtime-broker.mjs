@@ -638,7 +638,7 @@ export const resolveBrokerManagedDistDir = ({
   agentId = 'local',
 } = {}) =>
   [
-    '.next-dev',
+    '.next-dev-playwright-broker',
     sanitizeRuntimeToken(appId, DEFAULT_APP_ID),
     sanitizeRuntimeToken(mode, DEFAULT_MODE),
     bundler ? sanitizeRuntimeToken(bundler, 'bundler') : null,
@@ -954,7 +954,7 @@ export const acquireRuntimeLease = async ({
             return await reuseExistingLease();
           }
 
-          throw error;
+          await removeFileIfPresent(leaseFilePath);
         }
       } else {
         await removeFileIfPresent(leaseFilePath);

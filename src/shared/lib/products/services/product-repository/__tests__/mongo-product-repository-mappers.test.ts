@@ -33,6 +33,28 @@ describe('mongo product repository mappers', () => {
     expect(result.categoryId).toBe('category-1');
   });
 
+  it('prefers canonical product catalog relations over stale scalar catalog ids', () => {
+    const result = toProductResponse(asProductDocument({
+      _id: 'product-catalog-1',
+      id: 'product-catalog-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      name_en: 'Keychain',
+      catalogId: 'default',
+      catalogs: [
+        {
+          productId: 'product-catalog-1',
+          catalogId: 'catalog-mentios',
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          catalog: { id: 'catalog-mentios' },
+        },
+      ],
+      published: true,
+    }));
+
+    expect(result.catalogId).toBe('catalog-mentios');
+  });
+
   it('normalizes duplicate parameter entries by merging sibling localized values', () => {
     const result = toProductResponse(asProductDocument({
       _id: 'product-params-1',

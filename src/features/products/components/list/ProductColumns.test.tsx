@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
 
@@ -24,7 +24,7 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
   };
 });
 
-import { getProductColumns } from './ProductColumns';
+let getProductColumns: typeof import('./ProductColumns').getProductColumns;
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -69,6 +69,12 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
   }) as ProductWithImages;
 
 describe('ProductColumns queued badge', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    ({ getProductColumns } = await import('./ProductColumns'));
+  });
+
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
     useProductListActionsContextMock.mockReturnValue({
@@ -121,6 +127,173 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
+  it('renders parameter values in the product list name summary', () => {
+    const product = createProduct({
+      parameters: [
+        {
+          parameterId: 'size',
+          value: '13 cm',
+        },
+        {
+          parameterId: 'material',
+          value: '',
+          valuesByLanguage: { en: 'Faux Leather' },
+        },
+      ] as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(
+      screen.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to English parameter values when the preferred locale is empty', () => {
+    const product = createProduct({
+      name_pl: 'Brelok',
+      parameters: [
+        {
+          parameterId: 'material',
+          value: '',
+          valuesByLanguage: { en: 'Metal' },
+        },
+      ] as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_pl',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Breloki']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_pl',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Breloki']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Brelok | Metal' })).toBeInTheDocument();
+  });
+
+  it('falls back to nested localized names and legacy localized parameter fields', () => {
+    const product = createProduct({
+      name: { en: 'Keychain', pl: null, de: null },
+      name_en: null,
+      parameters: [
+        {
+          parameterId: 'material',
+          value: '',
+          value_en: 'Faux Leather',
+        },
+      ] as unknown as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Keychain | Faux Leather' })).toBeInTheDocument();
+  });
+
+  it('splits malformed composite parameter values into separate list summary segments', () => {
+    const product = createProduct({
+      name_en: 'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight',
+      parameters: [
+        {
+          parameterId: 'model',
+          value: '',
+          valuesByLanguage: { pl: 'Pojemnik' },
+        },
+        {
+          parameterId: 'size',
+          value: '13 cm',
+        },
+        {
+          parameterId: 'material',
+          value: 'Faux Leather',
+        },
+        {
+          parameterId: 'tags',
+          value: '',
+          valuesByLanguage: { pl: 'Portfel Gamingowy|Hollow Knight' },
+        },
+      ] as unknown as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(
+      screen.getByRole('button', {
+        name: 'The Vessel | Pojemnik | 13 cm | Faux Leather | Portfel Gamingowy | Hollow Knight',
+      })
+    ).toBeInTheDocument();
   });
 
   it('renders the resolved category label instead of the category id', () => {
@@ -181,5 +354,43 @@ describe('ProductColumns queued badge', () => {
 
     expect(screen.getByRole('button', { name: '—' })).toBeInTheDocument();
     expect(screen.queryByText('507f1f77bcf86cd799439011')).not.toBeInTheDocument();
+  });
+
+  it('renders the embedded category label when the row exposes a nested category object', () => {
+    const product = {
+      ...createProduct({
+        categoryId: null,
+        catalogId: '',
+      }),
+      category: {
+        id: 'category-1',
+        catalogId: 'catalog-1',
+        name_en: 'Nested Keychains',
+      },
+    } as ProductWithImages;
+
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Nested Keychains' })).toBeInTheDocument();
   });
 });

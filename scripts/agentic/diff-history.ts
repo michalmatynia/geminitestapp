@@ -15,6 +15,7 @@ export interface AgenticHistoryDiff {
   addedBundles: string[];
   removedBundles: string[];
   newlyHighRiskBundles: string[];
+  newlyAttemptedHighRiskSuppressions: string[];
   riskEscalations: Array<{
     bundle: string;
     previousPriority: string;
@@ -84,20 +85,26 @@ function selectionStateMap(
 ): Map<string, 'selected' | 'skipped'> {
   if (!snapshot.bundleSelection) {
     return new Map(
-      snapshot.bundlePlan.map((entry) => [entry.bundle, 'selected' as const]),
+      snapshot.bundlePlan.map(
+        (entry): readonly [string, 'selected'] => [entry.bundle, 'selected'],
+      ),
     );
   }
 
-  return new Map([
-    ...snapshot.bundleSelection.selectedBundles.map((bundle) => [
-      bundle,
-      'selected' as const,
-    ]),
-    ...snapshot.bundleSelection.skippedBundles.map((entry) => [
-      entry.bundle,
-      'skipped' as const,
-    ]),
+  return new Map<string, 'selected' | 'skipped'>([
+    ...snapshot.bundleSelection.selectedBundles.map(
+      (bundle): readonly [string, 'selected'] => [bundle, 'selected'],
+    ),
+    ...snapshot.bundleSelection.skippedBundles.map(
+      (entry): readonly [string, 'skipped'] => [entry.bundle, 'skipped'],
+    ),
   ]);
+}
+
+function attemptedSuppressionSet(snapshot: AgenticHistorySnapshot): Set<string> {
+  return new Set(
+    snapshot.bundleSelection?.attemptedSuppressions.map((entry) => entry.bundle) ?? [],
+  );
 }
 
 export function diffAgenticHistorySnapshots(
@@ -118,6 +125,8 @@ export function diffAgenticHistorySnapshots(
   const previousPriorityMap = priorityMap(previousSnapshot);
   const currentSelectionMap = selectionStateMap(currentSnapshot);
   const previousSelectionMap = selectionStateMap(previousSnapshot);
+  const currentAttemptedSuppressions = attemptedSuppressionSet(currentSnapshot);
+  const previousAttemptedSuppressions = attemptedSuppressionSet(previousSnapshot);
   const currentExecutionMap = executionMap(currentSnapshot);
   const previousExecutionMap = executionMap(previousSnapshot);
 
@@ -133,6 +142,10 @@ export function diffAgenticHistorySnapshots(
     newlyHighRiskBundles: difference(currentBundles, previousBundles).filter(
       (bundle) => currentPriorityMap.get(bundle) === 'high',
     ),
+    newlyAttemptedHighRiskSuppressions: difference(
+      [...currentAttemptedSuppressions],
+      [...previousAttemptedSuppressions],
+    ).filter((bundle) => currentPriorityMap.get(bundle) === 'high'),
     riskEscalations: allBundles
       .map((bundle) => {
         const currentPriority = currentPriorityMap.get(bundle);
@@ -165,8 +178,10 @@ export function diffAgenticHistorySnapshots(
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
     selectionChanges: allBundles
       .map((bundle) => {
-        const previousState = previousSelectionMap.get(bundle) ?? 'missing';
-        const currentState = currentSelectionMap.get(bundle) ?? 'missing';
+        const previousState: AgenticHistoryDiff['selectionChanges'][number]['previousState'] =
+          previousSelectionMap.get(bundle) ?? 'missing';
+        const currentState: AgenticHistoryDiff['selectionChanges'][number]['currentState'] =
+          currentSelectionMap.get(bundle) ?? 'missing';
         if (previousState === currentState) {
           return null;
         }

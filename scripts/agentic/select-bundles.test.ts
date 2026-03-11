@@ -29,10 +29,11 @@ describe('agentic bundle selection', () => {
       'product_data_pipeline',
       'admin_experience',
     ]);
+    expect(selection.attemptedSuppressions).toEqual([]);
     expect(selection.skippedBundles).toEqual([]);
   });
 
-  it('skips only unchanged bundles against the previous history snapshot', () => {
+  it('retains unchanged high-risk bundles and skips only unchanged lower-risk bundles', () => {
     const selection = buildAgenticBundleSelection(
       {
         kind: 'agentic-bundle-plan',
@@ -45,9 +46,9 @@ describe('agentic bundle selection', () => {
             targets: ['//:integration_prisma'],
           },
           {
-            bundle: 'admin_experience',
-            priority: 'high',
-            targets: ['//:accessibility_smoke'],
+            bundle: 'observability_contracts',
+            priority: 'medium',
+            targets: ['//:api_error_sources'],
           },
           {
             bundle: 'ai_paths_runtime',
@@ -62,16 +63,21 @@ describe('agentic bundle selection', () => {
         workOrder: {
           generatedAt: '2026-03-10T00:00:00.000Z',
           changedFiles: [],
-          impactedDomainIds: ['products', 'admin'],
+          impactedDomainIds: ['products', 'observability'],
           highestRiskLevel: 'high',
-          requiredImpactBundles: ['product_data_pipeline', 'admin_experience'],
-          recommendedBundleOrder: ['product_data_pipeline', 'admin_experience'],
+          requiredImpactBundles: ['product_data_pipeline', 'observability_contracts'],
+          recommendedBundleOrder: ['product_data_pipeline', 'observability_contracts'],
           recommendedValidationByBundle: {
             product_data_pipeline: ['//:integration_prisma'],
-            admin_experience: ['//:accessibility_smoke'],
+            observability_contracts: ['//:api_error_sources'],
           },
         },
         executionReport: null,
+        bundleSelection: {
+          selectedBundles: ['product_data_pipeline', 'observability_contracts'],
+          attemptedSuppressions: [],
+          skippedBundles: [],
+        },
         bundlePlan: [
           {
             bundle: 'product_data_pipeline',
@@ -79,9 +85,9 @@ describe('agentic bundle selection', () => {
             targets: ['//:integration_prisma'],
           },
           {
-            bundle: 'admin_experience',
+            bundle: 'observability_contracts',
             priority: 'medium',
-            targets: ['//:accessibility_smoke'],
+            targets: ['//:api_error_sources'],
           },
         ],
         bundleReports: [],
@@ -89,12 +95,18 @@ describe('agentic bundle selection', () => {
     );
 
     expect(selection.selectedBundles).toEqual([
-      'admin_experience',
+      'product_data_pipeline',
       'ai_paths_runtime',
+    ]);
+    expect(selection.attemptedSuppressions).toEqual([
+      {
+        bundle: 'product_data_pipeline',
+        reason: 'unchanged-high-risk-retained',
+      },
     ]);
     expect(selection.skippedBundles).toEqual([
       {
-        bundle: 'product_data_pipeline',
+        bundle: 'observability_contracts',
         reason: 'unchanged',
       },
     ]);

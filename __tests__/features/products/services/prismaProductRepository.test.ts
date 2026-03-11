@@ -207,6 +207,26 @@ describe('prismaProductRepository', () => {
     expect(links.map((entry) => entry.imageFileId)).toEqual([imageB.id, imageA.id]);
   });
 
+  it('syncs scalar catalogId when replacing product catalogs', async () => {
+    if (shouldSkipPrismaProductRepositoryTests()) return;
+    const suffix = Date.now().toString(36);
+    const catalog = await prisma.catalog.create({
+      data: { name: `Mentios ${suffix}` },
+    });
+    const created = await prismaProductRepository.createProduct({
+      name_en: 'Catalog Sync',
+      sku: `CAT-SYNC-${suffix}`,
+    });
+
+    await prismaProductRepository.replaceProductCatalogs(created.id, [catalog.id]);
+
+    const persisted = await prisma.product.findUnique({
+      where: { id: created.id },
+      select: { catalogId: true },
+    });
+    expect(persisted?.catalogId).toBe(catalog.id);
+  });
+
   it('supports advanced relation and boolean filter fields', async () => {
     if (shouldSkipPrismaProductRepositoryTests()) return;
     const suffix = Date.now().toString(36);

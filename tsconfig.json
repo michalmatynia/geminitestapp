@@ -153,7 +153,9 @@
     ".next-dev-products-fix/types/**/*.ts",
     ".next-dev-products-fix/dev/types/**/*.ts",
     ".next-dev-products-fix-3200/types/**/*.ts",
-    ".next-dev-products-fix-3200/dev/types/**/*.ts"
+    ".next-dev-products-fix-3200/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-michalmatynia/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-michalmatynia/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

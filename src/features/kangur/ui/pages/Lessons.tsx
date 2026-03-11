@@ -617,10 +617,11 @@ export default function Lessons() {
         <KangurTopNavigationController navigation={navigation} />
 
         <KangurPageContainer id='kangur-lessons-main' className='flex flex-col items-center'>
-          <AnimatePresence initial={false} mode='wait'>
+          <AnimatePresence mode='wait'>
             {!activeLesson ? (
-              <div
+              <motion.div
                 key='list-shell'
+                {...lessonPageMotionProps}
                 className='flex w-full max-w-md flex-col items-center gap-4'
                 data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
@@ -779,7 +780,7 @@ export default function Lessons() {
                     )}
                   </motion.div>
                 ) : null}
-              </div>
+              </motion.div>
             ) : (
               <motion.div
                 key={activeLesson.id}

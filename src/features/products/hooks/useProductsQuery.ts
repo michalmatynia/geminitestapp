@@ -6,7 +6,11 @@ import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
-import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
+import {
+  type ProductWithImages,
+  productSchema,
+  productWithImagesSchema,
+} from '@/shared/contracts/products/product';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import {
   createListQueryV2,
@@ -28,6 +32,79 @@ export interface UseProductsOptions {
 // 60s keeps the UI feeling responsive while significantly reducing repeated fetches
 // when users navigate in and out of the products pages.
 const PRODUCTS_STALE_MS = 60_000;
+const productsPagedResultSchema = z.object({
+  products: z.array(productWithImagesSchema),
+  total: z.number().nonnegative(),
+});
+
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const toOptionalFiniteNumber = (value: unknown): number | undefined => {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+};
+
+const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> | undefined => {
+  const record = toRecord(input);
+  if (!record) return undefined;
+
+  const filepath = toTrimmedString(record['filepath']);
+  const derivedFilename = filepath.split('/').filter(Boolean).pop() ?? 'image';
+  const id =
+    toTrimmedString(record['id']) ||
+    toTrimmedString(record['_id']) ||
+    filepath ||
+    derivedFilename;
+
+  return {
+    ...record,
+    id,
+    filename: toTrimmedString(record['filename']) || derivedFilename,
+    filepath,
+    mimetype: toTrimmedString(record['mimetype']) || 'application/octet-stream',
+    size: toOptionalFiniteNumber(record['size']) ?? 0,
+    createdAt: toTrimmedString(record['createdAt']) || undefined,
+    updatedAt: toTrimmedString(record['updatedAt']) || null,
+  };
+};
+
+const normalizePagedProductRecord = (input: unknown): Record<string, unknown> => {
+  const record = toRecord(input) ?? {};
+  const images = Array.isArray(record['images'])
+    ? record['images'].map((image: unknown) => {
+        const imageRecord = toRecord(image) ?? {};
+        return {
+          ...imageRecord,
+          imageFile: normalizePagedImageFileRecord(imageRecord['imageFile']),
+        };
+      })
+    : record['images'];
+
+  return {
+    ...record,
+    images,
+  };
+};
+
+const parseProductsPagedResult = (
+  payload: unknown
+): {
+  products: ProductWithImages[];
+  total: number;
+} =>
+  productsPagedResultSchema.parse({
+    ...(toRecord(payload) ?? {}),
+    products: Array.isArray(toRecord(payload)?.['products'])
+      ? (toRecord(payload)?.['products'] as unknown[]).map(normalizePagedProductRecord)
+      : [],
+  });
 
 const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
@@ -118,7 +195,7 @@ export function useProductsWithCount(
     id: JSON.stringify(filters) + ':paged',
     queryKey,
     queryFn: async () => {
-      const { products, total } = await getProductsWithCount(filters);
+      const { products, total } = parseProductsPagedResult(await getProductsWithCount(filters));
       return { items: products, total };
     },
     staleTime: PRODUCTS_STALE_MS,
@@ -164,7 +241,7 @@ export function useProductsWithCount(
     void prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
       queryFn: async () => {
-        const { products, total } = await getProductsWithCount(nextFilters);
+        const { products, total } = parseProductsPagedResult(await getProductsWithCount(nextFilters));
         return { items: products, total };
       },
       staleTime: PRODUCTS_STALE_MS,

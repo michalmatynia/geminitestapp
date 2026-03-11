@@ -2,12 +2,52 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
 
+const NAME_KEY_TO_LANGUAGE_CODE: Record<ProductNameKey, string> = {
+  name_en: 'en',
+  name_pl: 'pl',
+  name_de: 'de',
+};
+
+export const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const toDisplayString = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return '';
+};
+
+const toDisplayListString = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    const parts = value.map((entry: unknown) => toDisplayListString(entry)).filter(Boolean);
+    return parts.join(', ');
+  }
+  return toDisplayString(value);
+};
+
+const splitDisplaySegments = (value: string): string[] =>
+  value
+    .split('|')
+    .map((segment: string) => segment.trim())
+    .filter(Boolean);
+
 export const getProductNameValue = (
   product: ProductWithImages,
   key: ProductNameKey
 ): string | undefined => {
   const value = product[key];
-  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+  if (typeof value === 'string' && value.trim().length > 0) return value;
+
+  const localizedName = toTrimmedString(toRecord(product.name)?.[NAME_KEY_TO_LANGUAGE_CODE[key]]);
+  return localizedName || undefined;
 };
 
 export const getProductDisplayName = (product: ProductWithImages): string =>
@@ -22,15 +62,130 @@ export const getImageFilepath = (imageFile: unknown): string | undefined => {
   return typeof filepath === 'string' && filepath.trim().length > 0 ? filepath : undefined;
 };
 
-export const toTrimmedString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
+const getProductParameterDisplayValue = (parameter: unknown, key: ProductNameKey): string => {
+  const record = toRecord(parameter);
+  if (!record) return '';
+
+  const directValue = toDisplayListString(record['value']);
+  const valuesByLanguageRecord = toRecord(record['valuesByLanguage']) ?? {};
+  const preferredLanguageCode = NAME_KEY_TO_LANGUAGE_CODE[key];
+
+  for (const candidate of [preferredLanguageCode, 'en', 'pl', 'de', 'default']) {
+    const localizedValue = toDisplayListString(valuesByLanguageRecord[candidate]);
+    if (localizedValue) return localizedValue;
+  }
+
+  for (const candidate of [preferredLanguageCode, 'en', 'pl', 'de']) {
+    const legacyLocalizedValue = toDisplayListString(record[`value_${candidate}`]);
+    if (legacyLocalizedValue) return legacyLocalizedValue;
+  }
+
+  for (const localizedValue of Object.values(valuesByLanguageRecord)) {
+    const normalizedValue = toDisplayListString(localizedValue);
+    if (normalizedValue) return normalizedValue;
+  }
+
+  return directValue;
+};
+
+export const getProductListDisplayName = (
+  product: ProductWithImages,
+  key: ProductNameKey,
+): string => {
+  const rawBaseName =
+    getProductNameValue(product, key) ??
+    getProductNameValue(product, 'name_en') ??
+    getProductNameValue(product, 'name_pl') ??
+    getProductNameValue(product, 'name_de') ??
+    'Product';
+
+  const parsedNameParts = rawBaseName
+    .split('|')
+    .map((part: string) => part.trim())
+    .filter(Boolean);
+  const baseName = parsedNameParts[0] || rawBaseName;
+
+  const seenValues = new Set<string>([baseName.trim().toLowerCase()]);
+  const parameterValues = Array.isArray(product.parameters)
+    ? product.parameters.reduce((acc: string[], parameter: unknown) => {
+        const resolvedValue = getProductParameterDisplayValue(parameter, key).trim();
+        if (!resolvedValue) return acc;
+
+        for (const segment of splitDisplaySegments(resolvedValue)) {
+          const signature = segment.toLowerCase();
+          if (!segment || seenValues.has(signature)) continue;
+          seenValues.add(signature);
+          acc.push(segment);
+        }
+        return acc;
+      }, [])
+    : [];
+
+  if (parameterValues.length === 0 && parsedNameParts.length > 1) {
+    return rawBaseName;
+  }
+
+  return parameterValues.length > 0 ? [baseName, ...parameterValues].join(' | ') : baseName;
+};
+
+const OPAQUE_CATEGORY_ID_PATTERN =
+  /^(?:[a-f0-9]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
+const CATEGORY_NAME_KEYS_BY_LOCALE: Record<ProductNameKey, string[]> = {
+  name_en: ['name_en', 'name', 'name_pl', 'name_de'],
+  name_pl: ['name_pl', 'name', 'name_en', 'name_de'],
+  name_de: ['name_de', 'name', 'name_en', 'name_pl'],
+};
+
+const resolveProductCategoryRecord = (product: ProductWithImages): Record<string, unknown> | null => {
+  const record = toRecord(product);
+  if (!record) return null;
+  return toRecord(record['category']);
+};
+
+const resolveCategoryLabelFromRecord = (
+  categoryRecord: Record<string, unknown> | null,
+  preferredLocale: ProductNameKey
+): string => {
+  if (!categoryRecord) return '';
+  const keys = CATEGORY_NAME_KEYS_BY_LOCALE[preferredLocale] ?? CATEGORY_NAME_KEYS_BY_LOCALE.name_en;
+  for (const key of keys) {
+    const value = toTrimmedString(categoryRecord[key]);
+    if (value) return value;
+  }
+  return '';
 };
 
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
-  return '';
+
+  const categoryRecord = resolveProductCategoryRecord(product);
+  if (!categoryRecord) return '';
+
+  return (
+    toTrimmedString(categoryRecord['id']) ||
+    toTrimmedString(categoryRecord['_id']) ||
+    toTrimmedString(categoryRecord['categoryId'])
+  );
+};
+
+export const resolveProductCategoryLabel = (
+  product: ProductWithImages,
+  categoryNameById: ReadonlyMap<string, string>,
+  preferredLocale: ProductNameKey = 'name_en'
+): string => {
+  const normalizedCategoryId = resolveProductCategoryId(product);
+  const categoryRecord = resolveProductCategoryRecord(product);
+  const directLabel = resolveCategoryLabelFromRecord(categoryRecord, preferredLocale);
+  const resolvedLookupLabel = normalizedCategoryId
+    ? toTrimmedString(categoryNameById.get(normalizedCategoryId))
+    : '';
+
+  if (directLabel) return directLabel;
+  if (resolvedLookupLabel) return resolvedLookupLabel;
+  if (!normalizedCategoryId) return 'Unassigned';
+  return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
 
 export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();

@@ -43,9 +43,23 @@ const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('del
 
 type ProductListCacheValue =
   | ProductWithImages[]
+  | { items: ProductWithImages[]; total?: number }
   | { products: ProductWithImages[] }
   | null
   | undefined;
+
+const isPaginatedItemsCacheValue = (
+  cacheValue: ProductListCacheValue
+): cacheValue is { items: ProductWithImages[]; total?: number } =>
+  !!cacheValue && !Array.isArray(cacheValue) && 'items' in cacheValue && Array.isArray(cacheValue.items);
+
+const isProductsArrayCacheValue = (
+  cacheValue: ProductListCacheValue
+): cacheValue is { products: ProductWithImages[] } =>
+  !!cacheValue &&
+  !Array.isArray(cacheValue) &&
+  'products' in cacheValue &&
+  Array.isArray(cacheValue.products);
 
 const patchProductListCacheValue = (
   cacheValue: ProductListCacheValue,
@@ -57,7 +71,15 @@ const patchProductListCacheValue = (
       product.id === savedProduct.id ? { ...product, ...savedProduct } : product
     );
   }
-  if (Array.isArray(cacheValue.products)) {
+  if (isPaginatedItemsCacheValue(cacheValue)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+      ),
+    };
+  }
+  if (isProductsArrayCacheValue(cacheValue)) {
     return {
       ...cacheValue,
       products: cacheValue.products.map((product: ProductWithImages) =>

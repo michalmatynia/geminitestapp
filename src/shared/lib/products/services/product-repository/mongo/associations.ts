@@ -176,10 +176,12 @@ export const mongoProductAssociationsImpl = {
       assignedAt: now,
       catalog: { id: c.id },
     }));
+    const primaryCatalogId = newCatalogs[0]?.catalogId ?? '';
 
     await collection.updateOne(buildProductIdFilter(productId), {
       $set: {
         catalogs: newCatalogs,
+        catalogId: primaryCatalogId,
         updatedAt: new Date(),
       },
     } as UpdateFilter<ProductDocument>);
@@ -278,6 +280,7 @@ export const mongoProductAssociationsImpl = {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
+    const primaryCatalogId = (catalogs as Array<{ id: string }>)[0]?.id ?? '';
 
     const bulkOps = productIds.map((pid) => ({
       updateOne: {
@@ -290,6 +293,7 @@ export const mongoProductAssociationsImpl = {
               assignedAt: now,
               catalog: { id: c.id },
             })),
+            catalogId: primaryCatalogId,
             updatedAt: new Date(),
           },
         },

@@ -169,4 +169,97 @@ describe('useProductsWithCount', () => {
       );
     });
   });
+
+  it('normalizes paged products before exposing them to the list state', async () => {
+    getProductsWithCountMock.mockResolvedValue({
+      products: [
+        {
+          ...createProduct('raw-1'),
+          category: {
+            id: 'category-1',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+            name: 'Keychains',
+            name_en: 'Keychains',
+            name_pl: 'Breloki',
+            name_de: 'Schluesselanhaenger',
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-1',
+          },
+          images: [
+            {
+              productId: 'raw-1',
+              imageFileId: 'file-1',
+              assignedAt: '2026-01-01T00:00:00.000Z',
+              imageFile: {
+                id: 'file-1',
+                filepath: '/uploads/raw-1.webp',
+              },
+            },
+          ],
+          catalogs: undefined,
+          tags: undefined,
+          producers: undefined,
+          parameters: [
+            {
+              parameterId: 'material',
+              value: null,
+              valuesByLanguage: {
+                en: 'Faux Leather',
+              },
+            },
+          ],
+        },
+      ],
+      total: 1,
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useProductsWithCount({
+          page: 1,
+          pageSize: 20,
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.products[0]?.id).toBe('raw-1');
+    });
+
+    expect(result.current.products[0]?.images?.[0]?.imageFile).toEqual(
+      expect.objectContaining({
+        id: 'file-1',
+        filepath: '/uploads/raw-1.webp',
+        filename: 'raw-1.webp',
+        mimetype: 'application/octet-stream',
+        size: 0,
+      })
+    );
+    expect(result.current.products[0]?.catalogs).toEqual([]);
+    expect(result.current.products[0]?.tags).toEqual([]);
+    expect(result.current.products[0]?.producers).toEqual([]);
+    expect(result.current.products[0]?.parameters?.[0]).toEqual(
+      expect.objectContaining({
+        parameterId: 'material',
+        value: null,
+        valuesByLanguage: {
+          en: 'Faux Leather',
+        },
+      })
+    );
+    expect(result.current.products[0]?.category).toEqual(
+      expect.objectContaining({
+        id: 'category-1',
+        catalogId: 'catalog-1',
+        name_en: 'Keychains',
+      })
+    );
+  });
 });

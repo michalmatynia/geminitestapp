@@ -26,6 +26,7 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
     name_en: 1,
     name_pl: 1,
     name_de: 1,
+    parameters: 1,
     price: 1,
     stock: 1,
     createdAt: 1,

@@ -10,6 +10,12 @@ describe('agentic bundle selection summary', () => {
       planPath: 'artifacts/agent-bundle-plan.json',
       previousHistoryPath: 'artifacts/agent-history/previous/base-branch.json',
       selectedBundles: ['ai_paths_runtime', 'admin_experience'],
+      attemptedSuppressions: [
+        {
+          bundle: 'ai_paths_runtime',
+          reason: 'unchanged-high-risk-retained',
+        },
+      ],
       skippedBundles: [
         {
           bundle: 'product_data_pipeline',
@@ -22,5 +28,9 @@ describe('agentic bundle selection summary', () => {
     expect(summary).toContain('`ai_paths_runtime`');
     expect(summary).toContain('`admin_experience`');
     expect(summary).toContain('`product_data_pipeline` (unchanged)');
+    expect(summary).toContain('`ai_paths_runtime` (unchanged-high-risk-retained)');
+    expect(summary.indexOf('### Retained high-risk bundles')).toBeLessThan(
+      summary.indexOf('### Selected bundles'),
+    );
   });
 });

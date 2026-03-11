@@ -79,6 +79,73 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
   } as TData;
 };
 
+const EXPLICIT_PARAMETER_CLEAR_FLAG_KEYS = [
+  'forceClearParameters',
+  'allowEmptyParameters',
+  'clearParameters',
+] as const;
+
+const isTruthyFlag = (value: unknown): boolean => {
+  if (value === true) return true;
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
+const hasExplicitParameterClearIntent = (value: unknown): boolean => {
+  if (value instanceof FormData) {
+    return EXPLICIT_PARAMETER_CLEAR_FLAG_KEYS.some((key) => isTruthyFlag(value.get(key)));
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return EXPLICIT_PARAMETER_CLEAR_FLAG_KEYS.some((key) => isTruthyFlag(record[key]));
+};
+
+const hasNonEmptyParameterValues = (value: unknown): value is ProductParameterValue[] =>
+  Array.isArray(value) && value.length > 0;
+
+const preserveExistingParametersOnImplicitClear = async (input: {
+  id: string;
+  existing: ProductWithImages;
+  normalized: Record<string, unknown>;
+  rawInput: unknown;
+}): Promise<Record<string, unknown>> => {
+  if (!Object.prototype.hasOwnProperty.call(input.normalized, 'parameters')) {
+    return input.normalized;
+  }
+
+  const nextParameters = input.normalized['parameters'];
+  if (!Array.isArray(nextParameters) || nextParameters.length > 0) {
+    return input.normalized;
+  }
+
+  if (!hasNonEmptyParameterValues(input.existing.parameters)) {
+    return input.normalized;
+  }
+
+  if (hasExplicitParameterClearIntent(input.rawInput)) {
+    return input.normalized;
+  }
+
+  void ErrorSystem.logWarning('Prevented implicit parameter clear on product update.', {
+    service: 'product-service',
+    action: 'updateProduct',
+    productId: input.id,
+    metadata: {
+      existingParameterCount: input.existing.parameters.length,
+    },
+  });
+
+  return {
+    ...input.normalized,
+    parameters: input.existing.parameters,
+  };
+};
+
 type RelationPayload = {
   imageFileIds?: string[] | undefined;
   catalogIds?: string[] | undefined;
@@ -402,10 +469,15 @@ async function updateProduct(
     });
   }
 
-  const normalized = normalizeUpdateProductPayloadForStorage(validation.data);
+  const normalized = await preserveExistingParametersOnImplicitClear({
+    id,
+    existing,
+    normalized: normalizeUpdateProductPayloadForStorage(validation.data),
+    rawInput: data,
+  });
 
   // Run DB write and image uploads in parallel — they are independent of each other.
-  const uploadSku = parsedForm ? resolveUploadSku(normalized.sku, existing.sku) : null;
+  const uploadSku = parsedForm ? resolveUploadSku(normalized['sku'], existing.sku) : null;
   const imageUploadTask: Promise<Map<File, string>> =
     parsedForm && parsedForm.images.length > 0
       ? uploadFilesForProduct(parsedForm.images, uploadSku, provider)
@@ -426,12 +498,12 @@ async function updateProduct(
   }
 
   const relationPayload: RelationPayload = {
-    imageFileIds: normalizeRelationArray(normalized.imageFileIds),
-    catalogIds: normalizeRelationArray(normalized.catalogIds),
-    categoryId: normalizeRelationCategory(normalized.categoryId),
-    tagIds: normalizeRelationArray(normalized.tagIds),
-    producerIds: normalizeRelationArray(normalized.producerIds),
-    noteIds: normalizeRelationArray(normalized.noteIds),
+    imageFileIds: normalizeRelationArray(normalized['imageFileIds']),
+    catalogIds: normalizeRelationArray(normalized['catalogIds']),
+    categoryId: normalizeRelationCategory(normalized['categoryId']),
+    tagIds: normalizeRelationArray(normalized['tagIds']),
+    producerIds: normalizeRelationArray(normalized['producerIds']),
+    noteIds: normalizeRelationArray(normalized['noteIds']),
   };
 
   if (parsedForm) {

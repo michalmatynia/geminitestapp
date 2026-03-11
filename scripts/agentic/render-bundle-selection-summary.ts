@@ -10,6 +10,14 @@ export function renderAgenticBundleSelectionSummary(
 ): string {
   const lines: string[] = ['## Agentic bundle selection'];
 
+  if (selection.attemptedSuppressions.length > 0) {
+    lines.push('');
+    lines.push('### Retained high-risk bundles');
+    for (const bundle of selection.attemptedSuppressions) {
+      lines.push(`- \`${bundle.bundle}\` (${bundle.reason})`);
+    }
+  }
+
   if (selection.selectedBundles.length > 0) {
     lines.push('');
     lines.push('### Selected bundles');
@@ -26,7 +34,11 @@ export function renderAgenticBundleSelectionSummary(
     }
   }
 
-  if (selection.selectedBundles.length === 0 && selection.skippedBundles.length === 0) {
+  if (
+    selection.selectedBundles.length === 0 &&
+    selection.skippedBundles.length === 0 &&
+    selection.attemptedSuppressions.length === 0
+  ) {
     lines.push('');
     lines.push('- No impact bundles were selected.');
   }

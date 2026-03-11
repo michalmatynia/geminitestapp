@@ -99,6 +99,12 @@ export const resolveCategoryRecordId = (
   );
 };
 
+const resolveProductCategoryRecord = (product: ProductWithImages): Record<string, unknown> | null => {
+  const record = toRecord(product);
+  if (!record) return null;
+  return toRecord(record['category']);
+};
+
 export const buildCategoryNameById = (
   grouped: Record<string, Array<ProductCategory | Record<string, unknown>> | undefined>,
   locale: 'name_en' | 'name_pl' | 'name_de'
@@ -133,22 +139,37 @@ export const resolveProductCategoryDisplayLabel = (
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
-  return '';
+
+  const categoryRecord = resolveProductCategoryRecord(product);
+  if (!categoryRecord) return '';
+
+  return (
+    toTrimmedString(categoryRecord['id']) ||
+    toTrimmedString(categoryRecord['_id']) ||
+    toTrimmedString(categoryRecord['categoryId'])
+  );
 };
 
 export const resolveProductCatalogId = (product: ProductWithImages): string => {
+  const catalogs = product.catalogs;
+  if (Array.isArray(catalogs)) {
+    const first = catalogs[0] as Record<string, unknown> | undefined;
+    if (first) {
+      const relationCatalogId = toTrimmedString(
+        (first['catalogId'] as string | undefined) ||
+          ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
+          (first['id'] as string | undefined)
+      );
+      if (relationCatalogId) return relationCatalogId;
+    }
+  }
+
   const direct = toTrimmedString(product.catalogId);
   if (direct) return direct;
 
-  const catalogs = product.catalogs;
-  if (!Array.isArray(catalogs)) return '';
+  const categoryRecord = resolveProductCategoryRecord(product);
+  const categoryCatalogId = toTrimmedString(categoryRecord?.['catalogId']);
+  if (categoryCatalogId) return categoryCatalogId;
 
-  const first = catalogs[0] as Record<string, unknown> | undefined;
-  if (!first) return '';
-
-  return toTrimmedString(
-    (first['catalogId'] as string | undefined) ||
-      ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
-      (first['id'] as string | undefined)
-  );
+  return '';
 };

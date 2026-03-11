@@ -9,6 +9,7 @@ import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
+import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
@@ -36,10 +37,12 @@ import { cn } from '@/shared/utils';
 import type { JSX } from 'react';
 
 const APP_LOADER_MIN_VISIBLE_MS = 280;
+const NAVIGATION_SKELETON_DELAY_MS = 140;
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useKangurAuth();
-  const { isRoutePending } = useKangurRouteTransitionState();
+  const { isRoutePending, isRouteRevealing, pendingPageKey, activeTransitionPageKey } =
+    useKangurRouteTransitionState();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
@@ -48,10 +51,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
-  const shouldShowLoader = isBootLoading || isRoutePending;
+  const isNavigationTransitionActive = isRoutePending || isRouteRevealing;
   const shouldBlockRouteContent = isBootLoading && !canRenderRouteWhileLoading;
-  const [isLoaderVisible, setIsLoaderVisible] = useState<boolean>(shouldShowLoader);
-  const loaderShownAtRef = useRef<number | null>(shouldShowLoader ? Date.now() : null);
+  const [isLoaderVisible, setIsLoaderVisible] = useState<boolean>(isBootLoading);
+  const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
+  const loaderShownAtRef = useRef<number | null>(isBootLoading ? Date.now() : null);
+  const navigationSkeletonShownRef = useRef(false);
+  const transitionPageKey =
+    pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -60,7 +67,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }, [authErrorType, navigateToLogin]);
 
   useEffect(() => {
-    if (shouldShowLoader) {
+    if (isBootLoading) {
       if (loaderShownAtRef.current === null) {
         loaderShownAtRef.current = Date.now();
       }
@@ -83,7 +90,44 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [shouldShowLoader]);
+  }, [isBootLoading]);
+
+  useEffect(() => {
+    if (isBootLoading) {
+      navigationSkeletonShownRef.current = false;
+      setIsNavigationSkeletonVisible(false);
+      return;
+    }
+
+    if (isRoutePending && navigationSkeletonShownRef.current) {
+      setIsNavigationSkeletonVisible(true);
+      return;
+    }
+
+    if (isRoutePending) {
+      const timeoutId = window.setTimeout(() => {
+        navigationSkeletonShownRef.current = true;
+        setIsNavigationSkeletonVisible(true);
+      }, NAVIGATION_SKELETON_DELAY_MS);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    }
+
+    if (isRouteRevealing) {
+      setIsNavigationSkeletonVisible(navigationSkeletonShownRef.current);
+      return;
+    }
+
+    if (!isNavigationTransitionActive) {
+      navigationSkeletonShownRef.current = false;
+      setIsNavigationSkeletonVisible(false);
+      return;
+    }
+
+    return undefined;
+  }, [isBootLoading, isNavigationTransitionActive, isRoutePending, isRouteRevealing]);
 
   if (authErrorType === 'user_not_registered') {
     return <UserNotRegisteredError />;
@@ -114,12 +158,25 @@ const AuthenticatedApp = (): JSX.Element | null => {
           <motion.div
             key={routeTransitionKey}
             {...routeContentMotionProps}
-            aria-busy={false}
+            aria-busy={isNavigationTransitionActive}
             className={cn(embedded ? 'min-h-full' : 'min-h-screen')}
             data-route-transition-key={routeTransitionKey}
             data-testid='kangur-route-content'
           >
             {routeContent}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isNavigationSkeletonVisible ? (
+          <motion.div
+            key='kangur-page-transition-skeleton'
+            animate={{ opacity: 1 }}
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
+          >
+            <KangurPageTransitionSkeleton pageKey={transitionPageKey} reason='navigation' />
           </motion.div>
         ) : null}
       </AnimatePresence>

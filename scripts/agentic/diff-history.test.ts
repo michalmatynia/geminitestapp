@@ -29,6 +29,7 @@ describe('agentic history diff', () => {
         },
         bundleSelection: {
           selectedBundles: ['product_data_pipeline'],
+          attemptedSuppressions: [],
           skippedBundles: [
             {
               bundle: 'admin_experience',
@@ -91,6 +92,7 @@ describe('agentic history diff', () => {
         },
         bundleSelection: {
           selectedBundles: ['product_data_pipeline'],
+          attemptedSuppressions: [],
           skippedBundles: [],
         },
         bundlePlan: [
@@ -124,6 +126,7 @@ describe('agentic history diff', () => {
     expect(diff.addedBundles).toEqual(['admin_experience']);
     expect(diff.removedBundles).toEqual([]);
     expect(diff.newlyHighRiskBundles).toEqual([]);
+    expect(diff.newlyAttemptedHighRiskSuppressions).toEqual([]);
     expect(diff.riskEscalations).toEqual([]);
     expect(diff.selectionChanges).toEqual([
       {
@@ -184,12 +187,14 @@ describe('agentic history diff', () => {
         },
         executionReport: null,
         bundleSelection: {
-          selectedBundles: ['ai_paths_runtime'],
-          skippedBundles: [
+          selectedBundles: ['ai_paths_runtime', 'admin_experience'],
+          attemptedSuppressions: [
             {
               bundle: 'admin_experience',
-              reason: 'unchanged',
+              reason: 'unchanged-high-risk-retained',
             },
+          ],
+          skippedBundles: [
           ],
         },
         bundlePlan: [
@@ -223,6 +228,7 @@ describe('agentic history diff', () => {
         executionReport: null,
         bundleSelection: {
           selectedBundles: ['admin_experience'],
+          attemptedSuppressions: [],
           skippedBundles: [],
         },
         bundlePlan: [
@@ -241,6 +247,7 @@ describe('agentic history diff', () => {
     );
 
     expect(diff.newlyHighRiskBundles).toEqual(['ai_paths_runtime']);
+    expect(diff.newlyAttemptedHighRiskSuppressions).toEqual(['admin_experience']);
     expect(diff.riskEscalations).toEqual([
       {
         bundle: 'admin_experience',
@@ -249,11 +256,6 @@ describe('agentic history diff', () => {
       },
     ]);
     expect(diff.selectionChanges).toEqual([
-      {
-        bundle: 'admin_experience',
-        previousState: 'selected',
-        currentState: 'skipped',
-      },
       {
         bundle: 'ai_paths_runtime',
         previousState: 'missing',

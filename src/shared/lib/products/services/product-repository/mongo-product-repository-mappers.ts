@@ -47,6 +47,11 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const toPlainRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
 const assertNoUnsupportedLocalizedObjectShape = (
   value: unknown,
   field: 'name' | 'description',
@@ -136,6 +141,21 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
     );
   });
   return Array.from(byParameterId.values());
+};
+
+const resolveCanonicalCatalogId = (doc: ProductDocument): string => {
+  if (Array.isArray(doc.catalogs)) {
+    for (const entry of doc.catalogs) {
+      const record = toPlainRecord(entry);
+      if (!record) continue;
+      const relationCatalogId =
+        toTrimmedString(record['catalogId']) ||
+        toTrimmedString(toPlainRecord(record['catalog'])?.['id']) ||
+        toTrimmedString(record['id']);
+      if (relationCatalogId) return relationCatalogId;
+    }
+  }
+  return toTrimmedString(doc.catalogId) ?? '';
 };
 
 const normalizeProducerRelations = (
@@ -330,7 +350,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
-    catalogId: doc.catalogId ?? '',
+    catalogId: resolveCanonicalCatalogId(doc),
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
@@ -395,7 +415,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
-    catalogId: doc.catalogId ?? '',
+    catalogId: resolveCanonicalCatalogId(doc),
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],

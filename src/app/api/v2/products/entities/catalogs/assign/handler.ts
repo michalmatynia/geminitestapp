@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { CachedProductService } from '@/features/products/server';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -47,6 +48,7 @@ export async function postProductsCatalogAssignHandler(
   } else {
     await productRepository.bulkAddProductCatalogs(uniqueProductIds, validCatalogIds);
   }
+  CachedProductService.invalidateAll();
 
   return NextResponse.json({
     updated: uniqueProductIds.length,

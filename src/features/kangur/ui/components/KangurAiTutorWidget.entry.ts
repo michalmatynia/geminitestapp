@@ -24,6 +24,7 @@ import type {
   GuidedTutorAuthKind,
   GuidedTutorAuthMode,
   GuidedTutorTarget,
+  PendingSelectionResponse,
   TutorHomeOnboardingStep,
 } from './KangurAiTutorWidget.types';
 
@@ -60,7 +61,9 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   isOpen: boolean;
   isTutorHidden: boolean;
   mounted: boolean;
+  selectionGuidanceHandoffText: string | null;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  selectionResponsePending: PendingSelectionResponse | null;
   setCanonicalTutorModalVisible: (value: boolean) => void;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setGuestIntroHelpVisible: (value: boolean) => void;
@@ -87,7 +90,9 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     isOpen,
     isTutorHidden,
     mounted,
+    selectionGuidanceHandoffText,
     selectionExplainTimeoutRef,
+    selectionResponsePending,
     setCanonicalTutorModalVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
@@ -99,6 +104,12 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   } = input;
 
   useEffect(() => {
+    const hasContextualTakeover =
+      contextualTutorMode !== null ||
+      guidedTutorTarget !== null ||
+      selectionGuidanceHandoffText !== null ||
+      selectionResponsePending !== null;
+
     if (isTutorHidden) {
       setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
@@ -110,21 +121,24 @@ export function useKangurAiTutorGuestIntroFlow(input: {
       return;
     }
 
+    if (authState.isAuthenticated) {
+      setCanonicalTutorModalVisible(false);
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
+      return;
+    }
+
     if (canonicalTutorModalVisible) {
       return;
     }
 
-    if (contextualTutorMode || guidedTutorTarget) {
+    if (hasContextualTakeover) {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       return;
     }
 
     if (guestIntroVisible || guestIntroHelpVisible) {
-      return;
-    }
-
-    if (authState.isAuthenticated) {
       return;
     }
 
@@ -232,6 +246,8 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     isTutorHidden,
     isOpen,
     mounted,
+    selectionGuidanceHandoffText,
+    selectionResponsePending,
     setCanonicalTutorModalVisible,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,

@@ -80,6 +80,7 @@ That means PR bundle fanout now focuses on bundles with actual recommendation or
 The preflight job also renders the bundle-selection result into the Actions summary so reviewers can see:
 - which bundles were selected for validation
 - which bundles were intentionally suppressed as unchanged
+- which unchanged high-risk bundles were retained instead of being suppressed
 
 ## History snapshot
 
@@ -120,6 +121,7 @@ On push-triggered finalize runs, the workflow also tries to download the previou
 If no prior branch snapshot exists yet, the finalize lane simply skips the diff step.
 
 Both preflight and finalize now also render the diff into the Actions summary, with explicit emphasis on:
+- attempted suppression prevented for high-risk bundles
 - newly introduced high-risk bundles
 - risk escalations in existing bundles
 - bundle-set changes

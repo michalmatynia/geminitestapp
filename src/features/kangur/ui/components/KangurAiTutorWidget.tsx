@@ -46,6 +46,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     loginModal: {
       authMode: loginModal.authMode,
       isOpen: loginModal.isOpen,
+      openLoginModal: loginModal.openLoginModal,
     },
     prefersReducedMotion: prefersReducedMotion ?? undefined,
     tutorContent,

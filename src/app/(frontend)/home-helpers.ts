@@ -1,8 +1,6 @@
 import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
 
 import type { Session } from 'next-auth';
@@ -33,9 +31,6 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
   }
 };
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
 export const shouldApplyFrontPageAppSelection = (): boolean => {
   const value = process.env['ENABLE_FRONT_PAGE_APP_REDIRECT']?.trim().toLowerCase();
   return value !== 'false' && value !== '0';
@@ -55,29 +50,6 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
   return null;
 };
 
-const readPrismaFrontPageSetting = async (): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: FRONT_PAGE_SETTING_KEY },
-      select: { value: true },
-    });
-    if (setting?.value) return setting.value;
-  } catch {
-    // Prisma unavailable — ignore.
-  }
-  return null;
-};
-
 export const getFrontPageSetting = async (): Promise<string | null> => {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    const mongoValue = await readMongoFrontPageSetting();
-    if (mongoValue) return mongoValue;
-    return readPrismaFrontPageSetting();
-  }
-
-  const prismaValue = await readPrismaFrontPageSetting();
-  if (prismaValue) return prismaValue;
   return readMongoFrontPageSetting();
 };

@@ -4,7 +4,6 @@ import { NextRequest } from 'next/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider, type AppDbProvider } from '@/shared/lib/db/app-db-provider';
-import prisma from '@/shared/lib/db/prisma';
 import { getNodeOtelRuntimeStatus } from '@/shared/lib/observability/otel-node';
 import { getCentralLoggingRuntimeStats } from '@/shared/lib/observability/system-logger';
 import { getSystemLogAlertsQueueStatus } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
@@ -20,16 +19,11 @@ const pingMongo = async (uri: string): Promise<void> => {
   }
 };
 
-const pingPrisma = async (): Promise<void> => {
-  await prisma.$queryRawUnsafe('SELECT 1');
-};
-
 const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
   try {
     return await getAppDbProvider();
   } catch {
     if (process.env['MONGODB_URI']) return 'mongodb';
-    if (process.env['DATABASE_URL']) return 'prisma';
     return 'unknown';
   }
 };
@@ -50,8 +44,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         throw configurationError('MONGODB_URI missing');
       }
       await pingMongo(uri);
-    } else if (provider === 'prisma') {
-      await pingPrisma();
     } else {
       throw configurationError('No database provider configured.');
     }

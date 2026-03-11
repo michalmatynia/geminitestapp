@@ -488,8 +488,13 @@ export const playwrightConfigSchema = z.object({
 export type PlaywrightConfigDto = z.infer<typeof playwrightConfigSchema>;
 export type PlaywrightConfig = PlaywrightConfigDto;
 
+const dbQueryProviderSchema = z.union([
+  z.enum(['auto', 'mongodb']),
+  z.literal('prisma').transform(() => 'auto' as const),
+]);
+
 export const dbQueryConfigSchema = z.object({
-  provider: z.enum(['auto', 'mongodb', 'prisma']),
+  provider: dbQueryProviderSchema,
   collection: z.string(),
   mode: z.enum(['preset', 'custom']),
   preset: z.enum(['by_id', 'by_productId', 'by_entityId', 'by_field']),
@@ -521,8 +526,16 @@ export const pollConfigSchema = z.object({
 export type PollConfigDto = z.infer<typeof pollConfigSchema>;
 export type PollConfig = PollConfigDto;
 
+const dbSchemaProviderSchema = z
+  .union([
+    z.enum(['auto', 'mongodb']),
+    z.literal('prisma').transform(() => 'auto' as const),
+    z.literal('all').transform(() => 'auto' as const),
+  ])
+  .optional();
+
 export const dbSchemaConfigSchema = z.object({
-  provider: z.enum(['auto', 'mongodb', 'prisma', 'all']).optional(),
+  provider: dbSchemaProviderSchema,
   mode: z.enum(['all', 'selected']),
   collections: z.array(z.string()),
   includeFields: z.boolean(),
@@ -532,6 +545,17 @@ export const dbSchemaConfigSchema = z.object({
 
 export type DbSchemaConfigDto = z.infer<typeof dbSchemaConfigSchema>;
 export type DbSchemaConfig = DbSchemaConfigDto;
+
+const dbSchemaSnapshotSourceSchema = z.object({
+  provider: z.enum(['mongodb', 'prisma']),
+  collections: z.array(
+    z.object({
+      name: z.string(),
+      fields: z.array(z.object({ name: z.string(), type: z.string() })),
+      relations: z.array(z.string()).optional(),
+    })
+  ),
+});
 
 export const dbSchemaSnapshotSchema = z.object({
   provider: z.enum(['mongodb', 'prisma', 'multi']),
@@ -544,19 +568,10 @@ export const dbSchemaSnapshotSchema = z.object({
     })
   ),
   sources: z
-    .record(
-      z.enum(['mongodb', 'prisma']),
-      z.object({
-        provider: z.enum(['mongodb', 'prisma']),
-        collections: z.array(
-          z.object({
-            name: z.string(),
-            fields: z.array(z.object({ name: z.string(), type: z.string() })),
-            relations: z.array(z.string()).optional(),
-          })
-        ),
-      })
-    )
+    .object({
+      mongodb: dbSchemaSnapshotSourceSchema.optional(),
+      prisma: dbSchemaSnapshotSourceSchema.optional(),
+    })
     .optional(),
   syncedAt: z.string().optional(),
 });
@@ -680,6 +695,7 @@ export const databaseConfigSchema = z.object({
       targetPath: z.string().optional(),
       definitionsPort: z.string().optional(),
       definitionsPath: z.string().optional(),
+      languageCode: z.string().optional(),
       enforceOptionLabels: z.boolean().optional(),
       allowUnknownParameterIds: z.boolean().optional(),
     })

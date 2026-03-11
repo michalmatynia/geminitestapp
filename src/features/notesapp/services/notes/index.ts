@@ -27,7 +27,6 @@ import type {
   NoteRelationWithTarget,
 } from '@/shared/contracts/notes';
 import { configurationError } from '@/shared/errors/app-error';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -41,8 +40,8 @@ export const invalidateNoteRepositoryCache = (): void => {
   _repository = null;
 };
 
-const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
-  const provider = await getAppDbProvider();
+const resolveNoteProvider = async (): Promise<'mongodb'> => {
+  const provider = 'mongodb';
   if (process.env['NODE_ENV'] === 'test') {
     void logSystemEvent({
       level: 'info',
@@ -56,14 +55,9 @@ const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
 
 async function getRepository(): Promise<NoteRepository> {
   if (!_repository) {
-    const provider = await resolveNoteProvider();
-    if (provider === 'mongodb') {
-      const { mongoNoteRepository } = await import('./note-repository/mongo-note-repository');
-      _repository = mongoNoteRepository;
-    } else {
-      const { prismaNoteRepository } = await import('./note-repository/prisma-note-repository');
-      _repository = prismaNoteRepository;
-    }
+    await resolveNoteProvider();
+    const { mongoNoteRepository } = await import('./note-repository/mongo-note-repository');
+    _repository = mongoNoteRepository;
   }
 
   if (!_repository) {

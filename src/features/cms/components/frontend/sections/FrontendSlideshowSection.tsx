@@ -40,7 +40,7 @@ export function FrontendSlideshowSection({
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
             {blocks.length === 0 && (
-              <div className='flex min-h-[300px] items-center justify-center bg-gray-800/20 text-gray-500 italic'>
+              <div className='cms-appearance-subtle-surface cms-appearance-muted-text flex min-h-[300px] items-center justify-center italic'>
                 Empty slideshow
               </div>
             )}

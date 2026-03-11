@@ -180,6 +180,22 @@ const gotoLessonsRoute = async (page: Page) => {
   });
 };
 
+const gotoLessonsLibraryRoute = async (page: Page) => {
+  await page.goto('/kangur/lessons', {
+    waitUntil: 'commit',
+    timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-route-shell')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByRole('heading', { name: 'Lekcje' })).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-ai-tutor-avatar')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+};
+
 const selectLessonFragment = async (page: Page) => {
   await page.evaluate((selectedText) => {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -193,7 +209,7 @@ const selectLessonFragment = async (page: Page) => {
       current = walker.nextNode();
     }
 
-    if (!target || !target.textContent) {
+    if (!target?.textContent) {
       throw new Error(`Could not find text node containing "${selectedText}".`);
     }
 
@@ -228,20 +244,28 @@ const expectDiagnostics = async (
   }
 };
 
-const installLiveLessonMocks = async (page: Page) => {
+const installLiveLessonMocks = async (
+  page: Page,
+  options: { anonymous?: boolean } = {}
+) => {
+  const { anonymous = false } = options;
   let progress = createDefaultProgress();
 
   await page.route('**/api/auth/session**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        user: {
-          name: authUser.full_name,
-          email: authUser.email,
-        },
-        expires: '2099-12-31T23:59:59.999Z',
-      }),
+      body: JSON.stringify(
+        anonymous
+          ? null
+          : {
+              user: {
+                name: authUser.full_name,
+                email: authUser.email,
+              },
+              expires: '2099-12-31T23:59:59.999Z',
+            }
+      ),
     });
   });
 
@@ -254,6 +278,15 @@ const installLiveLessonMocks = async (page: Page) => {
   });
 
   await page.route('**/api/kangur/auth/me**', async (route) => {
+    if (anonymous) {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unauthorized' }),
+      });
+      return;
+    }
+
     await fulfillJson(route, authUser);
   });
 
@@ -313,6 +346,16 @@ const installLiveLessonMocks = async (page: Page) => {
   await page.route('**/api/query-telemetry', async (route) => {
     await fulfillJson(route, { ok: true });
   });
+
+  if (anonymous) {
+    await page.route('**/api/kangur/ai-tutor/guest-intro**', async (route) => {
+      await fulfillJson(route, {
+        ok: true,
+        shouldShow: true,
+        reason: 'first_visit',
+      });
+    });
+  }
 };
 
 test.describe('Kangur AI Tutor live lesson route', () => {
@@ -420,5 +463,41 @@ test.describe('Kangur AI Tutor live lesson route', () => {
       'data-is-minimal-panel': 'false',
       'data-guest-intro-rendered': 'false',
     });
+  });
+
+  test('routes anonymous live lesson guest intro acceptance into guided login help', async ({
+    page,
+  }) => {
+    await installLiveLessonMocks(page, { anonymous: true });
+
+    await gotoLessonsLibraryRoute(page);
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+
+    await page
+      .getByTestId('kangur-ai-tutor-guest-intro')
+      .getByRole('button', { name: 'Tak' })
+      .click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toContainText(
+      'U góry kliknij „Zaloguj się”.'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-guidance-target',
+      'login_action'
+    );
+    await expect(page.getByTestId('kangur-primary-nav-login')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-primary-nav-login')).toBeInViewport();
   });
 });

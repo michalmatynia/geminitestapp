@@ -24,7 +24,7 @@ export const COMMON_RUNTIME_FIELDS: NodeConfigDocField[] = [
 export const dbQueryFields = (prefix: string): NodeConfigDocField[] => [
   {
     path: `${prefix}.provider`,
-    description: 'Database provider (mongodb|prisma).',
+    description: 'Database provider (mongodb; auto resolves to MongoDB).',
     defaultValue: 'mongodb',
   },
   {

@@ -1,6 +1,10 @@
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import {
+  resolveStorefrontAppearanceColorSchemes,
+  type CmsStorefrontAppearanceMode,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
@@ -59,6 +63,7 @@ export interface CmsPageRendererProps {
   hoverScale?: number | undefined;
   mediaVars?: React.CSSProperties | undefined;
   mediaStyles?: React.CSSProperties | null | undefined;
+  appearanceMode?: CmsStorefrontAppearanceMode | undefined;
 }
 
 type CmsPageRendererBaseProps = CmsPageRendererProps & {
@@ -71,7 +76,10 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
 
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   const resolvedMediaStyles = mediaStyles ?? null;
-  const resolvedColorSchemes = colorSchemes ?? {};
+  const resolvedColorSchemes = resolveStorefrontAppearanceColorSchemes(
+    colorSchemes ?? {},
+    props.appearanceMode ?? 'default'
+  );
   const resolvedLayout = layout ?? {};
 
   const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
@@ -104,7 +112,11 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
   return (
     <MediaStylesProvider value={resolvedMediaStyles}>
       <CmsPageProvider colorSchemes={resolvedColorSchemes} layout={resolvedLayout}>
-        <div className='cms-page cms-hover-scope' style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
+        <div
+          className='cms-page cms-hover-scope'
+          data-appearance-mode={props.appearanceMode ?? 'default'}
+          style={{ ...hoverVars, ...(mediaVars ?? {}) }}
+        >
           {ZONE_ORDER.map((zone: PageZone) =>
             rootSectionIdsByZone[zone].map((rootId: string) => {
               const renderSectionSubtree = (sectionId: string, depth: number): React.ReactNode => {
@@ -139,10 +151,11 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
                     </GsapAnimationWrapper>
                     {childIds.length > 0 ? (
                       <div
+                        style={{ borderColor: 'var(--cms-appearance-page-border)' }}
                         className={
                           depth === 1
-                            ? 'ml-4 border-l border-white/10 pl-3'
-                            : 'ml-5 border-l border-white/10 pl-3'
+                            ? 'ml-4 border-l pl-3'
+                            : 'ml-5 border-l pl-3'
                         }
                       >
                         {childIds.map((childId: string) =>

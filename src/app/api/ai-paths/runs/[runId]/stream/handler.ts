@@ -7,7 +7,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import {
-  resolveAlternatePathRunRepository,
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
@@ -321,20 +320,8 @@ export async function getAiPathRunStreamHandler(
   const repoSelection = await resolvePathRunRepository();
   let readRepo = repoSelection.repo;
   let readProvider = repoSelection.provider;
-  let readMode: 'selected' | 'alternate' = 'selected';
+  const readMode = 'selected' as const;
   let initialRun = await readRepo.findRunById(runId);
-  if (!initialRun) {
-    const alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
-    if (alternateRepoSelection) {
-      const alternateRun = await alternateRepoSelection.repo.findRunById(runId);
-      if (alternateRun) {
-        initialRun = alternateRun;
-        readRepo = alternateRepoSelection.repo;
-        readProvider = alternateRepoSelection.provider;
-        readMode = 'alternate';
-      }
-    }
-  }
   if (!initialRun) {
     throw notFoundError('Run not found', { runId });
   }

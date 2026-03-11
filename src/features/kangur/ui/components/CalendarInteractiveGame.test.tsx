@@ -33,7 +33,7 @@ describe('CalendarInteractiveGame', () => {
     );
     expect(screen.getByTestId('calendar-interactive-calendar-shell')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('calendar-day-1')).toHaveClass('soft-card', 'rounded-[16px]');
   });

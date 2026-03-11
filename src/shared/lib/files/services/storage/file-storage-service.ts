@@ -1,9 +1,7 @@
 import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
@@ -30,9 +28,6 @@ type CacheState = {
 };
 
 let settingsCache: CacheState | null = null;
-
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -83,19 +78,6 @@ const parseFileStorageSource = (raw: string | null): FileStorageSource | null =>
   return isFileStorageSource(normalized) ? normalized : null;
 };
 
-const readPrismaSettingValue = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const record = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return typeof record?.value === 'string' ? record.value : null;
-  } catch {
-    return null;
-  }
-};
-
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   try {
@@ -109,18 +91,7 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   }
 };
 
-const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    const fromMongo = await readMongoSettingValue(key);
-    if (fromMongo !== null) return fromMongo;
-    return await readPrismaSettingValue(key);
-  }
-
-  const fromPrisma = await readPrismaSettingValue(key);
-  if (fromPrisma !== null) return fromPrisma;
-  return await readMongoSettingValue(key);
-};
+const readSettingValue = async (key: string): Promise<string | null> => readMongoSettingValue(key);
 
 const resolveFastCometConfig = (raw: string | null): FastCometStorageConfig => {
   const stored = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};

@@ -53,6 +53,7 @@ type InlineLoginModalState = {
 };
 
 const KangurLoginModalContext = createContext<KangurLoginModalContextValue | null>(null);
+const LOGIN_MODAL_CLOSE_ACKNOWLEDGE_MS = 110;
 
 const toNonEmptyString = (value: string | null | undefined, fallback: string): string => {
   const trimmed = typeof value === 'string' ? value.trim() : '';
@@ -128,7 +129,12 @@ export const KangurLoginModalProvider = ({
   const closeLoginModal = useCallback((): void => {
     if (isRouteDriven) {
       dismissLoginModal();
-      routeNavigator.push(homeHref, { pageKey: 'Game', scroll: false });
+      routeNavigator.push(homeHref, {
+        acknowledgeMs: LOGIN_MODAL_CLOSE_ACKNOWLEDGE_MS,
+        pageKey: 'Game',
+        scroll: false,
+        sourceId: 'kangur-login-modal:close',
+      });
       return;
     }
 

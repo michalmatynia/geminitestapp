@@ -7,7 +7,7 @@ const hoistedMocks = vi.hoisted(() => ({
   mockDbApiSchema: vi.fn(async () => ({
     ok: true as const,
     data: {
-      provider: 'prisma',
+      provider: 'mongodb',
       collections: [
         {
           name: 'products',

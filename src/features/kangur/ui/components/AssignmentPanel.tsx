@@ -34,6 +34,8 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
+const ASSIGNMENT_PANEL_ROUTE_ACKNOWLEDGE_MS = 110;
+
 export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): React.JSX.Element {
   const assignments = useMemo(() => buildKangurAssignments(progress), [progress]);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
@@ -152,6 +154,8 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       <Link
                         href={assignmentHref}
                         targetPageKey={assignment.action.page}
+                        transitionAcknowledgeMs={ASSIGNMENT_PANEL_ROUTE_ACKNOWLEDGE_MS}
+                        transitionSourceId={`assignment-panel:${assignment.id}`}
                       >
                         {assignment.action.label}
                       </Link>

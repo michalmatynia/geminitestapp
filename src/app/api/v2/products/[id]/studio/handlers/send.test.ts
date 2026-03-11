@@ -18,6 +18,22 @@ vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () =
 
 import { POST_handler } from './send';
 
+const createConfig = () => ({
+  projectId: 'studio-project-1',
+  sourceSlotByImageIndex: { '0': 'source-slot-1' },
+  sourceSlotHistoryByImageIndex: { '0': ['source-slot-1'] },
+  updatedAt: '2026-03-11T10:00:00.000Z',
+});
+
+const createSlot = (id: string) => ({
+  id,
+  projectId: 'studio-project-1',
+  name: 'Source slot',
+  folderPath: 'products/SKU-001',
+  createdAt: '2026-03-11T10:00:00.000Z',
+  updatedAt: '2026-03-11T10:05:00.000Z',
+});
+
 describe('products studio send handler', () => {
   beforeEach(() => {
     resolveImageStudioContextRegistryEnvelopeMock.mockReset();
@@ -63,8 +79,8 @@ describe('products studio send handler', () => {
       dispatchMode: 'queued',
       projectId: 'studio-project-1',
       imageSlotIndex: 0,
-      sourceSlot: { id: 'source-slot-1' },
-      config: { productId: 'product-1', slots: {} },
+      sourceSlot: createSlot('source-slot-1'),
+      config: createConfig(),
       sequencing: {
         persistedEnabled: true,
         enabled: true,

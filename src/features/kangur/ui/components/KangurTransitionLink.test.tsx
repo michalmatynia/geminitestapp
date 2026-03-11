@@ -9,12 +9,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   nextLinkPropsMock,
   startRouteTransitionMock,
+  usePathnameMock,
   routerPushMock,
   routerReplaceMock,
   routerPrefetchMock,
 } = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  usePathnameMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
   routerPrefetchMock: vi.fn(),
@@ -37,6 +39,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
   useRouter: () => ({
     push: routerPushMock,
     replace: routerReplaceMock,
@@ -55,6 +58,7 @@ import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTran
 describe('KangurTransitionLink', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    usePathnameMock.mockReturnValue('/kangur');
     startRouteTransitionMock.mockReturnValue({
       acknowledgeMs: 0,
       started: true,

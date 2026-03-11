@@ -5,28 +5,28 @@ import {
   getCollectionProvider,
   getCollectionRouteMap,
 } from '@/shared/lib/db/collection-provider-map';
+import type { DatabaseEngineProvider } from '@/shared/lib/db/database-engine-constants';
 
 import { mongoPathRunRepository } from './mongo-path-run-repository';
-import { prismaPathRunRepository } from './prisma-path-run-repository';
 
 export const AI_PATH_RUNS_COLLECTION = 'ai_path_runs';
 
 export type PathRunRepositorySelection = {
   collection: typeof AI_PATH_RUNS_COLLECTION;
-  provider: 'mongodb' | 'prisma';
+  provider: 'mongodb';
   repo: AiPathRunRepository;
   routeMode: 'explicit' | 'fallback';
 };
 
 export type PersistedRunRepositorySelection = {
   collection: string | null;
-  provider: 'mongodb' | 'prisma' | null;
+  provider: 'mongodb' | null;
   routeMode: 'explicit' | 'fallback' | null;
   selectedAt: string | null;
 };
 
 const hasExplicitCollectionRoute = (
-  routeMap: Record<string, 'mongodb' | 'prisma' | 'redis'>
+  routeMap: Record<string, DatabaseEngineProvider>
 ): boolean => {
   if (AI_PATH_RUNS_COLLECTION in routeMap) return true;
   const normalizedCollection = AI_PATH_RUNS_COLLECTION.trim().toLowerCase();
@@ -40,8 +40,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-const asProvider = (value: unknown): 'mongodb' | 'prisma' | null =>
-  value === 'mongodb' || value === 'prisma' ? value : null;
+const asProvider = (value: unknown): 'mongodb' | null => (value === 'mongodb' ? value : null);
 
 const asRouteMode = (value: unknown): 'explicit' | 'fallback' | null =>
   value === 'explicit' || value === 'fallback' ? value : null;
@@ -91,35 +90,23 @@ export const resolvePathRunRepository = async (): Promise<PathRunRepositorySelec
   return {
     collection: AI_PATH_RUNS_COLLECTION,
     provider,
-    repo: provider === 'prisma' ? prismaPathRunRepository : mongoPathRunRepository,
+    repo: mongoPathRunRepository,
     routeMode: hasExplicitCollectionRoute(routeMap) ? 'explicit' : 'fallback',
   };
 };
 
 export const resolveAlternatePathRunRepository = async (
-  currentProvider: 'mongodb' | 'prisma'
+  currentProvider: 'mongodb'
 ): Promise<
   | {
       collection: typeof AI_PATH_RUNS_COLLECTION;
-      provider: 'mongodb' | 'prisma';
+      provider: 'mongodb';
       repo: AiPathRunRepository;
     }
   | null
 > => {
-  if (currentProvider === 'mongodb') {
-    if (!process.env['DATABASE_URL']) return null;
-    return {
-      collection: AI_PATH_RUNS_COLLECTION,
-      provider: 'prisma',
-      repo: prismaPathRunRepository,
-    };
-  }
-  if (!process.env['MONGODB_URI']) return null;
-  return {
-    collection: AI_PATH_RUNS_COLLECTION,
-    provider: 'mongodb',
-    repo: mongoPathRunRepository,
-  };
+  void currentProvider;
+  return null;
 };
 
 export const getPathRunRepository = async (): Promise<AiPathRunRepository> => {

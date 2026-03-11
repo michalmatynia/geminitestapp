@@ -23,25 +23,31 @@ import {
   defaultBaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Document, Filter } from 'mongodb';
+import { ObjectId as _ObjectId } from 'mongodb';
 
-type ImportTemplateProvider = 'mongodb' | 'prisma';
 const LOG_SOURCE = 'import-template-repository';
+type SettingDoc = Document & {
+  _id?: string | _ObjectId;
+  key?: string;
+  value?: string;
+};
 
-const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
-  const provider = await getProductDataProvider();
+const toMongoId = (value: string): string | _ObjectId =>
+  _ObjectId.isValid(value) ? new _ObjectId(value) : value;
+
+const getImportTemplateProvider = async (): Promise<'mongodb'> => {
+  const provider = 'mongodb';
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
     context: { provider },
   });
-  return provider as ImportTemplateProvider;
+  return provider;
 };
 
 const SETTINGS_KEY = 'base_import_templates';
@@ -98,128 +104,66 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
-    } as Filter<Document>);
-    const val = doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-    await logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: 'Read templates (Mongo)',
-      context: { length: val ? val.length : 0 },
-    });
-    return val;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: SETTINGS_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
   });
+  const val = doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Read templates (Prisma)',
-    context: { length: setting?.value ? setting.value.length : 0 },
+    message: 'Read templates (Mongo)',
+    context: { length: val ? val.length : 0 },
   });
-  return setting?.value ?? null;
+  return val;
 };
 
 const readSampleProductValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: SAMPLE_PRODUCT_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(SAMPLE_PRODUCT_KEY) }, { key: SAMPLE_PRODUCT_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const readSampleInventoryValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: SAMPLE_INVENTORY_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(SAMPLE_INVENTORY_KEY) }, { key: SAMPLE_INVENTORY_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const readLastTemplateValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: LAST_TEMPLATE_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(LAST_TEMPLATE_KEY) }, { key: LAST_TEMPLATE_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const readActiveTemplateValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: ACTIVE_TEMPLATE_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const readParameterCacheValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: PARAMETER_CACHE_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(PARAMETER_CACHE_KEY) }, { key: PARAMETER_CACHE_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const readExportWarehouseMapValue = async (): Promise<string | null> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection('settings').findOne({
-      $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-    } as Filter<Document>);
-    return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: EXPORT_WAREHOUSE_MAP_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(EXPORT_WAREHOUSE_MAP_KEY) }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
   });
-  return setting?.value ?? null;
+  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
 };
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
@@ -230,184 +174,130 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     message: 'Writing templates...',
     context: { length: value.length, provider },
   });
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateMany(
-      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: SETTINGS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateMany(
+    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: SETTINGS_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: SETTINGS_KEY },
-    update: { value },
-    create: { key: SETTINGS_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Wrote templates (Prisma)',
+    message: 'Wrote templates (Mongo)',
   });
 };
 
 const writeSampleProductValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      { $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: SAMPLE_PRODUCT_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    {
+      $or: [{ _id: toMongoId(SAMPLE_PRODUCT_KEY) }, { key: SAMPLE_PRODUCT_KEY }],
+    } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: SAMPLE_PRODUCT_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: SAMPLE_PRODUCT_KEY },
-    update: { value },
-    create: { key: SAMPLE_PRODUCT_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeSampleInventoryValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      { $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: SAMPLE_INVENTORY_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    {
+      $or: [{ _id: toMongoId(SAMPLE_INVENTORY_KEY) }, { key: SAMPLE_INVENTORY_KEY }],
+    } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: SAMPLE_INVENTORY_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: SAMPLE_INVENTORY_KEY },
-    update: { value },
-    create: { key: SAMPLE_INVENTORY_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeExportWarehouseMapValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      {
-        $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-      } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: EXPORT_WAREHOUSE_MAP_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    {
+      $or: [{ _id: toMongoId(EXPORT_WAREHOUSE_MAP_KEY) }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
+    } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: EXPORT_WAREHOUSE_MAP_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: EXPORT_WAREHOUSE_MAP_KEY },
-    update: { value },
-    create: { key: EXPORT_WAREHOUSE_MAP_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeLastTemplateValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      { $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: LAST_TEMPLATE_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    { $or: [{ _id: toMongoId(LAST_TEMPLATE_KEY) }, { key: LAST_TEMPLATE_KEY }] } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: LAST_TEMPLATE_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: LAST_TEMPLATE_KEY },
-    update: { value },
-    create: { key: LAST_TEMPLATE_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      { $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: ACTIVE_TEMPLATE_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    {
+      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
+    } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: ACTIVE_TEMPLATE_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: ACTIVE_TEMPLATE_KEY },
-    update: { value },
-    create: { key: ACTIVE_TEMPLATE_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeParameterCacheValue = async (value: string): Promise<void> => {
-  const provider = await getImportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection('settings').updateOne(
-      { $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }] } as Filter<Document>,
-      {
-        $set: {
-          value,
-          key: PARAMETER_CACHE_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection('settings').updateOne(
+    {
+      $or: [{ _id: toMongoId(PARAMETER_CACHE_KEY) }, { key: PARAMETER_CACHE_KEY }],
+    } as Filter<Document>,
+    {
+      $set: {
+        value,
+        key: PARAMETER_CACHE_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: PARAMETER_CACHE_KEY },
-    update: { value },
-    create: { key: PARAMETER_CACHE_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 export const listImportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();

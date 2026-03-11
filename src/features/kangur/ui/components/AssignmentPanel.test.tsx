@@ -115,7 +115,7 @@ describe('AssignmentPanel', () => {
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getAllByText('Cel: 1 powtorka')[0]).toHaveClass(
       'border-indigo-200',
@@ -194,7 +194,7 @@ describe('AssignmentPanel', () => {
     expect(emptyState.parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
   });
 });

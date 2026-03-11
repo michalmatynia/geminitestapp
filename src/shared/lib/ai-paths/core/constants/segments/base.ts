@@ -21,7 +21,7 @@ export const VIEW_MARGIN = 40;
 export const PORT_GAP = 20;
 export const PORT_SIZE = 12;
 export const PORT_STACK_TOP = Math.round(NODE_MIN_HEIGHT * 0.3);
-export const DB_PROVIDER_PLACEHOLDERS = ['MongoDB', 'PostgreSQL', 'Prisma', 'Redis'];
+export const DB_PROVIDER_PLACEHOLDERS = ['MongoDB', 'Redis'];
 export const DEFAULT_CONTEXT_ROLE = 'entity';
 
 export const CACHEABLE_NODE_TYPES: NodeType[] = [

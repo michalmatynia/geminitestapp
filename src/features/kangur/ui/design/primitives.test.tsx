@@ -269,12 +269,13 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border',
+      'text-center'
     );
     expect(screen.getByTestId('kangur-inline-fallback')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80',
+      'border',
       'w-full'
     );
     expect(screen.getByTestId('kangur-option')).toHaveClass(
@@ -284,7 +285,7 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
       'soft-card',
-      'border-slate-200/80',
+      'border',
       'text-slate-400',
       'opacity-70'
     );
@@ -302,7 +303,7 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-surface-panel')).toHaveClass(
       'glass-panel',
       'border-sky-200/80',
-      'bg-white/95',
+      'rounded-[34px]',
       'flex'
     );
     expect(screen.getByTestId('kangur-glass-panel')).toHaveClass(
@@ -344,7 +345,7 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
       'rounded-[16px]',
       'text-[15px]',
-      'data-[highlighted]:bg-white/80'
+      'data-[highlighted]:[background:var(--kangur-nav-item-hover-background)]'
     );
     expect(screen.getByTestId('kangur-media-frame')).toHaveClass(
       'soft-card',
@@ -362,15 +363,18 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-input')).toHaveClass(
       'soft-card',
-      'border-slate-200/80',
+      'border',
       'focus:border-indigo-300'
     );
     expect(screen.getByTestId('kangur-select')).toHaveClass(
       'soft-card',
-      'border-slate-200/80',
+      'border',
       'focus:border-indigo-300'
     );
-    expect(screen.getByTestId('kangur-progress')).toHaveClass('bg-slate-100/95', 'h-2');
+    expect(screen.getByTestId('kangur-progress')).toHaveClass(
+      'h-2',
+      '[background:var(--kangur-progress-track)]'
+    );
     expect(screen.getByTestId('kangur-progress')).toHaveAttribute('aria-valuenow', '65');
     expect(screen.getByTestId('kangur-progress').firstElementChild).toHaveClass(
       'bg-gradient-to-r',

@@ -57,7 +57,7 @@ describe('executeDatabaseQuery guardrail metadata', () => {
         requestedProvider: 'auto',
         resolvedProvider: 'mongodb',
         provider: 'mongodb',
-        fallback: { provider: 'prisma' },
+        fallback: { provider: 'mongodb' },
       },
     });
 

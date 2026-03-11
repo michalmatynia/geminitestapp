@@ -64,6 +64,6 @@ describe('LessonMasteryInsights', () => {
       screen.getByText(
         'Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do powtorki.'
       ).parentElement
-    ).toHaveClass('soft-card', 'border-dashed', 'border-slate-200/80');
+    ).toHaveClass('soft-card', 'border-dashed', 'border');
   });
 });

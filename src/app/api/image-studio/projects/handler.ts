@@ -12,9 +12,7 @@ import {
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -44,60 +42,34 @@ const parseCanvasDimension = (value: unknown): number | null => {
   return normalized;
 };
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
 const readSettingValue = async (
-  key: string,
-  provider: 'prisma' | 'mongodb'
+  key: string
 ): Promise<string | null> => {
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) return null;
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<{ key?: string; value?: string }>(SETTINGS_COLLECTION)
-      .findOne({ key }, { projection: { value: 1 } });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-
-  if (!canUsePrismaSettings()) return null;
-  const record = await prisma.setting.findUnique({
-    where: { key },
-    select: { value: true },
-  });
-  return record?.value ?? null;
+  if (!process.env['MONGODB_URI']) return null;
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<{ key?: string; value?: string }>(SETTINGS_COLLECTION)
+    .findOne({ key }, { projection: { value: 1 } });
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const upsertSettingValue = async (
   key: string,
-  value: string,
-  provider: 'prisma' | 'mongodb'
+  value: string
 ): Promise<void> => {
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw operationFailedError('Mongo settings store is unavailable.');
-    }
-    const mongo = await getMongoDb();
-    const now = new Date();
-    await mongo.collection(SETTINGS_COLLECTION).updateOne(
-      { key },
-      {
-        $set: { value, updatedAt: now },
-        $setOnInsert: { createdAt: now },
-      },
-      { upsert: true }
-    );
-    return;
+  if (!process.env['MONGODB_URI']) {
+    throw operationFailedError('Mongo settings store is unavailable.');
   }
-
-  if (!canUsePrismaSettings()) {
-    throw operationFailedError('Prisma settings store is unavailable.');
-  }
-  await prisma.setting.upsert({
-    where: { key },
-    update: { value },
-    create: { key, value },
-  });
+  const mongo = await getMongoDb();
+  const now = new Date();
+  await mongo.collection(SETTINGS_COLLECTION).updateOne(
+    { key },
+    {
+      $set: { value, updatedAt: now },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true }
+  );
 };
 
 const ensureProjectScopedSettingsInitialized = async (projectId: string): Promise<string> => {
@@ -105,15 +77,14 @@ const ensureProjectScopedSettingsInitialized = async (projectId: string): Promis
   if (!projectSettingsKey) {
     throw badRequestError('Invalid project id for settings initialization.');
   }
-  const provider = await getAppDbProvider();
-  const existingProjectSettings = await readSettingValue(projectSettingsKey, provider);
+  const existingProjectSettings = await readSettingValue(projectSettingsKey);
   if (existingProjectSettings && existingProjectSettings.trim().length > 0) {
     return projectSettingsKey;
   }
 
-  const globalSettingsRaw = await readSettingValue(IMAGE_STUDIO_SETTINGS_KEY, provider);
+  const globalSettingsRaw = await readSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
   const seedSettings = parsePersistedImageStudioSettings(globalSettingsRaw);
-  await upsertSettingValue(projectSettingsKey, serializeSetting(seedSettings), provider);
+  await upsertSettingValue(projectSettingsKey, serializeSetting(seedSettings));
   clearSettingsCache();
   return projectSettingsKey;
 };

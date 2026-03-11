@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   usePathnameMock,
+  useSearchParamsMock,
   setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContextMock,
   kangurRoutingProviderMock,
 } = vi.hoisted(() => ({
   usePathnameMock: vi.fn<() => string | null>(),
+  useSearchParamsMock: vi.fn<() => URLSearchParams>(),
   setKangurClientObservabilityContextMock: vi.fn(),
   clearKangurClientObservabilityContextMock: vi.fn(),
   kangurRoutingProviderMock: vi.fn(),
@@ -23,6 +25,7 @@ const mockKangurRoutingState = {
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+  useSearchParams: useSearchParamsMock,
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -37,6 +40,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   }: {
     pageKey?: string | null;
     requestedPath?: string;
+    requestedHref?: string;
     basePath: string;
     embedded: boolean;
       children: ReactNode;
@@ -61,6 +65,7 @@ describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePathnameMock.mockReturnValue('/kangur');
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
   it('maps lesson routes into Kangur routing and observability context', () => {
@@ -76,6 +81,7 @@ describe('KangurFeatureRouteShell', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
       requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
       basePath: '/kangur',
       embedded: false,
     });
@@ -93,6 +99,7 @@ describe('KangurFeatureRouteShell', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: null,
       requestedPath: '/kangur/tests',
+      requestedHref: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
     });
@@ -108,6 +115,7 @@ describe('KangurFeatureRouteShell', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Game',
       requestedPath: '/kangur',
+      requestedHref: '/kangur',
       basePath: '/kangur',
       embedded: false,
     });
@@ -125,6 +133,7 @@ describe('KangurFeatureRouteShell', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Game',
       requestedPath: '/kangur',
+      requestedHref: '/kangur/login',
       basePath: '/kangur',
       embedded: false,
     });

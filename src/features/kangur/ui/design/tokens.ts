@@ -21,22 +21,21 @@ export const KANGUR_PANEL_CLASSNAMES = {
 } as const;
 
 export const KANGUR_TOP_NAV_GROUP_CLASSNAME =
-  'flex w-full min-w-0 max-w-full flex-wrap items-center gap-2 rounded-[30px] border border-white/78 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.58)_100%)] p-2 shadow-[0_20px_40px_-30px_rgba(94,110,160,0.38)] backdrop-blur-xl sm:flex-nowrap';
+  'kangur-nav-group flex w-full min-w-0 max-w-full flex-wrap items-center gap-2 rounded-[30px] border p-2 sm:flex-nowrap';
 
 export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
-  'group relative inline-flex min-w-0 items-center justify-center gap-2 rounded-[20px] border border-transparent bg-transparent font-semibold tracking-[-0.02em] text-slate-500 transition-all duration-200 hover:border-white/80 hover:bg-white/78 hover:text-slate-700 hover:shadow-[0_10px_18px_-16px_rgba(148,163,184,0.7)]';
+  'kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 rounded-[20px] border font-semibold tracking-[-0.02em] transition-all duration-200';
 
-export const KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME =
-  'border-indigo-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(238,242,255,0.92)_100%)] text-indigo-700 shadow-[0_14px_24px_-18px_rgba(99,102,241,0.42)] ring-1 ring-indigo-100/80 hover:border-indigo-100 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(238,242,255,0.95)_100%)] hover:text-indigo-700';
+export const KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME = 'kangur-nav-item-active';
 
 export const KANGUR_SEGMENTED_CONTROL_CLASSNAME =
-  'flex w-full items-center gap-1.5 rounded-[28px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.76)_0%,rgba(255,255,255,0.56)_100%)] p-1.5 shadow-[0_18px_36px_-28px_rgba(94,110,160,0.34)] backdrop-blur-xl';
+  'kangur-segmented-control flex w-full items-center gap-1.5 rounded-[28px] border p-1.5';
 
 export const KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME =
-  'group relative inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[18px] border border-transparent bg-transparent font-semibold tracking-[-0.02em] text-slate-500 transition-all duration-200 hover:border-white/80 hover:bg-white/76 hover:text-slate-700 hover:shadow-[0_10px_18px_-16px_rgba(148,163,184,0.66)]';
+  'kangur-segmented-control-item group relative inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[18px] border font-semibold tracking-[-0.02em] transition-all duration-200';
 
 export const KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME =
-  'border-indigo-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(238,242,255,0.92)_100%)] text-indigo-700 shadow-[0_14px_24px_-18px_rgba(99,102,241,0.4)] ring-1 ring-indigo-100/80 hover:border-indigo-100 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(238,242,255,0.95)_100%)] hover:text-indigo-700';
+  'kangur-segmented-control-item-active';
 
 export type KangurAccent =
   | 'indigo'

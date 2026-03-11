@@ -26,7 +26,7 @@ describe('MultiplicationArrayGame', () => {
     );
     expect(screen.getByTestId('multiplication-array-counter-target')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     const firstGroup = screen.getByTestId('multiplication-array-group-0');
 

@@ -59,6 +59,52 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const createConfig = (projectId = 'studio-a') => ({
+  projectId,
+  sourceSlotByImageIndex: { '0': 'slot-source' },
+  sourceSlotHistoryByImageIndex: { '0': ['slot-source'] },
+  updatedAt: '2026-02-13T10:00:00.000Z',
+});
+
+const createSlot = (id: string, projectId = 'studio-a') => ({
+  id,
+  projectId,
+  name: `Slot ${id}`,
+  folderPath: 'products/SKU-001',
+  createdAt: '2026-02-13T10:00:00.000Z',
+  updatedAt: '2026-02-13T10:05:00.000Z',
+});
+
+const createProduct = () => ({
+  id: 'prod-1',
+  sku: 'SKU-001',
+  baseProductId: null,
+  defaultPriceGroupId: null,
+  ean: null,
+  gtin: null,
+  asin: null,
+  name: { en: 'Vintage Lamp' },
+  description: { en: null },
+  supplierName: null,
+  supplierLink: null,
+  priceComment: null,
+  stock: null,
+  price: null,
+  sizeLength: null,
+  sizeWidth: null,
+  weight: null,
+  length: null,
+  published: true,
+  categoryId: null,
+  catalogId: 'catalog-1',
+  images: [],
+  catalogs: [],
+  tags: [],
+  producers: [],
+  createdAt: '2026-02-13T10:00:00.000Z',
+  updatedAt: '2026-02-13T10:05:00.000Z',
+});
+
 describe('Product Studio API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -142,12 +188,7 @@ describe('Product Studio API', () => {
 
   it('POST /api/products/[id]/studio/send forwards request', async () => {
     vi.mocked(sendProductImageToStudio).mockResolvedValue({
-      config: {
-        projectId: 'studio-a',
-        sourceSlotByImageIndex: { '0': 'slot-1' },
-        sourceSlotHistoryByImageIndex: {},
-        updatedAt: '2026-02-13T10:00:00.000Z',
-      },
+      config: createConfig(),
       sequencing: {
         persistedEnabled: false,
         enabled: false,
@@ -190,9 +231,7 @@ describe('Product Studio API', () => {
       sequenceStepPlan: [],
       projectId: 'studio-a',
       imageSlotIndex: 0,
-      sourceSlot: {
-        id: 'slot-1',
-      } as any,
+      sourceSlot: createSlot('slot-1'),
       runId: 'run-1',
       runStatus: 'queued',
       runKind: 'generation',
@@ -257,17 +296,10 @@ describe('Product Studio API', () => {
 
   it('POST /api/products/[id]/studio/link forwards request', async () => {
     vi.mocked(linkProductImageToStudio).mockResolvedValue({
-      config: {
-        projectId: 'studio-a',
-        sourceSlotByImageIndex: { '0': 'slot-source' },
-        sourceSlotHistoryByImageIndex: {},
-        updatedAt: '2026-02-13T10:00:00.000Z',
-      },
+      config: createConfig(),
       projectId: 'studio-a',
       imageSlotIndex: 0,
-      sourceSlot: {
-        id: 'slot-source',
-      } as any,
+      sourceSlot: createSlot('slot-source'),
     });
 
     const response = await POST_LINK(
@@ -293,7 +325,7 @@ describe('Product Studio API', () => {
       config: {
         projectId: 'studio-a',
         sourceSlotByImageIndex: { '1': 'slot-source' },
-        sourceSlotHistoryByImageIndex: {},
+        sourceSlotHistoryByImageIndex: { '1': ['slot-source'] },
         updatedAt: '2026-02-13T10:00:00.000Z',
       },
       sequencing: {
@@ -348,13 +380,9 @@ describe('Product Studio API', () => {
       sequenceGenerationMode: 'studio_prompt_then_sequence',
       projectId: 'studio-a',
       sourceSlotId: 'slot-source',
-      sourceSlot: {
-        id: 'slot-source',
-      } as any,
+      sourceSlot: createSlot('slot-source'),
       variants: [
-        {
-          id: 'variant-1',
-        } as any,
+        createSlot('variant-1'),
       ],
     });
 
@@ -385,7 +413,7 @@ describe('Product Studio API', () => {
       config: {
         projectId: 'studio-a',
         sourceSlotByImageIndex: { '1': 'slot-source' },
-        sourceSlotHistoryByImageIndex: {},
+        sourceSlotHistoryByImageIndex: { '1': ['slot-source'] },
         updatedAt: '2026-02-13T10:00:00.000Z',
       },
       projectId: 'studio-a',
@@ -465,10 +493,7 @@ describe('Product Studio API', () => {
   });
 
   it('POST /api/products/[id]/studio/accept forwards request', async () => {
-    vi.mocked(acceptProductStudioVariant).mockResolvedValue({
-      id: 'prod-1',
-      images: [],
-    } as any);
+    vi.mocked(acceptProductStudioVariant).mockResolvedValue(createProduct() as any);
 
     const response = await POST_ACCEPT(
       new NextRequest('http://localhost/api/products/prod-1/studio/accept', {

@@ -1,19 +1,20 @@
 services:
   db:
-    image: postgres:16
+    image: mongo:7
     environment:
-      POSTGRES_DB: app
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
+      MONGO_INITDB_DATABASE: app
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodb:/data/db
 
   web:
     build: .
     environment:
-      DATABASE_URL: postgresql://app:app@db:5432/app
+      APP_DB_PROVIDER: mongodb
+      AUTH_DB_PROVIDER: mongodb
+      MONGODB_URI: mongodb://db:27017/app
+      MONGODB_DB: app
       NODE_ENV: production
       PORT: "3000"
     ports:
@@ -22,4 +23,4 @@ services:
       - db
 
 volumes:
-  pgdata:
+  mongodb:

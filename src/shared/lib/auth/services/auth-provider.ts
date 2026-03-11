@@ -10,7 +10,6 @@ import {
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { AuthDbProvider };
@@ -18,7 +17,6 @@ export type { AuthDbProvider };
 const normalizeProvider = (value?: string | null): AuthDbProvider | null => {
   if (!value) return null;
   const normalized = value.toLowerCase().trim();
-  if (normalized === 'prisma') return 'prisma';
   if (normalized === 'mongodb') return 'mongodb';
   return null;
 };
@@ -38,23 +36,10 @@ const readMongoAuthProvider = async (): Promise<AuthDbProvider | null> => {
   }
 };
 
-const readPrismaAuthProvider = async (): Promise<AuthDbProvider | null> => {
-  if (!process.env['DATABASE_URL']) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: AUTH_SETTINGS_KEYS.provider },
-      select: { value: true },
-    });
-    return normalizeProvider(setting?.value ?? null);
-  } catch {
-    return null;
-  }
-};
-
 const warnAuthProviderDrift = (
-  appProvider: 'prisma' | 'mongodb',
+  appProvider: 'mongodb',
   authProvider: AuthDbProvider,
-  source: 'env' | 'mongo-setting' | 'prisma-setting' | 'route-map' | 'default'
+  source: 'env' | 'mongo-setting' | 'route-map' | 'default'
 ): void => {
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
@@ -90,17 +75,15 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
     warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');
     return ensureAvailableAuthProvider(mongoSetting);
   }
-  const prismaSetting = await readPrismaAuthProvider();
-  if (prismaSetting) {
-    warnAuthProviderDrift(appProvider, prismaSetting, 'prisma-setting');
-    return ensureAvailableAuthProvider(prismaSetting);
-  }
 
   const routeProvider = await getDatabaseEngineServiceProvider('auth');
   if (routeProvider) {
     if (routeProvider === 'redis') {
+      throw internalError('Database Engine route "auth" cannot target Redis. Configure MongoDB.');
+    }
+    if (routeProvider !== 'mongodb') {
       throw internalError(
-        'Database Engine route "auth" cannot target Redis. Configure Prisma or MongoDB.'
+        `Database Engine route "auth" targets "${routeProvider}" but only MongoDB is supported.`
       );
     }
     warnAuthProviderDrift(appProvider, routeProvider, 'route-map');
@@ -119,11 +102,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
 };
 
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {
-  if (provider === 'prisma' && !process.env['DATABASE_URL']) {
-    throw internalError(
-      'Auth provider is set to Prisma but DATABASE_URL is missing. Configure Database Engine routing before continuing.'
-    );
-  }
   if (provider === 'mongodb' && !process.env['MONGODB_URI']) {
     throw internalError(
       'Auth provider is set to MongoDB but MONGODB_URI is missing. Configure Database Engine routing before continuing.'

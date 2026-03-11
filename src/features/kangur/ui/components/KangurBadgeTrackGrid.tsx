@@ -37,7 +37,7 @@ export default function KangurBadgeTrackGrid({
 
   if (tracks.length === 0) {
     return (
-      <p className='text-sm text-slate-500' data-testid={emptyTestId}>
+      <p className='text-sm [color:var(--kangur-page-muted-text)]' data-testid={emptyTestId}>
         Kolejne odznaki pojawia sie wraz z postepem.
       </p>
     );
@@ -49,19 +49,19 @@ export default function KangurBadgeTrackGrid({
         const accent = TRACK_ACCENTS[track.key] ?? 'indigo';
         return (
           <div
-            className='rounded-[26px] border border-slate-200/80 bg-white/80 px-4 py-3'
+            className='soft-card rounded-[26px] border border-slate-200/80 px-4 py-3'
             data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0'>
-                <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
+                <p className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
                   {track.emoji} {track.label}
                 </p>
-                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                   {track.unlockedCount}/{track.totalCount} odznak
                 </p>
-                <p className='mt-1 text-xs leading-5 text-slate-500'>
+                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                   {track.nextBadge
                     ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
                     : 'Wszystkie odznaki odblokowane'}

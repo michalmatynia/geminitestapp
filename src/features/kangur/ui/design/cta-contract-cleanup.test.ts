@@ -116,7 +116,9 @@ describe('Kangur CTA contract cleanup', () => {
     expect(source).toContain(
       'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94'
     );
-    expect(source).toContain('border-b border-amber-200/80 bg-[#fff7cf]/78');
+    expect(source).toContain(
+      'border-b border-amber-200/80 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)]'
+    );
     expect(source).toContain('border border-amber-100 bg-amber-50/80');
     expect(source).toContain('border border-amber-100 bg-amber-50/70');
     expect(source).toContain('accent=\'amber\'');

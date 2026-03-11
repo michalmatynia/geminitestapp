@@ -110,28 +110,22 @@ test.describe('Kangur Home Hover', () => {
   }) => {
     await page.goto('/kangur/game');
 
-    const nameInput = page.getByPlaceholder(/Wpisz swoje im/i);
     const lessonsLink = page.locator('[data-doc-id="home_lessons_action"]');
     const playButton = page.getByRole('button', { name: /Grajmy/i });
     const trainingButton = page.getByRole('button', { name: /Trening mieszany/i });
     const geometryHomeButton = page.getByRole('button', { name: /Ćwiczenia z figurami/i });
     const playWrapper = getFeaturedActionParts(page, playButton).wrapper;
 
-    await expect(nameInput).toBeVisible();
     await expect(lessonsLink).toBeVisible();
     await expect(playButton).toBeVisible();
     await expect(trainingButton).toBeVisible();
     await expect(geometryHomeButton).toHaveCount(0);
-    await expect(playButton).toBeDisabled();
-    await expect(trainingButton).toBeDisabled();
+    await expect(playButton).toBeEnabled();
+    await expect(trainingButton).toBeEnabled();
     await expect(page.locator('.home-action-active')).toHaveCount(0);
     await expect(page.locator('.home-action-featured')).toHaveCount(4);
     await expect(page.locator('.home-action-featured-shell')).toHaveCount(4);
-
-    await nameInput.fill('Jan');
-    await expect(playButton).toBeEnabled();
-    await expect(trainingButton).toBeEnabled();
-    await nameInput.hover();
+    await lessonsLink.hover();
 
     await expectFeaturedHoverCycle({
       control: playButton,
@@ -141,7 +135,7 @@ test.describe('Kangur Home Hover', () => {
 
     await expectFeaturedHoverCycle({
       control: trainingButton,
-      exitTarget: nameInput,
+      exitTarget: lessonsLink,
       page,
     });
 
@@ -171,7 +165,7 @@ test.describe('Kangur Home Hover', () => {
       .poll(async () => Number.parseFloat(await getComputedStyleValue(playAccent, 'opacity')))
       .toBeGreaterThan(0.75);
 
-    await nameInput.focus();
+    await lessonsLink.focus();
     await expect
       .poll(async () => Number.parseFloat(await getComputedStyleValue(playAccent, 'opacity')))
       .toBeLessThanOrEqual(0.01);

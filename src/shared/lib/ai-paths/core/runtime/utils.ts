@@ -432,7 +432,7 @@ export const buildDbQueryPayload = (
   filter: Record<string, unknown>;
   projection?: Record<string, unknown>;
   sort?: Record<string, unknown>;
-  provider: 'auto' | 'mongodb' | 'prisma';
+  provider: 'auto' | 'mongodb';
   collection: string;
   collectionMap?: Record<string, string>;
   limit?: number;
@@ -490,7 +490,7 @@ export const buildDbQueryPayload = (
   const collectionMap = getAiPathsCollectionMapFromInputs(nodeInputs);
   return {
     filter: query,
-    provider: queryConfig.provider,
+    provider: queryConfig.provider === 'mongodb' ? 'mongodb' : 'auto',
     collection: queryConfig.collection,
     ...(collectionMap ? { collectionMap } : {}),
     ...(projection !== undefined ? { projection } : {}),

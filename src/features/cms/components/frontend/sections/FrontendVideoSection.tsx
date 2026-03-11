@@ -69,14 +69,14 @@ export function FrontendVideoSection(): React.ReactNode {
           </div>
         ) : (
           <div
-            className='cms-media flex items-center justify-center bg-gray-800/50'
+            className='cms-media cms-appearance-subtle-surface flex items-center justify-center'
             style={{
               paddingBottom: getAspectPadding(aspectRatio),
               position: 'relative',
               ...(mediaStyles ?? {}),
             }}
           >
-            <p className='absolute inset-0 flex items-center justify-center text-gray-500'>
+            <p className='cms-appearance-muted-text absolute inset-0 flex items-center justify-center'>
               Enter a video URL in section settings
             </p>
           </div>

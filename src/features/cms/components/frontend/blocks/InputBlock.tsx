@@ -99,7 +99,7 @@ export function InputBlock(): React.ReactNode {
       maxLength={maxLength}
       disabled={disabled}
       aria-label={inputAriaLabel || placeholder || 'Input field'}
-      className='w-full'
+      className='cms-appearance-input w-full'
       style={customStyles}
       onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
         const nextValue = event.target.value;

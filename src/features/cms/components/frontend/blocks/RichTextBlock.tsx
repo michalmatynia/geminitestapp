@@ -17,7 +17,7 @@ export function RichTextBlock(): React.ReactNode {
 
   return (
     <div
-      className='rounded-lg p-4 text-gray-400'
+      className='cms-appearance-subtle-surface cms-appearance-muted-text rounded-lg border p-4'
       data-color-scheme={colorScheme}
       data-has-schemes={hasSchemes}
     >

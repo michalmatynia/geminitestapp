@@ -71,8 +71,12 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
             <div className='flex-1'>
               <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <div className='text-xl font-extrabold text-slate-800'>{lesson.title}</div>
-                  <div className='mt-0.5 text-sm text-slate-500'>{lesson.description}</div>
+                  <div className='text-xl font-extrabold [color:var(--kangur-page-text)]'>
+                    {lesson.title}
+                  </div>
+                  <div className='mt-0.5 text-sm [color:var(--kangur-page-muted-text)]'>
+                    {lesson.description}
+                  </div>
                   {lesson.contentMode === 'document' &&
                   hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
                       <KangurStatusChip
@@ -132,7 +136,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                   ) : null}
                 </div>
               </div>
-              <div className='mt-3 text-xs font-medium text-slate-500'>
+              <div className='mt-3 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
                 {masteryPresentation.summaryLabel}
               </div>
               {lessonAssignment ? (

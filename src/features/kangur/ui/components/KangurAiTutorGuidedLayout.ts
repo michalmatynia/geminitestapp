@@ -19,6 +19,9 @@ const FLOATING_TUTOR_ARROWHEAD_ROTATION_OFFSET_DEG = 180;
 const FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX = FLOATING_TUTOR_ARROWHEAD_DOT_RADIUS_PX + 1;
 const FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX = 18;
 const GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S = 0.22;
+export const GUIDED_CALLOUT_HEIGHT = 260;
+const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX = 255;
+const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN = 219;
 
 type FloatingTutorArrowheadGeometry = {
   angle: number;
@@ -84,6 +87,12 @@ const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
     Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top)
   );
   return overlapWidth * overlapHeight;
+};
+
+const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
+  const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
+  const verticalGap = Math.max(0, left.top - right.bottom, right.top - left.bottom);
+  return Math.hypot(horizontalGap, verticalGap);
 };
 
 export const resolveContinuousRotationDegrees = (previous: number | null, next: number): number => {
@@ -226,10 +235,13 @@ export const getFloatingTutorArrowCorridorRect = (input: {
 export const getGuidedCalloutLayout = (
   rect: DOMRect,
   viewport: { width: number; height: number },
-  protectedRects: DOMRect[] = []
+  protectedRects: DOMRect[] = [],
+  options?: {
+    anchorRect?: DOMRect | null;
+  }
 ): { style: CSSProperties; placement: 'top' | 'bottom' | 'left' | 'right' } => {
   const width = Math.min(280, Math.max(220, viewport.width * 0.24));
-  const height = 132;
+  const height = GUIDED_CALLOUT_HEIGHT;
   const gap = 18;
   const maxLeft = viewport.width - EDGE_GAP - width;
   const maxTop = viewport.height - EDGE_GAP - height;
@@ -277,14 +289,19 @@ export const getGuidedCalloutLayout = (
         (sum, protectedRect) => sum + getRectOverlapArea(panelRect, protectedRect),
         0
       );
+      const anchorDistance = options?.anchorRect
+        ? getRectSeparationDistance(panelRect, options.anchorRect)
+        : 0;
       const repositionCost = Math.hypot(candidate.left - left, candidate.top - top);
       const score =
         overlapArea * 20 +
         protectedOverlapArea * 10 +
+        anchorDistance * 0.45 +
         repositionCost * 0.6 +
         candidate.priority * 24;
 
       return {
+        anchorDistance,
         placement: candidate.placement,
         left,
         top,
@@ -314,9 +331,14 @@ export const getGuidedCalloutLayout = (
         return leftCandidate.protectedOverlapArea - rightCandidate.protectedOverlapArea;
       }
 
+      if (leftCandidate.anchorDistance !== rightCandidate.anchorDistance) {
+        return leftCandidate.anchorDistance - rightCandidate.anchorDistance;
+      }
+
       return leftCandidate.score - rightCandidate.score;
     })[0] ?? {
     placement: 'bottom' as const,
+    anchorDistance: 0,
     left: clamp(centeredLeft, EDGE_GAP, maxLeft),
     top: clamp(rect.bottom + gap, EDGE_GAP, maxTop),
     overlapArea: 0,
@@ -334,6 +356,13 @@ export const getGuidedCalloutLayout = (
     },
   };
 };
+
+export const getGuidedSelectionCalloutAttachmentHeight = (calloutWidth: number): number =>
+  clamp(
+    Math.round(387 - calloutWidth * 0.6),
+    GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN,
+    GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX
+  );
 
 export const getEstimatedBubbleHeight = (
   viewport: { width: number; height: number },

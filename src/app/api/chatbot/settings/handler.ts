@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,11 +9,12 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import prisma from '@/shared/lib/db/prisma';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_SETTINGS_KEY = 'default';
+const CHATBOT_SETTINGS_COLLECTION = 'chatbot_settings';
 
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
@@ -33,7 +33,14 @@ const resolveChatbotSettingsQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-type ChatbotSettingsRow = Prisma.ChatbotSettingsGetPayload<Record<string, never>>;
+type ChatbotSettingsRecord = {
+  _id?: string;
+  id?: string;
+  key: string;
+  settings: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+};
 
 type ChatbotSettingsResponse = {
   id: string;
@@ -43,24 +50,41 @@ type ChatbotSettingsResponse = {
   updatedAt: string;
 };
 
-const toChatbotSettingsResponse = (record: ChatbotSettingsRow): ChatbotSettingsResponse => ({
-  id: record.id,
-  key: record.key,
-  settings: parseChatbotSettingsPayload(record.settings),
-  createdAt: record.createdAt.toISOString(),
-  updatedAt: record.updatedAt.toISOString(),
-});
+const toIsoString = (value: Date | string | undefined, fallback: string): string => {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+  }
+  return fallback;
+};
+
+const toChatbotSettingsResponse = (record: ChatbotSettingsRecord): ChatbotSettingsResponse => {
+  const nowIso = new Date().toISOString();
+  return {
+    id: String(record.id ?? record._id ?? record.key),
+    key: record.key,
+    settings: parseChatbotSettingsPayload(record.settings),
+    createdAt: toIsoString(record.createdAt, nowIso),
+    updatedAt: toIsoString(record.updatedAt, nowIso),
+  };
+};
+
+const getChatbotSettingsCollection = async () => {
+  if (!process.env['MONGODB_URI']) {
+    throw internalError('MongoDB is not configured.');
+  }
+  const mongo = await getMongoDb();
+  return mongo.collection<ChatbotSettingsRecord>(CHATBOT_SETTINGS_COLLECTION);
+};
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotSettings' in prisma)) {
-    throw internalError('Chatbot settings not initialized. Run prisma generate/db push.');
-  }
   const query = querySchema.parse(resolveChatbotSettingsQueryInput(req, _ctx));
   const key = query.key ?? DEFAULT_SETTINGS_KEY;
-  const settings = await prisma.chatbotSettings.findUnique({
-    where: { key },
-  });
+  const collection = await getChatbotSettingsCollection();
+  const settings = await collection.findOne({ key });
+
   if (DEBUG_CHATBOT) {
     logger.info('[chatbot][settings][GET] Loaded', {
       key,
@@ -68,6 +92,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       durationMs: Date.now() - requestStart,
     });
   }
+
   return NextResponse.json({
     settings: settings ? toChatbotSettingsResponse(settings) : null,
   });
@@ -75,29 +100,48 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotSettings' in prisma)) {
-    throw internalError('Chatbot settings not initialized. Run prisma generate/db push.');
-  }
   const parsed = await parseJsonBody(req, settingsSchema, {
     logPrefix: 'chatbot.settings.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
+
   const key = parsed.data.key?.trim() || DEFAULT_SETTINGS_KEY;
   if (!parsed.data.settings || typeof parsed.data.settings !== 'object') {
     throw badRequestError('Settings payload is required.');
   }
-  const saved = await prisma.chatbotSettings.upsert({
-    where: { key },
-    update: { settings: parsed.data.settings as Prisma.InputJsonValue },
-    create: { key, settings: parsed.data.settings as Prisma.InputJsonValue },
-  });
+
+  const collection = await getChatbotSettingsCollection();
+  const now = new Date();
+  await collection.updateOne(
+    { key },
+    {
+      $set: {
+        id: key,
+        key,
+        settings: parsed.data.settings,
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        _id: key,
+        createdAt: now,
+      },
+    },
+    { upsert: true }
+  );
+
+  const saved = await collection.findOne({ key });
+  if (!saved) {
+    throw internalError('Failed to persist chatbot settings.');
+  }
+
   if (DEBUG_CHATBOT) {
     logger.info('[chatbot][settings][POST] Saved', {
       key,
       durationMs: Date.now() - requestStart,
     });
   }
+
   return NextResponse.json({ settings: toChatbotSettingsResponse(saved) });
 }

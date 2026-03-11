@@ -22,6 +22,7 @@ type KangurPracticeAssignmentBannerProps = {
 };
 
 type KangurPracticeAssignmentBannerModel = {
+  actionTransitionSourceId: string;
   helperLabel: string;
   priorityLabel: string;
   title: string;
@@ -63,6 +64,7 @@ const buildKangurPracticeAssignmentBannerModel = (
         )}.`;
 
   return {
+    actionTransitionSourceId: `practice-assignment-banner:${assignment.id}`,
     helperLabel,
     priorityLabel: item.priorityLabel,
     title: item.title,
@@ -122,7 +124,13 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
         </KangurSummaryPanel>
 
         <KangurButton asChild className='mt-4' fullWidth variant='primary'>
-          <Link href={banner.actionHref}>{banner.actionLabel}</Link>
+          <Link
+            href={banner.actionHref}
+            transitionAcknowledgeMs={110}
+            transitionSourceId={banner.actionTransitionSourceId}
+          >
+            {banner.actionLabel}
+          </Link>
         </KangurButton>
       </KangurGlassPanel>
     </>

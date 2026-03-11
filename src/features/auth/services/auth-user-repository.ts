@@ -1,7 +1,6 @@
 import type { AuthUserRecord } from '@/shared/contracts/auth';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 type MongoUserDoc = {
@@ -22,28 +21,6 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
     message: `[AUTH-REPO] Finding user ${normalized} using ${provider}`,
     context: { email: normalized, provider },
   });
-  if (provider === 'prisma') {
-    const user = await prisma.user.findUnique({
-      where: { email: normalized },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-    if (!user?.email) return null;
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? null,
-      passwordHash: user.passwordHash ?? null,
-      image: user.image ?? null,
-      emailVerified: user.emailVerified ?? null,
-    };
-  }
   if (!process.env['MONGODB_URI']) {
     await logSystemEvent({
       level: 'warn',
@@ -72,29 +49,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
 };
 
 export const findAuthUserById = async (userId: string): Promise<AuthUserRecord | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-    if (!user?.email) return null;
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? null,
-      passwordHash: user.passwordHash ?? null,
-      image: user.image ?? null,
-      emailVerified: user.emailVerified ?? null,
-    };
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (!process.env['MONGODB_URI']) return null;
   const db = await getMongoDb();
   const { ObjectId } = await import('mongodb');

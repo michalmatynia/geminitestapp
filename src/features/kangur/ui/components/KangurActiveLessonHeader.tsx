@@ -104,7 +104,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
     <div className='min-w-0 flex-1'>
       {subsectionSummary ? (
         <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
-          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 text-lg shadow-sm'>
+          <div className='soft-card flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 text-lg shadow-sm'>
             {subsectionSummary.emoji}
           </div>
           <div className='min-w-0'>
@@ -120,7 +120,9 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
                 {displayTitle}
               </KangurHeadline>
             </div>
-            <p className='mt-0.5 text-xs text-slate-500'>{displayDescription}</p>
+            <p className='mt-0.5 text-xs [color:var(--kangur-page-muted-text)]'>
+              {displayDescription}
+            </p>
           </div>
         </div>
       ) : (
@@ -128,7 +130,9 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
           <KangurHeadline accent='slate' as='h2' size='md'>
             {displayTitle}
           </KangurHeadline>
-          <p className='mt-1 text-sm text-slate-500'>{displayDescription}</p>
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
+            {displayDescription}
+          </p>
         </>
       )}
       {activeLessonAssignment ? (

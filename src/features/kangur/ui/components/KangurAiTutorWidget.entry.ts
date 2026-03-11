@@ -86,7 +86,6 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     contextualTutorMode,
     guidedTutorTarget,
     handleCloseChat,
-    handleOpenChat,
     isOpen,
     isTutorHidden,
     mounted,
@@ -268,28 +267,6 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     setGuestIntroVisible,
   ]);
 
-  const handleGuestIntroAccept = useCallback((): void => {
-    const nextRecord = persistGuestIntroRecord('accepted');
-    setCanonicalTutorModalVisible(false);
-    setGuestIntroRecord(nextRecord);
-    setGuestIntroVisible(false);
-    setGuestIntroHelpVisible(false);
-    trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
-      hasInteractiveTutor: enabled,
-    });
-
-    if (enabled) {
-      handleOpenChat('toggle');
-    }
-  }, [
-    enabled,
-    handleOpenChat,
-    setCanonicalTutorModalVisible,
-    setGuestIntroHelpVisible,
-    setGuestIntroRecord,
-    setGuestIntroVisible,
-  ]);
-
   const handleGuestIntroHelpClose = useCallback((): void => {
     setGuestIntroHelpVisible(false);
   }, [setGuestIntroHelpVisible]);
@@ -340,6 +317,26 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     setGuestIntroHelpVisible(false);
     startGuidedGuestLogin('create-account');
   }, [setGuestIntroHelpVisible, startGuidedGuestLogin]);
+
+  const handleGuestIntroAccept = useCallback((): void => {
+    const nextRecord = persistGuestIntroRecord('accepted');
+    setCanonicalTutorModalVisible(false);
+    setGuestIntroRecord(nextRecord);
+    setGuestIntroVisible(false);
+    setGuestIntroHelpVisible(false);
+    trackKangurClientEvent('kangur_ai_tutor_guest_intro_accepted', {
+      hasInteractiveTutor: enabled,
+    });
+
+    startGuidedGuestLogin('sign-in');
+  }, [
+    enabled,
+    setCanonicalTutorModalVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroRecord,
+    setGuestIntroVisible,
+    startGuidedGuestLogin,
+  ]);
 
   return {
     handleGuestIntroAccept,

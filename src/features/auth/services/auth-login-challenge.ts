@@ -4,7 +4,6 @@ import crypto from 'crypto';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 export type AuthChallengePurpose =
   | 'credentials'
@@ -131,12 +130,6 @@ const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> =>
   return mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).findOne({ _id: id });
 };
 
-const getPrismaChallenge = async (id: string): Promise<ChallengeRecord | null> => {
-  const row = await prisma.authLoginChallenge.findUnique({ where: { id } });
-  if (!row) return null;
-  return parseChallengeRecord(row.data);
-};
-
 const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
@@ -145,22 +138,10 @@ const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
     .updateOne({ _id: record._id }, { $set: record }, { upsert: true });
 };
 
-const setPrismaChallenge = async (record: ChallengeRecord): Promise<void> => {
-  await prisma.authLoginChallenge.upsert({
-    where: { id: record._id },
-    update: { data: record },
-    create: { id: record._id, data: record },
-  });
-};
-
 const deleteMongoChallenge = async (id: string): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).deleteOne({ _id: id });
-};
-
-const deletePrismaChallenge = async (id: string): Promise<void> => {
-  await prisma.authLoginChallenge.deleteMany({ where: { id } });
 };
 
 const getMemoryChallenge = (id: string): ChallengeRecord | null => memoryChallenges.get(id) ?? null;
@@ -178,20 +159,10 @@ const listMongoChallenges = async (): Promise<ChallengeRecord[]> => {
     .filter((row): row is ChallengeRecord => row !== null);
 };
 
-const listPrismaChallenges = async (): Promise<ChallengeRecord[]> => {
-  const rows = await prisma.authLoginChallenge.findMany();
-  return rows
-    .map((row) => parseChallengeRecord(row.data))
-    .filter((record): record is ChallengeRecord => record !== null);
-};
-
 const listMemoryChallenges = (): ChallengeRecord[] => [...memoryChallenges.values()];
 
 const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    return getPrismaChallenge(id);
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     return getMongoChallenge(id);
   }
@@ -199,11 +170,7 @@ const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
 };
 
 const setChallenge = async (record: ChallengeRecord): Promise<void> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    await setPrismaChallenge(record);
-    return;
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     if (!challengeIndexesReady) {
       challengeIndexesReady = (async (): Promise<void> => {
@@ -222,11 +189,7 @@ const setChallenge = async (record: ChallengeRecord): Promise<void> => {
 };
 
 const deleteChallenge = async (id: string): Promise<void> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    await deletePrismaChallenge(id);
-    return;
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     await deleteMongoChallenge(id);
     return;
@@ -235,10 +198,7 @@ const deleteChallenge = async (id: string): Promise<void> => {
 };
 
 const listChallenges = async (): Promise<ChallengeRecord[]> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    return listPrismaChallenges();
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     return listMongoChallenges();
   }
@@ -250,17 +210,7 @@ const deleteChallenges = async (ids: string[]): Promise<void> => {
     return;
   }
 
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    await prisma.authLoginChallenge.deleteMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-    });
-    return;
-  }
+  requireAuthProvider(await getAuthDataProvider());
 
   if (process.env['MONGODB_URI']) {
     const mongo = await getMongoDb();

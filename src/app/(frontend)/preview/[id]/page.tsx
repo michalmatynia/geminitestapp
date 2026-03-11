@@ -55,7 +55,7 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
   );
 
   return (
-    <div className='min-h-screen bg-gray-950 text-white'>
+    <div className='min-h-screen'>
       {previewData.theme ? (
         <ThemeProvider theme={previewData.theme}>{content}</ThemeProvider>
       ) : (

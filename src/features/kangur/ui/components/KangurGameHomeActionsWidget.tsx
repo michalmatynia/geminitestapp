@@ -35,7 +35,12 @@ const resolveHomeActionNavigationState = ({
   transitionSourceId,
 }: {
   activeTransitionSourceId?: string | null;
-  transitionPhase?: 'acknowledging' | 'idle' | 'pending' | 'revealing';
+  transitionPhase?:
+    | 'acknowledging'
+    | 'idle'
+    | 'pending'
+    | 'waiting_for_ready'
+    | 'revealing';
   transitionSourceId?: string;
 }): HomeActionNavigationState => {
   if (!transitionSourceId || transitionSourceId !== activeTransitionSourceId) {

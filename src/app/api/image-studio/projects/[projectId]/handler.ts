@@ -11,9 +11,7 @@ import { getImageStudioProjectSettingsKey } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
@@ -66,75 +64,43 @@ const toProjectSettingsKeys = (projectIds: string[]): string[] =>
     )
   );
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
 const readSettingByKey = async (
-  key: string,
-  provider: 'prisma' | 'mongodb'
+  key: string
 ): Promise<string | null> => {
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) return null;
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<{ key?: string; value?: string }>(SETTINGS_COLLECTION)
-      .findOne({ key }, { projection: { value: 1 } });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  if (!canUsePrismaSettings()) return null;
-  const doc = await prisma.setting.findUnique({
-    where: { key },
-    select: { value: true },
-  });
-  return doc?.value ?? null;
+  if (!process.env['MONGODB_URI']) return null;
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<{ key?: string; value?: string }>(SETTINGS_COLLECTION)
+    .findOne({ key }, { projection: { value: 1 } });
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const upsertSettingByKey = async (
   key: string,
-  value: string,
-  provider: 'prisma' | 'mongodb'
+  value: string
 ): Promise<void> => {
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw operationFailedError('Mongo settings store is unavailable.');
-    }
-    const mongo = await getMongoDb();
-    const now = new Date();
-    await mongo
-      .collection(SETTINGS_COLLECTION)
-      .updateOne(
-        { key },
-        { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
-        { upsert: true }
-      );
-    return;
+  if (!process.env['MONGODB_URI']) {
+    throw operationFailedError('Mongo settings store is unavailable.');
   }
-  if (!canUsePrismaSettings()) {
-    throw operationFailedError('Prisma settings store is unavailable.');
-  }
-  await prisma.setting.upsert({
-    where: { key },
-    update: { value },
-    create: { key, value },
-  });
+  const mongo = await getMongoDb();
+  const now = new Date();
+  await mongo
+    .collection(SETTINGS_COLLECTION)
+    .updateOne(
+      { key },
+      { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
+      { upsert: true }
+    );
 };
 
 const deleteSettingsByKeys = async (
-  keys: string[],
-  provider: 'prisma' | 'mongodb'
+  keys: string[]
 ): Promise<number> => {
   if (keys.length === 0) return 0;
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) return 0;
-    const mongo = await getMongoDb();
-    const result = await mongo.collection(SETTINGS_COLLECTION).deleteMany({ key: { $in: keys } });
-    return result.deletedCount ?? 0;
-  }
-  if (!canUsePrismaSettings()) return 0;
-  const result = await prisma.setting.deleteMany({
-    where: { key: { in: keys } },
-  });
-  return result.count ?? 0;
+  if (!process.env['MONGODB_URI']) return 0;
+  const mongo = await getMongoDb();
+  const result = await mongo.collection(SETTINGS_COLLECTION).deleteMany({ key: { $in: keys } });
+  return result.deletedCount ?? 0;
 };
 
 const migrateProjectScopedSettings = async (params: {
@@ -145,21 +111,20 @@ const migrateProjectScopedSettings = async (params: {
   deletedUnsupportedKeys: number;
   targetKey: string | null;
 }> => {
-  const provider = await getAppDbProvider();
   const fromKeys = toProjectSettingsKeys(params.fromProjectIds);
   const targetKey = getImageStudioProjectSettingsKey(params.toProjectId);
   if (!targetKey) {
     throw badRequestError('Invalid target project settings key.');
   }
 
-  const targetExisting = await readSettingByKey(targetKey, provider);
+  const targetExisting = await readSettingByKey(targetKey);
   if (targetExisting && targetExisting.trim().length > 0) {
     throw badRequestError('Target project settings key already exists.');
   }
 
   let sourceValue: string | null = null;
   for (const key of fromKeys) {
-    const value = await readSettingByKey(key, provider);
+    const value = await readSettingByKey(key);
     if (value && value.trim().length > 0) {
       sourceValue = value;
       break;
@@ -167,9 +132,9 @@ const migrateProjectScopedSettings = async (params: {
   }
 
   if (sourceValue) {
-    await upsertSettingByKey(targetKey, sourceValue, provider);
+    await upsertSettingByKey(targetKey, sourceValue);
   }
-  const deletedUnsupportedKeys = await deleteSettingsByKeys(fromKeys, provider);
+  const deletedUnsupportedKeys = await deleteSettingsByKeys(fromKeys);
   if (sourceValue || deletedUnsupportedKeys > 0) {
     clearSettingsCache();
   }
@@ -539,10 +504,7 @@ export async function deleteImageStudioProjectHandler(
   }
 
   stats.imageFileRecordsDeleted = await deleteProjectImageFileRecords(candidates);
-  stats.settingsKeysDeleted = await deleteSettingsByKeys(
-    toProjectSettingsKeys(candidates),
-    await getAppDbProvider()
-  );
+  stats.settingsKeysDeleted = await deleteSettingsByKeys(toProjectSettingsKeys(candidates));
   if (stats.settingsKeysDeleted > 0) {
     clearSettingsCache();
   }

@@ -79,8 +79,8 @@ function KangurWidgetFallback({
 }): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='w-full border-border/40 bg-card/30 text-left'>
-      <div className='text-sm font-semibold text-white'>{title}</div>
-      <div className='mt-2 text-xs text-gray-400'>{description}</div>
+      <div className='text-sm font-semibold text-[var(--cms-appearance-page-text)]'>{title}</div>
+      <div className='cms-appearance-muted-text mt-2 text-xs'>{description}</div>
     </Card>
   );
 }

@@ -1,4 +1,3 @@
-import { CountryCode, Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -9,7 +8,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type {
   MongoCountryDoc,
   MongoLanguageDoc,
@@ -151,53 +149,27 @@ export async function GET_metadata_id_handler(
   }
 
   if (type === 'countries') {
-    if (provider === 'mongodb') {
-      const countryDoc = await resolveMongoCountry(id);
-      if (!countryDoc) throw notFoundError(`Country not found: ${id}`);
-      return NextResponse.json(mapMongoCountry(countryDoc));
-    }
-
-    const country = await prisma.country.findUnique({
-      where: { id },
-      include: { currencies: { include: { currency: true } } },
-    });
-    if (!country) throw notFoundError(`Country not found: ${id}`);
-    return NextResponse.json(country);
+    const countryDoc = await resolveMongoCountry(id);
+    if (!countryDoc) throw notFoundError(`Country not found: ${id}`);
+    return NextResponse.json(mapMongoCountry(countryDoc));
   }
 
   if (type === 'languages') {
-    if (provider === 'mongodb') {
-      const languageDoc = await resolveMongoLanguage(id);
-      if (!languageDoc) throw notFoundError(`Language not found: ${id}`);
-      const countryIds = (languageDoc.countries ?? []).map((entry) => entry.countryId);
-      const mongo = await getMongoDb();
-      const countryDocs = (await mongo
-        .collection<MongoCountryDoc>('countries')
-        .find({ id: { $in: countryIds } })
-        .toArray()) as MongoCountryDoc[];
-      const countriesById = new Map(
-        countryDocs.map((country: MongoCountryDoc) => {
-          const mapped = mapMongoCountry(country);
-          return [mapped.id, mapped] as const;
-        })
-      );
-      return NextResponse.json(mapMongoLanguage(languageDoc, countriesById));
-    }
-
-    const language = await prisma.language.findUnique({
-      where: { id },
-      include: { countries: { include: { country: true } } },
-    });
-    if (!language) throw notFoundError(`Language not found: ${id}`);
-    return NextResponse.json({
-      ...language,
-      isDefault: false,
-      isActive: true,
-      countries: language.countries.map((relation) => ({
-        ...relation.country,
-        countryId: relation.countryId,
-      })),
-    });
+    const languageDoc = await resolveMongoLanguage(id);
+    if (!languageDoc) throw notFoundError(`Language not found: ${id}`);
+    const countryIds = (languageDoc.countries ?? []).map((entry) => entry.countryId);
+    const mongo = await getMongoDb();
+    const countryDocs = (await mongo
+      .collection<MongoCountryDoc>('countries')
+      .find({ id: { $in: countryIds } })
+      .toArray()) as MongoCountryDoc[];
+    const countriesById = new Map(
+      countryDocs.map((country: MongoCountryDoc) => {
+        const mapped = mapMongoCountry(country);
+        return [mapped.id, mapped] as const;
+      })
+    );
+    return NextResponse.json(mapMongoLanguage(languageDoc, countriesById));
   }
 
   throw badRequestError(`Invalid internationalization type: ${type}`);
@@ -230,168 +202,100 @@ export async function PUT_metadata_id_handler(
   }
 
   if (type === 'countries') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const existing = await resolveMongoCountry(id);
-      if (!existing) throw notFoundError(`Country not found: ${id}`);
-      const resolvedId = String(existing.id ?? existing.code ?? id);
-      const now = new Date();
-      const nextCode = ('code' in data ? readString(data, 'code') : undefined)?.toUpperCase();
-      const nextId = nextCode ?? resolvedId;
-      const currencyIds = readStringArray(data, 'currencyIds');
-      const update: Record<string, unknown> = { updatedAt: now };
-      if (nextCode) {
-        update['code'] = nextCode;
-        update['id'] = nextId;
-      }
-      if ('name' in data) update['name'] = readString(data, 'name') ?? nextCode ?? resolvedId;
-      if (currencyIds !== null) update['currencyIds'] = currencyIds;
-
-      await mongo
-        .collection<MongoCountryDoc>('countries')
-        .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
-
-      if (nextId !== resolvedId) {
-        await mongo
-          .collection<MongoLanguageDoc>('languages')
-          .updateMany(
-            { 'countries.countryId': resolvedId },
-            { $set: { 'countries.$[entry].countryId': nextId, updatedAt: now } },
-            { arrayFilters: [{ 'entry.countryId': resolvedId }] }
-          );
-      }
-
-      const updated = await resolveMongoCountry(nextId);
-      if (!updated) throw notFoundError(`Country not found after update: ${nextId}`);
-      return NextResponse.json(mapMongoCountry(updated));
-    }
-
-    const existing = await prisma.country.findUnique({ where: { id }, select: { id: true } });
+    const mongo = await getMongoDb();
+    const existing = await resolveMongoCountry(id);
     if (!existing) throw notFoundError(`Country not found: ${id}`);
-
-    const updateData: Prisma.CountryUpdateInput = {};
-    if ('code' in data) {
-      updateData.code = (readString(data, 'code') ?? '') as CountryCode;
-    }
-    if ('name' in data) {
-      updateData.name = readString(data, 'name') ?? '';
-    }
-
+    const resolvedId = String(existing.id ?? existing.code ?? id);
+    const now = new Date();
+    const nextCode = ('code' in data ? readString(data, 'code') : undefined)?.toUpperCase();
+    const nextId = nextCode ?? resolvedId;
     const currencyIds = readStringArray(data, 'currencyIds');
-    if (currencyIds !== null) {
-      updateData.currencies = {
-        deleteMany: {},
-        create: currencyIds.map((currencyId: string) => ({ currencyId })),
-      };
+    const update: Record<string, unknown> = { updatedAt: now };
+    if (nextCode) {
+      update['code'] = nextCode;
+      update['id'] = nextId;
+    }
+    if ('name' in data) update['name'] = readString(data, 'name') ?? nextCode ?? resolvedId;
+    if (currencyIds !== null) update['currencyIds'] = currencyIds;
+
+    await mongo
+      .collection<MongoCountryDoc>('countries')
+      .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
+
+    if (nextId !== resolvedId) {
+      await mongo
+        .collection<MongoLanguageDoc>('languages')
+        .updateMany(
+          { 'countries.countryId': resolvedId },
+          { $set: { 'countries.$[entry].countryId': nextId, updatedAt: now } },
+          { arrayFilters: [{ 'entry.countryId': resolvedId }] }
+        );
     }
 
-    const country = await prisma.country.update({
-      where: { id },
-      data: updateData,
-      include: { currencies: true },
-    });
-    return NextResponse.json(country);
+    const updated = await resolveMongoCountry(nextId);
+    if (!updated) throw notFoundError(`Country not found after update: ${nextId}`);
+    return NextResponse.json(mapMongoCountry(updated));
   }
 
   if (type === 'languages') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const existing = await resolveMongoLanguage(id);
-      if (!existing) throw notFoundError(`Language not found: ${id}`);
-      const resolvedId = String(existing.id ?? existing.code ?? id);
-      const now = new Date();
-      const nextCode = ('code' in data ? readString(data, 'code') : undefined)?.toUpperCase();
-      const nextId = nextCode ?? resolvedId;
-
-      const update: Record<string, unknown> = { updatedAt: now };
-      if (nextCode) {
-        update['code'] = nextCode;
-        update['id'] = nextId;
-      }
-      if ('name' in data) update['name'] = readString(data, 'name') ?? nextCode ?? resolvedId;
-      if ('nativeName' in data) {
-        update['nativeName'] =
-          data['nativeName'] === null ? null : (readString(data, 'nativeName') ?? null);
-      }
-      const countryIds = readStringArray(data, 'countryIds');
-      if (countryIds !== null) {
-        update['countries'] = countryIds.map((countryId: string) => ({ countryId }));
-      }
-
-      await mongo
-        .collection<MongoLanguageDoc>('languages')
-        .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
-
-      if (nextId !== resolvedId) {
-        const catalogLanguageReplaceUpdate: UpdateFilter<MongoCatalogDoc> = {
-          $pull: { languageIds: resolvedId },
-          $addToSet: { languageIds: nextId },
-          $set: { updatedAt: now },
-        };
-        await mongo
-          .collection<MongoCatalogDoc>('catalogs')
-          .updateMany({ languageIds: resolvedId }, catalogLanguageReplaceUpdate);
-        await mongo
-          .collection<MongoCatalogDoc>('catalogs')
-          .updateMany(
-            { defaultLanguageId: resolvedId },
-            { $set: { defaultLanguageId: nextId, updatedAt: now } }
-          );
-      }
-
-      const updated = await resolveMongoLanguage(nextId);
-      if (!updated) throw notFoundError(`Language not found after update: ${nextId}`);
-      const relatedCountryIds = (updated.countries ?? []).map((entry) => entry.countryId);
-      const countryDocs = (await mongo
-        .collection<MongoCountryDoc>('countries')
-        .find({ id: { $in: relatedCountryIds } })
-        .toArray()) as MongoCountryDoc[];
-      const countriesById = new Map(
-        countryDocs.map((country: MongoCountryDoc) => {
-          const mapped = mapMongoCountry(country);
-          return [mapped.id, mapped] as const;
-        })
-      );
-      return NextResponse.json(mapMongoLanguage(updated, countriesById));
-    }
-
-    const existing = await prisma.language.findUnique({ where: { id }, select: { id: true } });
+    const mongo = await getMongoDb();
+    const existing = await resolveMongoLanguage(id);
     if (!existing) throw notFoundError(`Language not found: ${id}`);
+    const resolvedId = String(existing.id ?? existing.code ?? id);
+    const now = new Date();
+    const nextCode = ('code' in data ? readString(data, 'code') : undefined)?.toUpperCase();
+    const nextId = nextCode ?? resolvedId;
 
-    const updateData: Prisma.LanguageUpdateInput = {};
-    if ('code' in data) {
-      updateData.code = readString(data, 'code') ?? '';
+    const update: Record<string, unknown> = { updatedAt: now };
+    if (nextCode) {
+      update['code'] = nextCode;
+      update['id'] = nextId;
     }
-    if ('name' in data) {
-      updateData.name = readString(data, 'name') ?? '';
-    }
+    if ('name' in data) update['name'] = readString(data, 'name') ?? nextCode ?? resolvedId;
     if ('nativeName' in data) {
-      updateData.nativeName =
+      update['nativeName'] =
         data['nativeName'] === null ? null : (readString(data, 'nativeName') ?? null);
     }
-
     const countryIds = readStringArray(data, 'countryIds');
     if (countryIds !== null) {
-      updateData.countries = {
-        deleteMany: {},
-        create: countryIds.map((countryId: string) => ({ countryId })),
-      };
+      update['countries'] = countryIds.map((countryId: string) => ({ countryId }));
     }
 
-    const language = await prisma.language.update({
-      where: { id },
-      data: updateData,
-      include: { countries: { include: { country: true } } },
-    });
-    return NextResponse.json({
-      ...language,
-      isDefault: false,
-      isActive: true,
-      countries: language.countries.map((relation) => ({
-        ...relation.country,
-        countryId: relation.countryId,
-      })),
-    });
+    await mongo
+      .collection<MongoLanguageDoc>('languages')
+      .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
+
+    if (nextId !== resolvedId) {
+      const catalogLanguageReplaceUpdate: UpdateFilter<MongoCatalogDoc> = {
+        $pull: { languageIds: resolvedId },
+        $addToSet: { languageIds: nextId },
+        $set: { updatedAt: now },
+      };
+      await mongo
+        .collection<MongoCatalogDoc>('catalogs')
+        .updateMany({ languageIds: resolvedId }, catalogLanguageReplaceUpdate);
+      await mongo
+        .collection<MongoCatalogDoc>('catalogs')
+        .updateMany(
+          { defaultLanguageId: resolvedId },
+          { $set: { defaultLanguageId: nextId, updatedAt: now } }
+        );
+    }
+
+    const updated = await resolveMongoLanguage(nextId);
+    if (!updated) throw notFoundError(`Language not found after update: ${nextId}`);
+    const relatedCountryIds = (updated.countries ?? []).map((entry) => entry.countryId);
+    const countryDocs = (await mongo
+      .collection<MongoCountryDoc>('countries')
+      .find({ id: { $in: relatedCountryIds } })
+      .toArray()) as MongoCountryDoc[];
+    const countriesById = new Map(
+      countryDocs.map((country: MongoCountryDoc) => {
+        const mapped = mapMongoCountry(country);
+        return [mapped.id, mapped] as const;
+      })
+    );
+    return NextResponse.json(mapMongoLanguage(updated, countriesById));
   }
 
   throw badRequestError(`Invalid internationalization type: ${type}`);
@@ -412,57 +316,42 @@ export async function DELETE_metadata_id_handler(
   }
 
   if (type === 'countries') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const existing = await resolveMongoCountry(id);
-      if (!existing) throw notFoundError(`Country not found: ${id}`);
-      const resolvedId = String(existing.id ?? existing.code ?? id);
-      await mongo.collection<MongoCountryDoc>('countries').deleteOne({ id: resolvedId });
-      const languageCountryPullUpdate: UpdateFilter<MongoLanguageDoc> = {
-        $pull: { countries: { countryId: resolvedId } },
-        $set: { updatedAt: new Date() },
-      };
-      await mongo
-        .collection<MongoLanguageDoc>('languages')
-        .updateMany({ 'countries.countryId': resolvedId }, languageCountryPullUpdate);
-
-      return new Response(null, { status: 204 });
-    }
-
-    const existing = await prisma.country.findUnique({ where: { id }, select: { id: true } });
+    const mongo = await getMongoDb();
+    const existing = await resolveMongoCountry(id);
     if (!existing) throw notFoundError(`Country not found: ${id}`);
-    await prisma.country.delete({ where: { id } });
+    const resolvedId = String(existing.id ?? existing.code ?? id);
+    await mongo.collection<MongoCountryDoc>('countries').deleteOne({ id: resolvedId });
+    const languageCountryPullUpdate: UpdateFilter<MongoLanguageDoc> = {
+      $pull: { countries: { countryId: resolvedId } },
+      $set: { updatedAt: new Date() },
+    };
+    await mongo
+      .collection<MongoLanguageDoc>('languages')
+      .updateMany({ 'countries.countryId': resolvedId }, languageCountryPullUpdate);
     return new Response(null, { status: 204 });
   }
 
   if (type === 'languages') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const existing = await resolveMongoLanguage(id);
-      if (!existing) throw notFoundError(`Language not found: ${id}`);
-      const resolvedId = String(existing.id ?? existing.code ?? id);
-      const now = new Date();
-      await mongo.collection<MongoLanguageDoc>('languages').deleteOne({ id: resolvedId });
-      const catalogLanguagePullUpdate: UpdateFilter<MongoCatalogDoc> = {
-        $pull: { languageIds: resolvedId },
-        $set: { updatedAt: now },
-      };
-      await mongo
-        .collection<MongoCatalogDoc>('catalogs')
-        .updateMany({ languageIds: resolvedId }, catalogLanguagePullUpdate);
-
-      await mongo
-        .collection('catalogs')
-        .updateMany(
-          { defaultLanguageId: resolvedId },
-          { $set: { defaultLanguageId: null, updatedAt: now } }
-        );
-      return new Response(null, { status: 204 });
-    }
-
-    const existing = await prisma.language.findUnique({ where: { id }, select: { id: true } });
+    const mongo = await getMongoDb();
+    const existing = await resolveMongoLanguage(id);
     if (!existing) throw notFoundError(`Language not found: ${id}`);
-    await prisma.language.delete({ where: { id } });
+    const resolvedId = String(existing.id ?? existing.code ?? id);
+    const now = new Date();
+    await mongo.collection<MongoLanguageDoc>('languages').deleteOne({ id: resolvedId });
+    const catalogLanguagePullUpdate: UpdateFilter<MongoCatalogDoc> = {
+      $pull: { languageIds: resolvedId },
+      $set: { updatedAt: now },
+    };
+    await mongo
+      .collection<MongoCatalogDoc>('catalogs')
+      .updateMany({ languageIds: resolvedId }, catalogLanguagePullUpdate);
+
+    await mongo
+      .collection('catalogs')
+      .updateMany(
+        { defaultLanguageId: resolvedId },
+        { $set: { defaultLanguageId: null, updatedAt: now } }
+      );
     return new Response(null, { status: 204 });
   }
 

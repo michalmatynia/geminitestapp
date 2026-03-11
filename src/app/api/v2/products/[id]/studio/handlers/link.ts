@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { linkProductImageToStudio } from '@/features/ai/server';
-import { productStudioLinkRequestSchema as linkSchema } from '@/shared/contracts/products';
+import {
+  productStudioLinkRequestSchema as linkSchema,
+  productStudioLinkResponseSchema,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -28,5 +31,5 @@ export async function POST_handler(
     rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(productStudioLinkResponseSchema.parse(result));
 }

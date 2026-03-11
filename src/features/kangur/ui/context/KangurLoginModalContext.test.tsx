@@ -69,11 +69,13 @@ function LoginModalProbe(): JSX.Element {
 }
 
 function renderHarness({
+  basePath = '/kangur',
   pageKey = 'Lessons',
   pathname = '/kangur/lessons',
   requestedPath = '/kangur/lessons',
   search = '',
 }: {
+  basePath?: string;
   pageKey?: string;
   pathname?: string;
   requestedPath?: string;
@@ -83,7 +85,7 @@ function renderHarness({
   useSearchParamsMock.mockReturnValue(new URLSearchParams(search));
 
   return render(
-    <KangurRoutingProvider basePath='/kangur' pageKey={pageKey} requestedPath={requestedPath}>
+    <KangurRoutingProvider basePath={basePath} pageKey={pageKey} requestedPath={requestedPath}>
       <KangurLoginModalProvider>
         <LoginModalProbe />
       </KangurLoginModalProvider>
@@ -176,5 +178,23 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent(
       'create-account'
     );
+  });
+
+  it('closes the canonical public login route back to root when Kangur owns the front page', () => {
+    renderHarness({
+      basePath: '/',
+      pageKey: 'Game',
+      pathname: '/login',
+      requestedPath: '/',
+      search: 'callbackUrl=%2Fkangur%2Fprofile',
+    });
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-home')).toHaveTextContent('/');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close modal' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith('/', { scroll: false });
   });
 });

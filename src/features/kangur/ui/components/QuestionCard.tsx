@@ -163,7 +163,11 @@ export default function QuestionCard({
       exit={{ opacity: 0, scale: 0.9 }}
       className='flex flex-col items-center gap-6 w-full max-w-md'
     >
-      <div aria-live='polite' aria-atomic='true' className='text-sm font-semibold text-slate-400'>
+      <div
+        aria-live='polite'
+        aria-atomic='true'
+        className='text-sm font-semibold [color:var(--kangur-page-muted-text)]'
+      >
         Pytanie {questionNumber} z {total}
       </div>
 
@@ -177,7 +181,9 @@ export default function QuestionCard({
       />
       <div
         aria-hidden='true'
-        className={`text-lg font-bold ${timerPercent <= 25 ? 'text-rose-500' : 'text-slate-500'}`}
+        className={`text-lg font-bold ${
+          timerPercent <= 25 ? 'text-rose-500' : '[color:var(--kangur-page-muted-text)]'
+        }`}
       >
         ⏱ {timeLeft}s
       </div>
@@ -191,7 +197,7 @@ export default function QuestionCard({
       >
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
-            <h3 id={questionHeadingId} className='text-xl font-bold text-slate-800'>
+            <h3 id={questionHeadingId} className='text-xl font-bold [color:var(--kangur-page-text)]'>
               Ktora godzine pokazuje zegar?
             </h3>
             <AnalogClockSmall
@@ -199,16 +205,19 @@ export default function QuestionCard({
               hours={normalizedClockHours}
               minutes={normalizedClockMinutes}
             />
-            <div id={questionDescriptionId} className='text-sm text-slate-500'>
+            <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
               Wybierz odpowiedz, ktora pasuje do polozenia wskazowek.
             </div>
           </div>
         ) : (
           <>
-            <h3 id={questionHeadingId} className='mb-2 text-5xl font-extrabold text-slate-800'>
+            <h3
+              id={questionHeadingId}
+              className='mb-2 text-5xl font-extrabold [color:var(--kangur-page-text)]'
+            >
               {question.question}
             </h3>
-            <div id={questionDescriptionId} className='text-sm text-slate-500'>
+            <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
               Jaka jest odpowiedz?
             </div>
           </>
@@ -226,7 +235,7 @@ export default function QuestionCard({
           let accent: KangurAccent = 'indigo';
           let emphasis: 'neutral' | 'accent' = 'neutral';
           let state: 'default' | 'muted' = 'default';
-          let cardClass = 'text-slate-700';
+          let cardClass = '[color:var(--kangur-page-text)]';
           if (showResult) {
             if (choice === question.answer) {
               accent = 'emerald';

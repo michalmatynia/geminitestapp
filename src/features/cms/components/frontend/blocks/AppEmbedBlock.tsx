@@ -116,8 +116,10 @@ export function AppEmbedBlock(): React.ReactNode {
     >
       <div className='mb-3 flex items-start justify-between gap-3'>
         <div>
-          <div className='text-sm font-semibold text-white'>{heading}</div>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+          <div className='text-sm font-semibold text-[var(--cms-appearance-page-text)]'>
+            {heading}
+          </div>
+          <div className='cms-appearance-muted-text text-[10px] uppercase tracking-wide'>
             {appOption?.renderMode === 'internal-app'
               ? `Internal app mount${hostPath ? ` · ${hostPath}` : ''}`
               : 'App embed'}
@@ -126,7 +128,7 @@ export function AppEmbedBlock(): React.ReactNode {
       </div>
       {appOption?.id === 'kangur' && appOption.renderMode === 'internal-app' ? (
         <div
-          className='relative overflow-hidden rounded-[28px] border border-border/40 bg-white/95'
+          className='cms-appearance-surface relative overflow-hidden rounded-[28px] border'
           style={{ minHeight: height }}
         >
           <KangurFeaturePage slug={activeSlug} basePath={embeddedBasePath} embedded />
@@ -142,7 +144,7 @@ export function AppEmbedBlock(): React.ReactNode {
         <Card
           variant='subtle-compact'
           padding='none'
-          className='flex items-center justify-center border-dashed border-border/40 bg-card/20 px-4 text-center text-xs text-gray-400'
+          className='cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center border-dashed px-4 text-center text-xs'
           style={{ minHeight: height }}
         >
           {appOption?.renderMode === 'internal-app'

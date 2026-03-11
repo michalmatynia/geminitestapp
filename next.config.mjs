@@ -79,7 +79,6 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: [
-    '@prisma/client',
     'bcrypt',
     'bullmq',
     '@grpc/grpc-js',

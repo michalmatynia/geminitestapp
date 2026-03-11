@@ -76,6 +76,7 @@ export async function executeMongoEntityUpdate({
     targetPath: parameterTargetPath,
     updates: updatesForEntity,
     templateInputs,
+    languageCode: dbConfig.parameterInferenceGuard?.languageCode,
   });
   if (mergeForEntityResult.applied) {
     updatesForEntity = mergeForEntityResult.updates;

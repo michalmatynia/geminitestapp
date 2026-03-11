@@ -17,6 +17,7 @@ const ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS = new Set([
   'lesson_header',
   'assignment',
   'document',
+  'question',
   'summary',
   'review',
 ]);
@@ -31,7 +32,7 @@ const PAGE_HELP_PATTERNS = [
   /jak korzystac/u,
   /gdzie znajde/u,
   /opisz/u,
-  /wyjasnij(?: mi)?(?: te| ten| ta)?(?: sekcj| ekran| panel| widok| test| gra| lekcj)/u,
+  /wyjasnij(?: mi)?(?: te| ten| ta)?(?: sekcj| ekran| panel| widok| test| gra| lekcj| pytan| zadani| podsumowani| omowieni)/u,
   /powiedz o/u,
 ];
 
@@ -49,6 +50,53 @@ type KangurAiTutorNativeGuideResponse = {
   followUpActions: KangurAiTutorFollowUpAction[];
 };
 
+type KangurAiTutorNativeGuideMatchSignal =
+  | 'surface'
+  | 'focus_kind'
+  | 'focus_id_exact'
+  | 'focus_id_prefix'
+  | 'content_id_exact'
+  | 'content_id_prefix'
+  | 'message_trigger'
+  | 'focus_label_trigger'
+  | 'title_trigger';
+
+type RankedNativeGuideEntry = {
+  entry: KangurAiTutorNativeGuideEntry;
+  score: number;
+  matchedSignals: KangurAiTutorNativeGuideMatchSignal[];
+};
+
+export type KangurAiTutorNativeGuideCoverageLevel = 'specific' | 'overview_fallback';
+
+export type KangurAiTutorNativeGuideResolution =
+  | {
+    status: 'skipped';
+    message: null;
+    followUpActions: [];
+    entryId: null;
+    matchedSignals: [];
+    coverageLevel: null;
+  }
+  | {
+    status: 'miss';
+    message: null;
+    followUpActions: [];
+    entryId: null;
+    matchedSignals: [];
+    coverageLevel: null;
+  }
+  | {
+    status: 'hit';
+    message: string;
+    followUpActions: KangurAiTutorFollowUpAction[];
+    entryId: string;
+    matchedSignals: KangurAiTutorNativeGuideMatchSignal[];
+    coverageLevel: KangurAiTutorNativeGuideCoverageLevel;
+  };
+
+const OVERVIEW_ENTRY_IDS = new Set(['lesson-overview', 'game-overview', 'test-overview']);
+
 const normalizeMessage = (value: string | null | undefined): string =>
   typeof value === 'string'
     ? value
@@ -58,6 +106,60 @@ const normalizeMessage = (value: string | null | undefined): string =>
       .replace(/\s+/g, ' ')
       .trim()
     : '';
+
+const matchesTriggerPhrases = (
+  entry: KangurAiTutorNativeGuideEntry,
+  value: string | null | undefined
+): boolean => {
+  const normalized = normalizeMessage(value);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return entry.triggerPhrases.some((phrase) => normalized.includes(normalizeMessage(phrase)));
+};
+
+const matchLookupPrefixes = (
+  prefixes: string[],
+  value: string | null | undefined,
+  options: {
+    exact: number;
+    prefix: number;
+    exactSignal: KangurAiTutorNativeGuideMatchSignal;
+    prefixSignal: KangurAiTutorNativeGuideMatchSignal;
+  }
+): { score: number; signal: KangurAiTutorNativeGuideMatchSignal | null } => {
+  const normalizedValue = normalizeMessage(value);
+
+  if (!normalizedValue) {
+    return { score: 0, signal: null };
+  }
+
+  let score = 0;
+  let signal: KangurAiTutorNativeGuideMatchSignal | null = null;
+  for (const prefix of prefixes) {
+    const normalizedPrefix = normalizeMessage(prefix);
+    if (!normalizedPrefix) {
+      continue;
+    }
+    if (normalizedValue === normalizedPrefix) {
+      if (options.exact > score) {
+        score = options.exact;
+        signal = options.exactSignal;
+      }
+      continue;
+    }
+    if (normalizedValue.startsWith(normalizedPrefix)) {
+      if (options.prefix > score) {
+        score = options.prefix;
+        signal = options.prefixSignal;
+      }
+    }
+  }
+
+  return { score, signal };
+};
 
 const shouldUseNativeGuide = (input: {
   latestUserMessage: string | null;
@@ -88,45 +190,74 @@ const shouldUseNativeGuide = (input: {
   return PAGE_HELP_PATTERNS.some((pattern) => pattern.test(normalized));
 };
 
-const rankEntry = (
+const analyzeEntryMatch = (
   entry: KangurAiTutorNativeGuideEntry,
   input: {
     normalizedMessage: string;
     context: KangurAiTutorConversationContext | undefined;
   }
-): number => {
+): RankedNativeGuideEntry => {
   let score = 0;
+  const matchedSignals: KangurAiTutorNativeGuideMatchSignal[] = [];
 
   if (entry.surface && entry.surface === input.context?.surface) {
     score += 40;
+    matchedSignals.push('surface');
   } else if (entry.surface === null) {
     score += 10;
   }
 
   if (entry.focusKind && entry.focusKind === input.context?.focusKind) {
     score += 60;
+    matchedSignals.push('focus_kind');
   } else if (entry.focusKind === null) {
     score += 5;
   }
 
+  const focusIdMatch = matchLookupPrefixes(entry.focusIdPrefixes, input.context?.focusId, {
+    exact: 80,
+    prefix: 45,
+    exactSignal: 'focus_id_exact',
+    prefixSignal: 'focus_id_prefix',
+  });
+  score += focusIdMatch.score;
+  if (focusIdMatch.signal) {
+    matchedSignals.push(focusIdMatch.signal);
+  }
+
+  const contentIdMatch = matchLookupPrefixes(entry.contentIdPrefixes, input.context?.contentId, {
+    exact: 70,
+    prefix: 35,
+    exactSignal: 'content_id_exact',
+    prefixSignal: 'content_id_prefix',
+  });
+  score += contentIdMatch.score;
+  if (contentIdMatch.signal) {
+    matchedSignals.push(contentIdMatch.signal);
+  }
+
   if (
-    entry.triggerPhrases.some((phrase) =>
-      input.normalizedMessage.includes(normalizeMessage(phrase))
-    )
+    matchesTriggerPhrases(entry, input.normalizedMessage)
   ) {
     score += 30;
+    matchedSignals.push('message_trigger');
   }
 
-  if (
-    input.context?.focusLabel &&
-    entry.triggerPhrases.some((phrase) =>
-      normalizeMessage(input.context?.focusLabel).includes(normalizeMessage(phrase))
-    )
-  ) {
+  if (matchesTriggerPhrases(entry, input.context?.focusLabel)) {
     score += 15;
+    matchedSignals.push('focus_label_trigger');
   }
 
-  return score;
+  if (matchesTriggerPhrases(entry, input.context?.title)) {
+    score += 18;
+    matchedSignals.push('title_trigger');
+  }
+
+  return {
+    entry,
+    score,
+    matchedSignals,
+  };
 };
 
 const selectGuideEntry = (
@@ -135,18 +266,17 @@ const selectGuideEntry = (
     latestUserMessage: string | null;
     context: KangurAiTutorConversationContext | undefined;
   }
-): KangurAiTutorNativeGuideEntry | null => {
+): RankedNativeGuideEntry | null => {
   const normalizedMessage = normalizeMessage(input.latestUserMessage);
   const enabledEntries = entries.filter((entry) => entry.enabled);
 
   const ranked = enabledEntries
-    .map((entry) => ({
-      entry,
-      score: rankEntry(entry, {
+    .map((entry) =>
+      analyzeEntryMatch(entry, {
         normalizedMessage,
         context: input.context,
-      }),
-    }))
+      })
+    )
     .filter(({ score, entry }) => {
       if (score > 0) {
         return true;
@@ -163,7 +293,22 @@ const selectGuideEntry = (
       return left.entry.sortOrder - right.entry.sortOrder;
     });
 
-  return ranked[0]?.entry ?? null;
+  return ranked[0] ?? null;
+};
+
+const resolveCoverageLevel = (
+  entry: KangurAiTutorNativeGuideEntry,
+  context: KangurAiTutorConversationContext | undefined
+): KangurAiTutorNativeGuideCoverageLevel => {
+  const hasSectionSpecificContext = Boolean(
+    context?.focusKind || context?.focusId || context?.questionId || context?.assignmentId
+  );
+
+  if (OVERVIEW_ENTRY_IDS.has(entry.id) && hasSectionSpecificContext) {
+    return 'overview_fallback';
+  }
+
+  return 'specific';
 };
 
 const dedupeActions = (
@@ -193,6 +338,7 @@ const buildGuideMessage = (
     lines.push(`${entry.title}.`);
   }
 
+  lines.push(entry.shortDescription);
   lines.push(entry.fullDescription);
 
   if (entry.hints.length > 0) {
@@ -210,23 +356,60 @@ const buildGuideMessage = (
   return lines.join('\n\n');
 };
 
+export async function resolveKangurAiTutorNativeGuideResolution(input: {
+  latestUserMessage: string | null;
+  context: KangurAiTutorConversationContext | undefined;
+  locale?: string | null;
+}): Promise<KangurAiTutorNativeGuideResolution> {
+  if (!shouldUseNativeGuide(input)) {
+    return {
+      status: 'skipped',
+      message: null,
+      followUpActions: [],
+      entryId: null,
+      matchedSignals: [],
+      coverageLevel: null,
+    };
+  }
+
+  const store = await getKangurAiTutorNativeGuideStore(input.locale?.trim() || 'pl');
+  const rankedEntry = selectGuideEntry(store.entries, input);
+  if (!rankedEntry) {
+    return {
+      status: 'miss',
+      message: null,
+      followUpActions: [],
+      entryId: null,
+      matchedSignals: [],
+      coverageLevel: null,
+    };
+  }
+
+  const followUpActions = dedupeActions(rankedEntry.entry.followUpActions);
+
+  return {
+    status: 'hit',
+    message: buildGuideMessage(rankedEntry.entry, input.context),
+    followUpActions,
+    entryId: rankedEntry.entry.id,
+    matchedSignals: rankedEntry.matchedSignals,
+    coverageLevel: resolveCoverageLevel(rankedEntry.entry, input.context),
+  };
+}
+
 export async function resolveKangurAiTutorNativeGuideResponse(input: {
   latestUserMessage: string | null;
   context: KangurAiTutorConversationContext | undefined;
   locale?: string | null;
 }): Promise<KangurAiTutorNativeGuideResponse | null> {
-  if (!shouldUseNativeGuide(input)) {
-    return null;
-  }
+  const resolution = await resolveKangurAiTutorNativeGuideResolution(input);
 
-  const store = await getKangurAiTutorNativeGuideStore(input.locale?.trim() || 'pl');
-  const entry = selectGuideEntry(store.entries, input);
-  if (!entry) {
+  if (resolution.status !== 'hit') {
     return null;
   }
 
   return {
-    message: buildGuideMessage(entry, input.context),
-    followUpActions: dedupeActions(entry.followUpActions),
+    message: resolution.message,
+    followUpActions: resolution.followUpActions,
   };
 }

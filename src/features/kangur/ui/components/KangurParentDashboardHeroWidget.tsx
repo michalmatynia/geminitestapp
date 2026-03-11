@@ -157,10 +157,10 @@ export function KangurParentDashboardHeroWidget({
       className='mx-auto w-full max-w-2xl'
       description={
         <>
-          Rola: <span className='font-semibold text-slate-700'>{viewerRoleLabel}</span>. Konto
-          wlasciciela: <span className='font-semibold text-slate-700'>{viewerName}</span>. Wybrany
+          Rola: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerRoleLabel}</span>. Konto
+          wlasciciela: <span className='font-semibold [color:var(--kangur-page-text)]'>{viewerName}</span>. Wybrany
           uczen:{' '}
-          <span className='font-semibold text-slate-700'>
+          <span className='font-semibold [color:var(--kangur-page-text)]'>
             {activeLearner?.displayName ?? 'Brak profilu'}
           </span>
           .
@@ -173,8 +173,12 @@ export function KangurParentDashboardHeroWidget({
     >
       {dailyQuest ? (
         <div
-          className='mb-3 rounded-[28px] border border-indigo-200/80 bg-white/78 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'
+          className='soft-card mb-3 rounded-[28px] border border-indigo-200/80 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'
           data-testid='kangur-parent-dashboard-daily-quest'
+          style={{
+            background:
+              'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,231,255,0.92))',
+          }}
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0'>
@@ -198,11 +202,13 @@ export function KangurParentDashboardHeroWidget({
                   {dailyQuest.reward.label}
                 </KangurStatusChip>
               </div>
-              <p className='mt-3 text-sm font-semibold text-slate-900'>
+              <p className='mt-3 text-sm font-semibold [color:var(--kangur-page-text)]'>
                 {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
                 {dailyQuest.assignment.title}
               </p>
-              <p className='mt-1 text-xs leading-5 text-slate-500'>{dailyQuest.progress.summary}</p>
+              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                {dailyQuest.progress.summary}
+              </p>
             </div>
             <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
               <Link
@@ -219,7 +225,7 @@ export function KangurParentDashboardHeroWidget({
       ) : null}
 
       <div className='mb-3 text-left' data-testid='kangur-parent-dashboard-track-summary'>
-        <p className='mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
+        <p className='mb-2 text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
           Sciezki postepu ucznia
         </p>
         <KangurHeroMilestoneSummary

@@ -649,7 +649,11 @@ describe('Integration Handlers', () => {
           update: {
             $set: {
               parameters: [
-                { parameterId: 'p_color', value: 'Blue' },
+                {
+                  parameterId: 'p_color',
+                  value: 'Blue',
+                  valuesByLanguage: { en: 'Blue' },
+                },
                 { parameterId: 'p_material', value: 'Steel' },
                 { parameterId: 'cf_model_name', value: 'X100' },
                 { parameterId: 'p_model_number', value: '' },

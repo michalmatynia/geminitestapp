@@ -15,6 +15,7 @@ import {
   type TutorMotionProfile,
   type TutorPointerSide,
 } from './KangurAiTutorWidget.shared';
+import { getAttachedAvatarRectForSurface } from './KangurAiTutorAvatarAttachment';
 
 import type { Transition } from 'framer-motion';
 
@@ -114,27 +115,6 @@ const getDockAvatarRect = (viewport: { width: number; height: number }): RectLik
   };
 };
 
-const getAttachedAvatarRect = (input: {
-  panelLeft: number;
-  panelTop: number;
-  panelWidth: number;
-  side: TutorAvatarAttachmentSide;
-}): RectLike => {
-  const avatarLeft =
-    input.side === 'left'
-      ? input.panelLeft - ATTACHED_AVATAR_OVERLAP
-      : input.panelLeft + input.panelWidth - AVATAR_SIZE + ATTACHED_AVATAR_OVERLAP;
-
-  return {
-    left: avatarLeft,
-    top: input.panelTop + ATTACHED_AVATAR_EDGE_INSET,
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    right: avatarLeft + AVATAR_SIZE,
-    bottom: input.panelTop + ATTACHED_AVATAR_EDGE_INSET + AVATAR_SIZE,
-  };
-};
-
 const getDockLaunchOffset = (input: {
   finalLeft: number;
   finalTop: number;
@@ -212,11 +192,13 @@ const getTutorPointerGeometry = (input: {
     return null;
   }
 
-  const avatarRect = getAttachedAvatarRect({
-    panelLeft: input.panelLeft,
-    panelTop: input.panelTop,
-    panelWidth: input.panelWidth,
-    side: input.side,
+  const avatarRect = getAttachedAvatarRectForSurface({
+    placement: input.side,
+    surface: {
+      left: input.panelLeft,
+      top: input.panelTop,
+      width: input.panelWidth,
+    },
   });
   const originX =
     input.side === 'left'

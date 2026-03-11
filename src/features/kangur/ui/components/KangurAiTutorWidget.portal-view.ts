@@ -21,6 +21,7 @@ type ReducedMotionTransitions = KangurAiTutorPortalContextValue['avatar']['reduc
 type TutorSurfaceMode =
   | 'idle_avatar'
   | 'onboarding'
+  | 'auth_guided'
   | 'selection_guided'
   | 'section_guided';
 

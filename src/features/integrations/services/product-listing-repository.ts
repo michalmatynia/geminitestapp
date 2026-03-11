@@ -370,14 +370,14 @@ const prismaRepository: ProductListingRepository = {
     const listings = await prisma.productListing.findMany({
       where: { productId: { in: productIds } },
     });
-    return listings.map((l) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
+    return listings.map((l: any) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
   },
 
   getListingsByConnection: async (connectionId: string): Promise<ProductListing[]> => {
     const listings = await prisma.productListing.findMany({
       where: { connectionId },
     });
-    return listings.map((l) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
+    return listings.map((l: any) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
   },
 
   listAllListings: async (): Promise<
@@ -391,7 +391,7 @@ const prismaRepository: ProductListingRepository = {
         marketplaceData: true,
       },
     });
-    return listings.map((l) => ({
+    return listings.map((l: any) => ({
       ...l,
       marketplaceData: l.marketplaceData as ProductListing['marketplaceData'],
     }));

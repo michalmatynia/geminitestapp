@@ -1,8 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { formatKangurAiTutorTemplate } from '@/shared/contracts/kangur-ai-tutor-content';
-import { cn } from '@/shared/utils';
-
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { KangurNarratorControl } from './KangurNarratorControl';
 
@@ -35,7 +33,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
 
   return (
     <div
-      className='flex flex-wrap gap-2 border-b border-slate-100 px-3 py-3'
+      className='flex flex-wrap gap-2 border-b px-3 py-3 [border-color:var(--kangur-soft-card-border)]'
       data-kangur-tts-ignore='true'
     >
       {shouldRenderNarratorControl ? (
@@ -65,7 +63,15 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         </KangurButton>
       ) : null}
       {usageSummary && usageSummary.dailyMessageLimit !== null ? (
-        <div className='w-full rounded-2xl border border-amber-100 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-900'>
+        <div
+          className='w-full rounded-2xl border px-3 py-2 text-[11px] text-amber-900'
+          style={{
+            background:
+              'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
+            borderColor:
+              'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
+          }}
+        >
           <div className='flex items-center justify-between gap-3'>
             <span className='font-semibold'>
               {formatKangurAiTutorTemplate(tutorContent.auxiliaryControls.dailyLimitTemplate, {
@@ -90,20 +96,25 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           data-testid='kangur-ai-tutor-proactive-nudge'
           data-nudge-mode={visibleProactiveNudge.mode}
-          className={cn(
-            'w-full rounded-2xl border px-3 py-3 shadow-sm',
-            visibleProactiveNudge.mode === 'coach'
-              ? 'border-sky-100 bg-sky-50/85'
-              : 'border-emerald-100 bg-emerald-50/85'
-          )}
+          className='w-full rounded-2xl border px-3 py-3 shadow-sm'
+          style={{
+            background:
+              visibleProactiveNudge.mode === 'coach'
+                ? 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(224,242,254,0.94))'
+                : 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(209,250,229,0.92))',
+            borderColor:
+              visibleProactiveNudge.mode === 'coach'
+                ? 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(125 211 252))'
+                : 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(110 231 183))',
+          }}
         >
-          <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
             {visibleProactiveNudge.title}
           </div>
-          <div className='mt-1 text-sm font-semibold text-slate-800'>
+          <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
             {visibleProactiveNudge.action.label}
           </div>
-          <div className='mt-1 text-xs leading-relaxed text-slate-600'>
+          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
             {visibleProactiveNudge.description}
           </div>
           <KangurButton

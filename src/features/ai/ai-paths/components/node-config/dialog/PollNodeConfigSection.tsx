@@ -46,7 +46,10 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     successValue: pollConfig?.successValue ?? 'completed',
     resultPath: pollConfig?.resultPath ?? 'result',
   };
-  const queryConfig = resolvedPollConfig.dbQuery!;
+  const queryConfig: DbQueryConfig = {
+    ...resolvedPollConfig.dbQuery!,
+    provider: resolvedPollConfig.dbQuery?.provider === 'mongodb' ? 'mongodb' : 'auto',
+  };
   const collectionOption = DB_COLLECTION_OPTIONS.some(
     (option: { label: string; value: string }) => option.value === queryConfig.collection
   )
@@ -171,7 +174,6 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 options={[
                   { value: 'auto', label: 'Auto' },
                   { value: 'mongodb', label: 'MongoDB' },
-                  { value: 'prisma', label: 'Prisma' },
                 ]}
                 placeholder='Select provider'
               />

@@ -206,11 +206,16 @@ describe('ClockTrainingGame drag interactions', () => {
     const snapModeSwitch = screen.getByTestId('clock-snap-mode-switch');
     const modeSwitch = screen.getByTestId('clock-mode-switch');
 
-    expect(coarseSnapButton).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
-    expect(exactSnapButton).toHaveClass('rounded-[18px]', 'text-slate-500');
+    expect(coarseSnapButton).toHaveClass(
+      'kangur-segmented-control-item',
+      'kangur-segmented-control-item-active',
+      'rounded-[18px]'
+    );
+    expect(exactSnapButton).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
+    expect(exactSnapButton).not.toHaveClass('kangur-segmented-control-item-active');
     expect(clockDisplay).toHaveClass('border-indigo-200', 'bg-indigo-100');
-    expect(snapModeSwitch).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
-    expect(modeSwitch).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
+    expect(snapModeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
+    expect(modeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(screen.getByTestId('clock-hour-legend-dot')).toHaveClass('bg-rose-500');
     expect(screen.getByTestId('clock-minute-legend-dot')).toHaveClass('bg-emerald-500');
     expect(taskLabel).toHaveClass('border-amber-200', 'bg-amber-100');
@@ -221,8 +226,8 @@ describe('ClockTrainingGame drag interactions', () => {
 
     fireEvent.click(exactSnapButton);
 
-    expect(coarseSnapButton).toHaveClass('text-slate-500');
-    expect(exactSnapButton).toHaveClass('text-indigo-700', 'ring-1');
+    expect(coarseSnapButton).not.toHaveClass('kangur-segmented-control-item-active');
+    expect(exactSnapButton).toHaveClass('kangur-segmented-control-item-active');
     dragHandToAngle(hourHand, 90);
     dragHandToAngle(minuteHand, 42);
 

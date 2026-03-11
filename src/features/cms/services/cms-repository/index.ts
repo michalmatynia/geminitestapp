@@ -1,22 +1,20 @@
 import 'server-only';
 
 import type { CmsRepository } from '@/shared/contracts/cms';
-import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { mongoCmsRepository } from './mongo-cms-repository';
-import { prismaCmsRepository } from './prisma-cms-repository';
 
 let cachedRepository: CmsRepository | null = null;
-let cachedProvider: 'mongodb' | 'prisma' | null = null;
+let cachedProvider: 'mongodb' | null = null;
 const LOG_SOURCE = 'cms-repository';
 const shouldLogCms = (): boolean => process.env['DEBUG_CMS'] === 'true';
 
 export async function getCmsRepository(): Promise<CmsRepository> {
   if (cachedRepository) return cachedRepository;
-  const provider = await getCmsDataProvider();
+  const provider = 'mongodb';
   cachedProvider = provider;
-  cachedRepository = provider === 'mongodb' ? mongoCmsRepository : prismaCmsRepository;
+  cachedRepository = mongoCmsRepository;
   if (shouldLogCms()) {
     void logSystemEvent({
       level: 'info',
@@ -28,7 +26,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
   return cachedRepository;
 }
 
-export const getCmsRepositoryProvider = (): 'mongodb' | 'prisma' | null => cachedProvider;
+export const getCmsRepositoryProvider = (): 'mongodb' | null => cachedProvider;
 
 export function resetCmsRepositoryCache(): void {
   cachedRepository = null;

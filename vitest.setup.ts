@@ -4,8 +4,8 @@ import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
 import { server } from './src/mocks/server';
 
-// Force Prisma as the database provider for tests to ensure consistency with cleanup logic
-process.env['APP_DB_PROVIDER'] = 'prisma';
+// Force MongoDB as the database provider for tests.
+process.env['APP_DB_PROVIDER'] = 'mongodb';
 process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
 process.env['MONGODB_DB'] = 'test';
 
@@ -27,7 +27,6 @@ const QUIET_TEST_LOG_PATTERNS = [
 const QUIET_TEST_LOG_SERVICES = new Set([
   'export-template-repository',
   'products.advanced-filter.mongo',
-  'products.advanced-filter.prisma',
 ]);
 const originalConsoleLog = console.log.bind(console);
 const originalConsoleInfo = console.info.bind(console);
@@ -238,17 +237,17 @@ vi.mock('@/shared/lib/db/prisma', () => {
 });
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn().mockResolvedValue('prisma'),
-  getAppDbProviderSetting: vi.fn().mockResolvedValue('prisma'),
+  getAppDbProvider: vi.fn().mockResolvedValue('mongodb'),
+  getAppDbProviderSetting: vi.fn().mockResolvedValue('mongodb'),
   invalidateAppDbProviderCache: vi.fn(),
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
 }));
 
 vi.mock('@/shared/lib/db/collection-provider-map', () => ({
-  getCollectionProvider: vi.fn().mockResolvedValue('prisma'),
+  getCollectionProvider: vi.fn().mockResolvedValue('mongodb'),
   getCollectionProviderMap: vi.fn().mockResolvedValue({}),
   getCollectionRouteMap: vi.fn().mockResolvedValue({}),
-  resolveCollectionProviderForRequest: vi.fn().mockResolvedValue('prisma'),
+  resolveCollectionProviderForRequest: vi.fn().mockResolvedValue('mongodb'),
   invalidateCollectionProviderMapCache: vi.fn(),
 }));
 

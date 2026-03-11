@@ -8,7 +8,10 @@ export function FrontendTextElementSection(): React.ReactNode {
   const typoStyles = getBlockTypographyStyles(settings);
   return (
     <section className='m-0 w-full p-0'>
-      <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>
+      <p
+        className='m-0 p-0 text-base leading-relaxed text-[var(--cms-appearance-page-text)]'
+        style={typoStyles}
+      >
         {text}
       </p>
     </section>

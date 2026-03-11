@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import NextAuth, { type NextAuthConfig, type Session, type User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
@@ -26,7 +25,6 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { decryptAuthSecret } from '@/shared/lib/security/encryption';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -254,14 +252,12 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     if (authLoggingEnabled) {
       await ErrorSystem.logInfo('[AUTH] Starting configuration...', { service: 'auth' });
     }
-    const configuredProvider = await getAuthDataProvider();
-    const provider = requireAuthProvider(configuredProvider);
-    let adapter: ReturnType<typeof PrismaAdapter> | ReturnType<typeof MongoDBAdapter> | undefined;
+    const provider = requireAuthProvider(await getAuthDataProvider());
+    let adapter: ReturnType<typeof MongoDBAdapter> | undefined;
     try {
-      adapter =
-        provider === 'prisma'
-          ? PrismaAdapter(prisma)
-          : MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
+      adapter = MongoDBAdapter(getMongoClient(), {
+        databaseName: process.env['MONGODB_DB'] ?? 'app',
+      });
     } catch (error) {
       await ErrorSystem.logWarning('[AUTH] Adapter initialization failed.', {
         service: 'auth',

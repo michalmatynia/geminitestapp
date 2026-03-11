@@ -66,7 +66,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   const response: AgentRunsResponse = {
     runs: runs.map(
-      (run): AgentRunRecord => ({
+      (run: any): AgentRunRecord => ({
         ...run,
         checkpointedAt: run.checkpointedAt ? run.checkpointedAt.toISOString() : null,
         createdAt: run.createdAt.toISOString(),
@@ -256,7 +256,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     where: { status: { in: terminalStatuses } },
     select: { id: true },
   });
-  const ids = runs.map((run) => run.id);
+  const ids = runs.map((run: any) => run.id);
   if (ids.length === 0) {
     const response: AgentRunsDeleteResponse = { deleted: 0 };
     return NextResponse.json(response);
@@ -265,7 +265,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     where: { id: { in: ids } },
   });
   await Promise.all(
-    ids.map((runId) =>
+    ids.map((runId: string) =>
       fs.rm(path.join(process.cwd(), 'tmp', 'chatbot-agent', runId), {
         recursive: true,
         force: true,

@@ -10,12 +10,9 @@ import {
 } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
 
-type Provider = 'mongodb' | 'prisma';
 type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const SETTINGS_KEY = 'base_import_parameter_link_map';
@@ -25,53 +22,31 @@ const toMongoId = (id: string): string | ObjectId => {
   return id;
 };
 
-const resolveProvider = async (): Promise<Provider> => {
-  const provider = await getProductDataProvider();
-  return provider as Provider;
-};
-
 const readSettingsValue = async (): Promise<string | null> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-    } as Filter<SettingDoc>);
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const row = await prisma.setting.findUnique({
-    where: { key: SETTINGS_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
   });
-  return row?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSettingsValue = async (value: string): Promise<void> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] } as Filter<SettingDoc>,
-      {
-        $set: {
-          key: SETTINGS_KEY,
-          value,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          _id: SETTINGS_KEY,
-          createdAt: new Date(),
-        },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] } as Filter<SettingDoc>,
+    {
+      $set: {
+        key: SETTINGS_KEY,
+        value,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: SETTINGS_KEY },
-    update: { value },
-    create: { key: SETTINGS_KEY, value },
-  });
+      $setOnInsert: {
+        _id: SETTINGS_KEY,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
 };
 
 export const getCatalogParameterLinks = async (input: {

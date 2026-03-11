@@ -242,7 +242,6 @@ export type EvaluateGraphOptions = {
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   services?: {
-    prisma?: unknown;
     mongo?: unknown;
     [key: string]: unknown;
   };

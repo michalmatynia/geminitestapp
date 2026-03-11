@@ -137,7 +137,7 @@ export async function handleDatabaseMongoCreateAction({
   }
   const insertActionPayload = {
     ...(queryPayload['provider']
-      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),
     ...(queryPayload['collectionMap']
       ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }

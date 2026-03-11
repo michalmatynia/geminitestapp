@@ -39,7 +39,12 @@ type UseKangurAiTutorWidgetCoordinatorDisplayInput = {
   isLoading: boolean;
   isOpen: boolean;
   learnerMemory: KangurAiTutorContextValue['learnerMemory'];
+  loginModalIsOpen: boolean;
   messages: KangurAiTutorContextValue['messages'];
+  openLoginModal: (
+    callbackUrl?: string | null,
+    options?: { authMode?: 'sign-in' | 'create-account' }
+  ) => void;
   prefersReducedMotion: boolean | undefined;
   sessionContext: KangurAiTutorContextValue['sessionContext'];
   tutorContent: KangurAiTutorContent;
@@ -55,7 +60,9 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   isLoading,
   isOpen,
   learnerMemory,
+  loginModalIsOpen,
   messages,
+  openLoginModal,
   prefersReducedMotion,
   sessionContext,
   tutorContent,
@@ -103,7 +110,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     activeSectionProtectedRect,
     activeSectionRect,
     activeSelectedText,
-    activeSelectionContainerRect,
     activeSelectionPageRect,
     activeSelectionProtectedRect,
     activeSelectionRect,
@@ -160,7 +166,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     showSelectionGuidanceCallout,
   } = useKangurAiTutorGuidedDisplayState({
     activeSectionRect,
-    activeSelectionContainerRect,
     activeSelectionPageRect,
     activeSelectionRect,
     askModalVisible,
@@ -173,9 +178,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     hoveredSectionAnchorId,
     isAuthenticated: authIsAuthenticated,
     isLoading,
+    loginModalIsOpen,
     isOpen,
     isTutorHidden,
     mounted,
+    openLoginModal,
     persistedSelectionPageRect,
     persistedSelectionRect,
     sectionResponsePending,
@@ -370,6 +377,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectionSpotlightStyle,
     shouldRenderGuidedCallout,
   } = useKangurAiTutorGuidedShellState({
+    activeSelectionFocusRect: effectiveSelectionRect,
     activeSectionProtectedRect,
     activeSelectionProtectedRect,
     guidedFocusRect,

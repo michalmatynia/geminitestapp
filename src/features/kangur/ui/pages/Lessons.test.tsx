@@ -34,6 +34,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
   }),
+  usePathname: () => '/kangur/lessons',
 }));
 
 vi.mock('next/dynamic', async () => {
@@ -851,7 +852,7 @@ describe('Lessons', () => {
     expect(emptyTitle.parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
   });
 });

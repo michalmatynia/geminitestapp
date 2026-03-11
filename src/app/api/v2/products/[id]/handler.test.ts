@@ -80,9 +80,25 @@ describe('products/[id] handler cache invalidation', () => {
     expect(timingHeader).toContain('total;dur=');
   });
 
-  it('forwards FormData updates that explicitly clear parameters', async () => {
+  it('forwards FormData updates with empty parameters to productService for preservation handling', async () => {
     const formData = new FormData();
     formData.append('parameters', '[]');
+    const request = {
+      formData: vi.fn().mockResolvedValue(formData),
+    } as unknown as NextRequest;
+
+    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+
+    expect(response.status).toBe(200);
+    expect(validateProductUpdateMiddlewareMock).toHaveBeenCalledWith(formData);
+    expect(updateProductMock).toHaveBeenCalledTimes(1);
+    expect(updateProductMock).toHaveBeenCalledWith('product-1', formData, {});
+  });
+
+  it('forwards explicit parameter clear flags through the PUT handler', async () => {
+    const formData = new FormData();
+    formData.append('parameters', '[]');
+    formData.append('forceClearParameters', 'true');
     const request = {
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;

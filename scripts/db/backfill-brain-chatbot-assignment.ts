@@ -1,8 +1,6 @@
 import 'dotenv/config';
 
-import prisma from '@/shared/lib/db/prisma';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
   AI_BRAIN_SETTINGS_KEY,
   parseBrainSettings,
@@ -29,36 +27,20 @@ const parseArgs = (argv: string[]): CliOptions => ({
 });
 
 const readBrainSettings = async (): Promise<AiBrainSettings> => {
-  const provider = await getAppDbProvider().catch(() => 'prisma' as const);
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
-    });
-    return parseBrainSettings(doc?.value ?? null);
-  }
-
-  if (!('setting' in prisma)) {
-    return parseBrainSettings(null);
-  }
-
-  const setting = await prisma.setting.findUnique({
-    where: { key: AI_BRAIN_SETTINGS_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
   });
-  return parseBrainSettings(setting?.value ?? null);
+  return parseBrainSettings(doc?.value ?? null);
 };
 
 const readChatbotSettings = async (): Promise<ChatbotSettings | null> => {
-  if (!('chatbotSettings' in prisma)) {
-    return null;
-  }
-
-  const row = await prisma.chatbotSettings.findUnique({
-    where: { key: CHATBOT_SETTINGS_KEY },
-    select: { settings: true },
-  });
+  const mongo = await getMongoDb();
+  const row = await mongo
+    .collection<{ _id?: string; key?: string; settings?: unknown }>('chatbot_settings')
+    .findOne({
+      $or: [{ _id: CHATBOT_SETTINGS_KEY }, { key: CHATBOT_SETTINGS_KEY }],
+    });
 
   if (!row || !row.settings || typeof row.settings !== 'object' || Array.isArray(row.settings)) {
     return null;
@@ -69,40 +51,28 @@ const readChatbotSettings = async (): Promise<ChatbotSettings | null> => {
 
 const writeBrainSettings = async (settings: AiBrainSettings): Promise<void> => {
   const value = JSON.stringify(settings);
-  const provider = await getAppDbProvider();
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      {
-        $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    {
+      $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+    },
+    {
+      $set: {
+        key: AI_BRAIN_SETTINGS_KEY,
+        value,
       },
-      {
-        $set: {
-          key: AI_BRAIN_SETTINGS_KEY,
-          value,
-        },
-        $setOnInsert: {
-          _id: AI_BRAIN_SETTINGS_KEY,
-        },
+      $setOnInsert: {
+        _id: AI_BRAIN_SETTINGS_KEY,
       },
-      { upsert: true }
-    );
-    return;
-  }
-
-  if (!('setting' in prisma)) {
-    throw new Error('Prisma settings model is unavailable.');
-  }
-
-  await prisma.setting.upsert({
-    where: { key: AI_BRAIN_SETTINGS_KEY },
-    update: { value },
-    create: { key: AI_BRAIN_SETTINGS_KEY, value },
-  });
+    },
+    { upsert: true }
+  );
 };
 
 async function main(): Promise<void> {
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('MONGODB_URI is required.');
+  }
   const options = parseArgs(process.argv.slice(2));
   const [currentBrainSettings, chatbotSettings] = await Promise.all([
     readBrainSettings(),

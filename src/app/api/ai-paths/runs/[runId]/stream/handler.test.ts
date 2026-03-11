@@ -5,14 +5,12 @@ const {
   assertAiPathRunAccessMock,
   requireAiPathsRunAccessMock,
   resolvePathRunRepositoryMock,
-  resolveAlternatePathRunRepositoryMock,
   getRedisSubscriberMock,
   isSubscriberConnectedMock,
 } = vi.hoisted(() => ({
   assertAiPathRunAccessMock: vi.fn(),
   requireAiPathsRunAccessMock: vi.fn(),
   resolvePathRunRepositoryMock: vi.fn(),
-  resolveAlternatePathRunRepositoryMock: vi.fn(),
   getRedisSubscriberMock: vi.fn(),
   isSubscriberConnectedMock: vi.fn(),
 }));
@@ -28,7 +26,6 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   return {
     ...actual,
     resolvePathRunRepository: resolvePathRunRepositoryMock,
-    resolveAlternatePathRunRepository: resolveAlternatePathRunRepositoryMock,
   };
 });
 
@@ -46,7 +43,6 @@ describe('ai-paths run stream handler', () => {
     assertAiPathRunAccessMock.mockReturnValue(undefined);
     getRedisSubscriberMock.mockReturnValue(null);
     isSubscriberConnectedMock.mockReturnValue(false);
-    resolveAlternatePathRunRepositoryMock.mockResolvedValue(null);
   });
 
   it('exports the supported handlers and query schema', () => {
@@ -54,13 +50,8 @@ describe('ai-paths run stream handler', () => {
     expect(typeof querySchema.safeParse).toBe('function');
   });
 
-  it('falls back to the alternate provider when the selected repository misses the run', async () => {
+  it('streams selected repository metadata when the Mongo repository finds the run', async () => {
     const selectedRepo = {
-      findRunById: vi.fn().mockResolvedValue(null),
-      listRunNodes: vi.fn().mockResolvedValue([]),
-      listRunEvents: vi.fn().mockResolvedValue([]),
-    };
-    const alternateRepo = {
       findRunById: vi.fn().mockResolvedValue({
         id: 'run-alt',
         status: 'completed',
@@ -78,11 +69,6 @@ describe('ai-paths run stream handler', () => {
       collection: 'ai_path_runs',
       repo: selectedRepo,
     });
-    resolveAlternatePathRunRepositoryMock.mockResolvedValue({
-      provider: 'prisma',
-      collection: 'ai_path_runs',
-      repo: alternateRepo,
-    });
 
     const response = await getAiPathRunStreamHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-alt/stream'),
@@ -92,16 +78,15 @@ describe('ai-paths run stream handler', () => {
 
     expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('mongodb');
     expect(response.headers.get('X-Ai-Paths-Run-Route-Mode')).toBe('fallback');
-    expect(response.headers.get('X-Ai-Paths-Run-Read-Provider')).toBe('prisma');
-    expect(response.headers.get('X-Ai-Paths-Run-Read-Mode')).toBe('alternate');
+    expect(response.headers.get('X-Ai-Paths-Run-Read-Provider')).toBe('mongodb');
+    expect(response.headers.get('X-Ai-Paths-Run-Read-Mode')).toBe('selected');
 
     const body = await response.text();
     expect(body).toContain('event: ready');
-    expect(body).toContain('"readProvider":"prisma"');
+    expect(body).toContain('"readProvider":"mongodb"');
     expect(body).toContain('event: run');
     expect(body).toContain('event: done');
 
     expect(selectedRepo.findRunById).toHaveBeenCalledWith('run-alt');
-    expect(alternateRepo.findRunById).toHaveBeenCalledWith('run-alt');
   });
 });

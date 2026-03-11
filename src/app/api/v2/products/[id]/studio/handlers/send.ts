@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { productStudioSendRequestSchema as sendSchema } from '@/shared/contracts/products';
+import {
+  productStudioSendRequestSchema as sendSchema,
+  productStudioSendResponseSchema,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -45,5 +48,5 @@ export async function POST_handler(
     ...(contextRegistry ? { contextRegistry } : {}),
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(productStudioSendResponseSchema.parse(result));
 }

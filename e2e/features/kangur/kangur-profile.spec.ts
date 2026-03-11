@@ -113,7 +113,9 @@ test.describe('Kangur Learner Profile', () => {
     await expectLearnerProfileReady(page);
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
-    await expect(page.getByText(/Statystyki ucznia: Tryb lokalny\./i)).toBeVisible();
+    await expect(
+      page.getByText(/Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami\./i)
+    ).toBeVisible();
 
     await expect(page.getByText(/Srednia skutecznosc/i)).toBeVisible();
     await expect(page.getByText(/Seria dni/i)).toBeVisible();

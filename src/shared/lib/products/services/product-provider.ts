@@ -29,8 +29,11 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
     const routeProvider = await getDatabaseEngineServiceProvider('product');
     if (routeProvider) {
       if (routeProvider === 'redis') {
+        throw internalError('Database Engine route "product" cannot target Redis. Configure MongoDB.');
+      }
+      if (routeProvider !== 'mongodb') {
         throw internalError(
-          'Database Engine route "product" cannot target Redis. Configure Prisma or MongoDB.'
+          `Database Engine route "product" points to "${routeProvider}" but only MongoDB is supported.`
         );
       }
       if (policy.strictProviderAvailability && !isPrimaryProviderConfigured(routeProvider)) {
@@ -47,8 +50,8 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
       );
     }
 
-    const appProvider = await getAppDbProvider();
-    return appProvider === 'prisma' ? 'prisma' : 'mongodb';
+    await getAppDbProvider();
+    return 'mongodb';
   })();
 
   try {

@@ -25,8 +25,16 @@ vi.mock('framer-motion', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
-  KangurPageTransitionSkeleton: ({ pageKey }: { pageKey?: string | null }) => (
-    <div data-testid='kangur-page-transition-skeleton'>{pageKey ?? 'none'}</div>
+  KangurPageTransitionSkeleton: ({
+    pageKey,
+    variant,
+  }: {
+    pageKey?: string | null;
+    variant?: string | null;
+  }) => (
+    <div data-testid='kangur-page-transition-skeleton'>
+      {pageKey ?? 'none'}:{variant ?? 'default'}
+    </div>
   ),
 }));
 
@@ -138,12 +146,16 @@ describe('KangurFeatureApp', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: false,
+      isRouteWaitingForReady: false,
       isRouteRevealing: false,
       transitionPhase: 'idle',
       activeTransitionSourceId: null,
       activeTransitionPageKey: null,
+      activeTransitionRequestedHref: null,
+      activeTransitionSkeletonVariant: null,
       pendingPageKey: null,
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     ({ KangurFeatureApp } = await import('@/features/kangur/ui/KangurFeatureApp'));
@@ -167,12 +179,16 @@ describe('KangurFeatureApp', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: true,
+      isRouteWaitingForReady: false,
       isRouteRevealing: false,
       transitionPhase: 'pending',
       activeTransitionSourceId: null,
       activeTransitionPageKey: 'Game',
+      activeTransitionRequestedHref: '/kangur',
+      activeTransitionSkeletonVariant: 'game-home',
       pendingPageKey: 'Game',
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     render(<KangurFeatureApp />);
@@ -184,55 +200,49 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(140);
     });
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:game-home'
+    );
   });
 
-  it('does not flash the navigation skeleton for fast route transitions', async () => {
-    routeTransitionStateMock.mockReturnValue({
-      isRouteAcknowledging: false,
-      isRoutePending: true,
-      isRouteRevealing: false,
-      transitionPhase: 'pending',
-      activeTransitionSourceId: null,
-      activeTransitionPageKey: 'Lessons',
-      pendingPageKey: 'Lessons',
-      startRouteTransition: vi.fn(),
-    });
-
-    const { rerender } = render(<KangurFeatureApp />);
-
-    await act(async () => {
-      vi.advanceTimersByTime(100);
-    });
-
+  it('keeps the target route hidden while the destination is still loading', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: false,
-      isRouteRevealing: true,
-      transitionPhase: 'revealing',
+      isRouteWaitingForReady: true,
+      isRouteRevealing: false,
+      transitionPhase: 'waiting_for_ready',
       activeTransitionSourceId: null,
       activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons?focus=adding',
+      activeTransitionSkeletonVariant: 'lessons-focus',
       pendingPageKey: null,
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
-    await act(async () => {
-      rerender(<KangurFeatureApp />);
-    });
+    render(<KangurFeatureApp />);
 
-    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-focus'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none', 'opacity-0');
   });
 
-  it('keeps the navigation skeleton visible through reveal after a slow route transition', async () => {
+  it('keeps the navigation skeleton visible through reveal after the destination becomes ready', async () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: true,
+      isRouteWaitingForReady: false,
       isRouteRevealing: false,
       transitionPhase: 'pending',
       activeTransitionSourceId: null,
       activeTransitionPageKey: 'Tests',
+      activeTransitionRequestedHref: '/kangur/tests',
+      activeTransitionSkeletonVariant: 'tests',
       pendingPageKey: 'Tests',
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     const { rerender } = render(<KangurFeatureApp />);
@@ -241,36 +251,48 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(140);
     });
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Tests');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Tests:tests'
+    );
 
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: false,
+      isRouteWaitingForReady: false,
       isRouteRevealing: true,
       transitionPhase: 'revealing',
       activeTransitionSourceId: null,
       activeTransitionPageKey: 'Tests',
+      activeTransitionRequestedHref: '/kangur/tests',
+      activeTransitionSkeletonVariant: 'tests',
       pendingPageKey: null,
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     await act(async () => {
       rerender(<KangurFeatureApp />);
     });
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Tests');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Tests:tests'
+    );
   });
 
   it('keeps the old page visible during the button acknowledgement phase', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: true,
       isRoutePending: false,
+      isRouteWaitingForReady: false,
       isRouteRevealing: false,
       transitionPhase: 'acknowledging',
       activeTransitionSourceId: 'game-home-action:lessons',
       activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
       pendingPageKey: null,
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     render(<KangurFeatureApp />);
@@ -283,17 +305,23 @@ describe('KangurFeatureApp', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: true,
+      isRouteWaitingForReady: false,
       isRouteRevealing: false,
       transitionPhase: 'pending',
       activeTransitionSourceId: 'game-home-action:lessons',
       activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
       pendingPageKey: 'Lessons',
       startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
     });
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
   });
 
   it('keeps the global app loader for boot loading states', () => {

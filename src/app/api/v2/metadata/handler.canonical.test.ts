@@ -84,16 +84,30 @@ describe('v2 metadata handler canonical contract', () => {
   });
 
   it('creates language from canonical payload and country IDs', async () => {
-    const languageCreateMock = vi.fn().mockResolvedValue({
-      id: 'lang-en',
-      code: 'EN',
-      name: 'English',
-      nativeName: 'English',
-      countries: [{ countryId: 'country-pl' }],
+    getInternationalizationProviderMock.mockResolvedValue('mongodb');
+
+    const insertOneMock = vi.fn().mockResolvedValue({ acknowledged: true });
+    const countryFindToArrayMock = vi
+      .fn()
+      .mockResolvedValue([{ id: 'country-pl', code: 'PL', name: 'Poland' }]);
+
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'languages') {
+          return {
+            insertOne: insertOneMock,
+          };
+        }
+        if (name === 'countries') {
+          return {
+            find: vi.fn(() => ({
+              toArray: countryFindToArrayMock,
+            })),
+          };
+        }
+        return {};
+      }),
     });
-    prismaMock.language = {
-      create: languageCreateMock,
-    };
 
     const request = new NextRequest('http://localhost/api/v2/metadata/languages', {
       method: 'POST',
@@ -110,16 +124,13 @@ describe('v2 metadata handler canonical contract', () => {
       type: 'languages',
     });
 
-    expect(languageCreateMock).toHaveBeenCalledWith(
+    expect(insertOneMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          code: 'EN',
-          name: 'English',
-          nativeName: 'English',
-          countries: {
-            create: [{ countryId: 'country-pl' }],
-          },
-        }),
+        id: 'EN',
+        code: 'EN',
+        name: 'English',
+        nativeName: 'English',
+        countries: [{ countryId: 'country-pl' }],
       })
     );
   });

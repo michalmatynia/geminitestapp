@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { CurrencyCode } from '@prisma/client';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -9,14 +8,12 @@ import {
   getProducerRepository,
   getTagRepository,
   getParameterRepository,
-  getProductDataProvider,
 } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,
@@ -126,20 +123,6 @@ const resolveGroupType = (
   return sourceGroupId ? 'dependent' : 'standard';
 };
 
-const mapPriceGroupResponse = <
-  T extends {
-    type: string;
-    sourceGroupId: string | null;
-    currencyId: string;
-    currency?: { code: string } | null;
-  },
->(
-    group: T
-  ): T & { currencyCode: string } => ({
-    ...group,
-    currencyCode: group.currency?.code ?? group.currencyId,
-  });
-
 const mapMongoPriceGroupResponse = (
   group: MongoPriceGroupDoc,
   currencyById: Map<string, MongoCurrencyDoc>
@@ -192,54 +175,6 @@ const mapMongoPriceGroupResponse = (
   };
 };
 
-const resolveCurrencyId = async (payload: Record<string, unknown>): Promise<string> => {
-  const explicitCurrencyId = readString(payload, 'currencyId');
-  if (explicitCurrencyId) {
-    const currencyById = await prisma.currency.findUnique({
-      where: { id: explicitCurrencyId },
-      select: { id: true },
-    });
-    if (currencyById) return currencyById.id;
-  }
-
-  const rawCurrencyCode = readString(payload, 'currencyCode');
-  if (rawCurrencyCode) {
-    const normalizedCode = rawCurrencyCode.toUpperCase();
-    if (!/^[A-Z]{3}$/.test(normalizedCode)) {
-      throw badRequestError(`Invalid currencyCode for price-group: ${rawCurrencyCode}`);
-    }
-    const currencyByCode = await prisma.currency.findUnique({
-      where: { code: normalizedCode as CurrencyCode },
-      select: { id: true },
-    });
-    if (currencyByCode) return currencyByCode.id;
-  }
-
-  throw badRequestError('currencyId or currencyCode is required for price-groups');
-};
-
-const resolveUniqueGroupId = async (payload: Record<string, unknown>): Promise<string> => {
-  const explicitGroupId = readString(payload, 'groupId');
-  const fallbackFromName = readString(payload, 'name');
-  const fallbackFromCurrency = readString(payload, 'currencyCode');
-  const baseGroupId = normalizeGroupId(
-    explicitGroupId ?? fallbackFromCurrency ?? fallbackFromName ?? 'PRICE_GROUP'
-  );
-
-  let candidate = baseGroupId;
-  let sequence = 2;
-  while (sequence < 1000) {
-    const existing = await prisma.priceGroup.findUnique({
-      where: { groupId: candidate },
-      select: { id: true },
-    });
-    if (!existing) return candidate;
-    candidate = `${baseGroupId}_${sequence}`;
-    sequence += 1;
-  }
-  return `${baseGroupId}_${randomUUID()}`;
-};
-
 export async function GET_products_metadata_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -266,42 +201,30 @@ export async function GET_products_metadata_handler(
     return NextResponse.json(await listSimpleParameters({ catalogId }));
   }
   if (type === 'price-groups') {
-    const provider = await getProductDataProvider();
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const groups = (await mongo
-        .collection<MongoPriceGroupDoc>('price_groups')
-        .find({})
-        .sort({ name: 1 })
-        .toArray()) as MongoPriceGroupDoc[];
-      const currencyIds = Array.from(
-        new Set(
-          groups
-            .map((group: MongoPriceGroupDoc) => group.currencyId ?? '')
-            .filter((value: string): value is string => value.trim().length > 0)
-        )
-      );
-      const currencyDocs = (
-        currencyIds.length
-          ? await mongo
-            .collection<MongoCurrencyDoc>('currencies')
-            .find({ id: { $in: currencyIds } })
-            .toArray()
-          : []
-      ) as MongoCurrencyDoc[];
-      const currencyById = new Map(
-        currencyDocs.map((currency: MongoCurrencyDoc) => [String(currency.id ?? ''), currency])
-      );
-      return NextResponse.json(
-        groups.map((group: MongoPriceGroupDoc) => mapMongoPriceGroupResponse(group, currencyById))
-      );
-    }
-
-    const groups = await prisma.priceGroup.findMany({
-      include: { currency: true },
-      orderBy: { name: 'asc' },
-    });
-    return NextResponse.json(groups.map(mapPriceGroupResponse));
+    const mongo = await getMongoDb();
+    const groups = (await mongo
+      .collection<MongoPriceGroupDoc>('price_groups')
+      .find({})
+      .sort({ name: 1 })
+      .toArray()) as MongoPriceGroupDoc[];
+    const currencyIds = Array.from(
+      new Set(
+        groups
+          .map((group: MongoPriceGroupDoc) => group.currencyId ?? '')
+          .filter((value: string): value is string => value.trim().length > 0)
+      )
+    );
+    const currencyDocs = (
+      currencyIds.length
+        ? await mongo.collection<MongoCurrencyDoc>('currencies').find({ id: { $in: currencyIds } }).toArray()
+        : []
+    ) as MongoCurrencyDoc[];
+    const currencyById = new Map(
+      currencyDocs.map((currency: MongoCurrencyDoc) => [String(currency.id ?? ''), currency])
+    );
+    return NextResponse.json(
+      groups.map((group: MongoPriceGroupDoc) => mapMongoPriceGroupResponse(group, currencyById))
+    );
   }
 
   throw badRequestError(`Invalid products metadata type: ${type}`);
@@ -315,92 +238,29 @@ export async function POST_products_metadata_handler(
   const { type } = params;
 
   if (type === 'price-groups') {
-    const provider = await getProductDataProvider();
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const parsed = await parseObjectPayload(req, _ctx);
-      if (!parsed.ok) {
-        return parsed.response;
-      }
-      const payload = priceGroupCreatePayloadSchema.parse(parsed.data);
-
-      const explicitCurrencyId = readString(payload, 'currencyId');
-      const currencyCodeFromPayload = readString(payload, 'currencyCode')?.toUpperCase() ?? null;
-      let currencyDoc: MongoCurrencyDoc | null = null;
-      if (explicitCurrencyId) {
-        currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
-          $or: [{ id: explicitCurrencyId }, { code: explicitCurrencyId }],
-        })) as MongoCurrencyDoc | null;
-      }
-      if (!currencyDoc && currencyCodeFromPayload) {
-        currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
-          code: currencyCodeFromPayload,
-        })) as MongoCurrencyDoc | null;
-      }
-      if (!currencyDoc) {
-        throw badRequestError('currencyId or currencyCode is required for price-groups');
-      }
-
-      const sourceGroupId = readString(payload, 'sourceGroupId');
-      const typeValue = readString(payload, 'type');
-      const groupType = resolveGroupType(typeValue, sourceGroupId);
-
-      if (groupType === 'dependent' && !sourceGroupId) {
-        throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
-      }
-
-      const explicitGroupId = readString(payload, 'groupId');
-      const fallbackFromName = readString(payload, 'name');
-      const fallbackFromCurrency = currencyCodeFromPayload ?? readString(payload, 'currencyCode');
-      const baseGroupId = normalizeGroupId(
-        explicitGroupId ?? fallbackFromCurrency ?? fallbackFromName ?? 'PRICE_GROUP'
-      );
-
-      let groupId = baseGroupId;
-      let sequence = 2;
-      while (sequence < 1000) {
-        const existing = await mongo
-          .collection<MongoPriceGroupDoc>('price_groups')
-          .findOne({ groupId });
-        if (!existing) break;
-        groupId = `${baseGroupId}_${sequence}`;
-        sequence += 1;
-      }
-
-      const now = new Date();
-      const created: MongoPriceGroupDoc = {
-        id: randomUUID(),
-        groupId,
-        isDefault: readBoolean(payload, 'isDefault') ?? false,
-        name: readString(payload, 'name') ?? groupId,
-        description: readString(payload, 'description'),
-        currencyId: String(currencyDoc.id ?? currencyDoc.code ?? ''),
-        type: groupType,
-        basePriceField: readString(payload, 'basePriceField') ?? 'price',
-        sourceGroupId,
-        priceMultiplier: readNumber(payload, 'priceMultiplier') ?? 1,
-        addToPrice: Math.trunc(readNumber(payload, 'addToPrice') ?? 0),
-        createdAt: now,
-        updatedAt: now,
-      };
-      const insertDoc: MongoPriceGroupDoc = {
-        _id: new ObjectId(),
-        ...created,
-      };
-      await mongo.collection<MongoPriceGroupDoc>('price_groups').insertOne(insertDoc);
-
-      const currencyById = new Map([
-        [String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc],
-      ]);
-      return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
-    }
-
     const parsed = await parseObjectPayload(req, _ctx);
     if (!parsed.ok) {
       return parsed.response;
     }
     const payload = priceGroupCreatePayloadSchema.parse(parsed.data);
-    const currencyId = await resolveCurrencyId(payload);
+    const mongo = await getMongoDb();
+    const explicitCurrencyId = readString(payload, 'currencyId');
+    const currencyCodeFromPayload = readString(payload, 'currencyCode')?.toUpperCase() ?? null;
+    let currencyDoc: MongoCurrencyDoc | null = null;
+    if (explicitCurrencyId) {
+      currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
+        $or: [{ id: explicitCurrencyId }, { code: explicitCurrencyId }],
+      })) as MongoCurrencyDoc | null;
+    }
+    if (!currencyDoc && currencyCodeFromPayload) {
+      currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
+        code: currencyCodeFromPayload,
+      })) as MongoCurrencyDoc | null;
+    }
+    if (!currencyDoc) {
+      throw badRequestError('currencyId or currencyCode is required for price-groups');
+    }
+
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type');
     const groupType = resolveGroupType(typeValue, sourceGroupId);
@@ -409,26 +269,46 @@ export async function POST_products_metadata_handler(
       throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
     }
 
-    const groupId = await resolveUniqueGroupId(payload);
-    const name = readString(payload, 'name') ?? groupId;
+    const explicitGroupId = readString(payload, 'groupId');
+    const fallbackFromName = readString(payload, 'name');
+    const fallbackFromCurrency = currencyCodeFromPayload ?? readString(payload, 'currencyCode');
+    const baseGroupId = normalizeGroupId(
+      explicitGroupId ?? fallbackFromCurrency ?? fallbackFromName ?? 'PRICE_GROUP'
+    );
 
-    const created = await prisma.priceGroup.create({
-      data: {
-        groupId,
-        name,
-        description: readString(payload, 'description'),
-        currencyId,
-        isDefault: readBoolean(payload, 'isDefault') ?? false,
-        type: groupType,
-        basePriceField: readString(payload, 'basePriceField') ?? 'price',
-        sourceGroupId,
-        priceMultiplier: readNumber(payload, 'priceMultiplier') ?? 1,
-        addToPrice: Math.trunc(readNumber(payload, 'addToPrice') ?? 0),
-      },
-      include: { currency: true },
-    });
+    let groupId = baseGroupId;
+    let sequence = 2;
+    while (sequence < 1000) {
+      const existing = await mongo.collection<MongoPriceGroupDoc>('price_groups').findOne({ groupId });
+      if (!existing) break;
+      groupId = `${baseGroupId}_${sequence}`;
+      sequence += 1;
+    }
 
-    return NextResponse.json(mapPriceGroupResponse(created));
+    const now = new Date();
+    const created: MongoPriceGroupDoc = {
+      id: randomUUID(),
+      groupId,
+      isDefault: readBoolean(payload, 'isDefault') ?? false,
+      name: readString(payload, 'name') ?? groupId,
+      description: readString(payload, 'description'),
+      currencyId: String(currencyDoc.id ?? currencyDoc.code ?? ''),
+      type: groupType,
+      basePriceField: readString(payload, 'basePriceField') ?? 'price',
+      sourceGroupId,
+      priceMultiplier: readNumber(payload, 'priceMultiplier') ?? 1,
+      addToPrice: Math.trunc(readNumber(payload, 'addToPrice') ?? 0),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const insertDoc: MongoPriceGroupDoc = {
+      _id: new ObjectId(),
+      ...created,
+    };
+    await mongo.collection<MongoPriceGroupDoc>('price_groups').insertOne(insertDoc);
+
+    const currencyById = new Map([[String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc]]);
+    return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
   }
 
   throw badRequestError(`POST not implemented for products metadata type: ${type}`);

@@ -52,9 +52,9 @@ export function FrontendImageWithTextSection(): React.ReactNode {
               />
             ) : (
               <div
-                className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}
+                className={`cms-appearance-subtle-surface flex ${imgHeightClass} w-full items-center justify-center`}
               >
-                <ImageIcon className='size-16 text-gray-600' />
+                <ImageIcon className='cms-appearance-muted-text size-16' />
               </div>
             )}
           </div>
@@ -64,7 +64,9 @@ export function FrontendImageWithTextSection(): React.ReactNode {
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
-            {blocks.length === 0 && <p className='text-gray-500'>Add content blocks</p>}
+            {blocks.length === 0 && (
+              <p className='cms-appearance-muted-text'>Add content blocks</p>
+            )}
           </div>
         </div>
       </div>

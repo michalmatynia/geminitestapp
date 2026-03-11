@@ -44,11 +44,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const {
     isRouteAcknowledging,
     isRoutePending,
+    isRouteWaitingForReady,
     isRouteRevealing,
     transitionPhase,
     activeTransitionSourceId,
     pendingPageKey,
     activeTransitionPageKey,
+    activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const { pageKey, embedded, requestedPath } = useKangurRouting();
   const authErrorType = authError?.type;
@@ -58,7 +60,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
-  const isNavigationTransitionActive = isRouteAcknowledging || isRoutePending || isRouteRevealing;
+  const isNavigationTransitionActive =
+    isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = isBootLoading && !canRenderRouteWhileLoading;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(isBootLoading);
@@ -68,6 +71,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
+  const isRouteContentVisuallyHidden =
+    transitionPhase === 'waiting_for_ready' ||
+    (transitionPhase === 'pending' && isRouteSkeletonVisible);
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -136,8 +142,15 @@ const AuthenticatedApp = (): JSX.Element | null => {
       };
     }
 
+    if (isRouteWaitingForReady) {
+      navigationSkeletonShownRef.current = true;
+      setIsNavigationSkeletonVisible(true);
+      return;
+    }
+
     if (isRouteRevealing) {
-      setIsNavigationSkeletonVisible(navigationSkeletonShownRef.current);
+      navigationSkeletonShownRef.current = true;
+      setIsNavigationSkeletonVisible(true);
       return;
     }
 
@@ -153,6 +166,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,
+    isRouteWaitingForReady,
     isRouteRevealing,
     shouldSkipNavigationSkeletonDelay,
   ]);
@@ -188,7 +202,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
             key={routeTransitionKey}
             {...routeContentMotionProps}
             aria-busy={isNavigationTransitionActive}
-            className={cn(embedded ? 'min-h-full' : 'min-h-screen')}
+            aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
+            className={cn(
+              embedded ? 'min-h-full' : 'min-h-screen',
+              isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
+            )}
             data-route-transition-phase={transitionPhase}
             data-route-transition-key={routeTransitionKey}
             data-route-transition-source-id={activeTransitionSourceId ?? undefined}
@@ -207,7 +225,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
           >
-            <KangurPageTransitionSkeleton pageKey={transitionPageKey} reason='navigation' />
+            <KangurPageTransitionSkeleton
+              pageKey={transitionPageKey}
+              reason='navigation'
+              variant={activeTransitionSkeletonVariant}
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>

@@ -47,6 +47,7 @@ export function KangurAssignmentSpotlight({
         ? 'Priorytet średni'
         : 'Priorytet niski';
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
+  const transitionSourceId = `assignment-spotlight:${assignment.id}`;
 
   return (
     <KangurGlassPanel
@@ -57,7 +58,7 @@ export function KangurAssignmentSpotlight({
       variant='elevated'
     >
       <div className='px-3 pt-2 sm:px-4'>
-        <div className='text-[1.9rem] font-extrabold tracking-tight text-[#3d4f85] sm:text-[2rem]'>
+        <div className='text-[1.9rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
           Zadanie od rodzica
         </div>
       </div>
@@ -90,17 +91,17 @@ export function KangurAssignmentSpotlight({
               {assignment.target.type === 'lesson' ? '📚' : '🎯'}
             </span>
             <div className='min-w-0'>
-              <div className='text-[1.55rem] font-extrabold tracking-tight text-[#243b73]'>
+              <div className='text-[1.55rem] font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
                 {assignment.title}
               </div>
-              <div className='mt-4 text-[1.04rem] leading-8 text-[#647196]'>
+              <div className='mt-4 text-[1.04rem] leading-8 [color:var(--kangur-page-muted-text)]'>
                 {assignment.description}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='mt-5 space-y-4 text-sm text-[#7d86a7]'>
+        <div className='mt-5 space-y-4 text-sm [color:var(--kangur-page-muted-text)]'>
           <KangurDivider
             accent='slate'
             className='w-full'
@@ -116,7 +117,11 @@ export function KangurAssignmentSpotlight({
           fullWidth
           variant='primary'
         >
-          <Link href={assignmentHref}>
+          <Link
+            href={assignmentHref}
+            transitionAcknowledgeMs={110}
+            transitionSourceId={transitionSourceId}
+          >
             {getKangurAssignmentActionLabel(assignment)}
           </Link>
         </KangurButton>

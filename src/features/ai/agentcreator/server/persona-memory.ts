@@ -419,7 +419,7 @@ export async function searchAgentPersonaMemory(
     await prisma.agentLongTermMemory.updateMany({
       where: {
         id: {
-          in: memoryEntries.map((item) => item.id),
+          in: memoryEntries.map((item: any) => item.id),
         },
       },
       data: {
@@ -428,7 +428,7 @@ export async function searchAgentPersonaMemory(
     });
   }
 
-  const memoryItems: PersonaMemoryRecord[] = memoryEntries.map((item) => {
+  const memoryItems: PersonaMemoryRecord[] = memoryEntries.map((item: any) => {
     const metadata = asRecord(item.metadata);
     const role =
       typeof metadata?.['role'] === 'string'
@@ -470,7 +470,7 @@ export async function searchAgentPersonaMemory(
     };
   });
 
-  const messageItems: PersonaMemoryRecord[] = conversationMessages.map((message) => {
+  const messageItems: PersonaMemoryRecord[] = conversationMessages.map((message: any) => {
     const metadata = asRecord(message.metadata);
     const moodHints = normalizeMoodHints(
       Array.isArray(metadata?.['moodHints'])

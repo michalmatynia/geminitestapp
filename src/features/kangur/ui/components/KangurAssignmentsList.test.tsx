@@ -84,7 +84,7 @@ describe('KangurAssignmentsList', () => {
     );
     expect(screen.getByTestId('kangur-assignments-list-card-assignment-regular')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('kangur-assignments-list-progress-assignment-regular')).toHaveAttribute(
       'aria-valuenow',
@@ -117,7 +117,7 @@ describe('KangurAssignmentsList', () => {
     );
     expect(screen.getByTestId('kangur-assignments-list-card-assignment-compact')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('kangur-assignments-list-divider-assignment-compact')).toHaveClass(
       'h-px',

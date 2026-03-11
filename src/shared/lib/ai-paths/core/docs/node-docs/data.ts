@@ -50,7 +50,7 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.action',
-    description: 'Provider action command (MongoDB or Prisma-mapped command labels).',
+    description: 'Provider action command (MongoDB action labels).',
   },
   {
     path: 'database.distinctField',
@@ -122,6 +122,11 @@ export const databaseDocs: NodeConfigDocField[] = [
     defaultValue: '""',
   },
   {
+    path: 'database.parameterInferenceGuard.languageCode',
+    description: 'Language code mirrored into valuesByLanguage for inferred parameter writes.',
+    defaultValue: 'en',
+  },
+  {
     path: 'database.parameterInferenceGuard.enforceOptionLabels',
     description:
       'When true, radio/select/dropdown values must match optionLabels from definitions.',
@@ -138,8 +143,8 @@ export const databaseDocs: NodeConfigDocField[] = [
 export const dbSchemaDocs: NodeConfigDocField[] = [
   {
     path: 'db_schema.provider',
-    description: 'Which provider to load: auto (primary), mongodb, prisma, or all.',
-    defaultValue: 'all',
+    description: 'Which provider to load: auto (primary) or mongodb.',
+    defaultValue: 'auto',
   },
   {
     path: 'db_schema.mode',

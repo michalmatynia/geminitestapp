@@ -9,7 +9,6 @@ import {
 import { MongoSettingRecord } from '@/shared/contracts/base';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -53,25 +52,9 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch {
-    return null;
-  }
-};
-
 const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  return provider === 'mongodb' ? readMongoSetting(key) : readPrismaSetting(key);
+  requireAuthProvider(await getAuthDataProvider());
+  return readMongoSetting(key);
 };
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
@@ -133,62 +116,11 @@ const clearMemoryAttempt = (key: string): void => {
   memoryAttempts.delete(key);
 };
 
-const toDate = (value: unknown): Date | null => {
-  if (value instanceof Date) return value;
-  if (typeof value === 'string' || typeof value === 'number') {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-  return null;
-};
-
-const parseAttemptRecord = (value: unknown): AttemptRecord | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  const firstAttemptAt = toDate(record['firstAttemptAt']);
-  const lastAttemptAt = toDate(record['lastAttemptAt']);
-  const lockedUntilRaw = record['lockedUntil'];
-  const expiresAtRaw = record['expiresAt'];
-  const lockedUntil =
-    lockedUntilRaw === null || lockedUntilRaw === undefined ? null : toDate(lockedUntilRaw);
-  const expiresAt =
-    expiresAtRaw === null || expiresAtRaw === undefined ? null : toDate(expiresAtRaw);
-  if (
-    typeof record['_id'] !== 'string' ||
-    (record['scope'] !== 'email' && record['scope'] !== 'ip') ||
-    typeof record['value'] !== 'string' ||
-    typeof record['count'] !== 'number' ||
-    !Number.isFinite(record['count']) ||
-    !firstAttemptAt ||
-    !lastAttemptAt ||
-    (lockedUntilRaw !== null && lockedUntilRaw !== undefined && !lockedUntil) ||
-    (expiresAtRaw !== null && expiresAtRaw !== undefined && !expiresAt)
-  ) {
-    return null;
-  }
-  return {
-    _id: record['_id'],
-    scope: record['scope'],
-    value: record['value'],
-    count: record['count'],
-    firstAttemptAt,
-    lastAttemptAt,
-    lockedUntil,
-    expiresAt,
-  };
-};
-
 const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).findOne({ _id: key });
   return doc ?? null;
-};
-
-const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
-  const row = await prisma.authSecurityAttempt.findUnique({ where: { id: key } });
-  if (!row) return null;
-  return parseAttemptRecord(row.data);
 };
 
 const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {
@@ -199,29 +131,14 @@ const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {
     .updateOne({ _id: record._id }, { $set: record }, { upsert: true });
 };
 
-const setPrismaAttempt = async (record: AttemptRecord): Promise<void> => {
-  await prisma.authSecurityAttempt.upsert({
-    where: { id: record._id },
-    update: { data: record },
-    create: { id: record._id, data: record },
-  });
-};
-
 const clearMongoAttempt = async (key: string): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).deleteOne({ _id: key });
 };
 
-const clearPrismaAttempt = async (key: string): Promise<void> => {
-  await prisma.authSecurityAttempt.deleteMany({ where: { id: key } });
-};
-
 const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    return await getPrismaAttempt(key);
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     return await getMongoAttempt(key);
   }
@@ -229,11 +146,7 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
 };
 
 const saveAttempt = async (record: AttemptRecord): Promise<void> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    await setPrismaAttempt(record);
-    return;
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     await setMongoAttempt(record);
     return;
@@ -242,11 +155,7 @@ const saveAttempt = async (record: AttemptRecord): Promise<void> => {
 };
 
 const clearAttempt = async (key: string): Promise<void> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    await clearPrismaAttempt(key);
-    return;
-  }
+  requireAuthProvider(await getAuthDataProvider());
   if (process.env['MONGODB_URI']) {
     await clearMongoAttempt(key);
     return;

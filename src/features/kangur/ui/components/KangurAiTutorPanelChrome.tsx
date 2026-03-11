@@ -141,10 +141,10 @@ export function KangurAiTutorPanelChrome({
   const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
   const panelSurfaceTestId = isAskModalMode ? 'kangur-ai-tutor-ask-modal-surface' : undefined;
   const panelSurfaceClassName = cn(
-    'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94 backdrop-blur-[6px]',
+    'relative flex flex-col overflow-hidden border border-amber-200/60 [background:linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(255,253,250,0.94)_100%)] backdrop-blur-[8px]',
     shouldUseMinimalPanelShell
-      ? 'shadow-[0_26px_60px_-34px_rgba(180,83,9,0.38)] rounded-[28px]'
-      : 'shadow-[0_20px_48px_-30px_rgba(180,83,9,0.38)]',
+      ? 'shadow-[0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)] rounded-[28px]'
+      : 'shadow-[0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)]',
     isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
     isCompactDockedTutorPanel ? 'rounded-[24px]' : null,
     !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? 'rounded-[28px] rounded-b-[24px]' : null
@@ -161,7 +161,7 @@ export function KangurAiTutorPanelChrome({
           : '70vh',
   } satisfies CSSProperties;
   const panelHeaderClassName = cn(
-    'flex items-start justify-between gap-3 border-b border-amber-200/80 bg-[#fff7cf]/78',
+    'relative flex items-start justify-between gap-3 border-b border-amber-200/70 [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%)]',
     shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
@@ -294,24 +294,33 @@ export function KangurAiTutorPanelChrome({
                   <defs>
                     <marker
                       id={pointerMarkerId}
-                      markerWidth='9'
-                      markerHeight='9'
-                      refX='7'
-                      refY='4.5'
+                      markerWidth='10'
+                      markerHeight='10'
+                      refX='8'
+                      refY='5'
                       orient='auto'
-                      viewBox='0 0 9 9'
+                      viewBox='0 0 10 10'
                     >
-                      <path d='M0 0 L9 4.5 L0 9 Z' fill='#b45309' />
+                      <path d='M1 1 Q3 5 1 9 L9 5 Z' fill='#b45309' opacity='0.85' />
                     </marker>
+                    <filter id={`${pointerMarkerId}-glow`}>
+                      <feGaussianBlur stdDeviation='2' result='blur' />
+                      <feMerge>
+                        <feMergeNode in='blur' />
+                        <feMergeNode in='SourceGraphic' />
+                      </feMerge>
+                    </filter>
                   </defs>
                   <line
                     x1={avatarPointer.start.x}
                     y1={avatarPointer.start.y}
                     x2={avatarPointer.end.x}
                     y2={avatarPointer.end.y}
-                    stroke='#fff7cf'
+                    stroke='#fef3c7'
                     strokeLinecap='round'
-                    strokeWidth='6'
+                    strokeWidth='7'
+                    opacity='0.6'
+                    filter={`url(#${pointerMarkerId}-glow)`}
                   />
                   <line
                     x1={avatarPointer.start.x}
@@ -321,7 +330,9 @@ export function KangurAiTutorPanelChrome({
                     markerEnd={`url(#${pointerMarkerId})`}
                     stroke='#b45309'
                     strokeLinecap='round'
-                    strokeWidth='3'
+                    strokeWidth='2.5'
+                    strokeDasharray='6 4'
+                    opacity='0.75'
                   />
                 </svg>
               ) : null}
@@ -368,7 +379,7 @@ export function KangurAiTutorPanelChrome({
                   <div
                     aria-hidden='true'
                     className={cn(
-                      'absolute left-8 h-4 w-4 rotate-45 border border-amber-200/80 bg-white',
+                      'absolute left-8 h-4 w-4 rotate-45 border border-amber-200/80 [background:var(--kangur-soft-card-background)]',
                       bubbleTailPlacement === 'top'
                         ? '-top-2 border-b-0 border-r-0'
                         : '-bottom-2 border-t-0 border-l-0'
@@ -377,7 +388,7 @@ export function KangurAiTutorPanelChrome({
                 ) : null}
 
                 {!isAskModalMode && !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? (
-                  <div className='flex justify-center bg-white/92 px-3 pt-3'>
+                  <div className='flex justify-center px-3 pt-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,#fef3c7)]'>
                     <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-amber-200' />
                   </div>
                 ) : null}
@@ -387,17 +398,18 @@ export function KangurAiTutorPanelChrome({
                   className={panelHeaderClassName}
                 >
                   <div className='min-w-0 flex flex-1 flex-col'>
-                    <span className='text-[10px] font-semibold tracking-[0.16em] text-amber-700'>
+                    <span className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-amber-700'>
+                      <span className='inline-flex h-1.5 w-1.5 rounded-full bg-amber-500' />
                       AI Tutor
                     </span>
-                    <span className='mt-1 text-sm font-semibold leading-relaxed text-slate-900'>
+                    <span className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-page-text,#1e293b)]'>
                       {tutorDisplayName}
                     </span>
                     {!shouldUseMinimalPanelShell ? (
                       <span
                         data-testid='kangur-ai-tutor-mood-chip'
                         data-mood-id={tutorBehaviorMoodId}
-                        className='mt-2 inline-flex w-fit items-center rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800'
+                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-200/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800 shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [background:linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed))]'
                       >
                         {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
                       </span>
@@ -419,7 +431,7 @@ export function KangurAiTutorPanelChrome({
                       <button
                         type='button'
                         onClick={onDisableTutor}
-                        className='cursor-pointer rounded-full border border-amber-200/80 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-white'
+                        className='cursor-pointer rounded-full border border-amber-200/80 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)] hover:[background:var(--kangur-soft-card-background)]'
                         aria-label={tutorContent.common.disableTutorAria}
                       >
                         {tutorContent.common.disableTutorLabel}
@@ -428,7 +440,7 @@ export function KangurAiTutorPanelChrome({
                     <button
                       type='button'
                       onClick={onClose}
-                      className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 bg-white/85 p-1 text-amber-900 transition-[background-color,box-shadow,transform] hover:-translate-y-[1px] hover:scale-[1.03] hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
+                      className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 text-amber-900 transition-[background-color,box-shadow,transform] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-soft-card-background)] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
                       aria-label={tutorContent.common.closeAria}
                     >
                       <X className='h-4 w-4' />

@@ -1,5 +1,4 @@
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import { normalizeDatabaseEngineBackupSchedule } from './database-engine-backup-schedule';
 import {
@@ -51,7 +50,7 @@ let operationControlsCache: CachedValue<DatabaseEngineOperationControls> | null 
 let operationControlsInflight: Promise<DatabaseEngineOperationControls> | null = null;
 
 const isValidProvider = (value: string): value is DatabaseEngineProvider =>
-  value === 'mongodb' || value === 'prisma' || value === 'redis';
+  value === 'mongodb' || value === 'redis';
 
 const isValidServiceRoute = (value: string): value is DatabaseEngineServiceRoute =>
   value === 'app' ||
@@ -125,19 +124,6 @@ const parseBackupSchedule = (raw: unknown): DatabaseEngineBackupSchedule =>
 const parseOperationControls = (raw: unknown): DatabaseEngineOperationControls =>
   normalizeDatabaseEngineOperationControls(raw);
 
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['DATABASE_URL']) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return typeof setting?.value === 'string' ? setting.value : null;
-  } catch {
-    return null;
-  }
-};
-
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   try {
@@ -153,11 +139,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   }
 };
 
-const readSettingValue = async (key: string): Promise<string | null> => {
-  const fromPrisma = await readPrismaSetting(key);
-  if (fromPrisma) return fromPrisma;
-  return readMongoSetting(key);
-};
+const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
 export async function getDatabaseEnginePolicy(): Promise<DatabaseEnginePolicy> {
   const now = Date.now();
@@ -289,9 +271,7 @@ export async function getDatabaseEngineServiceProvider(
 }
 
 export const isPrimaryProviderConfigured = (provider: DatabaseEnginePrimaryProvider): boolean =>
-  provider === 'mongodb'
-    ? Boolean(process.env['MONGODB_URI'])
-    : Boolean(process.env['DATABASE_URL']);
+  provider === 'mongodb' ? Boolean(process.env['MONGODB_URI']) : false;
 
 export const isRedisProviderConfigured = (): boolean => Boolean(process.env['REDIS_URL']);
 

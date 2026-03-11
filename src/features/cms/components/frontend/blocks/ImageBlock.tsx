@@ -123,7 +123,7 @@ export function ImageElementBlock(): React.ReactNode {
   if (!src) {
     return (
       <div
-        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
+        className='cms-media cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center py-8 text-sm'
         style={wrapperStyles}
       >
         No image selected
@@ -174,7 +174,7 @@ export function ImageBlock(): React.ReactNode {
   if (!src) {
     return (
       <div
-        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
+        className='cms-media cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center py-8 text-sm'
         style={{ width: `${width}%`, ...resolvedStyles }}
       >
         No image selected

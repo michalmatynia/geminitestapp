@@ -98,14 +98,24 @@ describe('Leaderboard', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(operationGroup).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
-    expect(userGroup).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
-    expect(allOperationFilter).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
-    expect(divisionOperationFilter).toHaveClass('rounded-[18px]', 'text-slate-500');
+    expect(operationGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
+    expect(userGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
+    expect(allOperationFilter).toHaveClass(
+      'kangur-segmented-control-item',
+      'kangur-segmented-control-item-active',
+      'rounded-[18px]'
+    );
+    expect(divisionOperationFilter).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
+    expect(divisionOperationFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(allOperationFilter).toHaveAttribute('aria-pressed', 'true');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'false');
-    expect(allUserFilter).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
-    expect(anonymousUserFilter).toHaveClass('rounded-[18px]', 'text-slate-500');
+    expect(allUserFilter).toHaveClass(
+      'kangur-segmented-control-item',
+      'kangur-segmented-control-item-active',
+      'rounded-[18px]'
+    );
+    expect(anonymousUserFilter).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
+    expect(anonymousUserFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
       'soft-card',
       'border-indigo-300'
@@ -117,7 +127,7 @@ describe('Leaderboard', () => {
     expect(screen.getByTestId('leaderboard-xp-score-1')).toHaveTextContent('+24 XP');
     expect(screen.getByTestId('leaderboard-row-score-2')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
 
     expect(screen.getByText('Ada')).toBeInTheDocument();
@@ -126,18 +136,18 @@ describe('Leaderboard', () => {
 
     await user.click(divisionOperationFilter);
 
-    expect(divisionOperationFilter).toHaveClass('text-indigo-700', 'ring-1');
+    expect(divisionOperationFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(allOperationFilter).toHaveClass('text-slate-500');
+    expect(allOperationFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
     expect(screen.getByText('Bartek')).toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
 
     await user.click(anonymousUserFilter);
 
-    expect(anonymousUserFilter).toHaveClass('text-indigo-700', 'ring-1');
+    expect(anonymousUserFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(anonymousUserFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(allUserFilter).toHaveClass('text-slate-500');
+    expect(allUserFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(screen.queryByText('Bartek')).not.toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
   });
@@ -150,7 +160,7 @@ describe('Leaderboard', () => {
     expect(await screen.findByTestId('leaderboard-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
   });

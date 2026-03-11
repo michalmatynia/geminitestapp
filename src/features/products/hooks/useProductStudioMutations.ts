@@ -1,6 +1,12 @@
 'use client';
 
-import type { ProductStudioSendRequest, ProductWithImages } from '@/shared/contracts/products';
+import {
+  productStudioProductResponseSchema,
+  productStudioSendResponseSchema,
+  type ProductStudioSendRequest,
+  type ProductStudioSendResponse,
+  type ProductStudioProductResponse,
+} from '@/shared/contracts/products';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -11,12 +17,7 @@ export function useSendToStudioMutation() {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   return createCreateMutationV2<
-    {
-      runId: string;
-      runKind: 'generation' | 'sequence';
-      runStatus: string;
-      expectedOutputs: number;
-    },
+    ProductStudioSendResponse,
     {
       productId: string;
       imageSlotIndex: number;
@@ -24,21 +25,29 @@ export function useSendToStudioMutation() {
       contextRegistry?: ProductStudioSendRequest['contextRegistry'];
     }
   >({
-    mutationFn: ({ productId, imageSlotIndex, projectId, contextRegistry: payloadContextRegistry }) =>
-      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
-        imageSlotIndex,
-        projectId,
-        ...(payloadContextRegistry ?? contextRegistry
-          ? { contextRegistry: payloadContextRegistry ?? contextRegistry }
-          : {}),
-      }),
+    mutationFn: async ({
+      productId,
+      imageSlotIndex,
+      projectId,
+      contextRegistry: payloadContextRegistry,
+    }) =>
+      productStudioSendResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
+          imageSlotIndex,
+          projectId,
+          ...(payloadContextRegistry ?? contextRegistry
+            ? { contextRegistry: payloadContextRegistry ?? contextRegistry }
+            : {}),
+        })
+      ),
     meta: {
       source: 'products.hooks.useSendToStudioMutation',
       operation: 'create',
       resource: 'products.studio.send',
       domain: 'products',
       tags: ['products', 'studio', 'send'],
-      description: 'Creates products studio send.'},
+      description: 'Creates products studio send.',
+    },
     invalidate: (queryClient, _data, { projectId }) => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
@@ -47,22 +56,25 @@ export function useSendToStudioMutation() {
 
 export function useAcceptVariantMutation() {
   return createUpdateMutationV2<
-    { product: ProductWithImages },
+    ProductStudioProductResponse,
     { productId: string; imageSlotIndex: number; generationSlotId: string; projectId: string }
   >({
-    mutationFn: ({ productId, imageSlotIndex, generationSlotId, projectId }) =>
-      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/accept`, {
-        imageSlotIndex,
-        generationSlotId,
-        projectId,
-      }),
+    mutationFn: async ({ productId, imageSlotIndex, generationSlotId, projectId }) =>
+      productStudioProductResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/accept`, {
+          imageSlotIndex,
+          generationSlotId,
+          projectId,
+        })
+      ),
     meta: {
       source: 'products.hooks.useAcceptVariantMutation',
       operation: 'update',
       resource: 'products.studio.accept',
       domain: 'products',
       tags: ['products', 'studio', 'accept'],
-      description: 'Updates products studio accept.'},
+      description: 'Updates products studio accept.',
+    },
     invalidate: (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },
@@ -71,21 +83,24 @@ export function useAcceptVariantMutation() {
 
 export function useRotateImageSlotMutation() {
   return createUpdateMutationV2<
-    { product: ProductWithImages },
+    ProductStudioProductResponse,
     { productId: string; imageSlotIndex: number; direction: 'left' | 'right' }
   >({
-    mutationFn: ({ productId, imageSlotIndex, direction }) =>
-      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/rotate`, {
-        imageSlotIndex,
-        direction,
-      }),
+    mutationFn: async ({ productId, imageSlotIndex, direction }) =>
+      productStudioProductResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/rotate`, {
+          imageSlotIndex,
+          direction,
+        })
+      ),
     meta: {
       source: 'products.hooks.useRotateImageSlotMutation',
       operation: 'update',
       resource: 'products.studio.rotate',
       domain: 'products',
       tags: ['products', 'studio', 'rotate'],
-      description: 'Updates products studio rotate.'},
+      description: 'Updates products studio rotate.',
+    },
     invalidate: (queryClient) => {
       void invalidateProductsAndCounts(queryClient);
     },

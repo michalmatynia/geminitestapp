@@ -119,7 +119,7 @@ export function ButtonBlock(): React.ReactNode {
           type='button'
           onClick={() => runtimeAction?.(...runtimeActionArgs)}
           disabled={isDisabled}
-          className={`${baseClasses} border-2 border-white text-white hover:bg-white hover:text-gray-900 focus:ring-white`}
+          className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
           style={customStyles}
         >
           {label}
@@ -130,7 +130,7 @@ export function ButtonBlock(): React.ReactNode {
     return (
       <a
         href={link}
-        className={`${baseClasses} border-2 border-white text-white hover:bg-white hover:text-gray-900 focus:ring-white`}
+        className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus:ring-white`}
         style={customStyles}
       >
         {label}
@@ -144,7 +144,7 @@ export function ButtonBlock(): React.ReactNode {
         type='button'
         onClick={() => runtimeAction?.(...runtimeActionArgs)}
         disabled={isDisabled}
-        className={`${baseClasses} bg-white text-gray-900 hover:bg-gray-200 focus:ring-white`}
+        className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
         style={customStyles}
       >
         {label}
@@ -155,7 +155,7 @@ export function ButtonBlock(): React.ReactNode {
   return (
     <a
       href={link}
-      className={`${baseClasses} bg-white text-gray-900 hover:bg-gray-200 focus:ring-white`}
+      className={`${baseClasses} cms-appearance-button-primary border focus:ring-white`}
       style={customStyles}
     >
       {label}

@@ -1,10 +1,8 @@
 import 'server-only';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoKangurAssignmentRepository } from './mongo-kangur-assignment-repository';
-import { prismaKangurAssignmentRepository } from './prisma-kangur-assignment-repository';
 
 import type { KangurAssignmentRepository } from './types';
 
@@ -13,9 +11,8 @@ export type { KangurAssignmentListInput, KangurAssignmentRepository } from './ty
 const KANGUR_ASSIGNMENT_REPOSITORY_SERVICE = 'kangur.assignment-repository';
 
 export const getKangurAssignmentRepository = async (): Promise<KangurAssignmentRepository> => {
-  const provider = await getAppDbProvider();
-  const repository =
-    provider === 'mongodb' ? mongoKangurAssignmentRepository : prismaKangurAssignmentRepository;
+  const provider = 'mongodb';
+  const repository = mongoKangurAssignmentRepository;
 
   return {
     createAssignment: async (input) => {

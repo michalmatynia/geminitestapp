@@ -34,32 +34,26 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
+  const toMongoCollection = (collection: CollectionSchema): CollectionSchema => ({
+    ...stripUndefinedProvider(collection),
+    provider: 'mongodb',
+  });
 
   if (schema.provider === 'multi') {
-    const collections = resolveCollectionList(schema.collections);
-    if (collections.length) {
-      return collections.map((collection) => stripUndefinedProvider(collection));
+    const sources = isObjectRecord(schema.sources) ? schema.sources : null;
+    const mongoSource = sources ? sources['mongodb'] : null;
+    if (isObjectRecord(mongoSource)) {
+      const sourceCollections = resolveCollectionList(mongoSource['collections']);
+      if (sourceCollections.length) {
+        return sourceCollections.map(toMongoCollection);
+      }
     }
-    const merged: CollectionSchema[] = [];
-    (['mongodb', 'prisma'] as const).forEach((provider) => {
-      const sources = isObjectRecord(schema.sources) ? schema.sources : null;
-      const source = sources ? sources[provider] : null;
-      if (!isObjectRecord(source)) return;
-      const sourceCollections = resolveCollectionList(source['collections']);
-      if (!sourceCollections.length) return;
-      sourceCollections.forEach((collection) => {
-        merged.push({ ...stripUndefinedProvider(collection), provider });
-      });
-    });
-    return merged;
+    return resolveCollectionList(schema.collections)
+      .filter((collection) => collection.provider === undefined || collection.provider === 'mongodb')
+      .map(toMongoCollection);
   }
 
-  const provider = schema.provider as 'mongodb' | 'prisma';
-  const baseCollections = resolveCollectionList(schema.collections);
-  return baseCollections.map((collection) => ({
-    ...stripUndefinedProvider(collection),
-    provider,
-  }));
+  return resolveCollectionList(schema.collections).map(toMongoCollection);
 };
 
 const buildCollectionKey = (collection: CollectionSchema, includeProvider: boolean): string =>
@@ -81,7 +75,7 @@ const matchesCollectionSelection = (
 };
 
 interface SchemaConfig {
-  provider: 'auto' | 'mongodb' | 'prisma';
+  provider: 'auto' | 'mongodb';
   mode: 'all' | 'selected';
   collections: string[];
   includeFields: boolean;
@@ -90,7 +84,7 @@ interface SchemaConfig {
 }
 
 const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>
-  value === 'mongodb' || value === 'prisma' || value === 'auto' ? value : 'auto';
+  value === 'mongodb' || value === 'auto' ? value : 'auto';
 
 export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -104,7 +98,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const [browseSearch, setBrowseSearch] = React.useState('');
   const [browseQuery, setBrowseQuery] = React.useState('');
   const [expandedDocId, setExpandedDocId] = React.useState<string | null>(null);
-  const [browseProvider, setBrowseProvider] = React.useState<'mongodb' | 'prisma' | null>(null);
+  const [browseProvider, setBrowseProvider] = React.useState<'mongodb' | null>(null);
   const browseLimit = 10;
 
   const schemaConfig: SchemaConfig = {
@@ -190,26 +184,14 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     () => normalizeSchemaCollections(fetchedDbSchema),
     [fetchedDbSchema]
   );
-  const showProviderLabel = fetchedDbSchema?.provider === 'multi';
-  const availableProviders = React.useMemo<Array<'mongodb' | 'prisma'>>(() => {
-    if (!fetchedDbSchema) return [] as Array<'mongodb' | 'prisma'>;
-    if (fetchedDbSchema.provider === 'multi') {
-      const providers = new Set<'mongodb' | 'prisma'>();
-      schemaCollections.forEach((collection) => {
-        if (collection.provider === 'mongodb' || collection.provider === 'prisma') {
-          providers.add(collection.provider);
-        }
-      });
-      return Array.from(providers);
-    }
-    if (fetchedDbSchema.provider === 'mongodb' || fetchedDbSchema.provider === 'prisma') {
-      return [fetchedDbSchema.provider];
-    }
-    return [] as Array<'mongodb' | 'prisma'>;
-  }, [fetchedDbSchema, schemaCollections]);
+  const showProviderLabel = false;
+  const availableProviders = React.useMemo<Array<'mongodb'>>(
+    () => (schemaCollections.length > 0 ? ['mongodb'] : []),
+    [schemaCollections]
+  );
 
   React.useEffect((): void => {
-    if (schemaConfig.provider === 'mongodb' || schemaConfig.provider === 'prisma') {
+    if (schemaConfig.provider === 'mongodb') {
       setBrowseProvider(schemaConfig.provider);
       return;
     }
@@ -258,11 +240,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
           <div className='space-y-4'>
             <div className='text-xs text-gray-400'>
               Provider:{' '}
-              <span className='text-purple-300'>
-                {fetchedDbSchema?.provider === 'multi'
-                  ? availableProviders.join(' + ') || 'multi'
-                  : fetchedDbSchema?.provider || 'N/A'}
-              </span>
+              <span className='text-purple-300'>mongodb</span>
               {' · '}
               {schemaCollections.length} collections
             </div>
@@ -273,12 +251,11 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 size='sm'
                 value={schemaConfig.provider ?? 'auto'}
                 onValueChange={(value: string) =>
-                  updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })
+                  updateSchemaConfig({ provider: value as 'auto' | 'mongodb' })
                 }
                 options={[
                   { value: 'auto', label: 'Auto (Primary DB)' },
                   { value: 'mongodb', label: 'MongoDB' },
-                  { value: 'prisma', label: 'Prisma (PostgreSQL)' },
                 ]}
                 triggerClassName='mt-2 border-border bg-card/70'
               />
@@ -452,7 +429,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         size='sm'
                         value={browseProvider ?? ''}
                         onValueChange={(value: string) => {
-                          setBrowseProvider((value as 'mongodb' | 'prisma') || null);
+                          setBrowseProvider((value as 'mongodb') || null);
                         }}
                         options={availableProviders.map((provider) => ({
                           value: provider,

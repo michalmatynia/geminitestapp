@@ -7,14 +7,12 @@ const {
   enforceAiPathsActionRateLimitMock,
   assertAiPathRunAccessMock,
   resolvePathRunRepositoryMock,
-  resolveAlternatePathRunRepositoryMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   requireAiPathsRunAccessMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
   assertAiPathRunAccessMock: vi.fn(),
   resolvePathRunRepositoryMock: vi.fn(),
-  resolveAlternatePathRunRepositoryMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -30,7 +28,6 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   return {
     ...actual,
     resolvePathRunRepository: resolvePathRunRepositoryMock,
-    resolveAlternatePathRunRepository: resolveAlternatePathRunRepositoryMock,
   };
 });
 
@@ -54,7 +51,7 @@ describe('ai-paths run detail handler', () => {
       meta: {
         runRepository: {
           collection: 'ai_path_runs',
-          provider: 'prisma',
+          provider: 'mongodb',
           routeMode: 'fallback',
         },
       },
@@ -62,12 +59,11 @@ describe('ai-paths run detail handler', () => {
     repo.listRunNodes.mockReset().mockResolvedValue([]);
     repo.listRunEvents.mockReset().mockResolvedValue([]);
     resolvePathRunRepositoryMock.mockReset().mockResolvedValue({
-      provider: 'prisma',
+      provider: 'mongodb',
       routeMode: 'fallback',
       collection: 'ai_path_runs',
       repo,
     });
-    resolveAlternatePathRunRepositoryMock.mockReset().mockResolvedValue(null);
   });
 
   it('returns run detail with repository provider headers', async () => {
@@ -78,9 +74,9 @@ describe('ai-paths run detail handler', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('prisma');
+    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('mongodb');
     expect(response.headers.get('X-Ai-Paths-Run-Route-Mode')).toBe('fallback');
-    expect(response.headers.get('X-Ai-Paths-Run-Writer-Provider')).toBe('prisma');
+    expect(response.headers.get('X-Ai-Paths-Run-Writer-Provider')).toBe('mongodb');
     await expect(response.json()).resolves.toMatchObject({
       run: {
         id: 'run-1',
@@ -90,13 +86,13 @@ describe('ai-paths run detail handler', () => {
       events: [],
       repository: {
         reader: {
-          selectedProvider: 'prisma',
+          selectedProvider: 'mongodb',
           selectedRouteMode: 'fallback',
-          readProvider: 'prisma',
+          readProvider: 'mongodb',
           readMode: 'selected',
         },
         writer: {
-          provider: 'prisma',
+          provider: 'mongodb',
           routeMode: 'fallback',
         },
         mismatch: false,
@@ -128,15 +124,15 @@ describe('ai-paths run detail handler', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('prisma');
+    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('mongodb');
     expect(response.headers.get('X-Ai-Paths-Run-Writer-Provider')).toBe('mongodb');
     expect(response.headers.get('X-Ai-Paths-Run-Provider-Mismatch')).toBe('1');
     await expect(response.json()).resolves.toMatchObject({
       repository: {
         reader: {
-          selectedProvider: 'prisma',
+          selectedProvider: 'mongodb',
           selectedRouteMode: 'fallback',
-          readProvider: 'prisma',
+          readProvider: 'mongodb',
           readMode: 'selected',
         },
         writer: {
@@ -148,53 +144,16 @@ describe('ai-paths run detail handler', () => {
     });
   });
 
-  it('falls back to the alternate provider when the selected provider cannot find the run', async () => {
+  it('returns not found when the selected repository cannot find the run', async () => {
     repo.findRunById.mockResolvedValueOnce(null);
-    const alternateRepo = {
-      findRunById: vi.fn().mockResolvedValue({
-        id: 'run-alt',
-        status: 'queued',
-        meta: {
-          runRepository: {
-            collection: 'ai_path_runs',
-            provider: 'mongodb',
-            routeMode: 'explicit',
-          },
-        },
-      }),
-      listRunNodes: vi.fn().mockResolvedValue([]),
-      listRunEvents: vi.fn().mockResolvedValue([]),
-    };
-    resolveAlternatePathRunRepositoryMock.mockResolvedValueOnce({
-      provider: 'mongodb',
-      collection: 'ai_path_runs',
-      repo: alternateRepo,
-    });
-
-    const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/runs/run-alt'),
-      {} as Parameters<typeof GET_handler>[1],
-      { runId: 'run-alt' }
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('X-Ai-Paths-Run-Provider')).toBe('prisma');
-    expect(response.headers.get('X-Ai-Paths-Run-Read-Provider')).toBe('mongodb');
-    expect(response.headers.get('X-Ai-Paths-Run-Read-Mode')).toBe('alternate');
-    await expect(response.json()).resolves.toMatchObject({
-      run: {
-        id: 'run-alt',
-      },
-      repository: {
-        reader: {
-          selectedProvider: 'prisma',
-          readProvider: 'mongodb',
-          readMode: 'alternate',
-        },
-        writer: {
-          provider: 'mongodb',
-        },
-      },
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/ai-paths/runs/run-alt'),
+        {} as Parameters<typeof GET_handler>[1],
+        { runId: 'run-alt' }
+      )
+    ).rejects.toMatchObject({
+      message: 'Run not found',
     });
   });
 });

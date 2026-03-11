@@ -445,7 +445,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
         });
       }
       nextDatabaseConfig.query = {
-        provider: provider ?? 'auto',
+        provider: provider === 'mongodb' ? provider : 'auto',
         collection:
           typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
         mode:

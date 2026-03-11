@@ -77,7 +77,7 @@ export function SectionBlockRenderer({ block }: { block: BlockInstance }): React
                       </SectionLayoutProvider>
                     ))
                   ) : (
-                    <p className='text-gray-500'>Rich text section</p>
+                    <p className='cms-appearance-muted-text'>Rich text section</p>
                   )}
                 </div>
               </div>
@@ -187,7 +187,7 @@ export function SectionBlockRenderer({ block }: { block: BlockInstance }): React
                     </SectionLayoutProvider>
                   ))
                 ) : (
-                  <span className='text-sm text-gray-400'>Text atoms</span>
+                  <span className='cms-appearance-muted-text text-sm'>Text atoms</span>
                 )}
               </div>
             )}

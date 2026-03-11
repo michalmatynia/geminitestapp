@@ -47,7 +47,7 @@ describe('database client canonical db-action routing', () => {
     });
   });
 
-  it('routes databaseUpdate payloads through db-action updateOne/updateMany mapping', async () => {
+  it('normalizes deprecated Prisma databaseUpdate providers to the Mongo db-action contract', async () => {
     await databaseUpdate({
       provider: 'prisma',
       collection: 'products',
@@ -58,7 +58,6 @@ describe('database client canonical db-action routing', () => {
     });
 
     expect(apiPostMock).toHaveBeenCalledWith('/api/ai-paths/db-action', {
-      provider: 'prisma',
       collection: 'products',
       action: 'updateMany',
       filter: { id: 'p-1' },

@@ -5,7 +5,6 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {
   useDatabaseConstructorActionsContext,
-  useDatabaseConstructorStateContext,
 } from './DatabaseConstructorContext';
 import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
@@ -51,13 +50,10 @@ export function DatabaseTemplateSnippetsDialog(
     projectionPresets,
   } = props;
 
-  const { resolvedProvider } = useDatabaseConstructorStateContext();
   const { setSelectedAiQueryId, updateQueryConfig, insertTemplateSnippet } =
     useDatabaseConstructorActionsContext();
 
   const { toast } = useAiPathOrchestrator();
-
-  const isPrismaProvider = resolvedProvider === 'prisma';
 
   return (
     <DetailModal
@@ -217,9 +213,7 @@ export function DatabaseTemplateSnippetsDialog(
         </div>
 
         <div className='space-y-2'>
-          <Label className='text-xs text-gray-400 uppercase tracking-wide'>
-            {isPrismaProvider ? 'Order By Options' : 'Sort Options'}
-          </Label>
+          <Label className='text-xs text-gray-400 uppercase tracking-wide'>Sort Options</Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {sortPresets.map(
               (preset: SortPreset): React.JSX.Element => (
@@ -248,7 +242,7 @@ export function DatabaseTemplateSnippetsDialog(
 
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>
-            {isPrismaProvider ? 'Select (Fields)' : 'Projection (Fields)'}
+            Projection (Fields)
           </Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {projectionPresets.map(

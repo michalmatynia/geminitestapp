@@ -158,7 +158,7 @@ test.describe('Kangur tutor guest intro', () => {
     const guestIntro = page.getByTestId('kangur-ai-tutor-guest-intro');
     await expect(guestIntro).toBeVisible();
 
-    await guestIntro.getByRole('button', { name: 'Nie' }).click();
+    await guestIntro.getByTestId('kangur-ai-tutor-guest-intro-close').click();
 
     await expect(guestIntro).toHaveCount(0);
     await expect.poll(() => readGuestIntroStatus(page)).toBe('dismissed');
@@ -222,6 +222,8 @@ test.describe('Kangur tutor guest intro', () => {
       'data-guidance-target',
       'login_action'
     );
+    await expect(page.getByTestId('kangur-primary-nav-login')).toBeVisible();
+    await expect(page.getByTestId('kangur-primary-nav-login')).toBeInViewport();
     await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toHaveAttribute(
       'data-guidance-rim-color',
       '#78350f'
@@ -449,8 +451,9 @@ test.describe('Kangur tutor guest intro', () => {
     await guestIntro.getByTestId('kangur-ai-tutor-guest-intro-close').click();
     await page.getByTestId('kangur-ai-tutor-avatar').click();
 
-    await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-header')).toContainText('Mila');
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toContainText('Mila');
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(
       page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first()
     ).toHaveAttribute('src', /\/uploads\/agentcreator\/personas\/persona-mila\/neutral\/avatar\.png/);

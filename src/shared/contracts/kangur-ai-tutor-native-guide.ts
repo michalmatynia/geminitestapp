@@ -18,6 +18,8 @@ export const kangurAiTutorNativeGuideEntrySchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   surface: kangurAiTutorSurfaceSchema.nullable().default(null),
   focusKind: kangurAiTutorFocusKindSchema.nullable().default(null),
+  focusIdPrefixes: z.array(tutorGuideTagSchema).max(16).default([]),
+  contentIdPrefixes: z.array(tutorGuideTagSchema).max(16).default([]),
   title: nonEmptyTrimmedString.max(120),
   shortDescription: nonEmptyTrimmedString.max(240),
   fullDescription: tutorGuideCopySchema,
@@ -35,7 +37,7 @@ export type KangurAiTutorNativeGuideEntry = z.infer<
 
 export const kangurAiTutorNativeGuideStoreSchema = z.object({
   locale: nonEmptyTrimmedString.max(16).default('pl'),
-  version: z.number().int().positive().default(1),
+  version: z.number().int().positive().default(2),
   entries: z.array(kangurAiTutorNativeGuideEntrySchema).max(200).default([]),
 });
 export type KangurAiTutorNativeGuideStore = z.infer<
@@ -46,6 +48,8 @@ const createGuideEntry = (input: {
   id: string;
   surface?: KangurAiTutorSurface | null;
   focusKind?: KangurAiTutorFocusKind | null;
+  focusIdPrefixes?: string[];
+  contentIdPrefixes?: string[];
   title: string;
   shortDescription: string;
   fullDescription: string;
@@ -59,6 +63,8 @@ const createGuideEntry = (input: {
   kangurAiTutorNativeGuideEntrySchema.parse({
     surface: null,
     focusKind: null,
+    focusIdPrefixes: [],
+    contentIdPrefixes: [],
     hints: [],
     relatedGames: [],
     relatedTests: [],
@@ -72,11 +78,12 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
   Object.freeze(
     kangurAiTutorNativeGuideStoreSchema.parse({
       locale: 'pl',
-      version: 1,
+      version: 2,
       entries: [
         createGuideEntry({
           id: 'lesson-overview',
           surface: 'lesson',
+          contentIdPrefixes: ['lesson-'],
           title: 'Ekran lekcji',
           shortDescription: 'To tutaj uczen przechodzi przez temat krok po kroku.',
           fullDescription:
@@ -105,6 +112,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'lesson-header',
           surface: 'lesson',
           focusKind: 'lesson_header',
+          focusIdPrefixes: ['kangur-lesson-header'],
           title: 'Naglowek lekcji',
           shortDescription: 'Naglowek pokazuje temat, poziom i glowny cel tej lekcji.',
           fullDescription:
@@ -121,6 +129,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'lesson-document',
           surface: 'lesson',
           focusKind: 'document',
+          focusIdPrefixes: ['kangur-lesson-document'],
           title: 'Glowna tresc lekcji',
           shortDescription: 'To glowny material z objasnieniami, obrazami i przykladami.',
           fullDescription:
@@ -139,6 +148,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'lesson-assignment',
           surface: 'lesson',
           focusKind: 'assignment',
+          focusIdPrefixes: ['kangur-lesson-assignment'],
           title: 'Zadanie powiazane z lekcja',
           shortDescription: 'To szybki most miedzy lekcja a praktyka.',
           fullDescription:
@@ -154,6 +164,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'shared-progress',
           focusKind: 'progress',
+          focusIdPrefixes: ['kangur-game-home-progress'],
+          contentIdPrefixes: ['game:home'],
           title: 'Postep',
           shortDescription: 'Postep pokazuje, jak regularnie i jak skutecznie uczen pracuje.',
           fullDescription:
@@ -172,6 +184,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'shared-leaderboard',
           focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-home-leaderboard'],
+          contentIdPrefixes: ['game:home'],
           title: 'Ranking',
           shortDescription: 'Ranking pokazuje wyniki i pozycje na tle innych prob.',
           fullDescription:
@@ -187,6 +201,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'shared-home-actions',
           focusKind: 'home_actions',
+          focusIdPrefixes: ['kangur-game-home-actions'],
+          contentIdPrefixes: ['game:home'],
           title: 'Szybkie akcje',
           shortDescription: 'To skroty do najwazniejszych aktywnosci w Kangur.',
           fullDescription:
@@ -205,6 +221,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'shared-home-quest',
           focusKind: 'home_quest',
+          focusIdPrefixes: ['kangur-game-home-quest'],
+          contentIdPrefixes: ['game:home'],
           title: 'Misja dnia',
           shortDescription: 'Misja dnia podpowiada jeden maly, konkretny cel na teraz.',
           fullDescription:
@@ -223,6 +241,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'shared-priority-assignments',
           focusKind: 'priority_assignments',
+          focusIdPrefixes: ['kangur-game-home-assignments'],
+          contentIdPrefixes: ['game:home'],
           title: 'Priorytetowe zadania',
           shortDescription: 'To najwazniejsze rzeczy do zrobienia w tej chwili.',
           fullDescription:
@@ -238,6 +258,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
         createGuideEntry({
           id: 'game-overview',
           surface: 'game',
+          contentIdPrefixes: ['game:home'],
           title: 'Ekran gry',
           shortDescription: 'Gra sluzy do szybkiego treningu i utrwalania materialu.',
           fullDescription:
@@ -257,9 +278,230 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           sortOrder: 100,
         }),
         createGuideEntry({
+          id: 'game-training-setup',
+          surface: 'game',
+          contentIdPrefixes: ['game:training-setup'],
+          title: 'Konfiguracja treningu',
+          shortDescription:
+            'Tutaj ustawiasz jedna sesje treningowa: poziom, kategorie i liczbe pytan.',
+          fullDescription:
+            'Konfiguracja treningu sluzy do przygotowania jednej rundy cwiczen. Uczen dobiera trudnosc, zakres kategorii i liczbe pytan, zeby dopasowac tempo do aktualnej formy. To dobre miejsce, gdy trzeba zrobic krotsza, celowana serie zamiast przechodzic przez caly material naraz.',
+          hints: [
+            'Najpierw wybierz poziom, ktory pozwoli utrzymac dokladnosc.',
+            'Potem ogranicz kategorie do tego, co uczen cwiczy teraz najbardziej.',
+            'Na start lepsza jest krotsza seria pytan niz zbyt dluga runda bez przerwy.',
+          ],
+          followUpActions: [{ id: 'game-training-setup-open', label: 'Skonfiguruj trening', page: 'Game' }],
+          triggerPhrases: [
+            'konfiguracja treningu',
+            'trening mieszany',
+            'ustawienia treningu',
+            'dobierz poziom',
+            'liczbe pytan',
+            'kategorie',
+          ],
+          sortOrder: 105,
+        }),
+        createGuideEntry({
+          id: 'game-operation-selector',
+          surface: 'game',
+          contentIdPrefixes: ['game:operation-selector'],
+          title: 'Wybor rodzaju gry',
+          shortDescription:
+            'Tutaj wybierasz rodzaj gry lub szybkie cwiczenie najlepiej pasujace do celu.',
+          fullDescription:
+            'Wybor rodzaju gry pomaga zdecydowac, czy teraz lepszy bedzie trening dzialan, kalendarz, figury albo inna szybka aktywnosc. Ta sekcja nie sprawdza jeszcze wyniku. Jej rola to skierowac ucznia do rodzaju praktyki, ktory najlepiej utrwali aktualny temat albo rytm nauki.',
+          hints: [
+            'Wybierz aktywnosc zgodna z tym, co bylo ostatnio cwiczone w lekcji.',
+            'Jesli uczen potrzebuje powtorki podstaw, zacznij od prostszej gry zamiast od trybu konkursowego.',
+          ],
+          relatedGames: ['Dodawanie', 'Odejmowanie', 'Kalendarz', 'Figury'],
+          followUpActions: [{ id: 'game-operation-selector-open', label: 'Wybierz gre', page: 'Game' }],
+          triggerPhrases: [
+            'wybor rodzaju gry',
+            'wybor gry',
+            'jaka gre wybrac',
+            'rodzaj gry',
+            'wybor dzialania',
+          ],
+          sortOrder: 106,
+        }),
+        createGuideEntry({
+          id: 'game-kangur-setup',
+          surface: 'game',
+          contentIdPrefixes: ['game:kangur:setup'],
+          title: 'Konfiguracja sesji Kangura Matematycznego',
+          shortDescription:
+            'Tutaj wybierasz edycje konkursu i zestaw zadan przed startem sesji.',
+          fullDescription:
+            'Konfiguracja sesji Kangura Matematycznego przygotowuje bardziej konkursowy tryb pracy. Uczen wybiera wariant albo pakiet zadan, a potem przechodzi do dluzszych, bardziej problemowych pytan. To dobre miejsce, gdy trzeba pocwiczyc czytanie zadan i spokojniejsze myslenie wieloetapowe.',
+          hints: [
+            'Wybierz tryb, ktory odpowiada aktualnemu poziomowi ucznia.',
+            'Jesli uczen dopiero wraca do tego typu zadan, lepiej zaczac od krotszej serii.',
+          ],
+          followUpActions: [{ id: 'game-kangur-setup-open', label: 'Przygotuj sesje', page: 'Game' }],
+          triggerPhrases: [
+            'konfiguracja sesji kangura matematycznego',
+            'konfiguracja kangura',
+            'edycje konkursu',
+            'zestaw zadan',
+            'kangur setup',
+          ],
+          sortOrder: 107,
+        }),
+        createGuideEntry({
+          id: 'game-kangur-session',
+          surface: 'game',
+          contentIdPrefixes: ['game:kangur:'],
+          title: 'Sesja Kangura Matematycznego',
+          shortDescription:
+            'Tutaj uczen rozwiazuje zadania w bardziej konkursowym, problemowym stylu.',
+          fullDescription:
+            'Sesja Kangura Matematycznego to tryb zadan, w ktorym liczy sie uwazne czytanie, laczenie kilku informacji i spokojne planowanie rozwiazania. To nie jest tylko szybki trening reakcji. Najwieksza wartosc daje zatrzymanie sie na tresci i sprawdzanie, co dokladnie pyta zadanie.',
+          hints: [
+            'Czytaj cale zadanie przed ruszeniem z obliczeniami.',
+            'Szukaj zaleznosci miedzy warunkami, zamiast liczyc od razu wszystko naraz.',
+          ],
+          relatedTests: ['Spokojna powtorka po sesji problemowej'],
+          followUpActions: [{ id: 'game-kangur-session-open', label: 'Kontynuuj sesje', page: 'Game' }],
+          triggerPhrases: [
+            'sesja kangura matematycznego',
+            'sesja kangura',
+            'zadania kangura',
+            'tryb konkursowy',
+          ],
+          sortOrder: 108,
+        }),
+        createGuideEntry({
+          id: 'game-calendar-quiz',
+          surface: 'game',
+          contentIdPrefixes: ['game:calendar_quiz'],
+          title: 'Cwiczenia z kalendarzem',
+          shortDescription:
+            'Tutaj uczen cwiczy daty, dni tygodnia, miesiace i zaleznosci w kalendarzu.',
+          fullDescription:
+            'Cwiczenia z kalendarzem utrwalaja orientacje w datach i czasie. Zadania zwykle wymagaja zauważenia kolejnosci dni, miesiecy albo przesuniec na osi czasu. To dobra aktywnosc, gdy trzeba polaczyc matematyke z codziennym rozumieniem kalendarza.',
+          hints: [
+            'Najpierw ustal punkt startowy, a potem przesuwaj sie dzien po dniu lub tydzien po tygodniu.',
+            'Zwracaj uwage, czy pytanie dotyczy dnia tygodnia, daty czy odstepu czasu.',
+          ],
+          relatedGames: ['Kalendarz'],
+          followUpActions: [{ id: 'game-calendar-open', label: 'Cwicz kalendarz', page: 'Game' }],
+          triggerPhrases: [
+            'cwiczenia z kalendarzem',
+            'kalendarz',
+            'daty',
+            'dni tygodnia',
+            'miesiace',
+          ],
+          sortOrder: 109,
+        }),
+        createGuideEntry({
+          id: 'game-geometry-quiz',
+          surface: 'game',
+          contentIdPrefixes: ['game:geometry_quiz'],
+          title: 'Cwiczenia z figurami',
+          shortDescription:
+            'Tutaj uczen rozpoznaje figury i cwiczy ich wlasnosci w szybkich zadaniach.',
+          fullDescription:
+            'Cwiczenia z figurami pomagaja utrwalic nazwy ksztaltow, ich cechy oraz proste zaleznosci przestrzenne. To dobra sekcja do laczenia patrzenia na rysunek z nazewnictwem i wyobraznia geometryczna.',
+          hints: [
+            'Najpierw nazwij figure albo jej ceche, zanim zaznaczysz odpowiedz.',
+            'Jesli trzeba cos narysowac lub rozpoznac, porownaj boki, katy i osie symetrii.',
+          ],
+          relatedGames: ['Figury'],
+          followUpActions: [{ id: 'game-geometry-open', label: 'Cwicz figury', page: 'Game' }],
+          triggerPhrases: [
+            'cwiczenia z figurami',
+            'figury',
+            'geometria',
+            'ksztalty',
+            'rysowanie figur',
+          ],
+          sortOrder: 110,
+        }),
+        createGuideEntry({
+          id: 'game-assignment',
+          surface: 'game',
+          focusKind: 'assignment',
+          contentIdPrefixes: ['game:assignment:'],
+          title: 'Zadanie treningowe',
+          shortDescription:
+            'To karta pokazujaca, jaki trening jest teraz najwazniejszy do wykonania.',
+          fullDescription:
+            'Zadanie treningowe laczy plan nauki z jedna konkretna runda gry. Pokazuje, jaki zakres cwiczen warto uruchomic teraz, zeby nie wybierac przypadkowej aktywnosci. To most miedzy ogolnym celem a jednym nastepnym ruchem w praktyce.',
+          hints: [
+            'Najpierw uruchom zadanie, ktore jest aktywne albo najwyzej na liscie.',
+            'Jesli po kilku probach zadanie dalej jest trudne, wroc do lekcji z tego samego tematu.',
+          ],
+          followUpActions: [
+            { id: 'game-assignment-open', label: 'Uruchom zadanie', page: 'Game' },
+            { id: 'game-assignment-lessons', label: 'Wroc do lekcji', page: 'Lessons' },
+          ],
+          triggerPhrases: [
+            'zadanie treningowe',
+            'aktywne zadanie',
+            'przypisane zadanie',
+            'co mam teraz cwiczyc',
+          ],
+          sortOrder: 112,
+        }),
+        createGuideEntry({
+          id: 'game-question',
+          surface: 'game',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-game-question-anchor'],
+          contentIdPrefixes: ['game:practice:'],
+          title: 'Pytanie w grze',
+          shortDescription:
+            'To aktualne zadanie do rozwiazania, w ktorym liczy sie tok myslenia, nie samo tempo.',
+          fullDescription:
+            'Pytanie w grze pokazuje jedna aktywna probe do rozwiazania. Uczen powinien najpierw odczytac tresc, rozpoznac typ zadania i dopiero potem odpowiedziec. Tutor moze podpowiedziec, na co patrzec, ale nie powinien podawac gotowego wyniku zamiast ucznia.',
+          hints: [
+            'Najpierw nazwij w glowie, jaki to typ zadania: dodawanie, odejmowanie, mnozenie albo inna aktywnosc.',
+            'Jesli czujesz presje czasu, zwolnij na chwile i upewnij sie, co dokladnie pytanie chce sprawdzic.',
+            'Dopiero po zrozumieniu tresci przejdz do liczenia albo wyboru odpowiedzi.',
+          ],
+          relatedGames: ['Dodawanie', 'Odejmowanie', 'Mnozenie', 'Dzielenie'],
+          triggerPhrases: [
+            'pytanie w grze',
+            'aktualne pytanie',
+            'jak podejsc do tego pytania',
+            'co robi to pytanie',
+          ],
+          sortOrder: 113,
+        }),
+        createGuideEntry({
+          id: 'game-review',
+          surface: 'game',
+          focusKind: 'review',
+          contentIdPrefixes: ['game:assignment:', 'game:practice:'],
+          title: 'Omowienie wyniku gry',
+          shortDescription:
+            'To miejsce do zobaczenia, co poszlo dobrze i co warto poprawic w kolejnej rundzie.',
+          fullDescription:
+            'Omowienie wyniku gry pomaga zauwazyc wzor po zakonczonej rundzie: czy problemem bylo tempo, nieuwaga albo konkretny typ zadan. Zamiast patrzec tylko na liczbe punktow, warto sprawdzic, co bylo stabilne i jaki jeden ruch poprawi kolejna probe.',
+          hints: [
+            'Nie oceniaj rundy tylko po jednym wyniku. Sprawdz, czy blad sie powtarza.',
+            'Po slabszej probie wybierz jeden konkretny obszar do poprawy, zamiast zmieniac wszystko naraz.',
+          ],
+          followUpActions: [
+            { id: 'game-review-retry', label: 'Sprobuj jeszcze raz', page: 'Game' },
+            { id: 'game-review-lessons', label: 'Wroc do lekcji', page: 'Lessons' },
+          ],
+          triggerPhrases: [
+            'omowienie gry',
+            'wynik gry',
+            'co dalej po grze',
+            'jak czytac ten wynik',
+          ],
+          sortOrder: 114,
+        }),
+        createGuideEntry({
           id: 'game-summary',
           surface: 'game',
           focusKind: 'summary',
+          contentIdPrefixes: ['game:result'],
           title: 'Podsumowanie gry',
           shortDescription: 'Podsumowanie gry pokazuje, co juz wychodzi, a co wymaga jeszcze jednej serii.',
           fullDescription:
@@ -292,6 +534,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'test-summary',
           surface: 'test',
           focusKind: 'summary',
+          focusIdPrefixes: ['kangur-test-summary:'],
           title: 'Podsumowanie testu',
           shortDescription: 'Podsumowanie testu pokazuje wynik, ale przede wszystkim kierunek dalszej pracy.',
           fullDescription:
@@ -308,6 +551,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'test-question',
           surface: 'test',
           focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
           title: 'Pytanie testowe',
           shortDescription: 'To miejsce do spokojnego przeczytania tresci i samodzielnej proby.',
           fullDescription:
@@ -324,6 +568,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
           id: 'test-review',
           surface: 'test',
           focusKind: 'review',
+          focusIdPrefixes: ['kangur-test-question:'],
           title: 'Omowienie po tescie',
           shortDescription: 'Omowienie pomaga zrozumiec blad i wyciagnac jeden nastepny wniosek.',
           fullDescription:
@@ -339,6 +584,95 @@ export const DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE: Readonly<KangurAiTutorN
       ],
     })
   );
+
+const isPlainNativeGuideObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const mergeNativeGuideEntry = (
+  baseEntry: KangurAiTutorNativeGuideEntry,
+  entry: unknown
+): KangurAiTutorNativeGuideEntry => {
+  const nextEntry = isPlainNativeGuideObject(entry) ? entry : {};
+  return kangurAiTutorNativeGuideEntrySchema.parse({
+    ...baseEntry,
+    ...nextEntry,
+    surface: nextEntry['surface'] === undefined ? baseEntry.surface : nextEntry['surface'],
+    focusKind: nextEntry['focusKind'] === undefined ? baseEntry.focusKind : nextEntry['focusKind'],
+    focusIdPrefixes:
+      nextEntry['focusIdPrefixes'] === undefined ? baseEntry.focusIdPrefixes : nextEntry['focusIdPrefixes'],
+    contentIdPrefixes:
+      nextEntry['contentIdPrefixes'] === undefined
+        ? baseEntry.contentIdPrefixes
+        : nextEntry['contentIdPrefixes'],
+    hints: nextEntry['hints'] === undefined ? baseEntry.hints : nextEntry['hints'],
+    relatedGames:
+      nextEntry['relatedGames'] === undefined ? baseEntry.relatedGames : nextEntry['relatedGames'],
+    relatedTests:
+      nextEntry['relatedTests'] === undefined ? baseEntry.relatedTests : nextEntry['relatedTests'],
+    followUpActions:
+      nextEntry['followUpActions'] === undefined
+        ? baseEntry.followUpActions
+        : nextEntry['followUpActions'],
+    triggerPhrases:
+      nextEntry['triggerPhrases'] === undefined
+        ? baseEntry.triggerPhrases
+        : nextEntry['triggerPhrases'],
+    enabled: nextEntry['enabled'] === undefined ? baseEntry.enabled : nextEntry['enabled'],
+    sortOrder: nextEntry['sortOrder'] === undefined ? baseEntry.sortOrder : nextEntry['sortOrder'],
+  });
+};
+
+export const mergeKangurAiTutorNativeGuideStore = (
+  baseStore: KangurAiTutorNativeGuideStore,
+  value: unknown
+): KangurAiTutorNativeGuideStore => {
+  const valueObject = isPlainNativeGuideObject(value) ? value : {};
+  const rawEntries = Array.isArray(valueObject['entries']) ? valueObject['entries'] : [];
+  const baseEntriesById = new Map(baseStore.entries.map((entry) => [entry.id, entry]));
+  const seenEntryIds = new Set<string>();
+  const mergedEntries: KangurAiTutorNativeGuideEntry[] = [];
+
+  for (const rawEntry of rawEntries) {
+    if (!isPlainNativeGuideObject(rawEntry)) {
+      continue;
+    }
+
+    const rawId = typeof rawEntry['id'] === 'string' ? rawEntry['id'].trim() : '';
+    if (!rawId || seenEntryIds.has(rawId)) {
+      continue;
+    }
+    seenEntryIds.add(rawId);
+
+    const baseEntry = baseEntriesById.get(rawId);
+    mergedEntries.push(
+      baseEntry
+        ? mergeNativeGuideEntry(baseEntry, rawEntry)
+        : kangurAiTutorNativeGuideEntrySchema.parse(rawEntry)
+    );
+  }
+
+  for (const baseEntry of baseStore.entries) {
+    if (!seenEntryIds.has(baseEntry.id)) {
+      mergedEntries.push(baseEntry);
+    }
+  }
+
+  return kangurAiTutorNativeGuideStoreSchema.parse({
+    ...baseStore,
+    ...valueObject,
+    locale:
+      typeof valueObject['locale'] === 'string' && valueObject['locale'].trim().length > 0
+        ? valueObject['locale']
+        : baseStore.locale,
+    version: Math.max(
+      baseStore.version,
+      typeof valueObject['version'] === 'number' && Number.isInteger(valueObject['version'])
+        ? valueObject['version']
+        : baseStore.version
+    ),
+    entries: mergedEntries,
+  });
+};
 
 export function parseKangurAiTutorNativeGuideStore(
   raw: unknown

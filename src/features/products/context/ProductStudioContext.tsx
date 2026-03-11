@@ -4,6 +4,11 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import {
+  productStudioAuditResponseSchema,
+  productStudioLinkResponseSchema,
+  productStudioVariantsResponseSchema,
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import {
   useOptionalContextRegistryPageEnvelope,
@@ -176,12 +181,14 @@ export function ProductStudioProvider({
     setVariantsLoading(true);
     setStudioActionError(null);
     try {
-      const response = await api.get<ProductStudioVariantsResponse>(
-        `/api/v2/products/${encodeURIComponent(product.id)}/studio/variants`,
-        {
-          params: { imageSlotIndex: selectedImageIndex, projectId: studioProjectId },
-          cache: 'no-store',
-        }
+      const response = productStudioVariantsResponseSchema.parse(
+        await api.get<unknown>(
+          `/api/v2/products/${encodeURIComponent(product.id)}/studio/variants`,
+          {
+            params: { imageSlotIndex: selectedImageIndex, projectId: studioProjectId },
+            cache: 'no-store',
+          }
+        )
       );
       setVariantsData(response);
       setSelectedVariantSlotId((current) => {
@@ -212,13 +219,12 @@ export function ProductStudioProvider({
     setAuditLoading(true);
     setAuditError(null);
     try {
-      const response = await api.get<{ entries: ProductStudioAuditEntry[] }>(
-        `/api/v2/products/${encodeURIComponent(product.id)}/studio/audit`,
-        {
+      const response = productStudioAuditResponseSchema.parse(
+        await api.get<unknown>(`/api/v2/products/${encodeURIComponent(product.id)}/studio/audit`, {
           params: { imageSlotIndex: selectedImageIndex, limit: 40 },
           cache: 'no-store',
           logError: false,
-        }
+        })
       );
       setAuditEntries(Array.isArray(response.entries) ? response.entries : []);
     } catch (error) {
@@ -261,12 +267,11 @@ export function ProductStudioProvider({
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
     setOpeningInImageStudio(true);
     try {
-      const response = await api.post<{ projectId: string; sourceSlot: { id: string } }>(
-        `/api/v2/products/${encodeURIComponent(product.id)}/studio/link`,
-        {
+      const response = productStudioLinkResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(product.id)}/studio/link`, {
           imageSlotIndex: selectedImageIndex,
           projectId: studioProjectId,
-        }
+        })
       );
       const sourceSlotId = response.sourceSlot?.id;
       if (!sourceSlotId) throw internalError('Source slot not found.');

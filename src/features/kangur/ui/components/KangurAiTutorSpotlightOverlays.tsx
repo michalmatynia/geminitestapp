@@ -47,17 +47,17 @@ export function KangurAiTutorSpotlightOverlays({
             initial={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.98 }
+                : { opacity: 0 }
             }
             animate={reducedMotionTransitions.stableState}
             exit={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.98 }
+                : { opacity: 0 }
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={selectionSpotlightStyle}
-            className='pointer-events-none fixed z-[72] rounded-[22px] border-2 border-amber-400/85 bg-amber-100/20 shadow-[0_0_0_8px_rgba(251,191,36,0.18)]'
+            className='pointer-events-none fixed z-[72] rounded-[22px] border-2 border-amber-400/80 bg-amber-100/15 shadow-[0_0_0_6px_rgba(251,191,36,0.14),0_0_24px_-4px_rgba(245,158,11,0.2)]'
           />
         ) : null}
       </AnimatePresence>
@@ -70,13 +70,13 @@ export function KangurAiTutorSpotlightOverlays({
             initial={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             animate={reducedMotionTransitions.stableState}
             exit={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={selectionContextSpotlightStyle}
@@ -93,13 +93,13 @@ export function KangurAiTutorSpotlightOverlays({
             initial={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             animate={reducedMotionTransitions.stableState}
             exit={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={sectionContextSpotlightStyle}
@@ -116,13 +116,13 @@ export function KangurAiTutorSpotlightOverlays({
             initial={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             animate={reducedMotionTransitions.stableState}
             exit={
               prefersReducedMotion
                 ? reducedMotionTransitions.stableState
-                : { opacity: 0, scale: 0.985 }
+                : { opacity: 0 }
             }
             transition={prefersReducedMotion ? reducedMotionTransitions.instant : undefined}
             style={sectionDropHighlightStyle}

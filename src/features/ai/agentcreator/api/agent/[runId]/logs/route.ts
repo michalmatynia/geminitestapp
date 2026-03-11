@@ -41,7 +41,7 @@ async function GET_handler(
   }
   const response: AgentBrowserLogsResponse = {
     logs: logs.map(
-      (log): AgentBrowserLogRecord => ({
+      (log: any): AgentBrowserLogRecord => ({
         ...log,
         stepId: log.stepId ?? null,
         metadata: log.metadata ?? null,

@@ -1,9 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -26,22 +24,6 @@ const CACHE_TTL_MS = 30000;
 
 let cached: CacheState | null = null;
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch {
-    return null;
-  }
-};
-
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
@@ -51,13 +33,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
-const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    return readMongoSetting(key);
-  }
-  return readPrismaSetting(key);
-};
+const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
 const toPositiveNumber = (value: unknown, fallback: number, minValue: number = 0): number => {
   const parsed = typeof value === 'number' ? value : Number(value);

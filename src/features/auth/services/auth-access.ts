@@ -12,26 +12,8 @@ import {
 } from '@/features/auth/utils/auth-management';
 import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/contracts/auth';
 import { MongoSettingRecord } from '@/shared/contracts/base';
-import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch {
-    return null;
-  }
-};
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -42,10 +24,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
-const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  return provider === 'mongodb' ? readMongoSetting(key) : readPrismaSetting(key);
-};
+const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
 export const getAuthPermissions = async (): Promise<AuthPermission[]> => {
   const value = await readSettingValue(AUTH_SETTINGS_KEYS.permissions);

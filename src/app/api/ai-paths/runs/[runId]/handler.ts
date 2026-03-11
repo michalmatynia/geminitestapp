@@ -13,7 +13,6 @@ import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reportin
 import {
   hasRunRepositorySelectionMismatch,
   readPersistedRunRepositorySelection,
-  resolveAlternatePathRunRepository,
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 
@@ -26,31 +25,14 @@ export async function GET_handler(
   const runId = params.runId;
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
-  let alternateRepoSelection:
-    | Awaited<ReturnType<typeof resolveAlternatePathRunRepository>>
-    | null = null;
   let readProvider = repoSelection.provider;
-  let readMode: 'selected' | 'alternate' = 'selected';
+  const readMode = 'selected' as const;
   let run = await repo.findRunById(runId);
-  if (run === null) {
-    alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
-    if (alternateRepoSelection) {
-      const alternateRun = await alternateRepoSelection.repo.findRunById(runId);
-      if (alternateRun) {
-        run = alternateRun;
-        readProvider = alternateRepoSelection.provider;
-        readMode = 'alternate';
-      }
-    }
-  }
   if (run === null) {
     throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, run);
-  const readRepo =
-    readMode === 'alternate'
-      ? alternateRepoSelection?.repo ?? repo
-      : repo;
+  const readRepo = repo;
   const nodes = await readRepo.listRunNodes(runId);
   const events = await readRepo.listRunEvents(runId);
   const runMeta = run.meta && typeof run.meta === 'object' ? run.meta : null;

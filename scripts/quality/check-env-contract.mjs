@@ -41,7 +41,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Notes');
   lines.push('');
-  lines.push('- This report validates runtime env combinations that are easy to misconfigure in this mixed Prisma/Mongo/Redis setup.');
+  lines.push('- This report validates runtime env combinations in the MongoDB/Redis runtime setup.');
   lines.push('- Strict mode fails on error findings. Add --fail-on-warnings to promote warnings into a gate.');
   return `${lines.join('\n')}\n`;
 };

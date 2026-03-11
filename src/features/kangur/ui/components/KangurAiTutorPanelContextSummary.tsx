@@ -43,26 +43,26 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
       {isAskModalMode ? (
         <div
           data-testid='kangur-ai-tutor-ask-modal-helper'
-          className='border-b border-slate-900/10 bg-[#fff7cf]/72 px-3 py-2 text-xs leading-relaxed text-slate-700'
+          className='border-b px-3 py-2 text-xs leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)] [color:var(--kangur-page-text)]'
         >
           {askModalHelperText}
         </div>
       ) : null}
 
-      <div className='border-b border-slate-900/10 bg-[#fff7cf]/80 px-3 py-3'>
+      <div className='border-b px-3 py-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)]'>
         {contextSwitchNotice ? (
           <div
             data-testid='kangur-ai-tutor-context-switch'
-            className='mb-3 rounded-[20px] border-2 border-slate-900 bg-white px-3 py-2 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)]'
+            className='mb-3 rounded-[20px] border-2 px-3 py-2 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)] [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)]'
           >
             <div className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-600'>
               {contextSwitchNotice.title}
             </div>
-            <div className='mt-1 text-sm font-semibold text-slate-900'>
+            <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
               {contextSwitchNotice.target}
             </div>
             {contextSwitchNotice.detail ? (
-              <div className='mt-1 text-[11px] leading-relaxed text-slate-600'>
+              <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'>
                 {contextSwitchNotice.detail}
               </div>
             ) : null}
@@ -72,13 +72,13 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
           {focusChipLabel ? (
             <span
               data-testid='kangur-ai-tutor-focus-chip'
-              className='rounded-full border border-slate-900 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-900'
+              className='rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
             >
               {focusChipLabel}
             </span>
           ) : null}
           {activeFocus.label && activeFocus.kind !== 'selection' ? (
-            <span className='rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700'>
+            <span className='rounded-full border px-3 py-1 text-xs font-semibold [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'>
               {activeFocus.label}
             </span>
           ) : null}
@@ -95,7 +95,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
         {resolvedSelectedText ? (
           <div
             data-testid='kangur-ai-tutor-selected-text-preview'
-            className='mt-2 rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-3 text-slate-700 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)]'
+            className='mt-2 rounded-2xl border px-3 py-3 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#f59e0b)] [color:var(--kangur-page-text)]'
           >
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0 flex-1'>
@@ -130,7 +130,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                 {tutorContent.panelContext.detachSelectionLabel}
               </KangurButton>
             </div>
-            <div className='mt-2 text-[11px] leading-relaxed text-slate-600'>
+            <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'>
               {isSelectionExplainPendingMode
                 ? tutorContent.panelContext.selectedPendingDetail
                 : showSelectionExplainCompleteState
@@ -140,14 +140,14 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             {isSelectionExplainPendingMode ? (
               <div
                 data-testid='kangur-ai-tutor-selected-text-pending-status'
-                className='mt-2 rounded-2xl border border-amber-100 bg-amber-50/85 px-3 py-2 text-[11px] font-semibold text-amber-900'
+                className='mt-2 rounded-2xl border px-3 py-2 text-[11px] font-semibold text-amber-900 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_70%,#f59e0b)]'
               >
                 {tutorContent.panelContext.selectedPendingStatus}
               </div>
             ) : showSelectionExplainCompleteState ? (
               <div
                 data-testid='kangur-ai-tutor-selected-text-complete-status'
-                className='mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/85 px-3 py-2 text-[11px] font-semibold text-emerald-900'
+                className='mt-2 rounded-2xl border px-3 py-2 text-[11px] font-semibold text-emerald-900 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)]'
               >
                 {tutorContent.panelContext.selectedCompleteStatus}
               </div>
@@ -156,14 +156,14 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
         ) : highlightedSection ? (
           <div
             data-testid='kangur-ai-tutor-section-preview'
-            className='mt-2 rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-3 text-slate-700 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)]'
+            className='mt-2 rounded-2xl border px-3 py-3 shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#f59e0b)] [color:var(--kangur-page-text)]'
           >
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0 flex-1'>
                 <div className='text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700'>
                   {tutorContent.panelContext.sectionTitle}
                 </div>
-                <div className='mt-2 text-xs font-semibold leading-relaxed text-slate-800'>
+                <div className='mt-2 text-xs font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
                   {highlightedSection.label ?? highlightedSection.kind}
                 </div>
               </div>
@@ -190,7 +190,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                 {tutorContent.panelContext.detachSectionLabel}
               </KangurButton>
             </div>
-            <div className='mt-2 text-[11px] leading-relaxed text-slate-600'>
+            <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'>
               {isSectionExplainPendingMode
                 ? tutorContent.panelContext.sectionPendingDetail
                 : showSectionExplainCompleteState
@@ -200,14 +200,14 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             {isSectionExplainPendingMode ? (
               <div
                 data-testid='kangur-ai-tutor-section-pending-status'
-                className='mt-2 rounded-2xl border border-amber-100 bg-amber-50/85 px-3 py-2 text-[11px] font-semibold text-amber-900'
+                className='mt-2 rounded-2xl border px-3 py-2 text-[11px] font-semibold text-amber-900 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_70%,#f59e0b)]'
               >
                 {tutorContent.panelContext.sectionPendingStatus}
               </div>
             ) : showSectionExplainCompleteState ? (
               <div
                 data-testid='kangur-ai-tutor-section-complete-status'
-                className='mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/85 px-3 py-2 text-[11px] font-semibold text-emerald-900'
+                className='mt-2 rounded-2xl border px-3 py-2 text-[11px] font-semibold text-emerald-900 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)]'
               >
                 {tutorContent.panelContext.sectionCompleteStatus}
               </div>

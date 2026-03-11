@@ -28,7 +28,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     return NextResponse.json({ migrated: 0 });
   }
 
-  const ops = categories.map((category) => ({
+  const ops = categories.map((category: any) => ({
     updateOne: {
       filter: { id: category.id },
       update: {

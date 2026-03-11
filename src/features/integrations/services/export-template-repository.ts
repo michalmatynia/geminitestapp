@@ -20,14 +20,10 @@ import {
   normalizeImageRetryPresets,
 } from '@/shared/lib/data-import-export-adapter';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { Template, TemplateMapping };
-
-type ExportTemplateProvider = 'mongodb' | 'prisma';
 type SettingDoc = MongoTimestampedStringSettingRecord<string | _ObjectId, Date>;
 
 const LOG_SOURCE = 'export-template-repository';
@@ -35,15 +31,15 @@ const LOG_SOURCE = 'export-template-repository';
 const toMongoId = (value: string): string | _ObjectId =>
   _ObjectId.isValid(value) ? new _ObjectId(value) : value;
 
-const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
-  const provider = await _getProductDataProvider();
+const getExportTemplateProvider = async (): Promise<'mongodb'> => {
+  const provider = 'mongodb';
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
     context: { provider },
   });
-  return provider as ExportTemplateProvider;
+  return provider;
 };
 
 const logGuardFailure = async (
@@ -143,114 +139,58 @@ const assertNoUnsupportedParameterSourceMappings = (args: {
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-      });
-    const val = typeof doc?.value === 'string' ? doc.value : null;
-    await logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: 'Read templates (Mongo)',
-      context: { length: val ? val.length : 0 },
-    });
-    return val;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: SETTINGS_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
   });
+  const val = typeof doc?.value === 'string' ? doc.value : null;
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Read templates (Prisma)',
-    context: { length: setting?.value ? setting.value.length : 0 },
+    message: 'Read templates (Mongo)',
+    context: { length: val ? val.length : 0 },
   });
-  return setting?.value ?? null;
+  return val;
 };
 
 const readActiveTemplateValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-    });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: ACTIVE_TEMPLATE_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readDefaultInventoryValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
-    });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: DEFAULT_INVENTORY_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readStockFallbackValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
-    });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: STOCK_FALLBACK_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readDefaultConnectionValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
-    });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: DEFAULT_CONNECTION_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readImageRetryPresetsValue = async (): Promise<string | null> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
-    });
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key: IMAGE_RETRY_PRESETS_KEY },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
@@ -261,157 +201,104 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     message: 'Writing templates...',
     context: { length: value.length, provider },
   });
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateMany(
-      { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
-      {
-        $set: {
-          value,
-          key: SETTINGS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateMany(
+    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
+    {
+      $set: {
+        value,
+        key: SETTINGS_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: SETTINGS_KEY },
-    update: { value },
-    create: { key: SETTINGS_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Wrote templates (Prisma)',
+    message: 'Wrote templates (Mongo)',
   });
 };
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
-      {
-        $set: {
-          value,
-          key: ACTIVE_TEMPLATE_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
+    {
+      $set: {
+        value,
+        key: ACTIVE_TEMPLATE_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: ACTIVE_TEMPLATE_KEY },
-    update: { value },
-    create: { key: ACTIVE_TEMPLATE_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeDefaultInventoryValue = async (value: string): Promise<void> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
-      {
-        $set: {
-          value,
-          key: DEFAULT_INVENTORY_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
+    {
+      $set: {
+        value,
+        key: DEFAULT_INVENTORY_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: DEFAULT_INVENTORY_KEY },
-    update: { value },
-    create: { key: DEFAULT_INVENTORY_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeStockFallbackValue = async (value: string): Promise<void> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
-      {
-        $set: {
-          value,
-          key: STOCK_FALLBACK_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
+    {
+      $set: {
+        value,
+        key: STOCK_FALLBACK_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: STOCK_FALLBACK_KEY },
-    update: { value },
-    create: { key: STOCK_FALLBACK_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeDefaultConnectionValue = async (value: string): Promise<void> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
-      {
-        $set: {
-          value,
-          key: DEFAULT_CONNECTION_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
+    {
+      $set: {
+        value,
+        key: DEFAULT_CONNECTION_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: DEFAULT_CONNECTION_KEY },
-    update: { value },
-    create: { key: DEFAULT_CONNECTION_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 const writeImageRetryPresetsValue = async (value: string): Promise<void> => {
-  const provider = await getExportTemplateProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
-      {
-        $set: {
-          value,
-          key: IMAGE_RETRY_PRESETS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
+    {
+      $set: {
+        value,
+        key: IMAGE_RETRY_PRESETS_KEY,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key: IMAGE_RETRY_PRESETS_KEY },
-    update: { value },
-    create: { key: IMAGE_RETRY_PRESETS_KEY, value },
-  });
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
 };
 
 export const listExportTemplates = async (): Promise<Template[]> => {

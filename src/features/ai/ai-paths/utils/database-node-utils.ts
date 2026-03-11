@@ -78,12 +78,23 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Array<Col
     return provider ? ({ ...rest, provider } as CollectionSchema) : (rest as CollectionSchema);
   };
 
-  if (schema.provider === 'multi')
-    return baseCollections.map((collection) =>
-      stripUndefinedProvider(collection as CollectionSchema & { provider?: string })
-    );
+  if (schema.provider === 'multi') {
+    const schemaSources = schema['sources'];
+    const mongoSource = schemaSources?.['mongodb'];
+    if (mongoSource && Array.isArray(mongoSource['collections'])) {
+      return mongoSource['collections'].map((collection) =>
+        stripUndefinedProvider(collection as CollectionSchema & { provider?: string })
+      );
+    }
+    return baseCollections
+      .filter((collection) => {
+        const provider = (collection as CollectionSchema & { provider?: string }).provider;
+        return provider === undefined || provider === 'mongodb';
+      })
+      .map((collection) => stripUndefinedProvider(collection as CollectionSchema & { provider?: string }));
+  }
 
-  const provider: 'mongodb' | 'prisma' = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
+  const provider = 'mongodb';
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection as CollectionSchema & { provider?: string }),
     provider,
@@ -141,9 +152,7 @@ export const toDbSchemaSnapshotCollection = (
       type: field.type,
     })),
     ...(relations ? { relations } : {}),
-    ...(collection.provider === 'mongodb' || collection.provider === 'prisma'
-      ? { provider: collection.provider }
-      : {}),
+    ...(collection.provider === 'mongodb' ? { provider: collection.provider } : {}),
   };
 };
 
@@ -171,22 +180,16 @@ export const toDbSchemaSnapshot = (schema: SchemaData, syncedAt: string): DbSche
 
   if (schema.provider === 'multi') {
     const schemaSources = schema['sources'];
-    const sources = schemaSources
-      ? (['mongodb', 'prisma'] as const).reduce(
-        (acc, provider) => {
-          const source = schemaSources[provider] as
-              | { provider: string; collections: CollectionSchema[] }
-              | undefined;
-          if (!source) return acc;
-          acc[provider] = {
-            provider: source.provider as 'mongodb' | 'prisma',
-            collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
-          };
-          return acc;
-        },
-          {} as NonNullable<DbSchemaSnapshot['sources']>
-      )
-      : undefined;
+    const mongoSource = schemaSources?.['mongodb'];
+    const sources =
+      mongoSource && Array.isArray(mongoSource['collections'])
+        ? {
+            mongodb: {
+              provider: 'mongodb' as const,
+              collections: mongoSource['collections'].map(toDbSchemaSnapshotSourceCollection),
+            },
+          }
+        : undefined;
 
     return {
       provider: 'multi',
@@ -197,8 +200,7 @@ export const toDbSchemaSnapshot = (schema: SchemaData, syncedAt: string): DbSche
   }
 
   return {
-    provider:
-      schema.provider === 'multi' ? 'multi' : schema.provider === 'prisma' ? 'prisma' : 'mongodb',
+    provider: schema.provider === 'multi' ? 'multi' : 'mongodb',
     collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };
@@ -274,31 +276,4 @@ export const buildSchemaPlaceholderContext = (
     }
   });
   return context;
-};
-
-export const toPrismaSortPresetValue = (value: string): string => {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const next: Record<string, 'asc' | 'desc'> = {};
-    Object.entries(parsed).forEach(([key, val]) => {
-      if (val === -1 || val === 'desc') next[key] = 'desc';
-      if (val === 1 || val === 'asc') next[key] = 'asc';
-    });
-    return JSON.stringify(next);
-  } catch {
-    return value;
-  }
-};
-
-export const toPrismaProjectionPresetValue = (value: string): string => {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const next: Record<string, boolean> = {};
-    Object.entries(parsed).forEach(([key, val]) => {
-      if (val === 1 || val === true) next[key] = true;
-    });
-    return JSON.stringify(next);
-  } catch {
-    return value;
-  }
 };

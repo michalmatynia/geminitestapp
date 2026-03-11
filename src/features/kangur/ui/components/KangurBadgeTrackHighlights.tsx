@@ -62,19 +62,19 @@ export default function KangurBadgeTrackHighlights({
         const accent = TRACK_ACCENTS[track.key] ?? 'indigo';
         return (
           <div
-            className='rounded-[24px] border border-slate-200/80 bg-white/80 px-4 py-3 text-left'
+            className='soft-card rounded-[24px] border border-slate-200/80 px-4 py-3 text-left'
             data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
             <div className='flex items-start justify-between gap-2'>
               <div className='min-w-0'>
-                <p className='text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500'>
+                <p className='text-[11px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
                   {track.emoji} {track.label}
                 </p>
-                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                   {track.unlockedCount}/{track.totalCount} odznak
                 </p>
-                <p className='mt-1 text-xs leading-5 text-slate-500'>
+                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                   {track.nextBadge
                     ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
                     : 'Wszystkie odznaki odblokowane'}

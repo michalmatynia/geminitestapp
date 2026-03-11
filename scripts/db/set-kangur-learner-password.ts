@@ -6,7 +6,6 @@ import {
   updateKangurLearner,
 } from '@/features/kangur/services/kangur-learner-repository';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 type CliOptions = {
   learnerId: string | null;
@@ -55,7 +54,6 @@ Exactly one selector is required: --login-name or --learner-id.`);
 };
 
 const closeResources = async (): Promise<void> => {
-  await prisma.$disconnect().catch(() => {});
   if (process.env['MONGODB_URI']) {
     const client = await getMongoClient().catch(() => null);
     await client?.close().catch(() => {});

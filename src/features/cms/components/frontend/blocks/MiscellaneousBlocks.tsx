@@ -26,7 +26,7 @@ export function AnnouncementBlock(): React.ReactNode {
   }
 
   return (
-    <span className='text-sm text-gray-200' style={typoStyles}>
+    <span className='text-sm text-[var(--cms-appearance-page-text)]' style={typoStyles}>
       {text}
     </span>
   );
@@ -59,7 +59,7 @@ export function SocialLinksBlock(): React.ReactNode {
     .filter(Boolean);
 
   if (links.length === 0) {
-    return <p className='text-sm text-gray-500'>Add social media URLs in settings</p>;
+    return <p className='cms-appearance-muted-text text-sm'>Add social media URLs in settings</p>;
   }
 
   return (
@@ -77,7 +77,7 @@ export function SocialLinksBlock(): React.ReactNode {
             href={link}
             target='_blank'
             rel='noopener noreferrer'
-            className='rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white'
+            className='cms-appearance-subtle-surface cms-appearance-muted-text rounded-full border p-2 transition hover:text-[var(--cms-appearance-page-text)]'
           >
             <span className='text-xs font-medium uppercase'>{label.slice(0, 2)}</span>
           </a>
@@ -138,7 +138,7 @@ export function VideoEmbedBlock(): React.ReactNode {
   if (!embedUrl) {
     return (
       <div
-        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
+        className='cms-media cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center py-8 text-sm'
         style={containerStyle}
       >
         Enter a video URL

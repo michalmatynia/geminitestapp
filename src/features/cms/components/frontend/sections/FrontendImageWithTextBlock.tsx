@@ -30,8 +30,8 @@ export function FrontendImageWithTextBlock(): React.ReactNode {
             sizes='(max-width: 768px) 100vw, 40vw'
           />
         ) : (
-          <div className='flex min-h-[120px] w-full items-center justify-center bg-gray-800'>
-            <ImageIcon className='size-10 text-gray-600' />
+          <div className='cms-appearance-subtle-surface flex min-h-[120px] w-full items-center justify-center'>
+            <ImageIcon className='cms-appearance-muted-text size-10' />
           </div>
         )}
       </div>

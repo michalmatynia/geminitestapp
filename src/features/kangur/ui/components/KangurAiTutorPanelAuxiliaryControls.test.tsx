@@ -111,10 +111,10 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
 
     expect(screen.getByText('Limit dzisiaj: 5/5')).toBeInTheDocument();
     expect(screen.getByText('Limit wyczerpany')).toHaveClass('text-amber-700');
-    expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveClass(
-      'border-amber-100',
-      'bg-amber-50/80'
-    );
+    expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveStyle({
+      background:
+        'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
+    });
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
       'data-nudge-mode',
       'gentle'

@@ -2,7 +2,6 @@ import 'server-only';
 
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import { getAppDbProvider, type AppDbProvider } from './app-db-provider';
 import {
@@ -22,7 +21,7 @@ const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
     const parsed = JSON.parse(str) as Record<string, string>;
     const result: Record<string, DatabaseEngineProvider> = {};
     for (const [key, value] of Object.entries(parsed)) {
-      if (value === 'mongodb' || value === 'prisma' || value === 'redis') {
+      if (value === 'mongodb' || value === 'redis') {
         result[key] = value;
       }
     }
@@ -44,19 +43,6 @@ const findCollectionRoute = (
   return matchedKey ? map[matchedKey] : undefined;
 };
 
-const readMapFromPrisma = async (key: string): Promise<Record<string, DatabaseEngineProvider>> => {
-  if (!process.env['DATABASE_URL']) return {};
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return parseMap(setting?.value);
-  } catch {
-    return {};
-  }
-};
-
 const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEngineProvider>> => {
   if (!process.env['MONGODB_URI']) return {};
   try {
@@ -73,12 +59,10 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
 };
 
 const readCollectionRouteMap = async (): Promise<Record<string, DatabaseEngineProvider>> => {
-  const prismaMap = await readMapFromPrisma(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
-  if (Object.keys(prismaMap).length > 0) return prismaMap;
   return readMapFromMongo(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
 };
 
-/** Returns the full per-collection routing map (supports prisma/mongodb/redis). */
+/** Returns the full per-collection routing map (supports mongodb/redis). */
 export async function getCollectionRouteMap(): Promise<Record<string, DatabaseEngineProvider>> {
   const now = Date.now();
   if (mapCache && now - mapCache.ts < CACHE_TTL_MS) {
@@ -98,12 +82,12 @@ export async function getCollectionRouteMap(): Promise<Record<string, DatabaseEn
   return value;
 }
 
-/** Returns the primary-provider map only (prisma/mongodb). */
+/** Returns the primary-provider map only (mongodb). */
 export async function getCollectionProviderMap(): Promise<Record<string, AppDbProvider>> {
   const routeMap = await getCollectionRouteMap();
   const primaryMap: Record<string, AppDbProvider> = {};
   for (const [collection, provider] of Object.entries(routeMap)) {
-    if (provider === 'mongodb' || provider === 'prisma') {
+    if (provider === 'mongodb') {
       primaryMap[collection] = provider;
     }
   }
@@ -115,10 +99,10 @@ export async function getCollectionProvider(collectionName: string): Promise<App
   const policy = await getDatabaseEnginePolicy();
   const map = await getCollectionRouteMap();
   const explicit = findCollectionRoute(map, collectionName);
-  if (explicit === 'mongodb' || explicit === 'prisma') return explicit;
+  if (explicit === 'mongodb') return explicit;
   if (explicit === 'redis') {
     throw internalError(
-      `Collection "${collectionName}" is routed to Redis, but this code path requires Prisma or MongoDB.`
+      `Collection "${collectionName}" is routed to Redis, but this code path requires MongoDB.`
     );
   }
   if (policy.requireExplicitCollectionRouting) {
@@ -135,7 +119,7 @@ export async function resolveCollectionProviderForRequest(
   collectionName: string,
   requestedProvider: CollectionProviderSelection
 ): Promise<AppDbProvider> {
-  if (requestedProvider === 'mongodb' || requestedProvider === 'prisma') {
+  if (requestedProvider === 'mongodb') {
     return requestedProvider;
   }
   return getCollectionProvider(collectionName);

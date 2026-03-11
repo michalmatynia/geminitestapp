@@ -42,7 +42,7 @@ async function GET_handler(
   }
   const response: AgentBrowserSnapshotsResponse = {
     snapshots: snapshots.map(
-      (snapshot): AgentBrowserSnapshotRecord => ({
+      (snapshot: any): AgentBrowserSnapshotRecord => ({
         ...snapshot,
         title: snapshot.title ?? null,
         screenshotData: snapshot.screenshotData ?? null,

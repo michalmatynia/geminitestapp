@@ -25,14 +25,20 @@ export function FrontendHeroBlock(): React.ReactNode {
           <div className='absolute inset-0 bg-black/50' />
         </div>
       ) : (
-        <div className='absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-800' />
+        <div
+          className='absolute inset-0'
+          style={{
+            background:
+              'linear-gradient(135deg, var(--cms-appearance-subtle-surface), var(--cms-appearance-surface-background))',
+          }}
+        />
       )}
 
       <div className='relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center'>
         {blocks.map((block: BlockInstance) => (
           <FrontendBlockRenderer key={block.id} block={block} />
         ))}
-        {blocks.length === 0 && <p className='text-gray-400'>Hero banner</p>}
+        {blocks.length === 0 && <p className='cms-appearance-muted-text'>Hero banner</p>}
       </div>
     </div>
   );

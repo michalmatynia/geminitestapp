@@ -65,7 +65,7 @@ describe('LessonSlideSection', () => {
     expect(screen.getByTestId('lesson-slide-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Brak slajdu.')).toBeInTheDocument();
   });

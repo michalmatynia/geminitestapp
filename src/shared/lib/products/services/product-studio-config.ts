@@ -3,10 +3,7 @@ import 'server-only';
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 export type ProductStudioConfig = {
   projectId: string | null;
@@ -23,13 +20,6 @@ type ProductStudioConfigInput = {
 
 const SETTINGS_COLLECTION = 'settings';
 const PRODUCT_STUDIO_CONFIG_KEY_PREFIX = 'product_studio_config_';
-
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
 
 const normalizeProductId = (value: string): string => {
   const normalized = value.trim();
@@ -139,20 +129,6 @@ const toStorageValue = (config: ProductStudioConfig): string =>
 const buildConfigKey = (productId: string): string =>
   `${PRODUCT_STUDIO_CONFIG_KEY_PREFIX}${normalizeProductId(productId)}`;
 
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const row = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return row?.value ?? null;
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return null;
-    throw error;
-  }
-};
-
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
@@ -164,31 +140,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingWithProviderFallback = async (key: string): Promise<string | null> => {
-  const provider = await getAppDbProvider();
-
-  if (provider === 'mongodb') {
-    const mongoValue = await readMongoSetting(key);
-    if (mongoValue !== null) return mongoValue;
-    return await readPrismaSetting(key);
-  }
-
-  const prismaValue = await readPrismaSetting(key);
-  if (prismaValue !== null) return prismaValue;
-  return await readMongoSetting(key);
-};
-
-const writePrismaSetting = async (key: string, value: string): Promise<void> => {
-  if (!canUsePrismaSettings()) return;
-  try {
-    await prisma.setting.upsert({
-      where: { key },
-      create: { key, value },
-      update: { value },
-    });
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return;
-    throw error;
-  }
+  return readMongoSetting(key);
 };
 
 const writeMongoSetting = async (key: string, value: string): Promise<void> => {
@@ -214,53 +166,10 @@ const writeMongoSetting = async (key: string, value: string): Promise<void> => {
 };
 
 const writeSetting = async (key: string, value: string): Promise<void> => {
-  const tasks: Array<Promise<void>> = [];
-  if (canUsePrismaSettings()) {
-    tasks.push(writePrismaSetting(key, value));
-  }
-  if (process.env['MONGODB_URI']) {
-    tasks.push(writeMongoSetting(key, value));
-  }
-
-  if (tasks.length === 0) {
+  if (!process.env['MONGODB_URI']) {
     throw internalError('No database provider is available for product studio config.');
   }
-
-  const results = await Promise.allSettled(tasks);
-  if (results.some((result) => result.status === 'fulfilled')) return;
-
-  const firstError = results.find((result) => result.status === 'rejected');
-  if (firstError?.status === 'rejected') {
-    throw firstError.reason;
-  }
-
-  throw internalError('Failed to persist product studio config.');
-};
-
-const listPrismaProductStudioConfigs = async (): Promise<Array<{ key: string; value: string }>> => {
-  if (!canUsePrismaSettings()) return [];
-  try {
-    const rows = await prisma.setting.findMany({
-      where: {
-        key: {
-          startsWith: PRODUCT_STUDIO_CONFIG_KEY_PREFIX,
-        },
-      },
-      select: {
-        key: true,
-        value: true,
-      },
-    });
-    return rows.filter(
-      (row): row is { key: string; value: string } =>
-        typeof row.key === 'string' &&
-        row.key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX) &&
-        typeof row.value === 'string'
-    );
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return [];
-    throw error;
-  }
+  await writeMongoSetting(key, value);
 };
 
 const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; value: string }>> => {
@@ -303,23 +212,7 @@ const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; val
 const listProductStudioConfigSettings = async (): Promise<
   Array<{ key: string; value: string }>
 > => {
-  const provider = await getAppDbProvider();
-  const [mongoEntries, prismaEntries] = await Promise.all([
-    listMongoProductStudioConfigs().catch(() => []),
-    listPrismaProductStudioConfigs().catch(() => []),
-  ]);
-
-  const mergedByKey = new Map<string, string>();
-  const orderedEntries =
-    provider === 'mongodb'
-      ? [...mongoEntries, ...prismaEntries]
-      : [...prismaEntries, ...mongoEntries];
-  orderedEntries.forEach((entry) => {
-    if (mergedByKey.has(entry.key)) return;
-    mergedByKey.set(entry.key, entry.value);
-  });
-
-  return Array.from(mergedByKey.entries()).map(([key, value]) => ({ key, value }));
+  return listMongoProductStudioConfigs();
 };
 
 export async function getProductStudioConfig(productId: string): Promise<ProductStudioConfig> {

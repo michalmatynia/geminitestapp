@@ -3,7 +3,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import { ProductWithImages } from '@/shared/contracts/products';
+import {
+  ProductWithImages,
+  productStudioConfigResponseSchema,
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -22,12 +25,6 @@ export type ProductFormStudioContextType = ProductFormStudioStateContextType &
   ProductFormStudioActionsContextType;
 
 const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;
-
-type ProductStudioConfigResponse = {
-  config?: {
-    projectId?: string | null;
-  };
-};
 
 type ProductStudioConfigCacheEntry = {
   projectId: string | null;
@@ -63,10 +60,11 @@ const loadStudioProjectId = async (productId: string): Promise<string | null> =>
   }
 
   const request = api
-    .get<ProductStudioConfigResponse>(`/api/v2/products/${encodeURIComponent(productId)}/studio`, {
+    .get<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio`, {
       cache: 'no-store',
       logError: false,
     })
+    .then((response) => productStudioConfigResponseSchema.parse(response))
     .then((response) => normalizeStudioProjectId(response.config?.projectId))
     .then((projectId) => {
       setCachedStudioProjectId(productId, projectId);
@@ -152,17 +150,14 @@ export function ProductFormStudioProvider({
     setStudioConfigSaving(true);
 
     void api
-      .put<{
-        config?: {
-          projectId?: string | null;
-        };
-      }>(
+      .put<unknown>(
         `/api/v2/products/${encodeURIComponent(productId)}/studio`,
         {
           projectId: nextProjectId,
         },
         { logError: false }
       )
+      .then((response) => productStudioConfigResponseSchema.parse(response))
       .then((response) => {
         if (studioConfigSaveRequestRef.current !== requestId) return;
         const persistedProjectId = normalizeStudioProjectId(response.config?.projectId);

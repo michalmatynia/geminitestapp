@@ -107,7 +107,7 @@ describe('KangurLessonActivityBlock', () => {
     expect(screen.getByText(/live game widget is hidden in editor preview/i).parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.queryByRole('button', { name: 'AddingBallGame' })).toBeNull();
   });

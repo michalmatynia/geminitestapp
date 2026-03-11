@@ -1,10 +1,8 @@
 import 'server-only';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoKangurScoreRepository } from './mongo-kangur-score-repository';
-import { prismaKangurScoreRepository } from './prisma-kangur-score-repository';
 
 import type { KangurScoreRepository } from './types';
 
@@ -13,9 +11,8 @@ export type { KangurScoreRepository, KangurScoreListInput } from './types';
 const KANGUR_SCORE_REPOSITORY_SERVICE = 'kangur.score-repository';
 
 export const getKangurScoreRepository = async (): Promise<KangurScoreRepository> => {
-  const provider = await getAppDbProvider();
-  const repository =
-    provider === 'mongodb' ? mongoKangurScoreRepository : prismaKangurScoreRepository;
+  const provider = 'mongodb';
+  const repository = mongoKangurScoreRepository;
 
   return {
     createScore: async (input) => {

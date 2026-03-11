@@ -7,7 +7,6 @@ import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import type { ObjectId } from 'mongodb';
 
@@ -34,50 +33,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     stage: 'start',
     userId: session?.user?.id ?? null,
   });
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured.');
-    }
-    const rows = await prisma.user.findMany({
-      take: 500,
-      orderBy: { id: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-    const nowIso = new Date().toISOString();
-    const users: AuthUser[] = rows.map((row) => ({
-      id: row.id,
-      email: row.email ?? null,
-      name: row.name ?? null,
-      image: row.image ?? null,
-      emailVerified: row.emailVerified ? row.emailVerified.toISOString() : null,
-      provider,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    }));
-    await logAuthEvent({
-      req,
-      action: 'auth.users.list',
-      stage: 'success',
-      userId: session?.user?.id ?? null,
-      status: 200,
-      extra: { count: users.length },
-    });
-    return NextResponse.json(
-      { provider, users },
-      {
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      }
-    );
-  }
+  requireAuthProvider(await getAuthDataProvider());
 
   if (!process.env['MONGODB_URI']) {
     throw internalError('MongoDB is not configured.');

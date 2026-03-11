@@ -14,8 +14,8 @@ interface DbQueryResult {
   items?: unknown[];
   item?: unknown;
   count?: number;
-  requestedProvider?: 'auto' | 'mongodb' | 'prisma';
-  resolvedProvider?: 'mongodb' | 'prisma';
+  requestedProvider?: 'auto' | 'mongodb';
+  resolvedProvider?: 'mongodb';
 }
 
 export type ExecuteDatabaseQueryInput = {
@@ -112,13 +112,12 @@ export async function executeDatabaseQuery({
     : ({} as Record<string, unknown>);
   const requestedProvider =
     queryResultData['requestedProvider'] === 'auto' ||
-    queryResultData['requestedProvider'] === 'mongodb' ||
-    queryResultData['requestedProvider'] === 'prisma'
+    queryResultData['requestedProvider'] === 'mongodb'
       ? queryResultData['requestedProvider']
-      : typeof queryConfig.provider === 'string'
-        ? queryConfig.provider
+      : queryConfig.provider === 'mongodb'
+        ? 'mongodb'
         : 'auto';
-  const hasResolvedProvider = queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma';
+  const hasResolvedProvider = queryResultData['resolvedProvider'] === 'mongodb';
   const resolvedProvider = hasResolvedProvider
     ? queryResultData['resolvedProvider']
     : requestedProvider === 'auto'

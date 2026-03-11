@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   KangurTutorAnchorRegistration,
@@ -15,7 +15,6 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 import {
   cloneRect,
   getExpandedRect,
-  getSelectionProtectedRect,
   getViewportRectFromPageRect,
   isAuthGuidedTutorTarget,
   isSectionExplainableTutorAnchor,
@@ -24,6 +23,7 @@ import {
 } from './KangurAiTutorWidget.helpers';
 
 import type {
+  GuidedTutorAuthMode,
   GuidedTutorSectionKind,
   GuidedTutorTarget,
   PendingSelectionResponse,
@@ -78,7 +78,6 @@ const buildHomeOnboardingStepDefinitions = (
 
 export function useKangurAiTutorGuidedDisplayState(input: {
   activeSectionRect: DOMRect | null;
-  activeSelectionContainerRect: DOMRect | null;
   activeSelectionPageRect: DOMRect | null;
   activeSelectionRect: DOMRect | null;
   askModalVisible: boolean;
@@ -91,9 +90,14 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   hoveredSectionAnchorId: string | null;
   isAuthenticated: boolean | undefined;
   isLoading: boolean;
+  loginModalIsOpen: boolean;
   isOpen: boolean;
   isTutorHidden: boolean;
   mounted: boolean;
+  openLoginModal: (
+    callbackUrl?: string | null,
+    options?: { authMode?: GuidedTutorAuthMode }
+  ) => void;
   persistedSelectionPageRect: DOMRect | null;
   persistedSelectionRect: DOMRect | null;
   sectionResponsePending: SectionExplainContext | null;
@@ -107,7 +111,6 @@ export function useKangurAiTutorGuidedDisplayState(input: {
 }) {
   const {
     activeSectionRect,
-    activeSelectionContainerRect,
     activeSelectionPageRect,
     activeSelectionRect,
     askModalVisible,
@@ -120,9 +123,11 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     hoveredSectionAnchorId,
     isAuthenticated,
     isLoading,
+    loginModalIsOpen,
     isOpen,
     isTutorHidden,
     mounted,
+    openLoginModal,
     persistedSelectionPageRect,
     persistedSelectionRect,
     sectionResponsePending,
@@ -134,6 +139,8 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     tutorName,
     viewportTick,
   } = input;
+  const [authGuidedAnchorRetryTick, setAuthGuidedAnchorRetryTick] = useState(0);
+  const authGuidedModalFallbackKeyRef = useRef<string | null>(null);
 
   const homeOnboardingSteps = useMemo(() => {
     if (
@@ -272,7 +279,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
 
     const rect = fallbackAnchor.getBoundingClientRect();
     return rect.width >= 0 && rect.height >= 0 ? rect : null;
-  }, [guidedTargetAnchor, guidedTutorTarget, viewportTick]);
+  }, [authGuidedAnchorRetryTick, guidedTargetAnchor, guidedTutorTarget, viewportTick]);
 
   const guidedSelectionRect = useMemo(() => {
     if (!isSelectionGuidedTutorTarget(guidedTutorTarget) && !selectionResponsePending) {
@@ -295,10 +302,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
 
   const guidedSelectionSpotlightRect =
     isSelectionGuidedTutorTarget(guidedTutorTarget) || selectionResponsePending
-      ? cloneRect(
-        getSelectionProtectedRect(guidedSelectionRect, activeSelectionContainerRect) ??
-            guidedSelectionRect
-      )
+      ? cloneRect(guidedSelectionRect)
       : null;
 
   const isSelectionGuidedTutorMode = isSelectionGuidedTutorTarget(guidedTutorTarget);
@@ -427,6 +431,44 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     : null;
 
   useEffect(() => {
+    if (
+      !isAuthGuidedTutorTarget(guidedTutorTarget) ||
+      guidedTargetAnchor ||
+      guidedFallbackRect ||
+      typeof document === 'undefined'
+    ) {
+      return;
+    }
+
+    let frameId = 0;
+    let attemptCount = 0;
+
+    const pollForAuthAnchor = (): void => {
+      const fallbackAnchor = document.querySelector<HTMLElement>(
+        `[data-kangur-tutor-anchor-surface="auth"][data-kangur-tutor-anchor-kind="${guidedTutorTarget.kind}"]`
+      );
+
+      if (fallbackAnchor) {
+        setAuthGuidedAnchorRetryTick((current) => current + 1);
+        return;
+      }
+
+      attemptCount += 1;
+      if (attemptCount >= 24) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(pollForAuthAnchor);
+    };
+
+    frameId = window.requestAnimationFrame(pollForAuthAnchor);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [guidedFallbackRect, guidedTargetAnchor, guidedTutorTarget]);
+
+  useEffect(() => {
     if (!homeOnboardingAnchor || typeof document === 'undefined') {
       return;
     }
@@ -450,6 +492,76 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       window.cancelAnimationFrame(frameId);
     };
   }, [homeOnboardingAnchor?.id]);
+
+  useEffect(() => {
+    if (!isAuthGuidedTutorTarget(guidedTutorTarget) || typeof document === 'undefined') {
+      authGuidedModalFallbackKeyRef.current = null;
+      return;
+    }
+
+    const shouldFallbackToLoginModal =
+      guidedTutorTarget.kind === 'login_action' || guidedTutorTarget.kind === 'create_account_action';
+
+    if (loginModalIsOpen || !shouldFallbackToLoginModal) {
+      authGuidedModalFallbackKeyRef.current = null;
+    }
+
+    let frameId: number | null = null;
+    let attemptCount = 0;
+    const fallbackRequestKey = shouldFallbackToLoginModal
+      ? `${guidedTutorTarget.authMode}:${guidedTutorTarget.kind}`
+      : null;
+
+    const resolveAnchorElement = (): HTMLElement | null => {
+      if (guidedTargetAnchor) {
+        return document.querySelector<HTMLElement>(
+          `[data-kangur-tutor-anchor-id="${guidedTargetAnchor.id}"]`
+        );
+      }
+
+      return document.querySelector<HTMLElement>(
+        `[data-kangur-tutor-anchor-surface="auth"][data-kangur-tutor-anchor-kind="${guidedTutorTarget.kind}"]`
+      );
+    };
+
+    const scrollAnchorIntoView = (): void => {
+      const anchorElement = resolveAnchorElement();
+      if (anchorElement) {
+        anchorElement.scrollIntoView({
+          behavior: getMotionSafeScrollBehavior('smooth'),
+          block: 'center',
+          inline: 'nearest',
+        });
+        return;
+      }
+
+      attemptCount += 1;
+      if (attemptCount >= 24) {
+        if (
+          shouldFallbackToLoginModal &&
+          !loginModalIsOpen &&
+          fallbackRequestKey &&
+          authGuidedModalFallbackKeyRef.current !== fallbackRequestKey
+        ) {
+          authGuidedModalFallbackKeyRef.current = fallbackRequestKey;
+          openLoginModal(undefined, {
+            authMode: guidedTutorTarget.authMode,
+          });
+        }
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(scrollAnchorIntoView);
+    };
+
+    frameId = window.requestAnimationFrame(scrollAnchorIntoView);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [guidedTargetAnchor?.id, guidedTutorTarget, loginModalIsOpen, openLoginModal]);
 
   const guidedCalloutKey =
     guidedMode === 'home_onboarding'

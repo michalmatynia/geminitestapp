@@ -17,6 +17,7 @@ const {
   signOutMock,
   trackKangurClientEventMock,
   useOptionalKangurAuthMock,
+  usePathnameMock,
   useRouterMock,
   useSearchParamsMock,
 } = vi.hoisted(() => ({
@@ -27,11 +28,13 @@ const {
   signOutMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
+  usePathnameMock: vi.fn(),
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
   useRouter: useRouterMock,
   useSearchParams: useSearchParamsMock,
 }));
@@ -72,6 +75,7 @@ describe('KangurLoginPage', () => {
       push: routerPushMock,
       refresh: routerRefreshMock,
     });
+    usePathnameMock.mockReturnValue('/kangur/login');
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams('callbackUrl=%2Ftests%3Ffocus%3Ddivision')
     );

@@ -12,7 +12,6 @@ import {
 
 export function DatabaseQueryInputControls(): React.JSX.Element {
   const {
-    provider,
     requestedProvider,
     actionCategory,
     action,
@@ -44,25 +43,24 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     onQueryFocus,
     onFilterFocus,
   } = useDatabaseQueryInputControlsActionsContext();
-  const isPrismaProvider = provider === 'prisma';
-  const filterLabel = isPrismaProvider ? 'Where' : 'Filter';
-  const filterHint = isPrismaProvider ? 'Matches records' : 'Matches documents';
-  const updateLabel = isPrismaProvider ? 'Update Data' : 'Update Document';
-  const updateHint = isPrismaProvider ? 'Applies to matched records' : 'Applies to matched docs';
+  const normalizedRequestedProvider = requestedProvider === 'mongodb' ? 'mongodb' : 'auto';
+  const filterLabel = 'Filter';
+  const filterHint = 'Matches documents';
+  const updateLabel = 'Update Document';
+  const updateHint = 'Applies to matched docs';
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
         <div className='flex gap-2 items-center'>
           <SelectSimple
             size='xs'
-            value={requestedProvider ?? 'auto'}
+            value={normalizedRequestedProvider}
             onValueChange={(value: string): void =>
-              onProviderChange(value as 'auto' | 'mongodb' | 'prisma')
+              onProviderChange(value as 'auto' | 'mongodb')
             }
             options={[
               { value: 'auto', label: 'Auto' },
               { value: 'mongodb', label: 'MongoDB' },
-              { value: 'prisma', label: 'Prisma' },
             ]}
             triggerClassName='h-7 w-[130px] border-border bg-card/70 text-xs text-white'
           />

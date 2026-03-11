@@ -81,15 +81,44 @@ export async function databaseAction<T>(
   payload: DbActionPayload,
   options?: DbRequestOptions
 ): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/ai-paths/db-action', payload, {
+  const provider =
+    payload.provider === 'auto' || payload.provider === 'mongodb'
+      ? payload.provider
+      : undefined;
+  return apiPost<T>(
+    '/api/ai-paths/db-action',
+    {
+      ...(provider ? { provider } : {}),
+      collection: payload.collection,
+      ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
+      action: payload.action,
+      ...(payload.filter !== undefined ? { filter: payload.filter } : {}),
+      ...(payload.pipeline !== undefined ? { pipeline: payload.pipeline } : {}),
+      ...(payload.document !== undefined ? { document: payload.document } : {}),
+      ...(payload.documents !== undefined ? { documents: payload.documents } : {}),
+      ...(payload.update !== undefined ? { update: payload.update } : {}),
+      ...(payload.projection !== undefined ? { projection: payload.projection } : {}),
+      ...(payload.sort !== undefined ? { sort: payload.sort } : {}),
+      ...(payload.limit !== undefined ? { limit: payload.limit } : {}),
+      ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+      ...(payload.distinctField !== undefined
+        ? { distinctField: payload.distinctField }
+        : {}),
+      ...(payload.upsert !== undefined ? { upsert: payload.upsert } : {}),
+      ...(payload.returnDocument !== undefined
+        ? { returnDocument: payload.returnDocument }
+        : {}),
+    },
+    {
     timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
     ...(options?.signal ? { signal: options.signal } : {}),
-  });
+    }
+  );
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
   const provider =
-    payload.provider === 'auto' || payload.provider === 'mongodb' || payload.provider === 'prisma'
+    payload.provider === 'auto' || payload.provider === 'mongodb'
       ? payload.provider
       : undefined;
   return apiPost<T>('/api/ai-paths/db-action', {
@@ -107,7 +136,7 @@ export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResp
 
 export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
   const provider =
-    payload.provider === 'auto' || payload.provider === 'mongodb' || payload.provider === 'prisma'
+    payload.provider === 'auto' || payload.provider === 'mongodb'
       ? payload.provider
       : undefined;
   return apiPost<T>('/api/ai-paths/db-action', {

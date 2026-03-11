@@ -58,7 +58,7 @@ describe('GeometryDrawingGame', () => {
     expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(starterButton).toHaveAttribute('aria-pressed', 'true');
     expect(proButton).toHaveAttribute('aria-pressed', 'false');
-    expect(board).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(board).toHaveClass('soft-card', 'border');
     expect(
       screen.getByRole('img', { name: /Plansza do rysowania figury Koło/i })
     ).toBeInTheDocument();

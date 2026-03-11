@@ -37,6 +37,7 @@ vi.mock('next/image', () => ({
 }));
 
 import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { DEFAULT_MENU_SETTINGS } from '@/shared/contracts/cms-menu';
 
 describe('CmsMenu accessibility', () => {
@@ -107,5 +108,28 @@ describe('CmsMenu accessibility', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveAccessibleName('Expand navigation');
     expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
+  it('renders storefront appearance controls and updates the navbar mode', () => {
+    render(
+      <CmsStorefrontAppearanceProvider>
+        <CmsMenu
+          menu={{
+            ...DEFAULT_MENU_SETTINGS,
+            items: [{ id: 'home', label: 'Home', url: '/', imageUrl: '' }],
+          }}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    const navigation = screen.getByRole('navigation', { name: 'Site navigation' });
+    const darkModeButton = screen.getByRole('button', { name: 'Dark mode' });
+
+    expect(navigation).toHaveAttribute('data-appearance-mode', 'default');
+
+    fireEvent.click(darkModeButton);
+
+    expect(navigation).toHaveAttribute('data-appearance-mode', 'dark');
+    expect(darkModeButton).toHaveAttribute('aria-pressed', 'true');
   });
 });

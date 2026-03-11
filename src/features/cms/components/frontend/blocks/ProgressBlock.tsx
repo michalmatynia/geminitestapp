@@ -54,7 +54,9 @@ export function ProgressBlock(): React.ReactNode {
         />
       </div>
       {showPercentage ? (
-        <div className='text-right text-xs font-semibold text-gray-400'>{Math.round(percent)}%</div>
+        <div className='cms-appearance-muted-text text-right text-xs font-semibold'>
+          {Math.round(percent)}%
+        </div>
       ) : null}
     </div>
   );

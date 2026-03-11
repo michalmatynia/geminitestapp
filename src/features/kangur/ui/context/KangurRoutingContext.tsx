@@ -8,6 +8,7 @@ import { internalError } from '@/shared/errors/app-error';
 type KangurRoutingContextValue = {
   pageKey?: string | null;
   requestedPath?: string;
+  requestedHref?: string;
   basePath: string;
   embedded: boolean;
 };
@@ -22,6 +23,7 @@ const EMPTY_KANGUR_ROUTING_ACTIONS: KangurRoutingActionsContextValue = {};
 type KangurRoutingProviderProps = {
   pageKey?: string | null;
   requestedPath?: string;
+  requestedHref?: string;
   basePath?: string;
   embedded?: boolean;
   children: ReactNode;
@@ -30,6 +32,7 @@ type KangurRoutingProviderProps = {
 export const KangurRoutingProvider = ({
   pageKey,
   requestedPath,
+  requestedHref,
   basePath = KANGUR_BASE_PATH,
   embedded = false,
   children,
@@ -39,10 +42,11 @@ export const KangurRoutingProvider = ({
     () => ({
       pageKey,
       requestedPath,
+      requestedHref: requestedHref ?? requestedPath,
       basePath: resolvedBasePath,
       embedded,
     }),
-    [embedded, pageKey, requestedPath, resolvedBasePath]
+    [embedded, pageKey, requestedHref, requestedPath, resolvedBasePath]
   );
 
   return (

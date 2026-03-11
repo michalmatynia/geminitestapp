@@ -122,7 +122,9 @@ export function PageNotFound(): React.JSX.Element {
             <KangurButton
               onClick={() => {
                 routeNavigator.push(getKangurHomeHref(basePath), {
+                  acknowledgeMs: 110,
                   pageKey: 'Game',
+                  sourceId: 'page-not-found:home',
                 });
               }}
               size='lg'

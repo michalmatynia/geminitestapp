@@ -26,6 +26,7 @@ import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiT
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurEmptyState,
@@ -41,6 +42,7 @@ import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
@@ -50,6 +52,7 @@ import type { ComponentType } from 'react';
 
 type LessonProps = {
   onBack?: () => void;
+  onReady?: () => void;
 };
 
 const LESSONS_CARD_EASE = [0.22, 1, 0.36, 1] as const;
@@ -96,7 +99,15 @@ const loadLessonComponent = (loader: () => Promise<unknown>): ComponentType<Less
   dynamic<LessonProps>(
     async () => {
       const module = (await loader()) as { default: ComponentType<LessonProps> };
-      return module.default;
+      const ResolvedLesson = module.default;
+
+      return function KangurLoadedLesson(props: LessonProps): React.JSX.Element {
+        useEffect(() => {
+          props.onReady?.();
+        }, [props.onReady]);
+
+        return <ResolvedLesson {...props} />;
+      };
     },
     {
       ssr: false,
@@ -289,12 +300,14 @@ export default function Lessons() {
   const auth = useKangurAuth();
   const { user, navigateToLogin, logout } = auth;
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const prefersReducedMotion = useReducedMotion();
   const settingsStore = useSettingsStore();
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
+  const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
     enabled: isDeferredContentReady && canAccessParentAssignments,
@@ -494,6 +507,27 @@ export default function Lessons() {
   }, [isSecretLessonUnlocked, secretHostLesson]);
   const isSecretLessonHostActive =
     isSecretLessonActive && Boolean(secretHostLesson && activeLesson?.id === secretHostLesson.id);
+  const isActiveLessonSurfaceReady =
+    !activeLesson ||
+    isSecretLessonHostActive ||
+    shouldRenderLessonDocument ||
+    (activeLesson.contentMode === 'document' && !hasActiveLessonDocumentContent) ||
+    !ActiveLessonComponent ||
+    isActiveLessonComponentReady;
+  const expectsFocusedLesson =
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionSkeletonVariant === 'lessons-focus';
+  const isLessonsPageReady =
+    isDeferredContentReady &&
+    (expectsFocusedLesson
+      ? Boolean(activeLesson) && isActiveLessonSurfaceReady
+      : isActiveLessonSurfaceReady);
+
+  useKangurRoutePageReady({
+    pageKey: 'Lessons',
+    ready: isLessonsPageReady,
+  });
+
   const handleGoBack = (): void => {
     routeNavigator.back({
       acknowledgeMs: LESSONS_ROUTE_ACKNOWLEDGE_MS,
@@ -509,6 +543,9 @@ export default function Lessons() {
       setIsSecretLessonActive(false);
     }
   }, [isSecretLessonUnlocked]);
+  useEffect(() => {
+    setIsActiveLessonComponentReady(false);
+  }, [activeLesson?.id]);
   useEffect(() => {
     if (!activeLesson) {
       return;
@@ -868,7 +905,11 @@ export default function Lessons() {
                           tone='accent'
                         />
                       ) : ActiveLessonComponent ? (
-                        <ActiveLessonComponent />
+                        <ActiveLessonComponent
+                          onReady={() => {
+                            setIsActiveLessonComponentReady(true);
+                          }}
+                        />
                       ) : null}
 
                     <KangurLessonNavigationWidget

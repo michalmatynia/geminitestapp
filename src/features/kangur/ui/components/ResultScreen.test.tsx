@@ -37,7 +37,7 @@ describe('ResultScreen', () => {
     );
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveClass(
       'rounded-full',
-      'bg-slate-100/95'
+      '[background:var(--kangur-progress-track)]'
     );
     expect(screen.getByRole('button', { name: /Strona glowna/i })).toHaveClass(
       'kangur-cta-pill',

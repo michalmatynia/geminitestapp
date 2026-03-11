@@ -47,7 +47,7 @@ describe('KangurExam', () => {
 
     expect(screen.getByTestId('kangur-exam-question-shell')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute(
@@ -62,7 +62,7 @@ describe('KangurExam', () => {
     expect(screen.getByRole('group', { name: 'Pytanie 1' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-exam-question-illustration')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByRole('button', { name: /poprzednie/i })).toHaveClass(
       'kangur-cta-pill',
@@ -121,7 +121,7 @@ describe('KangurExam', () => {
     );
     expect(screen.getByTestId('kangur-exam-review-shell')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('kangur-exam-review-point-chip')).toHaveClass(
       'border-amber-200',
@@ -129,7 +129,7 @@ describe('KangurExam', () => {
     );
     expect(screen.getByTestId('kangur-exam-review-illustration')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByTestId('kangur-exam-review-explanation')).toHaveClass(
       'soft-card',

@@ -1,4 +1,5 @@
 import {
+  GUIDED_CALLOUT_HEIGHT,
   getAvatarRectFromPoint,
   getFloatingTutorArrowCorridorRect,
   getFloatingTutorArrowheadGeometry,
@@ -15,6 +16,12 @@ const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
   return overlapWidth * overlapHeight;
 };
 
+const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
+  const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
+  const verticalGap = Math.max(0, left.top - right.bottom, right.top - left.bottom);
+  return Math.hypot(horizontalGap, verticalGap);
+};
+
 const getRectFromCalloutLayout = (
   layout: ReturnType<typeof getGuidedCalloutLayout>
 ): DOMRect =>
@@ -22,7 +29,7 @@ const getRectFromCalloutLayout = (
     Number(layout.style.left ?? 0),
     Number(layout.style.top ?? 0),
     Number(layout.style.width ?? 0),
-    132
+    GUIDED_CALLOUT_HEIGHT
   );
 
 describe('KangurAiTutorGuidedLayout', () => {
@@ -66,5 +73,27 @@ describe('KangurAiTutorGuidedLayout', () => {
         verifiedArrowCorridorRect
       )
     ).toBe(0);
+  });
+
+  it('biases the guided callout toward the avatar when multiple non-overlapping placements fit', () => {
+    const viewport = { width: 1280, height: 720 };
+    const focusRect = new DOMRect(540, 280, 140, 26);
+    const avatarRect = new DOMRect(628, 212, 56, 56);
+    const layoutWithoutAnchorBias = getGuidedCalloutLayout(focusRect, viewport, [avatarRect]);
+    const layoutWithAnchorBias = getGuidedCalloutLayout(
+      focusRect,
+      viewport,
+      [avatarRect],
+      { anchorRect: avatarRect }
+    );
+
+    expect(layoutWithoutAnchorBias.placement).toBe('bottom');
+    expect(layoutWithAnchorBias.placement).toBe('right');
+    expect(
+      getRectSeparationDistance(getRectFromCalloutLayout(layoutWithAnchorBias), avatarRect)
+    ).toBeLessThan(
+      getRectSeparationDistance(getRectFromCalloutLayout(layoutWithoutAnchorBias), avatarRect)
+    );
+    expect(getRectOverlapArea(getRectFromCalloutLayout(layoutWithAnchorBias), focusRect)).toBe(0);
   });
 });

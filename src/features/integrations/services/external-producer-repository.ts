@@ -7,10 +7,7 @@ import type {
   ExternalProducer,
   ExternalProducerSyncInput,
 } from '@/shared/contracts/integrations';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 type ExternalProducerRepository = {
   syncFromBase: (connectionId: string, producers: BaseProducer[]) => Promise<number>;
@@ -19,19 +16,6 @@ type ExternalProducerRepository = {
   getByExternalId: (connectionId: string, externalId: string) => Promise<ExternalProducer | null>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
-
-type ExternalProducerDoc = Prisma.ExternalProducerGetPayload<Record<string, never>>;
-
-const toRecord = (doc: ExternalProducerDoc): ExternalProducer => ({
-  id: doc.id,
-  connectionId: doc.connectionId,
-  externalId: doc.externalId,
-  name: doc.name,
-  metadata: doc.metadata as Record<string, unknown> | null,
-  fetchedAt: doc.fetchedAt.toISOString(),
-  createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt.toISOString(),
-});
 
 type MongoExternalProducerDoc = {
   _id: ObjectId | string;
@@ -85,46 +69,17 @@ const toMongoRecord = (doc: MongoExternalProducerDoc): ExternalProducer => ({
 
 const buildMongoIdFilter = (id: string): Filter<MongoExternalProducerDoc> => {
   if (ObjectId.isValid(id)) {
-    return {
-      $or: [{ _id: id }, { _id: new ObjectId(id) }],
-    } as Filter<MongoExternalProducerDoc>;
+    return { $or: [{ _id: id }, { _id: new ObjectId(id) }] } as Filter<MongoExternalProducerDoc>;
   }
   return { _id: id } as Filter<MongoExternalProducerDoc>;
-};
-
-const mirrorPrismaRecordsToMongo = async (records: ExternalProducerDoc[]): Promise<void> => {
-  if (records.length === 0) return;
-
-  await ensureMongoExternalProducerIndexes();
-  const db = await getMongoDb();
-  const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
-
-  for (const record of records) {
-    await collection.updateOne(
-      {
-        connectionId: record.connectionId,
-        externalId: record.externalId,
-      },
-      {
-        $set: {
-          name: record.name,
-          metadata: (record.metadata as Record<string, unknown> | null) ?? null,
-          fetchedAt: record.fetchedAt,
-          updatedAt: record.updatedAt,
-        },
-        $setOnInsert: {
-          _id: record.id,
-          createdAt: record.createdAt,
-        },
-      },
-      { upsert: true }
-    );
-  }
 };
 
 export function getExternalProducerRepository(): ExternalProducerRepository {
   return {
     async syncFromBase(connectionId: string, producers: BaseProducer[]): Promise<number> {
+      await ensureMongoExternalProducerIndexes();
+      const db = await getMongoDb();
+      const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
       const now = new Date();
       const syncInputs: ExternalProducerSyncInput[] = producers.map((producer: BaseProducer) => ({
         connectionId,
@@ -132,194 +87,73 @@ export function getExternalProducerRepository(): ExternalProducerRepository {
         name: producer.name,
       }));
 
-      const provider = await getAppDbProvider();
-      if (provider === 'mongodb') {
-        await ensureMongoExternalProducerIndexes();
-        const db = await getMongoDb();
-        const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
-
-        let count = 0;
-        for (const input of syncInputs) {
-          await collection.updateOne(
-            {
-              connectionId: input.connectionId,
-              externalId: input.externalId,
-            },
-            {
-              $set: {
-                name: input.name,
-                metadata: input.metadata ?? null,
-                fetchedAt: now,
-                updatedAt: now,
-              },
-              $setOnInsert: {
-                _id: randomUUID(),
-                createdAt: now,
-              },
-            },
-            { upsert: true }
-          );
-          count++;
-        }
-        return count;
-      }
-
       let count = 0;
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        for (const input of syncInputs) {
-          await tx.externalProducer.upsert({
-            where: {
-              connectionId_externalId: {
-                connectionId: input.connectionId,
-                externalId: input.externalId,
-              },
-            },
-            create: {
-              connectionId: input.connectionId,
-              externalId: input.externalId,
+      for (const input of syncInputs) {
+        await collection.updateOne(
+          {
+            connectionId: input.connectionId,
+            externalId: input.externalId,
+          },
+          {
+            $set: {
               name: input.name,
+              metadata: input.metadata ?? null,
               fetchedAt: now,
+              updatedAt: now,
             },
-            update: {
-              name: input.name,
-              fetchedAt: now,
+            $setOnInsert: {
+              _id: randomUUID(),
+              createdAt: now,
             },
-          });
-          count++;
-        }
-      });
+          },
+          { upsert: true }
+        );
+        count++;
+      }
 
       return count;
     },
 
     async listByConnection(connectionId: string): Promise<ExternalProducer[]> {
-      const provider = await getAppDbProvider();
-      if (provider === 'mongodb') {
-        await ensureMongoExternalProducerIndexes();
-        const db = await getMongoDb();
-        const mongoRecords = await db
-          .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
-          .find({ connectionId })
-          .sort({ name: 1 })
-          .toArray();
+      await ensureMongoExternalProducerIndexes();
+      const db = await getMongoDb();
+      const records = await db
+        .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
+        .find({ connectionId })
+        .sort({ name: 1 })
+        .toArray();
 
-        if (mongoRecords.length > 0) {
-          return mongoRecords.map((record: MongoExternalProducerDoc) => toMongoRecord(record));
-        }
-
-        try {
-          const prismaRecords = await prisma.externalProducer.findMany({
-            where: { connectionId },
-            orderBy: [{ name: 'asc' }],
-          });
-          if (prismaRecords.length > 0) {
-            await mirrorPrismaRecordsToMongo(prismaRecords);
-          }
-          return prismaRecords.map((record: ExternalProducerDoc) => toRecord(record));
-        } catch {
-          return [];
-        }
-      }
-
-      const records = await prisma.externalProducer.findMany({
-        where: { connectionId },
-        orderBy: [{ name: 'asc' }],
-      });
-
-      return records.map((record: ExternalProducerDoc) => toRecord(record));
+      return records.map((record: MongoExternalProducerDoc) => toMongoRecord(record));
     },
 
     async getById(id: string): Promise<ExternalProducer | null> {
-      const provider = await getAppDbProvider();
-      if (provider === 'mongodb') {
-        await ensureMongoExternalProducerIndexes();
-        const db = await getMongoDb();
-        const filter = buildMongoIdFilter(id);
-        const mongoRecord = await db
-          .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
-          .findOne(filter);
-        if (mongoRecord) {
-          return toMongoRecord(mongoRecord);
-        }
-
-        try {
-          const prismaRecord = await prisma.externalProducer.findUnique({
-            where: { id },
-          });
-          if (!prismaRecord) return null;
-          await mirrorPrismaRecordsToMongo([prismaRecord]);
-          return toRecord(prismaRecord);
-        } catch {
-          return null;
-        }
-      }
-
-      const record = await prisma.externalProducer.findUnique({
-        where: { id },
-      });
-      if (!record) return null;
-      return toRecord(record);
+      await ensureMongoExternalProducerIndexes();
+      const db = await getMongoDb();
+      const record = await db
+        .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
+        .findOne(buildMongoIdFilter(id));
+      return record ? toMongoRecord(record) : null;
     },
 
     async getByExternalId(
       connectionId: string,
       externalId: string
     ): Promise<ExternalProducer | null> {
-      const provider = await getAppDbProvider();
-      if (provider === 'mongodb') {
-        await ensureMongoExternalProducerIndexes();
-        const db = await getMongoDb();
-        const mongoRecord = await db
-          .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
-          .findOne({ connectionId, externalId });
-        if (mongoRecord) {
-          return toMongoRecord(mongoRecord);
-        }
-
-        try {
-          const prismaRecord = await prisma.externalProducer.findUnique({
-            where: {
-              connectionId_externalId: {
-                connectionId,
-                externalId,
-              },
-            },
-          });
-          if (!prismaRecord) return null;
-          await mirrorPrismaRecordsToMongo([prismaRecord]);
-          return toRecord(prismaRecord);
-        } catch {
-          return null;
-        }
-      }
-
-      const record = await prisma.externalProducer.findUnique({
-        where: {
-          connectionId_externalId: {
-            connectionId,
-            externalId,
-          },
-        },
-      });
-      if (!record) return null;
-      return toRecord(record);
+      await ensureMongoExternalProducerIndexes();
+      const db = await getMongoDb();
+      const record = await db
+        .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
+        .findOne({ connectionId, externalId });
+      return record ? toMongoRecord(record) : null;
     },
 
     async deleteByConnection(connectionId: string): Promise<number> {
-      const provider = await getAppDbProvider();
-      if (provider === 'mongodb') {
-        await ensureMongoExternalProducerIndexes();
-        const db = await getMongoDb();
-        const result = await db
-          .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
-          .deleteMany({ connectionId });
-        return result.deletedCount ?? 0;
-      }
-
-      const result = await prisma.externalProducer.deleteMany({
-        where: { connectionId },
-      });
-      return result.count;
+      await ensureMongoExternalProducerIndexes();
+      const db = await getMongoDb();
+      const result = await db
+        .collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION)
+        .deleteMany({ connectionId });
+      return result.deletedCount ?? 0;
     },
   };
 }

@@ -70,9 +70,7 @@ export async function HomeContent({
     );
   }
 
-  const hasDatabase =
-    typeof process.env['DATABASE_URL'] === 'string' ||
-    typeof process.env['MONGODB_URI'] === 'string';
+  const hasDatabase = typeof process.env['MONGODB_URI'] === 'string';
 
   const productsRaw = hasDatabase
     ? await withTiming('products', () => productService.getProducts({ page: 1, pageSize: 20 }))
@@ -92,6 +90,12 @@ export async function HomeContent({
         showFallbackHeader={showFallbackHeader}
         products={products}
         themeSettings={themeSettings}
+        appearanceTone={{
+          background: themeSettings.backgroundColor,
+          text: themeSettings.textColor,
+          border: themeSettings.borderColor,
+          accent: themeSettings.accentColor || themeSettings.primaryColor || themeSettings.textColor,
+        }}
       />
     </CmsPageShell>
   );

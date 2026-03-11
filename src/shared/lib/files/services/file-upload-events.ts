@@ -4,10 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma, type FileUploadEvent } from '@/shared/lib/db/prisma-client';
 
 export type FileUploadEventInput = {
   status: 'success' | 'error';
@@ -88,9 +85,6 @@ const toMongoId = (id: string): ObjectId | string => {
   return id;
 };
 
-const isMissingPrismaTable = (error: unknown): boolean =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
-
 const normalizeRecord = (record: FileUploadEventRecord): FileUploadEventRecord => ({
   ...record,
   createdAt: record.createdAt instanceof Date ? record.createdAt : new Date(record.createdAt),
@@ -113,28 +107,6 @@ const toRecord = (doc: MongoFileUploadEventDoc): FileUploadEventRecord => ({
   meta: doc.meta ?? null,
   createdAt: doc.createdAt ?? new Date(),
 });
-
-const buildPrismaWhere = (input: ListFileUploadEventsInput): Prisma.FileUploadEventWhereInput => {
-  const where: Prisma.FileUploadEventWhereInput = {};
-  if (input.status) where.status = input.status;
-  if (input.category) where.category = { contains: input.category, mode: 'insensitive' };
-  if (input.projectId) where.projectId = input.projectId;
-  if (input.query) {
-    where.OR = [
-      { filename: { contains: input.query, mode: 'insensitive' } },
-      { filepath: { contains: input.query, mode: 'insensitive' } },
-      { errorMessage: { contains: input.query, mode: 'insensitive' } },
-      { source: { contains: input.query, mode: 'insensitive' } },
-    ];
-  }
-  if (input.from || input.to) {
-    where.createdAt = {
-      ...(input.from ? { gte: input.from } : {}),
-      ...(input.to ? { lte: input.to } : {}),
-    };
-  }
-  return where;
-};
 
 const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unknown> => {
   const filter: Record<string, unknown> = {};
@@ -162,7 +134,6 @@ const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unkn
 export async function createFileUploadEvent(
   input: FileUploadEventInput
 ): Promise<FileUploadEventRecord> {
-  const provider = await getAppDbProvider();
   const payload: FileUploadEventRecord = {
     id: randomUUID(),
     status: input.status,
@@ -181,137 +152,30 @@ export async function createFileUploadEvent(
     createdAt: input.createdAt ?? new Date(),
   };
 
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo
-      .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-      .insertOne({ _id: toMongoId(payload.id), ...payload });
-    return normalizeRecord(payload);
-  }
-
-  try {
-    const created = await prisma.fileUploadEvent.create({
-      data: {
-        status: payload.status,
-        ...(payload.category ? { category: payload.category } : {}),
-        ...(payload.projectId ? { projectId: payload.projectId } : {}),
-        ...(payload.folder ? { folder: payload.folder } : {}),
-        ...(payload.filename ? { filename: payload.filename } : {}),
-        ...(payload.filepath ? { filepath: payload.filepath } : {}),
-        ...(payload.mimetype ? { mimetype: payload.mimetype } : {}),
-        ...(payload.size !== null ? { size: payload.size } : {}),
-        ...(payload.source ? { source: payload.source } : {}),
-        ...(payload.errorMessage ? { errorMessage: payload.errorMessage } : {}),
-        ...(payload.requestId ? { requestId: payload.requestId } : {}),
-        ...(payload.userId ? { userId: payload.userId } : {}),
-        ...(payload.meta ? { meta: payload.meta as Prisma.InputJsonValue } : {}),
-        createdAt: payload.createdAt,
-      },
-    });
-
-    return normalizeRecord({
-      id: created.id,
-      status: created.status as 'success' | 'error',
-      category: created.category ?? null,
-      projectId: created.projectId ?? null,
-      folder: created.folder ?? null,
-      filename: created.filename ?? null,
-      filepath: created.filepath ?? null,
-      mimetype: created.mimetype ?? null,
-      size: typeof created.size === 'number' ? created.size : null,
-      source: created.source ?? null,
-      errorMessage: created.errorMessage ?? null,
-      requestId: created.requestId ?? null,
-      userId: created.userId ?? null,
-      meta: (created.meta as Record<string, unknown> | null) ?? null,
-      createdAt: created.createdAt,
-    });
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      await mongo
-        .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-        .insertOne({ _id: toMongoId(payload.id), ...payload });
-      return normalizeRecord(payload);
-    }
-    throw error;
-  }
+  const mongo = await getMongoDb();
+  await mongo
+    .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
+    .insertOne({ _id: toMongoId(payload.id), ...payload });
+  return normalizeRecord(payload);
 }
 
 export async function listFileUploadEvents(
   input: ListFileUploadEventsInput
 ): Promise<ListFileUploadEventsResult> {
-  const provider = await getAppDbProvider();
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const filter = buildMongoFilter(input);
-    const total = await mongo
-      .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-      .countDocuments(filter);
-    const docs = await mongo
-      .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .toArray();
-    const events = docs.map((doc: MongoFileUploadEventDoc) => normalizeRecord(toRecord(doc)));
-    return { events, total, page, pageSize };
-  }
-
-  try {
-    const where = buildPrismaWhere(input);
-    const [total, rows] = await Promise.all([
-      prisma.fileUploadEvent.count({ where }),
-      prisma.fileUploadEvent.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ]);
-
-    const events = rows.map((row: FileUploadEvent) =>
-      normalizeRecord({
-        id: row.id,
-        status: row.status as 'success' | 'error',
-        category: row.category ?? null,
-        projectId: row.projectId ?? null,
-        folder: row.folder ?? null,
-        filename: row.filename ?? null,
-        filepath: row.filepath ?? null,
-        mimetype: row.mimetype ?? null,
-        size: typeof row.size === 'number' ? row.size : null,
-        source: row.source ?? null,
-        errorMessage: row.errorMessage ?? null,
-        requestId: row.requestId ?? null,
-        userId: row.userId ?? null,
-        meta: (row.meta as Record<string, unknown> | null) ?? null,
-        createdAt: row.createdAt,
-      })
-    );
-
-    return { events, total, page, pageSize };
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      const filter = buildMongoFilter(input);
-      const total = await mongo
-        .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-        .countDocuments(filter);
-      const docs = await mongo
-        .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .toArray();
-      const events = docs.map((doc: MongoFileUploadEventDoc) => normalizeRecord(toRecord(doc)));
-      return { events, total, page, pageSize };
-    }
-    throw error;
-  }
+  const mongo = await getMongoDb();
+  const filter = buildMongoFilter(input);
+  const total = await mongo
+    .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
+    .countDocuments(filter);
+  const docs = await mongo
+    .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
+    .find(filter)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .toArray();
+  const events = docs.map((doc: MongoFileUploadEventDoc) => normalizeRecord(toRecord(doc)));
+  return { events, total, page, pageSize };
 }

@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client } from 'pg';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 
-const QUERY_TIMEOUT_MS = 30_000;
 const databaseExecuteRequestSchema = z.object({
   sql: z.string().trim().min(1).optional(),
-  type: z.enum(['postgresql', 'mongodb', 'auto']).optional().default('auto'),
+  type: z.enum(['mongodb', 'auto']).optional().default('auto'),
   collection: z.string().trim().min(1).optional(),
   operation: z
     .enum(['find', 'insertOne', 'updateOne', 'deleteOne', 'deleteMany', 'aggregate', 'countDocuments'])
@@ -37,100 +34,27 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const parsed = parsedBody.data;
-  const requestedType = parsed.type;
-
-  const hasMongoIntent = Boolean(
-    parsed.collection ||
-    parsed.operation ||
-    parsed.filter ||
-    parsed.document ||
-    parsed.update ||
-    parsed.pipeline
-  );
-
-  if (requestedType === 'mongodb') {
-    return handleMongoOperation(parsed);
+  if (parsed.sql) {
+    throw badRequestError('SQL execution is no longer supported. Use MongoDB collection operations.');
   }
-
-  if (requestedType === 'auto') {
-    if (parsed.collection) {
-      const provider = await resolveCollectionProviderForRequest(parsed.collection, 'auto');
-      if (provider === 'mongodb') {
-        try {
-          return await handleMongoOperation(parsed);
-        } catch (error) {
-          try {
-            const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-            void ErrorSystem.captureException(error, {
-              service: 'api/databases/execute',
-              provider: 'mongodb',
-              collection: parsed.collection,
-            });
-          } catch {
-            // Ignore error capture failures
-          }
-          throw error;
-        }
-      }
-      if (hasMongoIntent) {
-        throw badRequestError(
-          `Collection "${parsed.collection}" resolves to Prisma in Database Engine routing. Use type="mongodb" to force MongoDB or update collection route mapping.`
-        );
-      }
-    } else if (hasMongoIntent) {
-      throw badRequestError('Collection name is required for MongoDB operations.');
-    }
+  if (!parsed.collection) {
+    throw badRequestError('Collection name is required for MongoDB operations.');
   }
 
   try {
-    return await handlePostgresQuery(parsed.sql);
+    return await handleMongoOperation(parsed);
   } catch (error) {
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
       void ErrorSystem.captureException(error, {
         service: 'api/databases/execute',
-        provider: 'postgresql',
-        sql: parsed.sql,
+        provider: 'mongodb',
+        collection: parsed.collection,
       });
     } catch {
       // Ignore error capture failures
     }
     throw error;
-  }
-}
-
-async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
-  if (!sql?.trim()) {
-    throw badRequestError('SQL query is required.');
-  }
-
-  const dbUrl = process.env['DATABASE_URL'] ?? '';
-  if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
-    throw badRequestError('No PostgreSQL database configured.');
-  }
-
-  const client = new Client({ connectionString: dbUrl });
-  const startTime = Date.now();
-
-  try {
-    await client.connect();
-    await client.query(`SET statement_timeout = ${QUERY_TIMEOUT_MS}`);
-
-    const result = await client.query(sql);
-    const duration = Date.now() - startTime;
-
-    return NextResponse.json({
-      rows: result.rows ?? [],
-      rowCount: result.rowCount ?? 0,
-      fields: (result.fields ?? []).map((f: { name: string; dataTypeID: number }) => ({
-        name: f.name,
-        dataTypeID: f.dataTypeID,
-      })),
-      command: result.command ?? '',
-      duration,
-    });
-  } finally {
-    await client.end().catch(() => {});
   }
 }
 

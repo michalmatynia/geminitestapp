@@ -12,20 +12,21 @@ import {
   isProviderActionCategorySupported,
   getDefaultProviderAction,
   resolveProviderAction,
+  type DbActionProvider,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 
 export function useDatabaseActionConfig(args: {
   databaseConfig: DatabaseConfig;
   queryConfig: DbQueryConfig;
-  appDbProvider: 'prisma' | 'mongodb';
-  resolvedProvider: 'prisma' | 'mongodb';
+  appDbProvider: 'mongodb';
+  resolvedProvider: DbActionProvider;
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
   mapOperationFromActionCategory: (cat: DatabaseActionCategory) => DatabaseOperation;
 }) {
   const handleProviderChange = useCallback(
     (nextProvider: DbQueryConfig['provider']) => {
       const normalizedRequestedProvider: DbQueryConfig['provider'] =
-        nextProvider === 'mongodb' || nextProvider === 'prisma' ? nextProvider : 'auto';
+        nextProvider === 'mongodb' ? nextProvider : 'auto';
       const nextResolvedProvider = resolveDbActionProvider(
         normalizedRequestedProvider,
         args.appDbProvider

@@ -24,6 +24,7 @@ import {
 } from './KangurAiTutorWidget.entry';
 import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
+import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
 import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
@@ -36,6 +37,10 @@ import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 type LoginModalState = {
   authMode: KangurLoginModalAuthMode;
   isOpen: boolean;
+  openLoginModal: (
+    callbackUrl?: string | null,
+    options?: { authMode?: KangurLoginModalAuthMode }
+  ) => void;
 };
 
 type UseKangurAiTutorWidgetCoordinatorInput = {
@@ -63,6 +68,7 @@ export function useKangurAiTutorWidgetCoordinator({
   type TutorSurfaceMode =
     | 'idle_avatar'
     | 'onboarding'
+    | 'auth_guided'
     | 'selection_guided'
     | 'section_guided'
     ;
@@ -297,7 +303,9 @@ export function useKangurAiTutorWidgetCoordinator({
     isLoading,
     isOpen: tutorRuntime.isOpen,
     learnerMemory,
+    loginModalIsOpen: loginModal.isOpen,
     messages,
+    openLoginModal: loginModal.openLoginModal,
     prefersReducedMotion,
     sessionContext,
     tutorContent,
@@ -337,11 +345,14 @@ export function useKangurAiTutorWidgetCoordinator({
                 isSectionExplainPendingMode ||
                 hasSectionMinimalPanelSurface
               ? 'section_guided'
+              : isAuthGuidedTutorTarget(guidedTutorTarget)
+                ? 'auth_guided'
               : canonicalTutorModalVisible || guestIntroVisible || guestIntroHelpVisible
                 ? 'onboarding'
               : 'idle_avatar';
   const suppressPanelSurface =
     tutorSurfaceMode === 'onboarding' ||
+    tutorSurfaceMode === 'auth_guided' ||
     tutorSurfaceMode === 'selection_guided' ||
     tutorSurfaceMode === 'section_guided';
 

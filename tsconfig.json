@@ -49,6 +49,15 @@
       "@/__tests__/*": [
         "./__tests__/*"
       ],
+      "@prisma/client": [
+        "./src/shared/lib/db/prisma-client.ts"
+      ],
+      "@prisma/adapter-pg": [
+        "./src/shared/lib/db/prisma-adapter-pg-stub.ts"
+      ],
+      "pg": [
+        "./src/shared/lib/db/pg-stub.ts"
+      ],
       "gsap/ScrollTrigger": [
         "./node_modules/gsap/types/scroll-trigger.d.ts"
       ],

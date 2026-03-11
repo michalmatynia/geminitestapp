@@ -11,13 +11,11 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   conflictError,
-  internalError,
   validationError,
   forbiddenError,
 } from '@/shared/errors/app-error';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logger } from '@/shared/utils/logger';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 
@@ -65,55 +63,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   const email = normalizeAuthEmail(data.email);
   const passwordHash = await hash(data.password, 12);
 
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured.');
-    }
-    const existing = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
-    if (existing) {
-      throw conflictError('User already exists.', { email });
-    }
-    const now = new Date();
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: data.name ?? null,
-        passwordHash,
-        emailVerified: data.emailVerified ? now : null,
-        image: null,
-      },
-      select: { id: true, email: true, name: true },
-    });
-    await logAuthEvent({
-      req,
-      action: 'auth.register',
-      stage: 'success',
-      userId: user.id,
-      body: { email: user.email, name: user.name },
-      status: 201,
-    });
-    void logActivity({
-      type: ActivityTypes.AUTH.REGISTERED,
-      description: `User registered: ${user.email}`,
-      userId: user.id,
-      entityId: user.id,
-      entityType: 'user',
-      metadata: { email: user.email },
-    }).catch((error: Error) => {
-      logger.warn('Failed to log registration activity', {
-        service: 'auth.register',
-        error,
-      });
-    });
-    return NextResponse.json({ id: user.id, email: user.email, name: user.name }, { status: 201 });
-  }
+  requireAuthProvider(await getAuthDataProvider());
 
   if (!process.env['MONGODB_URI']) {
-    throw internalError('MongoDB is not configured.');
+    throw badRequestError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
   const existing = await db.collection<MongoUserDoc>('users').findOne({ email });

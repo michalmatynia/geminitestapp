@@ -7,7 +7,6 @@ import {
 } from '@/features/integrations/services/imports/base-client';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import {
@@ -25,6 +24,7 @@ export const resolvePriceGroupContext = async (
   provider: ProductDataProvider,
   preferredPriceGroupId?: string | null
 ): Promise<{ defaultPriceGroupId: string | null; preferredCurrencies: string[] }> => {
+  void provider;
   const projectedFields = {
     id: 1,
     groupId: 1,
@@ -32,81 +32,42 @@ export const resolvePriceGroupContext = async (
     currencyCode: 1,
   } as const;
 
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
-    const byId = preferredPriceGroupId?.trim()
-      ? await priceGroupCollection.findOne(
+  const mongo = await getMongoDb();
+  const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
+  const byId = preferredPriceGroupId?.trim()
+    ? await priceGroupCollection.findOne(
         { id: preferredPriceGroupId.trim() },
         { projection: projectedFields }
       )
-      : null;
-    const fallbackDefault = byId
-      ? null
-      : await priceGroupCollection.findOne({ isDefault: true }, { projection: projectedFields });
-    const resolved = byId ?? fallbackDefault;
-    if (!resolved?.id) {
-      return { defaultPriceGroupId: null, preferredCurrencies: [] };
-    }
-
-    const preferredCurrencies = new Set<string>();
-    addCurrencyCandidate(preferredCurrencies, resolved.currencyCode);
-    addCurrencyCandidate(preferredCurrencies, resolved.groupId);
-    addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
-
-    if (resolved.currencyId) {
-      try {
-        const currency = await mongo
-          .collection<{ id?: string; code?: string }>('currencies')
-          .findOne(
-            {
-              $or: [{ id: resolved.currencyId }, { code: resolved.currencyId }],
-            },
-            { projection: { code: 1, id: 1 } }
-          );
-        addCurrencyCandidate(preferredCurrencies, currency?.code);
-      } catch {
-        // Currency lookup is optional during import.
-      }
-    }
-
-    return {
-      defaultPriceGroupId: resolved.id,
-      preferredCurrencies: Array.from(preferredCurrencies),
-    };
-  }
-
-  const byId = preferredPriceGroupId?.trim()
-    ? await prisma.priceGroup.findUnique({
-      where: { id: preferredPriceGroupId.trim() },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    })
     : null;
   const fallbackDefault = byId
     ? null
-    : await prisma.priceGroup.findFirst({
-      where: { isDefault: true },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    });
+    : await priceGroupCollection.findOne({ isDefault: true }, { projection: projectedFields });
   const resolved = byId ?? fallbackDefault;
   if (!resolved?.id) {
     return { defaultPriceGroupId: null, preferredCurrencies: [] };
   }
 
   const preferredCurrencies = new Set<string>();
-  addCurrencyCandidate(preferredCurrencies, resolved.currency?.code);
+  addCurrencyCandidate(preferredCurrencies, resolved.currencyCode);
   addCurrencyCandidate(preferredCurrencies, resolved.groupId);
   addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
+
+  if (resolved.currencyId) {
+    try {
+      const currency = await mongo
+        .collection<{ id?: string; code?: string }>('currencies')
+        .findOne(
+          {
+            $or: [{ id: resolved.currencyId }, { code: resolved.currencyId }],
+          },
+          { projection: { code: 1, id: 1 } }
+        );
+      addCurrencyCandidate(preferredCurrencies, currency?.code);
+    } catch {
+      // Currency lookup is optional during import.
+    }
+  }
 
   return {
     defaultPriceGroupId: resolved.id,
@@ -130,6 +91,7 @@ export const resolveCatalogLanguageContext = async (
     defaultLanguageId?: string | null;
   }
 ): Promise<{ languageCodes: string[]; defaultLanguageCode: string | null }> => {
+  void provider;
   const catalogLanguageIds = Array.isArray(catalog.languageIds)
     ? catalog.languageIds
       .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
@@ -147,41 +109,24 @@ export const resolveCatalogLanguageContext = async (
   }
 
   const idToCode = new Map<string, string>();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const languageRows = await mongo
-      .collection<{ id?: string; code?: string }>('languages')
-      .find(
-        {
-          $or: [{ id: { $in: idsToResolve } }, { code: { $in: idsToResolve } }],
-        },
-        { projection: { id: 1, code: 1 } }
-      )
-      .toArray();
-    languageRows.forEach((row: { id?: string; code?: string }) => {
-      const id = row.id?.trim();
-      const code = normalizeLanguageCode(row.code);
-      if (!id || !code) return;
-      idToCode.set(id, code);
-      idToCode.set(id.toLowerCase(), code);
-      idToCode.set(code, code);
-    });
-  } else {
-    const languageRows = await prisma.language.findMany({
-      where: {
-        OR: [{ id: { in: idsToResolve } }, { code: { in: idsToResolve } }],
+  const mongo = await getMongoDb();
+  const languageRows = await mongo
+    .collection<{ id?: string; code?: string }>('languages')
+    .find(
+      {
+        $or: [{ id: { $in: idsToResolve } }, { code: { $in: idsToResolve } }],
       },
-      select: { id: true, code: true },
-    });
-    languageRows.forEach((row: { id: string; code: string }) => {
-      const id = row.id?.trim();
-      const code = normalizeLanguageCode(row.code);
-      if (!id || !code) return;
-      idToCode.set(id, code);
-      idToCode.set(id.toLowerCase(), code);
-      idToCode.set(code, code);
-    });
-  }
+      { projection: { id: 1, code: 1 } }
+    )
+    .toArray();
+  languageRows.forEach((row: { id?: string; code?: string }) => {
+    const id = row.id?.trim();
+    const code = normalizeLanguageCode(row.code);
+    if (!id || !code) return;
+    idToCode.set(id, code);
+    idToCode.set(id.toLowerCase(), code);
+    idToCode.set(code, code);
+  });
 
   const languageCodes = Array.from(
     new Set(

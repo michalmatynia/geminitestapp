@@ -2,6 +2,10 @@ import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
+import {
+  CmsStorefrontAppearanceButtons,
+  type CmsAppearanceTone,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import ProductCard from '@/features/products/components/ProductCard';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
@@ -133,10 +137,12 @@ export function HomeFallbackContent({
   showFallbackHeader,
   products,
   themeSettings,
+  appearanceTone,
 }: {
   showFallbackHeader: boolean;
   products: ProductWithImages[];
   themeSettings: SocialThemeSettings;
+  appearanceTone?: CmsAppearanceTone;
 }): React.JSX.Element {
   const socialLinks = React.useMemo(() => buildSocialLinks(themeSettings), [themeSettings]);
 
@@ -148,7 +154,8 @@ export function HomeFallbackContent({
             <MountainIcon className='size-6' />
             <span className='sr-only'>Acme Inc</span>
           </Link>
-          <nav className='ml-auto flex gap-4 sm:gap-6'>
+          <nav className='ml-auto flex items-center gap-3 sm:gap-4'>
+            <CmsStorefrontAppearanceButtons label='Homepage appearance' tone={appearanceTone} />
             <Link
               href='/admin'
               className='text-sm font-medium underline-offset-4 hover:underline'
@@ -173,8 +180,10 @@ export function HomeFallbackContent({
       </div>
 
       {showFallbackHeader ? (
-        <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
-          <p className='text-xs text-gray-400'>&copy; 2024 Acme Inc. All rights reserved.</p>
+        <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-[var(--cms-appearance-page-border)] px-4 py-6 sm:flex-row md:px-6'>
+          <p className='cms-appearance-muted-text text-xs'>
+            &copy; 2024 Acme Inc. All rights reserved.
+          </p>
           <div className='flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center'>
             <nav className='flex gap-4 sm:gap-6'>
               <Link
@@ -200,7 +209,7 @@ export function HomeFallbackContent({
                     <a
                       key={link.id}
                       href={link.href}
-                      className='inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100'
+                      className='cms-appearance-subtle-surface cms-appearance-muted-text inline-flex size-8 items-center justify-center rounded-full border transition hover:text-[var(--cms-appearance-page-text)]'
                       target='_blank'
                       rel='noopener noreferrer'
                       aria-label={link.label}

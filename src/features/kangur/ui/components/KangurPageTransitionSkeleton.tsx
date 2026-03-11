@@ -2,6 +2,10 @@
 
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
+import {
+  resolveKangurRouteTransitionSkeletonVariant,
+  type KangurRouteTransitionSkeletonVariant,
+} from '@/features/kangur/ui/routing/route-transition-skeletons';
 import { cn } from '@/shared/utils';
 
 type KangurSkeletonPageKey =
@@ -22,29 +26,18 @@ const SKELETON_TONE_BY_PAGE: Record<
   Tests: 'learn',
 };
 
-const isKangurSkeletonPageKey = (value: string | null | undefined): value is KangurSkeletonPageKey =>
-  value === 'Game' ||
-  value === 'Lessons' ||
-  value === 'LearnerProfile' ||
-  value === 'ParentDashboard' ||
-  value === 'Tests';
-
 const SkeletonBlock = ({ className }: { className?: string }): React.JSX.Element => (
   <div aria-hidden='true' className={cn('animate-pulse bg-slate-200/80', className)} />
 );
 
-const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => {
-  const chipClassName = className;
-
-  return (
-    <SkeletonBlock
-      className={cn(
-        'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
-        chipClassName
-      )}
-    />
-  );
-};
+const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => (
+  <SkeletonBlock
+    className={cn(
+      'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
+      className
+    )}
+  />
+);
 
 const SkeletonPanel = ({
   children,
@@ -63,13 +56,11 @@ const SkeletonPanel = ({
   </div>
 );
 
-const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
-  const lineClassName = className;
+const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => (
+  <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', className)} />
+);
 
-  return <SkeletonBlock className={cn('h-4 rounded-full bg-slate-200/85', lineClassName)} />;
-};
-
-const GameSkeleton = (): React.JSX.Element => (
+const GameHomeSkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col gap-6'>
     <SkeletonPanel className='min-h-[240px]'>
       <div className='flex flex-col gap-4'>
@@ -113,7 +104,33 @@ const GameSkeleton = (): React.JSX.Element => (
   </div>
 );
 
-const LessonsSkeleton = (): React.JSX.Element => (
+const GameSessionSkeleton = (): React.JSX.Element => (
+  <div className='flex w-full flex-col gap-6'>
+    <SkeletonPanel className='min-h-[160px]'>
+      <div className='flex flex-wrap items-center gap-3'>
+        <SkeletonChip className='h-8 w-32' />
+        <SkeletonChip className='h-8 w-28' />
+      </div>
+      <div className='mt-4 space-y-3'>
+        <SkeletonLine className='h-9 w-1/2 max-w-[320px]' />
+        <SkeletonLine className='w-full max-w-[520px]' />
+      </div>
+    </SkeletonPanel>
+    <SkeletonPanel className='min-h-[340px]'>
+      <div className='space-y-5'>
+        <SkeletonBlock className='h-40 rounded-[30px] bg-slate-200/78' />
+        <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+        </div>
+      </div>
+    </SkeletonPanel>
+  </div>
+);
+
+const LessonsLibrarySkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col gap-6'>
     <SkeletonPanel className='min-h-[180px]'>
       <div className='space-y-4'>
@@ -148,6 +165,34 @@ const LessonsSkeleton = (): React.JSX.Element => (
   </div>
 );
 
+const LessonsFocusSkeleton = (): React.JSX.Element => (
+  <div className='flex w-full flex-col gap-6'>
+    <SkeletonPanel className='min-h-[160px]'>
+      <div className='flex items-center justify-between gap-4'>
+        <div className='space-y-3'>
+          <SkeletonChip className='h-8 w-36' />
+          <SkeletonLine className='h-10 w-64 max-w-full' />
+          <SkeletonLine className='w-full max-w-[420px]' />
+        </div>
+        <SkeletonChip className='hidden h-12 w-28 sm:block' />
+      </div>
+    </SkeletonPanel>
+    <SkeletonPanel className='min-h-[360px]'>
+      <div className='space-y-4'>
+        <SkeletonBlock className='h-12 rounded-[22px] bg-slate-200/76' />
+        <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/78' />
+        <SkeletonLine className='w-full' />
+        <SkeletonLine className='w-5/6' />
+        <SkeletonLine className='w-4/6' />
+      </div>
+    </SkeletonPanel>
+    <div className='grid gap-4 sm:grid-cols-2'>
+      <SkeletonPanel className='min-h-[120px]' />
+      <SkeletonPanel className='min-h-[120px]' />
+    </div>
+  </div>
+);
+
 const LearnerProfileSkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col gap-6'>
     <SkeletonPanel className='min-h-[180px]'>
@@ -162,10 +207,10 @@ const LearnerProfileSkeleton = (): React.JSX.Element => (
       </div>
     </SkeletonPanel>
     <div className='grid gap-4 xl:grid-cols-2'>
-      <SkeletonPanel className='min-h-[220px]'>{null}</SkeletonPanel>
-      <SkeletonPanel className='min-h-[220px]'>{null}</SkeletonPanel>
-      <SkeletonPanel className='min-h-[220px]'>{null}</SkeletonPanel>
-      <SkeletonPanel className='min-h-[220px]'>{null}</SkeletonPanel>
+      <SkeletonPanel className='min-h-[220px]' />
+      <SkeletonPanel className='min-h-[220px]' />
+      <SkeletonPanel className='min-h-[220px]' />
+      <SkeletonPanel className='min-h-[220px]' />
     </div>
   </div>
 );
@@ -194,8 +239,8 @@ const ParentDashboardSkeleton = (): React.JSX.Element => (
       </div>
     </SkeletonPanel>
     <div className='grid gap-4 lg:grid-cols-2'>
-      <SkeletonPanel className='min-h-[240px]'>{null}</SkeletonPanel>
-      <SkeletonPanel className='min-h-[240px]'>{null}</SkeletonPanel>
+      <SkeletonPanel className='min-h-[240px]' />
+      <SkeletonPanel className='min-h-[240px]' />
     </div>
   </div>
 );
@@ -219,31 +264,66 @@ const TestsSkeleton = (): React.JSX.Element => (
   </div>
 );
 
-const renderPageSkeleton = (pageKey: KangurSkeletonPageKey): React.JSX.Element => {
-  switch (pageKey) {
-    case 'Lessons':
-      return <LessonsSkeleton />;
-    case 'LearnerProfile':
-      return <LearnerProfileSkeleton />;
-    case 'ParentDashboard':
-      return <ParentDashboardSkeleton />;
-    case 'Tests':
-      return <TestsSkeleton />;
-    case 'Game':
+const resolveSkeletonPageKey = (
+  variant: KangurRouteTransitionSkeletonVariant
+): KangurSkeletonPageKey => {
+  switch (variant) {
+    case 'lessons-library':
+    case 'lessons-focus':
+      return 'Lessons';
+    case 'learner-profile':
+      return 'LearnerProfile';
+    case 'parent-dashboard':
+      return 'ParentDashboard';
+    case 'tests':
+      return 'Tests';
+    case 'game-home':
+    case 'game-session':
     default:
-      return <GameSkeleton />;
+      return 'Game';
+  }
+};
+
+const renderSkeletonVariant = (
+  variant: KangurRouteTransitionSkeletonVariant
+): React.JSX.Element => {
+  switch (variant) {
+    case 'game-session':
+      return <GameSessionSkeleton />;
+    case 'lessons-focus':
+      return <LessonsFocusSkeleton />;
+    case 'lessons-library':
+      return <LessonsLibrarySkeleton />;
+    case 'learner-profile':
+      return <LearnerProfileSkeleton />;
+    case 'parent-dashboard':
+      return <ParentDashboardSkeleton />;
+    case 'tests':
+      return <TestsSkeleton />;
+    case 'game-home':
+    default:
+      return <GameHomeSkeleton />;
   }
 };
 
 export function KangurPageTransitionSkeleton({
   pageKey,
   reason = 'navigation',
+  variant,
 }: {
   pageKey?: string | null;
   reason?: 'boot' | 'navigation';
+  variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
-  const embedded = useOptionalKangurRouting()?.embedded ?? false;
-  const resolvedPageKey = isKangurSkeletonPageKey(pageKey) ? pageKey : 'Game';
+  const routing = useOptionalKangurRouting();
+  const embedded = routing?.embedded ?? false;
+  const resolvedVariant =
+    variant ??
+    resolveKangurRouteTransitionSkeletonVariant({
+      basePath: routing?.basePath,
+      pageKey,
+    });
+  const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
 
   return (
     <div
@@ -251,6 +331,7 @@ export function KangurPageTransitionSkeleton({
         embedded ? 'absolute' : 'fixed',
         'inset-0 z-30 cursor-progress overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(79,99,216,0.12),_transparent_34%),linear-gradient(180deg,_rgba(248,250,255,0.98)_0%,_rgba(240,244,255,0.99)_52%,_rgba(250,251,255,1)_100%)]'
       )}
+      data-kangur-skeleton-variant={resolvedVariant}
       data-testid='kangur-page-transition-skeleton'
     >
       <div className='sr-only' role='status' aria-live='polite'>
@@ -262,7 +343,7 @@ export function KangurPageTransitionSkeleton({
       >
         <div className='w-full'>
           <KangurPageContainer className='flex flex-col gap-6 pt-24 sm:pt-28'>
-            {renderPageSkeleton(resolvedPageKey)}
+            {renderSkeletonVariant(resolvedVariant)}
           </KangurPageContainer>
         </div>
       </KangurPageShell>

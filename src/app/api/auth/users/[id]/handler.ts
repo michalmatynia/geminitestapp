@@ -22,7 +22,6 @@ import {
   notFoundError,
 } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export const updateSchema = z.object({
@@ -63,30 +62,7 @@ const buildMongoUserIdCandidates = (userId: string): Array<ObjectId | string> =>
   return [userId];
 };
 
-const removeRoleMappingForUser = async (
-  provider: 'prisma' | 'mongodb',
-  userId: string
-): Promise<boolean> => {
-  if (provider === 'prisma') {
-    const current = await prisma.setting.findUnique({
-      where: { key: USER_ROLES_SETTING_KEY },
-      select: { value: true },
-    });
-    const userRoles = parseJsonSetting<AuthUserRoleMap>(current?.value ?? null, {});
-    if (!(userId in userRoles)) {
-      return false;
-    }
-
-    delete userRoles[userId];
-    const nextValue = serializeSetting(userRoles);
-    await prisma.setting.upsert({
-      where: { key: USER_ROLES_SETTING_KEY },
-      update: { value: nextValue },
-      create: { key: USER_ROLES_SETTING_KEY, value: nextValue },
-    });
-    return true;
-  }
-
+const removeRoleMappingForUser = async (userId: string): Promise<boolean> => {
   if (!process.env['MONGODB_URI']) {
     return false;
   }
@@ -147,76 +123,7 @@ export async function patchAuthUserHandler(
   }
 
   const { id: userId } = params;
-  const provider = requireAuthProvider(await getAuthDataProvider());
-
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured.');
-    }
-    const existing = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-    if (!existing) {
-      throw notFoundError('User not found.');
-    }
-
-    const nextEmail = typeof email === 'string' ? normalizeAuthEmail(email) : undefined;
-    if (nextEmail && nextEmail !== existing.email) {
-      const conflict = await prisma.user.findUnique({
-        where: { email: nextEmail },
-        select: { id: true },
-      });
-      if (conflict && conflict.id !== userId) {
-        throw conflictError('Email already in use.');
-      }
-    }
-
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(typeof name === 'string' ? { name } : {}),
-        ...(typeof nextEmail === 'string' ? { email: nextEmail } : {}),
-        ...(typeof emailVerified === 'boolean'
-          ? { emailVerified: emailVerified ? new Date() : null }
-          : {}),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-
-    const nowIso = new Date().toISOString();
-    const payload: AuthUser = {
-      id: updated.id,
-      email: updated.email ?? null,
-      name: updated.name ?? null,
-      image: updated.image ?? null,
-      emailVerified: updated.emailVerified ? updated.emailVerified.toISOString() : null,
-      provider,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    };
-    await logAuthEvent({
-      req,
-      action: 'auth.users.update',
-      stage: 'success',
-      userId: session?.user?.id ?? null,
-      body: { targetUserId: params.id },
-      status: 200,
-    });
-    return NextResponse.json(payload);
-  }
+  requireAuthProvider(await getAuthDataProvider());
 
   if (!process.env['MONGODB_URI']) {
     throw internalError('MongoDB is not configured.');
@@ -301,43 +208,7 @@ export async function deleteAuthUserHandler(
     body: { targetUserId: userId },
   });
 
-  const provider = requireAuthProvider(await getAuthDataProvider());
-
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured.');
-    }
-    const existing = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true },
-    });
-    if (!existing) {
-      throw notFoundError('User not found.');
-    }
-
-    await prisma.$transaction([
-      prisma.account.deleteMany({ where: { userId } }),
-      prisma.session.deleteMany({ where: { userId } }),
-      prisma.authSecurityProfile.deleteMany({ where: { userId } }),
-      prisma.userPreferences.deleteMany({ where: { userId } }),
-      prisma.user.delete({ where: { id: userId } }),
-    ]);
-
-    const roleMappingRemoved = await removeRoleMappingForUser(provider, userId);
-    invalidateAuthAccessCache(userId);
-    invalidateAuthSecurityProfileCache(userId);
-    invalidateUserPreferencesCache(userId);
-
-    await logAuthEvent({
-      req,
-      action: 'auth.users.delete',
-      stage: 'success',
-      userId: session?.user?.id ?? null,
-      body: { targetUserId: userId, roleMappingRemoved },
-      status: 200,
-    });
-    return NextResponse.json({ id: userId, deleted: true });
-  }
+  requireAuthProvider(await getAuthDataProvider());
 
   if (!process.env['MONGODB_URI']) {
     throw internalError('MongoDB is not configured.');
@@ -372,7 +243,7 @@ export async function deleteAuthUserHandler(
     }),
   ]);
 
-  const roleMappingRemoved = await removeRoleMappingForUser(provider, userId);
+  const roleMappingRemoved = await removeRoleMappingForUser(userId);
   invalidateAuthAccessCache(userId);
   invalidateAuthSecurityProfileCache(userId);
   invalidateUserPreferencesCache(userId);

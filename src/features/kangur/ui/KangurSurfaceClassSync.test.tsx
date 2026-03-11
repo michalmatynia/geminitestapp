@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 
 describe('KangurSurfaceClassSync', () => {
@@ -37,5 +38,24 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.documentElement.style.getPropertyValue('scrollbar-gutter')).toBe('');
     expect(document.body.style.getPropertyValue('scrollbar-gutter')).toBe('');
     expect(appContent?.style.getPropertyValue('scrollbar-gutter')).toBe('');
+  });
+
+  it('applies the selected storefront appearance background to the page chrome', async () => {
+    window.localStorage.setItem('cms.storefront.appearance.v1', 'dark');
+
+    render(
+      <CmsStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>
+          <div>Surface</div>
+        </KangurSurfaceClassSync>
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(document.body.style.getPropertyValue('background')).toContain('rgb(27, 35, 51)');
+    });
+    expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
+      '30,41,59'
+    );
   });
 });

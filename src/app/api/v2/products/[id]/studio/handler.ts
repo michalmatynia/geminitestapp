@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { productStudioConfigResponseSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
@@ -16,6 +17,18 @@ const putSchema = z.object({
 const productExists = async (productId: string): Promise<boolean> =>
   Boolean(await productService.getProductById(productId));
 
+const buildEmptyProductStudioConfigResponse = (): z.infer<
+  typeof productStudioConfigResponseSchema
+> =>
+  productStudioConfigResponseSchema.parse({
+    config: {
+      projectId: null,
+      sourceSlotByImageIndex: {},
+      sourceSlotHistoryByImageIndex: {},
+      updatedAt: new Date().toISOString(),
+    },
+  });
+
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -27,12 +40,12 @@ export async function GET_handler(
   }
 
   if (!(await productExists(productId))) {
-    return NextResponse.json({ config: { projectId: null } });
+    return NextResponse.json(buildEmptyProductStudioConfigResponse());
   }
 
   const config = await getProductStudioConfig(productId);
 
-  return NextResponse.json({ config });
+  return NextResponse.json(productStudioConfigResponseSchema.parse({ config }));
 }
 
 export async function PUT_handler(
@@ -46,7 +59,7 @@ export async function PUT_handler(
   }
 
   if (!(await productExists(productId))) {
-    return NextResponse.json({ config: { projectId: null } });
+    return NextResponse.json(buildEmptyProductStudioConfigResponse());
   }
 
   const body = (await req.json().catch(() => null)) as unknown;
@@ -58,5 +71,5 @@ export async function PUT_handler(
   const config = await setProductStudioConfig(productId, {
     ...(parsed.data.projectId !== undefined ? { projectId: parsed.data.projectId } : {}),
   });
-  return NextResponse.json({ config });
+  return NextResponse.json(productStudioConfigResponseSchema.parse({ config }));
 }

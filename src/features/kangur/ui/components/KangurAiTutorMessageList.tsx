@@ -12,6 +12,18 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { JSX } from 'react';
 
+const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 110;
+
+const COACHING_MODE_ICON: Record<
+  'hint_ladder' | 'misconception_check' | 'review_reflection' | 'next_best_action',
+  string
+> = {
+  hint_ladder: '?',
+  misconception_check: 'i',
+  review_reflection: '!',
+  next_best_action: '*',
+};
+
 export function KangurAiTutorMessageList(): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const {
@@ -37,19 +49,24 @@ export function KangurAiTutorMessageList(): JSX.Element {
   return (
     <div className='flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3'>
       {visibleMessages.length === 0 ? (
-        <p className='py-4 text-center text-xs text-slate-500'>
-          {isSelectionExplainPendingMode || isSectionExplainPendingMode
-            ? panelEmptyStateMessage
-            : isAskModalMode
-              ? askModalHelperText
-              : emptyStateMessage}
-        </p>
+        <div className='flex flex-col items-center justify-center py-6'>
+          <div className='mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100/60 text-amber-600 shadow-[0_6px_16px_-10px_rgba(245,158,11,0.24)]'>
+            <span className='text-lg'>?</span>
+          </div>
+          <p className='max-w-[240px] text-center text-xs leading-relaxed text-slate-500'>
+            {isSelectionExplainPendingMode || isSectionExplainPendingMode
+              ? panelEmptyStateMessage
+              : isAskModalMode
+                ? askModalHelperText
+                : emptyStateMessage}
+          </p>
+        </div>
       ) : (
         visibleMessages.map((msg, index) => {
           if (msg.role === 'user') {
             return (
               <div key={index} className='flex justify-end'>
-                <div className='max-w-[80%] rounded-[22px] border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500 px-3 py-2 text-sm leading-relaxed text-white shadow-[0_16px_28px_-20px_rgba(249,115,22,0.58)]'>
+                <div className='max-w-[80%] rounded-[22px] border border-orange-400/60 tutor-user-bubble px-3 py-2 text-sm leading-relaxed text-white'>
                   {msg.content}
                 </div>
               </div>
@@ -64,14 +81,19 @@ export function KangurAiTutorMessageList(): JSX.Element {
               <div className='w-full max-w-[90%] space-y-2'>
                 {msg.coachingFrame ? (
                   <div
-                    className='rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-left shadow-sm'
+                    className='tutor-coaching-frame rounded-2xl px-3 py-2.5 text-left'
                     data-testid='kangur-ai-tutor-coaching-frame'
                     data-coaching-mode={msg.coachingFrame.mode}
                   >
-                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-600'>
-                      {msg.coachingFrame.label}
+                    <div className='flex items-center gap-1.5'>
+                      <span className='inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-200/70 text-[8px] text-sky-700'>
+                        {COACHING_MODE_ICON[msg.coachingFrame.mode]}
+                      </span>
+                      <span className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
+                        {msg.coachingFrame.label}
+                      </span>
                     </div>
-                    <div className='mt-1 text-xs font-medium leading-relaxed text-slate-700'>
+                    <div className='mt-1.5 text-xs font-medium leading-relaxed text-slate-700'>
                       {msg.coachingFrame.description}
                     </div>
                     {msg.coachingFrame.rationale ? (
@@ -81,7 +103,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     ) : null}
                   </div>
                 ) : null}
-                <div className='rounded-[22px] border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 shadow-sm'>
+                <div className='tutor-assistant-bubble rounded-[22px] border border-slate-200/80 px-3 py-2 text-sm leading-relaxed text-slate-800'>
                   {msg.content}
                 </div>
                 {msg.followUpActions?.length ? (
@@ -96,7 +118,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                         return (
                           <div
                             key={action.id}
-                            className='rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-3'
+                            className='rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/40 px-3 py-3 shadow-[0_6px_16px_-10px_rgba(245,158,11,0.18)]'
                           >
                             {action.reason ? (
                               <div className='text-xs font-medium leading-relaxed text-slate-700'>
@@ -114,6 +136,10 @@ export function KangurAiTutorMessageList(): JSX.Element {
                                     handleFollowUpClick(action, index, followUpHref)
                                   }
                                   targetPageKey={action.page}
+                                  transitionAcknowledgeMs={
+                                    AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS
+                                  }
+                                  transitionSourceId={`ai-tutor-follow-up:${action.id}`}
                                 >
                                   {action.label}
                                 </Link>
@@ -213,10 +239,12 @@ export function KangurAiTutorMessageList(): JSX.Element {
       )}
       {isLoading ? (
         <div className='flex justify-start'>
-          <div className='rounded-2xl border border-slate-200 bg-white px-3 py-2'>
-            <span className='animate-pulse text-xs text-slate-400'>
-              {tutorContent.messageList.loadingLabel}
-            </span>
+          <div className='tutor-assistant-bubble rounded-[22px] border border-slate-200/80 px-4 py-3'>
+            <div className='flex items-center gap-1.5' aria-label={tutorContent.messageList.loadingLabel}>
+              <span className='tutor-typing-dot' />
+              <span className='tutor-typing-dot' />
+              <span className='tutor-typing-dot' />
+            </div>
           </div>
         </div>
       ) : null}

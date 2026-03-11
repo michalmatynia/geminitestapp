@@ -326,7 +326,12 @@ export default function ScoreHistory({
                 </p>
                 {weakestLessonHref && (
                   <KangurButton asChild className='mt-3' size='sm' variant='surface'>
-                    <Link href={weakestLessonHref} targetPageKey='Lessons'>
+                    <Link
+                      href={weakestLessonHref}
+                      targetPageKey='Lessons'
+                      transitionAcknowledgeMs={110}
+                      transitionSourceId='score-history:weakest-lesson'
+                    >
                       Powtorz lekcje
                     </Link>
                   </KangurButton>

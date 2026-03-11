@@ -14,6 +14,8 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 
+const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 110;
+
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
 
@@ -67,6 +69,10 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                   <Link
                     href={buildKangurRecommendationHref(basePath, recommendation.action)}
                     targetPageKey={recommendation.action.page}
+                    transitionAcknowledgeMs={
+                      LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS
+                    }
+                    transitionSourceId={`learner-profile-recommendation:${recommendation.id}`}
                   >
                     {recommendation.action.label}
                   </Link>

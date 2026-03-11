@@ -82,6 +82,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
 }));
 
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import {
   loadPersistedTutorVisibilityHidden,
@@ -227,6 +228,31 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders storefront appearance controls inside the Kangur navbar when the public provider is present', () => {
+    render(
+      <CmsStorefrontAppearanceProvider>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
+    const darkModeButton = screen.getByRole('button', { name: 'Dark mode' });
+
+    expect(utilityActions).toContainElement(
+      screen.getByTestId('kangur-primary-nav-appearance-controls')
+    );
+    expect(darkModeButton).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(darkModeButton);
+
+    expect(darkModeButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {

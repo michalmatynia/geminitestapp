@@ -29,19 +29,21 @@ export function FrontendContactFormSection(): React.ReactNode {
 
             return (
               <div key={field}>
-                <label className='mb-1.5 block text-sm font-medium text-gray-300'>{label}</label>
+                <label className='cms-appearance-muted-text mb-1.5 block text-sm font-medium'>
+                  {label}
+                </label>
                 {isTextarea ? (
                   <textarea
                     rows={4}
                     placeholder={label}
-                    className='w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                    className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                     readOnly
                   />
                 ) : (
                   <input
                     type={field.toLowerCase() === 'email' ? 'email' : 'text'}
                     placeholder={label}
-                    className='w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                    className='cms-appearance-input w-full rounded-md border px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                     readOnly
                   />
                 )}
@@ -50,7 +52,7 @@ export function FrontendContactFormSection(): React.ReactNode {
           })}
           <button
             type='submit'
-            className='cms-hover-button w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200'
+            className='cms-hover-button cms-appearance-button-primary w-full rounded-md border px-6 py-2.5 text-sm font-semibold transition'
           >
             {submitText}
           </button>

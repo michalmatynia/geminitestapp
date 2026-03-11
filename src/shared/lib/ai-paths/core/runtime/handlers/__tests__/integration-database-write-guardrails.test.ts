@@ -89,6 +89,32 @@ describe('resolveWriteTemplateGuardrail', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('treats empty parameter arrays as empty template tokens', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result: {
+          parameters: [],
+        },
+      },
+      currentValue: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected write template guardrail failure.');
+    }
+    expect(result.guardrailMeta.emptyTokens).toEqual(
+      expect.arrayContaining(['result.parameters'])
+    );
+    expect(result.guardrailMeta.emptyRoots).toEqual(expect.arrayContaining(['result']));
+  });
+
   it('accepts tokens from malformed JSON strings that are repairable', () => {
     const result = resolveWriteTemplateGuardrail({
       templates: [

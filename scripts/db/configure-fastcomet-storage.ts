@@ -9,9 +9,7 @@ import type {
   FileStorageSource,
 } from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CliOptions = {
@@ -120,9 +118,6 @@ const parseArgs = (argv: string[]): CliOptions => {
   return options;
 };
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
 const buildPayloads = (options: CliOptions): SettingPayload[] => {
   const fastCometConfig: FastCometStorageConfig = {
     baseUrl: options.baseUrl,
@@ -165,18 +160,10 @@ const writeMongoSettings = async (payloads: SettingPayload[]): Promise<void> => 
   }
 };
 
-const writePrismaSettings = async (payloads: SettingPayload[]): Promise<void> => {
-  if (!canUsePrismaSettings()) return;
-  for (const payload of payloads) {
-    await prisma.setting.upsert({
-      where: { key: payload.key },
-      update: { value: payload.value },
-      create: { key: payload.key, value: payload.value },
-    });
-  }
-};
-
 async function main(): Promise<void> {
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('MONGODB_URI is required.');
+  }
   const options = parseArgs(process.argv.slice(2));
 
   if (options.source === 'fastcomet' && !options.uploadEndpoint) {
@@ -186,14 +173,13 @@ async function main(): Promise<void> {
   }
 
   const payloads = buildPayloads(options);
-  const provider = await getAppDbProvider();
 
   if (options.dryRun) {
     console.log(
       JSON.stringify(
         {
           mode: 'dry-run',
-          provider,
+          provider: 'mongodb',
           payloads: payloads.map((payload) => ({
             key: payload.key,
             valuePreview:
@@ -209,18 +195,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (provider === 'mongodb') {
-    await writeMongoSettings(payloads);
-  } else {
-    await writePrismaSettings(payloads);
-  }
-
-  // Keep both providers aligned when both are available.
-  if (provider === 'mongodb') {
-    await writePrismaSettings(payloads);
-  } else {
-    await writeMongoSettings(payloads);
-  }
+  await writeMongoSettings(payloads);
 
   invalidateFileStorageSettingsCache();
 
@@ -228,7 +203,7 @@ async function main(): Promise<void> {
     JSON.stringify(
       {
         mode: 'write',
-        provider,
+        provider: 'mongodb',
         source: options.source,
         uploadEndpoint: options.uploadEndpoint,
         baseUrl: options.baseUrl || null,
@@ -243,7 +218,6 @@ async function main(): Promise<void> {
 }
 
 const closeResources = async (): Promise<void> => {
-  await prisma.$disconnect().catch(() => {});
   if (process.env['MONGODB_URI']) {
     const mongoClient = await getMongoClient().catch(() => null);
     await mongoClient?.close().catch(() => {});

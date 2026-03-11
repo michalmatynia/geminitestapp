@@ -20,8 +20,6 @@ import type {
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
 import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import type { Filter } from 'mongodb';
 
@@ -31,13 +29,7 @@ const LIST_LIMIT_DEFAULT = 50;
 const RUN_ITEM_HARD_LIMIT = 100_000;
 const BASE_IMPORT_AGENT_RESOURCE_ID = 'integrations.base-import.run';
 
-type StorageProvider = 'mongodb' | 'prisma';
 type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
-
-const resolveProvider = async (): Promise<StorageProvider> => {
-  const provider = await getProductDataProvider();
-  return provider as StorageProvider;
-};
 
 const toRunLeasePatch = (
   lease:
@@ -178,95 +170,54 @@ const normalizeRunRecord = (run: BaseImportRunRecord): BaseImportRunRecord => ({
 });
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo.collection<SettingDoc>('settings').findOne({
-      $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<SettingDoc>);
-    return typeof doc?.value === 'string' ? doc.value : null;
-  }
-  const setting = await prisma.setting.findUnique({
-    where: { key },
-    select: { value: true },
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<SettingDoc>('settings').findOne({
+    $or: [{ _id: toMongoId(key) }, { key }],
   });
-  return setting?.value ?? null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSettingValue = async (key: string, value: string): Promise<void> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<SettingDoc>,
-      {
-        $set: {
-          key,
-          value,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          _id: key,
-          createdAt: new Date(),
-        },
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<SettingDoc>,
+    {
+      $set: {
+        key,
+        value,
+        updatedAt: new Date(),
       },
-      { upsert: true }
-    );
-    return;
-  }
-  await prisma.setting.upsert({
-    where: { key },
-    update: { value },
-    create: { key, value },
-  });
+      $setOnInsert: {
+        _id: key,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
 };
 
 const deleteSettingByKey = async (key: string): Promise<void> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<SettingDoc>('settings').deleteMany({
-      $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<SettingDoc>);
-    return;
-  }
-  await prisma.setting.deleteMany({
-    where: { key },
-  });
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').deleteMany({
+    $or: [{ _id: toMongoId(key) }, { key }],
+  } as Filter<SettingDoc>);
 };
 
 const listSettingValuesByPrefix = async (
   prefix: string,
   take = LIST_LIMIT_DEFAULT
 ): Promise<string[]> => {
-  const provider = await resolveProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
-    const docs = await mongo
-      .collection<SettingDoc>('settings')
-      .find({ key: { $regex: regex } } as Filter<SettingDoc>)
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .limit(Math.max(1, take))
-      .toArray();
-    return docs
-      .map((doc: SettingDoc) => (typeof doc.value === 'string' ? doc.value : null))
-      .filter((value: string | null): value is string => Boolean(value));
-  }
-
-  const rows = await prisma.setting.findMany({
-    where: {
-      key: {
-        startsWith: prefix,
-      },
-    },
-    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-    take: Math.max(1, take),
-    select: { value: true },
-  });
-  return rows
-    .map((row: { value: string }) => row.value)
-    .filter((value: string) => value.trim().length > 0);
+  const mongo = await getMongoDb();
+  const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
+  const docs = await mongo
+    .collection<SettingDoc>('settings')
+    .find({ key: { $regex: regex } } as Filter<SettingDoc>)
+    .sort({ updatedAt: -1, createdAt: -1 })
+    .limit(Math.max(1, take))
+    .toArray();
+  return docs
+    .map((doc: SettingDoc) => (typeof doc.value === 'string' ? doc.value : null))
+    .filter((value: string | null): value is string => Boolean(value));
 };
 
 export const createBaseImportRun = async (input: {
@@ -345,7 +296,6 @@ export const listBaseImportRuns = async (
 
 export const putBaseImportRunItems = async (items: BaseImportItemRecord[]): Promise<number> => {
   if (items.length === 0) return 0;
-  const provider = await resolveProvider();
   const now = nowIso();
 
   const normalizedItems = items.map((item) => ({
@@ -358,41 +308,22 @@ export const putBaseImportRunItems = async (items: BaseImportItemRecord[]): Prom
     updatedAt: now,
   }));
 
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const bulkOps = normalizedItems.map((item) => ({
-      updateOne: {
-        filter: { key: itemKey(item.runId, item.itemId) },
-        update: {
-          $set: {
-            key: itemKey(item.runId, item.itemId),
-            value: JSON.stringify(item),
-            updatedAt: new Date(now),
-          },
-        },
-        upsert: true,
-      },
-    }));
-    const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps);
-    return (result.modifiedCount || 0) + (result.upsertedCount || 0);
-  }
-
-  await prisma.$transaction(
-    normalizedItems.map((item) =>
-      prisma.setting.upsert({
-        where: { key: itemKey(item.runId, item.itemId) },
-        create: {
+  const mongo = await getMongoDb();
+  const bulkOps = normalizedItems.map((item) => ({
+    updateOne: {
+      filter: { key: itemKey(item.runId, item.itemId) },
+      update: {
+        $set: {
           key: itemKey(item.runId, item.itemId),
           value: JSON.stringify(item),
+          updatedAt: new Date(now),
         },
-        update: {
-          value: JSON.stringify(item),
-        },
-      })
-    )
-  );
-
-  return items.length;
+      },
+      upsert: true,
+    },
+  }));
+  const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps);
+  return (result.modifiedCount || 0) + (result.upsertedCount || 0);
 };
 
 export const putBaseImportRunItem = async (

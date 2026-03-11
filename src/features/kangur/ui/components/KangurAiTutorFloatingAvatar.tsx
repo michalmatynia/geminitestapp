@@ -107,8 +107,9 @@ export function KangurAiTutorFloatingAvatar({
     return null;
   }
 
+  const shouldPreserveGuidedAvatarCluster = floatingAvatarPlacement === 'guided';
   const avatarTransition: Transition =
-    prefersReducedMotion
+    prefersReducedMotion || shouldPreserveGuidedAvatarCluster
       ? reducedMotionTransitions.instant
       : isGuidedTutorMode || isAskModalMode
         ? motionProfile.guidedAvatarTransition
@@ -153,7 +154,7 @@ export function KangurAiTutorFloatingAvatar({
           : { scale: motionProfile.tapScale }
       }
       className={cn(
-        'fixed touch-none',
+        'fixed touch-none rounded-full',
         isAskModalMode ? 'z-[78]' : 'z-[74]',
         isAskModalMode
           ? 'pointer-events-none cursor-default'
@@ -161,6 +162,9 @@ export function KangurAiTutorFloatingAvatar({
             ? 'cursor-grabbing'
             : 'cursor-grab',
         isAvatarDragging ? 'opacity-85 saturate-75' : null,
+        !isAvatarDragging && !isGuidedTutorMode && !isAskModalMode && !isOpen
+          ? 'tutor-avatar-idle'
+          : null,
         avatarButtonClassName
       )}
       style={avatarButtonStyle}
@@ -172,14 +176,17 @@ export function KangurAiTutorFloatingAvatar({
         label={
           tutor ? `${tutor.tutorName} avatar (${tutor.tutorMoodId})` : 'Kangur AI tutor avatar'
         }
-        className='relative z-[1] h-12 w-12 border border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
-        svgClassName='[&_svg]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.1)]'
+        className='relative z-[1] h-12 w-12 border border-white/30 bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_1px_2px_rgba(15,23,42,0.06)]'
+        svgClassName='[&_svg]:drop-shadow-[0_1px_2px_rgba(15,23,42,0.14)]'
         data-testid='kangur-ai-tutor-avatar-image'
       />
       <span
         aria-hidden='true'
         data-testid='kangur-ai-tutor-avatar-rim'
-        className='pointer-events-none absolute inset-0 z-[2] rounded-full border-2'
+        className={cn(
+          'pointer-events-none absolute inset-0 z-[2] rounded-full border-2',
+          !isGuidedTutorMode && !isAvatarDragging ? 'tutor-avatar-rim-shimmer' : null
+        )}
         style={{ borderColor: rimColor }}
       />
       {guidedAvatarArrowhead ? (
@@ -207,15 +214,25 @@ export function KangurAiTutorFloatingAvatar({
         >
           <svg
             viewBox='0 0 18 18'
-            className='h-[18px] w-[18px] overflow-visible drop-shadow-[0_1px_1px_rgba(15,23,42,0.18)]'
+            className='h-[18px] w-[18px] overflow-visible drop-shadow-[0_1px_2px_rgba(15,23,42,0.22)]'
           >
-            <circle cx='12.5' cy='9' r='3.2' fill={rimColor} />
-            <path d='M1.6 9 L12.4 3.2 L10 9 L12.4 14.8 Z' fill={rimColor} />
+            <defs>
+              <radialGradient id='tutor-arrowhead-glow' cx='70%' cy='50%' r='50%'>
+                <stop offset='0%' stopColor={rimColor} stopOpacity='1' />
+                <stop offset='100%' stopColor={rimColor} stopOpacity='0.7' />
+              </radialGradient>
+            </defs>
+            <circle cx='12.5' cy='9' r='3.4' fill='url(#tutor-arrowhead-glow)' />
+            <path d='M1.2 9 Q6 5.8 12.2 3.4 Q10.4 6.6 10.2 9 Q10.4 11.4 12.2 14.6 Q6 12.2 1.2 9Z' fill={rimColor} />
           </svg>
         </span>
       ) : null}
       {hasNewMessage && !isOpen ? (
-        <span className='absolute top-1 right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white animate-pulse' />
+        <span
+          className='absolute -top-0.5 -right-0.5 z-[4] flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-white tutor-badge-enter'
+        >
+          <span className='h-1.5 w-1.5 rounded-full bg-white' />
+        </span>
       ) : null}
     </motion.button>
   );

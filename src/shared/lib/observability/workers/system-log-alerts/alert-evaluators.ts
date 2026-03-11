@@ -554,16 +554,16 @@ export const evaluateUserDefinedAlerts = async (): Promise<void> => {
         createdAt: { gte: windowStart },
       };
       if (cond.level) {
-        where.level = cond.level;
+        where['level'] = cond.level;
       }
       if (cond.source) {
-        where.source = { contains: cond.source, mode: 'insensitive' };
+        where['source'] = { contains: cond.source, mode: 'insensitive' };
       }
       if (cond.pathPrefix) {
-        where.path = { startsWith: cond.pathPrefix, mode: 'insensitive' };
+        where['path'] = { startsWith: cond.pathPrefix, mode: 'insensitive' };
       }
       if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
-        where.statusCode = {
+        where['statusCode'] = {
           ...(cond.statusCodeMin !== undefined ? { gte: cond.statusCodeMin } : {}),
           ...(cond.statusCodeMax !== undefined ? { lte: cond.statusCodeMax } : {}),
         };

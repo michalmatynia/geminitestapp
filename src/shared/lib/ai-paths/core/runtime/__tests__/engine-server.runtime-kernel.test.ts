@@ -13,10 +13,6 @@ const { getMongoClientMock } = vi.hoisted(() => ({
 
 vi.mock('server-only', () => ({}));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {},
-}));
-
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoClient: getMongoClientMock,
 }));

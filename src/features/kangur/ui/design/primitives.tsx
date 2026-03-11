@@ -260,9 +260,10 @@ const kangurDividerVariants = cva('rounded-full', {
 const kangurInfoCardVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   variants: {
     tone: {
-      neutral: 'border-slate-200/80 bg-white/92 text-slate-700',
+      neutral: '[color:var(--kangur-soft-card-text)]',
       accent: '',
-      muted: 'border-slate-200/80 bg-slate-50/88 text-slate-600',
+      muted:
+        '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_68%,var(--kangur-page-background))] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-muted-text)]',
     },
     padding: {
       sm: 'p-3',
@@ -285,14 +286,14 @@ const kangurInfoCardVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
 const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
   variants: {
     accent: {
-      indigo: 'border-indigo-200/70 bg-white/95 text-slate-800',
-      violet: 'border-violet-200/80 bg-white/90 text-slate-800',
-      emerald: 'border-emerald-200/80 bg-white/95 text-slate-800',
-      sky: 'border-sky-200/80 bg-white/95 text-slate-800',
-      amber: 'border-amber-200/80 bg-white/95 text-slate-800',
-      rose: 'border-rose-200/80 bg-white/95 text-slate-800',
-      teal: 'border-teal-200/80 bg-white/95 text-slate-800',
-      slate: 'border-slate-200/80 bg-white/92 text-slate-800',
+      indigo: 'border-indigo-200/70 [color:var(--kangur-page-text)]',
+      violet: 'border-violet-200/80 [color:var(--kangur-page-text)]',
+      emerald: 'border-emerald-200/80 [color:var(--kangur-page-text)]',
+      sky: 'border-sky-200/80 [color:var(--kangur-page-text)]',
+      amber: 'border-amber-200/80 [color:var(--kangur-page-text)]',
+      rose: 'border-rose-200/80 [color:var(--kangur-page-text)]',
+      teal: 'border-teal-200/80 [color:var(--kangur-page-text)]',
+      slate: '[border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]',
     },
     padding: {
       md: 'p-5',
@@ -312,7 +313,7 @@ const kangurSurfacePanelVariants = cva('glass-panel rounded-[34px]', {
 });
 
 const kangurMenuItemVariants = cva(
-  'relative flex cursor-default select-none items-center rounded-[16px] px-3.5 py-2.5 text-[15px] font-medium text-slate-600 outline-none transition-colors focus:bg-white/80 focus:text-slate-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-white/80 data-[highlighted]:text-slate-800'
+  'relative flex cursor-default select-none items-center rounded-[16px] px-3.5 py-2.5 text-[15px] font-medium [color:var(--kangur-page-muted-text)] outline-none transition-colors focus:[background:var(--kangur-nav-item-hover-background)] focus:[color:var(--kangur-page-text)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:[background:var(--kangur-nav-item-hover-background)] data-[highlighted]:[color:var(--kangur-page-text)]'
 );
 
 const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
@@ -375,7 +376,7 @@ const kangurProseVariants = cva(
 );
 
 const kangurTextFieldVariants = cva(
-  'soft-card w-full rounded-[22px] border border-slate-200/80 bg-white/92 text-sm text-slate-700 shadow-[0_18px_44px_-38px_rgba(15,23,42,0.18)] outline-none transition placeholder:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-70',
+  'kangur-text-field soft-card w-full rounded-[22px] border text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-70',
   {
     variants: {
       accent: {
@@ -402,7 +403,7 @@ const kangurTextFieldVariants = cva(
 );
 
 const kangurProgressBarVariants = cva(
-  'w-full overflow-hidden rounded-full bg-slate-100/95 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]',
+  'w-full overflow-hidden rounded-full [background:var(--kangur-progress-track)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]',
   {
     variants: {
       size: {
@@ -528,7 +529,7 @@ export const KangurOptionCardButton = React.forwardRef<
         kangurOptionCardButtonVariants({ emphasis, state }),
         cursorClassName,
         disabled
-          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
+          ? 'cursor-not-allowed [border-color:var(--kangur-text-field-disabled-border)] [background:var(--kangur-text-field-disabled-background)] [color:var(--kangur-page-muted-text)] opacity-70'
           : state === 'muted'
             ? null
             : emphasis === 'accent'

@@ -1,10 +1,7 @@
 import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {
-  mongoIntegrationTestFiles,
-  prismaIntegrationTestFiles,
-} from './scripts/testing/lib/vitest-integration-projects.mjs';
+import { mongoIntegrationTestFiles } from './scripts/testing/lib/vitest-integration-projects.mjs';
 
 const bazelWorkspaceMirrorExcludes = [
   'bazel-geminitestapp/**',
@@ -58,25 +55,9 @@ export default defineConfig({
             ...configDefaults.exclude,
             ...bazelWorkspaceMirrorExcludes,
             'e2e/**',
-            ...generatedWorkspaceExcludeGlobs,
-            ...prismaIntegrationTestFiles,
+            '.next/**',
             ...mongoIntegrationTestFiles,
           ],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'integration-prisma',
-          globals: true,
-          environment: 'node',
-          setupFiles: ['./vitest.setup.prisma.ts'],
-          fileParallelism: false,
-          include: prismaIntegrationTestFiles,
-          exclude: [...configDefaults.exclude, ...bazelWorkspaceMirrorExcludes, 'e2e/**', '.next/**'],
-          pool: 'forks',
-          testTimeout: 30_000,
-          hookTimeout: 30_000,
         },
       },
       {

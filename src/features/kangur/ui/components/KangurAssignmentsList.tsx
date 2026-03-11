@@ -13,6 +13,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAssignmentListItem } from '@/features/kangur/ui/services/delegated-assignments';
 
+const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 110;
+
 type KangurAssignmentsListProps = {
   items: KangurAssignmentListItem[];
   title: string;
@@ -78,15 +80,19 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
         >
           {item.progressPercent}%
         </KangurStatusChip>
-        <div className='text-2xl font-medium text-[#7f8ab0]'>{item.progressCountLabel}</div>
+        <div className='text-2xl font-medium [color:var(--kangur-page-muted-text)]'>
+          {item.progressCountLabel}
+        </div>
       </div>
 
       <div className='pr-0 pt-12 sm:pr-52 sm:pt-0'>
-        <div className='flex items-center gap-2 text-[1.1rem] font-extrabold tracking-tight text-[#233b73]'>
+        <div className='flex items-center gap-2 text-[1.1rem] font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
           <span aria-hidden='true'>{item.icon}</span>
           <span>{item.title}</span>
         </div>
-        <div className='mt-4 text-base leading-7 text-[#62709a]'>{item.description}</div>
+        <div className='mt-4 text-base leading-7 [color:var(--kangur-page-muted-text)]'>
+          {item.description}
+        </div>
       </div>
 
       <div className='mt-4 space-y-4'>
@@ -97,13 +103,21 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           size='sm'
         />
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <div className='text-sm text-[#7d86a7]'>{item.progressSummary}</div>
+          <div className='text-sm [color:var(--kangur-page-muted-text)]'>{item.progressSummary}</div>
           <KangurButton asChild size='sm' variant={item.actionVariant}>
-            <Link href={item.actionHref}>{item.actionLabel}</Link>
+            <Link
+              href={item.actionHref}
+              transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
+              transitionSourceId={`assignments-list:compact:${item.id}`}
+            >
+              {item.actionLabel}
+            </Link>
           </KangurButton>
         </div>
         {item.lastActivityLabel ? (
-          <div className='text-[11px] text-[#97a0bc]'>Ostatnia aktywność: {item.lastActivityLabel}</div>
+          <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>
+            Ostatnia aktywność: {item.lastActivityLabel}
+          </div>
         ) : null}
       </div>
     </KangurInfoCard>
@@ -122,8 +136,12 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
     >
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='min-w-0'>
-          <div className='text-lg font-extrabold tracking-tight text-slate-900'>{item.title}</div>
-          <div className='mt-2 text-sm leading-6 text-slate-600'>{item.description}</div>
+          <div className='text-lg font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
+            {item.title}
+          </div>
+          <div className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+            {item.description}
+          </div>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <KangurStatusChip
@@ -159,7 +177,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           value={item.progressPercent}
         />
         {item.lastActivityLabel ? (
-          <div className='mt-3 text-[11px] text-slate-500'>
+          <div className='mt-3 text-[11px] [color:var(--kangur-page-muted-text)]'>
             Ostatnia aktywność: {item.lastActivityLabel}
           </div>
         ) : null}
@@ -167,7 +185,13 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
 
       <div className='mt-5 flex flex-wrap items-center gap-2'>
         <KangurButton asChild size='sm' variant='surface'>
-          <Link href={item.actionHref}>{item.actionLabel}</Link>
+          <Link
+            href={item.actionHref}
+            transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
+            transitionSourceId={`assignments-list:standard:${item.id}`}
+          >
+            {item.actionLabel}
+          </Link>
         </KangurButton>
         {onArchive ? (
           <KangurButton
@@ -203,14 +227,14 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <div>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
               Szybki podgląd
             </div>
-            <div className='mt-1 text-xl font-extrabold tracking-tight text-slate-800'>
+            <div className='mt-1 text-xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
               {title}
             </div>
           </div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
             {formatAssignmentCountLabel(items.length)}
           </div>
         </div>
@@ -244,10 +268,10 @@ export function KangurAssignmentsList({
       >
         <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
           <div>
-            <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+            <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
               Przydzielone zadania
             </div>
-            <div className='mt-1 text-xl font-extrabold tracking-tight text-slate-800'>
+            <div className='mt-1 text-xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
               {title}
             </div>
           </div>

@@ -18,7 +18,7 @@ import {
   setKangurLearnerAiTutorState,
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
-import { resolveKangurAiTutorNativeGuideResponse } from '@/features/kangur/server/ai-tutor-native-guide';
+import { resolveKangurAiTutorNativeGuideResolution } from '@/features/kangur/server/ai-tutor-native-guide';
 import {
   consumeKangurAiTutorDailyUsage,
   ensureKangurAiTutorDailyUsageAvailable,
@@ -648,12 +648,12 @@ export async function postKangurAiTutorChatHandler(
         'Match this tone in your wording, but keep the answer concise and age-appropriate.',
       ].join(' ')
     );
-    const nativeGuideResponse = await resolveKangurAiTutorNativeGuideResponse({
+    const nativeGuideResolution = await resolveKangurAiTutorNativeGuideResolution({
       latestUserMessage,
       context,
       locale: 'pl',
     });
-    if (nativeGuideResponse) {
+    if (nativeGuideResolution.status === 'hit') {
       const usage = await consumeKangurAiTutorDailyUsage({
         learnerId,
         dailyMessageLimit: tutorSettings.dailyMessageLimit,
@@ -669,6 +669,35 @@ export async function postKangurAiTutorChatHandler(
         req,
         ctx,
       });
+
+      if (nativeGuideResolution.coverageLevel === 'overview_fallback') {
+        await logKangurServerEvent({
+          source: 'kangur.ai-tutor.chat.native-guide.coverage-gap',
+          service: 'kangur.ai-tutor',
+          message:
+            'Kangur AI tutor used a generic overview entry for a section-specific request.',
+          level: 'warn',
+          request: req,
+          requestContext: ctx,
+          actor,
+          statusCode: 200,
+          context: {
+            surface: context?.surface ?? null,
+            contentId: context?.contentId ?? null,
+            title: context?.title ?? null,
+            focusKind: context?.focusKind ?? null,
+            focusId: context?.focusId ?? null,
+            assignmentId: context?.assignmentId ?? null,
+            questionId: context?.questionId ?? null,
+            promptMode: resolvedPromptMode,
+            interactionIntent: context?.interactionIntent ?? null,
+            nativeGuideApplied: true,
+            nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
+            nativeGuideEntryId: nativeGuideResolution.entryId,
+            nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
+          },
+        });
+      }
 
       await logKangurServerEvent({
         source: 'kangur.ai-tutor.chat.native-guide.completed',
@@ -695,9 +724,12 @@ export async function postKangurAiTutorChatHandler(
           proactiveNudges: tutorSettings.proactiveNudges,
           rememberTutorContext: tutorSettings.rememberTutorContext,
           nativeGuideApplied: true,
+          nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
+          nativeGuideEntryId: nativeGuideResolution.entryId,
+          nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
           contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
           contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
-          followUpActionCount: nativeGuideResponse.followUpActions.length,
+          followUpActionCount: nativeGuideResolution.followUpActions.length,
           tutorMoodId: tutorMood.currentMoodId,
           tutorBaselineMoodId: tutorMood.baselineMoodId,
           tutorMoodReasonCode: tutorMood.lastReasonCode,
@@ -711,12 +743,36 @@ export async function postKangurAiTutorChatHandler(
       });
 
       return NextResponse.json({
-        message: nativeGuideResponse.message,
+        message: nativeGuideResolution.message,
         sources: responseSources,
-        followUpActions: nativeGuideResponse.followUpActions,
+        followUpActions: nativeGuideResolution.followUpActions,
         tutorMood,
         usage,
       } satisfies KangurAiTutorChatResponse);
+    }
+    if (nativeGuideResolution.status === 'miss') {
+      await logKangurServerEvent({
+        source: 'kangur.ai-tutor.chat.native-guide.missing',
+        service: 'kangur.ai-tutor',
+        message: 'Kangur AI tutor did not find a native guide entry for an eligible request.',
+        level: 'warn',
+        request: req,
+        requestContext: ctx,
+        actor,
+        statusCode: 200,
+        context: {
+          surface: context?.surface ?? null,
+          contentId: context?.contentId ?? null,
+          title: context?.title ?? null,
+          focusKind: context?.focusKind ?? null,
+          focusId: context?.focusId ?? null,
+          assignmentId: context?.assignmentId ?? null,
+          questionId: context?.questionId ?? null,
+          promptMode: resolvedPromptMode,
+          interactionIntent: context?.interactionIntent ?? null,
+          nativeGuideApplied: false,
+        },
+      });
     }
     const contextInstructions = buildContextInstructions({
       context,

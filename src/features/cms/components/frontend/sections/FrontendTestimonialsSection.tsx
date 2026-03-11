@@ -39,9 +39,13 @@ export function FrontendTestimonialsSection(): React.ReactNode {
               key={block.id}
               variant='subtle'
               padding='lg'
-              className='cms-hover-card border-gray-700/50 bg-gray-800/30'
+              className='cms-hover-card cms-appearance-subtle-surface'
             >
-              <svg className='mb-4 size-6 text-gray-500' fill='currentColor' viewBox='0 0 24 24'>
+              <svg
+                className='cms-appearance-muted-text mb-4 size-6'
+                fill='currentColor'
+                viewBox='0 0 24 24'
+              >
                 <path d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z' />
               </svg>
               <FrontendBlockRenderer block={block} />

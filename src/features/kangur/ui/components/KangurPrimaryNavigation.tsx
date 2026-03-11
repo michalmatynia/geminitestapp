@@ -4,6 +4,11 @@ import { BookOpen, BrainCircuit, LayoutGrid, LogIn, LogOut, UserPlus } from 'luc
 import { useEffect, useRef, useState } from 'react';
 
 import {
+  CmsStorefrontAppearanceButtons,
+  resolveKangurStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
@@ -81,7 +86,12 @@ const isTransitionSourceActive = ({
   transitionSourceId,
 }: {
   activeTransitionSourceId?: string | null;
-  transitionPhase?: 'acknowledging' | 'idle' | 'pending' | 'revealing';
+  transitionPhase?:
+    | 'acknowledging'
+    | 'idle'
+    | 'pending'
+    | 'waiting_for_ready'
+    | 'revealing';
   transitionSourceId?: string;
 }): boolean =>
   Boolean(
@@ -175,6 +185,7 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
+  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
@@ -213,6 +224,7 @@ export function KangurPrimaryNavigation({
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
+  const kangurAppearance = resolveKangurStorefrontAppearance(storefrontAppearance?.mode ?? 'default');
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -448,12 +460,20 @@ export function KangurPrimaryNavigation({
       transitionSourceId: parentDashboardTransitionSourceId,
     }
     : null;
+  const appearanceControls = storefrontAppearance ? (
+    <CmsStorefrontAppearanceButtons
+      tone={kangurAppearance.tone}
+      label='Kangur appearance'
+      testId='kangur-primary-nav-appearance-controls'
+    />
+  ) : null;
   const utilityActions =
-    rightAccessory || parentDashboardAction || authAction ? (
+    appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
       <div
         className='ml-auto flex flex-wrap items-center justify-end gap-2'
         data-testid='kangur-primary-nav-utility-actions'
       >
+        {appearanceControls}
         {rightAccessory}
         {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
         {authAction}

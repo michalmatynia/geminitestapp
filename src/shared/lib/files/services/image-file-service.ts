@@ -11,7 +11,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getImageFileRepository } from './image-file-repository';
 import { mongoImageFileRepository } from './image-file-repository/mongo-image-file-repository';
-import { prismaImageFileRepository } from './image-file-repository/prisma-image-file-repository';
 
 /**
  * Service that wraps the Image File repository with error handling and logging.
@@ -62,7 +61,7 @@ export type {
   ImageFileUpdateInput,
 };
 
-export { getImageFileRepository, mongoImageFileRepository, prismaImageFileRepository };
+export { getImageFileRepository, mongoImageFileRepository };
 export { deleteFileFromStorage, getDiskPathFromPublicPath, uploadFile } from '../file-uploader';
 export {
   getPublicPathFromStoredPath,

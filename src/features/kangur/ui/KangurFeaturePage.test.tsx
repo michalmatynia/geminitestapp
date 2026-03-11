@@ -33,6 +33,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   }: {
     pageKey?: string | null;
     requestedPath?: string;
+    requestedHref?: string;
     basePath: string;
     embedded: boolean;
       children: ReactNode;
@@ -75,6 +76,7 @@ describe('KangurFeaturePage', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
       requestedPath: '/home?preview=1&kangur-app-embed-a=lessons',
+      requestedHref: '/home?preview=1&kangur-app-embed-a=lessons',
       basePath: '__kangur_embed__:app-embed-a::/home?preview=1',
       embedded: true,
     });
@@ -94,6 +96,7 @@ describe('KangurFeaturePage', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: null,
       requestedPath: '/kangur/tests',
+      requestedHref: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
     });
@@ -105,6 +108,7 @@ describe('KangurFeaturePage', () => {
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: null,
       requestedPath: '/tests',
+      requestedHref: '/tests',
       basePath: '/',
       embedded: false,
     });
@@ -128,6 +132,7 @@ describe('KangurFeaturePage', () => {
     expect(kangurRoutingProviderMock).toHaveBeenLastCalledWith({
       pageKey: null,
       requestedPath: '/home?preview=1&kangur-app-embed-a=tests',
+      requestedHref: '/home?preview=1&kangur-app-embed-a=tests',
       basePath: '__kangur_embed__:app-embed-a::/home?preview=1',
       embedded: true,
     });

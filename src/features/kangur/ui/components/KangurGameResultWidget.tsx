@@ -204,14 +204,20 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             <div className='grid gap-3 sm:grid-cols-2'>
               {unlockedBadgeDetails.map((badge) => (
                 <div
-                  className='rounded-[22px] border border-amber-200/80 bg-white/78 px-4 py-3 text-left'
+                  className='soft-card rounded-[22px] border border-amber-200/80 px-4 py-3 text-left'
                   data-testid={`kangur-result-badge-${badge.id}`}
                   key={badge.id}
+                  style={{
+                    background:
+                      'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(254,243,199,0.9))',
+                  }}
                 >
-                  <div className='text-sm font-semibold text-slate-900'>
+                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
                     {badge.emoji} {badge.name}
                   </div>
-                  <div className='mt-1 text-xs leading-6 text-slate-600'>{badge.desc}</div>
+                  <div className='mt-1 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
+                    {badge.desc}
+                  </div>
                 </div>
               ))}
             </div>

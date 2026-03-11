@@ -745,11 +745,11 @@ describe('client native code-object registry contract subset', () => {
 
     expect(mockDbApiSchema).toHaveBeenCalledTimes(1);
     expect(result.outputs?.['node-db-schema']?.['schema']).toMatchObject({
-      provider: 'prisma',
+      provider: 'mongodb',
       collections: [{ name: 'products' }],
     });
     expect(result.outputs?.['node-db-schema']?.['context']).toMatchObject({
-      provider: 'prisma',
+      provider: 'mongodb',
     });
     expect(
       String(

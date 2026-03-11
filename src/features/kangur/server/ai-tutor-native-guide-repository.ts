@@ -2,8 +2,8 @@ import 'server-only';
 
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+  mergeKangurAiTutorNativeGuideStore,
   parseKangurAiTutorNativeGuideStore,
-  type KangurAiTutorNativeGuideEntry,
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -24,43 +24,6 @@ const buildDefaultStore = (locale: string): KangurAiTutorNativeGuideStore =>
     ...DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
     locale,
   });
-
-const mergeStores = (
-  existing: KangurAiTutorNativeGuideStore,
-  defaults: KangurAiTutorNativeGuideStore
-): {
-  merged: KangurAiTutorNativeGuideStore;
-  changed: boolean;
-} => {
-  const existingById = new Map<string, KangurAiTutorNativeGuideEntry>(
-    existing.entries.map((entry) => [entry.id, entry])
-  );
-  let changed = existing.version !== defaults.version;
-
-  const mergedEntries = defaults.entries.map((defaultEntry) => {
-    const current = existingById.get(defaultEntry.id);
-    if (!current) {
-      changed = true;
-      return defaultEntry;
-    }
-    return current;
-  });
-
-  for (const entry of existing.entries) {
-    if (!mergedEntries.some((candidate) => candidate.id === entry.id)) {
-      mergedEntries.push(entry);
-    }
-  }
-
-  return {
-    merged: parseKangurAiTutorNativeGuideStore({
-      locale: existing.locale || defaults.locale,
-      version: Math.max(existing.version, defaults.version),
-      entries: mergedEntries,
-    }),
-    changed,
-  };
-};
 
 const ensureIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
@@ -118,9 +81,8 @@ export async function getKangurAiTutorNativeGuideStore(
   }
 
   try {
-    const parsed = parseKangurAiTutorNativeGuideStore(existing.store);
-    const { merged, changed } = mergeStores(parsed, defaults);
-    if (changed) {
+    const merged = mergeKangurAiTutorNativeGuideStore(defaults, existing.store);
+    if (JSON.stringify(merged) !== JSON.stringify(existing.store)) {
       await collection.updateOne(
         { locale },
         {
@@ -131,8 +93,17 @@ export async function getKangurAiTutorNativeGuideStore(
         }
       );
     }
-    return merged;
+    return parseKangurAiTutorNativeGuideStore(merged);
   } catch {
+    await collection.updateOne(
+      { locale },
+      {
+        $set: {
+          store: defaults,
+          updatedAt: new Date(),
+        },
+      }
+    );
     return defaults;
   }
 }

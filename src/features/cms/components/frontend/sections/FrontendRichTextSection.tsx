@@ -5,7 +5,7 @@ export function FrontendRichTextSection(): React.ReactNode {
     <FrontendBlocksSection
       maxWidthClass='max-w-3xl'
       contentClassName='space-y-4'
-      emptyState={<p className='text-gray-500'>Rich text section</p>}
+      emptyState={<p className='cms-appearance-muted-text'>Rich text section</p>}
     />
   );
 }

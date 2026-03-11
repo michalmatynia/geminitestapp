@@ -3,7 +3,6 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 type CliOptions = {
   email: string | null;
@@ -49,7 +48,6 @@ const printUsage = (): void => {
 };
 
 const closeResources = async (): Promise<void> => {
-  await prisma.$disconnect().catch(() => {});
   if (process.env['MONGODB_URI']) {
     const client = await getMongoClient().catch(() => null);
     await client?.close().catch(() => {});
@@ -70,71 +68,37 @@ const run = async (): Promise<void> => {
   if (!options.password || options.password.length < 8) {
     throw new Error('A password with at least 8 characters is required.');
   }
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('MONGODB_URI is required.');
+  }
 
   const passwordHash = await bcrypt.hash(options.password, 12);
+  const db = await getMongoDb();
+  const existing = await db.collection<MongoUserDoc>('users').findOne({ email: options.email });
 
-  if (process.env['MONGODB_URI']) {
-    const db = await getMongoDb();
-    const existing = await db
-      .collection<MongoUserDoc>('users')
-      .findOne({ email: options.email });
+  if (!existing) {
+    throw new Error('Auth user not found in MongoDB.');
+  }
 
-    if (!existing) {
-      throw new Error('Auth user not found in MongoDB.');
+  const user = existing as MongoUserDoc;
+
+  await db.collection('users').updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        passwordHash,
+        updatedAt: new Date(),
+      },
     }
-
-    const user = existing as MongoUserDoc;
-
-    await db.collection('users').updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          passwordHash,
-          updatedAt: new Date(),
-        },
-      }
-    );
-
-    console.log(
-      JSON.stringify(
-        {
-          ok: true,
-          provider: 'mongodb',
-          userId: user._id.toString(),
-          email: options.email,
-        },
-        null,
-        2
-      )
-    );
-    return;
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw new Error('No auth database provider configured.');
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: options.email },
-    select: { id: true, email: true },
-  });
-
-  if (!user?.email) {
-    throw new Error('Auth user not found in Prisma.');
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash },
-  });
+  );
 
   console.log(
     JSON.stringify(
       {
         ok: true,
-        provider: 'prisma',
-        userId: user.id,
-        email: user.email,
+        provider: 'mongodb',
+        userId: user._id.toString(),
+        email: options.email,
       },
       null,
       2

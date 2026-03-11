@@ -6,12 +6,11 @@ import { dtoBaseSchema } from './base';
  * System DTOs
  */
 
-export const appProviderValueSchema = z.enum(['prisma', 'mongodb']);
+export const appProviderValueSchema = z.enum(['mongodb']);
 export type AppProviderValue = z.infer<typeof appProviderValueSchema>;
 
 export const appProviderSourceSchema = z.enum([
   'env',
-  'prisma-setting',
   'mongo-setting',
   'app-setting',
   'default',
@@ -97,7 +96,7 @@ export type ActivityRepository = {
  * System Database Migration DTOs
  */
 
-export const appDbProviderSchema = z.enum(['prisma', 'mongodb']);
+export const appDbProviderSchema = z.enum(['mongodb']);
 export type AppDbProvider = z.infer<typeof appDbProviderSchema>;
 
 export const migrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);

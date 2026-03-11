@@ -24,7 +24,7 @@ export function KangurAiTutorComposer(): JSX.Element {
 
   return (
     <div
-      className='border-t border-slate-100 px-3 py-3'
+      className='border-t border-amber-200/40 px-3 py-3 [background:linear-gradient(180deg,rgba(255,253,250,0.5)_0%,transparent_100%)]'
       data-testid='kangur-ai-tutor-composer-shell'
     >
       <div className='flex items-center gap-2'>
@@ -35,7 +35,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           onKeyDown={handleKeyDown}
           accent='amber'
           size='sm'
-          className='flex-1'
+          className='flex-1 shadow-[0_4px_12px_-8px_rgba(15,23,42,0.06)]'
           disabled={isLoading || !canSendMessages}
           placeholder={isAskModalMode ? tutorContent.placeholders.askModal : inputPlaceholder}
           aria-label={tutorContent.common.questionInputAria}
@@ -44,6 +44,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           type='button'
           size='sm'
           variant='primary'
+          className='shadow-[0_8px_20px_-10px_rgba(245,158,11,0.4)]'
           onClick={() => void handleSend()}
           disabled={!inputValue.trim() || isLoading || !canSendMessages}
           aria-label={tutorContent.common.sendAria}
@@ -53,7 +54,7 @@ export function KangurAiTutorComposer(): JSX.Element {
       </div>
       {visibleQuickActions.length ? (
         <div
-          className='mt-2 flex flex-wrap gap-2'
+          className='mt-2.5 flex flex-wrap gap-1.5'
           data-kangur-tts-ignore='true'
           data-testid='kangur-ai-tutor-composer-pills'
         >
@@ -64,7 +65,7 @@ export function KangurAiTutorComposer(): JSX.Element {
               type='button'
               size='sm'
               variant='surface'
-              className='h-8 rounded-full px-3 text-[11px]'
+              className='h-8 rounded-full px-3 text-[11px] shadow-[0_4px_10px_-8px_rgba(15,23,42,0.1)]'
               disabled={isLoading || !canSendMessages}
               onClick={() => void handleQuickAction(action)}
             >

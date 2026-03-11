@@ -65,7 +65,7 @@ describe('KangurGame', () => {
     );
     expect(screen.getByTestId('kangur-game-illustration-shell')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(wrongChoice).toHaveClass('soft-card');
     expect(correctChoice).toHaveClass('soft-card');

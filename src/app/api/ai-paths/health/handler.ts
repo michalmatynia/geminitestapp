@@ -1,4 +1,3 @@
-import { ProductAiJobStatus as PrismaJobStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
@@ -16,7 +15,6 @@ import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';
 import {
   getProductAiJobProvider,
@@ -171,45 +169,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
               type: toOptionalString(latestRecord['type']),
             };
           })(),
-        };
-      }
-
-      if (provider === 'prisma') {
-        const totals = await Promise.all(
-          JOB_STATUSES.map(
-            async (status) =>
-              [
-                status,
-                await prisma.productAiJob.count({
-                  where: { status: status as PrismaJobStatus },
-                }),
-              ] as const
-          )
-        );
-        const total = await prisma.productAiJob.count();
-        const latest = await prisma.productAiJob.findFirst({
-          orderBy: { createdAt: 'desc' },
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            productId: true,
-            type: true,
-          },
-        });
-        return {
-          provider,
-          total,
-          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
-          latest: latest
-            ? {
-              id: latest.id,
-              status: latest.status as ProductAiJobStatus,
-              createdAt: toIso(latest.createdAt),
-              productId: latest.productId ?? null,
-              type: latest.type ?? null,
-            }
-            : null,
         };
       }
 

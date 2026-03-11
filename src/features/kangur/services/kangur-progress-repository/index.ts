@@ -1,10 +1,8 @@
 import 'server-only';
 
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { mongoKangurProgressRepository } from './mongo-kangur-progress-repository';
-import { prismaKangurProgressRepository } from './prisma-kangur-progress-repository';
 
 import type { KangurProgressRepository } from './types';
 
@@ -13,9 +11,8 @@ export type { KangurProgressRepository } from './types';
 const KANGUR_PROGRESS_REPOSITORY_SERVICE = 'kangur.progress-repository';
 
 export const getKangurProgressRepository = async (): Promise<KangurProgressRepository> => {
-  const provider = await getAppDbProvider();
-  const repository =
-    provider === 'mongodb' ? mongoKangurProgressRepository : prismaKangurProgressRepository;
+  const provider = 'mongodb';
+  const repository = mongoKangurProgressRepository;
 
   return {
     getProgress: async (userKey) => {

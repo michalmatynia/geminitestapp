@@ -1,15 +1,8 @@
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-
 import { IntegrationRepository, IntegrationWithConnections } from '../types/integrations';
 import { getMongoIntegrationRepository } from './integration-repository/mongo-impl';
-import { getPrismaIntegrationRepository } from './integration-repository/prisma-impl';
 
 export async function getIntegrationRepository(): Promise<IntegrationRepository> {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    return getMongoIntegrationRepository();
-  }
-  return getPrismaIntegrationRepository();
+  return getMongoIntegrationRepository();
 }
 
 export async function getIntegrationsWithConnections(): Promise<IntegrationWithConnections[]> {
@@ -27,5 +20,4 @@ export async function getIntegrationsWithConnections(): Promise<IntegrationWithC
   );
 }
 
-export { getPrismaIntegrationRepository } from './integration-repository/prisma-impl';
 export { getMongoIntegrationRepository } from './integration-repository/mongo-impl';

@@ -1,25 +1,4 @@
-export const prismaIntegrationTestFiles = [
-  '__tests__/features/ai/ai-paths/services/path-run-repository.test.ts',
-  '__tests__/features/ai/ai-paths/services/path-run-service.test.ts',
-  '__tests__/features/cms/api/cms-pages.test.ts',
-  '__tests__/features/cms/api/cms.test.ts',
-  '__tests__/features/drafter/services/draft-repository.test.ts',
-  '__tests__/features/files/api/files.test.ts',
-  '__tests__/features/integrations/services/category-mapping-repository.test.ts',
-  '__tests__/features/integrations/services/export-template-repository.test.ts',
-  '__tests__/features/internationalization/api/countries.test.ts',
-  '__tests__/features/internationalization/api/currencies.test.ts',
-  '__tests__/features/internationalization/api/languages.test.ts',
-  '__tests__/features/notesapp/api/categories.test.ts',
-  '__tests__/features/notesapp/api/notes.test.ts',
-  '__tests__/features/notesapp/api/tags.test.ts',
-  '__tests__/features/notesapp/services/note-service.test.ts',
-  '__tests__/features/products/api/pagination.test.ts',
-  '__tests__/features/products/services/prismaProductRepository.test.ts',
-  '__tests__/features/products/services/productMigration.test.ts',
-  '__tests__/features/products/services/productService.test.ts',
-  '__tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts',
-];
+export const prismaIntegrationTestFiles = [];
 
 export const mongoIntegrationTestFiles = [
   '__tests__/features/cms/services/mongo-cms-repository.test.ts',

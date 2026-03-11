@@ -25,7 +25,6 @@ import {
 } from '@/features/integrations/services/tradera-system-settings';
 import type { TraderaListingJobInput } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { TraderaListingJobInput };
@@ -262,39 +261,8 @@ const findDueRelistsInMongo = async (limit: number): Promise<string[]> => {
   return listings.map((listing) => listing._id);
 };
 
-const findDueRelistsInPrisma = async (limit: number): Promise<string[]> => {
-  if (!process.env['DATABASE_URL']) return [];
-  try {
-    const rows = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
-      `
-      SELECT pl.id
-      FROM "ProductListing" pl
-      INNER JOIN "Integration" i ON i.id = pl."integrationId"
-      WHERE LOWER(i.slug) IN ('tradera', 'tradera-api')
-        AND pl.status IN ('active', 'queued_relist')
-        AND pl."nextRelistAt" IS NOT NULL
-        AND pl."nextRelistAt" <= NOW()
-      ORDER BY pl."nextRelistAt" ASC, pl."updatedAt" ASC
-      LIMIT ${limit}
-      `
-    );
-    return rows.map((row) => row.id);
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to find due Tradera relists in SQL', {
-      service: 'tradera-listing',
-      error,
-    });
-    return [];
-  }
-};
-
 export const findDueTraderaRelistListingIds = async (limit: number = 10): Promise<string[]> => {
-  const [mongoIds, prismaIds] = await Promise.all([
-    findDueRelistsInMongo(limit),
-    findDueRelistsInPrisma(limit),
-  ]);
-  const combined = [...new Set([...mongoIds, ...prismaIds])];
-  return combined.slice(0, limit);
+  return findDueRelistsInMongo(limit);
 };
 
 export const shouldRunTraderaRelistScheduler = async (): Promise<boolean> => {

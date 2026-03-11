@@ -6,7 +6,6 @@ import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
-  type ImageStudioRunRecord,
 } from '@/features/ai/image-studio/server';
 import {
   createImageStudioSlots,
@@ -30,12 +29,9 @@ import {
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioExecutionRoute,
+  type ProductStudioLinkResponse,
+  type ProductStudioSendResponse,
   type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingConfig,
-  type ProductStudioSequencingDiagnostics,
-  type ProductStudioSequenceStepPlanEntry,
-  type ProductStudioSequenceReadiness,
   type ProductWithImages,
 } from '@/shared/contracts/products';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
@@ -76,33 +72,8 @@ import {
 } from './product-studio-service.sequencing';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
 
-export interface ProductStudioLinkResult {
-  config: ProductStudioConfig;
-  projectId: string;
-  imageSlotIndex: number;
-  sourceSlot: ImageStudioSlotRecord;
-}
-
-export interface ProductStudioSendResult {
-  config: ProductStudioConfig;
-  sequencing: ProductStudioSequencingConfig;
-  sequencingDiagnostics: ProductStudioSequencingDiagnostics;
-  sequenceReadiness: ProductStudioSequenceReadiness;
-  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
-  projectId: string;
-  imageSlotIndex: number;
-  sourceSlot: ImageStudioSlotRecord;
-  runId: string;
-  runStatus: ImageStudioRunRecord['status'] | 'cancelled';
-  expectedOutputs: number;
-  dispatchMode: ImageStudioRunDispatchMode;
-  runKind: 'generation' | 'sequence';
-  sequenceRunId: string | null;
-  requestedSequenceMode: ProductStudioSequenceGenerationMode;
-  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
-  executionRoute: ProductStudioExecutionRoute;
-  warnings?: string[];
-}
+export type ProductStudioLinkResult = ProductStudioLinkResponse;
+export type ProductStudioSendResult = ProductStudioSendResponse;
 
 interface UpsertProductStudioSourceSlotResult {
   sourceSlot: ImageStudioSlotRecord;

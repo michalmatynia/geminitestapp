@@ -1,13 +1,12 @@
-import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
 import type {
-  AppProviderValue as ProviderValue,
-  AppProviderSource as ProviderSource,
-  AppProviderServiceStatus as ProviderServiceStatus,
   AppProviderDiagnostics as ProviderDiagnosticsResponse,
+  AppProviderServiceStatus as ProviderServiceStatus,
+  AppProviderSource as ProviderSource,
+  AppProviderValue as ProviderValue,
 } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
@@ -18,48 +17,13 @@ import {
   type AppDbProvider,
 } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
-const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
+const normalizeProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;
-  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : 'prisma';
-};
-
-const normalizeProductProvider = (value?: string | null): ProviderValue | null => {
-  if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  if (normalized === 'mongodb') return 'mongodb';
-  if (normalized === 'prisma') return 'prisma';
-  return null;
-};
-
-const normalizeAuthProvider = (value?: string | null): ProviderValue | null => {
-  if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  if (normalized === 'prisma') return 'prisma';
-  if (normalized === 'mongodb') return 'mongodb';
-  return null;
-};
-
-const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
-
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['DATABASE_URL'] || !('setting' in prisma)) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return typeof setting?.value === 'string' ? setting.value : null;
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return null;
-    return null;
-  }
+  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : null;
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
@@ -77,13 +41,13 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const buildWarnings = (services: ProviderServiceStatus[]): string[] => {
   const warnings: string[] = [];
-  services.forEach((status: ProviderServiceStatus) => {
+  services.forEach((status) => {
     if (status.driftFromApp) {
       warnings.push(
         `${status.service} provider drift: configured/effective is ${status.effective.toUpperCase()} while app provider is different.`
       );
     }
-    status.notes.forEach((note: string) => warnings.push(`${status.service}: ${note}`));
+    status.notes.forEach((note) => warnings.push(`${status.service}: ${note}`));
   });
   return warnings;
 };
@@ -101,47 +65,30 @@ const isIntentionalServiceOverride = (
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
-  const hasDatabaseUrl = Boolean(process.env['DATABASE_URL']);
+
   const hasMongoUri = Boolean(process.env['MONGODB_URI']);
   const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;
   const authDbProviderEnv = process.env['AUTH_DB_PROVIDER']?.trim() || null;
 
-  const appPrismaSetting = normalizeAppProvider(
-    await readPrismaSetting(APP_DB_PROVIDER_SETTING_KEY)
-  );
-  const appMongoSetting = normalizeAppProvider(await readMongoSetting(APP_DB_PROVIDER_SETTING_KEY));
-  const envAppProvider = normalizeAppProvider(appDbProviderEnv);
-  const appConfigured = envAppProvider ?? appPrismaSetting ?? appMongoSetting;
+  const envAppProvider = normalizeProvider(appDbProviderEnv);
+  const appMongoSetting = normalizeProvider(await readMongoSetting(APP_DB_PROVIDER_SETTING_KEY));
+  const appConfigured = envAppProvider ?? appMongoSetting;
   const appConfiguredSource: ProviderSource | null = envAppProvider
     ? 'env'
-    : appPrismaSetting
-      ? 'prisma-setting'
-      : appMongoSetting
-        ? 'mongo-setting'
-        : null;
+    : appMongoSetting
+      ? 'mongo-setting'
+      : null;
   const appEffective = await getAppDbProvider();
 
-  const authMongoSetting = normalizeAuthProvider(
-    await readMongoSetting(AUTH_SETTINGS_KEYS.provider)
-  );
-  const authPrismaSetting = normalizeAuthProvider(
-    await readPrismaSetting(AUTH_SETTINGS_KEYS.provider)
-  );
-  const envAuthProvider = normalizeAuthProvider(authDbProviderEnv);
-  const authConfigured =
-    envAuthProvider ??
-    authMongoSetting ??
-    authPrismaSetting ??
-    (hasMongoUri ? 'mongodb' : 'prisma');
+  const envAuthProvider = normalizeProvider(authDbProviderEnv);
+  const authMongoSetting = normalizeProvider(await readMongoSetting(AUTH_SETTINGS_KEYS.provider));
+  const authConfigured = envAuthProvider ?? authMongoSetting ?? 'mongodb';
   const authConfiguredSource: ProviderSource = envAuthProvider
     ? 'env'
     : authMongoSetting
       ? 'mongo-setting'
-      : authPrismaSetting
-        ? 'prisma-setting'
-        : 'default';
-  const authResolved = await getAuthDataProvider();
-  const authEffective = requireAuthProvider(authResolved);
+      : 'default';
+  const authEffective = requireAuthProvider(await getAuthDataProvider());
   const authIntentionalOverride = isIntentionalServiceOverride(
     appEffective,
     authConfigured,
@@ -149,26 +96,13 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     authEffective
   );
 
-  const productMongoSetting = normalizeProductProvider(
+  const productMongoSetting = normalizeProvider(
     await readMongoSetting(PRODUCT_DB_PROVIDER_SETTING_KEY)
   );
-  const productPrismaSetting = normalizeProductProvider(
-    await readPrismaSetting(PRODUCT_DB_PROVIDER_SETTING_KEY)
-  );
-  const productConfigured =
-    appEffective === 'prisma'
-      ? (productPrismaSetting ?? 'prisma')
-      : (productMongoSetting ?? productPrismaSetting ?? (hasDatabaseUrl ? 'prisma' : 'mongodb'));
-  const productConfiguredSource: ProviderSource =
-    appEffective === 'prisma'
-      ? productPrismaSetting
-        ? 'prisma-setting'
-        : 'derived'
-      : productMongoSetting
-        ? 'mongo-setting'
-        : productPrismaSetting
-          ? 'prisma-setting'
-          : 'derived';
+  const productConfigured = productMongoSetting ?? 'mongodb';
+  const productConfiguredSource: ProviderSource = productMongoSetting
+    ? 'mongo-setting'
+    : 'derived';
   const productEffective = await getProductDataProvider();
   const productIntentionalOverride = isIntentionalServiceOverride(
     appEffective,
@@ -233,9 +167,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   ];
 
   const warnings = buildWarnings(services);
-  if (!hasDatabaseUrl) {
-    warnings.push('DATABASE_URL is missing.');
-  }
   if (!hasMongoUri) {
     warnings.push('MONGODB_URI is missing.');
   }
@@ -243,12 +174,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const payload: ProviderDiagnosticsResponse = {
     timestamp: new Date().toISOString(),
     env: {
-      hasDatabaseUrl,
+      hasDatabaseUrl: false,
       hasMongoUri,
       appDbProviderEnv,
     },
     services,
-    driftCount: services.filter((status: ProviderServiceStatus) => status.driftFromApp).length,
+    driftCount: services.filter((status) => status.driftFromApp).length,
     warningCount: warnings.length,
     warnings,
   };

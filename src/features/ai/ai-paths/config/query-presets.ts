@@ -38,29 +38,6 @@ const TEMPLATE_SNIPPETS: TemplateSnippet[] = [
   },
 ];
 
-const PRISMA_TEMPLATE_SNIPPETS: TemplateSnippet[] = [
-  {
-    label: 'By id',
-    value: '{\n  "id": "{{value}}"\n}',
-  },
-  {
-    label: 'By SKU',
-    value: '{\n  "sku": "{{value}}"\n}',
-  },
-  {
-    label: 'Name contains',
-    value: '{\n  "name_en": { "contains": "{{value}}", "mode": "insensitive" }\n}',
-  },
-  {
-    label: 'Created after',
-    value: '{\n  "createdAt": { "gte": "{{value}}" }\n}',
-  },
-  {
-    label: 'Catalog contains product',
-    value: '{\n  "catalogs": { "some": { "catalogId": "{{value}}" } }\n}',
-  },
-];
-
 const SORT_PRESETS: LabeledPreset[] = [
   { id: 'created_desc', label: 'Newest first (createdAt desc)', value: '{ "createdAt": -1 }' },
   { id: 'created_asc', label: 'Oldest first (createdAt asc)', value: '{ "createdAt": 1 }' },
@@ -70,25 +47,6 @@ const SORT_PRESETS: LabeledPreset[] = [
   { id: 'price_asc', label: 'Price low-high', value: '{ "price": 1 }' },
   { id: 'price_desc', label: 'Price high-low', value: '{ "price": -1 }' },
 ];
-
-const toPrismaSortValue = (value: string): string => {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const next: Record<string, 'asc' | 'desc'> = {};
-    Object.entries(parsed).forEach(([key, val]) => {
-      if (val === -1 || val === 'desc') next[key] = 'desc';
-      if (val === 1 || val === 'asc') next[key] = 'asc';
-    });
-    return JSON.stringify(next, null, 2);
-  } catch {
-    return value;
-  }
-};
-
-const PRISMA_SORT_PRESETS: LabeledPreset[] = SORT_PRESETS.map((preset: LabeledPreset) => ({
-  ...preset,
-  value: toPrismaSortValue(preset.value),
-}));
 
 const PROJECTION_PRESETS: LabeledPreset[] = [
   {
@@ -123,26 +81,6 @@ const PROJECTION_PRESETS: LabeledPreset[] = [
   },
 ];
 
-const toPrismaProjectionValue = (value: string): string => {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const next: Record<string, boolean> = {};
-    Object.entries(parsed).forEach(([key, val]) => {
-      if (val === 1 || val === true) next[key] = true;
-    });
-    return JSON.stringify(next, null, 2);
-  } catch {
-    return value;
-  }
-};
-
-const PRISMA_PROJECTION_PRESETS: LabeledPreset[] = PROJECTION_PRESETS.map(
-  (preset: LabeledPreset) => ({
-    ...preset,
-    value: toPrismaProjectionValue(preset.value),
-  })
-);
-
 const READ_QUERY_TYPES: SnippetItem[] = [
   {
     label: 'Find (filter)',
@@ -173,29 +111,6 @@ const READ_QUERY_TYPES: SnippetItem[] = [
     value: '[\n  { "$match": { "operationType": "insert" } }\n]',
     disabled: true,
     note: 'Not supported in UI runtime',
-  },
-];
-
-const PRISMA_READ_QUERY_TYPES: SnippetItem[] = [
-  {
-    label: 'Find (where)',
-    value: '{\n  "status": "active"\n}',
-  },
-  {
-    label: 'Contains (case-insensitive)',
-    value: '{\n  "name_en": { "contains": "{{value}}", "mode": "insensitive" }\n}',
-  },
-  {
-    label: 'In list',
-    value: '{\n  "sku": { "in": ["A", "B"] }\n}',
-  },
-  {
-    label: 'Relation filter',
-    value: '{\n  "catalogs": { "some": { "catalogId": "{{value}}" } }\n}',
-  },
-  {
-    label: 'Date range',
-    value: '{\n  "createdAt": { "gte": "{{value}}", "lte": "{{value}}" }\n}',
   },
 ];
 
@@ -285,67 +200,6 @@ const QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
   },
 ];
 
-const PRISMA_QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
-  {
-    label: 'Comparison',
-    items: [
-      { label: 'equals', value: '{ "field": { "equals": "{{value}}" } }' },
-      { label: 'not', value: '{ "field": { "not": "{{value}}" } }' },
-      { label: 'in', value: '{ "field": { "in": ["a", "b"] } }' },
-      { label: 'notIn', value: '{ "field": { "notIn": ["a", "b"] } }' },
-      { label: 'gt', value: '{ "field": { "gt": 10 } }' },
-      { label: 'gte', value: '{ "field": { "gte": 10 } }' },
-      { label: 'lt', value: '{ "field": { "lt": 10 } }' },
-      { label: 'lte', value: '{ "field": { "lte": 10 } }' },
-    ],
-  },
-  {
-    label: 'String',
-    items: [
-      { label: 'contains', value: '{ "field": { "contains": "{{value}}" } }' },
-      { label: 'startsWith', value: '{ "field": { "startsWith": "{{value}}" } }' },
-      { label: 'endsWith', value: '{ "field": { "endsWith": "{{value}}" } }' },
-      {
-        label: 'mode insensitive',
-        value: '{ "field": { "contains": "{{value}}", "mode": "insensitive" } }',
-      },
-    ],
-  },
-  {
-    label: 'Logical',
-    items: [
-      {
-        label: 'AND',
-        value:
-          '{ "AND": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }',
-      },
-      {
-        label: 'OR',
-        value:
-          '{ "OR": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }',
-      },
-      { label: 'NOT', value: '{ "NOT": { "field": { "contains": "{{value}}" } } }' },
-    ],
-  },
-  {
-    label: 'Array',
-    items: [
-      { label: 'has', value: '{ "field": { "has": "{{value}}" } }' },
-      { label: 'hasSome', value: '{ "field": { "hasSome": ["a", "b"] } }' },
-      { label: 'hasEvery', value: '{ "field": { "hasEvery": ["a", "b"] } }' },
-      { label: 'isEmpty', value: '{ "field": { "isEmpty": true } }' },
-    ],
-  },
-  {
-    label: 'Relation',
-    items: [
-      { label: 'some', value: '{ "relation": { "some": { "id": "{{value}}" } } }' },
-      { label: 'every', value: '{ "relation": { "every": { "id": "{{value}}" } } }' },
-      { label: 'none', value: '{ "relation": { "none": { "id": "{{value}}" } } }' },
-    ],
-  },
-];
-
 const UPDATE_OPERATOR_GROUPS: SnippetGroup[] = [
   {
     label: 'Field updates',
@@ -402,38 +256,6 @@ const UPDATE_OPERATOR_GROUPS: SnippetGroup[] = [
   },
 ];
 
-const PRISMA_UPDATE_OPERATOR_GROUPS: SnippetGroup[] = [
-  {
-    label: 'Field updates',
-    items: [
-      { label: 'set', value: '{ "field": { "set": "{{value}}" } }' },
-      { label: 'unset (set null)', value: '{ "field": { "set": null } }' },
-    ],
-  },
-  {
-    label: 'Numeric',
-    items: [
-      { label: 'increment', value: '{ "field": { "increment": 1 } }' },
-      { label: 'decrement', value: '{ "field": { "decrement": 1 } }' },
-      { label: 'multiply', value: '{ "field": { "multiply": 2 } }' },
-    ],
-  },
-  {
-    label: 'Array / List',
-    items: [
-      { label: 'push', value: '{ "field": { "push": "{{value}}" } }' },
-      { label: 'set list', value: '{ "field": { "set": ["a", "b"] } }' },
-    ],
-  },
-  {
-    label: 'Relations',
-    items: [
-      { label: 'connect', value: '{ "relation": { "connect": { "id": "{{value}}" } } }' },
-      { label: 'disconnect', value: '{ "relation": { "disconnect": { "id": "{{value}}" } } }' },
-    ],
-  },
-];
-
 const AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [
   { label: '$match', value: '{ "$match": { "status": "active" } }' },
   { label: '$project', value: '{ "$project": { "field": 1 } }' },
@@ -471,8 +293,6 @@ const AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [
   { label: '$merge', value: '{ "$merge": "targetCollection" }' },
 ];
 
-const PRISMA_AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [];
-
 const buildPresetQueryTemplate = (queryConfig: DbQueryConfig): string => {
   const preset = queryConfig.preset;
   let field = '_id';
@@ -496,18 +316,11 @@ const buildPresetQueryTemplate = (queryConfig: DbQueryConfig): string => {
 export {
   PLACEHOLDER_CHIPS,
   TEMPLATE_SNIPPETS,
-  PRISMA_TEMPLATE_SNIPPETS,
   SORT_PRESETS,
-  PRISMA_SORT_PRESETS,
   PROJECTION_PRESETS,
-  PRISMA_PROJECTION_PRESETS,
   READ_QUERY_TYPES,
-  PRISMA_READ_QUERY_TYPES,
   QUERY_OPERATOR_GROUPS,
-  PRISMA_QUERY_OPERATOR_GROUPS,
   UPDATE_OPERATOR_GROUPS,
-  PRISMA_UPDATE_OPERATOR_GROUPS,
   AGGREGATION_STAGE_SNIPPETS,
-  PRISMA_AGGREGATION_STAGE_SNIPPETS,
   buildPresetQueryTemplate,
 };

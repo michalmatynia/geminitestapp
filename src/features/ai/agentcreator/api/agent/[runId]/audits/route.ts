@@ -36,7 +36,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
       take,
     });
     const filtered = stepId
-      ? audits.filter((audit) => {
+      ? audits.filter((audit: any) => {
         const metadata = audit.metadata as {
             stepId?: string;
             failedStepId?: string;
@@ -51,7 +51,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
           return true;
         }
         if (Array.isArray(metadata?.steps)) {
-          return metadata?.steps.some((step) => step?.id === stepId);
+          return metadata?.steps.some((step: any) => step?.id === stepId);
         }
         return false;
       })
@@ -66,7 +66,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
     }
     const response: AgentAuditLogRecordsResponse = {
       audits: filtered.map(
-        (audit): AgentAuditLogRecordDto => ({
+        (audit: any): AgentAuditLogRecordDto => ({
           ...audit,
           runId: audit.runId ?? null,
           createdAt: audit.createdAt.toISOString(),

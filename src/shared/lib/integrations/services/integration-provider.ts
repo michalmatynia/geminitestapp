@@ -7,18 +7,19 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
-import prisma from '@/shared/lib/db/prisma';
 
-type IntegrationDbProvider = 'prisma' | 'mongodb';
+type IntegrationDbProvider = 'mongodb';
 
 export const getIntegrationDataProvider = async (): Promise<IntegrationDbProvider> => {
-  void prisma;
   const policy = await getDatabaseEnginePolicy();
   const routeProvider = await getDatabaseEngineServiceProvider('integrations');
   if (routeProvider) {
     if (routeProvider === 'redis') {
+      throw internalError('Database Engine route "integrations" cannot target Redis. Configure MongoDB.');
+    }
+    if (routeProvider !== 'mongodb') {
       throw internalError(
-        'Database Engine route "integrations" cannot target Redis. Configure Prisma or MongoDB.'
+        `Database Engine route "integrations" points to "${routeProvider}" but only MongoDB is supported.`
       );
     }
     if (policy.strictProviderAvailability && !isPrimaryProviderConfigured(routeProvider)) {
@@ -35,5 +36,6 @@ export const getIntegrationDataProvider = async (): Promise<IntegrationDbProvide
     );
   }
 
-  return getAppDbProvider();
+  await getAppDbProvider();
+  return 'mongodb';
 };

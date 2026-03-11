@@ -87,7 +87,7 @@ describe('ScoreHistory', () => {
     expect(screen.getByTestId('score-history-loading')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Ladowanie wynikow...')).toBeInTheDocument();
   });

@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { ObjectId } from 'mongodb';
+
 import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getProductListingRepository } from '@/features/integrations/server';
 import { integrationService } from '@/features/integrations/server';
@@ -14,8 +16,6 @@ import type {
 import type { ProductRepository, ProductRecord } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -27,6 +27,16 @@ type BaseListingSyncInfo = {
   connectionId: string;
   externalListingId: string | null;
   inventoryId: string | null;
+  exportHistory?: ProductListingExportEvent[] | null;
+};
+
+type MongoBaseListingSyncDoc = {
+  _id: string | ObjectId;
+  integrationId: string;
+  productId: string;
+  connectionId: string;
+  externalListingId?: string | null;
+  inventoryId?: string | null;
   exportHistory?: ProductListingExportEvent[] | null;
 };
 
@@ -45,48 +55,26 @@ const mergeImageLinks = (existing: string[], incoming: string[]): string[] => {
 };
 
 export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> => {
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    const db = await getMongoDb();
-    const integrations = await db
-      .collection<{ _id: string; slug: string }>('integrations')
-      .find({ slug: { $in: Array.from(BASE_INTEGRATION_SLUGS) } }, { projection: { _id: 1 } })
-      .toArray();
-    const integrationIds = integrations.map((entry: { _id: string }) => entry._id);
-    if (!integrationIds.length) return [];
-    const listings = await db
-      .collection<BaseListingSyncInfo>(LISTINGS_COLLECTION)
-      .find({ integrationId: { $in: integrationIds } })
-      .toArray();
-    return listings.map((listing) => ({
-      id: listing.id ?? listing._id,
-      productId: listing.productId,
-      connectionId: listing.connectionId,
-      externalListingId: listing.externalListingId ?? null,
-      inventoryId: listing.inventoryId ?? null,
-      exportHistory: listing.exportHistory ?? null,
-    }));
-  }
+  const db = await getMongoDb();
+  const integrations = await db
+    .collection<{ _id: string; slug: string }>('integrations')
+    .find({ slug: { $in: Array.from(BASE_INTEGRATION_SLUGS) } }, { projection: { _id: 1 } })
+    .toArray();
+  const integrationIds = integrations.map((entry: { _id: string }) => entry._id);
+  if (!integrationIds.length) return [];
 
-  const listings = await prisma.productListing.findMany({
-    where: { integration: { slug: { in: Array.from(BASE_INTEGRATION_SLUGS) } } },
-    select: {
-      id: true,
-      productId: true,
-      connectionId: true,
-      externalListingId: true,
-      inventoryId: true,
-      exportHistory: true,
-    },
-  });
+  const listings = await db
+    .collection<MongoBaseListingSyncDoc>(LISTINGS_COLLECTION)
+    .find({ integrationId: { $in: integrationIds } })
+    .toArray();
 
-  return listings.map((listing) => ({
-    id: listing.id,
+  return listings.map((listing: MongoBaseListingSyncDoc) => ({
+    id: listing._id.toString(),
     productId: listing.productId,
     connectionId: listing.connectionId,
     externalListingId: listing.externalListingId ?? null,
     inventoryId: listing.inventoryId ?? null,
-    exportHistory: (listing.exportHistory ?? null) as ProductListingExportEvent[] | null,
+    exportHistory: listing.exportHistory ?? null,
   }));
 };
 

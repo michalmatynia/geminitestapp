@@ -3,7 +3,6 @@ import 'server-only';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
@@ -177,7 +176,6 @@ export async function evaluateGraphServer(
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
     services: {
-      prisma,
       mongo,
       ...((resolvedOptions.services as Record<string, unknown>) ?? {}),
     },

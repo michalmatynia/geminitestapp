@@ -97,10 +97,10 @@ export function KangurPriorityAssignments({
         variant='soft'
       >
         <div className='mb-5 flex items-center justify-between gap-3'>
-          <div className='text-2xl font-extrabold tracking-tight text-[#7a86b0]'>
+          <div className='text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
             {assignmentsTitle}
           </div>
-          <div className='text-sm font-medium text-[#96a0be]'>0 zadan</div>
+          <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>0 zadan</div>
         </div>
         <KangurEmptyState
           accent='slate'

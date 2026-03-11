@@ -15,7 +15,7 @@ export type LessonProps = {
 };
 
 const LessonLoadingFallback = (): JSX.Element => (
-  <div className='w-full rounded-3xl border border-indigo-200/70 bg-white/90 p-6 text-center text-sm text-indigo-500 shadow-lg'>
+  <div className='glass-panel w-full rounded-3xl border border-indigo-200/70 p-6 text-center text-sm text-indigo-500 shadow-lg'>
     Ladowanie lekcji...
   </div>
 );

@@ -19,7 +19,6 @@ import { forbiddenError } from '@/shared/errors/app-error';
 import {
   hasRunRepositorySelectionMismatch,
   readPersistedRunRepositorySelection,
-  resolveAlternatePathRunRepository,
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
@@ -170,8 +169,8 @@ const buildRunRepositoryHeaders = (
   runs: unknown[],
   repoSelection: Awaited<ReturnType<typeof resolvePathRunRepository>>,
   options?: {
-    readProvider?: 'mongodb' | 'prisma';
-    readMode?: 'selected' | 'alternate';
+    readProvider?: 'mongodb';
+    readMode?: 'selected';
   }
 ): Record<string, string> => {
   const headers = new Headers({
@@ -277,45 +276,17 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(offset !== undefined ? { offset } : {}),
     ...(includeTotal ? {} : { includeTotal: false }),
   });
-  let effectiveResult = result;
-  let readProvider: 'mongodb' | 'prisma' = repoSelection.provider;
-  let readMode: 'selected' | 'alternate' = 'selected';
-  if (requestId && result.runs.length === 0) {
-    const alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
-    if (alternateRepoSelection) {
-      const alternateResult = await alternateRepoSelection.repo.listRuns({
-        ...(visibility === 'scoped' ? { userId: access.userId } : {}),
-        ...(pathId ? { pathId } : {}),
-        ...(nodeId ? { nodeId } : {}),
-        ...(requestId ? { requestId } : {}),
-        ...(searchQuery ? { query: searchQuery } : {}),
-        ...(source ? { source, sourceMode } : {}),
-        ...(status ? { status } : {}),
-        ...(limit !== undefined ? { limit } : {}),
-        ...(offset !== undefined ? { offset } : {}),
-        ...(includeTotal ? {} : { includeTotal: false }),
-      });
-      if (alternateResult.runs.length > 0) {
-        effectiveResult = alternateResult;
-        readProvider = alternateRepoSelection.provider;
-        readMode = 'alternate';
-      }
-    }
-  }
   if (!fresh && runsListResponseCacheTtlMs > 0) {
     runsListResponseCache.set(cacheKey, {
       expiresAt: now + runsListResponseCacheTtlMs,
-      payload: effectiveResult as { runs: unknown[]; total: number },
+      payload: result as { runs: unknown[]; total: number },
     });
   }
   const headers = {
-    ...buildRunRepositoryHeaders(effectiveResult.runs, repoSelection, {
-      readProvider,
-      readMode,
-    }),
+    ...buildRunRepositoryHeaders(result.runs, repoSelection),
     'Cache-Control': 'no-store',
   };
-  return NextResponse.json(effectiveResult, {
+  return NextResponse.json(result, {
     headers,
   });
 }

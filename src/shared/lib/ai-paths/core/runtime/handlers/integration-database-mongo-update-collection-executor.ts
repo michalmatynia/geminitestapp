@@ -72,7 +72,7 @@ export async function executeMongoCollectionUpdate({
 
   const updateResult: ApiResponse<unknown> = await dbApi.action({
     ...(queryPayload['provider']
-      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),
     ...(queryPayload['collectionMap']
       ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }

@@ -1,4 +1,3 @@
-import { type CountryCode } from '@prisma/client';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -6,14 +5,12 @@ import { z } from 'zod';
 import {
   getCurrencyRepository,
   getInternationalizationProvider,
-  ensureInternationalizationDefaults,
 } from '@/features/internationalization/server';
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type {
   MongoCountryDoc,
   MongoLanguageDoc,
@@ -143,86 +140,33 @@ export async function GET_intl_handler(
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
-    let currencies = await repo.listCurrencies();
-
-    if (currencies.length === 0 && provider === 'prisma') {
-      await prisma.$transaction(async (tx) => {
-        await ensureInternationalizationDefaults(tx);
-      });
-      currencies = await repo.listCurrencies();
-    }
-
-    return NextResponse.json(currencies);
+    return NextResponse.json(await repo.listCurrencies());
   }
 
   if (type === 'countries') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const countries = (await mongo
-        .collection<MongoCountryDoc>('countries')
-        .find({})
-        .sort({ code: 1 })
-        .toArray()) as MongoCountryDoc[];
-      return NextResponse.json(countries.map(mapMongoCountry));
-    }
-
-    let countries = await prisma.country.findMany({
-      include: { currencies: { include: { currency: true } } },
-    });
-
-    if (countries.length === 0) {
-      await prisma.$transaction(async (tx) => {
-        await ensureInternationalizationDefaults(tx);
-      });
-      countries = await prisma.country.findMany({
-        include: { currencies: { include: { currency: true } } },
-      });
-    }
-
-    return NextResponse.json(countries);
+    const mongo = await getMongoDb();
+    const countries = (await mongo
+      .collection<MongoCountryDoc>('countries')
+      .find({})
+      .sort({ code: 1 })
+      .toArray()) as MongoCountryDoc[];
+    return NextResponse.json(countries.map(mapMongoCountry));
   }
 
   if (type === 'languages') {
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const [countryDocs, languageDocs] = (await Promise.all([
-        mongo.collection<MongoCountryDoc>('countries').find({}).toArray(),
-        mongo.collection<MongoLanguageDoc>('languages').find({}).sort({ code: 1 }).toArray(),
-      ])) as [MongoCountryDoc[], MongoLanguageDoc[]];
-      const countriesById = new Map(
-        countryDocs.map((country: MongoCountryDoc) => {
-          const mapped = mapMongoCountry(country);
-          return [mapped.id, mapped] as const;
-        })
-      );
-      return NextResponse.json(
-        languageDocs.map((language: MongoLanguageDoc) => mapMongoLanguage(language, countriesById))
-      );
-    }
-
-    let languages = await prisma.language.findMany({
-      include: { countries: { include: { country: true } } },
-    });
-
-    if (languages.length === 0) {
-      await prisma.$transaction(async (tx) => {
-        await ensureInternationalizationDefaults(tx);
-      });
-      languages = await prisma.language.findMany({
-        include: { countries: { include: { country: true } } },
-      });
-    }
-
+    const mongo = await getMongoDb();
+    const [countryDocs, languageDocs] = (await Promise.all([
+      mongo.collection<MongoCountryDoc>('countries').find({}).toArray(),
+      mongo.collection<MongoLanguageDoc>('languages').find({}).sort({ code: 1 }).toArray(),
+    ])) as [MongoCountryDoc[], MongoLanguageDoc[]];
+    const countriesById = new Map(
+      countryDocs.map((country: MongoCountryDoc) => {
+        const mapped = mapMongoCountry(country);
+        return [mapped.id, mapped] as const;
+      })
+    );
     return NextResponse.json(
-      languages.map((language) => ({
-        ...language,
-        isDefault: false,
-        isActive: true,
-        countries: language.countries.map((relation) => ({
-          ...relation.country,
-          countryId: relation.countryId,
-        })),
-      }))
+      languageDocs.map((language: MongoLanguageDoc) => mapMongoLanguage(language, countriesById))
     );
   }
 
@@ -265,40 +209,22 @@ export async function POST_intl_handler(
     const name = readString(data, 'name');
     if (!code || !name) throw badRequestError('Code and name are required');
 
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const now = new Date();
-      const countryDoc: MongoCountryDoc = {
-        id: code,
-        code,
-        name,
-        currencyIds: readStringArray(data, 'currencyIds'),
-        createdAt: now,
-        updatedAt: now,
-      };
-      const insertDoc: MongoCountryDoc = {
-        _id: new ObjectId(),
-        ...countryDoc,
-      };
-      await mongo.collection<MongoCountryDoc>('countries').insertOne(insertDoc);
-      return NextResponse.json(mapMongoCountry(countryDoc));
-    }
-
-    const currencyIds = readStringArray(data, 'currencyIds');
-    const country = await prisma.country.create({
-      data: {
-        code: code as CountryCode,
-        name,
-        currencies:
-          currencyIds.length > 0
-            ? {
-              create: currencyIds.map((currencyId: string) => ({ currencyId })),
-            }
-            : undefined,
-      },
-      include: { currencies: true },
-    });
-    return NextResponse.json(country);
+    const mongo = await getMongoDb();
+    const now = new Date();
+    const countryDoc: MongoCountryDoc = {
+      id: code,
+      code,
+      name,
+      currencyIds: readStringArray(data, 'currencyIds'),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const insertDoc: MongoCountryDoc = {
+      _id: new ObjectId(),
+      ...countryDoc,
+    };
+    await mongo.collection<MongoCountryDoc>('countries').insertOne(insertDoc);
+    return NextResponse.json(mapMongoCountry(countryDoc));
   }
 
   if (type === 'languages') {
@@ -306,62 +232,35 @@ export async function POST_intl_handler(
     const name = readString(data, 'name');
     if (!code || !name) throw badRequestError('Code and name are required');
 
-    if (provider === 'mongodb') {
-      const mongo = await getMongoDb();
-      const countryIds = readStringArray(data, 'countryIds');
-      const now = new Date();
-      const languageDoc: MongoLanguageDoc = {
-        id: code,
-        code,
-        name,
-        nativeName: readString(data, 'nativeName') ?? null,
-        countries: countryIds.map((countryId: string) => ({ countryId })),
-        createdAt: now,
-        updatedAt: now,
-      };
-      const insertDoc: MongoLanguageDoc = {
-        _id: new ObjectId(),
-        ...languageDoc,
-      };
-      await mongo.collection<MongoLanguageDoc>('languages').insertOne(insertDoc);
-
-      const countryDocs = (await mongo
-        .collection<MongoCountryDoc>('countries')
-        .find({ id: { $in: countryIds } })
-        .toArray()) as MongoCountryDoc[];
-      const countriesById = new Map(
-        countryDocs.map((country: MongoCountryDoc) => {
-          const mapped = mapMongoCountry(country);
-          return [mapped.id, mapped] as const;
-        })
-      );
-      return NextResponse.json(mapMongoLanguage(languageDoc, countriesById));
-    }
-
+    const mongo = await getMongoDb();
     const countryIds = readStringArray(data, 'countryIds');
-    const language = await prisma.language.create({
-      data: {
-        code,
-        name,
-        nativeName: readString(data, 'nativeName'),
-        countries:
-          countryIds.length > 0
-            ? {
-              create: countryIds.map((countryId: string) => ({ countryId })),
-            }
-            : undefined,
-      },
-      include: { countries: { include: { country: true } } },
-    });
-    return NextResponse.json({
-      ...language,
-      isDefault: false,
-      isActive: true,
-      countries: language.countries.map((relation) => ({
-        ...relation.country,
-        countryId: relation.countryId,
-      })),
-    });
+    const now = new Date();
+    const languageDoc: MongoLanguageDoc = {
+      id: code,
+      code,
+      name,
+      nativeName: readString(data, 'nativeName') ?? null,
+      countries: countryIds.map((countryId: string) => ({ countryId })),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const insertDoc: MongoLanguageDoc = {
+      _id: new ObjectId(),
+      ...languageDoc,
+    };
+    await mongo.collection<MongoLanguageDoc>('languages').insertOne(insertDoc);
+
+    const countryDocs = (await mongo
+      .collection<MongoCountryDoc>('countries')
+      .find({ id: { $in: countryIds } })
+      .toArray()) as MongoCountryDoc[];
+    const countriesById = new Map(
+      countryDocs.map((country: MongoCountryDoc) => {
+        const mapped = mapMongoCountry(country);
+        return [mapped.id, mapped] as const;
+      })
+    );
+    return NextResponse.json(mapMongoLanguage(languageDoc, countriesById));
   }
 
   throw badRequestError(`Invalid internationalization type: ${type}`);

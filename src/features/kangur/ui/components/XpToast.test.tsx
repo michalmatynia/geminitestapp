@@ -58,12 +58,12 @@ describe('XpToast', () => {
     expect(screen.getByTestId('xp-toast-xp-shell')).toHaveClass(
       'glass-panel',
       'border-indigo-200/70',
-      'bg-white/95'
+      'rounded-[34px]'
     );
     expect(screen.getByTestId('xp-toast-badge-shell-first_game')).toHaveClass(
       'glass-panel',
       'border-amber-200/80',
-      'bg-white/95'
+      'rounded-[34px]'
     );
     expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByText('Swietnie, trzymasz polecany kierunek')).toBeInTheDocument();

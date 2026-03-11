@@ -42,6 +42,8 @@ const createEmptyEntry = (sortOrder: number): KangurAiTutorNativeGuideEntry => (
   id: createEntryId(),
   surface: null,
   focusKind: null,
+  focusIdPrefixes: [],
+  contentIdPrefixes: [],
   title: 'Nowy wpis',
   shortDescription: 'Krotki opis nowej sekcji Kangur.',
   fullDescription: 'Pelny opis nowej sekcji Kangur do uzupelnienia przez administratora.',

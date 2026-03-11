@@ -80,11 +80,11 @@ export default function ProgressOverview({
       >
         <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
         <div className='flex-1'>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
             Poziom i doswiadczenie
           </div>
           <p className={`mt-1 text-xl font-extrabold ${currentLevel.color}`}>{currentLevel.title}</p>
-          <p className='mb-2 text-sm text-slate-500'>
+          <p className='mb-2 text-sm [color:var(--kangur-page-muted-text)]'>
             Poziom {currentLevel.level} · {totalXp} XP lacznie
           </p>
           <KangurProgressBar
@@ -94,7 +94,7 @@ export default function ProgressOverview({
             size='md'
             value={percent}
           />
-          <p className='mt-1 text-xs text-slate-500'>
+          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
             {nextLevel
               ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
               : 'Osiagnieto maksymalny poziom!'}
@@ -123,13 +123,13 @@ export default function ProgressOverview({
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0'>
-              <p className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
                 Misja dnia
               </p>
-              <p className='mt-1 text-sm font-semibold text-slate-900'>
+              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                 {dailyQuest.assignment.title}
               </p>
-              <p className='mt-1 text-xs leading-5 text-slate-500'>
+              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                 {dailyQuest.progress.summary} · {dailyQuest.reward.label}
               </p>
             </div>
@@ -156,13 +156,13 @@ export default function ProgressOverview({
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0'>
-              <p className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
                 Polecony kierunek
               </p>
-              <p className='mt-1 text-sm font-semibold text-slate-900'>
+              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                 {guidedMomentum.completedSessions} polecone rundy
               </p>
-              <p className='mt-1 text-xs leading-5 text-slate-500'>
+              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                 {guidedMomentum.nextBadgeName
                   ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
                   : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
@@ -186,7 +186,7 @@ export default function ProgressOverview({
 
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
             Cwiczone operacje
           </p>
           <div className='flex flex-wrap gap-2'>
@@ -206,19 +206,21 @@ export default function ProgressOverview({
 
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
             Najczesciej cwiczone aktywnosci
           </p>
           <div className='flex flex-col gap-3'>
             {topActivities.map((activity) => (
               <div
                 key={activity.key}
-                className='flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 bg-white/80 px-4 py-3'
+                className='soft-card flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 px-4 py-3'
                 data-testid={`progress-overview-activity-${activity.key}`}
               >
                 <div className='min-w-0'>
-                  <p className='truncate text-sm font-semibold text-slate-800'>{activity.label}</p>
-                  <p className='text-xs text-slate-500'>
+                  <p className='truncate text-sm font-semibold [color:var(--kangur-page-text)]'>
+                    {activity.label}
+                  </p>
+                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
                     {activity.sessionsPlayed} sesji · {activity.averageXpPerSession} XP / gre ·
                     srednio {activity.averageAccuracy}% · najlepszy wynik{' '}
                     {activity.bestScorePercent}%
@@ -232,7 +234,7 @@ export default function ProgressOverview({
       )}
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Sciezki odznak
         </p>
         <KangurBadgeTrackGrid

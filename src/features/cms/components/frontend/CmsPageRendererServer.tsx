@@ -5,5 +5,9 @@ import { renderCmsPageRenderer, type CmsPageRendererProps } from './CmsPageRende
 export type { CmsPageRendererProps } from './CmsPageRendererBase';
 
 export function CmsPageRenderer(props: CmsPageRendererProps): React.ReactNode {
-  return renderCmsPageRenderer({ ...props, runtime: null });
+  return renderCmsPageRenderer({
+    ...props,
+    runtime: null,
+    appearanceMode: props.appearanceMode ?? 'default',
+  });
 }

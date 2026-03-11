@@ -32,6 +32,7 @@ export function KangurPublicApp({
         <KangurRoutingProvider
           pageKey={pageKey}
           requestedPath={requestedPath}
+          requestedHref={requestedPath}
           basePath={normalizedBasePath}
           embedded={isEmbedded}
         >

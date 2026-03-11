@@ -3,10 +3,9 @@ import 'server-only';
 import type { InternationalizationProvider } from '@/shared/contracts/internationalization';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
-
 const normalizeProvider = (value?: string | null): InternationalizationProvider | null => {
   if (!value) return null;
-  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : 'prisma';
+  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : null;
 };
 
 /**
@@ -16,14 +15,14 @@ const normalizeProvider = (value?: string | null): InternationalizationProvider 
 export const getInternationalizationProvider = async (): Promise<InternationalizationProvider> => {
   const explicit = normalizeProvider(process.env['INTERNATIONALIZATION_DB_PROVIDER']);
   if (explicit) {
-    if (explicit === 'mongodb' && !process.env['MONGODB_URI']) {
-      return 'prisma';
-    }
-    if (explicit === 'prisma' && !process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
-      return 'mongodb';
+    if (!process.env['MONGODB_URI']) {
+      throw new Error(
+        'INTERNATIONALIZATION_DB_PROVIDER is set to MongoDB but MONGODB_URI is missing.'
+      );
     }
     return explicit;
   }
 
-  return getAppDbProvider();
+  await getAppDbProvider();
+  return 'mongodb';
 };

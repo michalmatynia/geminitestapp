@@ -15,18 +15,27 @@ import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/compone
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import {
+  KangurLearnerProfileRuntimeBoundary,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 
-export default function LearnerProfile(): React.JSX.Element {
+function LearnerProfileContent(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin, logout } = useKangurAuth();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
+  const { isLoadingScores } = useKangurLearnerProfileRuntime();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
+  useKangurRoutePageReady({
+    pageKey: 'LearnerProfile',
+    ready: !isLoadingScores,
+  });
   const navigation = useMemo(
     () => ({
       basePath,
@@ -43,31 +52,37 @@ export default function LearnerProfile(): React.JSX.Element {
   );
 
   return (
-    <KangurLearnerProfileRuntimeBoundary enabled>
-      <KangurPageShell
-        tone='profile'
-        id='kangur-learner-profile-page'
-        skipLinkTargetId='kangur-learner-profile-main'
-      >
-        <KangurDocsTooltipEnhancer
-          enabled={docsTooltipsEnabled}
-          rootId='kangur-learner-profile-page'
-        />
-        <KangurTopNavigationController navigation={navigation} />
+    <KangurPageShell
+      tone='profile'
+      id='kangur-learner-profile-page'
+      skipLinkTargetId='kangur-learner-profile-main'
+    >
+      <KangurDocsTooltipEnhancer
+        enabled={docsTooltipsEnabled}
+        rootId='kangur-learner-profile-page'
+      />
+      <KangurTopNavigationController navigation={navigation} />
 
-        <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
-          <h2 className='sr-only'>Statystyki ucznia</h2>
-          <KangurLearnerProfileHeroWidget />
-          <KangurLearnerProfileAiTutorMoodWidget />
-          <KangurLearnerProfileLevelProgressWidget />
-          <KangurLearnerProfileOverviewWidget />
-          <KangurLearnerProfileRecommendationsWidget />
-          <KangurLearnerProfileAssignmentsWidget />
-          <KangurLearnerProfileMasteryWidget />
-          <KangurLearnerProfilePerformanceWidget />
-          <KangurLearnerProfileSessionsWidget />
-        </KangurPageContainer>
-      </KangurPageShell>
+      <KangurPageContainer id='kangur-learner-profile-main' className='flex flex-col gap-6'>
+        <h2 className='sr-only'>Statystyki ucznia</h2>
+        <KangurLearnerProfileHeroWidget />
+        <KangurLearnerProfileAiTutorMoodWidget />
+        <KangurLearnerProfileLevelProgressWidget />
+        <KangurLearnerProfileOverviewWidget />
+        <KangurLearnerProfileRecommendationsWidget />
+        <KangurLearnerProfileAssignmentsWidget />
+        <KangurLearnerProfileMasteryWidget />
+        <KangurLearnerProfilePerformanceWidget />
+        <KangurLearnerProfileSessionsWidget />
+      </KangurPageContainer>
+    </KangurPageShell>
+  );
+}
+
+export default function LearnerProfile(): React.JSX.Element {
+  return (
+    <KangurLearnerProfileRuntimeBoundary enabled>
+      <LearnerProfileContent />
     </KangurLearnerProfileRuntimeBoundary>
   );
 }

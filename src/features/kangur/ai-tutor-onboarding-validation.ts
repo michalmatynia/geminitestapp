@@ -1,4 +1,4 @@
-import type { KangurAiTutorFocusKind } from '@/shared/contracts/kangur-ai-tutor';
+import { REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE } from '@/features/kangur/ai-tutor-native-guide-coverage';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import type { KangurAiTutorNativeGuideStore } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import type {
@@ -34,21 +34,6 @@ const REQUIRED_ONBOARDING_FOCUS_KINDS: readonly RequiredOnboardingFocusKind[] = 
   'leaderboard',
   'progress',
 ];
-
-const REQUIRED_ONBOARDING_FOCUS_KIND_LABELS: Record<KangurAiTutorFocusKind, string> = {
-  selection: 'Selection',
-  lesson_header: 'Lesson header',
-  assignment: 'Assignment',
-  document: 'Document',
-  home_actions: 'Home actions',
-  home_quest: 'Home quest',
-  priority_assignments: 'Priority assignments',
-  leaderboard: 'Leaderboard',
-  progress: 'Progress',
-  question: 'Question',
-  review: 'Review',
-  summary: 'Summary',
-};
 
 export type KangurAiTutorOnboardingValidationField =
   | 'id'
@@ -339,26 +324,24 @@ export function validateKangurAiTutorOnboardingStore({
     }
   }
 
-  const enabledFocusKinds = new Set(
-    store.entries
-      .filter((entry) => entry.enabled && entry.focusKind)
-      .map((entry) => entry.focusKind as KangurAiTutorFocusKind)
+  const enabledEntryIds = new Set(
+    store.entries.filter((entry) => entry.enabled).map((entry) => entry.id)
   );
-  const missingFocusKinds = REQUIRED_ONBOARDING_FOCUS_KINDS.filter(
-    (focusKind) => !enabledFocusKinds.has(focusKind)
+  const missingGuideCoverage = REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE.filter(
+    (requirement) => !enabledEntryIds.has(requirement.entryId)
   );
 
-  if (missingFocusKinds.length > 0) {
+  if (missingGuideCoverage.length > 0) {
     issues.push(
       createCustomIssue({
         entryId: null,
         field: 'sequence',
         severity: 'error',
-        title: 'Required onboarding coverage',
-        message: `Missing enabled onboarding coverage for: ${missingFocusKinds
-          .map((focusKind) => REQUIRED_ONBOARDING_FOCUS_KIND_LABELS[focusKind])
+        title: 'Required native guide coverage',
+        message: `Missing enabled Mongo knowledge-base coverage for: ${missingGuideCoverage
+          .map((requirement) => requirement.label)
           .join(', ')}.`,
-        ruleId: 'kangur.onboarding.required_focus_coverage',
+        ruleId: 'kangur.onboarding.required_entry_coverage',
         sequenceGroupId: 'kangur_onboarding_coverage',
       })
     );

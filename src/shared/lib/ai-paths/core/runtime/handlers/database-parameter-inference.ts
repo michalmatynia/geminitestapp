@@ -32,6 +32,8 @@ export class ParameterInferenceGateError extends Error {
   }
 }
 
+const DEFAULT_PARAMETER_INFERENCE_LANGUAGE_CODE = 'en';
+
 const normalizeParameterId = (value: unknown): string | null => normalizeNonEmptyString(value);
 
 export const normalizeParameterEntries = (
@@ -95,6 +97,7 @@ export const mergeParameterInferenceUpdates = (args: {
   targetPath: string;
   updates: Record<string, unknown>;
   templateInputs: RuntimePortValues;
+  languageCode?: string;
 }): {
   updates: Record<string, unknown>;
   applied: boolean;
@@ -148,8 +151,10 @@ export const mergeParameterInferenceUpdates = (args: {
   existing.forEach((entry, index) => {
     indexByParameterId.set(entry.parameterId, index);
   });
+  const languageCode = resolveParameterInferenceLanguageCode(args.languageCode);
 
   let filledBlankCount = 0;
+  let filledLocalizedCount = 0;
   let preservedNonEmptyCount = 0;
   let skippedNotExistingCount = 0;
 
@@ -161,20 +166,40 @@ export const mergeParameterInferenceUpdates = (args: {
     }
     const current = nextRecords[existingIndex] ?? {};
     const currentValue = resolveParameterValue(current['value']);
-    if (currentValue) {
+    if (currentValue && !entry.value) {
       preservedNonEmptyCount += 1;
       return;
     }
-    nextRecords[existingIndex] = {
-      ...current,
+    if (currentValue) {
+      preservedNonEmptyCount += 1;
+    }
+
+    const mergeResult = mergeInferredParameterValueRecord({
+      current,
       parameterId: entry.parameterId,
-      value: entry.value,
-    };
-    filledBlankCount += 1;
+      inferredValue: entry.value,
+      languageCode,
+      allowScalarFill: !currentValue,
+    });
+    if (JSON.stringify(current) === JSON.stringify(mergeResult.next)) {
+      return;
+    }
+
+    nextRecords[existingIndex] = mergeResult.next;
+    if (mergeResult.filledScalar) {
+      filledBlankCount += 1;
+    }
+    if (mergeResult.filledLocalized) {
+      filledLocalizedCount += 1;
+    }
   });
 
   const nextUpdates: Record<string, unknown> = { ...args.updates };
-  if (filledBlankCount > 0) {
+  const changed = !areParameterRecordArraysEqual(
+    existing.map((entry) => entry.raw),
+    nextRecords
+  );
+  if (changed) {
     nextUpdates[args.targetPath] = nextRecords;
   } else {
     delete nextUpdates[args.targetPath];
@@ -187,12 +212,14 @@ export const mergeParameterInferenceUpdates = (args: {
       existingCount: existing.length,
       inferredCount: inferred.length,
       finalCount: nextRecords.length,
+      languageCode,
       merged: {
         filledBlank: filledBlankCount,
+        filledLocalized: filledLocalizedCount,
         preservedNonEmpty: preservedNonEmptyCount,
         skippedNotExisting: skippedNotExistingCount,
       },
-      writeCandidates: filledBlankCount,
+      writeCandidates: changed ? nextRecords.length : 0,
     },
   };
 };
@@ -255,6 +282,61 @@ const resolveLocalizedValueByLanguage = (
     return normalizeNonEmptyString(prefixed[1]);
   }
   return null;
+};
+
+const resolveParameterInferenceLanguageCode = (value: unknown): string =>
+  normalizeNonEmptyString(value)?.toLowerCase() ?? DEFAULT_PARAMETER_INFERENCE_LANGUAGE_CODE;
+
+const mergeInferredParameterValueRecord = (args: {
+  current: Record<string, unknown>;
+  parameterId: string;
+  inferredValue: string;
+  languageCode: string;
+  allowScalarFill: boolean;
+}): {
+  next: Record<string, unknown>;
+  filledScalar: boolean;
+  filledLocalized: boolean;
+} => {
+  const inferredValue = resolveParameterValue(args.inferredValue) ?? '';
+  const currentValue = resolveParameterValue(args.current['value']) ?? '';
+  const languageCode = resolveParameterInferenceLanguageCode(args.languageCode);
+  const currentValuesByLanguage = toRecord(args.current['valuesByLanguage']) ?? {};
+  const currentLocalizedValue =
+    resolveLocalizedValueByLanguage(currentValuesByLanguage, languageCode) ?? '';
+
+  let nextValue = currentValue;
+  let filledScalar = false;
+  if (!currentValue && args.allowScalarFill && inferredValue) {
+    nextValue = inferredValue;
+    filledScalar = true;
+  }
+
+  let nextValuesByLanguage = currentValuesByLanguage;
+  let filledLocalized = false;
+  if (!currentLocalizedValue) {
+    const localizedCandidate = nextValue || inferredValue;
+    if (localizedCandidate) {
+      nextValuesByLanguage = {
+        ...currentValuesByLanguage,
+        [languageCode]: localizedCandidate,
+      };
+      filledLocalized = true;
+    }
+  }
+
+  return {
+    next: {
+      ...args.current,
+      parameterId: args.parameterId,
+      value: nextValue,
+      ...(Object.keys(nextValuesByLanguage).length > 0
+        ? { valuesByLanguage: nextValuesByLanguage }
+        : {}),
+    },
+    filledScalar,
+    filledLocalized,
+  };
 };
 
 const resolveTranslatedParameterValue = (
@@ -469,6 +551,7 @@ export const materializeParameterInferenceUpdates = (args: {
   templateInputs: RuntimePortValues;
   definitionsPort: string;
   definitionsPath: string;
+  languageCode?: string;
 }): {
   updates: Record<string, unknown>;
   applied: boolean;
@@ -503,6 +586,7 @@ export const materializeParameterInferenceUpdates = (args: {
   existing.forEach((entry, index) => {
     indexByParameterId.set(entry.parameterId, index);
   });
+  const languageCode = resolveParameterInferenceLanguageCode(args.languageCode);
 
   let appendedMissingCount = 0;
   definitions.forEach((_definition: ParameterDefinitionRecord, parameterId: string) => {
@@ -516,36 +600,61 @@ export const materializeParameterInferenceUpdates = (args: {
   });
 
   let filledBlankCount = 0;
+  let filledLocalizedCount = 0;
   let preservedNonEmptyCount = 0;
   let appendedUnknownInferredCount = 0;
   inferred.forEach((entry) => {
     const existingIndex = indexByParameterId.get(entry.parameterId);
     if (existingIndex === undefined) {
       indexByParameterId.set(entry.parameterId, nextRecords.length);
-      nextRecords.push({
-        parameterId: entry.parameterId,
-        value: entry.value,
-      });
+      nextRecords.push(
+        mergeInferredParameterValueRecord({
+          current: {
+            parameterId: entry.parameterId,
+            value: '',
+          },
+          parameterId: entry.parameterId,
+          inferredValue: entry.value,
+          languageCode,
+          allowScalarFill: true,
+        }).next
+      );
       appendedUnknownInferredCount += 1;
       return;
     }
 
     const current = nextRecords[existingIndex] ?? {};
     const currentValue = resolveParameterValue(current['value']);
-    if (currentValue) {
+    if (currentValue && !entry.value) {
       preservedNonEmptyCount += 1;
       return;
     }
 
-    if (!entry.value) {
+    if (!entry.value && !currentValue) {
       return;
     }
-    nextRecords[existingIndex] = {
-      ...current,
+    if (currentValue) {
+      preservedNonEmptyCount += 1;
+    }
+
+    const mergeResult = mergeInferredParameterValueRecord({
+      current,
       parameterId: entry.parameterId,
-      value: entry.value,
-    };
-    filledBlankCount += 1;
+      inferredValue: entry.value,
+      languageCode,
+      allowScalarFill: !currentValue,
+    });
+    if (JSON.stringify(current) === JSON.stringify(mergeResult.next)) {
+      return;
+    }
+
+    nextRecords[existingIndex] = mergeResult.next;
+    if (mergeResult.filledScalar) {
+      filledBlankCount += 1;
+    }
+    if (mergeResult.filledLocalized) {
+      filledLocalizedCount += 1;
+    }
   });
 
   const changed = !areParameterRecordArraysEqual(baseRecords, nextRecords);
@@ -564,9 +673,11 @@ export const materializeParameterInferenceUpdates = (args: {
       inferredCount: inferred.length,
       definitionsCount: definitions.size,
       finalCount: nextRecords.length,
+      languageCode,
       changed,
       merged: {
         filledBlank: filledBlankCount,
+        filledLocalized: filledLocalizedCount,
         preservedNonEmpty: preservedNonEmptyCount,
         appendedMissing: appendedMissingCount,
         appendedUnknownInferred: appendedUnknownInferredCount,

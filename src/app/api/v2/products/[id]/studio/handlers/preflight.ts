@@ -1,29 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getProductStudioSequencePreflight } from '@/features/ai/server';
+import {
+  productStudioPreflightResponseSchema,
+  productStudioSequenceGenerationModeSchema,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const normalizeSequenceMode = (
-  value: string | null
-):
-  | 'auto'
-  | 'studio_prompt_then_sequence'
-  | 'model_full_sequence'
-  | 'studio_native_sequencer_prior_generation'
-  | null => {
-  if (!value) return null;
-  const normalized = value.trim();
-  if (
-    normalized === 'auto' ||
-    normalized === 'studio_prompt_then_sequence' ||
-    normalized === 'model_full_sequence' ||
-    normalized === 'studio_native_sequencer_prior_generation'
-  ) {
-    return normalized;
-  }
-  return null;
-};
 
 export async function GET_handler(
   req: NextRequest,
@@ -46,10 +29,15 @@ export async function GET_handler(
 
   const projectId = req.nextUrl.searchParams.get('projectId');
   const sequenceGenerationModeRaw = req.nextUrl.searchParams.get('sequenceGenerationMode');
-  const sequenceGenerationMode = normalizeSequenceMode(sequenceGenerationModeRaw);
-  if (sequenceGenerationModeRaw && !sequenceGenerationMode) {
+  const sequenceGenerationModeParsed = productStudioSequenceGenerationModeSchema.safeParse(
+    sequenceGenerationModeRaw?.trim() ?? null
+  );
+  if (sequenceGenerationModeRaw && !sequenceGenerationModeParsed.success) {
     throw badRequestError('Invalid sequenceGenerationMode query param.');
   }
+  const sequenceGenerationMode = sequenceGenerationModeParsed.success
+    ? sequenceGenerationModeParsed.data
+    : null;
 
   const result = await getProductStudioSequencePreflight({
     productId,
@@ -58,5 +46,5 @@ export async function GET_handler(
     sequenceGenerationMode,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(productStudioPreflightResponseSchema.parse(result));
 }

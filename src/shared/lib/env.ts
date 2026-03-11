@@ -23,11 +23,10 @@ const captureException = async (
 const envSchema = z.object({
   // Core
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  DATABASE_URL: z.string().url().optional(),
   MONGODB_URI: z.string().url().optional(),
   REDIS_URL: z.string().url().optional(),
   MONGODB_DB: z.string().default('app'),
-  APP_DB_PROVIDER: z.enum(['prisma', 'mongodb']).optional(),
+  APP_DB_PROVIDER: z.enum(['mongodb']).optional(),
 
   // Auth
   NEXTAUTH_SECRET: z.string().min(1).optional(),
@@ -36,7 +35,7 @@ const envSchema = z.object({
   AUTH_DEBUG: z.coerce.boolean().default(false),
   AUTH_TOKEN_REFRESH_TTL_MS: z.coerce.number().int().positive().default(60000),
   AUTH_ENCRYPTION_KEY: z.string().optional(),
-  AUTH_DB_PROVIDER: z.enum(['prisma', 'mongodb']).optional(),
+  AUTH_DB_PROVIDER: z.enum(['mongodb']).optional(),
 
   // AI
   OPENAI_API_KEY: z.string().optional(),
@@ -119,7 +118,7 @@ export const env = getEnv();
  * Validates that at least one primary database is configured.
  */
 export function validateDatabaseConfig() {
-  if (!env.DATABASE_URL && !env.MONGODB_URI) {
-    throw new Error('Either DATABASE_URL or MONGODB_URI must be configured.');
+  if (!env.MONGODB_URI) {
+    throw new Error('MONGODB_URI must be configured.');
   }
 }

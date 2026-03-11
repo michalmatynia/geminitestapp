@@ -1201,18 +1201,8 @@
     },
     {
       "id": "run_source_filter_contract",
-      "description": "Run repository source filters must remain canonical meta.source-only across Prisma and Mongo.",
+      "description": "Run repository source filters must remain canonical meta.source-only for Mongo path runs.",
       "targets": [
-        {
-          "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
-          "forbiddenSnippets": [
-            "['source', 'tab']",
-            "['sourceInfo', 'tab']"
-          ],
-          "requiredSnippets": [
-            "meta: { path: ['source'], equals: value }"
-          ]
-        },
         {
           "file": "src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
           "forbiddenSnippets": [

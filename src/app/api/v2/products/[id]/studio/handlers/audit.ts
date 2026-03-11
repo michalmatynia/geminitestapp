@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { productStudioAuditResponseSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { listProductStudioRunAudit } from '@/shared/lib/products/services/product-studio-audit-service';
@@ -39,5 +40,5 @@ export async function GET_handler(
     limit,
   });
 
-  return NextResponse.json({ entries });
+  return NextResponse.json(productStudioAuditResponseSchema.parse({ entries }));
 }

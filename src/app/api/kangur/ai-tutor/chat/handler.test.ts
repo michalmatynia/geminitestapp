@@ -27,6 +27,7 @@ const {
   upsertStoredSettingValueMock,
   logKangurServerEventMock,
   buildKangurAiTutorAdaptiveGuidanceMock,
+  resolveKangurAiTutorNativeGuideResolutionMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   buildKangurAiTutorLearnerMoodMock: vi.fn(),
@@ -43,6 +44,7 @@ const {
   upsertStoredSettingValueMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
   buildKangurAiTutorAdaptiveGuidanceMock: vi.fn(),
+  resolveKangurAiTutorNativeGuideResolutionMock: vi.fn(),
 }));
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
@@ -84,6 +86,9 @@ vi.mock('@/features/kangur/observability/server', () => ({
 }));
 vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
   buildKangurAiTutorAdaptiveGuidance: buildKangurAiTutorAdaptiveGuidanceMock,
+}));
+vi.mock('@/features/kangur/server/ai-tutor-native-guide', () => ({
+  resolveKangurAiTutorNativeGuideResolution: resolveKangurAiTutorNativeGuideResolutionMock,
 }));
 vi.unmock('@/features/kangur/settings-ai-tutor');
 import { postKangurAiTutorChatHandler } from './handler';
@@ -181,6 +186,14 @@ describe('kangur ai tutor chat handler', () => {
       instructions: '',
       followUpActions: [],
       coachingFrame: null,
+    });
+    resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
+      status: 'skipped',
+      message: null,
+      followUpActions: [],
+      entryId: null,
+      matchedSignals: [],
+      coverageLevel: null,
     });
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
@@ -613,6 +626,63 @@ describe('kangur ai tutor chat handler', () => {
     );
     expect(body.sources[0].text).toContain('Trening dodawania');
     expect(body.sources[0].text).toContain('Ile to 7 + 5?');
+  });
+  it('logs a coverage-gap warning when a section-specific explain request falls back to an overview guide entry', async () => {
+    resolveKangurAiTutorNativeGuideResolutionMock.mockResolvedValue({
+      status: 'hit',
+      message: 'Ekran lekcji.\n\nTo tutaj uczen przechodzi przez temat krok po kroku.',
+      followUpActions: [],
+      entryId: 'lesson-overview',
+      matchedSignals: ['surface'],
+      coverageLevel: 'overview_fallback',
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjasnij ten fragment.' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'lesson-1',
+            title: 'Dodawanie',
+            promptMode: 'explain',
+            focusKind: 'question',
+            focusId: 'lesson-question-1',
+            questionId: 'lesson-question-1',
+            currentQuestion: 'Ile to 2 + 2?',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.native-guide.coverage-gap',
+        context: expect.objectContaining({
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          focusKind: 'question',
+          focusId: 'lesson-question-1',
+          nativeGuideCoverageLevel: 'overview_fallback',
+          nativeGuideEntryId: 'lesson-overview',
+        }),
+      })
+    );
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.native-guide.completed',
+        context: expect.objectContaining({
+          nativeGuideCoverageLevel: 'overview_fallback',
+          nativeGuideEntryId: 'lesson-overview',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.message).toContain('Ekran lekcji');
   });
   it('returns adaptive follow-up actions with the tutor response', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({

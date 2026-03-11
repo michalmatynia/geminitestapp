@@ -1,8 +1,12 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
+import {
+  resolveKangurStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   KANGUR_BASE_PATH,
   normalizeKangurBasePath,
@@ -12,7 +16,7 @@ import {
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 
 const getSlugFromPathname = (
   pathname: string | null,
@@ -54,8 +58,12 @@ export function KangurFeatureRouteShell({
   basePath?: string;
   embedded?: boolean;
 }): JSX.Element {
+  const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const appearanceMode = appearance?.mode ?? 'default';
+  const kangurAppearance = resolveKangurStorefrontAppearance(appearanceMode);
   const slug = useMemo(
     () => getSlugFromPathname(pathname, normalizedBasePath),
     [normalizedBasePath, pathname]
@@ -64,16 +72,38 @@ export function KangurFeatureRouteShell({
   const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
   const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+  const requestedHref = useMemo(() => {
+    const search = searchParams?.toString() || '';
+    const baseHref = pathname || requestedPath;
+
+    try {
+      const parsed = new URL(baseHref, 'https://kangur.local');
+      const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
+      return search ? `${normalizedPathname}?${search}` : normalizedPathname;
+    } catch {
+      const normalizedHref = baseHref.replace(/\/+$/, '') || '/';
+      return search ? `${normalizedHref}?${search}` : normalizedHref;
+    }
+  }, [pathname, requestedPath, searchParams]);
   const isEmbedded = embedded;
+  const shellStyle: CSSProperties = {
+    background: kangurAppearance.background,
+    color: kangurAppearance.tone.text,
+    ...kangurAppearance.vars,
+  };
 
   return (
     <div
       className='relative min-h-screen w-full kangur-premium-bg text-slate-800'
+      data-appearance-mode={appearanceMode}
+      data-kangur-appearance={appearanceMode}
       data-testid='kangur-route-shell'
+      style={shellStyle}
     >
       <KangurRoutingProvider
         pageKey={pageKey}
         requestedPath={requestedPath}
+        requestedHref={requestedHref}
         basePath={normalizedBasePath}
         embedded={isEmbedded}
       >

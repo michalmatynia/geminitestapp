@@ -14,13 +14,25 @@ import {
 import { internalError } from '@/shared/errors/app-error';
 
 import { useKangurRouting } from './KangurRoutingContext';
+import {
+  resolveKangurRouteTransitionSkeletonVariant,
+  type KangurRouteTransitionSkeletonVariant,
+} from '../routing/route-transition-skeletons';
+
+type KangurRouteTransitionPhase =
+  | 'acknowledging'
+  | 'pending'
+  | 'waiting_for_ready'
+  | 'revealing';
 
 type KangurRouteTransitionState = {
   href: string | null;
   pageKey: string | null;
   sourceId: string | null;
+  skeletonVariant: KangurRouteTransitionSkeletonVariant;
+  committedRequestedHref: string | null;
   startedAt: number;
-  phase: 'acknowledging' | 'pending' | 'revealing';
+  phase: KangurRouteTransitionPhase;
 };
 
 type KangurRouteTransitionStartInput = {
@@ -28,6 +40,12 @@ type KangurRouteTransitionStartInput = {
   pageKey?: string | null;
   sourceId?: string | null;
   acknowledgeMs?: number;
+  skeletonVariant?: KangurRouteTransitionSkeletonVariant | null;
+};
+
+type KangurRouteTransitionReadyInput = {
+  pageKey?: string | null;
+  requestedHref?: string | null;
 };
 
 type KangurRouteTransitionStartResult = {
@@ -38,28 +56,35 @@ type KangurRouteTransitionStartResult = {
 type KangurRouteTransitionContextValue = {
   isRouteAcknowledging: boolean;
   isRoutePending: boolean;
+  isRouteWaitingForReady: boolean;
   isRouteRevealing: boolean;
   transitionPhase: 'idle' | KangurRouteTransitionState['phase'];
   activeTransitionSourceId: string | null;
   activeTransitionPageKey: string | null;
+  activeTransitionRequestedHref: string | null;
+  activeTransitionSkeletonVariant: KangurRouteTransitionSkeletonVariant | null;
   pendingPageKey: string | null;
   startRouteTransition: (input?: KangurRouteTransitionStartInput) => KangurRouteTransitionStartResult;
+  markRouteTransitionReady: (input?: KangurRouteTransitionReadyInput) => void;
 };
 
 type KangurRouteTransitionStateContextValue = Pick<
   KangurRouteTransitionContextValue,
   | 'isRouteAcknowledging'
   | 'isRoutePending'
+  | 'isRouteWaitingForReady'
   | 'isRouteRevealing'
   | 'transitionPhase'
   | 'activeTransitionSourceId'
   | 'activeTransitionPageKey'
+  | 'activeTransitionRequestedHref'
+  | 'activeTransitionSkeletonVariant'
   | 'pendingPageKey'
 >;
 
 type KangurRouteTransitionActionsContextValue = Pick<
   KangurRouteTransitionContextValue,
-  'startRouteTransition'
+  'markRouteTransitionReady' | 'startRouteTransition'
 >;
 
 const ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS = 400;
@@ -72,15 +97,35 @@ const KangurRouteTransitionStateContext =
 const KangurRouteTransitionActionsContext =
   createContext<KangurRouteTransitionActionsContextValue | null>(null);
 
+const normalizeTransitionHref = (href: string | null | undefined): string | null => {
+  if (typeof href !== 'string') {
+    return null;
+  }
+
+  const trimmed = href.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed, 'https://kangur.local');
+    const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
+    return `${normalizedPathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return trimmed.replace(/\/+$/, '') || '/';
+  }
+};
+
 export function KangurRouteTransitionProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { pageKey, requestedPath } = useKangurRouting();
+  const { basePath, pageKey, requestedHref, requestedPath } = useKangurRouting();
+  const currentRequestedHref = normalizeTransitionHref(requestedHref ?? requestedPath);
   const [transitionState, setTransitionState] = useState<KangurRouteTransitionState | null>(null);
   const transitionStateRef = useRef<KangurRouteTransitionState | null>(null);
-  const previousRequestedPathRef = useRef<string | undefined>(requestedPath);
+  const previousRequestedHrefRef = useRef<string | null>(currentRequestedHref);
   const shouldResetScrollOnCommitRef = useRef(false);
   const acknowledgementTimeoutRef = useRef<number | null>(null);
 
@@ -122,7 +167,7 @@ export function KangurRouteTransitionProvider({
   }, [clearAcknowledgementTimeout]);
 
   useEffect(() => {
-    const previousRequestedPath = previousRequestedPathRef.current;
+    const previousRequestedHref = previousRequestedHrefRef.current;
     let animationFrameId: number | null = null;
     let remainingFrameCount = ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT;
 
@@ -148,44 +193,61 @@ export function KangurRouteTransitionProvider({
       updateTransitionState((currentState) =>
         currentState
           ? {
-            ...currentState,
-            phase: 'revealing',
-          }
+              ...currentState,
+              committedRequestedHref: currentRequestedHref,
+              phase: 'waiting_for_ready',
+            }
           : null
       );
     };
 
     if (
       (transitionState?.phase === 'acknowledging' || transitionState?.phase === 'pending') &&
-      previousRequestedPath !== undefined &&
-      requestedPath !== previousRequestedPath
+      previousRequestedHref !== null &&
+      currentRequestedHref !== previousRequestedHref
     ) {
       commitTransition();
     }
 
-    previousRequestedPathRef.current = requestedPath;
+    previousRequestedHrefRef.current = currentRequestedHref;
 
     return () => {
       if (animationFrameId !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [clearAcknowledgementTimeout, requestedPath, transitionState, updateTransitionState]);
+  }, [clearAcknowledgementTimeout, currentRequestedHref, transitionState, updateTransitionState]);
 
   useEffect(() => {
-    if (transitionState?.phase !== 'pending' || typeof window === 'undefined') {
+    if (
+      (transitionState?.phase !== 'pending' && transitionState?.phase !== 'waiting_for_ready') ||
+      typeof window === 'undefined'
+    ) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
       shouldResetScrollOnCommitRef.current = false;
+
+      if (transitionState.phase === 'waiting_for_ready') {
+        updateTransitionState((currentState) =>
+          currentState?.phase === 'waiting_for_ready'
+            ? {
+                ...currentState,
+                phase: 'revealing',
+              }
+            : currentState
+        );
+        return;
+      }
+
       setNextTransitionState(null);
     }, ROUTE_TRANSITION_TIMEOUT_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [setNextTransitionState, transitionState]);
+  }, [setNextTransitionState, transitionState, updateTransitionState]);
 
   useEffect(() => {
     if (transitionState?.phase !== 'revealing' || typeof window === 'undefined') {
@@ -205,8 +267,8 @@ export function KangurRouteTransitionProvider({
 
   const startRouteTransition = useCallback(
     (input: KangurRouteTransitionStartInput = {}): KangurRouteTransitionStartResult => {
-      const normalizedHref =
-        typeof input.href === 'string' && input.href.trim().length > 0 ? input.href.trim() : null;
+      const normalizedHref = normalizeTransitionHref(input.href);
+      const normalizedRequestedHref = normalizeTransitionHref(currentRequestedHref);
       const nextPageKey = input.pageKey?.trim() || null;
       const nextSourceId = input.sourceId?.trim() || null;
       const requestedAcknowledgeMs = Number.isFinite(input.acknowledgeMs)
@@ -217,7 +279,7 @@ export function KangurRouteTransitionProvider({
         : 0;
 
       if (
-        (normalizedHref && normalizedHref === requestedPath) ||
+        (normalizedHref && normalizedRequestedHref && normalizedHref === normalizedRequestedHref) ||
         (!normalizedHref && nextPageKey !== null && nextPageKey === pageKey)
       ) {
         return {
@@ -226,7 +288,10 @@ export function KangurRouteTransitionProvider({
         };
       }
 
-      if (transitionStateRef.current) {
+      if (
+        transitionStateRef.current &&
+        transitionStateRef.current.phase !== 'revealing'
+      ) {
         return {
           started: false,
           acknowledgeMs: 0,
@@ -240,6 +305,14 @@ export function KangurRouteTransitionProvider({
         href: normalizedHref,
         pageKey: nextPageKey,
         sourceId: nextSourceId,
+        skeletonVariant:
+          input.skeletonVariant ??
+          resolveKangurRouteTransitionSkeletonVariant({
+            basePath,
+            href: normalizedHref,
+            pageKey: nextPageKey,
+          }),
+        committedRequestedHref: null,
         startedAt: Date.now(),
         phase: requestedAcknowledgeMs > 0 ? 'acknowledging' : 'pending',
       };
@@ -268,17 +341,55 @@ export function KangurRouteTransitionProvider({
         acknowledgeMs: requestedAcknowledgeMs,
       };
     },
-    [clearAcknowledgementTimeout, pageKey, requestedPath, setNextTransitionState, updateTransitionState]
+    [basePath, clearAcknowledgementTimeout, currentRequestedHref, pageKey, updateTransitionState]
+  );
+
+  const markRouteTransitionReady = useCallback(
+    (input: KangurRouteTransitionReadyInput = {}): void => {
+      const expectedPageKey = input.pageKey?.trim() || null;
+      const expectedRequestedHref = normalizeTransitionHref(input.requestedHref ?? currentRequestedHref);
+
+      updateTransitionState((currentState) => {
+        if (currentState?.phase !== 'waiting_for_ready') {
+          return currentState;
+        }
+
+        if (currentState.pageKey && expectedPageKey && currentState.pageKey !== expectedPageKey) {
+          return currentState;
+        }
+
+        const committedRequestedHref =
+          normalizeTransitionHref(currentState.committedRequestedHref) ??
+          normalizeTransitionHref(currentState.href);
+        if (
+          committedRequestedHref &&
+          expectedRequestedHref &&
+          committedRequestedHref !== expectedRequestedHref
+        ) {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          phase: 'revealing',
+        };
+      });
+    },
+    [currentRequestedHref, updateTransitionState]
   );
 
   const stateValue = useMemo<KangurRouteTransitionStateContextValue>(
     () => ({
       isRouteAcknowledging: transitionState?.phase === 'acknowledging',
       isRoutePending: transitionState?.phase === 'pending',
+      isRouteWaitingForReady: transitionState?.phase === 'waiting_for_ready',
       isRouteRevealing: transitionState?.phase === 'revealing',
       transitionPhase: transitionState?.phase ?? 'idle',
       activeTransitionSourceId: transitionState?.sourceId ?? null,
       activeTransitionPageKey: transitionState?.pageKey ?? null,
+      activeTransitionRequestedHref:
+        transitionState?.committedRequestedHref ?? transitionState?.href ?? null,
+      activeTransitionSkeletonVariant: transitionState?.skeletonVariant ?? null,
       pendingPageKey: transitionState?.phase === 'pending' ? transitionState.pageKey ?? null : null,
     }),
     [transitionState]
@@ -286,8 +397,9 @@ export function KangurRouteTransitionProvider({
   const actionsValue = useMemo<KangurRouteTransitionActionsContextValue>(
     () => ({
       startRouteTransition,
+      markRouteTransitionReady,
     }),
-    [startRouteTransition]
+    [markRouteTransitionReady, startRouteTransition]
   );
 
   return (

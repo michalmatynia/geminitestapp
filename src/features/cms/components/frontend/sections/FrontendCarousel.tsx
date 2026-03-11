@@ -159,7 +159,7 @@ export function FrontendCarousel(): React.ReactNode {
 
   if (frameCount === 0) {
     return (
-      <div className='flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-300 rounded'>
+      <div className='cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center rounded border border-dashed p-8'>
         No carousel frames
       </div>
     );
@@ -270,7 +270,8 @@ export function FrontendCarousel(): React.ReactNode {
               type='button'
               onClick={goToPrev}
               disabled={!loop && currentIndex === 0}
-              className='absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+              className='cms-appearance-subtle-surface absolute left-2 top-1/2 z-10 rounded-full p-2 text-[var(--cms-appearance-page-text)] transition-colors disabled:cursor-not-allowed disabled:opacity-30'
+              style={{ transform: 'translateY(-50%)' }}
               aria-label='Previous slide'
               aria-controls={`${carouselId}-slide-${currentIndex}`}
             >
@@ -280,7 +281,8 @@ export function FrontendCarousel(): React.ReactNode {
               type='button'
               onClick={goToNext}
               disabled={!loop && currentIndex === frameCount - 1}
-              className='absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+              className='cms-appearance-subtle-surface absolute right-2 top-1/2 z-10 rounded-full p-2 text-[var(--cms-appearance-page-text)] transition-colors disabled:cursor-not-allowed disabled:opacity-30'
+              style={{ transform: 'translateY(-50%)' }}
               aria-label='Next slide'
               aria-controls={`${carouselId}-slide-${currentIndex}`}
             >
@@ -297,9 +299,13 @@ export function FrontendCarousel(): React.ReactNode {
                 key={index}
                 type='button'
                 onClick={() => goToIndex(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
-                }`}
+                className='h-2.5 w-2.5 rounded-full transition-colors'
+                style={{
+                  backgroundColor:
+                    index === currentIndex
+                      ? 'var(--cms-appearance-page-accent)'
+                      : 'color-mix(in srgb, var(--cms-appearance-page-accent) 24%, var(--cms-appearance-page-background))',
+                }}
                 aria-label={`Go to slide ${index + 1} of ${frameCount}`}
                 aria-controls={`${carouselId}-slide-${index}`}
                 aria-current={index === currentIndex ? 'step' : undefined}

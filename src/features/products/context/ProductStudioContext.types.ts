@@ -1,79 +1,9 @@
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
-  ProductStudioExecutionRoute,
-  ProductStudioSequenceGenerationMode,
-  ProductStudioSequenceReadiness,
-  ProductStudioSequenceStepPlanEntry,
+  ProductStudioAuditEntry,
+  ProductStudioRunStatus,
+  ProductStudioVariantsResponse,
 } from '@/shared/contracts/products';
-
-export type ProductStudioVariantsResponse = {
-  sequencing: {
-    persistedEnabled: boolean;
-    enabled: boolean;
-    runViaSequence: boolean;
-    sequenceStepCount: number;
-    snapshotSavedAt: string | null;
-    snapshotMatchesCurrent: boolean;
-    needsSaveDefaults: boolean;
-    needsSaveDefaultsReason: string | null;
-  };
-  sequencingDiagnostics: {
-    projectId: string | null;
-    projectSettingsKey: string | null;
-    selectedSettingsKey: string | null;
-    selectedScope: 'project' | 'global' | 'default';
-    hasProjectSettings: boolean;
-    hasGlobalSettings: boolean;
-    projectSequencingEnabled: boolean;
-    globalSequencingEnabled: boolean;
-    selectedSequencingEnabled: boolean;
-    selectedSnapshotHash: string | null;
-    selectedSnapshotSavedAt: string | null;
-    selectedSnapshotStepCount: number;
-    selectedSnapshotModelId: string | null;
-  };
-  sequenceReadiness: ProductStudioSequenceReadiness;
-  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
-  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
-  projectId: string | null;
-  sourceSlotId: string | null;
-  sourceSlot: ImageStudioSlotRecord | null;
-  variants: ImageStudioSlotRecord[];
-};
-
-export type ProductStudioAuditEntry = {
-  id: string;
-  createdAt: string;
-  status: 'completed' | 'failed';
-  imageSlotIndex: number;
-  executionRoute: ProductStudioExecutionRoute;
-  requestedSequenceMode: ProductStudioSequenceGenerationMode;
-  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
-  runKind: 'generation' | 'sequence';
-  runId: string | null;
-  sequenceRunId: string | null;
-  dispatchMode: 'queued' | 'inline' | null;
-  fallbackReason: string | null;
-  warnings: string[];
-  settingsScope: 'project' | 'global' | 'default';
-  settingsKey: string | null;
-  projectSettingsKey: string | null;
-  settingsScopeValid: boolean;
-  sequenceSnapshotHash: string | null;
-  stepOrderUsed: string[];
-  resolvedCropRect: { x: number; y: number; width: number; height: number } | null;
-  sourceImageSize: { width: number; height: number } | null;
-  timings: {
-    importMs: number | null;
-    sourceSlotUpsertMs: number | null;
-    routeDecisionMs: number | null;
-    dispatchMs: number | null;
-    totalMs: number;
-  };
-  errorMessage: string | null;
-};
-
-export type ProductStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export type ProductImageSlotPreview = {
   index: number;
@@ -127,3 +57,5 @@ export interface ProductStudioActionsContextValue {
 
 export type ProductStudioContextValue = ProductStudioStateContextValue &
   ProductStudioActionsContextValue;
+
+export type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVariantsResponse };

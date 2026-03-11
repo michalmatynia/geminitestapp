@@ -14,6 +14,8 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 
+const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
+
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
 
@@ -100,6 +102,10 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                           item.averageAccuracy
                         )}
                         targetPageKey='Game'
+                        transitionAcknowledgeMs={
+                          LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS
+                        }
+                        transitionSourceId={`learner-profile-performance:${item.operation}`}
                       >
                         Trenuj
                       </Link>

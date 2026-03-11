@@ -4,7 +4,6 @@ import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { Button } from '@/shared/ui';
 
 import { useDatabaseQueryValidatorPanelContext } from './DatabaseQueryValidatorPanelContext';
-import { convertMongoToPrismaQuery } from './query-utils';
 import {
   useAiPathGraph,
   useAiPathOrchestrator,
@@ -15,7 +14,6 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
   const {
     queryValidation,
     queryConfig,
-    resolvedProvider,
     operation,
     queryTemplateValue,
     databaseConfig,
@@ -24,17 +22,7 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
   const { nodes, edges } = useAiPathGraph();
   const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
   if (!selectedNode) return null;
-  const effectiveProvider =
-    resolvedProvider ?? (queryConfig.provider === 'prisma' ? 'prisma' : 'mongodb');
-  const providerLabel =
-    queryConfig.provider === 'auto'
-      ? `Auto (resolved: ${effectiveProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
-      : effectiveProvider === 'prisma'
-        ? 'Prisma'
-        : 'MongoDB';
-  const isPrismaProvider = effectiveProvider === 'prisma';
-  const looksLikeMongo =
-    /\$[a-zA-Z]+/.test(queryTemplateValue) || /"_id"\s*:/.test(queryTemplateValue);
+  const providerLabel = queryConfig.provider === 'mongodb' ? 'MongoDB' : 'Auto (MongoDB)';
   return (
     <div
       className={`rounded-md border px-3 py-2 text-[11px] ${
@@ -117,11 +105,7 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
               className='mt-3 w-full rounded-md border border-purple-700 bg-purple-500/10 px-3 py-2 text-[11px] text-purple-200 hover:bg-purple-500/20'
               onClick={(): void => {
                 const providerName =
-                  queryConfig.provider === 'auto'
-                    ? `Auto (${effectiveProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
-                    : effectiveProvider === 'prisma'
-                      ? 'Prisma'
-                      : 'MongoDB';
+                  queryConfig.provider === 'mongodb' ? 'MongoDB' : 'Auto (MongoDB)';
                 const correctionPrompt = `Fix this invalid ${providerName} query for a ${operation} operation on the "${queryConfig.collection}" collection.
 
 Current Query:
@@ -149,50 +133,6 @@ Please return ONLY the corrected query as valid JSON, without any explanation or
             </Button>
           );
         })()}
-      {isPrismaProvider && (queryValidation.status === 'error' || looksLikeMongo) && (
-        <Button
-          type='button'
-          className='mt-3 w-full rounded-md border border-cyan-700 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100 hover:bg-cyan-500/20'
-          onClick={(): void => {
-            const mode = operation === 'update' ? 'update' : 'query';
-            const result = convertMongoToPrismaQuery(queryTemplateValue, mode);
-            if (!result.ok) {
-              toast(result.error, { variant: 'error' });
-              return;
-            }
-            if (operation === 'update') {
-              updateSelectedNodeConfig({
-                database: {
-                  ...databaseConfig,
-                  updateTemplate: result.value,
-                },
-              });
-            } else {
-              updateSelectedNodeConfig({
-                database: {
-                  ...databaseConfig,
-                  presetId: 'custom',
-                  query: {
-                    ...queryConfig,
-                    mode: 'custom',
-                    queryTemplate: result.value,
-                  },
-                },
-              });
-            }
-            const warningText = result.warnings.length
-              ? ` Warnings: ${result.warnings.join(' ')}`
-              : '';
-            if (!result.changed) {
-              toast(`No Mongo-specific operators found.${warningText}`, { variant: 'success' });
-            } else {
-              toast(`Converted Mongo -> Prisma.${warningText}`, { variant: 'success' });
-            }
-          }}
-        >
-          Convert Mongo → Prisma
-        </Button>
-      )}
     </div>
   );
 }

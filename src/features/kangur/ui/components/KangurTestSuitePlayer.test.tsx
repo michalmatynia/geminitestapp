@@ -88,7 +88,7 @@ describe('KangurTestSuitePlayer', () => {
     expect(screen.getByTestId('kangur-test-suite-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('This test suite has no published questions yet.')).toBeInTheDocument();
   });

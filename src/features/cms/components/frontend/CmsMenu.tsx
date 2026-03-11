@@ -6,6 +6,11 @@ import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getGsapFromVars } from '@/features/gsap';
+import {
+  CmsStorefrontAppearanceButtons,
+  resolveStorefrontAppearanceTone,
+  useOptionalCmsStorefrontAppearance,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
@@ -28,6 +33,7 @@ export function CmsMenu({
   colorSchemes,
   animationsEnabled = true,
 }: CmsMenuProps): React.ReactNode {
+  const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
   const itemsRef = useRef<HTMLUListElement | null>(null);
@@ -132,6 +138,15 @@ export function CmsMenu({
     };
   }, [menu, colorSchemes]);
 
+  const displayColors = useMemo(
+    () =>
+      resolveStorefrontAppearanceTone(
+        resolvedColors,
+        appearance?.mode ?? 'default'
+      ),
+    [appearance?.mode, resolvedColors]
+  );
+
   const allowAnimations = animationsEnabled && !prefersReducedMotion;
 
   useEffect(() => {
@@ -227,17 +242,17 @@ export function CmsMenu({
     .join(', ');
 
   const navStyle: React.CSSProperties = {
-    backgroundColor: resolvedColors.background,
-    color: resolvedColors.text,
+    backgroundColor: displayColors.background,
+    color: displayColors.text,
     borderBottom:
-      !isSide && resolvedColors.border ? `1px solid ${resolvedColors.border}` : undefined,
+      !isSide && displayColors.border ? `1px solid ${displayColors.border}` : undefined,
     borderRight:
-      menu.menuPlacement === 'left' && resolvedColors.border
-        ? `1px solid ${resolvedColors.border}`
+      menu.menuPlacement === 'left' && displayColors.border
+        ? `1px solid ${displayColors.border}`
         : undefined,
     borderLeft:
-      menu.menuPlacement === 'right' && resolvedColors.border
-        ? `1px solid ${resolvedColors.border}`
+      menu.menuPlacement === 'right' && displayColors.border
+        ? `1px solid ${displayColors.border}`
         : undefined,
     paddingTop: menu.paddingTop,
     paddingBottom: menu.paddingBottom,
@@ -284,12 +299,14 @@ export function CmsMenu({
     flexDirection: menu.layoutStyle === 'vertical' || isSide ? 'column' : 'row',
     gap: menu.itemGap,
     alignItems: menu.layoutStyle === 'vertical' || isSide ? 'flex-start' : 'center',
+    flexWrap: !isSide && menu.layoutStyle !== 'vertical' ? 'wrap' : undefined,
   };
 
   return (
     <nav
       aria-label='Site navigation'
       style={navStyle}
+      data-appearance-mode={appearance?.mode ?? 'default'}
       onFocusCapture={() => {
         if (isHiddenOnScroll) {
           setIsHiddenOnScroll(false);
@@ -304,7 +321,12 @@ export function CmsMenu({
             aria-controls={itemsId}
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className='mb-2 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10'
+            className='mb-2 inline-flex items-center gap-2 rounded px-2 py-1 text-[11px] transition-colors'
+            style={{
+              border: `1px solid ${displayColors.border}`,
+              backgroundColor: `color-mix(in srgb, ${displayColors.background} 92%, ${displayColors.text})`,
+              color: displayColors.text,
+            }}
           >
             {collapsed ? 'Expand navigation' : 'Collapse navigation'}
           </button>
@@ -322,7 +344,7 @@ export function CmsMenu({
             const isActive = hydrated
               ? !isExternal && normalizePathname(pathname) === normalizePathname(item.url)
               : false;
-            const color = isActive ? resolvedColors.accent : resolvedColors.text;
+            const color = isActive ? displayColors.accent : displayColors.text;
             const activeStyles: React.CSSProperties = {};
             if (isActive) {
               switch (menu.activeStyle) {
@@ -333,12 +355,12 @@ export function CmsMenu({
                   activeStyles.fontWeight = '700';
                   break;
                 case 'background':
-                  activeStyles.backgroundColor = `${resolvedColors.accent}22`;
+                  activeStyles.backgroundColor = `color-mix(in srgb, ${displayColors.accent} 18%, ${displayColors.background})`;
                   activeStyles.borderRadius = 6;
                   activeStyles.padding = '2px 6px';
                   break;
                 case 'border-bottom':
-                  activeStyles.borderBottom = `2px solid ${resolvedColors.accent}`;
+                  activeStyles.borderBottom = `2px solid ${displayColors.accent}`;
                   break;
                 default:
                   break;
@@ -397,6 +419,11 @@ export function CmsMenu({
             );
           })}
         </ul>
+        <CmsStorefrontAppearanceButtons
+          tone={displayColors}
+          className={isSide ? 'mt-3' : 'ml-auto'}
+          label='Site appearance'
+        />
       </div>
     </nav>
   );

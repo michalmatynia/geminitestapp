@@ -1,15 +1,11 @@
-import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { internalError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { LITE_SETTINGS_KEYS } from '@/shared/lib/settings-lite-keys';
 import {
   cloneLiteSettings,
@@ -52,31 +48,6 @@ const attachServerTiming = (
   response.headers.set('Server-Timing', value);
 };
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
-
-const readPrismaSettings = async (
-  keys: readonly string[]
-): Promise<{ rows: SettingRecord[]; missing: boolean }> => {
-  if (!canUsePrismaSettings()) return { rows: [], missing: false };
-  try {
-    const rows = await prisma.setting.findMany({
-      where: { key: { in: keys as string[] } },
-      select: { key: true, value: true },
-    });
-    return { rows, missing: false };
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) {
-      return { rows: [], missing: true };
-    }
-    throw error;
-  }
-};
-
 const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
   const mongo = await getMongoDb();
@@ -98,22 +69,7 @@ const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord
 };
 
 const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
-  const envProvider = process.env['APP_DB_PROVIDER']?.toLowerCase().trim();
-  const provider =
-    envProvider === 'mongodb' || envProvider === 'prisma' ? envProvider : await getAppDbProvider();
-
-  if (provider === 'mongodb') {
-    return readMongoSettings(LITE_SETTINGS_KEYS);
-  }
-
-  const { rows: prismaSettings, missing: prismaMissing } =
-    await readPrismaSettings(LITE_SETTINGS_KEYS);
-  if (prismaMissing) {
-    throw internalError(
-      'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
-    );
-  }
-  return prismaSettings;
+  return readMongoSettings(LITE_SETTINGS_KEYS);
 };
 
 export const clearLiteSettingsServerCache = (): void => {

@@ -22,6 +22,7 @@ import {
   KangurPageContainer,
   KangurPageShell,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 
 function ParentDashboardContent(): React.JSX.Element {
   const {
@@ -33,6 +34,10 @@ function ParentDashboardContent(): React.JSX.Element {
     logout,
     navigateToLogin,
   } = useKangurParentDashboardRuntime();
+  useKangurRoutePageReady({
+    pageKey: 'ParentDashboard',
+    ready: true,
+  });
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);

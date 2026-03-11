@@ -34,12 +34,12 @@ export function FrontendNewsletterSection(): React.ReactNode {
           <input
             type='email'
             placeholder={placeholder}
-            className='flex-1 rounded-md border border-gray-600 bg-gray-800/50 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none'
+            className='cms-appearance-input flex-1 rounded-md border px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none'
             readOnly
           />
           <button
             type='submit'
-            className='cms-hover-button rounded-md bg-white px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-200 sm:rounded-l-none'
+            className='cms-hover-button cms-appearance-button-primary rounded-md border px-6 py-3 text-sm font-semibold transition sm:rounded-l-none'
           >
             {buttonText}
           </button>

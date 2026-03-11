@@ -67,4 +67,22 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
 
     expect(input.setCanonicalTutorModalVisible).not.toHaveBeenCalled();
   });
+
+  it('routes guest intro accept into guided login instead of reopening chat', () => {
+    const input = createGuestIntroFlowInput();
+
+    const { result } = renderHook(() => useKangurAiTutorGuestIntroFlow(input));
+
+    result.current.handleGuestIntroAccept();
+
+    expect(input.handleOpenChat).not.toHaveBeenCalled();
+    expect(input.setGuidedTutorTarget).toHaveBeenCalledWith({
+      mode: 'auth',
+      authMode: 'sign-in',
+      kind: 'login_action',
+    });
+    expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
+  });
 });

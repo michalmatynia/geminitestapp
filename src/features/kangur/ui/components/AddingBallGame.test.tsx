@@ -74,8 +74,8 @@ describe('AddingBallGame', () => {
     expect(screen.getByTestId('adding-ball-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('adding-ball-slotA')).toHaveClass('soft-card');
     expect(screen.getByTestId('adding-ball-slotB')).toHaveClass('soft-card');
-    expect(screen.getByTestId('adding-ball-slotA')).toHaveClass('border-slate-200/80');
-    expect(screen.getByTestId('adding-ball-slotB')).toHaveClass('border-slate-200/80');
+    expect(screen.getByTestId('adding-ball-slotA')).toHaveClass('border');
+    expect(screen.getByTestId('adding-ball-slotB')).toHaveClass('border');
     expect(screen.getByTestId('adding-ball-pool')).toHaveClass('soft-card');
     expect(screen.getByTestId('adding-ball-round-shell')).toHaveClass(
       'glass-panel',

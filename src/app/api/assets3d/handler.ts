@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,8 +9,6 @@ import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import { logger } from '@/shared/utils/logger';
-
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export const querySchema = z.object({
@@ -24,41 +21,20 @@ export const querySchema = z.object({
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const repository = getAsset3DRepository();
+  const assets = await repository.listAssets3D({
+    ...(query.filename && { filename: query.filename }),
+    ...(query.category && { category: query.category }),
+    ...(query.search && { search: query.search }),
+    ...(query.isPublic !== undefined && { isPublic: query.isPublic }),
+    ...(query.tags && { tags: query.tags }),
+  });
 
-  try {
-    const repository = getAsset3DRepository();
-    const assets = await repository.listAssets3D({
-      ...(query.filename && { filename: query.filename }),
-      ...(query.category && { category: query.category }),
-      ...(query.search && { search: query.search }),
-      ...(query.isPublic !== undefined && { isPublic: query.isPublic }),
-      ...(query.tags && { tags: query.tags }),
-    });
-
-    return NextResponse.json(assets, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-      },
-    });
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === 'P2021' ||
-        error.code === 'P2022' ||
-        error.code === 'P1001' ||
-        error.code === 'P1003')
-    ) {
-      logger.warn('[assets3d] Falling back to empty list due to missing table or database.', {
-        code: error.code,
-      });
-      return NextResponse.json([], {
-        headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-        },
-      });
-    }
-    throw error;
-  }
+  return NextResponse.json(assets, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+    },
+  });
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

@@ -49,17 +49,14 @@
       "@/__tests__/*": [
         "./__tests__/*"
       ],
-      "@kangur/contracts": [
-        "./packages/kangur-contracts/src/index.ts"
+      "@prisma/client": [
+        "./src/shared/lib/db/prisma-client.ts"
       ],
-      "@kangur/core": [
-        "./packages/kangur-core/src/index.ts"
+      "@prisma/adapter-pg": [
+        "./src/shared/lib/db/prisma-adapter-pg-stub.ts"
       ],
-      "@kangur/platform": [
-        "./packages/kangur-platform/src/index.ts"
-      ],
-      "@kangur/api-client": [
-        "./packages/kangur-api-client/src/index.ts"
+      "pg": [
+        "./src/shared/lib/db/pg-stub.ts"
       ],
       "gsap/ScrollTrigger": [
         "./node_modules/gsap/types/scroll-trigger.d.ts"

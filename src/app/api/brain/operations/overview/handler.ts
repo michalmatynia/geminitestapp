@@ -567,13 +567,13 @@ const collectAgentRuntimeDomain = async (
     waiting_human: 0,
   };
 
-  runs.forEach((run) => {
+  runs.forEach((run: any) => {
     if (run.status in counts) {
       counts[run.status as keyof typeof counts] += 1;
     }
   });
 
-  const timedRecords: TimedStatusRecord[] = runs.flatMap((run) => {
+  const timedRecords: TimedStatusRecord[] = runs.flatMap((run: any) => {
     const timestampMs = parseTimestampMs(run.updatedAt);
     if (timestampMs === null) return [];
     return [

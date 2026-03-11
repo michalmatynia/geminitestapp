@@ -316,6 +316,41 @@ export function KangurAiTutorNativeGuideEntryEditor({
           </div>
 
           <div className='grid gap-4 lg:grid-cols-2'>
+            <FormField
+              label='Focus id prefixes'
+              description='One focus anchor id prefix per line. Use these for exact section matching.'
+            >
+              <Textarea
+                value={stringifyLineList(selectedEntry.focusIdPrefixes)}
+                onChange={(event) =>
+                  updateSelectedEntry((entry) => ({
+                    ...entry,
+                    focusIdPrefixes: parseLineList(event.target.value),
+                  }))
+                }
+                rows={4}
+                aria-label='Native guide focus id prefixes'
+              />
+            </FormField>
+            <FormField
+              label='Content id prefixes'
+              description='One content id prefix per line. Use these for screen and activity matching.'
+            >
+              <Textarea
+                value={stringifyLineList(selectedEntry.contentIdPrefixes)}
+                onChange={(event) =>
+                  updateSelectedEntry((entry) => ({
+                    ...entry,
+                    contentIdPrefixes: parseLineList(event.target.value),
+                  }))
+                }
+                rows={4}
+                aria-label='Native guide content id prefixes'
+              />
+            </FormField>
+          </div>
+
+          <div className='grid gap-4 lg:grid-cols-2'>
             <FormField label='Related games' description='One game hint or game label per line.'>
               <div className='space-y-2'>
                 <Textarea

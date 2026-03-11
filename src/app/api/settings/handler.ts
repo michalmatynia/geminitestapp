@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -32,7 +31,6 @@ import {
 } from '@/shared/lib/db/database-engine-constants';
 import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
@@ -42,7 +40,6 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   AI_PATHS_CONFIG_PREFIX,
-  AI_PATHS_KEY_PREFIX,
   AI_PATHS_PREFIX_REGEX,
   CASE_RESOLVER_WORKSPACE_KEY,
   HEAVY_PREFIX_REGEX,
@@ -127,52 +124,9 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   await settingsIndexesEnsured;
 };
 
-const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
-  provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
-
-const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<SettingRecord[]> => {
-  if (!process.env['DATABASE_URL'] || !('setting' in prisma)) return [];
-  try {
-    const settings = await prisma.setting.findMany({
-      where: buildPrismaScopeWhere(scope),
-      select: { key: true, value: true },
-    });
-    return applyScopeFilter(
-      settings.map((setting: SettingRecord) => ({
-        key: setting.key,
-        value: decodeSettingValue(setting.key, setting.value),
-      })),
-      scope
-    );
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return [];
-    throw error;
-  }
-};
-
 const readCurrentSettingValue = async (
-  key: string,
-  provider: 'prisma' | 'mongodb'
+  key: string
 ): Promise<string | null> => {
-  const readPrisma = async (): Promise<string | null> => {
-    if (!canUsePrismaSettings(provider)) return null;
-    try {
-      const record = await prisma.setting.findUnique({
-        where: { key },
-        select: { value: true },
-      });
-      if (typeof record?.value !== 'string') return null;
-      return decodeSettingValue(key, record.value);
-    } catch (error) {
-      if (isPrismaMissingTableError(error)) return null;
-      throw error;
-    }
-  };
-
   const readMongo = async (): Promise<string | null> => {
     if (!process.env['MONGODB_URI']) return null;
     await ensureSettingsIndexes();
@@ -184,7 +138,7 @@ const readCurrentSettingValue = async (
     return decodeSettingValue(key, doc.value);
   };
 
-  return provider === 'mongodb' ? readMongo() : readPrisma();
+  return readMongo();
 };
 
 const maybeFilterDetachedCaseResolverPayloadByFileId = ({
@@ -219,36 +173,6 @@ const maybeFilterDetachedCaseResolverPayloadByFileId = ({
 const normalizeScope = (scope?: string | null): SettingsScope => {
   if (scope === 'heavy' || scope === 'light' || scope === 'all') return scope;
   return DEFAULT_SCOPE;
-};
-
-const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> => {
-  const aiPathsExclusion = { key: { startsWith: AI_PATHS_KEY_PREFIX } };
-  if (scope === 'all') return { NOT: aiPathsExclusion };
-  const heavyOr = [
-    { key: { startsWith: 'image_studio_' } },
-    { key: { startsWith: 'base_import_' } },
-    { key: { startsWith: 'base_export_' } },
-    {
-      key: {
-        in: [
-          'agent_personas',
-          'case_resolver_workspace_v2',
-          'case_resolver_workspace_v2_history',
-          'case_resolver_workspace_v2_documents',
-          'product_validator_decision_log',
-          'ai_insights_analytics_history',
-          'ai_insights_runtime_analytics_history',
-          'ai_insights_logs_history',
-        ],
-      },
-    },
-  ];
-  if (scope === 'heavy') {
-    return { AND: [{ OR: heavyOr }, { NOT: aiPathsExclusion }] };
-  }
-  return {
-    AND: [{ NOT: { OR: heavyOr } }, { NOT: aiPathsExclusion }],
-  };
 };
 
 const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => {
@@ -375,38 +299,11 @@ const fetchAndCacheSettings = async (
   timings?: Record<string, number | null | undefined>
 ): Promise<SettingRecord[]> => {
   const totalStart = performance.now();
-  const provider = await getAppDbProvider();
-  if (timings) timings['provider'] = performance.now() - totalStart;
-  let settings: SettingRecord[];
-  if (provider === 'mongodb') {
-    const mongoStart = performance.now();
-    settings = await listMongoSettings(scope);
-    if (timings) timings['mongo'] = performance.now() - mongoStart;
-  } else {
-    if (!canUsePrismaSettings(provider)) {
-      throw internalError('Prisma settings store is unavailable. Configure DATABASE_URL.');
-    }
-    const prismaStart = performance.now();
-    try {
-      settings = await prisma.setting.findMany({
-        where: buildPrismaScopeWhere(scope),
-        select: { key: true, value: true },
-      });
-      settings = settings.map((setting: SettingRecord) => ({
-        key: setting.key,
-        value: decodeSettingValue(setting.key, setting.value),
-      }));
-      settings = applyScopeFilter(settings, scope);
-    } catch (error) {
-      if (isPrismaMissingTableError(error)) {
-        throw internalError(
-          'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
-        );
-      }
-      throw error;
-    } finally {
-      if (timings) timings['prisma'] = performance.now() - prismaStart;
-    }
+  const mongoStart = performance.now();
+  const settings = await listMongoSettings(scope);
+  if (timings) {
+    timings['provider'] = performance.now() - totalStart;
+    timings['mongo'] = performance.now() - mongoStart;
   }
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] fetched', {
@@ -459,10 +356,10 @@ export async function GET_handler(
     const timings: Record<string, number | null | undefined> = {};
     const returnMetadataOnly = requestedKey === CASE_RESOLVER_WORKSPACE_KEY && query.meta;
     const providerStart = performance.now();
-    const provider = await getAppDbProvider();
+    await getAppDbProvider();
     timings['provider'] = performance.now() - providerStart;
     const readStart = performance.now();
-    const value = await readCurrentSettingValue(requestedKey, provider);
+    const value = await readCurrentSettingValue(requestedKey);
     timings['single'] = performance.now() - readStart;
     if (returnMetadataOnly) {
       const metadata = parseCaseResolverWorkspaceMetadata(value);
@@ -564,23 +461,6 @@ export async function GET_handler(
           : fallbackFromLight
             ? 'timeout-light-fallback'
             : 'timeout-empty';
-    if (fallbackData.length === 0) {
-      try {
-        const prismaFallback = await readPrismaSettingsForScope(scope);
-        if (prismaFallback.length > 0) {
-          fallbackData = prismaFallback;
-          cacheStatus = 'timeout-prisma-fallback';
-          setCachedSettings(prismaFallback, scope);
-        }
-      } catch (error) {
-        await logSystemEvent({
-          level: 'warn',
-          message: '[settings] Prisma timeout fallback failed.',
-          error,
-          context: { scope },
-        });
-      }
-    }
     if (shouldLogTiming()) {
       await ErrorSystem.logWarning('[settings] cache fallback', {
         service: 'api/settings',
@@ -777,7 +657,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const provider = await getAppDbProvider();
   if (key === CASE_RESOLVER_WORKSPACE_KEY && expectedRevision !== undefined) {
-    const currentValue = await readCurrentSettingValue(key, provider);
+    const currentValue = await readCurrentSettingValue(key);
     const currentMetadata = parseCaseResolverWorkspaceMetadata(currentValue);
     if (
       mutationId &&
@@ -806,7 +686,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
   }
   if (key.startsWith(AI_PATHS_CONFIG_PREFIX)) {
-    const currentValueForPathConfig = await readCurrentSettingValue(key, provider);
+    const currentValueForPathConfig = await readCurrentSettingValue(key);
     if (currentValueForPathConfig && isRuntimeOnlyPathConfigPayload(value)) {
       const mergedValue = mergeRuntimeOnlyPathConfigWrite(currentValueForPathConfig, value);
       if (mergedValue) {
@@ -815,8 +695,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
     const incomingUpdatedAtMs = parseUpdatedAtMsFromPathConfig(value);
     if (incomingUpdatedAtMs !== null) {
-      const currentValue =
-        currentValueForPathConfig ?? (await readCurrentSettingValue(key, provider));
+      const currentValue = currentValueForPathConfig ?? (await readCurrentSettingValue(key));
       if (currentValue) {
         const currentUpdatedAtMs = parseUpdatedAtMsFromPathConfig(currentValue);
         if (currentUpdatedAtMs !== null && currentUpdatedAtMs > incomingUpdatedAtMs) {
@@ -826,32 +705,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
   }
   const valueForStorage = encodeSettingValue(key, value);
-  let prismaSetting: SettingRecord | null = null;
-  let mongoSetting: SettingRecord | null = null;
-  if (provider === 'prisma') {
-    if (!canUsePrismaSettings(provider)) {
-      throw internalError('Prisma settings store is unavailable. Configure DATABASE_URL.');
-    }
-    try {
-      prismaSetting = await prisma.setting.upsert({
-        where: { key },
-        update: { value: valueForStorage },
-        create: { key, value: valueForStorage },
-        select: { key: true, value: true },
-      });
-    } catch (error) {
-      if (isPrismaMissingTableError(error)) {
-        throw internalError(
-          'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
-        );
-      }
-      throw error;
-    }
-  }
-  if (provider === 'mongodb') {
-    mongoSetting = await upsertMongoSetting(key, valueForStorage);
-  }
-  const setting = prismaSetting ?? mongoSetting;
+  const setting = provider === 'mongodb' ? await upsertMongoSetting(key, valueForStorage) : null;
   if (!setting) {
     throw internalError('No settings store configured.');
   }

@@ -492,7 +492,7 @@ export const getDefaultConfigForType = (
   if (type === 'db_schema') {
     return {
       db_schema: {
-        provider: 'all',
+        provider: 'auto',
         mode: 'all',
         collections: [],
         includeFields: true,

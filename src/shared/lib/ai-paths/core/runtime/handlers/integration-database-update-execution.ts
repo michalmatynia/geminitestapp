@@ -20,8 +20,8 @@ interface DbActionResult {
   count?: number;
   modifiedCount?: number;
   matchedCount?: number;
-  requestedProvider?: 'auto' | 'mongodb' | 'prisma';
-  resolvedProvider?: 'mongodb' | 'prisma';
+  requestedProvider?: 'auto' | 'mongodb';
+  resolvedProvider?: 'mongodb';
 }
 
 type ResolveCollectionUpdateContextInput = {
@@ -90,14 +90,12 @@ const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => 
   if (!isObjectRecord(responseData)) return {};
   const requestedProvider =
     responseData['requestedProvider'] === 'auto' ||
-    responseData['requestedProvider'] === 'mongodb' ||
-    responseData['requestedProvider'] === 'prisma'
+    responseData['requestedProvider'] === 'mongodb'
       ? responseData['requestedProvider']
       : undefined;
-  const resolvedProvider =
-    responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'
-      ? responseData['resolvedProvider']
-      : undefined;
+  const resolvedProvider = responseData['resolvedProvider'] === 'mongodb'
+    ? responseData['resolvedProvider']
+    : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),

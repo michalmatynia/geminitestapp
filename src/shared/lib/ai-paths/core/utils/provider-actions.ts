@@ -1,9 +1,8 @@
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
-import type { AppProviderValue as DbActionProvider } from '@/shared/contracts/system';
 import type { LabeledOptionDto } from '@/shared/contracts/ui';
 
-export type { DbActionProvider };
-export type DbActionProviderSelection = 'auto' | DbActionProvider | undefined;
+export type DbActionProvider = 'mongodb';
+export type DbActionProviderSelection = 'auto' | 'mongodb' | undefined;
 
 export type ProviderActionOption = LabeledOptionDto<DatabaseAction>;
 
@@ -24,111 +23,61 @@ const ACTION_CATEGORY_BY_ACTION: Record<DatabaseAction, DatabaseActionCategory> 
   findOneAndDelete: 'delete',
 };
 
-const CATEGORY_OPTIONS_BY_PROVIDER: Record<
-  DbActionProvider,
-  LabeledOptionDto<DatabaseActionCategory>[]
-> = {
-  mongodb: [
-    { value: 'create', label: 'Create' },
-    { value: 'read', label: 'Read' },
-    { value: 'update', label: 'Update' },
-    { value: 'delete', label: 'Delete' },
-    { value: 'aggregate', label: 'Aggregate' },
-  ],
-  prisma: [
-    { value: 'create', label: 'Create' },
-    { value: 'read', label: 'Read' },
-    { value: 'update', label: 'Update' },
-    { value: 'delete', label: 'Delete' },
-  ],
-};
+const CATEGORY_OPTIONS: LabeledOptionDto<DatabaseActionCategory>[] = [
+  { value: 'create', label: 'Create' },
+  { value: 'read', label: 'Read' },
+  { value: 'update', label: 'Update' },
+  { value: 'delete', label: 'Delete' },
+  { value: 'aggregate', label: 'Aggregate' },
+];
 
-const ACTION_OPTIONS_BY_PROVIDER: Record<
-  DbActionProvider,
-  Record<DatabaseActionCategory, ProviderActionOption[]>
-> = {
-  mongodb: {
-    create: [
-      { value: 'insertOne', label: 'insertOne' },
-      { value: 'insertMany', label: 'insertMany' },
-    ],
-    read: [
-      { value: 'find', label: 'find' },
-      { value: 'findOne', label: 'findOne' },
-      { value: 'countDocuments', label: 'countDocuments' },
-      { value: 'distinct', label: 'distinct' },
-    ],
-    update: [
-      { value: 'updateOne', label: 'updateOne' },
-      { value: 'updateMany', label: 'updateMany' },
-      { value: 'replaceOne', label: 'replaceOne' },
-      { value: 'findOneAndUpdate', label: 'findOneAndUpdate' },
-    ],
-    delete: [
-      { value: 'deleteOne', label: 'deleteOne' },
-      { value: 'deleteMany', label: 'deleteMany' },
-      { value: 'findOneAndDelete', label: 'findOneAndDelete' },
-    ],
-    aggregate: [{ value: 'aggregate', label: 'aggregate' }],
-  },
-  prisma: {
-    create: [
-      { value: 'insertOne', label: 'create' },
-      { value: 'insertMany', label: 'createMany' },
-    ],
-    read: [
-      { value: 'find', label: 'findMany' },
-      { value: 'findOne', label: 'findFirst' },
-      { value: 'countDocuments', label: 'count' },
-      { value: 'distinct', label: 'distinct' },
-    ],
-    update: [
-      { value: 'updateOne', label: 'update' },
-      { value: 'updateMany', label: 'updateMany' },
-    ],
-    delete: [
-      { value: 'deleteOne', label: 'delete' },
-      { value: 'deleteMany', label: 'deleteMany' },
-    ],
-    aggregate: [],
-  },
-};
-
-const PRISMA_UNSUPPORTED_ACTION_MESSAGES: Partial<Record<DatabaseAction, string>> = {
-  aggregate:
-    'Prisma provider does not support "aggregate" in this node. Switch provider to MongoDB for pipeline aggregation.',
-  replaceOne:
-    'Prisma provider does not support "replaceOne". Use "update" / "updateMany" with explicit fields.',
-  findOneAndUpdate:
-    'Prisma provider does not support "findOneAndUpdate". Use "update" and query the record separately if needed.',
-  findOneAndDelete:
-    'Prisma provider does not support "findOneAndDelete". Use "delete" and query the record separately if needed.',
+const ACTION_OPTIONS_BY_CATEGORY: Record<DatabaseActionCategory, ProviderActionOption[]> = {
+  create: [
+    { value: 'insertOne', label: 'insertOne' },
+    { value: 'insertMany', label: 'insertMany' },
+  ],
+  read: [
+    { value: 'find', label: 'find' },
+    { value: 'findOne', label: 'findOne' },
+    { value: 'countDocuments', label: 'countDocuments' },
+    { value: 'distinct', label: 'distinct' },
+  ],
+  update: [
+    { value: 'updateOne', label: 'updateOne' },
+    { value: 'updateMany', label: 'updateMany' },
+    { value: 'replaceOne', label: 'replaceOne' },
+    { value: 'findOneAndUpdate', label: 'findOneAndUpdate' },
+  ],
+  delete: [
+    { value: 'deleteOne', label: 'deleteOne' },
+    { value: 'deleteMany', label: 'deleteMany' },
+    { value: 'findOneAndDelete', label: 'findOneAndDelete' },
+  ],
+  aggregate: [{ value: 'aggregate', label: 'aggregate' }],
 };
 
 export const resolveDbActionProvider = (
   requestedProvider: DbActionProviderSelection,
   fallbackProvider: DbActionProvider
 ): DbActionProvider =>
-  requestedProvider === 'mongodb' || requestedProvider === 'prisma'
-    ? requestedProvider
-    : fallbackProvider;
+  requestedProvider === 'mongodb' ? requestedProvider : fallbackProvider;
 
 export const getActionCategoryForAction = (action: DatabaseAction): DatabaseActionCategory =>
   ACTION_CATEGORY_BY_ACTION[action];
 
 export const isProviderActionCategorySupported = (
-  provider: DbActionProvider,
+  _provider: DbActionProvider,
   category: DatabaseActionCategory
-): boolean => CATEGORY_OPTIONS_BY_PROVIDER[provider].some((option) => option.value === category);
+): boolean => CATEGORY_OPTIONS.some((option) => option.value === category);
 
 export const getProviderActionCategoryOptions = (
-  provider: DbActionProvider
-): LabeledOptionDto<DatabaseActionCategory>[] => CATEGORY_OPTIONS_BY_PROVIDER[provider];
+  _provider: DbActionProvider
+): LabeledOptionDto<DatabaseActionCategory>[] => CATEGORY_OPTIONS;
 
 export const getProviderActionOptions = (
-  provider: DbActionProvider,
+  _provider: DbActionProvider,
   category: DatabaseActionCategory
-): ProviderActionOption[] => ACTION_OPTIONS_BY_PROVIDER[provider][category] ?? [];
+): ProviderActionOption[] => ACTION_OPTIONS_BY_CATEGORY[category] ?? [];
 
 export const isProviderActionSupported = (
   provider: DbActionProvider,
@@ -154,12 +103,6 @@ export const getUnsupportedProviderActionMessage = (
   action: DatabaseAction
 ): string | null => {
   if (isProviderActionSupported(provider, action)) return null;
-  if (provider === 'prisma') {
-    return (
-      PRISMA_UNSUPPORTED_ACTION_MESSAGES[action] ??
-      `Prisma provider does not support "${action}" in this node.`
-    );
-  }
   return `MongoDB provider does not support "${action}" in this node.`;
 };
 

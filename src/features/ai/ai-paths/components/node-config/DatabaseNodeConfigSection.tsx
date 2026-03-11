@@ -22,7 +22,6 @@ import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPrese
 import { DatabaseSaveQueryPresetDialogContextProvider } from './database/DatabaseSaveQueryPresetDialogContext';
 import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
 import {
-  buildJsonQueryValidation,
   buildMongoQueryValidation,
   formatAndFixMongoQuery,
   getQueryPlaceholderByAction,
@@ -76,11 +75,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const filterPlaceholder = getQueryPlaceholderByAction(resolvedAction);
   const validationTargetTemplate = activeQueryTemplateValue;
   const queryValidation: QueryValidationResult = React.useMemo(() => {
-    if (state.resolvedProvider === 'prisma') {
-      return buildJsonQueryValidation(validationTargetTemplate);
-    }
     return buildMongoQueryValidation(validationTargetTemplate);
-  }, [state.resolvedProvider, validationTargetTemplate]);
+  }, [validationTargetTemplate]);
 
   const constructorValue: DatabaseConstructorContextValue = {
     pendingAiQuery: state.pendingAiQuery,
@@ -168,16 +164,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     onFormatClick: () => {
       const targetValue = activeQueryTemplateValue;
       if (!targetValue.trim()) return;
-      const formatted =
-        state.resolvedProvider === 'mongodb'
-          ? formatAndFixMongoQuery(targetValue)
-          : (() => {
-            try {
-              return JSON.stringify(JSON.parse(targetValue), null, 2);
-            } catch {
-              return targetValue;
-            }
-          })();
+      const formatted = formatAndFixMongoQuery(targetValue);
       if (state.isUpdateAction) {
         state.updateSelectedNodeConfig({
           database: {

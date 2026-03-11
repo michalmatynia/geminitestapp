@@ -1,3 +1,6 @@
+import { randomUUID } from 'crypto';
+
+import { ObjectId } from 'mongodb';
 
 import type {
   TagMappingAssignment,
@@ -6,8 +9,22 @@ import type {
   TagMappingUpdateInput,
   TagMappingWithDetails,
 } from '@/shared/contracts/integrations';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
+
+import {
+  EXTERNAL_TAG_COLLECTION,
+  INTERNAL_TAG_COLLECTION,
+  TAG_MAPPING_COLLECTION,
+  buildMongoTagMappingIdFilter,
+  ensureMongoTagMappingIndexes,
+  hydrateMongoTagMappingDetails,
+  mapMongoTagMappingToRecord,
+  type MongoExternalTagDoc,
+  type MongoInternalTagDoc,
+  type MongoTagMappingDoc,
+} from './tag-mapping-repository-mongo-utils';
 
 export type TagMappingRepository = {
   create: (input: TagMappingCreateInput) => Promise<TagMapping>;
@@ -31,126 +48,209 @@ export type TagMappingRepository = {
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
 
-function mapToRecord(record: {
-  id: string;
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}): TagMapping {
-  return {
-    id: record.id,
-    connectionId: record.connectionId,
-    externalTagId: record.externalTagId,
-    internalTagId: record.internalTagId,
-    isActive: record.isActive,
-    createdAt: record.createdAt.toISOString(),
-    updatedAt: record.updatedAt.toISOString(),
-  };
-}
+const buildFallbackTagName = (internalTagId: string): string => {
+  const suffix = internalTagId.slice(-6);
+  return `Tag ${suffix || 'unknown'}`;
+};
 
-type EnrichedTagMapping = Prisma.TagMappingGetPayload<{
-  include: {
-    externalTag: true;
-    internalTag: true;
-  };
-}>;
+const resolveExternalTagRefMongo = async (
+  connectionId: string,
+  externalTagId: string
+): Promise<string> => {
+  await ensureMongoTagMappingIndexes();
+  const db = await getMongoDb();
+  const collection = db.collection<MongoExternalTagDoc>(EXTERNAL_TAG_COLLECTION);
 
-const toDetails = (record: EnrichedTagMapping): TagMappingWithDetails => ({
-  id: record.id,
-  connectionId: record.connectionId,
-  externalTagId: record.externalTagId,
-  internalTagId: record.internalTagId,
-  isActive: record.isActive,
-  createdAt: record.createdAt.toISOString(),
-  updatedAt: record.updatedAt.toISOString(),
-  externalTag: {
-    id: record.externalTag.id,
-    connectionId: record.externalTag.connectionId,
-    externalId: record.externalTag.externalId,
-    name: record.externalTag.name,
-    metadata: record.externalTag.metadata as Record<string, unknown> | null,
-    fetchedAt: record.externalTag.fetchedAt.toISOString(),
-    createdAt: record.externalTag.createdAt.toISOString(),
-    updatedAt: record.externalTag.updatedAt.toISOString(),
-  },
-  internalTag: {
-    id: record.internalTag.id,
-    name: record.internalTag.name,
-    color: record.internalTag.color ?? null,
-    catalogId: record.internalTag.catalogId,
-    createdAt: record.internalTag.createdAt.toISOString(),
-    updatedAt: record.internalTag.updatedAt.toISOString(),
-  },
-});
+  const candidate = externalTagId.trim();
+  if (candidate.length === 0) {
+    return candidate;
+  }
+
+  const byCandidate = await collection.findOne({
+    connectionId,
+    $or: ObjectId.isValid(candidate)
+      ? [{ _id: candidate }, { _id: new ObjectId(candidate) }, { externalId: candidate }]
+      : [{ _id: candidate }, { externalId: candidate }],
+  });
+
+  if (byCandidate) {
+    return byCandidate._id.toString();
+  }
+
+  const now = new Date();
+  const doc: MongoExternalTagDoc = {
+    _id: randomUUID(),
+    connectionId,
+    externalId: candidate,
+    name: `External Tag ${candidate}`,
+    metadata: null,
+    fetchedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(doc);
+  return doc._id.toString();
+};
+
+const ensureInternalTagRefMongo = async (internalTagId: string): Promise<void> => {
+  const candidate = internalTagId.trim();
+  if (candidate.length === 0) {
+    return;
+  }
+
+  const db = await getMongoDb();
+  const collection = db.collection<MongoInternalTagDoc>(INTERNAL_TAG_COLLECTION);
+  const existing = await collection.findOne({
+    $or: ObjectId.isValid(candidate)
+      ? [{ id: candidate }, { _id: candidate }, { _id: new ObjectId(candidate) }]
+      : [{ id: candidate }, { _id: candidate }],
+  });
+  if (existing) {
+    return;
+  }
+
+  const tagRepository = await getTagRepository();
+  const sourceTag = await tagRepository.getTagById(candidate).catch(() => null);
+
+  const now = new Date();
+  await collection.updateOne(
+    { id: candidate },
+    {
+      $set: {
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        _id: randomUUID(),
+        id: candidate,
+        name: sourceTag?.name?.trim() || buildFallbackTagName(candidate),
+        color: sourceTag?.color ?? null,
+        catalogId: sourceTag?.catalogId ?? '',
+        createdAt: now,
+      },
+    },
+    { upsert: true }
+  );
+};
+
+const sortByInternalTagName = (records: TagMappingWithDetails[]): TagMappingWithDetails[] =>
+  [...records].sort((a, b) => {
+    const nameA = a.internalTag?.name ?? '';
+    const nameB = b.internalTag?.name ?? '';
+    return nameA.localeCompare(nameB);
+  });
 
 export function getTagMappingRepository(): TagMappingRepository {
   return {
     async create(input: TagMappingCreateInput): Promise<TagMapping> {
-      const record = await prisma.tagMapping.create({
-        data: {
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const collection = db.collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION);
+
+      const resolvedExternalTagId = await resolveExternalTagRefMongo(
+        input.connectionId,
+        input.externalTagId
+      );
+      await ensureInternalTagRefMongo(input.internalTagId);
+
+      const now = new Date();
+      await collection.updateOne(
+        {
           connectionId: input.connectionId,
-          externalTagId: input.externalTagId,
           internalTagId: input.internalTagId,
         },
+        {
+          $set: {
+            externalTagId: resolvedExternalTagId,
+            isActive: true,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            _id: randomUUID(),
+            createdAt: now,
+          },
+        },
+        { upsert: true }
+      );
+
+      const record = await collection.findOne({
+        connectionId: input.connectionId,
+        internalTagId: input.internalTagId,
       });
-      return mapToRecord(record);
+      if (!record) {
+        throw internalError('Failed to create tag mapping');
+      }
+      return mapMongoTagMappingToRecord(record);
     },
 
     async update(id: string, input: TagMappingUpdateInput): Promise<TagMapping> {
-      const record = await prisma.tagMapping.update({
-        where: { id },
-        data: {
-          ...(input.externalTagId !== undefined && {
-            externalTagId: input.externalTagId,
-          }),
-          ...(input.isActive !== undefined && { isActive: input.isActive }),
-        },
-      });
-      return mapToRecord(record);
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const collection = db.collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION);
+
+      const filter = buildMongoTagMappingIdFilter(id);
+      const current = await collection.findOne(filter);
+      if (!current) {
+        throw notFoundError('Tag mapping not found', { mappingId: id });
+      }
+
+      const updatePayload: Partial<MongoTagMappingDoc> = {
+        updatedAt: new Date(),
+      };
+
+      if (input.externalTagId !== undefined) {
+        updatePayload.externalTagId = await resolveExternalTagRefMongo(
+          current.connectionId,
+          input.externalTagId
+        );
+      }
+      if (input.isActive !== undefined) {
+        updatePayload.isActive = input.isActive;
+      }
+
+      await collection.updateOne(filter, { $set: updatePayload });
+      const updated = await collection.findOne(filter);
+      if (!updated) {
+        throw notFoundError('Tag mapping not found', { mappingId: id });
+      }
+      return mapMongoTagMappingToRecord(updated);
     },
 
     async delete(id: string): Promise<void> {
-      await prisma.tagMapping.delete({
-        where: { id },
-      });
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      await db.collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION).deleteOne(
+        buildMongoTagMappingIdFilter(id)
+      );
     },
 
     async getById(id: string): Promise<TagMapping | null> {
-      const record = await prisma.tagMapping.findUnique({
-        where: { id },
-      });
-      return record ? mapToRecord(record) : null;
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const record = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .findOne(buildMongoTagMappingIdFilter(id));
+      return record ? mapMongoTagMappingToRecord(record) : null;
     },
 
     async listByConnection(connectionId: string): Promise<TagMappingWithDetails[]> {
-      const records = await prisma.tagMapping.findMany({
-        where: { connectionId },
-        include: {
-          externalTag: true,
-          internalTag: true,
-        },
-        orderBy: [{ internalTag: { name: 'asc' } }],
-      });
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const records = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .find({ connectionId })
+        .toArray();
 
-      return records.map((record: EnrichedTagMapping) => toDetails(record));
+      return sortByInternalTagName(await hydrateMongoTagMappingDetails(records));
     },
 
-    async getByInternalTag(
-      connectionId: string,
-      internalTagId: string
-    ): Promise<TagMapping | null> {
-      const record = await prisma.tagMapping.findUnique({
-        where: {
-          connectionId_internalTagId: {
-            connectionId,
-            internalTagId,
-          },
-        },
-      });
-      return record ? mapToRecord(record) : null;
+    async getByInternalTag(connectionId: string, internalTagId: string): Promise<TagMapping | null> {
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const record = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .findOne({ connectionId, internalTagId });
+      return record ? mapMongoTagMappingToRecord(record) : null;
     },
 
     async listByInternalTagIds(
@@ -159,19 +259,18 @@ export function getTagMappingRepository(): TagMappingRepository {
     ): Promise<TagMappingWithDetails[]> {
       if (internalTagIds.length === 0) return [];
 
-      const records = await prisma.tagMapping.findMany({
-        where: {
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const records = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .find({
           connectionId,
-          internalTagId: { in: internalTagIds },
+          internalTagId: { $in: internalTagIds },
           isActive: true,
-        },
-        include: {
-          externalTag: true,
-          internalTag: true,
-        },
-      });
+        })
+        .toArray();
 
-      return records.map((record: EnrichedTagMapping) => toDetails(record));
+      return hydrateMongoTagMappingDetails(records);
     },
 
     async listByExternalTagIds(
@@ -180,73 +279,107 @@ export function getTagMappingRepository(): TagMappingRepository {
     ): Promise<TagMappingWithDetails[]> {
       if (externalTagIds.length === 0) return [];
 
-      const records = await prisma.tagMapping.findMany({
-        where: {
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const externalCollection = db.collection<MongoExternalTagDoc>(EXTERNAL_TAG_COLLECTION);
+      const externalDocs = await externalCollection
+        .find({
+          connectionId,
+          $or: [
+            { externalId: { $in: externalTagIds } },
+            {
+              _id: {
+                $in: externalTagIds.flatMap((value) =>
+                  ObjectId.isValid(value) ? [value, new ObjectId(value)] : [value]
+                ),
+              },
+            },
+          ],
+        })
+        .toArray();
+
+      const resolvedExternalTagIds = Array.from(
+        new Set([...externalTagIds, ...externalDocs.map((doc) => doc._id.toString())])
+      );
+
+      const records = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .find({
           connectionId,
           isActive: true,
-          externalTag: {
-            externalId: {
-              in: externalTagIds,
-            },
-          },
-        },
-        include: {
-          externalTag: true,
-          internalTag: true,
-        },
-      });
+          externalTagId: { $in: resolvedExternalTagIds },
+        })
+        .toArray();
 
-      return records.map((record: EnrichedTagMapping) => toDetails(record));
+      return hydrateMongoTagMappingDetails(records);
     },
 
     async bulkUpsert(
       connectionId: string,
       mappings: TagMappingAssignment[]
     ): Promise<number> {
-      let count = 0;
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        for (const mapping of mappings) {
-          if (mapping.externalTagId === null) {
-            const deactivated = await tx.tagMapping.updateMany({
-              where: {
-                connectionId,
-                internalTagId: mapping.internalTagId,
-                isActive: true,
-              },
-              data: { isActive: false },
-            });
-            count += deactivated.count;
-            continue;
-          }
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const collection = db.collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION);
 
-          await tx.tagMapping.upsert({
-            where: {
-              connectionId_internalTagId: {
-                connectionId,
-                internalTagId: mapping.internalTagId,
-              },
-            },
-            create: {
+      let count = 0;
+      for (const mapping of mappings) {
+        if (mapping.externalTagId === null) {
+          const deactivated = await collection.updateMany(
+            {
               connectionId,
               internalTagId: mapping.internalTagId,
-              externalTagId: mapping.externalTagId,
-            },
-            update: {
-              externalTagId: mapping.externalTagId,
               isActive: true,
             },
-          });
-          count++;
+            {
+              $set: {
+                isActive: false,
+                updatedAt: new Date(),
+              },
+            }
+          );
+          count += deactivated.modifiedCount ?? 0;
+          continue;
         }
-      });
+
+        const resolvedExternalTagId = await resolveExternalTagRefMongo(
+          connectionId,
+          mapping.externalTagId
+        );
+        await ensureInternalTagRefMongo(mapping.internalTagId);
+
+        const now = new Date();
+        await collection.updateOne(
+          {
+            connectionId,
+            internalTagId: mapping.internalTagId,
+          },
+          {
+            $set: {
+              externalTagId: resolvedExternalTagId,
+              isActive: true,
+              updatedAt: now,
+            },
+            $setOnInsert: {
+              _id: randomUUID(),
+              createdAt: now,
+            },
+          },
+          { upsert: true }
+        );
+        count++;
+      }
+
       return count;
     },
 
     async deleteByConnection(connectionId: string): Promise<number> {
-      const result = await prisma.tagMapping.deleteMany({
-        where: { connectionId },
-      });
-      return result.count;
+      await ensureMongoTagMappingIndexes();
+      const db = await getMongoDb();
+      const result = await db
+        .collection<MongoTagMappingDoc>(TAG_MAPPING_COLLECTION)
+        .deleteMany({ connectionId });
+      return result.deletedCount ?? 0;
     },
   };
 }

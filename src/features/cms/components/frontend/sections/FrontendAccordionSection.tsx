@@ -91,7 +91,9 @@ function AccordionItem({
         className='flex w-full items-center justify-between text-left'
       >
         <FrontendBlockRenderer block={headingBlock} />
-        <span className='ml-4 shrink-0 text-gray-400 text-xl'>{isOpen ? '−' : '+'}</span>
+        <span className='cms-appearance-muted-text ml-4 shrink-0 text-xl'>
+          {isOpen ? '−' : '+'}
+        </span>
       </button>
       {isOpen && textBlock && (
         <div className='mt-3'>

@@ -1,8 +1,5 @@
 import 'server-only';
 
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-
 import type {
   DatabaseEngineCollectionStatus,
   DatabaseEnginePrimaryProvider,
@@ -22,101 +19,11 @@ import {
   isRedisProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-type DmmfModel = { name: string };
-type DmmfDatamodel = { models?: DmmfModel[] };
-
 const services: DatabaseEngineService[] = ['app', 'auth', 'product', 'integrations', 'cms'];
-const PROJECT_ROOT = process.cwd();
-const PRISMA_ROOT_DIR = path.join(PROJECT_ROOT, 'prisma');
-const PRISMA_SCHEMA_DEFAULT_PATH = path.join(PRISMA_ROOT_DIR, 'schema.prisma');
-
-const resolvePrismaSchemaPath = (candidate: string): string => {
-  if (path.isAbsolute(candidate)) {
-    return candidate;
-  }
-
-  const normalized = candidate
-    .trim()
-    .replace(/\\/g, '/')
-    .replace(/^\.\/+/, '');
-  if (!normalized) {
-    return PRISMA_SCHEMA_DEFAULT_PATH;
-  }
-
-  if (normalized.startsWith('prisma/')) {
-    const relativePath = normalized.slice('prisma/'.length);
-    const segments = relativePath.split('/').filter((segment) => segment.length > 0);
-    if (segments.some((segment) => segment === '..')) {
-      return PRISMA_SCHEMA_DEFAULT_PATH;
-    }
-    return path.join(PRISMA_ROOT_DIR, ...segments);
-  }
-
-  const segments = normalized.split('/').filter((segment) => segment.length > 0);
-  if (segments.some((segment) => segment === '..')) {
-    return PRISMA_SCHEMA_DEFAULT_PATH;
-  }
-
-  return path.join(PRISMA_ROOT_DIR, ...segments);
-};
-
-const getPrismaSchemaPath = (): string => {
-  const schemaPath = process.env['PRISMA_SCHEMA_PATH'];
-  if (schemaPath) {
-    return resolvePrismaSchemaPath(schemaPath);
-  }
-  return PRISMA_SCHEMA_DEFAULT_PATH;
-};
-
-const parsePrismaModelNamesFromSchema = (): string[] => {
-  try {
-    const raw = readFileSync(getPrismaSchemaPath(), 'utf8');
-    const modelRegex = /model\s+(\w+)\s*\{/g;
-    const names = new Set<string>();
-    let match: RegExpExecArray | null;
-    while ((match = modelRegex.exec(raw)) !== null) {
-      if (match[1]) {
-        names.add(match[1]);
-      }
-    }
-    return Array.from(names).sort((a, b) => a.localeCompare(b));
-  } catch (error) {
-    void ErrorSystem.logWarning(
-      '[database-engine-status] Failed to parse Prisma schema for model names',
-      {
-        service: 'database-engine-status',
-        path: getPrismaSchemaPath(),
-        error,
-      }
-    );
-    return [];
-  }
-};
-
-const getKnownPrismaCollections = (): string[] => {
-  if (!process.env['DATABASE_URL']) return [];
-  try {
-    const datamodel = (prisma as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel;
-    const modelNames = datamodel?.models?.map((model) => model.name) ?? [];
-    if (modelNames.length > 0) {
-      return Array.from(new Set(modelNames)).sort((a, b) => a.localeCompare(b));
-    }
-  } catch (error) {
-    void ErrorSystem.logWarning(
-      '[database-engine-status] Failed to extract models from prisma._dmmf',
-      {
-        service: 'database-engine-status',
-        error,
-      }
-    );
-  }
-  return parsePrismaModelNamesFromSchema();
-};
 
 const getKnownMongoCollections = async (): Promise<string[]> => {
   if (!process.env['MONGODB_URI']) return [];
@@ -157,14 +64,7 @@ const resolveEffectiveServiceProvider = async (
 const buildCollectionStatus = async (
   collectionRouteMap: Record<string, DatabaseEngineProvider>
 ): Promise<DatabaseEngineCollectionStatus> => {
-  const [mongoCollections, prismaCollections] = await Promise.all([
-    getKnownMongoCollections(),
-    Promise.resolve(getKnownPrismaCollections()),
-  ]);
-
-  const knownCollections = Array.from(new Set([...mongoCollections, ...prismaCollections])).sort(
-    (a, b) => a.localeCompare(b)
-  );
+  const knownCollections = await getKnownMongoCollections();
   const knownCollectionSet = new Set<string>(knownCollections);
 
   const missingExplicitRoutes = knownCollections

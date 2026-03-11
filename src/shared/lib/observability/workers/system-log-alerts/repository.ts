@@ -49,12 +49,12 @@ export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
 export const toPrismaWhere = (query: AlertEvidenceQuery): Prisma.SystemLogWhereInput => {
   const where: Prisma.SystemLogWhereInput = {};
 
-  if (query.level) where.level = query.level;
+  if (query.level) where['level'] = query.level;
   if (query.sourceContains) {
-    where.source = { contains: query.sourceContains, mode: 'insensitive' };
+    where['source'] = { contains: query.sourceContains, mode: 'insensitive' };
   }
   if (query.service) {
-    where.OR = [
+    where['OR'] = [
       { service: { equals: query.service, mode: 'insensitive' } },
       {
         context: {
@@ -65,16 +65,16 @@ export const toPrismaWhere = (query: AlertEvidenceQuery): Prisma.SystemLogWhereI
     ];
   }
   if (query.pathPrefix) {
-    where.path = { startsWith: query.pathPrefix, mode: 'insensitive' };
+    where['path'] = { startsWith: query.pathPrefix, mode: 'insensitive' };
   }
   if (query.statusCodeMin !== undefined || query.statusCodeMax !== undefined) {
-    where.statusCode = {
+    where['statusCode'] = {
       ...(query.statusCodeMin !== undefined ? { gte: query.statusCodeMin } : {}),
       ...(query.statusCodeMax !== undefined ? { lte: query.statusCodeMax } : {}),
     };
   }
   if (query.from || query.to) {
-    where.createdAt = {
+    where['createdAt'] = {
       ...(query.from ? { gte: query.from } : {}),
       ...(query.to ? { lte: query.to } : {}),
     };
@@ -139,7 +139,7 @@ export const listAlertEvidenceLogs = async (
     take: limit,
   });
 
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     level:
       row.level === 'warn' || row.level === 'info' || row.level === 'error' ? row.level : 'error',

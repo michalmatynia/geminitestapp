@@ -12,35 +12,8 @@ import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-type PrismaBrowseModel = {
-  findMany: (args: unknown) => Promise<unknown[]>;
-  count: (args: unknown) => Promise<number>;
-};
-
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const getRecordValue = (value: unknown, key: string): unknown | undefined =>
-  value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined;
-
-const isPrismaBrowseModel = (value: unknown): value is PrismaBrowseModel => {
-  const record = asRecord(value);
-  return (
-    record !== null &&
-    typeof record['findMany'] === 'function' &&
-    typeof record['count'] === 'function'
-  );
-};
-
-const toBrowseDocument = (value: unknown): Record<string, unknown> => asRecord(value) ?? { value };
 
 export const querySchema = z.object({
   collection: optionalTrimmedQueryString(),
@@ -112,73 +85,6 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   };
 }
 
-async function browsePrismaCollection(params: BrowseParams): Promise<BrowseResponse> {
-  const { collection, limit = 20, skip = 0, query } = params;
-
-  // Get the Prisma model dynamically
-  const modelName = collection.charAt(0).toLowerCase() + collection.slice(1);
-  const modelCandidate = getRecordValue(prisma, modelName);
-  const model = isPrismaBrowseModel(modelCandidate) ? modelCandidate : null;
-
-  if (!isPrismaBrowseModel(model)) {
-    return {
-      provider: 'prisma',
-      collection,
-      documents: [],
-      total: 0,
-      limit,
-      skip,
-    };
-  }
-
-  // Build where clause if query provided
-  let where: Record<string, unknown> = {};
-  if (query) {
-    try {
-      where = JSON.parse(query) as Record<string, unknown>;
-    } catch {
-      // Try to search by common fields
-      where = {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { title: { contains: query, mode: 'insensitive' } },
-          { id: query },
-        ],
-      };
-    }
-  }
-
-  try {
-    const [documents, total] = await Promise.all([
-      model.findMany({
-        where,
-        skip,
-        take: limit,
-      }),
-      model.count({ where }),
-    ]);
-
-    return {
-      provider: 'prisma',
-      collection,
-      documents: documents.map(toBrowseDocument),
-      total,
-      limit,
-      skip,
-    };
-  } catch (error) {
-    void ErrorSystem.captureException(error, { service: 'api/databases/browse', collection });
-    return {
-      provider: 'prisma',
-      collection,
-      documents: [],
-      total: 0,
-      limit,
-      skip,
-    };
-  }
-}
-
 export async function GET_handler(
   _request: NextRequest,
   _ctx: ApiHandlerContext
@@ -192,29 +98,19 @@ export async function GET_handler(
     throw badRequestError('Collection parameter is required');
   }
 
-  const provider = await resolveCollectionProviderForRequest(
-    collection,
-    providerParam === 'mongodb' || providerParam === 'prisma' ? providerParam : 'auto'
-  );
+  if (providerParam && providerParam !== 'mongodb' && providerParam !== 'auto') {
+    throw badRequestError('Only MongoDB browsing is supported.');
+  }
 
   const params: BrowseParams = { collection, limit: query.limit, skip: query.skip };
   if (query.query !== undefined) {
     params.query = query.query;
   }
 
-  if (provider === 'mongodb') {
-    const result = await browseMongoCollection(params);
-    return NextResponse.json(result, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
-  } else {
-    const result = await browsePrismaCollection(params);
-    return NextResponse.json(result, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
-  }
+  const result = await browseMongoCollection(params);
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }

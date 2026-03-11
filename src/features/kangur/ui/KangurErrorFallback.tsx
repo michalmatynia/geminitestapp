@@ -47,12 +47,15 @@ export function KangurErrorFallback({
   return (
     <div
       className='kangur-premium-bg flex min-h-screen items-center justify-center p-6'
+      data-kangur-appearance='default'
       data-testid='kangur-error-shell'
     >
-      <div className='w-full max-w-lg rounded-3xl border border-indigo-100 bg-white/90 p-8 text-center shadow-2xl'>
+      <div className='glass-panel w-full max-w-lg rounded-3xl p-8 text-center shadow-2xl'>
         <div className='mb-4 text-4xl font-black text-indigo-500'>K</div>
-        <h2 className='text-2xl font-extrabold text-slate-800'>Kangur encountered an error</h2>
-        <p className='mt-3 text-sm text-slate-600'>{errorMessage}</p>
+        <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
+          Kangur encountered an error
+        </h2>
+        <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{errorMessage}</p>
         <div className='mt-6 flex items-center justify-center gap-3'>
           <button
             type='button'
@@ -63,7 +66,7 @@ export function KangurErrorFallback({
           </button>
           <Link
             href={homeHref}
-            className='rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-50'
+            className='soft-card rounded-xl border px-4 py-2 font-semibold [color:var(--kangur-page-text)] transition'
           >
             Back to Kangur
           </Link>

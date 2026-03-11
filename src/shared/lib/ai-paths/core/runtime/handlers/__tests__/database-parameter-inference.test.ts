@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyParameterInferenceGuard,
+  mergeParameterInferenceUpdates,
   mergeTranslatedParameterUpdates,
   materializeParameterInferenceUpdates,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference';
@@ -190,12 +191,61 @@ describe('applyParameterInferenceGuard', () => {
 
     expect(result.updates).toEqual({
       parameters: [
-        { parameterId: 'color', value: 'Blue' },
+        { parameterId: 'color', value: 'Blue', valuesByLanguage: { en: 'Blue' } },
         { parameterId: 'material', value: 'Steel' },
         { parameterId: 'cf_model_name', value: 'X100' },
         { parameterId: 'model_number', value: '' },
       ],
     });
+  });
+
+  it('backfills missing English localized values while preserving sibling translations', () => {
+    const result = materializeParameterInferenceUpdates({
+      targetPath: 'parameters',
+      updates: {
+        parameters: [{ parameterId: 'material', value: 'Faux Leather' }],
+      },
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [
+              {
+                parameterId: 'material',
+                value: 'Faux Leather',
+                valuesByLanguage: { pl: 'Sztuczna skora' },
+              },
+            ],
+          },
+        },
+        result: [{ id: 'material', selectorType: 'text', optionLabels: [] }],
+      },
+      definitionsPort: 'result',
+      definitionsPath: '',
+      languageCode: 'en',
+    });
+
+    expect(result.updates).toEqual({
+      parameters: [
+        {
+          parameterId: 'material',
+          value: 'Faux Leather',
+          valuesByLanguage: {
+            en: 'Faux Leather',
+            pl: 'Sztuczna skora',
+          },
+        },
+      ],
+    });
+    expect(result.meta).toEqual(
+      expect.objectContaining({
+        languageCode: 'en',
+        merged: expect.objectContaining({
+          filledBlank: 0,
+          filledLocalized: 1,
+          preservedNonEmpty: 1,
+        }),
+      })
+    );
   });
 
   it('creates full parameter rows with empty values when existing rows are missing', () => {
@@ -218,6 +268,52 @@ describe('applyParameterInferenceGuard', () => {
         { parameterId: 'material', value: '' },
       ],
     });
+  });
+
+  it('mirrors inferred values into English localized storage for entity updates', () => {
+    const result = mergeParameterInferenceUpdates({
+      targetPath: 'parameters',
+      updates: {
+        parameters: [{ parameterId: 'material', value: 'Faux Leather' }],
+      },
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [
+              {
+                parameterId: 'material',
+                value: 'Faux Leather',
+                valuesByLanguage: { pl: 'Sztuczna skora' },
+              },
+            ],
+          },
+        },
+      },
+      languageCode: 'en',
+    });
+
+    expect(result.updates).toEqual({
+      parameters: [
+        {
+          parameterId: 'material',
+          value: 'Faux Leather',
+          valuesByLanguage: {
+            en: 'Faux Leather',
+            pl: 'Sztuczna skora',
+          },
+        },
+      ],
+    });
+    expect(result.meta).toEqual(
+      expect.objectContaining({
+        languageCode: 'en',
+        merged: expect.objectContaining({
+          filledBlank: 0,
+          filledLocalized: 1,
+          preservedNonEmpty: 1,
+        }),
+      })
+    );
   });
 });
 

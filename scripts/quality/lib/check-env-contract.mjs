@@ -14,7 +14,7 @@ const parseUrl = (value) => {
   }
 };
 
-const isKnownAppProvider = (value) => value === 'prisma' || value === 'mongodb';
+const isKnownAppProvider = (value) => value === 'mongodb';
 
 export const analyzeEnvContract = ({
   env = process.env,
@@ -22,7 +22,6 @@ export const analyzeEnvContract = ({
 } = {}) => {
   const issues = [];
   const nodeEnv = normalizeString(env['NODE_ENV']) || 'development';
-  const databaseUrl = normalizeString(env['DATABASE_URL']);
   const mongoUri = normalizeString(env['MONGODB_URI']);
   const appDbProvider = normalizeString(env['APP_DB_PROVIDER']).toLowerCase();
   const authSecret = normalizeString(env['AUTH_SECRET']);
@@ -32,12 +31,12 @@ export const analyzeEnvContract = ({
   const enableRateLimits = normalizeString(env['ENABLE_RATE_LIMITS']).toLowerCase();
   const disableRateLimits = normalizeString(env['DISABLE_RATE_LIMITS']).toLowerCase();
 
-  if (!hasValue(databaseUrl) && !hasValue(mongoUri)) {
+  if (!hasValue(mongoUri)) {
     issues.push(
       createIssue({
         severity: 'error',
         ruleId: 'database-provider-missing',
-        message: 'No database provider is configured. Set DATABASE_URL or MONGODB_URI.',
+        message: 'No database provider is configured. Set MONGODB_URI.',
       })
     );
   }
@@ -47,17 +46,7 @@ export const analyzeEnvContract = ({
       createIssue({
         severity: 'error',
         ruleId: 'app-db-provider-invalid',
-        message: `APP_DB_PROVIDER="${appDbProvider}" is invalid. Expected "prisma" or "mongodb".`,
-      })
-    );
-  }
-
-  if (appDbProvider === 'prisma' && !hasValue(databaseUrl)) {
-    issues.push(
-      createIssue({
-        severity: 'error',
-        ruleId: 'app-db-provider-prisma-missing-url',
-        message: 'APP_DB_PROVIDER=prisma requires DATABASE_URL.',
+        message: `APP_DB_PROVIDER="${appDbProvider}" is invalid. Expected "mongodb".`,
       })
     );
   }
@@ -68,27 +57,6 @@ export const analyzeEnvContract = ({
         severity: 'error',
         ruleId: 'app-db-provider-mongodb-missing-url',
         message: 'APP_DB_PROVIDER=mongodb requires MONGODB_URI.',
-      })
-    );
-  }
-
-  if (hasValue(databaseUrl) && hasValue(mongoUri) && !hasValue(appDbProvider)) {
-    issues.push(
-      createIssue({
-        severity: 'warn',
-        ruleId: 'dual-database-provider-implicit-fallback',
-        message:
-          'DATABASE_URL and MONGODB_URI are both configured while APP_DB_PROVIDER is unset. App data will default to MongoDB unless Database Engine routing overrides it.',
-      })
-    );
-  }
-
-  if (hasValue(databaseUrl) && !parseUrl(databaseUrl).ok) {
-    issues.push(
-      createIssue({
-        severity: 'error',
-        ruleId: 'database-url-invalid',
-        message: 'DATABASE_URL is not a valid URL.',
       })
     );
   }

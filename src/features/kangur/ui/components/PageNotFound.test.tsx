@@ -7,13 +7,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMeMock, useKangurRoutingMock, routerPushMock } = vi.hoisted(() => ({
+const { authMeMock, useKangurRoutingMock, usePathnameMock, routerPushMock } = vi.hoisted(() => ({
   authMeMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
+  usePathnameMock: vi.fn(),
   routerPushMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
   useRouter: () => ({
     push: routerPushMock,
   }),
@@ -29,6 +31,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: () => useKangurRoutingMock(),
 }));
 
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
@@ -52,6 +55,7 @@ describe('PageNotFound', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMeMock.mockResolvedValue({ role: 'student' });
+    usePathnameMock.mockReturnValue('/kangur/missing-page');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       requestedPath: '/kangur/missing-page',
@@ -73,7 +77,7 @@ describe('PageNotFound', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Go Home' }));
 
-    expect(routerPushMock).toHaveBeenCalledWith('/kangur');
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
   });
 
   it('uses shared Kangur summary and dot primitives for the admin note', async () => {
@@ -83,7 +87,9 @@ describe('PageNotFound', () => {
 
     expect(await screen.findByTestId('page-not-found-admin-note')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border',
+      'mt-8',
+      'text-left'
     );
     expect(screen.getByTestId('page-not-found-admin-dot')).toHaveClass('bg-amber-400');
     expect(screen.getByText('Admin Note').parentElement).toHaveClass(

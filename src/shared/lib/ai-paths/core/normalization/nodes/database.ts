@@ -100,6 +100,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
       targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
       definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
       definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
+      languageCode: databaseConfig.parameterInferenceGuard.languageCode ?? 'en',
       enforceOptionLabels: databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
       allowUnknownParameterIds:
           databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
@@ -153,12 +154,13 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
 
 export const normalizeDbSchemaNode = (node: AiNode): AiNode => {
   const schemaConfig = node.config?.db_schema;
+  const normalizedProvider = schemaConfig?.provider === 'mongodb' ? 'mongodb' : 'auto';
   return {
     ...node,
     config: {
       ...node.config,
       db_schema: {
-        provider: schemaConfig?.provider ?? 'all',
+        provider: normalizedProvider,
         mode: schemaConfig?.mode ?? 'all',
         collections: schemaConfig?.collections ?? [],
         includeFields: schemaConfig?.includeFields ?? true,

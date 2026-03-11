@@ -1,7 +1,6 @@
 import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import {
   getDatabaseEnginePolicy,
@@ -28,7 +27,6 @@ const normalizeProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;
   const normalized = value.toLowerCase().trim();
   if (normalized === 'mongodb') return 'mongodb';
-  if (normalized === 'prisma') return 'prisma';
   return null;
 };
 
@@ -47,19 +45,6 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
   }
 };
 
-const readPrismaAppProviderSetting = async (): Promise<AppDbProvider | null> => {
-  if (!process.env['DATABASE_URL']) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: APP_DB_PROVIDER_SETTING_KEY },
-      select: { value: true },
-    });
-    return normalizeProvider(setting?.value ?? null);
-  } catch {
-    return null;
-  }
-};
-
 export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> => {
   const now = Date.now();
   if (providerCache && now - providerCache.ts < PROVIDER_CACHE_TTL_MS) {
@@ -73,11 +58,7 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
       const envProvider = normalizeProvider(process.env['APP_DB_PROVIDER']);
       if (envProvider) return envProvider;
     }
-    const mongoSetting = await readMongoAppProviderSetting();
-    if (mongoSetting) return mongoSetting;
-    const prismaSetting = await readPrismaAppProviderSetting();
-    if (prismaSetting) return prismaSetting;
-    return null;
+    return readMongoAppProviderSetting();
   })();
   const value = await providerInflight;
   providerCache = { value, ts: Date.now() };
@@ -100,8 +81,11 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
 
   if (routeProvider) {
     if (routeProvider === 'redis') {
+      throw internalError('Database Engine route "app" cannot target Redis. Use MongoDB.');
+    }
+    if (routeProvider !== 'mongodb') {
       throw internalError(
-        'Database Engine route "app" cannot target Redis. Use Prisma or MongoDB.'
+        `Database Engine route "app" targets "${routeProvider}" but only MongoDB is supported.`
       );
     }
     if (!isPrimaryProviderConfigured(routeProvider)) {
@@ -116,24 +100,13 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
     );
   } else {
     const setting = await getAppDbProviderSetting();
-    if (setting === 'mongodb') {
+    if (setting === 'mongodb' || process.env['MONGODB_URI']) {
       if (!process.env['MONGODB_URI']) {
         throw internalError('App provider is set to MongoDB but MONGODB_URI is missing.');
       }
       result = 'mongodb';
-    } else if (setting === 'prisma') {
-      if (!process.env['DATABASE_URL']) {
-        throw internalError('App provider is set to Prisma but DATABASE_URL is missing.');
-      }
-      result = 'prisma';
-    } else if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
-      result = 'mongodb';
-    } else if (process.env['DATABASE_URL']) {
-      result = 'prisma';
-    } else if (process.env['MONGODB_URI']) {
-      result = 'mongodb';
     } else {
-      throw internalError('No database provider is configured. Set DATABASE_URL or MONGODB_URI.');
+      throw internalError('No database provider is configured. Set MONGODB_URI.');
     }
   }
 

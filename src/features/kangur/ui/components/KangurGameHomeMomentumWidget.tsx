@@ -247,6 +247,17 @@ const getHomeRecommendation = (
   getTrackRecommendation(progress) ??
   getFallbackRecommendation(progress);
 
+const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 110;
+
+const buildHomeMomentumTransitionSourceId = (action: KangurRouteAction): string => {
+  const queryToken =
+    action.query?.['focus'] ??
+    action.query?.['operation'] ??
+    action.query?.['quickStart'] ??
+    'default';
+  return `game-home-momentum:${action.page.toLowerCase()}:${queryToken}`;
+};
+
 export default function KangurGameHomeMomentumWidget({
   basePath,
   progress,
@@ -296,6 +307,8 @@ export default function KangurGameHomeMomentumWidget({
           <Link
             href={recommendationHref}
             targetPageKey={recommendationTargetPageKey}
+            transitionAcknowledgeMs={HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS}
+            transitionSourceId={buildHomeMomentumTransitionSourceId(recommendationAction)}
           >
             {recommendationAction.label}
           </Link>

@@ -24,7 +24,9 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurPageContainer, KangurPageShell } from '@/features/kangur/ui/design/primitives';
+import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
@@ -81,6 +83,7 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 function GameContent(): React.JSX.Element {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
@@ -189,6 +192,16 @@ function GameContent(): React.JSX.Element {
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
+  const isGamePageReady =
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
+      ? screen !== 'home'
+      : true;
+
+  useKangurRoutePageReady({
+    pageKey: 'Game',
+    ready: isGamePageReady,
+  });
 
   useKangurTutorAnchor({
     id: 'kangur-game-home-actions',

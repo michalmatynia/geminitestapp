@@ -100,7 +100,9 @@ export function RepeaterBlock(): React.ReactNode {
   }
 
   if (visibleItems.length === 0) {
-    return emptyMessage ? <div className='text-sm text-gray-500'>{emptyMessage}</div> : null;
+    return emptyMessage ? (
+      <div className='cms-appearance-muted-text text-sm'>{emptyMessage}</div>
+    ) : null;
   }
 
   return (

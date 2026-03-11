@@ -256,7 +256,9 @@ function renderImageBlock(
         </KangurMediaFrame>
       </div>
       {block.caption?.trim() ? (
-        <div className='mt-3 text-sm leading-6 text-slate-600'>{block.caption.trim()}</div>
+        <div className='mt-3 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+          {block.caption.trim()}
+        </div>
       ) : null}
     </KangurSurfacePanel>
   );
@@ -288,12 +290,36 @@ function renderInlineBlock(
 
 const CALLOUT_STYLES: Record<
   KangurLessonCalloutBlock['variant'],
-  { bg: string; border: string; icon: string; label: string }
+  { border: string; icon: string; label: string; accentSurface: string; text: string }
 > = {
-  info: { bg: 'bg-indigo-50', border: 'border-indigo-200', icon: 'ℹ️', label: 'Info' },
-  tip: { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: '💡', label: 'Wskazówka' },
-  warning: { bg: 'bg-amber-50', border: 'border-amber-200', icon: '⚠️', label: 'Uwaga' },
-  success: { bg: 'bg-teal-50', border: 'border-teal-200', icon: '✅', label: 'Sukces' },
+  info: {
+    border: 'border-indigo-200',
+    icon: 'ℹ️',
+    label: 'Info',
+    accentSurface: '#e0e7ff',
+    text: '#4338ca',
+  },
+  tip: {
+    border: 'border-emerald-200',
+    icon: '💡',
+    label: 'Wskazówka',
+    accentSurface: '#d1fae5',
+    text: '#047857',
+  },
+  warning: {
+    border: 'border-amber-200',
+    icon: '⚠️',
+    label: 'Uwaga',
+    accentSurface: '#fde68a',
+    text: '#b45309',
+  },
+  success: {
+    border: 'border-teal-200',
+    icon: '✅',
+    label: 'Sukces',
+    accentSurface: '#ccfbf1',
+    text: '#0f766e',
+  },
 };
 
 function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React.JSX.Element {
@@ -302,9 +328,12 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
     <div
       key={key}
       data-testid={`lesson-callout-block-${block.id}`}
-      className={cn('rounded-xl border p-4', style.bg, style.border)}
+      className={cn('soft-card rounded-xl border p-4', style.border)}
+      style={{
+        background: `color-mix(in srgb, var(--kangur-soft-card-background) 84%, ${style.accentSurface})`,
+      }}
     >
-      <div className='mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700'>
+      <div className='mb-1 flex items-center gap-2 text-sm font-semibold' style={{ color: style.text }}>
         <span aria-hidden>{style.icon}</span>
         {block.title?.trim() || style.label}
       </div>
@@ -327,9 +356,12 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
   };
 
   return (
-    <div data-testid={`lesson-quiz-block-${block.id}`} className='rounded-xl border border-slate-200 bg-white p-4 shadow-sm'>
+    <div
+      data-testid={`lesson-quiz-block-${block.id}`}
+      className='soft-card rounded-xl border border-slate-200 p-4 shadow-sm'
+    >
       <div
-        className='prose prose-sm mb-4 max-w-none font-semibold'
+        className='prose prose-sm mb-4 max-w-none font-semibold [color:var(--kangur-page-text)]'
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
       />
       <div className='space-y-2'>
@@ -338,19 +370,29 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
           const isCorrect = choice.id === block.correctChoiceId;
           let choiceClass = 'rounded-lg border px-4 py-2 text-left text-sm w-full transition';
           if (!state.revealed) {
-            choiceClass += ' border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300';
+            choiceClass +=
+              ' soft-card border-slate-200 [color:var(--kangur-page-text)] hover:border-indigo-300';
           } else if (isCorrect) {
             choiceClass += ' border-emerald-400 bg-emerald-50 text-emerald-800 font-semibold';
           } else if (isSelected) {
             choiceClass += ' border-rose-300 bg-rose-50 text-rose-700';
           } else {
-            choiceClass += ' border-slate-100 bg-slate-50 opacity-60';
+            choiceClass +=
+              ' border-slate-100 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)] opacity-60';
           }
           return (
             <button
               key={choice.id}
               type='button'
               className={choiceClass}
+              style={
+                !state.revealed
+                  ? {
+                      background:
+                        'var(--kangur-soft-card-background)',
+                    }
+                  : undefined
+              }
               onClick={(): void => handleSelect(choice.id)}
               disabled={state.revealed}
             >
@@ -361,7 +403,7 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
       </div>
       {state.revealed && block.explanation?.trim() ? (
         <div
-          className='prose prose-sm mt-3 max-w-none rounded-lg bg-slate-100 p-3'
+          className='prose prose-sm mt-3 max-w-none rounded-lg p-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
         />
       ) : null}
@@ -379,25 +421,27 @@ function renderQuizBlock(
       <div
         key={key}
         data-testid={`lesson-quiz-block-${block.id}`}
-        className='rounded-xl border border-slate-200 bg-slate-50 p-4'
+        className='soft-card rounded-xl border border-slate-200 p-4'
       >
-        <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500'>Quiz</div>
+        <div className='mb-2 text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+          Quiz
+        </div>
         <div
-          className='prose prose-sm mb-3 max-w-none font-semibold'
+          className='prose prose-sm mb-3 max-w-none font-semibold [color:var(--kangur-page-text)]'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
         />
         <ul className='space-y-1'>
           {block.choices.map((choice) => (
             <li
               key={choice.id}
-              className={cn(
-                'rounded px-3 py-1.5 text-sm',
-                choice.id === block.correctChoiceId
-                  ? 'bg-emerald-100 font-semibold text-emerald-800'
-                  : 'bg-slate-100 text-slate-600'
-              )}
-            >
-              {choice.id === block.correctChoiceId ? '✓ ' : ''}
+                className={cn(
+                  'rounded px-3 py-1.5 text-sm',
+                  choice.id === block.correctChoiceId
+                    ? 'bg-emerald-100 font-semibold text-emerald-800'
+                    : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)]'
+                )}
+              >
+                {choice.id === block.correctChoiceId ? '✓ ' : ''}
               {choice.text}
             </li>
           ))}

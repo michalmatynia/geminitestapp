@@ -8,14 +8,20 @@ import {
   type CmsPageRendererProps,
   type SectionRendererProps,
 } from './CmsPageRendererBase';
+import { useOptionalCmsStorefrontAppearance } from './CmsStorefrontAppearance';
 import { useOptionalCmsRuntime } from './CmsRuntimeContext';
 
 export type { CmsPageRendererProps } from './CmsPageRendererBase';
 
 export function CmsPageRenderer(props: CmsPageRendererProps): React.ReactNode {
   const runtime = useOptionalCmsRuntime();
+  const appearance = useOptionalCmsStorefrontAppearance();
 
-  return renderCmsPageRenderer({ ...props, runtime });
+  return renderCmsPageRenderer({
+    ...props,
+    runtime,
+    appearanceMode: props.appearanceMode ?? appearance?.mode ?? 'default',
+  });
 }
 
 export function SectionRenderer(props: SectionRendererProps): React.ReactNode {

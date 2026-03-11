@@ -1,4 +1,10 @@
+'use client';
+
 import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
+import {
+  resolveCmsStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 
@@ -35,11 +41,6 @@ export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
     menuVisible && (menu.menuPlacement === 'left' || menu.menuPlacement === 'right');
   const sideOffset = isSideMenu ? menu.sideWidth : 0;
   const pageRadius = typeof theme.borderRadius === 'number' ? theme.borderRadius : 0;
-  const pageStyle: CSSProperties = {
-    backgroundColor: theme.backgroundColor,
-    borderRadius: pageRadius > 0 ? pageRadius : undefined,
-    overflow: pageRadius > 0 ? 'hidden' : undefined,
-  };
   const contentStyle: CSSProperties = {
     paddingTop,
     paddingRight,
@@ -60,13 +61,60 @@ export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
   }
 
   return (
-    <div style={pageStyle} suppressHydrationWarning>
+    <CmsPageShellFrame
+      menu={menu}
+      theme={theme}
+      colorSchemes={colorSchemes}
+      animationsEnabled={theme.enableAnimations}
+      menuVisible={menuVisible}
+      pageRadius={pageRadius}
+      contentStyle={contentStyle}
+    >
+      {children}
+    </CmsPageShellFrame>
+  );
+}
+
+function CmsPageShellFrame({
+  menu,
+  theme,
+  colorSchemes,
+  animationsEnabled,
+  menuVisible,
+  pageRadius,
+  contentStyle,
+  children,
+}: {
+  menu: MenuSettings;
+  theme: ThemeSettings;
+  colorSchemes: Record<string, ColorSchemeColors>;
+  animationsEnabled: boolean;
+  menuVisible: boolean;
+  pageRadius: number;
+  contentStyle: CSSProperties;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const appearance = useOptionalCmsStorefrontAppearance();
+  const appearanceMode = appearance?.mode ?? 'default';
+  const storefrontAppearance = resolveCmsStorefrontAppearance(theme, appearanceMode);
+
+  const pageStyle: CSSProperties = {
+    backgroundColor: storefrontAppearance.pageTone.background,
+    color: storefrontAppearance.pageTone.text,
+    borderRadius: pageRadius > 0 ? pageRadius : undefined,
+    overflow: pageRadius > 0 ? 'hidden' : undefined,
+    ...storefrontAppearance.vars,
+  };
+
+  return (
+    <div
+      style={pageStyle}
+      data-appearance-mode={appearanceMode}
+      data-cms-appearance-scope='true'
+      suppressHydrationWarning
+    >
       {menuVisible ? (
-        <CmsMenu
-          menu={menu}
-          colorSchemes={colorSchemes}
-          animationsEnabled={theme.enableAnimations}
-        />
+        <CmsMenu menu={menu} colorSchemes={colorSchemes} animationsEnabled={animationsEnabled} />
       ) : null}
       <div style={contentStyle} suppressHydrationWarning>
         {children}

@@ -58,6 +58,8 @@ const QUEST_STATUS_ACCENTS = {
   not_started: 'slate',
 } as const;
 
+const HOME_QUEST_ROUTE_ACKNOWLEDGE_MS = 110;
+
 export function KangurGameHomeQuestWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
@@ -143,10 +145,10 @@ export function KangurGameHomeQuestWidget({
             </KangurStatusChip>
           </div>
 
-          <div className='mt-4 text-2xl font-extrabold tracking-tight text-slate-900'>
+          <div className='mt-4 text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
             {assignment.title}
           </div>
-          <p className='mt-3 max-w-2xl text-sm leading-7 text-slate-600'>
+          <p className='mt-3 max-w-2xl text-sm leading-7 [color:var(--kangur-page-muted-text)]'>
             {assignment.description}
           </p>
 
@@ -234,6 +236,8 @@ export function KangurGameHomeQuestWidget({
             <Link
               href={buildAssignmentHref(basePath, assignment.action)}
               targetPageKey={assignment.action.page}
+              transitionAcknowledgeMs={HOME_QUEST_ROUTE_ACKNOWLEDGE_MS}
+              transitionSourceId={`game-home-quest:${assignment.id}`}
             >
               {assignment.action.label}
             </Link>

@@ -16,8 +16,11 @@ export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
   const routeProvider = await getDatabaseEngineServiceProvider('cms');
   if (routeProvider) {
     if (routeProvider === 'redis') {
+      throw internalError('Database Engine route "cms" cannot target Redis. Configure MongoDB.');
+    }
+    if (routeProvider !== 'mongodb') {
       throw internalError(
-        'Database Engine route "cms" cannot target Redis. Configure Prisma or MongoDB.'
+        `Database Engine route "cms" points to "${routeProvider}" but only MongoDB is supported.`
       );
     }
     if (policy.strictProviderAvailability && !isPrimaryProviderConfigured(routeProvider)) {
@@ -34,6 +37,6 @@ export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
     );
   }
 
-  const provider = await getAppDbProvider();
-  return provider;
+  await getAppDbProvider();
+  return 'mongodb';
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
@@ -27,6 +27,29 @@ type KangurBackNavigationOptions = Pick<
 };
 
 const isManagedLocalHref = (href: string): boolean => href.startsWith('/') && !href.startsWith('//');
+
+const normalizeManagedPathname = (pathname: string | null | undefined): string | null => {
+  if (typeof pathname !== 'string') {
+    return null;
+  }
+
+  const trimmed = pathname.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const withoutQuery = trimmed.split('?')[0] ?? trimmed;
+  const normalized = withoutQuery.replace(/\/+$/, '') || '/';
+  return normalized;
+};
+
+const getManagedPathnameFromHref = (href: string): string | null => {
+  try {
+    return normalizeManagedPathname(new URL(href, 'https://kangur.local').pathname);
+  } catch {
+    return normalizeManagedPathname(href);
+  }
+};
 
 const getSlugFromPathname = (
   pathname: string | null,
@@ -91,10 +114,12 @@ export function useKangurRouteNavigator(): {
   push: (href: string, options?: KangurRouteNavigationOptions) => void;
   replace: (href: string, options?: KangurRouteNavigationOptions) => void;
 } {
+  const pathname = usePathname();
   const router = useRouter();
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const queuedNavigationTimeoutRef = useRef<number | null>(null);
 
   const startManagedTransition = useCallback(
@@ -107,6 +132,24 @@ export function useKangurRouteNavigator(): {
       }: Pick<KangurRouteNavigationOptions, 'acknowledgeMs' | 'pageKey' | 'sourceId'> = {}
     ): { acknowledgeMs: number; started: boolean } => {
       if (!routeTransitionActions || (href !== null && !isManagedLocalHref(href))) {
+        return {
+          acknowledgeMs: 0,
+          started: true,
+        };
+      }
+
+      const targetPathname = href ? getManagedPathnameFromHref(href) : null;
+      const currentPathname = normalizeManagedPathname(pathname);
+      const normalizedRequestedHref = normalizeManagedPathname(requestedHref);
+
+      if (
+        href &&
+        normalizedRequestedHref &&
+        href === requestedHref &&
+        targetPathname &&
+        currentPathname &&
+        targetPathname !== currentPathname
+      ) {
         return {
           acknowledgeMs: 0,
           started: true,
@@ -136,7 +179,7 @@ export function useKangurRouteNavigator(): {
         started: true,
       };
     },
-    [basePath, routeTransitionActions]
+    [basePath, pathname, requestedHref, routeTransitionActions]
   );
 
   const clearQueuedNavigation = useCallback((): void => {

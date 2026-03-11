@@ -448,7 +448,12 @@ export function KangurAssignmentManager({
 
                 {featuredQuestHref ? (
                   <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
-                    <Link href={featuredQuestHref} targetPageKey={featuredQuestTargetPage ?? undefined}>
+                    <Link
+                      href={featuredQuestHref}
+                      targetPageKey={featuredQuestTargetPage ?? undefined}
+                      transitionAcknowledgeMs={110}
+                      transitionSourceId='assignment-manager:featured-daily-quest'
+                    >
                       {featuredDailyQuest.assignment.action.label}
                     </Link>
                   </KangurButton>
@@ -672,7 +677,13 @@ export function KangurAssignmentManager({
                       {item.progressSummary}
                     </div>
                     <KangurButton asChild size='sm' variant='warning'>
-                      <Link href={item.actionHref}>{item.actionLabel}</Link>
+                      <Link
+                        href={item.actionHref}
+                        transitionAcknowledgeMs={110}
+                        transitionSourceId={`assignment-manager:attention:${item.id}`}
+                      >
+                        {item.actionLabel}
+                      </Link>
                     </KangurButton>
                   </div>
                 </KangurInfoCard>

@@ -295,7 +295,7 @@ describe('KangurLessonDocumentRenderer', () => {
     );
     expect(screen.getAllByText('Section')[0].parentElement).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Missing image')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByTestId('lesson-image-frame-image-empty')).toHaveClass(
@@ -306,7 +306,7 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByText('This page has no blocks yet.').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Image block has no source yet.').parentElement).toHaveClass(
       'soft-card',

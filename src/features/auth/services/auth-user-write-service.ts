@@ -5,7 +5,6 @@ import { hash } from 'bcryptjs';
 import type { AuthUserRecord } from '@/shared/contracts/auth';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from './auth-user-repository';
 
@@ -39,35 +38,7 @@ export const createAuthUserWithEmail = async (input: {
   const normalizedName = normalizeOptionalName(input.name);
   const passwordHash = input.passwordHash ?? null;
   const emailVerified = input.emailVerified ?? null;
-
-  if (provider === 'prisma') {
-    const created = await prisma.user.create({
-      data: {
-        email,
-        name: normalizedName,
-        passwordHash,
-        emailVerified,
-        image: null,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
-
-    return {
-      id: created.id,
-      email: created.email ?? email,
-      name: created.name ?? null,
-      passwordHash: created.passwordHash ?? null,
-      image: created.image ?? null,
-      emailVerified: created.emailVerified ?? null,
-    };
-  }
+  void provider;
 
   if (!process.env['MONGODB_URI']) {
     throw new Error('MongoDB is not configured.');
@@ -121,18 +92,8 @@ export const ensureAuthUserWithEmail = async (input: {
 };
 
 export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUserRecord | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
+  requireAuthProvider(await getAuthDataProvider());
   const verifiedAt = new Date();
-
-  if (provider === 'prisma') {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        emailVerified: verifiedAt,
-      },
-    });
-    return findAuthUserById(userId);
-  }
 
   if (!process.env['MONGODB_URI']) {
     return null;
@@ -161,18 +122,8 @@ export const setAuthUserPassword = async (
   userId: string,
   password: string
 ): Promise<AuthUserRecord | null> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
+  requireAuthProvider(await getAuthDataProvider());
   const passwordHash = await hash(password, 12);
-
-  if (provider === 'prisma') {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        passwordHash,
-      },
-    });
-    return findAuthUserById(userId);
-  }
 
   if (!process.env['MONGODB_URI']) {
     return null;

@@ -20,6 +20,7 @@ export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.
       <KangurRoutingProvider
         pageKey={pageKey}
         requestedPath={requestedPath}
+        requestedHref={requestedPath}
         basePath={normalizedBasePath}
         embedded
       >

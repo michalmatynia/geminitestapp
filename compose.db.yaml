@@ -1,16 +1,12 @@
 services:
   db:
-    image: postgres:16
-    # Defaults match .env's DATABASE_URL (postgresuser/stardb) and allow passwordless local dev.
+    image: mongo:7
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-stardb}
-      POSTGRES_USER: ${POSTGRES_USER:-postgresuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-trust}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-app}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '${MONGODB_PORT:-27017}:27017'
     volumes:
-      - pgdata_local:/var/lib/postgresql/data
+      - mongodb_local:/data/db
 
 volumes:
-  pgdata_local:
+  mongodb_local:

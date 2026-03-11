@@ -132,6 +132,80 @@ const patchTargetPathInUpdateDoc = (
   return nextRecord;
 };
 
+const isImplicitEmptyArray = (value: unknown): value is unknown[] =>
+  Array.isArray(value) && value.length === 0;
+
+const isProductParameterUpdateTarget = (args: {
+  collection: string;
+  dbConfig: DatabaseConfig;
+  targetPath: string;
+}): boolean => {
+  if (args.targetPath !== 'parameters') return false;
+  const collection = args.collection.trim().toLowerCase();
+  if (collection === 'products') return true;
+  return normalizeNonEmptyString(args.dbConfig.entityType)?.toLowerCase() === 'product';
+};
+
+const pruneImplicitEmptyProductParameterUpdate = (args: {
+  collection: string;
+  dbConfig: DatabaseConfig;
+  targetPath: string;
+  updates: Record<string, unknown>;
+  updateDoc: unknown;
+}): {
+  updates: Record<string, unknown>;
+  updateDoc: unknown;
+  pruned: boolean;
+  meta?: Record<string, unknown>;
+} => {
+  if (args.dbConfig.parameterInferenceGuard?.enabled) {
+    return {
+      updates: args.updates,
+      updateDoc: args.updateDoc,
+      pruned: false,
+    };
+  }
+  if (
+    !isProductParameterUpdateTarget({
+      collection: args.collection,
+      dbConfig: args.dbConfig,
+      targetPath: args.targetPath,
+    })
+  ) {
+    return {
+      updates: args.updates,
+      updateDoc: args.updateDoc,
+      pruned: false,
+    };
+  }
+  if (!Object.prototype.hasOwnProperty.call(args.updates, args.targetPath)) {
+    return {
+      updates: args.updates,
+      updateDoc: args.updateDoc,
+      pruned: false,
+    };
+  }
+  if (!isImplicitEmptyArray(args.updates[args.targetPath])) {
+    return {
+      updates: args.updates,
+      updateDoc: args.updateDoc,
+      pruned: false,
+    };
+  }
+
+  const nextUpdates = { ...args.updates };
+  delete nextUpdates[args.targetPath];
+  return {
+    updates: nextUpdates,
+    updateDoc: patchTargetPathInUpdateDoc(args.updateDoc, args.targetPath, nextUpdates),
+    pruned: true,
+    meta: {
+      targetPath: args.targetPath,
+      reason: 'implicit_empty_parameter_array',
+    },
+  };
+};
+
 const createTranslationNoUpdatesOutput = (args: {
   error: string;
   aiPrompt: string;
@@ -192,6 +266,29 @@ const createTranslationNoUpdatesOutput = (args: {
     },
   };
 };
+
+const createNoParameterUpdatesOutput = (args: {
+  aiPrompt: string;
+  collection: string;
+  resolvedFilter: Record<string, unknown>;
+  mode: 'mapping' | 'custom';
+  debugMeta?: Record<string, unknown>;
+}): BuildMongoUpdatePlanResult => ({
+  output: {
+    result: null,
+    bundle: {
+      skipped: true,
+      reason: 'no_parameter_updates',
+    },
+    debugPayload: {
+      mode: args.mode,
+      collection: args.collection,
+      filter: args.resolvedFilter,
+      ...(args.debugMeta ?? {}),
+    },
+    aiPrompt: args.aiPrompt,
+  },
+});
 
 export async function buildMongoUpdatePlan({
   actionCategory,
@@ -265,6 +362,7 @@ export async function buildMongoUpdatePlan({
   let updates: Record<string, unknown> = {};
   let updateDoc: unknown = null;
   let translationParameterMergeMeta: Record<string, unknown> | undefined;
+  let implicitEmptyParameterPruneMeta: Record<string, unknown> | undefined;
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -305,6 +403,18 @@ export async function buildMongoUpdatePlan({
       }
     }
 
+    const prunedEmptyParameterUpdate = pruneImplicitEmptyProductParameterUpdate({
+      collection,
+      dbConfig,
+      targetPath: parameterTargetPath,
+      updates,
+      updateDoc,
+    });
+    if (prunedEmptyParameterUpdate.pruned) {
+      updates = prunedEmptyParameterUpdate.updates;
+      implicitEmptyParameterPruneMeta = prunedEmptyParameterUpdate.meta;
+    }
+
     if (Object.keys(updates).length === 0) {
       if (isTranslationParameterUpdate) {
         return createTranslationNoUpdatesOutput({
@@ -319,6 +429,18 @@ export async function buildMongoUpdatePlan({
           toast,
           nodeId: node.id,
           mode: 'mapping',
+        });
+      }
+      if (implicitEmptyParameterPruneMeta) {
+        return createNoParameterUpdatesOutput({
+          aiPrompt,
+          collection,
+          resolvedFilter,
+          mode: 'mapping',
+          debugMeta: {
+            parameterWriteGuard: implicitEmptyParameterPruneMeta,
+            unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+          },
         });
       }
       return {
@@ -484,6 +606,31 @@ export async function buildMongoUpdatePlan({
           });
         }
       }
+
+      const prunedEmptyParameterUpdate = pruneImplicitEmptyProductParameterUpdate({
+        collection,
+        dbConfig,
+        targetPath: parameterTargetPath,
+        updates,
+        updateDoc,
+      });
+      if (prunedEmptyParameterUpdate.pruned) {
+        updates = prunedEmptyParameterUpdate.updates;
+        updateDoc = prunedEmptyParameterUpdate.updateDoc;
+        implicitEmptyParameterPruneMeta = prunedEmptyParameterUpdate.meta;
+      }
+
+      if (Object.keys(updates).length === 0 && implicitEmptyParameterPruneMeta) {
+        return createNoParameterUpdatesOutput({
+          aiPrompt,
+          collection,
+          resolvedFilter,
+          mode: 'custom',
+          debugMeta: {
+            parameterWriteGuard: implicitEmptyParameterPruneMeta,
+          },
+        });
+      }
     }
   }
 
@@ -498,6 +645,9 @@ export async function buildMongoUpdatePlan({
   });
   if (translationParameterMergeMeta) {
     debugPayload['translationParameterMerge'] = translationParameterMergeMeta;
+  }
+  if (implicitEmptyParameterPruneMeta) {
+    debugPayload['parameterWriteGuard'] = implicitEmptyParameterPruneMeta;
   }
 
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
@@ -560,12 +710,15 @@ export async function buildMongoUpdatePlan({
       normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.definitionsPort) ?? 'result';
     const definitionsPath =
       normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.definitionsPath) ?? '';
+    const languageCode =
+      normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.languageCode) ?? 'en';
     const materializeResult = materializeParameterInferenceUpdates({
       targetPath: parameterTargetPath,
       updates,
       templateInputs,
       definitionsPort,
       definitionsPath,
+      languageCode,
     });
     if (materializeResult.applied) {
       updates = materializeResult.updates;

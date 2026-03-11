@@ -80,7 +80,7 @@ export async function handleDatabaseMongoReadAction({
     }
     const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
       ...(queryPayload['provider']
-        ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+        ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
         : {}),
       action,
       collection,
@@ -128,7 +128,7 @@ export async function handleDatabaseMongoReadAction({
   }
   const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
     ...(queryPayload['provider']
-      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' }
       : {}),
     action,
     collection,

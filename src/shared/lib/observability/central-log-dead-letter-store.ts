@@ -1,9 +1,6 @@
 
 import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 
 const SETTINGS_COLLECTION = 'settings';
 const CENTRAL_LOG_DEAD_LETTER_STORE_VERSION = 1;
@@ -23,13 +20,6 @@ type CentralLogDeadLetterEnvelope = {
   updatedAt: string;
   entries: CentralLogDeadLetterStoredEntry[];
 };
-
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
 
 const resolveMaxEntries = (value: number | undefined): number => {
   if (!Number.isFinite(value)) return DEFAULT_MAX_ENTRIES;
@@ -112,20 +102,6 @@ const stringifyEntries = (
   }
 };
 
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return null;
-    return null;
-  }
-};
-
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   try {
@@ -136,21 +112,6 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
     return typeof doc?.value === 'string' ? doc.value : null;
   } catch {
     return null;
-  }
-};
-
-const writePrismaSetting = async (key: string, value: string): Promise<boolean> => {
-  if (!canUsePrismaSettings()) return false;
-  try {
-    await prisma.setting.upsert({
-      where: { key },
-      create: { key, value },
-      update: { value },
-    });
-    return true;
-  } catch (error) {
-    if (isPrismaMissingTableError(error)) return false;
-    return false;
   }
 };
 
@@ -182,29 +143,11 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
   }
 };
 
-const readSettingByProviderPriority = async (key: string): Promise<string | null> => {
-  const provider = await Promise.resolve(getAppDbProvider()).catch(() => null);
-  if (provider === 'mongodb') {
-    const mongoValue = await readMongoSetting(key);
-    if (mongoValue !== null) return mongoValue;
-    return readPrismaSetting(key);
-  }
-  const prismaValue = await readPrismaSetting(key);
-  if (prismaValue !== null) return prismaValue;
-  return readMongoSetting(key);
-};
+const readSettingByProviderPriority = async (key: string): Promise<string | null> =>
+  readMongoSetting(key);
 
-const writeSettingByProviderPriority = async (key: string, value: string): Promise<boolean> => {
-  const provider = await Promise.resolve(getAppDbProvider()).catch(() => null);
-  if (provider === 'mongodb') {
-    const mongoOk = await writeMongoSetting(key, value);
-    if (mongoOk) return true;
-    return writePrismaSetting(key, value);
-  }
-  const prismaOk = await writePrismaSetting(key, value);
-  if (prismaOk) return true;
-  return writeMongoSetting(key, value);
-};
+const writeSettingByProviderPriority = async (key: string, value: string): Promise<boolean> =>
+  writeMongoSetting(key, value);
 
 export const loadCentralLogDeadLetters = async (options?: {
   maxEntries?: number;

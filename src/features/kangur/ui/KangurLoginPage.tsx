@@ -12,6 +12,7 @@ import {
   useState,
   useContext,
   type FormEvent,
+  type CSSProperties,
   type JSX,
 } from 'react';
 
@@ -43,6 +44,8 @@ type KangurLoginPageProps = {
   onClose?: () => void;
   parentAuthMode?: KangurParentAuthMode;
 };
+
+const LOGIN_ROUTE_ACKNOWLEDGE_MS = 110;
 
 type KangurCredentialsCallbackPayload = {
   error?: string;
@@ -343,13 +346,35 @@ function KangurLoginPageContent(): JSX.Element {
           ? 'Rodzic'
           : 'Rodzic lub uczen';
   const audienceBadgeClassName =
+    'inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] shadow-[0_14px_30px_-26px_rgba(15,23,42,0.22)]';
+  const audienceBadgeStyle: CSSProperties =
     parentAuthMode === 'create-account'
-      ? 'inline-flex items-center justify-center rounded-full border border-amber-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#9a5418] shadow-[0_14px_30px_-26px_rgba(249,115,22,0.52)]'
+      ? {
+          background:
+            'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(245,158,11,0.22))',
+          borderColor: 'rgba(251,191,36,0.52)',
+          color: '#9a5418',
+        }
       : loginKind === 'student'
-        ? 'inline-flex items-center justify-center rounded-full border border-sky-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-sky-700 shadow-[0_14px_30px_-26px_rgba(59,130,246,0.4)]'
+        ? {
+            background:
+              'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(56,189,248,0.2))',
+            borderColor: 'rgba(125,211,252,0.5)',
+            color: '#0369a1',
+          }
         : loginKind === 'parent'
-          ? 'inline-flex items-center justify-center rounded-full border border-indigo-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-[0_14px_30px_-26px_rgba(99,102,241,0.42)]'
-          : 'inline-flex items-center justify-center rounded-full border border-amber-200/80 bg-white/82 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#9a5418] shadow-[0_14px_30px_-26px_rgba(249,115,22,0.42)]';
+          ? {
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(99,102,241,0.2))',
+              borderColor: 'rgba(165,180,252,0.5)',
+              color: '#4338ca',
+            }
+          : {
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(245,158,11,0.18))',
+              borderColor: 'rgba(251,191,36,0.48)',
+              color: '#9a5418',
+            };
   const introDescription =
     parentAuthMode === 'create-account'
       ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
@@ -371,7 +396,7 @@ function KangurLoginPageContent(): JSX.Element {
     ? `Wyslij email ponownie za ${formatRetryAfterLabel(resendRetryAfterMs)}`
     : 'Wyslij email ponownie';
   const inputClassName =
-    'rounded-[24px] border border-white/85 bg-white/88 px-4 py-3 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition placeholder:text-slate-400 focus:border-amber-200 focus:bg-white focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
+    'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus:ring-2 focus:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
     .filter(Boolean)
     .join(' ');
@@ -483,7 +508,11 @@ function KangurLoginPageContent(): JSX.Element {
 
     if (navigationTarget.kind === 'router') {
       onClose?.();
-      routeNavigator.push(navigationTarget.href, { scroll: false });
+      routeNavigator.push(navigationTarget.href, {
+        acknowledgeMs: LOGIN_ROUTE_ACKNOWLEDGE_MS,
+        scroll: false,
+        sourceId: 'kangur-login:finish',
+      });
       return;
     }
 
@@ -893,7 +922,7 @@ function KangurLoginPageContent(): JSX.Element {
           <div className='max-w-2xl'>
             <div className='flex items-center gap-3'>
               <div
-                className='inline-flex items-center rounded-full border border-white/80 bg-white/78 px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
+                className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
                 data-testid='kangur-login-hero-logo'
               >
                 <KangurHomeLogo
@@ -913,9 +942,13 @@ function KangurLoginPageContent(): JSX.Element {
             >
               Zaloguj się
             </KangurGradientHeading>
-            <p className='mt-3 max-w-xl text-sm leading-6 text-slate-600'>{introDescription}</p>
+            <p className='mt-3 max-w-xl text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+              {introDescription}
+            </p>
           </div>
-          <div className={audienceBadgeClassName}>{audienceLabel}</div>
+          <div className={audienceBadgeClassName} style={audienceBadgeStyle}>
+            {audienceLabel}
+          </div>
         </div>
       </KangurGlassPanel>
 
@@ -931,7 +964,7 @@ function KangurLoginPageContent(): JSX.Element {
         ref={loginFormRef}
       >
         {isParentFlowVisible ? (
-          <div className='rounded-[28px] border border-white/80 bg-white/62 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
+          <div className='glass-panel rounded-[28px] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
             <div className='grid gap-2 sm:grid-cols-2'>
               <KangurButton
                 aria-pressed={parentAuthMode === 'sign-in'}
@@ -971,7 +1004,7 @@ function KangurLoginPageContent(): JSX.Element {
           </div>
         ) : null}
 
-        <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
           {isParentFlowVisible && parentAuthMode === 'create-account'
             ? 'Email rodzica'
             : 'Email rodzica albo nick ucznia'}
@@ -997,7 +1030,7 @@ function KangurLoginPageContent(): JSX.Element {
           />
         </label>
 
-        <label className='flex flex-col gap-2 text-sm font-semibold text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
           {isParentFlowVisible && parentAuthMode === 'create-account'
             ? 'Ustaw hasło rodzica'
             : 'Hasło'}
@@ -1059,16 +1092,18 @@ function KangurLoginPageContent(): JSX.Element {
           <KangurGlassPanel
             aria-atomic='true'
             aria-live='polite'
-            className='text-sm text-slate-700'
+            className='text-sm [color:var(--kangur-page-text)]'
             padding='md'
             role='status'
             surface='warmGlow'
             variant='soft'
           >
-            <p className='font-bold text-slate-900'>Sprawdź skrzynkę: {createdParentEmail}</p>
+            <p className='font-bold [color:var(--kangur-page-text)]'>
+              Sprawdź skrzynkę: {createdParentEmail}
+            </p>
             <p className='mt-1 leading-6'>{createAccountConfirmationDetail}</p>
             {resendAvailabilityMessage ? (
-              <p className='mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500'>
+              <p className='mt-2 text-xs font-semibold uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
                 {resendAvailabilityMessage}
               </p>
             ) : null}

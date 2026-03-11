@@ -1,27 +1,39 @@
-import prisma from '@/shared/lib/db/prisma';
 import bcrypt from 'bcryptjs';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 async function main() {
   try {
+    if (!process.env['MONGODB_URI']) {
+      throw new Error('MONGODB_URI is required.');
+    }
+
     const email = 'admin@example.com';
     const password = 'admin123';
     const passwordHash = await bcrypt.hash(password, 12);
+    const db = await getMongoDb();
+    const now = new Date();
 
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: {},
-      create: {
-        email,
-        name: 'Admin User',
-        passwordHash,
+    await db.collection('users').updateOne(
+      { email },
+      {
+        $set: {
+          email,
+          name: 'Admin User',
+          passwordHash,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+          image: null,
+        },
       },
-    });
+      { upsert: true }
+    );
 
-    console.log('Admin user ensured:', user.email);
+    console.log('Admin user ensured:', email);
   } catch (error) {
     console.error('Error seeding admin:', error);
-  } finally {
-    process.exit();
+    process.exitCode = 1;
   }
 }
 

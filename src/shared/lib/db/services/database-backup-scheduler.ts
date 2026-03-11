@@ -16,7 +16,6 @@ import {
   invalidateDatabaseEnginePolicyCache,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -118,28 +117,7 @@ export const evaluateBackupTargetSchedule = (
 
 const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Promise<void> => {
   const value = JSON.stringify(schedule);
-  let wrotePrisma = false;
   let wroteMongo = false;
-
-  if (process.env['DATABASE_URL']) {
-    try {
-      await prisma.setting.upsert({
-        where: { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY },
-        update: { value },
-        create: { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value },
-      });
-      wrotePrisma = true;
-    } catch (error) {
-      void ErrorSystem.logWarning(
-        '[database-backup-scheduler] Failed to persist schedule to Prisma',
-        {
-          service: 'database-backup-scheduler',
-          error,
-        }
-      );
-      wrotePrisma = false;
-    }
-  }
 
   if (process.env['MONGODB_URI']) {
     try {
@@ -166,7 +144,7 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
     }
   }
 
-  if (!wrotePrisma && !wroteMongo) {
+  if (!wroteMongo) {
     throw configurationError('No settings store available to persist backup schedule.');
   }
 
@@ -220,7 +198,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
   return job.id;
 };
 
-const targetKeys: DatabaseEngineBackupType[] = ['mongodb', 'postgresql'];
+const targetKeys: DatabaseEngineBackupType[] = ['mongodb'];
 
 export async function tickDatabaseBackupScheduler(
   now = new Date()

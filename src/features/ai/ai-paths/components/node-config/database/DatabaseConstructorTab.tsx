@@ -5,19 +5,12 @@ import React from 'react';
 
 import {
   TEMPLATE_SNIPPETS,
-  PRISMA_TEMPLATE_SNIPPETS,
   SORT_PRESETS,
-  PRISMA_SORT_PRESETS,
   PROJECTION_PRESETS,
-  PRISMA_PROJECTION_PRESETS,
   READ_QUERY_TYPES,
-  PRISMA_READ_QUERY_TYPES,
   QUERY_OPERATOR_GROUPS,
-  PRISMA_QUERY_OPERATOR_GROUPS,
   UPDATE_OPERATOR_GROUPS,
-  PRISMA_UPDATE_OPERATOR_GROUPS,
   AGGREGATION_STAGE_SNIPPETS,
-  PRISMA_AGGREGATION_STAGE_SNIPPETS,
 } from '@/features/ai/ai-paths/config/query-presets';
 import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { Button, Label, Textarea, SelectSimple, Input, Card } from '@/shared/ui';
@@ -87,26 +80,15 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
   if (!selectedNode) return null;
 
   const selectedNodeId = selectedNode.id;
-  const isPrismaProvider = resolvedProvider === 'prisma';
   const providerLabel =
-    queryConfig.provider === 'auto'
-      ? `Auto (resolved: ${resolvedProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
-      : resolvedProvider === 'prisma'
-        ? 'Prisma'
-        : 'MongoDB';
-  const templateSnippets = isPrismaProvider ? PRISMA_TEMPLATE_SNIPPETS : TEMPLATE_SNIPPETS;
-  const readQueryTypes = isPrismaProvider ? PRISMA_READ_QUERY_TYPES : READ_QUERY_TYPES;
-  const queryOperatorGroups = isPrismaProvider
-    ? PRISMA_QUERY_OPERATOR_GROUPS
-    : QUERY_OPERATOR_GROUPS;
-  const updateOperatorGroups = isPrismaProvider
-    ? PRISMA_UPDATE_OPERATOR_GROUPS
-    : UPDATE_OPERATOR_GROUPS;
-  const aggregationStageSnippets = isPrismaProvider
-    ? PRISMA_AGGREGATION_STAGE_SNIPPETS
-    : AGGREGATION_STAGE_SNIPPETS;
-  const sortPresets = isPrismaProvider ? PRISMA_SORT_PRESETS : SORT_PRESETS;
-  const projectionPresets = isPrismaProvider ? PRISMA_PROJECTION_PRESETS : PROJECTION_PRESETS;
+    queryConfig.provider === 'mongodb' ? 'MongoDB' : 'Auto (MongoDB)';
+  const templateSnippets = TEMPLATE_SNIPPETS;
+  const readQueryTypes = READ_QUERY_TYPES;
+  const queryOperatorGroups = QUERY_OPERATOR_GROUPS;
+  const updateOperatorGroups = UPDATE_OPERATOR_GROUPS;
+  const aggregationStageSnippets = AGGREGATION_STAGE_SNIPPETS;
+  const sortPresets = SORT_PRESETS;
+  const projectionPresets = PROJECTION_PRESETS;
 
   const schemaCollections = React.useMemo(
     () => normalizeSchemaCollections(schemaMatrix),

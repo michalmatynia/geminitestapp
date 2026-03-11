@@ -63,13 +63,6 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
 export const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
 
-  const rawCollections = schema.collections;
-  const collectionsArray = Array.isArray(rawCollections)
-    ? rawCollections
-    : Object.values(rawCollections);
-
-  if (collectionsArray.length === 0) return [];
-
   const stripUndefinedProvider = (
     collection: CollectionSchema & { provider?: string }
   ): CollectionSchema => {
@@ -77,13 +70,30 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Collectio
     return provider ? { ...rest, provider } : rest;
   };
 
+  const rawCollections = schema.collections;
+  const collectionsArray = Array.isArray(rawCollections)
+    ? rawCollections
+    : Object.values(rawCollections);
+
+  if (collectionsArray.length === 0) return [];
+
   if (schema.provider === 'multi') {
-    return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) =>
-      stripUndefinedProvider(collection)
-    );
+    const sourceMap = schema.sources as Record<string, unknown> | undefined;
+    const mongoSource = sourceMap?.['mongodb'];
+    if (mongoSource && typeof mongoSource === 'object' && !Array.isArray(mongoSource)) {
+      const sourceCollections = (mongoSource as { collections?: unknown }).collections;
+      if (Array.isArray(sourceCollections) && sourceCollections.length > 0) {
+        return sourceCollections.map((collection) =>
+          stripUndefinedProvider(collection as CollectionSchema & { provider?: string })
+        );
+      }
+    }
+    return (collectionsArray as Array<CollectionSchema & { provider?: string }>)
+      .filter((collection) => collection.provider === undefined || collection.provider === 'mongodb')
+      .map((collection) => stripUndefinedProvider(collection));
   }
 
-  const provider = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
+  const provider = 'mongodb';
   return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map(
     (collection) => ({
       ...stripUndefinedProvider(collection),

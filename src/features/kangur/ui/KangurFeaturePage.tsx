@@ -3,6 +3,10 @@
 import { useEffect } from 'react';
 
 import {
+  resolveKangurStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import {
   KANGUR_BASE_PATH,
   resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
@@ -17,7 +21,7 @@ import {
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { cn } from '@/shared/utils';
 
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 
 type KangurFeaturePageProps = {
   slug?: string[];
@@ -26,7 +30,15 @@ type KangurFeaturePageProps = {
 };
 
 export function KangurFeaturePageShell(): JSX.Element {
+  const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath } = useKangurRoutingState();
+  const appearanceMode = appearance?.mode ?? 'default';
+  const kangurAppearance = resolveKangurStorefrontAppearance(appearanceMode);
+  const shellStyle: CSSProperties = {
+    background: kangurAppearance.background,
+    color: kangurAppearance.tone.text,
+    ...kangurAppearance.vars,
+  };
 
   useEffect(() => {
     setKangurClientObservabilityContext({
@@ -44,7 +56,10 @@ export function KangurFeaturePageShell(): JSX.Element {
         'relative w-full kangur-premium-bg text-slate-800',
         embedded ? 'min-h-full' : 'min-h-screen'
       )}
+      data-appearance-mode={appearanceMode}
+      data-kangur-appearance={appearanceMode}
       data-testid='kangur-feature-page-shell'
+      style={shellStyle}
     >
       <KangurFeatureApp />
     </div>
@@ -66,6 +81,7 @@ export function KangurFeaturePage({
     <KangurRoutingProvider
       pageKey={pageKey}
       requestedPath={requestedPath}
+      requestedHref={requestedPath}
       basePath={normalizedBasePath}
       embedded={isEmbedded}
     >

@@ -45,11 +45,9 @@ describe('validateKangurAiTutorOnboardingStore', () => {
     ).toBe(true);
   });
 
-  it('requires enabled onboarding coverage for the core home sections', () => {
+  it('requires enabled Mongo knowledge-base coverage for the seeded guide set', () => {
     const store = cloneDefaultStore();
-    store.entries = store.entries.filter(
-      (entry: { focusKind?: string | null }) => entry.focusKind !== 'home_actions'
-    );
+    store.entries = store.entries.filter((entry: { id: string }) => entry.id !== 'game-review');
 
     const result = validateKangurAiTutorOnboardingStore({
       store,
@@ -62,7 +60,7 @@ describe('validateKangurAiTutorOnboardingStore', () => {
         (issue) =>
           issue.entryId === null &&
           issue.field === 'sequence' &&
-          issue.ruleId === 'kangur.onboarding.required_focus_coverage'
+          issue.ruleId === 'kangur.onboarding.required_entry_coverage'
       )
     ).toBe(true);
   });

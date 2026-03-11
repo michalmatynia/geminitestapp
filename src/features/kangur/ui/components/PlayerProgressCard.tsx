@@ -115,15 +115,17 @@ export default function PlayerProgressCard({
 
         {topActivity && (
           <div
-            className='flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 bg-white/80 px-4 py-3'
+            className='soft-card flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 px-4 py-3'
             data-testid='player-progress-top-activity'
           >
             <div>
-              <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
                 Najczesciej cwiczysz
               </p>
-              <p className='text-sm font-semibold text-slate-800'>{topActivity.label}</p>
-              <p className='text-xs text-slate-500'>
+              <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                {topActivity.label}
+              </p>
+              <p className='text-xs [color:var(--kangur-page-muted-text)]'>
                 {topActivity.sessionsPlayed} sesji · {topActivity.averageXpPerSession} XP / gre
               </p>
             </div>
@@ -133,18 +135,24 @@ export default function PlayerProgressCard({
 
         {nextBadge ? (
           <div
-            className='rounded-[28px] border border-amber-200/80 bg-amber-50/80 px-4 py-4'
+            className='rounded-[28px] border border-amber-200/80 px-4 py-4'
             data-testid='player-progress-next-badge'
+            style={{
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
+            }}
           >
             <div className='flex items-start justify-between gap-3'>
               <div>
                 <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700/80'>
                   Nastepna odznaka
                 </p>
-                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                   {nextBadge.emoji} {nextBadge.name}
                 </p>
-                <p className='mt-1 text-xs leading-5 text-slate-600'>{nextBadge.desc}</p>
+                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                  {nextBadge.desc}
+                </p>
               </div>
               <KangurStatusChip accent='amber' className='shrink-0'>
                 {nextBadge.summary}
@@ -162,18 +170,22 @@ export default function PlayerProgressCard({
 
         {guidedMomentum.completedSessions > 0 ? (
           <div
-            className='rounded-[28px] border border-sky-200/80 bg-sky-50/80 px-4 py-4'
+            className='rounded-[28px] border border-sky-200/80 px-4 py-4'
             data-testid='player-progress-guided-momentum'
+            style={{
+              background:
+                'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #dbeafe)',
+            }}
           >
             <div className='flex items-start justify-between gap-3'>
               <div>
                 <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700/80'>
                   Polecony kierunek
                 </p>
-                <p className='mt-1 text-sm font-semibold text-slate-900'>
+                <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                   {guidedMomentum.completedSessions} polecone rundy
                 </p>
-                <p className='mt-1 text-xs leading-5 text-slate-600'>
+                <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                   {guidedMomentum.nextBadgeName
                     ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
                     : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
@@ -194,7 +206,7 @@ export default function PlayerProgressCard({
         ) : null}
 
         <div>
-          <p className='mb-2 text-xs font-bold uppercase tracking-wide text-slate-500'>
+          <p className='mb-2 text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
             Sciezki odznak
           </p>
           <KangurBadgeTrackGrid

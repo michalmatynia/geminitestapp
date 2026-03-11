@@ -11,7 +11,7 @@ describe('extractDatabaseRuntimeMetadata', () => {
         resolvedProvider: 'mongodb',
         count: 2,
         providerFallback: {
-          provider: 'prisma',
+          provider: 'legacy-provider',
         },
       },
     });
@@ -29,7 +29,7 @@ describe('extractDatabaseRuntimeMetadata', () => {
   it('returns null when bundle has no canonical database metadata', () => {
     const metadata = extractDatabaseRuntimeMetadata({
       bundle: {
-        provider: 'prisma',
+        provider: 'legacy-provider',
       },
     });
 
@@ -38,7 +38,7 @@ describe('extractDatabaseRuntimeMetadata', () => {
 
   it('ignores inherited metadata keys from the prototype chain', () => {
     const bundleWithInheritedKeys = Object.create({
-      resolvedProvider: 'prisma',
+      resolvedProvider: 'mongodb',
       count: 2,
     }) as Record<string, unknown>;
     const metadata = extractDatabaseRuntimeMetadata({

@@ -1,17 +1,12 @@
 import 'server-only';
 
 import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/server';
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server';
 import {
   normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioExecutionRoute,
+  type ProductStudioPreflightResponse,
   type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingConfig,
-  type ProductStudioSequencingDiagnostics,
-  type ProductStudioSequenceStepPlanEntry,
-  type ProductStudioSequenceReadiness,
+  type ProductStudioVariantsResponse,
 } from '@/shared/contracts/products';
-import type { ProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
 
 import { resolveGenerationVariants } from './product-studio-service.analysis';
 import {
@@ -26,34 +21,8 @@ import {
 } from './product-studio-service.sequencing';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
 
-export type ProductStudioVariantsResult = {
-  config: ProductStudioConfig;
-  sequencing: ProductStudioSequencingConfig;
-  sequencingDiagnostics: ProductStudioSequencingDiagnostics;
-  sequenceReadiness: ProductStudioSequenceReadiness;
-  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
-  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
-  projectId: string | null;
-  sourceSlotId: string | null;
-  sourceSlot: ImageStudioSlotRecord | null;
-  variants: ImageStudioSlotRecord[];
-};
-
-export type ProductStudioSequencePreflightResult = {
-  config: ProductStudioConfig;
-  projectId: string;
-  imageSlotIndex: number;
-  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
-  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
-  requestedSequenceMode: ProductStudioSequenceGenerationMode;
-  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
-  executionRoute: ProductStudioExecutionRoute;
-  sequencing: ProductStudioSequencingConfig;
-  sequencingDiagnostics: ProductStudioSequencingDiagnostics;
-  sequenceReadiness: ProductStudioSequenceReadiness;
-  modelId: string;
-  warnings: string[];
-};
+export type ProductStudioVariantsResult = ProductStudioVariantsResponse;
+export type ProductStudioSequencePreflightResult = ProductStudioPreflightResponse;
 
 export const resolveProductStudioSequencePreflight = async (params: {
   productId: string;

@@ -450,7 +450,6 @@ sh_binary(
         "//tools/js:lint",
         "//tools/js:typecheck",
         "//tools/js:unit",
-        "//:integration_prisma",
         "//:integration_mongo",
         "//:next_build",
         "//:api_error_sources",
@@ -459,7 +458,6 @@ sh_binary(
         "//tools/js:lint",
         "//tools/js:typecheck",
         "//tools/js:unit",
-        ":integration_prisma",
         ":integration_mongo",
         ":next_build",
         ":api_error_sources",
@@ -657,16 +655,6 @@ sh_binary(
     args = ["scripts/quality/recalibrate-weekly-duration-budgets.mjs", "--ci", "--no-history"],
     data = [
         ":weekly_quality_inputs",
-        ":node_modules",
-        ":package_metadata",
-    ],
-)
-
-sh_binary(
-    name = "integration_prisma",
-    srcs = ["//tools/bazel:integration_prisma.sh"],
-    data = [
-        ":integration_gate_inputs",
         ":node_modules",
         ":package_metadata",
     ],

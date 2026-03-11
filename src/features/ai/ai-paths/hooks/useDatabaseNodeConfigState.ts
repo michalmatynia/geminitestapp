@@ -55,8 +55,12 @@ const normalizeTemplateText = (value: string | undefined | null): string => {
   return value.replace(/\\n/g, '\n');
 };
 
+const normalizeRequestedProvider = (value: DbQueryConfig['provider']): DbQueryConfig['provider'] =>
+  value === 'mongodb' ? value : 'auto';
+
 const normalizeQueryConfig = (query: DbQueryConfig): DbQueryConfig => ({
   ...query,
+  provider: normalizeRequestedProvider(query.provider),
   queryTemplate: normalizeTemplateText(query.queryTemplate ?? ''),
 });
 
@@ -79,7 +83,7 @@ export function useDatabaseNodeConfigState() {
   const { dbQueryPresets, setDbQueryPresets, saveDbQueryPresets } = useAiPathPresets();
 
   const selectedNodeId = contextSelectedNode?.id ?? '';
-  const appDbProvider: 'prisma' | 'mongodb' = 'mongodb';
+  const appDbProvider: 'mongodb' = 'mongodb';
 
   const { ConfirmationModal } = useConfirm();
 

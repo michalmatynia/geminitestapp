@@ -10,7 +10,6 @@ import { noteUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { productUpdateSchema } from '@/features/products/server';
-import { getProductRepository } from '@/features/products/server';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -21,6 +20,7 @@ import {
 } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { productService } from '@/shared/lib/products/services/productService';
 import { removeUndefined } from '@/shared/utils';
 
 const updateSchema = z.object({
@@ -110,16 +110,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   if (entityType === 'product') {
     ensureAiPathsPermission(access, 'products.manage', 'Forbidden.');
-    const appProvider = await getAppDbProvider();
-    const productProvider = await getProductDataProvider();
-    if (appProvider === 'prisma' && productProvider === 'mongodb') {
-      throw badRequestError(
-        'Product updates are blocked: product_db_provider is MongoDB while app_db_provider is Prisma.'
-      );
-    }
-    const productRepository = await getProductRepository();
+    await getAppDbProvider();
+    await getProductDataProvider();
     const existing =
-      mode === 'append' ? await productRepository.getProductById(entityId as string) : null;
+      mode === 'append' ? await productService.getProductById(entityId as string) : null;
     if (mode === 'append' && !existing) {
       throw notFoundError('Product not found', { productId: entityId });
     }
@@ -147,7 +141,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (Object.keys(updateData).length === 0) {
       throw badRequestError('No valid product fields to update');
     }
-    const updated = await productRepository.updateProduct(entityId as string, updateData);
+    const updated = await productService.updateProduct(entityId as string, updateData);
     if (!updated) {
       throw notFoundError('Product not found', { productId: entityId });
     }

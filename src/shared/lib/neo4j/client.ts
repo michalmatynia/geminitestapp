@@ -24,6 +24,9 @@ type Neo4jHttpResponse = {
   errors?: Array<{ code?: string; message?: string }>;
 };
 
+const NEO4J_FETCH_RETRY_COUNT = 2;
+const NEO4J_FETCH_RETRY_DELAY_MS = 200;
+
 const buildAuthHeader = (username: string, password: string): string =>
   `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 
@@ -35,6 +38,11 @@ const createTimeoutSignal = (timeoutMs: number): { signal: AbortSignal; clear: (
     clear: () => clearTimeout(timer),
   };
 };
+
+const sleep = async (delayMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
 
 const normalizeResults = (payload: Neo4jHttpResponse): Neo4jStatementResult[] =>
   (payload.results ?? []).map((result) => {
@@ -61,50 +69,65 @@ export async function runNeo4jStatements(
   }
 
   const endpoint = `${config.httpUrl}/db/${encodeURIComponent(config.database)}/tx/commit`;
-  const timeout = createTimeoutSignal(config.requestTimeoutMs);
+  let lastError: unknown = null;
 
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: buildAuthHeader(config.username, config.password),
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ statements }),
-      signal: timeout.signal,
-      cache: 'no-store',
-    });
+  for (let attempt = 0; attempt <= NEO4J_FETCH_RETRY_COUNT; attempt += 1) {
+    const timeout = createTimeoutSignal(config.requestTimeoutMs);
 
-    const payload = (await response.json()) as Neo4jHttpResponse;
-    if (!response.ok) {
-      throw externalServiceError('Neo4j request failed.', {
-        endpoint,
-        status: response.status,
-        statusText: response.statusText,
-        errors: payload.errors ?? [],
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: buildAuthHeader(config.username, config.password),
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ statements }),
+        signal: timeout.signal,
+        cache: 'no-store',
       });
-    }
 
-    if (payload.errors && payload.errors.length > 0) {
-      throw externalServiceError('Neo4j returned query errors.', {
-        endpoint,
-        errors: payload.errors,
-      });
-    }
+      const payload = (await response.json()) as Neo4jHttpResponse;
+      if (!response.ok) {
+        throw externalServiceError('Neo4j request failed.', {
+          endpoint,
+          status: response.status,
+          statusText: response.statusText,
+          errors: payload.errors ?? [],
+        });
+      }
 
-    return normalizeResults(payload);
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw timeoutError('Neo4j request timed out.', {
-        endpoint,
-        timeoutMs: config.requestTimeoutMs,
-      });
+      if (payload.errors && payload.errors.length > 0) {
+        throw externalServiceError('Neo4j returned query errors.', {
+          endpoint,
+          errors: payload.errors,
+        });
+      }
+
+      return normalizeResults(payload);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw timeoutError('Neo4j request timed out.', {
+          endpoint,
+          timeoutMs: config.requestTimeoutMs,
+        });
+      }
+
+      lastError = error;
+      const canRetry =
+        attempt < NEO4J_FETCH_RETRY_COUNT &&
+        error instanceof Error &&
+        error.name !== 'AppError';
+      if (!canRetry) {
+        throw error;
+      }
+      await sleep(NEO4J_FETCH_RETRY_DELAY_MS * (attempt + 1));
+    } finally {
+      timeout.clear();
     }
-    throw error;
-  } finally {
-    timeout.clear();
   }
+
+  throw lastError instanceof Error ? lastError : new Error('Neo4j request failed.');
 }
 
 export async function pingNeo4j(): Promise<boolean> {

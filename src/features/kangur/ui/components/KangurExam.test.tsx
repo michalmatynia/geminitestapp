@@ -49,6 +49,8 @@ describe('KangurExam', () => {
       'soft-card',
       'border'
     );
+    expect(screen.getByText('1/1')).toHaveClass('[color:var(--kangur-page-muted-text)]');
+    expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute(
       'aria-valuetext',
@@ -89,6 +91,10 @@ describe('KangurExam', () => {
       'border-white/88',
       'bg-white/94'
     );
+    expect(screen.getByText('Wynik: 1/1')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('100% poprawnych odpowiedzi')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
       'aria-valuenow',
@@ -123,6 +129,7 @@ describe('KangurExam', () => {
       'soft-card',
       'border'
     );
+    expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-exam-review-point-chip')).toHaveClass(
       'border-amber-200',
       'bg-amber-100'

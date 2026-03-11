@@ -88,7 +88,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           valueClassName='text-2xl sm:text-3xl'
         >
           <div className='space-y-2 pt-1'>
-            <p className='text-xs font-semibold text-slate-700'>
+            <p className='text-xs font-semibold [color:var(--kangur-page-text)]'>
               {snapshot.recommendedSessionSummary}
             </p>
             <KangurProgressBar
@@ -121,7 +121,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       >
         {dailyQuest ? (
           <div className='space-y-2 pt-1'>
-            <p className='text-xs font-semibold text-slate-700'>{dailyQuest.assignment.title}</p>
+            <p className='text-xs font-semibold [color:var(--kangur-page-text)]'>
+              {dailyQuest.assignment.title}
+            </p>
             <KangurProgressBar
               accent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
               data-testid='learner-profile-overview-daily-quest-bar'

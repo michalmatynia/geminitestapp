@@ -115,7 +115,7 @@ export default function PlayerProgressCard({
 
         {topActivity && (
           <div
-            className='soft-card flex items-center justify-between gap-3 rounded-3xl border border-slate-200/80 px-4 py-3'
+            className='soft-card flex items-center justify-between gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3'
             data-testid='player-progress-top-activity'
           >
             <div>

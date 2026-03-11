@@ -101,7 +101,7 @@ export default function DifficultySelector({
                 <span
                   className={cn(
                     'text-lg font-extrabold',
-                    isSelected ? accent.activeText : 'text-slate-800'
+                    isSelected ? accent.activeText : '[color:var(--kangur-page-text)]'
                   )}
                 >
                   {config.label}
@@ -109,7 +109,12 @@ export default function DifficultySelector({
                 <KangurStatusChip accent={difficulty.accent} className='gap-1' size='sm'>
                   <Clock className='h-3 w-3' /> {config.timeLimit}s
                 </KangurStatusChip>
-                <span className={cn('text-xs', isSelected ? accent.mutedText : 'text-slate-500')}>
+                <span
+                  className={cn(
+                    'text-xs',
+                    isSelected ? accent.mutedText : '[color:var(--kangur-page-muted-text)]'
+                  )}
+                >
                   Zakres 1-{config.range}
                 </span>
               </KangurOptionCardButton>

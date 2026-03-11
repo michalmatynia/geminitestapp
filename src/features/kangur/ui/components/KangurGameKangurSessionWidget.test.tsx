@@ -55,9 +55,15 @@ describe('KangurGameKangurSessionWidget', () => {
     expect(screen.getByTestId('kangur-kangur-session-recommendation-title')).toHaveTextContent(
       'Polecamy pelny test konkursowy'
     );
+    expect(screen.getByTestId('kangur-kangur-session-recommendation-title')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
     expect(
       screen.getByTestId('kangur-kangur-session-recommendation-description')
     ).toHaveTextContent('Ten zestaw najlepiej pasuje do obecnej skutecznosci i serii.');
+    expect(screen.getByTestId('kangur-kangur-session-recommendation-description')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('kangur-session-provider')).toHaveTextContent('mode:full_test_2024');
     expect(screen.getByTestId('kangur-session-game')).toBeInTheDocument();
   });

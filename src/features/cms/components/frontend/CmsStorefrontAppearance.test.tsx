@@ -2,14 +2,14 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 import {
-  CMS_STOREFRONT_APPEARANCE_STORAGE_KEY,
   CmsStorefrontAppearanceButtons,
   CmsStorefrontAppearanceProvider,
   resolveCmsStorefrontAppearance,
+  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from './CmsStorefrontAppearance';
 
@@ -20,11 +20,7 @@ function AppearanceModeProbe(): React.JSX.Element {
 }
 
 describe('CmsStorefrontAppearance', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  it('updates and persists the selected appearance mode', async () => {
+  it('updates the selected appearance mode', () => {
     render(
       <CmsStorefrontAppearanceProvider>
         <CmsStorefrontAppearanceButtons />
@@ -33,35 +29,27 @@ describe('CmsStorefrontAppearance', () => {
     );
 
     expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'default');
+    expect(screen.getAllByRole('button')).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Slightly darker background' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Dark theme' }));
 
-    expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'darker');
-    expect(screen.getByRole('button', { name: 'Slightly darker background' })).toHaveAttribute(
+    expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'dark');
+    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-
-    await waitFor(() => {
-      expect(window.localStorage.getItem(CMS_STOREFRONT_APPEARANCE_STORAGE_KEY)).toBe('darker');
-    });
   });
 
-  it('hydrates the last selected appearance mode from local storage', async () => {
-    window.localStorage.setItem(CMS_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
-
+  it('hydrates the selected appearance mode from the provider input', () => {
     render(
-      <CmsStorefrontAppearanceProvider>
+      <CmsStorefrontAppearanceProvider initialMode='dark'>
         <CmsStorefrontAppearanceButtons />
         <AppearanceModeProbe />
       </CmsStorefrontAppearanceProvider>
     );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'dark');
-    });
-
-    expect(screen.getByRole('button', { name: 'Dark mode' })).toHaveAttribute(
+    expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'dark');
+    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -86,7 +74,16 @@ describe('CmsStorefrontAppearance', () => {
     );
 
     expect(appearance.vars['--cms-appearance-page-background']).toContain('color-mix');
-    expect(appearance.vars['--cms-appearance-button-primary-text']).toBe('#f3f4f6');
+    expect(appearance.vars['--cms-appearance-button-primary-text']).toBe('#f8fafc');
     expect(appearance.vars['--cms-appearance-input-border']).toBe('rgba(255,255,255,0.18)');
+  });
+
+  it('builds darker Kangur button and brighter tutor text variables for dark mode', () => {
+    const appearance = resolveKangurStorefrontAppearance('dark');
+
+    expect(appearance.vars['--kangur-button-secondary-background']).toContain('rgba(51,65,85');
+    expect(appearance.vars['--kangur-button-warning-text']).toBe('#fde68a');
+    expect(appearance.vars['--kangur-chat-panel-text']).toBe('#f8fafc');
+    expect(appearance.vars['--kangur-chat-muted-text']).toBe('#d7e1ee');
   });
 });

@@ -24,6 +24,12 @@ type TutorSurfaceMode =
   | 'auth_guided'
   | 'selection_guided'
   | 'section_guided';
+type GuidedCalloutAvatarPlacement = 'top' | 'bottom' | 'left' | 'right';
+
+const isGuidedCalloutAvatarPlacement = (
+  value: string | null | undefined
+): value is GuidedCalloutAvatarPlacement =>
+  value === 'top' || value === 'bottom' || value === 'left' || value === 'right';
 
 type UseKangurAiTutorPortalViewModelInput = {
   activeFocus: KangurAiTutorPanelBodyContextValue['activeFocus'];
@@ -96,6 +102,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleCloseGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['onClose'];
   handleDrawingComplete: KangurAiTutorPanelBodyContextValue['handleDrawingComplete'];
   handleDetachHighlightedSection: KangurAiTutorPanelBodyContextValue['handleDetachHighlightedSection'];
+  handleDetachPanelFromContext: KangurAiTutorPortalContextValue['panel']['onDetachPanelFromContext'];
   handleDetachSelectedFragment: KangurAiTutorPanelBodyContextValue['handleDetachSelectedFragment'];
   handleDisableTutor: KangurAiTutorPortalContextValue['panel']['onDisableTutor'];
   handleFloatingAvatarPointerCancel: KangurAiTutorPortalContextValue['avatar']['onPointerCancel'];
@@ -114,8 +121,14 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleHomeOnboardingFinishEarly: KangurAiTutorPortalContextValue['guidedCallout']['onFinishHomeOnboarding'];
   handleKeyDown: KangurAiTutorPanelBodyContextValue['handleKeyDown'];
   handleMessageFeedback: KangurAiTutorPanelBodyContextValue['handleMessageFeedback'];
+  handleMovePanelToContext: KangurAiTutorPortalContextValue['panel']['onMovePanelToContext'];
   handlePanelBackdropClose: KangurAiTutorPortalContextValue['panel']['onBackdropClose'];
   handlePanelHeaderClose: KangurAiTutorPortalContextValue['panel']['onClose'];
+  handleResetPanelPosition: KangurAiTutorPortalContextValue['panel']['onResetPanelPosition'];
+  handlePanelHeaderPointerCancel: KangurAiTutorPortalContextValue['panel']['onHeaderPointerCancel'];
+  handlePanelHeaderPointerDown: KangurAiTutorPortalContextValue['panel']['onHeaderPointerDown'];
+  handlePanelHeaderPointerMove: KangurAiTutorPortalContextValue['panel']['onHeaderPointerMove'];
+  handlePanelHeaderPointerUp: KangurAiTutorPortalContextValue['panel']['onHeaderPointerUp'];
   handleQuickAction: KangurAiTutorPanelBodyContextValue['handleQuickAction'];
   handleSelectionActionMouseDown: KangurAiTutorPortalContextValue['selectionAction']['onSelectionActionMouseDown'];
   handleSend: KangurAiTutorPanelBodyContextValue['handleSend'];
@@ -130,6 +143,11 @@ type UseKangurAiTutorPortalViewModelInput = {
   isGuidedTutorMode: KangurAiTutorPortalContextValue['avatar']['isGuidedTutorMode'];
   isLoading: KangurAiTutorPanelBodyContextValue['isLoading'];
   isOpen: KangurAiTutorPortalContextValue['avatar']['isOpen'];
+  isPanelFollowingContext: boolean;
+  isPanelContextMoveAvailable: boolean;
+  isPanelPositionCustomized: boolean;
+  isPanelDraggable: KangurAiTutorPortalContextValue['panel']['isPanelDraggable'];
+  isPanelDragging: KangurAiTutorPortalContextValue['panel']['isPanelDragging'];
   isSectionExplainPendingMode: KangurAiTutorPanelBodyContextValue['isSectionExplainPendingMode'];
   isSelectionExplainPendingMode: KangurAiTutorPanelBodyContextValue['isSelectionExplainPendingMode'];
   isTutorHidden: KangurAiTutorPortalContextValue['panel']['isTutorHidden'];
@@ -140,6 +158,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   panelAvatarPlacement: KangurAiTutorPortalContextValue['panel']['panelAvatarPlacement'];
   panelEmptyStateMessage: KangurAiTutorPanelBodyContextValue['panelEmptyStateMessage'];
   panelOpenAnimation: KangurAiTutorPortalContextValue['panel']['panelOpenAnimation'];
+  panelSnapState: KangurAiTutorPortalContextValue['panel']['panelSnapState'];
   panelShellMode: TutorPanelShellMode;
   panelTransition: KangurAiTutorPortalContextValue['panel']['panelTransition'];
   pointerMarkerId: KangurAiTutorPortalContextValue['panel']['pointerMarkerId'];
@@ -155,6 +174,7 @@ type UseKangurAiTutorPortalViewModelInput = {
     placement: KangurAiTutorPortalContextValue['selectionAction']['placement'];
   } | null;
   selectionActionStyle: KangurAiTutorPortalContextValue['selectionAction']['style'];
+  selectionGlowStyles: KangurAiTutorPortalContextValue['spotlights']['selectionGlowStyles'];
   selectionContextSpotlightStyle: KangurAiTutorPortalContextValue['spotlights']['selectionContextSpotlightStyle'];
   selectionSpotlightStyle: KangurAiTutorPortalContextValue['spotlights']['selectionSpotlightStyle'];
   sessionSurfaceLabel: KangurAiTutorPortalContextValue['panel']['sessionSurfaceLabel'];
@@ -223,6 +243,16 @@ export function useKangurAiTutorPortalViewModel(
     !input.isAskModalMode &&
     (isContextualMinimalPanelMode || input.shouldRenderContextlessTutorUi);
   const minimalPanelStyle = getGuestIntroPanelStyle(input.viewport);
+  const showToolboxLayout =
+    input.uiMode === 'freeform' &&
+    !input.isAskModalMode &&
+    input.panelShellMode === 'default' &&
+    !input.isCompactDockedTutorPanel;
+  const guidedCalloutAvatarPlacement = isGuidedCalloutAvatarPlacement(
+    input.guidedAvatarLayout?.placement
+  )
+    ? input.guidedAvatarLayout.placement
+    : null;
 
   const panelBodyContextValue = useMemo<KangurAiTutorPanelBodyContextValue>(
     () => ({
@@ -267,6 +297,7 @@ export function useKangurAiTutorPortalViewModel(
       panelEmptyStateMessage: input.panelEmptyStateMessage,
       remainingMessages: input.remainingMessages,
       selectedTextPreview: input.selectedTextPreview,
+      showToolboxLayout,
       shouldRenderAuxiliaryPanelControls: input.shouldRenderAuxiliaryPanelControls,
       showSectionExplainCompleteState: input.showSectionExplainCompleteState,
       showSelectionExplainCompleteState: input.showSelectionExplainCompleteState,
@@ -320,6 +351,7 @@ export function useKangurAiTutorPortalViewModel(
       input.panelEmptyStateMessage,
       input.remainingMessages,
       input.selectedTextPreview,
+      showToolboxLayout,
       input.shouldRenderAuxiliaryPanelControls,
       input.showSectionExplainCompleteState,
       input.showSelectionExplainCompleteState,
@@ -397,6 +429,7 @@ export function useKangurAiTutorPortalViewModel(
         onClose: handleCanonicalOnboardingDismiss,
       },
       guidedCallout: {
+        avatarPlacement: guidedCalloutAvatarPlacement,
         calloutKey: input.guidedCalloutKey,
         calloutTestId: input.guidedCalloutTestId,
         detail: input.guidedCalloutDetail ?? '',
@@ -441,23 +474,38 @@ export function useKangurAiTutorPortalViewModel(
         bubbleStyle: input.bubblePlacement.style,
         bubbleTailPlacement: input.bubblePlacement.tailPlacement,
         bubbleWidth: input.bubblePlacement.width,
+        canDetachPanelFromContext: input.isPanelFollowingContext,
+        canMovePanelToContext:
+          input.isPanelContextMoveAvailable && !input.isPanelFollowingContext,
+        canResetPanelPosition: input.isPanelPositionCustomized,
         compactDockedTutorPanelWidth: input.compactDockedTutorPanelWidth,
         isAskModalMode: input.isAskModalMode,
         isCompactDockedTutorPanel: input.isCompactDockedTutorPanel,
+        isFollowingContext: input.isPanelFollowingContext,
         isGuidedTutorMode: input.isGuidedTutorMode,
         isMinimalPanelMode,
         isOpen: input.isOpen,
+        isPanelDraggable: input.isPanelDraggable,
+        isPanelDragging: input.isPanelDragging,
         isTutorHidden: input.isTutorHidden,
         minimalPanelStyle,
         motionProfile: input.motionProfile,
         onAttachedAvatarClick: input.handleAvatarClick,
         onBackdropClose: input.handlePanelBackdropClose,
         onClose: input.handlePanelHeaderClose,
+        onDetachPanelFromContext: input.handleDetachPanelFromContext,
         onDisableTutor: input.handleDisableTutor,
+        onMovePanelToContext: input.handleMovePanelToContext,
+        onResetPanelPosition: input.handleResetPanelPosition,
+        onHeaderPointerCancel: input.handlePanelHeaderPointerCancel,
+        onHeaderPointerDown: input.handlePanelHeaderPointerDown,
+        onHeaderPointerMove: input.handlePanelHeaderPointerMove,
+        onHeaderPointerUp: input.handlePanelHeaderPointerUp,
         panelAvatarPlacement: input.panelAvatarPlacement,
         panelBodyContextValue,
         panelEmptyStateMessage: input.panelEmptyStateMessage,
         panelOpenAnimation: input.panelOpenAnimation,
+        panelSnapState: input.panelSnapState,
         panelTransition: input.panelTransition,
         pointerMarkerId: input.pointerMarkerId,
         prefersReducedMotion: prefersReducedMotionEnabled,
@@ -481,6 +529,7 @@ export function useKangurAiTutorPortalViewModel(
         reducedMotionTransitions: input.reducedMotionTransitions,
         sectionContextSpotlightStyle: input.sectionContextSpotlightStyle,
         sectionDropHighlightStyle: input.sectionDropHighlightStyle,
+        selectionGlowStyles: input.selectionGlowStyles,
         selectionContextSpotlightStyle: input.selectionContextSpotlightStyle,
         selectionSpotlightStyle: input.selectionSpotlightStyle,
       },
@@ -498,6 +547,7 @@ export function useKangurAiTutorPortalViewModel(
       input.avatarStyle,
       input.canonicalTutorModalVisible,
       input.bubblePlacement,
+      input.handleDetachPanelFromContext,
       input.compactDockedTutorPanelWidth,
       input.contextualTutorMode,
       input.guestTutorAssistantLabel,
@@ -506,6 +556,7 @@ export function useKangurAiTutorPortalViewModel(
       input.guidedAvatarArrowheadDisplayAngle,
       input.guidedAvatarArrowheadDisplayAngleLabel,
       input.guidedAvatarLayout,
+      guidedCalloutAvatarPlacement,
       input.guidedCalloutDetail,
       input.guidedCalloutHeaderLabel,
       input.guidedCalloutKey,
@@ -528,6 +579,10 @@ export function useKangurAiTutorPortalViewModel(
       input.handleGuestIntroDismiss,
       input.handleCloseGuidedCallout,
       input.handleDisableTutor,
+      input.handlePanelHeaderPointerCancel,
+      input.handlePanelHeaderPointerDown,
+      input.handlePanelHeaderPointerMove,
+      input.handlePanelHeaderPointerUp,
       input.handleFloatingAvatarPointerCancel,
       input.handleFloatingAvatarPointerDown,
       input.handleFloatingAvatarPointerMove,
@@ -536,8 +591,10 @@ export function useKangurAiTutorPortalViewModel(
       input.handleHomeOnboardingAdvance,
       input.handleHomeOnboardingBack,
       input.handleHomeOnboardingFinishEarly,
+      input.handleMovePanelToContext,
       input.handlePanelBackdropClose,
       input.handlePanelHeaderClose,
+      input.handleResetPanelPosition,
       input.handleSelectionActionMouseDown,
       input.canStartHomeOnboardingManually,
       input.homeOnboardingStep,
@@ -545,6 +602,11 @@ export function useKangurAiTutorPortalViewModel(
       input.isAskModalMode,
       input.isCompactDockedTutorPanel,
       input.isGuidedTutorMode,
+      input.isPanelFollowingContext,
+      input.isPanelContextMoveAvailable,
+      input.isPanelPositionCustomized,
+      input.isPanelDraggable,
+      input.isPanelDragging,
       isMinimalPanelMode,
       input.isOpen,
       input.isTutorHidden,
@@ -553,12 +615,14 @@ export function useKangurAiTutorPortalViewModel(
       input.panelAvatarPlacement,
       input.panelEmptyStateMessage,
       input.panelOpenAnimation,
+      input.panelSnapState,
       input.panelShellMode,
       input.panelTransition,
       input.pointerMarkerId,
       input.reducedMotionTransitions,
       input.sectionContextSpotlightStyle,
       input.sectionDropHighlightStyle,
+      input.selectionGlowStyles,
       input.sectionGuidanceLabel,
       input.sectionResponsePendingKind,
       input.selectionActionLayout,

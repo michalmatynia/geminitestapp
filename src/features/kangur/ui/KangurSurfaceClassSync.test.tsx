@@ -41,10 +41,8 @@ describe('KangurSurfaceClassSync', () => {
   });
 
   it('applies the selected storefront appearance background to the page chrome', async () => {
-    window.localStorage.setItem('cms.storefront.appearance.v1', 'dark');
-
     render(
-      <CmsStorefrontAppearanceProvider>
+      <CmsStorefrontAppearanceProvider initialMode='dark'>
         <KangurSurfaceClassSync>
           <div>Surface</div>
         </KangurSurfaceClassSync>

@@ -121,6 +121,7 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
 
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
+  activateSelectionGlow: () => boolean;
   clearSelection: () => void;
   handleOpenChat: (
     reason: 'section_explain' | 'selection_explain',
@@ -147,6 +148,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   setHoveredSectionAnchorId: (value: string | null) => void;
   setPersistedSelectionContainerRect: (value: DOMRect | null) => void;
   setPersistedSelectionPageRect: (value: DOMRect | null) => void;
+  setPersistedSelectionPageRects: (value: DOMRect[]) => void;
   setPersistedSelectionRect: (value: DOMRect | null) => void;
   setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
   setSelectionConversationContext: (value: SelectionConversationContext | null) => void;
@@ -164,6 +166,7 @@ export function useKangurAiTutorGuidedFlow(input: {
 }) {
   const {
     activeSelectionPageRect,
+    activateSelectionGlow,
     clearSelection,
     handleOpenChat,
     messageCount,
@@ -185,6 +188,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     setHoveredSectionAnchorId,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
     setPersistedSelectionRect,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
@@ -311,6 +315,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setHighlightedText(null);
       setPersistedSelectionRect(null);
       setPersistedSelectionPageRect(null);
+      setPersistedSelectionPageRects([]);
       setPersistedSelectionContainerRect(null);
       setDismissedSelectedText(null);
       setSelectionConversationContext(null);
@@ -380,6 +385,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       setHoveredSectionAnchorId,
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
+      setPersistedSelectionPageRects,
       setPersistedSelectionRect,
       setSelectionGuidanceCalloutVisibleText,
       setSelectionConversationContext,
@@ -412,6 +418,8 @@ export function useKangurAiTutorGuidedFlow(input: {
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       resetAskModalState();
+      activateSelectionGlow();
+      clearSelection();
 
       trackKangurClientEvent('kangur_ai_tutor_selection_guidance_started', {
         ...telemetryContext,
@@ -460,6 +468,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     },
     [
       activeSelectionPageRect,
+      activateSelectionGlow,
       focusSelectionPageRect,
       handleOpenChat,
       messageCount,

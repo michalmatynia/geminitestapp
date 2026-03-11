@@ -103,7 +103,9 @@ export function KangurTestQuestionRenderer({
   const stemContent = renderRichStem && stemDocument ? (
     <KangurLessonDocumentRenderer document={stemDocument} renderMode='lesson' />
   ) : (
-    <p className='text-sm font-medium leading-relaxed text-slate-800'>{question.prompt}</p>
+    <p className='text-sm font-medium leading-relaxed [color:var(--kangur-page-text)]'>
+      {question.prompt}
+    </p>
   );
 
   const illustrationContent = hasIllustration(question) ? (
@@ -116,7 +118,7 @@ export function KangurTestQuestionRenderer({
       presentation.layout === 'split-illustration-right') ? (
         <div
           className={cn(
-            'grid gap-4 rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4 lg:grid-cols-2',
+            'grid gap-4 rounded-[24px] border p-4 lg:grid-cols-2 [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-page-background))]',
             presentation.layout === 'split-illustration-left' && 'lg:[&>*:first-child]:order-2'
           )}
         >
@@ -138,7 +140,7 @@ export function KangurTestQuestionRenderer({
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
         <div className='flex items-start justify-between gap-3'>
-          <span className='pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400'>
+          <span className='pt-2 text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </span>
           <div className='flex items-center gap-2'>
@@ -168,7 +170,7 @@ export function KangurTestQuestionRenderer({
 
           let accent: KangurAccent = 'slate';
           let emphasis: 'neutral' | 'accent' = 'neutral';
-          let cardClassName = 'text-slate-700';
+          let cardClassName = '[color:var(--kangur-page-text)]';
           let badgeClassName = KANGUR_ACCENT_STYLES.slate.badge;
 
           if (isSelected && !showAnswer) {
@@ -211,9 +213,9 @@ export function KangurTestQuestionRenderer({
               >
                 {choice.label}
               </span>
-              <span className='flex flex-1 flex-col gap-2 text-slate-700'>
+              <span className='flex flex-1 flex-col gap-2 [color:var(--kangur-page-text)]'>
                 {choice.svgContent?.trim() ? (
-                  <span className='flex items-center justify-center rounded-[18px] border border-slate-200 bg-white p-2'>
+                  <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
                     <span
                       className='block max-h-24 max-w-full'
                       dangerouslySetInnerHTML={{ __html: sanitizeSvg(choice.svgContent) }}
@@ -222,7 +224,7 @@ export function KangurTestQuestionRenderer({
                 ) : null}
                 <span>{choice.text}</span>
                 {choice.description?.trim() ? (
-                  <span className='text-xs font-medium leading-5 text-slate-500'>
+                  <span className='text-xs font-medium leading-5 [color:var(--kangur-page-muted-text)]'>
                     {choice.description.trim()}
                   </span>
                 ) : null}

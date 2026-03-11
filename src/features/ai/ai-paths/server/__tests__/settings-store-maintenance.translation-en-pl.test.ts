@@ -255,6 +255,29 @@ const buildStarterRefreshRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
+const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: JSON.stringify([
+      {
+        id: 'path_base_export_blwo_v1',
+        name: 'Base Export Workflow (BLWo)',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]),
+  },
+  {
+    key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`,
+    value: JSON.stringify({
+      id: 'path_base_export_blwo_v1',
+      name: 'Base Export Workflow (BLWo)',
+      nodes: [{ id: 'node-broken-trigger', type: 'trigger' }],
+      edges: [],
+    }),
+  },
+];
+
 describe('AI Paths maintenance forward-only action ids', () => {
   it('does not surface removed runtime migration action ids', () => {
     const report = buildAiPathsMaintenanceReport(buildSettingsRecords());
@@ -349,5 +372,42 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
     expect(report.shouldBlock).toBe(false);
     expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {
+    const report = buildAiPathsMaintenanceReport(buildBrokenBlwoStarterRefreshRecords());
+
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'refresh_starter_workflow_configs',
+          status: 'pending',
+          affectedRecords: 1,
+        }),
+      ])
+    );
+
+    const result = runMaintenanceAction({
+      actionId: 'refresh_starter_workflow_configs',
+      records: buildBrokenBlwoStarterRefreshRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(1);
+
+    const configRecord = result.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+    );
+    if (!configRecord) throw new Error('Expected refreshed BLWo config record');
+
+    const parsed = JSON.parse(configRecord.value) as PathConfig;
+    expect(parsed.id).toBe('path_base_export_blwo_v1');
+    expect(parsed.name).toBe('Base Export Workflow (BLWo)');
+    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        templateId: 'starter_base_export_blwo',
+      })
+    );
   });
 });

@@ -32,6 +32,7 @@ export function KangurAiTutorComposer(): JSX.Element {
     inputPlaceholder,
     isAskModalMode,
     isLoading,
+    showToolboxLayout,
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const { inputRef, inputValue, setInputValue } = useKangurAiTutorWidgetStateContext();
@@ -102,18 +103,20 @@ export function KangurAiTutorComposer(): JSX.Element {
         </div>
       ) : null}
       <div className='flex items-center gap-2'>
-        <KangurButton
-          data-testid='kangur-ai-tutor-drawing-toggle'
-          type='button'
-          size='sm'
-          variant='surface'
-          className='h-9 w-9 shrink-0 p-0'
-          disabled={isLoading || !canSendMessages}
-          onClick={handleToggleDrawing}
-          aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
-        >
-          <Pen className='h-3.5 w-3.5' />
-        </KangurButton>
+        {!showToolboxLayout ? (
+          <KangurButton
+            data-testid='kangur-ai-tutor-drawing-toggle'
+            type='button'
+            size='sm'
+            variant='surface'
+            className='h-9 w-9 shrink-0 p-0'
+            disabled={isLoading || !canSendMessages}
+            onClick={handleToggleDrawing}
+            aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
+          >
+            <Pen className='h-3.5 w-3.5' />
+          </KangurButton>
+        ) : null}
         <KangurTextField
           ref={inputRef}
           value={inputValue}
@@ -138,7 +141,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           <Send className='h-3.5 w-3.5' />
         </KangurButton>
       </div>
-      {visibleQuickActions.length ? (
+      {!showToolboxLayout && visibleQuickActions.length ? (
         <div
           className='mt-2.5 flex flex-wrap gap-1.5'
           data-kangur-tts-ignore='true'

@@ -6,6 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import { getProductRepository } from '@/features/products/server';
 import {
   productListingDeleteFromBasePayloadSchema,
   type ProductListingDeleteFromBaseResponse,
@@ -45,8 +46,9 @@ export async function POST_handler(
   }
   const data = parsed.data;
   const inventoryId = resolveDeleteInventoryId(data.inventoryId, listing.inventoryId);
+  const normalizedExternalListingId = listing.externalListingId?.trim() || '';
 
-  if (!listing.externalListingId) {
+  if (!normalizedExternalListingId) {
     throw badRequestError('Missing Base.com product id for deletion.');
   }
 
@@ -126,15 +128,27 @@ export async function POST_handler(
       });
     }
 
-    await deleteBaseProduct(tokenResolution.token, inventoryId, listing.externalListingId);
+    await deleteBaseProduct(tokenResolution.token, inventoryId, normalizedExternalListingId);
+
+    await repo.updateListingExternalId(listingId, null);
 
     await repo.updateListingStatus(listingId, 'removed');
     await repo.appendExportHistory(listingId, {
       exportedAt: new Date().toISOString(),
       status: 'deleted',
       inventoryId,
-      externalListingId: listing.externalListingId,
+      externalListingId: normalizedExternalListingId,
     });
+    try {
+      const productRepository = await getProductRepository();
+      const product = await productRepository.getProductById(productId);
+      const normalizedBaseProductId = product?.baseProductId?.trim() || '';
+      if (normalizedBaseProductId === normalizedExternalListingId) {
+        await productRepository.updateProduct(productId, { baseProductId: null });
+      }
+    } catch {
+      // Keep Base deletion successful even if local product cleanup fails.
+    }
     if (runId) {
       await runRepository
         .createRunEvent({
@@ -145,7 +159,7 @@ export async function POST_handler(
             productId,
             listingId,
             inventoryId,
-            externalListingId: listing.externalListingId,
+            externalListingId: normalizedExternalListingId,
           },
         })
         .catch(() => undefined);

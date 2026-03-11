@@ -1,6 +1,7 @@
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
   computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
@@ -151,6 +152,31 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
   return JSON.stringify(nextConfig) === JSON.stringify(config) ? null : nextConfig;
 };
 
+const DEFAULT_STARTER_PATH_IDS = new Set(
+  getAutoSeedStarterWorkflowEntries()
+    .map((entry) => entry.seedPolicy?.defaultPathId ?? null)
+    .filter((pathId): pathId is string => typeof pathId === 'string' && pathId.trim().length > 0)
+);
+
+const tryRepairBrokenSeededStarterConfig = (args: {
+  pathId: string;
+  rawConfig: string;
+}): PathConfig | null => {
+  if (!DEFAULT_STARTER_PATH_IDS.has(args.pathId)) {
+    return null;
+  }
+  try {
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: args.pathId,
+      rawConfig: args.rawConfig,
+      fallbackName: args.pathId,
+    });
+    return resolved.changed ? resolved.config : null;
+  } catch {
+    return null;
+  }
+};
+
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return getAutoSeedStarterWorkflowEntries().length;
 
@@ -285,11 +311,30 @@ export const refreshStarterWorkflowConfigs = (
 
   nextRecords.forEach((record) => {
     if (!record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
+    const pathId = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
     const parsedConfig = parsePathConfigRecord(record.value);
-    if (!parsedConfig) return;
+    if (!parsedConfig) {
+      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+        pathId,
+        rawConfig: record.value,
+      });
+      if (!repairedSeededConfig) return;
+      record.value = JSON.stringify(repairedSeededConfig);
+      affectedCount += 1;
+      return;
+    }
 
     const refreshed = buildRefreshedStarterWorkflowConfig(parsedConfig);
-    if (!refreshed) return;
+    if (!refreshed) {
+      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+        pathId,
+        rawConfig: record.value,
+      });
+      if (!repairedSeededConfig) return;
+      record.value = JSON.stringify(repairedSeededConfig);
+      affectedCount += 1;
+      return;
+    }
 
     record.value = JSON.stringify(refreshed);
     affectedCount += 1;

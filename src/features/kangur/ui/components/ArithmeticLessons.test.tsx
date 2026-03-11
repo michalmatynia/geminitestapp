@@ -94,7 +94,9 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-orange-500'
     );
-    expect(getParagraphByTextContent('Zacznij od 4')).toHaveClass('text-slate-500');
+    expect(getParagraphByTextContent('Zacznij od 4')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
 
     unmount();
 
@@ -126,7 +128,9 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-red-500'
     );
-    expect(getParagraphByTextContent('Zacznij od 9')).toHaveClass('text-slate-500');
+    expect(getParagraphByTextContent('Zacznij od 9')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
 
     unmount();
 
@@ -159,7 +163,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-teal-600'
     );
-    expect(screen.getByText(/7 czekolad/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/7 czekolad/i)).toHaveClass('[color:var(--kangur-page-muted-text)]');
 
     unmount();
 
@@ -190,7 +194,9 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-2xl',
       'text-purple-600'
     );
-    expect(screen.getByText(/3 grupy po 3 cukierki/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/3 grupy po 3 cukierki/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
     fireEvent.click(screen.getByRole('button', { name: /tabliczka × 2 i × 3/i }));

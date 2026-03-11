@@ -14,6 +14,8 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
 import {
   fetchAiPathsSettingsCached,
@@ -61,7 +63,25 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
   const queryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
   return createSingleQueryV2({
     queryKey,
-    queryFn: () => api.get<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons'),
+    queryFn: async () => {
+      try {
+        return await api.get<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons', {
+          logError: false,
+        });
+      } catch (error) {
+        if (isAbortLikeError(error)) {
+          throw error;
+        }
+        logClientError(error, {
+          context: {
+            source: 'aiPaths.hooks.useAiPathsTriggerButtonsQuery',
+            action: 'loadTriggerButtons',
+            endpoint: '/api/ai-paths/trigger-buttons',
+          },
+        });
+        return [];
+      }
+    },
     id: 'trigger-buttons',
     staleTime: 30_000,
     refetchOnMount: 'always',

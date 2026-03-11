@@ -21,12 +21,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Co to znaczy dzielic?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Dzielenie to równy podział na grupy. Pytamy: ile w każdej grupie?
           </p>
           <div className='flex flex-col items-center gap-2'>
             <KangurDisplayEmoji size='sm'>🍪🍪🍪🍪🍪🍪</KangurDisplayEmoji>
-            <p className='text-sm text-slate-500'>6 ciastek podzielone na 2 osoby</p>
+            <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+              6 ciastek podzielone na 2 osoby
+            </p>
             <KangurEquationDisplay accent='sky' size='md'>
               6 ÷ 2 = 3
             </KangurEquationDisplay>
@@ -44,10 +46,12 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Dzielenie i mnozenie',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>Każde mnozenie ma swoje dzielenie!</p>
+          <p className='text-center [color:var(--kangur-page-text)]'>
+            Każde mnozenie ma swoje dzielenie!
+          </p>
           <KangurLessonCallout accent='sky' className='max-w-xs'>
             <div className='flex flex-col gap-2 text-center'>
-              <p className='text-slate-700'>
+              <p className='[color:var(--kangur-page-text)]'>
                 4 × 3 = <b>12</b>
               </p>
               <div className='flex flex-wrap justify-center gap-3'>
@@ -60,7 +64,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </div>
             </div>
           </KangurLessonCallout>
-          <p className='text-center text-sm text-slate-500'>
+          <p className='text-center text-sm [color:var(--kangur-page-muted-text)]'>
             Znajac tabliczkę mnozenia, znasz tez tabliczkę dzielenia!
           </p>
         </div>
@@ -72,20 +76,24 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Reszta z dzielenia',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Nie zawsze dzielenie wychodzi równo — wtedy zostaje reszta.
           </p>
           <KangurLessonCallout accent='teal' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='teal' data-testid='division-lesson-remainder-equation'>
               7 ÷ 2 = ?
             </KangurEquationDisplay>
-            <p className='mt-2 text-slate-500'>2×3=6 (za mało), 2×4=8 (za duzo)</p>
+            <p className='mt-2 [color:var(--kangur-page-muted-text)]'>
+              2×3=6 (za mało), 2×4=8 (za duzo)
+            </p>
             <KangurEquationDisplay accent='teal' className='mt-1' size='md'>
               7 ÷ 2 = <b>3</b> reszta <b>1</b>
             </KangurEquationDisplay>
           </KangurLessonCallout>
           <KangurDisplayEmoji size='xs'>🍫🍫🍫🍫🍫🍫🍫</KangurDisplayEmoji>
-          <p className='text-sm text-slate-500'>7 czekolad → 3 dla każdego, 1 zostaje</p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            7 czekolad → 3 dla każdego, 1 zostaje
+          </p>
         </div>
       ),
     },
@@ -96,7 +104,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
-            <ul className='space-y-2 text-sm text-slate-700'>
+            <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
                 ✅ Podziel przez 1 = ta sama liczba: <b>9÷1=9</b>
               </li>

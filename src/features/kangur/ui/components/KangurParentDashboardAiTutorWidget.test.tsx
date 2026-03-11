@@ -289,6 +289,12 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     render(<KangurParentDashboardAiTutorWidget />);
 
     expect(screen.getByText(/wykorzystanie dzisiaj/i)).toHaveClass('text-amber-700');
+    expect(screen.getByText('AI Tutor dla Ada')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(
+      screen.getByText('Ustaw dostępność i guardrails pomocy AI dla tego ucznia')
+    ).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByText('Zużyto 4 z 12 wiadomości.')).toBeInTheDocument();
     expect(screen.getByText('Pozostało 8')).toHaveClass('text-amber-700');
   });
@@ -322,8 +328,14 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-description')).toHaveTextContent(
       'Tutor podkresla postep'
     );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-description')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveTextContent(
       'Wspierajacy'
+    );
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toHaveTextContent(
       '82%'
@@ -394,5 +406,8 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.queryByLabelText(/persona \(charakter tutora\)/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/persona playwright/i)).not.toBeInTheDocument();
     expect(screen.getByText(/zarządzane w/i)).toHaveTextContent('Kangur Settings');
+    expect(screen.getByText(/zarządzane w/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 });

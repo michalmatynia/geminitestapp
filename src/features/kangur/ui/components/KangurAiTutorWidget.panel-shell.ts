@@ -8,11 +8,17 @@ import {
   ATTACHED_AVATAR_POINTER_EDGE_INSET,
   ATTACHED_AVATAR_POINTER_PADDING,
   AVATAR_SIZE,
+  BUBBLE_MAX_HEIGHT,
+  BUBBLE_MIN_HEIGHT,
   EDGE_GAP,
+  applyTutorPanelSnapState,
+  clampTutorPanelPoint,
+  getTutorPanelSnapState,
   type TutorAvatarAttachmentSide,
   type TutorBubblePlacementStrategy,
   type TutorMotionPosition,
   type TutorMotionProfile,
+  type TutorPanelSnapState,
   type TutorPointerSide,
 } from './KangurAiTutorWidget.shared';
 import { getAttachedAvatarRectForSurface } from './KangurAiTutorAvatarAttachment';
@@ -79,8 +85,12 @@ type PanelShellState = {
   avatarPointer: AvatarPointer | null;
   avatarStyle: TutorMotionPosition;
   floatingAvatarPlacement: 'ask-modal' | 'guided' | 'floating';
+  isPanelDraggable: boolean;
+  isPanelDragging: boolean;
   panelAvatarPlacement: 'attached' | 'hidden' | 'independent';
+  panelBubbleStyle: Record<string, number | string | undefined>;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
+  panelSnapState: TutorPanelSnapState | 'none';
   panelTransition: Transition;
   pointerMarkerId: string;
   showAttachedAvatarShell: boolean;
@@ -246,6 +256,7 @@ export function useKangurAiTutorPanelShellState(input: {
       }
     | null;
   bubblePlacement: BubblePlacement;
+  compactDockedTutorPanelWidth: number;
   displayFocusRect: DOMRect | null;
   draggedAvatarPoint: PanelShellPoint | null;
   guidedAvatarStyle: TutorMotionPosition | null;
@@ -256,23 +267,30 @@ export function useKangurAiTutorPanelShellState(input: {
   homeOnboardingStepKind: string | null;
   isAnchoredUiMode: boolean;
   isAvatarDragging: boolean;
-  showSelectionGuidanceCallout: boolean;
-  showSectionGuidanceCallout: boolean;
+  isCompactDockedTutorPanel: boolean;
   isAskModalMode: boolean;
   isContextualPanelAnchor: boolean;
+  isFreeformUiMode: boolean;
   isGuidedTutorMode: boolean;
   isOpen: boolean;
+  isPanelDragging: boolean;
   isStaticUiMode: boolean;
   isTutorHidden: boolean;
   motionProfile: TutorMotionProfile;
+  panelMeasuredHeight: number | null;
+  panelPosition: PanelShellPoint | null;
+  panelSnapPreference: TutorPanelSnapState;
   prefersReducedMotion: boolean;
   reducedMotionTransitions: ReducedMotionTransitions;
+  showSectionGuidanceCallout: boolean;
+  showSelectionGuidanceCallout: boolean;
   viewport: { width: number; height: number };
 }): PanelShellState {
   const {
     activeFocusKind,
     askModalDockStyle,
     bubblePlacement,
+    compactDockedTutorPanelWidth,
     displayFocusRect,
     draggedAvatarPoint,
     guidedAvatarStyle,
@@ -283,22 +301,35 @@ export function useKangurAiTutorPanelShellState(input: {
     homeOnboardingStepKind,
     isAnchoredUiMode,
     isAvatarDragging,
-    showSectionGuidanceCallout,
-    showSelectionGuidanceCallout,
+    isCompactDockedTutorPanel,
     isAskModalMode,
     isContextualPanelAnchor,
+    isFreeformUiMode,
     isGuidedTutorMode,
     isOpen,
+    isPanelDragging,
     isStaticUiMode,
     isTutorHidden,
     motionProfile,
+    panelMeasuredHeight,
+    panelPosition,
+    panelSnapPreference,
     prefersReducedMotion,
     reducedMotionTransitions,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
     viewport,
   } = input;
 
   const shouldPreserveInlineGuidanceAvatar =
     showSelectionGuidanceCallout || showSectionGuidanceCallout;
+  const isFreeformPanel =
+    isFreeformUiMode &&
+    isOpen &&
+    bubblePlacement.mode === 'bubble' &&
+    !isAskModalMode &&
+    !isGuidedTutorMode &&
+    !shouldPreserveInlineGuidanceAvatar;
 
   const showAttachedAvatarShell =
     !isTutorHidden &&
@@ -309,7 +340,10 @@ export function useKangurAiTutorPanelShellState(input: {
     !shouldPreserveInlineGuidanceAvatar &&
     !isAskModalMode;
   const hideFloatingAvatar =
-    isOpen && isStaticUiMode && !isAskModalMode && !hasContextualVisibilityFallback;
+    isOpen &&
+    (isStaticUiMode || isFreeformUiMode) &&
+    !isAskModalMode &&
+    !hasContextualVisibilityFallback;
   const showFloatingAvatar =
     !isTutorHidden &&
     (
@@ -318,12 +352,65 @@ export function useKangurAiTutorPanelShellState(input: {
       shouldPreserveInlineGuidanceAvatar ||
       (!showAttachedAvatarShell && !hideFloatingAvatar)
     );
+  const resolvedPanelWidth = isCompactDockedTutorPanel
+    ? compactDockedTutorPanelWidth
+    : bubblePlacement.width ?? motionProfile.desktopBubbleWidth;
+  const resolvedPanelHeight =
+    panelMeasuredHeight && panelMeasuredHeight > 0
+      ? panelMeasuredHeight
+      : Math.min(Math.max(BUBBLE_MIN_HEIGHT, viewport.height - EDGE_GAP * 2), BUBBLE_MAX_HEIGHT);
+  const fallbackPanelPoint = {
+    x:
+      typeof bubblePlacement.style['left'] === 'number'
+        ? bubblePlacement.style['left']
+        : viewport.width - EDGE_GAP - resolvedPanelWidth,
+    y:
+      typeof bubblePlacement.style['top'] === 'number'
+        ? bubblePlacement.style['top']
+        : clamp(
+            viewport.height - resolvedPanelHeight - EDGE_GAP,
+            EDGE_GAP,
+            Math.max(EDGE_GAP, viewport.height - EDGE_GAP - resolvedPanelHeight)
+          ),
+  };
+  const resolvedPanelPoint = isFreeformPanel
+    ? panelSnapPreference === 'free'
+      ? clampTutorPanelPoint(panelPosition ?? fallbackPanelPoint, viewport, {
+          width: resolvedPanelWidth,
+          height: resolvedPanelHeight,
+        })
+      : applyTutorPanelSnapState(
+          panelPosition ?? fallbackPanelPoint,
+          panelSnapPreference,
+          viewport,
+          {
+            width: resolvedPanelWidth,
+            height: resolvedPanelHeight,
+          }
+        )
+    : null;
+  const panelBubbleStyle: Record<string, number | string | undefined> = isFreeformPanel
+    ? {
+        ...bubblePlacement.style,
+        left: resolvedPanelPoint?.x,
+        top: resolvedPanelPoint?.y,
+        right: undefined,
+        bottom: undefined,
+      }
+    : bubblePlacement.style;
+  const panelSnapState =
+    isFreeformPanel && resolvedPanelPoint
+      ? getTutorPanelSnapState(resolvedPanelPoint, viewport, {
+          width: resolvedPanelWidth,
+          height: resolvedPanelHeight,
+        })
+      : 'none';
   const avatarAttachmentSide = getAttachedAvatarSide({
     rect: displayFocusRect,
     mode: bubblePlacement.mode,
     panelLeft:
-      typeof bubblePlacement.style['left'] === 'number' ? bubblePlacement.style['left'] : undefined,
-    panelWidth: bubblePlacement.width,
+      typeof panelBubbleStyle['left'] === 'number' ? panelBubbleStyle['left'] : undefined,
+    panelWidth: resolvedPanelWidth,
     strategy: bubblePlacement.strategy,
   });
   const attachedAvatarStyle = getAttachedAvatarStyle(avatarAttachmentSide);
@@ -331,24 +418,24 @@ export function useKangurAiTutorPanelShellState(input: {
     bubblePlacement.mode === 'bubble' &&
     isAnchoredUiMode &&
     displayFocusRect &&
-    typeof bubblePlacement.style['left'] === 'number' &&
-    typeof bubblePlacement.style['top'] === 'number'
+    typeof panelBubbleStyle['left'] === 'number' &&
+    typeof panelBubbleStyle['top'] === 'number'
       ? getTutorPointerGeometry({
         focusRect: displayFocusRect,
-        panelLeft: bubblePlacement.style['left'],
-        panelTop: bubblePlacement.style['top'],
-        panelWidth: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+        panelLeft: panelBubbleStyle['left'],
+        panelTop: panelBubbleStyle['top'],
+        panelWidth: resolvedPanelWidth,
         side: avatarAttachmentSide,
       })
       : null;
   const attachedLaunchOffset =
     bubblePlacement.mode === 'bubble' &&
-    typeof bubblePlacement.style['left'] === 'number' &&
-    typeof bubblePlacement.style['top'] === 'number'
+    typeof panelBubbleStyle['left'] === 'number' &&
+    typeof panelBubbleStyle['top'] === 'number'
       ? getDockLaunchOffset({
-        finalLeft: bubblePlacement.style['left'],
-        finalTop: bubblePlacement.style['top'],
-        width: bubblePlacement.width ?? motionProfile.desktopBubbleWidth,
+        finalLeft: panelBubbleStyle['left'],
+        finalTop: panelBubbleStyle['top'],
+        width: resolvedPanelWidth,
         side: avatarAttachmentSide,
         viewport,
       })
@@ -419,7 +506,11 @@ export function useKangurAiTutorPanelShellState(input: {
       ? 'guided'
       : 'floating';
   const panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet' =
-    bubblePlacement.mode === 'sheet' ? 'sheet' : isStaticUiMode ? 'fade' : 'dock-launch';
+    bubblePlacement.mode === 'sheet'
+      ? 'sheet'
+      : isStaticUiMode || isFreeformUiMode
+        ? 'fade'
+        : 'dock-launch';
   const panelTransition: Transition = prefersReducedMotion
     ? reducedMotionTransitions.instant
     : panelOpenAnimation === 'fade'
@@ -434,8 +525,12 @@ export function useKangurAiTutorPanelShellState(input: {
     avatarPointer,
     avatarStyle,
     floatingAvatarPlacement,
+    isPanelDraggable: isFreeformPanel,
+    isPanelDragging: isFreeformPanel && isPanelDragging,
     panelAvatarPlacement,
+    panelBubbleStyle,
     panelOpenAnimation,
+    panelSnapState,
     panelTransition,
     pointerMarkerId,
     showAttachedAvatarShell,

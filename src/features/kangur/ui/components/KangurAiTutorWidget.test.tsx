@@ -31,7 +31,9 @@ const {
   recordFollowUpCompletionMock,
   navigateToLoginMock,
   setHighlightedTextMock,
+  activateSelectionGlowMock,
   clearSelectionMock,
+  clearSelectionGlowMock,
   trackKangurClientEventMock,
   speechSynthesisMock,
   audioPlayMock,
@@ -52,7 +54,9 @@ const {
   recordFollowUpCompletionMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   setHighlightedTextMock: vi.fn(),
+  activateSelectionGlowMock: vi.fn().mockReturnValue(false),
   clearSelectionMock: vi.fn(),
+  clearSelectionGlowMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   speechSynthesisMock: {
     speak: vi.fn(),
@@ -518,6 +522,10 @@ describe('KangurAiTutorWidget', () => {
       setHighlightedText: setHighlightedTextMock,
     });
     useKangurTextHighlightMock.mockReturnValue({
+      activateSelectionGlow: activateSelectionGlowMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
+      selectionLineRects: [new DOMRect(120, 180, 140, 26)],
       selectedText: '2 + 2',
       selectionRect: new DOMRect(120, 180, 140, 26),
       selectionContainerRect: new DOMRect(80, 150, 520, 240),
@@ -1978,6 +1986,12 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveTextContent(
       'Tutor aktywnie podtrzymuje ucznia w biezacej probie.'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-mood-description')).toHaveClass(
+      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-mood-chip')).toHaveClass(
+      '[color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveTextContent('Pomocnik');
   });
   it('tracks clicks on assistant follow-up actions', () => {
@@ -2298,10 +2312,14 @@ describe('KangurAiTutorWidget', () => {
       setHighlightedText: setHighlightedTextMock,
     });
     useKangurTextHighlightMock.mockReturnValue({
+      activateSelectionGlow: activateSelectionGlowMock,
       selectedText: '2 + 2',
+      selectionLineRects: [new DOMRect(120, 620, 140, 26)],
       selectionRect: new DOMRect(120, 620, 140, 26),
       selectionContainerRect: new DOMRect(80, 580, 520, 240),
       clearSelection: clearSelectionMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
     });
     render(<KangurAiTutorWidget />);
     expect(screen.getByTestId('kangur-ai-tutor-selection-action')).toBeInTheDocument();
@@ -2309,11 +2327,17 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
     expect(setHighlightedTextMock).toHaveBeenCalledWith('2 + 2');
+    expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
+    expect(clearSelectionMock).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveStyle({
-      width: '160px',
-      height: '46px',
+    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveAttribute(
+      'data-selection-emphasis',
+      'glow'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveStyle({
+      width: '152px',
+      height: '34px',
     });
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
@@ -2921,14 +2945,13 @@ describe('KangurAiTutorWidget', () => {
       const guidedCalloutPlacement = screen
         .getByTestId('kangur-ai-tutor-selection-guided-callout')
         .getAttribute('data-guidance-placement');
-      expect(
-        [
-          ['top', 'bottom'],
-          ['bottom', 'top'],
-          ['left', 'right'],
-          ['right', 'left'],
-        ]
-      ).toContainEqual([guidedAvatarPlacement, guidedCalloutPlacement]);
+      const selectionPreview = screen.getByTestId('kangur-ai-tutor-selection-preview');
+      expect(guidedAvatarPlacement).not.toBe('dock');
+      expect(['bottom', 'left', 'right']).toContain(guidedCalloutPlacement);
+      expect(selectionPreview).toHaveAttribute(
+        'data-avatar-avoid-edge',
+        guidedAvatarPlacement ?? 'none'
+      );
       const topEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
       expect(
         Number(topEdgeSelectionArrowhead.getAttribute('data-guidance-target-x'))
@@ -3422,6 +3445,733 @@ describe('KangurAiTutorWidget', () => {
       })
     );
     expect(openChatMock).not.toHaveBeenCalled();
+  });
+  it('persists a dragged freeform panel position without showing the launcher separately', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 7,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 7,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 7,
+    });
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 780,
+          top: 180,
+        })
+      );
+    });
+
+    expect(panel).toHaveAttribute('data-panel-draggable', 'true');
+    expect(panel).toHaveAttribute('data-panel-dragging', 'false');
+    expect(panel).toHaveAttribute('data-panel-snap', 'free');
+    expect(screen.getByTestId('kangur-ai-tutor-move-to-context')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-detach-from-context')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-following-context-badge')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-reset-position')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-avatar')).not.toBeInTheDocument();
+  });
+  it('moves a dragged freeform panel beside the current context and persists that point', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 27,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 27,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 27,
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-move-to-context'));
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          mode?: string;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 620,
+          mode: 'contextual',
+          snap: 'free',
+          top: 16,
+        })
+      );
+    });
+
+    expect(panel).toHaveStyle({
+      left: '620px',
+      top: '16px',
+    });
+    expect(panel).toHaveAttribute('data-panel-snap', 'top');
+    expect(screen.queryByTestId('kangur-ai-tutor-move-to-context')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-detach-from-context')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-following-context-badge')).toBeInTheDocument();
+  });
+  it('keeps following the current selection after moving a freeform panel to context', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    const highlightState = {
+      clearSelection: clearSelectionMock,
+      selectedText: '2 + 2',
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      selectionRect: new DOMRect(120, 180, 140, 26),
+    };
+    useKangurTextHighlightMock.mockImplementation(() => highlightState);
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 31,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 31,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 31,
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-move-to-context'));
+
+    await waitFor(() => {
+      expect(panel).toHaveStyle({
+        left: '620px',
+        top: '16px',
+      });
+    });
+
+    highlightState.selectionRect = new DOMRect(760, 320, 140, 26);
+    highlightState.selectionContainerRect = new DOMRect(700, 280, 260, 220);
+    rerender(<KangurAiTutorWidget />);
+
+    await waitFor(() => {
+      expect(panel.style.left).not.toBe('620px');
+      expect(panel.style.top).not.toBe('16px');
+    });
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          mode?: string;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          mode: 'contextual',
+          snap: 'free',
+        })
+      );
+      expect(persistedState.panelPosition?.left).not.toBe(620);
+      expect(persistedState.panelPosition?.top).not.toBe(16);
+    });
+  });
+  it('restores the contextual-follow header state after remounting a freeform panel', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    const firstRender = render(<KangurAiTutorWidget />);
+
+    let panel = screen.getByTestId('kangur-ai-tutor-panel');
+    let header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 41,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 41,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 41,
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-move-to-context'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-ai-tutor-detach-from-context')).toBeInTheDocument();
+      expect(screen.getByTestId('kangur-ai-tutor-following-context-badge')).toBeInTheDocument();
+    });
+
+    firstRender.unmount();
+
+    render(<KangurAiTutorWidget />);
+
+    panel = screen.getByTestId('kangur-ai-tutor-panel');
+    header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(620, 16, 384, 420);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('kangur-ai-tutor-move-to-context')).not.toBeInTheDocument();
+      expect(screen.getByTestId('kangur-ai-tutor-detach-from-context')).toBeInTheDocument();
+      expect(screen.getByTestId('kangur-ai-tutor-following-context-badge')).toBeInTheDocument();
+      expect(header).toHaveAttribute('data-panel-draggable', 'true');
+      expect(panel).toHaveStyle({
+        left: '620px',
+        top: '16px',
+      });
+    });
+  });
+  it('stops following the current selection after detaching a freeform panel from context', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    const highlightState = {
+      clearSelection: clearSelectionMock,
+      selectedText: '2 + 2',
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      selectionRect: new DOMRect(120, 180, 140, 26),
+    };
+    useKangurTextHighlightMock.mockImplementation(() => highlightState);
+
+    const { rerender } = render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 32,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 32,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 32,
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-move-to-context'));
+
+    await waitFor(() => {
+      expect(panel).toHaveStyle({
+        left: '620px',
+        top: '16px',
+      });
+      expect(screen.getByTestId('kangur-ai-tutor-detach-from-context')).toBeInTheDocument();
+      expect(screen.getByTestId('kangur-ai-tutor-following-context-badge')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-detach-from-context'));
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          mode?: string;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 620,
+          mode: 'manual',
+          snap: 'free',
+          top: 16,
+        })
+      );
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-move-to-context')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-detach-from-context')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-following-context-badge')).not.toBeInTheDocument();
+
+    highlightState.selectionRect = new DOMRect(760, 320, 140, 26);
+    highlightState.selectionContainerRect = new DOMRect(700, 280, 260, 220);
+    rerender(<KangurAiTutorWidget />);
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          mode?: string;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(panel).toHaveStyle({
+        left: '620px',
+        top: '16px',
+      });
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 620,
+          mode: 'manual',
+          snap: 'free',
+          top: 16,
+        })
+      );
+    });
+  });
+  it('resets a custom freeform panel position back to the default dock and clears persisted state', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 17,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 17,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1020,
+      clientY: 230,
+      pointerId: 17,
+    });
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 780,
+          top: 180,
+        })
+      );
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-reset-position'));
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toBeUndefined();
+    });
+
+    expect(panel).toHaveAttribute('data-panel-snap', 'bottom-right');
+    expect(panel).toHaveStyle({
+      left: '880px',
+    });
+    expect(screen.queryByTestId('kangur-ai-tutor-reset-position')).not.toBeInTheDocument();
+  });
+  it('snaps a dragged freeform panel into the nearest corner before persisting it', async () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      selectionContainerRect: new DOMRect(80, 150, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    const panel = screen.getByTestId('kangur-ai-tutor-panel');
+    const header = screen.getByTestId('kangur-ai-tutor-header');
+    panel.getBoundingClientRect = () => new DOMRect(880, 160, 384, 420);
+
+    fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 1120,
+      clientY: 210,
+      pointerId: 9,
+    });
+    fireEvent.pointerMove(header, {
+      clientX: 1200,
+      clientY: 70,
+      pointerId: 9,
+    });
+    fireEvent.pointerUp(header, {
+      clientX: 1200,
+      clientY: 70,
+      pointerId: 9,
+    });
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 880,
+          snap: 'top-right',
+          top: 16,
+        })
+      );
+    });
+
+    expect(panel).toHaveAttribute('data-panel-snap', 'top-right');
+    expect(header).toHaveAttribute('data-panel-snap', 'top-right');
+
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1440,
+    });
+    fireEvent(window, new Event('resize'));
+
+    await waitFor(() => {
+      const persistedState = JSON.parse(
+        window.sessionStorage.getItem('kangur-ai-tutor-widget-v1') ?? '{}'
+      ) as {
+        panelPosition?: {
+          left: number;
+          snap?: string;
+          top: number;
+        };
+      };
+
+      expect(persistedState.panelPosition).toEqual(
+        expect.objectContaining({
+          left: 1040,
+          snap: 'top-right',
+          top: 16,
+        })
+      );
+    });
+
+    expect(panel).toHaveStyle({
+      left: '1040px',
+      top: '16px',
+    });
   });
   it('lets the learner drop the tutor onto a page section and starts explaining that section', async () => {
     vi.useFakeTimers();
@@ -4043,6 +4793,88 @@ describe('KangurAiTutorWidget', () => {
       'data-open-animation',
       'fade'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-focus-chip')).toHaveTextContent('Fragment lekcji');
+    expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-pointer')).not.toBeInTheDocument();
+  });
+  it('renders the open tutor as a draggable freeform panel while preserving lesson context', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'freeform',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorAvatarSvg:
+        '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="#ffffff" /></svg>',
+      tutorAvatarImageUrl: null,
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: '2 + 2',
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 180, 140, 26),
+      clearSelection: clearSelectionMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.queryByTestId('kangur-ai-tutor-avatar')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-ui-mode',
+      'freeform'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute('data-layout', 'bubble');
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-avatar-placement',
+      'hidden'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-has-pointer',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-open-animation',
+      'fade'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-panel-draggable',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveAttribute(
+      'data-panel-draggable',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox-action-selected-text')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-move-to-context')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-detach-from-context')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-following-context-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-reset-position')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-composer-pills')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-drawing-toggle')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-focus-chip')).toHaveTextContent('Fragment lekcji');
     expect(screen.getByRole('button', { name: 'Ten fragment' })).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-pointer')).not.toBeInTheDocument();

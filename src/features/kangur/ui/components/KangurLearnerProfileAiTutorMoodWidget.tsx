@@ -59,7 +59,7 @@ function LearnerMoodStat({
   testId: string;
 }): React.JSX.Element {
   return (
-    <div className='soft-card rounded-[24px] border border-slate-200/80 px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'>
+    <div className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'>
       <div className='text-[11px] font-bold uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
         {label}
       </div>

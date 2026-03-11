@@ -92,6 +92,7 @@ export type KangurAiTutorPanelBodyContextValue = {
   panelEmptyStateMessage: string;
   remainingMessages: number | null;
   selectedTextPreview: string | null;
+  showToolboxLayout: boolean;
   shouldRenderAuxiliaryPanelControls: boolean;
   showSectionExplainCompleteState: boolean;
   showSelectionExplainCompleteState: boolean;

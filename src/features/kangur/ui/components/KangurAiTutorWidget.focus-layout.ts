@@ -70,7 +70,7 @@ type UseKangurAiTutorFocusLayoutStateInput = {
   tutorAnchorContext: {
     anchors: KangurTutorAnchorRegistration[];
   } | null;
-  uiMode: 'anchored' | 'static';
+  uiMode: 'anchored' | 'freeform' | 'static';
   viewport: {
     height: number;
     width: number;
@@ -237,7 +237,7 @@ const getSelectionActionLayout = (
   };
 };
 
-const getBubblePlacement = (
+export const getTutorBubblePlacement = (
   rect: DOMRect | null,
   viewport: { width: number; height: number },
   mode: 'bubble' | 'sheet',
@@ -653,8 +653,9 @@ export function useKangurAiTutorFocusLayoutState({
     Boolean(selectedText && selectionRect && selectionActionStyle) &&
     !isSelectionWithinTutorUi();
   const isStaticUiMode = uiMode === 'static';
-  const isAnchoredUiMode = uiMode !== 'static';
-  const isContextualPanelAnchor = panelAnchorMode === 'contextual' && !isStaticUiMode;
+  const isFreeformUiMode = uiMode === 'freeform';
+  const isAnchoredUiMode = uiMode === 'anchored';
+  const isContextualPanelAnchor = panelAnchorMode === 'contextual' && isAnchoredUiMode;
   const displayFocusRect = isAnchoredUiMode && isContextualPanelAnchor ? activeFocus.rect : null;
   const isMobileSheet = viewport.width < motionProfile.sheetBreakpoint;
 
@@ -663,6 +664,7 @@ export function useKangurAiTutorFocusLayoutState({
     displayFocusRect,
     isAnchoredUiMode,
     isContextualPanelAnchor,
+    isFreeformUiMode,
     isMobileSheet,
     isStaticUiMode,
     selectionActionLayout,
@@ -710,7 +712,7 @@ export function useKangurAiTutorBubblePlacementState(input: {
         )
       );
 
-    return getBubblePlacement(
+    return getTutorBubblePlacement(
       isOpen && !isMobileSheet ? displayFocusRect : null,
       viewport,
       isMobileSheet ? 'sheet' : 'bubble',

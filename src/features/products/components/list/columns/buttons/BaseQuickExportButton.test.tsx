@@ -111,6 +111,7 @@ const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickE
     prefetchListings: vi.fn(),
     showMarketplaceBadge: false,
     onOpenIntegrations: undefined,
+    onOpenExportSettings: undefined,
     ...overrides,
   };
 
@@ -320,5 +321,24 @@ describe('BaseQuickExportButton', () => {
     expect(toastMock).toHaveBeenCalledWith('Base.com export started.', {
       variant: 'success',
     });
+  });
+
+  it('opens Base export settings instead of re-exporting when the product is already exported', () => {
+    const onOpenExportSettings = vi.fn();
+
+    renderButton({
+      status: 'active',
+      showMarketplaceBadge: true,
+      onOpenExportSettings,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Base.com listing actions (active).' }));
+
+    expect(onOpenExportSettings).toHaveBeenCalledTimes(1);
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(apiPostMock).not.toHaveBeenCalledWith(
+      '/api/v2/integrations/products/product-1/base/sku-check',
+      expect.anything()
+    );
   });
 });

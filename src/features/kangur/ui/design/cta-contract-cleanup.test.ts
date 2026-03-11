@@ -114,15 +114,14 @@ describe('Kangur CTA contract cleanup', () => {
     ]);
 
     expect(source).toContain(
-      'relative flex flex-col overflow-hidden border border-amber-200/80 bg-white/94'
+      'relative flex flex-col overflow-hidden border [border-color:var(--kangur-chat-panel-border'
     );
     expect(source).toContain(
-      'border-b border-amber-200/80 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)]'
+      '[background:var(--kangur-chat-header-background'
     );
-    expect(source).toContain('border border-amber-100 bg-amber-50/80');
-    expect(source).toContain('border border-amber-100 bg-amber-50/70');
+    expect(source).toContain('--kangur-chat-chip-background');
+    expect(source).toContain('--kangur-chat-control-background');
     expect(source).toContain('accent=\'amber\'');
-    expect(source).toContain('border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500');
     expect(source).not.toContain('bg-[linear-gradient(135deg,#2f4df6_0%,#e84694_55%,#fbbf24_100%)]');
     expect(source).not.toContain('border border-indigo-500 bg-indigo-500');
   });

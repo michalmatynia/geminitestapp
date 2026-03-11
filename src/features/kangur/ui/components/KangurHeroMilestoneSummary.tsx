@@ -44,16 +44,21 @@ export default function KangurHeroMilestoneSummary({
         <div
           className='rounded-[28px] border border-amber-200/80 bg-amber-50/80 px-4 py-4'
           data-testid={`${summaryTestIdPrefix}-next-badge`}
+          style={{
+            background: 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
+          }}
         >
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
               <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700/80'>
                 Nastepny kamien milowy
               </p>
-              <p className='mt-1 text-sm font-semibold text-slate-900'>
+              <p className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                 {nextBadge.emoji} {nextBadge.name}
               </p>
-              <p className='mt-1 text-xs leading-5 text-slate-600'>{nextBadge.desc}</p>
+              <p className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                {nextBadge.desc}
+              </p>
             </div>
             <KangurStatusChip accent='amber' className='shrink-0 text-[11px]'>
               {nextBadge.summary}

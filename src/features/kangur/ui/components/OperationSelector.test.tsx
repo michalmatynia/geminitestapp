@@ -70,6 +70,10 @@ describe('OperationSelector', () => {
     expect(
       screen.getByTestId('operation-card-division').getAttribute('aria-describedby')
     ).toContain('operation-card-recommendation-division');
+    expect(screen.getByText('Dzielenie')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(
+      screen.getByText('Wejdz do serii pytan i cwicz we wlasnym tempie.')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('operation-card-recommendation-division')).toHaveTextContent(
       'Misja dnia'
     );

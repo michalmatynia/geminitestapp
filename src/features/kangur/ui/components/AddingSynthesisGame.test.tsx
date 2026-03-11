@@ -98,6 +98,10 @@ describe('AddingSynthesisGame', () => {
       'glass-panel',
       'border-amber-200/70'
     );
+    expect(screen.getByText('Synteza dodawania')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(
+      screen.getByText(/Licz w glowie, patrz jak dzialanie spada do linii/i)
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Nowa gra')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Synthesia-style')).toHaveClass('border-violet-200', 'bg-violet-100');
     expect(screen.getByTestId('adding-synthesis-intro-badge')).toHaveClass(
@@ -136,6 +140,7 @@ describe('AddingSynthesisGame', () => {
       'border-violet-200',
       'bg-violet-100'
     );
+    expect(screen.getByText('2 + 3')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('adding-synthesis-note-hit-line')).toHaveClass(
       'border-slate-200',
       'bg-slate-100'

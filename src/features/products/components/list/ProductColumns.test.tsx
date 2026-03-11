@@ -4,11 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
 const {
+  baseQuickExportButtonMock,
+  triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
   useProductListRowActionsContextMock,
   useProductListRowVisualsContextMock,
 } = vi.hoisted(() => ({
+  baseQuickExportButtonMock: vi.fn(),
+  triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
@@ -26,6 +30,28 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
     useProductListRowVisualsContext: () => useProductListRowVisualsContextMock(),
   };
 });
+
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQueryClient: () => ({}),
+  };
+});
+
+vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+  TriggerButtonBar: (props: Record<string, unknown>) => {
+    triggerButtonBarMock(props);
+    return null;
+  },
+}));
+
+vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
+  BaseQuickExportButton: (props: Record<string, unknown>) => {
+    baseQuickExportButtonMock(props);
+    return <button type='button'>BL</button>;
+  },
+}));
 
 let getProductColumns: typeof import('./ProductColumns').getProductColumns;
 
@@ -471,5 +497,107 @@ describe('ProductColumns queued badge', () => {
 
     expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
     expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
+  });
+
+  it('keeps the BL quick-export button visible when AI Path row triggers render nothing', async () => {
+    const product = createProduct();
+    const onIntegrationsClick = vi.fn();
+    const onExportSettingsClick = vi.fn();
+
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick,
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      integrationBadgeIds: new Set<string>(),
+      integrationBadgeStatuses: new Map<string, string>(),
+      traderaBadgeIds: new Set<string>(),
+      traderaBadgeStatuses: new Map<string, string>(),
+      showTriggerRunFeedback: true,
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(await screen.findByRole('button', { name: 'BL' })).toBeInTheDocument();
+    expect(baseQuickExportButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        product,
+      })
+    );
+  });
+
+  it('routes the green BL button to the Base export settings modal path', async () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+    });
+    const onIntegrationsClick = vi.fn();
+    const onExportSettingsClick = vi.fn();
+
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick,
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      integrationBadgeIds: new Set<string>(['product-1']),
+      integrationBadgeStatuses: new Map<string, string>([['product-1', 'active']]),
+      traderaBadgeIds: new Set<string>(),
+      traderaBadgeStatuses: new Map<string, string>(),
+      showTriggerRunFeedback: true,
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(await screen.findByRole('button', { name: 'BL' })).toBeInTheDocument();
+
+    const props = baseQuickExportButtonMock.mock.calls
+      .map((call) => call[0])
+      .find(
+        (value) =>
+          typeof value === 'object' &&
+          value !== null &&
+          'showMarketplaceBadge' in value &&
+          (value as { showMarketplaceBadge?: boolean }).showMarketplaceBadge === true
+      ) as
+      | {
+          showMarketplaceBadge?: boolean;
+          onOpenExportSettings?: (() => void) | undefined;
+        }
+      | undefined;
+
+    expect(props?.showMarketplaceBadge).toBe(true);
+    props?.onOpenExportSettings?.();
+
+    expect(onExportSettingsClick).toHaveBeenCalledWith(product);
+    expect(onIntegrationsClick).not.toHaveBeenCalled();
   });
 });

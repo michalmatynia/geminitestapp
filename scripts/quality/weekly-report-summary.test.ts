@@ -152,6 +152,14 @@ describe('weekly report summary helpers', () => {
           range: '7d',
           bridgeSuggestionCount: 4,
           bridgeCompletionRatePercent: 50,
+          messageSucceededCount: 8,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           alertStatus: 'ok',
         },
         details: {
@@ -160,6 +168,17 @@ describe('weekly report summary helpers', () => {
             to: '2026-03-09T00:00:00.000Z',
           },
         },
+        error: null,
+      },
+      kangurKnowledgeGraphStatus: {
+        status: 'ok',
+        summary: {
+          mode: 'status',
+          semanticReadiness: 'vector_ready',
+          liveNodeCount: 87,
+          vectorIndexState: 'ONLINE',
+        },
+        details: null,
         error: null,
       },
       criticalFlows: [
@@ -199,7 +218,18 @@ describe('weekly report summary helpers', () => {
           range: '7d',
           bridgeSuggestionCount: 4,
           bridgeCompletionRatePercent: 50,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
           alertStatus: 'ok',
+        },
+      },
+      kangurKnowledgeGraphStatus: {
+        status: 'ok',
+        summary: {
+          mode: 'status',
+          semanticReadiness: 'vector_ready',
+          vectorIndexState: 'ONLINE',
         },
       },
       criticalFlows: [
@@ -357,7 +387,25 @@ describe('weekly report summary helpers', () => {
           range: '7d',
           bridgeSuggestionCount: 6,
           bridgeCompletionRatePercent: 33.3,
+          messageSucceededCount: 9,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           alertStatus: 'warning',
+        },
+        details: null,
+        error: null,
+      },
+      kangurKnowledgeGraphStatus: {
+        status: 'warning',
+        summary: {
+          mode: 'status',
+          semanticReadiness: 'vector_index_pending',
+          vectorIndexState: 'POPULATING',
         },
         details: null,
         error: null,
@@ -422,7 +470,18 @@ describe('weekly report summary helpers', () => {
         range: '7d',
         bridgeSuggestionCount: 6,
         bridgeCompletionRatePercent: 33.3,
+        knowledgeGraphAppliedCount: 6,
+        knowledgeGraphHybridRecallCount: 2,
+        knowledgeGraphVectorOnlyRecallCount: 1,
         alertStatus: 'warning',
+      },
+    });
+    expect(details.kangurKnowledgeGraphStatus).toMatchObject({
+      status: 'warning',
+      summary: {
+        mode: 'status',
+        semanticReadiness: 'vector_index_pending',
+        vectorIndexState: 'POPULATING',
       },
     });
   });

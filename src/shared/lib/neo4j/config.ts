@@ -2,8 +2,22 @@ import 'server-only';
 
 import { configurationError } from '@/shared/errors/app-error';
 
-const parseBoolean = (value: string | undefined): boolean =>
-  ['1', 'true', 'yes', 'on'].includes(value?.trim().toLowerCase() ?? '');
+const parseOptionalBoolean = (value: string | undefined): boolean | null => {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  if (!normalized) {
+    return null;
+  }
+
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return null;
+};
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -45,9 +59,14 @@ export interface Neo4jConfig {
   requestTimeoutMs: number;
 }
 
-export const isNeo4jEnabled = (): boolean =>
-  parseBoolean(process.env['NEO4J_ENABLED']) ||
-  Boolean(process.env['NEO4J_URI']?.trim() || process.env['NEO4J_HTTP_URL']?.trim());
+export const isNeo4jEnabled = (): boolean => {
+  const explicitFlag = parseOptionalBoolean(process.env['NEO4J_ENABLED']);
+  if (explicitFlag !== null) {
+    return explicitFlag;
+  }
+
+  return Boolean(process.env['NEO4J_URI']?.trim() || process.env['NEO4J_HTTP_URL']?.trim());
+};
 
 export const getNeo4jConfig = (): Neo4jConfig => {
   const enabled = isNeo4jEnabled();

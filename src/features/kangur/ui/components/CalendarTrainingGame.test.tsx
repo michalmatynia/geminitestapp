@@ -174,6 +174,9 @@ describe('CalendarTrainingGame', () => {
       'text-2xl',
       'text-green-700'
     );
+    expect(
+      screen.getByText('Idealnie! Świetnie znasz kalendarz!')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-training-summary-breakdown')).toHaveTextContent(
       'Ukonczenie rundy +14'

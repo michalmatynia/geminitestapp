@@ -364,6 +364,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   const product: ProductWithImages = row.original;
   const {
     onIntegrationsClick: handleClick,
+    onExportSettingsClick,
   } = useProductListRowActionsContext();
   const {
     integrationBadgeIds,
@@ -424,6 +425,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         prefetchListings={prefetchListings}
         showMarketplaceBadge={showMarketplaceBadge}
         onOpenIntegrations={(): void => handleClick(product)}
+        onOpenExportSettings={(): void => onExportSettingsClick(product)}
       />
       <TriggerButtonBar
         location='product_row'

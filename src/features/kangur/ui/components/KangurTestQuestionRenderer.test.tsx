@@ -78,8 +78,10 @@ describe('KangurTestQuestionRenderer', () => {
     );
 
     expect(screen.getByText('3 pts')).toHaveClass('border-slate-200', 'bg-slate-100');
-    expect(screen.getByText('Question 1 / 1')).toHaveClass('text-slate-400');
-    expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('text-slate-800');
+    expect(screen.getByText('Question 1 / 1')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByText('Explanation').parentElement).toHaveClass(
       'soft-card',
       'border-indigo-300'

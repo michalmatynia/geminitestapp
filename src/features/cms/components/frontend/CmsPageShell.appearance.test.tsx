@@ -5,18 +5,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  CMS_STOREFRONT_APPEARANCE_STORAGE_KEY,
-  CmsStorefrontAppearanceProvider,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 
 describe('CmsPageShell appearance', () => {
   it('applies page-wide appearance variables when dark mode is selected', async () => {
-    window.localStorage.setItem(CMS_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
-
     render(
-      <CmsStorefrontAppearanceProvider>
+      <CmsStorefrontAppearanceProvider initialMode='dark'>
         <CmsPageShell
           menu={
             {

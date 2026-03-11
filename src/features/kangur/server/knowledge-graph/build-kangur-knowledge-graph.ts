@@ -3,6 +3,10 @@ import {
   KANGUR_RUNTIME_PROVIDER_ID,
 } from '@/features/kangur/context-registry/refs';
 import {
+  getKangurHomeHref,
+  getKangurPageSlug,
+} from '@/features/kangur/config/routing';
+import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
@@ -26,6 +30,17 @@ type BuildKangurKnowledgeGraphOptions = {
   locale?: string;
   tutorContent?: KangurAiTutorContent;
   nativeGuideStore?: KangurAiTutorNativeGuideStore;
+};
+
+type LocalizedValue<T> = T | Partial<Record<string, T>>;
+
+type ReferenceDetail = {
+  title: LocalizedValue<string>;
+  summary: LocalizedValue<string>;
+  route?: string;
+  triggerPhrases?: LocalizedValue<string[]>;
+  tags?: LocalizedValue<string[]>;
+  semanticText?: LocalizedValue<string>;
 };
 
 const ROOT_DEFINITIONS = {
@@ -61,19 +76,41 @@ const ROOT_DEFINITIONS = {
   },
 } as const;
 
-const REFERENCE_DETAILS: Partial<
-  Record<
-    string,
-    {
-      title: string;
-      summary: string;
-      route?: string;
-    }
-  >
-> = {
+const KANGUR_HOME_ROUTE = getKangurHomeHref('/');
+
+const toRelativeKangurPageRoute = (pageName: string): string => {
+  const slug = getKangurPageSlug(pageName).trim().replace(/^\/+/, '');
+  return slug.length > 0 ? `/${slug}` : KANGUR_HOME_ROUTE;
+};
+
+const FLOW_TARGETS: Partial<Record<string, {
+  route: string;
+  anchorId?: string;
+}>> = {
+  'flow:kangur:sign-in': {
+    route: KANGUR_HOME_ROUTE,
+    anchorId: 'kangur-primary-nav-login',
+  },
+  'flow:kangur:create-account': {
+    route: KANGUR_HOME_ROUTE,
+    anchorId: 'kangur-primary-nav-create-account',
+  },
+};
+
+const SURFACE_ROUTES: Partial<Record<string, string>> = {
+  lesson: toRelativeKangurPageRoute('Lessons'),
+  test: '/tests',
+  game: toRelativeKangurPageRoute('Game'),
+  profile: toRelativeKangurPageRoute('LearnerProfile'),
+  parent_dashboard: toRelativeKangurPageRoute('ParentDashboard'),
+  auth: KANGUR_HOME_ROUTE,
+};
+
+const REFERENCE_DETAILS: Partial<Record<string, ReferenceDetail>> = {
   'page:kangur-learner-profile': {
     title: 'Learner profile page',
     summary: 'Kangur learner profile with progress, streaks, and recommendations.',
+    route: toRelativeKangurPageRoute('LearnerProfile'),
   },
   'collection:kangur-progress': {
     title: 'Learner progress collection',
@@ -96,8 +133,35 @@ const REFERENCE_DETAILS: Partial<
     summary: 'Primary tutor entry point available across Kangur surfaces.',
   },
   'page:kangur-lessons': {
-    title: 'Lessons page',
-    summary: 'Lesson library and lesson navigation surface in Kangur.',
+    title: {
+      pl: 'Lekcje',
+      en: 'Lessons page',
+    },
+    summary: {
+      pl: 'Biblioteka lekcji i ekran nawigacji po lekcjach w Kangurze.',
+      en: 'Lesson library and lesson navigation surface in Kangur.',
+    },
+    route: toRelativeKangurPageRoute('Lessons'),
+    triggerPhrases: {
+      pl: [
+        'lekcje',
+        'gdzie sa lekcje',
+        'gdzie znajde lekcje',
+        'otworz lekcje',
+        'biblioteka lekcji',
+        'wroc do lekcji',
+        'wrocic do lekcji',
+      ],
+      en: ['lessons', 'lesson library', 'open lessons'],
+    },
+    tags: {
+      pl: ['lekcje', 'biblioteka-lekcji'],
+      en: ['lessons', 'lesson-library'],
+    },
+    semanticText: {
+      pl: 'Ekran lekcji w Kangurze. To tutaj uczen znajduje lekcje, biblioteke lekcji i wraca do tematow.',
+      en: 'Kangur lessons page where learners find lessons and the lesson library.',
+    },
   },
   'collection:kangur-lessons': {
     title: 'Lessons collection',
@@ -108,8 +172,38 @@ const REFERENCE_DETAILS: Partial<
     summary: 'Tutor behavior policy for guided, answer-safe Kangur explanations.',
   },
   'page:kangur-tests': {
-    title: 'Tests page',
-    summary: 'Kangur tests and exam-navigation surface.',
+    title: {
+      pl: 'Testy',
+      en: 'Tests page',
+    },
+    summary: {
+      pl: 'Ekran testow i nawigacji po testach w Kangurze.',
+      en: 'Kangur tests and exam-navigation surface.',
+    },
+    route: SURFACE_ROUTES['test'],
+    triggerPhrases: {
+      pl: [
+        'testy',
+        'testow',
+        'gdzie sa testy',
+        'gdzie znajde testy',
+        'otworz testy',
+        'wroc do testow',
+        'wrocic do testow',
+        'jak wrocic do testow',
+        'powrot do testow',
+        'ekran testow',
+      ],
+      en: ['tests', 'open tests', 'tests page'],
+    },
+    tags: {
+      pl: ['testy', 'ekran-testow'],
+      en: ['tests', 'tests-page'],
+    },
+    semanticText: {
+      pl: 'Ekran testow w Kangurze. To tutaj uczen znajduje testy, wraca do testow i przechodzi do zestawow testowych. Gdy pyta, gdzie sa testy albo jak wrocic do testow, odpowiedzia jest ta strona.',
+      en: 'Kangur tests page where learners find and return to tests.',
+    },
   },
   'collection:kangur-test-suites': {
     title: 'Test suites collection',
@@ -122,10 +216,12 @@ const REFERENCE_DETAILS: Partial<
   'page:kangur-parent-dashboard': {
     title: 'Parent dashboard page',
     summary: 'Parent-facing Kangur dashboard for assignments and progress review.',
+    route: toRelativeKangurPageRoute('ParentDashboard'),
   },
   'page:kangur-game': {
     title: 'Game home page',
     summary: 'Learner home and quick-start Kangur game surface.',
+    route: toRelativeKangurPageRoute('Game'),
   },
 };
 
@@ -182,16 +278,28 @@ const inferReferenceKind = (refId: string): KangurKnowledgeNodeKind => {
   return 'policy';
 };
 
-const inferReferenceTitle = (refId: string): string => {
+const resolveLocalizedValue = <T>(value: LocalizedValue<T> | undefined, locale: string): T | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (Array.isArray(value) || typeof value !== 'object' || value === null) {
+    return value as T;
+  }
+  return value[locale] ?? value['pl'] ?? Object.values(value)[0];
+};
+
+const inferReferenceTitle = (refId: string, locale: string): string => {
   const detail = REFERENCE_DETAILS[refId];
-  if (detail) return detail.title;
+  const title = resolveLocalizedValue(detail?.title, locale);
+  if (title) return title;
   const [, raw = refId] = refId.split(':', 2);
   return `${toSentenceCase(raw)} reference`;
 };
 
-const inferReferenceSummary = (refId: string): string => {
+const inferReferenceSummary = (refId: string, locale: string): string => {
   const detail = REFERENCE_DETAILS[refId];
-  if (detail) return detail.summary;
+  const summary = resolveLocalizedValue(detail?.summary, locale);
+  if (summary) return summary;
   return 'Kangur website knowledge reference.';
 };
 
@@ -222,25 +330,90 @@ const createEdge = (
 
 const buildReferenceNode = (
   refId: string,
-  source: KangurKnowledgeNodeSource = 'kangur_context_registry'
-): KangurKnowledgeGraphNode => ({
-  id: refId,
-  kind: inferReferenceKind(refId),
-  title: inferReferenceTitle(refId),
-  summary: inferReferenceSummary(refId),
-  source,
-  refId,
-  sourceCollection: 'kangur_context_registry',
-  sourceRecordId: refId,
-  sourcePath: refId,
-  route: REFERENCE_DETAILS[refId]?.route,
-  tags: ['kangur', inferReferenceKind(refId)],
-});
+  source: KangurKnowledgeNodeSource = 'kangur_context_registry',
+  locale = 'pl'
+): KangurKnowledgeGraphNode => {
+  const detail = REFERENCE_DETAILS[refId];
+  const kind = inferReferenceKind(refId);
+
+  return {
+    id: refId,
+    kind,
+    title: inferReferenceTitle(refId, locale),
+    summary: inferReferenceSummary(refId, locale),
+    source,
+    refId,
+    sourceCollection: 'kangur_context_registry',
+    sourceRecordId: refId,
+    sourcePath: refId,
+    route: detail?.route,
+    triggerPhrases: resolveLocalizedValue(detail?.triggerPhrases, locale),
+    semanticText: resolveLocalizedValue(detail?.semanticText, locale),
+    tags: [
+      'kangur',
+      kind,
+      ...(resolveLocalizedValue(detail?.tags, locale) ?? []),
+    ],
+  };
+};
 
 const SURFACE_FLOW_IDS: Partial<Record<string, string>> = {
   lesson: 'flow:kangur:lesson-help',
   test: 'flow:kangur:test-help',
   assignment: 'flow:kangur:assignment-help',
+};
+
+const resolveNativeGuidePrimaryActionRoute = (
+  pageName: string | null | undefined
+): string | undefined => (pageName ? toRelativeKangurPageRoute(pageName) : undefined);
+
+const resolveConcreteAnchorId = (value: string | null | undefined): string | undefined => {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return undefined;
+  }
+  return normalized.endsWith(':') ? undefined : normalized;
+};
+
+const resolveNativeGuideDirectTarget = (entry: {
+  id: string;
+  surface?: string | null;
+  focusKind?: string | null;
+  focusIdPrefixes: string[];
+  followUpActions: Array<{ page: string }>;
+}): { route?: string; anchorId?: string } => {
+  if (entry.focusKind === 'login_action') {
+    return {
+      route: KANGUR_HOME_ROUTE,
+      anchorId: 'kangur-primary-nav-login',
+    };
+  }
+
+  if (entry.focusKind === 'create_account_action') {
+    return {
+      route: KANGUR_HOME_ROUTE,
+      anchorId: 'kangur-primary-nav-create-account',
+    };
+  }
+
+  if (entry.surface === 'auth') {
+    return {
+      route: KANGUR_HOME_ROUTE,
+    };
+  }
+
+  const surfaceRoute = entry.surface ? SURFACE_ROUTES[entry.surface] : undefined;
+  if (surfaceRoute) {
+    return {
+      route: surfaceRoute,
+      anchorId: resolveConcreteAnchorId(entry.focusIdPrefixes[0]),
+    };
+  }
+
+  return {
+    route: resolveNativeGuidePrimaryActionRoute(entry.followUpActions[0]?.page),
+    anchorId: resolveConcreteAnchorId(entry.focusIdPrefixes[0]),
+  };
 };
 
 export const buildKangurKnowledgeGraph = (
@@ -268,6 +441,7 @@ export const buildKangurKnowledgeGraph = (
   });
 
   for (const flow of FLOW_DEFINITIONS) {
+    const target = FLOW_TARGETS[flow.id];
     createNode(nodes, {
       id: flow.id,
       kind: 'flow',
@@ -275,6 +449,8 @@ export const buildKangurKnowledgeGraph = (
       summary: flow.summary,
       source: 'kangur_manual_manifest',
       locale,
+      route: target?.route,
+      anchorId: target?.anchorId,
       tags: [...flow.tags],
       sourcePath: flow.id,
     });
@@ -293,6 +469,7 @@ export const buildKangurKnowledgeGraph = (
     summary: 'Primary navigation sign-in anchor used by the AI Tutor guided login flow.',
     source: 'kangur_ai_tutor_content',
     locale,
+    route: KANGUR_HOME_ROUTE,
     anchorId: 'kangur-primary-nav-login',
     sourceCollection: 'kangur_ai_tutor_content',
     sourceRecordId: locale,
@@ -306,6 +483,7 @@ export const buildKangurKnowledgeGraph = (
     summary: 'Primary navigation create-account anchor used by the AI Tutor guided signup flow.',
     source: 'kangur_ai_tutor_content',
     locale,
+    route: KANGUR_HOME_ROUTE,
     anchorId: 'kangur-primary-nav-create-account',
     sourceCollection: 'kangur_ai_tutor_content',
     sourceRecordId: locale,
@@ -408,7 +586,7 @@ export const buildKangurKnowledgeGraph = (
       description: `${definition.title} supports the ${definition.relatedFlowId.split(':').at(-1)} website-help flow.`,
     });
     for (const refId of refs) {
-      createNode(nodes, buildReferenceNode(refId));
+      createNode(nodes, buildReferenceNode(refId, 'kangur_context_registry', locale));
       createEdge(edges, {
         kind: 'HAS_REFERENCE',
         from: rootId,
@@ -424,6 +602,7 @@ export const buildKangurKnowledgeGraph = (
     }
 
     const guideNodeId = `guide:native:${entry.id}`;
+    const directTarget = resolveNativeGuideDirectTarget(entry);
     createNode(nodes, {
       id: guideNodeId,
       kind: 'guide',
@@ -433,6 +612,8 @@ export const buildKangurKnowledgeGraph = (
       locale,
       surface: entry.surface ?? undefined,
       focusKind: entry.focusKind ?? undefined,
+      route: directTarget.route,
+      anchorId: directTarget.anchorId,
       sourceCollection: 'kangur_ai_tutor_native_guides',
       sourceRecordId: entry.id,
       sourcePath: `entry:${entry.id}`,
@@ -477,6 +658,64 @@ export const buildKangurKnowledgeGraph = (
         from: flowId,
         to: guideNodeId,
         description: `${entry.title} supports ${flowId.split(':').at(-1)} help.`,
+      });
+    }
+
+    if (entry.focusKind === 'login_action') {
+      createEdge(edges, {
+        kind: 'LEADS_TO',
+        from: guideNodeId,
+        to: 'anchor:kangur:login',
+        description: `${entry.title} sends learners to the Kangur login anchor.`,
+      });
+      createEdge(edges, {
+        kind: 'RELATED_TO',
+        from: guideNodeId,
+        to: 'flow:kangur:sign-in',
+        description: `${entry.title} supports the Kangur sign-in flow.`,
+      });
+    } else if (entry.focusKind === 'create_account_action') {
+      createEdge(edges, {
+        kind: 'LEADS_TO',
+        from: guideNodeId,
+        to: 'anchor:kangur:create-account',
+        description: `${entry.title} sends learners to the Kangur create-account anchor.`,
+      });
+      createEdge(edges, {
+        kind: 'RELATED_TO',
+        from: guideNodeId,
+        to: 'flow:kangur:create-account',
+        description: `${entry.title} supports the Kangur create-account flow.`,
+      });
+    } else if (entry.surface === 'auth') {
+      createEdge(edges, {
+        kind: 'RELATED_TO',
+        from: guideNodeId,
+        to: 'flow:kangur:sign-in',
+        description: `${entry.title} supports the Kangur sign-in flow.`,
+      });
+    }
+
+    for (const action of entry.followUpActions) {
+      const actionNodeId = `action:native:${entry.id}:${action.id}`;
+      createNode(nodes, {
+        id: actionNodeId,
+        kind: 'action',
+        title: action.label,
+        summary: action.reason ?? `Suggested Kangur action from ${entry.title}.`,
+        source: 'kangur_ai_tutor_native_guides',
+        locale,
+        route: toRelativeKangurPageRoute(action.page),
+        sourceCollection: 'kangur_ai_tutor_native_guides',
+        sourceRecordId: entry.id,
+        sourcePath: `entry:${entry.id}.followUpAction:${action.id}`,
+        tags: ['native-guide-action', action.page],
+      });
+      createEdge(edges, {
+        kind: 'LEADS_TO',
+        from: guideNodeId,
+        to: actionNodeId,
+        description: `${entry.title} suggests the ${action.label} follow-up action.`,
       });
     }
   }

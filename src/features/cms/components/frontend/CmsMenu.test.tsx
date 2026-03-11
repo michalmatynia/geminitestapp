@@ -112,7 +112,7 @@ describe('CmsMenu accessibility', () => {
 
   it('renders storefront appearance controls and updates the navbar mode', () => {
     render(
-      <CmsStorefrontAppearanceProvider>
+      <CmsStorefrontAppearanceProvider initialMode='default'>
         <CmsMenu
           menu={{
             ...DEFAULT_MENU_SETTINGS,
@@ -123,13 +123,16 @@ describe('CmsMenu accessibility', () => {
     );
 
     const navigation = screen.getByRole('navigation', { name: 'Site navigation' });
-    const darkModeButton = screen.getByRole('button', { name: 'Dark mode' });
+    const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dark theme' });
 
     expect(navigation).toHaveAttribute('data-appearance-mode', 'default');
 
-    fireEvent.click(darkModeButton);
+    fireEvent.click(themeToggleButton);
 
     expect(navigation).toHaveAttribute('data-appearance-mode', 'dark');
-    expect(darkModeButton).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Switch to Default theme' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 });

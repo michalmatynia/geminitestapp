@@ -91,6 +91,11 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
     render(<KangurLearnerProfileAiTutorMoodWidget />);
 
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-current')).toHaveTextContent('Dumny');
+    expect(
+      screen.getByTestId('learner-profile-ai-tutor-mood-confidence').parentElement
+    ).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
+    );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-current')).toHaveAttribute(
       'data-mood-id',
       'proud'

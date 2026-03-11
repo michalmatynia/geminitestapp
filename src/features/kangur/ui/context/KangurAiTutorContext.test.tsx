@@ -348,6 +348,16 @@ describe('KangurAiTutorContext', () => {
     apiPostMock.mockResolvedValue({
       message: 'Spróbuj policzyć krok po kroku.',
       suggestedMoodId: 'encouraging',
+      knowledgeGraph: {
+        applied: true,
+        queryMode: 'website_help',
+        recallStrategy: 'metadata_only',
+        lexicalHitCount: 1,
+        vectorHitCount: 0,
+        vectorRecallAttempted: false,
+        websiteHelpApplied: true,
+        websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+      },
       websiteHelpTarget: {
         nodeId: 'flow:kangur:sign-in',
         label: 'Zaloguj się',
@@ -468,6 +478,14 @@ describe('KangurAiTutorContext', () => {
         bridgeFollowUpActionCount: 0,
         bridgeFollowUpDirection: null,
         coachingMode: 'hint_ladder',
+        knowledgeGraphApplied: true,
+        knowledgeGraphQueryMode: 'website_help',
+        knowledgeGraphRecallStrategy: 'metadata_only',
+        knowledgeGraphLexicalHitCount: 1,
+        knowledgeGraphVectorHitCount: 0,
+        knowledgeGraphVectorRecallAttempted: false,
+        websiteHelpGraphApplied: true,
+        websiteHelpGraphTargetNodeId: 'flow:kangur:sign-in',
       })
     );
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();

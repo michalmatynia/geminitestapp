@@ -69,6 +69,7 @@ const createPanelBodyContextValue = (
   panelEmptyStateMessage: 'Czekaj chwilę…',
   remainingMessages: null,
   selectedTextPreview: null,
+  showToolboxLayout: false,
   shouldRenderAuxiliaryPanelControls: false,
   showSectionExplainCompleteState: false,
   showSelectionExplainCompleteState: false,
@@ -170,6 +171,9 @@ describe('KangurAiTutorMessageList', () => {
     );
     expect(screen.getByText('Źródła')).toBeInTheDocument();
     expect(screen.getByText('Dodawanie podstawy')).toBeInTheDocument();
+    expect(screen.getByText('Dodawanie podstawy').parentElement).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
+    );
     expect(screen.getByText(/lesson-library · score 0\.913/i)).toBeInTheDocument();
     expect(screen.getByText(/Dodawanie łączy liczby i tworzy sumę\./)).toBeInTheDocument();
   });
@@ -327,11 +331,14 @@ describe('KangurAiTutorMessageList', () => {
     expect(
       screen.getByTestId('kangur-ai-tutor-assistant-drawing-message-1-0')
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-ai-tutor-assistant-drawing-message-1-0')
+    ).toHaveClass('[border-color:var(--kangur-soft-card-border)]');
     expect(screen.getByText('Dwie pary')).toBeInTheDocument();
     expect(screen.getByText('Kazda para ma po dwa elementy.')).toBeInTheDocument();
     expect(
       screen.getByLabelText('Dwie pary kropek ustawione obok siebie.')
-    ).toBeInTheDocument();
+    ).toHaveClass('[background:var(--kangur-soft-card-background)]');
   });
 
   it('locks assistant feedback controls after feedback was already submitted', () => {
@@ -360,6 +367,9 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toHaveAttribute(
       'aria-pressed',
       'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-0')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toBeDisabled();
     expect(screen.getByTestId('kangur-ai-tutor-feedback-not-helpful-0')).toBeDisabled();

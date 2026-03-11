@@ -12,7 +12,7 @@ import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
 import type { TutorEntryDirection, TutorMotionProfile } from './KangurAiTutorWidget.shared';
-import type { CSSProperties, JSX, ReactNode } from 'react';
+import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
 type ReducedMotionTransitions = {
   instant: {
@@ -62,18 +62,25 @@ type Props = {
   bubbleStyle: Record<string, number | string | undefined>;
   bubbleTailPlacement: 'bottom' | 'dock' | 'top';
   bubbleWidth?: number;
+  canDetachPanelFromContext: boolean;
   children: ReactNode;
+  canMovePanelToContext: boolean;
   compactDockedTutorPanelWidth: number;
+  canResetPanelPosition: boolean;
   isAskModalMode: boolean;
   isCompactDockedTutorPanel: boolean;
+  isFollowingContext: boolean;
   isGuidedTutorMode: boolean;
   isMinimalPanelMode: boolean;
   isOpen: boolean;
+  isPanelDraggable: boolean;
+  isPanelDragging: boolean;
   isTutorHidden: boolean;
   minimalPanelStyle: CSSProperties;
   panelAvatarPlacement: string;
   panelEmptyStateMessage: string;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
+  panelSnapState: string;
   panelTransition: Transition;
   pointerMarkerId: string;
   prefersReducedMotion: boolean;
@@ -85,7 +92,14 @@ type Props = {
   onAttachedAvatarClick: () => void;
   onBackdropClose: () => void;
   onClose: () => void;
+  onDetachPanelFromContext: () => void;
   onDisableTutor: () => void;
+  onMovePanelToContext: () => void;
+  onResetPanelPosition: () => void;
+  onHeaderPointerCancel: (event: PointerEvent<HTMLDivElement>) => void;
+  onHeaderPointerDown: (event: PointerEvent<HTMLDivElement>) => void;
+  onHeaderPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
+  onHeaderPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
   motionProfile: TutorMotionProfile;
 };
 
@@ -112,19 +126,26 @@ export function KangurAiTutorPanelChrome({
   bubbleStyle,
   bubbleTailPlacement,
   bubbleWidth,
+  canDetachPanelFromContext,
   children,
+  canMovePanelToContext,
   compactDockedTutorPanelWidth,
+  canResetPanelPosition,
   isAskModalMode,
   isCompactDockedTutorPanel,
+  isFollowingContext,
   isGuidedTutorMode,
   isMinimalPanelMode,
   isOpen,
+  isPanelDraggable,
+  isPanelDragging,
   isTutorHidden,
   minimalPanelStyle,
   motionProfile,
   panelAvatarPlacement,
   panelEmptyStateMessage,
   panelOpenAnimation,
+  panelSnapState,
   panelTransition,
   pointerMarkerId,
   prefersReducedMotion,
@@ -136,7 +157,14 @@ export function KangurAiTutorPanelChrome({
   onAttachedAvatarClick,
   onBackdropClose,
   onClose,
+  onDetachPanelFromContext,
   onDisableTutor,
+  onMovePanelToContext,
+  onResetPanelPosition,
+  onHeaderPointerCancel,
+  onHeaderPointerDown,
+  onHeaderPointerMove,
+  onHeaderPointerUp,
 }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const tutor = useKangurAiTutor();
@@ -145,10 +173,10 @@ export function KangurAiTutorPanelChrome({
   const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
   const panelSurfaceTestId = isAskModalMode ? 'kangur-ai-tutor-ask-modal-surface' : undefined;
   const panelSurfaceClassName = cn(
-    'relative flex flex-col overflow-hidden border border-amber-200/60 [background:linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(255,253,250,0.94)_100%)] backdrop-blur-[8px]',
+    'relative flex flex-col overflow-hidden border [border-color:var(--kangur-chat-panel-border,rgba(253,186,116,0.52))] [background:var(--kangur-chat-panel-background,linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(255,253,250,0.94)_100%))] backdrop-blur-[8px]',
     shouldUseMinimalPanelShell
-      ? 'shadow-[0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)] rounded-[28px]'
-      : 'shadow-[0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)]',
+      ? '[box-shadow:var(--kangur-chat-panel-shadow,0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5))] rounded-[28px]'
+      : '[box-shadow:var(--kangur-chat-panel-shadow,0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5))]',
     isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
     isCompactDockedTutorPanel ? 'rounded-[24px]' : null,
     !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? 'rounded-[28px] rounded-b-[24px]' : null
@@ -165,12 +193,14 @@ export function KangurAiTutorPanelChrome({
           : '70vh',
   } satisfies CSSProperties;
   const panelHeaderClassName = cn(
-    'relative flex items-start justify-between gap-3 border-b border-amber-200/70 [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%)]',
+    'relative flex items-start justify-between gap-3 border-b [border-color:var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52)))] [background:var(--kangur-chat-header-background,linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%))]',
     shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
     showAttachedAvatarShell && avatarAttachmentSide === 'left' ? 'pl-16' : null,
-    showAttachedAvatarShell && avatarAttachmentSide === 'right' ? 'pr-16' : null
+    showAttachedAvatarShell && avatarAttachmentSide === 'right' ? 'pr-16' : null,
+    isPanelDraggable ? 'touch-none select-none cursor-grab' : null,
+    isPanelDraggable && isPanelDragging ? 'cursor-grabbing' : null
   );
   const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
   const tutorMoodId = tutor?.tutorMoodId ?? 'default';
@@ -190,6 +220,18 @@ export function KangurAiTutorPanelChrome({
     y: 0,
     ...(bubbleMode === 'sheet' ? {} : { scale: 1 }),
   } satisfies TargetAndTransition;
+  const panelContainerStyle = isAskModalMode
+    ? undefined
+    : shouldUseMinimalPanelShell
+      ? minimalPanelStyle
+      : ({
+          ...toMotionTarget(bubbleStyle),
+          ...(bubbleWidth
+            ? {
+                width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
+              }
+            : {}),
+        } satisfies CSSProperties);
   const directionalPanelInitialState =
     prefersReducedMotion
       ? { opacity: 1 }
@@ -251,6 +293,9 @@ export function KangurAiTutorPanelChrome({
               data-motion-state={panelMotionState}
               data-open-animation={panelOpenAnimation}
               data-entry-direction={bubbleEntryDirection}
+              data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
+              data-panel-dragging={isPanelDragging ? 'true' : 'false'}
+              data-panel-snap={panelSnapState}
               data-placement-strategy={bubbleStrategy}
               data-launch-origin={bubbleLaunchOrigin}
               data-panel-style={shouldUseMinimalPanelShell ? 'minimal-card' : 'guided-card'}
@@ -286,17 +331,7 @@ export function KangurAiTutorPanelChrome({
                     ? 'fixed z-[75]'
                     : 'fixed z-[65]'
               }
-              style={
-                isAskModalMode
-                  ? undefined
-                  : shouldUseMinimalPanelShell
-                    ? minimalPanelStyle
-                  : bubbleWidth
-                    ? {
-                      width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
-                    }
-                    : undefined
-              }
+              style={panelContainerStyle}
             >
               {!isAskModalMode && !shouldUseMinimalPanelShell && avatarPointer ? (
                 <svg
@@ -409,28 +444,44 @@ export function KangurAiTutorPanelChrome({
                 ) : null}
 
                 {!isAskModalMode && !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? (
-                  <div className='flex justify-center px-3 pt-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,#fef3c7)]'>
-                    <div aria-hidden='true' className='h-1.5 w-14 rounded-full bg-amber-200' />
+                  <div className='flex justify-center px-3 pt-3 [background:var(--kangur-chat-header-background,color-mix(in_srgb,var(--kangur-soft-card-background)_92%,#fef3c7))]'>
+                    <div
+                      aria-hidden='true'
+                      className='h-1.5 w-14 rounded-full [background:var(--kangur-chat-header-border,rgba(251,191,36,0.22))]'
+                    />
                   </div>
                 ) : null}
 
                 <div
                   data-testid='kangur-ai-tutor-header'
+                  data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
+                  data-panel-dragging={isPanelDragging ? 'true' : 'false'}
+                  data-panel-snap={panelSnapState}
                   className={panelHeaderClassName}
+                  onPointerCancel={onHeaderPointerCancel}
+                  onPointerDown={onHeaderPointerDown}
+                  onPointerMove={onHeaderPointerMove}
+                  onPointerUp={onHeaderPointerUp}
                 >
                   <div className='min-w-0 flex flex-1 flex-col'>
-                    <span className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-amber-700'>
-                      <span className='inline-flex h-1.5 w-1.5 rounded-full bg-amber-500' />
+                    <span className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'>
+                      <span
+                        className='inline-flex h-1.5 w-1.5 rounded-full'
+                        style={{
+                          backgroundColor:
+                            'var(--kangur-chat-kicker-dot, var(--kangur-chat-kicker-text, var(--kangur-page-text)))',
+                        }}
+                      />
                       AI Tutor
                     </span>
-                    <span className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-page-text,#1e293b)]'>
+                    <span className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'>
                       {tutorDisplayName}
                     </span>
                     {!shouldUseMinimalPanelShell ? (
                       <span
                         data-testid='kangur-ai-tutor-mood-chip'
                         data-mood-id={tutorBehaviorMoodId}
-                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-200/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-800 shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [background:linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed))]'
+                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed)))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
                       >
                         {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
                       </span>
@@ -438,21 +489,70 @@ export function KangurAiTutorPanelChrome({
                     {shouldRenderPanelMoodDescription ? (
                       <span
                         data-testid='kangur-ai-tutor-mood-description'
-                        className='mt-2 text-xs leading-relaxed text-slate-600'
+                        className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
                       >
                         {panelMoodDescription}
                       </span>
                     ) : null}
+                    {isFollowingContext && uiMode === 'freeform' ? (
+                      <span
+                        data-testid='kangur-ai-tutor-following-context-badge'
+                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+                      >
+                        {tutorContent.panelChrome.followingContextLabel}
+                      </span>
+                    ) : null}
                     {sessionSurfaceLabel ? (
-                      <span className='mt-2 text-[11px] text-slate-500'>{sessionSurfaceLabel}</span>
+                      <span className='mt-2 text-[11px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                        {sessionSurfaceLabel}
+                      </span>
                     ) : null}
                   </div>
                   <div className='ml-3 flex items-center gap-2 pt-0.5'>
                     {!shouldUseMinimalPanelShell ? (
+                      canDetachPanelFromContext && uiMode === 'freeform' ? (
+                        <button
+                          data-testid='kangur-ai-tutor-detach-from-context'
+                          type='button'
+                          onClick={onDetachPanelFromContext}
+                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
+                          aria-label={tutorContent.panelChrome.detachFromContextAria}
+                        >
+                          {tutorContent.panelChrome.detachFromContextLabel}
+                        </button>
+                      ) : null
+                    ) : null}
+                    {!shouldUseMinimalPanelShell ? (
+                      canMovePanelToContext && uiMode === 'freeform' ? (
+                        <button
+                          data-testid='kangur-ai-tutor-move-to-context'
+                          type='button'
+                          onClick={onMovePanelToContext}
+                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
+                          aria-label={tutorContent.panelChrome.moveToContextAria}
+                        >
+                          {tutorContent.panelChrome.moveToContextLabel}
+                        </button>
+                      ) : null
+                    ) : null}
+                    {!shouldUseMinimalPanelShell ? (
+                      canResetPanelPosition && uiMode === 'freeform' ? (
+                        <button
+                          data-testid='kangur-ai-tutor-reset-position'
+                          type='button'
+                          onClick={onResetPanelPosition}
+                          className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
+                          aria-label={tutorContent.panelChrome.resetPositionAria}
+                        >
+                          {tutorContent.panelChrome.resetPositionLabel}
+                        </button>
+                      ) : null
+                    ) : null}
+                    {!shouldUseMinimalPanelShell ? (
                       <button
                         type='button'
                         onClick={onDisableTutor}
-                        className='cursor-pointer rounded-full border border-amber-200/80 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)] hover:[background:var(--kangur-soft-card-background)]'
+                        className='cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))]'
                         aria-label={tutorContent.common.disableTutorAria}
                       >
                         {tutorContent.common.disableTutorLabel}
@@ -461,7 +561,7 @@ export function KangurAiTutorPanelChrome({
                     <button
                       type='button'
                       onClick={onClose}
-                      className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 text-amber-900 transition-[background-color,box-shadow,transform] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-soft-card-background)] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
+                      className='shrink-0 cursor-pointer rounded-full border p-1 transition-[background-color,box-shadow,transform,color] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
                       aria-label={tutorContent.common.closeAria}
                     >
                       <X className='h-4 w-4' />

@@ -1,8 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { parseKangurKnowledgeGraphQueryArgs } from './lib/kangur-knowledge-graph-query';
 
 describe('kangur knowledge graph query CLI parser', () => {
+  const scriptsDir = dirname(fileURLToPath(import.meta.url));
+
   it('parses a minimal message-only query', () => {
     expect(
       parseKangurKnowledgeGraphQueryArgs(['--message=Jak się zalogować?'])
@@ -56,5 +62,16 @@ describe('kangur knowledge graph query CLI parser', () => {
         '--content-id=lesson-adding-doc',
       ])
     ).toThrow('The --surface flag is required when passing Kangur tutor context flags.');
+  });
+
+  it('keeps the Kangur Neo4j helper scripts wired to dotenv config', () => {
+    for (const filename of [
+      'query-kangur-knowledge-graph.ts',
+      'kangur-knowledge-graph-status.ts',
+      'sync-kangur-knowledge-graph.ts',
+    ]) {
+      const source = readFileSync(resolve(scriptsDir, filename), 'utf8');
+      expect(source).toContain("import 'dotenv/config';");
+    }
   });
 });

@@ -200,20 +200,23 @@ describe('Kangur shared primitives', () => {
       </>
     );
 
-    expect(screen.getByText('Warm badge')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Warm badge')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+    );
     expect(screen.getByTestId('kangur-dot')).toHaveClass('h-4', 'w-4', 'bg-rose-500');
     expect(screen.getByTestId('kangur-icon-badge')).toHaveClass(
       'h-9',
       'w-9',
-      'bg-emerald-100',
-      'text-emerald-700'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(209_250_229))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(4_120_87))]'
     );
     expect(screen.getByTestId('kangur-icon-badge-3xl')).toHaveClass(
       'h-24',
       'w-24',
       'text-5xl',
-      'bg-amber-100',
-      'text-amber-700'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(254_243_199))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(180_83_9))]'
     );
     expect(screen.getByTestId('kangur-gradient-icon-tile')).toHaveClass(
       'h-16',

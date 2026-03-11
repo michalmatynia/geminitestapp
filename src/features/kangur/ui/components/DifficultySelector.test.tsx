@@ -44,7 +44,7 @@ describe('DifficultySelector', () => {
     );
     expect(screen.getByRole('heading', { name: 'Wybierz poziom trudnosci' })).toHaveClass(
       'text-xl',
-      'text-slate-800'
+      '[color:var(--kangur-page-text)]'
     );
 
     const easyOption = screen.getByTestId('difficulty-option-easy');
@@ -54,6 +54,10 @@ describe('DifficultySelector', () => {
     expect(mediumOption).toHaveClass('soft-card', 'border-amber-300');
     expect(easyOption).toHaveAttribute('aria-pressed', 'false');
     expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
+    expect(within(easyOption).getByText('Latwy')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(within(easyOption).getByText('Zakres 1-10')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(within(easyOption).getByTestId('difficulty-icon-easy')).toHaveClass(
       'bg-emerald-100',
       'text-emerald-700'

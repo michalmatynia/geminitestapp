@@ -94,6 +94,10 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
     previewKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
       queryMode: 'website_help',
+      recallStrategy: 'metadata_only',
+      lexicalHitCount: 1,
+      vectorHitCount: 0,
+      vectorRecallAttempted: false,
       tokens: ['zalogowac', 'kangura'],
       instructions: 'Kangur website-help graph context:\n- Sign in flow [flow]',
       websiteHelpTarget: {
@@ -189,9 +193,26 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           expect.stringContaining('runtime:kangur:lesson:'),
         ]),
         runtimeDocumentIds: ['runtime:kangur:learner:learner-1'],
+        summary: {
+          requestedRefCount: 3,
+          runtimeDocumentCount: 1,
+          retrievalStatus: 'hit',
+          queryMode: 'website_help',
+          recallStrategy: 'metadata_only',
+          nodeCount: 1,
+          sourceCount: 1,
+          lexicalHitCount: 1,
+          vectorHitCount: 0,
+          vectorRecallAttempted: false,
+          websiteHelpTargetNodeId: 'flow:kangur:sign-in',
+        },
         retrieval: expect.objectContaining({
           status: 'hit',
           queryMode: 'website_help',
+          recallStrategy: 'metadata_only',
+          lexicalHitCount: 1,
+          vectorHitCount: 0,
+          vectorRecallAttempted: false,
           nodeIds: ['flow:kangur:sign-in'],
           tokens: ['zalogowac', 'kangura'],
           websiteHelpTarget: {

@@ -39,6 +39,7 @@ import {
 import {
   kangurAiTutorCoachingFrameSchema,
   kangurAiTutorLearnerMemorySchema,
+  kangurAiTutorKnowledgeGraphSummarySchema,
   kangurAiTutorMessageArtifactSchema,
   kangurAiTutorUsageSummarySchema,
   kangurAiTutorWebsiteHelpTargetSchema,
@@ -1481,6 +1482,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const followUpReporting = summarizeKangurAiTutorFollowUpActions(followUpActions);
         const coachingFrame =
           kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
+        const knowledgeGraph =
+          kangurAiTutorKnowledgeGraphSummarySchema.safeParse(result.knowledgeGraph).data ?? null;
         const websiteHelpTarget =
           kangurAiTutorWebsiteHelpTargetSchema.safeParse(result.websiteHelpTarget).data ?? null;
         const artifacts = normalizeMessageArtifacts(result.artifacts);
@@ -1495,6 +1498,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           bridgeFollowUpActionCount: followUpReporting.bridgeFollowUpActionCount,
           bridgeFollowUpDirection: followUpReporting.bridgeFollowUpDirection,
           coachingMode: coachingFrame?.mode ?? null,
+          knowledgeGraphApplied: knowledgeGraph?.applied ?? false,
+          knowledgeGraphQueryMode: knowledgeGraph?.queryMode ?? null,
+          knowledgeGraphRecallStrategy: knowledgeGraph?.recallStrategy ?? null,
+          knowledgeGraphLexicalHitCount: knowledgeGraph?.lexicalHitCount ?? 0,
+          knowledgeGraphVectorHitCount: knowledgeGraph?.vectorHitCount ?? 0,
+          knowledgeGraphVectorRecallAttempted: knowledgeGraph?.vectorRecallAttempted ?? false,
+          websiteHelpGraphApplied: knowledgeGraph?.websiteHelpApplied ?? false,
+          websiteHelpGraphTargetNodeId: knowledgeGraph?.websiteHelpTargetNodeId ?? null,
           hasDrawingArtifact: Boolean(artifacts?.length),
         });
         if (resolvedPromptMode === 'hint') {

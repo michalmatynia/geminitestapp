@@ -69,6 +69,11 @@ export type TutorAvatarDragState = {
   startY: number;
 };
 
+export type TutorPanelDragState = TutorAvatarDragState & {
+  height: number;
+  width: number;
+};
+
 export type TutorAskEntrySource = 'guest_intro' | 'guest_assistance' | 'guided_help';
 
 export type PendingSelectionResponse = {

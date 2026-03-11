@@ -121,6 +121,7 @@ export type KangurAiTutorPortalContextValue = {
     onClose: () => void;
   };
   guidedCallout: {
+    avatarPlacement: 'top' | 'bottom' | 'left' | 'right' | null;
     calloutKey: string;
     calloutTestId: string;
     detail: string;
@@ -163,12 +164,18 @@ export type KangurAiTutorPortalContextValue = {
     bubbleStyle: Record<string, number | string | undefined>;
     bubbleTailPlacement: 'bottom' | 'dock' | 'top';
     bubbleWidth?: number;
+    canDetachPanelFromContext: boolean;
+    canMovePanelToContext: boolean;
     compactDockedTutorPanelWidth: number;
     isAskModalMode: boolean;
     isCompactDockedTutorPanel: boolean;
     isGuidedTutorMode: boolean;
     isMinimalPanelMode: boolean;
     isOpen: boolean;
+    canResetPanelPosition: boolean;
+    isPanelDraggable: boolean;
+    isPanelDragging: boolean;
+    isFollowingContext: boolean;
     isTutorHidden: boolean;
     minimalPanelStyle: CSSProperties;
     motionProfile: TutorMotionProfile;
@@ -176,6 +183,7 @@ export type KangurAiTutorPortalContextValue = {
     panelBodyContextValue: KangurAiTutorPanelBodyContextValue;
     panelEmptyStateMessage: string;
     panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
+    panelSnapState: string;
     panelTransition: Transition;
     pointerMarkerId: string;
     prefersReducedMotion: boolean;
@@ -187,7 +195,14 @@ export type KangurAiTutorPortalContextValue = {
     onAttachedAvatarClick: () => void;
     onBackdropClose: () => void;
     onClose: () => void;
+    onDetachPanelFromContext: () => void;
     onDisableTutor: () => void;
+    onMovePanelToContext: () => void;
+    onResetPanelPosition: () => void;
+    onHeaderPointerCancel: (event: PointerEvent<HTMLDivElement>) => void;
+    onHeaderPointerDown: (event: PointerEvent<HTMLDivElement>) => void;
+    onHeaderPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
+    onHeaderPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
   };
   selectionAction: {
     placement: EdgePlacement;
@@ -203,6 +218,7 @@ export type KangurAiTutorPortalContextValue = {
     reducedMotionTransitions: ReducedMotionTransitions;
     sectionContextSpotlightStyle: CSSProperties | null;
     sectionDropHighlightStyle: CSSProperties | null;
+    selectionGlowStyles: CSSProperties[];
     selectionContextSpotlightStyle: CSSProperties | null;
     selectionSpotlightStyle: CSSProperties | null;
   };

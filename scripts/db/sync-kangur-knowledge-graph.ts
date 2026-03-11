@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
 import {
   buildKangurKnowledgeGraphSyncPayload,

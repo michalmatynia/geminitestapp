@@ -176,16 +176,16 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
   return (
     <div
       data-testid='kangur-ai-tutor-drawing-canvas'
-      className='flex flex-col rounded-2xl border border-amber-200/60 bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.18)]'
+      className='flex flex-col rounded-2xl border border-amber-200/60 [background:var(--kangur-soft-card-background)] shadow-[0_16px_40px_-20px_rgba(15,23,42,0.18)]'
     >
       <div className='flex items-center justify-between border-b border-amber-100/60 px-3 py-2'>
-        <span className='text-xs font-semibold text-slate-600'>
+        <span className='text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
           {drawingContent?.title ?? 'Rysowanie'}
         </span>
         <button
           type='button'
           onClick={onCancel}
-          className='cursor-pointer rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'
+          className='cursor-pointer rounded-full p-1 [color:var(--kangur-page-muted-text)] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)]'
           aria-label={tutorContent.common.closeAria}
         >
           <X className='h-3.5 w-3.5' />
@@ -216,7 +216,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform ${
                 selectedColor === color && !isEraser
                   ? 'scale-110 border-amber-500'
-                  : 'border-slate-200 hover:scale-105'
+                  : '[border-color:var(--kangur-soft-card-border)] hover:scale-105'
               }`}
               style={{ backgroundColor: color }}
               onClick={() => {
@@ -227,7 +227,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           ))}
         </div>
 
-        <div className='mx-1 h-4 w-px bg-slate-200' />
+        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
         <div className='flex items-center gap-1'>
           {STROKE_WIDTHS.map((w) => (
@@ -238,7 +238,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
                 selectedWidth === w && !isEraser
                   ? 'bg-amber-100 text-amber-700'
-                  : 'text-slate-400 hover:bg-slate-100'
+                  : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
               }`}
               onClick={() => {
                 setSelectedWidth(w);
@@ -253,13 +253,15 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           ))}
         </div>
 
-        <div className='mx-1 h-4 w-px bg-slate-200' />
+        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
         <button
           type='button'
           aria-label={drawingContent?.penLabel ?? 'Pióro'}
           className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
-            !isEraser ? 'bg-amber-100 text-amber-700' : 'text-slate-400 hover:bg-slate-100'
+            !isEraser
+              ? 'bg-amber-100 text-amber-700'
+              : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(false)}
         >
@@ -269,19 +271,21 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           type='button'
           aria-label={drawingContent?.eraserLabel ?? 'Gumka'}
           className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
-            isEraser ? 'bg-amber-100 text-amber-700' : 'text-slate-400 hover:bg-slate-100'
+            isEraser
+              ? 'bg-amber-100 text-amber-700'
+              : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(true)}
         >
           <Eraser className='h-3 w-3' />
         </button>
 
-        <div className='mx-1 h-4 w-px bg-slate-200' />
+        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
         <button
           type='button'
           aria-label={drawingContent?.undoLabel ?? 'Cofnij'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-page-muted-text)] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleUndo}
         >
@@ -290,7 +294,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-page-muted-text)] transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleClear}
         >

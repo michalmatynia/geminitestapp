@@ -121,6 +121,19 @@ describe('kangur ai tutor settings', () => {
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1').uiMode).toBe('static');
   });
 
+  it('respects an explicit freeform ui mode override', () => {
+    const store = parseKangurAiTutorSettings(
+      JSON.stringify({
+        'learner-1': {
+          enabled: true,
+          uiMode: 'freeform',
+        },
+      })
+    );
+
+    expect(getKangurAiTutorSettingsForLearner(store, 'learner-1').uiMode).toBe('freeform');
+  });
+
   it('resolves global tutor settings from the dedicated app key and overrides legacy learner values', () => {
     const store = parseKangurAiTutorSettings(
       JSON.stringify({

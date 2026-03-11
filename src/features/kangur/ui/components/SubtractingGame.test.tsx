@@ -18,6 +18,11 @@ describe('SubtractingGame', () => {
     );
     expect(screen.getByTestId('subtracting-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('subtracting-game-equation')).toHaveClass('text-3xl', 'text-red-500');
+    expect(screen.getByRole('button', { name: 'Sprawdź ✓' })).toHaveClass(
+      '[background:var(--kangur-soft-card-background)]',
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[color:var(--kangur-page-text)]'
+    );
 
     const firstChoice = screen.getByTestId('subtracting-game-choice-0');
 

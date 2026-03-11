@@ -79,5 +79,8 @@ describe('LessonActivityStage', () => {
 
     expect(screen.getByTestId('lesson-activity-header')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ćwiczenia' })).toBeInTheDocument();
+    expect(screen.getByText('Przejdz przez szybkie zadania.')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 });

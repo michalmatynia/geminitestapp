@@ -50,7 +50,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Ostatnie sesje
         </div>
         {isLoadingScores ? (
@@ -98,8 +98,10 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                     <span aria-hidden='true'>{session.operationEmoji}</span>
                   </KangurIconBadge>
                   <div className='flex-1'>
-                    <div className='text-sm font-semibold text-slate-700'>{session.operationLabel}</div>
-                    <div className='text-xs text-slate-500'>
+                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {session.operationLabel}
+                    </div>
+                    <div className='text-xs [color:var(--kangur-page-muted-text)]'>
                       {formatKangurProfileDateTime(session.createdAt)}
                     </div>
                   </div>
@@ -120,7 +122,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                         +{session.xpEarned} XP
                       </KangurStatusChip>
                     ) : null}
-                    <div className='text-xs text-slate-500'>
+                    <div className='text-xs [color:var(--kangur-page-muted-text)]'>
                       {formatKangurProfileDuration(session.timeTakenSeconds)}
                     </div>
                   </div>
@@ -132,7 +134,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
           Sciezki odznak
         </div>
         <KangurBadgeTrackGrid

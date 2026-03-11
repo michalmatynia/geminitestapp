@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { buildKangurKnowledgeGraphPreviewResult } from '@/features/kangur/server/knowledge-graph/preview';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 

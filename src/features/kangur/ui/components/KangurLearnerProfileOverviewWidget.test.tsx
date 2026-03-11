@@ -160,6 +160,9 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
       'Pierwsza lekcja startowa'
     );
+    expect(screen.getByText('Pierwsza lekcja startowa')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
     expect(screen.getByTestId('learner-profile-overview-daily-quest')).toHaveTextContent(
       '0/1 lekcja dzisiaj'
     );

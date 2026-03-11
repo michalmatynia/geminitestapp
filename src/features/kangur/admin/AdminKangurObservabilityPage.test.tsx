@@ -112,6 +112,20 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
   },
   alerts: [
     {
+      id: 'kangur-knowledge-graph-readiness',
+      title: 'Knowledge Graph Readiness',
+      status: 'ok' as const,
+      value: null,
+      unit: 'status',
+      warningThreshold: null,
+      criticalThreshold: null,
+      summary: 'Neo4j graph kangur-website-help-v1 is vector-ready with 87 nodes, 108 edges, and an online vector index.',
+      investigation: {
+        label: 'Open graph status',
+        href: `/admin/kangur/observability?range=${range}#knowledge-graph-status`,
+      },
+    },
+    {
       id: 'kangur-server-error-rate',
       title: 'Server error rate',
       status: 'ok' as const,
@@ -196,6 +210,34 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       },
     },
     {
+      id: 'kangur-ai-tutor-graph-coverage-rate',
+      title: 'AI Tutor Graph Coverage Rate',
+      status: 'warning' as const,
+      value: 66.7,
+      unit: '%',
+      warningThreshold: 60,
+      criticalThreshold: 30,
+      summary: 'Neo4j graph coverage is below the preferred Tutor reply share.',
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: `/admin/kangur/observability?range=${range}#ai-tutor-bridge`,
+      },
+    },
+    {
+      id: 'kangur-ai-tutor-vector-assist-rate',
+      title: 'AI Tutor Vector Assist Rate',
+      status: 'critical' as const,
+      value: 12.5,
+      unit: '%',
+      warningThreshold: 40,
+      criticalThreshold: 15,
+      summary: 'Vector-assisted recall is contributing to too few semantic Tutor replies.',
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: `/admin/kangur/observability?range=${range}#ai-tutor-bridge`,
+      },
+    },
+    {
       id: 'kangur-performance-baseline',
       title: 'Performance baseline',
       status: 'warning' as const,
@@ -272,12 +314,22 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     importantEvents: [{ name: 'kangur_progress_sync_failed', count: 4 }],
     aiTutor: {
       messageSucceededCount: 6,
+      knowledgeGraphAppliedCount: 4,
+      knowledgeGraphSemanticCount: 3,
+      knowledgeGraphWebsiteHelpCount: 1,
+      knowledgeGraphMetadataOnlyRecallCount: 1,
+      knowledgeGraphHybridRecallCount: 2,
+      knowledgeGraphVectorOnlyRecallCount: 1,
+      knowledgeGraphVectorRecallAttemptedCount: 3,
       bridgeSuggestionCount: 3,
       lessonToGameBridgeSuggestionCount: 2,
       gameToLessonBridgeSuggestionCount: 1,
       bridgeQuickActionClickCount: 2,
       bridgeFollowUpClickCount: 2,
       bridgeFollowUpCompletionCount: 1,
+      bridgeCompletionRatePercent: 33.3,
+      knowledgeGraphCoverageRatePercent: 66.7,
+      knowledgeGraphVectorAssistRatePercent: 100,
     },
     recent: [
       {
@@ -291,6 +343,31 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
         meta: null,
       },
     ],
+  },
+  knowledgeGraphStatus: {
+    mode: 'status' as const,
+    graphKey: 'kangur-website-help-v1',
+    present: true,
+    locale: 'pl',
+    syncedAt: '2026-03-07T12:00:00.000Z',
+    syncedNodeCount: 87,
+    syncedEdgeCount: 108,
+    liveNodeCount: 87,
+    liveEdgeCount: 108,
+    canonicalNodeCount: 80,
+    validCanonicalNodeCount: 80,
+    invalidCanonicalNodeCount: 0,
+    semanticNodeCount: 87,
+    embeddingNodeCount: 87,
+    embeddingDimensions: 1536,
+    embeddingModels: ['text-embedding-3-small'],
+    vectorIndexPresent: true,
+    vectorIndexState: 'ONLINE',
+    vectorIndexType: 'VECTOR',
+    vectorIndexDimensions: 1536,
+    semanticCoverageRatePercent: 100,
+    embeddingCoverageRatePercent: 100,
+    semanticReadiness: 'vector_ready' as const,
   },
   performanceBaseline: {
     generatedAt: '2026-03-07T08:00:00.000Z',
@@ -334,6 +411,20 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Progress sync failures detected.')).toBeInTheDocument();
     expect(screen.getByText('Kangur TTS fallback used.')).toBeInTheDocument();
     expect(screen.getByText('TTS Generation Failures')).toBeInTheDocument();
+    expect(screen.getByText('AI Tutor Graph Coverage Rate')).toBeInTheDocument();
+    expect(screen.getByText('Knowledge Graph Readiness')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Neo4j graph kangur-website-help-v1 is vector-ready with 87 nodes, 108 edges, and an online vector index.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Neo4j graph coverage is below the preferred Tutor reply share.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('AI Tutor Vector Assist Rate')).toBeInTheDocument();
+    expect(
+      screen.getByText('Vector-assisted recall is contributing to too few semantic Tutor replies.')
+    ).toBeInTheDocument();
     expect(screen.getByText('AI Tutor Bridge Completion Rate')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -346,7 +437,29 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Grajmy -> Lekcja')).toBeInTheDocument();
     expect(screen.getByText('Bridge CTA Clicks')).toBeInTheDocument();
     expect(screen.getByText('Bridge Completions')).toBeInTheDocument();
+    expect(screen.getByText('Bridge Completion Rate')).toBeInTheDocument();
+    expect(screen.getByText('Neo4j-backed Replies')).toBeInTheDocument();
+    expect(screen.getByText('Graph Coverage')).toBeInTheDocument();
+    expect(screen.getByText('Semantic Graph Replies')).toBeInTheDocument();
+    expect(screen.getByText('Recall Mix')).toBeInTheDocument();
+    expect(screen.getByText('Vector Assist Rate')).toBeInTheDocument();
+    expect(screen.getByText('Metadata 1 / Hybrid 2 / Vector-only 1')).toBeInTheDocument();
+    expect(screen.getByText('Website-help graph replies: 1.')).toBeInTheDocument();
+    expect(screen.getByText('Vector recall attempts: 3.')).toBeInTheDocument();
     expect(screen.getByText('Opened: 2 bridge follow-ups. Completed: 1.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Completed follow-ups as a share of 3 bridge suggestions.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Graph-backed share across 6 Tutor replies.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Hybrid and vector-only recall as a share of 3 semantic graph replies.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Knowledge Graph Status')).toBeInTheDocument();
+    expect(screen.getByText('Neo4j semantic retrieval graph')).toBeInTheDocument();
+    expect(screen.getByText('Vector ready')).toBeInTheDocument();
+    expect(screen.getByText('text-embedding-3-small')).toBeInTheDocument();
+    expect(screen.getAllByText('87 nodes / 108 edges')).toHaveLength(2);
+    expect(screen.getByText('All canonical nodes valid')).toBeInTheDocument();
     expect(useKangurObservabilitySummaryMock).toHaveBeenCalledWith('30d');
     const allLogsHref = screen.getByRole('link', { name: /all kangur logs/i }).getAttribute('href');
     const logsUrl = new URL(allLogsHref ?? '', 'http://localhost');
@@ -401,5 +514,30 @@ describe('AdminKangurObservabilityPage', () => {
         scroll: false,
       });
     });
+  });
+
+  it('renders a disabled Neo4j graph status state', () => {
+    useKangurObservabilitySummaryMock.mockReturnValue({
+      data: {
+        ...createSummary('24h'),
+        knowledgeGraphStatus: {
+          mode: 'disabled' as const,
+          graphKey: 'kangur-website-help-v1',
+          message: 'Neo4j is not enabled. Set NEO4J_* env vars before checking live graph status.',
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: refetchMock,
+    });
+
+    render(<AdminKangurObservabilityPage />);
+
+    expect(screen.getByText('Knowledge Graph Status')).toBeInTheDocument();
+    expect(screen.getByText('Neo4j graph status disabled')).toBeInTheDocument();
+    expect(
+      screen.getByText('Neo4j is not enabled. Set NEO4J_* env vars before checking live graph status.')
+    ).toBeInTheDocument();
   });
 });

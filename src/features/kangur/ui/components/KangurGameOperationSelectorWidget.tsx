@@ -460,13 +460,13 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                 {recommendation.label}
               </KangurStatusChip>
               <p
-                className='mt-3 text-lg font-extrabold text-slate-800'
+                className='mt-3 text-lg font-extrabold [color:var(--kangur-page-text)]'
                 data-testid='kangur-operation-recommendation-title'
               >
                 {recommendation.title}
               </p>
               <p
-                className='mt-1 text-sm text-slate-600'
+                className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'
                 data-testid='kangur-operation-recommendation-description'
               >
                 {recommendation.description}
@@ -522,10 +522,12 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                   {option.emoji}
                 </KangurIconBadge>
                 <div className='min-w-0'>
-                  <p className='text-base font-extrabold leading-tight text-slate-800'>
+                  <p className='text-base font-extrabold leading-tight [color:var(--kangur-page-text)]'>
                     {option.label}
                   </p>
-                  <p className='mt-0.5 text-sm text-slate-500'>{option.description}</p>
+                  <p className='mt-0.5 text-sm [color:var(--kangur-page-muted-text)]'>
+                    {option.description}
+                  </p>
                 </div>
                 <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
                   <KangurStatusChip

@@ -32,13 +32,13 @@ const kangurButtonVariants = cva(
         primary:
           'kangur-cta-pill border-transparent primary-cta text-white hover:brightness-[1.02] focus-visible:ring-amber-300/70',
         secondary:
-          'kangur-cta-pill border-transparent soft-cta text-[#2f467e] hover:text-[#24386e] focus-visible:ring-indigo-300/70',
+          'kangur-cta-pill border-transparent soft-cta text-[var(--kangur-button-secondary-text,#2f467e)] hover:text-[var(--kangur-button-secondary-hover-text,#24386e)] focus-visible:ring-indigo-300/70',
         surface:
-          'kangur-cta-pill border-transparent surface-cta text-[#2f4db5] hover:text-[#233e99] focus-visible:ring-indigo-300/70',
+          'kangur-cta-pill border-transparent surface-cta text-[var(--kangur-button-surface-text,#2f4db5)] hover:text-[var(--kangur-button-surface-hover-text,#233e99)] focus-visible:ring-indigo-300/70',
         success:
-          'kangur-cta-pill border-transparent success-cta text-emerald-800 hover:text-emerald-900 focus-visible:ring-emerald-300/70',
+          'kangur-cta-pill border-transparent success-cta text-[var(--kangur-button-success-text,#065f46)] hover:text-[var(--kangur-button-success-hover-text,#064e3b)] focus-visible:ring-emerald-300/70',
         warning:
-          'kangur-cta-pill border-transparent warning-cta text-[#9a5418] hover:text-[#7f4310] focus-visible:ring-amber-300/70',
+          'kangur-cta-pill border-transparent warning-cta text-[var(--kangur-button-warning-text,#9a5418)] hover:text-[var(--kangur-button-warning-hover-text,#7f4310)] focus-visible:ring-amber-300/70',
         segment: cn(
           'border-transparent text-sm shadow-none focus-visible:ring-indigo-300/70',
           KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME

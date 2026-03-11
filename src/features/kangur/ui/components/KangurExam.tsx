@@ -148,7 +148,7 @@ function ExamQuestion({
           size='sm'
           value={progressValue}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {questionNumber}/{total}
         </span>
       </div>
@@ -184,7 +184,7 @@ function ExamQuestion({
             ) : null}
           </div>
         </div>
-        <p id={descriptionId} className='font-semibold leading-relaxed text-slate-800'>
+        <p id={descriptionId} className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
           {q.question}
         </p>
         {Illustration && (
@@ -223,7 +223,9 @@ function ExamQuestion({
                 aria-pressed={isSelected}
                 className={cn(
                   'w-full rounded-[24px] px-4 py-3 font-semibold transition-all flex items-center gap-3',
-                  isSelected ? KANGUR_ACCENT_STYLES.amber.activeText : 'text-slate-700'
+                  isSelected
+                    ? KANGUR_ACCENT_STYLES.amber.activeText
+                    : '[color:var(--kangur-page-text)]'
                 )}
                 data-testid={`kangur-exam-choice-${index}`}
                 emphasis={emphasis}
@@ -303,9 +305,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               type='button'
               variant='surface'
             >
-              <ChevronLeft className='w-4 h-4 text-slate-500' />
+              <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
             </KangurButton>
-            <span className='self-center text-xs font-bold text-slate-400'>
+            <span className='self-center text-xs font-bold [color:var(--kangur-page-muted-text)]'>
               {reviewing + 1}/{reviewQuestionCount}
             </span>
             <KangurButton
@@ -317,7 +319,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               type='button'
               variant='surface'
             >
-              <ChevronRight className='w-4 h-4 text-slate-500' />
+              <ChevronRight className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
             </KangurButton>
           </div>
         </div>
@@ -342,7 +344,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               </KangurStatusChip>
             ) : null}
           </div>
-          <p className='font-semibold leading-relaxed text-slate-800'>{question.question}</p>
+          <p className='font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+            {question.question}
+          </p>
           {Illustration && (
             <KangurInfoCard
               accent='slate'
@@ -454,10 +458,10 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         <KangurDisplayEmoji data-testid='kangur-exam-summary-emoji' size='lg'>
           {emoji}
         </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold text-slate-800'>
+        <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
           Wynik: {score}/{questions.length}
         </h2>
-        <p className='text-sm text-slate-500'>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
           {pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
@@ -475,10 +479,12 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           size='md'
           value={pct}
         />
-        <p className='text-sm text-slate-400'>{pct}% poprawnych odpowiedzi</p>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          {pct}% poprawnych odpowiedzi
+        </p>
       </KangurGlassPanel>
 
-      <p className='text-center text-sm font-semibold text-slate-500'>
+      <p className='text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
         Kliknij pytanie, aby zobaczyć rozwiązanie:
       </p>
 
@@ -511,7 +517,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 onClick={() => setReviewing(index)}
                 type='button'
               >
-                <span className='text-xs font-bold text-slate-500'>#{index + 1}</span>
+                <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+                  #{index + 1}
+                </span>
                 {skipped ? (
                   <span className='text-sm'>➖</span>
                 ) : correct ? (
@@ -521,7 +529,11 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 )}
                 <span
                   className={`text-[10px] font-bold ${
-                    skipped ? 'text-slate-400' : correct ? 'text-green-700' : 'text-red-600'
+                    skipped
+                      ? '[color:var(--kangur-page-muted-text)]'
+                      : correct
+                        ? 'text-green-700'
+                        : 'text-red-600'
                   }`}
                 >
                   {skipped ? 'pom.' : correct ? '✓' : userAnswer}
@@ -622,7 +634,7 @@ export default function KangurExam(): React.JSX.Element {
           </KangurButton>
         </div>
         {!selected && (
-          <p className='text-center text-xs text-slate-400'>
+          <p className='text-center text-xs [color:var(--kangur-page-muted-text)]'>
             Możesz pominąć pytanie i wrócić do niego później
           </p>
         )}

@@ -142,6 +142,9 @@ describe('ProgressOverview lesson mastery insights', () => {
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       'Trening zegara: Godziny'
     );
+    expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
+    );
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       '4 sesji'
     );
@@ -189,6 +192,9 @@ describe('ProgressOverview lesson mastery insights', () => {
     );
     expect(screen.getByTestId('progress-overview-badge-track-challenge')).toHaveTextContent(
       'Wyzwania'
+    );
+    expect(screen.getByTestId('progress-overview-badge-track-challenge')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
     );
     expect(screen.getByTestId('progress-overview-badge-track-challenge')).toHaveTextContent(
       '2/2 odznak'

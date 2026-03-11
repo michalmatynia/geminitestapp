@@ -62,7 +62,7 @@ export default function KangurBadgeTrackHighlights({
         const accent = TRACK_ACCENTS[track.key] ?? 'indigo';
         return (
           <div
-            className='soft-card rounded-[24px] border border-slate-200/80 px-4 py-3 text-left'
+            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-3 text-left'
             data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >

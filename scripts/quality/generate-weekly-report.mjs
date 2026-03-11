@@ -15,6 +15,10 @@ import {
 } from './lib/weekly-report-checks.mjs';
 import { applyWeeklyCheckSelection, parseWeeklyCheckSelectionArgs } from './lib/weekly-report-selection.mjs';
 import { summarizeWeeklyChecks } from './lib/weekly-report-aggregation.mjs';
+import {
+  buildKangurAiTutorBridgeSnapshotLines,
+  buildKangurKnowledgeGraphStatusLines,
+} from './lib/weekly-report-markdown.mjs';
 import { buildWeeklyReportSummaryJsonDetails } from './lib/weekly-report-summary.mjs';
 
 const execFile = promisify(execFileCallback);
@@ -179,6 +183,32 @@ const loadKangurAiTutorBridgeSnapshot = async () => {
     },
     sourceName: 'kangur-ai-tutor-bridge-snapshot',
     timeoutMs: 30 * 1000,
+  });
+
+  return {
+    status: result.output?.status ?? (result.ok ? 'ok' : 'failed'),
+    summary: result.output?.summary ?? null,
+    details: result.output?.details ?? null,
+    error: result.error ?? null,
+  };
+};
+
+const loadKangurKnowledgeGraphStatusSnapshot = async () => {
+  const result = await execScanOutput({
+    command: 'node',
+    commandArgs: [
+      '--import',
+      'tsx',
+      'scripts/db/kangur-knowledge-graph-status.ts',
+      '--summary-json',
+    ],
+    cwd: root,
+    env: {
+      ...process.env,
+      FORCE_COLOR: '0',
+    },
+    sourceName: 'kangur-knowledge-graph-status',
+    timeoutMs: 20 * 1000,
   });
 
   return {
@@ -640,26 +670,12 @@ const toMarkdown = (report) => {
 
   lines.push('## Kangur AI Tutor Bridge Snapshot');
   lines.push('');
-  if (report.kangurAiTutorBridge?.summary) {
-    const snapshot = report.kangurAiTutorBridge.summary;
-    const completionRate =
-      snapshot.bridgeCompletionRatePercent === null
-        ? 'n/a'
-        : `${snapshot.bridgeCompletionRatePercent}%`;
-    lines.push(`- Range: ${snapshot.range}`);
-    lines.push(`- Overall status: ${snapshot.overallStatus}`);
-    lines.push(`- Tutor replies: ${snapshot.messageSucceededCount}`);
-    lines.push(`- Bridge suggestions: ${snapshot.bridgeSuggestionCount}`);
-    lines.push(
-      `- Direction split: lesson->game=${snapshot.lessonToGameBridgeSuggestionCount} | game->lesson=${snapshot.gameToLessonBridgeSuggestionCount}`
-    );
-    lines.push(`- Bridge CTA clicks: ${snapshot.bridgeQuickActionClickCount}`);
-    lines.push(`- Bridge follow-up opens: ${snapshot.bridgeFollowUpClickCount}`);
-    lines.push(`- Bridge completions: ${snapshot.bridgeFollowUpCompletionCount}`);
-    lines.push(`- Bridge completion rate: ${completionRate} | alert=${snapshot.alertStatus ?? 'n/a'}`);
-  } else {
-    lines.push('- Kangur AI Tutor bridge snapshot unavailable; inspect JSON payload for error details.');
-  }
+  lines.push(...buildKangurAiTutorBridgeSnapshotLines(report.kangurAiTutorBridge?.summary ?? null));
+  lines.push('');
+
+  lines.push('## Kangur Knowledge Graph Status');
+  lines.push('');
+  lines.push(...buildKangurKnowledgeGraphStatusLines(report.kangurKnowledgeGraphStatus?.summary ?? null));
   lines.push('');
 
   lines.push('## Top 5 Critical User Flows (Priority Order)');
@@ -981,7 +997,10 @@ const run = async () => {
     readJsonIfExists('docs/metrics/unit-domain-timings-trend-latest.json'),
     readJsonIfExists('docs/metrics/lint-domain-checks-trend-latest.json'),
   ]);
-  const kangurAiTutorBridge = await loadKangurAiTutorBridgeSnapshot();
+  const [kangurAiTutorBridge, kangurKnowledgeGraphStatus] = await Promise.all([
+    loadKangurAiTutorBridgeSnapshot(),
+    loadKangurKnowledgeGraphStatusSnapshot(),
+  ]);
 
   const summary = summarizeWeeklyChecks(checkResults, checkSelection);
 
@@ -1036,6 +1055,7 @@ const run = async () => {
       lintDomains: summarizeTrend(lintDomainTrendRaw),
     },
     kangurAiTutorBridge,
+    kangurKnowledgeGraphStatus,
     criticalFlows,
   };
 

@@ -9,13 +9,17 @@ import {
   getGuidedCalloutClusterLayout,
   getGuidedCalloutLayout,
   getMotionPositionPoint,
+  getSelectionGlowStyle,
   getSelectionSpotlightStyle,
   resolveContinuousRotationDegrees,
 } from './KangurAiTutorGuidedLayout';
+import { getExpandedRect } from './KangurAiTutorWidget.helpers';
 import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfile } from './KangurAiTutorWidget.shared';
 
 type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 type GuidedPlacement = 'top' | 'bottom' | 'left' | 'right';
+const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 8;
+
 type GuidedShellState = {
   guidedArrowheadTransition: string | undefined;
   guidedAvatarArrowhead: ReturnType<typeof getFloatingTutorArrowheadGeometry>;
@@ -29,12 +33,11 @@ type GuidedShellState = {
   isGuidedTutorMode: boolean;
   sectionContextSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   sectionDropHighlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
+  selectionGlowStyles: Array<ReturnType<typeof getSelectionGlowStyle>>;
   selectionContextSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   selectionSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   shouldRenderGuidedCallout: boolean;
 };
-
-const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 6;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
@@ -67,6 +70,7 @@ export function useKangurAiTutorGuidedShellState(input: {
   activeSelectionProtectedRect: DOMRect | null;
   guidedFocusRect: DOMRect | null;
   guidedMode: GuidedMode;
+  guidedSelectionGlowRects: DOMRect[];
   guidedSelectionSpotlightRect: DOMRect | null;
   hoveredSectionProtectedRect: DOMRect | null;
   isAnonymousVisitor: boolean;
@@ -74,6 +78,7 @@ export function useKangurAiTutorGuidedShellState(input: {
   isAvatarDragging: boolean;
   isContextualPanelAnchor: boolean;
   isOpen: boolean;
+  selectionGlowSupported: boolean;
   isTutorHidden: boolean;
   motionProfile: TutorMotionProfile;
   prefersReducedMotion: boolean;
@@ -87,6 +92,7 @@ export function useKangurAiTutorGuidedShellState(input: {
     activeSelectionProtectedRect,
     guidedFocusRect,
     guidedMode,
+    guidedSelectionGlowRects,
     guidedSelectionSpotlightRect,
     hoveredSectionProtectedRect,
     isAnonymousVisitor,
@@ -94,6 +100,7 @@ export function useKangurAiTutorGuidedShellState(input: {
     isAvatarDragging,
     isContextualPanelAnchor,
     isOpen,
+    selectionGlowSupported,
     isTutorHidden,
     motionProfile,
     prefersReducedMotion,
@@ -101,9 +108,11 @@ export function useKangurAiTutorGuidedShellState(input: {
     showSelectionGuidanceCallout,
     viewport,
   } = input;
+  const shouldUseSelectionGuidanceLayout =
+    Boolean(guidedFocusRect) && (guidedMode === 'selection' || showSelectionGuidanceCallout);
 
   const guidedSelectionCalloutProtectedRect =
-    showSelectionGuidanceCallout &&
+    shouldUseSelectionGuidanceLayout &&
     guidedFocusRect &&
     activeSelectionProtectedRect &&
     activeSelectionProtectedRect.width > 0 &&
@@ -117,14 +126,41 @@ export function useKangurAiTutorGuidedShellState(input: {
           : null;
       })()
       : null;
+  const guidedSelectionFallbackProtectedPaddingX = Math.max(
+    140,
+    Math.min(Math.round(viewport.width * 0.18), 220)
+  );
+  const guidedSelectionFallbackProtectedPaddingY = Math.max(
+    96,
+    Math.min(Math.round(viewport.height * 0.14), 140)
+  );
+  const guidedSelectionFallbackProtectedRect =
+    shouldUseSelectionGuidanceLayout && guidedFocusRect
+      ? getExpandedRect(
+        guidedFocusRect,
+        guidedSelectionFallbackProtectedPaddingX,
+        guidedSelectionFallbackProtectedPaddingY
+      )
+      : null;
+  const guidedSelectionProtectedRects =
+    shouldUseSelectionGuidanceLayout && guidedFocusRect
+      ? [
+        guidedFocusRect,
+        guidedSelectionCalloutProtectedRect,
+        guidedSelectionFallbackProtectedRect,
+      ].filter(
+        (rect): rect is DOMRect => Boolean(rect)
+      )
+      : [];
   const guidedCalloutAttachmentHeight = GUIDED_CALLOUT_HEIGHT;
   const guidedCalloutClusterLayout = guidedFocusRect
     ? getGuidedCalloutClusterLayout(
       guidedFocusRect,
       viewport,
-      [guidedSelectionCalloutProtectedRect].filter((rect): rect is DOMRect => Boolean(rect)),
+      guidedSelectionProtectedRects,
       {
         calloutHeight: guidedCalloutAttachmentHeight,
+        hasSelectionPreview: shouldUseSelectionGuidanceLayout,
       }
     )
     : null;
@@ -190,8 +226,16 @@ export function useKangurAiTutorGuidedShellState(input: {
     0.34,
     motionProfile.guidedAvatarTransition.duration * 0.78
   );
+  const shouldRenderSelectionGlowOverlay =
+    guidedMode === 'selection' && (guidedSelectionGlowRects.length > 0 || selectionGlowSupported);
+  const selectionGlowStyles =
+    shouldRenderSelectionGlowOverlay
+      ? guidedSelectionGlowRects.map((rect) => getSelectionGlowStyle(rect))
+      : [];
   const selectionSpotlightStyle =
-    guidedMode === 'selection' && guidedSelectionSpotlightRect
+    guidedMode === 'selection' &&
+    guidedSelectionSpotlightRect &&
+    selectionGlowStyles.length === 0
       ? getSelectionSpotlightStyle(guidedSelectionSpotlightRect)
       : null;
   const isGuidedTutorMode = !isTutorHidden && guidedMode !== null;
@@ -229,6 +273,7 @@ export function useKangurAiTutorGuidedShellState(input: {
     isGuidedTutorMode,
     sectionContextSpotlightStyle,
     sectionDropHighlightStyle,
+    selectionGlowStyles,
     selectionContextSpotlightStyle,
     selectionSpotlightStyle,
     shouldRenderGuidedCallout,

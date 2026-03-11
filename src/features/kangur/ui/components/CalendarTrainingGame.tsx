@@ -248,7 +248,7 @@ export default function CalendarTrainingGame({
             size='md'
             value={Math.round((score / TOTAL) * 100)}
           />
-          <p className='max-w-xs text-center text-slate-500'>
+          <p className='max-w-xs text-center [color:var(--kangur-page-muted-text)]'>
             {score === TOTAL
               ? 'Idealnie! Świetnie znasz kalendarz!'
               : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
@@ -339,7 +339,7 @@ export default function CalendarTrainingGame({
           let accent: KangurAccent = 'emerald';
           let emphasis: 'neutral' | 'accent' = 'neutral';
           let state: 'default' | 'muted' = 'default';
-          let choiceClassName = 'text-slate-700';
+          let choiceClassName = '[color:var(--kangur-page-text)]';
           if (selected !== null) {
             if (choice === question.answer) {
               accent = 'emerald';

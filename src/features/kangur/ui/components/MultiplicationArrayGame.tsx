@@ -156,7 +156,7 @@ export default function MultiplicationArrayGame({
           <KangurDisplayEmoji data-testid='multiplication-array-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-slate-800'>
+          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
             Zebrałeś {score}/{TOTAL_ROUNDS} grup!
           </h2>
           {xpEarned > 0 && (
@@ -172,7 +172,7 @@ export default function MultiplicationArrayGame({
             itemDataTestIdPrefix='multiplication-array-summary-breakdown'
           />
           <KangurProgressBar accent='indigo' animated size='md' value={percent} />
-          <p className='text-slate-500'>
+          <p className='[color:var(--kangur-page-muted-text)]'>
             {percent === 100
               ? 'Mistrz grupowania! Tabliczka zdobyta!'
               : percent >= 67
@@ -224,7 +224,7 @@ export default function MultiplicationArrayGame({
           size='sm'
           value={(roundIndex / TOTAL_ROUNDS) * 100}
         />
-        <span className='text-xs font-bold text-slate-400'>
+        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
           {roundIndex + 1}/{TOTAL_ROUNDS}
         </span>
       </div>
@@ -249,7 +249,7 @@ export default function MultiplicationArrayGame({
               </p>
               <p className='text-3xl font-extrabold text-purple-600'>
                 {a} × {b}{' '}
-                <span className='text-slate-400'>
+                <span className='[color:var(--kangur-page-muted-text)]'>
                   = {allCollected ? <span className='text-green-500'>{total}</span> : '?'}
                 </span>
               </p>
@@ -275,7 +275,7 @@ export default function MultiplicationArrayGame({
                   </motion.span>
                 }
               />
-              <div className='text-slate-300 text-2xl font-bold'>/</div>
+              <div className='text-2xl font-bold [color:var(--kangur-page-muted-text)]'>/</div>
               <KangurMetricCard
                 accent='slate'
                 align='center'
@@ -305,7 +305,9 @@ export default function MultiplicationArrayGame({
                       aria-pressed={isCollected}
                       className={cn(
                         'w-full flex items-center gap-3 rounded-[24px] px-4 py-3 transition-all duration-300',
-                        isCollected ? KANGUR_ACCENT_STYLES.violet.activeText : 'text-slate-700',
+                        isCollected
+                          ? KANGUR_ACCENT_STYLES.violet.activeText
+                          : '[color:var(--kangur-page-text)]',
                         !isCollected && !celebrating ? 'cursor-pointer' : 'cursor-default'
                       )}
                       data-testid={`multiplication-array-group-${groupIndex}`}
@@ -316,7 +318,9 @@ export default function MultiplicationArrayGame({
                       <span
                         className={cn(
                           'w-5 text-center text-xs font-bold',
-                          isCollected ? KANGUR_ACCENT_STYLES.violet.mutedText : 'text-slate-400'
+                          isCollected
+                            ? KANGUR_ACCENT_STYLES.violet.mutedText
+                            : '[color:var(--kangur-page-muted-text)]'
                         )}
                       >
                         {groupIndex + 1}
@@ -363,7 +367,7 @@ export default function MultiplicationArrayGame({
                   <p className='text-2xl font-extrabold text-green-600'>
                     🎉 {a} × {b} = {total}!
                   </p>
-                  <p className='mt-1 text-sm text-slate-500'>
+                  <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
                     {a} grup po {b} = {total} razem
                   </p>
                 </motion.div>
@@ -372,7 +376,7 @@ export default function MultiplicationArrayGame({
 
             {/* Instruction when not all collected */}
             {!allCollected && (
-              <p className='text-center text-xs text-slate-400'>
+              <p className='text-center text-xs [color:var(--kangur-page-muted-text)]'>
                 Zebrane: {collected.size}/{a} grup — dotknij kolejną!
               </p>
             )}

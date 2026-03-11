@@ -105,10 +105,10 @@ function TutorToggleField({
       aria-label={label}
       className={`flex items-start gap-3 rounded-2xl border px-3 py-3 transition-colors ${
         disabled
-          ? 'cursor-not-allowed border-slate-100 bg-slate-50/60 opacity-70'
+          ? 'cursor-not-allowed [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#cbd5e1)] opacity-70'
           : checked
             ? 'cursor-pointer border-amber-200 bg-amber-50/65'
-            : 'cursor-pointer border-slate-200 bg-white/70'
+            : 'cursor-pointer [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
       }`}
     >
       <div className='relative mt-0.5'>
@@ -124,16 +124,18 @@ function TutorToggleField({
           className={`h-5 w-10 rounded-full transition-all ${
             checked
               ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
-              : 'bg-slate-300'
+              : '[background:color-mix(in_srgb,var(--kangur-soft-card-border)_86%,#94a3b8)]'
           }`}
         />
         <div
-          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`}
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full [background:var(--kangur-soft-card-background)] shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`}
         />
       </div>
       <div className='min-w-0'>
-        <div className='text-sm font-medium text-slate-700'>{label}</div>
-        <div className='mt-1 text-xs leading-relaxed text-slate-500'>{description}</div>
+        <div className='text-sm font-medium [color:var(--kangur-page-text)]'>{label}</div>
+        <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          {description}
+        </div>
       </div>
     </label>
   );
@@ -314,7 +316,9 @@ function AiTutorConfigPanel(): React.JSX.Element {
   if (!activeLearner) {
     return (
       <KangurGlassPanel padding='lg' surface='solid' variant='soft' className='w-full text-center'>
-        <p className='text-sm text-slate-500'>{tutorContent.parentDashboard.noActiveLearner}</p>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          {tutorContent.parentDashboard.noActiveLearner}
+        </p>
       </KangurGlassPanel>
     );
   }
@@ -328,12 +332,12 @@ function AiTutorConfigPanel(): React.JSX.Element {
       <div className='flex items-center gap-3'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
         <div>
-          <div className='text-sm font-bold text-slate-800'>
+          <div className='text-sm font-bold [color:var(--kangur-page-text)]'>
             {formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
               learnerName: activeLearner.displayName,
             })}
           </div>
-          <div className='text-xs text-slate-500'>
+          <div className='text-xs [color:var(--kangur-page-muted-text)]'>
             {tutorContent.parentDashboard.subtitle}
           </div>
         </div>
@@ -349,7 +353,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               {tutorContent.parentDashboard.moodTitle}
             </div>
             <p
-              className='mt-1 text-sm leading-relaxed text-slate-600'
+              className='mt-1 text-sm leading-relaxed [color:var(--kangur-page-muted-text)]'
               data-testid='parent-dashboard-ai-tutor-mood-description'
             >
               {currentMoodPreset.description}
@@ -365,35 +369,35 @@ function AiTutorConfigPanel(): React.JSX.Element {
           </KangurStatusChip>
         </div>
 
-        <div className='mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-3'>
+        <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] sm:grid-cols-3'>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
               {tutorContent.parentDashboard.baselineLabel}
             </div>
             <div
-              className='mt-1 text-sm font-semibold text-slate-800'
+              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='parent-dashboard-ai-tutor-mood-baseline'
             >
               {baselineMoodPreset.label}
             </div>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
               {tutorContent.parentDashboard.confidenceLabel}
             </div>
             <div
-              className='mt-1 text-sm font-semibold text-slate-800'
+              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='parent-dashboard-ai-tutor-mood-confidence'
             >
               {moodConfidence}
             </div>
           </div>
           <div>
-            <div className='font-semibold uppercase tracking-wide text-slate-500'>
+            <div className='font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
               {tutorContent.parentDashboard.updatedLabel}
             </div>
             <div
-              className='mt-1 text-sm font-semibold text-slate-800'
+              className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='parent-dashboard-ai-tutor-mood-updated'
             >
               {moodUpdatedAt}
@@ -409,7 +413,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               <div className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
               </div>
-              <div className='mt-1 text-sm font-semibold text-slate-800'>
+              <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
                 {isUsageLoading
                   ? tutorContent.parentDashboard.usageLoading
                   : hasUsageError || !usageSummary
@@ -429,7 +433,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               </div>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
-              <div className='shrink-0 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-amber-700'>
+              <div className='shrink-0 rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700'>
                 {usageSummary.dailyMessageLimit === null
                   ? tutorContent.parentDashboard.usageUnlimitedBadge
                   : usageSummary.remainingMessages === 0
@@ -441,15 +445,15 @@ function AiTutorConfigPanel(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-          <p className='mt-2 text-xs leading-relaxed text-slate-500'>
+          <p className='mt-2 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
             {tutorContent.parentDashboard.usageHelp}
           </p>
         </div>
       ) : null}
 
-      <div className='rounded-2xl border border-slate-200 bg-white/75 px-4 py-3 text-xs leading-relaxed text-slate-500'>
+      <div className='rounded-2xl border [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,var(--kangur-page-background))] px-4 py-3 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
         {settingsManagedNoticeBefore}
-        <span className='font-semibold text-slate-700'>
+        <span className='font-semibold [color:var(--kangur-page-text)]'>
           {tutorContent.parentDashboard.settingsManagedHighlight}
         </span>
         {settingsManagedNoticeAfter}
@@ -468,14 +472,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
             className={`w-10 h-5 rounded-full transition-all ${
               enabled
                 ? 'bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_8px_18px_-14px_rgba(249,115,22,0.72)]'
-                : 'bg-slate-300'
+                : '[background:color-mix(in_srgb,var(--kangur-soft-card-border)_86%,#94a3b8)]'
             }`}
           />
           <div
-            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
+            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full [background:var(--kangur-soft-card-background)] shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
           />
         </div>
-        <span className='text-sm font-medium text-slate-700'>
+        <span className='text-sm font-medium [color:var(--kangur-page-text)]'>
           {enabled
             ? tutorContent.parentDashboard.toggleEnabledLabel
             : tutorContent.parentDashboard.toggleDisabledLabel}
@@ -483,7 +487,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
       </label>
 
       <div className='space-y-3'>
-        <div className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
+        <div className='text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
           {tutorContent.parentDashboard.guardrailsTitle}
         </div>
         <TutorToggleField
@@ -503,7 +507,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
         <div className='flex flex-col gap-1'>
           <label
             htmlFor={testAccessModeFieldId}
-            className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+            className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
           >
             {tutorContent.parentDashboard.selects.testAccessModeLabel}
           </label>
@@ -521,7 +525,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               {tutorContent.parentDashboard.selects.testAccessModeReview}
             </option>
           </KangurSelectField>
-          <p className='text-xs leading-relaxed text-slate-500'>
+          <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
             {tutorContent.parentDashboard.selects.testAccessModeDescription}
           </p>
         </div>
@@ -529,7 +533,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
           <div className='flex flex-col gap-1'>
             <label
               htmlFor={hintDepthFieldId}
-              className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+              className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
             >
               {tutorContent.parentDashboard.selects.hintDepthLabel}
             </label>
@@ -547,14 +551,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
                 {tutorContent.parentDashboard.selects.hintDepthStepByStep}
               </option>
             </KangurSelectField>
-            <p className='text-xs leading-relaxed text-slate-500'>
+            <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
               {tutorContent.parentDashboard.selects.hintDepthDescription}
             </p>
           </div>
           <div className='flex flex-col gap-1'>
             <label
               htmlFor={proactiveNudgesFieldId}
-              className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+              className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
             >
               {tutorContent.parentDashboard.selects.proactiveNudgesLabel}
             </label>
@@ -575,7 +579,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
                 {tutorContent.parentDashboard.selects.proactiveNudgesCoach}
               </option>
             </KangurSelectField>
-            <p className='text-xs leading-relaxed text-slate-500'>
+            <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
               {tutorContent.parentDashboard.selects.proactiveNudgesDescription}
             </p>
           </div>
@@ -618,7 +622,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
       <div className='flex flex-col gap-1'>
         <label
           htmlFor={uiModeFieldId}
-          className='text-xs font-semibold text-slate-600 uppercase tracking-wide'
+          className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
         >
           {tutorContent.parentDashboard.selects.uiModeLabel}
         </label>
@@ -631,9 +635,10 @@ function AiTutorConfigPanel(): React.JSX.Element {
           disabled={!enabled}
         >
           <option value='anchored'>{tutorContent.parentDashboard.selects.uiModeAnchored}</option>
+          <option value='freeform'>{tutorContent.parentDashboard.selects.uiModeFreeform}</option>
           <option value='static'>{tutorContent.parentDashboard.selects.uiModeStatic}</option>
         </KangurSelectField>
-        <p className='text-xs leading-relaxed text-slate-500'>
+        <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           {tutorContent.parentDashboard.selects.uiModeDescription}
         </p>
       </div>
@@ -653,7 +658,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
       </KangurButton>
 
       {feedback && (
-        <p className='text-xs text-center text-slate-600'>{feedback}</p>
+        <p className='text-xs text-center [color:var(--kangur-page-muted-text)]'>{feedback}</p>
       )}
     </KangurSurfacePanel>
   );

@@ -131,9 +131,13 @@ describe('KangurLearnerProfileHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveClass('text-center');
     expect(screen.getByText('Ala')).toBeInTheDocument();
+    expect(screen.getByText('Ala')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-next-badge')).toHaveTextContent(
       '⭐ Pol tysiaca XP'
+    );
+    expect(screen.getByTestId('kangur-learner-profile-hero-milestone-track-quest')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]'
     );
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-track-quest')).toHaveTextContent(
       'Misje'

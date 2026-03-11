@@ -7,6 +7,7 @@ import {
 } from './KangurAiTutorWidget.shared';
 
 import type { CSSProperties } from 'react';
+import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
 
 export type KangurAiTutorGuestIntroRecord = {
   status: 'shown' | 'accepted' | 'dismissed';
@@ -52,10 +53,20 @@ export type KangurAiTutorAvatarPositionRecord = {
   updatedAt: string;
 };
 
+export type KangurAiTutorPanelPositionRecord = {
+  version: 1;
+  left: number;
+  mode?: TutorPanelPositionMode;
+  snap?: TutorPanelSnapState;
+  top: number;
+  updatedAt: string;
+};
+
 type KangurAiTutorWidgetStorageState = {
   lastSessionKey?: string | null;
   pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
   avatarPosition?: KangurAiTutorAvatarPositionRecord | null;
+  panelPosition?: KangurAiTutorPanelPositionRecord | null;
   hidden?: boolean;
 };
 
@@ -108,6 +119,7 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       : {}),
     ...(state.pendingFollowUp ? { pendingFollowUp: state.pendingFollowUp } : {}),
     ...(state.avatarPosition ? { avatarPosition: state.avatarPosition } : {}),
+    ...(state.panelPosition ? { panelPosition: state.panelPosition } : {}),
     ...(state.hidden === true ? { hidden: true } : {}),
   };
 
@@ -116,6 +128,7 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       !('lastSessionKey' in nextState) &&
       !('pendingFollowUp' in nextState) &&
       !('avatarPosition' in nextState) &&
+      !('panelPosition' in nextState) &&
       !('hidden' in nextState)
     ) {
       window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
@@ -171,6 +184,35 @@ const isValidAvatarPositionRecord = (
     input.version === 1 &&
     typeof input.left === 'number' &&
     Number.isFinite(input.left) &&
+    typeof input.top === 'number' &&
+    Number.isFinite(input.top) &&
+    typeof input.updatedAt === 'string'
+  );
+};
+
+const isValidPanelPositionRecord = (
+  value: unknown
+): value is KangurAiTutorPanelPositionRecord => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const input = value as Partial<KangurAiTutorPanelPositionRecord>;
+  return (
+    input.version === 1 &&
+    typeof input.left === 'number' &&
+    Number.isFinite(input.left) &&
+    (input.mode === undefined || input.mode === 'manual' || input.mode === 'contextual') &&
+    (input.snap === undefined ||
+      input.snap === 'free' ||
+      input.snap === 'left' ||
+      input.snap === 'right' ||
+      input.snap === 'top' ||
+      input.snap === 'bottom' ||
+      input.snap === 'top-left' ||
+      input.snap === 'top-right' ||
+      input.snap === 'bottom-left' ||
+      input.snap === 'bottom-right') &&
     typeof input.top === 'number' &&
     Number.isFinite(input.top) &&
     typeof input.updatedAt === 'string'
@@ -292,6 +334,7 @@ export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {
   persistTutorWidgetState({
     ...currentState,
     avatarPosition: null,
+    panelPosition: null,
     hidden,
   });
   dispatchTutorVisibilityChange(hidden);
@@ -377,6 +420,47 @@ export const clearPersistedTutorAvatarPosition = (): void => {
   persistTutorWidgetState({
     ...currentState,
     avatarPosition: null,
+  });
+};
+
+export const loadPersistedTutorPanelPosition =
+  (): KangurAiTutorPanelPositionRecord | null => {
+    const parsed = loadPersistedTutorWidgetState();
+    return isValidPanelPositionRecord(parsed?.panelPosition) ? parsed.panelPosition : null;
+  };
+
+export const persistTutorPanelPosition = (
+  position: Pick<KangurAiTutorPanelPositionRecord, 'left' | 'top'> & {
+    mode?: TutorPanelPositionMode;
+    snap?: TutorPanelSnapState;
+  }
+): KangurAiTutorPanelPositionRecord | null => {
+  if (!Number.isFinite(position.left) || !Number.isFinite(position.top)) {
+    return null;
+  }
+
+  const nextRecord: KangurAiTutorPanelPositionRecord = {
+    version: 1,
+    left: position.left,
+    ...(position.mode ? { mode: position.mode } : {}),
+    ...(position.snap ? { snap: position.snap } : {}),
+    top: position.top,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    panelPosition: nextRecord,
+  });
+  return nextRecord;
+};
+
+export const clearPersistedTutorPanelPosition = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    panelPosition: null,
   });
 };
 

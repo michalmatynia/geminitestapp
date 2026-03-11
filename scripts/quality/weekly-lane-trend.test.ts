@@ -98,8 +98,13 @@ describe('weekly lane trend helpers', () => {
       summarizeKangurAiTutorBridgeSignal({
         alertStatus: 'warning',
         bridgeCompletionRatePercent: 33.3,
+        messageSucceededCount: 9,
+        knowledgeGraphAppliedCount: 6,
+        knowledgeGraphSemanticCount: 4,
+        knowledgeGraphHybridRecallCount: 2,
+        knowledgeGraphVectorOnlyRecallCount: 1,
       })
-    ).toBe('bridge funnel degraded (33.3%)');
+    ).toBe('bridge funnel degraded (33.3%) · graph=66.7% · vector=75%');
   });
 
   it('preserves scan summaries when building weekly trend runs', () => {
@@ -120,6 +125,14 @@ describe('weekly lane trend helpers', () => {
           range: '7d',
           bridgeSuggestionCount: 4,
           bridgeCompletionRatePercent: 50,
+          messageSucceededCount: 8,
+          knowledgeGraphAppliedCount: 6,
+          knowledgeGraphSemanticCount: 4,
+          knowledgeGraphWebsiteHelpCount: 2,
+          knowledgeGraphMetadataOnlyRecallCount: 1,
+          knowledgeGraphHybridRecallCount: 2,
+          knowledgeGraphVectorOnlyRecallCount: 1,
+          knowledgeGraphVectorRecallAttemptedCount: 3,
           bridgeQuickActionClickCount: 2,
           bridgeFollowUpClickCount: 2,
           bridgeFollowUpCompletionCount: 2,
@@ -186,7 +199,9 @@ describe('weekly lane trend helpers', () => {
       bridgeFollowUpCompletionCount: 2,
       alertStatus: 'ok',
     });
-    expect(run?.kangurAiTutorBridgeSummaryText).toBe('bridge funnel healthy (50%)');
+    expect(run?.kangurAiTutorBridgeSummaryText).toBe(
+      'bridge funnel healthy (50%) · graph=75% · vector=75%'
+    );
     expect(run?.checks.build).toMatchObject({
       status: 'pass',
       durationMs: 1_200,
@@ -214,12 +229,21 @@ describe('weekly lane trend helpers', () => {
           kangurAiTutorBridge: {
             bridgeSuggestionCount: 4,
             bridgeCompletionRatePercent: 50,
+            messageSucceededCount: 8,
+            knowledgeGraphAppliedCount: 6,
+            knowledgeGraphSemanticCount: 4,
+            knowledgeGraphWebsiteHelpCount: 2,
+            knowledgeGraphMetadataOnlyRecallCount: 1,
+            knowledgeGraphHybridRecallCount: 2,
+            knowledgeGraphVectorOnlyRecallCount: 1,
+            knowledgeGraphVectorRecallAttemptedCount: 3,
             bridgeQuickActionClickCount: 2,
             bridgeFollowUpClickCount: 2,
             bridgeFollowUpCompletionCount: 2,
             alertStatus: 'ok',
           },
-          kangurAiTutorBridgeSummaryText: 'bridge funnel healthy (50%)',
+          kangurAiTutorBridgeSummaryText:
+            'bridge funnel healthy (50%) · graph=75% · vector=75%',
           checks: {
             build: {
               status: 'pass',
@@ -269,7 +293,7 @@ describe('weekly lane trend helpers', () => {
     expect(markdown).toContain('Latest Kangur AI Tutor bridge age: 0 runs');
     expect(markdown).toContain('Latest Kangur AI Tutor bridge alert: ok');
     expect(markdown).toContain(
-      'Latest Kangur AI Tutor bridge signal: bridge funnel healthy (50%)'
+      'Latest Kangur AI Tutor bridge signal: bridge funnel healthy (50%) · graph=75% · vector=75%'
     );
     expect(markdown).toContain('| Run | Status | Duration | Exit | Structured Summary |');
     expect(markdown).toContain('pass=5/6 fail=1');
@@ -285,7 +309,7 @@ describe('weekly lane trend helpers', () => {
     expect(markdown).toContain('| 2026-03-09T10:30:00.000Z | PASS | 1.2s | 0 |');
     expect(markdown).toContain('## Kangur AI Tutor Bridge Snapshot');
     expect(markdown).toContain(
-      '| 2026-03-09T10:30:00.000Z | 4 | 50 | 2 | 2 | 2 | ok |'
+      '| 2026-03-09T10:30:00.000Z | 4 | 50 | 75 | 75 | m=1 h=2 v=1 | 2 | 2 | 2 | ok |'
     );
     expect(markdown).toContain(
       'Structured gate summaries are preserved for weekly testing, architecture, and observability checks when available.'
@@ -320,12 +344,21 @@ describe('weekly lane trend helpers', () => {
           kangurAiTutorBridge: {
             bridgeSuggestionCount: 6,
             bridgeCompletionRatePercent: 33.3,
+            messageSucceededCount: 9,
+            knowledgeGraphAppliedCount: 6,
+            knowledgeGraphSemanticCount: 4,
+            knowledgeGraphWebsiteHelpCount: 2,
+            knowledgeGraphMetadataOnlyRecallCount: 1,
+            knowledgeGraphHybridRecallCount: 2,
+            knowledgeGraphVectorOnlyRecallCount: 1,
+            knowledgeGraphVectorRecallAttemptedCount: 3,
             bridgeQuickActionClickCount: 2,
             bridgeFollowUpClickCount: 2,
             bridgeFollowUpCompletionCount: 1,
             alertStatus: 'warning',
           },
-          kangurAiTutorBridgeSummaryText: 'bridge funnel degraded (33.3%)',
+          kangurAiTutorBridgeSummaryText:
+            'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
           checks: {
             build: null,
             lint: null,
@@ -378,7 +411,7 @@ describe('weekly lane trend helpers', () => {
     expect(markdown).toContain('Most recent Kangur AI Tutor bridge age: 1 run / 60.0m');
     expect(markdown).toContain('Most recent Kangur AI Tutor bridge alert: warning');
     expect(markdown).toContain(
-      'Most recent Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%)'
+      'Most recent Kangur AI Tutor bridge signal: bridge funnel degraded (33.3%) · graph=66.7% · vector=75%'
     );
   });
 });

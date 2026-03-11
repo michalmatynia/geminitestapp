@@ -1,3 +1,5 @@
+import { cn } from '@/shared/utils';
+
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 
 export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
@@ -56,74 +58,78 @@ type KangurAccentStyles = {
   mutedText: string;
 };
 
+const buildAccentStyles = ({
+  accentColor,
+  accentSurface,
+  glow,
+}: {
+  accentColor: string;
+  accentSurface: string;
+  glow: string;
+}): KangurAccentStyles => ({
+  icon: cn(
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,${accentSurface})]`,
+    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`
+  ),
+  badge: cn(
+    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,${accentSurface})]`,
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,${accentSurface})]`,
+    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`
+  ),
+  activeCard: cn(
+    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,${accentSurface})]`,
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,${accentSurface})]`,
+    `shadow-[0_24px_60px_-42px_${glow}]`
+  ),
+  hoverCard: cn(
+    `hover:[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_54%,${accentSurface})]`,
+    `hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,${accentSurface})]`
+  ),
+  activeText: `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`,
+  mutedText: `[color:color-mix(in_srgb,var(--kangur-page-text)_54%,${accentColor})]`,
+});
+
 export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
-  indigo: {
-    icon: 'bg-indigo-100 text-indigo-700',
-    badge: 'border border-indigo-200 bg-indigo-100 text-indigo-700',
-    activeCard:
-      'border-indigo-300 bg-indigo-50/80 shadow-[0_24px_60px_-42px_rgba(99,102,241,0.58)]',
-    hoverCard: 'hover:border-indigo-200 hover:bg-indigo-50/40',
-    activeText: 'text-indigo-700',
-    mutedText: 'text-indigo-600',
-  },
-  violet: {
-    icon: 'bg-violet-100 text-violet-700',
-    badge: 'border border-violet-200 bg-violet-100 text-violet-700',
-    activeCard:
-      'border-violet-300 bg-violet-50/80 shadow-[0_24px_60px_-42px_rgba(139,92,246,0.55)]',
-    hoverCard: 'hover:border-violet-200 hover:bg-violet-50/40',
-    activeText: 'text-violet-700',
-    mutedText: 'text-violet-600',
-  },
-  emerald: {
-    icon: 'bg-emerald-100 text-emerald-700',
-    badge: 'border border-emerald-200 bg-emerald-100 text-emerald-700',
-    activeCard:
-      'border-emerald-300 bg-emerald-50/80 shadow-[0_24px_60px_-42px_rgba(16,185,129,0.52)]',
-    hoverCard: 'hover:border-emerald-200 hover:bg-emerald-50/40',
-    activeText: 'text-emerald-700',
-    mutedText: 'text-emerald-600',
-  },
-  sky: {
-    icon: 'bg-sky-100 text-sky-700',
-    badge: 'border border-sky-200 bg-sky-100 text-sky-700',
-    activeCard: 'border-sky-300 bg-sky-50/80 shadow-[0_24px_60px_-42px_rgba(14,165,233,0.48)]',
-    hoverCard: 'hover:border-sky-200 hover:bg-sky-50/40',
-    activeText: 'text-sky-700',
-    mutedText: 'text-sky-600',
-  },
-  amber: {
-    icon: 'bg-amber-100 text-amber-700',
-    badge: 'border border-amber-200 bg-amber-100 text-amber-700',
-    activeCard: 'border-amber-300 bg-amber-50/85 shadow-[0_24px_60px_-42px_rgba(245,158,11,0.48)]',
-    hoverCard: 'hover:border-amber-200 hover:bg-amber-50/50',
-    activeText: 'text-amber-700',
-    mutedText: 'text-amber-700',
-  },
-  rose: {
-    icon: 'bg-rose-100 text-rose-700',
-    badge: 'border border-rose-200 bg-rose-100 text-rose-700',
-    activeCard: 'border-rose-300 bg-rose-50/85 shadow-[0_24px_60px_-42px_rgba(244,63,94,0.46)]',
-    hoverCard: 'hover:border-rose-200 hover:bg-rose-50/50',
-    activeText: 'text-rose-700',
-    mutedText: 'text-rose-600',
-  },
-  teal: {
-    icon: 'bg-teal-100 text-teal-700',
-    badge: 'border border-teal-200 bg-teal-100 text-teal-700',
-    activeCard: 'border-teal-300 bg-teal-50/85 shadow-[0_24px_60px_-42px_rgba(20,184,166,0.48)]',
-    hoverCard: 'hover:border-teal-200 hover:bg-teal-50/50',
-    activeText: 'text-teal-700',
-    mutedText: 'text-teal-600',
-  },
-  slate: {
-    icon: 'bg-slate-100 text-slate-700',
-    badge: 'border border-slate-200 bg-slate-100 text-slate-700',
-    activeCard: 'border-slate-300 bg-slate-50/95 shadow-[0_24px_60px_-46px_rgba(15,23,42,0.35)]',
-    hoverCard: 'hover:border-slate-200 hover:bg-slate-50/70',
-    activeText: 'text-slate-700',
-    mutedText: 'text-slate-500',
-  },
+  indigo: buildAccentStyles({
+    accentColor: 'rgb(79_70_229)',
+    accentSurface: 'rgb(224_231_255)',
+    glow: 'rgba(99,102,241,0.38)',
+  }),
+  violet: buildAccentStyles({
+    accentColor: 'rgb(124_58_237)',
+    accentSurface: 'rgb(237_233_254)',
+    glow: 'rgba(139,92,246,0.34)',
+  }),
+  emerald: buildAccentStyles({
+    accentColor: 'rgb(4_120_87)',
+    accentSurface: 'rgb(209_250_229)',
+    glow: 'rgba(16,185,129,0.3)',
+  }),
+  sky: buildAccentStyles({
+    accentColor: 'rgb(3_105_161)',
+    accentSurface: 'rgb(224_242_254)',
+    glow: 'rgba(14,165,233,0.3)',
+  }),
+  amber: buildAccentStyles({
+    accentColor: 'rgb(180_83_9)',
+    accentSurface: 'rgb(254_243_199)',
+    glow: 'rgba(245,158,11,0.3)',
+  }),
+  rose: buildAccentStyles({
+    accentColor: 'rgb(190_24_93)',
+    accentSurface: 'rgb(255_228_230)',
+    glow: 'rgba(244,63,94,0.28)',
+  }),
+  teal: buildAccentStyles({
+    accentColor: 'rgb(15_118_110)',
+    accentSurface: 'rgb(204_251_241)',
+    glow: 'rgba(20,184,166,0.3)',
+  }),
+  slate: buildAccentStyles({
+    accentColor: 'rgb(71_85_105)',
+    accentSurface: 'rgb(226_232_240)',
+    glow: 'rgba(15,23,42,0.24)',
+  }),
 };
 
 export const KANGUR_SURFACE_CARD_CLASSNAME =

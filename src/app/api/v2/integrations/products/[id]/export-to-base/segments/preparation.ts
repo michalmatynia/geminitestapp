@@ -391,15 +391,15 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       );
     });
 
-    if (hasCategoryTemplateMapping) {
-      const internalCategoryId =
-        typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
-      if (!internalCategoryId) {
-        throw badRequestError(
-          'Product has no internal category assigned. Assign a category before exporting with category mapping.'
-        );
-      }
+    const internalCategoryId =
+      typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
+    if (hasCategoryTemplateMapping && !internalCategoryId) {
+      throw badRequestError(
+        'Product has no internal category assigned. Assign a category before exporting with category mapping.'
+      );
+    }
 
+    if (internalCategoryId) {
       const categoryMappingRepo = await getCategoryMappingRepository();
       const categoryMappings = await categoryMappingRepo.listByConnection(data.connectionId);
       const productCatalogIds = new Set(
@@ -441,47 +441,102 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
             return categoryName ? `${categoryName} (${externalId})` : externalId;
           })
           .filter(Boolean);
-        throw badRequestError(
-          `Multiple active Base.com category mappings found for this category. Keep only one active mapping and retry. Found: ${mappingLabels.join(', ')}`
-        );
-      }
-      const selectedMapping = (([...prioritizedMappings].sort(
-        (a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) =>
-          toTimeMs(b.updatedAt ?? 0) - toTimeMs(a.updatedAt ?? 0)
-      )[0] as CategoryMappingWithDetails) ?? null) as CategoryMappingWithDetails | null;
-
-      if (!selectedMapping) {
-        if (matchingMappings.length > 0) {
+        if (hasCategoryTemplateMapping) {
           throw badRequestError(
-            `Category mapping for internal category "${internalCategoryId}" points to stale external categories. Re-fetch categories and re-save mapping in Category Mapper.`
+            `Multiple active Base.com category mappings found for this category. Keep only one active mapping and retry. Found: ${mappingLabels.join(', ')}`
           );
         }
-        throw badRequestError(
-          `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
+        await ErrorSystem.logWarning(
+          '[export-to-base] Skipping category export because multiple Base.com category mappings matched the product category.',
+          {
+            productId,
+            connectionId: data.connectionId,
+            internalCategoryId,
+            mappingLabels,
+          }
         );
+        exportProduct = {
+          ...product,
+          categoryId: null,
+        } as TProduct;
+      } else {
+        const selectedMapping = (([...prioritizedMappings].sort(
+          (a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) =>
+            toTimeMs(b.updatedAt ?? 0) - toTimeMs(a.updatedAt ?? 0)
+        )[0] as CategoryMappingWithDetails) ?? null) as CategoryMappingWithDetails | null;
+
+        if (!selectedMapping) {
+          if (matchingMappings.length > 0) {
+            if (hasCategoryTemplateMapping) {
+              throw badRequestError(
+                `Category mapping for internal category "${internalCategoryId}" points to stale external categories. Re-fetch categories and re-save mapping in Category Mapper.`
+              );
+            }
+            await ErrorSystem.logWarning(
+              '[export-to-base] Skipping category export because the product category mapping is stale.',
+              {
+                productId,
+                connectionId: data.connectionId,
+                internalCategoryId,
+              }
+            );
+          } else if (hasCategoryTemplateMapping) {
+            throw badRequestError(
+              `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
+            );
+          } else {
+            await ErrorSystem.logWarning(
+              '[export-to-base] Skipping category export because no Base.com category mapping was found.',
+              {
+                productId,
+                connectionId: data.connectionId,
+                internalCategoryId,
+              }
+            );
+          }
+          exportProduct = {
+            ...product,
+            categoryId: null,
+          } as TProduct;
+        } else {
+          const mappedExternalCategoryId = toTrimmedString(
+            selectedMapping.externalCategory?.externalId
+          );
+          if (!mappedExternalCategoryId) {
+            if (hasCategoryTemplateMapping) {
+              throw badRequestError(
+                `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
+              );
+            }
+            await ErrorSystem.logWarning(
+              '[export-to-base] Skipping category export because the selected category mapping has no external id.',
+              {
+                productId,
+                connectionId: data.connectionId,
+                internalCategoryId,
+                catalogId: selectedMapping.catalogId,
+              }
+            );
+            exportProduct = {
+              ...product,
+              categoryId: null,
+            } as TProduct;
+          } else {
+            exportProduct = {
+              ...product,
+              categoryId: mappedExternalCategoryId,
+            } as TProduct;
+
+            await ErrorSystem.logInfo('[export-to-base] Resolved category mapping for export', {
+              productId,
+              connectionId: data.connectionId,
+              internalCategoryId,
+              mappedExternalCategoryId,
+              catalogId: selectedMapping.catalogId,
+            });
+          }
+        }
       }
-
-      const mappedExternalCategoryId = toTrimmedString(
-        selectedMapping.externalCategory?.externalId
-      );
-      if (!mappedExternalCategoryId) {
-        throw badRequestError(
-          `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
-        );
-      }
-
-      exportProduct = {
-        ...product,
-        categoryId: mappedExternalCategoryId,
-      } as TProduct;
-
-      await ErrorSystem.logInfo('[export-to-base] Resolved category mapping for export', {
-        productId,
-        connectionId: data.connectionId,
-        internalCategoryId,
-        mappedExternalCategoryId,
-        catalogId: selectedMapping.catalogId,
-      });
     }
   }
 

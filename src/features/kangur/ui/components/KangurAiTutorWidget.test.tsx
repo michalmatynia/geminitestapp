@@ -1071,9 +1071,9 @@ describe('KangurAiTutorWidget', () => {
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1210,9 +1210,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toBeVisible();
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    expect(openChatMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-ai-tutor-guest-intro')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(openChatMock).toHaveBeenCalled();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
   });
   it('closes the guest intro card via the X and lets the avatar reopen the canonical onboarding modal', async () => {
     useOptionalKangurAuthMock.mockReturnValue({

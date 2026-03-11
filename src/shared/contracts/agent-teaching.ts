@@ -58,6 +58,33 @@ export const agentTeachingDocumentSchema = dtoBaseSchema.extend({
 export type AgentTeachingDocumentDto = z.infer<typeof agentTeachingDocumentSchema>;
 export type AgentTeachingEmbeddingDocumentListItem = AgentTeachingDocumentDto;
 
+export const agentTeachingDocumentsResponseSchema = z.object({
+  items: z.array(agentTeachingDocumentSchema),
+  total: z.number(),
+});
+
+export type AgentTeachingDocumentsResponseDto = z.infer<
+  typeof agentTeachingDocumentsResponseSchema
+>;
+export type AgentTeachingDocumentsResponse = AgentTeachingDocumentsResponseDto;
+
+export const agentTeachingDocumentResponseSchema = z.object({
+  item: agentTeachingDocumentSchema,
+});
+
+export type AgentTeachingDocumentResponseDto = z.infer<typeof agentTeachingDocumentResponseSchema>;
+export type AgentTeachingDocumentResponse = AgentTeachingDocumentResponseDto;
+
+export const agentTeachingDocumentDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+  deleted: z.boolean(),
+});
+
+export type AgentTeachingDocumentDeleteResponseDto = z.infer<
+  typeof agentTeachingDocumentDeleteResponseSchema
+>;
+export type AgentTeachingDocumentDeleteResponse = AgentTeachingDocumentDeleteResponseDto;
+
 export const agentTeachingCollectionSchema = dtoBaseSchema.extend({
   name: z.string(),
   description: z.string().nullable(),
@@ -72,6 +99,35 @@ export const agentTeachingCollectionSchema = dtoBaseSchema.extend({
 
 export type AgentTeachingCollectionDto = z.infer<typeof agentTeachingCollectionSchema>;
 export type AgentTeachingEmbeddingCollectionRecord = AgentTeachingCollectionDto;
+
+export const agentTeachingCollectionsResponseSchema = z.object({
+  collections: z.array(agentTeachingCollectionSchema),
+});
+
+export type AgentTeachingCollectionsResponseDto = z.infer<
+  typeof agentTeachingCollectionsResponseSchema
+>;
+export type AgentTeachingCollectionsResponse = AgentTeachingCollectionsResponseDto;
+
+export const agentTeachingCollectionResponseSchema = z.object({
+  collection: agentTeachingCollectionSchema,
+});
+
+export type AgentTeachingCollectionResponseDto = z.infer<
+  typeof agentTeachingCollectionResponseSchema
+>;
+export type AgentTeachingCollectionResponse = AgentTeachingCollectionResponseDto;
+
+export const agentTeachingCollectionDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+  deleted: z.boolean(),
+  deletedDocuments: z.number(),
+});
+
+export type AgentTeachingCollectionDeleteResponseDto = z.infer<
+  typeof agentTeachingCollectionDeleteResponseSchema
+>;
+export type AgentTeachingCollectionDeleteResponse = AgentTeachingCollectionDeleteResponseDto;
 
 /**
  * Agent Teaching & Context Extension
@@ -100,6 +156,29 @@ export const agentTeachingAgentSchema = z.object({
 
 export type AgentTeachingAgentDto = z.infer<typeof agentTeachingAgentSchema>;
 export type AgentTeachingAgentRecord = AgentTeachingAgentDto;
+
+export const agentTeachingAgentsResponseSchema = z.object({
+  agents: z.array(agentTeachingAgentSchema),
+});
+
+export type AgentTeachingAgentsResponseDto = z.infer<typeof agentTeachingAgentsResponseSchema>;
+export type AgentTeachingAgentsResponse = AgentTeachingAgentsResponseDto;
+
+export const agentTeachingAgentResponseSchema = z.object({
+  agent: agentTeachingAgentSchema,
+});
+
+export type AgentTeachingAgentResponseDto = z.infer<typeof agentTeachingAgentResponseSchema>;
+export type AgentTeachingAgentResponse = AgentTeachingAgentResponseDto;
+
+export const agentTeachingAgentDeleteResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export type AgentTeachingAgentDeleteResponseDto = z.infer<
+  typeof agentTeachingAgentDeleteResponseSchema
+>;
+export type AgentTeachingAgentDeleteResponse = AgentTeachingAgentDeleteResponseDto;
 
 export const agentTeachingContextSchema = z.object({
   query: z.string(),
@@ -135,3 +214,18 @@ export const agentTeachingChatRequestSchema = z.object({
 
 export type AgentTeachingChatRequestDto = z.infer<typeof agentTeachingChatRequestSchema>;
 export type AgentTeachingChatRequest = AgentTeachingChatRequestDto;
+
+export const agentTeachingSearchResponseSchema = z.object({
+  sources: z.array(agentTeachingChatSourceSchema),
+});
+
+export type AgentTeachingSearchResponseDto = z.infer<typeof agentTeachingSearchResponseSchema>;
+export type AgentTeachingSearchResponse = AgentTeachingSearchResponseDto;
+
+export const agentTeachingChatResponseSchema = z.object({
+  message: z.string(),
+  sources: z.array(agentTeachingChatSourceSchema),
+});
+
+export type AgentTeachingChatResponseDto = z.infer<typeof agentTeachingChatResponseSchema>;
+export type AgentTeachingChatResponse = AgentTeachingChatResponseDto;

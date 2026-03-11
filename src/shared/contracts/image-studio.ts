@@ -308,6 +308,48 @@ export const studioSlotsResponseSchema = z.object({
 
 export type StudioSlotsResponse = z.infer<typeof studioSlotsResponseSchema>;
 
+export const imageStudioSlotResponseSchema = z.object({
+  slot: imageStudioSlotSchema,
+});
+
+export type ImageStudioSlotResponse = z.infer<typeof imageStudioSlotResponseSchema>;
+
+export const imageStudioEnsureSlotActionSchema = z.enum([
+  'reused_existing',
+  'reused_selected_slot',
+  'created',
+  'reused_deterministic',
+]);
+
+export type ImageStudioEnsureSlotAction = z.infer<typeof imageStudioEnsureSlotActionSchema>;
+
+export const imageStudioEnsureSlotFromUploadResponseSchema = z.object({
+  slot: imageStudioSlotSchema,
+  created: z.boolean(),
+  action: imageStudioEnsureSlotActionSchema,
+});
+
+export type ImageStudioEnsureSlotFromUploadResponse = z.infer<
+  typeof imageStudioEnsureSlotFromUploadResponseSchema
+>;
+
+export const imageStudioSlotDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+  deletedSlotIds: z.array(z.string()),
+  timingsMs: z.unknown().optional(),
+});
+
+export type ImageStudioSlotDeleteResponse = z.infer<typeof imageStudioSlotDeleteResponseSchema>;
+
+export const imageStudioSlotScreenshotResponseSchema = z.object({
+  slot: imageStudioSlotSchema,
+  screenshot: imageFileSchema,
+});
+
+export type ImageStudioSlotScreenshotResponse = z.infer<
+  typeof imageStudioSlotScreenshotResponseSchema
+>;
+
 export const imageStudioModelsSourceSchema = z.enum(['brain']);
 
 export type ImageStudioModelsSource = z.infer<typeof imageStudioModelsSourceSchema>;

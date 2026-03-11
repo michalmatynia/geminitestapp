@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   productBulkImagesBase64ResponseSchema,
+  productCsvImportResponseSchema,
   productDuplicateRequestSchema,
   productImageBase64ResponseSchema,
   productPatchInputSchema,
@@ -40,5 +41,19 @@ describe('product action contract runtime', () => {
         failed: 1,
       }).failed
     ).toBe(1);
+  });
+
+  it('parses product csv import responses', () => {
+    expect(
+      productCsvImportResponseSchema.parse({
+        message: 'CSV import completed',
+        summary: {
+          total: 12,
+          successful: 10,
+          failed: 2,
+          errors: [{ sku: 'SKU-1', error: 'Invalid price' }],
+        },
+      }).summary.failed
+    ).toBe(2);
   });
 });

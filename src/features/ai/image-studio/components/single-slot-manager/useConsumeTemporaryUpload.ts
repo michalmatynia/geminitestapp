@@ -7,8 +7,10 @@ import {
   setImageStudioSlotImageLocked,
 } from '@/features/ai/image-studio/utils/slot-image-lock';
 import type {
+  ImageStudioEnsureSlotFromUploadResponse,
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
+  StudioSlotsResponse,
   UpdateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
@@ -124,7 +126,7 @@ export function useConsumeTemporaryUpload({
 
           const resolveFallbackSlot = async (): Promise<ImageStudioSlot | null> => {
             await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-            const refreshed = queryClient.getQueryData<{ slots: ImageStudioSlot[] }>(
+            const refreshed = queryClient.getQueryData<StudioSlotsResponse>(
               studioKeys.slots(normalizedProjectId)
             );
             const refreshedSlots = refreshed?.slots ?? [];
@@ -154,7 +156,7 @@ export function useConsumeTemporaryUpload({
               return patchedSelected;
             }
 
-            const created = await api.post<{ slots: ImageStudioSlot[] }>(
+            const created = await api.post<StudioSlotsResponse>(
               `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
               {
                 slots: [
@@ -175,7 +177,7 @@ export function useConsumeTemporaryUpload({
 
           let ensuredSlot: ImageStudioSlot | null = null;
           try {
-            const ensured = await api.post<{ slot: ImageStudioSlot }>(
+            const ensured = await api.post<ImageStudioEnsureSlotFromUploadResponse>(
               `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
               {
                 uploadId: currentTemporaryUploadId || null,
@@ -218,7 +220,7 @@ export function useConsumeTemporaryUpload({
             }
           }
 
-          queryClient.setQueryData<{ slots: ImageStudioSlot[] }>(
+          queryClient.setQueryData<StudioSlotsResponse>(
             studioKeys.slots(normalizedProjectId),
             (current) => {
               if (!current || !Array.isArray(current.slots)) {

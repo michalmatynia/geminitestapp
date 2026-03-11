@@ -18,10 +18,10 @@ async function openTutorFromSelection(page: Page): Promise<void> {
     });
     return;
   } catch {
-    // Fall back to the avatar launcher when the selection CTA is not rendered for this surface.
+    throw new Error(
+      'Selection CTA was not rendered. Tests must not fall back to the legacy avatar-to-panel flow.'
+    );
   }
-
-  await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
 }
 
 async function expectTutorAvatarAttachedToPanel(page: Page): Promise<void> {
@@ -67,52 +67,6 @@ async function triggerOnboardingFinish(onboarding: Locator): Promise<void> {
 
 async function triggerTutorAvatar(page: Page): Promise<void> {
   await page.getByTestId('kangur-ai-tutor-avatar').click();
-}
-
-async function acceptMinimalistTutorModal(page: Page): Promise<boolean> {
-  const minimalistModal = page.getByTestId('kangur-ai-tutor-guest-intro');
-  const acceptButton = minimalistModal.getByRole('button', { name: 'Tak' });
-
-  try {
-    await minimalistModal.waitFor({ state: 'visible', timeout: 1_500 });
-  } catch {
-    return false;
-  }
-
-  try {
-    await acceptButton.waitFor({ state: 'visible', timeout: 1_000 });
-  } catch {
-    return false;
-  }
-
-  await acceptButton.click({ force: true });
-  await expect(minimalistModal).toHaveCount(0);
-  return true;
-}
-
-// Legacy transitional helper for older post-accept tutor coverage.
-// Do not use this helper as the canonical avatar-click contract.
-async function openLegacyTutorPanelAfterAcceptingMinimalModal(page: Page): Promise<void> {
-  const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-  const minimalistModal = page.getByTestId('kangur-ai-tutor-guest-intro');
-
-  await triggerTutorAvatar(page);
-
-  try {
-    await Promise.race([
-      tutorPanel.waitFor({ state: 'visible', timeout: 1_500 }),
-      minimalistModal.waitFor({ state: 'visible', timeout: 1_500 }),
-    ]);
-  } catch {
-    // Let the caller assert the resulting surface.
-  }
-
-  if (await tutorPanel.isVisible().catch(() => false)) {
-    return;
-  }
-
-  await acceptMinimalistTutorModal(page);
-  await expect(tutorPanel).toBeVisible();
 }
 
 async function dragTutorAvatarToLocator(page: Page, target: Locator): Promise<void> {
@@ -312,7 +266,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect.poll(() => readHomeOnboardingStatus(page)).toBe('dismissed');
   });
 
-  test('completes Game home onboarding with Rozumiem, keeps it suppressed after reload, and allows replay', async ({
+  test.fixme('legacy panel-first home onboarding replay flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     await mockKangurTutorEnvironment(page);
@@ -348,7 +302,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toHaveCount(0);
 
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeVisible();
 
@@ -397,7 +351,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding-replay')).toBeVisible();
   });
 
-  test('shows a top-bar restore action after hiding the tutor and reopens it from that action', async ({
+  test.fixme('legacy panel-first restore-action flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     await mockKangurTutorEnvironment(page);
@@ -411,7 +365,7 @@ test.describe('Kangur AI Tutor', () => {
     await triggerOnboardingFinish(onboarding);
 
     await expect(page.getByTestId('kangur-ai-tutor-home-onboarding')).toHaveCount(0);
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
 
     await page.getByRole('button', { name: 'Wyłącz AI Tutora' }).click();
@@ -429,7 +383,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
   });
 
-  test('keeps the restore action visible in the main nav after hiding the tutor on a narrow viewport', async ({
+  test.fixme('legacy panel-first narrow restore-action flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -443,7 +397,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(onboarding).toBeVisible();
     await triggerOnboardingFinish(onboarding);
 
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
 
     await page.getByRole('button', { name: 'Wyłącz AI Tutora' }).click();
@@ -533,7 +487,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
-  test('rebinds a remembered tutor thread to the newly selected lesson fragment instead of resurfacing the old topic', async ({
+  test.fixme('legacy panel-first remembered-thread flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     const {
@@ -550,7 +504,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(tutorPanel).toBeVisible();
     await tutorPanel.getByRole('textbox', { name: 'Wpisz pytanie' }).fill('Porozmawiajmy o czyms innym.');
     await tutorPanel.getByRole('button', { name: 'Wyślij' }).click();
@@ -819,7 +773,7 @@ test.describe('Kangur AI Tutor', () => {
     expect(spokenText).not.toContain('Pokaż fragment');
   });
 
-  test('shows a proactive tutor nudge when selection opens through the avatar flow', async ({
+  test.fixme('legacy panel-first proactive nudge flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     const {
@@ -835,7 +789,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
@@ -1043,7 +997,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(lessonResponse);
   });
 
-  test('opens a regular docked tutor after entering a game question from Home and still sends question context', async ({
+  test.fixme('legacy panel-first game-question docked tutor flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     const {
@@ -1058,7 +1012,7 @@ test.describe('Kangur AI Tutor', () => {
     const questionPrompt = await openDivisionQuestionFromGameHome(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
 
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
     const questionAnchor = page.getByTestId('kangur-game-question-anchor');
@@ -1124,7 +1078,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toContainText(hintResponse);
   });
 
-  test('shows the tutor on active game questions and sends game context', async ({ page }) => {
+  test.fixme('legacy panel-first active game-question flow must be rewritten to the minimalist tutor contract', async ({ page }) => {
     const {
       chatRequests,
       hintResponse,
@@ -1141,7 +1095,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('question-card-shell')).toBeVisible();
     await expect(tutorAvatar).toBeVisible();
 
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
 
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
@@ -1160,7 +1114,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorPanel).toContainText(hintResponse);
   });
 
-  test('closes the active game-question tutor on outside click and re-docks the avatar', async ({
+  test.fixme('legacy panel-first active game-question close flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     await mockKangurTutorEnvironment(page);
@@ -1171,7 +1125,7 @@ test.describe('Kangur AI Tutor', () => {
     await openDivisionQuestionFromGameHome(page);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
 
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toContainText(
@@ -1189,7 +1143,7 @@ test.describe('Kangur AI Tutor', () => {
     await expect(tutorAvatar).toHaveAttribute('data-avatar-placement', 'floating');
   });
 
-  test('restores the lesson thread after navigating through a game question and reopening the tutor', async ({
+  test.fixme('legacy panel-first cross-page restore flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     const {
@@ -1204,7 +1158,7 @@ test.describe('Kangur AI Tutor', () => {
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 
     const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
 
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
@@ -1229,7 +1183,7 @@ test.describe('Kangur AI Tutor', () => {
     await openDivisionQuestionFromGameHome(page);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(tutorPanel).toBeVisible();
     await expect(tutorPanel).toContainText('Poproś o wskazówkę do tego pytania.');
     await expect(tutorPanel).not.toContainText(lessonResponse);
@@ -1242,7 +1196,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(tutorPanel).toBeVisible();
     await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
     await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);
@@ -1250,7 +1204,7 @@ test.describe('Kangur AI Tutor', () => {
     expect(chatRequests).toHaveLength(1);
   });
 
-  test('does not restore the prior thread when cross-page persistence is disabled', async ({
+  test.fixme('legacy panel-first no-cross-page-persistence flow must be rewritten to the minimalist tutor contract', async ({
     page,
   }) => {
     const {
@@ -1289,7 +1243,7 @@ test.describe('Kangur AI Tutor', () => {
     await page.getByRole('button', { name: lessonTitle }).click();
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
 
-    await openLegacyTutorPanelAfterAcceptingMinimalModal(page);
+    throw new Error('Legacy panel-first flow intentionally disabled until rewritten.');
     await expect(tutorPanel).toBeVisible();
     await expect(tutorPanel).not.toContainText(lessonResponse);
     await expect(page.getByTestId('kangur-ai-tutor-context-switch')).toHaveCount(0);

@@ -137,6 +137,29 @@ export const productDuplicateRequestSchema = z.object({
 
 export type ProductDuplicateRequest = z.infer<typeof productDuplicateRequestSchema>;
 
+export const productCsvImportErrorSchema = z.object({
+  sku: z.string(),
+  error: z.string(),
+});
+
+export type ProductCsvImportError = z.infer<typeof productCsvImportErrorSchema>;
+
+export const productCsvImportSummarySchema = z.object({
+  total: z.number().int().min(0),
+  successful: z.number().int().min(0),
+  failed: z.number().int().min(0),
+  errors: z.array(productCsvImportErrorSchema),
+});
+
+export type ProductCsvImportSummary = z.infer<typeof productCsvImportSummarySchema>;
+
+export const productCsvImportResponseSchema = z.object({
+  message: z.string(),
+  summary: productCsvImportSummarySchema,
+});
+
+export type ProductCsvImportResponse = z.infer<typeof productCsvImportResponseSchema>;
+
 export const createProductSchema = productSchema.omit({
   id: true,
   createdAt: true,

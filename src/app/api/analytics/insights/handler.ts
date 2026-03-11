@@ -5,7 +5,11 @@ import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights
 import { generateAnalyticsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { analyticsInsightRunRequestSchema } from '@/shared/contracts/ai-insights';
+import {
+  analyticsInsightRunRequestSchema,
+  type AiInsightResponse,
+  type AiInsightsResponse,
+} from '@/shared/contracts/ai-insights';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -18,7 +22,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const url = new URL(req.url);
   const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const insights = await listAiInsights('analytics', parsed.limit ?? 10);
-  return NextResponse.json({ insights });
+  const response: AiInsightsResponse = { insights };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -38,5 +43,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     source: 'user_triggered',
     contextRegistry,
   });
-  return NextResponse.json({ insight });
+  const response: AiInsightResponse = { insight };
+  return NextResponse.json(response);
 }

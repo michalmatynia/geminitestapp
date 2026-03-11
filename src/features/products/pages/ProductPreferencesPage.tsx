@@ -11,7 +11,7 @@ import {
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductListPreferences } from '@/shared/contracts/products';
 import {
-  AdminProductsBreadcrumbs,
+  AdminProductsPageLayout,
   Button,
   SelectSimple,
   Input,
@@ -19,7 +19,6 @@ import {
   FormSection,
   FormField,
   LoadingState,
-  PageLayout,
   FormActions,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -31,6 +30,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   pageSize: 50,
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
+  showTriggerRunFeedback: true,
   advancedFilterPresets: [],
   appliedAdvancedFilter: '',
   appliedAdvancedFilterPresetId: null,
@@ -97,10 +97,10 @@ export function ProductPreferencesPage(): React.JSX.Element {
   }
 
   return (
-    <PageLayout
+    <AdminProductsPageLayout
       title='Product Preferences'
+      current='Preferences'
       description='Manage your product list display and navigation preferences'
-      eyebrow={<AdminProductsBreadcrumbs current='Preferences' />}
     >
       <div className='space-y-6'>
         <FormSection title='Product List Settings' className='p-6'>
@@ -232,6 +232,26 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 ]}
               />
             </FormField>
+
+            <FormField
+              label='Trigger Run Feedback Pills'
+              description='Show or hide AI trigger run feedback pills across the product list'
+            >
+              <SelectSimple
+                size='sm'
+                value={preferences.showTriggerRunFeedback ? 'shown' : 'hidden'}
+                onValueChange={(value: string) =>
+                  setPreferences((prev: ProductListPreferences) => ({
+                    ...prev,
+                    showTriggerRunFeedback: value === 'shown',
+                  }))
+                }
+                options={[
+                  { value: 'shown', label: 'Show Pills' },
+                  { value: 'hidden', label: 'Hide Pills' },
+                ]}
+              />
+            </FormField>
           </div>
         </FormSection>
 
@@ -254,6 +274,6 @@ export function ProductPreferencesPage(): React.JSX.Element {
           </Button>
         </FormActions>
       </div>
-    </PageLayout>
+    </AdminProductsPageLayout>
   );
 }

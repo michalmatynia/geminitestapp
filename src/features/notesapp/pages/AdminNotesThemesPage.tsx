@@ -16,10 +16,10 @@ import {
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { ThemeRecord } from '@/shared/contracts/notes';
 import {
+  AdminNotesPageLayout,
   Button,
   useToast,
   Input,
-  PageLayout,
   FormSection,
   FormField,
   ListPanel,
@@ -155,7 +155,11 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   };
 
   return (
-    <PageLayout title='Note Themes' description='Create and manage themes for your notes.'>
+    <AdminNotesPageLayout
+      title='Note Themes'
+      current='Themes'
+      description='Create and manage themes for your notes.'
+    >
       <div className='max-w-5xl space-y-8'>
         <FormSection title='Create Theme' className='p-6'>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
@@ -499,6 +503,6 @@ export function AdminNotesThemesPage(): React.JSX.Element {
           }
         }}
       />
-    </PageLayout>
+    </AdminNotesPageLayout>
   );
 }

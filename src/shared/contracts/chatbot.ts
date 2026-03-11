@@ -204,6 +204,81 @@ export const chatbotSessionListItemSchema = z.object({
 export type ChatbotSessionListItemDto = z.infer<typeof chatbotSessionListItemSchema>;
 export type ChatbotSessionListItem = ChatbotSessionListItemDto;
 
+export const chatbotSessionsQuerySchema = z.object({
+  scope: z.enum(['list', 'ids']).optional(),
+  query: z.string().trim().optional(),
+});
+
+export type ChatbotSessionsQueryDto = z.infer<typeof chatbotSessionsQuerySchema>;
+export type ChatbotSessionsQuery = ChatbotSessionsQueryDto;
+
+export const chatbotSessionsResponseSchema = z.object({
+  sessions: z.array(chatSessionSchema).optional(),
+});
+
+export type ChatbotSessionsResponseDto = z.infer<typeof chatbotSessionsResponseSchema>;
+export type ChatbotSessionsResponse = ChatbotSessionsResponseDto;
+
+export const chatbotSessionIdsResponseSchema = z.object({
+  ids: z.array(z.string()),
+});
+
+export type ChatbotSessionIdsResponseDto = z.infer<typeof chatbotSessionIdsResponseSchema>;
+export type ChatbotSessionIdsResponse = ChatbotSessionIdsResponseDto;
+
+export const chatbotSessionResponseSchema = z.object({
+  session: chatSessionSchema,
+});
+
+export type ChatbotSessionResponseDto = z.infer<typeof chatbotSessionResponseSchema>;
+export type ChatbotSessionResponse = ChatbotSessionResponseDto;
+
+export const chatbotSessionCreateRequestSchema = z.object({
+  title: z.string().trim().optional(),
+  settings: chatbotSettingsSchema.optional(),
+});
+
+export type ChatbotSessionCreateRequestDto = z.infer<typeof chatbotSessionCreateRequestSchema>;
+export type ChatbotSessionCreateRequest = ChatbotSessionCreateRequestDto;
+
+export const chatbotSessionCreateResponseSchema = z.object({
+  sessionId: z.string(),
+  session: chatSessionSchema.optional(),
+});
+
+export type ChatbotSessionCreateResponseDto = z.infer<typeof chatbotSessionCreateResponseSchema>;
+export type ChatbotSessionCreateResponse = ChatbotSessionCreateResponseDto;
+
+export const chatbotSessionUpdateRequestSchema = z.object({
+  sessionId: z.string().trim().min(1),
+  title: z.string().trim().optional(),
+});
+
+export type ChatbotSessionUpdateRequestDto = z.infer<typeof chatbotSessionUpdateRequestSchema>;
+export type ChatbotSessionUpdateRequest = ChatbotSessionUpdateRequestDto;
+
+export const chatbotSessionDeleteRequestSchema = z.object({
+  sessionId: z.string().trim().min(1),
+});
+
+export type ChatbotSessionDeleteRequestDto = z.infer<typeof chatbotSessionDeleteRequestSchema>;
+export type ChatbotSessionDeleteRequest = ChatbotSessionDeleteRequestDto;
+
+export const chatbotSessionsDeleteRequestSchema = z.object({
+  sessionIds: z.array(z.string().trim().min(1)).min(1),
+});
+
+export type ChatbotSessionsDeleteRequestDto = z.infer<typeof chatbotSessionsDeleteRequestSchema>;
+export type ChatbotSessionsDeleteRequest = ChatbotSessionsDeleteRequestDto;
+
+export const chatbotSessionDeleteResponseSchema = z.object({
+  success: z.literal(true),
+  deletedCount: z.number().int().nonnegative().optional(),
+});
+
+export type ChatbotSessionDeleteResponseDto = z.infer<typeof chatbotSessionDeleteResponseSchema>;
+export type ChatbotSessionDeleteResponse = ChatbotSessionDeleteResponseDto;
+
 export const createChatSessionSchema = chatSessionSchema.omit({
   id: true,
   createdAt: true,
@@ -400,6 +475,21 @@ export const chatbotContextSegmentSchema = z.object({
 
 export type ChatbotContextSegmentDto = z.infer<typeof chatbotContextSegmentSchema>;
 export type ChatbotContextSegment = ChatbotContextSegmentDto;
+
+export const chatbotContextUploadSegmentSchema = z.object({
+  title: z.string(),
+  content: z.string(),
+});
+
+export type ChatbotContextUploadSegmentDto = z.infer<typeof chatbotContextUploadSegmentSchema>;
+export type ChatbotContextUploadSegment = ChatbotContextUploadSegmentDto;
+
+export const chatbotContextUploadResponseSchema = z.object({
+  segments: z.array(chatbotContextUploadSegmentSchema),
+});
+
+export type ChatbotContextUploadResponseDto = z.infer<typeof chatbotContextUploadResponseSchema>;
+export type ChatbotContextUploadResponse = ChatbotContextUploadResponseDto;
 
 /**
  * Chatbot Global Context DTOs

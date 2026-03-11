@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listTeachingAgents, upsertTeachingAgent } from '@/features/ai/agentcreator/server';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingAgentResponse,
+  AgentTeachingAgentsResponse,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -22,7 +26,8 @@ const createAgentSchema = z.object({
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const agents = await listTeachingAgents();
-  return NextResponse.json({ agents });
+  const response: AgentTeachingAgentsResponse = { agents };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -47,5 +52,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     maxDocsPerCollection: data.maxDocsPerCollection,
     enabled: true,
   });
-  return NextResponse.json({ agent });
+  const response: AgentTeachingAgentResponse = { agent };
+  return NextResponse.json(response);
 }

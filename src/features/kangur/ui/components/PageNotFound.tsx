@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import {
@@ -12,7 +11,6 @@ import {
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurAccentDot,
@@ -20,6 +18,7 @@ import {
   KangurDivider,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const kangurPlatform = getKangurPlatform();
@@ -30,8 +29,7 @@ type PageNotFoundAuthState = {
 };
 
 export function PageNotFound(): React.JSX.Element {
-  const router = useRouter();
-  const routeTransition = useOptionalKangurRouteTransition();
+  const routeNavigator = useKangurRouteNavigator();
   const { requestedPath, basePath, embedded } = useKangurRouting();
 
   const pageName = useMemo(() => {
@@ -123,12 +121,9 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <KangurButton
               onClick={() => {
-                const homeHref = getKangurHomeHref(basePath);
-                routeTransition?.startRouteTransition({
-                  href: homeHref,
+                routeNavigator.push(getKangurHomeHref(basePath), {
                   pageKey: 'Game',
                 });
-                router.push(homeHref);
               }}
               size='lg'
               type='button'

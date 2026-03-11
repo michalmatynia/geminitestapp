@@ -1,9 +1,17 @@
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingAgentResponse,
+  AgentTeachingAgentsResponse,
+  AgentTeachingChatResponse,
   AgentTeachingChatRequest,
   AgentTeachingChatMessage,
+  AgentTeachingCollectionResponse,
+  AgentTeachingCollectionsResponse,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingDocumentResponse,
+  AgentTeachingDocumentsResponse,
   AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
+  AgentTeachingSearchResponse,
   AgentTeachingChatSourceDto as AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
@@ -14,10 +22,8 @@ import { api } from '@/shared/lib/api-client';
  * List all teaching agents
  */
 export async function getTeachingAgents(): Promise<AgentTeachingAgentRecord[]> {
-  const data = await api.get<{ agents?: AgentTeachingAgentRecord[] }>(
-    '/api/agentcreator/teaching/agents'
-  );
-  return data.agents ?? [];
+  const data = await api.get<AgentTeachingAgentsResponse>('/api/agentcreator/teaching/agents');
+  return data.agents;
 }
 
 /**
@@ -28,18 +34,13 @@ export async function upsertTeachingAgent(
 ): Promise<AgentTeachingAgentRecord> {
   const id = typeof payload.id === 'string' ? payload.id.trim() : '';
   if (id) {
-    const data = await api.patch<{ agent?: AgentTeachingAgentRecord }>(
+    const data = await api.patch<AgentTeachingAgentResponse>(
       `/api/agentcreator/teaching/agents/${id}`,
       payload
     );
-    if (!data.agent) throw new Error('Missing agent in response.');
     return data.agent;
   }
-  const data = await api.post<{ agent?: AgentTeachingAgentRecord }>(
-    '/api/agentcreator/teaching/agents',
-    payload
-  );
-  if (!data.agent) throw new Error('Missing agent in response.');
+  const data = await api.post<AgentTeachingAgentResponse>('/api/agentcreator/teaching/agents', payload);
   return data.agent;
 }
 
@@ -54,10 +55,10 @@ export async function deleteTeachingAgent(id: string): Promise<void> {
  * List all embedding collections
  */
 export async function getEmbeddingCollections(): Promise<AgentTeachingEmbeddingCollectionRecord[]> {
-  const data = await api.get<{ collections?: AgentTeachingEmbeddingCollectionRecord[] }>(
+  const data = await api.get<AgentTeachingCollectionsResponse>(
     '/api/agentcreator/teaching/collections'
   );
-  return data.collections ?? [];
+  return data.collections;
 }
 
 /**
@@ -68,18 +69,16 @@ export async function upsertEmbeddingCollection(
 ): Promise<AgentTeachingEmbeddingCollectionRecord> {
   const id = typeof payload.id === 'string' ? payload.id.trim() : '';
   if (id) {
-    const data = await api.patch<{ collection?: AgentTeachingEmbeddingCollectionRecord }>(
+    const data = await api.patch<AgentTeachingCollectionResponse>(
       `/api/agentcreator/teaching/collections/${id}`,
       payload
     );
-    if (!data.collection) throw new Error('Missing collection in response.');
     return data.collection;
   }
-  const data = await api.post<{ collection?: AgentTeachingEmbeddingCollectionRecord }>(
+  const data = await api.post<AgentTeachingCollectionResponse>(
     '/api/agentcreator/teaching/collections',
     payload
   );
-  if (!data.collection) throw new Error('Missing collection in response.');
   return data.collection;
 }
 
@@ -97,8 +96,8 @@ export async function getEmbeddingDocuments(
   collectionId: string,
   limit: number = 100,
   skip: number = 0
-): Promise<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number }> {
-  return api.get<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number }>(
+): Promise<AgentTeachingDocumentsResponse> {
+  return api.get<AgentTeachingDocumentsResponse>(
     `/api/agentcreator/teaching/collections/${collectionId}/documents`,
     { params: { limit, skip } }
   );
@@ -111,11 +110,10 @@ export async function addEmbeddingDocument(
   collectionId: string,
   payload: { text: string; title?: string | null; source?: string | null; tags?: string[] }
 ): Promise<AgentTeachingEmbeddingDocumentListItem> {
-  const data = await api.post<{ item?: AgentTeachingEmbeddingDocumentListItem }>(
+  const data = await api.post<AgentTeachingDocumentResponse>(
     `/api/agentcreator/teaching/collections/${collectionId}/documents`,
     payload
   );
-  if (!data.item) throw new Error('Missing item in response.');
   return data.item;
 }
 
@@ -138,11 +136,11 @@ export async function searchEmbeddingCollection(
   collectionId: string,
   payload: { queryText: string; topK?: number; minScore?: number }
 ): Promise<AgentTeachingChatSource[]> {
-  const data = await api.post<{ sources?: AgentTeachingChatSource[] }>(
+  const data = await api.post<AgentTeachingSearchResponse>(
     `/api/agentcreator/teaching/collections/${collectionId}/search`,
     payload
   );
-  return data.sources ?? [];
+  return data.sources;
 }
 
 /**
@@ -152,7 +150,7 @@ export async function teachingChat(
   agentId: string,
   messages: ChatMessage[],
   contextRegistry?: ContextRegistryConsumerEnvelope | null
-): Promise<{ message: string; sources: AgentTeachingChatSource[] }> {
+): Promise<AgentTeachingChatResponse> {
   const normalizedMessages: AgentTeachingChatMessage[] = messages
     .map((message): AgentTeachingChatMessage | null => {
       if (message.role === 'user' || message.role === 'assistant' || message.role === 'system') {
@@ -166,8 +164,5 @@ export async function teachingChat(
     messages: normalizedMessages,
     ...(contextRegistry ? { contextRegistry } : {}),
   };
-  return api.post<{ message: string; sources: AgentTeachingChatSource[] }>(
-    '/api/agentcreator/teaching/chat',
-    payload
-  );
+  return api.post<AgentTeachingChatResponse>('/api/agentcreator/teaching/chat', payload);
 }

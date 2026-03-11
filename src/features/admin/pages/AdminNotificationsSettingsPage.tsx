@@ -3,14 +3,13 @@
 import React, { useState } from 'react';
 
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   Button,
   FormActions,
   FormField,
   FormSection,
   Hint,
   MetadataItem,
-  SectionHeader,
   SelectSimple,
   Tooltip,
   useToast,
@@ -76,14 +75,11 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
       ?.color ?? 'bg-emerald-500';
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
-        title='Notifications'
-        description='Customize toast position, accent color, and preview behavior.'
-        eyebrow={<AdminSettingsBreadcrumbs current='Notifications' />}
-        className='mb-8'
-      />
-
+    <AdminSettingsPageLayout
+      title='Notifications'
+      current='Notifications'
+      description='Customize toast position, accent color, and preview behavior.'
+    >
       <div className='grid gap-6 lg:grid-cols-3'>
         {/* Settings Panel */}
         <div className='lg:col-span-2 space-y-6'>
@@ -220,6 +216,6 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
           </FormSection>
         </div>
       </div>
-    </div>
+    </AdminSettingsPageLayout>
   );
 }

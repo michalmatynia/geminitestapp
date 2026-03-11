@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import {
+  imageStudioCropResponseSchema,
+  type ImageStudioCropResponse,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
@@ -149,10 +152,12 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: Generati
       formData.append('canvasHeight', canvasRect.height.toString());
       formData.append('mask', uploadBlob, 'mask.png');
 
-      const response = await api.post<{ slot: ImageStudioSlotRecord }>(
-        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-        formData,
-        { timeout: CROP_REQUEST_TIMEOUT_MS }
+      const response = imageStudioCropResponseSchema.parse(
+        await api.post<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+          formData,
+          { timeout: CROP_REQUEST_TIMEOUT_MS }
+        )
       );
 
       const normalizedProjectId = projectId?.trim() ?? '';

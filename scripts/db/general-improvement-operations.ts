@@ -258,20 +258,69 @@ const improvementTracks: ImprovementTrack[] = [
             'Assign missing categories only when a defensible family/category match exists.',
             'Choose final parameter ids for the unresolved families before generating any curated override file.',
             'Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.',
+            'Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.',
+            'Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply.',
           ],
         ),
       ],
-      'dry-run': [],
+      'dry-run': [
+        manualStep(
+          'products-category-schema-curate-family-mappings',
+          'Fill final parameter ids in the latest family mapping packs',
+          [
+            'Review /tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md.',
+            'Fill suggestedFinalParameterId in each *-mapping-pack.json only when the final category/schema mapping is approved.',
+          ],
+        ),
+        scriptStep(
+          'products-category-schema-build-ready-curated-overrides',
+          'Build ready curated override bundle from completed family mapping packs',
+          'products:build:ready-parameter-curated-overrides',
+          {
+            outputs: [
+              '/tmp/product-parameter-curated-build-latest.json',
+              '/tmp/product-parameter-curated-overrides-latest.json',
+            ],
+          },
+        ),
+        scriptStep(
+          'products-category-schema-preview-ready-curated-overrides',
+          'Preview the latest curated override bundle without applying writes',
+          'products:apply:parameter-curated-overrides',
+          {
+            outputs: ['/tmp/product-parameter-curated-apply-*.json'],
+          },
+        ),
+      ],
       apply: [
         manualStep(
           'products-category-schema-apply',
           'Apply category/schema normalization only after explicit review',
           [
-            'Fill suggestedFinalParameterId in the mapping packs or family mapping checklist.',
-            'Build curated override files from those approved mappings.',
+            'Confirm /tmp/product-parameter-curated-build-latest.json shows only the approved family packs as ready.',
             'Apply the resulting curated overrides only after the category/schema decision is finalized.',
           ],
           { writes: true },
+        ),
+        scriptStep(
+          'products-category-schema-build-ready-curated-overrides',
+          'Build ready curated override bundle from completed family mapping packs',
+          'products:build:ready-parameter-curated-overrides',
+          {
+            outputs: [
+              '/tmp/product-parameter-curated-build-latest.json',
+              '/tmp/product-parameter-curated-overrides-latest.json',
+            ],
+          },
+        ),
+        scriptStep(
+          'products-category-schema-apply-ready-curated-overrides',
+          'Apply the latest ready curated override bundle',
+          'products:apply:ready-parameter-curated-overrides',
+          {
+            writes: true,
+            outputs: ['/tmp/product-parameter-curated-apply-*.json'],
+          },
         ),
       ],
     },

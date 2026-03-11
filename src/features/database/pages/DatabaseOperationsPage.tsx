@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
-  PageLayout,
+  AdminDatabasePageLayout,
   Button,
   Tabs,
   TabsContent,
@@ -28,8 +28,9 @@ function DatabaseOperationsContent(): React.JSX.Element {
   const isProduction = process.env['NODE_ENV'] === 'production';
 
   return (
-    <PageLayout
+    <AdminDatabasePageLayout
       title='Database Operations'
+      current='Operations'
       description='Execute SQL queries and manage table data directly.'
       headerActions={
         <div className='flex items-center gap-2'>
@@ -87,7 +88,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
           {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>
       </Tabs>
-    </PageLayout>
+    </AdminDatabasePageLayout>
   );
 }
 

@@ -11,6 +11,7 @@ vi.mock('@/features/ai/chatbot/server', () => ({
     findAll: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
   },
 }));
 
@@ -39,6 +40,37 @@ describe('Chatbot Sessions API', () => {
 
     expect(res.status).toBe(200);
     expect(data.sessions).toEqual(mockSessions);
+  });
+
+  it('GET: returns filtered session ids when scope=ids', async () => {
+    const mockSessions: ChatSession[] = [
+      {
+        id: 'alpha-1',
+        title: 'Alpha Session',
+        userId: null,
+        messages: [],
+        messageCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'beta-1',
+        title: 'Beta Session',
+        userId: null,
+        messages: [],
+        messageCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+    vi.mocked(chatbotSessionRepository.findAll).mockResolvedValue(mockSessions);
+
+    const req = new NextRequest('http://localhost/api/chatbot/sessions?scope=ids&query=alpha');
+    const res = await GET(req);
+    const data = (await res.json()) as { ids: string[] };
+
+    expect(res.status).toBe(200);
+    expect(data.ids).toEqual(['alpha-1']);
   });
 
   it('POST: creates a new session', async () => {
@@ -103,10 +135,28 @@ describe('Chatbot Sessions API', () => {
     });
 
     const res = await DELETE(req);
-    const data = (await res.json()) as { success: boolean };
+    const data = (await res.json()) as { success: boolean; deletedCount: number };
 
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);
+    expect(data.deletedCount).toBe(1);
+  });
+
+  it('DELETE: deletes multiple sessions', async () => {
+    vi.mocked(chatbotSessionRepository.deleteMany).mockResolvedValue(2);
+
+    const req = new NextRequest('http://localhost/api/chatbot/sessions', {
+      method: 'DELETE',
+      body: JSON.stringify({ sessionIds: ['s1', 's2'] }),
+    });
+
+    const res = await DELETE(req);
+    const data = (await res.json()) as { success: boolean; deletedCount: number };
+
+    expect(res.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.deletedCount).toBe(2);
+    expect(chatbotSessionRepository.deleteMany).toHaveBeenCalledWith(['s1', 's2']);
   });
 
   it('DELETE: returns 404 if session not found', async () => {

@@ -6,7 +6,11 @@ import {
   getEmbeddingCollectionById,
   upsertEmbeddingCollection,
 } from '@/features/ai/agentcreator/server';
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingCollectionDeleteResponse,
+  AgentTeachingCollectionResponse,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -38,7 +42,8 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     ...(data.description !== undefined ? { description: data.description ?? null } : {}),
     ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
   });
-  return NextResponse.json({ collection });
+  const response: AgentTeachingCollectionResponse = { collection };
+  return NextResponse.json(response);
 }
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -47,5 +52,6 @@ export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext):
     throw badRequestError('Missing collectionId.');
   }
   const result = await deleteEmbeddingCollection(collectionId);
-  return NextResponse.json({ ok: true, ...result });
+  const response: AgentTeachingCollectionDeleteResponse = { ok: true, ...result };
+  return NextResponse.json(response);
 }

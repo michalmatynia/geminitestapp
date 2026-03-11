@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { chatbotSessionResponseSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -30,5 +31,5 @@ export async function GET_handler(
     });
   }
 
-  return NextResponse.json({ session });
+  return NextResponse.json(chatbotSessionResponseSchema.parse({ session }));
 }

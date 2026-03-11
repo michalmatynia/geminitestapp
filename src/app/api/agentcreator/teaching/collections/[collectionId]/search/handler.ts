@@ -4,7 +4,10 @@ import { z } from 'zod';
 import { getEmbeddingCollectionById } from '@/features/ai/agentcreator/server';
 import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import { retrieveTopContext } from '@/features/ai/agentcreator/teaching/server/retrieval';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingChatSource,
+  AgentTeachingSearchResponse,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -46,5 +49,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     maxDocsPerCollection: parsed.data.maxDocsPerCollection,
   });
 
-  return NextResponse.json({ sources });
+  const response: AgentTeachingSearchResponse = { sources };
+  return NextResponse.json(response);
 }

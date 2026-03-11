@@ -331,12 +331,118 @@ export const agentRunStatusTypeSchema = z.enum([
 ]);
 export type AgentRunStatusType = z.infer<typeof agentRunStatusTypeSchema>;
 
+export const agentRunRecordSchema = dtoBaseSchema.extend({
+  prompt: z.string(),
+  model: z.string().nullable().optional(),
+  tools: z.array(z.string()),
+  searchProvider: z.string().nullable().optional(),
+  agentBrowser: z.string().nullable().optional(),
+  runHeadless: z.boolean(),
+  status: agentRunStatusTypeSchema,
+  logLines: z.array(z.string()),
+  requiresHumanIntervention: z.boolean(),
+  errorMessage: z.string().nullable().optional(),
+  recordingPath: z.string().nullable().optional(),
+  activeStepId: z.string().nullable().optional(),
+  checkpointedAt: z.string().nullable().optional(),
+  _count: z.object({
+    browserSnapshots: z.number(),
+    browserLogs: z.number(),
+  }),
+});
+
+export type AgentRunRecordDto = z.infer<typeof agentRunRecordSchema>;
+export type AgentRunRecord = AgentRunRecordDto;
+
+export const agentRunsResponseSchema = z.object({
+  runs: z.array(agentRunRecordSchema),
+});
+
+export type AgentRunsResponseDto = z.infer<typeof agentRunsResponseSchema>;
+export type AgentRunsResponse = AgentRunsResponseDto;
+
+export const agentRunEnqueueResponseSchema = z.object({
+  runId: z.string(),
+  status: agentRunStatusTypeSchema,
+});
+
+export type AgentRunEnqueueResponseDto = z.infer<typeof agentRunEnqueueResponseSchema>;
+export type AgentRunEnqueueResponse = AgentRunEnqueueResponseDto;
+
+export const agentRunsDeleteResponseSchema = z.object({
+  deleted: z.number(),
+});
+
+export type AgentRunsDeleteResponseDto = z.infer<typeof agentRunsDeleteResponseSchema>;
+export type AgentRunsDeleteResponse = AgentRunsDeleteResponseDto;
+
+export const agentRunDeleteResponseSchema = z.object({
+  deleted: z.boolean(),
+});
+
+export type AgentRunDeleteResponseDto = z.infer<typeof agentRunDeleteResponseSchema>;
+export type AgentRunDeleteResponse = AgentRunDeleteResponseDto;
+
+export const agentBrowserSnapshotRecordSchema = dtoBaseSchema.extend({
+  runId: z.string(),
+  url: z.string(),
+  title: z.string().nullable().optional(),
+  domHtml: z.string(),
+  domText: z.string(),
+  screenshotData: z.string().nullable().optional(),
+  screenshotPath: z.string().nullable().optional(),
+  stepId: z.string().nullable().optional(),
+  mouseX: z.number().nullable().optional(),
+  mouseY: z.number().nullable().optional(),
+  viewportWidth: z.number().nullable().optional(),
+  viewportHeight: z.number().nullable().optional(),
+});
+
+export type AgentBrowserSnapshotRecordDto = z.infer<typeof agentBrowserSnapshotRecordSchema>;
+export type AgentBrowserSnapshotRecord = AgentBrowserSnapshotRecordDto;
+
+export const agentBrowserSnapshotsResponseSchema = z.object({
+  snapshots: z.array(agentBrowserSnapshotRecordSchema),
+});
+
+export type AgentBrowserSnapshotsResponseDto = z.infer<
+  typeof agentBrowserSnapshotsResponseSchema
+>;
+export type AgentBrowserSnapshotsResponse = AgentBrowserSnapshotsResponseDto;
+
+export const agentBrowserLogRecordSchema = dtoBaseSchema.extend({
+  runId: z.string(),
+  stepId: z.string().nullable().optional(),
+  level: z.string(),
+  message: z.string(),
+  metadata: z.unknown().nullable().optional(),
+});
+
+export type AgentBrowserLogRecordDto = z.infer<typeof agentBrowserLogRecordSchema>;
+export type AgentBrowserLogRecord = AgentBrowserLogRecordDto;
+
+export const agentBrowserLogsResponseSchema = z.object({
+  logs: z.array(agentBrowserLogRecordSchema),
+});
+
+export type AgentBrowserLogsResponseDto = z.infer<typeof agentBrowserLogsResponseSchema>;
+export type AgentBrowserLogsResponse = AgentBrowserLogsResponseDto;
+
 export const agentAuditLogRecordSchema = dtoBaseSchema.extend({
   runId: z.string().nullable(),
   level: z.string(),
   message: z.string(),
   metadata: z.unknown(),
 });
+
+export type AgentAuditLogRecordDto = z.infer<typeof agentAuditLogRecordSchema>;
+
+export const agentAuditLogRecordsResponseSchema = z.object({
+  audits: z.array(agentAuditLogRecordSchema),
+});
+
+export type AgentAuditLogRecordsResponseDto = z.infer<typeof agentAuditLogRecordsResponseSchema>;
+export type AgentAuditLogRecordsResponse = AgentAuditLogRecordsResponseDto;
 
 export interface AgentAuditLogRecordDtoBase {
   id: string;

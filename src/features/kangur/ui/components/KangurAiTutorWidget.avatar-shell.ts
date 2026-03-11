@@ -58,13 +58,10 @@ export function useKangurAiTutorAvatarShellActions(input: {
     canonicalTutorModalVisible,
     closeChat,
     guidedMode,
-    guidedTutorTarget,
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
     homeOnboardingStepIndex,
-    isAnonymousVisitor,
     isOpen,
     launcherPromptVisible,
     persistSelectionContext,
@@ -156,12 +153,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
 
     if (homeOnboardingStepIndex !== null) {
       handleHomeOnboardingFinishEarly();
-      if (isAnonymousVisitor) {
-        openCanonicalOnboarding();
-      } else {
-        resetAvatarShellState();
-        handleOpenChat('toggle', { panelShellMode: 'minimal' });
-      }
+      openCanonicalOnboarding();
       return;
     }
 
@@ -169,42 +161,21 @@ export function useKangurAiTutorAvatarShellActions(input: {
       handleCloseLauncherPrompt();
     }
 
-    if (isAnonymousVisitor) {
-      if (canonicalTutorModalVisible) {
-        setCanonicalTutorModalVisible(false);
-        setGuestIntroVisible(false);
-        setGuestIntroHelpVisible(false);
-        return;
-      }
-      openCanonicalOnboarding();
+    if (canonicalTutorModalVisible) {
+      setCanonicalTutorModalVisible(false);
+      setGuestIntroVisible(false);
+      setGuestIntroHelpVisible(false);
       return;
     }
 
-    // Authenticated user path: never show the guest intro panel.
-    if (isOpen) {
-      handleCloseChat('toggle');
-      return;
-    }
-
-    if (guidedTutorTarget) {
-      resetAvatarShellState();
-      return;
-    }
-
-    handleOpenChat('toggle', { panelShellMode: 'minimal' });
+    openCanonicalOnboarding();
   }, [
     canonicalTutorModalVisible,
-    guidedTutorTarget,
-    handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
     homeOnboardingStepIndex,
-    isAnonymousVisitor,
-    isOpen,
     launcherPromptVisible,
     openCanonicalOnboarding,
-    resetAvatarShellState,
     setCanonicalTutorModalVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,

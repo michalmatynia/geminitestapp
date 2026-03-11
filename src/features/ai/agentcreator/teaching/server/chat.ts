@@ -2,6 +2,7 @@ import 'server-only';
 
 import type {
   AgentTeachingChatMessage,
+  AgentTeachingChatResponse,
   AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
@@ -45,7 +46,7 @@ export async function runTeachingChat(params: {
   agentId: string;
   messages: AgentTeachingChatMessage[];
   additionalSystemPrompt?: string | null;
-}): Promise<{ message: string; sources: AgentTeachingChatSource[] }> {
+}): Promise<AgentTeachingChatResponse> {
   const agent = await getTeachingAgentById(params.agentId);
   if (!agent) {
     throw new Error('Learner agent not found.');

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensureImageStudioSlotFromUploadedAsset } from '@/features/ai/image-studio/server/ensure-slot-from-upload';
+import { imageStudioEnsureSlotFromUploadResponseSchema } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -44,9 +45,11 @@ export async function POST_handler(
     selectedSlotId: parsed.data.selectedSlotId ?? null,
   });
 
-  return NextResponse.json({
-    slot: ensured.slot,
-    created: ensured.created,
-    action: ensured.action,
-  });
+  return NextResponse.json(
+    imageStudioEnsureSlotFromUploadResponseSchema.parse({
+      slot: ensured.slot,
+      created: ensured.created,
+      action: ensured.action,
+    })
+  );
 }

@@ -226,7 +226,7 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
 
   useEffect(() => {
     if (!isOpen || !focusTelemetryKey || !activeFocus.kind) {
-      lastTrackedFocusKeyRef.current = focusTelemetryKey;
+      lastTrackedFocusKeyRef.current = null;
       setPanelMotionState('settled');
       if (motionTimeoutRef.current !== null) {
         window.clearTimeout(motionTimeoutRef.current);

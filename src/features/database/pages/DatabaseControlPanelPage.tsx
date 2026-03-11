@@ -5,7 +5,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import {
-  PageLayout,
+  AdminDatabasePageLayout,
   Button,
   StandardDataTablePanel,
   useToast,
@@ -218,8 +218,9 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   const jsonBackups = jsonBackupsQuery.data?.backups ?? [];
 
   return (
-    <PageLayout
+    <AdminDatabasePageLayout
       title='Database Control Panel'
+      current='Control Panel'
       description='View and manage collections across MongoDB and PostgreSQL. Copy data between providers and assign per-collection provider routing.'
     >
       {logModalContent !== null && (
@@ -324,6 +325,6 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
           <LoadingState message='Loading backups...' className='mt-3' size='sm' />
         )}
       </CollapsibleSection>
-    </PageLayout>
+    </AdminDatabasePageLayout>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
+import type { ChatbotContextUploadResponse } from '@/shared/contracts/chatbot';
 import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
@@ -51,7 +51,7 @@ export function useSaveChatbotContextMutation(): MutationResult<
 }
 
 export function useUploadChatbotContextPdfMutation(): MutationResult<
-  { segments: ChatbotContextSegmentDto[] },
+  ChatbotContextUploadResponse,
   { file: File; helpers?: FileUploadHelpers }
   > {
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('upload-context-pdf');

@@ -173,14 +173,12 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
 
     await act(async () => {
       vi.advanceTimersByTime(140);
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game');
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
   });
 
   it('does not flash the navigation skeleton for fast route transitions', async () => {
@@ -211,7 +209,6 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
   });
 
   it('keeps the navigation skeleton visible through reveal after a slow route transition', async () => {
@@ -244,7 +241,6 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Tests');
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
   });
 
   it('keeps the global app loader for boot loading states', () => {

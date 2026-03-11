@@ -84,6 +84,7 @@ const BUTTON = {
 
 describe('TriggerButtonBar', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     useTriggerButtonsMock.mockReset();
     useTriggerButtonsMock.mockReturnValue({
       buttons: [BUTTON],
@@ -97,6 +98,9 @@ describe('TriggerButtonBar', () => {
   });
 
   it('renders product run feedback with a queue link and failure summary', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-11T12:05:00.000Z'));
+
     useTriggerButtonsMock.mockReturnValue({
       buttons: [BUTTON],
       toggleMap: {},
@@ -106,8 +110,8 @@ describe('TriggerButtonBar', () => {
         [BUTTON.id]: {
           runId: 'run-product-feedback-123456',
           status: 'failed',
-          updatedAt: '2026-03-09T12:00:05.000Z',
-          finishedAt: '2026-03-09T12:00:05.000Z',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: '2026-03-11T12:00:00.000Z',
           errorMessage: 'Database write affected 0 records for update.',
         },
       },
@@ -119,12 +123,75 @@ describe('TriggerButtonBar', () => {
 
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByTitle('run-product-feedback-123456')).toBeInTheDocument();
+    expect(screen.getByText('5m ago')).toBeInTheDocument();
     // Error text appears in both the trigger preview button and the expanded dialog content
     expect(screen.getAllByText('Database write affected 0 records for update.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('link', { name: 'Job Queue' })).toHaveAttribute(
       'href',
       '/admin/ai-paths/queue?tab=paths-all&query=run-product-feedback-123456&runId=run-product-feedback-123456&status=all'
     );
+  });
+
+  it('hides inline run feedback when showRunFeedback is false', () => {
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-feedback-hidden',
+          status: 'completed',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(
+      <TriggerButtonBar
+        location='product_row'
+        entityType='product'
+        entityId='product-1'
+        showRunFeedback={false}
+      />
+    );
+
+    expect(screen.queryByRole('link', { name: 'Job Queue' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Completed')).not.toBeInTheDocument();
+  });
+
+  it('renders waiting feedback immediately without a queue link', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-11T12:05:00.000Z'));
+
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'waiting:button-product-row:1',
+          status: 'waiting',
+          updatedAt: '2026-03-11T12:05:00.000Z',
+          finishedAt: null,
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(<TriggerButtonBar location='product_row' entityType='product' entityId='product-1' />);
+
+    expect(screen.getByText('Waiting')).toBeInTheDocument();
+    expect(screen.getByText('Just now')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Job Queue' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/waiting:button-product-row:1/i)).not.toBeInTheDocument();
   });
 
   it('does not render inline run feedback outside product row and modal locations', () => {

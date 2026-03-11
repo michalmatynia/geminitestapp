@@ -1,14 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
 
 const {
   useProductListActionsContextMock,
+  useProductListHeaderActionsContextMock,
   useProductListRowActionsContextMock,
   useProductListRowVisualsContextMock,
 } = vi.hoisted(() => ({
   useProductListActionsContextMock: vi.fn(),
+  useProductListHeaderActionsContextMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
   useProductListRowVisualsContextMock: vi.fn(),
 }));
@@ -19,6 +21,7 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
   return {
     ...actual,
     useProductListActionsContext: () => useProductListActionsContextMock(),
+    useProductListHeaderActionsContext: () => useProductListHeaderActionsContextMock(),
     useProductListRowActionsContext: () => useProductListRowActionsContextMock(),
     useProductListRowVisualsContext: () => useProductListRowVisualsContextMock(),
   };
@@ -72,6 +75,10 @@ describe('ProductColumns queued badge', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      showTriggerRunFeedback: true,
+      setShowTriggerRunFeedback: vi.fn(),
+    });
     ({ getProductColumns } = await import('./ProductColumns'));
   });
 
@@ -243,7 +250,7 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByRole('button', { name: 'Keychain | Faux Leather' })).toBeInTheDocument();
   });
 
-  it('splits malformed composite parameter values into separate list summary segments', () => {
+  it('preserves an existing composite product title instead of recomposing it from parameters', () => {
     const product = createProduct({
       name_en: 'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight',
       parameters: [
@@ -291,7 +298,58 @@ describe('ProductColumns queued badge', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'The Vessel | Pojemnik | 13 cm | Faux Leather | Portfel Gamingowy | Hollow Knight',
+        name: 'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight',
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('does not replace a canonical English composite name with mixed-language parameter fallbacks', () => {
+    const product = createProduct({
+      sku: 'KEYCHA1217',
+      name_en: 'Silksong | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight Test',
+      parameters: [
+        {
+          parameterId: 'size',
+          value: '',
+          valuesByLanguage: { pl: 'X cm' },
+        },
+        {
+          parameterId: 'material',
+          value: 'Metal',
+          valuesByLanguage: { en: 'Metal', pl: 'Metal' },
+        },
+        {
+          parameterId: 'type',
+          value: '',
+          valuesByLanguage: { pl: 'Pin' },
+        },
+      ] as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Silksong | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight Test',
       })
     ).toBeInTheDocument();
   });
@@ -392,5 +450,26 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(screen.getByRole('button', { name: 'Nested Keychains' })).toBeInTheDocument();
+  });
+
+  it('renders a global trigger run feedback toggle in the integrations header', () => {
+    const setShowTriggerRunFeedback = vi.fn();
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      showTriggerRunFeedback: true,
+      setShowTriggerRunFeedback,
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.header !== 'function') {
+      throw new Error('Integrations column header was not found.');
+    }
+
+    const header = integrationsColumn.header({} as never);
+    render(header);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide trigger run pills' }));
+
+    expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
+    expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
   });
 });

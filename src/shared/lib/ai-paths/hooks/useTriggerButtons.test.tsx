@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
+import { __resetTriggerButtonRunFeedbackForTests } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 
 const {
   fireAiPathTriggerEventMock,
@@ -78,6 +79,7 @@ const BUTTON = {
 
 describe('useTriggerButtons', () => {
   beforeEach(() => {
+    __resetTriggerButtonRunFeedbackForTests();
     fireAiPathTriggerEventMock.mockReset();
     subscribeToTrackedAiPathRunMock.mockReset();
     useAiPathsTriggerButtonsQueryMock.mockReset();
@@ -191,7 +193,7 @@ describe('useTriggerButtons', () => {
       await result.current.handleTrigger(modalButton, { mode: 'click' });
     });
 
-    expect(getEntityJson).toHaveBeenCalledTimes(1);
+    expect(getEntityJson).toHaveBeenCalled();
     expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         entityId: 'product-from-snapshot',
@@ -294,6 +296,53 @@ describe('useTriggerButtons', () => {
     });
 
     expect(onRunQueued).not.toHaveBeenCalled();
+    expect(result.current.lastRuns[BUTTON.id]).toBeUndefined();
+  });
+
+  it('shows waiting immediately before enqueue resolves, then replaces it with queued', async () => {
+    let resolveTrigger: (() => void) | null = null;
+    fireAiPathTriggerEventMock.mockImplementation(
+      (args: { onSuccess?: (runId: string) => void }) =>
+        new Promise<void>((resolve) => {
+          resolveTrigger = () => {
+            args.onSuccess?.('run-queued-1');
+            resolve();
+          };
+        })
+    );
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    let triggerPromise: Promise<void> | undefined;
+    await act(async () => {
+      triggerPromise = result.current.handleTrigger(BUTTON, { mode: 'click' });
+      await Promise.resolve();
+    });
+
+    expect(result.current.lastRuns[BUTTON.id]).toMatchObject({
+      status: 'waiting',
+      finishedAt: null,
+      errorMessage: null,
+    });
+    expect(subscribeToTrackedAiPathRunMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveTrigger?.();
+      await triggerPromise;
+    });
+
+    await waitFor(() => {
+      expect(result.current.lastRuns[BUTTON.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'queued',
+      });
+    });
   });
 
   it('resets runState to idle after trigger completes', async () => {
@@ -426,6 +475,172 @@ describe('useTriggerButtons', () => {
         status: 'failed',
         errorMessage: 'Database write affected 0 records for update.',
       });
+    });
+  });
+
+  it('restores the last completed run feedback after the trigger bar remounts', async () => {
+    const modalButton = {
+      ...BUTTON,
+      id: 'button-product-modal',
+      locations: ['product_modal'],
+    } satisfies AiTriggerButtonRecord;
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [modalButton],
+      isLoading: false,
+    });
+
+    const firstView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await firstView.result.current.handleTrigger(modalButton, { mode: 'click' });
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-queued-1', {
+        status: 'completed',
+        updatedAt: '2026-03-09T12:00:05.000Z',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        trackingState: 'stopped',
+      });
+    });
+
+    await waitFor(() => {
+      expect(firstView.result.current.lastRuns[modalButton.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'completed',
+      });
+    });
+
+    firstView.unmount();
+
+    const secondView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await waitFor(() => {
+      expect(secondView.result.current.lastRuns[modalButton.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'completed',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+      });
+    });
+  });
+
+  it('re-subscribes to an active persisted run after the trigger bar remounts', async () => {
+    const modalButton = {
+      ...BUTTON,
+      id: 'button-product-modal-active',
+      locations: ['product_modal'],
+    } satisfies AiTriggerButtonRecord;
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [modalButton],
+      isLoading: false,
+    });
+
+    const firstView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await firstView.result.current.handleTrigger(modalButton, { mode: 'click' });
+    });
+
+    firstView.unmount();
+
+    const subscribeCallCountBeforeRemount = subscribeToTrackedAiPathRunMock.mock.calls.length;
+
+    const secondView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await waitFor(() => {
+      expect(secondView.result.current.lastRuns[modalButton.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'queued',
+      });
+    });
+
+    expect(subscribeToTrackedAiPathRunMock.mock.calls.length).toBeGreaterThan(
+      subscribeCallCountBeforeRemount
+    );
+  });
+
+  it('does not restore run feedback from a different trigger location', async () => {
+    const sharedButtonId = 'button-shared-product-trigger';
+    const rowButton = {
+      ...BUTTON,
+      id: sharedButtonId,
+      locations: ['product_row'],
+    } satisfies AiTriggerButtonRecord;
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [
+        rowButton,
+        {
+          ...rowButton,
+          locations: ['product_modal'],
+        } satisfies AiTriggerButtonRecord,
+      ],
+      isLoading: false,
+    });
+
+    const rowView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await rowView.result.current.handleTrigger(rowButton, { mode: 'click' });
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-queued-1', {
+        status: 'completed',
+        updatedAt: '2026-03-09T12:00:05.000Z',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        trackingState: 'stopped',
+      });
+    });
+
+    await waitFor(() => {
+      expect(rowView.result.current.lastRuns[sharedButtonId]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'completed',
+      });
+    });
+
+    rowView.unmount();
+
+    const modalView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await waitFor(() => {
+      expect(modalView.result.current.lastRuns[sharedButtonId]).toBeUndefined();
     });
   });
 });

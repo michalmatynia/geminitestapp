@@ -71,8 +71,13 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter: updateCatalogFilter,
     setCurrencyCode: updateCurrencyCode,
     setPageSize: updatePageSize,
+    setShowTriggerRunFeedback: updateShowTriggerRunFeedback,
     setAppliedAdvancedFilterState: persistAppliedAdvancedFilterState,
   } = useUserPreferences();
+
+  const [showTriggerRunFeedback, setShowTriggerRunFeedback] = useState(
+    preferences.showTriggerRunFeedback ?? true
+  );
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
@@ -296,6 +301,12 @@ export function useProductListState(): ProductListContextType & {
   }, [preferencesLoading, preferences.currencyCode, setCurrencyCode]);
 
   useEffect(() => {
+    if (!preferencesLoading) {
+      setShowTriggerRunFeedback(preferences.showTriggerRunFeedback ?? true);
+    }
+  }, [preferences.showTriggerRunFeedback, preferencesLoading]);
+
+  useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
 
@@ -373,6 +384,13 @@ export function useProductListState(): ProductListContextType & {
       void updateCatalogFilter(filter);
     },
     [setCatalogFilter, updateCatalogFilter]
+  );
+  const handleSetShowTriggerRunFeedback = useCallback(
+    (show: boolean): void => {
+      setShowTriggerRunFeedback(show);
+      void updateShowTriggerRunFeedback(show);
+    },
+    [updateShowTriggerRunFeedback]
   );
   const handleDismissActionError = useCallback((): void => {
     setActionError(null);
@@ -520,6 +538,8 @@ export function useProductListState(): ProductListContextType & {
     queuedProductIds,
     categoryNameById,
     thumbnailSource: preferences.thumbnailSource ?? 'file',
+    showTriggerRunFeedback,
+    setShowTriggerRunFeedback: handleSetShowTriggerRunFeedback,
     imageExternalBaseUrl,
     getRowId: getProductRowId,
     isLoading: !isMounted || isLoading,

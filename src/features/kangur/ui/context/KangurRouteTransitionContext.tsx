@@ -233,3 +233,8 @@ export const useOptionalKangurRouteTransition = (): KangurRouteTransitionContext
     return { ...state, ...actions };
   }, [actions, state]);
 };
+
+export const useOptionalKangurRouteTransitionActions =
+  (): KangurRouteTransitionActionsContextValue | null => {
+    return useContext(KangurRouteTransitionActionsContext);
+  };

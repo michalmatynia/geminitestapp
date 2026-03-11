@@ -9,11 +9,10 @@ import {
   useUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
 import {
-  AdminCaseResolverBreadcrumbs,
+  AdminCaseResolverPageLayout,
   Button,
   FormField,
   FormSection,
-  SectionHeader,
   SelectSimple,
   useToast,
   LoadingState,
@@ -137,21 +136,11 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
 
   if (preferencesQuery.isLoading && !preferencesQuery.data) {
     return (
-      <div className='flex min-h-[400px] items-center justify-center'>
-        <LoadingState message='Loading preferences...' />
-      </div>
-    );
-  }
-
-  return (
-    <div className='container mx-auto max-w-5xl space-y-6 py-10'>
-      <SectionHeader
+      <AdminCaseResolverPageLayout
         title='Case Resolver Preferences'
+        current='Preferences'
         description='Configure default view, sorting, and search behavior for Case Resolver cases.'
-        eyebrow={
-          <AdminCaseResolverBreadcrumbs current='Preferences' className='mb-2' />
-        }
-        actions={
+        headerActions={
           <Button
             type='button'
             variant='outline'
@@ -162,7 +151,33 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
             Back to Cases
           </Button>
         }
-      />
+        containerClassName='container mx-auto max-w-5xl py-10'
+      >
+        <div className='flex min-h-[400px] items-center justify-center'>
+          <LoadingState message='Loading preferences...' />
+        </div>
+      </AdminCaseResolverPageLayout>
+    );
+  }
+
+  return (
+    <AdminCaseResolverPageLayout
+      title='Case Resolver Preferences'
+      current='Preferences'
+      description='Configure default view, sorting, and search behavior for Case Resolver cases.'
+      headerActions={
+        <Button
+          type='button'
+          variant='outline'
+          onClick={(): void => {
+            router.push('/admin/case-resolver/cases');
+          }}
+        >
+          Back to Cases
+        </Button>
+      }
+      containerClassName='container mx-auto max-w-5xl py-10'
+    >
 
       <FormSection title='Case List Defaults' className='p-6'>
         <div className='space-y-4'>
@@ -316,6 +331,6 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
         isSaving={updatePreferencesMutation.isPending}
         className='justify-start'
       />
-    </div>
+    </AdminCaseResolverPageLayout>
   );
 }

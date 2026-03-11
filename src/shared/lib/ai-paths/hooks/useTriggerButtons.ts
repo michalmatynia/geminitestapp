@@ -10,6 +10,13 @@ import {
   type TrackedAiPathRunSnapshot,
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
+import {
+  clearTriggerButtonRunFeedback,
+  isTriggerButtonRunFeedbackTerminal,
+  persistTriggerButtonRunFeedback,
+  readTriggerButtonRunFeedback,
+  type TriggerButtonRunFeedbackSnapshot,
+} from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { useToast } from '@/shared/ui';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
@@ -23,10 +30,7 @@ type TriggerRunState = {
   progress: number;
 };
 
-export type TriggerButtonLastRun = Pick<
-  TrackedAiPathRunSnapshot,
-  'runId' | 'status' | 'updatedAt' | 'finishedAt' | 'errorMessage'
->;
+export type TriggerButtonLastRun = TriggerButtonRunFeedbackSnapshot;
 
 const readMapFromStorage = (key: string): Record<string, boolean> => {
   if (typeof window === 'undefined') return {};
@@ -97,6 +101,11 @@ export function useTriggerButtons({
 }: UseTriggerButtonsOptions) {
   const { toast } = useToast();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
+  const feedbackEntityId = useMemo(
+    () => resolveTriggerEntityId(entityId, getEntityJson),
+    [entityId, getEntityJson]
+  );
+  const feedbackScopeKey = `${entityType}::${feedbackEntityId ?? '__none__'}`;
 
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>(() =>
     readMapFromStorage(TOGGLE_STORAGE_KEY)
@@ -107,6 +116,7 @@ export function useTriggerButtons({
   const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
   const [lastRuns, setLastRuns] = useState<Record<string, TriggerButtonLastRun>>({});
   const runSubscriptionsRef = useRef<Map<string, () => void>>(new Map());
+  const previousFeedbackScopeKeyRef = useRef<string | null>(null);
 
   const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
 
@@ -145,34 +155,110 @@ export function useTriggerButtons({
     (
       buttonId: string,
       runId: string,
-      initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined
+      options: {
+        entityId: string | null;
+        entityType: 'product' | 'note' | 'custom';
+        initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined;
+      }
     ): void => {
       stopRunSubscription(buttonId);
       let didStop = false;
       const unsubscribe = subscribeToTrackedAiPathRun(
         runId,
         (snapshot: TrackedAiPathRunSnapshot): void => {
+          const nextLastRun: TriggerButtonLastRun = {
+            runId: snapshot.runId,
+            status: snapshot.status,
+            updatedAt: snapshot.updatedAt,
+            finishedAt: snapshot.finishedAt,
+            errorMessage: snapshot.errorMessage,
+          };
           setLastRuns((prev) => ({
             ...prev,
-            [buttonId]: {
-              runId: snapshot.runId,
-              status: snapshot.status,
-              updatedAt: snapshot.updatedAt,
-              finishedAt: snapshot.finishedAt,
-              errorMessage: snapshot.errorMessage,
-            },
+            [buttonId]: nextLastRun,
           }));
+          persistTriggerButtonRunFeedback({
+            buttonId,
+            location,
+            entityId: options.entityId ?? snapshot.entityId ?? null,
+            entityType: options.entityType,
+            run: nextLastRun,
+          });
 
           if (snapshot.trackingState !== 'stopped' || didStop) return;
           didStop = true;
           stopRunSubscription(buttonId);
         },
-        initialSnapshot ? { initialSnapshot } : undefined
+        options.initialSnapshot ? { initialSnapshot: options.initialSnapshot } : undefined
       );
       runSubscriptionsRef.current.set(buttonId, unsubscribe);
     },
-    [stopRunSubscription]
+    [location, stopRunSubscription]
   );
+
+  useEffect(() => {
+    const currentButtonIds = new Set<string>(
+      buttons
+        .map((button: AiTriggerButtonRecord) => button.id)
+        .filter((buttonId): buttonId is string => typeof buttonId === 'string' && buttonId.length > 0)
+    );
+    const scopeChanged = previousFeedbackScopeKeyRef.current !== feedbackScopeKey;
+    previousFeedbackScopeKeyRef.current = feedbackScopeKey;
+
+    Array.from(runSubscriptionsRef.current.keys()).forEach((buttonId: string) => {
+      if (scopeChanged || !currentButtonIds.has(buttonId)) {
+        stopRunSubscription(buttonId);
+      }
+    });
+
+    const restoredRuns: Record<string, TriggerButtonLastRun> = {};
+    buttons.forEach((button: AiTriggerButtonRecord) => {
+      if (!button.id) return;
+      const restoredRun = readTriggerButtonRunFeedback({
+        buttonId: button.id,
+        location,
+        entityType,
+        entityId: feedbackEntityId,
+      });
+      if (!restoredRun) return;
+      restoredRuns[button.id] = restoredRun;
+      if (
+        !runSubscriptionsRef.current.has(button.id) &&
+        !isTriggerButtonRunFeedbackTerminal(restoredRun.status)
+      ) {
+        startRunSubscription(button.id, restoredRun.runId, {
+          entityId: feedbackEntityId,
+          entityType,
+          initialSnapshot: {
+            runId: restoredRun.runId,
+            status: restoredRun.status,
+            updatedAt: restoredRun.updatedAt,
+            finishedAt: restoredRun.finishedAt,
+            errorMessage: restoredRun.errorMessage,
+            entityId: feedbackEntityId,
+            entityType,
+          },
+        });
+      }
+    });
+
+    setLastRuns((prev) => {
+      const source = scopeChanged ? {} : prev;
+      const next: Record<string, TriggerButtonLastRun> = {};
+      currentButtonIds.forEach((buttonId: string) => {
+        const existing = source[buttonId];
+        const restored = restoredRuns[buttonId];
+        if (existing) {
+          next[buttonId] = existing;
+          return;
+        }
+        if (restored) {
+          next[buttonId] = restored;
+        }
+      });
+      return next;
+    });
+  }, [buttons, entityType, feedbackEntityId, feedbackScopeKey, startRunSubscription, stopRunSubscription]);
 
   useEffect(() => {
     return () => {
@@ -224,6 +310,24 @@ export function useTriggerButtons({
       }
 
       try {
+        const waitingRun: TriggerButtonLastRun = {
+          runId: `waiting:${button.id}:${Date.now()}`,
+          status: 'waiting',
+          updatedAt: new Date().toISOString(),
+          finishedAt: null,
+          errorMessage: null,
+        };
+        setLastRuns((prev) => ({
+          ...prev,
+          [button.id]: waitingRun,
+        }));
+        clearTriggerButtonRunFeedback({
+          buttonId: button.id,
+          location,
+          entityId: resolvedEntityId,
+          entityType,
+        });
+
         await fireAiPathTriggerEvent({
           triggerEventId: button.id,
           triggerLabel: button.name,
@@ -238,14 +342,32 @@ export function useTriggerButtons({
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
           onSuccess: (runId: string): void => {
-            startRunSubscription(button.id, runId, {
+            const queuedRun: TriggerButtonLastRun = {
               runId,
               status: 'queued',
               updatedAt: new Date().toISOString(),
               finishedAt: null,
               errorMessage: null,
+            };
+            persistTriggerButtonRunFeedback({
+              buttonId: button.id,
+              location,
               entityId: resolvedEntityId,
               entityType,
+              run: queuedRun,
+            });
+            setLastRuns((prev) => ({
+              ...prev,
+              [button.id]: queuedRun,
+            }));
+            startRunSubscription(button.id, runId, {
+              entityId: resolvedEntityId,
+              entityType,
+              initialSnapshot: {
+                ...queuedRun,
+                entityId: resolvedEntityId,
+                entityType,
+              },
             });
             onRunQueued?.({
               button,
@@ -290,6 +412,12 @@ export function useTriggerButtons({
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
+        setLastRuns((prev) => {
+          if (prev[button.id]?.status !== 'waiting') return prev;
+          const next = { ...prev };
+          delete next[button.id];
+          return next;
+        });
         toast(String(message), { variant: 'error' });
       } finally {
         if (!gotProgress) {

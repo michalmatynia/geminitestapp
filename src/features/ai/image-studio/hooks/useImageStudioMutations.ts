@@ -5,6 +5,8 @@ import { useRef } from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {
+  imageStudioSlotDeleteResponseSchema,
+  imageStudioSlotResponseSchema,
   type ImageStudioProjectRecord,
   type ImageStudioSlotRecord,
   type StudioSlotsResponse,
@@ -279,13 +281,12 @@ export function useUpdateStudioSlot(
       data: Partial<ImageStudioSlotRecord>;
     }): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
-      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(
-        `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
-        data
+      const response = imageStudioSlotResponseSchema.parse(
+        await api.patch<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+          data
+        )
       );
-      if (!response.slot) {
-        throw new Error('Failed to update image studio slot');
-      }
       return response.slot;
     },
     onMutate: async ({ id, data }) => {
@@ -486,21 +487,20 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         return;
       }
       try {
-        const response = await api.delete<{ deletedSlotIds?: string[]; timingsMs?: unknown }>(
-          `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
-          {
-            timeout: DELETE_SLOT_TIMEOUT_MS,
-            ...(process.env['NODE_ENV'] !== 'production' ? { params: { debug: '1' } } : {}),
-          }
+        const response = imageStudioSlotDeleteResponseSchema.parse(
+          await api.delete<unknown>(
+            `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+            {
+              timeout: DELETE_SLOT_TIMEOUT_MS,
+              ...(process.env['NODE_ENV'] !== 'production' ? { params: { debug: '1' } } : {}),
+            }
+          )
         );
-        const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
-          ? response.deletedSlotIds
-            .filter((value: unknown): value is string => typeof value === 'string')
-            .map((value: string) => normalizeStudioSlotId(value))
-            .filter((value: string) => value.length > 0)
-          : [];
+        const deletedSlotIds = response.deletedSlotIds
+          .map((value: string) => normalizeStudioSlotId(value))
+          .filter((value: string) => value.length > 0);
         deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
-        deleteTimingsByRequestRef.current.set(slotId, response?.timingsMs ?? null);
+        deleteTimingsByRequestRef.current.set(slotId, response.timingsMs ?? null);
       } catch (error) {
         if (isDeleteTimeoutError(error)) {
           timeoutFallbackIdsRef.current.add(slotId);

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AiInsightRecord } from '@/shared/contracts';
+import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
   ClearLogsResponseDto as ClearLogsResponse,
   MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
@@ -48,12 +48,12 @@ export function useRebuildIndexesMutation(): UpdateMutation<MongoRebuildIndexesR
   });
 }
 
-export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord }, void> {
+export function useRunLogInsight(): UpdateMutation<AiInsightResponse, void> {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   return createCreateMutationV2({
     mutationFn: () =>
-      api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights', {
+      api.post<AiInsightResponse>('/api/system/logs/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
       }),
     mutationKey: logsKeys.all,
@@ -69,12 +69,12 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
   });
 }
 
-export function useInterpretLog(): UpdateMutation<{ insight: AiInsightRecord }, string> {
+export function useInterpretLog(): UpdateMutation<AiInsightResponse, string> {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
   return createCreateMutationV2({
     mutationFn: (logId: string) =>
-      api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', {
+      api.post<AiInsightResponse>('/api/system/logs/interpret', {
         logId,
         ...(contextRegistry ? { contextRegistry } : {}),
       }),

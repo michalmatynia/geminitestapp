@@ -18,12 +18,11 @@ import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/co
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  AdminCmsBreadcrumbs,
+  AdminCmsPageLayout,
   Button,
   StandardDataTablePanel,
   ToggleRow,
   EmptyState,
-  PageLayout,
   SelectSimple,
   StatusBadge,
   ActionMenu,
@@ -187,15 +186,13 @@ export default function SlugsPage(): React.JSX.Element {
   );
 
   return (
-    <PageLayout
+    <AdminCmsPageLayout
       title='Slugs'
+      current='Slugs'
       description={
         zoningEnabled
           ? 'Manage unique paths assigned to the active domain. These control how pages are resolved.'
           : 'Global route management. Domain zoning is currently disabled.'
-      }
-      eyebrow={
-        <AdminCmsBreadcrumbs current='Slugs' className='mb-2' />
       }
       headerActions={
         <div className='flex items-center gap-3'>
@@ -301,6 +298,6 @@ export default function SlugsPage(): React.JSX.Element {
         confirmText='Detach Route'
         isDangerous={true}
       />
-    </PageLayout>
+    </AdminCmsPageLayout>
   );
 }

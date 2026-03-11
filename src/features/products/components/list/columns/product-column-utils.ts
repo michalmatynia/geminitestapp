@@ -103,6 +103,14 @@ export const getProductListDisplayName = (
     .split('|')
     .map((part: string) => part.trim())
     .filter(Boolean);
+
+  // If the product already has a composed title, treat it as canonical.
+  // Rebuilding it from parameters can replace correct locale-specific segments
+  // with incomplete fallback parameter values from another language.
+  if (parsedNameParts.length > 1) {
+    return rawBaseName;
+  }
+
   const baseName = parsedNameParts[0] || rawBaseName;
 
   const seenValues = new Set<string>([baseName.trim().toLowerCase()]);
@@ -120,10 +128,6 @@ export const getProductListDisplayName = (
         return acc;
       }, [])
     : [];
-
-  if (parameterValues.length === 0 && parsedNameParts.length > 1) {
-    return rawBaseName;
-  }
 
   return parameterValues.length > 0 ? [baseName, ...parameterValues].join(' | ') : baseName;
 };

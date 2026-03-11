@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import type {
+  ImageStudioSlotScreenshotResponse,
   ImageStudioSlotRecord,
   SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
@@ -665,10 +666,13 @@ export function CenterPreviewInner(): React.JSX.Element {
         /[^a-zA-Z0-9_-]/g,
         '_'
       );
-      await api.post(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`, {
-        dataUrl,
-        filename: `${baseName}-${Date.now()}.png`,
-      });
+      await api.post<ImageStudioSlotScreenshotResponse>(
+        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`,
+        {
+          dataUrl,
+          filename: `${baseName}-${Date.now()}.png`,
+        }
+      );
       void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });
     } catch (error) {

@@ -1,7 +1,6 @@
 'use client';
 
 import { LogIn } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
@@ -11,9 +10,10 @@ import {
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
-  const router = useRouter();
+  const routeNavigator = useKangurRouteNavigator();
   const { basePath, user, navigateToLogin, progress } = useKangurLearnerProfileRuntime();
   const displayName = getKangurLearnerProfileDisplayName(user);
 
@@ -31,7 +31,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
         )
       }
       headingAs='h1'
-      onBack={() => router.push(getKangurHomeHref(basePath))}
+      onBack={() =>
+        routeNavigator.push(getKangurHomeHref(basePath), {
+          pageKey: 'Game',
+        })
+      }
       testId='kangur-learner-profile-hero'
       title='Profil ucznia'
     >

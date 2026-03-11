@@ -8,6 +8,8 @@ import {
 } from '@/features/ai/agentcreator/server';
 import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import type {
+  AgentTeachingDocumentResponse,
+  AgentTeachingDocumentsResponse,
   AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingSourceType,
 } from '@/shared/contracts/agent-teaching';
@@ -37,7 +39,8 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const limit = query.limit ?? 50;
   const skip = query.skip ?? 0;
   const result = await listEmbeddingDocuments(collectionId, { limit, skip });
-  return NextResponse.json(result);
+  const response: AgentTeachingDocumentsResponse = result;
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -72,5 +75,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     },
   });
 
-  return NextResponse.json({ item });
+  const response: AgentTeachingDocumentResponse = { item };
+  return NextResponse.json(response);
 }

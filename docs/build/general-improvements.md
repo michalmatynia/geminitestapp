@@ -122,6 +122,7 @@ It currently:
 - refreshes unresolved source-recovery reporting
 - emits a manual-remediation report
 - records category/schema decisions as explicit manual plan/apply steps
+- can build a ready curated-override bundle from any family mapping packs that already have final parameter ids
 
 This track is intentionally decision-first:
 - category assignment
@@ -130,3 +131,25 @@ This track is intentionally decision-first:
 - then controlled apply
 
 It does not perform blind category or schema writes automatically.
+
+## Curated family-mapping bridge
+
+Once `suggestedFinalParameterId` values are filled in the latest
+`/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json` files, the
+improvement runner can bridge that curation into an apply-ready bundle.
+
+Key outputs:
+- `/tmp/product-parameter-curated-build-latest.json`
+- `/tmp/product-parameter-curated-overrides-latest.json`
+
+The category/schema normalization track now supports:
+- `dry-run`
+  - builds the latest ready curated override bundle
+  - previews the resulting apply set without writes
+- `apply`
+  - rebuilds the latest curated override bundle
+  - applies only that merged latest file
+
+This remains conservative:
+- incomplete family packs stay `pending`
+- only fully mapped packs are included in the ready bundle

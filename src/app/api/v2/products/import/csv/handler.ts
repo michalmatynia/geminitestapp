@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import { z } from 'zod';
 
-import type { CreateProductInput } from '@/shared/contracts/products';
+import type { CreateProductInput, ProductCsvImportResponse } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -91,7 +91,7 @@ export async function postProductsImportCsvHandler(
 
   await flushBatch();
 
-  return NextResponse.json({
+  const response: ProductCsvImportResponse = {
     message: 'CSV import completed',
     summary: {
       total: parsed.data.length,
@@ -99,5 +99,7 @@ export async function postProductsImportCsvHandler(
       failed,
       errors: errors.slice(0, 10),
     },
-  });
+  };
+
+  return NextResponse.json(response);
 }

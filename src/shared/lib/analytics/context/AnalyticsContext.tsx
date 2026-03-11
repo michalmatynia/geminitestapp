@@ -3,7 +3,7 @@
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
 
-import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import {
   useAnalyticsSummary,
@@ -27,8 +27,8 @@ interface AnalyticsSummaryContextValue {
 }
 
 interface AnalyticsInsightsContextValue {
-  insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
+  insightsQuery: UseQueryResult<AiInsightsResponse, Error>;
+  runInsightMutation: UseMutationResult<AiInsightResponse, Error, void>;
 }
 
 export const { Context: AnalyticsFiltersContext, useStrictContext: useAnalyticsFilters } =

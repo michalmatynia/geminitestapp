@@ -36,7 +36,7 @@ import { cn } from '@/shared/utils';
 
 import type { JSX } from 'react';
 
-const APP_LOADER_MIN_VISIBLE_MS = 280;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 280;
 const NAVIGATION_SKELETON_DELAY_MS = 140;
 
 const AuthenticatedApp = (): JSX.Element | null => {
@@ -53,12 +53,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isNavigationTransitionActive = isRoutePending || isRouteRevealing;
   const shouldBlockRouteContent = isBootLoading && !canRenderRouteWhileLoading;
-  const [isLoaderVisible, setIsLoaderVisible] = useState<boolean>(isBootLoading);
+  const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(isBootLoading);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
-  const loaderShownAtRef = useRef<number | null>(isBootLoading ? Date.now() : null);
+  const bootSkeletonShownAtRef = useRef<number | null>(isBootLoading ? Date.now() : null);
   const navigationSkeletonShownRef = useRef(false);
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
+  const isRouteSkeletonVisible = isNavigationSkeletonVisible;
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -68,23 +69,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
 
   useEffect(() => {
     if (isBootLoading) {
-      if (loaderShownAtRef.current === null) {
-        loaderShownAtRef.current = Date.now();
+      if (bootSkeletonShownAtRef.current === null) {
+        bootSkeletonShownAtRef.current = Date.now();
       }
-      setIsLoaderVisible(true);
+      setIsBootSkeletonVisible(true);
       return;
     }
 
-    const shownAt = loaderShownAtRef.current;
+    const shownAt = bootSkeletonShownAtRef.current;
     if (shownAt === null) {
-      setIsLoaderVisible(false);
+      setIsBootSkeletonVisible(false);
       return;
     }
 
-    const remainingMs = Math.max(0, APP_LOADER_MIN_VISIBLE_MS - (Date.now() - shownAt));
+    const remainingMs = Math.max(0, BOOT_SKELETON_MIN_VISIBLE_MS - (Date.now() - shownAt));
     const timeoutId = window.setTimeout(() => {
-      loaderShownAtRef.current = null;
-      setIsLoaderVisible(false);
+      bootSkeletonShownAtRef.current = null;
+      setIsBootSkeletonVisible(false);
     }, remainingMs);
 
     return () => {
@@ -153,6 +154,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     <>
       <KangurRouteAccessibilityAnnouncer />
       <KangurTopNavigationHost />
+      <KangurAppLoader visible={isBootSkeletonVisible} />
       <AnimatePresence mode='wait'>
         {routeContent ? (
           <motion.div
@@ -168,9 +170,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
         ) : null}
       </AnimatePresence>
       <AnimatePresence>
-        {isNavigationSkeletonVisible ? (
+        {isRouteSkeletonVisible ? (
           <motion.div
-            key='kangur-page-transition-skeleton'
+            key='kangur-page-transition-skeleton:navigation'
             animate={{ opacity: 1 }}
             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -180,7 +182,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
           </motion.div>
         ) : null}
       </AnimatePresence>
-      <KangurAppLoader visible={isLoaderVisible} />
     </>
   );
 };

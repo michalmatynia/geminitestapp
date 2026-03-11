@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import { Button, SectionHeader, SectionHeaderBackLink, StandardDataTablePanel } from '@/shared/ui';
+import { AdminAgentTeachingPageLayout, Button, StandardDataTablePanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';
@@ -107,21 +107,17 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
-        title='Embedding School'
-        description='Knowledge base management for AI agents. Upload documents to create searchable vector embeddings.'
-        eyebrow={
-          <SectionHeaderBackLink href='/admin/agentcreator/teaching' arrow>
-            Back to learners
-          </SectionHeaderBackLink>
-        }
-        actions={
-          <Button onClick={openCreate} className='h-8 text-xs'>
-            New Collection
-          </Button>
-        }
-      />
+    <AdminAgentTeachingPageLayout
+      title='Embedding School'
+      current='Collections'
+      description='Knowledge base management for AI agents. Upload documents to create searchable vector embeddings.'
+      headerActions={
+        <Button onClick={openCreate} className='h-8 text-xs'>
+          New Collection
+        </Button>
+      }
+      containerClassName='mx-auto w-full max-w-none py-10'
+    >
 
       <StandardDataTablePanel columns={columns} data={collections} isLoading={isLoading} />
 
@@ -136,7 +132,7 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
       />
 
       <AgentTeachingCollectionModal />
-    </div>
+    </AdminAgentTeachingPageLayout>
   );
 }
 

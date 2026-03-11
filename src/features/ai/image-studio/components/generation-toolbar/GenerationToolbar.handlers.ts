@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { type ImageStudioSlotRecord, type StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -23,10 +23,10 @@ export function useGenerationToolbarHandlers(
 
   const fetchProjectSlots = useCallback(
     async (id: string): Promise<ImageStudioSlotRecord[]> => {
-      const data = await fetchQueryV2<{ slots: ImageStudioSlotRecord[] }>(queryClient, {
+      const data = await fetchQueryV2<StudioSlotsResponse>(queryClient, {
         queryKey: normalizeQueryKey(studioKeys.slots(id)),
         queryFn: () =>
-          api.get<{ slots: ImageStudioSlotRecord[] }>(`/api/image-studio/projects/${id}/slots`),
+          api.get<StudioSlotsResponse>(`/api/image-studio/projects/${id}/slots`),
         staleTime: 0,
         meta: {
           source: 'imageStudio.toolbar.handlers.fetchProjectSlots',

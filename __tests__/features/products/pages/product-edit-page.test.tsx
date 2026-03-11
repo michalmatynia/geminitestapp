@@ -92,7 +92,7 @@ describe('EditProductForm', () => {
   it('renders the form with product data in the General tab', async () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
-    expect(await screen.findByText('Edit Product')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Edit Product' })).toBeInTheDocument();
 
     // Check for English Name input - using role to be specific
     const nameInput = await screen.findByRole('textbox', { name: /English Name/i });
@@ -104,7 +104,7 @@ describe('EditProductForm', () => {
   it('has no obvious accessibility violations in the default edit form view', async () => {
     const { container } = renderWithProviders(<EditProductPage product={mockProduct} />);
 
-    await screen.findByText('Edit Product');
+    await screen.findByRole('heading', { name: 'Edit Product' });
     await waitFor(() => {
       expect(queryClient.isFetching()).toBe(0);
     });
@@ -116,7 +116,7 @@ describe('EditProductForm', () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     // Wait for the form to load
-    await screen.findByText('Edit Product');
+    await screen.findByRole('heading', { name: 'Edit Product' });
 
     // Click on the 'Other' tab
     const otherTab = screen.getByRole('tab', { name: /Other/i });

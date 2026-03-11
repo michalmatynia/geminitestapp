@@ -6,10 +6,11 @@ import React, { useMemo } from 'react';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import {
+  AdminWidePageLayout,
+  Button,
   StandardDataTablePanel,
   SelectSimple,
   StatusBadge,
-  PanelHeader,
   SearchInput,
   EmptyState,
   ActionMenu,
@@ -141,41 +142,38 @@ function AuthUsersPageContent(): React.JSX.Element {
   }
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <PanelHeader
+    <AdminWidePageLayout
         title='Identity Management'
         description={`Active directory console using ${provider} provider.`}
         icon={<Users className='size-4' />}
-        refreshable={true}
-        isRefreshing={isFetching}
-        onRefresh={refetch}
-        actions={[
-          {
-            key: 'mock',
-            label: 'Mock Sign-in',
-            icon: <Key className='size-3.5' />,
-            variant: 'outline',
-            onClick: () => setMockOpen(true),
-          },
-          {
-            key: 'new',
-            label: 'New User',
-            icon: <UserPlusIcon className='size-3.5' />,
-            variant: 'outline',
-            onClick: () => setCreateOpen(true),
-          },
-          {
-            key: 'save',
-            label: dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date',
-            icon: <ShieldCheck className='size-3.5' />,
-            disabled: !dirtyRoles,
-            onClick: () => {
-              void saveRoles();
-            },
-          },
-        ]}
-      />
-
+        refresh={{
+          onRefresh: refetch,
+          isRefreshing: isFetching,
+        }}
+        headerActions={
+          <>
+            <Button type='button' variant='outline' size='sm' onClick={() => setMockOpen(true)}>
+              <Key className='mr-1 size-3.5' />
+              Mock Sign-in
+            </Button>
+            <Button type='button' variant='outline' size='sm' onClick={() => setCreateOpen(true)}>
+              <UserPlusIcon className='mr-1 size-3.5' />
+              New User
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              disabled={!dirtyRoles}
+              onClick={() => {
+                void saveRoles();
+              }}
+            >
+              <ShieldCheck className='mr-1 size-3.5' />
+              {dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date'}
+            </Button>
+          </>
+        }
+      >
       <StandardDataTablePanel
         variant='default'
         columns={columns}
@@ -224,6 +222,6 @@ function AuthUsersPageContent(): React.JSX.Element {
         isDangerous={true}
         onConfirm={deleteUser}
       />
-    </div>
+    </AdminWidePageLayout>
   );
 }

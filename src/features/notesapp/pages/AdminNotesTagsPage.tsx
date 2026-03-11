@@ -16,6 +16,7 @@ import {
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { TagRecord } from '@/shared/contracts/notes';
 import {
+  AdminNotesPageLayout,
   Button,
   useToast,
   Input,
@@ -24,7 +25,6 @@ import {
   StandardDataTablePanel,
   Tag,
   EmptyState,
-  PageLayout,
   FilterPanel,
   FormActions,
 } from '@/shared/ui';
@@ -252,8 +252,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   );
 
   return (
-    <PageLayout
+    <AdminNotesPageLayout
       title='Note Tags'
+      current='Tags'
       description='Create and remove tags used in the Notes app.'
       refresh={{
         onRefresh: () => {
@@ -343,6 +344,6 @@ export function AdminNotesTagsPage(): React.JSX.Element {
         isDangerous={true}
         loading={deleteTag.isPending}
       />
-    </PageLayout>
+    </AdminNotesPageLayout>
   );
 }

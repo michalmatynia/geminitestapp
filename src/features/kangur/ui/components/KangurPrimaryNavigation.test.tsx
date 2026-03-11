@@ -68,9 +68,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
-  useOptionalKangurRouteTransition: () => ({
-    isRoutePending: false,
-    pendingPageKey: null,
+  useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
 }));

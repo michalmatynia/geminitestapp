@@ -1,12 +1,13 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-03-11T12:37:31.140Z",
+  "generatedAt": "2026-03-11T14:10:35.249Z",
   "phase": "plan",
   "executionMode": "planned",
   "allowWrite": false,
   "selectedTrackIds": [
     "products-parameter-integrity",
-    "products-category-schema-normalization"
+    "products-category-schema-normalization",
+    "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/plan-report.json",
   "steps": [
@@ -36,7 +37,23 @@
       "instructions": [
         "Assign missing categories only when a defensible family/category match exists.",
         "Choose final parameter ids for the unresolved families before generating any curated override file.",
-        "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved."
+        "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
+        "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
+        "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
+      ]
+    },
+    {
+      "id": "repo-quality-baseline-plan",
+      "title": "Review baseline results and decide follow-up validation",
+      "trackId": "repo-quality-baseline",
+      "phase": "plan",
+      "mode": "manual",
+      "writes": false,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
+        "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
       ]
     }
   ]

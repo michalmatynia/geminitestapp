@@ -11,12 +11,11 @@ import {
 import type { Producer } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
-  AdminProductsBreadcrumbs,
+  AdminProductsPageLayout,
   Button,
   EmptyState,
   useToast,
   StandardDataTablePanel,
-  PanelHeader,
   SearchInput,
 } from '@/shared/ui';
 import {
@@ -191,22 +190,18 @@ export function AdminProductProducersPage(): React.JSX.Element {
   );
 
   return (
-    <div className='space-y-6'>
-      <PanelHeader
+    <AdminProductsPageLayout
         title='Producers'
+        current='Producers'
         description='Manage producers and assign them in Product Edit.'
         icon={<Factory className='size-4' />}
-        subtitle={<AdminProductsBreadcrumbs current='Producers' />}
-        actions={[
-          {
-            key: 'add',
-            label: 'Add Producer',
-            icon: <Plus className='size-4' />,
-            onClick: openCreate,
-          },
-        ]}
-      />
-
+        headerActions={
+          <Button type='button' size='sm' variant='outline' onClick={openCreate}>
+            <Plus className='size-4 mr-1' />
+            Add Producer
+          </Button>
+        }
+      >
       <StandardDataTablePanel
         filters={
           <div className='max-w-sm'>
@@ -255,6 +250,6 @@ export function AdminProductProducersPage(): React.JSX.Element {
       />
 
       <ConfirmationModal />
-    </div>
+    </AdminProductsPageLayout>
   );
 }

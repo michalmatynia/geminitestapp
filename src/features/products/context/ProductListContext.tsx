@@ -339,8 +339,16 @@ export function ProductListProvider({
       onCreateProduct: value.onCreateProduct,
       onCreateFromDraft: value.onCreateFromDraft,
       activeDrafts: value.activeDrafts,
+      showTriggerRunFeedback: value.showTriggerRunFeedback,
+      setShowTriggerRunFeedback: value.setShowTriggerRunFeedback,
     }),
-    [value.onCreateProduct, value.onCreateFromDraft, value.activeDrafts]
+    [
+      value.onCreateProduct,
+      value.onCreateFromDraft,
+      value.activeDrafts,
+      value.showTriggerRunFeedback,
+      value.setShowTriggerRunFeedback,
+    ]
   );
 
   const rowActionsValue = useMemo<ProductListRowActionsContextType>(
@@ -376,6 +384,7 @@ export function ProductListProvider({
       queuedProductIds: value.queuedProductIds,
       categoryNameById: value.categoryNameById,
       thumbnailSource: value.thumbnailSource,
+      showTriggerRunFeedback: value.showTriggerRunFeedback,
       imageExternalBaseUrl: value.imageExternalBaseUrl,
     }),
     [
@@ -389,6 +398,7 @@ export function ProductListProvider({
       value.queuedProductIds,
       value.categoryNameById,
       value.thumbnailSource,
+      value.showTriggerRunFeedback,
       value.imageExternalBaseUrl,
     ]
   );

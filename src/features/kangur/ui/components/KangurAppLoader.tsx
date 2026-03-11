@@ -18,7 +18,7 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
           key='kangur-app-loader'
           aria-busy='true'
           aria-live='polite'
-          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(124,82,255,0.14),_transparent_34%),linear-gradient(180deg,_#f6f8ff_0%,_#edf2ff_52%,_#f9fbff_100%)]'
+          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(124,82,255,0.14),_transparent_34%),linear-gradient(180deg,_#f6f8ff_0%,_#edf2ff_52%,_#f9fbff_100%)] px-4'
           data-testid='kangur-app-loader'
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
@@ -27,10 +27,12 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
         >
           <div
             aria-hidden='true'
-            className='absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(79,99,248,0.12)_0%,_rgba(124,82,255,0.05)_46%,_transparent_74%)] blur-3xl'
+            className='absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(79,99,248,0.12)_0%,_rgba(124,82,255,0.05)_46%,_transparent_74%)] blur-3xl'
           />
           <motion.div
-            className='relative flex flex-col items-center justify-center gap-3 rounded-[36px] border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(247,249,255,0.88)_100%)] px-9 py-8 shadow-[0_28px_72px_-38px_rgba(68,87,215,0.28)] backdrop-blur-xl'
+            className='relative flex flex-col items-center justify-center gap-4 rounded-[40px] border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(247,249,255,0.88)_100%)] px-12 py-11 shadow-[0_32px_84px_-42px_rgba(68,87,215,0.28)] backdrop-blur-xl'
+            data-loader-layout='expanded-card'
+            data-testid='kangur-app-loader-panel'
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0.94, scale: 0.98 }}
             animate={
               prefersReducedMotion
@@ -49,27 +51,30 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
           >
             <div
               aria-hidden='true'
-              className='absolute inset-[10px] rounded-[28px] border border-[rgba(79,99,248,0.08)]'
+              className='absolute inset-[10px] rounded-[30px] border border-[rgba(79,99,248,0.08)]'
             />
             <div
               aria-hidden='true'
-              className='absolute -right-2 -top-2 h-12 w-12 rounded-full bg-[radial-gradient(circle,_rgba(255,213,96,0.82)_0%,_rgba(255,154,53,0.18)_54%,_transparent_76%)] blur-md'
+              className='absolute -right-2 -top-2 h-14 w-14 rounded-full bg-[radial-gradient(circle,_rgba(255,213,96,0.82)_0%,_rgba(255,154,53,0.18)_54%,_transparent_76%)] blur-md'
             />
-            <div className='relative flex h-20 w-20 items-center justify-center rounded-full border border-[rgba(79,99,248,0.12)] bg-[radial-gradient(circle_at_32%_28%,_rgba(255,255,255,0.98),_rgba(241,245,255,0.9)_58%,_rgba(236,241,255,0.78)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_16px_28px_-22px_rgba(68,87,215,0.26)]'>
+            <div className='relative flex h-24 w-24 items-center justify-center rounded-full border border-[rgba(79,99,248,0.12)] bg-[radial-gradient(circle_at_32%_28%,_rgba(255,255,255,0.98),_rgba(241,245,255,0.9)_58%,_rgba(236,241,255,0.78)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_18px_32px_-24px_rgba(68,87,215,0.26)]'>
               <div
                 aria-hidden='true'
-                className='absolute inset-2 rounded-full border border-[rgba(124,82,255,0.1)]'
+                className='absolute inset-2.5 rounded-full border border-[rgba(124,82,255,0.1)]'
               />
               <KangurHomeLogo
-                className='relative h-[28px] sm:h-[30px] md:h-[34px]'
+                className='relative h-[32px] sm:h-[34px] md:h-[38px]'
                 idPrefix='kangur-app-loader-logo'
               />
             </div>
-            <div className='relative text-center'>
-              <div className='text-[10px] font-semibold uppercase tracking-[0.32em] text-[#5a6df4]'>
+            <div
+              className='relative text-center'
+              data-testid='kangur-app-loader-copy'
+            >
+              <div className='text-[11px] font-semibold uppercase tracking-[0.32em] text-[#5a6df4]'>
                 StudiQ
               </div>
-              <div className='mt-1 text-xs font-medium tracking-[0.08em] text-slate-400'>
+              <div className='mt-1 text-sm font-medium tracking-[0.08em] text-slate-400'>
                 Loading
               </div>
             </div>

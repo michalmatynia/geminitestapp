@@ -6,7 +6,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { ItemLibrary, SectionHeaderBackLink, useToast } from '@/shared/ui';
+import { AdminAgentTeachingBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
 
 import { LearnerAgentForm, type LearnerAgentLibraryItem } from '../components/LearnerAgentForm';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
@@ -134,9 +134,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       onSave={handleSave}
       onDelete={handleDelete}
       backLink={
-        <SectionHeaderBackLink href='/admin/agentcreator/teaching' arrow>
-          Back to learners
-        </SectionHeaderBackLink>
+        <AdminAgentTeachingBreadcrumbs current='Agents' className='mb-2' />
       }
       buildDefaultItem={() => ({
         name: '',

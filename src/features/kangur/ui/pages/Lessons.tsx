@@ -1,10 +1,7 @@
 'use client';
 
-'use client';
-
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -29,7 +26,6 @@ import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiT
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import { useOptionalKangurRouteTransition } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurEmptyState,
@@ -44,6 +40,7 @@ import {
 import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
@@ -286,9 +283,8 @@ const getLessonAssignmentTimestamp = (
 };
 
 export default function Lessons() {
-  const router = useRouter();
+  const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
-  const routeTransition = useOptionalKangurRouteTransition();
   const auth = useKangurAuth();
   const { user, navigateToLogin, logout } = auth;
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
@@ -505,11 +501,9 @@ export default function Lessons() {
     }
 
     const homeHref = getKangurHomeHref(basePath);
-    routeTransition?.startRouteTransition({
-      href: homeHref,
+    routeNavigator.push(homeHref, {
       pageKey: 'Game',
     });
-    router.push(homeHref);
   };
 
   const learnerId = user?.activeLearner?.id ?? user?.id ?? null;

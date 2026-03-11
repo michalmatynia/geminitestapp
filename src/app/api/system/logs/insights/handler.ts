@@ -6,6 +6,7 @@ import { generateLogsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/features/observability/context-registry/server';
+import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInsightRequestSchema } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -21,7 +22,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const url = new URL(req.url);
   const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const insights = await listAiInsights('logs', parsed.limit ?? 10);
-  return NextResponse.json({ insights });
+  const response: AiInsightsResponse = { insights };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -43,5 +45,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     source: 'manual',
     contextRegistry,
   });
-  return NextResponse.json({ insight });
+  const response: AiInsightResponse = { insight };
+  return NextResponse.json(response);
 }

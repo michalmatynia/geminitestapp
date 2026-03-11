@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import {
+  chatbotContextUploadResponseSchema,
+  type ChatbotContextUploadResponse,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 
@@ -82,5 +86,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  return NextResponse.json({ segments });
+  const response: ChatbotContextUploadResponse = { segments };
+  return NextResponse.json(chatbotContextUploadResponseSchema.parse(response));
 }

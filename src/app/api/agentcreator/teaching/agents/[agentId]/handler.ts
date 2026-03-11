@@ -6,7 +6,11 @@ import {
   upsertTeachingAgent,
   deleteTeachingAgent,
 } from '@/features/ai/agentcreator/server';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentDeleteResponse,
+  AgentTeachingAgentRecord,
+  AgentTeachingAgentResponse,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -59,7 +63,8 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     enabled: data.enabled ?? existing.enabled,
   });
 
-  return NextResponse.json({ agent });
+  const response: AgentTeachingAgentResponse = { agent };
+  return NextResponse.json(response);
 }
 
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -71,7 +76,8 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!agent) {
     return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
   }
-  return NextResponse.json({ agent });
+  const response: AgentTeachingAgentResponse = { agent };
+  return NextResponse.json(response);
 }
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -80,5 +86,6 @@ export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext):
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
   const success = await deleteTeachingAgent(agentId);
-  return NextResponse.json({ success });
+  const response: AgentTeachingAgentDeleteResponse = { success };
+  return NextResponse.json(response);
 }

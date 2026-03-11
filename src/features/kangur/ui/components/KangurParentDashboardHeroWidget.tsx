@@ -8,7 +8,6 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import {
@@ -26,6 +25,7 @@ import {
   KangurStatusChip,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 
 const buildAssignmentHref = (
@@ -44,7 +44,7 @@ export function KangurParentDashboardHeroWidget({
 }: {
   showActions?: boolean;
 }): React.JSX.Element {
-  const router = useRouter();
+  const routeNavigator = useKangurRouteNavigator();
   const {
     activeLearner,
     basePath,
@@ -57,10 +57,12 @@ export function KangurParentDashboardHeroWidget({
     viewerRoleLabel,
   } = useKangurParentDashboardRuntime();
   const handleGoHome = (): void => {
-    router.push(getKangurHomeHref(basePath));
+    routeNavigator.push(getKangurHomeHref(basePath), { pageKey: 'Game' });
   };
   const handleGoToProfile = (): void => {
-    router.push(createPageUrl('LearnerProfile', basePath));
+    routeNavigator.push(createPageUrl('LearnerProfile', basePath), {
+      pageKey: 'LearnerProfile',
+    });
   };
 
   if (!isAuthenticated) {

@@ -28,6 +28,7 @@ import {
   KangurGlassPanel,
   KangurGradientHeading,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
 import {
@@ -289,6 +290,7 @@ function KangurLoginPageContent(): JSX.Element {
     parentAuthMode: parentAuthModeProp,
   } = useKangurLoginPageProps();
   const router = useRouter();
+  const routeNavigator = useKangurRouteNavigator();
   const searchParams = useSearchParams();
   const auth = useOptionalKangurAuth();
   const loginFormRef = useRef<HTMLFormElement | null>(null);
@@ -481,7 +483,7 @@ function KangurLoginPageContent(): JSX.Element {
 
     if (navigationTarget.kind === 'router') {
       onClose?.();
-      router.push(navigationTarget.href, { scroll: false });
+      routeNavigator.push(navigationTarget.href, { scroll: false });
       return;
     }
 

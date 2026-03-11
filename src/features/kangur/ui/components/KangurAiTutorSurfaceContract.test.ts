@@ -9,6 +9,9 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 const readTutorSource = (fileName: string) =>
   readFileSync(join(currentDir, fileName), 'utf8');
 
+const readTutorPlaywrightSource = (fileName: string) =>
+  readFileSync(join(currentDir, '../../../../../e2e/features/kangur', fileName), 'utf8');
+
 describe('Kangur AI Tutor surface contract', () => {
   it('does not allow the deprecated regular panel surface back into the coordinator or portal view', () => {
     const coordinatorSource = readTutorSource('KangurAiTutorWidget.coordinator.ts');
@@ -17,5 +20,19 @@ describe('Kangur AI Tutor surface contract', () => {
     expect(coordinatorSource).not.toContain("'regular_panel'");
     expect(portalViewSource).not.toContain("'regular_panel'");
     expect(portalViewSource).not.toContain('isRegularMinimalPanelMode');
+  });
+
+  it('does not allow avatar clicks to branch by auth state into a non-minimal surface', () => {
+    const avatarShellSource = readTutorSource('KangurAiTutorWidget.avatar-shell.ts');
+    const portalViewSource = readTutorSource('KangurAiTutorWidget.portal-view.ts');
+
+    expect(avatarShellSource).not.toContain("handleOpenChat('toggle'");
+    expect(portalViewSource).not.toContain("tutorSurfaceMode === 'onboarding' &&\n    input.isAnonymousVisitor");
+  });
+
+  it('does not allow the legacy avatar-to-panel Playwright helper back into the tutor browser contract', () => {
+    const browserSpecSource = readTutorPlaywrightSource('kangur-ai-tutor.spec.ts');
+
+    expect(browserSpecSource).not.toContain('openLegacyTutorPanelAfterAcceptingMinimalModal');
   });
 });

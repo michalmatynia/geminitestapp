@@ -98,7 +98,7 @@ async function mockAnonymousGuestTutorIntro(
 }
 
 test.describe('Kangur tutor guest intro', () => {
-  test('shows the first-visit anonymous prompt with Yes and No actions', async ({ page }) => {
+  test('shows the first-visit anonymous minimalist prompt with a single primary action', async ({ page }) => {
     const { getGuestIntroChecks } = await mockAnonymousGuestTutorIntro(page);
 
     await gotoGuestTutorRoute(page);
@@ -108,8 +108,12 @@ test.describe('Kangur tutor guest intro', () => {
     await expect(guestIntro).toBeVisible();
     await expect(guestIntro).toContainText('Mila');
     await expect(guestIntro).toContainText('Czy chcesz pomocy z logowaniem albo założeniem konta?');
+    await expect(guestIntro).toHaveAttribute('data-modal-surface', 'canonical-onboarding');
+    await expect(guestIntro).toHaveAttribute('data-modal-motion', 'fade-only');
+    await expect(guestIntro).toHaveAttribute('data-modal-actions', 'single-primary');
     await expect(guestIntro.getByRole('button', { name: 'Tak' })).toBeVisible();
-    await expect(guestIntro.getByRole('button', { name: 'Nie' })).toBeVisible();
+    await expect(guestIntro.getByRole('button', { name: 'Nie' })).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect.poll(() => getGuestIntroChecks()).toBe(1);
     await expect.poll(() => readGuestIntroStatus(page)).toBe('shown');
   });
@@ -167,7 +171,7 @@ test.describe('Kangur tutor guest intro', () => {
     await expect.poll(() => getGuestIntroChecks()).toBe(1);
   });
 
-  test.fixme('legacy guest assistance flow after Yes must be rewritten to the minimalist guided login contract', async ({ page }) => {
+  test('starts the minimalist guided login flow immediately after Yes', async ({ page }) => {
     const { getGuestIntroChecks } = await mockAnonymousGuestTutorIntro(page);
 
     await gotoGuestTutorRoute(page);
@@ -177,31 +181,17 @@ test.describe('Kangur tutor guest intro', () => {
       .getByRole('button', { name: 'Tak' })
       .click();
 
-    const guestAssistance = page.getByTestId('kangur-ai-tutor-guest-assistance');
+    const guidedHelp = page.getByTestId('kangur-ai-tutor-guided-login-help');
 
-    await expect(guestAssistance).toBeVisible();
-    await expect(guestAssistance).toContainText('Mila');
-    await expect(guestAssistance).toContainText('Pokażę Ci, gdzie kliknąć.');
-    await expect(guestAssistance.getByRole('button', { name: 'Pokaż logowanie' })).toBeVisible();
-    await expect(
-      guestAssistance.getByRole('button', { name: 'Pokaż tworzenie konta' })
-    ).toBeVisible();
-    await expect(
-      guestAssistance.getByRole('button', { name: 'Przeglądaj dalej' })
-    ).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-guest-assistance')).toHaveCount(0);
+    await expect(guidedHelp).toBeVisible();
+    await expect(guidedHelp).toContainText('U góry kliknij „Zaloguj się”.');
     await expect.poll(() => readGuestIntroStatus(page)).toBe('accepted');
     await expect.poll(() => getGuestIntroChecks()).toBe(1);
 
-    await guestAssistance.getByRole('button', { name: 'Pokaż logowanie' }).click();
-
     await expect(page.getByTestId('kangur-login-modal')).toHaveCount(0);
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toHaveAttribute(
-      'data-guidance-motion',
-      'gentle'
-    );
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toContainText(
-      'U góry kliknij „Zaloguj się”.'
-    );
+    await expect(guidedHelp).toHaveAttribute('data-guidance-motion', 'gentle');
     await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
@@ -244,22 +234,8 @@ test.describe('Kangur tutor guest intro', () => {
       'data-guidance-angle',
       /^-?\d+(?:\.\d+)?$/
     );
-
-    await page.getByTestId('kangur-primary-nav-login').click();
-
-    await expect(page.getByTestId('kangur-login-modal')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'data-guidance-target',
-      'login_identifier_field'
-    );
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toContainText(
-      'Tutaj wpisz e-mail rodzica albo nick ucznia.'
-    );
-    await expect(page.getByTestId('kangur-login-identifier-input')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toHaveAttribute(
-      'data-guidance-angle',
-      /^-?\d+(?:\.\d+)?$/
-    );
+    await expect(guidedHelp.getByRole('button', { name: 'Rozumiem' })).toBeVisible();
+    await expect(guidedHelp.getByRole('button', { name: 'Zapytaj' })).toHaveCount(0);
   });
 
   test('reopens the minimalist tutor modal from the docked anonymous avatar without forcing auth navigation', async ({
@@ -282,7 +258,7 @@ test.describe('Kangur tutor guest intro', () => {
     await expect(page.getByTestId('kangur-login-modal')).toHaveCount(0);
   });
 
-  test.fixme('legacy guided login help acknowledgement flow must be rewritten to the minimalist guided login contract', async ({
+  test('acknowledges guided login help and lets the avatar reopen the minimalist tutor modal', async ({
     page,
   }) => {
     await mockAnonymousGuestTutorIntro(page);
@@ -292,11 +268,6 @@ test.describe('Kangur tutor guest intro', () => {
     await page
       .getByTestId('kangur-ai-tutor-guest-intro')
       .getByRole('button', { name: 'Tak' })
-      .click();
-
-    await page
-      .getByTestId('kangur-ai-tutor-guest-assistance')
-      .getByRole('button', { name: 'Pokaż logowanie' })
       .click();
 
     const guidedHelp = page.getByTestId('kangur-ai-tutor-guided-login-help');
@@ -310,9 +281,23 @@ test.describe('Kangur tutor guest intro', () => {
       'data-guidance-target',
       'login_action'
     );
+
+    await guidedHelp.getByRole('button', { name: 'Rozumiem' }).click();
+
+    await expect(guidedHelp).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'floating'
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-anchor-kind', 'dock');
+
+    await page.getByTestId('kangur-ai-tutor-avatar').click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
   });
 
-  test.fixme('legacy guided login help close flow must be rewritten to the minimalist guided login contract', async ({
+  test('closes guided login help with X and lets the avatar reopen the minimalist tutor modal', async ({
     page,
   }) => {
     await mockAnonymousGuestTutorIntro(page);
@@ -322,11 +307,6 @@ test.describe('Kangur tutor guest intro', () => {
     await page
       .getByTestId('kangur-ai-tutor-guest-intro')
       .getByRole('button', { name: 'Tak' })
-      .click();
-
-    await page
-      .getByTestId('kangur-ai-tutor-guest-assistance')
-      .getByRole('button', { name: 'Pokaż logowanie' })
       .click();
 
     const guidedHelp = page.getByTestId('kangur-ai-tutor-guided-login-help');
@@ -347,10 +327,10 @@ test.describe('Kangur tutor guest intro', () => {
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
   });
 
-  test.fixme('legacy create-account assistance flow must be rewritten to the minimalist guided login contract', async ({
+  test('does not resurface the removed guest assistance or create-account chooser after Yes', async ({
     page,
   }) => {
-    const { getGuestIntroChecks } = await mockAnonymousGuestTutorIntro(page);
+    await mockAnonymousGuestTutorIntro(page);
 
     await gotoGuestTutorRoute(page);
 
@@ -359,38 +339,17 @@ test.describe('Kangur tutor guest intro', () => {
       .getByRole('button', { name: 'Tak' })
       .click();
 
-    const guestAssistance = page.getByTestId('kangur-ai-tutor-guest-assistance');
-
-    await expect(guestAssistance).toBeVisible();
-    await expect.poll(() => readGuestIntroStatus(page)).toBe('accepted');
-    await expect.poll(() => getGuestIntroChecks()).toBe(1);
-
-    await guestAssistance.getByRole('button', { name: 'Pokaż tworzenie konta' }).click();
-
+    await expect(page.getByTestId('kangur-ai-tutor-guest-assistance')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Pokaż logowanie' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Pokaż tworzenie konta' })).toHaveCount(0);
     await expect(page.getByTestId('kangur-login-modal')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-guidance-target',
-      'create_account_action'
+      'login_action'
     );
     await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toContainText(
-      'U góry kliknij „Utwórz konto”.'
+      'U góry kliknij „Zaloguj się”.'
     );
-    await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toHaveAttribute(
-      'data-guidance-angle',
-      /^-?\d+(?:\.\d+)?$/
-    );
-
-    await page.getByTestId('kangur-primary-nav-create-account').click();
-
-    await expect(page.getByTestId('kangur-login-modal')).toBeVisible();
-    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
-      'data-guidance-target',
-      'login_identifier_field'
-    );
-    await expect(page.getByTestId('kangur-ai-tutor-guided-login-help')).toContainText(
-      'Tutaj wpisz e-mail rodzica.'
-    );
-    await expect(page.getByTestId('kangur-login-identifier-input')).toBeVisible();
     await expect(page.getByTestId('kangur-ai-tutor-guided-arrowhead')).toHaveAttribute(
       'data-guidance-angle',
       /^-?\d+(?:\.\d+)?$/

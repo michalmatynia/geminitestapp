@@ -6,6 +6,7 @@ import {
   createImageStudioSlots,
   listImageStudioSlots,
 } from '@/features/ai/server';
+import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 
@@ -48,7 +49,7 @@ export async function GET_handler(
 
   const slots = await listImageStudioSlots(projectId);
 
-  return NextResponse.json({ slots });
+  return NextResponse.json(studioSlotsResponseSchema.parse({ slots }));
 }
 
 export async function POST_handler(
@@ -103,5 +104,5 @@ export async function POST_handler(
 
   const created = await createImageStudioSlots(projectId, slotsToCreate);
 
-  return NextResponse.json({ slots: created }, { status: 201 });
+  return NextResponse.json(studioSlotsResponseSchema.parse({ slots: created }), { status: 201 });
 }

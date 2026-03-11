@@ -10,7 +10,7 @@ import {
   useBackgroundSyncState,
 } from '@/shared/providers/BackgroundSyncProvider';
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   Button,
   Card,
   FormActions,
@@ -19,7 +19,6 @@ import {
   Hint,
   Input,
   MetadataItem,
-  SectionHeader,
   SimpleSettingsList,
   ToggleRow,
   useToast,
@@ -120,14 +119,11 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
-        title='Background Sync'
-        description='Control background synchronization and manage the offline mutation queue.'
-        eyebrow={<AdminSettingsBreadcrumbs current='Background Sync' />}
-        className='mb-8'
-      />
-
+    <AdminSettingsPageLayout
+      title='Background Sync'
+      current='Background Sync'
+      description='Control background synchronization and manage the offline mutation queue.'
+    >
       <ConfirmModal
         isOpen={isClearQueueConfirmOpen}
         onClose={() => setIsClearQueueConfirmOpen(false)}
@@ -251,6 +247,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           />
         </FormSection>
       </div>
-    </div>
+    </AdminSettingsPageLayout>
   );
 }

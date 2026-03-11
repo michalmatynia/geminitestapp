@@ -10,14 +10,13 @@ import {
 } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsBreadcrumbs,
+  AdminSettingsPageLayout,
   FormActions,
   FormField,
   FormSection,
   Hint,
   LoadingState,
   MetadataItem,
-  SectionHeader,
   SelectSimple,
   useToast,
 } from '@/shared/ui';
@@ -58,18 +57,23 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
   };
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
-    return <LoadingState message='Loading typography settings...' />;
+    return (
+      <AdminSettingsPageLayout
+        title='Typography'
+        current='Typography'
+        description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
+      >
+        <LoadingState message='Loading typography settings...' />
+      </AdminSettingsPageLayout>
+    );
   }
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
-        title='Typography'
-        description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
-        eyebrow={<AdminSettingsBreadcrumbs current='Typography' />}
-        className='mb-8'
-      />
-
+    <AdminSettingsPageLayout
+      title='Typography'
+      current='Typography'
+      description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
+    >
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2 space-y-6'>
           <FormSection title='Typography Settings' className='p-6'>
@@ -141,6 +145,6 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
           </FormSection>
         </div>
       </div>
-    </div>
+    </AdminSettingsPageLayout>
   );
 }

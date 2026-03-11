@@ -14,12 +14,11 @@ import {
 } from '@/features/cms/utils/slug-utils';
 import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import {
-  AdminCmsBreadcrumbs,
+  AdminCmsPageLayout,
   Button,
   StatusBadge,
   SelectSimple,
   Badge,
-  SectionHeader,
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -234,25 +233,6 @@ export default function PagesPage(): React.ReactNode {
     [domainSlugSet, previewSelections, activeDomain]
   );
 
-  const header = (
-    <SectionHeader
-      title='Content Pages'
-      description='Manage layouts and routes for your marketplace domains.'
-      eyebrow={
-        <AdminCmsBreadcrumbs current='Pages' className='mb-2' />
-      }
-      actions={
-        <div className='flex gap-2'>
-          <CmsDomainSelector />
-          <Button size='xs' className='h-8' onClick={handleCreatePage}>
-            <Plus className='size-3.5 mr-2' />
-            Create Page
-          </Button>
-        </div>
-      }
-    />
-  );
-
   const filterConfig: FilterField[] = useMemo(
     () => [
       {
@@ -285,9 +265,21 @@ export default function PagesPage(): React.ReactNode {
   );
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
+    <AdminCmsPageLayout
+      title='Content Pages'
+      current='Pages'
+      description='Manage layouts and routes for your marketplace domains.'
+      headerActions={
+        <div className='flex gap-2'>
+          <CmsDomainSelector />
+          <Button size='xs' className='h-8' onClick={handleCreatePage}>
+            <Plus className='size-3.5 mr-2' />
+            Create Page
+          </Button>
+        </div>
+      }
+    >
       <StandardDataTablePanel
-        header={header}
         filters={filters}
         variant='flat'
         columns={columns}
@@ -306,6 +298,6 @@ export default function PagesPage(): React.ReactNode {
         confirmText='Destroy Page'
         isDangerous
       />
-    </div>
+    </AdminCmsPageLayout>
   );
 }

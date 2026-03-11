@@ -10,7 +10,12 @@ import { deletePathRunWithRepository } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import {
+  hasRunRepositorySelectionMismatch,
+  readPersistedRunRepositorySelection,
+  resolveAlternatePathRunRepository,
+  resolvePathRunRepository,
+} from '@/shared/lib/ai-paths/services/path-run-repository';
 
 export async function GET_handler(
   _req: NextRequest,
@@ -19,21 +24,83 @@ export async function GET_handler(
 ): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const runId = params.runId;
-  const repo = await getPathRunRepository();
-  const run = await repo.findRunById(runId);
+  const repoSelection = await resolvePathRunRepository();
+  const repo = repoSelection.repo;
+  let alternateRepoSelection:
+    | Awaited<ReturnType<typeof resolveAlternatePathRunRepository>>
+    | null = null;
+  let readProvider = repoSelection.provider;
+  let readMode: 'selected' | 'alternate' = 'selected';
+  let run = await repo.findRunById(runId);
+  if (run === null) {
+    alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
+    if (alternateRepoSelection) {
+      const alternateRun = await alternateRepoSelection.repo.findRunById(runId);
+      if (alternateRun) {
+        run = alternateRun;
+        readProvider = alternateRepoSelection.provider;
+        readMode = 'alternate';
+      }
+    }
+  }
   if (run === null) {
     throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, run);
-  const nodes = await repo.listRunNodes(runId);
-  const events = await repo.listRunEvents(runId);
+  const readRepo =
+    readMode === 'alternate'
+      ? alternateRepoSelection?.repo ?? repo
+      : repo;
+  const nodes = await readRepo.listRunNodes(runId);
+  const events = await readRepo.listRunEvents(runId);
   const runMeta = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const compile =
     runMeta?.['graphCompile'] && typeof runMeta['graphCompile'] === 'object'
       ? (runMeta['graphCompile'] as Record<string, unknown>)
       : null;
   const errorSummary = buildAiPathRunErrorSummary({ run, nodes, events });
-  return NextResponse.json({ run, nodes, events, compile, errorSummary });
+  const writerSelection = readPersistedRunRepositorySelection(run.meta);
+  const repositoryMismatch = hasRunRepositorySelectionMismatch(writerSelection, repoSelection);
+
+  const headers = new Headers({
+    'X-Ai-Paths-Run-Provider': repoSelection.provider,
+    'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
+    'X-Ai-Paths-Run-Read-Provider': readProvider,
+    'X-Ai-Paths-Run-Read-Mode': readMode,
+  });
+  if (writerSelection?.provider) {
+    headers.set('X-Ai-Paths-Run-Writer-Provider', writerSelection.provider);
+  }
+  if (writerSelection?.routeMode) {
+    headers.set('X-Ai-Paths-Run-Writer-Route-Mode', writerSelection.routeMode);
+  }
+  if (repositoryMismatch) {
+    headers.set('X-Ai-Paths-Run-Provider-Mismatch', '1');
+  }
+
+  return NextResponse.json(
+    {
+      run,
+      nodes,
+      events,
+      compile,
+      errorSummary,
+      repository: {
+        reader: {
+          collection: repoSelection.collection,
+          selectedProvider: repoSelection.provider,
+          selectedRouteMode: repoSelection.routeMode,
+          readProvider,
+          readMode,
+        },
+        writer: writerSelection,
+        mismatch: repositoryMismatch,
+      },
+    },
+    {
+      headers: Object.fromEntries(headers.entries()),
+    }
+  );
 }
 
 export async function DELETE_handler(
@@ -44,7 +111,7 @@ export async function DELETE_handler(
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-delete');
   const runId = params.runId;
-  const repo = await getPathRunRepository();
+  const repo = (await resolvePathRunRepository()).repo;
   const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });

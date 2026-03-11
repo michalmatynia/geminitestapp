@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverAssetFile,
   createDefaultCaseResolverWorkspace,
   createEmptyNodeFileSnapshot,

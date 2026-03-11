@@ -1,0 +1,360 @@
+name: Agentic Preflight
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/agentic-preflight.yml'
+      - 'BUILD.bazel'
+      - 'config/agentic/**'
+      - 'docs/build/**'
+      - 'package-lock.json'
+      - 'package.json'
+      - 'scripts/agentic/**'
+      - 'src/app/api/ai-paths/**'
+      - 'src/app/api/kangur/**'
+      - 'src/app/api/system/logs/**'
+      - 'src/app/api/v2/products/**'
+      - 'src/features/ai/ai-paths/**'
+      - 'src/features/kangur/**'
+      - 'src/features/observability/**'
+      - 'src/features/products/**'
+      - 'src/shared/lib/ai-paths/**'
+      - 'src/shared/lib/observability/**'
+      - 'src/shared/lib/products/**'
+      - 'tools/bazel/**'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  agentic-preflight:
+    name: agentic-preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      bundle_matrix: ${{ steps.bundle-selection-outputs.outputs.bundle_matrix }}
+      has_bundles: ${{ steps.bundle-selection-outputs.outputs.has_bundles }}
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve changed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            printf 'No pull request diff context available; running agentic preflight without changed files.\n'
+            exit 0
+          fi
+
+          base_sha='${{ github.event.pull_request.base.sha }}'
+          head_sha='${{ github.sha }}'
+          mapfile -t changed_files < <(git diff --name-only --diff-filter=ACMR "$base_sha" "$head_sha")
+          if [ "${#changed_files[@]}" -eq 0 ]; then
+            printf 'No changed files detected for agentic preflight.\n'
+          else
+            printf '%s\n' "${changed_files[@]}" > /tmp/agentic-changed-files.txt
+            printf 'Changed files for agentic preflight:\n'
+            printf ' - %s\n' "${changed_files[@]}"
+          fi
+
+      - name: Run agentic preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/agentic-changed-files.txt ]; then
+            mapfile -t changed_files < /tmp/agentic-changed-files.txt
+            npm run bazel -- run //:agentic_preflight -- "${changed_files[@]}"
+          else
+            npm run bazel -- run //:agentic_preflight
+          fi
+
+      - name: Execute agentic work order
+        run: npm run agentic:execute
+
+      - name: Collect generated artifacts
+        run: npm run agentic:collect-artifacts
+
+      - name: Build agentic bundle plan
+        run: npm run agentic:bundle-plan
+
+      - name: Download previous base-branch agent history snapshot for bundle selection
+        id: bundle-selection-history
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          artifact_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=agent-history&per_page=100" --jq '.artifacts
+            | map(select(
+                .expired == false and
+                ((.workflow_run.id | tostring) != env.GITHUB_RUN_ID) and
+                ((.workflow_run.head_branch // "") == env.GITHUB_BASE_REF)
+              ))
+            | sort_by(.created_at)
+            | reverse
+            | .[0]')"
+
+          if [ -z "$artifact_json" ] || [ "$artifact_json" = "null" ]; then
+            printf 'found=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          download_url="$(printf '%s' "$artifact_json" | jq -r '.archive_download_url')"
+          mkdir -p artifacts/agent-history/previous
+          gh api "$download_url" > /tmp/agent-history-base-selection.zip
+          unzip -jo /tmp/agent-history-base-selection.zip '*latest.json' -d artifacts/agent-history/previous >/dev/null
+          mv artifacts/agent-history/previous/latest.json artifacts/agent-history/previous/base-branch-selection.json
+          printf 'found=true\n' >> "$GITHUB_OUTPUT"
+
+      - name: Build agentic bundle selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.bundle-selection-history.outputs.found || 'false' }}" = "true" ]; then
+            npm run agentic:select-bundles -- \
+              --plan artifacts/agent-bundle-plan.json \
+              --previous artifacts/agent-history/previous/base-branch-selection.json
+          else
+            npm run agentic:select-bundles -- --plan artifacts/agent-bundle-plan.json
+          fi
+
+      - name: Expose bundle selection outputs
+        id: bundle-selection-outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle_matrix="$(node --input-type=module -e "import fs from 'node:fs'; const selection = JSON.parse(fs.readFileSync('artifacts/agent-bundle-selection.json', 'utf8')); process.stdout.write(JSON.stringify(selection.selectedBundles));")"
+          if [ "$bundle_matrix" = "[]" ]; then
+            printf 'has_bundles=false\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'has_bundles=true\n' >> "$GITHUB_OUTPUT"
+          fi
+          printf 'bundle_matrix=%s\n' "$bundle_matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize agentic bundle selection
+        run: npm run agentic:bundle-selection:summary -- --input artifacts/agent-bundle-selection.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload agent work order
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-work-order
+          path: artifacts/agent-work-order.json
+          if-no-files-found: error
+
+      - name: Upload agent execution report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-execution-report
+          path: |
+            artifacts/agent-execution-report.json
+            artifacts/generated-outputs-manifest.json
+          if-no-files-found: error
+
+      - name: Upload agent bundle plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-bundle-plan
+          path: artifacts/agent-bundle-plan.json
+          if-no-files-found: error
+
+      - name: Upload agent bundle selection
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-bundle-selection
+          path: artifacts/agent-bundle-selection.json
+          if-no-files-found: error
+
+      - name: Upload generated outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-generated-outputs
+          path: artifacts/generated-outputs
+          if-no-files-found: error
+
+  agentic-bundle-validation:
+    name: agentic-bundle-validation (${{ matrix.bundle }})
+    runs-on: ubuntu-latest
+    needs: agentic-preflight
+    if: needs.agentic-preflight.outputs.has_bundles == 'true'
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        bundle: ${{ fromJson(needs.agentic-preflight.outputs.bundle_matrix) }}
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download agent work order
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-work-order
+          path: artifacts
+
+      - name: Run bundle validation
+        run: npm run agentic:run-bundle -- --bundle "${{ matrix.bundle }}"
+
+      - name: Upload bundle execution report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-bundle-report-${{ matrix.bundle }}
+          path: artifacts/agent-bundle-reports/${{ matrix.bundle }}.json
+          if-no-files-found: error
+
+  agentic-history:
+    name: agentic-history
+    runs-on: ubuntu-latest
+    needs:
+      - agentic-preflight
+      - agentic-bundle-validation
+    if: always() && needs.agentic-preflight.result == 'success'
+    timeout-minutes: 15
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download agent work order
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-work-order
+          path: artifacts
+
+      - name: Download agent execution report
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-execution-report
+          path: artifacts
+
+      - name: Download agent bundle plan
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-bundle-plan
+          path: artifacts
+
+      - name: Download bundle execution reports
+        if: needs.agentic-preflight.outputs.has_bundles == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: agent-bundle-report-*
+          path: artifacts/agent-bundle-reports
+          merge-multiple: true
+
+      - name: Build agent history snapshot
+        run: node --import tsx scripts/agentic/agent-history.ts
+
+      - name: Download previous base-branch agent history snapshot
+        id: previous-history
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          artifact_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=agent-history&per_page=100" --jq '.artifacts
+            | map(select(
+                .expired == false and
+                ((.workflow_run.id | tostring) != env.GITHUB_RUN_ID) and
+                ((.workflow_run.head_branch // "") == env.GITHUB_BASE_REF)
+              ))
+            | sort_by(.created_at)
+            | reverse
+            | .[0]')"
+
+          if [ -z "$artifact_json" ] || [ "$artifact_json" = "null" ]; then
+            printf 'found=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          download_url="$(printf '%s' "$artifact_json" | jq -r '.archive_download_url')"
+          mkdir -p artifacts/agent-history/previous
+          gh api "$download_url" > /tmp/agent-history-base.zip
+          unzip -jo /tmp/agent-history-base.zip '*latest.json' -d artifacts/agent-history/previous >/dev/null
+          mv artifacts/agent-history/previous/latest.json artifacts/agent-history/previous/base-branch.json
+          printf 'found=true\n' >> "$GITHUB_OUTPUT"
+
+      - name: Build agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        run: |
+          npm run agentic:history:diff -- \
+            --current artifacts/agent-history/latest.json \
+            --previous artifacts/agent-history/previous/base-branch.json \
+            --output artifacts/agent-history/diff.json
+
+      - name: Summarize agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        run: npm run agentic:history:summary -- --input artifacts/agent-history/diff.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload agent history snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-history
+          path: artifacts/agent-history/latest.json
+          if-no-files-found: error
+
+      - name: Upload agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-history-diff
+          path: artifacts/agent-history/diff.json
+          if-no-files-found: error

@@ -337,6 +337,59 @@ describe('client-run-tracker', () => {
     ).toBe(false);
   });
 
+  it('keeps polling briefly when a newly tracked run detail returns not found', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Run not found',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          run: createRunRecord({
+            id: 'run-not-found-grace',
+            status: 'running',
+            updatedAt: '2026-03-09T12:00:04.000Z',
+          }),
+        },
+      });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-not-found-grace', (snapshot: TrackedAiPathRunSnapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit('error', new Event('error'));
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+    });
+
+    expect(getAiPathRunMock).toHaveBeenCalledTimes(1);
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-not-found-grace',
+      status: 'queued',
+      trackingState: 'active',
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(2_000);
+      await Promise.resolve();
+    });
+
+    expect(getAiPathRunMock).toHaveBeenCalledTimes(2);
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-not-found-grace',
+      status: 'running',
+      trackingState: 'active',
+      errorMessage: null,
+    });
+  });
+
   it('returns a no-op unsubscribe for an empty runId', () => {
     const listener = vi.fn();
     const unsub = subscribeToTrackedAiPathRun('', listener);

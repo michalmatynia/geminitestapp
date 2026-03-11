@@ -12,11 +12,11 @@ vi.mock('framer-motion', () => ({
   motion: {
     div: ({
       children,
-      animate,
-      initial,
-      transition,
-      whileHover,
-      whileTap,
+      animate: _animate,
+      initial: _initial,
+      transition: _transition,
+      whileHover: _whileHover,
+      whileTap: _whileTap,
       ...props
     }: React.HTMLAttributes<HTMLDivElement> & {
       animate?: unknown;

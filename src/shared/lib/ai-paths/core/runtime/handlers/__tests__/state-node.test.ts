@@ -70,7 +70,7 @@ const buildContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerC
     setVariable: () => {},
     ...overrides,
   };
-  const variables = (context.variables ?? {}) as Record<string, unknown>;
+  const variables = context.variables ?? {};
   context.variables = variables;
   context.setVariable = (key: string, value: unknown) => {
     variables[key] = value;

@@ -41,7 +41,7 @@ import {
   remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type EnqueueRunInput = {
@@ -243,7 +243,8 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
 
   const execute = async (): Promise<AiPathRunRecord> => {
     const enqueueStartedAt = performance.now();
-    const repo = await getPathRunRepository();
+    const repoSelection = await resolvePathRunRepository();
+    const repo = repoSelection.repo;
     if (requestId) {
       const existingByRequestId = await repo.listRuns({
         ...(input.userId ? { userId: input.userId } : {}),
@@ -308,6 +309,12 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const meta = withRuntimeFingerprintMeta({
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
+      runRepository: {
+        collection: repoSelection.collection,
+        provider: repoSelection.provider,
+        routeMode: repoSelection.routeMode,
+        selectedAt: new Date().toISOString(),
+      },
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
       nodePolicy:

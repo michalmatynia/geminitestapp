@@ -167,7 +167,6 @@ describe('handleDatabase', () => {
 
     expect(result).toEqual(
       expect.objectContaining({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         bundle: expect.objectContaining({
           error: 'Query failed',
         }),
@@ -321,7 +320,6 @@ describe('handleDatabase', () => {
 
     expect(result).toEqual(
       expect.objectContaining({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         writeOutcome: expect.objectContaining({
           status: 'warning',
         }),

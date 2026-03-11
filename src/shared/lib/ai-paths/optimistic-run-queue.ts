@@ -7,10 +7,18 @@ import { AI_PATHS_RUN_SOURCE_VALUES } from './run-sources';
 
 const STORAGE_KEY = 'ai-paths-optimistic-run-queue';
 const DEFAULT_RUN_TTL_MS = 60_000;
+const ACTIVE_RUN_TTL_MS = 10 * 60_000;
 const MAX_QUEUE_SIZE = 50;
 const MAX_QUEUE_SIZE_ON_QUOTA_RETRY = 25;
 const MAX_QUEUE_SIZE_MINIMUM_FALLBACK = 10;
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+const ACTIVE_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
+  'queued',
+  'running',
+  'blocked_on_lease',
+  'handoff_ready',
+  'paused',
+]);
 
 type StoredOptimisticRun = {
   expiresAt: number;
@@ -59,6 +67,9 @@ const compareRuns = (left: AiPathRunRecord, right: AiPathRunRecord): number => {
   if (rightTimestamp !== leftTimestamp) return rightTimestamp - leftTimestamp;
   return (right.id ?? '').localeCompare(left.id ?? '');
 };
+
+const isActiveRun = (run: Pick<AiPathRunRecord, 'status'>): boolean =>
+  ACTIVE_RUN_STATUSES.has(run.status);
 
 const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
@@ -379,7 +390,10 @@ export const rememberOptimisticAiPathRun = (
   const normalizedRun = normalizeStoredRun(run);
   if (!normalizedRun) return;
 
-  const ttlMs = Math.max(1_000, options?.ttlMs ?? DEFAULT_RUN_TTL_MS);
+  const ttlMs = Math.max(
+    1_000,
+    options?.ttlMs ?? (isActiveRun(normalizedRun) ? ACTIVE_RUN_TTL_MS : DEFAULT_RUN_TTL_MS)
+  );
   const entries = readEntries();
   const nextEntries = replaceEntry(entries, normalizedRun, Date.now() + ttlMs);
   writeEntries(nextEntries);
@@ -458,7 +472,19 @@ export const mergeAiPathQueuePayloadWithOptimisticRuns = (
     if (runId) serverRunIds.add(runId);
   });
   if (serverRunIds.size > 0) {
-    removeOptimisticAiPathRuns(serverRunIds);
+    const terminalRunIds: string[] = [];
+    serverRuns.forEach((run) => {
+      const runId = normalizeRunId(run?.id);
+      if (!runId) return;
+      if (isActiveRun(run)) {
+        rememberOptimisticAiPathRun(run);
+        return;
+      }
+      terminalRunIds.push(runId);
+    });
+    if (terminalRunIds.length > 0) {
+      removeOptimisticAiPathRuns(terminalRunIds);
+    }
   }
   return previewAiPathQueuePayloadWithOptimisticRuns(payload, options);
 };

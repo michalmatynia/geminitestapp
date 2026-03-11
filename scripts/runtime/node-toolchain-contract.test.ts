@@ -27,6 +27,12 @@ const nvmrcWorkflowPaths = fs
   .filter((entry) => entry.endsWith('.yml'))
   .map((entry) => `.github/workflows/${entry}`)
   .filter((workflowPath) => readRepoFile(workflowPath).includes("node-version-file: '.nvmrc'"));
+const bazelToolchainWorkflowText = readRepoFile('.github/workflows/bazel-toolchain.yml');
+const bazelSmokeWorkflowText = readRepoFile('.github/workflows/bazel-smoke.yml');
+const bazelQualityWorkflowText = readRepoFile('.github/workflows/bazel-quality.yml');
+const bazelRegressionsWorkflowText = readRepoFile('.github/workflows/bazel-regressions.yml');
+const buildReadmeText = readRepoFile('docs/build/README.md');
+const buildBazelDocText = readRepoFile('docs/build/bazel.md');
 const npmCacheWorkflowPaths = fs
   .readdirSync(workflowDirectory)
   .filter((entry) => entry.endsWith('.yml'))
@@ -61,6 +67,14 @@ describe('Node toolchain contract', () => {
     expect(nodeToolchainContractScript).toContain('node scripts/runtime/check-bun-config.cjs');
   });
 
+  it('keeps the canonical Bazel repo lane scripts wired to the root repo targets', () => {
+    expect(packageJson.scripts?.['bazel:toolchain']).toBe('bazelisk run //:repo_toolchain');
+    expect(packageJson.scripts?.['bazel:smoke']).toBe('bazelisk run //:repo_smoke');
+    expect(packageJson.scripts?.['bazel:quality']).toBe('bazelisk run //:repo_quality');
+    expect(packageJson.scripts?.['bazel:regressions']).toBe('bazelisk run //:repo_regressions');
+    expect(packageJson.scripts?.['bazel:ci']).toBe('bazelisk run //:repo_ci');
+  });
+
   it('keeps the Node version mirror aligned with .nvmrc', () => {
     expect(readRepoFile('.node-version').trim()).toBe(nvmrc);
   });
@@ -91,6 +105,20 @@ describe('Node toolchain contract', () => {
     expect(workflowText).toContain('run: npm ci');
     expect(workflowText).toContain('run: npm run check:toolchain:contract:node');
     expect(workflowText).toContain('run: npm run test:toolchain:contract');
+  });
+
+  it('keeps dedicated Bazel repo-lane workflows aligned to the canonical npm entrypoints', () => {
+    expect(bazelToolchainWorkflowText).toContain('name: Bazel Toolchain');
+    expect(bazelToolchainWorkflowText).toContain('run: npm run bazel:toolchain');
+
+    expect(bazelSmokeWorkflowText).toContain('name: Bazel Smoke');
+    expect(bazelSmokeWorkflowText).toContain('run: npm run bazel:smoke');
+
+    expect(bazelQualityWorkflowText).toContain('name: Bazel Quality');
+    expect(bazelQualityWorkflowText).toContain('run: npm run bazel:quality');
+
+    expect(bazelRegressionsWorkflowText).toContain('name: Bazel Regressions');
+    expect(bazelRegressionsWorkflowText).toContain('run: npm run bazel:regressions');
   });
 
   it('keeps the canonical test matrix enforcing the npm-first toolchain contract too', () => {
@@ -138,6 +166,16 @@ describe('Node toolchain contract', () => {
       const docText = readRepoFile(docPath);
       expect(docText).toContain('.nvmrc');
       expect(docText).not.toContain('Node 22');
+    }
+  });
+
+  it('documents the Bazel repo lanes consistently across the build docs', () => {
+    for (const surface of [buildReadmeText, buildBazelDocText]) {
+      expect(surface).toContain('npm run bazel:toolchain');
+      expect(surface).toContain('npm run bazel:smoke');
+      expect(surface).toContain('npm run bazel:quality');
+      expect(surface).toContain('npm run bazel:regressions');
+      expect(surface).toContain('npm run bazel:ci');
     }
   });
 });

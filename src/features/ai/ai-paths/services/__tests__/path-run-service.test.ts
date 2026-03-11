@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 
 const {
-  getPathRunRepositoryMock,
+  resolvePathRunRepositoryMock,
   enqueuePathRunJobMock,
   removePathRunQueueEntriesMock,
   scheduleLocalFallbackRunMock,
@@ -12,7 +12,7 @@ const {
   captureExceptionMock,
   logWarningMock,
 } = vi.hoisted(() => ({
-  getPathRunRepositoryMock: vi.fn(),
+  resolvePathRunRepositoryMock: vi.fn(),
   enqueuePathRunJobMock: vi.fn(),
   removePathRunQueueEntriesMock: vi.fn(),
   scheduleLocalFallbackRunMock: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/server/auth', () => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
+  resolvePathRunRepository: resolvePathRunRepositoryMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
@@ -86,9 +86,14 @@ describe('path-run-service enqueuePathRun', () => {
     }));
 
     const createRunMock = vi.fn();
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
-      createRun: createRunMock,
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+        createRun: createRunMock,
+      },
     });
 
     const { enqueuePathRun } = await loadModule();
@@ -123,9 +128,14 @@ describe('path-run-service enqueuePathRun', () => {
     );
 
     const createRunMock = vi.fn();
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
-      createRun: createRunMock,
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+        createRun: createRunMock,
+      },
     });
 
     const { enqueuePathRun } = await loadModule();
@@ -172,12 +182,17 @@ describe('path-run-service enqueuePathRun', () => {
         meta: null,
       });
       const createRunNodesMock = vi.fn().mockResolvedValue(undefined);
-      getPathRunRepositoryMock.mockResolvedValue({
-        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
-        createRun: createRunMock,
-        createRunNodes: createRunNodesMock,
-        createRunEvent: vi.fn().mockResolvedValue(undefined),
-        updateRunIfStatus: vi.fn().mockResolvedValue(null),
+      resolvePathRunRepositoryMock.mockResolvedValue({
+        provider: 'mongodb',
+        routeMode: 'explicit',
+        collection: 'ai_path_runs',
+        repo: {
+          listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+          createRun: createRunMock,
+          createRunNodes: createRunNodesMock,
+          createRunEvent: vi.fn().mockResolvedValue(undefined),
+          updateRunIfStatus: vi.fn().mockResolvedValue(null),
+        },
       });
       enqueuePathRunJobMock.mockResolvedValue(undefined);
       recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
@@ -220,12 +235,17 @@ describe('path-run-service enqueuePathRun', () => {
     const createRunNodesMock = vi.fn().mockResolvedValue(undefined);
     const createRunEventMock = vi.fn().mockResolvedValue(undefined);
 
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: listRunsMock,
-      createRun: createRunMock,
-      createRunNodes: createRunNodesMock,
-      createRunEvent: createRunEventMock,
-      updateRunIfStatus: vi.fn().mockResolvedValue(null),
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: listRunsMock,
+        createRun: createRunMock,
+        createRunNodes: createRunNodesMock,
+        createRunEvent: createRunEventMock,
+        updateRunIfStatus: vi.fn().mockResolvedValue(null),
+      },
     });
     enqueuePathRunJobMock.mockResolvedValue(undefined);
     recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
@@ -262,6 +282,13 @@ describe('path-run-service enqueuePathRun', () => {
       edges: config.edges,
     });
     expect(createRunArgs?.meta).not.toHaveProperty('identityRepair');
+    expect(createRunArgs?.meta).toMatchObject({
+      runRepository: {
+        collection: 'ai_path_runs',
+        provider: 'mongodb',
+        routeMode: 'explicit',
+      },
+    });
   });
 
   it('uses canonical requestId lookup only once when deduplicating enqueue runs', async () => {
@@ -276,12 +303,17 @@ describe('path-run-service enqueuePathRun', () => {
     const listRunsMock = vi.fn().mockResolvedValue({ runs: [existingRun], total: 1 });
     const createRunMock = vi.fn();
 
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: listRunsMock,
-      createRun: createRunMock,
-      createRunNodes: vi.fn(),
-      createRunEvent: vi.fn(),
-      updateRunIfStatus: vi.fn().mockResolvedValue(null),
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: listRunsMock,
+        createRun: createRunMock,
+        createRunNodes: vi.fn(),
+        createRunEvent: vi.fn(),
+        updateRunIfStatus: vi.fn().mockResolvedValue(null),
+      },
     });
 
     const { enqueuePathRun } = await loadModule();
@@ -314,18 +346,23 @@ describe('path-run-service enqueuePathRun', () => {
   it('does not schedule local fallback when durable queue is explicitly required', async () => {
     process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] = 'true';
     const config = createDefaultPathConfig('path_durable_queue');
-    getPathRunRepositoryMock.mockResolvedValue({
-      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
-      createRun: vi.fn().mockResolvedValue({
-        id: 'run-durable',
-        pathId: config.id,
-        status: 'queued',
-        startedAt: null,
-        meta: null,
-      }),
-      createRunNodes: vi.fn().mockResolvedValue(undefined),
-      createRunEvent: vi.fn().mockResolvedValue(undefined),
-      updateRunIfStatus: vi.fn().mockResolvedValue(null),
+    resolvePathRunRepositoryMock.mockResolvedValue({
+      provider: 'mongodb',
+      routeMode: 'explicit',
+      collection: 'ai_path_runs',
+      repo: {
+        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+        createRun: vi.fn().mockResolvedValue({
+          id: 'run-durable',
+          pathId: config.id,
+          status: 'queued',
+          startedAt: null,
+          meta: null,
+        }),
+        createRunNodes: vi.fn().mockResolvedValue(undefined),
+        createRunEvent: vi.fn().mockResolvedValue(undefined),
+        updateRunIfStatus: vi.fn().mockResolvedValue(null),
+      },
     });
     enqueuePathRunJobMock.mockResolvedValue(undefined);
     recordRuntimeRunQueuedMock.mockResolvedValue(undefined);

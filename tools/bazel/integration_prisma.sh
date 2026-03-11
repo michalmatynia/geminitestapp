@@ -7,7 +7,4 @@ if [[ -z "${BUILD_WORKSPACE_DIRECTORY:-}" ]]; then
 fi
 
 cd "${BUILD_WORKSPACE_DIRECTORY}"
-
-./node_modules/.bin/prisma migrate status
-./node_modules/.bin/tsx scripts/testing/check-prisma-test-db.ts
-exec ./node_modules/.bin/vitest run --project integration-prisma
+exec node scripts/testing/run-integration-prisma-baseline.mjs --strict --ci

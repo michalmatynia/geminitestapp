@@ -49,13 +49,11 @@ import {
   bootstrapPortablePathEnvelopeVerificationAuditSinks,
   bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
   bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks,
-  bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
   createPortablePathSigningPolicyTrendReporter,
   loadPortablePathSigningPolicyTrendSnapshots,
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
   createPortablePathEnvelopeVerificationPrismaSink,
-  notifyPortablePathAuditSinkAutoRemediation,
   resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
@@ -85,7 +83,6 @@ import {
   resolvePortablePathSigningPolicyTrendPersistenceEnabledFromEnvironment,
   resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment,
   resolvePortablePathSigningPolicyTrendReportEveryUsesFromEnvironment,
-  runPortablePathAuditSinkAutoRemediation,
 } from '../sinks.server';
 
 const createEvent = (

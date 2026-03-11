@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2/adapter/createMasterFolderTreeAdapterV3';
-import type { MasterFolderTreePersistOperation } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const decodeNodeId = (nodeId: string) => {

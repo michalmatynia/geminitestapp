@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { useFolderTreeKeyboardNav } from '@/features/foldertree/v2/hooks/useFolderTreeKeyboardNav';
 import { useFolderTreeInstanceV2 } from '@/features/foldertree/v2/hooks/useFolderTreeInstanceV2';

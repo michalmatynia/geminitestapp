@@ -5,7 +5,11 @@ import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
+import {
+  resolveAlternatePathRunRepository,
+  resolvePathRunRepository,
+} from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 
@@ -27,6 +31,7 @@ const PUBSUB_CATCHUP_INTERVAL_MS = 10_000;
 const POLL_INTERVAL_MIN_MS = 200;
 const POLL_INTERVAL_MAX_MS = 2_000;
 const POLL_BACKOFF_MULTIPLIER = 1.5;
+const STREAM_KEEPALIVE_INTERVAL_MS = 15_000;
 
 export const querySchema = z.object({
   since: optionalTrimmedQueryString(),
@@ -63,6 +68,7 @@ type PubSubMessage = {
  * Returns whether the run is in a terminal state.
  */
 async function sendCatchUp(
+  repo: AiPathRunRepository,
   runId: string,
   send: (event: string, data: unknown) => void,
   cursors: {
@@ -76,7 +82,6 @@ async function sendCatchUp(
   lastNodeCursor: { ts: string; nodeId: string } | null;
   lastEventCursor: { createdAt: string; id: string } | null;
 }> {
-  const repo = await getPathRunRepository();
   const nextRun: AiPathRunRecord | null = await repo.findRunById(runId);
   let { lastRunUpdatedAt, lastNodeCursor, lastEventCursor } = cursors;
 
@@ -140,6 +145,7 @@ async function sendCatchUp(
  * Falls back to polling if Redis is unavailable or disconnects mid-stream.
  */
 async function streamWithPubSub(
+  repo: AiPathRunRepository,
   runId: string,
   send: (event: string, data: unknown) => void,
   initialCursors: {
@@ -151,7 +157,7 @@ async function streamWithPubSub(
 ): Promise<void> {
   const sub = getRedisSubscriber();
   if (!sub || !isSubscriberConnected()) {
-    await streamWithPolling(runId, send, initialCursors, isCancelled);
+    await streamWithPolling(repo, runId, send, initialCursors, isCancelled);
     return;
   }
 
@@ -190,7 +196,7 @@ async function streamWithPubSub(
     await sub.subscribe(channel);
 
     // 2. Catch-up query to handle race condition
-    const catchUp = await sendCatchUp(runId, send, cursors);
+    const catchUp = await sendCatchUp(repo, runId, send, cursors);
     cursors = {
       lastRunUpdatedAt: catchUp.lastRunUpdatedAt,
       lastNodeCursor: catchUp.lastNodeCursor,
@@ -213,7 +219,7 @@ async function streamWithPubSub(
         } catch {
           // Already disconnected
         }
-        await streamWithPolling(runId, send, cursors, isCancelled);
+        await streamWithPolling(repo, runId, send, cursors, isCancelled);
         return;
       }
 
@@ -221,7 +227,7 @@ async function streamWithPubSub(
 
       // Periodic catch-up query every 10s to catch lost messages
       if (now - lastCatchUpMs >= PUBSUB_CATCHUP_INTERVAL_MS) {
-        const check = await sendCatchUp(runId, send, cursors);
+        const check = await sendCatchUp(repo, runId, send, cursors);
         cursors = {
           lastRunUpdatedAt: check.lastRunUpdatedAt,
           lastNodeCursor: check.lastNodeCursor,
@@ -236,7 +242,7 @@ async function streamWithPubSub(
 
       // Idle timeout — final safety net
       if (now - lastActivityMs > PUBSUB_IDLE_TIMEOUT_MS) {
-        const check = await sendCatchUp(runId, send, cursors);
+        const check = await sendCatchUp(repo, runId, send, cursors);
         cursors = {
           lastRunUpdatedAt: check.lastRunUpdatedAt,
           lastNodeCursor: check.lastNodeCursor,
@@ -266,6 +272,7 @@ async function streamWithPubSub(
  * Interval range: POLL_INTERVAL_MIN_MS → POLL_INTERVAL_MAX_MS.
  */
 async function streamWithPolling(
+  repo: AiPathRunRepository,
   runId: string,
   send: (event: string, data: unknown) => void,
   initialCursors: {
@@ -283,7 +290,7 @@ async function streamWithPolling(
     const prevEventId = cursors.lastEventCursor?.id;
     const prevRunUpdatedAt = cursors.lastRunUpdatedAt;
 
-    const result = await sendCatchUp(runId, send, cursors);
+    const result = await sendCatchUp(repo, runId, send, cursors);
     cursors = {
       lastRunUpdatedAt: result.lastRunUpdatedAt,
       lastNodeCursor: result.lastNodeCursor,
@@ -311,8 +318,23 @@ export async function getAiPathRunStreamHandler(
 ): Promise<Response> {
   const { runId } = params;
   const access = await requireAiPathsRunAccess();
-  const repo = await getPathRunRepository();
-  const initialRun = await repo.findRunById(runId);
+  const repoSelection = await resolvePathRunRepository();
+  let readRepo = repoSelection.repo;
+  let readProvider = repoSelection.provider;
+  let readMode: 'selected' | 'alternate' = 'selected';
+  let initialRun = await readRepo.findRunById(runId);
+  if (!initialRun) {
+    const alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
+    if (alternateRepoSelection) {
+      const alternateRun = await alternateRepoSelection.repo.findRunById(runId);
+      if (alternateRun) {
+        initialRun = alternateRun;
+        readRepo = alternateRepoSelection.repo;
+        readProvider = alternateRepoSelection.provider;
+        readMode = 'alternate';
+      }
+    }
+  }
   if (!initialRun) {
     throw notFoundError('Run not found', { runId });
   }
@@ -334,28 +356,47 @@ export async function getAiPathRunStreamHandler(
         const payload = `event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(payload));
       };
-
-      send('ready', { runId });
-      send('run', initialRun);
-
-      const initialCursors = {
-        lastRunUpdatedAt: toISOStringSafe(initialRun.updatedAt ?? initialRun.createdAt),
-        lastNodeCursor: null as { ts: string; nodeId: string } | null,
-        lastEventCursor: initialSince
-          ? { createdAt: initialSince.toISOString(), id: '' }
-          : (null as { createdAt: string; id: string } | null),
+      const sendComment = (comment: string): void => {
+        if (cancelled) return;
+        controller.enqueue(encoder.encode(`: ${comment}\n\n`));
       };
+      const keepAliveTimer = setInterval(() => {
+        sendComment('keepalive');
+      }, STREAM_KEEPALIVE_INTERVAL_MS);
 
-      // If already terminal, send done immediately
-      if (TERMINAL_STATUSES.has(initialRun.status)) {
-        send('done', { runId, status: initialRun.status });
+      try {
+        send('ready', {
+          runId,
+          repository: {
+            selectedProvider: repoSelection.provider,
+            selectedRouteMode: repoSelection.routeMode,
+            readProvider,
+            readMode,
+          },
+        });
+        send('run', initialRun);
+
+        const initialCursors = {
+          lastRunUpdatedAt: toISOStringSafe(initialRun.updatedAt ?? initialRun.createdAt),
+          lastNodeCursor: null as { ts: string; nodeId: string } | null,
+          lastEventCursor: initialSince
+            ? { createdAt: initialSince.toISOString(), id: '' }
+            : (null as { createdAt: string; id: string } | null),
+        };
+
+        // If already terminal, send done immediately
+        if (TERMINAL_STATUSES.has(initialRun.status)) {
+          send('done', { runId, status: initialRun.status });
+          controller.close();
+          return;
+        }
+
+        await streamWithPubSub(readRepo, runId, send, initialCursors, () => cancelled);
+
         controller.close();
-        return;
+      } finally {
+        clearInterval(keepAliveTimer);
       }
-
-      await streamWithPubSub(runId, send, initialCursors, () => cancelled);
-
-      controller.close();
     },
     cancel() {
       cancelled = true;
@@ -367,6 +408,10 @@ export async function getAiPathRunStreamHandler(
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
+      'X-Ai-Paths-Run-Provider': repoSelection.provider,
+      'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
+      'X-Ai-Paths-Run-Read-Provider': readProvider,
+      'X-Ai-Paths-Run-Read-Mode': readMode,
     },
   });
 }

@@ -30,6 +30,20 @@ const listAllFiles = (absoluteDir, acc = []) => {
 const isTestFile = (filePath) =>
   /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(filePath);
 
+const isE2eTestFile = (relativePath) => relativePath.startsWith('e2e/');
+
+const negativePathFileHint = /(?:^|\/|\.)(?:invalid|error|fail|missing|denied|unauthori[sz]ed|forbidden|reject|guard|fallback|timeout|not-found)(?:[./-]|$)/i;
+const negativePathContentHint =
+  /\.\s*rejects\b|\btoThrow(?:Error)?\b|\bassert\.rejects\b|\bthrows?\b|\bunauthori[sz]ed\b|\bforbidden\b|\binvalid\b|\bmissing\b|\bnot found\b/i;
+
+const createFeatureSignal = (feature) => ({
+  feature,
+  testCount: 0,
+  fastTestCount: 0,
+  e2eTestCount: 0,
+  negativePathTestCount: 0,
+});
+
 const getLineNumber = (text, index) => {
   let line = 1;
   for (let i = 0; i < index && i < text.length; i++) {
@@ -50,15 +64,16 @@ export const analyzeTestDistribution = ({ root = process.cwd() } = {}) => {
     : [];
 
   // 2. Count test files per feature
-  const featureTestCounts = new Map();
+  const featureSignals = new Map();
   for (const feature of featureNames) {
-    featureTestCounts.set(feature, 0);
+    featureSignals.set(feature, createFeatureSignal(feature));
   }
 
   // Scan all test directories for test files
   let totalTestFiles = 0;
   let onlyCount = 0;
   let skipCount = 0;
+  let todoCount = 0;
   const testFiles = [];
 
   for (const testDir of TEST_DIRS) {
@@ -71,15 +86,27 @@ export const analyzeTestDistribution = ({ root = process.cwd() } = {}) => {
       const relativePath = toRepoRelativePath(root, filePath);
       testFiles.push(relativePath);
 
+      const rawText = fs.readFileSync(filePath, 'utf8');
+      const isNegativePathTest =
+        negativePathFileHint.test(relativePath) || negativePathContentHint.test(rawText);
+      const isFastTest = !isE2eTestFile(relativePath);
+
       // Attribute to feature
       for (const feature of featureNames) {
         if (relativePath.includes(`/features/${feature}/`) || relativePath.includes(`/features/${feature}.`)) {
-          featureTestCounts.set(feature, (featureTestCounts.get(feature) || 0) + 1);
+          const signal = featureSignals.get(feature) ?? createFeatureSignal(feature);
+          signal.testCount += 1;
+          if (isFastTest) {
+            signal.fastTestCount += 1;
+          } else {
+            signal.e2eTestCount += 1;
+          }
+          if (isNegativePathTest) {
+            signal.negativePathTestCount += 1;
+          }
+          featureSignals.set(feature, signal);
         }
       }
-
-      // Check for .only and .skip
-      const rawText = fs.readFileSync(filePath, 'utf8');
 
       // Rule: test-only-left
       const onlyRegex = /\b(?:it|test|describe)\.only\s*\(/g;
@@ -113,14 +140,31 @@ export const analyzeTestDistribution = ({ root = process.cwd() } = {}) => {
           })
         );
       }
+
+      const todoRegex = /\b(?:it|test|describe)\.todo\s*\(/g;
+      while ((match = todoRegex.exec(rawText)) !== null) {
+        todoCount++;
+        const line = getLineNumber(rawText, match.index);
+        issues.push(
+          createIssue({
+            severity: 'info',
+            ruleId: 'test-todo-left',
+            file: relativePath,
+            line,
+            message: '.todo() in test file. Convert placeholders into executable coverage when the behavior is ready.',
+          })
+        );
+      }
     }
   }
 
   // Rule: feature-no-tests
   const featuresWithTests = [];
   const featuresWithoutTests = [];
-  for (const [feature, count] of featureTestCounts) {
-    if (count === 0) {
+  const featuresWithoutFastTests = [];
+  const featuresWithoutNegativeTests = [];
+  for (const [feature, signal] of featureSignals) {
+    if (signal.testCount === 0) {
       featuresWithoutTests.push(feature);
       issues.push(
         createIssue({
@@ -131,7 +175,29 @@ export const analyzeTestDistribution = ({ root = process.cwd() } = {}) => {
         })
       );
     } else {
-      featuresWithTests.push({ feature, testCount: count });
+      featuresWithTests.push(signal);
+      if (signal.fastTestCount === 0) {
+        featuresWithoutFastTests.push(feature);
+        issues.push(
+          createIssue({
+            severity: 'warn',
+            ruleId: 'feature-no-fast-tests',
+            message: `Feature "${feature}" has tests, but none of them are fast local tests outside e2e.`,
+            context: `src/features/${feature}/`,
+          })
+        );
+      }
+      if (signal.negativePathTestCount === 0) {
+        featuresWithoutNegativeTests.push(feature);
+        issues.push(
+          createIssue({
+            severity: 'info',
+            ruleId: 'feature-no-negative-tests',
+            message: `Feature "${feature}" has tests, but no negative-path signal was detected in its attributed test files.`,
+            context: `src/features/${feature}/`,
+          })
+        );
+      }
     }
   }
 
@@ -146,16 +212,26 @@ export const analyzeTestDistribution = ({ root = process.cwd() } = {}) => {
       featureCount: featureNames.length,
       featuresWithTestCount: featuresWithTests.length,
       featuresWithoutTestCount: featuresWithoutTests.length,
+      featuresWithoutFastTestCount: featuresWithoutFastTests.length,
+      featuresWithoutNegativeTestCount: featuresWithoutNegativeTests.length,
       totalTestFiles,
       onlyCount,
       skipCount,
+      todoCount,
     },
     scope: {
       featuresDir: FEATURES_DIR,
       testDirs: TEST_DIRS,
     },
-    featuresWithTests: featuresWithTests.sort((a, b) => b.testCount - a.testCount),
+    featuresWithTests: featuresWithTests.sort((left, right) => {
+      if (right.testCount !== left.testCount) {
+        return right.testCount - left.testCount;
+      }
+      return left.feature.localeCompare(right.feature);
+    }),
     featuresWithoutTests,
+    featuresWithoutFastTests,
+    featuresWithoutNegativeTests,
     issues: sortedIssues,
     rules: summarizeRules(sortedIssues),
   };

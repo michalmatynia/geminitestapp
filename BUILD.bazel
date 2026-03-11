@@ -30,6 +30,16 @@ e2e_sources = glob([
     "e2e/**/*.json",
 ], allow_empty = True)
 
+root_test_sources = glob([
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "__tests__/**/*.js",
+    "__tests__/**/*.jsx",
+    "__tests__/**/*.mjs",
+    "__tests__/**/*.cjs",
+    "__tests__/**/*.json",
+], allow_empty = True)
+
 docs_sources = glob([
     "docs/**/*.md",
     "docs/**/*.mdx",
@@ -55,6 +65,7 @@ config_sources = glob([
     "*.js",
     "tsconfig*.json",
 ], allow_empty = True) + [
+    "bun.lock",
     "package.json",
     "package-lock.json",
     "MODULE.bazel",
@@ -65,6 +76,7 @@ config_sources = glob([
 filegroup(
     name = "package_metadata",
     srcs = [
+        "bun.lock",
         "package.json",
         "package-lock.json",
         "REPO.bazel",
@@ -77,6 +89,7 @@ filegroup(
 filegroup(
     name = "node_modules",
     srcs = [
+        "bun.lock",
         "package.json",
         "package-lock.json",
     ],
@@ -90,6 +103,26 @@ filegroup(
 filegroup(
     name = "typecheck_inputs",
     srcs = app_sources + script_sources + e2e_sources + prisma_sources + config_sources,
+)
+
+filegroup(
+    name = "toolchain_contract_inputs",
+    srcs = script_sources + config_sources,
+)
+
+filegroup(
+    name = "bun_runtime_contract_inputs",
+    srcs = glob([
+        "scripts/runtime/**/*",
+    ], allow_empty = True) + config_sources,
+)
+
+filegroup(
+    name = "bun_compat_inputs",
+    srcs = app_sources + glob([
+        "scripts/runtime/**/*",
+        "scripts/quality/**/*",
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
@@ -149,12 +182,18 @@ filegroup(
 
 filegroup(
     name = "observability_inputs",
-    srcs = app_sources + script_sources + docs_sources + config_sources,
+    srcs = app_sources + glob([
+        "scripts/observability/**/*",
+        "scripts/architecture/lib/scan-output.mjs",
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
     name = "canonical_inputs",
-    srcs = app_sources + script_sources + docs_sources + config_sources,
+    srcs = app_sources + root_test_sources + docs_sources + glob([
+        "scripts/canonical/**/*",
+        "scripts/lib/**/*",
+    ], allow_empty = True) + config_sources,
 )
 
 filegroup(
@@ -356,6 +395,130 @@ alias(
     actual = "//tools/js:unit",
 )
 
+alias(
+    name = "toolchain_contract",
+    actual = "//tools/js:bun_toolchain_contract",
+)
+
+alias(
+    name = "bun_config",
+    actual = "//tools/js:bun_config",
+)
+
+alias(
+    name = "bun_version",
+    actual = "//tools/js:bun_version",
+)
+
+alias(
+    name = "bun_lock_check",
+    actual = "//tools/js:bun_lock_check",
+)
+
+alias(
+    name = "bun_runtime_contract",
+    actual = "//tools/js:bun_runtime_contract",
+)
+
+alias(
+    name = "bun_compat",
+    actual = "//tools/js:bun_compat",
+)
+
+alias(
+    name = "bun_contracts",
+    actual = "//tools/js:bun_compat",
+)
+
+sh_binary(
+    name = "repo_toolchain",
+    srcs = ["//tools/bazel:repo_lane.sh"],
+    args = [
+        "//tools/js:bun_toolchain_contract",
+        "//tools/js:bun_compat",
+    ],
+    data = [
+        "//tools/js:bun_toolchain_contract",
+        "//tools/js:bun_compat",
+    ],
+)
+
+sh_binary(
+    name = "repo_smoke",
+    srcs = ["//tools/bazel:repo_lane.sh"],
+    args = [
+        "//tools/js:lint",
+        "//tools/js:typecheck",
+        "//tools/js:unit",
+        "//:integration_prisma",
+        "//:integration_mongo",
+        "//:next_build",
+        "//:api_error_sources",
+    ],
+    data = [
+        "//tools/js:lint",
+        "//tools/js:typecheck",
+        "//tools/js:unit",
+        ":integration_prisma",
+        ":integration_mongo",
+        ":next_build",
+        ":api_error_sources",
+    ],
+)
+
+sh_binary(
+    name = "repo_quality",
+    srcs = ["//tools/bazel:repo_lane.sh"],
+    args = [
+        "//:docs_structure",
+        "//:scanner_contracts",
+        "//:canonical_sitewide",
+        "//:ai_paths_canonical",
+        "//:observability",
+        "//:architecture_guardrails",
+        "//:ui_consolidation",
+    ],
+    data = [
+        ":docs_structure",
+        ":scanner_contracts",
+        ":canonical_sitewide",
+        ":ai_paths_canonical",
+        ":observability",
+        ":architecture_guardrails",
+        ":ui_consolidation",
+    ],
+)
+
+sh_binary(
+    name = "repo_regressions",
+    srcs = ["//tools/bazel:repo_lane.sh"],
+    args = [
+        "//tools/js:case_resolver_regression",
+        "//tools/js:products_trigger_queue_unit",
+    ],
+    data = [
+        "//tools/js:case_resolver_regression",
+        "//tools/js:products_trigger_queue_unit",
+    ],
+)
+
+sh_binary(
+    name = "repo_ci",
+    srcs = ["//tools/bazel:repo_lane.sh"],
+    args = [
+        "//:repo_toolchain",
+        "//:repo_smoke",
+        "//:repo_quality",
+        "//:repo_regressions",
+    ],
+    data = [
+        ":repo_toolchain",
+        ":repo_smoke",
+        ":repo_quality",
+        ":repo_regressions",
+    ],
+)
+
 sh_binary(
     name = "unit_domain_timings",
     srcs = ["//tools/bazel:node_script.sh"],
@@ -496,6 +659,26 @@ sh_binary(
     srcs = ["//tools/bazel:next_build.sh"],
     data = [
         ":next_build_inputs",
+        ":node_modules",
+        ":package_metadata",
+    ],
+)
+
+filegroup(
+    name = "agentic_inputs",
+    srcs = glob([
+        "config/agentic/**/*.json",
+        "scripts/agentic/**/*.ts",
+        "docs/build/agentic-engineering.md",
+    ], allow_empty = True) + config_sources,
+)
+
+sh_binary(
+    name = "agentic_preflight",
+    srcs = ["//tools/bazel:tsx_script.sh"],
+    args = ["scripts/agentic/preflight.ts"],
+    data = [
+        ":agentic_inputs",
         ":node_modules",
         ":package_metadata",
     ],

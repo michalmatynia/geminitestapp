@@ -250,9 +250,6 @@ const resetTutorAuthAnchorRects = (): void => {
   );
   tutorAuthAnchorRects.login_form = cloneTutorAuthAnchorRect(DEFAULT_TUTOR_AUTH_ANCHOR_RECT);
 };
-const setTutorAuthAnchorRect = (kind: TutorAuthAnchorKind, rect: DOMRect): void => {
-  tutorAuthAnchorRects[kind] = cloneTutorAuthAnchorRect(rect);
-};
 const TutorAuthAnchor = ({
   kind,
   label,
@@ -984,7 +981,7 @@ describe('KangurAiTutorWidget', () => {
       })
     );
   });
-  it('opens the tutor panel directly from the docked Game avatar after home onboarding is dismissed', async () => {
+  it('reopens canonical onboarding from the docked Game avatar after home onboarding is dismissed', async () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -1067,13 +1064,19 @@ describe('KangurAiTutorWidget', () => {
         isOpen: false,
       };
     });
-    const { rerender } = renderWithTutorAnchors({
-      homeAnchorKinds: ['home_actions', 'home_quest', 'leaderboard', 'progress'],
-    });
+    const renderOptions = {
+      homeAnchorKinds: ['home_actions', 'home_quest', 'leaderboard', 'progress'] as const,
+    };
+    const { rerender } = renderWithTutorAnchors(renderOptions);
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
-    rerender(<KangurAiTutorWidget />);
+    rerender(buildTutorAnchorsTree(renderOptions));
     expect(screen.queryByTestId('kangur-ai-tutor-launcher-prompt')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
+      'data-modal-surface',
+      'canonical-onboarding'
+    );
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(openChatMock).not.toHaveBeenCalled();
   });
   it('shows the guest intro prompt for a first anonymous visit and stores a local marker', async () => {
     useOptionalKangurAuthMock.mockReturnValue({
@@ -1289,7 +1292,7 @@ describe('KangurAiTutorWidget', () => {
     );
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
   });
-  it('keeps the anonymous avatar docked after closing the generic panel from the docked anonymous avatar', async () => {
+  it('reopens canonical onboarding from the docked anonymous avatar after closing the generic panel', async () => {
     let tutorState = {
       enabled: false,
       tutorSettings: null,
@@ -1359,8 +1362,12 @@ describe('KangurAiTutorWidget', () => {
     );
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
     rerender(<KangurAiTutorWidget />);
-    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
+      'data-modal-surface',
+      'canonical-onboarding'
+    );
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute('data-anchor-kind', 'dock');
     expect(openChatMock).not.toHaveBeenCalled();
     expect(closeChatMock).toHaveBeenCalledTimes(1);
   });
@@ -3008,7 +3015,7 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
     getSelectionSpy.mockRestore();
   });
-  it('opens a regular docked chat from the launcher even with an active lesson selection', async () => {
+  it('opens canonical onboarding from the launcher even with an active lesson selection', async () => {
     let tutorState = {
       enabled: true,
       tutorSettings: {
@@ -3058,40 +3065,23 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveClass('cursor-pointer');
     fireEvent.mouseDown(screen.getByTestId('kangur-ai-tutor-avatar'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-avatar'));
-    expect(await screen.findByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
-    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
-      'kangur_ai_tutor_opened',
-      expect.objectContaining({
-        surface: 'lesson',
-        title: 'Dodawanie',
-        reason: 'toggle',
-        hasSelectedText: true,
-        messageCount: 0,
-      })
+    expect(await screen.findByTestId('kangur-ai-tutor-guest-intro')).toHaveAttribute(
+      'data-modal-surface',
+      'canonical-onboarding'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
-      'data-launch-origin',
-      'dock-bottom-right'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
-      'data-placement-strategy',
-      'dock'
-    );
-    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
-      'data-has-pointer',
-      'false'
-    );
+    expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-anchor-kind',
       'dock'
     );
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
     ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-context-spotlight')
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent('2 + 2');
+    expect(screen.getByTestId('kangur-ai-tutor-selection-action')).toBeInTheDocument();
   });
   it('persists a dragged launcher position without opening the tutor', () => {
     useKangurTextHighlightMock.mockReturnValue({

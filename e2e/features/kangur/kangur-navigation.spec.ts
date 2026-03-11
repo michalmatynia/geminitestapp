@@ -203,23 +203,21 @@ const expectRouteShellContinuity = (
   expect(
     samples.every(
       (sample) =>
-        sample.backgroundImage !== null && sample.backgroundImage.includes('radial-gradient')
+        sample.backgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: route shell lost the Kangur premium background`
   ).toBe(true);
   expect(
     samples.every(
       (sample) =>
-        sample.bodyBackgroundImage !== null &&
-        sample.bodyBackgroundImage.includes('radial-gradient')
+        sample.bodyBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: document body lost the Kangur premium background`
   ).toBe(true);
   expect(
     samples.every(
       (sample) =>
-        sample.appContentBackgroundImage !== null &&
-        sample.appContentBackgroundImage.includes('radial-gradient')
+        sample.appContentBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: app content lost the Kangur premium background`
   ).toBe(true);
@@ -302,8 +300,7 @@ const expectKangurSurfaceContinuity = (
     samples.every(
       (sample) =>
         !sample.hasRouteShell ||
-        (sample.routeShellBackgroundImage !== null &&
-          sample.routeShellBackgroundImage.includes('radial-gradient'))
+        sample.routeShellBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: visible route shell lost the premium background`
   ).toBe(true);
@@ -311,24 +308,21 @@ const expectKangurSurfaceContinuity = (
     samples.every(
       (sample) =>
         !sample.hasFeaturePageShell ||
-        (sample.featurePageShellBackgroundImage !== null &&
-          sample.featurePageShellBackgroundImage.includes('radial-gradient'))
+        sample.featurePageShellBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: visible feature-page shell lost the premium background`
   ).toBe(true);
   expect(
     samples.every(
       (sample) =>
-        sample.bodyBackgroundImage !== null &&
-        sample.bodyBackgroundImage.includes('radial-gradient')
+        sample.bodyBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: document body lost the Kangur premium background`
   ).toBe(true);
   expect(
     samples.every(
       (sample) =>
-        sample.appContentBackgroundImage !== null &&
-        sample.appContentBackgroundImage.includes('radial-gradient')
+        sample.appContentBackgroundImage?.includes('radial-gradient') === true
     ),
     `${stepLabel}: app content lost the Kangur premium background`
   ).toBe(true);
@@ -927,7 +921,6 @@ test.describe('Kangur navigation continuity', () => {
   }) => {
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-tests');
-    const routeShell = page.getByTestId('kangur-route-shell');
     await markRouteShellAsPersistent(page);
 
     await page.getByTestId('kangur-primary-nav-tests').click();
@@ -1148,7 +1141,6 @@ test.describe('Kangur navigation continuity', () => {
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
 
-    const routeShell = page.getByTestId('kangur-route-shell');
     await markRouteShellAsPersistent(page);
 
     await page.getByRole('button', { name: /grajmy/i }).click();
@@ -1329,7 +1321,6 @@ test.describe('Kangur navigation continuity', () => {
     await gotoKangurPath(page, '/kangur/profile');
     await expectLearnerProfileRouteReady(page);
 
-    const routeShell = page.getByTestId('kangur-route-shell');
     await markRouteShellAsPersistent(page);
 
     await startRouteShellMonitor(page);

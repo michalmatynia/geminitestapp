@@ -1,0 +1,163 @@
+name: Agentic Finalize
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_validation:
+        description: Force validation execution for low-risk work orders
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/agentic-finalize.yml'
+      - 'BUILD.bazel'
+      - 'config/agentic/**'
+      - 'docs/build/**'
+      - 'package-lock.json'
+      - 'package.json'
+      - 'scripts/agentic/**'
+      - 'src/app/api/ai-paths/**'
+      - 'src/app/api/kangur/**'
+      - 'src/app/api/system/logs/**'
+      - 'src/app/api/v2/products/**'
+      - 'src/features/ai/ai-paths/**'
+      - 'src/features/kangur/**'
+      - 'src/features/observability/**'
+      - 'src/features/products/**'
+      - 'src/shared/lib/ai-paths/**'
+      - 'src/shared/lib/observability/**'
+      - 'src/shared/lib/products/**'
+      - 'tools/bazel/**'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  agentic-finalize:
+    name: agentic-finalize
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+      BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+      BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '1' || '0' }}
+      AGENTIC_FORCE_VALIDATION: ${{ github.event_name == 'workflow_dispatch' && inputs.force_validation && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build full-repo agentic work order
+        run: npm run bazel -- run //:agentic_preflight
+
+      - name: Run agentic finalize
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$AGENTIC_FORCE_VALIDATION" = "1" ]; then
+            npm run agentic:finalize:force
+          else
+            npm run agentic:finalize
+          fi
+
+      - name: Build agent history snapshot
+        run: npm run agentic:history
+
+      - name: Download previous agent history snapshot
+        id: previous-history
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          artifact_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=agent-history&per_page=100" --jq '.artifacts
+            | map(select(
+                .expired == false and
+                ((.workflow_run.id | tostring) != env.GITHUB_RUN_ID) and
+                ((.workflow_run.head_branch // "") == env.GITHUB_REF_NAME)
+              ))
+            | sort_by(.created_at)
+            | reverse
+            | .[0]')"
+
+          if [ -z "$artifact_json" ] || [ "$artifact_json" = "null" ]; then
+            printf 'found=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          download_url="$(printf '%s' "$artifact_json" | jq -r '.archive_download_url')"
+          mkdir -p artifacts/agent-history/previous
+          gh api "$download_url" > /tmp/agent-history-previous.zip
+          unzip -jo /tmp/agent-history-previous.zip '*latest.json' -d artifacts/agent-history/previous >/dev/null
+          mv artifacts/agent-history/previous/latest.json artifacts/agent-history/previous/previous.json
+          printf 'found=true\n' >> "$GITHUB_OUTPUT"
+
+      - name: Build agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        run: |
+          npm run agentic:history:diff -- \
+            --current artifacts/agent-history/latest.json \
+            --previous artifacts/agent-history/previous/previous.json \
+            --output artifacts/agent-history/diff.json
+
+      - name: Summarize agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        run: npm run agentic:history:summary -- --input artifacts/agent-history/diff.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload agent work order
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-work-order
+          path: artifacts/agent-work-order.json
+          if-no-files-found: error
+
+      - name: Upload final agent reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-final-reports
+          path: |
+            artifacts/agent-final-report.json
+            artifacts/generated-outputs-manifest.json
+          if-no-files-found: error
+
+      - name: Upload finalized generated outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-final-generated-outputs
+          path: artifacts/generated-outputs
+          if-no-files-found: error
+
+      - name: Upload final agent history
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-history
+          path: artifacts/agent-history/latest.json
+          if-no-files-found: error
+
+      - name: Upload final agent history diff
+        if: steps.previous-history.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-history-diff
+          path: artifacts/agent-history/diff.json
+          if-no-files-found: error

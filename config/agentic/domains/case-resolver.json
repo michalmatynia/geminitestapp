@@ -1,0 +1,29 @@
+{
+  "id": "case-resolver",
+  "label": "Case resolver matching, capture, and regression flows",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/case-resolver",
+    "src/features/case-resolver-capture",
+    "src/app/api/case-resolver"
+  ],
+  "ownedDocs": [
+    "docs/case-resolver"
+  ],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [
+    "docs/case-resolver"
+  ],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:case_resolver_regression"
+  ],
+  "impactBundles": [
+    "case_resolver_runtime"
+  ]
+}

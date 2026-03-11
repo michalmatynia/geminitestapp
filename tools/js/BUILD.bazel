@@ -107,3 +107,45 @@ sh_binary(
     ],
     data = ["//:testing_gate_inputs", "//:node_modules", "//:package_metadata"],
 )
+
+sh_binary(
+    name = "bun_toolchain_contract",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "check:toolchain:contract"],
+    data = ["//:toolchain_contract_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "bun_config",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "check:bun:config"],
+    data = ["//:toolchain_contract_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "bun_version",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "check:bun:version"],
+    data = ["//:toolchain_contract_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "bun_lock_check",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "check:bun:lock-sync"],
+    data = ["//:toolchain_contract_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "bun_runtime_contract",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "test:bun:runtime"],
+    data = ["//:bun_runtime_contract_inputs", "//:node_modules", "//:package_metadata"],
+)
+
+sh_binary(
+    name = "bun_compat",
+    srcs = ["//tools/bazel:bun_bin.sh"],
+    args = ["run", "check:bun:compat"],
+    data = ["//:bun_compat_inputs", "//:node_modules", "//:package_metadata"],
+)

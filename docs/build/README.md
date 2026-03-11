@@ -21,12 +21,38 @@ shared toolchain surfaces.
 
 ## Current Docs
 
+- [`agentic-ci.md`](./agentic-ci.md)
+- [`agentic-engineering.md`](./agentic-engineering.md)
 - [`bazel.md`](./bazel.md)
 - [`bazel-buildbuddy.md`](./bazel-buildbuddy.md)
+- [`bun.md`](./bun.md)
+
+## Canonical Repo Lanes
+
+- Bazel repo toolchain lane:
+  `npm run bazel:toolchain`
+- Bazel repo smoke lane:
+  `npm run bazel:smoke`
+- Bazel repo quality lane:
+  `npm run bazel:quality`
+- Bazel repo regression lane:
+  `npm run bazel:regressions`
+- Bazel repo CI lane:
+  `npm run bazel:ci`
+- Bun repo smoke lane:
+  `bun run bun:repo:smoke`
+- Bun repo toolchain lane:
+  `bun run bun:repo:toolchain`
+- Bun repo quality lane:
+  `bun run bun:repo:quality`
+- Bun repo CI lane:
+  `bun run bun:repo:ci`
 
 ## Related Docs
 
-- Bun support and local package-manager parity:
+- Bun build/runtime lane overview:
+  [`docs/build/bun.md`](./bun.md)
+- Bun support contract and local package-manager parity:
   [`docs/platform/bun-support.md`](../platform/bun-support.md)
 - Shared toolchain mirror resync helper:
   `npm run sync:toolchain:mirrors`
@@ -34,9 +60,19 @@ shared toolchain surfaces.
   `npm run check:toolchain:contract:node`
 - Shared npm-first toolchain contract test bundle:
   `npm run test:toolchain:contract`
+- Shared high-risk coverage gate:
+  `npm run check:coverage:high-risk`
+- Shared high-risk coverage baseline runner:
+  `npm run test:coverage:high-risk`
+  Weekly CI runs it with `HIGH_RISK_COVERAGE_CONCURRENCY=2` to keep the
+  split-domain coverage sweep bounded.
+- Shared feature test-distribution quality scan:
+  `npm run check:test-distribution`
+- Shared testing quality baseline snapshot check:
+  `npm run check:test-quality`
 - Shared Bun config contract check:
   `bun run check:bun:config`
 - Shared Bun/npm/Node contract checks:
   `bun run check:toolchain:contract`
-- Shared Bun compatibility gate:
-  `bun run check:bun:compat`
+- Shared Bun repo toolchain lane:
+  `bun run bun:repo:toolchain`

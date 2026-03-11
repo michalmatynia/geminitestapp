@@ -1,5 +1,5 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { JSX, ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +31,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+    Card: ({ children }: { children: ReactNode }): JSX.Element => <div>{children}</div>,
     useToast: () => ({ toast: mocks.toast }),
   };
 });
@@ -90,7 +90,7 @@ vi.mock('@/features/ai/image-studio/context/UiContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection', () => ({
-  AnalysisSettingsSection: (): React.JSX.Element => <div data-testid='analysis-settings' />,
+  AnalysisSettingsSection: (): JSX.Element => <div data-testid='analysis-settings' />,
 }));
 
 vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultSection', async () => {
@@ -100,7 +100,7 @@ vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultS
   );
 
   return {
-    AnalysisResultSection: (): React.JSX.Element => {
+    AnalysisResultSection: (): JSX.Element => {
       const { resultRuntime } = useImageStudioAnalysisRuntime();
       return (
         <div>

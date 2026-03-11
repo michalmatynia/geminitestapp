@@ -5,7 +5,7 @@ import type { Job } from '@/features/products/workers/product-ai-processors';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import { notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { normalizeGraphModelPayloadForDispatch } from '@/shared/lib/products/services/product-ai-graph-model-payload';
+import { prepareGraphModelDispatchJob } from '@/shared/lib/products/services/product-ai-graph-model-payload';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -34,13 +34,11 @@ const isDatabaseSyncDirection = (
   typeof value === 'string' && DATABASE_SYNC_DIRECTIONS.has(value as DatabaseSyncDirection);
 
 const toDispatchJob = (job: ProductAiJobRecord): Job => {
-  const source = isRecord(job.payload) ? job.payload : {};
   if (job.type === 'graph_model') {
-    return {
-      ...job,
-      payload: normalizeGraphModelPayloadForDispatch(source),
-    };
+    return prepareGraphModelDispatchJob(job);
   }
+
+  const source = isRecord(job.payload) ? job.payload : {};
 
   const payload: Job['payload'] = {};
 

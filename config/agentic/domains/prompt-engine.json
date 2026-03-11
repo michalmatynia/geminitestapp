@@ -1,0 +1,32 @@
+{
+  "id": "prompt-engine",
+  "label": "Prompt-engine rules, runtime scopes, and validation flows",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/prompt-engine",
+    "src/shared/lib/prompt-engine",
+    "src/app/api/prompt-runtime"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [
+    "docs/validator"
+  ],
+  "generatedOnlyPaths": [
+    "docs/validator"
+  ],
+  "manualOnlyPaths": [],
+  "docGenerators": [
+    "//:validator_docs_generate"
+  ],
+  "scannerTargets": [
+    "//:validator_docs_check"
+  ],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "prompt_validation"
+  ]
+}

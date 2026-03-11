@@ -4,6 +4,7 @@ import {
   graphModelQueuedPayloadSchema,
   type GraphModelQueuedPayload,
 } from '@/shared/contracts/jobs';
+import { badRequestError } from '@/shared/errors/app-error';
 import { buildGraphModelJobCacheMetadata } from '@/shared/lib/ai-paths/core/runtime/graph-model-job';
 
 type GraphModelStringField = 'modelId' | 'nodeId' | 'nodeTitle' | 'requestedModelId' | 'runId';
@@ -132,6 +133,9 @@ const normalizeGraphModelDispatchPayloadFromMetadata = (
   const normalized = {
     ...record,
     ...(classification.source ? { source: classification.source } : {}),
+    imageUrls: Array.isArray(record['imageUrls'])
+      ? record['imageUrls'].filter((value): value is string => typeof value === 'string')
+      : record['imageUrls'],
   };
 
   const enqueuePayload = graphModelJobEnqueuePayloadSchema.parse(normalized);
@@ -149,7 +153,16 @@ const normalizeGraphModelDispatchPayloadFromMetadata = (
   });
 };
 
-const resolveGraphModelExecutionPayloadFromMetadata = (
+const isAiPathsGraphModelClassification = (
+  classification: ReturnType<typeof readGraphModelPayloadClassification>
+): boolean =>
+  Boolean(
+    classification.queuedPayload ||
+      classification.enqueuePayload ||
+      classification.hasLegacyAiPathsNodeContext
+  );
+
+const resolveGraphModelReadablePayloadFromMetadata = (
   metadata: ReturnType<typeof readGraphModelPayloadMetadata>
 ): {
   source: string | null;
@@ -163,21 +176,48 @@ const resolveGraphModelExecutionPayloadFromMetadata = (
     };
   }
 
-  if (
-    classification.source === 'ai_paths' &&
-    (classification.queuedPayload ||
-      classification.enqueuePayload ||
-      classification.hasLegacyAiPathsNodeContext)
-  ) {
+  return {
+    source: classification.source,
+    payload:
+      classification.source === 'ai_paths' && isAiPathsGraphModelClassification(classification)
+        ? normalizeGraphModelDispatchPayloadFromMetadata(metadata)
+        : classification.record,
+  };
+};
+
+const resolveGraphModelExecutionContextFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): {
+  source: string | null;
+  payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
+  requestedModelId: string | null;
+  runId: string | null;
+  nodeId: string | null;
+  nodeTitle: string | null;
+  hasAiPathsNodeContext: boolean;
+} => {
+  const inspection = resolveGraphModelPayloadInspectionFromMetadata(metadata);
+  const readablePayload = resolveGraphModelReadablePayloadFromMetadata(metadata);
+  if (!readablePayload.payload) {
     return {
-      source: classification.source,
-      payload: normalizeGraphModelDispatchPayloadFromMetadata(metadata),
+      source: inspection.source,
+      payload: null,
+      requestedModelId: inspection.requestedModelId,
+      runId: inspection.runId,
+      nodeId: inspection.nodeId,
+      nodeTitle: inspection.nodeTitle,
+      hasAiPathsNodeContext: inspection.hasAiPathsNodeContext,
     };
   }
 
   return {
-    source: classification.source,
-    payload: classification.record,
+    source: inspection.source,
+    payload: readablePayload.payload,
+    requestedModelId: inspection.requestedModelId,
+    runId: inspection.runId,
+    nodeId: inspection.nodeId,
+    nodeTitle: inspection.nodeTitle,
+    hasAiPathsNodeContext: inspection.hasAiPathsNodeContext,
   };
 };
 
@@ -193,33 +233,49 @@ const resolveGraphModelReuseIdentityFromMetadata = (
   requestedModelId: metadata.requestedModelId,
 });
 
+const resolveGraphModelPayloadInspectionFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): {
+  source: string | null;
+  requestedModelId: string | null;
+  cacheKey: string | null;
+  payloadHash: string | null;
+  runId: string | null;
+  nodeId: string | null;
+  nodeTitle: string | null;
+  hasAiPathsNodeContext: boolean;
+  isAiPathsGraphModelPayload: boolean;
+  reuseIdentity: {
+    cacheKey: string | null;
+    payloadHash: string | null;
+    requestedModelId: string | null;
+  };
+} => {
+  const reuseIdentity = resolveGraphModelReuseIdentityFromMetadata(metadata);
+  return {
+    source: metadata.classification.source,
+    requestedModelId: metadata.requestedModelId,
+    cacheKey: metadata.cacheKey,
+    payloadHash: metadata.payloadHash,
+    runId: metadata.runId,
+    nodeId: metadata.nodeId,
+    nodeTitle: metadata.nodeTitle,
+    hasAiPathsNodeContext: Boolean(metadata.runId && metadata.nodeId),
+    isAiPathsGraphModelPayload: isAiPathsGraphModelClassification(metadata.classification),
+    reuseIdentity,
+  };
+};
+
 const readSummarizableGraphModelPayloadFromMetadata = (
   metadata: ReturnType<typeof readGraphModelPayloadMetadata>
 ): GraphModelQueuedPayload | GraphModelJobPayload | Record<string, unknown> | null => {
   const classification = metadata.classification;
   if (classification.queuedPayload) return classification.queuedPayload;
   if (classification.enqueuePayload) return classification.enqueuePayload;
-  if (classification.hasLegacyAiPathsNodeContext && classification.record) {
-    return {
-      ...classification.record,
-      source: 'ai_paths',
-      prompt:
-        toTrimmedString(classification.record['prompt']) ?? classification.record['prompt'],
-      modelId:
-        toTrimmedString(classification.record['modelId']) ?? classification.record['modelId'],
-      cacheKey:
-        toTrimmedString(classification.record['cacheKey']) ?? classification.record['cacheKey'],
-      payloadHash:
-        toTrimmedString(classification.record['payloadHash']) ??
-        classification.record['payloadHash'],
-      imageUrls: Array.isArray(classification.record['imageUrls'])
-        ? classification.record['imageUrls'].filter(
-            (value): value is string => typeof value === 'string'
-          )
-        : classification.record['imageUrls'],
-    };
+  if (!isAiPathsGraphModelClassification(classification)) {
+    return null;
   }
-  return null;
+  return resolveGraphModelReadablePayloadFromMetadata(metadata).payload;
 };
 
 const summarizeGraphModelPayloadFromMetadata = (
@@ -228,6 +284,8 @@ const summarizeGraphModelPayloadFromMetadata = (
   const record = readSummarizableGraphModelPayloadFromMetadata(metadata);
   if (!record) return undefined;
   const prompt = toTrimmedString(record['prompt']);
+  const cacheKey = toTrimmedString(record['cacheKey']) ?? metadata.cacheKey;
+  const payloadHash = toTrimmedString(record['payloadHash']) ?? metadata.payloadHash;
   const imageCount = Array.isArray(record['imageUrls'])
     ? record['imageUrls'].filter((value): value is string => typeof value === 'string').length
     : 0;
@@ -239,8 +297,42 @@ const summarizeGraphModelPayloadFromMetadata = (
     vision: typeof record['vision'] === 'boolean' ? record['vision'] : null,
     promptLength: prompt?.length ?? null,
     imageCount,
-    cacheKey: metadata.cacheKey?.slice(0, 12) ?? null,
-    payloadHash: metadata.payloadHash?.slice(0, 12) ?? null,
+    cacheKey: cacheKey?.slice(0, 12) ?? null,
+    payloadHash: payloadHash?.slice(0, 12) ?? null,
+  };
+};
+
+const resolveGraphModelSummaryInspectionFromMetadata = (
+  metadata: ReturnType<typeof readGraphModelPayloadMetadata>
+): {
+  summary: Record<string, unknown> | undefined;
+} => ({
+  summary: summarizeGraphModelPayloadFromMetadata(metadata),
+});
+
+const prepareGraphModelEnqueuePayloadFromParsed = (
+  payload: GraphModelJobPayload
+): PreparedGraphModelEnqueuePayload => {
+  const queuedPayload = normalizeGraphModelDispatchPayloadFromMetadata(
+    readGraphModelPayloadMetadata(payload)
+  );
+  const metadata = readGraphModelPayloadMetadata(queuedPayload);
+  const payloadInspection = resolveGraphModelPayloadInspectionFromMetadata(metadata);
+  const summaryInspection = resolveGraphModelSummaryInspectionFromMetadata(metadata);
+  const reuseIdentity = payloadInspection.reuseIdentity;
+  if (!reuseIdentity.cacheKey || !reuseIdentity.payloadHash) {
+    throw new Error('Prepared graph_model payload missing queue metadata');
+  }
+
+  return {
+    success: true,
+    payload: queuedPayload,
+    reuseIdentity: {
+      cacheKey: reuseIdentity.cacheKey,
+      payloadHash: reuseIdentity.payloadHash,
+      requestedModelId: reuseIdentity.requestedModelId,
+    },
+    summary: summaryInspection.summary,
   };
 };
 
@@ -255,15 +347,15 @@ export const readGraphModelPayloadGraphString = (
 
 export const resolveGraphModelRequestedModelId = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): string | null => readGraphModelPayloadMetadata(payload).requestedModelId;
+): string | null => resolveGraphModelPayloadInspection(payload).requestedModelId;
 
 export const resolveGraphModelCacheKey = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): string | null => readGraphModelPayloadMetadata(payload).cacheKey;
+): string | null => resolveGraphModelPayloadInspection(payload).cacheKey;
 
 export const resolveGraphModelPayloadHash = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): string | null => readGraphModelPayloadMetadata(payload).payloadHash;
+): string | null => resolveGraphModelPayloadInspection(payload).payloadHash;
 
 export const resolveGraphModelReuseIdentity = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
@@ -271,14 +363,25 @@ export const resolveGraphModelReuseIdentity = (
   cacheKey: string | null;
   payloadHash: string | null;
   requestedModelId: string | null;
-} => resolveGraphModelReuseIdentityFromMetadata(readGraphModelPayloadMetadata(payload));
+} => resolveGraphModelPayloadInspection(payload).reuseIdentity;
+
+export type GraphModelReuseIdentity = ReturnType<typeof resolveGraphModelReuseIdentity>;
+export type PreparedGraphModelReuseIdentity = GraphModelReuseIdentity & {
+  cacheKey: string;
+  payloadHash: string;
+};
+export type PreparedGraphModelEnqueuePayload = {
+  success: true;
+  payload: GraphModelQueuedPayload;
+  reuseIdentity: PreparedGraphModelReuseIdentity;
+  summary: Record<string, unknown> | undefined;
+};
 
 export const matchesGraphModelReuseIdentity = (args: {
   payload: GraphModelJobPayload | Record<string, unknown> | unknown;
-  identity: {
+  identity: GraphModelReuseIdentity & {
     cacheKey: string;
     payloadHash: string;
-    requestedModelId: string | null;
   };
 }): boolean => {
   const existingIdentity = resolveGraphModelReuseIdentity(args.payload);
@@ -296,41 +399,97 @@ export const readGraphModelAiPathsRunContext = (
   nodeId: string | null;
   nodeTitle: string | null;
 } => {
-  const metadata = readGraphModelPayloadMetadata(payload);
+  const inspection = resolveGraphModelPayloadInspection(payload);
   return {
-    runId: metadata.runId,
-    nodeId: metadata.nodeId,
-    nodeTitle: metadata.nodeTitle,
+    runId: inspection.runId,
+    nodeId: inspection.nodeId,
+    nodeTitle: inspection.nodeTitle,
   };
 };
 
 export const hasAiPathsGraphModelNodeContext = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): boolean => {
-  const metadata = readGraphModelPayloadMetadata(payload);
-  return Boolean(metadata.runId && metadata.nodeId);
-};
+): boolean => resolveGraphModelPayloadInspection(payload).hasAiPathsNodeContext;
 
 export const resolveGraphModelPayloadSource = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): string | null => readGraphModelPayloadMetadata(payload).classification.source;
+): string | null => resolveGraphModelPayloadInspection(payload).source;
 
 export const isAiPathsGraphModelPayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
-): boolean => {
-  const classification = readGraphModelPayloadMetadata(payload).classification;
-  return Boolean(
-    classification.queuedPayload ||
-      classification.enqueuePayload ||
-      classification.hasLegacyAiPathsNodeContext
-  );
+): boolean => resolveGraphModelPayloadInspection(payload).isAiPathsGraphModelPayload;
+
+export const resolveGraphModelPayloadInspection = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): {
+  source: string | null;
+  requestedModelId: string | null;
+  cacheKey: string | null;
+  payloadHash: string | null;
+  runId: string | null;
+  nodeId: string | null;
+  nodeTitle: string | null;
+  hasAiPathsNodeContext: boolean;
+  isAiPathsGraphModelPayload: boolean;
+  reuseIdentity: {
+    cacheKey: string | null;
+    payloadHash: string | null;
+    requestedModelId: string | null;
+  };
+} => resolveGraphModelPayloadInspectionFromMetadata(readGraphModelPayloadMetadata(payload));
+
+export const resolveGraphModelDispatchInspection = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+):
+  | {
+    normalizedPayload: GraphModelQueuedPayload;
+    error: null;
+  }
+  | {
+    normalizedPayload: null;
+    error: unknown;
+  } => {
+  try {
+    return {
+      normalizedPayload: normalizeGraphModelDispatchPayloadFromMetadata(
+        readGraphModelPayloadMetadata(payload)
+      ),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      normalizedPayload: null,
+      error,
+    };
+  }
 };
 
 export const normalizeGraphModelPayloadForDispatch = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ): GraphModelQueuedPayload => {
-  const metadata = readGraphModelPayloadMetadata(payload);
-  return normalizeGraphModelDispatchPayloadFromMetadata(metadata);
+  const inspection = resolveGraphModelDispatchInspection(payload);
+  if (inspection.error || !inspection.normalizedPayload) {
+    throw inspection.error ?? new Error('Graph model dispatch normalization failed');
+  }
+  return inspection.normalizedPayload;
+};
+
+export const prepareGraphModelDispatchJob = <
+  T extends {
+    payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+  },
+>(
+  job: T
+): Omit<T, 'payload'> & { payload: GraphModelQueuedPayload } => {
+  const inspection = resolveGraphModelDispatchInspection(job.payload);
+  if (inspection.error || !inspection.normalizedPayload) {
+    throw inspection.error ?? new Error('Graph model dispatch normalization failed');
+  }
+
+  return {
+    ...job,
+    payload: inspection.normalizedPayload,
+  };
 };
 
 export const safeParseGraphModelJobEnqueuePayload = (
@@ -341,13 +500,46 @@ export const safeParseGraphModelQueuedPayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ) => graphModelQueuedPayloadSchema.safeParse(payload);
 
+export const resolveGraphModelEnqueueInspection = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+):
+  | {
+    parsedPayload: GraphModelJobPayload;
+    preparedPayload: PreparedGraphModelEnqueuePayload;
+    error: null;
+  }
+  | {
+    parsedPayload: null;
+    preparedPayload: null;
+    error: NonNullable<ReturnType<typeof safeParseGraphModelJobEnqueuePayload>['error']>;
+  } => {
+  const parsed = safeParseGraphModelJobEnqueuePayload(payload);
+  if (!parsed.success) {
+    return {
+      parsedPayload: null,
+      preparedPayload: null,
+      error: parsed.error,
+    };
+  }
+
+  return {
+    parsedPayload: parsed.data,
+    preparedPayload: prepareGraphModelEnqueuePayloadFromParsed(parsed.data),
+    error: null,
+  };
+};
+
 export const resolveGraphModelExecutionPayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ): {
   source: string | null;
   payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
 } => {
-  return resolveGraphModelExecutionPayloadFromMetadata(readGraphModelPayloadMetadata(payload));
+  const executionContext = resolveGraphModelExecutionContext(payload);
+  return {
+    source: executionContext.source,
+    payload: executionContext.payload,
+  };
 };
 
 export const resolveGraphModelExecutionContext = (
@@ -360,18 +552,32 @@ export const resolveGraphModelExecutionContext = (
   nodeId: string | null;
   nodeTitle: string | null;
   hasAiPathsNodeContext: boolean;
-} => {
-  const metadata = readGraphModelPayloadMetadata(payload);
-  const execution = resolveGraphModelExecutionPayloadFromMetadata(metadata);
+} => resolveGraphModelExecutionContextFromMetadata(readGraphModelPayloadMetadata(payload));
 
+export const resolveGraphModelExecutionInspection = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): {
+  executionPayload: {
+    source: string | null;
+    payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
+  };
+  executionContext: {
+    source: string | null;
+    payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown> | null;
+    requestedModelId: string | null;
+    runId: string | null;
+    nodeId: string | null;
+    nodeTitle: string | null;
+    hasAiPathsNodeContext: boolean;
+  };
+} => {
+  const executionContext = resolveGraphModelExecutionContext(payload);
   return {
-    source: execution.source,
-    payload: execution.payload,
-    requestedModelId: metadata.requestedModelId,
-    runId: metadata.runId,
-    nodeId: metadata.nodeId,
-    nodeTitle: metadata.nodeTitle,
-    hasAiPathsNodeContext: Boolean(metadata.runId && metadata.nodeId),
+    executionPayload: {
+      source: executionContext.source,
+      payload: executionContext.payload,
+    },
+    executionContext,
   };
 };
 
@@ -429,6 +635,79 @@ export const resolveAiPathsGraphModelNodeSnapshotFromExecutionContext = async (a
   }
 };
 
+export const prepareGraphModelExecutionInput = async (args: {
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+  jobId?: string;
+  findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
+}): Promise<{
+  executionContext: GraphModelExecutionContext;
+  source: string;
+  payload: GraphModelJobPayload | GraphModelQueuedPayload | Record<string, unknown>;
+  rawPrompt: string;
+  aiPathsNodeSnapshot: { requestedModelId: string; nodeTitle: string | null } | null;
+  requestedModelId: string;
+  aiPathsConfigErrorContext: {
+    requestedModelId: string;
+    runId: string | null;
+    nodeId: string | null;
+    nodeTitle: string | null;
+  };
+}> => {
+  const executionContext = resolveGraphModelExecutionContext(args.payload);
+  const source = executionContext.source;
+  const payload = executionContext.payload;
+  const aiPathsNodeSnapshot =
+    source === 'ai_paths'
+      ? await resolveAiPathsGraphModelNodeSnapshotFromExecutionContext({
+          executionContext,
+          findRunById: args.findRunById,
+        })
+      : null;
+  if (!source) {
+    throw badRequestError('Graph model job missing source', {
+      ...(args.jobId ? { jobId: args.jobId } : {}),
+    });
+  }
+  if (!payload) {
+    throw badRequestError('Graph model job missing payload', {
+      ...(args.jobId ? { jobId: args.jobId } : {}),
+    });
+  }
+
+  const requestedModelId =
+    aiPathsNodeSnapshot?.requestedModelId ?? executionContext.requestedModelId ?? '';
+  const resolvedNodeTitle = aiPathsNodeSnapshot?.nodeTitle ?? executionContext.nodeTitle;
+  if (source === 'ai_paths' && !executionContext.hasAiPathsNodeContext && !requestedModelId) {
+    throw badRequestError(
+      'AI Paths graph_model payload requires graph.runId and graph.nodeId when no requested model is provided.',
+      {
+        ...(args.jobId ? { jobId: args.jobId } : {}),
+      }
+    );
+  }
+  const rawPrompt = typeof payload?.prompt === 'string' ? payload.prompt.trim() : '';
+  if (!rawPrompt) {
+    throw badRequestError('Graph model job missing prompt', {
+      ...(args.jobId ? { jobId: args.jobId } : {}),
+    });
+  }
+
+  return {
+    executionContext,
+    source,
+    payload,
+    rawPrompt,
+    aiPathsNodeSnapshot,
+    requestedModelId,
+    aiPathsConfigErrorContext: {
+      requestedModelId,
+      runId: executionContext.runId,
+      nodeId: executionContext.nodeId,
+      nodeTitle: resolvedNodeTitle,
+    },
+  };
+};
+
 export const resolveAiPathsGraphModelRequestedModelIdFromExecutionContext = async (args: {
   executionContext: GraphModelExecutionContext;
   findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
@@ -443,49 +722,65 @@ export const resolveAiPathsGraphModelRequestedModelIdFromExecutionContext = asyn
 export const resolveAiPathsGraphModelRequestedModelId = async (args: {
   payload: GraphModelJobPayload | Record<string, unknown> | unknown;
   findRunById: (runId: string) => Promise<Record<string, unknown> | null | undefined>;
-}): Promise<string> =>
-  resolveAiPathsGraphModelRequestedModelIdFromExecutionContext({
-    executionContext: resolveGraphModelExecutionContext(args.payload),
+}): Promise<string> => {
+  const inspection = resolveGraphModelPayloadInspection(args.payload);
+
+  return resolveAiPathsGraphModelRequestedModelIdFromExecutionContext({
+    executionContext: {
+      source: inspection.source,
+      payload: null,
+      requestedModelId: inspection.requestedModelId,
+      runId: inspection.runId,
+      nodeId: inspection.nodeId,
+      nodeTitle: inspection.nodeTitle,
+      hasAiPathsNodeContext: inspection.hasAiPathsNodeContext,
+    },
     findRunById: args.findRunById,
   });
+};
+
+export const resolveGraphModelSummaryInspection = (
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown
+): {
+  summary: Record<string, unknown> | undefined;
+} => resolveGraphModelSummaryInspectionFromMetadata(readGraphModelPayloadMetadata(payload));
 
 export const summarizeGraphModelPayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ): Record<string, unknown> | undefined =>
-  summarizeGraphModelPayloadFromMetadata(readGraphModelPayloadMetadata(payload));
+  resolveGraphModelSummaryInspection(payload).summary;
 
 export const prepareGraphModelEnqueuePayload = (
   payload: GraphModelJobPayload | Record<string, unknown> | unknown
 ):
-  | {
-    success: true;
-    payload: GraphModelQueuedPayload;
-    reuseIdentity: {
-      cacheKey: string | null;
-      payloadHash: string | null;
-      requestedModelId: string | null;
-    };
-    summary: Record<string, unknown> | undefined;
-  }
+  | PreparedGraphModelEnqueuePayload
   | {
     success: false;
     error: NonNullable<ReturnType<typeof safeParseGraphModelJobEnqueuePayload>['error']>;
   } => {
-  const parsed = safeParseGraphModelJobEnqueuePayload(payload);
-  if (!parsed.success) {
+  const inspection = resolveGraphModelEnqueueInspection(payload);
+  if (inspection.error) {
     return {
       success: false,
-      error: parsed.error,
+      error: inspection.error,
     };
   }
 
-  const queuedPayload = normalizeGraphModelPayloadForDispatch(parsed.data);
-  const metadata = readGraphModelPayloadMetadata(queuedPayload);
+  return inspection.preparedPayload;
+};
 
-  return {
-    success: true,
-    payload: queuedPayload,
-    reuseIdentity: resolveGraphModelReuseIdentityFromMetadata(metadata),
-    summary: summarizeGraphModelPayloadFromMetadata(metadata),
-  };
+export const prepareGraphModelEnqueuePayloadOrThrow = (args: {
+  payload: GraphModelJobPayload | Record<string, unknown> | unknown;
+  productId?: string;
+}): PreparedGraphModelEnqueuePayload => {
+  const prepared = prepareGraphModelEnqueuePayload(args.payload);
+  if (prepared.success) return prepared;
+
+  throw badRequestError('Invalid graph_model payload', {
+    ...(args.productId ? { productId: args.productId } : {}),
+    issues: prepared.error.issues.map((issue) => ({
+      path: issue.path.join('.'),
+      message: issue.message,
+    })),
+  });
 };

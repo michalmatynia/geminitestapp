@@ -143,7 +143,7 @@ describe('notifyAiPathRunEnqueued', () => {
       if (key === 'ai-path-run-recent-enqueue') {
         throw new Error('Quota exceeded');
       }
-      return originalSetItem(key, value);
+      originalSetItem(key, value);
     });
 
     expect(() =>

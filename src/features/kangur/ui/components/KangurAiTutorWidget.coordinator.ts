@@ -79,6 +79,7 @@ export function useKangurAiTutorWidgetCoordinator({
     askModalReturnStateRef,
     askModalVisible,
     avatarDragStateRef,
+    canonicalTutorModalVisible,
     draggedAvatarPoint,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
@@ -105,6 +106,7 @@ export function useKangurAiTutorWidgetCoordinator({
     selectionGuidanceHandoffText,
     setAskModalDockStyle,
     setAskModalVisible,
+    setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
@@ -391,6 +393,7 @@ export function useKangurAiTutorWidgetCoordinator({
     startGuidedGuestLogin,
   } = useKangurAiTutorGuestIntroFlow({
     authState,
+    canonicalTutorModalVisible,
     enabled,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
@@ -406,6 +409,7 @@ export function useKangurAiTutorWidgetCoordinator({
     isTutorHidden,
     mounted,
     selectionExplainTimeoutRef,
+    setCanonicalTutorModalVisible,
     setGuidedTutorTarget,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
@@ -483,23 +487,21 @@ export function useKangurAiTutorWidgetCoordinator({
     handleAvatarClick,
     handleCloseGuidedCallout,
   } = useKangurAiTutorAvatarShellActions({
+    canonicalTutorModalVisible,
     closeChat,
-    enabled,
     guestIntroHelpVisible,
-    guestIntroRecord,
     guestIntroVisible,
     guidedMode,
     guidedTutorTarget,
     handleCloseChat,
     handleCloseLauncherPrompt,
     handleHomeOnboardingFinishEarly,
-    handleOpenChat,
     homeOnboardingStepIndex,
-    isAnonymousVisitor,
     isOpen: tutorRuntime.isOpen,
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
+    setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDraggedAvatarPoint,
     setGuestIntroHelpVisible,
@@ -614,6 +616,7 @@ export function useKangurAiTutorWidgetCoordinator({
     canNarrateTutorText,
     canSendMessages,
     canStartHomeOnboardingManually,
+    canonicalTutorModalVisible,
     compactDockedTutorPanelWidth,
     contextualTutorMode,
     emptyStateMessage,
@@ -732,6 +735,7 @@ export function useKangurAiTutorWidgetCoordinator({
       shouldRenderContextlessTutorUi ||
       isGuidedTutorMode ||
       askModalVisible ||
+      canonicalTutorModalVisible ||
       isAnonymousVisitor ||
       !isTutorHidden ||
       tutorRuntime.isOpen ||

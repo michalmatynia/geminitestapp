@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { processGraphModel, type Job } from '../product-ai-processors';
-import { resolveAiPathsNodeExecutionConfig } from '@/shared/lib/ai-brain/server';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { configurationError } from '@/shared/errors/app-error';
+
+type Job = import('../product-ai-processors').Job;
+
+let processGraphModel: typeof import('../product-ai-processors').processGraphModel;
+let resolveAiPathsNodeExecutionConfig: typeof import('@/shared/lib/ai-brain/server').resolveAiPathsNodeExecutionConfig;
+let getPathRunRepository: typeof import('@/shared/lib/ai-paths/services/path-run-repository').getPathRunRepository;
+let runBrainChatCompletion: typeof import('@/shared/lib/ai-brain/server-runtime-client').runBrainChatCompletion;
+let inferBrainModelVendor: typeof import('@/shared/lib/ai-brain/model-vendor').inferBrainModelVendor;
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveAiPathsNodeExecutionConfig: vi.fn(),
@@ -48,8 +51,14 @@ const buildJob = (payloadPatch: Record<string, unknown> = {}): Job =>
   }) as unknown as Job;
 
 describe('processGraphModel AI Paths model selection', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     vi.clearAllMocks();
+    ({ processGraphModel } = await import('../product-ai-processors'));
+    ({ resolveAiPathsNodeExecutionConfig } = await import('@/shared/lib/ai-brain/server'));
+    ({ getPathRunRepository } = await import('@/shared/lib/ai-paths/services/path-run-repository'));
+    ({ runBrainChatCompletion } = await import('@/shared/lib/ai-brain/server-runtime-client'));
+    ({ inferBrainModelVendor } = await import('@/shared/lib/ai-brain/model-vendor'));
     vi.mocked(inferBrainModelVendor).mockReturnValue('ollama');
     vi.mocked(runBrainChatCompletion).mockResolvedValue({
       text: 'Generated copy',

@@ -739,7 +739,7 @@ describe('starter workflow registry', () => {
   it('upgrades stale parameter inference v2 configs with blank product_core parser mappings', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveParameterInferencePathConfig());
     const parserNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'parser');
-    const parserMappings = parserNode?.config?.parser?.mappings as Record<string, string> | undefined;
+    const parserMappings = parserNode?.config?.parser?.mappings;
     const report = evaluateRunPreflight({
       nodes: upgraded.config.nodes ?? [],
       edges: upgraded.config.edges ?? [],

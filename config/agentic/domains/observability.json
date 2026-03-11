@@ -1,0 +1,34 @@
+{
+  "id": "observability",
+  "label": "Observability pipelines, metrics, and system logs",
+  "riskLevel": "medium",
+  "sourceRoots": [
+    "src/features/observability",
+    "src/shared/lib/observability",
+    "src/app/api/system/logs",
+    "scripts/observability"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [
+    "docs/metrics/api-error-sources-latest.json",
+    "docs/metrics/api-error-sources-latest.md"
+  ],
+  "generatedOnlyPaths": [
+    "docs/metrics"
+  ],
+  "manualOnlyPaths": [],
+  "docGenerators": [
+    "//:api_error_sources"
+  ],
+  "scannerTargets": [
+    "//:observability"
+  ],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit"
+  ],
+  "impactBundles": [
+    "observability_contracts"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "ai-paths",
+  "label": "AI Paths editor, runtime, and trigger workflows",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/ai/ai-paths",
+    "src/shared/lib/ai-paths",
+    "src/app/api/ai-paths",
+    "scripts/ai-paths"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [
+    "//:ai_paths_node_docs"
+  ],
+  "scannerTargets": [
+    "//:ai_paths_canonical"
+  ],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:case_resolver_regression",
+    "//:products_trigger_queue_unit"
+  ],
+  "impactBundles": [
+    "ai_paths_runtime"
+  ]
+}

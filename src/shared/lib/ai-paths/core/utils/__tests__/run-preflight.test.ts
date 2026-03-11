@@ -486,8 +486,8 @@ describe('evaluateRunPreflight', () => {
     });
 
     const after = evaluateRunPreflight({
-      nodes: upgraded.config.nodes as AiNode[],
-      edges: upgraded.config.edges as Edge[],
+      nodes: upgraded.config.nodes,
+      edges: upgraded.config.edges,
       runtimeState: buildRuntimeState({}),
       aiPathsValidation: { enabled: true, blockThreshold: 0, warnThreshold: 0 },
       strictFlowMode: true,

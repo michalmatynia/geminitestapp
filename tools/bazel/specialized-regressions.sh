@@ -5,5 +5,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-./tools/bazel/run-bazel.sh run //:case_resolver_regression
-./tools/bazel/run-bazel.sh run //:products_trigger_queue_unit
+# Compatibility shim. The canonical repo entrypoint is `npm run bazel:regressions`,
+# which resolves to the root Bazel lane `//:repo_regressions`.
+./tools/bazel/run-bazel.sh run //:repo_regressions

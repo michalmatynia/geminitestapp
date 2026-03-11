@@ -136,7 +136,7 @@ describe('kangur tts server', () => {
     logSystemEventMock.mockResolvedValue(undefined);
     audioSpeechCreateMock.mockResolvedValue({
       arrayBuffer: async (): Promise<ArrayBuffer> =>
-        Uint8Array.from([1, 2, 3, 4]).buffer as ArrayBuffer,
+        Uint8Array.from([1, 2, 3, 4]).buffer,
     });
     uploadToConfiguredStorageMock.mockResolvedValue({
       filepath: '/uploads/kangur/tts/generated.mp3',

@@ -8,7 +8,7 @@ const promptExploderRoot = path.join(projectRoot, 'src/features/prompt-exploder'
 const forbiddenRuntimeCompatTokens = [
   '@/features/prompt-exploder/persistence-contract-migration',
   'migratePromptExploderPersistedSettingValue',
-  "scope === 'case-resolver-prompt-exploder'",
+  'scope === \'case-resolver-prompt-exploder\'',
   'runtime_retry_success',
   'runtime_retry',
   'parseStoredValidationRuleStack',

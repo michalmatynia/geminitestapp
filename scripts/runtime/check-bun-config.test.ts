@@ -103,6 +103,16 @@ describe('Bun config check', () => {
     expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
   });
 
+  it('passes when the linker line has an inline comment', () => {
+    const root = createTempRoot();
+    writeFile(root, 'bunfig.toml', '[install]\nlinker = "hoisted" # keep npm-style hoisting\n');
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('bunfig.toml keeps Bun on the hoisted install layout');
+  });
+
   it('fails when bunfig.toml is missing', () => {
     const root = createTempRoot();
 

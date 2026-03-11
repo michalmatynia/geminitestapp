@@ -5,11 +5,6 @@ const {
   createIndexMock,
   findOneMock,
   insertOneMock,
-  toArrayMock,
-  sortMock,
-  limitMock,
-  findMock,
-  collectionMock,
   getMongoDbMock,
 } = vi.hoisted(() => {
   const createIndexMock = vi.fn();
@@ -33,11 +28,6 @@ const {
     createIndexMock,
     findOneMock,
     insertOneMock,
-    toArrayMock,
-    sortMock,
-    limitMock,
-    findMock,
-    collectionMock,
     getMongoDbMock,
   };
 });

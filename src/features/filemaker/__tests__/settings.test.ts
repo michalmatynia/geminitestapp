@@ -4,42 +4,13 @@ import {
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
-  extractFilemakerEmailsFromText,
   getFilemakerAddressById,
   getFilemakerAddressLinksForOwner,
-  getFilemakerAddressesForOwner,
   getFilemakerDefaultAddressForOwner,
-  getFilemakerEmailsForParty,
-  getFilemakerEventsForOrganization,
-  getFilemakerPhoneNumbersForParty,
-  getFilemakerOrganizationsForEvent,
-  getFilemakerPartiesForEmail,
-  getFilemakerPartiesForPhoneNumber,
-  linkFilemakerAddressToOwner,
-  linkFilemakerEmailToParty,
-  linkFilemakerEventToOrganization,
-  linkFilemakerPhoneNumberToParty,
-  parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
-  parseAndUpsertFilemakerEmailsForParty,
-  removeFilemakerEmail,
-  removeFilemakerEvent,
-  removeFilemakerOrganizationEventLinks,
-  removeFilemakerPartyEmailLinks,
-  removeFilemakerPartyPhoneNumberLinks,
-  removeFilemakerPhoneNumber,
   resolveFilemakerPartyLabel,
-  setFilemakerDefaultAddressForOwner,
   toPersistedFilemakerDatabase,
-  unlinkFilemakerAddressFromOwner,
-  unlinkFilemakerEventFromOrganization,
-  unlinkFilemakerEmailFromParty,
-  unlinkFilemakerPhoneNumberFromParty,
-  upsertFilemakerEmailsForParty,
-  upsertFilemakerPhoneNumbersForParty,
-  validateFilemakerPhoneNumber,
 } from '@/features/filemaker/settings';
-import { parseFilemakerPhoneValidationRulesFromPromptSettings } from '@/features/filemaker/filemaker-settings.validation';
 
 const createPersonRecord = (overrides: Record<string, unknown> = {}) => ({
   id: 'p-1',
@@ -83,17 +54,6 @@ const createEventRecord = (overrides: Record<string, unknown> = {}) => ({
   countryId: '',
   ...overrides,
 });
-
-const emptyCanonicalRelations = {
-  events: [],
-  addresses: [],
-  addressLinks: [],
-  phoneNumbers: [],
-  phoneNumberLinks: [],
-  emails: [],
-  emailLinks: [],
-  eventOrganizationLinks: [],
-};
 
 describe('filemaker settings', () => {
   it('normalizes and deduplicates database entries', () => {

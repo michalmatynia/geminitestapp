@@ -356,6 +356,16 @@ jobs:
       - name: Run Prisma integration project
         run: npm run bazel -- run //:integration_prisma
 
+      - name: Upload Prisma integration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-prisma-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/integration-prisma-latest.json
+            docs/metrics/integration-prisma-latest.md
+
   integration-mongo:
     runs-on: ubuntu-latest
     services:
@@ -392,3 +402,13 @@ jobs:
 
       - name: Run Mongo integration project
         run: npm run bazel -- run //:integration_mongo
+
+      - name: Upload Mongo integration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-mongo-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/integration-mongo-latest.json
+            docs/metrics/integration-mongo-latest.md

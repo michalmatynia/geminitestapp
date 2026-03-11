@@ -1,17 +1,127 @@
 import 'server-only';
 
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import { getCollectionProvider } from '@/shared/lib/db/collection-provider-map';
+import {
+  getCollectionProvider,
+  getCollectionRouteMap,
+} from '@/shared/lib/db/collection-provider-map';
 
 import { mongoPathRunRepository } from './mongo-path-run-repository';
 import { prismaPathRunRepository } from './prisma-path-run-repository';
 
-const AI_PATH_RUNS_COLLECTION = 'ai_path_runs';
+export const AI_PATH_RUNS_COLLECTION = 'ai_path_runs';
+
+export type PathRunRepositorySelection = {
+  collection: typeof AI_PATH_RUNS_COLLECTION;
+  provider: 'mongodb' | 'prisma';
+  repo: AiPathRunRepository;
+  routeMode: 'explicit' | 'fallback';
+};
+
+export type PersistedRunRepositorySelection = {
+  collection: string | null;
+  provider: 'mongodb' | 'prisma' | null;
+  routeMode: 'explicit' | 'fallback' | null;
+  selectedAt: string | null;
+};
+
+const hasExplicitCollectionRoute = (
+  routeMap: Record<string, 'mongodb' | 'prisma' | 'redis'>
+): boolean => {
+  if (AI_PATH_RUNS_COLLECTION in routeMap) return true;
+  const normalizedCollection = AI_PATH_RUNS_COLLECTION.trim().toLowerCase();
+  return Object.keys(routeMap).some((collectionName) => {
+    return collectionName.trim().toLowerCase() === normalizedCollection;
+  });
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const asProvider = (value: unknown): 'mongodb' | 'prisma' | null =>
+  value === 'mongodb' || value === 'prisma' ? value : null;
+
+const asRouteMode = (value: unknown): 'explicit' | 'fallback' | null =>
+  value === 'explicit' || value === 'fallback' ? value : null;
+
+const asOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+export const readPersistedRunRepositorySelection = (
+  meta: unknown
+): PersistedRunRepositorySelection | null => {
+  const metaRecord = asRecord(meta);
+  const runRepository = asRecord(metaRecord?.['runRepository']);
+  if (!runRepository) return null;
+
+  const selection: PersistedRunRepositorySelection = {
+    collection: asOptionalString(runRepository['collection']),
+    provider: asProvider(runRepository['provider']),
+    routeMode: asRouteMode(runRepository['routeMode']),
+    selectedAt: asOptionalString(runRepository['selectedAt']),
+  };
+
+  if (!selection.collection && !selection.provider && !selection.routeMode && !selection.selectedAt) {
+    return null;
+  }
+  return selection;
+};
+
+export const hasRunRepositorySelectionMismatch = (
+  persisted: PersistedRunRepositorySelection | null,
+  current: Pick<PathRunRepositorySelection, 'collection' | 'provider' | 'routeMode'>
+): boolean => {
+  if (!persisted) return false;
+  if (persisted.collection && persisted.collection !== current.collection) return true;
+  if (persisted.provider && persisted.provider !== current.provider) return true;
+  if (persisted.routeMode && persisted.routeMode !== current.routeMode) return true;
+  return false;
+};
+
+export const resolvePathRunRepository = async (): Promise<PathRunRepositorySelection> => {
+  const [provider, routeMap] = await Promise.all([
+    getCollectionProvider(AI_PATH_RUNS_COLLECTION),
+    getCollectionRouteMap(),
+  ]);
+  return {
+    collection: AI_PATH_RUNS_COLLECTION,
+    provider,
+    repo: provider === 'prisma' ? prismaPathRunRepository : mongoPathRunRepository,
+    routeMode: hasExplicitCollectionRoute(routeMap) ? 'explicit' : 'fallback',
+  };
+};
+
+export const resolveAlternatePathRunRepository = async (
+  currentProvider: 'mongodb' | 'prisma'
+): Promise<
+  | {
+      collection: typeof AI_PATH_RUNS_COLLECTION;
+      provider: 'mongodb' | 'prisma';
+      repo: AiPathRunRepository;
+    }
+  | null
+> => {
+  if (currentProvider === 'mongodb') {
+    if (!process.env['DATABASE_URL']) return null;
+    return {
+      collection: AI_PATH_RUNS_COLLECTION,
+      provider: 'prisma',
+      repo: prismaPathRunRepository,
+    };
+  }
+  if (!process.env['MONGODB_URI']) return null;
+  return {
+    collection: AI_PATH_RUNS_COLLECTION,
+    provider: 'mongodb',
+    repo: mongoPathRunRepository,
+  };
+};
 
 export const getPathRunRepository = async (): Promise<AiPathRunRepository> => {
-  const provider = await getCollectionProvider(AI_PATH_RUNS_COLLECTION);
-  if (provider === 'prisma') {
-    return prismaPathRunRepository;
-  }
-  return mongoPathRunRepository;
+  return (await resolvePathRunRepository()).repo;
 };

@@ -13,10 +13,15 @@ import {
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/server';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
-import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
+import type { AiPathRunListOptions, AiPathRunRepository, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import {
+  hasRunRepositorySelectionMismatch,
+  readPersistedRunRepositorySelection,
+  resolveAlternatePathRunRepository,
+  resolvePathRunRepository,
+} from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,
@@ -72,7 +77,7 @@ const pruneRunsListResponseCache = (now: number): void => {
 };
 
 const scheduleStaleRunningCleanup = (
-  repo: Awaited<ReturnType<typeof getPathRunRepository>>
+  repo: AiPathRunRepository
 ): void => {
   const now = Date.now();
   if (staleRunningCleanupPromise) return;
@@ -161,6 +166,54 @@ const resolveAiPathRunsQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
+const buildRunRepositoryHeaders = (
+  runs: unknown[],
+  repoSelection: Awaited<ReturnType<typeof resolvePathRunRepository>>,
+  options?: {
+    readProvider?: 'mongodb' | 'prisma';
+    readMode?: 'selected' | 'alternate';
+  }
+): Record<string, string> => {
+  const headers = new Headers({
+    'X-Ai-Poll-Guard': 'runs-fresh',
+    'X-Ai-Paths-Run-Provider': repoSelection.provider,
+    'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
+    'X-Ai-Paths-Run-Read-Provider': options?.readProvider ?? repoSelection.provider,
+    'X-Ai-Paths-Run-Read-Mode': options?.readMode ?? 'selected',
+  });
+  let mismatchCount = 0;
+  let firstWriterProvider: string | null = null;
+  let firstWriterRouteMode: string | null = null;
+
+  runs.forEach((run) => {
+    if (!run || typeof run !== 'object' || Array.isArray(run)) return;
+    const writerSelection = readPersistedRunRepositorySelection(
+      (run as Record<string, unknown>)['meta']
+    );
+    if (!hasRunRepositorySelectionMismatch(writerSelection, repoSelection)) return;
+    mismatchCount += 1;
+    if (!firstWriterProvider && writerSelection?.provider) {
+      firstWriterProvider = writerSelection.provider;
+    }
+    if (!firstWriterRouteMode && writerSelection?.routeMode) {
+      firstWriterRouteMode = writerSelection.routeMode;
+    }
+  });
+
+  if (mismatchCount > 0) {
+    headers.set('X-Ai-Paths-Run-Provider-Mismatch', '1');
+    headers.set('X-Ai-Paths-Run-Provider-Mismatch-Count', String(mismatchCount));
+    if (firstWriterProvider) {
+      headers.set('X-Ai-Paths-Run-Writer-Provider', firstWriterProvider);
+    }
+    if (firstWriterRouteMode) {
+      headers.set('X-Ai-Paths-Run-Writer-Route-Mode', firstWriterRouteMode);
+    }
+  }
+
+  return Object.fromEntries(headers.entries());
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const query = listQuerySchema.parse(resolveAiPathRunsQueryInput(req, _ctx));
@@ -176,7 +229,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const offset = query.offset ?? undefined;
   const includeTotal = query.includeTotal;
   const fresh = query.fresh;
-  const repo = await getPathRunRepository();
+  const repoSelection = await resolvePathRunRepository();
+  const repo = repoSelection.repo;
   scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   if (visibility === 'global' && !hasGlobalRunAccess) {
@@ -201,11 +255,13 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     pruneRunsListResponseCache(now);
     const cached = runsListResponseCache.get(cacheKey);
     if (cached && cached.expiresAt > now) {
+      const headers = {
+        ...buildRunRepositoryHeaders(cached.payload.runs, repoSelection),
+        'Cache-Control': 'no-store',
+        'X-Ai-Poll-Guard': 'runs-cache-hit',
+      };
       return NextResponse.json(cached.payload, {
-        headers: {
-          'Cache-Control': 'no-store',
-          'X-Ai-Poll-Guard': 'runs-cache-hit',
-        },
+        headers,
       });
     }
   }
@@ -221,17 +277,46 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(offset !== undefined ? { offset } : {}),
     ...(includeTotal ? {} : { includeTotal: false }),
   });
+  let effectiveResult = result;
+  let readProvider: 'mongodb' | 'prisma' = repoSelection.provider;
+  let readMode: 'selected' | 'alternate' = 'selected';
+  if (requestId && result.runs.length === 0) {
+    const alternateRepoSelection = await resolveAlternatePathRunRepository(repoSelection.provider);
+    if (alternateRepoSelection) {
+      const alternateResult = await alternateRepoSelection.repo.listRuns({
+        ...(visibility === 'scoped' ? { userId: access.userId } : {}),
+        ...(pathId ? { pathId } : {}),
+        ...(nodeId ? { nodeId } : {}),
+        ...(requestId ? { requestId } : {}),
+        ...(searchQuery ? { query: searchQuery } : {}),
+        ...(source ? { source, sourceMode } : {}),
+        ...(status ? { status } : {}),
+        ...(limit !== undefined ? { limit } : {}),
+        ...(offset !== undefined ? { offset } : {}),
+        ...(includeTotal ? {} : { includeTotal: false }),
+      });
+      if (alternateResult.runs.length > 0) {
+        effectiveResult = alternateResult;
+        readProvider = alternateRepoSelection.provider;
+        readMode = 'alternate';
+      }
+    }
+  }
   if (!fresh && runsListResponseCacheTtlMs > 0) {
     runsListResponseCache.set(cacheKey, {
       expiresAt: now + runsListResponseCacheTtlMs,
-      payload: result as { runs: unknown[]; total: number },
+      payload: effectiveResult as { runs: unknown[]; total: number },
     });
   }
-  return NextResponse.json(result, {
-    headers: {
-      'Cache-Control': 'no-store',
-      'X-Ai-Poll-Guard': 'runs-fresh',
-    },
+  const headers = {
+    ...buildRunRepositoryHeaders(effectiveResult.runs, repoSelection, {
+      readProvider,
+      readMode,
+    }),
+    'Cache-Control': 'no-store',
+  };
+  return NextResponse.json(effectiveResult, {
+    headers,
   });
 }
 
@@ -244,7 +329,7 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
   const source = query.source ?? undefined;
   const sourceMode = query.sourceMode;
 
-  const repo = await getPathRunRepository();
+  const repo = (await resolvePathRunRepository()).repo;
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const listOptions: AiPathRunListOptions = {};
   if (!hasGlobalRunAccess) {

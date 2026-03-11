@@ -1,0 +1,24 @@
+{
+  "id": "viewer3d",
+  "label": "3D asset management, viewer runtime, and asset administration",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/viewer3d",
+    "src/app/api/assets3d"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:critical_flows"
+  ],
+  "impactBundles": [
+    "viewer3d_runtime"
+  ]
+}

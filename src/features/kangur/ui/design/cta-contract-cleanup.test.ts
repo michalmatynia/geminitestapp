@@ -90,7 +90,7 @@ describe('Kangur CTA contract cleanup', () => {
   it('keeps a single primary button variant without the removed warm alias', () => {
     const source = readFileSync(kangurPrimitivesPath, 'utf8');
 
-    expect(source).toContain("primary:");
+    expect(source).toContain('primary:');
     expect(source).not.toContain('warm:');
   });
 
@@ -119,7 +119,7 @@ describe('Kangur CTA contract cleanup', () => {
     expect(source).toContain('border-b border-amber-200/80 bg-[#fff7cf]/78');
     expect(source).toContain('border border-amber-100 bg-amber-50/80');
     expect(source).toContain('border border-amber-100 bg-amber-50/70');
-    expect(source).toContain("accent='amber'");
+    expect(source).toContain('accent=\'amber\'');
     expect(source).toContain('border border-orange-400 bg-gradient-to-br from-orange-400 to-amber-500');
     expect(source).not.toContain('bg-[linear-gradient(135deg,#2f4df6_0%,#e84694_55%,#fbbf24_100%)]');
     expect(source).not.toContain('border border-indigo-500 bg-indigo-500');
@@ -128,11 +128,11 @@ describe('Kangur CTA contract cleanup', () => {
   it('keeps the parent dashboard ai tutor settings surface on the warm amber palette', () => {
     const source = readFileSync(kangurParentDashboardAiTutorWidgetPath, 'utf8');
 
-    expect(source).toContain("accent='amber'");
+    expect(source).toContain('accent=\'amber\'');
     expect(source).toContain('bg-gradient-to-r from-amber-400 to-orange-400');
     expect(source).toContain('border border-amber-100 bg-amber-50/75');
     expect(source).toContain('text-orange-500');
-    expect(source).not.toContain("accent='indigo'");
+    expect(source).not.toContain('accent=\'indigo\'');
     expect(source).not.toContain('bg-indigo-500');
     expect(source).not.toContain('text-indigo-500');
   });
@@ -145,7 +145,7 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('does not reintroduce the removed warm variant or recommendation helper across Kangur sources', () => {
-    expect(findSourceMatches("variant='warm'")).toEqual([]);
+    expect(findSourceMatches('variant=\'warm\'')).toEqual([]);
     expect(findSourceMatches('variant="warm"')).toEqual([]);
     expect(findSourceMatches('getKangurRecommendationButtonVariant')).toEqual([]);
     expect(findSourceMatches('play-cta')).toEqual([]);

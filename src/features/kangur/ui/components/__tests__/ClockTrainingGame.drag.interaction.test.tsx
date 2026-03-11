@@ -33,7 +33,7 @@ const getClockDisplay = (): HTMLElement => {
 
 const getHourHand = (container: HTMLElement): Element => {
   const hand = container.querySelector('[data-testid="clock-hour-hand"]');
-  if (!hand || hand.tagName.toLowerCase() !== 'line') {
+  if (hand?.tagName.toLowerCase() !== 'line') {
     throw new Error('Hour hand not found.');
   }
   return hand;
@@ -41,7 +41,7 @@ const getHourHand = (container: HTMLElement): Element => {
 
 const getMinuteHand = (container: HTMLElement): Element => {
   const hand = container.querySelector('[data-testid="clock-minute-hand"]');
-  if (!hand || hand.tagName.toLowerCase() !== 'line') {
+  if (hand?.tagName.toLowerCase() !== 'line') {
     throw new Error('Minute hand not found.');
   }
   return hand;

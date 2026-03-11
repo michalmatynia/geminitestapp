@@ -37,9 +37,9 @@ describe('ai brain provider credentials legacy prune guard', () => {
       ),
     ];
     const forbiddenFeatureTokens = [
-      "settingsStore.get('openai_api_key')",
-      "settingsStore.get('anthropic_api_key')",
-      "settingsStore.get('gemini_api_key')",
+      'settingsStore.get(\'openai_api_key\')',
+      'settingsStore.get(\'anthropic_api_key\')',
+      'settingsStore.get(\'gemini_api_key\')',
       'ai_brain.providers.openai_api_key',
       'ai_brain.providers.anthropic_api_key',
       'ai_brain.providers.gemini_api_key',

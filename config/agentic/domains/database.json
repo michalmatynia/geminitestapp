@@ -1,0 +1,29 @@
+{
+  "id": "database",
+  "label": "Database tooling, providers, and engine administration",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/database",
+    "src/app/api/databases",
+    "src/shared/lib/db"
+  ],
+  "ownedDocs": [
+    "docs/migrations"
+  ],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [
+    "docs/migrations"
+  ],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:integration_prisma"
+  ],
+  "impactBundles": [
+    "database_integrity"
+  ]
+}

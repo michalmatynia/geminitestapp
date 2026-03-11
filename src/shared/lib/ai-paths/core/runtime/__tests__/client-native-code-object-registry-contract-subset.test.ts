@@ -97,6 +97,75 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-model']?.['jobId']).toBe('job-model-1');
   });
 
+  it('waits for template-referenced prompt inputs before starting downstream model nodes', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const promptNode = {
+      ...builders.buildPromptNode(),
+      inputs: ['bundle', 'result'],
+      config: {
+        prompt: {
+          template: 'Bundle {{bundle.title}} definitions {{result}}',
+        },
+      },
+    };
+
+    const result = await evaluateGraphClient({
+      nodes: [
+        builders.buildConstantNode({
+          id: 'node-bundle',
+          title: 'Bundle Source',
+          value: { title: 'Silksong' },
+        }),
+        {
+          ...builders.buildModelNode(),
+          id: 'node-result-missing',
+          title: 'Definitions Source',
+        },
+        promptNode,
+        builders.buildModelNode(),
+      ],
+      edges: [
+        {
+          id: 'edge-bundle-prompt',
+          from: 'node-bundle',
+          to: 'node-prompt',
+          fromPort: 'value',
+          toPort: 'bundle',
+          kind: 'value',
+        },
+        {
+          id: 'edge-result-prompt',
+          from: 'node-result-missing',
+          to: 'node-prompt',
+          fromPort: 'result',
+          toPort: 'result',
+          kind: 'value',
+        },
+        {
+          id: 'edge-prompt-model-template-required',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelNodeTypes: ['constant', 'prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-prompt']?.['status']).toBe('waiting_callback');
+    expect(result.outputs?.['node-prompt']?.['blockedReason']).toBe('missing_inputs');
+    expect(result.outputs?.['node-prompt']?.['waitingOnPorts']).toEqual(['result']);
+    expect(result.outputs?.['node-model']?.['status']).toBe('waiting_callback');
+    expect(result.outputs?.['node-model']?.['blockedReason']).toBe('missing_inputs');
+    expect(result.outputs?.['node-model']?.['waitingOnPorts']).toEqual(['prompt']);
+  });
+
   it('forwards contextRegistry into queued client model jobs', async () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
@@ -846,7 +915,7 @@ describe('client native code-object registry contract subset', () => {
         reportAiPathsError: (): void => {},
       })
     ).rejects.toThrow(
-      `Node type 'function' is not supported in client-side execution. Use Server execution.`
+      'Node type \'function\' is not supported in client-side execution. Use Server execution.'
     );
   });
 
@@ -859,7 +928,7 @@ describe('client native code-object registry contract subset', () => {
         reportAiPathsError: (): void => {},
       })
     ).rejects.toThrow(
-      `Node type 'unsupported_client_node' is not supported in client-side execution. Use Server execution.`
+      'Node type \'unsupported_client_node\' is not supported in client-side execution. Use Server execution.'
     );
   });
 });

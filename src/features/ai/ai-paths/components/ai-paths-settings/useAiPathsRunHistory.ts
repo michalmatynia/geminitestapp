@@ -212,6 +212,8 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     if (latestEventTimestamp) {
       params.set('since', latestEventTimestamp);
     }
+    // Only reopen when the viewed run changes or streaming state toggles.
+    // Reopening on every merged event causes client-side stream churn.
     const url = params.toString()
       ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
       : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
@@ -291,7 +293,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     return (): void => {
       stopStream();
     };
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events, runHistoryActions]);
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runHistoryActions]);
 
   useEffect(() => {
     runHistoryActions.setRunEventsOverflow(false);

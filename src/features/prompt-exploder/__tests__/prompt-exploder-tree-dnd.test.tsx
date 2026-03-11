@@ -233,7 +233,7 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
     });
     renderTreeNodeWithRuntime(<>{renderedNode}</>);
     expect(screen.getByText('A1')).toBeTruthy();
-    expect(document.querySelector('[data-master-tree-drag-handle=\"true\"]')).toBeTruthy();
+    expect(document.querySelector('[data-master-tree-drag-handle="true"]')).toBeTruthy();
   });
 
   it('rejects inside drops for top-level segment reordering', () => {
@@ -369,7 +369,7 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
     });
     renderTreeNodeWithRuntime(<>{renderedNode}</>);
     expect(screen.getByText('Alpha')).toBeTruthy();
-    expect(document.querySelector('[data-master-tree-drag-handle=\"true\"]')).toBeTruthy();
+    expect(document.querySelector('[data-master-tree-drag-handle="true"]')).toBeTruthy();
   });
 
   it('rejects invalid subsection drop paths while allowing only structurally valid targets', () => {

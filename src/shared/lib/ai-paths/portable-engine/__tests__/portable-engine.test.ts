@@ -221,7 +221,7 @@ describe('portable AI-path engine scaffold', () => {
   it('embeds node code object manifest metadata when building portable package', () => {
     const pathConfig = createDefaultPathConfig('path_portable_manifest_embed');
     const portablePackage = buildPortablePathPackage(pathConfig);
-    const metadataRecord = portablePackage.metadata as Record<string, unknown> | undefined;
+    const metadataRecord = portablePackage.metadata;
     const manifest = metadataRecord?.[PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY] as
       | {
           schemaVersion?: string;
@@ -237,7 +237,7 @@ describe('portable AI-path engine scaffold', () => {
   it('warns or blocks on node code object hash mismatch based on verification mode', () => {
     const pathConfig = createDefaultPathConfig('path_portable_manifest_mismatch');
     const portablePackage = buildPortablePathPackage(pathConfig);
-    const metadataRecord = (portablePackage.metadata ?? {}) as Record<string, unknown>;
+    const metadataRecord = portablePackage.metadata ?? {};
     const manifest = metadataRecord[PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY] as
       | {
           schemaVersion?: string;

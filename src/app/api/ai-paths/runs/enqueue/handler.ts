@@ -43,6 +43,7 @@ import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/sta
 import {
   remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const enqueueSchema = z.object({
@@ -378,5 +379,14 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     });
   }
 
-  return NextResponse.json(responseContract.data);
+  const repoSelection = await withTiming('resolveRunRepoMs', async () => {
+    return await resolvePathRunRepository();
+  });
+
+  return NextResponse.json(responseContract.data, {
+    headers: {
+      'X-Ai-Paths-Run-Provider': repoSelection.provider,
+      'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
+    },
+  });
 }

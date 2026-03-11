@@ -8,14 +8,22 @@ let hasAiPathsGraphModelNodeContext: typeof import('@/shared/lib/products/servic
 let isAiPathsGraphModelPayload: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').isAiPathsGraphModelPayload;
 let matchesGraphModelReuseIdentity: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').matchesGraphModelReuseIdentity;
 let normalizeGraphModelPayloadForDispatch: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').normalizeGraphModelPayloadForDispatch;
+let prepareGraphModelDispatchJob: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').prepareGraphModelDispatchJob;
 let prepareGraphModelEnqueuePayload: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').prepareGraphModelEnqueuePayload;
+let prepareGraphModelEnqueuePayloadOrThrow: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').prepareGraphModelEnqueuePayloadOrThrow;
+let resolveGraphModelEnqueueInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelEnqueueInspection;
+let resolveGraphModelDispatchInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelDispatchInspection;
+let prepareGraphModelExecutionInput: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').prepareGraphModelExecutionInput;
 let readGraphModelAiPathsRunContext: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').readGraphModelAiPathsRunContext;
 let readGraphModelPayloadGraphString: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').readGraphModelPayloadGraphString;
+let resolveGraphModelExecutionInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionInspection;
 let resolveGraphModelExecutionPayload: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionPayload;
 let resolveGraphModelExecutionContext: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelExecutionContext;
 let resolveGraphModelCacheKey: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelCacheKey;
+let resolveGraphModelPayloadInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelPayloadInspection;
 let resolveGraphModelPayloadHash: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelPayloadHash;
 let resolveGraphModelPayloadSource: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelPayloadSource;
+let resolveGraphModelSummaryInspection: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelSummaryInspection;
 let resolveGraphModelReuseIdentity: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelReuseIdentity;
 let resolveGraphModelRequestedModelId: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').resolveGraphModelRequestedModelId;
 let safeParseGraphModelJobEnqueuePayload: typeof import('@/shared/lib/products/services/product-ai-graph-model-payload').safeParseGraphModelJobEnqueuePayload;
@@ -37,14 +45,22 @@ beforeEach(async () => {
     isAiPathsGraphModelPayload,
     matchesGraphModelReuseIdentity,
     normalizeGraphModelPayloadForDispatch,
+    prepareGraphModelDispatchJob,
     prepareGraphModelEnqueuePayload,
+    prepareGraphModelEnqueuePayloadOrThrow,
+    resolveGraphModelEnqueueInspection,
+    resolveGraphModelDispatchInspection,
+    prepareGraphModelExecutionInput,
     readGraphModelAiPathsRunContext,
     readGraphModelPayloadGraphString,
+    resolveGraphModelExecutionInspection,
     resolveGraphModelExecutionPayload,
     resolveGraphModelExecutionContext,
     resolveGraphModelCacheKey,
+    resolveGraphModelPayloadInspection,
     resolveGraphModelPayloadHash,
     resolveGraphModelPayloadSource,
+    resolveGraphModelSummaryInspection,
     resolveGraphModelReuseIdentity,
     resolveGraphModelRequestedModelId,
     safeParseGraphModelJobEnqueuePayload,
@@ -80,6 +96,36 @@ describe('product-ai graph_model payload helpers', () => {
     expect(resolveGraphModelPayloadHash({ payloadHash: '  hash-1  ' })).toBe('hash-1');
     expect(resolveGraphModelCacheKey(null)).toBeNull();
     expect(resolveGraphModelPayloadHash(null)).toBeNull();
+  });
+
+  it('reads graph_model payload inspection through one shared helper', () => {
+    expect(
+      resolveGraphModelPayloadInspection({
+        cacheKey: '  cache-key-1  ',
+        payloadHash: '  hash-1  ',
+        graph: {
+          requestedModelId: ' node-selected-model ',
+          runId: ' run-1 ',
+          nodeId: ' node-1 ',
+          nodeTitle: ' Node title ',
+        },
+      })
+    ).toEqual({
+      source: 'ai_paths',
+      requestedModelId: 'node-selected-model',
+      cacheKey: 'cache-key-1',
+      payloadHash: 'hash-1',
+      runId: 'run-1',
+      nodeId: 'node-1',
+      nodeTitle: 'Node title',
+      hasAiPathsNodeContext: true,
+      isAiPathsGraphModelPayload: true,
+      reuseIdentity: {
+        cacheKey: 'cache-key-1',
+        payloadHash: 'hash-1',
+        requestedModelId: 'node-selected-model',
+      },
+    });
   });
 
   it('reads the graph_model reuse identity through one shared helper', () => {
@@ -289,6 +335,61 @@ describe('product-ai graph_model payload helpers', () => {
     expect(safeParseGraphModelQueuedPayload(queuedPayload).success).toBe(true);
   });
 
+  it('prepares a graph_model dispatch job with normalized queued payload', () => {
+    const prepared = prepareGraphModelDispatchJob({
+      id: 'job-graph-model-1',
+      type: 'graph_model' as const,
+      payload: {
+        prompt: 'Generate copy',
+        graph: {
+          runId: 'run-1',
+          nodeId: 'node-1',
+        },
+      },
+    });
+
+    expect(prepared).toEqual(
+      expect.objectContaining({
+        id: 'job-graph-model-1',
+        type: 'graph_model',
+        payload: expect.objectContaining({
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+          },
+        }),
+      })
+    );
+  });
+
+  it('reads graph_model dispatch normalization through one shared inspection helper', () => {
+    const inspection = resolveGraphModelDispatchInspection({
+      prompt: 'Generate copy',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+      },
+    });
+
+    expect(inspection.error).toBeNull();
+    expect(inspection.normalizedPayload).toEqual(
+      expect.objectContaining({
+        prompt: 'Generate copy',
+        source: 'ai_paths',
+        cacheKey: expect.any(String),
+        payloadHash: expect.any(String),
+        graph: {
+          runId: 'run-1',
+          nodeId: 'node-1',
+        },
+      })
+    );
+  });
+
   it('rejects malformed graph_model dispatch payloads', () => {
     expect(() =>
       normalizeGraphModelPayloadForDispatch({
@@ -378,6 +479,52 @@ describe('product-ai graph_model payload helpers', () => {
     );
   });
 
+  it('reads graph_model enqueue parsing and preparation through one shared inspection helper', () => {
+    const inspection = resolveGraphModelEnqueueInspection({
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+        requestedModelId: 'node-selected-model',
+      },
+    });
+
+    expect(inspection.error).toBeNull();
+    expect(inspection.parsedPayload).toEqual(
+      expect.objectContaining({
+        source: 'ai_paths',
+        prompt: 'Generate copy',
+      })
+    );
+    expect(inspection.preparedPayload).toEqual(
+      expect.objectContaining({
+        success: true,
+        payload: expect.objectContaining({
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+        }),
+        reuseIdentity: {
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+          requestedModelId: 'node-selected-model',
+        },
+      })
+    );
+  });
+
+  it('throws a badRequestError when graph_model enqueue payload preparation fails', () => {
+    expect(() =>
+      prepareGraphModelEnqueuePayloadOrThrow({
+        payload: {
+          prompt: 'Generate copy',
+        },
+        productId: 'product-1',
+      })
+    ).toThrow('Invalid graph_model payload');
+  });
+
   it('resolves execution payloads by normalizing real AI Paths jobs', () => {
     const resolved = resolveGraphModelExecutionPayload({
       prompt: 'Generate copy',
@@ -401,6 +548,54 @@ describe('product-ai graph_model payload helpers', () => {
         },
       })
     );
+  });
+
+  it('reads execution payload and context through one shared inspection helper', async () => {
+    const { resolveGraphModelExecutionInspection: inspectExecutionPayload } = await import(
+      '@/shared/lib/products/services/product-ai-graph-model-payload'
+    );
+
+    const resolved = inspectExecutionPayload({
+      prompt: 'Generate copy',
+      source: 'ai_paths',
+      graph: {
+        runId: 'run-1',
+        nodeId: 'node-1',
+        nodeTitle: 'Model node',
+        requestedModelId: 'node-selected-model',
+      },
+    });
+
+    expect(resolved).toEqual({
+      executionPayload: {
+        source: 'ai_paths',
+        payload: expect.objectContaining({
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+            nodeTitle: 'Model node',
+            requestedModelId: 'node-selected-model',
+          },
+        }),
+      },
+      executionContext: {
+        source: 'ai_paths',
+        requestedModelId: 'node-selected-model',
+        runId: 'run-1',
+        nodeId: 'node-1',
+        nodeTitle: 'Model node',
+        hasAiPathsNodeContext: true,
+        payload: expect.objectContaining({
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+        }),
+      },
+    });
   });
 
   it('resolves malformed explicit-source payloads without normalizing them into AI Paths jobs', () => {
@@ -463,6 +658,98 @@ describe('product-ai graph_model payload helpers', () => {
     });
   });
 
+  it('prepares graph_model execution input in one shared async step', async () => {
+    await expect(
+      prepareGraphModelExecutionInput({
+        payload: {
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+          },
+        },
+        findRunById: async () => ({
+          graph: {
+            nodes: [
+              {
+                id: 'node-1',
+                title: 'Recovered node title',
+                config: {
+                  model: {
+                    modelId: 'fallback-model',
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        source: 'ai_paths',
+        rawPrompt: 'Generate copy',
+        requestedModelId: 'fallback-model',
+        aiPathsConfigErrorContext: {
+          requestedModelId: 'fallback-model',
+          runId: 'run-1',
+          nodeId: 'node-1',
+          nodeTitle: 'Recovered node title',
+        },
+        aiPathsNodeSnapshot: {
+          requestedModelId: 'fallback-model',
+          nodeTitle: 'Recovered node title',
+        },
+        payload: expect.objectContaining({
+          source: 'ai_paths',
+          cacheKey: expect.any(String),
+          payloadHash: expect.any(String),
+        }),
+      })
+    );
+  });
+
+  it('fails execution preparation when graph_model prompt is blank', async () => {
+    await expect(
+      prepareGraphModelExecutionInput({
+        payload: {
+          prompt: '   ',
+          source: 'custom_graph',
+        },
+        jobId: 'job-3',
+        findRunById: async () => null,
+      })
+    ).rejects.toThrow('Graph model job missing prompt');
+  });
+
+  it('fails execution preparation when graph_model source is missing', async () => {
+    await expect(
+      prepareGraphModelExecutionInput({
+        payload: {
+          prompt: 'Generate copy',
+        },
+        jobId: 'job-1',
+        findRunById: async () => null,
+      })
+    ).rejects.toThrow('Graph model job missing source');
+  });
+
+  it('fails execution preparation when ai_paths payload lacks node context and requested model', async () => {
+    await expect(
+      prepareGraphModelExecutionInput({
+        payload: {
+          prompt: 'Generate copy',
+          source: 'ai_paths',
+          graph: {},
+        },
+        jobId: 'job-2',
+        findRunById: async () => null,
+      })
+    ).rejects.toThrow(
+      'AI Paths graph_model payload requires graph.runId and graph.nodeId when no requested model is provided.'
+    );
+  });
+
   it('resolves the requested AI Paths model id from graph context first and run fallback second', async () => {
     await expect(
       resolveAiPathsGraphModelRequestedModelId({
@@ -496,6 +783,34 @@ describe('product-ai graph_model payload helpers', () => {
       resolveAiPathsGraphModelRequestedModelId({
         payload: {
           prompt: 'Generate copy',
+          source: 'ai_paths',
+          graph: {
+            runId: 'run-1',
+            nodeId: 'node-1',
+          },
+        },
+        findRunById: async () => ({
+          graph: {
+            nodes: [
+              {
+                id: 'node-1',
+                config: {
+                  model: {
+                    modelId: 'fallback-model',
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      })
+    ).resolves.toBe('fallback-model');
+  });
+
+  it('resolves the requested AI Paths model id without requiring worker-entry prompt validation', async () => {
+    await expect(
+      resolveAiPathsGraphModelRequestedModelId({
+        payload: {
           source: 'ai_paths',
           graph: {
             runId: 'run-1',
@@ -606,6 +921,62 @@ describe('product-ai graph_model payload helpers', () => {
       imageCount: 2,
       cacheKey: '1234567890ab',
       payloadHash: 'fedcba098765',
+    });
+  });
+
+  it('reads graph_model summaries through one shared inspection helper', () => {
+    expect(
+      resolveGraphModelSummaryInspection({
+        prompt: '  Generate collectible copy  ',
+        imageUrls: ['a', 17, 'b'],
+        modelId: '  top-level-model  ',
+        vision: true,
+        cacheKey: ' 1234567890abcdef ',
+        payloadHash: ' fedcba0987654321 ',
+        graph: {
+          requestedModelId: ' node-selected-model ',
+          runId: 'run-1',
+          nodeId: 'node-1',
+        },
+      })
+    ).toEqual({
+      summary: {
+        source: 'ai_paths',
+        modelId: 'top-level-model',
+        requestedModelId: 'node-selected-model',
+        vision: true,
+        promptLength: 25,
+        imageCount: 2,
+        cacheKey: '1234567890ab',
+        payloadHash: 'fedcba098765',
+      },
+    });
+  });
+
+  it('summarizes legacy AI Paths payloads through normalized queued metadata', () => {
+    const payload = {
+      prompt: '  Generate collectible copy  ',
+      imageUrls: ['a', 17, 'b'],
+      modelId: '  top-level-model  ',
+      vision: true,
+      graph: {
+        requestedModelId: ' node-selected-model ',
+        runId: 'run-1',
+        nodeId: 'node-1',
+      },
+    } satisfies Record<string, unknown>;
+
+    const normalized = normalizeGraphModelPayloadForDispatch(payload);
+
+    expect(summarizeGraphModelPayload(payload)).toEqual({
+      source: 'ai_paths',
+      modelId: 'top-level-model',
+      requestedModelId: 'node-selected-model',
+      vision: true,
+      promptLength: 25,
+      imageCount: 2,
+      cacheKey: normalized.cacheKey.slice(0, 12),
+      payloadHash: normalized.payloadHash.slice(0, 12),
     });
   });
 

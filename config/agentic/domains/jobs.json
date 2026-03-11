@@ -1,0 +1,25 @@
+{
+  "id": "jobs",
+  "label": "Background jobs, queue initialization, and jobs pages",
+  "riskLevel": "high",
+  "sourceRoots": [
+    "src/features/jobs",
+    "src/shared/lib/jobs",
+    "src/shared/lib/queue"
+  ],
+  "ownedDocs": [],
+  "generatedArtifacts": [],
+  "generatedOnlyPaths": [],
+  "manualOnlyPaths": [],
+  "docGenerators": [],
+  "scannerTargets": [],
+  "validationTargets": [
+    "//:lint",
+    "//:typecheck",
+    "//:unit",
+    "//:critical_flows"
+  ],
+  "impactBundles": [
+    "background_jobs"
+  ]
+}

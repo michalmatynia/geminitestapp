@@ -55,7 +55,7 @@ const installFakeBun = (root: string) =>
       '      process.stdout.write(process.env.BUN_FAKE_MIGRATE_STDOUT);',
       '    }',
       '    if (process.env.BUN_FAKE_MIGRATE_STDERR !== "0") {',
-      '      process.stderr.write("forced migrate failure\\n");',
+      '      process.stderr.write(process.env.BUN_FAKE_MIGRATE_STDERR ?? "forced migrate failure\\n");',
       '    }',
       '    process.exit(1);',
       '  }',
@@ -744,6 +744,195 @@ describe('Bun runtime checks', () => {
     expect(result.stderr).toContain('stdout-only migrate failure');
     expect(result.stderr).not.toContain('forced migrate failure');
     expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(originalLock);
+  });
+
+  it('falls back to exit code 1 when bun pm migrate terminates without a numeric status', () => {
+    const root = createTempRoot();
+
+    writeExecutable(
+      root,
+      'bin/bun',
+      ['#!/bin/sh', 'printf "signal-only migrate failure\\n"', 'kill -TERM $$'].join('\n')
+    );
+
+    const originalLock = '{\n  "lockfileVersion": 1\n}\n';
+    writeFile(root, 'package.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'package-lock.json', '{\n  "name": "bun-lock-check-fixture"\n}\n');
+    writeFile(root, 'bun.lock', originalLock);
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Bun lock sync check failed while regenerating bun.lock');
+    expect(result.stderr).toContain('signal-only migrate failure');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(originalLock);
+  });
+
+  it('passes via fallback manifest parity when bun pm migrate hits the known wasm resolver failure', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+
+    const lockContents = [
+      '{',
+      '  "lockfileVersion": 1,',
+      '  "workspaces": {',
+      '    "": {',
+      '      "name": "bun-lock-check-fixture",',
+      '      "dependencies": {',
+      '        "alpha": "^1.0.0",',
+      '      },',
+      '      "devDependencies": {',
+      '        "beta": "^2.0.0",',
+      '      },',
+      '    },',
+      '  },',
+      '  "packages": {}',
+      '}',
+      '',
+    ].join('\n');
+
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'bun-lock-check-fixture',
+          dependencies: {
+            alpha: '^1.0.0',
+          },
+          devDependencies: {
+            beta: '^2.0.0',
+          },
+        },
+        null,
+        2
+      )
+    );
+    writeFile(
+      root,
+      'package-lock.json',
+      JSON.stringify(
+        {
+          name: 'bun-lock-check-fixture',
+          lockfileVersion: 3,
+          packages: {
+            '': {
+              name: 'bun-lock-check-fixture',
+              dependencies: {
+                alpha: '^1.0.0',
+              },
+              devDependencies: {
+                beta: '^2.0.0',
+              },
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
+    writeFile(root, 'bun.lock', lockContents);
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_MIGRATE_FAIL: '1',
+        BUN_FAKE_MIGRATE_STDERR:
+          "warn: Could not resolve package '@napi-rs/wasm-runtime' in lockfile during migration\nerror: Error loading lockfile: NotAllPackagesGotResolved\n",
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('known Bun resolver issue');
+    expect(result.stdout).toContain('bun.lock matches package-lock.json via fallback manifest parity check.');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(lockContents);
+  });
+
+  it('fails when fallback manifest parity does not match package-lock.json after the known resolver failure', () => {
+    const root = createTempRoot();
+    installFakeBun(root);
+
+    const lockContents = [
+      '{',
+      '  "lockfileVersion": 1,',
+      '  "workspaces": {',
+      '    "": {',
+      '      "name": "bun-lock-check-fixture",',
+      '      "dependencies": {',
+      '        "alpha": "^9.9.9",',
+      '      },',
+      '      "devDependencies": {',
+      '        "beta": "^2.0.0",',
+      '      },',
+      '    },',
+      '  },',
+      '  "packages": {}',
+      '}',
+      '',
+    ].join('\n');
+
+    writeFile(
+      root,
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'bun-lock-check-fixture',
+          dependencies: {
+            alpha: '^1.0.0',
+          },
+          devDependencies: {
+            beta: '^2.0.0',
+          },
+        },
+        null,
+        2
+      )
+    );
+    writeFile(
+      root,
+      'package-lock.json',
+      JSON.stringify(
+        {
+          name: 'bun-lock-check-fixture',
+          lockfileVersion: 3,
+          packages: {
+            '': {
+              name: 'bun-lock-check-fixture',
+              dependencies: {
+                alpha: '^1.0.0',
+              },
+              devDependencies: {
+                beta: '^2.0.0',
+              },
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
+    writeFile(root, 'bun.lock', lockContents);
+
+    const result = runNodeScript(lockSyncScript, {
+      cwd: root,
+      env: {
+        PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+        BUN_FAKE_MIGRATE_FAIL: '1',
+        BUN_FAKE_MIGRATE_STDERR:
+          "warn: Could not resolve package '@napi-rs/wasm-runtime' in lockfile during migration\nerror: Error loading lockfile: NotAllPackagesGotResolved\n",
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Bun lock sync fallback failed after Bun regeneration hit a known resolver issue.');
+    expect(result.stderr).toContain('bun.lock workspace.dependencies do not match package-lock.json root dependencies.');
+    expect(fs.readFileSync(path.join(root, 'bun.lock'), 'utf8')).toBe(lockContents);
   });
 
   it('fails when bun pm migrate succeeds without writing bun.lock', () => {

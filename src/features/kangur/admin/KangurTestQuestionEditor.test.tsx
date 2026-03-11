@@ -122,7 +122,7 @@ describe('KangurTestQuestionEditor', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /sync labels to choices/i }));
 
-    const panelLabelInputs = screen.getAllByLabelText('Panel label') as HTMLInputElement[];
+    const panelLabelInputs = screen.getAllByLabelText('Panel label');
     expect(panelLabelInputs[0]?.value).toBe('Z');
   });
 
@@ -320,7 +320,7 @@ describe('KangurTestQuestionEditor', () => {
     expect(
       screen.getByText('Split layouts need an illustration before they can be saved.')
     ).toBeInTheDocument();
-    const panelLabelInputs = screen.getAllByLabelText('Panel label') as HTMLInputElement[];
+    const panelLabelInputs = screen.getAllByLabelText('Panel label');
     expect(panelLabelInputs[0]?.value).toBe('A');
     expect(panelLabelInputs[1]?.value).toBe('B');
   });

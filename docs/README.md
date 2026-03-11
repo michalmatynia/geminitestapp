@@ -62,6 +62,8 @@ These are canonical platform guides.
 - [`docs/platform/api-caching.md`](./platform/api-caching.md)
 - [`docs/platform/data-fetching-caching.md`](./platform/data-fetching-caching.md)
 - [`docs/build/README.md`](./build/README.md)
+- [`docs/build/bazel.md`](./build/bazel.md)
+- [`docs/build/bun.md`](./build/bun.md)
 - [`docs/platform/bun-support.md`](./platform/bun-support.md)
 
 Future platform-wide docs should land under [`docs/platform/`](./platform/README.md).

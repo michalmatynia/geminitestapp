@@ -43,6 +43,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   bridgeQuickAction: TutorQuickAction | null;
   bridgeSummaryChipLabel: KangurAiTutorPanelBodyContextValue['bridgeSummaryChipLabel'];
   bubblePlacement: {
+    entryDirection: KangurAiTutorPortalContextValue['panel']['bubbleEntryDirection'];
     launchOrigin: KangurAiTutorPortalContextValue['panel']['bubbleLaunchOrigin'];
     mode: KangurAiTutorPortalContextValue['panel']['bubbleMode'];
     strategy: KangurAiTutorPortalContextValue['panel']['bubbleStrategy'];
@@ -56,6 +57,8 @@ type UseKangurAiTutorPortalViewModelInput = {
   canonicalTutorModalVisible: boolean;
   compactDockedTutorPanelWidth: KangurAiTutorPortalContextValue['panel']['compactDockedTutorPanelWidth'];
   contextualTutorMode: 'selection_explain' | 'section_explain' | null;
+  drawingImageData: KangurAiTutorPanelBodyContextValue['drawingImageData'];
+  drawingMode: KangurAiTutorPanelBodyContextValue['drawingMode'];
   emptyStateMessage: KangurAiTutorPanelBodyContextValue['emptyStateMessage'];
   floatingAvatarPlacement: KangurAiTutorPortalContextValue['avatar']['floatingAvatarPlacement'];
   focusChipLabel: KangurAiTutorPanelBodyContextValue['focusChipLabel'];
@@ -72,6 +75,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   guidedCalloutHeaderLabel: string | null;
   guidedCalloutKey: string;
   guidedCalloutLayout: {
+    entryDirection: KangurAiTutorPortalContextValue['guidedCallout']['entryDirection'];
     placement: KangurAiTutorPortalContextValue['guidedCallout']['placement'];
   } | null;
   guidedCalloutStepLabel: string | null;
@@ -86,9 +90,11 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleAvatarClick: KangurAiTutorPortalContextValue['avatar']['onClick'];
   handleAvatarMouseDown: KangurAiTutorPortalContextValue['avatar']['onMouseDown'];
   handleAvatarMouseUp: KangurAiTutorPortalContextValue['avatar']['onMouseUp'];
+  handleClearDrawing: KangurAiTutorPanelBodyContextValue['handleClearDrawing'];
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
   handleGuestIntroDismiss: KangurAiTutorPortalContextValue['guestIntro']['onClose'];
   handleCloseGuidedCallout: KangurAiTutorPortalContextValue['guidedCallout']['onClose'];
+  handleDrawingComplete: KangurAiTutorPanelBodyContextValue['handleDrawingComplete'];
   handleDetachHighlightedSection: KangurAiTutorPanelBodyContextValue['handleDetachHighlightedSection'];
   handleDetachSelectedFragment: KangurAiTutorPanelBodyContextValue['handleDetachSelectedFragment'];
   handleDisableTutor: KangurAiTutorPortalContextValue['panel']['onDisableTutor'];
@@ -111,6 +117,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleSelectionActionMouseDown: KangurAiTutorPortalContextValue['selectionAction']['onSelectionActionMouseDown'];
   handleSend: KangurAiTutorPanelBodyContextValue['handleSend'];
   handleStartHomeOnboarding: KangurAiTutorPanelBodyContextValue['handleStartHomeOnboarding'];
+  handleToggleDrawing: KangurAiTutorPanelBodyContextValue['handleToggleDrawing'];
   homeOnboardingReplayLabel: KangurAiTutorPanelBodyContextValue['homeOnboardingReplayLabel'];
   homeOnboardingStep: TutorHomeOnboardingStep | null;
   inputPlaceholder: KangurAiTutorPanelBodyContextValue['inputPlaceholder'];
@@ -216,18 +223,23 @@ export function useKangurAiTutorPortalViewModel(
       canNarrateTutorText: input.canNarrateTutorText,
       canSendMessages: input.canSendMessages,
       canStartHomeOnboardingManually: input.canStartHomeOnboardingManually,
+      drawingImageData: input.drawingImageData,
+      drawingMode: input.drawingMode,
       emptyStateMessage: input.emptyStateMessage,
       focusChipLabel: input.focusChipLabel,
+      handleClearDrawing: input.handleClearDrawing,
       handleDetachHighlightedSection: input.handleDetachHighlightedSection,
       handleDetachSelectedFragment: input.handleDetachSelectedFragment,
       handleFocusHighlightedSection: input.handleFocusHighlightedSection,
       handleFocusSelectedFragment: input.handleFocusSelectedFragment,
+      handleDrawingComplete: input.handleDrawingComplete,
       handleFollowUpClick: input.handleFollowUpClick,
       handleKeyDown: input.handleKeyDown,
       handleMessageFeedback: input.handleMessageFeedback,
       handleQuickAction: input.handleQuickAction,
       handleSend: input.handleSend,
       handleStartHomeOnboarding: input.handleStartHomeOnboarding,
+      handleToggleDrawing: input.handleToggleDrawing,
       homeOnboardingReplayLabel: input.homeOnboardingReplayLabel,
       inputPlaceholder: input.inputPlaceholder,
       isAskModalMode: input.isAskModalMode,
@@ -263,10 +275,14 @@ export function useKangurAiTutorPortalViewModel(
       input.canNarrateTutorText,
       input.canSendMessages,
       input.canStartHomeOnboardingManually,
+      input.drawingImageData,
+      input.drawingMode,
       input.emptyStateMessage,
       input.focusChipLabel,
+      input.handleClearDrawing,
       input.handleDetachHighlightedSection,
       input.handleDetachSelectedFragment,
+      input.handleDrawingComplete,
       input.handleFocusHighlightedSection,
       input.handleFocusSelectedFragment,
       input.handleFollowUpClick,
@@ -275,6 +291,7 @@ export function useKangurAiTutorPortalViewModel(
       input.handleQuickAction,
       input.handleSend,
       input.handleStartHomeOnboarding,
+      input.handleToggleDrawing,
       input.homeOnboardingReplayLabel,
       input.inputPlaceholder,
       input.isAskModalMode,
@@ -367,6 +384,7 @@ export function useKangurAiTutorPortalViewModel(
         calloutKey: input.guidedCalloutKey,
         calloutTestId: input.guidedCalloutTestId,
         detail: input.guidedCalloutDetail ?? '',
+        entryDirection: input.guidedCalloutLayout?.entryDirection ?? 'right',
         headerLabel: input.guidedCalloutHeaderLabel ?? '',
         mode: input.guidedMode,
         onAdvanceHomeOnboarding: input.handleHomeOnboardingAdvance,
@@ -400,6 +418,7 @@ export function useKangurAiTutorPortalViewModel(
         avatarAttachmentSide: input.avatarAttachmentSide,
         avatarButtonClassName: input.avatarButtonClassName,
         avatarPointer: input.avatarPointer,
+        bubbleEntryDirection: input.bubblePlacement.entryDirection,
         bubbleLaunchOrigin: input.bubblePlacement.launchOrigin,
         bubbleMode: input.bubblePlacement.mode,
         bubbleStrategy: input.bubblePlacement.strategy,

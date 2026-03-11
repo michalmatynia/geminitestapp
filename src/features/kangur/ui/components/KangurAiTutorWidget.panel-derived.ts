@@ -6,6 +6,7 @@ import { buildKangurLessonNarrationScriptFromText } from '@/features/kangur/tts/
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
+import { getTutorSurfaceLabel } from './KangurAiTutorWidget.coordinator.helpers';
 
 import type {
   TutorProactiveNudge,
@@ -183,6 +184,12 @@ export function useKangurAiTutorPanelDerivedState({
     } else {
       messages.forEach((message) => {
         if (message.role === 'user') {
+          message.artifacts?.forEach((artifact) => {
+            if (artifact.type === 'user_drawing') {
+              pushPart(tutorContent.drawing?.messageLabel ?? 'Narysowano');
+              pushPart(artifact.caption);
+            }
+          });
           pushPart(message.content);
           return;
         }
@@ -193,6 +200,13 @@ export function useKangurAiTutorPanelDerivedState({
           pushPart(message.coachingFrame.rationale);
         }
 
+        message.artifacts?.forEach((artifact) => {
+          if (artifact.type === 'assistant_drawing') {
+            pushPart(artifact.title);
+            pushPart(artifact.caption);
+            pushPart(artifact.alt);
+          }
+        });
         pushPart(message.content);
         message.followUpActions?.forEach((action) => {
           pushPart(action.reason);
@@ -277,11 +291,7 @@ export function useKangurAiTutorPanelDerivedState({
   const sessionSurfaceLabel =
     !isCompactDockedTutorPanel && (sessionContext.title || sessionContext.contentId)
       ? `${
-        sessionContext.surface === 'test'
-          ? tutorContent.panelChrome.surfaceLabels.test
-          : sessionContext.surface === 'game'
-            ? tutorContent.panelChrome.surfaceLabels.game
-            : tutorContent.panelChrome.surfaceLabels.lesson
+        getTutorSurfaceLabel(sessionContext.surface, tutorContent)
       }: ${sessionContext.title ?? sessionContext.contentId}`
       : null;
 

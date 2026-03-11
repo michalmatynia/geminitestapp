@@ -2233,9 +2233,17 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       '„2 + 2”'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+      'data-entry-direction',
+      'left'
+    );
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
+      'guided'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-guidance-transition',
       'guided'
     );
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -2389,6 +2397,10 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal-backdrop')).not.toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
       'data-avatar-placement',
+      'guided'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-guidance-transition',
       'guided'
     );
     expect(screen.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeInTheDocument();
@@ -2869,6 +2881,10 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveAttribute(
+      'data-entry-direction',
+      'right'
+    );
     const rightEdgeSelectionArrowhead = screen.getByTestId('kangur-ai-tutor-guided-arrowhead');
     expect(
       Number(rightEdgeSelectionArrowhead.getAttribute('data-guidance-anchor-avatar-left'))
@@ -3938,6 +3954,10 @@ describe('KangurAiTutorWidget', () => {
       'dock-bottom-right'
     );
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-entry-direction',
+      'left'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-open-animation',
       'dock-launch'
     );
@@ -3966,6 +3986,10 @@ describe('KangurAiTutorWidget', () => {
       clearSelection: clearSelectionMock,
     });
     render(<KangurAiTutorWidget />);
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
+      'data-entry-direction',
+      'right'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-panel')).toHaveAttribute(
       'data-placement-strategy',
       'left'

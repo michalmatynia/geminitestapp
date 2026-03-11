@@ -43,6 +43,7 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'ai_paths.model',
   'chatbot.reply',
   'kangur_ai_tutor.chat',
+  'kangur_ai_tutor.drawing_analysis',
   'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',

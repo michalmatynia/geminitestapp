@@ -20,9 +20,8 @@ import { logSystemError } from '@/shared/lib/observability/system-logger';
 
 const resolveTargets = (
   dbType: DatabaseEngineBackupRunNowRequest['dbType']
-): Array<'mongodb' | 'postgresql'> => {
-  if (dbType === 'all') return ['mongodb', 'postgresql'];
-  return [dbType];
+): Array<'mongodb'> => {
+  return dbType === 'all' || dbType === 'mongodb' ? ['mongodb'] : [];
 };
 
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
@@ -53,8 +52,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('No database targets selected for backup.');
   }
 
-  const queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }> = [];
-  const inlineProcessed: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }> = [];
+  const queued: Array<{ dbType: 'mongodb'; jobId: string }> = [];
+  const inlineProcessed: Array<{ dbType: 'mongodb'; jobId: string }> = [];
   startProductAiJobQueue();
 
   for (const dbType of targets) {

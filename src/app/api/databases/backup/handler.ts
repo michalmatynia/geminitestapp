@@ -13,7 +13,7 @@ import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/datab
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
 
-const backupTypeSchema = z.enum(['mongodb', 'postgresql']);
+const backupTypeSchema = z.enum(['mongodb']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -28,7 +28,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   z.unknown().parse(body);
 
   const { searchParams } = new URL(req.url);
-  const parsedType = backupTypeSchema.safeParse(searchParams.get('type') ?? 'postgresql');
+  const parsedType = backupTypeSchema.safeParse(searchParams.get('type') ?? 'mongodb');
   if (!parsedType.success) {
     throw badRequestError('Invalid database backup type.', {
       type: searchParams.get('type'),

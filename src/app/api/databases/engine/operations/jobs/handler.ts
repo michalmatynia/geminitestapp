@@ -18,7 +18,7 @@ export const querySchema = z.object({
 type DatabaseEngineOperationJobRecord = Awaited<ReturnType<typeof getProductAiJobs>>[number];
 
 const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): boolean =>
-  job.jobType === 'db_backup' || job.jobType === 'db_sync';
+  job.jobType === 'db_backup';
 
 const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJob => {
   const payload =
@@ -29,14 +29,8 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
 
   const rawDbType = payload?.['dbType'];
   const dbType =
-    rawDbType === 'mongodb' || rawDbType === 'postgresql'
-      ? (rawDbType as DatabaseEngineOperationJob['dbType'])
-      : null;
-  const rawDirection = payload?.['direction'];
-  const direction =
-    rawDirection === 'mongo_to_prisma' || rawDirection === 'prisma_to_mongo'
-      ? (rawDirection as DatabaseEngineOperationJob['direction'])
-      : null;
+    rawDbType === 'mongodb' ? (rawDbType as DatabaseEngineOperationJob['dbType']) : null;
+  const direction = null;
   const source = typeof payload?.['source'] === 'string' ? payload['source'] : null;
   const resultSummary =
     typeof result?.['message'] === 'string'

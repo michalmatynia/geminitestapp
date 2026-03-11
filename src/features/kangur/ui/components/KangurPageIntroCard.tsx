@@ -85,7 +85,9 @@ function KangurPageIntroHeading(): React.JSX.Element {
 
 function KangurPageIntroDescription(): React.JSX.Element | null {
   const { description } = useKangurPageIntroCardContext();
-  return description ? <p className='mt-3 text-sm text-slate-500'>{description}</p> : null;
+  return description ? (
+    <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
+  ) : null;
 }
 
 function KangurPageIntroBackButton(): React.JSX.Element {

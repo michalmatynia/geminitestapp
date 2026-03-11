@@ -22,10 +22,8 @@ import {
 import {
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
-  createPortablePathEnvelopeVerificationPrismaSink,
   type CreatePortablePathEnvelopeVerificationLogForwardingSinkOptions,
   type CreatePortablePathEnvelopeVerificationMongoSinkOptions,
-  type CreatePortablePathEnvelopeVerificationPrismaSinkOptions,
 } from './sinks-creators.server';
 import {
   resolveHealthTimeoutMs,
@@ -51,27 +49,23 @@ const resolveDefaultProfileInclusion = (
   profile: PortablePathEnvelopeVerificationAuditSinkProfile
 ): {
   includeLogForwarding: boolean;
-  includePrisma: boolean;
   includeMongo: boolean;
 } => {
   switch (profile) {
     case 'prod':
       return {
         includeLogForwarding: true,
-        includePrisma: true,
         includeMongo: true,
       };
     case 'staging':
       return {
         includeLogForwarding: true,
-        includePrisma: true,
-        includeMongo: false,
+        includeMongo: true,
       };
     case 'dev':
     default:
       return {
         includeLogForwarding: true,
-        includePrisma: false,
         includeMongo: false,
       };
   }
@@ -84,12 +78,8 @@ export type BootstrapPortablePathEnvelopeVerificationAuditSinksOptions = {
   profile?: PortablePathEnvelopeVerificationAuditSinkProfile;
   clearExisting?: boolean;
   includeLogForwarding?: boolean;
-  includePrisma?: boolean;
   includeMongo?: boolean;
   logForwarding?: Omit<CreatePortablePathEnvelopeVerificationLogForwardingSinkOptions, 'id'> & {
-    id?: string;
-  };
-  prisma?: Omit<CreatePortablePathEnvelopeVerificationPrismaSinkOptions, 'id'> & {
     id?: string;
   };
   mongo?: Omit<CreatePortablePathEnvelopeVerificationMongoSinkOptions, 'id'> & {
@@ -122,7 +112,6 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
     defaults.includeLogForwarding,
     options.includeLogForwarding
   );
-  const includePrisma = applyBooleanOverride(defaults.includePrisma, options.includePrisma);
   const includeMongo = applyBooleanOverride(defaults.includeMongo, options.includeMongo);
   const clearExisting = options.clearExisting !== false;
 
@@ -153,13 +142,6 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
       register(
         createPortablePathEnvelopeVerificationLogForwardingSink({
           ...(options.logForwarding ?? {}),
-        })
-      );
-    }
-    if (includePrisma) {
-      register(
-        createPortablePathEnvelopeVerificationPrismaSink({
-          ...(options.prisma ?? {}),
         })
       );
     }

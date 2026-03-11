@@ -7,6 +7,7 @@ import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-cont
 import type {
   KangurAiTutorCoachingFrame,
   KangurAiTutorFollowUpAction,
+  KangurAiTutorMessageArtifact,
   KangurAiTutorUsageSummary,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { internalError } from '@/shared/errors/app-error';
@@ -24,6 +25,8 @@ export type TutorRenderedMessage = {
   role: 'user' | 'assistant';
   content: string;
   coachingFrame?: KangurAiTutorCoachingFrame | null;
+  drawingImageData?: string | null;
+  artifacts?: KangurAiTutorMessageArtifact[];
   followUpActions?: KangurAiTutorFollowUpAction[];
   sources?: AgentTeachingChatSource[];
 };
@@ -40,8 +43,11 @@ export type KangurAiTutorPanelBodyContextValue = {
   canNarrateTutorText: boolean;
   canSendMessages: boolean;
   canStartHomeOnboardingManually: boolean;
+  drawingImageData: string | null;
+  drawingMode: boolean;
   emptyStateMessage: string;
   focusChipLabel: string | null;
+  handleClearDrawing: () => void;
   handleDetachHighlightedSection: () => void;
   handleDetachSelectedFragment: () => void;
   handleFocusHighlightedSection: () => void;
@@ -51,6 +57,7 @@ export type KangurAiTutorPanelBodyContextValue = {
     messageIndex: number,
     href: string
   ) => void;
+  handleDrawingComplete: (dataUrl: string) => void;
   handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   handleMessageFeedback: (
     messageIndex: number,
@@ -65,6 +72,7 @@ export type KangurAiTutorPanelBodyContextValue = {
   ) => Promise<void>;
   handleSend: () => Promise<void>;
   handleStartHomeOnboarding: () => void;
+  handleToggleDrawing: () => void;
   homeOnboardingReplayLabel: string;
   inputPlaceholder: string;
   isAskModalMode: boolean;

@@ -12,7 +12,11 @@ import {
 import { internalError } from '@/shared/errors/app-error';
 
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
-import type { TutorMotionPosition, TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type {
+  TutorEntryDirection,
+  TutorMotionPosition,
+  TutorMotionProfile,
+} from './KangurAiTutorWidget.shared';
 import type { Transition } from 'framer-motion';
 
 type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
@@ -120,6 +124,7 @@ export type KangurAiTutorPortalContextValue = {
     calloutKey: string;
     calloutTestId: string;
     detail: string;
+    entryDirection: TutorEntryDirection;
     headerLabel: string;
     mode: GuidedMode;
     placement: EdgePlacement;
@@ -151,6 +156,7 @@ export type KangurAiTutorPortalContextValue = {
     avatarAttachmentSide: 'left' | 'right';
     avatarButtonClassName: string;
     avatarPointer: AvatarPointer | null;
+    bubbleEntryDirection: TutorEntryDirection;
     bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
     bubbleMode: 'bubble' | 'sheet';
     bubbleStrategy: string;

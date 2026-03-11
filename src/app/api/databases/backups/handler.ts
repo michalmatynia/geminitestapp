@@ -5,8 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
-  pgBackupsDir,
-  ensurePgBackupsDir,
   mongoBackupsDir,
   ensureMongoBackupsDir,
 } from '@/features/database/server';
@@ -21,23 +19,19 @@ const isValidDate = (value: unknown): value is Date =>
 export const querySchema = z.object({
   type: z.preprocess(
     (value: unknown) => normalizeOptionalQueryString(value),
-    z.enum(['postgresql', 'mongodb']).optional()
+    z.enum(['mongodb']).optional()
   ),
 });
 
-async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
-  const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
-  const ensureDir = type === 'mongodb' ? ensureMongoBackupsDir : ensurePgBackupsDir;
-  const extension = type === 'mongodb' ? '.archive' : '.dump';
+async function getBackups(): Promise<DatabaseInfo[]> {
+  await ensureMongoBackupsDir();
 
-  await ensureDir();
-
-  const files = await fs.readdir(backupsDir);
-  const backupFiles = files.filter((file: string) => file.endsWith(extension));
+  const files = await fs.readdir(mongoBackupsDir);
+  const backupFiles = files.filter((file: string) => file.endsWith('.archive'));
 
   const backups: DatabaseInfo[] = await Promise.all(
     backupFiles.map(async (file) => {
-      const filePath = join(backupsDir, file);
+      const filePath = join(mongoBackupsDir, file);
       const stats = await fs.stat(filePath);
       const createdAt =
         isValidDate(stats.birthtime) && stats.birthtime.getTime() > 0
@@ -69,11 +63,8 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const type = query.type === 'mongodb' ? 'mongodb' : 'postgresql';
-
   try {
-    const backups = await getBackups(type);
+    const backups = await getBackups();
     return NextResponse.json(backups, {
       headers: {
         'Cache-Control': 'no-store',
@@ -81,7 +72,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     });
   } catch (error) {
     const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-    void ErrorSystem.captureException(error, { service: 'api/databases/backups', type });
+    void ErrorSystem.captureException(error, { service: 'api/databases/backups', type: 'mongodb' });
     throw error;
   }
 }

@@ -29,14 +29,9 @@ const DATABASE_OPTIONS: Array<{
   description: string;
 }> = [
   {
-    value: 'postgresql',
-    label: 'PostgreSQL',
-    description: 'Use SQL Console and table-level CRUD operations.',
-  },
-  {
     value: 'mongodb',
     label: 'MongoDB',
-    description: 'Use SQL Console for MongoDB-compatible operations.',
+    description: 'Use the command console for MongoDB-backed operations.',
   },
 ];
 
@@ -115,7 +110,7 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         >
           <TabsTrigger value='sql' className='gap-2 text-xs'>
             <TerminalSquareIcon className='size-3.5' />
-            SQL Console
+            Command Console
           </TabsTrigger>
           <TabsTrigger value='crud' className='gap-2 text-xs'>
             <Table2Icon className='size-3.5' />
@@ -124,7 +119,7 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         </TabsList>
 
         <TabsContent value='sql'>
-          <FormSection title='Query Console' className='p-5'>
+          <FormSection title='Command Console' className='p-5'>
             <SqlQueryConsole />
           </FormSection>
         </TabsContent>
@@ -140,7 +135,7 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
               title='No tables found'
               description={
                 dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                  ? 'Table metadata is not available for MongoDB. Use the command console tab for MongoDB operations.'
                   : 'No tables found in the database.'
               }
               icon={<Table2Icon className='size-12 opacity-20' />}

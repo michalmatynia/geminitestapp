@@ -114,6 +114,8 @@ export function useKangurAiTutorWidgetState() {
   } | null>(null);
   const [viewportTick, setViewportTick] = useState(0);
   const [tutorNarrationObservedText, setTutorNarrationObservedText] = useState('');
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -157,6 +159,8 @@ export function useKangurAiTutorWidgetState() {
     contextSwitchNotice,
     dismissedSelectedText,
     draggedAvatarPoint,
+    drawingImageData,
+    drawingMode,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
     guestIntroLocalSuppressionTrackedRef,
@@ -210,6 +214,8 @@ export function useKangurAiTutorWidgetState() {
     setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
+    setDrawingImageData,
+    setDrawingMode,
     setGuestIntroHelpVisible,
     setGuestIntroRecord,
     setGuestIntroVisible,

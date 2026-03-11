@@ -48,8 +48,14 @@ const buildSectionExplainPrompt = (
   anchor: SectionAnchor
 ): string => {
   const label = anchor.metadata?.label?.trim() ?? null;
-  const prompt =
-    tutorContent.sectionExplainPrompts[anchor.kind] ?? tutorContent.sectionExplainPrompts.default;
+  const promptCatalog = tutorContent.sectionExplainPrompts as Record<
+    string,
+    {
+      defaultPrompt: string;
+      labeledPrompt?: string;
+    }
+  >;
+  const prompt = promptCatalog[anchor.kind] ?? tutorContent.sectionExplainPrompts.default;
 
   if (label && prompt.labeledPrompt) {
     return formatKangurAiTutorTemplate(prompt.labeledPrompt, { label });

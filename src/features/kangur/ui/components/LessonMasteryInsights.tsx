@@ -49,7 +49,9 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
 
   return (
     <KangurInfoCard accent='slate' padding='md' tone='muted'>
-      <div className='text-xs font-bold uppercase tracking-wide text-slate-500'>{title}</div>
+      <div className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+        {title}
+      </div>
       {items.length === 0 ? (
         <KangurEmptyState
           accent='slate'
@@ -68,10 +70,10 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
             >
               <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <div className='text-sm font-semibold text-slate-700'>
+                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
                     {item.emoji} {item.title}
                   </div>
-                  <div className='mt-1 text-xs text-slate-500'>
+                  <div className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
                     Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
                   </div>
                 </div>
@@ -79,7 +81,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                   {item.masteryPercent}%
                 </KangurStatusChip>
               </div>
-              <div className='mt-2 text-[11px] text-slate-500'>
+              <div className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
                 Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
                 {formatCompletedAt(item.lastCompletedAt)}
               </div>
@@ -100,10 +102,10 @@ export default function LessonMasteryInsights({
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
         <div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
             Opanowanie lekcji
           </div>
-          <p className='text-sm text-slate-500'>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             Sledzone: {insights.trackedLessons} · opanowane: {insights.masteredLessons} · do
             powtorki: {insights.lessonsNeedingPractice}
           </p>

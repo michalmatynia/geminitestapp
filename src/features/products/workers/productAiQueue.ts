@@ -12,11 +12,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const STALE_RUNNING_TTL_MS = 1000 * 60 * 10;
 const LOG_SOURCE = 'product-ai-queue';
-type DatabaseSyncDirection = NonNullable<Job['payload']['direction']>;
-const DATABASE_SYNC_DIRECTIONS = new Set<DatabaseSyncDirection>([
-  'mongo_to_prisma',
-  'prisma_to_mongo',
-]);
 
 type ProductAiJobData = {
   jobId: string;
@@ -27,11 +22,6 @@ type ProductAiJobData = {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const isDatabaseSyncDirection = (
-  value: unknown
-): value is DatabaseSyncDirection =>
-  typeof value === 'string' && DATABASE_SYNC_DIRECTIONS.has(value as DatabaseSyncDirection);
 
 const toDispatchJob = (job: ProductAiJobRecord): Job => {
   if (job.type === 'graph_model') {
@@ -75,9 +65,6 @@ const toDispatchJob = (job: ProductAiJobRecord): Job => {
   }
   if (isRecord(source['graph'])) {
     payload.graph = source['graph'];
-  }
-  if (isDatabaseSyncDirection(source['direction'])) {
-    payload.direction = source['direction'];
   }
   if (typeof source['skipAuthCollections'] === 'boolean') {
     payload.skipAuthCollections = source['skipAuthCollections'];

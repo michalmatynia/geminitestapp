@@ -7,12 +7,32 @@ import { kangurRouteActionQuerySchema, kangurRoutePageSchema } from './kangur';
 import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
+const kangurAiTutorDrawingImageDataSchema = z.string().max(500_000);
+const kangurAiTutorDrawingSvgSchema = z.string().max(100_000);
 
 export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = 'kangur_ai_tutor_app_settings_v1';
+
+export const kangurAiTutorMessageArtifactSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('user_drawing'),
+    imageDataUrl: kangurAiTutorDrawingImageDataSchema,
+    alt: z.string().trim().max(160).optional(),
+    caption: z.string().trim().max(240).optional(),
+  }),
+  z.object({
+    type: z.literal('assistant_drawing'),
+    svgContent: kangurAiTutorDrawingSvgSchema,
+    alt: z.string().trim().max(160).optional(),
+    title: z.string().trim().max(120).optional(),
+    caption: z.string().trim().max(240).optional(),
+  }),
+]);
+export type KangurAiTutorMessageArtifact = z.infer<typeof kangurAiTutorMessageArtifactSchema>;
 
 export const kangurAiTutorChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: nonEmptyTrimmedString.max(8_000),
+  artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).optional(),
 });
 export type KangurAiTutorChatMessage = z.infer<typeof kangurAiTutorChatMessageSchema>;
 
@@ -26,6 +46,11 @@ export type KangurAiTutorPromptMode = z.infer<typeof kangurAiTutorPromptModeSche
 
 export const kangurAiTutorFocusKindSchema = z.enum([
   'selection',
+  'hero',
+  'screen',
+  'library',
+  'empty_state',
+  'navigation',
   'lesson_header',
   'assignment',
   'document',
@@ -50,7 +75,13 @@ export type KangurAiTutorInteractionIntent = z.infer<
   typeof kangurAiTutorInteractionIntentSchema
 >;
 
-export const kangurAiTutorSurfaceSchema = z.enum(['lesson', 'test', 'game']);
+export const kangurAiTutorSurfaceSchema = z.enum([
+  'lesson',
+  'test',
+  'game',
+  'profile',
+  'parent_dashboard',
+]);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
 export const kangurAiTutorCoachingModeSchema = z.enum([
@@ -88,6 +119,7 @@ export const kangurAiTutorConversationContextSchema = z.object({
   assignmentSummary: z.string().trim().max(500).optional(),
   questionId: z.string().trim().max(120).optional(),
   selectedText: z.string().trim().max(1_000).optional(),
+  drawingImageData: kangurAiTutorDrawingImageDataSchema.optional(),
   currentQuestion: z.string().trim().max(2_000).optional(),
   questionProgressLabel: z.string().trim().max(60).optional(),
   answerRevealed: z.boolean().optional(),
@@ -152,6 +184,7 @@ export const kangurAiTutorChatResponseSchema = z.object({
   message: z.string(),
   sources: z.array(agentTeachingChatSourceSchema).default([]),
   followUpActions: z.array(kangurAiTutorFollowUpActionSchema).default([]),
+  artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).default([]),
   coachingFrame: kangurAiTutorCoachingFrameSchema.optional(),
   suggestedMoodId: agentPersonaMoodIdSchema.nullable().optional(),
   tutorMood: kangurAiTutorLearnerMoodSchema.optional(),

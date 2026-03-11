@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
@@ -90,11 +90,20 @@ function GameContent(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
+  const homeHeroRef = useRef<HTMLDivElement | null>(null);
   const homeActionsRef = useRef<HTMLDivElement | null>(null);
   const homeQuestRef = useRef<HTMLElement | null>(null);
   const homeAssignmentsRef = useRef<HTMLElement | null>(null);
   const homeLeaderboardRef = useRef<HTMLDivElement | null>(null);
   const homeProgressRef = useRef<HTMLDivElement | null>(null);
+  const trainingSetupRef = useRef<HTMLDivElement | null>(null);
+  const kangurSetupRef = useRef<HTMLDivElement | null>(null);
+  const kangurSessionRef = useRef<HTMLDivElement | null>(null);
+  const calendarQuizRef = useRef<HTMLDivElement | null>(null);
+  const geometryQuizRef = useRef<HTMLDivElement | null>(null);
+  const operationSelectorRef = useRef<HTMLDivElement | null>(null);
+  const resultSummaryRef = useRef<HTMLDivElement | null>(null);
+  const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
   const currentScreenLabel = GAME_SCREEN_LABELS[screen];
   const learnerId = user?.activeLearner?.id ?? null;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
@@ -204,6 +213,18 @@ function GameContent(): React.JSX.Element {
   });
 
   useKangurTutorAnchor({
+    id: 'kangur-game-home-hero',
+    kind: 'hero',
+    ref: homeHeroRef,
+    surface: 'game',
+    enabled: screen === 'home',
+    priority: 130,
+    metadata: {
+      contentId: 'game:home',
+      label: 'Wprowadzenie do gry',
+    },
+  });
+  useKangurTutorAnchor({
     id: 'kangur-game-home-actions',
     kind: 'home_actions',
     ref: homeActionsRef,
@@ -263,6 +284,103 @@ function GameContent(): React.JSX.Element {
       label: 'Postep gracza',
     },
   });
+  useKangurTutorAnchor({
+    id: 'kangur-game-training-setup',
+    kind: 'screen',
+    ref: trainingSetupRef,
+    surface: 'game',
+    enabled: screen === 'training',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'training' ? tutorActivityContentId : null,
+      label: 'Konfiguracja treningu',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-kangur-setup',
+    kind: 'screen',
+    ref: kangurSetupRef,
+    surface: 'game',
+    enabled: screen === 'kangur_setup',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'kangur_setup' ? tutorActivityContentId : null,
+      label: 'Konfiguracja sesji Kangura Matematycznego',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-kangur-session',
+    kind: 'screen',
+    ref: kangurSessionRef,
+    surface: 'game',
+    enabled: screen === 'kangur',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'kangur' ? tutorActivityContentId : null,
+      label: 'Sesja Kangura Matematycznego',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-calendar-quiz',
+    kind: 'screen',
+    ref: calendarQuizRef,
+    surface: 'game',
+    enabled: screen === 'calendar_quiz',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null,
+      label: 'Cwiczenia z kalendarzem',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-geometry-quiz',
+    kind: 'screen',
+    ref: geometryQuizRef,
+    surface: 'game',
+    enabled: screen === 'geometry_quiz',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null,
+      label: 'Cwiczenia z figurami',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-operation-selector',
+    kind: 'screen',
+    ref: operationSelectorRef,
+    surface: 'game',
+    enabled: screen === 'operation',
+    priority: 120,
+    metadata: {
+      contentId: screen === 'operation' ? tutorActivityContentId : null,
+      label: 'Wybor rodzaju gry',
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-result-summary',
+    kind: 'review',
+    ref: resultSummaryRef,
+    surface: 'game',
+    enabled: screen === 'result',
+    priority: 110,
+    metadata: {
+      contentId: screen === 'result' ? tutorActivityContentId : null,
+      label: 'Wynik gry',
+      assignmentId: activeGameAssignment?.id ?? null,
+    },
+  });
+  useKangurTutorAnchor({
+    id: 'kangur-game-result-leaderboard',
+    kind: 'leaderboard',
+    ref: resultLeaderboardRef,
+    surface: 'game',
+    enabled: screen === 'result',
+    priority: 100,
+    metadata: {
+      contentId: screen === 'result' ? tutorActivityContentId : null,
+      label: 'Ranking po rundzie',
+    },
+  });
 
   useEffect(() => {
     if (previousScreenRef.current === null) {
@@ -290,9 +408,10 @@ function GameContent(): React.JSX.Element {
   const renderScreen = (
     screenKey: KangurGameScreen,
     className: string,
-    children: React.ReactNode
+    children: React.ReactNode,
+    screenRef?: RefObject<HTMLDivElement | null>
   ): React.JSX.Element => (
-    <motion.div key={screenKey} {...screenMotionProps} className={className}>
+    <motion.div key={screenKey} {...screenMotionProps} className={className} ref={screenRef}>
       <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
         {GAME_SCREEN_LABELS[screenKey]}
       </h2>
@@ -335,11 +454,16 @@ function GameContent(): React.JSX.Element {
                 'flex w-full flex-col items-center gap-10',
                 <>
                   <section className='w-full max-w-[520px] space-y-5' aria-labelledby='kangur-home-start-heading'>
-                    <div ref={homeActionsRef}>
+                    <div ref={homeHeroRef}>
                       <h3 id='kangur-home-start-heading' className='sr-only'>
-                    Rozpocznij gre
+                        Wprowadzenie do gry
                       </h3>
                       <KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />
+                    </div>
+                    <div ref={homeActionsRef} aria-labelledby='kangur-home-actions-heading'>
+                      <h3 id='kangur-home-actions-heading' className='sr-only'>
+                    Rozpocznij gre
+                      </h3>
                       <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                     </div>
                   </section>
@@ -398,7 +522,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'training',
                 'w-full flex flex-col items-center',
-                <KangurGameTrainingSetupWidget />
+                <KangurGameTrainingSetupWidget />,
+                trainingSetupRef
               )
             ) : null}
 
@@ -406,7 +531,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'kangur_setup',
                 'w-full flex flex-col items-center',
-                <KangurGameKangurSetupWidget />
+                <KangurGameKangurSetupWidget />,
+                kangurSetupRef
               )
             ) : null}
 
@@ -414,7 +540,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'kangur',
                 'w-full max-w-lg flex flex-col items-center',
-                <KangurGameKangurSessionWidget />
+                <KangurGameKangurSessionWidget />,
+                kangurSessionRef
               )
             ) : null}
 
@@ -422,7 +549,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'calendar_quiz',
                 'w-full flex flex-col items-center',
-                <KangurGameCalendarTrainingWidget />
+                <KangurGameCalendarTrainingWidget />,
+                calendarQuizRef
               )
             ) : null}
 
@@ -430,7 +558,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'geometry_quiz',
                 'w-full flex flex-col items-center',
-                <KangurGameGeometryTrainingWidget />
+                <KangurGameGeometryTrainingWidget />,
+                geometryQuizRef
               )
             ) : null}
 
@@ -438,7 +567,8 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'operation',
                 'w-full flex flex-col items-center',
-                <KangurGameOperationSelectorWidget />
+                <KangurGameOperationSelectorWidget />,
+                operationSelectorRef
               )
             ) : null}
 
@@ -455,8 +585,12 @@ function GameContent(): React.JSX.Element {
                 'result',
                 'flex w-full flex-col items-center gap-6',
                 <>
-                  <KangurGameResultWidget />
-                  <Leaderboard />
+                  <div ref={resultSummaryRef} className='w-full flex flex-col items-center'>
+                    <KangurGameResultWidget />
+                  </div>
+                  <div ref={resultLeaderboardRef} className='w-full'>
+                    <Leaderboard />
+                  </div>
                 </>
               )
             ) : null}

@@ -4,8 +4,6 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  pgBackupsDir,
-  assertValidPgBackupName,
   mongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
@@ -28,21 +26,18 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const { backupName, type } = parsed.data as {
     backupName: string;
-    type?: 'postgresql' | 'mongodb';
+    type?: 'mongodb';
   };
   if (!backupName) {
     throw badRequestError('Backup name is required');
   }
-
-  const dbType = type === 'mongodb' ? 'mongodb' : 'postgresql';
-  if (dbType === 'mongodb') {
-    assertValidMongoBackupName(backupName);
-  } else {
-    assertValidPgBackupName(backupName);
+  if (type && type !== 'mongodb') {
+    throw badRequestError('Only MongoDB backup deletion is supported.');
   }
 
-  const backupsDir = dbType === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
-  const backupPath = path.join(backupsDir, backupName);
+  assertValidMongoBackupName(backupName);
+
+  const backupPath = path.join(mongoBackupsDir, backupName);
   await fs.unlink(backupPath);
 
   return NextResponse.json({ message: 'Backup deleted' });

@@ -4,7 +4,7 @@ import { PlayIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
-import { Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
+import { Button, Textarea, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useDatabaseConfig } from '../context/DatabaseContext';
@@ -13,8 +13,33 @@ import { SqlHistoryDropdown } from './sql/SqlHistoryDropdown';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-const HISTORY_KEY = 'db-sql-query-history';
+const HISTORY_KEY = 'db-mongo-command-history';
 const MAX_HISTORY = 20;
+const MONGO_OPERATIONS = new Set([
+  'find',
+  'insertOne',
+  'updateOne',
+  'deleteOne',
+  'deleteMany',
+  'aggregate',
+  'countDocuments',
+]);
+
+type MongoCommandInput = {
+  collection: string;
+  operation:
+    | 'find'
+    | 'insertOne'
+    | 'updateOne'
+    | 'deleteOne'
+    | 'deleteMany'
+    | 'aggregate'
+    | 'countDocuments';
+  filter?: Record<string, unknown>;
+  document?: Record<string, unknown>;
+  update?: Record<string, unknown>;
+  pipeline?: Record<string, unknown>[];
+};
 
 function loadHistory(): string[] {
   try {
@@ -40,6 +65,81 @@ function formatCellValue(value: unknown): string {
   return String(value);
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function parseMongoCommandInput(raw: string): MongoCommandInput {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error('Command must be valid JSON.');
+  }
+
+  const input = asRecord(parsed);
+  if (!input) {
+    throw new Error('Command must be a JSON object.');
+  }
+
+  const collection =
+    typeof input['collection'] === 'string' ? input['collection'].trim() : '';
+  if (!collection) {
+    throw new Error('Command must include a "collection" string.');
+  }
+
+  const rawOperation = input['operation'];
+  if (typeof rawOperation !== 'string' || !MONGO_OPERATIONS.has(rawOperation)) {
+    throw new Error(
+      'Command must include a supported "operation": find, insertOne, updateOne, deleteOne, deleteMany, aggregate, or countDocuments.'
+    );
+  }
+  const operation = rawOperation as MongoCommandInput['operation'];
+
+  const rawFilter = input['filter'];
+  if (rawFilter !== undefined && !asRecord(rawFilter)) {
+    throw new Error('"filter" must be a JSON object.');
+  }
+  const filter = rawFilter === undefined ? undefined : (asRecord(rawFilter) ?? undefined);
+
+  const rawDocument = input['document'];
+  if (rawDocument !== undefined && !asRecord(rawDocument)) {
+    throw new Error('"document" must be a JSON object.');
+  }
+  const document =
+    rawDocument === undefined ? undefined : (asRecord(rawDocument) ?? undefined);
+
+  const rawUpdate = input['update'];
+  if (rawUpdate !== undefined && !asRecord(rawUpdate)) {
+    throw new Error('"update" must be a JSON object.');
+  }
+  const update = rawUpdate === undefined ? undefined : (asRecord(rawUpdate) ?? undefined);
+
+  let pipeline: Record<string, unknown>[] | undefined;
+  if (input['pipeline'] !== undefined) {
+    if (!Array.isArray(input['pipeline'])) {
+      throw new Error('"pipeline" must be a JSON array.');
+    }
+    pipeline = input['pipeline'].map((stage, index) => {
+      const record = asRecord(stage);
+      if (!record) {
+        throw new Error(`Pipeline stage ${index + 1} must be a JSON object.`);
+      }
+      return record;
+    });
+  }
+
+  return {
+    collection,
+    operation,
+    filter,
+    document,
+    update,
+    pipeline,
+  };
+}
+
 export function SqlQueryConsole({
   defaultDbType,
   initialSql = '',
@@ -48,9 +148,10 @@ export function SqlQueryConsole({
   initialSql?: string;
 }): React.JSX.Element {
   const { dbType: contextDbType, setDbType } = useDatabaseConfig();
-  const dbType = defaultDbType ?? contextDbType;
+  const dbType = 'mongodb';
 
-  const [sql, setSql] = useState(initialSql);
+  const [command, setCommand] = useState(initialSql);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<SqlQueryResult | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -61,16 +162,29 @@ export function SqlQueryConsole({
     setHistory(loadHistory());
   }, []);
 
-  // Allow parent to push SQL into the console
   useEffect(() => {
-    if (initialSql) setSql(initialSql);
+    if (contextDbType !== 'mongodb' || (defaultDbType && defaultDbType !== 'mongodb')) {
+      setDbType('mongodb');
+    }
+  }, [contextDbType, defaultDbType, setDbType]);
+
+  useEffect(() => {
+    if (initialSql) setCommand(initialSql);
   }, [initialSql]);
 
   const executeQuery = useCallback(() => {
-    const trimmed = sql.trim();
+    const trimmed = command.trim();
     if (!trimmed) return;
 
-    // Add to history
+    let parsedCommand: MongoCommandInput;
+    try {
+      parsedCommand = parseMongoCommandInput(trimmed);
+      setParseError(null);
+    } catch (error) {
+      setParseError(error instanceof Error ? error.message : 'Invalid MongoDB command.');
+      return;
+    }
+
     const newHistory = [trimmed, ...history.filter((h: string) => h !== trimmed)].slice(
       0,
       MAX_HISTORY
@@ -79,12 +193,21 @@ export function SqlQueryConsole({
     saveHistory(newHistory);
 
     queryMutation.mutate(
-      { sql: trimmed, type: dbType },
+      { type: dbType, ...parsedCommand },
       {
-        onSuccess: (data: SqlQueryResult) => setResult(data),
+        onSuccess: (data: SqlQueryResult) => {
+          setParseError(null);
+          setResult(data);
+        },
+        onError: (error: Error) => {
+          logClientError(error, {
+            context: { source: 'SqlQueryConsole', action: 'executeMongoCommand' },
+          });
+          setParseError(error.message);
+        },
       }
     );
-  }, [sql, dbType, history, queryMutation]);
+  }, [command, dbType, history, queryMutation]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -107,33 +230,22 @@ export function SqlQueryConsole({
       <div>
         <div className='flex items-center justify-between mb-2'>
           <div className='flex items-center gap-2'>
-            <SelectSimple
-              size='sm'
-              value={dbType}
-              onValueChange={(v: string): void => setDbType(v as DatabaseType)}
-              options={[
-                { value: 'postgresql', label: 'PostgreSQL' },
-                { value: 'mongodb', label: 'MongoDB' },
-              ]}
-              triggerClassName='h-8 w-[120px] text-xs'
-            />
-            <span className='text-[11px] text-gray-500'>
-              {dbType === 'postgresql'
-                ? 'Enter SQL query'
-                : 'Use the CRUD panel for MongoDB operations'}
+            <span className='rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200'>
+              MongoDB
             </span>
+            <span className='text-[11px] text-gray-500'>Enter a JSON command payload</span>
           </div>
           <div className='flex items-center gap-2'>
             <SqlHistoryDropdown
               history={history}
               showHistory={showHistory}
               setShowHistory={setShowHistory}
-              onSelectQuery={setSql}
+              onSelectQuery={setCommand}
               onClearHistory={clearHistory}
             />
             <Button
               onClick={executeQuery}
-              disabled={queryMutation.isPending || !sql.trim()}
+              disabled={queryMutation.isPending || !command.trim()}
               size='sm'
               className='h-8 gap-1 text-xs'
             >
@@ -145,21 +257,24 @@ export function SqlQueryConsole({
 
         <Textarea
           ref={textareaRef}
-          value={sql}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setSql(e.target.value)}
+          value={command}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setCommand(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={
-            dbType === 'postgresql'
-              ? 'SELECT * FROM "User" LIMIT 20;\n\n-- Press Ctrl+Enter to execute'
-              : 'Use the CRUD panel below for MongoDB operations'
-          }
+          placeholder={`{\n  "collection": "products",\n  "operation": "find",\n  "filter": {}\n}`}
           className='w-full min-h-[140px] bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50'
           spellCheck={false}
         />
         <p className='mt-1 text-[11px] text-gray-600'>
-          Ctrl+Enter to execute. 30s timeout. Production execution disabled.
+          Ctrl+Enter to execute. Supported operations: `find`, `insertOne`, `updateOne`,
+          `deleteOne`, `deleteMany`, `countDocuments`, `aggregate`.
         </p>
       </div>
+
+      {parseError && (
+        <Alert variant='error' className='py-2 text-xs'>
+          {parseError}
+        </Alert>
+      )}
 
       {/* Results */}
       {result && (

@@ -28,6 +28,7 @@ const {
   logKangurServerEventMock,
   buildKangurAiTutorAdaptiveGuidanceMock,
   resolveKangurAiTutorNativeGuideResolutionMock,
+  resolveKangurWebsiteHelpGraphContextMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   buildKangurAiTutorLearnerMoodMock: vi.fn(),
@@ -45,6 +46,7 @@ const {
   logKangurServerEventMock: vi.fn(),
   buildKangurAiTutorAdaptiveGuidanceMock: vi.fn(),
   resolveKangurAiTutorNativeGuideResolutionMock: vi.fn(),
+  resolveKangurWebsiteHelpGraphContextMock: vi.fn(),
 }));
 vi.mock('@/features/kangur/server', () => ({
   resolveKangurActor: resolveKangurActorMock,
@@ -89,6 +91,9 @@ vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
 }));
 vi.mock('@/features/kangur/server/ai-tutor-native-guide', () => ({
   resolveKangurAiTutorNativeGuideResolution: resolveKangurAiTutorNativeGuideResolutionMock,
+}));
+vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
+  resolveKangurWebsiteHelpGraphContext: resolveKangurWebsiteHelpGraphContextMock,
 }));
 vi.unmock('@/features/kangur/settings-ai-tutor');
 import { postKangurAiTutorChatHandler } from './handler';
@@ -194,6 +199,12 @@ describe('kangur ai tutor chat handler', () => {
       entryId: null,
       matchedSignals: [],
       coverageLevel: null,
+    });
+    resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
+      status: 'skipped',
+      instructions: null,
+      sources: [],
+      nodeIds: [],
     });
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
@@ -537,6 +548,106 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.sources[0].text).toContain('Krótki zestaw próbny.');
     expect(body.sources[0].text).toContain('Ile to 2 + 2?');
   });
+
+  it('extracts tutor drawing artifacts from the model response and strips the drawing block from persisted text', async () => {
+    runBrainChatCompletionMock
+      .mockResolvedValueOnce({
+        text: 'Widac dwie grupy kropek ustawione obok siebie.',
+      })
+      .mockResolvedValueOnce({
+        text: [
+          'Policz najpierw lewa pare, potem prawa.',
+          '<kangur_tutor_drawing>',
+          '<title>Dwie pary</title>',
+          '<caption>Kazda para ma po dwa elementy.</caption>',
+          '<alt>Dwie pary kropek ustawione obok siebie.</alt>',
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
+          '</kangur_tutor_drawing>',
+        ].join('\n'),
+      });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: 'Wyjasnij to rysunkiem.',
+              artifacts: [
+                {
+                  type: 'user_drawing',
+                  imageDataUrl: 'data:image/png;base64,AAA',
+                },
+              ],
+            },
+          ],
+          context: {
+            surface: 'lesson',
+            contentId: 'lesson-1',
+            title: 'Dodawanie obrazkami',
+            promptMode: 'explain',
+            drawingImageData: 'data:image/png;base64,AAA',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(2);
+    expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor.drawing_analysis',
+      expect.objectContaining({
+        runtimeKind: 'vision',
+      })
+    );
+    expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenNthCalledWith(
+      2,
+      KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
+      expect.objectContaining({
+        runtimeKind: 'chat',
+      })
+    );
+    const drawingAnalysisInput = runBrainChatCompletionMock.mock.calls[0]?.[0];
+    expect(drawingAnalysisInput?.messages?.[1]?.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'text' }),
+        expect.objectContaining({
+          type: 'image_url',
+          image_url: expect.objectContaining({
+            url: 'data:image/png;base64,AAA',
+          }),
+        }),
+      ])
+    );
+    const tutorReplyInput = runBrainChatCompletionMock.mock.calls[1]?.[0];
+    expect(tutorReplyInput?.messages?.[0]?.content).toContain('Drawing support:');
+    expect(tutorReplyInput?.messages?.[0]?.content).toContain(
+      'Learner drawing analysis summary:'
+    );
+    expect(resolveKangurAiTutorNativeGuideResolutionMock).not.toHaveBeenCalled();
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      message: 'Policz najpierw lewa pare, potem prawa.',
+      artifacts: [
+        {
+          type: 'assistant_drawing',
+          title: 'Dwie pary',
+          caption: 'Kazda para ma po dwa elementy.',
+          alt: 'Dwie pary kropek ustawione obok siebie.',
+        },
+      ],
+    });
+    expect(body.artifacts[0]?.svgContent).toContain('<svg');
+    expect(persistAgentPersonaExchangeMemoryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistantMessage: 'Policz najpierw lewa pare, potem prawa.',
+      })
+    );
+  });
+
   it('builds structured game tutor context from the live request when the registry has no game surface document', async () => {
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
@@ -1139,6 +1250,72 @@ describe('kangur ai tutor chat handler', () => {
           surface: 'lesson',
           contentId: 'lesson-1',
           dailyMessageLimit: 2,
+        }),
+      })
+    );
+  });
+
+  it('adds website-help graph context and sources when Neo4j retrieval resolves a Kangur website query', async () => {
+    resolveKangurWebsiteHelpGraphContextMock.mockResolvedValue({
+      status: 'hit',
+      instructions:
+        'Kangur website-help graph context:\n- Sign in flow [flow]\n  Website target: / · anchor=kangur-primary-nav-login',
+      nodeIds: ['flow:kangur:sign-in'],
+      sources: [
+        {
+          documentId: 'flow:kangur:sign-in',
+          collectionId: 'kangur-knowledge-graph',
+          text: 'Sign in flow (flow)\nHow anonymous learners sign in from the Kangur website shell.',
+          score: 0.94,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'flow:kangur:sign-in',
+            title: 'Sign in flow',
+            description: 'How anonymous learners sign in from the Kangur website shell.',
+            tags: ['kangur-knowledge-graph', 'flow', 'auth'],
+          },
+        },
+      ],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Jak się zalogować do Kangura?' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'lesson-1',
+            promptMode: 'chat',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+    const body = await response.json();
+
+    expect(runBrainChatCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('Kangur website-help graph context:'),
+          }),
+        ]),
+      })
+    );
+    expect(body.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          documentId: 'flow:kangur:sign-in',
+          collectionId: 'kangur-knowledge-graph',
+        }),
+      ])
+    );
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.completed',
+        context: expect.objectContaining({
+          websiteHelpGraphApplied: true,
         }),
       })
     );

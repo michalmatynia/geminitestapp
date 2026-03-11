@@ -151,6 +151,6 @@ async function handleMongoOperation(parsed: {
     rowCount,
     fields: [],
     command: operation,
-    duration,
+    executionTimeMs: duration,
   });
 }

@@ -77,6 +77,47 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     );
   });
 
+  it('uses the new screen anchor coverage for game setup widgets', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Wyjasnij ten panel.',
+      context: {
+        surface: 'game',
+        promptMode: 'explain',
+        focusKind: 'screen',
+        focusId: 'kangur-game-training-setup',
+        focusLabel: 'Konfiguracja treningu',
+        title: 'Nowy ekran',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Konfiguracja treningu');
+    expect(response?.message).toContain(
+      'Tutaj ustawiasz jedna sesje treningowa: poziom, kategorie i liczbe pytan.'
+    );
+  });
+
+  it('uses the new lesson library entry for the lessons list surface', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Powiedz mi o tej sekcji.',
+      context: {
+        surface: 'lesson',
+        promptMode: 'explain',
+        focusKind: 'library',
+        focusId: 'kangur-lessons-library',
+        contentId: 'lesson:list',
+        focusLabel: 'Biblioteka lekcji',
+        title: 'Lekcje',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Biblioteka lekcji');
+    expect(response?.message).toContain(
+      'To lista tematow, z ktorej wybierasz nastepna lekcje do przerobienia.'
+    );
+  });
+
   it('uses the game-specific review entry on the result surface', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
       latestUserMessage: 'Wyjasnij omowienie tego wyniku.',
@@ -94,6 +135,27 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     expect(response?.message).toContain('Omowienie wyniku gry');
     expect(response?.followUpActions).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 'game-review-retry' })])
+    );
+  });
+
+  it('uses the dedicated empty-state entry for test suites without published questions', async () => {
+    const response = await resolveKangurAiTutorNativeGuideResponse({
+      latestUserMessage: 'Co oznacza ten pusty stan?',
+      context: {
+        surface: 'test',
+        promptMode: 'explain',
+        focusKind: 'empty_state',
+        focusId: 'kangur-test-empty-state:suite-2024',
+        contentId: 'suite-2024',
+        title: 'Kangur 2024',
+        focusLabel: 'Pusty zestaw testowy',
+      },
+      locale: 'pl',
+    });
+
+    expect(response?.message).toContain('Pusty zestaw testowy');
+    expect(response?.message).toContain(
+      'wybrany zestaw nie ma jeszcze opublikowanych pytan do rozwiazania'
     );
   });
 

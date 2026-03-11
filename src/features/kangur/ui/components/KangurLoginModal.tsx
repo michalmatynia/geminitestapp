@@ -23,10 +23,14 @@ export function KangurLoginModal(): JSX.Element {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
-            'fixed inset-0 z-50 bg-slate-950/35 backdrop-blur-[2px]',
+            'fixed inset-0 z-50 backdrop-blur-[2px]',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
           )}
+          style={{
+            background:
+              'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 14%, rgba(2,6,23,0.72))',
+          }}
         />
         <DialogPrimitive.Content
           className={cn(
@@ -45,11 +49,16 @@ export function KangurLoginModal(): JSX.Element {
             aria-label='Zamknij logowanie'
             className={cn(
               'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
-              'bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(255,247,237,0.88)_100%)] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
-              'text-[#9a5418] shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition hover:text-[#7f4310]'
+              'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]',
+              'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
             )}
             data-testid='kangur-login-modal-close'
             onClick={closeLoginModal}
+            style={{
+              background:
+                'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
+              color: '#9a5418',
+            }}
             type='button'
           >
             Zamknij

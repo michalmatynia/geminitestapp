@@ -104,7 +104,10 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
     <div className='min-w-0 flex-1'>
       {subsectionSummary ? (
         <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
-          <div className='soft-card flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 text-lg shadow-sm'>
+          <div
+            className='soft-card flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border text-lg shadow-sm'
+            style={{ borderColor: 'var(--kangur-soft-card-border)' }}
+          >
             {subsectionSummary.emoji}
           </div>
           <div className='min-w-0'>

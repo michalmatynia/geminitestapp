@@ -90,7 +90,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             </div>
 
             <div
-              className='text-sm font-semibold text-slate-900'
+              className='text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='kangur-result-reward-title'
             >
               {xpToast.recommendation
@@ -108,7 +108,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
             {xpToast.nextBadge ? (
               <div
-                className='text-xs leading-6 text-slate-700'
+                className='text-xs leading-6 [color:var(--kangur-page-text)]'
                 data-testid='kangur-result-reward-next-badge'
               >
                 Nastepna odznaka: {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
@@ -156,14 +156,14 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               </KangurStatusChip>
             </div>
             <div
-              className='text-sm font-semibold text-slate-900'
+              className='text-sm font-semibold [color:var(--kangur-page-text)]'
               data-testid='kangur-result-recommendation-title'
             >
               {activeSessionRecommendation.title}
             </div>
             {activeSessionRecommendation.description ? (
               <div
-                className='text-xs leading-6 text-slate-700'
+                className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
                 data-testid='kangur-result-recommendation-description'
               >
                 {activeSessionRecommendation.description}
@@ -290,13 +290,13 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             {xpToast.dailyQuest ? (
               <>
                 <div
-                  className='text-sm font-semibold text-slate-900'
+                  className='text-sm font-semibold [color:var(--kangur-page-text)]'
                   data-testid='kangur-result-followup-title'
                 >
                   {xpToast.dailyQuest.title}
                 </div>
                 <div
-                  className='text-xs leading-6 text-slate-700'
+                  className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
                   data-testid='kangur-result-followup-description'
                 >
                   {xpToast.dailyQuest.summary}
@@ -305,13 +305,13 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             ) : nextBadge ? (
               <>
                 <div
-                  className='text-sm font-semibold text-slate-900'
+                  className='text-sm font-semibold [color:var(--kangur-page-text)]'
                   data-testid='kangur-result-followup-title'
                 >
                   {nextBadge.emoji} {nextBadge.name}
                 </div>
                 <div
-                  className='text-xs leading-6 text-slate-700'
+                  className='text-xs leading-6 [color:var(--kangur-page-muted-text)]'
                   data-testid='kangur-result-followup-description'
                 >
                   Do odznaki brakuje: {nextBadge.summary}

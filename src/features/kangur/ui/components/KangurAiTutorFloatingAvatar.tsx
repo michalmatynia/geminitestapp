@@ -107,11 +107,11 @@ export function KangurAiTutorFloatingAvatar({
     return null;
   }
 
-  const shouldPreserveGuidedAvatarCluster = floatingAvatarPlacement === 'guided';
+  const isGuidedAvatarPlacement = floatingAvatarPlacement === 'guided';
   const avatarTransition: Transition =
-    prefersReducedMotion || shouldPreserveGuidedAvatarCluster
+    prefersReducedMotion
       ? reducedMotionTransitions.instant
-      : isGuidedTutorMode || isAskModalMode
+      : isGuidedAvatarPlacement || isGuidedTutorMode || isAskModalMode
         ? motionProfile.guidedAvatarTransition
         : motionProfile.avatarTransition;
   const avatarMotionTarget = toMotionTarget(avatarStyle);
@@ -125,6 +125,13 @@ export function KangurAiTutorFloatingAvatar({
       data-guidance-target={guidedTargetKind}
       data-guidance-avatar-placement={guidedAvatarPlacement}
       data-guidance-motion={isGuidedTutorMode ? 'gentle' : 'standard'}
+      data-guidance-transition={
+        prefersReducedMotion
+          ? 'reduced'
+          : isGuidedAvatarPlacement || isGuidedTutorMode || isAskModalMode
+            ? 'guided'
+            : 'standard'
+      }
       data-guidance-pointer={guidedAvatarArrowhead ? 'rim-arrowhead' : 'none'}
       data-guidance-interaction={isGuidedTutorMode ? 'suppressed' : 'interactive'}
       data-is-dragging={isAvatarDragging ? 'true' : 'false'}

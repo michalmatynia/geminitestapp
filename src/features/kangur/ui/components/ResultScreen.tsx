@@ -80,7 +80,11 @@ export default function ResultScreen({
       >
         Swietna robota, {playerName}!
       </KangurHeadline>
-      <p role='status' aria-live='polite' className='text-lg text-slate-500'>
+      <p
+        role='status'
+        aria-live='polite'
+        className='text-lg [color:var(--kangur-page-muted-text)]'
+      >
         {message}
       </p>
 
@@ -93,21 +97,21 @@ export default function ResultScreen({
       >
         <dl className='space-y-3 text-lg'>
           <div className='flex justify-between gap-4'>
-            <dt className='text-slate-500'>Wynik</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>Wynik</dt>
             <dd className='font-bold text-indigo-600'>
               {score} / {total}
             </dd>
           </div>
           <div className='flex justify-between gap-4'>
-            <dt className='text-slate-500'>Dokladnosc</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>Dokladnosc</dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
           </div>
           <div className='flex justify-between gap-4'>
-            <dt className='text-slate-500'>Czas</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>Czas</dt>
             <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
           </div>
           <div className='flex justify-between gap-4'>
-            <dt className='text-slate-500'>Temat</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>Temat</dt>
             <dd className='font-bold text-purple-500'>{operationLabel}</dd>
           </div>
         </dl>

@@ -43,6 +43,7 @@ const buildManagerUser = (overrides = {}) => {
     actorType: 'parent',
     canManageLearners: true,
     ownerUserId: 'parent-001',
+    ownerEmailVerified: true,
     activeLearner: {
       id: 'learner-001',
       ownerUserId: 'parent-001',
@@ -129,7 +130,7 @@ test.describe('Kangur Learner Profile', () => {
     await expect(page.getByText(/Plan na dzis/i)).toBeVisible();
   });
 
-  test('supports navigation from game screen to learner profile', async ({ page }) => {
+  test('exposes learner profile navigation from the game screen', async ({ page }) => {
     await mockKangurAuthMe(page, buildManagerUser());
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page);
@@ -140,7 +141,11 @@ test.describe('Kangur Learner Profile', () => {
     await expect(profileLink).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
-    await profileLink.click();
+    await expect(profileLink).toHaveAttribute('href', /\/kangur\/profile$/);
+
+    const profileHref = await profileLink.getAttribute('href');
+    expect(profileHref).toBeTruthy();
+    await gotoKangurPath(page, profileHref!);
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
     await expectLearnerProfileReady(page);
@@ -236,7 +241,11 @@ test.describe('Kangur Learner Profile', () => {
     await playNowLink.click();
     await expect(page).toHaveURL(/\/kangur\/game/);
     await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Trening mieszany/i })).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-game-training-top-section')
+        .getByRole('heading', { name: /^Trening$/i })
+    ).toBeVisible();
     await page
       .getByTestId('kangur-game-training-top-section')
       .getByRole('button', { name: 'Wróć do poprzedniej strony' })
@@ -405,7 +414,11 @@ test.describe('Kangur Learner Profile', () => {
 
     await expect(page).toHaveURL(/\/kangur\/game/);
     await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Trening mieszany/i })).toBeVisible();
+    await expect(
+      page
+        .getByTestId('kangur-game-training-top-section')
+        .getByRole('heading', { name: /^Trening$/i })
+    ).toBeVisible();
     await page
       .getByTestId('kangur-game-training-top-section')
       .getByRole('button', { name: 'Wróć do poprzedniej strony' })

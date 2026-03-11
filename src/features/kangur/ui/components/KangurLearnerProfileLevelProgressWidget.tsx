@@ -18,17 +18,17 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
     >
       <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
         <div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
             Postep poziomu
           </div>
           <div className={`mt-1 text-2xl font-extrabold ${snapshot.level.color}`}>
             {snapshot.level.title}
           </div>
-          <p className='text-sm text-slate-500'>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
           </p>
         </div>
-        <div className='text-sm text-slate-500'>
+        <div className='text-sm [color:var(--kangur-page-muted-text)]'>
           {snapshot.nextLevel
             ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
             : 'Maksymalny poziom osiagniety'}
@@ -42,7 +42,7 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
           size='md'
           value={snapshot.levelProgressPercent}
         />
-        <div className='mt-1 text-right text-xs text-slate-500'>
+        <div className='mt-1 text-right text-xs [color:var(--kangur-page-muted-text)]'>
           {snapshot.levelProgressPercent}%
         </div>
       </div>

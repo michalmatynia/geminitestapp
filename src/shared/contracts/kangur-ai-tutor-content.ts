@@ -490,6 +490,19 @@ export const kangurAiTutorContentSchema = z.object({
     loadingLabel: tutorCopySchema,
   }),
   moods: z.record(z.string(), tutorMoodContentSchema),
+  drawing: z.object({
+    title: tutorCopySchema,
+    toggleLabel: tutorCopySchema,
+    penLabel: tutorCopySchema,
+    eraserLabel: tutorCopySchema,
+    undoLabel: tutorCopySchema,
+    clearLabel: tutorCopySchema,
+    cancelLabel: tutorCopySchema,
+    doneLabel: tutorCopySchema,
+    previewAlt: tutorCopySchema,
+    attachedLabel: tutorCopySchema,
+    messageLabel: tutorCopySchema,
+  }).optional(),
 });
 
 export type KangurAiTutorContent = z.infer<typeof kangurAiTutorContentSchema>;
@@ -684,6 +697,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         lessonWithoutText: 'Zaznaczony fragment',
       },
       kinds: {
+        hero: 'Wprowadzenie',
+        screen: 'Ekran',
+        library: 'Biblioteka',
+        empty_state: 'Pusty stan',
+        navigation: 'Nawigacja',
         home_actions: 'Start',
         home_quest: 'Misja',
         priority_assignments: 'Zadania od rodzica',
@@ -1051,6 +1069,19 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       loadingLabel: 'Myślę…',
     },
     moods: defaultMoodContent,
+    drawing: {
+      title: 'Rysowanie',
+      toggleLabel: 'Rysuj',
+      penLabel: 'Pióro',
+      eraserLabel: 'Gumka',
+      undoLabel: 'Cofnij',
+      clearLabel: 'Wyczyść',
+      cancelLabel: 'Anuluj',
+      doneLabel: 'Gotowe',
+      previewAlt: 'Rysunek',
+      attachedLabel: 'Rysunek załączony',
+      messageLabel: 'Narysowano',
+    },
   });
 
 const isPlainTutorObject = (value: unknown): value is Record<string, unknown> =>

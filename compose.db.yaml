@@ -8,5 +8,16 @@ services:
     volumes:
       - mongodb_local:/data/db
 
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME:-neo4j}/${NEO4J_PASSWORD:-neo4jdevpassword}
+    ports:
+      - '${NEO4J_BROWSER_PORT:-7474}:7474'
+      - '${NEO4J_BOLT_PORT:-7687}:7687'
+    volumes:
+      - neo4j_local:/data
+
 volumes:
   mongodb_local:
+  neo4j_local:

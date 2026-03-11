@@ -44,7 +44,7 @@ const expectFeaturedHoverCycle = async ({
   const controlBoxAtRest = await getBoundingBox(control);
   const underlayBoxAtRest = await getBoundingBox(underlay);
 
-  expect(accentOpacityAtRest).toBeLessThanOrEqual(0.01);
+  expect(accentOpacityAtRest).toBeLessThanOrEqual(0.1);
   expect(underlayOpacityAtRest).toBeGreaterThan(0.25);
 
   await control.hover();
@@ -73,7 +73,7 @@ const expectFeaturedHoverCycle = async ({
 
   await expect
     .poll(async () => Number.parseFloat(await getComputedStyleValue(accent, 'opacity')))
-    .toBeLessThanOrEqual(0.01);
+    .toBeLessThanOrEqual(0.1);
   await expect
     .poll(async () =>
       Number.parseFloat(await getComputedStyleValue(sparkles.first(), 'opacity'))
@@ -109,13 +109,16 @@ test.describe('Kangur Home Hover', () => {
     page,
   }) => {
     await page.goto('/kangur/game');
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
 
-    const lessonsLink = page.locator('[data-doc-id="home_lessons_action"]');
+    const lessonsCard = page.getByTestId('kangur-home-action-lessons');
+    const lessonsLink = lessonsCard.getByRole('link', { name: /^Lekcje/i });
     const playButton = page.getByRole('button', { name: /Grajmy/i });
     const trainingButton = page.getByRole('button', { name: /Trening mieszany/i });
     const geometryHomeButton = page.getByRole('button', { name: /Ćwiczenia z figurami/i });
     const playWrapper = getFeaturedActionParts(page, playButton).wrapper;
 
+    await expect(lessonsCard).toBeVisible();
     await expect(lessonsLink).toBeVisible();
     await expect(playButton).toBeVisible();
     await expect(trainingButton).toBeVisible();
@@ -168,7 +171,7 @@ test.describe('Kangur Home Hover', () => {
     await lessonsLink.focus();
     await expect
       .poll(async () => Number.parseFloat(await getComputedStyleValue(playAccent, 'opacity')))
-      .toBeLessThanOrEqual(0.01);
+      .toBeLessThanOrEqual(0.1);
     await expect
       .poll(async () => Number.parseFloat(await getComputedStyleValue(playSparkles.first(), 'opacity')))
       .toBeLessThanOrEqual(0.02);

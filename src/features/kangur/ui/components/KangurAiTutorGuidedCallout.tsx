@@ -8,6 +8,7 @@ import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/prim
 
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
+import type { TutorEntryDirection } from './KangurAiTutorWidget.shared';
 import type { GuidedTutorTarget } from './KangurAiTutorWidget.types';
 import type { CSSProperties, JSX } from 'react';
 
@@ -26,6 +27,7 @@ type Props = {
   calloutKey: string;
   calloutTestId: string;
   detail: string | null;
+  entryDirection: TutorEntryDirection;
   headerLabel: string;
   mode: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
   onAction: (
@@ -47,6 +49,8 @@ type Props = {
   transitionEase: [number, number, number, number];
 };
 
+const GUIDED_CALLOUT_ENTRY_OFFSET_PX = 72;
+
 const isSelectionGuidedTutorTarget = (
   value: GuidedTutorTarget | null | undefined
 ): value is Extract<GuidedTutorTarget, { mode: 'selection' }> => value?.mode === 'selection';
@@ -59,6 +63,7 @@ export function KangurAiTutorGuidedCallout({
   calloutKey,
   calloutTestId,
   detail,
+  entryDirection,
   headerLabel,
   mode,
   onAction,
@@ -109,17 +114,23 @@ export function KangurAiTutorGuidedCallout({
           data-kangur-ai-tutor-root='true'
           key={calloutKey}
           data-testid={calloutTestId}
+          data-entry-direction={entryDirection}
           data-guidance-motion='gentle'
           data-guidance-placement={placement}
           initial={
             prefersReducedMotion
-              ? reducedMotionTransitions.stableState
-              : { opacity: 0 }
+              ? { ...reducedMotionTransitions.stableState, x: 0 }
+              : {
+                ...reducedMotionTransitions.stableState,
+                opacity: 0,
+                x: entryDirection === 'left' ? -GUIDED_CALLOUT_ENTRY_OFFSET_PX : GUIDED_CALLOUT_ENTRY_OFFSET_PX,
+                scale: 0.98,
+              }
           }
-          animate={reducedMotionTransitions.stableState}
+          animate={{ ...reducedMotionTransitions.stableState, x: 0 }}
           exit={
             prefersReducedMotion
-              ? reducedMotionTransitions.stableState
+              ? { ...reducedMotionTransitions.stableState, x: 0 }
               : { opacity: 0 }
           }
           transition={

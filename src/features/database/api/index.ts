@@ -1,7 +1,6 @@
 import type {
   DatabaseBackupFile as DatabaseInfoResponse,
   DatabaseBackupResponse,
-  CollectionCopyResult,
   DatabaseEngineBackupRunNowResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
   DatabaseEngineBackupSchedulerTickResponse,
@@ -19,14 +18,12 @@ import type {
   DatabasePreviewPayload,
   DatabasePreviewRequest,
   DatabasePreviewTable,
-  DatabaseSyncDirection,
   DatabaseType,
   SqlQueryResult,
 } from '@/shared/contracts/database';
 import { type ApiPayloadResult } from '@/shared/contracts/http';
 import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -196,7 +193,7 @@ export const getDatabaseEngineStatus = async (): Promise<DatabaseEngineStatusRes
   api.get<DatabaseEngineStatusResponse>('/api/databases/engine/status');
 
 export const runDatabaseEngineBackupNow = async (
-  dbType: 'mongodb' | 'postgresql' | 'all'
+  dbType: 'mongodb' | 'all'
 ): Promise<DatabaseEngineBackupRunNowResponse> =>
   api.post<DatabaseEngineBackupRunNowResponse>('/api/databases/engine/backup-scheduler/run-now', {
     dbType,
@@ -237,31 +234,6 @@ export const getDatabaseEngineProviderPreview = async (
 };
 
 export const fetchDatabaseEngineProviderPreview = getDatabaseEngineProviderPreview;
-
-export const copyCollectionBetweenProviders = async (
-  collection: string,
-  direction: 'mongo_to_prisma' | 'prisma_to_mongo'
-): Promise<ApiPayloadResult<CollectionCopyResult>> =>
-  wrapInApiPayloadResult(
-    api.post<CollectionCopyResult>('/api/databases/copy-collection', { collection, direction })
-  );
-
-export const updateDatabaseCollectionProviderMap = async (
-  collectionName: string,
-  provider: 'mongodb' | 'prisma'
-): Promise<void> => {
-  await api.patch('/api/settings', {
-    key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
-    value: JSON.stringify({ [collectionName]: provider }),
-    mode: 'merge_json_object',
-  });
-};
-
-export const syncDatabase = async (
-  direction: DatabaseSyncDirection
-): Promise<{ error?: string }> => {
-  return api.post<{ error?: string }>('/api/settings/database/sync', { direction, manual: true });
-};
 
 export const backfillSettingsKeys = async (
   limit: number = 500,

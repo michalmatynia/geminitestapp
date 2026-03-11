@@ -4,7 +4,6 @@ import { databasePreviewRequestSchema, databaseTypeSchema } from '@/shared/contr
 
 describe('database contract runtime', () => {
   it('parses valid database types', () => {
-    expect(databaseTypeSchema.parse('postgresql')).toBe('postgresql');
     expect(databaseTypeSchema.parse('mongodb')).toBe('mongodb');
   });
 
@@ -14,10 +13,10 @@ describe('database contract runtime', () => {
 
   it('parses valid preview request and rejects invalid request type', () => {
     const parsed = databasePreviewRequestSchema.parse({
-      type: 'postgresql',
+      type: 'mongodb',
       mode: 'full',
     });
-    expect(parsed.type).toBe('postgresql');
+    expect(parsed.type).toBe('mongodb');
     expect(parsed.mode).toBe('full');
 
     expect(() =>

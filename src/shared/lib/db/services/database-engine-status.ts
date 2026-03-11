@@ -140,7 +140,7 @@ const buildBlockingIssues = (params: {
   servicesStatus.forEach((status) => {
     if (status.unsupportedConfiguredProvider) {
       issues.push(
-        `Service "${status.service}" is routed to Redis, but only Prisma/MongoDB are supported.`
+        `Service "${status.service}" is routed to Redis, but only MongoDB is supported.`
       );
     }
     if (status.missingExplicitRoute) {
@@ -195,7 +195,7 @@ export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatus> {
   const serviceRouteMap = services.reduce(
     (acc, service) => {
       const status = serviceStatusByService.get(service);
-      const fallbackProvider = (status?.effectiveProvider ?? 'prisma') as DatabaseEngineProvider;
+      const fallbackProvider = (status?.effectiveProvider ?? 'mongodb') as DatabaseEngineProvider;
       acc[service] = partialServiceRouteMap[service] ?? fallbackProvider;
       return acc;
     },
@@ -211,7 +211,6 @@ export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatus> {
     timestamp: new Date().toISOString(),
     policy,
     providers: {
-      prismaConfigured: isPrimaryProviderConfigured('prisma'),
       mongodbConfigured: isPrimaryProviderConfigured('mongodb'),
       redisConfigured: isRedisProviderConfigured(),
     },

@@ -639,19 +639,17 @@ function DatabasePreviewContent(): React.JSX.Element {
             </FormSection>
           )}
 
-          {/* ── SQL Console ── */}
-          {dbType === 'postgresql' && (
-            <div ref={consoleSectionRef} className='scroll-mt-6'>
-              <CollapsibleSection
-                title='SQL Query Console'
-                open={showConsole}
-                onOpenChange={setShowConsole}
-                className='p-6'
-              >
-                <SqlQueryConsole defaultDbType='postgresql' initialSql={consoleSql} />
-              </CollapsibleSection>
-            </div>
-          )}
+          {/* ── Mongo Console ── */}
+          <div ref={consoleSectionRef} className='scroll-mt-6'>
+            <CollapsibleSection
+              title='MongoDB Command Console'
+              open={showConsole}
+              onOpenChange={setShowConsole}
+              className='p-6'
+            >
+              <SqlQueryConsole defaultDbType='mongodb' initialSql={consoleSql} />
+            </CollapsibleSection>
+          </div>
 
           {/* ── Table Manager ── */}
           {showCrud && tableDetails.length > 0 && (
@@ -681,7 +679,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const searchParams = useSearchParams();
   const backupName = searchParams.get('backup') ?? '';
   const mode = searchParams.get('mode') ?? 'backup';
-  const previewType = searchParams.get('type') ?? 'postgresql';
+  const previewType: DatabaseType = 'mongodb';
   const previewMode: DatabasePreviewMode = mode === 'current' ? 'current' : 'backup';
 
   return (

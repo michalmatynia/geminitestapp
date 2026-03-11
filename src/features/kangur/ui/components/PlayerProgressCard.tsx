@@ -59,14 +59,14 @@ export default function PlayerProgressCard({
             <p className={`font-extrabold text-lg leading-tight ${currentLevel.color}`}>
               {currentLevel.title}
             </p>
-            <p className='text-xs text-slate-500'>
+            <p className='text-xs [color:var(--kangur-page-muted-text)]'>
               Poziom {currentLevel.level} · {totalXp} XP lacznie
             </p>
           </div>
         </div>
 
         <div>
-          <div className='mb-1 flex justify-between text-xs text-slate-500'>
+          <div className='mb-1 flex justify-between text-xs [color:var(--kangur-page-muted-text)]'>
             <span>{xpIntoLevel} XP</span>
             {nextLevel ? (
               <span>

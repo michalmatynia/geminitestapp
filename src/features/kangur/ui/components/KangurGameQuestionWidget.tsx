@@ -23,12 +23,14 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     currentQuestionIndex,
     difficulty,
     handleAnswer,
+    operation,
     progress,
     questionTimeLimit,
     score,
     screen,
     totalQuestions,
   } = useKangurGameRuntime();
+  const assignmentBannerRef = useRef<HTMLDivElement | null>(null);
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const answeredQuestions = Math.max(0, currentQuestionIndex);
   const roundAccuracy =
@@ -40,6 +42,25 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     ? getRecommendedSessionProjection(progress, 1)
     : null;
 
+  const tutorContentId = activePracticeAssignment?.id
+    ? `game:assignment:${activePracticeAssignment.id}`
+    : operation
+      ? `game:practice:${operation}:${difficulty}`
+      : 'game';
+
+  useKangurTutorAnchor({
+    id: 'kangur-game-assignment-banner',
+    kind: 'assignment',
+    ref: assignmentBannerRef,
+    surface: 'game',
+    enabled: screen === 'playing' && Boolean(activePracticeAssignment),
+    priority: 110,
+    metadata: {
+      contentId: tutorContentId,
+      label: activePracticeAssignment?.title ?? 'Zadanie treningowe',
+      assignmentId: activePracticeAssignment?.id ?? null,
+    },
+  });
   useKangurTutorAnchor({
     id: 'kangur-game-question-anchor',
     kind: 'question',
@@ -48,7 +69,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     enabled: screen === 'playing' && Boolean(currentQuestion),
     priority: 120,
     metadata: {
-      contentId: 'game',
+      contentId: tutorContentId,
       label: currentQuestion?.question ?? null,
       assignmentId: activePracticeAssignment?.id ?? null,
     },
@@ -61,7 +82,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
   return (
     <div className='flex w-full flex-col items-center'>
       {activePracticeAssignment ? (
-        <div className='mb-4 flex w-full justify-center px-4'>
+        <div ref={assignmentBannerRef} className='mb-4 flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
             assignment={activePracticeAssignment}
             basePath={basePath}
@@ -70,10 +91,10 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
         </div>
       ) : null}
       <div className='mb-4 flex w-full max-w-md items-center justify-between px-2'>
-        <span className='font-semibold text-slate-500'>
+        <span className='font-semibold [color:var(--kangur-page-muted-text)]'>
           ⭐ Wynik: <span className='font-bold text-indigo-600'>{score}</span>
         </span>
-        <span className='font-semibold text-slate-500'>
+        <span className='font-semibold [color:var(--kangur-page-muted-text)]'>
           {DIFFICULTY_CONFIG[difficulty]?.emoji} {DIFFICULTY_CONFIG[difficulty]?.label}
         </span>
       </div>

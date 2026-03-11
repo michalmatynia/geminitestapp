@@ -23,12 +23,12 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
       title: 'Co to znaczy mnozyc?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-center text-slate-700'>
+          <p className='text-center [color:var(--kangur-page-text)]'>
             Mnozenie to skrócone dodawanie tej samej liczby kilka razy.
           </p>
           <div className='flex flex-col items-center gap-2'>
             <KangurDisplayEmoji size='xs'>🍬🍬🍬 🍬🍬🍬 🍬🍬🍬</KangurDisplayEmoji>
-            <p className='text-sm text-slate-500'>3 grupy po 3 cukierki</p>
+            <p className='text-sm [color:var(--kangur-page-muted-text)]'>3 grupy po 3 cukierki</p>
             <KangurEquationDisplay
               accent='violet'
               data-testid='multiplication-lesson-intro-equation'
@@ -36,7 +36,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
             >
               3 × 3 = 9
             </KangurEquationDisplay>
-            <p className='text-sm text-slate-400'>(to samo co 3+3+3=9)</p>
+            <p className='text-sm [color:var(--kangur-page-muted-text)]'>(to samo co 3+3+3=9)</p>
           </div>
         </div>
       ),
@@ -58,7 +58,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
                   × {base}
                 </KangurStatusChip>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <p key={n} className='text-center text-xs text-slate-700'>
+                  <p key={n} className='text-center text-xs [color:var(--kangur-page-text)]'>
                     {n} × {base} = <b>{n * base}</b>
                   </p>
                 ))}
@@ -85,7 +85,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
                   × {base}
                 </KangurStatusChip>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <p key={n} className='text-center text-xs text-slate-700'>
+                  <p key={n} className='text-center text-xs [color:var(--kangur-page-text)]'>
                     {n} × {base} = <b>{n * base}</b>
                   </p>
                 ))}
@@ -102,7 +102,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
       content: (
         <div className='flex flex-col items-center gap-3'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
-            <ul className='space-y-2 text-sm text-slate-700'>
+            <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
                 ✖️ × 1 = ta sama liczba: <b>7×1=7</b>
               </li>

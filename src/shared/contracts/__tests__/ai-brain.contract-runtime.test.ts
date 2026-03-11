@@ -17,6 +17,12 @@ describe('ai-brain contract runtime', () => {
     expect(aiBrainCapabilityKeySchema.parse('agent_runtime.planner')).toBe('agent_runtime.planner');
   });
 
+  it('accepts the Kangur tutor drawing analysis capability key', () => {
+    expect(aiBrainCapabilityKeySchema.parse('kangur_ai_tutor.drawing_analysis')).toBe(
+      'kangur_ai_tutor.drawing_analysis'
+    );
+  });
+
   it('keeps systemPrompt on assignment parsing', () => {
     const assignment = aiBrainAssignmentSchema.parse({
       enabled: true,

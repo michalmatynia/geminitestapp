@@ -133,8 +133,15 @@ export default function LessonSlideSection({
                 aria-label='Otworz sekretny panel'
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-500 text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
+                  'h-[14px] min-w-[40px] cursor-pointer justify-center text-[10px] font-black shadow-sm'
                 )}
+                style={{
+                  background:
+                    'linear-gradient(90deg, color-mix(in srgb, rgb(252 211 77) 78%, var(--kangur-soft-card-background)) 0%, color-mix(in srgb, rgb(253 224 71) 84%, var(--kangur-soft-card-background)) 50%, color-mix(in srgb, rgb(245 158 11) 82%, var(--kangur-soft-card-background)) 100%)',
+                  color: 'color-mix(in srgb, rgb(120 53 15) 84%, var(--kangur-page-text))',
+                  boxShadow: '0 4px 10px -6px rgba(217,119,6,0.4)',
+                  borderColor: 'color-mix(in srgb, rgb(251 191 36) 72%, var(--kangur-soft-card-border))',
+                }}
                 data-testid='lesson-slide-secret-indicator'
                 title='Sekretny panel'
               >
@@ -157,7 +164,9 @@ export default function LessonSlideSection({
             padding='xl'
             surface='solid'
           >
-            <h2 className='text-xl font-extrabold text-slate-800'>{activeSlide.title}</h2>
+            <h2 className='text-xl font-extrabold [color:var(--kangur-page-text)]'>
+              {activeSlide.title}
+            </h2>
             <div className='flex-1'>{activeSlide.content}</div>
           </KangurGlassPanel>
         </motion.div>
@@ -171,7 +180,11 @@ export default function LessonSlideSection({
             <KangurButton
               onClick={handlePreviousSlide}
               aria-label='Poprzedni panel'
-              className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+              className='min-w-[72px] justify-center px-5 shadow-sm'
+              style={{
+                background: 'var(--kangur-soft-card-background)',
+                borderColor: 'var(--kangur-soft-card-border)',
+              }}
               data-testid='lesson-slide-prev-button'
               size='sm'
               type='button'
@@ -188,7 +201,11 @@ export default function LessonSlideSection({
             <KangurButton
               onClick={handleNextSlide}
               aria-label='Nastepny panel'
-              className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+              className='min-w-[72px] justify-center px-5 shadow-sm'
+              style={{
+                background: 'var(--kangur-soft-card-background)',
+                borderColor: 'var(--kangur-soft-card-border)',
+              }}
               data-testid='lesson-slide-next-button'
               size='sm'
               type='button'

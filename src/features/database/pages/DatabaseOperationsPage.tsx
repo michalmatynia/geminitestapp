@@ -31,17 +31,14 @@ function DatabaseOperationsContent(): React.JSX.Element {
     <AdminDatabasePageLayout
       title='Database Operations'
       current='Operations'
-      description='Execute SQL queries and manage table data directly.'
+      description='Run MongoDB-backed operations from the admin workspace.'
       headerActions={
         <div className='flex items-center gap-2'>
           <SelectSimple
             size='sm'
             value={dbType}
             onValueChange={(value: string): void => setDbType(value as DatabaseType)}
-            options={[
-              { value: 'postgresql', label: 'PostgreSQL' },
-              { value: 'mongodb', label: 'MongoDB' },
-            ]}
+            options={[{ value: 'mongodb', label: 'MongoDB' }]}
             triggerClassName='h-8 text-xs w-[120px]'
           />
           <Button asChild variant='outline' size='sm'>
@@ -60,7 +57,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
       <Tabs defaultValue='sql' className='w-full'>
         <TabsList className='mb-4' aria-label='Database workspace tabs'>
           <TabsTrigger value='sql' className='text-xs'>
-            SQL Console
+            Command Console
           </TabsTrigger>
           <TabsTrigger value='crud' className='text-xs'>
             Table Manager {tableDetails.length > 0 && `(${tableDetails.length})`}
@@ -68,7 +65,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
         </TabsList>
 
         <TabsContent value='sql'>
-          <FormSection title='Query Console' className='p-5'>
+          <FormSection title='Command Console' className='p-5'>
             <SqlQueryConsole />
           </FormSection>
         </TabsContent>
@@ -80,7 +77,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
               title='No tables found'
               description={
                 dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                  ? 'Table metadata is not available for MongoDB. Use the command console tab for MongoDB operations.'
                   : 'No tables found in the database.'
               }
             />

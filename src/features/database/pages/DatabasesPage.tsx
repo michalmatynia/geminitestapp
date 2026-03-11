@@ -1,6 +1,5 @@
 'use client';
 
-import type { DatabaseType } from '@/shared/contracts/database';
 import {
   AdminDatabasePageLayout,
   Button,
@@ -21,10 +20,8 @@ import {
 } from '../context/DatabaseBackupsContext';
 import { DatabaseProvider } from '../context/DatabaseContext';
 
-
 function DatabasesContentInner(): React.JSX.Element {
   const {
-    activeTab,
     isLogModalOpen,
     logModalContent,
     isRestoreModalOpen,
@@ -35,7 +32,6 @@ function DatabasesContentInner(): React.JSX.Element {
     isProd,
   } = useDatabaseBackupsStateContext();
   const {
-    setActiveTab,
     setBackupToDelete,
     setIsRestoreModalOpen,
     setSelectedBackupForRestore,
@@ -49,13 +45,9 @@ function DatabasesContentInner(): React.JSX.Element {
 
   return (
     <AdminDatabasePageLayout
-      title={`Databases - ${activeTab === 'postgresql' ? 'PostgreSQL' : 'MongoDB'}`}
+      title='Databases - MongoDB'
       current='Backups'
-      description={
-        activeTab === 'postgresql'
-          ? 'PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema.'
-          : 'MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format.'
-      }
+      description='MongoDB backups use mongodump/mongorestore archive files and preserve the full document database.'
       headerActions={
         <>
           <Button
@@ -71,7 +63,7 @@ function DatabasesContentInner(): React.JSX.Element {
             onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
               handleUpload(files, helpers)
             }
-            accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
+            accept='.archive'
             disabled={isProd}
             title={isProd ? 'Disabled in production' : undefined}
           >
@@ -98,14 +90,6 @@ function DatabasesContentInner(): React.JSX.Element {
           </Button>
         </>
       }
-      tabs={{
-        activeTab: activeTab,
-        onTabChange: (value: string) => setActiveTab(value as DatabaseType),
-        tabsList: [
-          { value: 'postgresql', label: 'PostgreSQL' },
-          { value: 'mongodb', label: 'MongoDB' },
-        ],
-      }}
     >
       {isLogModalOpen && <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />}
 
@@ -145,7 +129,7 @@ function DatabasesContentInner(): React.JSX.Element {
         data={data}
         isLoading={isLoading}
         initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
-        sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
+        sortingStorageKey='stardb:database-backups:mongodb:sorting'
         variant='flat'
       />
     </AdminDatabasePageLayout>

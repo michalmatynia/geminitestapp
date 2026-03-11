@@ -17,8 +17,10 @@ import {
   PROTECTED_CONTENT_GAP,
   type ActiveTutorFocus,
   type TutorBubblePlacementStrategy,
+  type TutorEntryDirection,
   type TutorMotionPosition,
   type TutorMotionProfile,
+  getTutorEntryDirection,
 } from './KangurAiTutorWidget.shared';
 
 import type { TutorSurface } from './KangurAiTutorWidget.types';
@@ -29,6 +31,7 @@ type SelectionActionLayout = {
 };
 
 type BubblePlacement = {
+  entryDirection: TutorEntryDirection;
   launchOrigin: 'dock-bottom-right' | 'sheet';
   mode: 'bubble' | 'sheet';
   strategy: TutorBubblePlacementStrategy;
@@ -249,6 +252,7 @@ const getBubblePlacement = (
 ): BubblePlacement => {
   if (mode === 'sheet') {
     return {
+      entryDirection: 'right',
       launchOrigin: 'sheet',
       mode,
       strategy: 'dock',
@@ -268,6 +272,7 @@ const getBubblePlacement = (
 
   if (!rect) {
     return {
+      entryDirection: 'right',
       launchOrigin: 'dock-bottom-right',
       mode,
       strategy: 'dock',
@@ -283,6 +288,7 @@ const getBubblePlacement = (
   const estimatedHeight = options?.estimatedHeight ?? getEstimatedBubbleHeight(viewport);
   const protectedRects = options?.protectedRects?.filter(Boolean) ?? [];
   const protectedZone = getRectUnion([rect, ...protectedRects]) ?? rect;
+  const entryDirection = getTutorEntryDirection(rect, viewport.width);
   const largestAvailableSideWidth = Math.max(
     protectedZone.left - EDGE_GAP - PROTECTED_CONTENT_GAP,
     viewport.width - protectedZone.right - EDGE_GAP - PROTECTED_CONTENT_GAP
@@ -420,6 +426,7 @@ const getBubblePlacement = (
     })[0];
 
   return {
+    entryDirection,
     launchOrigin: 'dock-bottom-right',
     mode,
     strategy: bestCandidate?.candidate.strategy ?? 'dock',
@@ -442,11 +449,21 @@ const getAnchorKindsForSurface = (
   hasAssignmentSummary: boolean
 ): KangurTutorAnchorKind[] => {
   if (surface === 'lesson') {
-    return ['assignment', 'lesson_header', 'document'];
+    if (!contentId || contentId === 'lesson:list') {
+      return ['hero', 'library', 'empty_state'];
+    }
+
+    return ['assignment', 'lesson_header', 'document', 'screen', 'empty_state', 'navigation'];
   }
 
   if (surface === 'test') {
-    return answerRevealed ? ['review', 'summary', 'question'] : ['question', 'review', 'summary'];
+    if (!hasCurrentQuestion && !answerRevealed) {
+      return ['empty_state', 'question', 'review', 'summary'];
+    }
+
+    return answerRevealed
+      ? ['review', 'summary', 'question', 'empty_state']
+      : ['question', 'review', 'summary', 'empty_state'];
   }
 
   if (surface === 'game') {
@@ -456,10 +473,50 @@ const getAnchorKindsForSurface = (
       !hasCurrentQuestion &&
       !hasAssignmentSummary
     ) {
-      return ['home_actions', 'home_quest', 'priority_assignments', 'progress', 'leaderboard'];
+      return ['hero', 'home_actions', 'home_quest', 'priority_assignments', 'progress', 'leaderboard'];
     }
 
-    return answerRevealed ? ['review', 'assignment', 'question'] : ['question', 'assignment'];
+    if (
+      contentId === 'game:training-setup' ||
+      contentId === 'game:operation-selector' ||
+      contentId === 'game:calendar_quiz' ||
+      contentId === 'game:geometry_quiz' ||
+      contentId?.startsWith('game:kangur:')
+    ) {
+      return ['screen'];
+    }
+
+    return answerRevealed
+      ? ['review', 'leaderboard', 'assignment', 'question']
+      : ['question', 'assignment', 'screen'];
+  }
+
+  if (surface === 'profile') {
+    return ['hero', 'progress', 'summary', 'assignment', 'screen'];
+  }
+
+  if (surface === 'parent_dashboard') {
+    if (contentId === 'parent-dashboard:guest') {
+      return ['hero'];
+    }
+
+    if (contentId?.endsWith(':progress')) {
+      return ['progress', 'navigation', 'hero', 'screen'];
+    }
+
+    if (contentId?.endsWith(':scores')) {
+      return ['summary', 'navigation', 'hero', 'screen'];
+    }
+
+    if (contentId?.endsWith(':assign')) {
+      return ['assignment', 'navigation', 'hero', 'screen'];
+    }
+
+    if (contentId?.endsWith(':ai-tutor')) {
+      return ['screen', 'navigation', 'hero'];
+    }
+
+    return ['hero', 'navigation', 'screen'];
   }
 
   return [];

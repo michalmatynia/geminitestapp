@@ -85,11 +85,6 @@ export function useCrudPanelState(props: {
     [tableDetails, selectedTable]
   );
 
-  const primaryKeyColumns = useMemo(
-    () => (tableDetail?.columns ?? []).filter((c) => c.isPrimaryKey),
-    [tableDetail]
-  );
-
   useEffect(() => {
     if (props.defaultTable && props.defaultTable !== selectedTable) {
       setSelectedTable(props.defaultTable);
@@ -104,34 +99,8 @@ export function useCrudPanelState(props: {
     enabled: Boolean(selectedTable),
     queryFn: async () => {
       if (!selectedTable) return { rows: [], totalRows: 0 };
-
-      const offset = (page - 1) * pageSize;
-
-      if (dbType === 'postgresql') {
-        const rowsResult = await executeSqlQuery({
-          sql: `SELECT * FROM "${selectedTable}" LIMIT ${pageSize} OFFSET ${offset}`,
-          type: 'postgresql',
-        });
-
-        if (rowsResult.error) throw new ApiError(rowsResult.error, 400);
-
-        let totalRows = rowsResult.rowCount ?? rowsResult.rows.length;
-        try {
-          const countResult = await executeSqlQuery({
-            sql: `SELECT COUNT(*)::bigint AS total FROM "${selectedTable}"`,
-            type: 'postgresql',
-          });
-          if (!countResult.error) {
-            const firstRow = countResult.rows[0];
-            totalRows = Number(firstRow?.['total'] ?? totalRows);
-          }
-        } catch (error) {
-          logClientError(error, {
-            context: { source: 'useCrudPanelState', action: 'fetchCount', table: selectedTable },
-          });
-        }
-
-        return { rows: rowsResult.rows, totalRows };
+      if (dbType !== 'mongodb') {
+        throw new ApiError('Only MongoDB CRUD operations are supported.', 400);
       }
 
       const mongoResult = await executeSqlQuery({
@@ -169,23 +138,15 @@ export function useCrudPanelState(props: {
   }, [rowsQuery, selectedTable]);
 
   const getPrimaryKey = (row: Record<string, unknown>) => {
-    const pk: Record<string, unknown> = {};
-    if (dbType === 'mongodb') {
-      pk['_id'] = row['_id'];
-    } else {
-      for (const col of primaryKeyColumns) {
-        pk[col.name] = row[col.name];
-      }
-      if (Object.keys(pk).length === 0) return { ...row };
-    }
-    return pk;
+    if (row['_id'] === undefined) return { ...row };
+    return { _id: row['_id'] };
   };
 
   const handleAdd = (data: Record<string, unknown>) => {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { collection: selectedTable, operation: 'create', provider: dbType, data },
+      { collection: selectedTable, operation: 'create', provider: 'mongodb', data },
       {
         onSuccess: (result) => {
           if (result.error) setMutationError(result.error);
@@ -213,7 +174,7 @@ export function useCrudPanelState(props: {
       {
         collection: selectedTable,
         operation: 'update',
-        provider: dbType,
+        provider: 'mongodb',
         data,
         filter: getPrimaryKey(editingRow),
       },
@@ -244,7 +205,7 @@ export function useCrudPanelState(props: {
       {
         collection: selectedTable,
         operation: 'delete',
-        provider: dbType,
+        provider: 'mongodb',
         filter: getPrimaryKey(deletingRow),
       },
       {

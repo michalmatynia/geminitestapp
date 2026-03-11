@@ -43,6 +43,7 @@ export function KangurTestSuitePlayer({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
   const [finished, setFinished] = useState(false);
+  const emptyStateAnchorRef = useRef<HTMLDivElement | null>(null);
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const summaryAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -92,6 +93,18 @@ export function KangurTestSuitePlayer({
   useKangurAiTutorSessionSync({
     learnerId: learnerId ?? null,
     sessionContext: finished ? summaryTutorContext : activeTutorContext,
+  });
+  useKangurTutorAnchor({
+    id: `kangur-test-empty-state:${suite.id}`,
+    kind: 'empty_state',
+    ref: emptyStateAnchorRef,
+    surface: 'test',
+    enabled: totalQuestions === 0,
+    priority: 76,
+    metadata: {
+      contentId: suite.id,
+      label: 'Pusty zestaw testowy',
+    },
   });
   useKangurTutorAnchor({
     id: `kangur-test-question:${suite.id}:${currentQuestion?.id ?? 'none'}`,
@@ -153,12 +166,14 @@ export function KangurTestSuitePlayer({
 
   if (totalQuestions === 0) {
     return (
-      <KangurEmptyState
-        accent='slate'
-        data-testid='kangur-test-suite-empty'
-        padding='xl'
-        title='This test suite has no published questions yet.'
-      />
+      <div ref={emptyStateAnchorRef}>
+        <KangurEmptyState
+          accent='slate'
+          data-testid='kangur-test-suite-empty'
+          padding='xl'
+          title='This test suite has no published questions yet.'
+        />
+      </div>
     );
   }
 

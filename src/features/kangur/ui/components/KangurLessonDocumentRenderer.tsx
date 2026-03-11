@@ -161,7 +161,8 @@ function renderSvgBlock(
         <div className='mb-3'>
           <KangurStatusChip
             accent='sky'
-            className='text-sm uppercase tracking-[0.18em] text-sky-700/80'
+            className='text-sm uppercase tracking-[0.18em]'
+            style={{ color: 'color-mix(in srgb, rgb(3 105 161) 82%, var(--kangur-page-text))' }}
             size='sm'
           >
             {block.title}
@@ -213,7 +214,8 @@ function renderImageBlock(
         <div className='mb-3'>
           <KangurStatusChip
             accent='amber'
-            className='text-sm uppercase tracking-[0.18em] text-amber-700/80'
+            className='text-sm uppercase tracking-[0.18em]'
+            style={{ color: 'color-mix(in srgb, rgb(180 83 9) 82%, var(--kangur-page-text))' }}
             size='sm'
           >
             {block.title}
@@ -243,7 +245,12 @@ function renderImageBlock(
           ) : (
             <KangurInlineFallback
               accent='amber'
-              className='min-h-[180px] rounded-[18px] border-amber-200/80 text-amber-700/80 shadow-none'
+              className='min-h-[180px] rounded-[18px] shadow-none'
+              style={{
+                borderColor:
+                  'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
+                color: 'color-mix(in srgb, rgb(180 83 9) 80%, var(--kangur-page-text))',
+              }}
               data-testid={`lesson-image-empty-${block.id}`}
               icon={
                 <span aria-hidden='true' className='text-lg'>
@@ -328,9 +335,10 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
     <div
       key={key}
       data-testid={`lesson-callout-block-${block.id}`}
-      className={cn('soft-card rounded-xl border p-4', style.border)}
+      className='soft-card rounded-xl border p-4'
       style={{
         background: `color-mix(in srgb, var(--kangur-soft-card-background) 84%, ${style.accentSurface})`,
+        borderColor: `color-mix(in srgb, var(--kangur-soft-card-border) 72%, ${style.accentSurface})`,
       }}
     >
       <div className='mb-1 flex items-center gap-2 text-sm font-semibold' style={{ color: style.text }}>
@@ -358,7 +366,8 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
   return (
     <div
       data-testid={`lesson-quiz-block-${block.id}`}
-      className='soft-card rounded-xl border border-slate-200 p-4 shadow-sm'
+      className='soft-card rounded-xl border p-4 shadow-sm'
+      style={{ borderColor: 'var(--kangur-soft-card-border)' }}
     >
       <div
         className='prose prose-sm mb-4 max-w-none font-semibold [color:var(--kangur-page-text)]'
@@ -371,28 +380,41 @@ function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }):
           let choiceClass = 'rounded-lg border px-4 py-2 text-left text-sm w-full transition';
           if (!state.revealed) {
             choiceClass +=
-              ' soft-card border-slate-200 [color:var(--kangur-page-text)] hover:border-indigo-300';
+              ' soft-card [color:var(--kangur-page-text)]';
           } else if (isCorrect) {
-            choiceClass += ' border-emerald-400 bg-emerald-50 text-emerald-800 font-semibold';
+            choiceClass += ' font-semibold';
           } else if (isSelected) {
-            choiceClass += ' border-rose-300 bg-rose-50 text-rose-700';
+            choiceClass += '';
           } else {
             choiceClass +=
-              ' border-slate-100 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)] opacity-60';
+              ' [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)] opacity-60';
           }
           return (
             <button
               key={choice.id}
               type='button'
               className={choiceClass}
-              style={
-                !state.revealed
-                  ? {
-                      background:
-                        'var(--kangur-soft-card-background)',
-                    }
-                  : undefined
-              }
+              style={{
+                borderColor: !state.revealed
+                  ? 'var(--kangur-soft-card-border)'
+                  : isCorrect
+                    ? 'color-mix(in srgb, rgb(52 211 153) 72%, var(--kangur-soft-card-border))'
+                    : isSelected
+                      ? 'color-mix(in srgb, rgb(251 113 133) 68%, var(--kangur-soft-card-border))'
+                      : 'color-mix(in srgb, var(--kangur-soft-card-border) 72%, #cbd5e1)',
+                background: !state.revealed
+                  ? 'var(--kangur-soft-card-background)'
+                  : isCorrect
+                    ? 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #d1fae5)'
+                    : isSelected
+                      ? 'color-mix(in srgb, var(--kangur-soft-card-background) 84%, #ffe4e6)'
+                      : 'color-mix(in srgb, var(--kangur-soft-card-background) 86%, #cbd5e1)',
+                color: isCorrect
+                  ? 'color-mix(in srgb, rgb(6 95 70) 82%, var(--kangur-page-text))'
+                  : isSelected
+                    ? 'color-mix(in srgb, rgb(190 24 93) 76%, var(--kangur-page-text))'
+                    : undefined,
+              }}
               onClick={(): void => handleSelect(choice.id)}
               disabled={state.revealed}
             >
@@ -421,7 +443,8 @@ function renderQuizBlock(
       <div
         key={key}
         data-testid={`lesson-quiz-block-${block.id}`}
-        className='soft-card rounded-xl border border-slate-200 p-4'
+        className='soft-card rounded-xl border p-4'
+        style={{ borderColor: 'var(--kangur-soft-card-border)' }}
       >
         <div className='mb-2 text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
           Quiz
@@ -434,13 +457,23 @@ function renderQuizBlock(
           {block.choices.map((choice) => (
             <li
               key={choice.id}
-                className={cn(
-                  'rounded px-3 py-1.5 text-sm',
-                  choice.id === block.correctChoiceId
-                    ? 'bg-emerald-100 font-semibold text-emerald-800'
-                    : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)]'
-                )}
-              >
+              className={cn(
+                'rounded px-3 py-1.5 text-sm',
+                choice.id === block.correctChoiceId
+                  ? 'font-semibold'
+                  : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)]'
+              )}
+              style={
+                choice.id === block.correctChoiceId
+                  ? {
+                      background:
+                        'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #d1fae5)',
+                      color:
+                        'color-mix(in srgb, rgb(6 95 70) 82%, var(--kangur-page-text))',
+                    }
+                  : undefined
+              }
+            >
                 {choice.id === block.correctChoiceId ? '✓ ' : ''}
               {choice.text}
             </li>

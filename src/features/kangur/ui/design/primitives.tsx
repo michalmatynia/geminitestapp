@@ -748,7 +748,9 @@ export function KangurFeatureHeader({
       >
         {title}
       </HeadingComp>
-      {description ? <p className='max-w-sm text-sm text-slate-500'>{description}</p> : null}
+      {description ? (
+        <p className='max-w-sm text-sm [color:var(--kangur-page-muted-text)]'>{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -816,7 +818,7 @@ export function KangurSectionHeading({
           {title}
         </HeadingComp>
         {description ? (
-          <p className='text-sm text-slate-500' id={descriptionId}>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]' id={descriptionId}>
             {description}
           </p>
         ) : null}
@@ -855,7 +857,7 @@ const KANGUR_HEADLINE_CLASSNAMES: Record<KangurAccent, string> = {
   amber: 'text-amber-700',
   rose: 'text-rose-700',
   teal: 'text-teal-700',
-  slate: 'text-slate-800',
+  slate: '[color:var(--kangur-page-text)]',
 };
 
 type KangurHeadlineProps = React.HTMLAttributes<HTMLElement> &
@@ -1227,7 +1229,9 @@ export function KangurSummaryPanel({
         <div
           className={cn(
             'text-2xl font-extrabold leading-tight',
-            tone === 'accent' ? KANGUR_ACCENT_STYLES[accent].activeText : 'text-slate-900'
+            tone === 'accent'
+              ? KANGUR_ACCENT_STYLES[accent].activeText
+              : '[color:var(--kangur-page-text)]'
           )}
         >
           {title}
@@ -1237,7 +1241,9 @@ export function KangurSummaryPanel({
         <p
           className={cn(
             'text-sm leading-6',
-            tone === 'accent' ? KANGUR_ACCENT_STYLES[accent].mutedText : 'text-slate-600',
+            tone === 'accent'
+              ? KANGUR_ACCENT_STYLES[accent].mutedText
+              : '[color:var(--kangur-page-muted-text)]',
             centered && 'mx-auto max-w-2xl'
           )}
         >
@@ -1298,10 +1304,12 @@ export function KangurEmptyState({
         </div>
       ) : null}
       {emptyStateTitle ? (
-        <div className='text-base font-bold text-slate-700'>{emptyStateTitle}</div>
+        <div className='text-base font-bold [color:var(--kangur-page-text)]'>{emptyStateTitle}</div>
       ) : null}
       {emptyStateDescription ? (
-        <p className='text-sm leading-6 text-slate-500'>{emptyStateDescription}</p>
+        <p className='text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+          {emptyStateDescription}
+        </p>
       ) : null}
       {children}
     </div>
@@ -1349,8 +1357,10 @@ export function KangurInlineFallback({
           {icon}
         </div>
       ) : null}
-      <div className='text-base font-bold text-slate-700'>{title}</div>
-      {description ? <p className='text-sm leading-6 text-slate-500'>{description}</p> : null}
+      <div className='text-base font-bold [color:var(--kangur-page-text)]'>{title}</div>
+      {description ? (
+        <p className='text-sm leading-6 [color:var(--kangur-page-muted-text)]'>{description}</p>
+      ) : null}
       {children}
     </div>
   );
@@ -1405,7 +1415,7 @@ export function KangurMetricCard({
           'text-[11px] font-bold uppercase tracking-wide',
           metricTone === 'accent'
             ? KANGUR_ACCENT_STYLES[metricAccent].activeText
-            : 'text-slate-500'
+            : '[color:var(--kangur-page-muted-text)]'
         )}
       >
         {metricLabel}
@@ -1415,7 +1425,7 @@ export function KangurMetricCard({
           'text-3xl font-extrabold leading-none',
           metricTone === 'accent'
             ? KANGUR_ACCENT_STYLES[metricAccent].activeText
-            : 'text-slate-900',
+            : '[color:var(--kangur-page-text)]',
           metricValueClassName
         )}
       >
@@ -1427,7 +1437,7 @@ export function KangurMetricCard({
             'text-xs leading-5',
             metricTone === 'accent'
               ? KANGUR_ACCENT_STYLES[metricAccent].mutedText
-              : 'text-slate-500'
+              : '[color:var(--kangur-page-muted-text)]'
           )}
         >
           {metricDescription}
@@ -1458,7 +1468,7 @@ export const KangurPageShell = ({
   return (
     <div
       className={cn(
-        'relative isolate flex w-full flex-col items-center overflow-hidden text-slate-800',
+        'relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)]',
         embedded ? 'min-h-full' : 'min-h-screen',
         KANGUR_PAGE_TONE_CLASSNAMES[tone],
         className

@@ -175,6 +175,10 @@ export const kangurAiTutorContentSchema = z.object({
     manualStartLabel: tutorCopySchema,
     manualReplayLabel: tutorCopySchema,
     stepLabelTemplate: tutorCopySchema,
+    entry: z.object({
+      headline: tutorCopySchema,
+      description: tutorCopySchema,
+    }),
     steps: z.object({
       home_actions: tutorStepSchema,
       home_quest: tutorStepSchema,
@@ -616,6 +620,11 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
       manualStartLabel: 'Pokaz plan strony',
       manualReplayLabel: 'Powtorz plan strony',
       stepLabelTemplate: 'Krok {current} z {total}',
+      entry: {
+        headline: 'Czy chcesz, żebym pokazała główne przyciski oraz elementy wyniku i postępu?',
+        description:
+          'Mogę przeprowadzić Cię po najważniejszych akcjach na stronie głównej oraz po miejscach, w których zobaczysz ranking, punkty i tempo nauki.',
+      },
       steps: {
         home_actions: {
           title: 'Tutaj wybierasz, jak chcesz zacząć.',
@@ -713,6 +722,10 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT: KangurAiTutorContent =
         question: 'Aktualne pytanie',
         review: 'Omówienie pytania',
         summary: 'Podsumowanie testu',
+        login_action: 'Logowanie',
+        create_account_action: 'Tworzenie konta',
+        login_identifier_field: 'Pole logowania',
+        login_form: 'Formularz logowania',
       },
     },
     contextSwitch: {

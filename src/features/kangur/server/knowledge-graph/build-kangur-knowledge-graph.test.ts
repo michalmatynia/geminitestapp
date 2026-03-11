@@ -29,6 +29,16 @@ describe('buildKangurKnowledgeGraph', () => {
           id: 'page:kangur-lessons',
           kind: 'page',
         }),
+        expect.objectContaining({
+          id: 'guide:native:lesson-overview',
+          kind: 'guide',
+          surface: 'lesson',
+          sourceCollection: 'kangur_ai_tutor_native_guides',
+          sourceRecordId: 'lesson-overview',
+          sourcePath: 'entry:lesson-overview',
+          contentIdPrefixes: ['lesson-', 'lesson:list'],
+          semanticText: expect.stringContaining('Ekran lekcji prowadzi ucznia'),
+        }),
       ])
     );
     expect(snapshot.edges).toEqual(
@@ -58,5 +68,26 @@ describe('buildKangurKnowledgeGraph', () => {
 
     expect(snapshot.locale).toBe('en');
     expect(loginAnchor?.locale).toBe('en');
+  });
+
+  it('attaches canonical source references to Mongo-backed content nodes', () => {
+    const snapshot = buildKangurKnowledgeGraph();
+
+    expect(snapshot.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'anchor:kangur:login',
+          sourceCollection: 'kangur_ai_tutor_content',
+          sourceRecordId: 'pl',
+          sourcePath: 'common.signInLabel',
+        }),
+        expect.objectContaining({
+          id: 'faq:kangur:guest-intro',
+          sourceCollection: 'kangur_ai_tutor_content',
+          sourceRecordId: 'pl',
+          sourcePath: 'guestIntro.initial',
+        }),
+      ])
+    );
   });
 });

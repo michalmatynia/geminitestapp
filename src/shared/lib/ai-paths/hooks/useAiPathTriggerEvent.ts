@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-paths';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
 import { type FireAiPathTriggerEventArgs } from '@/shared/contracts/ai-trigger-buttons';
+import { isAppError } from '@/shared/errors/app-error';
 import {
   enqueueAiPathRun,
   listAiPathRuns,
@@ -102,22 +103,32 @@ export function useAiPathTriggerEvent(): {
           const errorMessage =
             settingsError instanceof Error ? settingsError.message : String(settingsError);
           const timeoutCode = isTimeoutMessage(errorMessage) ? 'settings_preload_timeout' : null;
+          const appErrorMeta =
+            isAppError(settingsError) && settingsError.meta ? settingsError.meta : null;
+          const preferredPathSettingsMissing =
+            appErrorMeta?.['reason'] === 'preferred_path_config_missing';
           logClientError(settingsError, {
             context: {
               source: 'useAiPathTriggerEvent',
               action: 'loadTriggerSettingsData',
               timeoutCode,
+              preferredPathId: args.preferredPathId ?? null,
             },
           });
           toast(
             timeoutCode
               ? 'Failed to prepare AI Path run (settings_preload_timeout). Please retry.'
-              : 'Failed to load AI Path settings. Please retry.',
+              : preferredPathSettingsMissing
+                ? errorMessage
+                : 'Failed to load AI Path settings. Please retry.',
             { variant: 'error' }
           );
           args.onProgress?.({
             status: 'error',
-            error: timeoutCode || 'settings_load_error',
+            error:
+              timeoutCode ||
+              (preferredPathSettingsMissing ? 'preferred_path_missing' : 'settings_load_error'),
+            ...(preferredPathSettingsMissing ? { message: errorMessage } : {}),
             progress: 0,
             completedNodes: 0,
             totalNodes: 1,

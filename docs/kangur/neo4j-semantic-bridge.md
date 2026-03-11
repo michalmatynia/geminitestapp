@@ -11,10 +11,10 @@ canonical: true
 
 ## Purpose
 
-Kangur website-help questions need two kinds of context:
+Kangur Tutor-AI questions need two kinds of context:
 
 - long-form copy and FAQ text
-- relationships between pages, actions, anchors, flows, and tutor guidance
+- relationships between pages, panels, actions, anchors, flows, and tutor guidance
 
 Neo4j is the relationship layer for that second part. It is not the canonical
 source of Kangur tutor copy.
@@ -69,11 +69,52 @@ Preview the Kangur graph payload without writing to Neo4j:
 npm run kangur:knowledge-graph:preview
 ```
 
+The dry-run summary now also reports `sourceIntegrity`, which counts how many
+canonical-source nodes are sync-safe versus missing required `sourceRecordId` or
+`sourcePath` references.
+
 Apply the sync to Neo4j:
 
 ```bash
 npm run kangur:knowledge-graph:sync
 ```
+
+To build a vector-backed graph snapshot for semantic Tutor-AI reranking, run:
+
+```bash
+node --import tsx scripts/db/sync-kangur-knowledge-graph.ts --with-embeddings
+```
+
+This keeps Mongo-backed tutor content and native guides as the source of truth,
+but stores derived `semanticText` plus embeddings on Neo4j nodes so the tutor
+can semantically rerank graph hits and use Neo4j vector-index recall.
+
+Sync bootstraps the minimal Neo4j schema automatically:
+
+- unique node identity on `(graphKey, id)` for `KangurKnowledgeNode`
+- lookup index on `graphKey`
+
+Inspect the live synced graph status in Neo4j with:
+
+```bash
+npm run kangur:knowledge-graph:status
+```
+
+That reports the currently synced locale, sync timestamp, stored node and edge
+counts, live graph counts, and canonical-source integrity counts.
+
+You can also preview a real tutor-style question locally from the command line:
+
+```bash
+npm run kangur:knowledge-graph:query -- --message="Jak się zalogować?" --surface=lesson --content-id=lesson-adding-doc --title="Dodawanie"
+```
+
+The query preview prints:
+
+- requested context-registry refs
+- runtime resolution mode and any resolved runtime document ids
+- Neo4j retrieval/hydration output
+- resolved `websiteHelpTarget`
 
 The sync currently seeds:
 
@@ -81,6 +122,12 @@ The sync currently seeds:
   assignments, and learner profile help
 - tutor-auth guidance anchors such as `kangur-primary-nav-login`
 - context-root references from `refs.ts`
+- Mongo-backed native-guide entries for page sections across lessons, games,
+  tests, profile, parent dashboard, and auth
+- optional node embeddings derived from the same canonical sources when sync is
+  run with `--with-embeddings`
+- a Neo4j vector index over node embeddings when the graph is synced with
+  `--with-embeddings`
 
 ## Runtime Bridge
 
@@ -94,10 +141,41 @@ The first runtime bridge is now wired into the Kangur tutor server path:
 Current behavior:
 
 - only runs when `NEO4J_ENABLED` is active
-- only activates for website-help and navigation-style tutor questions
+- activates for both:
+  - website-help and navigation-style tutor questions
+  - section-aware Tutor-AI prompts where the current Kangur surface, panel, or
+    focus id should drive retrieval
+- scores Neo4j hits with Kangur Tutor-AI metadata such as `surface`,
+  `focusKind`, `focusIdPrefixes`, `contentIdPrefixes`, and trigger phrases
+- optionally reranks semantic hits with stored Neo4j node embeddings when the
+  graph has been synced with `--with-embeddings`
+- uses Neo4j vector-index recall first for semantic Tutor-AI prompts when that
+  index is available, then falls back to the metadata graph scorer
 - adds Neo4j graph hits as:
   - tutor system context
   - tutor response sources
+- hydrates graph hits back into canonical Mongo-backed tutor content, native
+  guides, and live Kangur runtime context documents when available
+
+## Retrieval Debug Preview
+
+Admin-only retrieval preview is available at:
+
+- `POST /api/kangur/ai-tutor/knowledge-graph/preview`
+
+Use it to inspect:
+
+- normalized retrieval tokens
+- requested runtime refs
+- resolved runtime document ids
+- Neo4j retrieval status, node ids, resolved `websiteHelpTarget`, hydrated
+  sources, and node-level hydration provenance
+
+For graph-grounded website-help answers, tutor chat responses now also carry
+`websiteHelpTarget`, which is the resolved route or anchor that the tutor UI can
+turn into a `Przejdź do tego miejsca` affordance. Neo4j still selects the
+semantic neighborhood, but the answer and target remain grounded in canonical
+Mongo/runtime hydration.
 
 ## First-Phase Graph Contract
 
@@ -130,7 +208,8 @@ Neo4j should be used together with existing retrieval systems:
 - vector retrieval for long-form text chunks
 - Neo4j for flow and relationship traversal
 
-For tutor answers about the Kangur website, the intended bridge is:
+For tutor answers about the Kangur website or current Kangur page section, the
+intended bridge is:
 
 1. resolve relevant graph neighborhood from Neo4j
 2. fetch supporting tutor/doc text from canonical sources or vector retrieval
@@ -141,5 +220,6 @@ For tutor answers about the Kangur website, the intended bridge is:
 - Do not store canonical Kangur tutor copy only in Neo4j.
 - Do not add manual graph-only facts that are not traceable to repo-owned
   Kangur sources.
-- Keep the graph scoped to website-help and navigation first; lesson pedagogy
-  and math explanation stay in the existing tutor/runtime systems.
+- Use the graph for page semantics, navigation, and section grounding; lesson
+  pedagogy and math explanation still stay in the existing tutor/runtime
+  systems.

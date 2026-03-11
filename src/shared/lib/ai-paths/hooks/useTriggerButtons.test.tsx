@@ -583,23 +583,46 @@ describe('useTriggerButtons', () => {
     );
   });
 
-  it('does not restore run feedback from a different trigger location', async () => {
-    const sharedButtonId = 'button-shared-product-trigger';
+  it('syncs active run feedback across product surfaces by shared pathId', async () => {
+    const sharedPathId = 'path-shared-product-trigger';
     const rowButton = {
       ...BUTTON,
-      id: sharedButtonId,
+      id: 'button-shared-product-row',
       locations: ['product_row'],
+      pathId: sharedPathId,
+    } satisfies AiTriggerButtonRecord;
+    const modalButton = {
+      ...BUTTON,
+      id: 'button-shared-product-modal',
+      locations: ['product_modal'],
+      pathId: sharedPathId,
     } satisfies AiTriggerButtonRecord;
     useAiPathsTriggerButtonsQueryMock.mockReturnValue({
-      data: [
-        rowButton,
-        {
-          ...rowButton,
-          locations: ['product_modal'],
-        } satisfies AiTriggerButtonRecord,
-      ],
+      data: [rowButton, modalButton],
       isLoading: false,
     });
+
+    const modalView = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await modalView.result.current.handleTrigger(modalButton, { mode: 'click' });
+    });
+
+    await waitFor(() => {
+      expect(modalView.result.current.lastRuns[modalButton.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'queued',
+      });
+    });
+
+    modalView.unmount();
+    const subscribeCallCountBeforeRowMount = subscribeToTrackedAiPathRunMock.mock.calls.length;
 
     const rowView = renderHook(() =>
       useTriggerButtons({
@@ -609,9 +632,16 @@ describe('useTriggerButtons', () => {
       })
     );
 
-    await act(async () => {
-      await rowView.result.current.handleTrigger(rowButton, { mode: 'click' });
+    await waitFor(() => {
+      expect(rowView.result.current.lastRuns[rowButton.id]).toMatchObject({
+        runId: 'run-queued-1',
+        status: 'queued',
+      });
     });
+
+    expect(subscribeToTrackedAiPathRunMock.mock.calls.length).toBeGreaterThan(
+      subscribeCallCountBeforeRowMount
+    );
 
     act(() => {
       emitTrackedRunSnapshot('run-queued-1', {
@@ -623,24 +653,10 @@ describe('useTriggerButtons', () => {
     });
 
     await waitFor(() => {
-      expect(rowView.result.current.lastRuns[sharedButtonId]).toMatchObject({
+      expect(rowView.result.current.lastRuns[rowButton.id]).toMatchObject({
         runId: 'run-queued-1',
         status: 'completed',
       });
-    });
-
-    rowView.unmount();
-
-    const modalView = renderHook(() =>
-      useTriggerButtons({
-        location: 'product_modal',
-        entityType: 'product',
-        entityId: 'product-1',
-      })
-    );
-
-    await waitFor(() => {
-      expect(modalView.result.current.lastRuns[sharedButtonId]).toBeUndefined();
     });
   });
 });

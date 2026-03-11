@@ -128,6 +128,7 @@ export function useKangurAiTutorLifecycleEffects({
     panelRef,
     previousSessionKeyRef,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setAskModalDockStyle,
     setAskModalVisible,
     setContextSwitchNotice,
@@ -150,6 +151,7 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionRect,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
@@ -214,6 +216,10 @@ export function useKangurAiTutorLifecycleEffects({
     setDraggedAvatarPoint(null);
     clearPersistedTutorAvatarPosition();
     setAskModalDockStyle(null);
+    if (selectionGuidanceRevealTimeoutRef.current !== null) {
+      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      selectionGuidanceRevealTimeoutRef.current = null;
+    }
     clearSelection();
     setHighlightedText(null);
     setHighlightedSection(null);
@@ -223,6 +229,7 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionContainerRect(null);
     setSelectionResponsePending(null);
     setSelectionResponseComplete(null);
+    setSelectionGuidanceCalloutVisibleText(null);
     setSelectionConversationContext(null);
     setSelectionGuidanceHandoffText(null);
     setSectionResponsePending(null);
@@ -247,8 +254,10 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    selectionGuidanceRevealTimeoutRef,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
@@ -402,8 +411,12 @@ export function useKangurAiTutorLifecycleEffects({
         window.clearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
+      if (selectionGuidanceRevealTimeoutRef.current !== null) {
+        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        selectionGuidanceRevealTimeoutRef.current = null;
+      }
     },
-    [selectionExplainTimeoutRef]
+    [selectionExplainTimeoutRef, selectionGuidanceRevealTimeoutRef]
   );
 
   useEffect(() => {
@@ -472,6 +485,7 @@ export function useKangurAiTutorLifecycleEffects({
     if (!isOpen) {
       setPanelAnchorMode('dock');
       setDismissedSelectedText(null);
+      setSelectionGuidanceCalloutVisibleText(null);
       setSelectionConversationContext(null);
       setSelectionGuidanceHandoffText(null);
       setPersistedSelectionRect(null);
@@ -487,6 +501,7 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
   ]);
@@ -499,6 +514,7 @@ export function useKangurAiTutorLifecycleEffects({
     const previousSessionKey = allowCrossPagePersistence ? previousSessionKeyRef.current : null;
     if (previousSessionKey && previousSessionKey !== tutorSessionKey) {
       setInputValue('');
+      setSelectionGuidanceCalloutVisibleText(null);
       setSelectionConversationContext(null);
       setSelectionGuidanceHandoffText(null);
       setPersistedSelectionRect(null);
@@ -543,6 +559,7 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
     tutorContent,

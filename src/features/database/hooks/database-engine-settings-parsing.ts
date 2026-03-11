@@ -51,11 +51,8 @@ const databaseEngineBackupScheduleStrictSchema = databaseEngineBackupScheduleSch
   .extend({
     lastCheckedAt: nullableIsoDateStringSchema,
     mongodb: databaseEngineBackupTargetScheduleStrictSchema,
-    // Accept legacy PostgreSQL scheduler payloads, then drop them from the normalized shape.
-    postgresql: databaseEngineBackupTargetScheduleStrictSchema.optional(),
   })
-  .strict()
-  .transform(({ postgresql: _postgresql, ...value }) => value);
+  .strict();
 
 const parseNonEmptyJsonObject = (
   raw: string | null | undefined,

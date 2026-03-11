@@ -59,6 +59,9 @@ const READ_ONLY_DB_ACTIONS = new Set<string>([
   'aggregate',
 ]);
 
+const normalizeRuntimeDbProvider = (value: unknown): 'auto' | 'mongodb' =>
+  value === 'mongodb' ? 'mongodb' : 'auto';
+
 type RuntimeOperator =
   | 'truthy'
   | 'falsy'
@@ -447,10 +450,7 @@ const evaluateDatabaseRuntime = async ({
   >;
 
   if (operation === 'action') {
-    const provider =
-      renderedPayload['provider'] === 'mongodb' || renderedPayload['provider'] === 'prisma'
-        ? renderedPayload['provider']
-        : 'auto';
+    const provider = normalizeRuntimeDbProvider(renderedPayload['provider']);
     const actionName = String(renderedPayload['action'] ?? 'find').trim() || 'find';
     if (!READ_ONLY_DB_ACTIONS.has(actionName)) {
       throw badRequestError(
@@ -492,7 +492,7 @@ const evaluateDatabaseRuntime = async ({
   }
 
   const payload: DbQueryPayload = {
-    provider: String(renderedPayload['provider'] ?? 'auto'),
+    provider: normalizeRuntimeDbProvider(renderedPayload['provider']),
     collection: String(renderedPayload['collection'] ?? ''),
     filter:
       renderedPayload['filter'] && typeof renderedPayload['filter'] === 'object'

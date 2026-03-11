@@ -659,7 +659,10 @@ export default function GeometryDrawingGame({
                 <KangurHeadline accent='violet' as='h3' id='geometry-drawing-heading' size='sm'>
                   Narysuj: {currentRound?.label}
                 </KangurHeadline>
-                <p id='geometry-drawing-hint' className='text-sm text-slate-500 text-center'>
+                <p
+                  id='geometry-drawing-hint'
+                  className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+                >
                   {currentRound?.hint}
                 </p>
               </KangurInfoCard>
@@ -684,7 +687,8 @@ export default function GeometryDrawingGame({
                   tabIndex={0}
                   width={CANVAS_WIDTH}
                   height={CANVAS_HEIGHT}
-                  className='w-full rounded-[20px] bg-white touch-none'
+                  className='w-full rounded-[20px] touch-none'
+                  style={{ background: 'var(--kangur-soft-card-background)' }}
                   onKeyDown={handleCanvasKeyDown}
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}
@@ -701,13 +705,16 @@ export default function GeometryDrawingGame({
                   style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
                 />
                 {points.length === 0 && (
-                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-semibold'>
+                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
                     <PencilRuler className='w-4 h-4 mr-2' />
                     Rysuj tutaj
                   </div>
                 )}
               </KangurInfoCard>
-              <p id='geometry-drawing-input-help' className='text-xs text-center text-slate-400'>
+              <p
+                id='geometry-drawing-input-help'
+                className='text-xs text-center [color:var(--kangur-page-muted-text)]'
+              >
                 Pole rysowania obsluguje mysz, dotyk lub klawiature. Enter albo spacja zaczyna i
                 konczy kreske, strzalki przesuwaja kursor, Escape czysci plansze.
               </p>
@@ -733,7 +740,7 @@ export default function GeometryDrawingGame({
                         : feedback.kind === 'error'
                           ? 'bg-rose-500 border-rose-500 text-white'
                           : 'bg-amber-500 border-amber-500 text-white'
-                      : 'bg-white'
+                      : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
                   )}
                   disabled={feedback !== null}
                   onClick={handleCheck}

@@ -15,9 +15,10 @@ describe('trigger-button-run-feedback', () => {
     __resetTriggerButtonRunFeedbackForTests();
   });
 
-  it('persists and restores run feedback for the same trigger surface', () => {
+  it('persists and restores run feedback for the same trigger path identity', () => {
     persistTriggerButtonRunFeedback({
       buttonId: 'button-product-modal',
+      pathId: 'path-product-trigger',
       location: 'product_modal',
       entityType: 'product',
       entityId: 'product-1',
@@ -33,7 +34,7 @@ describe('trigger-button-run-feedback', () => {
     expect(
       readTriggerButtonRunFeedback({
         buttonId: 'button-product-modal',
-        location: 'product_modal',
+        pathId: 'path-product-trigger',
         entityType: 'product',
         entityId: 'product-1',
       })
@@ -46,14 +47,15 @@ describe('trigger-button-run-feedback', () => {
     });
   });
 
-  it('does not restore run feedback for a different trigger location', () => {
+  it('restores run feedback across trigger locations when the pathId matches', () => {
     persistTriggerButtonRunFeedback({
-      buttonId: 'button-shared',
+      buttonId: 'button-product-modal',
+      pathId: 'path-shared',
       location: 'product_modal',
       entityType: 'product',
       entityId: 'product-1',
       run: {
-        runId: 'run-modal-only',
+        runId: 'run-shared',
         status: 'completed',
         updatedAt: '2026-03-11T12:00:00.000Z',
         finishedAt: '2026-03-11T12:00:05.000Z',
@@ -63,17 +65,74 @@ describe('trigger-button-run-feedback', () => {
 
     expect(
       readTriggerButtonRunFeedback({
-        buttonId: 'button-shared',
-        location: 'product_row',
+        buttonId: 'button-product-row',
+        pathId: 'path-shared',
         entityType: 'product',
         entityId: 'product-1',
       })
-    ).toBeNull();
+    ).toEqual({
+      runId: 'run-shared',
+      status: 'completed',
+      updatedAt: '2026-03-11T12:00:00.000Z',
+      finishedAt: '2026-03-11T12:00:05.000Z',
+      errorMessage: null,
+    });
   });
 
-  it('clears persisted run feedback for the requested trigger surface', () => {
+  it('falls back to the freshest legacy per-surface feedback for button aliases', () => {
+    window.localStorage.setItem(
+      'ai-paths-trigger-button-run-feedback',
+      JSON.stringify({
+        'button-product-modal::product_modal::product::product-1': {
+          buttonId: 'button-product-modal',
+          pathId: null,
+          location: 'product_modal',
+          entityType: 'product',
+          entityId: 'product-1',
+          runId: 'run-older',
+          status: 'queued',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: null,
+          errorMessage: null,
+          expiresAt: Date.now() + 60_000,
+        },
+        'button-product-row::product_row::product::product-1': {
+          buttonId: 'button-product-row',
+          pathId: null,
+          location: 'product_row',
+          entityType: 'product',
+          entityId: 'product-1',
+          runId: 'run-newer',
+          status: 'running',
+          updatedAt: '2026-03-11T12:00:03.000Z',
+          finishedAt: null,
+          errorMessage: null,
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    expect(
+      readTriggerButtonRunFeedback({
+        buttonId: 'button-product-modal',
+        pathId: 'path-shared',
+        legacyButtonIds: ['button-product-modal', 'button-product-row'],
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    ).toEqual({
+      runId: 'run-newer',
+      status: 'running',
+      updatedAt: '2026-03-11T12:00:03.000Z',
+      finishedAt: null,
+      errorMessage: null,
+    });
+  });
+
+  it('clears persisted run feedback for the shared trigger identity', () => {
     persistTriggerButtonRunFeedback({
       buttonId: 'button-product-modal',
+      pathId: 'path-product-trigger',
       location: 'product_modal',
       entityType: 'product',
       entityId: 'product-1',
@@ -87,8 +146,10 @@ describe('trigger-button-run-feedback', () => {
     });
 
     clearTriggerButtonRunFeedback({
-      buttonId: 'button-product-modal',
-      location: 'product_modal',
+      buttonId: 'button-product-row',
+      pathId: 'path-product-trigger',
+      legacyButtonIds: ['button-product-modal', 'button-product-row'],
+      location: 'product_row',
       entityType: 'product',
       entityId: 'product-1',
     });
@@ -96,7 +157,7 @@ describe('trigger-button-run-feedback', () => {
     expect(
       readTriggerButtonRunFeedback({
         buttonId: 'button-product-modal',
-        location: 'product_modal',
+        pathId: 'path-product-trigger',
         entityType: 'product',
         entityId: 'product-1',
       })
@@ -109,6 +170,7 @@ describe('trigger-button-run-feedback', () => {
 
     persistTriggerButtonRunFeedback({
       buttonId: 'button-product-modal',
+      pathId: 'path-product-trigger',
       location: 'product_modal',
       entityType: 'product',
       entityId: 'product-1',
@@ -126,7 +188,7 @@ describe('trigger-button-run-feedback', () => {
     expect(
       readTriggerButtonRunFeedback({
         buttonId: 'button-product-modal',
-        location: 'product_modal',
+        pathId: 'path-product-trigger',
         entityType: 'product',
         entityId: 'product-1',
       })
@@ -136,6 +198,7 @@ describe('trigger-button-run-feedback', () => {
   it('does not persist transient waiting feedback', () => {
     persistTriggerButtonRunFeedback({
       buttonId: 'button-product-modal',
+      pathId: 'path-product-trigger',
       location: 'product_modal',
       entityType: 'product',
       entityId: 'product-1',
@@ -151,7 +214,7 @@ describe('trigger-button-run-feedback', () => {
     expect(
       readTriggerButtonRunFeedback({
         buttonId: 'button-product-modal',
-        location: 'product_modal',
+        pathId: 'path-product-trigger',
         entityType: 'product',
         entityId: 'product-1',
       })

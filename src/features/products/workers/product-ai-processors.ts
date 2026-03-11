@@ -14,13 +14,12 @@ import {
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
+import { createMongoBackup } from '@/shared/lib/db/services/database-backup';
 import {
   markDatabaseBackupJobFailed,
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
-import { runDatabaseSync } from '@/shared/lib/db/services/database-sync';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import {
   getDiskPathFromPublicPath,
@@ -345,57 +344,35 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   };
 }
 
-export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
-  void job;
-  return runDatabaseSync();
-}
-
 export async function processDatabaseBackup(job: Job): Promise<Record<string, unknown>> {
   const dbType = job.payload['dbType'];
-  if (dbType !== 'mongodb' && dbType !== 'postgresql') {
+  if (dbType !== 'mongodb') {
     throw badRequestError('Database backup job missing valid dbType', {
       jobId: job.id,
       dbType,
     });
   }
-  const schedulerDbType = dbType === 'mongodb' ? dbType : null;
 
   try {
-    if (schedulerDbType) {
-      await markDatabaseBackupJobRunning(schedulerDbType, job.id);
-    }
+    await markDatabaseBackupJobRunning(dbType, job.id);
   } catch {
     // Backup execution should continue even if scheduler metadata persistence fails.
   }
 
   try {
-    if (dbType === 'mongodb') {
-      const result = await createMongoBackup();
-      try {
-        await markDatabaseBackupJobSucceeded(dbType, job.id);
-      } catch {
-        // Keep backup result successful if status persistence fails.
-      }
-      return { ...result, dbType };
-    }
-
-    const result = await createPostgresBackup();
-    if (schedulerDbType) {
-      try {
-        await markDatabaseBackupJobSucceeded(schedulerDbType, job.id);
-      } catch {
-        // Keep backup result successful if status persistence fails.
-      }
+    const result = await createMongoBackup();
+    try {
+      await markDatabaseBackupJobSucceeded(dbType, job.id);
+    } catch {
+      // Keep backup result successful if status persistence fails.
     }
     return { ...result, dbType };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    if (schedulerDbType) {
-      try {
-        await markDatabaseBackupJobFailed(schedulerDbType, job.id, message);
-      } catch {
-        // Keep original backup failure as the primary error path.
-      }
+    try {
+      await markDatabaseBackupJobFailed(dbType, job.id, message);
+    } catch {
+      // Keep original backup failure as the primary error path.
     }
     throw error;
   }
@@ -483,8 +460,6 @@ export async function dispatchProductAiJob(job: Job): Promise<unknown> {
   switch (job.type) {
     case 'graph_model':
       return processGraphModel(job);
-    case 'db_sync':
-      return processDatabaseSync(job);
     case 'db_backup':
       return processDatabaseBackup(job);
     case 'base64_all':

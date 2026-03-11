@@ -328,4 +328,64 @@ describe('kangur ai tutor settings', () => {
       reason: 'games_disabled',
     });
   });
+
+  it('allows the tutor on profile surfaces as long as the tutor is enabled overall', () => {
+    const availability = resolveKangurAiTutorAvailability(
+      {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        rememberTutorContext: true,
+        allowLessons: false,
+        allowGames: false,
+        testAccessMode: 'disabled',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
+        dailyMessageLimit: 12,
+      },
+      {
+        surface: 'profile',
+        contentId: 'profile:learner-1',
+        title: 'Profil ucznia',
+      }
+    );
+
+    expect(availability).toEqual({ allowed: true });
+  });
+
+  it('allows the tutor on auth surfaces as long as the tutor is enabled overall', () => {
+    const availability = resolveKangurAiTutorAvailability(
+      {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        guestIntroMode: 'first_visit',
+        homeOnboardingMode: 'first_visit',
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        rememberTutorContext: true,
+        allowLessons: false,
+        allowGames: false,
+        testAccessMode: 'disabled',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        hintDepth: 'guided',
+        proactiveNudges: 'gentle',
+        dailyMessageLimit: 12,
+      },
+      {
+        surface: 'auth',
+        contentId: 'auth:login:sign-in',
+        title: 'Logowanie do Kangur',
+      }
+    );
+
+    expect(availability).toEqual({ allowed: true });
+  });
 });

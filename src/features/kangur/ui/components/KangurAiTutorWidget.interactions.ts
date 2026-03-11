@@ -40,6 +40,8 @@ type UseKangurAiTutorPanelInteractionsInput = {
     KangurAiTutorWidgetState,
     | 'askModalReturnStateRef'
     | 'avatarDragStateRef'
+    | 'selectionExplainTimeoutRef'
+    | 'selectionGuidanceRevealTimeoutRef'
     | 'setAskModalDockStyle'
     | 'setAskModalVisible'
     | 'setCanonicalTutorModalVisible'
@@ -59,7 +61,9 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setPersistedSelectionContainerRect'
     | 'setPersistedSelectionPageRect'
     | 'setPersistedSelectionRect'
+    | 'setSelectionGuidanceCalloutVisibleText'
     | 'setSelectionConversationContext'
+    | 'setSelectionGuidanceHandoffText'
     | 'setSelectionResponseComplete'
     | 'setSelectionResponsePending'
     | 'suppressAvatarClickRef'
@@ -89,6 +93,8 @@ export function useKangurAiTutorPanelInteractions({
   const {
     askModalReturnStateRef,
     avatarDragStateRef,
+    selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setAskModalDockStyle,
     setAskModalVisible,
     setCanonicalTutorModalVisible,
@@ -108,7 +114,9 @@ export function useKangurAiTutorPanelInteractions({
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,
     setPersistedSelectionRect,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
+    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     suppressAvatarClickRef,
@@ -220,6 +228,16 @@ export function useKangurAiTutorPanelInteractions({
       setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
+      if (selectionExplainTimeoutRef.current !== null) {
+        window.clearTimeout(selectionExplainTimeoutRef.current);
+        selectionExplainTimeoutRef.current = null;
+      }
+      if (selectionGuidanceRevealTimeoutRef.current !== null) {
+        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        selectionGuidanceRevealTimeoutRef.current = null;
+      }
+      setSelectionGuidanceCalloutVisibleText(null);
+      setSelectionGuidanceHandoffText(null);
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
       setHoveredSectionAnchorId(null);
@@ -249,6 +267,10 @@ export function useKangurAiTutorPanelInteractions({
       setPersistedSelectionContainerRect,
       setPersistedSelectionPageRect,
       setPersistedSelectionRect,
+      selectionExplainTimeoutRef,
+      selectionGuidanceRevealTimeoutRef,
+      setSelectionGuidanceCalloutVisibleText,
+      setSelectionGuidanceHandoffText,
       setSelectionResponseComplete,
       setSelectionResponsePending,
       telemetryContext,
@@ -307,6 +329,14 @@ export function useKangurAiTutorPanelInteractions({
     setContextualTutorMode(null);
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
+    if (selectionExplainTimeoutRef.current !== null) {
+      window.clearTimeout(selectionExplainTimeoutRef.current);
+      selectionExplainTimeoutRef.current = null;
+    }
+    if (selectionGuidanceRevealTimeoutRef.current !== null) {
+      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      selectionGuidanceRevealTimeoutRef.current = null;
+    }
     setHomeOnboardingStepIndex(null);
     setHasNewMessage(false);
     setDraggedAvatarPoint(null);
@@ -315,7 +345,9 @@ export function useKangurAiTutorPanelInteractions({
     setHighlightedText(null);
     setPersistedSelectionRect(null);
     setPersistedSelectionContainerRect(null);
+    setSelectionGuidanceCalloutVisibleText(null);
     setSelectionConversationContext(null);
+    setSelectionGuidanceHandoffText(null);
     closeChat();
     persistTutorVisibilityHidden(true);
   }, [
@@ -335,7 +367,11 @@ export function useKangurAiTutorPanelInteractions({
     setHomeOnboardingStepIndex,
     setPersistedSelectionContainerRect,
     setPersistedSelectionRect,
+    selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
+    setSelectionGuidanceHandoffText,
     telemetryContext,
   ]);
 

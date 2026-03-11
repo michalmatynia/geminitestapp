@@ -14,21 +14,20 @@ import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
 import { auth } from '@/features/auth/server';
-import { execFileAsync } from '@/shared/lib/db/utils/postgres';
+import { mongoExecFileAsync } from '@/features/database/server';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
-import prisma from '@/shared/lib/db/prisma';
 import type { ProductAiJobDto } from '@/shared/contracts/jobs';
 
-vi.mock('@/shared/lib/db/utils/postgres', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/lib/db/utils/postgres')>();
+vi.mock('@/features/database/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/database/server')>();
   return {
     ...actual,
-    execFileAsync: vi.fn().mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' }),
+    mongoExecFileAsync: vi.fn().mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' }),
   };
 });
 
@@ -66,7 +65,7 @@ describe('Databases API', () => {
       allowBackupSchedulerTick: true,
       allowOperationJobCancellation: true,
     });
-    (execFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
+    (mongoExecFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
     vi.mocked(enqueueProductAiJob).mockResolvedValue({
       id: 'job-backup-1',
       productId: 'system',
@@ -79,19 +78,19 @@ describe('Databases API', () => {
       updatedAt: new Date().toISOString(),
     } as unknown as ProductAiJobDto);
     vi.mocked(startProductAiJobQueue).mockImplementation(() => {});
-    process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
-    vi.mocked(prisma.$executeRawUnsafe).mockResolvedValue(0);
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    process.env['MONGODB_DB'] = 'test';
   });
 
   afterAll(() => {
-    delete process.env['DATABASE_URL'];
+    delete process.env['MONGODB_URI'];
+    delete process.env['MONGODB_DB'];
   });
 
   describe('POST /api/databases/backup', () => {
     it('should enqueue a database backup job', async () => {
       const res = await POST_BACKUP(
-        new NextRequest('http://localhost/api/databases/backup?type=postgresql', { method: 'POST' })
+        new NextRequest('http://localhost/api/databases/backup?type=mongodb', { method: 'POST' })
       );
       const payload = await res.json();
 
@@ -104,7 +103,7 @@ describe('Databases API', () => {
         'system',
         'db_backup',
         expect.objectContaining({
-          dbType: 'postgresql',
+          dbType: 'mongodb',
           entityType: 'system',
           source: 'db_backup',
         })
@@ -128,12 +127,12 @@ describe('Databases API', () => {
         new NextRequest('http://localhost/api/databases/restore', {
           method: 'POST',
           body: JSON.stringify({
-            backupName: 'test-backup.dump',
+            backupName: 'test-backup.archive',
           }),
         })
       );
       expect(res.status).toEqual(200);
-      expect(execFileAsync).toHaveBeenCalledTimes(1);
+      expect(mongoExecFileAsync).toHaveBeenCalledTimes(1);
       expect(fs.writeFile).toHaveBeenCalledTimes(2);
     });
 
@@ -152,20 +151,20 @@ describe('Databases API', () => {
         new NextRequest('http://localhost/api/databases/restore', {
           method: 'POST',
           body: JSON.stringify({
-            backupName: 'test-backup.dump',
+            backupName: 'test-backup.archive',
           }),
         })
       );
 
       expect(res.status).toEqual(403);
-      expect(execFileAsync).not.toHaveBeenCalled();
+      expect(mongoExecFileAsync).not.toHaveBeenCalled();
     });
   });
 
   describe('GET /api/databases/backups', () => {
     it('should return a list of backups', async () => {
       (vi.spyOn(fs, 'readdir') as Mock).mockResolvedValue([
-        'stardb-backup-123.dump',
+        'stardb-backup-123.archive',
         'restore-log.json',
       ]);
       vi.spyOn(fs, 'readFile').mockResolvedValue('{}');
@@ -176,12 +175,12 @@ describe('Databases API', () => {
       } as unknown as Stats);
 
       const res = await GET_BACKUPS(
-        new NextRequest('http://localhost/api/databases/backups?type=postgresql')
+        new NextRequest('http://localhost/api/databases/backups?type=mongodb')
       );
       const backups = (await res.json()) as { name: string }[];
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);
-      expect(backups[0]!.name).toEqual('stardb-backup-123.dump');
+      expect(backups[0]!.name).toEqual('stardb-backup-123.archive');
     });
   });
 
@@ -190,7 +189,7 @@ describe('Databases API', () => {
       vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined);
       const formData = new FormData();
       const blob = new Blob(['test content'], { type: 'application/octet-stream' });
-      formData.append('file', blob, 'test.dump');
+      formData.append('file', blob, 'test.archive');
 
       const res = await POST_UPLOAD(
         new NextRequest('http://localhost/api/databases/upload', {
@@ -224,7 +223,7 @@ describe('Databases API', () => {
       const res = await POST_DELETE(
         new NextRequest('http://localhost/api/databases/delete', {
           method: 'POST',
-          body: JSON.stringify({ backupName: 'test.dump' }),
+          body: JSON.stringify({ backupName: 'test.archive' }),
         })
       );
       expect(res.status).toEqual(200);

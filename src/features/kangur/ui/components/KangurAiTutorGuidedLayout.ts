@@ -1,9 +1,15 @@
 
 import {
+  getGuidedAvatarAttachmentPlacement,
+  getGuidedAvatarRectForSurface,
+  getGuidedAvatarStyleForSurface,
+} from './KangurAiTutorAvatarAttachment';
+import {
   AVATAR_SIZE,
   BUBBLE_MAX_HEIGHT,
   BUBBLE_MIN_HEIGHT,
   EDGE_GAP,
+  GUIDED_AVATAR_SURFACE_GAP,
   type TutorEntryDirection,
   type TutorMotionPosition,
   type TutorMotionProfile,
@@ -22,6 +28,7 @@ const FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX = FLOATING_TUTOR_ARROWHEAD_DOT_RADIU
 const FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX = 18;
 const GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S = 0.22;
 export const GUIDED_CALLOUT_HEIGHT = 260;
+const GUIDED_CALLOUT_FOCUS_GAP = 40;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX = 255;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN = 219;
 
@@ -95,6 +102,73 @@ const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
   const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
   const verticalGap = Math.max(0, left.top - right.bottom, right.top - left.bottom);
   return Math.hypot(horizontalGap, verticalGap);
+};
+
+const getViewportOverflowArea = (
+  rect: DOMRect,
+  viewport: { width: number; height: number }
+): number => {
+  const viewportRect = createRect(EDGE_GAP, EDGE_GAP, viewport.width - EDGE_GAP * 2, viewport.height - EDGE_GAP * 2);
+  const overlapArea = getRectOverlapArea(rect, viewportRect);
+  return rect.width * rect.height - overlapArea;
+};
+
+const clampGuidedCalloutPosition = (input: {
+  candidateLeft: number;
+  candidateTop: number;
+  height: number;
+  placement: 'top' | 'bottom' | 'left' | 'right';
+  viewport: { width: number; height: number };
+  width: number;
+}): {
+  avatarPlacement: ReturnType<typeof getGuidedAvatarAttachmentPlacement>;
+  left: number;
+  top: number;
+} => {
+  const { candidateLeft, candidateTop, height, placement, viewport, width } = input;
+  const avatarPlacement = getGuidedAvatarAttachmentPlacement(placement);
+  const baseMinLeft = EDGE_GAP;
+  const baseMaxLeft = viewport.width - EDGE_GAP - width;
+  const baseMinTop = EDGE_GAP;
+  const baseMaxTop = viewport.height - EDGE_GAP - height;
+
+  let minLeft = baseMinLeft;
+  let maxLeft = baseMaxLeft;
+  let minTop = baseMinTop;
+  let maxTop = baseMaxTop;
+
+  switch (avatarPlacement) {
+    case 'left':
+      minLeft = Math.max(minLeft, EDGE_GAP + GUIDED_AVATAR_SURFACE_GAP + AVATAR_SIZE);
+      break;
+    case 'right':
+      maxLeft = Math.min(
+        maxLeft,
+        viewport.width - EDGE_GAP - width - GUIDED_AVATAR_SURFACE_GAP - AVATAR_SIZE
+      );
+      break;
+    case 'top':
+      minTop = Math.max(minTop, EDGE_GAP + GUIDED_AVATAR_SURFACE_GAP + AVATAR_SIZE);
+      break;
+    case 'bottom':
+      maxTop = Math.min(
+        maxTop,
+        viewport.height - EDGE_GAP - height - GUIDED_AVATAR_SURFACE_GAP - AVATAR_SIZE
+      );
+      break;
+  }
+
+  return {
+    avatarPlacement,
+    left:
+      minLeft <= maxLeft
+        ? clamp(candidateLeft, minLeft, maxLeft)
+        : clamp(candidateLeft, baseMinLeft, baseMaxLeft),
+    top:
+      minTop <= maxTop
+        ? clamp(candidateTop, minTop, maxTop)
+        : clamp(candidateTop, baseMinTop, baseMaxTop),
+  };
 };
 
 export const resolveContinuousRotationDegrees = (previous: number | null, next: number): number => {
@@ -248,7 +322,7 @@ export const getGuidedCalloutLayout = (
 } => {
   const width = Math.min(280, Math.max(220, viewport.width * 0.24));
   const height = GUIDED_CALLOUT_HEIGHT;
-  const gap = 18;
+  const gap = GUIDED_CALLOUT_FOCUS_GAP;
   const maxLeft = viewport.width - EDGE_GAP - width;
   const maxTop = viewport.height - EDGE_GAP - height;
   const centeredLeft = rect.left + rect.width / 2 - width / 2;
@@ -354,6 +428,232 @@ export const getGuidedCalloutLayout = (
   };
 
   return {
+    entryDirection,
+    placement: bestCandidate.placement,
+    style: {
+      position: 'fixed',
+      left: bestCandidate.left,
+      top: bestCandidate.top,
+      width,
+    },
+  };
+};
+
+export const getGuidedCalloutClusterLayout = (
+  rect: DOMRect,
+  viewport: { width: number; height: number },
+  protectedRects: DOMRect[] = [],
+  options?: {
+    anchorRect?: DOMRect | null;
+    calloutHeight?: number;
+  }
+): {
+  avatarPlacement: ReturnType<typeof getGuidedAvatarAttachmentPlacement>;
+  avatarRect: DOMRect;
+  avatarStyle: TutorMotionPosition;
+  calloutRect: DOMRect;
+  entryDirection: TutorEntryDirection;
+  placement: 'top' | 'bottom' | 'left' | 'right';
+  style: CSSProperties;
+} => {
+  const width = Math.min(280, Math.max(220, viewport.width * 0.24));
+  const height = options?.calloutHeight ?? GUIDED_CALLOUT_HEIGHT;
+  const gap = GUIDED_CALLOUT_FOCUS_GAP;
+  const centeredLeft = rect.left + rect.width / 2 - width / 2;
+  const centeredTop = rect.top + rect.height / 2 - height / 2;
+  const entryDirection = getTutorEntryDirection(rect, viewport.width);
+  const candidates: Array<{
+    left: number;
+    placement: 'top' | 'bottom' | 'left' | 'right';
+    priority: number;
+    top: number;
+  }> = [
+    {
+      placement: 'top',
+      left: centeredLeft,
+      top: rect.top - height - gap,
+      priority: 0,
+    },
+    {
+      placement: 'bottom',
+      left: centeredLeft,
+      top: rect.bottom + gap,
+      priority: 1,
+    },
+    {
+      placement: 'right',
+      left: rect.right + gap,
+      top: centeredTop,
+      priority: 2,
+    },
+    {
+      placement: 'left',
+      left: rect.left - width - gap,
+      top: centeredTop,
+      priority: 3,
+    },
+  ];
+
+  const bestCandidate = candidates
+    .map((candidate) => {
+      const clampedPosition = clampGuidedCalloutPosition({
+        candidateLeft: candidate.left,
+        candidateTop: candidate.top,
+        height,
+        placement: candidate.placement,
+        viewport,
+        width,
+      });
+      const panelRect = createRect(clampedPosition.left, clampedPosition.top, width, height);
+      const avatarRect = getGuidedAvatarRectForSurface({
+        placement: clampedPosition.avatarPlacement,
+        surface: panelRect,
+      });
+      const overlapArea = getRectOverlapArea(panelRect, rect);
+      const protectedOverlapArea = protectedRects.reduce(
+        (sum, protectedRect) => sum + getRectOverlapArea(panelRect, protectedRect),
+        0
+      );
+      const avatarOverlapArea =
+        getRectOverlapArea(avatarRect, rect) +
+        protectedRects.reduce((sum, protectedRect) => sum + getRectOverlapArea(avatarRect, protectedRect), 0);
+      const clusterOverlapArea = getRectOverlapArea(panelRect, avatarRect);
+      const anchorDistance = options?.anchorRect
+        ? getRectSeparationDistance(panelRect, options.anchorRect)
+        : 0;
+      const avatarAnchorDistance = options?.anchorRect
+        ? getRectSeparationDistance(avatarRect, options.anchorRect)
+        : 0;
+      const viewportOverflowArea =
+        getViewportOverflowArea(panelRect, viewport) + getViewportOverflowArea(avatarRect, viewport);
+      const repositionCost = Math.hypot(candidate.left - clampedPosition.left, candidate.top - clampedPosition.top);
+      const score =
+        overlapArea * 20 +
+        protectedOverlapArea * 10 +
+        avatarOverlapArea * 14 +
+        clusterOverlapArea * 40 +
+        viewportOverflowArea * 24 +
+        anchorDistance * 0.45 +
+        avatarAnchorDistance * 0.3 +
+        repositionCost * 0.6 +
+        candidate.priority * 24;
+
+      return {
+        anchorDistance,
+        avatarAnchorDistance,
+        avatarOverlapArea,
+        avatarPlacement: clampedPosition.avatarPlacement,
+        avatarRect,
+        calloutRect: panelRect,
+        clusterOverlapArea,
+        left: clampedPosition.left,
+        overlapArea,
+        placement: candidate.placement,
+        protectedOverlapArea,
+        score,
+        top: clampedPosition.top,
+        viewportOverflowArea,
+      };
+    })
+    .sort((leftCandidate, rightCandidate) => {
+      const leftHasClusterOverlap = leftCandidate.clusterOverlapArea > 0 ? 1 : 0;
+      const rightHasClusterOverlap = rightCandidate.clusterOverlapArea > 0 ? 1 : 0;
+      if (leftHasClusterOverlap !== rightHasClusterOverlap) {
+        return leftHasClusterOverlap - rightHasClusterOverlap;
+      }
+
+      if (leftCandidate.clusterOverlapArea !== rightCandidate.clusterOverlapArea) {
+        return leftCandidate.clusterOverlapArea - rightCandidate.clusterOverlapArea;
+      }
+
+      const leftHasViewportOverflow = leftCandidate.viewportOverflowArea > 0 ? 1 : 0;
+      const rightHasViewportOverflow = rightCandidate.viewportOverflowArea > 0 ? 1 : 0;
+      if (leftHasViewportOverflow !== rightHasViewportOverflow) {
+        return leftHasViewportOverflow - rightHasViewportOverflow;
+      }
+
+      if (leftCandidate.viewportOverflowArea !== rightCandidate.viewportOverflowArea) {
+        return leftCandidate.viewportOverflowArea - rightCandidate.viewportOverflowArea;
+      }
+
+      const leftHasOverlap = leftCandidate.overlapArea > 0 ? 1 : 0;
+      const rightHasOverlap = rightCandidate.overlapArea > 0 ? 1 : 0;
+      if (leftHasOverlap !== rightHasOverlap) {
+        return leftHasOverlap - rightHasOverlap;
+      }
+
+      if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
+        return leftCandidate.overlapArea - rightCandidate.overlapArea;
+      }
+
+      const leftHasProtectedOverlap = leftCandidate.protectedOverlapArea > 0 ? 1 : 0;
+      const rightHasProtectedOverlap = rightCandidate.protectedOverlapArea > 0 ? 1 : 0;
+      if (leftHasProtectedOverlap !== rightHasProtectedOverlap) {
+        return leftHasProtectedOverlap - rightHasProtectedOverlap;
+      }
+
+      if (leftCandidate.protectedOverlapArea !== rightCandidate.protectedOverlapArea) {
+        return leftCandidate.protectedOverlapArea - rightCandidate.protectedOverlapArea;
+      }
+
+      const leftHasAvatarOverlap = leftCandidate.avatarOverlapArea > 0 ? 1 : 0;
+      const rightHasAvatarOverlap = rightCandidate.avatarOverlapArea > 0 ? 1 : 0;
+      if (leftHasAvatarOverlap !== rightHasAvatarOverlap) {
+        return leftHasAvatarOverlap - rightHasAvatarOverlap;
+      }
+
+      if (leftCandidate.avatarOverlapArea !== rightCandidate.avatarOverlapArea) {
+        return leftCandidate.avatarOverlapArea - rightCandidate.avatarOverlapArea;
+      }
+
+      if (leftCandidate.anchorDistance !== rightCandidate.anchorDistance) {
+        return leftCandidate.anchorDistance - rightCandidate.anchorDistance;
+      }
+
+      if (leftCandidate.avatarAnchorDistance !== rightCandidate.avatarAnchorDistance) {
+        return leftCandidate.avatarAnchorDistance - rightCandidate.avatarAnchorDistance;
+      }
+
+      return leftCandidate.score - rightCandidate.score;
+    })[0] ?? (() => {
+    const clampedPosition = clampGuidedCalloutPosition({
+      candidateLeft: centeredLeft,
+      candidateTop: rect.bottom + gap,
+      height,
+      placement: 'bottom',
+      viewport,
+      width,
+    });
+    const calloutRect = createRect(clampedPosition.left, clampedPosition.top, width, height);
+    return {
+      anchorDistance: 0,
+      avatarAnchorDistance: 0,
+      avatarOverlapArea: 0,
+      avatarPlacement: clampedPosition.avatarPlacement,
+      avatarRect: getGuidedAvatarRectForSurface({
+        placement: clampedPosition.avatarPlacement,
+        surface: calloutRect,
+      }),
+      calloutRect,
+      clusterOverlapArea: 0,
+      left: clampedPosition.left,
+      overlapArea: 0,
+      placement: 'bottom' as const,
+      protectedOverlapArea: 0,
+      score: 0,
+      top: clampedPosition.top,
+      viewportOverflowArea: 0,
+    };
+  })();
+
+  return {
+    avatarPlacement: bestCandidate.avatarPlacement,
+    avatarRect: bestCandidate.avatarRect,
+    avatarStyle: getGuidedAvatarStyleForSurface({
+      placement: bestCandidate.avatarPlacement,
+      surface: bestCandidate.calloutRect,
+    }),
+    calloutRect: bestCandidate.calloutRect,
     entryDirection,
     placement: bestCandidate.placement,
     style: {

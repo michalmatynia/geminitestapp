@@ -64,7 +64,9 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
       variant='soft'
     >
       <header className='flex items-center justify-between gap-3'>
-        <div className='text-sm font-bold uppercase tracking-[0.18em] text-slate-500'>Zadania</div>
+        <div className='text-sm font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+          Zadania
+        </div>
         <KangurStatusChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
           {completionLabel}
         </KangurStatusChip>
@@ -112,12 +114,14 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     {completed ? (
                       <CheckCircle2 className='h-4 w-4 text-emerald-600' />
                     ) : (
-                      <Circle className='h-4 w-4 text-slate-400' />
+                      <Circle className='h-4 w-4 [color:var(--kangur-page-muted-text)]' />
                     )}
                   </KangurButton>
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <p className='text-sm font-semibold text-slate-900'>{assignment.title}</p>
+                      <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {assignment.title}
+                      </p>
                       <KangurStatusChip
                         accent={
                           assignment.priority === 'high'
@@ -135,7 +139,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                             : 'Priorytet niski'}
                       </KangurStatusChip>
                     </div>
-                    <p className='mt-1 text-sm leading-6 text-slate-600'>
+                    <p className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
                       {assignment.description}
                     </p>
                     <KangurStatusChip

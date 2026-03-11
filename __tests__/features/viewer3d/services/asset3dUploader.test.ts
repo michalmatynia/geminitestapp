@@ -2,29 +2,55 @@ import fs from 'fs/promises';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { prismaAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
 import { uploadAsset3D, deleteAsset3D } from '@/features/viewer3d/utils/asset3dUploader';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+
+const {
+  repositoryMock,
+  uploadToConfiguredStorageMock,
+  deleteFileFromStorageMock,
+} = vi.hoisted(() => ({
+  repositoryMock: {
+    createAsset3D: vi.fn(),
+    getAsset3DById: vi.fn(),
+    deleteAsset3D: vi.fn(),
+  },
+  uploadToConfiguredStorageMock: vi.fn(),
+  deleteFileFromStorageMock: vi.fn(),
+}));
 
 vi.mock('fs/promises', () => ({
   default: {
     mkdir: vi.fn().mockResolvedValue(undefined),
     writeFile: vi.fn().mockResolvedValue(undefined),
-    unlink: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
-vi.mock('@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository', () => ({
-  prismaAsset3DRepository: {
-    createAsset3D: vi.fn(),
-    getAsset3DById: vi.fn(),
-    deleteAsset3D: vi.fn(),
-  },
+vi.mock('@/features/viewer3d/services/asset3d-repository', () => ({
+  getAsset3DRepository: () => repositoryMock,
+}));
+
+vi.mock('@/shared/lib/files/services/image-file-service', () => ({
+  uploadToConfiguredStorage: uploadToConfiguredStorageMock,
+  deleteFileFromStorage: deleteFileFromStorageMock,
 }));
 
 describe('asset3dUploader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    uploadToConfiguredStorageMock.mockImplementation(
+      async ({
+        publicPath,
+        writeLocalCopy,
+      }: {
+        publicPath: string;
+        writeLocalCopy: () => Promise<void>;
+      }) => {
+        await writeLocalCopy();
+        return { filepath: publicPath };
+      }
+    );
+    deleteFileFromStorageMock.mockResolvedValue(undefined);
   });
 
   describe('uploadAsset3D', () => {
@@ -35,17 +61,20 @@ describe('asset3dUploader', () => {
         file.arrayBuffer = () => Promise.resolve(new ArrayBuffer(8));
       }
       const mockResult = { id: '1', filename: 'test.glb' };
-      vi.mocked(prismaAsset3DRepository.createAsset3D).mockResolvedValue(mockResult as unknown as Asset3DRecord);
+      repositoryMock.createAsset3D.mockResolvedValue(mockResult as unknown as Asset3DRecord);
 
       const result = await uploadAsset3D(file, { name: 'Test Asset' });
 
       expect(vi.mocked(fs.mkdir)).toHaveBeenCalled();
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalled();
-      expect(prismaAsset3DRepository.createAsset3D).toHaveBeenCalledWith(
+      expect(uploadToConfiguredStorageMock).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.createAsset3D).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Test Asset',
           filename: expect.stringContaining('test.glb'),
           size: file.size,
+          fileUrl: expect.stringContaining('test.glb'),
+          filepath: expect.stringContaining('test.glb'),
         })
       );
       expect(result).toEqual(mockResult);
@@ -60,23 +89,23 @@ describe('asset3dUploader', () => {
   describe('deleteAsset3D', () => {
     it('should delete file from disk and database', async () => {
       const mockAsset = { id: '1', filepath: '/uploads/assets3d/test.glb' };
-      vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(mockAsset as unknown as Asset3DRecord);
-      vi.mocked(prismaAsset3DRepository.deleteAsset3D).mockResolvedValue(mockAsset as unknown as Asset3DRecord);
+      repositoryMock.getAsset3DById.mockResolvedValue(mockAsset as unknown as Asset3DRecord);
+      repositoryMock.deleteAsset3D.mockResolvedValue(mockAsset as unknown as Asset3DRecord);
 
       const result = await deleteAsset3D('1');
 
       expect(result).toBe(true);
-      expect(vi.mocked(fs.unlink)).toHaveBeenCalled();
-      expect(prismaAsset3DRepository.deleteAsset3D).toHaveBeenCalledWith('1');
+      expect(deleteFileFromStorageMock).toHaveBeenCalledWith('/uploads/assets3d/test.glb');
+      expect(repositoryMock.deleteAsset3D).toHaveBeenCalledWith('1');
     });
 
     it('should return false if asset not found', async () => {
-      vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(null);
+      repositoryMock.getAsset3DById.mockResolvedValue(null);
 
       const result = await deleteAsset3D('non-existent');
 
       expect(result).toBe(false);
-      expect(vi.mocked(fs.unlink)).not.toHaveBeenCalled();
+      expect(deleteFileFromStorageMock).not.toHaveBeenCalled();
     });
   });
 });

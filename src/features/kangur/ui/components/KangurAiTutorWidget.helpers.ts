@@ -1,6 +1,9 @@
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
 import { buildKangurRecommendationHref } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
-import type { KangurAiTutorFollowUpAction } from '@/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorFollowUpAction,
+  KangurAiTutorWebsiteHelpTarget,
+} from '@/shared/contracts/kangur-ai-tutor';
 
 import type { GuidedTutorSectionKind, GuidedTutorTarget, TutorSurface } from './KangurAiTutorWidget.types';
 
@@ -22,6 +25,24 @@ export const toFollowUpHref = (
     page: action.page,
     query: action.query,
   });
+
+export const toWebsiteHelpTargetHref = (
+  basePath: string,
+  target: KangurAiTutorWebsiteHelpTarget
+): string => {
+  const normalizedBasePath = basePath.endsWith('/') && basePath !== '/' ? basePath.slice(0, -1) : basePath;
+  const rawRoute = typeof target.route === 'string' ? target.route.trim() : '';
+  const normalizedRoute = rawRoute && rawRoute !== '/'
+    ? rawRoute.startsWith(normalizedBasePath)
+      ? rawRoute
+      : `${normalizedBasePath}${rawRoute.startsWith('/') ? rawRoute : `/${rawRoute}`}`
+    : normalizedBasePath;
+  const hash = typeof target.anchorId === 'string' && target.anchorId.trim()
+    ? `#${target.anchorId.trim()}`
+    : '';
+
+  return `${normalizedRoute}${hash}`;
+};
 
 export const isAuthGuidedTutorTarget = (
   value: GuidedTutorTarget | null | undefined

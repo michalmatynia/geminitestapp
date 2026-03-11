@@ -97,6 +97,15 @@ function Harness(): React.JSX.Element {
         : []
     )
     .join(' | ');
+  const websiteHelpTargets = messages
+    .flatMap((message) =>
+      message.websiteHelpTarget
+        ? [
+            `${message.websiteHelpTarget.label}:${message.websiteHelpTarget.route ?? 'none'}:${message.websiteHelpTarget.anchorId ?? 'none'}`,
+          ]
+        : []
+    )
+    .join(' | ');
 
   return (
     <div>
@@ -148,6 +157,7 @@ function Harness(): React.JSX.Element {
       <div data-testid='messages'>{messages.map((message) => message.content).join(' | ')}</div>
       <div data-testid='follow-up-actions'>{followUpSummary || 'none'}</div>
       <div data-testid='coaching-summary'>{coachingSummary || 'none'}</div>
+      <div data-testid='website-help-targets'>{websiteHelpTargets || 'none'}</div>
     </div>
   );
 }
@@ -196,6 +206,33 @@ function DrawingHarness(): React.JSX.Element {
       </div>
       <div data-testid='drawing-artifacts'>
         {JSON.stringify(messages.map((message) => message.artifacts ?? []))}
+      </div>
+    </div>
+  );
+}
+
+function SurfaceOverrideHarness(): React.JSX.Element {
+  const { messages, sendMessage } = useKangurAiTutor();
+
+  return (
+    <div>
+      <button
+        type='button'
+        onClick={() =>
+          void sendMessage('Wyjaśnij logowanie.', {
+            promptMode: 'explain',
+            focusKind: 'login_action',
+            focusId: 'kangur-auth-login-action',
+            focusLabel: 'Zaloguj się',
+            interactionIntent: 'explain',
+            surface: 'auth',
+          })
+        }
+      >
+        Send with surface override
+      </button>
+      <div data-testid='surface-override-messages'>
+        {messages.map((message) => message.content).join(' | ')}
       </div>
     </div>
   );
@@ -311,6 +348,12 @@ describe('KangurAiTutorContext', () => {
     apiPostMock.mockResolvedValue({
       message: 'Spróbuj policzyć krok po kroku.',
       suggestedMoodId: 'encouraging',
+      websiteHelpTarget: {
+        nodeId: 'flow:kangur:sign-in',
+        label: 'Zaloguj się',
+        route: '/',
+        anchorId: 'kangur-primary-nav-login',
+      },
       tutorMood: {
         currentMoodId: 'supportive',
         baselineMoodId: 'encouraging',
@@ -439,7 +482,63 @@ describe('KangurAiTutorContext', () => {
     expect(screen.getByTestId('coaching-summary')).toHaveTextContent(
       'hint_ladder:Jeden trop'
     );
+    expect(screen.getByTestId('website-help-targets')).toHaveTextContent(
+      'Zaloguj się:/:kangur-primary-nav-login'
+    );
     expect(screen.getByTestId('usage-summary')).toHaveTextContent('2/3/1');
+  });
+
+  it('allows section explains to override the active page surface when the anchor belongs to auth', async () => {
+    apiPostMock.mockResolvedValue({
+      message: 'To przycisk logowania dla osób, które mają już konto.',
+      sources: [],
+      followUpActions: [],
+      usage: {
+        dateKey: '2026-03-07',
+        messageCount: 1,
+        dailyMessageLimit: 3,
+        remainingMessages: 2,
+      },
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'game',
+          contentId: 'game:home',
+          title: 'Gra Kangur',
+        }}
+      >
+        <SurfaceOverrideHarness />
+      </KangurAiTutorProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send with surface override' }));
+
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    expect(apiPostMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/chat', {
+      messages: [{ role: 'user', content: 'Wyjaśnij logowanie.' }],
+      context: {
+        surface: 'auth',
+        contentId: 'game:home',
+        title: 'Gra Kangur',
+        promptMode: 'explain',
+        focusKind: 'login_action',
+        focusId: 'kangur-auth-login-action',
+        focusLabel: 'Zaloguj się',
+        interactionIntent: 'explain',
+      },
+    });
+    expect(trackKangurClientEventMock).toHaveBeenNthCalledWith(
+      1,
+      'kangur_ai_tutor_message_sent',
+      expect.objectContaining({
+        surface: 'auth',
+        promptMode: 'explain',
+        focusKind: 'login_action',
+      })
+    );
   });
 
   it('sends learner drawings as artifacts and stores assistant drawing replies', async () => {
@@ -1857,6 +1956,56 @@ describe('KangurAiTutorContext', () => {
     expect(screen.getByTestId('is-loading')).toHaveTextContent('false');
     expect(screen.getByTestId('is-usage-loading')).toHaveTextContent('false');
     expect(screen.getByTestId('tutor-mood')).toHaveTextContent('happy');
+  });
+
+  it('restores persisted website-help targets from session storage', async () => {
+    window.sessionStorage.setItem(
+      'kangur-ai-tutor-runtime-v1',
+      JSON.stringify({
+        isOpen: true,
+        sessionStates: {
+          'learner-1:lesson:lesson-1': {
+            messages: [
+              {
+                role: 'assistant',
+                content: 'Kliknij przycisk logowania w górnej nawigacji.',
+                websiteHelpTarget: {
+                  nodeId: 'flow:kangur:sign-in',
+                  label: 'Zaloguj się',
+                  route: '/',
+                  anchorId: 'kangur-primary-nav-login',
+                },
+              },
+            ],
+            isLoading: false,
+            isUsageLoading: false,
+            highlightedText: null,
+            usageSummary: null,
+          },
+        },
+      })
+    );
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('is-open')).toHaveTextContent('true'));
+    expect(screen.getByTestId('messages')).toHaveTextContent(
+      'Kliknij przycisk logowania w górnej nawigacji.'
+    );
+    expect(screen.getByTestId('website-help-targets')).toHaveTextContent(
+      'Zaloguj się:/:kangur-primary-nav-login'
+    );
   });
 
   it('closes a persisted open tutor when the restored session is not allowed', async () => {

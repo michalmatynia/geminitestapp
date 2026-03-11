@@ -84,7 +84,14 @@ function AnalogClock({
   return (
     <div className='flex flex-col items-center gap-2'>
       <svg viewBox='0 0 200 200' width='180' height='180' className='drop-shadow-lg'>
-        <circle cx='100' cy='100' r='95' fill='white' stroke='#6366f1' strokeWidth='4' />
+        <circle
+          cx='100'
+          cy='100'
+          r='95'
+          fill='var(--kangur-soft-card-background)'
+          stroke='#6366f1'
+          strokeWidth='4'
+        />
         {Array.from({ length: 12 }, (_, i) => {
           const angle = (i * 30 - 90) * (Math.PI / 180);
           const x1 = 100 + 80 * Math.cos(angle);
@@ -158,7 +165,11 @@ function AnalogClock({
         ) : null}
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
-      {label ? <p className='text-center text-sm font-semibold text-slate-500'>{label}</p> : null}
+      {label ? (
+        <p className='text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
+          {label}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -185,7 +196,7 @@ const HOURS_SLIDES: LessonSlide[] = [
             label='Krótka wskazówka na 8'
           />
         </div>
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           Patrzymy na <strong className='text-red-600'>krótką wskazówkę</strong>. Ona mówi nam,
           która jest godzina.
         </p>
@@ -220,7 +231,7 @@ const HOURS_SLIDES: LessonSlide[] = [
             label='11:00'
           />
         </div>
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           W tej sekcji trenujemy tylko odczyt godziny: 1, 6, 11.
         </p>
       </div>
@@ -239,8 +250,8 @@ const HOURS_SLIDES: LessonSlide[] = [
           label='Jaka to godzina?'
         />
         <KangurLessonCallout accent='rose' className='max-w-xs text-left'>
-          <p className='font-semibold text-slate-700'>Krok:</p>
-          <p className='mt-1 text-sm text-slate-600'>
+          <p className='font-semibold [color:var(--kangur-page-text)]'>Krok:</p>
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
             1. Znajdź krótką wskazówkę.
             <br />
             2. Odczytaj numer, na który pokazuje.
@@ -265,7 +276,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
           showHourHand={false}
           label='Długa wskazówka = minuty'
         />
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           <strong className='text-green-600'>Długa wskazówka</strong> chodzi po tarczy i mówi,
           ile minut minęło.
         </p>
@@ -300,7 +311,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
             label='9 = 45 min'
           />
         </div>
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           Zapamiętaj: każda kolejna liczba to +5 minut.
         </p>
       </div>
@@ -319,8 +330,8 @@ const MINUTES_SLIDES: LessonSlide[] = [
           label='Jaka to liczba minut?'
         />
         <KangurLessonCallout accent='emerald' className='max-w-xs text-left'>
-          <p className='font-semibold text-slate-700'>Krok:</p>
-          <p className='mt-1 text-sm text-slate-600'>
+          <p className='font-semibold [color:var(--kangur-page-text)]'>Krok:</p>
+          <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
             Długa wskazówka stoi przy 7.
             <br />
             7 × 5 = 35 minut.
@@ -340,9 +351,13 @@ const COMBINED_SLIDES: LessonSlide[] = [
       <div className='flex flex-col items-center gap-4 text-center'>
         <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
         <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
-          <p className='font-semibold text-slate-700'>Kroki:</p>
-          <p className='text-sm text-slate-600'>1. Krótka wskazówka: godzina = 8</p>
-          <p className='text-sm text-slate-600'>2. Długa wskazówka: minuty = 30</p>
+          <p className='font-semibold [color:var(--kangur-page-text)]'>Kroki:</p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            1. Krótka wskazówka: godzina = 8
+          </p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            2. Długa wskazówka: minuty = 30
+          </p>
           <p className='text-indigo-700 font-extrabold'>Wynik: 8:30</p>
         </KangurLessonCallout>
       </div>
@@ -357,7 +372,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
           <AnalogClock hours={5} minutes={15} label='5:15 - kwadrans po 5' />
           <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
         </div>
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           Odczytujemy godzinę i minuty jednocześnie.
         </p>
       </div>
@@ -369,7 +384,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col items-center gap-4 text-center'>
         <div className='text-7xl'>✨</div>
-        <p className='max-w-xs leading-relaxed text-slate-600'>
+        <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
           Brawo! Umiesz:
           <br />
           🔴 czytać godziny,
@@ -797,7 +812,11 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Poprzedni panel'
-            className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+            className='min-w-[72px] justify-center px-5 shadow-sm'
+            style={{
+              background: 'var(--kangur-soft-card-background)',
+              borderColor: 'var(--kangur-soft-card-border)',
+            }}
             data-testid='clock-lesson-training-prev-button'
             size='sm'
             type='button'
@@ -819,7 +838,11 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Nastepny panel'
-            className='min-w-[72px] justify-center border-slate-300/80 bg-white/92 px-5 shadow-sm'
+            className='min-w-[72px] justify-center px-5 shadow-sm'
+            style={{
+              background: 'var(--kangur-soft-card-background)',
+              borderColor: 'var(--kangur-soft-card-border)',
+            }}
             data-testid='clock-lesson-training-next-button'
             size='sm'
             type='button'

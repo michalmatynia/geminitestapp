@@ -98,14 +98,14 @@ export default function TrainingSetup({
                 {suggestionLabel ?? 'Polecamy teraz'}
               </KangurStatusChip>
               <p
-                className='text-sm font-extrabold text-slate-800'
+                className='text-sm font-extrabold [color:var(--kangur-page-text)]'
                 data-testid='training-setup-suggestion-title'
               >
                 {suggestionTitle}
               </p>
               {suggestionDescription ? (
                 <p
-                  className='text-xs text-slate-600'
+                  className='text-xs [color:var(--kangur-page-muted-text)]'
                   data-testid='training-setup-suggestion-description'
                 >
                   {suggestionDescription}
@@ -119,7 +119,7 @@ export default function TrainingSetup({
 
         <section aria-labelledby={categoryHeadingId}>
           <div className='mb-2 flex items-center justify-between'>
-            <h3 id={categoryHeadingId} className='text-sm font-bold text-slate-700'>
+            <h3 id={categoryHeadingId} className='text-sm font-bold [color:var(--kangur-page-text)]'>
               Kategorie pytan
             </h3>
             <KangurButton onClick={toggleAllCategories} size='sm' variant='ghost' type='button'>
@@ -156,7 +156,10 @@ export default function TrainingSetup({
         </section>
 
         <section aria-labelledby={countHeadingId}>
-          <h3 id={countHeadingId} className='mb-2 block text-sm font-bold text-slate-700'>
+          <h3
+            id={countHeadingId}
+            className='mb-2 block text-sm font-bold [color:var(--kangur-page-text)]'
+          >
             Liczba pytan
           </h3>
           <div

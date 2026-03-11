@@ -21,6 +21,7 @@ type HarnessProps = {
     callbackUrl?: string | null,
     options?: { authMode?: 'sign-in' | 'create-account' }
   ) => void;
+  selectionGuidanceCalloutVisibleText?: string | null;
   selectionResponsePending?: PendingSelectionResponse | null;
 };
 
@@ -28,6 +29,7 @@ function GuidedDisplayHarness({
   guidedTutorTarget = null,
   loginModalIsOpen = false,
   openLoginModal = vi.fn(),
+  selectionGuidanceCalloutVisibleText = null,
   selectionResponsePending = null,
 }: HarnessProps) {
   const guidedState = useKangurAiTutorGuidedDisplayState({
@@ -52,6 +54,7 @@ function GuidedDisplayHarness({
     persistedSelectionPageRect: null,
     persistedSelectionRect: null,
     sectionResponsePending: null,
+    selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
     sessionContentId: 'lesson-1',
     sessionSurface: 'lesson',
@@ -84,6 +87,7 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
           kind: 'selection_excerpt',
           selectedText: '2 + 2',
         }}
+        selectionGuidanceCalloutVisibleText='2 + 2'
       />
     );
 
@@ -93,7 +97,12 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
   });
 
   it('keeps the pending selected-text handoff on the inline guidance surface even if ask-modal state is stale', () => {
-    render(<GuidedDisplayHarness selectionResponsePending={{ selectedText: '2 + 2' }} />);
+    render(
+      <GuidedDisplayHarness
+        selectionGuidanceCalloutVisibleText='2 + 2'
+        selectionResponsePending={{ selectedText: '2 + 2' }}
+      />
+    );
 
     expect(screen.getByTestId('ask-modal-mode')).toHaveTextContent('false');
     expect(screen.getByTestId('selection-guidance')).toHaveTextContent('true');
@@ -133,6 +142,7 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
         inline: 'nearest',
       });
       expect(screen.getByTestId('guided-mode')).toHaveTextContent('auth');
+      expect(screen.getByTestId('selection-guidance')).toHaveTextContent('false');
     } finally {
       window.requestAnimationFrame = originalRequestAnimationFrame;
       window.cancelAnimationFrame = originalCancelAnimationFrame;
@@ -160,8 +170,10 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
           }}
         />
       );
+      act(() => {});
 
       expect(screen.getByTestId('guided-mode')).toHaveTextContent('auth');
+      expect(callbacks.length).toBeGreaterThan(0);
 
       const anchor = document.createElement('button');
       anchor.dataset.kangurTutorAnchorSurface = 'auth';
@@ -174,7 +186,13 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
       act(() => {
         pendingCallbacks.forEach((callback) => callback(0));
       });
+      const scrollCallbacks = [...callbacks];
+      callbacks.length = 0;
+      act(() => {
+        scrollCallbacks.forEach((callback) => callback(0));
+      });
 
+      expect(screen.getByTestId('guided-mode')).toHaveTextContent('auth');
       expect(anchor.scrollIntoView).toHaveBeenCalledWith({
         behavior: 'smooth',
         block: 'center',
@@ -186,7 +204,7 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
     }
   });
 
-  it('opens the login modal when guided auth cannot resolve a login anchor', () => {
+  it('keeps guided auth on the nav target when the login anchor is temporarily unavailable', () => {
     const openLoginModalMock = vi.fn();
     const originalRequestAnimationFrame = window.requestAnimationFrame;
     const originalCancelAnimationFrame = window.cancelAnimationFrame;
@@ -208,10 +226,9 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
           openLoginModal={openLoginModalMock}
         />
       );
+      act(() => {});
 
-      expect(openLoginModalMock).toHaveBeenCalledWith(undefined, {
-        authMode: 'sign-in',
-      });
+      expect(openLoginModalMock).not.toHaveBeenCalled();
       expect(screen.getByTestId('guided-mode')).toHaveTextContent('auth');
     } finally {
       window.requestAnimationFrame = originalRequestAnimationFrame;

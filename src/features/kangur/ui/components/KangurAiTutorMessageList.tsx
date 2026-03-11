@@ -10,6 +10,7 @@ import {
 import {
   getAssistantMessageFeedbackKey,
   toFollowUpHref,
+  toWebsiteHelpTargetHref,
 } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
@@ -62,6 +63,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
     emptyStateMessage,
     handleFollowUpClick,
     handleMessageFeedback,
+    handleWebsiteHelpTargetClick,
     isAskModalMode,
     isLoading,
     isSectionExplainPendingMode,
@@ -287,6 +289,51 @@ export function KangurAiTutorMessageList(): JSX.Element {
                       </div>
                     ))}
                   </div>
+                ) : null}
+                {msg.websiteHelpTarget ? (
+                  (() => {
+                    const websiteHelpTargetHref = toWebsiteHelpTargetHref(
+                      basePath,
+                      msg.websiteHelpTarget
+                    );
+
+                    return (
+                  <div
+                    data-kangur-tts-ignore='true'
+                    className='soft-card rounded-2xl border border-sky-200/80 px-3 py-3 shadow-[0_8px_18px_-12px_rgba(14,165,233,0.22)]'
+                    style={{
+                      background:
+                        'linear-gradient(135deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,242,254,0.9)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 86%, rgba(239,246,255,0.82)) 100%)',
+                    }}
+                  >
+                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
+                      Miejsce na stronie
+                    </div>
+                    <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-text)]'>
+                      {msg.websiteHelpTarget.label}
+                    </div>
+                    <div className='mt-2'>
+                      <KangurButton asChild size='sm' variant='primary' className='w-full sm:w-auto'>
+                        <Link
+                          href={websiteHelpTargetHref}
+                          onClick={() =>
+                            handleWebsiteHelpTargetClick(
+                              msg.websiteHelpTarget as NonNullable<
+                                TutorRenderedMessage['websiteHelpTarget']
+                              >,
+                              index,
+                              websiteHelpTargetHref
+                            )
+                          }
+                          title={msg.websiteHelpTarget.anchorId ?? undefined}
+                        >
+                          Przejdź do tego miejsca
+                        </Link>
+                      </KangurButton>
+                    </div>
+                  </div>
+                    );
+                  })()
                 ) : null}
                 <div
                   data-testid={`kangur-ai-tutor-feedback-${index}`}

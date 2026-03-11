@@ -94,7 +94,11 @@ function MiniCalendar({
         {DAYS.map((dayLabel, index) => (
           <div
             key={dayLabel}
-            className={`py-1 font-bold ${index >= 5 ? 'text-red-500' : 'text-slate-500'}`}
+            className={`py-1 font-bold ${
+              index >= 5
+                ? 'text-red-500'
+                : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_92%,white)]'
+            }`}
           >
             {dayLabel}
           </div>
@@ -108,7 +112,7 @@ function MiniCalendar({
                 : day !== null && index % 7 >= 5
                   ? 'text-red-400'
                   : day !== null
-                    ? 'text-slate-700'
+                    ? '[color:var(--kangur-page-text)]'
                     : ''
             }`}
           >
@@ -130,7 +134,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
             📅
           </KangurDisplayEmoji>
-          <p className='max-w-xs leading-relaxed text-slate-600'>
+          <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
             Kalendarz to sposob organizowania czasu.
             <br />
             <br />
@@ -156,7 +160,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               padding='sm'
             >
               <span className='w-5 font-bold text-indigo-500'>{index + 1}.</span>
-              <span className='font-semibold text-slate-700'>{dayLabel}</span>
+              <span className='font-semibold [color:var(--kangur-page-text)]'>{dayLabel}</span>
               <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
             </KangurLessonCallout>
           ))}
@@ -168,7 +172,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               padding='sm'
             >
               <span className='w-5 font-bold text-pink-500'>{index + 6}.</span>
-              <span className='font-semibold text-slate-700'>{dayLabel}</span>
+              <span className='font-semibold [color:var(--kangur-page-text)]'>{dayLabel}</span>
               <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
             </KangurLessonCallout>
           ))}
@@ -206,11 +210,13 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               },
             ].map((group) => (
               <KangurLessonCallout key={group.season} accent={group.accent} padding='sm'>
-                <p className='mb-1 text-sm font-bold text-slate-600'>{group.season}</p>
+                <p className='mb-1 text-sm font-bold [color:var(--kangur-page-text)]'>
+                  {group.season}
+                </p>
                 {group.months.map((month) => (
-                  <p key={month.name} className='text-sm text-slate-700'>
+                  <p key={month.name} className='text-sm [color:var(--kangur-page-text)]'>
                     <span className='font-bold'>{month.num}.</span> {month.name}{' '}
-                    <span className='text-slate-400'>({month.days}d)</span>
+                    <span className='[color:var(--kangur-page-muted-text)]'>({month.days}d)</span>
                   </p>
                 ))}
               </KangurLessonCallout>
@@ -249,11 +255,11 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
         <div className='flex flex-col items-center gap-4 text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
           <KangurLessonCallout accent='indigo' className='max-w-xs space-y-2 text-left'>
-            <p className='font-semibold text-slate-700'>Jak zapisac date?</p>
-            <p className='text-slate-600'>
+            <p className='font-semibold [color:var(--kangur-page-text)]'>Jak zapisac date?</p>
+            <p className='[color:var(--kangur-page-muted-text)]'>
               📅 <strong>15 marca 2025</strong>
             </p>
-            <p className='text-slate-600'>
+            <p className='[color:var(--kangur-page-muted-text)]'>
               📝 Lub: <strong>15/03/2025</strong>
             </p>
             <p className='mt-1 font-bold text-indigo-700'>Dzien / Miesiac / Rok</p>

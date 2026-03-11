@@ -111,7 +111,7 @@ describe('Integration Handlers', () => {
             database: {
               operation: 'query',
               query: {
-                provider: 'prisma',
+                provider: 'mongodb',
                 collection: 'products',
                 mode: 'custom',
                 queryTemplate: '{}',
@@ -149,7 +149,7 @@ describe('Integration Handlers', () => {
             database: {
               operation: 'query',
               query: {
-                provider: 'prisma',
+                provider: 'mongodb',
                 collection: 'products',
                 mode: 'custom',
                 queryTemplate: '{}',

@@ -96,6 +96,8 @@ export function useKangurAiTutorWidgetState() {
   const [selectionContextSpotlightTick, setSelectionContextSpotlightTick] = useState(0);
   const [selectionConversationContext, setSelectionConversationContext] =
     useState<SelectionConversationContext | null>(null);
+  const [selectionGuidanceCalloutVisibleText, setSelectionGuidanceCalloutVisibleText] =
+    useState<string | null>(null);
   const [selectionGuidanceHandoffText, setSelectionGuidanceHandoffText] = useState<string | null>(
     null
   );
@@ -134,6 +136,7 @@ export function useKangurAiTutorWidgetState() {
   const guestIntroLocalSuppressionTrackedRef = useRef(false);
   const motionTimeoutRef = useRef<number | null>(null);
   const selectionExplainTimeoutRef = useRef<number | null>(null);
+  const selectionGuidanceRevealTimeoutRef = useRef<number | null>(null);
   const selectionResponseCompleteTimeoutRef = useRef<number | null>(null);
   const sectionResponseCompleteTimeoutRef = useRef<number | null>(null);
   const guestIntroShownForCurrentEntryRef = useRef(false);
@@ -200,6 +203,8 @@ export function useKangurAiTutorWidgetState() {
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
     selectionConversationContext,
+    selectionGuidanceCalloutVisibleText,
+    selectionGuidanceRevealTimeoutRef,
     selectionContextSpotlightTick,
     selectionExplainTimeoutRef,
     selectionGuidanceHandoffText,
@@ -241,6 +246,7 @@ export function useKangurAiTutorWidgetState() {
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionConversationContext,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionContextSpotlightTick,
     setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,

@@ -416,7 +416,11 @@ export function resolveKangurAiTutorAvailability(
       : { allowed: false, reason: 'games_disabled' };
   }
 
-  if (context.surface === 'profile' || context.surface === 'parent_dashboard') {
+  if (
+    context.surface === 'profile' ||
+    context.surface === 'parent_dashboard' ||
+    context.surface === 'auth'
+  ) {
     return { allowed: true };
   }
 

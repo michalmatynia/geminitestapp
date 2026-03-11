@@ -46,7 +46,9 @@ describe('Geometry lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /punkt i odcinek/i }));
 
-    expect(screen.getByText(/odcinek ma poczatek i koniec/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/odcinek ma poczatek i koniec/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 
   it('uses the lighter helper copy palette in the perimeter lesson', () => {
@@ -54,8 +56,12 @@ describe('Geometry lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /obwód kwadratu/i }));
 
-    expect(screen.getByText(/każdy bok ma 3 cm/i)).toHaveClass('text-slate-700');
-    expect(screen.getByText(/przykład: a = 5 cm/i)).toHaveClass('text-slate-500');
+    expect(screen.getByText(/każdy bok ma 3 cm/i)).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByText(/przykład: a = 5 cm/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
   });
 
   it('uses the lighter helper copy palette in the symmetry lesson', () => {
@@ -63,9 +69,11 @@ describe('Geometry lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /os symetrii/i }));
 
-    expect(screen.getByText(/pionowa kreska to os symetrii/i)).toHaveClass('text-slate-600');
+    expect(screen.getByText(/pionowa kreska to os symetrii/i)).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByText(/figura może miec więcej niż jedna os symetrii/i)).toHaveClass(
-      'text-slate-500'
+      '[color:var(--kangur-page-muted-text)]'
     );
   });
 
@@ -74,8 +82,10 @@ describe('Geometry lessons shared surfaces', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /boki i rogi/i }));
 
-    expect(screen.getByText('Koło')).toHaveClass('text-slate-800');
-    expect(screen.getByText('0 boków i 0 rogów')).toHaveClass('text-slate-500');
+    expect(screen.getByText('Koło')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('0 boków i 0 rogów')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
 
     unmount();
 

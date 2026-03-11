@@ -488,10 +488,7 @@ export const playwrightConfigSchema = z.object({
 export type PlaywrightConfigDto = z.infer<typeof playwrightConfigSchema>;
 export type PlaywrightConfig = PlaywrightConfigDto;
 
-const dbQueryProviderSchema = z.union([
-  z.enum(['auto', 'mongodb']),
-  z.literal('prisma').transform(() => 'auto' as const),
-]);
+const dbQueryProviderSchema = z.enum(['auto', 'mongodb']);
 
 export const dbQueryConfigSchema = z.object({
   provider: dbQueryProviderSchema,
@@ -529,7 +526,6 @@ export type PollConfig = PollConfigDto;
 const dbSchemaProviderSchema = z
   .union([
     z.enum(['auto', 'mongodb']),
-    z.literal('prisma').transform(() => 'auto' as const),
     z.literal('all').transform(() => 'auto' as const),
   ])
   .optional();
@@ -547,7 +543,7 @@ export type DbSchemaConfigDto = z.infer<typeof dbSchemaConfigSchema>;
 export type DbSchemaConfig = DbSchemaConfigDto;
 
 const dbSchemaSnapshotSourceSchema = z.object({
-  provider: z.enum(['mongodb', 'prisma']),
+  provider: z.literal('mongodb'),
   collections: z.array(
     z.object({
       name: z.string(),
@@ -558,19 +554,18 @@ const dbSchemaSnapshotSourceSchema = z.object({
 });
 
 export const dbSchemaSnapshotSchema = z.object({
-  provider: z.enum(['mongodb', 'prisma', 'multi']),
+  provider: z.enum(['mongodb', 'multi']),
   collections: z.array(
     z.object({
       name: z.string(),
       fields: z.array(z.object({ name: z.string(), type: z.string() })),
       relations: z.array(z.string()).optional(),
-      provider: z.enum(['mongodb', 'prisma']).optional(),
+      provider: z.literal('mongodb').optional(),
     })
   ),
   sources: z
     .object({
       mongodb: dbSchemaSnapshotSourceSchema.optional(),
-      prisma: dbSchemaSnapshotSourceSchema.optional(),
     })
     .optional(),
   syncedAt: z.string().optional(),

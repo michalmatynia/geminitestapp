@@ -36,6 +36,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   launcherPromptVisible: boolean;
   persistSelectionContext: (options?: { prefillInput?: boolean }) => string | null;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
   setCanonicalTutorModalVisible: Dispatch<SetStateAction<boolean>>;
   setContextualTutorMode: Dispatch<
     SetStateAction<'selection_explain' | 'section_explain' | null>
@@ -48,6 +49,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
   setHoveredSectionAnchorId: Dispatch<SetStateAction<string | null>>;
   setSectionResponseComplete: Dispatch<SetStateAction<SectionExplainContext | null>>;
   setSectionResponsePending: Dispatch<SetStateAction<SectionExplainContext | null>>;
+  setSelectionGuidanceCalloutVisibleText: Dispatch<SetStateAction<string | null>>;
   setSelectionResponseComplete: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
   setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
   setSelectionGuidanceHandoffText: Dispatch<SetStateAction<string | null>>;
@@ -66,6 +68,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     launcherPromptVisible,
     persistSelectionContext,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setCanonicalTutorModalVisible,
     setContextualTutorMode,
     setDraggedAvatarPoint,
@@ -76,6 +79,7 @@ export function useKangurAiTutorAvatarShellActions(input: {
     setHoveredSectionAnchorId,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setSelectionGuidanceHandoffText,
@@ -88,13 +92,20 @@ export function useKangurAiTutorAvatarShellActions(input: {
       window.clearTimeout(selectionExplainTimeoutRef.current);
       selectionExplainTimeoutRef.current = null;
     }
+    if (selectionGuidanceRevealTimeoutRef.current !== null) {
+      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      selectionGuidanceRevealTimeoutRef.current = null;
+    }
 
+    setSelectionGuidanceCalloutVisibleText(null);
     setSelectionResponsePending(null);
     setSelectionResponseComplete(null);
     setSectionResponsePending(null);
     setSectionResponseComplete(null);
   }, [
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
+    setSelectionGuidanceCalloutVisibleText,
     setSectionResponseComplete,
     setSectionResponsePending,
     setSelectionResponseComplete,

@@ -25,6 +25,10 @@ const ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS = new Set([
   'question',
   'summary',
   'review',
+  'login_action',
+  'create_account_action',
+  'login_identifier_field',
+  'login_form',
 ]);
 
 const PAGE_HELP_PATTERNS = [
@@ -100,7 +104,12 @@ export type KangurAiTutorNativeGuideResolution =
     coverageLevel: KangurAiTutorNativeGuideCoverageLevel;
   };
 
-const OVERVIEW_ENTRY_IDS = new Set(['lesson-overview', 'game-overview', 'test-overview']);
+const OVERVIEW_ENTRY_IDS = new Set([
+  'lesson-overview',
+  'game-overview',
+  'test-overview',
+  'auth-overview',
+]);
 
 const normalizeMessage = (value: string | null | undefined): string =>
   typeof value === 'string'

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type {
   KangurTutorAnchorRegistration,
@@ -101,6 +101,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   persistedSelectionPageRect: DOMRect | null;
   persistedSelectionRect: DOMRect | null;
   sectionResponsePending: SectionExplainContext | null;
+  selectionGuidanceCalloutVisibleText: string | null;
   selectionResponsePending: PendingSelectionResponse | null;
   sessionContentId: string | null | undefined;
   sessionSurface: TutorSurface | null | undefined;
@@ -123,14 +124,13 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     hoveredSectionAnchorId,
     isAuthenticated,
     isLoading,
-    loginModalIsOpen,
     isOpen,
     isTutorHidden,
     mounted,
-    openLoginModal,
     persistedSelectionPageRect,
     persistedSelectionRect,
     sectionResponsePending,
+    selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
     sessionContentId,
     sessionSurface,
@@ -140,7 +140,6 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     viewportTick,
   } = input;
   const [authGuidedAnchorRetryTick, setAuthGuidedAnchorRetryTick] = useState(0);
-  const authGuidedModalFallbackKeyRef = useRef<string | null>(null);
 
   const homeOnboardingSteps = useMemo(() => {
     if (
@@ -309,9 +308,16 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   const isSectionGuidedTutorMode = isSectionGuidedTutorTarget(guidedTutorTarget);
   const isAskModalState = false;
   const isAskModalMode = false;
+  const selectionGuidanceCalloutText = isSelectionGuidedTutorMode
+    ? guidedTutorTarget.selectedText
+    : (selectionResponsePending?.selectedText ?? null);
   const showSelectionGuidanceCallout =
-    isSelectionGuidedTutorMode ||
-    (!isTutorHidden && isOpen && !isAskModalState && selectionResponsePending !== null);
+    selectionGuidanceCalloutText !== null &&
+    selectionGuidanceCalloutVisibleText === selectionGuidanceCalloutText &&
+    (
+      isSelectionGuidedTutorMode ||
+      (!isTutorHidden && isOpen && !isAskModalState && selectionResponsePending !== null)
+    );
   const showSectionGuidanceCallout =
     isSectionGuidedTutorMode ||
     (!isTutorHidden && isOpen && !isAskModalState && sectionResponsePending !== null);
@@ -359,9 +365,9 @@ export function useKangurAiTutorGuidedDisplayState(input: {
               ? guidedTutorTarget.authMode === 'create-account'
                 ? tutorContent.guidedCallout.authTitles.createAccountForm
                 : tutorContent.guidedCallout.authTitles.signInForm
-              : guidedTargetLabel
+              : guidedTargetLabel && isAuthGuidedTutorTarget(guidedTutorTarget)
                 ? formatKangurAiTutorTemplate(
-                  guidedTutorTarget?.authMode === 'create-account'
+                  guidedTutorTarget.authMode === 'create-account'
                     ? tutorContent.guidedCallout.authTitles.createAccountNav
                     : tutorContent.guidedCallout.authTitles.signInNav,
                   { label: guidedTargetLabel }
@@ -469,6 +475,36 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   }, [guidedFallbackRect, guidedTargetAnchor, guidedTutorTarget]);
 
   useEffect(() => {
+    if (!isAuthGuidedTutorTarget(guidedTutorTarget) || typeof document === 'undefined') {
+      return;
+    }
+
+    const anchorElement = guidedTargetAnchor
+      ? document.querySelector<HTMLElement>(
+        `[data-kangur-tutor-anchor-id="${guidedTargetAnchor.id}"]`
+      )
+      : document.querySelector<HTMLElement>(
+        `[data-kangur-tutor-anchor-surface="auth"][data-kangur-tutor-anchor-kind="${guidedTutorTarget.kind}"]`
+      );
+
+    if (!anchorElement || typeof anchorElement.scrollIntoView !== 'function') {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      anchorElement.scrollIntoView({
+        behavior: getMotionSafeScrollBehavior('smooth'),
+        block: 'center',
+        inline: 'nearest',
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [guidedFallbackRect, guidedTargetAnchor?.id, guidedTutorTarget]);
+
+  useEffect(() => {
     if (!homeOnboardingAnchor || typeof document === 'undefined') {
       return;
     }
@@ -492,76 +528,6 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       window.cancelAnimationFrame(frameId);
     };
   }, [homeOnboardingAnchor?.id]);
-
-  useEffect(() => {
-    if (!isAuthGuidedTutorTarget(guidedTutorTarget) || typeof document === 'undefined') {
-      authGuidedModalFallbackKeyRef.current = null;
-      return;
-    }
-
-    const shouldFallbackToLoginModal =
-      guidedTutorTarget.kind === 'login_action' || guidedTutorTarget.kind === 'create_account_action';
-
-    if (loginModalIsOpen || !shouldFallbackToLoginModal) {
-      authGuidedModalFallbackKeyRef.current = null;
-    }
-
-    let frameId: number | null = null;
-    let attemptCount = 0;
-    const fallbackRequestKey = shouldFallbackToLoginModal
-      ? `${guidedTutorTarget.authMode}:${guidedTutorTarget.kind}`
-      : null;
-
-    const resolveAnchorElement = (): HTMLElement | null => {
-      if (guidedTargetAnchor) {
-        return document.querySelector<HTMLElement>(
-          `[data-kangur-tutor-anchor-id="${guidedTargetAnchor.id}"]`
-        );
-      }
-
-      return document.querySelector<HTMLElement>(
-        `[data-kangur-tutor-anchor-surface="auth"][data-kangur-tutor-anchor-kind="${guidedTutorTarget.kind}"]`
-      );
-    };
-
-    const scrollAnchorIntoView = (): void => {
-      const anchorElement = resolveAnchorElement();
-      if (anchorElement) {
-        anchorElement.scrollIntoView({
-          behavior: getMotionSafeScrollBehavior('smooth'),
-          block: 'center',
-          inline: 'nearest',
-        });
-        return;
-      }
-
-      attemptCount += 1;
-      if (attemptCount >= 24) {
-        if (
-          shouldFallbackToLoginModal &&
-          !loginModalIsOpen &&
-          fallbackRequestKey &&
-          authGuidedModalFallbackKeyRef.current !== fallbackRequestKey
-        ) {
-          authGuidedModalFallbackKeyRef.current = fallbackRequestKey;
-          openLoginModal(undefined, {
-            authMode: guidedTutorTarget.authMode,
-          });
-        }
-        return;
-      }
-
-      frameId = window.requestAnimationFrame(scrollAnchorIntoView);
-    };
-
-    frameId = window.requestAnimationFrame(scrollAnchorIntoView);
-
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
-  }, [guidedTargetAnchor?.id, guidedTutorTarget, loginModalIsOpen, openLoginModal]);
 
   const guidedCalloutKey =
     guidedMode === 'home_onboarding'

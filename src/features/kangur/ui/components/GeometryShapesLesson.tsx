@@ -67,8 +67,12 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <div className='flex items-center gap-2'>
                 <span className='text-2xl'>{shape.emoji}</span>
                 <div>
-                  <p className='text-sm font-bold text-slate-800'>{shape.name}</p>
-                  <p className='text-xs text-slate-500'>{shape.details}</p>
+                  <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
+                    {shape.name}
+                  </p>
+                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+                    {shape.details}
+                  </p>
                 </div>
               </div>
             </KangurLessonCallout>

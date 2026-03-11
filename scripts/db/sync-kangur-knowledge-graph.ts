@@ -1,8 +1,10 @@
 import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
 import {
   buildKangurKnowledgeGraphSyncPayload,
+  summarizeKangurKnowledgeGraphSourceIntegrity,
   syncKangurKnowledgeGraphToNeo4j,
 } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
+import { enrichKangurKnowledgeGraphWithEmbeddings } from '@/features/kangur/server/knowledge-graph/semantic';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
@@ -12,16 +14,22 @@ import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 type CliOptions = {
   dryRun: boolean;
   locale: string;
+  withEmbeddings: boolean;
 };
 
 const parseArgs = (argv: string[]): CliOptions => {
   const dryRun = argv.includes('--dry-run');
+  const withEmbeddings =
+    argv.includes('--with-embeddings') || process.env['KANGUR_KNOWLEDGE_GRAPH_EMBEDDINGS'] === 'true';
   const localeArg = argv.find((arg) => arg.startsWith('--locale='));
   const locale = localeArg?.split('=').slice(1).join('=').trim() || 'pl';
-  return { dryRun, locale };
+  return { dryRun, locale, withEmbeddings };
 };
 
-const summarizePayload = (payload: ReturnType<typeof buildKangurKnowledgeGraphSyncPayload>) => {
+const summarizePayload = (
+  payload: ReturnType<typeof buildKangurKnowledgeGraphSyncPayload>,
+  sourceIntegrity: ReturnType<typeof summarizeKangurKnowledgeGraphSourceIntegrity>
+) => {
   const nodeCounts = payload.nodes.reduce<Record<string, number>>((acc, node) => {
     const kind = String(node['kind'] ?? 'unknown');
     acc[kind] = (acc[kind] ?? 0) + 1;
@@ -38,8 +46,23 @@ const summarizePayload = (payload: ReturnType<typeof buildKangurKnowledgeGraphSy
     graphKey: payload.graphKey,
     nodeCount: payload.nodes.length,
     edgeCount: payload.edges.length,
+    semanticNodeCount: payload.nodes.filter(
+      (node) => typeof node['semanticText'] === 'string' && String(node['semanticText']).trim()
+    ).length,
+    embeddedNodeCount: payload.nodes.filter(
+      (node) => Array.isArray(node['embedding']) && (node['embedding'] as unknown[]).length > 0
+    ).length,
+    embeddingModel:
+      payload.nodes.find(
+        (node) => typeof node['embeddingModel'] === 'string' && String(node['embeddingModel']).trim()
+      )?.['embeddingModel'] ?? null,
     nodeCounts,
     edgeCounts,
+    sourceIntegrity: {
+      canonicalNodeCount: sourceIntegrity.canonicalNodeCount,
+      validCanonicalNodeCount: sourceIntegrity.validCanonicalNodeCount,
+      invalidCanonicalNodeCount: sourceIntegrity.invalidCanonicalNodeCount,
+    },
   };
 };
 
@@ -51,11 +74,15 @@ const main = async (): Promise<void> => {
   const nativeGuideStore = await getKangurAiTutorNativeGuideStore(options.locale).catch(
     () => DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE
   );
-  const snapshot = buildKangurKnowledgeGraph({
+  const baseSnapshot = buildKangurKnowledgeGraph({
     locale: options.locale,
     tutorContent,
     nativeGuideStore,
   });
+  const snapshot = options.withEmbeddings
+    ? await enrichKangurKnowledgeGraphWithEmbeddings(baseSnapshot)
+    : baseSnapshot;
+  const sourceIntegrity = summarizeKangurKnowledgeGraphSourceIntegrity(snapshot);
   const payload = buildKangurKnowledgeGraphSyncPayload(snapshot);
 
   if (options.dryRun || !isNeo4jEnabled()) {
@@ -64,7 +91,7 @@ const main = async (): Promise<void> => {
         {
           mode: options.dryRun ? 'dry-run' : 'preview',
           neo4jEnabled: isNeo4jEnabled(),
-          summary: summarizePayload(payload),
+          summary: summarizePayload(payload, sourceIntegrity),
         },
         null,
         2

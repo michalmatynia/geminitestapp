@@ -6,16 +6,12 @@ import {
   formatGuidedArrowheadTransition,
   getFloatingTutorArrowheadGeometry,
   GUIDED_CALLOUT_HEIGHT,
+  getGuidedCalloutClusterLayout,
   getGuidedCalloutLayout,
-  getGuidedSelectionCalloutAttachmentHeight,
   getMotionPositionPoint,
   getSelectionSpotlightStyle,
   resolveContinuousRotationDegrees,
 } from './KangurAiTutorGuidedLayout';
-import {
-  getAttachedAvatarStyleForSurface,
-  getGuidedAvatarAttachmentPlacement,
-} from './KangurAiTutorAvatarAttachment';
 import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfile } from './KangurAiTutorWidget.shared';
 
 type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
@@ -42,33 +38,6 @@ const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 6;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
-
-const createRect = (left: number, top: number, width: number, height: number): DOMRect => {
-  if (typeof DOMRect === 'function') {
-    return new DOMRect(left, top, width, height);
-  }
-
-  return {
-    x: left,
-    y: top,
-    width,
-    height,
-    top,
-    right: left + width,
-    bottom: top + height,
-    left,
-    toJSON: () => ({
-      x: left,
-      y: top,
-      width,
-      height,
-      top,
-      right: left + width,
-      bottom: top + height,
-      left,
-    }),
-  } as DOMRect;
-};
 
 const getAnchorAvatarStyle = (
   rect: DOMRect,
@@ -148,45 +117,30 @@ export function useKangurAiTutorGuidedShellState(input: {
           : null;
       })()
       : null;
-  const guidedCalloutLayout = guidedFocusRect
-    ? getGuidedCalloutLayout(
+  const guidedCalloutAttachmentHeight = GUIDED_CALLOUT_HEIGHT;
+  const guidedCalloutClusterLayout = guidedFocusRect
+    ? getGuidedCalloutClusterLayout(
       guidedFocusRect,
       viewport,
-      [guidedSelectionCalloutProtectedRect].filter((rect): rect is DOMRect => Boolean(rect))
+      [guidedSelectionCalloutProtectedRect].filter((rect): rect is DOMRect => Boolean(rect)),
+      {
+        calloutHeight: guidedCalloutAttachmentHeight,
+      }
     )
     : null;
-  const guidedCalloutStyle = guidedCalloutLayout?.style ?? null;
-  const guidedCalloutAttachmentHeight =
-    guidedCalloutStyle && typeof guidedCalloutStyle.width === 'number'
-      ? showSelectionGuidanceCallout
-        ? getGuidedSelectionCalloutAttachmentHeight(guidedCalloutStyle.width)
-        : GUIDED_CALLOUT_HEIGHT
-      : GUIDED_CALLOUT_HEIGHT;
-  const guidedCalloutRect =
-    guidedCalloutStyle &&
-    typeof guidedCalloutStyle.left === 'number' &&
-    typeof guidedCalloutStyle.top === 'number' &&
-    typeof guidedCalloutStyle.width === 'number'
-      ? createRect(
-        guidedCalloutStyle.left,
-        guidedCalloutStyle.top,
-        guidedCalloutStyle.width,
-        guidedCalloutAttachmentHeight
-      )
-      : null;
+  const guidedCalloutLayout = guidedCalloutClusterLayout
+    ? {
+      entryDirection: guidedCalloutClusterLayout.entryDirection,
+      placement: guidedCalloutClusterLayout.placement,
+      style: guidedCalloutClusterLayout.style,
+    }
+    : null;
+  const guidedCalloutStyle = guidedCalloutClusterLayout?.style ?? null;
   const guidedAvatarLayout =
-    guidedCalloutRect && guidedCalloutLayout
+    guidedCalloutClusterLayout
       ? {
-        placement: getGuidedAvatarAttachmentPlacement(guidedCalloutLayout.placement),
-        style: getAttachedAvatarStyleForSurface({
-          placement: getGuidedAvatarAttachmentPlacement(guidedCalloutLayout.placement),
-          surface: {
-            height: guidedCalloutRect.height,
-            left: guidedCalloutRect.left,
-            top: guidedCalloutRect.top,
-            width: guidedCalloutRect.width,
-          },
-        }),
+        placement: guidedCalloutClusterLayout.avatarPlacement,
+        style: guidedCalloutClusterLayout.avatarStyle,
       }
       : guidedFocusRect
         ? { placement: 'top' as const, style: getAnchorAvatarStyle(guidedFocusRect, viewport) }
@@ -237,7 +191,7 @@ export function useKangurAiTutorGuidedShellState(input: {
     motionProfile.guidedAvatarTransition.duration * 0.78
   );
   const selectionSpotlightStyle =
-    showSelectionGuidanceCallout && guidedSelectionSpotlightRect
+    guidedMode === 'selection' && guidedSelectionSpotlightRect
       ? getSelectionSpotlightStyle(guidedSelectionSpotlightRect)
       : null;
   const isGuidedTutorMode = !isTutorHidden && guidedMode !== null;

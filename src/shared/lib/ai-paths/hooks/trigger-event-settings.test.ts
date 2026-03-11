@@ -296,6 +296,54 @@ describe('loadPathConfigsFromSettings', () => {
     await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(/config id does not match/i);
   });
 
+  it('throws when a stored config contains an invalid trigger node payload', async () => {
+    const pathId = 'path-invalid-trigger-node';
+    const brokenConfig = {
+      ...createDefaultPathConfig(pathId),
+      name: 'Broken Trigger Path',
+      nodes: [
+        {
+          id: 'node-broken-trigger',
+          type: 'trigger',
+        },
+      ],
+      edges: [],
+    };
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Broken Trigger Path' }]) },
+      { key: `${PATH_CONFIG_PREFIX}${pathId}`, value: JSON.stringify(brokenConfig) },
+    ];
+
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /invalid ai path trigger node payload/i
+    );
+  });
+
+  it('recovers seeded BLWo starter defaults when the stored config payload is broken', async () => {
+    const pathId = 'path_base_export_blwo_v1';
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Base Export Workflow (BLWo)' }]) },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: JSON.stringify({
+          id: pathId,
+          name: 'Base Export Workflow (BLWo)',
+          nodes: [{ id: 'node-broken-trigger', type: 'trigger' }],
+          edges: [],
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.settingsPathOrder).toEqual([pathId]);
+    expect(loaded.configs[pathId]?.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.any(String)
+    );
+  });
+
   it('loads partial stored configs without inheriting stale default node references', async () => {
     const pathId = 'path-partial-stored-trigger';
     const data: Array<{ key: string; value: string }> = [
@@ -470,6 +518,123 @@ describe('loadPathConfigsFromSettings', () => {
     expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(16);
   });
 
+  it('repairs legacy database provider aliases before trigger preflight validation', async () => {
+    const pathId = 'path-legacy-trigger-provider-aliases';
+    const data: Array<{ key: string; value: string }> = [
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: pathId, name: 'Legacy Trigger Provider Aliases' }]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: makeConfig(pathId, 'Legacy Trigger Provider Aliases', {
+          nodes: [
+            {
+              id: 'node-trigger',
+              type: 'trigger',
+              title: 'Trigger',
+              description: '',
+              position: { x: 0, y: 0 },
+              data: {},
+              inputs: [],
+              outputs: ['trigger'],
+              config: { trigger: { event: 'manual' } },
+              createdAt: TS,
+              updatedAt: null,
+            },
+            {
+              id: 'node-database-query',
+              type: 'database',
+              title: 'Database Query',
+              description: '',
+              position: { x: 320, y: 0 },
+              data: {},
+              inputs: ['trigger', 'value'],
+              outputs: ['result', 'bundle'],
+              config: {
+                database: {
+                  operation: 'query',
+                  query: {
+                    provider: 'prisma',
+                    collection: 'products',
+                    mode: 'custom',
+                    preset: 'by_id',
+                    field: '_id',
+                    idType: 'string',
+                    queryTemplate: '{"_id":"{{value}}"}',
+                    limit: 20,
+                    sort: '',
+                    projection: '',
+                    single: false,
+                  },
+                },
+              },
+              createdAt: TS,
+              updatedAt: null,
+            },
+            {
+              id: 'node-db-schema',
+              type: 'db_schema',
+              title: 'Database Schema',
+              description: '',
+              position: { x: 640, y: 0 },
+              data: {},
+              inputs: [],
+              outputs: ['result'],
+              config: {
+                db_schema: {
+                  provider: 'all',
+                  mode: 'all',
+                  collections: [],
+                  includeFields: true,
+                  includeRelations: true,
+                  formatAs: 'text',
+                },
+              },
+              createdAt: TS,
+              updatedAt: null,
+            },
+          ] satisfies AiNode[],
+          edges: [],
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
+      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
+    )?.[1];
+    const repairedConfig = JSON.parse(repairedPayload as string) as {
+      nodes?: Array<{
+        id?: string;
+        config?: {
+          database?: {
+            query?: {
+              provider?: string;
+            };
+          };
+          db_schema?: {
+            provider?: string;
+          };
+        };
+      }>;
+    };
+
+    expect(
+      loaded.configs[pathId]?.nodes.find((node) => node.type === 'database')?.config?.database?.query
+        ?.provider
+    ).toBe('auto');
+    expect(
+      loaded.configs[pathId]?.nodes.find((node) => node.type === 'db_schema')?.config?.db_schema?.provider
+    ).toBe('auto');
+    expect(
+      repairedConfig.nodes?.find((node) => node.config?.database)?.config?.database?.query?.provider
+    ).toBe('auto');
+    expect(
+      repairedConfig.nodes?.find((node) => node.config?.db_schema)?.config?.db_schema?.provider
+    ).toBe('auto');
+  });
+
   it('derives a fallback name from the path id when both config and index names are empty', async () => {
     const data: Array<{ key: string; value: string }> = [
       {
@@ -493,7 +658,7 @@ describe('buildSelectiveTriggerSettingsData', () => {
     ]);
 
     await expect(buildSelectiveTriggerSettingsData('path-missing')).rejects.toThrow(
-      /missing preferred path config/i
+      'Trigger button is bound to missing AI Path "path-missing". Update the button configuration.'
     );
   });
 
@@ -503,7 +668,7 @@ describe('buildSelectiveTriggerSettingsData', () => {
     ]);
 
     await expect(buildSelectiveTriggerSettingsData('path-empty')).rejects.toThrow(
-      /missing preferred path config/i
+      'Trigger button is bound to missing AI Path "path-empty". Update the button configuration.'
     );
   });
 
@@ -567,7 +732,7 @@ describe('loadTriggerSettingsData', () => {
     expect(mockedFetchAll).not.toHaveBeenCalled();
   });
 
-  it('falls back to mode=full when selective load throws', async () => {
+  it('falls back to mode=full when selective load fails with a transport error', async () => {
     mockedFetchByKeys.mockRejectedValue(new Error('Selective fetch failed'));
     const allSettings = settingsFor([{ id: 'path-1', name: 'Path One' }]);
     mockedFetchAll.mockResolvedValue(allSettings);
@@ -576,5 +741,15 @@ describe('loadTriggerSettingsData', () => {
 
     expect(result.mode).toBe('full');
     expect(mockedFetchAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fall back to mode=full when the preferred bound path config is missing', async () => {
+    mockedFetchByKeys.mockResolvedValue([]);
+
+    await expect(loadTriggerSettingsData({ preferredPathId: 'path-missing' })).rejects.toThrow(
+      'Trigger button is bound to missing AI Path "path-missing". Update the button configuration.'
+    );
+
+    expect(mockedFetchAll).not.toHaveBeenCalled();
   });
 });

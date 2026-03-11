@@ -103,7 +103,6 @@ export const productAiJobTypeSchema = z.enum([
   'attribute_extraction',
   'image_analysis',
   'db_backup',
-  'db_sync',
   'graph_model',
   'ai_path',
 ]);

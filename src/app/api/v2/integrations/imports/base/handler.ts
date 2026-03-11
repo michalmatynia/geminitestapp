@@ -14,6 +14,7 @@ import {
   mapBaseProduct,
   extractBaseImageUrls,
 } from '@/features/integrations/server';
+import { resolvePriceGroupContext } from '@/features/integrations/services/imports/base-import-service-context';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import {
   getCatalogRepository,
@@ -35,8 +36,6 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 
 export const requestSchema = baseImportInventoriesPayloadSchema.or(
   baseImportWarehousesPayloadSchema
@@ -55,111 +54,6 @@ const isImportListItem = (item: MappedItem): item is ImportListItem =>
   item.baseProductId.trim().length > 0 &&
   typeof item.sku === 'string' &&
   item.sku.trim().length > 0;
-
-type PriceGroupLookup = {
-  id: string;
-  groupId?: string | null;
-  currencyId?: string | null;
-  currencyCode?: string | null;
-  isDefault?: boolean;
-};
-
-const normalizeCurrencyCode = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const compact = value
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z]/g, '');
-  return compact.length === 3 ? compact : null;
-};
-
-const addCurrencyCandidate = (target: Set<string>, value: unknown): void => {
-  const code = normalizeCurrencyCode(value);
-  if (code) target.add(code);
-};
-
-const resolvePriceGroupContext = async (
-  provider: Awaited<ReturnType<typeof getProductDataProvider>>,
-  preferredPriceGroupId?: string | null
-): Promise<{ defaultPriceGroupId: string | null; preferredCurrencies: string[] }> => {
-  const projectedFields = { id: 1, groupId: 1, currencyId: 1, currencyCode: 1 } as const;
-
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
-    const byId = preferredPriceGroupId?.trim()
-      ? await priceGroupCollection.findOne(
-        { id: preferredPriceGroupId.trim() },
-        { projection: projectedFields }
-      )
-      : null;
-    const fallbackDefault = byId
-      ? null
-      : await priceGroupCollection.findOne({ isDefault: true }, { projection: projectedFields });
-    const resolved = byId ?? fallbackDefault;
-    if (!resolved?.id) {
-      return { defaultPriceGroupId: null, preferredCurrencies: [] };
-    }
-    const preferredCurrencies = new Set<string>();
-    addCurrencyCandidate(preferredCurrencies, resolved.currencyCode);
-    addCurrencyCandidate(preferredCurrencies, resolved.groupId);
-    addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
-    if (resolved.currencyId) {
-      try {
-        const currency = await mongo
-          .collection<{ id?: string; code?: string }>('currencies')
-          .findOne(
-            {
-              $or: [{ id: resolved.currencyId }, { code: resolved.currencyId }],
-            },
-            { projection: { code: 1, id: 1 } }
-          );
-        addCurrencyCandidate(preferredCurrencies, currency?.code);
-      } catch {
-        // Currency lookup is optional for import mapping.
-      }
-    }
-    return {
-      defaultPriceGroupId: resolved.id,
-      preferredCurrencies: Array.from(preferredCurrencies),
-    };
-  }
-
-  const byId = preferredPriceGroupId?.trim()
-    ? await prisma.priceGroup.findUnique({
-      where: { id: preferredPriceGroupId.trim() },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    })
-    : null;
-  const fallbackDefault = byId
-    ? null
-    : await prisma.priceGroup.findFirst({
-      where: { isDefault: true },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    });
-  const resolved = byId ?? fallbackDefault;
-  if (!resolved?.id) {
-    return { defaultPriceGroupId: null, preferredCurrencies: [] };
-  }
-  const preferredCurrencies = new Set<string>();
-  addCurrencyCandidate(preferredCurrencies, resolved.currency?.code);
-  addCurrencyCandidate(preferredCurrencies, resolved.groupId);
-  addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
-  return {
-    defaultPriceGroupId: resolved.id,
-    preferredCurrencies: Array.from(preferredCurrencies),
-  };
-};
 
 export async function postBaseImportsHandler(
   _req: NextRequest,

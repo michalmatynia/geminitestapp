@@ -227,11 +227,13 @@ export function useKangurAiTutorAvatarDrag(input: {
   isAvatarDragging: boolean;
   isOpen: boolean;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setHomeOnboardingStepIndex: Dispatch<SetStateAction<number | null>>;
   setHoveredSectionAnchorId: Dispatch<SetStateAction<string | null>>;
   setIsAvatarDragging: Dispatch<SetStateAction<boolean>>;
+  setSelectionGuidanceCalloutVisibleText: Dispatch<SetStateAction<string | null>>;
   startGuidedSectionExplanation: (anchor: SectionAnchor) => void;
   suppressAvatarClickRef: MutableRefObject<boolean>;
   handleAvatarTap: () => void;
@@ -247,11 +249,13 @@ export function useKangurAiTutorAvatarDrag(input: {
     isAvatarDragging,
     isOpen,
     selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
     setDraggedAvatarPoint,
     setGuidedTutorTarget,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
     setIsAvatarDragging,
+    setSelectionGuidanceCalloutVisibleText,
     startGuidedSectionExplanation,
     suppressAvatarClickRef,
     handleAvatarTap,
@@ -324,6 +328,11 @@ export function useKangurAiTutorAvatarDrag(input: {
             window.clearTimeout(selectionExplainTimeoutRef.current);
             selectionExplainTimeoutRef.current = null;
           }
+          if (selectionGuidanceRevealTimeoutRef.current !== null) {
+            window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+            selectionGuidanceRevealTimeoutRef.current = null;
+          }
+          setSelectionGuidanceCalloutVisibleText(null);
           setGuidedTutorTarget(null);
         }
       }
@@ -343,10 +352,12 @@ export function useKangurAiTutorAvatarDrag(input: {
       guidedTutorTarget,
       homeOnboardingStepIndex,
       selectionExplainTimeoutRef,
+      selectionGuidanceRevealTimeoutRef,
       setDraggedAvatarPoint,
       setGuidedTutorTarget,
       setHomeOnboardingStepIndex,
       setHoveredSectionAnchorId,
+      setSelectionGuidanceCalloutVisibleText,
       suppressAvatarClickRef,
       tutorAnchorContext,
       viewport,

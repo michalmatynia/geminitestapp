@@ -2,20 +2,15 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraft,
   type CreateProductDraftInput,
   type UpdateProductDraftInput,
   type ProductDraftOpenFormTab,
-  type DraftProvider,
   type ProductParameterValue,
 } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 type MongoDraftDoc = {
   _id: string;
@@ -90,11 +85,6 @@ const normalizeOpenProductFormTab = (value: unknown): ProductDraftOpenFormTab =>
   const trimmed = value.trim();
   if (!openProductFormTabOptions.has(trimmed)) return 'general';
   return trimmed as ProductDraftOpenFormTab;
-};
-
-const getDraftProvider = async (): Promise<DraftProvider> => {
-  const provider = await getProductDataProvider();
-  return provider;
 };
 
 // MongoDB implementation
@@ -402,192 +392,17 @@ const deleteDraft_Mongo = async (id: string): Promise<boolean> => {
   return result.deletedCount > 0;
 };
 
-// Prisma implementation
-const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
-  const drafts = await prisma.productDraft.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
-
-  return drafts.map((draft: Prisma.ProductDraftGetPayload<Record<string, never>>) => ({
-    ...draft,
-    createdAt: draft.createdAt.toISOString(),
-    updatedAt: draft.updatedAt.toISOString(),
-    catalogIds: draft.catalogIds as string[],
-    categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
-    tagIds: draft.tagIds as string[],
-    producerIds: normalizeStringArray(draft.producerIds),
-    parameters: draft.parameters as ProductParameterValue[],
-    validatorEnabled: true,
-    formatterEnabled: false,
-    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
-    iconColor: normalizeIconColor(draft.iconColor),
-    openProductFormTab: 'general',
-    imageLinks: draft.imageLinks as string[],
-  }));
-};
-
-const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
-  const draft = await prisma.productDraft.findUnique({
-    where: { id },
-  });
-
-  if (!draft) return null;
-
-  return {
-    ...draft,
-    createdAt: draft.createdAt.toISOString(),
-    updatedAt: draft.updatedAt.toISOString(),
-    catalogIds: draft.catalogIds as string[],
-    categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
-    tagIds: draft.tagIds as string[],
-    producerIds: normalizeStringArray(draft.producerIds),
-    parameters: draft.parameters as ProductParameterValue[],
-    validatorEnabled: true,
-    formatterEnabled: false,
-    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
-    iconColor: normalizeIconColor(draft.iconColor),
-    openProductFormTab: 'general',
-    imageLinks: draft.imageLinks as string[],
-  };
-};
-
-const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
-  const draft = await prisma.productDraft.create({
-    data: {
-      name: input.name,
-      description: input.description,
-      sku: input.sku,
-      ean: input.ean,
-      gtin: input.gtin,
-      asin: input.asin,
-      name_en: input.name_en,
-      name_pl: input.name_pl,
-      name_de: input.name_de,
-      description_en: input.description_en,
-      description_pl: input.description_pl,
-      description_de: input.description_de,
-      weight: input.weight,
-      sizeLength: input.sizeLength,
-      sizeWidth: input.sizeWidth,
-      length: input.length,
-      price: input.price,
-      supplierName: input.supplierName,
-      supplierLink: input.supplierLink,
-      priceComment: input.priceComment,
-      stock: input.stock,
-      catalogIds: input.catalogIds || [],
-      categoryId: input.categoryId || null,
-      tagIds: input.tagIds || [],
-      producerIds: normalizeStringArray(input.producerIds),
-      parameters: input.parameters || [],
-      defaultPriceGroupId: input.defaultPriceGroupId,
-      active: input.active ?? true,
-      icon: input.icon,
-      iconColorMode: normalizeIconColorMode(input.iconColorMode),
-      iconColor: normalizeIconColor(input.iconColor),
-      imageLinks: input.imageLinks || [],
-      baseProductId: input.baseProductId,
-    } as Prisma.ProductDraftCreateInput, // Type assertion needed due to exactOptionalPropertyTypes
-  });
-
-  return {
-    ...draft,
-    createdAt: draft.createdAt.toISOString(),
-    updatedAt: draft.updatedAt.toISOString(),
-    catalogIds: draft.catalogIds as string[],
-    categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
-    tagIds: draft.tagIds as string[],
-    producerIds: normalizeStringArray(draft.producerIds),
-    parameters: draft.parameters as ProductParameterValue[],
-    validatorEnabled: true,
-    formatterEnabled: false,
-    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
-    iconColor: normalizeIconColor(draft.iconColor),
-    openProductFormTab: 'general',
-    imageLinks: draft.imageLinks as string[],
-  };
-};
-
-const updateDraft_Prisma = async (
-  id: string,
-  input: UpdateProductDraftInput
-): Promise<ProductDraft | null> => {
-  try {
-    const {
-      validatorEnabled: _validatorEnabled,
-      formatterEnabled: _formatterEnabled,
-      openProductFormTab: _openProductFormTab,
-      ...updateData
-    } = input;
-    if ('iconColorMode' in input) {
-      updateData.iconColorMode = normalizeIconColorMode(input.iconColorMode);
-    }
-    if ('iconColor' in input) {
-      updateData.iconColor = normalizeIconColor(input.iconColor);
-    }
-
-    const draft = await prisma.productDraft.update({
-      where: { id },
-      data: updateData as Prisma.ProductDraftUpdateInput, // Type assertion needed due to exactOptionalPropertyTypes
-    });
-
-    return {
-      ...draft,
-      createdAt: draft.createdAt.toISOString(),
-      updatedAt: draft.updatedAt.toISOString(),
-      catalogIds: draft.catalogIds as string[],
-      categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
-      tagIds: draft.tagIds as string[],
-      producerIds: normalizeStringArray(draft.producerIds),
-      parameters: draft.parameters as ProductParameterValue[],
-      validatorEnabled: true,
-      formatterEnabled: false,
-      iconColorMode: normalizeIconColorMode(draft.iconColorMode),
-      iconColor: normalizeIconColor(draft.iconColor),
-      openProductFormTab: 'general',
-      imageLinks: draft.imageLinks as string[],
-    };
-  } catch {
-    return null;
-  }
-};
-
-const deleteDraft_Prisma = async (id: string): Promise<boolean> => {
-  try {
-    await prisma.productDraft.delete({
-      where: { id },
-    });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 // Public API
-export const listDrafts = async (): Promise<ProductDraft[]> => {
-  const provider = await getDraftProvider();
-  return provider === 'mongodb' ? listDrafts_Mongo() : listDrafts_Prisma();
-};
+export const listDrafts = async (): Promise<ProductDraft[]> => listDrafts_Mongo();
 
-export const getDraft = async (id: string): Promise<ProductDraft | null> => {
-  const provider = await getDraftProvider();
-  return provider === 'mongodb' ? getDraft_Mongo(id) : getDraft_Prisma(id);
-};
+export const getDraft = async (id: string): Promise<ProductDraft | null> => getDraft_Mongo(id);
 
-export const createDraft = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
-  const provider = await getDraftProvider();
-  return provider === 'mongodb' ? createDraft_Mongo(input) : createDraft_Prisma(input);
-};
+export const createDraft = async (input: CreateProductDraftInput): Promise<ProductDraft> =>
+  createDraft_Mongo(input);
 
 export const updateDraft = async (
   id: string,
   input: UpdateProductDraftInput
-): Promise<ProductDraft | null> => {
-  const provider = await getDraftProvider();
-  return provider === 'mongodb' ? updateDraft_Mongo(id, input) : updateDraft_Prisma(id, input);
-};
+): Promise<ProductDraft | null> => updateDraft_Mongo(id, input);
 
-export const deleteDraft = async (id: string): Promise<boolean> => {
-  const provider = await getDraftProvider();
-  return provider === 'mongodb' ? deleteDraft_Mongo(id) : deleteDraft_Prisma(id);
-};
+export const deleteDraft = async (id: string): Promise<boolean> => deleteDraft_Mongo(id);

@@ -12,9 +12,9 @@ describe('Kangur tutor page coverage manifest', () => {
   it('keeps a stable inventory summary for the current Kangur UI', () => {
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_SUMMARY).toEqual({
       total: 50,
-      nativeGuideReady: 29,
+      nativeGuideReady: 50,
       contextOnly: 0,
-      contractGap: 21,
+      contractGap: 0,
     });
   });
 
@@ -24,7 +24,7 @@ describe('Kangur tutor page coverage manifest', () => {
   });
 
   it('tracks the current explicit tutor-anchor coverage points that are already Mongo-ready', () => {
-    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO).toHaveLength(29);
+    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO).toHaveLength(50);
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => entry.id)).toEqual(
       expect.arrayContaining([
         'game-home-hero',
@@ -45,6 +45,16 @@ describe('Kangur tutor page coverage manifest', () => {
         'tests-question',
         'tests-review',
         'tests-summary',
+        'learner-profile-hero',
+        'learner-profile-recommendations',
+        'learner-profile-sessions',
+        'parent-dashboard-guest-hero',
+        'parent-dashboard-tabs',
+        'parent-dashboard-ai-tutor',
+        'login-page-form',
+        'login-page-identifier-field',
+        'shared-nav-create-account-action',
+        'shared-nav-login-action',
       ])
     );
   });
@@ -53,21 +63,7 @@ describe('Kangur tutor page coverage manifest', () => {
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_CONTEXT_ONLY).toEqual([]);
   });
 
-  it('keeps contract gaps explicit for profile, parent, and auth surfaces', () => {
-    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_CONTRACT_GAPS.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining([
-        'learner-profile-hero',
-        'learner-profile-recommendations',
-        'parent-dashboard-hero',
-        'parent-dashboard-ai-tutor',
-        'login-page-form',
-        'shared-nav-login-action',
-      ])
-    );
-    expect(
-      KANGUR_AI_TUTOR_PAGE_COVERAGE_CONTRACT_GAPS.every(
-        (entry) => entry.surface === null || entry.surface === 'auth'
-      )
-    ).toBe(true);
+  it('has no remaining contract gaps after auth coverage is seeded into Mongo', () => {
+    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_CONTRACT_GAPS).toEqual([]);
   });
 });

@@ -1,23 +1,10 @@
 import 'server-only';
 
 export * from '@/shared/lib/db/services/database-backup';
-export * from '@/shared/lib/db/services/database-sync';
 export * from '@/shared/lib/db/services/database-json-backup';
 export * from '@/shared/lib/db/services/database-collection-copy';
 export * from '@/shared/lib/db/services/sync-utils';
 export * from '@/shared/contracts/database';
-
-export {
-  backupsDir as pgBackupsDir,
-  ensureBackupsDir as ensurePgBackupsDir,
-  getDatabaseUrl,
-  getPgConnectionUrl,
-  getDatabaseName,
-  getPgDumpCommand,
-  getPgRestoreCommand,
-  execFileAsync as pgExecFileAsync,
-  assertValidBackupName as assertValidPgBackupName,
-} from '@/shared/lib/db/utils/postgres';
 
 export {
   backupsDir as mongoBackupsDir,

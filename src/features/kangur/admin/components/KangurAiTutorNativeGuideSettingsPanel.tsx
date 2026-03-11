@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
 import {
   validateKangurAiTutorOnboardingStore,
 } from '@/features/kangur/ai-tutor-onboarding-validation';
@@ -67,6 +68,14 @@ const normalizeEntries = (
 type ParsedEditorState = {
   store: KangurAiTutorNativeGuideStore | null;
   error: string | null;
+};
+
+type NativeGuideManifestCoverageRow = {
+  id: string;
+  pageKey: string;
+  title: string;
+  missingGuideIds: string[];
+  disabledGuideIds: string[];
 };
 
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
@@ -159,6 +168,38 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
     }
     return counts;
   }, [validationIssues]);
+  const manifestCoverage = useMemo(() => {
+    if (!parsedState.store) {
+      return null;
+    }
+
+    const entriesById = new Map(parsedState.store.entries.map((entry) => [entry.id, entry]));
+    const rows: NativeGuideManifestCoverageRow[] = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map(
+      (section) => {
+        const missingGuideIds = section.currentKnowledgeEntryIds.filter((entryId) => !entriesById.has(entryId));
+        const disabledGuideIds = section.currentKnowledgeEntryIds.filter(
+          (entryId) => entriesById.get(entryId)?.enabled === false
+        );
+
+        return {
+          id: section.id,
+          pageKey: section.pageKey,
+          title: section.title,
+          missingGuideIds,
+          disabledGuideIds,
+        };
+      }
+    );
+    const attentionRows = rows.filter(
+      (row) => row.missingGuideIds.length > 0 || row.disabledGuideIds.length > 0
+    );
+
+    return {
+      totalSections: rows.length,
+      coveredSections: rows.length - attentionRows.length,
+      attentionRows,
+    };
+  }, [parsedState.store]);
 
   useEffect(() => {
     setFollowUpActionsEditorValue(
@@ -446,6 +487,70 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
             blockingIssueCount={blockingValidationIssues.length}
             collectionIssues={collectionValidationIssues}
           />
+        ) : null}
+
+        {manifestCoverage ? (
+          <Card variant='subtle' padding='md' className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'>
+            <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Manifest coverage</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Compares the current Mongo native-guide store against every tracked Kangur page
+                  section in the coverage manifest.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Badge
+                  variant={
+                    manifestCoverage.attentionRows.length === 0 ? 'secondary' : 'warning'
+                  }
+                >
+                  {manifestCoverage.coveredSections} / {manifestCoverage.totalSections} tracked
+                  sections covered
+                </Badge>
+                <Badge
+                  variant={
+                    manifestCoverage.attentionRows.length === 0 ? 'outline' : 'warning'
+                  }
+                >
+                  {manifestCoverage.attentionRows.length === 0
+                    ? 'No manifest gaps'
+                    : manifestCoverage.attentionRows.length === 1
+                      ? '1 section needs attention'
+                      : `${manifestCoverage.attentionRows.length} sections need attention`}
+                </Badge>
+              </div>
+            </div>
+
+            {manifestCoverage.attentionRows.length > 0 ? (
+              <div className='mt-3 space-y-2'>
+                {manifestCoverage.attentionRows.slice(0, 8).map((row) => (
+                  <div
+                    key={row.id}
+                    className='rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-950'
+                  >
+                    <div className='font-semibold'>
+                      {row.pageKey}: {row.title}
+                    </div>
+                    {row.missingGuideIds.length > 0 ? (
+                      <div className='mt-1'>
+                        Missing guide ids: {row.missingGuideIds.join(', ')}
+                      </div>
+                    ) : null}
+                    {row.disabledGuideIds.length > 0 ? (
+                      <div className='mt-1'>
+                        Disabled guide ids: {row.disabledGuideIds.join(', ')}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className='mt-3 text-sm text-muted-foreground'>
+                Every tracked Kangur section is backed by an enabled Mongo native-guide entry.
+              </p>
+            )}
+          </Card>
         ) : null}
 
         {parsedState.store ? (

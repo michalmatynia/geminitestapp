@@ -69,6 +69,10 @@ export const normalizeConversationFocusKind = (
     case 'question':
     case 'review':
     case 'summary':
+    case 'login_action':
+    case 'create_account_action':
+    case 'login_identifier_field':
+    case 'login_form':
       return focusKind;
     default:
       return undefined;
@@ -119,6 +123,8 @@ export const getTutorSurfaceLabel = (
       return 'Profil';
     case 'parent_dashboard':
       return 'Panel rodzica';
+    case 'auth':
+      return 'Logowanie';
     default:
       return tutorContent.panelChrome.surfaceLabels.lesson;
   }
@@ -139,6 +145,8 @@ export const getTutorContextFallbackTarget = (
       return 'Nowy panel profilu';
     case 'parent_dashboard':
       return 'Nowy panel rodzica';
+    case 'auth':
+      return 'Ekran logowania';
     default:
       return tutorContent.panelChrome.contextFallbackTargets.lesson;
   }

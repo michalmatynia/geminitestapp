@@ -10,16 +10,8 @@ import type {
   ListSystemLogsInputDto,
   ListSystemLogsResultDto as ListSystemLogsResult,
 } from '@/shared/contracts/observability';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma, type SystemLog } from '@/shared/lib/db/prisma-client';
-import {
-  getPrismaSystemLogMetricsWithMinDuration,
-  matchesMinDurationMs,
-  toPrismaSystemLogRecord,
-} from '@/shared/lib/observability/system-log-prisma-helpers';
 
 type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
   createdAt?: Date;
@@ -73,14 +65,6 @@ const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => 
   });
 };
 
-const isMissingPrismaTable = (error: unknown): boolean => {
-  const errorCode =
-    typeof error === 'object' && error !== null && 'code' in error
-      ? (error as { code?: unknown }).code
-      : undefined;
-  return errorCode === 'P2021' || errorCode === 'P2022';
-};
-
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
   createdAt: record.createdAt ?? new Date().toISOString(),
@@ -125,124 +109,6 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   createdAt: (doc.createdAt ?? new Date()).toISOString(),
   updatedAt: null,
 });
-
-const buildPrismaWhere = (input: ListSystemLogsInput): Prisma.SystemLogWhereInput => {
-  const filters: Prisma.SystemLogWhereInput[] = [];
-
-  if (input.level) {
-    filters.push({ level: input.level });
-  }
-  if (input.source) {
-    filters.push({ source: { contains: input.source, mode: 'insensitive' } });
-  }
-  if (input.service) {
-    filters.push({
-      OR: [
-        { service: { contains: input.service, mode: 'insensitive' } },
-        {
-          context: {
-            path: ['service'],
-            equals: input.service,
-          },
-        },
-      ],
-    });
-  }
-  if (input.method) {
-    filters.push({ method: { equals: input.method, mode: 'insensitive' } });
-  }
-  if (input.statusCode !== undefined && input.statusCode !== null) {
-    filters.push({ statusCode: input.statusCode });
-  }
-  // Numeric JSON filtering is handled in-memory for Prisma to avoid provider-specific query behavior.
-  if (input.requestId) {
-    filters.push({ requestId: { contains: input.requestId, mode: 'insensitive' } });
-  }
-  if (input.traceId) {
-    filters.push({
-      OR: [
-        { traceId: { contains: input.traceId, mode: 'insensitive' } },
-        {
-          context: {
-            path: ['traceId'],
-            equals: input.traceId,
-          },
-        },
-      ],
-    });
-  }
-  if (input.correlationId) {
-    filters.push({
-      OR: [
-        { correlationId: { contains: input.correlationId, mode: 'insensitive' } },
-        {
-          context: {
-            path: ['correlationId'],
-            equals: input.correlationId,
-          },
-        },
-      ],
-    });
-  }
-  if (input.userId) {
-    filters.push({ userId: { contains: input.userId, mode: 'insensitive' } });
-  }
-  if (input.fingerprint) {
-    filters.push({
-      context: {
-        path: ['fingerprint'],
-        equals: input.fingerprint,
-      },
-    });
-  }
-  if (input.category) {
-    filters.push({
-      OR: [
-        { category: { equals: input.category, mode: 'insensitive' } },
-        {
-          context: {
-            path: ['category'],
-            equals: input.category,
-          },
-        },
-      ],
-    });
-  }
-  if (input.query) {
-    filters.push({
-      OR: [
-        { message: { contains: input.query, mode: 'insensitive' } },
-        { source: { contains: input.query, mode: 'insensitive' } },
-        { service: { contains: input.query, mode: 'insensitive' } },
-        { path: { contains: input.query, mode: 'insensitive' } },
-        { requestId: { contains: input.query, mode: 'insensitive' } },
-        { traceId: { contains: input.query, mode: 'insensitive' } },
-        { correlationId: { contains: input.query, mode: 'insensitive' } },
-        { userId: { contains: input.query, mode: 'insensitive' } },
-      ],
-    });
-  }
-  if (input.from || input.to) {
-    filters.push({
-      createdAt: {
-        ...(input.from ? { gte: input.from } : {}),
-        ...(input.to ? { lte: input.to } : {}),
-      },
-    });
-  }
-
-  return filters.length > 0 ? { AND: filters } : {};
-};
-
-const mergeWhere = (
-  base: Prisma.SystemLogWhereInput,
-  extra: Prisma.SystemLogWhereInput
-): Prisma.SystemLogWhereInput => {
-  if (!base || Object.keys(base).length === 0) {
-    return extra;
-  }
-  return { AND: [base, extra] };
-};
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -355,9 +221,6 @@ let indexesReady = false;
 let indexesPromise: Promise<void> | null = null;
 
 const ensureSystemLogIndexes = async (): Promise<void> => {
-  const provider = await getAppDbProvider();
-  if (provider !== 'mongodb') return;
-
   if (indexesReady) return;
   if (!indexesPromise) {
     indexesPromise = (async (): Promise<void> => {
@@ -469,7 +332,6 @@ const getMongoSystemLogMetrics = async (
 };
 
 export async function createSystemLog(input: CreateSystemLogInput): Promise<SystemLogRecord> {
-  const provider = await getAppDbProvider();
   const contextService =
     typeof input.context?.['service'] === 'string' ? input.context['service'] : null;
   const contextTraceId =
@@ -528,321 +390,48 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
     updatedAt: null,
   };
 
-  if (provider === 'mongodb') {
-    await insertMongoSystemLog(payload);
-    return normalizeLogRecord(payload);
-  }
-
-  try {
-    const created = await prisma.systemLog.create({
-      data: {
-        level: payload.level,
-        message: payload.message,
-        ...(payload.category !== null && payload.category !== undefined
-          ? { category: payload.category }
-          : {}),
-        ...(payload.source !== null && payload.source !== undefined
-          ? { source: payload.source }
-          : {}),
-        ...(payload.service !== null && payload.service !== undefined
-          ? { service: payload.service }
-          : {}),
-        ...(payload.context !== null && payload.context !== undefined
-          ? { context: payload.context as Prisma.InputJsonValue }
-          : {}),
-        ...(payload.stack !== null && payload.stack !== undefined ? { stack: payload.stack } : {}),
-        ...(payload.path !== null && payload.path !== undefined ? { path: payload.path } : {}),
-        ...(payload.method !== null && payload.method !== undefined
-          ? { method: payload.method }
-          : {}),
-        ...(payload.statusCode !== null && payload.statusCode !== undefined
-          ? { statusCode: payload.statusCode }
-          : {}),
-        ...(payload.requestId !== null && payload.requestId !== undefined
-          ? { requestId: payload.requestId }
-          : {}),
-        ...(payload.traceId !== null && payload.traceId !== undefined
-          ? { traceId: payload.traceId }
-          : {}),
-        ...(payload.correlationId !== null && payload.correlationId !== undefined
-          ? { correlationId: payload.correlationId }
-          : {}),
-        ...(payload.spanId !== null && payload.spanId !== undefined
-          ? { spanId: payload.spanId }
-          : {}),
-        ...(payload.parentSpanId !== null && payload.parentSpanId !== undefined
-          ? { parentSpanId: payload.parentSpanId }
-          : {}),
-        ...(payload.userId !== null && payload.userId !== undefined
-          ? { userId: payload.userId }
-          : {}),
-        createdAt: payload.createdAt || new Date().toISOString(),
-      },
-    });
-
-    return normalizeLogRecord(toPrismaSystemLogRecord(created));
-  } catch (error) {
-    if (isMissingPrismaTable(error)) {
-      if (process.env['MONGODB_URI']) {
-        await insertMongoSystemLog(payload);
-      }
-      return normalizeLogRecord(payload);
-    }
-    throw error;
-  }
+  await insertMongoSystemLog(payload);
+  return normalizeLogRecord(payload);
 }
 
 export async function listSystemLogs(input: ListSystemLogsInput): Promise<ListSystemLogsResult> {
-  const provider = await getAppDbProvider();
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
 
-  if (provider === 'mongodb') {
-    await ensureSystemLogIndexes();
-    const mongo = await getMongoDb();
-    const filter = buildMongoFilter(input);
-    const total = await mongo
-      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-      .countDocuments(filter);
-    const docs = await mongo
-      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .toArray();
-    const logs = docs.map((doc: MongoSystemLogDoc) => normalizeLogRecord(toSystemLogRecord(doc)));
-    return { logs, total, page, pageSize };
-  }
-
-  const where = buildPrismaWhere(input);
-
-  try {
-    if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
-      const rows = await prisma.systemLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-      });
-
-      const filteredLogs = rows
-        .map((row: SystemLog) => normalizeLogRecord(toPrismaSystemLogRecord(row)))
-        .filter((log: SystemLogRecord) => matchesMinDurationMs(log.context, input.minDurationMs));
-
-      const total = filteredLogs.length;
-      const logs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
-      return { logs, total, page, pageSize };
-    }
-
-    const [total, rows] = await Promise.all([
-      prisma.systemLog.count({ where }),
-      prisma.systemLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ]);
-
-    const logs = rows.map((row: SystemLog) => normalizeLogRecord(toPrismaSystemLogRecord(row)));
-    return { logs, total, page, pageSize };
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      const filter = buildMongoFilter(input);
-      const total = await mongo
-        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-        .countDocuments(filter);
-      const docs = await mongo
-        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .toArray();
-      const logs = docs.map((doc: MongoSystemLogDoc) => normalizeLogRecord(toSystemLogRecord(doc)));
-      return { logs, total, page, pageSize };
-    }
-    throw error;
-  }
+  await ensureSystemLogIndexes();
+  const mongo = await getMongoDb();
+  const filter = buildMongoFilter(input);
+  const total = await mongo
+    .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+    .countDocuments(filter);
+  const docs = await mongo
+    .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+    .find(filter)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .toArray();
+  const logs = docs.map((doc: MongoSystemLogDoc) => normalizeLogRecord(toSystemLogRecord(doc)));
+  return { logs, total, page, pageSize };
 }
 
 export async function getSystemLogById(id: string): Promise<SystemLogRecord | null> {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-      .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
-    if (!doc) return null;
-    return normalizeLogRecord(toSystemLogRecord(doc));
-  }
-
-  try {
-    const row = await prisma.systemLog.findUnique({
-      where: { id },
-    });
-    if (!row) return null;
-    return normalizeLogRecord(toPrismaSystemLogRecord(row));
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      const doc = await mongo
-        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-        .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
-      if (!doc) return null;
-      return normalizeLogRecord(toSystemLogRecord(doc));
-    }
-    throw error;
-  }
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+    .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
+  if (!doc) return null;
+  return normalizeLogRecord(toSystemLogRecord(doc));
 }
 
 export async function getSystemLogMetrics(input: ListSystemLogsInput): Promise<SystemLogMetrics> {
-  const provider = await getAppDbProvider();
-  const now = new Date();
-
-  if (provider === 'mongodb') {
-    const filter = buildMongoFilter(input);
-    return getMongoSystemLogMetrics(filter);
-  }
-
-  const where = buildPrismaWhere(input);
-  const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  try {
-    if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
-      const rows = await prisma.systemLog.findMany({
-        where,
-        select: {
-          level: true,
-          source: true,
-          service: true,
-          path: true,
-          context: true,
-          createdAt: true,
-        },
-      });
-
-      return getPrismaSystemLogMetricsWithMinDuration(rows, input.minDurationMs, now);
-    }
-
-    const [total, last24Hours, last7Days, levelGroups, sourceGroups, serviceGroups, pathGroups] =
-      await Promise.all([
-        prisma.systemLog.count({ where }),
-        prisma.systemLog.count({
-          where: mergeWhere(where, { createdAt: { gte: last24 } }),
-        }),
-        prisma.systemLog.count({
-          where: mergeWhere(where, { createdAt: { gte: last7 } }),
-        }),
-        prisma.systemLog.groupBy({
-          by: ['level'],
-          _count: { _all: true },
-          where,
-        }),
-        prisma.systemLog.groupBy({
-          by: ['source'],
-          _count: { _all: true },
-          where: mergeWhere(where, {
-            AND: [{ source: { not: null } }, { source: { not: '' } }],
-          }),
-          orderBy: { _count: { id: 'desc' } },
-          take: 5,
-        }),
-        prisma.systemLog.groupBy({
-          by: ['service'],
-          _count: { _all: true },
-          where: mergeWhere(where, {
-            AND: [{ service: { not: null } }, { service: { not: '' } }],
-          }),
-          orderBy: { _count: { id: 'desc' } },
-          take: 5,
-        }),
-        prisma.systemLog.groupBy({
-          by: ['path'],
-          _count: { _all: true },
-          where: mergeWhere(where, {
-            AND: [{ path: { not: null } }, { path: { not: '' } }],
-          }),
-          orderBy: { _count: { id: 'desc' } },
-          take: 5,
-        }),
-      ]);
-
-    const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
-    for (const row of levelGroups as Array<{
-      level: SystemLogLevel;
-      _count: { _all: number };
-    }>) {
-      if (row.level in levels) {
-        levels[row.level] = row._count._all ?? 0;
-      }
-    }
-
-    const topSources = (sourceGroups as Array<{ source: string | null; _count: { _all: number } }>)
-      .filter((row: { source: string | null; _count: { _all: number } }) => row.source)
-      .map((row: { source: string | null; _count: { _all: number } }) => ({
-        source: row.source as string,
-        count: row._count._all ?? 0,
-      }));
-    const topServices = (
-      serviceGroups as Array<{ service: string | null; _count: { _all: number } }>
-    )
-      .filter((row: { service: string | null; _count: { _all: number } }) => row.service)
-      .map((row: { service: string | null; _count: { _all: number } }) => ({
-        service: row.service as string,
-        count: row._count._all ?? 0,
-      }));
-    const topPaths = (pathGroups as Array<{ path: string | null; _count: { _all: number } }>)
-      .filter((row: { path: string | null; _count: { _all: number } }) => row.path)
-      .map((row: { path: string | null; _count: { _all: number } }) => ({
-        path: row.path as string,
-        count: row._count._all ?? 0,
-      }));
-
-    return {
-      total,
-      levels,
-      last24Hours,
-      last7Days,
-      topSources,
-      topServices,
-      topPaths,
-      generatedAt: now.toISOString(),
-    };
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const filter = buildMongoFilter(input);
-      return getMongoSystemLogMetrics(filter);
-    }
-    throw error;
-  }
+  const filter = buildMongoFilter(input);
+  return getMongoSystemLogMetrics(filter);
 }
 
 export async function clearSystemLogs(before?: Date | null): Promise<{ deleted: number }> {
-  const provider = await getAppDbProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const filter = before ? { createdAt: { $lte: before } } : {};
-    const result = await mongo
-      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-      .deleteMany(filter);
-    return { deleted: result.deletedCount ?? 0 };
-  }
-
-  const where = before ? { createdAt: { lte: before } } : {};
-  try {
-    const result = await prisma.systemLog.deleteMany({ where });
-    return { deleted: result.count };
-  } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      const filter = before ? { createdAt: { $lte: before } } : {};
-      const result = await mongo
-        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
-        .deleteMany(filter);
-      return { deleted: result.deletedCount ?? 0 };
-    }
-    throw error;
-  }
+  const mongo = await getMongoDb();
+  const filter = before ? { createdAt: { $lte: before } } : {};
+  const result = await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).deleteMany(filter);
+  return { deleted: result.deletedCount ?? 0 };
 }

@@ -178,6 +178,9 @@ describe('Kangur shared primitives', () => {
         >
           Shared option
         </KangurOptionCardButton>
+        <KangurOptionCardButton data-testid='kangur-option-neutral'>
+          Neutral option
+        </KangurOptionCardButton>
         <KangurOptionCardButton data-testid='kangur-option-muted' state='muted'>
           Muted option
         </KangurOptionCardButton>
@@ -257,6 +260,20 @@ describe('Kangur shared primitives', () => {
       'w-9',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(209_250_229))]',
       '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(4_120_87))]'
+    );
+    expect(screen.getByTestId('kangur-option-neutral')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,var(--kangur-page-background))]',
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,var(--kangur-page-background))]',
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByTestId('kangur-button-surface')).toHaveClass(
+      'surface-cta',
+      'text-[var(--kangur-button-surface-text,#2f4db5)]'
     );
     expect(screen.getByTestId('kangur-icon-badge-3xl')).toHaveClass(
       'h-24',
@@ -410,7 +427,8 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
       'soft-card',
       'border',
-      'text-slate-400',
+      '[border-color:var(--kangur-soft-card-border)]',
+      '[color:var(--kangur-page-muted-text)]',
       'opacity-70'
     );
     expect(screen.getByTestId('kangur-option-muted')).not.toHaveClass('cursor-pointer');

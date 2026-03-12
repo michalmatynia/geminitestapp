@@ -80,6 +80,9 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
       '30,41,59'
     );
+    expect(document.body.style.getPropertyValue('--kangur-button-surface-hover-background')).toContain(
+      '51,65,85'
+    );
   });
 
   it('applies stored class overrides to the Kangur surface targets', () => {

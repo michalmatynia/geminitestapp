@@ -816,11 +816,7 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Poprzedni panel'
-            className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
-            style={{
-              background: 'var(--kangur-soft-card-background)',
-              borderColor: 'var(--kangur-soft-card-border)',
-            }}
+            className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
             data-testid='clock-lesson-training-prev-button'
             size='sm'
             type='button'
@@ -842,11 +838,7 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Nastepny panel'
-            className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
-            style={{
-              background: 'var(--kangur-soft-card-background)',
-              borderColor: 'var(--kangur-soft-card-border)',
-            }}
+            className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
             data-testid='clock-lesson-training-next-button'
             size='sm'
             type='button'

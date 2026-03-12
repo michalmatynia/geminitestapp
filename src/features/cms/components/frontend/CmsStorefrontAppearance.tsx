@@ -635,6 +635,8 @@ const resolveDefaultKangurStorefrontAppearance = (
         '--kangur-button-secondary-hover-text': '#f8fafc',
         '--kangur-button-surface-background':
           'linear-gradient(180deg, rgba(30,41,59,0.98) 0%, rgba(17,24,39,0.98) 100%)',
+        '--kangur-button-surface-hover-background':
+          'linear-gradient(180deg, rgba(51,65,85,0.99) 0%, rgba(30,41,59,0.99) 100%)',
         '--kangur-button-surface-shadow':
           '0 16px 28px -24px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(191, 219, 254, 0.08)',
         '--kangur-button-surface-text': '#bfdbfe',
@@ -1184,6 +1186,8 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-button-secondary-hover-text': toneText,
       '--kangur-button-surface-background':
         `linear-gradient(180deg, ${mixCssColor(surfaceBackground, mode === 'dark' ? '#000000' : '#ffffff', mode === 'dark' ? 92 : 90)} 0%, ${mixCssColor(primary, surfaceBackground, mode === 'dark' ? 12 : 16)} 100%)`,
+      '--kangur-button-surface-hover-background':
+        `linear-gradient(180deg, ${mixCssColor(surfaceBackground, '#ffffff', mode === 'dark' ? 82 : 84)} 0%, ${mixCssColor(primary, surfaceBackground, mode === 'dark' ? 18 : 22)} 100%)`,
       '--kangur-button-surface-shadow':
         `0 16px 28px -24px ${mixCssColor(primary, '#000000', mode === 'dark' ? 26 : 18)}, inset 0 1px 0 ${mixCssColor(primary, '#ffffff', mode === 'dark' ? 10 : 18)}`,
       '--kangur-button-surface-text':

@@ -180,11 +180,7 @@ export default function LessonSlideSection({
             <KangurButton
               onClick={handlePreviousSlide}
               aria-label='Poprzedni panel'
-              className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
-              style={{
-                background: 'var(--kangur-soft-card-background)',
-                borderColor: 'var(--kangur-soft-card-border)',
-              }}
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
               data-testid='lesson-slide-prev-button'
               size='sm'
               type='button'
@@ -201,11 +197,7 @@ export default function LessonSlideSection({
             <KangurButton
               onClick={handleNextSlide}
               aria-label='Nastepny panel'
-              className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
-              style={{
-                background: 'var(--kangur-soft-card-background)',
-                borderColor: 'var(--kangur-soft-card-border)',
-              }}
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
               data-testid='lesson-slide-next-button'
               size='sm'
               type='button'

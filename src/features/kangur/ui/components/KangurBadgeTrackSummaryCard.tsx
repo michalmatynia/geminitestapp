@@ -52,11 +52,11 @@ export function KangurBadgeTrackSummaryCard({
     >
       <div
         className={cn(
-          'flex flex-col items-start gap-3 sm:flex-row sm:justify-between',
+          'flex flex-col items-start gap-4 md:flex-row md:items-start md:justify-between',
           headerClassName
         )}
       >
-        <div className='min-w-0'>
+        <div className='min-w-0 md:flex-1'>
           <KangurSectionEyebrow as='p' className={cn('tracking-[0.18em]', trackLabelClassName)}>
             {track.emoji} {track.label}
           </KangurSectionEyebrow>
@@ -71,7 +71,8 @@ export function KangurBadgeTrackSummaryCard({
         </div>
         <KangurStatusChip
           accent={accent}
-          className={cn('self-start sm:shrink-0', statusChipClassName)}
+          className={cn('self-start whitespace-nowrap md:shrink-0', statusChipClassName)}
+          size='sm'
         >
           {track.progressPercent}%
         </KangurStatusChip>

@@ -63,5 +63,24 @@ describe('KangurPageTransitionSkeleton', () => {
       'data-kangur-skeleton-variant',
       'lessons-focus'
     );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-layout')
+    ).toHaveClass('items-center');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-layout')
+    ).toHaveClass('w-full');
+  });
+
+  it('keeps the lessons-library transition skeleton centered and narrow', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
+
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
+    ).toHaveClass('max-w-lg');
   });
 });

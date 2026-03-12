@@ -19,7 +19,7 @@ vi.mock('next/image', () => ({
     src: string;
     unoptimized?: boolean;
     sizes?: string;
-  }) => <img alt={alt} src={src} {...rest} />,
+  }) => <img alt={alt} data-next-image='true' src={src} {...rest} />,
 }));
 
 import { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
@@ -38,6 +38,7 @@ describe('AgentPersonaMoodAvatar', () => {
     const image = avatar.querySelector('img');
     expect(image).not.toBeNull();
     expect(image?.getAttribute('src')).toContain('data:image/png;base64,');
+    expect(image).toHaveAttribute('data-next-image', 'true');
   });
 
   it('renders sanitized SVG markup when an avatar is provided', () => {

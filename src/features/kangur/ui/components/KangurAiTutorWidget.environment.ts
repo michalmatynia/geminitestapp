@@ -131,10 +131,19 @@ const getMotionPresetKind = (
   motionPresetId: string | null | undefined
 ): KangurAiTutorMotionPresetKind => resolveKangurAiTutorMotionPresetKind(motionPresetId);
 
+const withMotionCompletionDelay = (
+  profile: Omit<TutorMotionProfile, 'motionCompletedDelayMs'>
+): TutorMotionProfile => ({
+  ...profile,
+  // Keep motion-driven state changes behind the full guided handoff so
+  // the docked tutor does not surface while the avatar is still traveling.
+  motionCompletedDelayMs: Math.ceil(profile.guidedAvatarTransition.duration * 1000),
+});
+
 const getTutorMotionProfile = (motionPresetId: string | null | undefined): TutorMotionProfile => {
   switch (getMotionPresetKind(motionPresetId)) {
     case 'mobile':
-      return {
+      return withMotionCompletionDelay({
         kind: 'mobile',
         sheetBreakpoint: 840,
         avatarTransition: { type: 'spring', stiffness: 250, damping: 30 },
@@ -142,12 +151,11 @@ const getTutorMotionProfile = (motionPresetId: string | null | undefined): Tutor
         bubbleTransition: { type: 'spring', stiffness: 235, damping: 30 },
         hoverScale: 1.03,
         tapScale: 0.97,
-        motionCompletedDelayMs: 420,
         desktopBubbleWidth: 360,
         mobileBubbleWidth: 320,
-      };
+      });
     case 'tablet':
-      return {
+      return withMotionCompletionDelay({
         kind: 'tablet',
         sheetBreakpoint: 960,
         avatarTransition: { type: 'spring', stiffness: 280, damping: 30 },
@@ -155,12 +163,11 @@ const getTutorMotionProfile = (motionPresetId: string | null | undefined): Tutor
         bubbleTransition: { type: 'spring', stiffness: 250, damping: 30 },
         hoverScale: 1.04,
         tapScale: 0.96,
-        motionCompletedDelayMs: 400,
         desktopBubbleWidth: 408,
         mobileBubbleWidth: 336,
-      };
+      });
     case 'desktop':
-      return {
+      return withMotionCompletionDelay({
         kind: 'desktop',
         sheetBreakpoint: 680,
         avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
@@ -168,12 +175,11 @@ const getTutorMotionProfile = (motionPresetId: string | null | undefined): Tutor
         bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
         hoverScale: 1.06,
         tapScale: 0.94,
-        motionCompletedDelayMs: 360,
         desktopBubbleWidth: 392,
         mobileBubbleWidth: 320,
-      };
+      });
     default:
-      return {
+      return withMotionCompletionDelay({
         kind: 'default',
         sheetBreakpoint: 640,
         avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
@@ -181,10 +187,9 @@ const getTutorMotionProfile = (motionPresetId: string | null | undefined): Tutor
         bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
         hoverScale: 1.06,
         tapScale: 0.94,
-        motionCompletedDelayMs: 360,
         desktopBubbleWidth: DESKTOP_BUBBLE_WIDTH,
         mobileBubbleWidth: MOBILE_BUBBLE_WIDTH,
-      };
+      });
   }
 };
 

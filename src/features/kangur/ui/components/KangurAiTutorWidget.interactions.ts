@@ -62,6 +62,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'panelPosition'
     | 'panelSnapPreference'
     | 'setPanelAnchorMode'
+    | 'setPanelMotionState'
     | 'setPanelPosition'
     | 'setPanelPositionMode'
     | 'setPanelSnapPreference'
@@ -124,6 +125,7 @@ export function useKangurAiTutorPanelInteractions({
     panelPosition,
     panelSnapPreference,
     setPanelAnchorMode,
+    setPanelMotionState,
     setPanelPosition,
     setPanelPositionMode,
     setPanelSnapPreference,
@@ -213,6 +215,7 @@ export function useKangurAiTutorPanelInteractions({
         setContextualTutorMode(null);
       }
       setPanelAnchorMode(reason === 'toggle' ? 'dock' : 'contextual');
+      setPanelMotionState('animating');
       setPanelShellMode(options?.panelShellMode ?? 'default');
       trackKangurClientEvent('kangur_ai_tutor_opened', {
         ...telemetryContext,
@@ -233,6 +236,7 @@ export function useKangurAiTutorPanelInteractions({
       setGuestIntroVisible,
       setLauncherPromptVisible,
       setPanelAnchorMode,
+      setPanelMotionState,
       setPanelShellMode,
       telemetryContext,
     ]

@@ -6,6 +6,8 @@ import { cn, sanitizeSvg } from '@/shared/utils';
 import type { TutorMoodAvatarProps } from './KangurAiTutorWidget.shared';
 import type { JSX } from 'react';
 
+const KANGUR_TUTOR_AVATAR_IMAGE_SIZES = '48px';
+
 export function KangurAiTutorMoodAvatar({
   svgContent,
   avatarImageUrl,
@@ -18,7 +20,6 @@ export function KangurAiTutorMoodAvatar({
 }: TutorMoodAvatarProps): JSX.Element {
   const normalizedImageUrl = typeof avatarImageUrl === 'string' ? avatarImageUrl.trim() : '';
   const hasImage = normalizedImageUrl.length > 0;
-  const isInlineImageDataUrl = normalizedImageUrl.startsWith('data:image/');
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -31,22 +32,15 @@ export function KangurAiTutorMoodAvatar({
       data-testid={dataTestId}
       role='img'
     >
-      {hasImage && isInlineImageDataUrl ? (
-        <img
-          src={normalizedImageUrl}
-          alt={label}
-          className={cn('h-full w-full object-cover', imgClassName)}
-          loading='eager'
-        />
-      ) : hasImage ? (
+      {hasImage ? (
         <NextImage
           src={normalizedImageUrl}
           alt={label}
           fill
-          sizes='100%'
+          sizes={KANGUR_TUTOR_AVATAR_IMAGE_SIZES}
           unoptimized
-          className={cn('h-full w-full object-cover', imgClassName)}
-          loading='lazy'
+          className={cn('object-cover', imgClassName)}
+          loading='eager'
         />
       ) : hasSvg ? (
         <div

@@ -239,4 +239,20 @@ describe('useKangurAiTutorAvatarShellActions', () => {
     expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
   });
+
+  it('closes the currently open tutor surface before starting Zapytaj o to guidance', () => {
+    const input = createAvatarShellInput({
+      isOpen: true,
+      persistSelectionContext: vi.fn().mockReturnValue('2 + 2'),
+    });
+
+    const { result } = renderHook(() => useKangurAiTutorAvatarShellActions(input));
+
+    act(() => {
+      result.current.handleAskAbout();
+    });
+
+    expect(input.closeChat).toHaveBeenCalledTimes(1);
+    expect(input.startGuidedSelectionExplanation).toHaveBeenCalledWith('2 + 2');
+  });
 });

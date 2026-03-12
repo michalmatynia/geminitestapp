@@ -786,7 +786,10 @@ describe('Lessons', () => {
 
     renderLessonsPage();
 
-    expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveClass('soft-card');
+    expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveClass(
+      'soft-card',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,var(--kangur-page-background))]'
+    );
     expect(screen.getByTestId('lesson-library-icon-clock-doc')).toHaveClass(
       'h-16',
       'w-16',

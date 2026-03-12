@@ -158,6 +158,7 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
   ) => void;
   hasSelectionPanelReady: boolean;
   isLoading?: boolean;
+  isOpen: boolean;
   selectionConversationSelectedText: string | null;
   selectionGuidanceHandoffText: string | null;
 }): void {
@@ -166,6 +167,7 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading = false,
+    isOpen,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
   } = input;
@@ -174,6 +176,7 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
     if (
       !selectionGuidanceHandoffText ||
       isLoading ||
+      isOpen ||
       hasSelectionPanelReady ||
       selectionConversationSelectedText !== selectionGuidanceHandoffText ||
       (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
@@ -189,6 +192,7 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading,
+    isOpen,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
   ]);

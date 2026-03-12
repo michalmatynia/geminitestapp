@@ -16,6 +16,8 @@ type AgentPersonaMoodAvatarProps = {
   'data-testid'?: string;
 };
 
+const AGENT_PERSONA_MOOD_AVATAR_IMAGE_SIZES = '64px';
+
 export function AgentPersonaMoodAvatar({
   svgContent,
   avatarImageUrl,
@@ -28,7 +30,6 @@ export function AgentPersonaMoodAvatar({
 }: AgentPersonaMoodAvatarProps): React.JSX.Element {
   const normalizedImageUrl = typeof avatarImageUrl === 'string' ? avatarImageUrl.trim() : '';
   const hasImage = normalizedImageUrl.length > 0;
-  const isInlineImageDataUrl = normalizedImageUrl.startsWith('data:image/');
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -38,21 +39,14 @@ export function AgentPersonaMoodAvatar({
       data-testid={dataTestId}
       role='img'
     >
-      {hasImage && isInlineImageDataUrl ? (
-        <img
-          src={normalizedImageUrl}
-          alt={label}
-          className={cn('h-full w-full object-cover', imgClassName)}
-          loading='eager'
-        />
-      ) : hasImage ? (
+      {hasImage ? (
         <NextImage
           src={normalizedImageUrl}
           alt={label}
           fill
-          sizes='100%'
+          sizes={AGENT_PERSONA_MOOD_AVATAR_IMAGE_SIZES}
           unoptimized
-          className={cn('h-full w-full object-cover', imgClassName)}
+          className={cn('object-cover', imgClassName)}
           loading='lazy'
         />
       ) : hasSvg ? (

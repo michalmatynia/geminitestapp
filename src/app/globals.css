@@ -2111,6 +2111,28 @@
       0 16px 28px -24px rgba(85, 103, 196, 0.38),
       inset 0 1px 0 rgba(255, 255, 255, 0.92)
     );
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms ease,
+      filter 220ms ease;
+    will-change: transform;
+  }
+
+  .soft-cta:hover,
+  .soft-cta:focus-visible {
+    background-image: var(
+      --kangur-button-secondary-hover-background,
+      var(
+        --kangur-button-secondary-background,
+        linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          rgba(240, 245, 255, 0.95) 100%
+        )
+      )
+    ) !important;
+    filter: saturate(1.02) brightness(1.01);
+    transform: translateY(-1px) scale(1.014);
   }
 
   .kangur-step-pill-pending {
@@ -2157,6 +2179,28 @@
       0 16px 28px -24px rgba(85, 103, 196, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.88)
     );
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms ease,
+      filter 220ms ease;
+    will-change: transform;
+  }
+
+  .surface-cta:hover,
+  .surface-cta:focus-visible {
+    background-image: var(
+      --kangur-button-surface-hover-background,
+      var(
+        --kangur-button-surface-background,
+        linear-gradient(
+          180deg,
+          rgba(246, 248, 255, 0.98) 0%,
+          rgba(232, 239, 255, 0.98) 100%
+        )
+      )
+    ) !important;
+    filter: saturate(1.02) brightness(1.01);
+    transform: translateY(-1px) scale(1.014);
   }
 
   .warning-cta {
@@ -2259,8 +2303,6 @@
   }
 
   .primary-cta,
-  .soft-cta,
-  .surface-cta,
   .warning-cta,
   .success-cta,
   button[class*='bg-gradient-to-'],
@@ -2287,6 +2329,30 @@
     animation-duration: 18s !important;
     animation-timing-function: cubic-bezier(0.37, 0, 0.23, 1) !important;
     animation-iteration-count: infinite !important;
+  }
+
+  .soft-cta {
+    animation-name: none !important;
+    background-image: var(
+      --kangur-button-secondary-background,
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.98) 0%,
+        rgba(240, 245, 255, 0.95) 100%
+      )
+    ) !important;
+  }
+
+  .surface-cta {
+    animation-name: none !important;
+    background-image: var(
+      --kangur-button-surface-background,
+      linear-gradient(
+        180deg,
+        rgba(246, 248, 255, 0.98) 0%,
+        rgba(232, 239, 255, 0.98) 100%
+      )
+    ) !important;
   }
 
   .kangur-progress-fill {
@@ -2396,8 +2462,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .primary-cta,
-    .soft-cta,
-    .surface-cta,
     .warning-cta,
     .success-cta,
     .kangur-progress-fill,

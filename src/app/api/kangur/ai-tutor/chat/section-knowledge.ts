@@ -271,8 +271,7 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
     pageContentEntries: pageContentStore.entries,
   });
   if (
-    !pageContentReference ||
-    pageContentReference.sourceCollection !== 'kangur_page_content'
+    pageContentReference?.sourceCollection !== 'kangur_page_content'
   ) {
     return null;
   }
@@ -295,7 +294,7 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
   ];
   const resolvedGuides = linkedGuideIds
     .map((guideId) => nativeGuideEntriesById.get(guideId))
-    .filter((entry): entry is KangurAiTutorNativeGuideEntry => Boolean(entry && entry.enabled))
+    .filter((entry): entry is KangurAiTutorNativeGuideEntry => Boolean(entry?.enabled))
     .filter(
       (entry, index, entries) => entries.findIndex((candidate) => candidate.id === entry.id) === index
     );

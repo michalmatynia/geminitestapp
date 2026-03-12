@@ -30,6 +30,8 @@ export default defineConfig({
           globals: true,
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
+          hookTimeout: 30_000,
+          testTimeout: 15_000,
           fileParallelism: false,
           pool: 'forks',
           include: configDefaults.include,

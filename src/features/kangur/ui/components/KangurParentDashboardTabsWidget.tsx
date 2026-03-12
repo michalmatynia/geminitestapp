@@ -14,13 +14,38 @@ import { cn } from '@/shared/utils';
 const TABS: Array<{
   id: KangurParentDashboardTabId;
   label: string;
+  mobileLabel: string;
   icon: typeof BarChart2;
   docId: string;
 }> = [
-  { id: 'progress', label: 'Postep', icon: BarChart2, docId: 'parent_progress_tab' },
-  { id: 'scores', label: 'Wyniki gier', icon: ClipboardList, docId: 'parent_scores_tab' },
-  { id: 'assign', label: 'Zadania', icon: BookOpen, docId: 'parent_assignments_tab' },
-  { id: 'ai-tutor', label: 'AI Tutor', icon: BrainCircuit, docId: 'parent_ai_tutor_tab' },
+  {
+    id: 'progress',
+    label: 'Postep',
+    mobileLabel: 'Postep',
+    icon: BarChart2,
+    docId: 'parent_progress_tab',
+  },
+  {
+    id: 'scores',
+    label: 'Wyniki gier',
+    mobileLabel: 'Wyniki',
+    icon: ClipboardList,
+    docId: 'parent_scores_tab',
+  },
+  {
+    id: 'assign',
+    label: 'Zadania',
+    mobileLabel: 'Zadania',
+    icon: BookOpen,
+    docId: 'parent_assignments_tab',
+  },
+  {
+    id: 'ai-tutor',
+    label: 'AI Tutor',
+    mobileLabel: 'Tutor AI',
+    icon: BrainCircuit,
+    docId: 'parent_ai_tutor_tab',
+  },
 ];
 
 export function KangurParentDashboardTabsWidget({
@@ -51,7 +76,12 @@ export function KangurParentDashboardTabsWidget({
   }
 
   return (
-    <div className={cn(KANGUR_SEGMENTED_CONTROL_CLASSNAME, 'sm:w-auto')}>
+    <div
+      className={cn(
+        KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+        'grid grid-cols-2 sm:w-auto sm:grid-cols-none sm:flex'
+      )}
+    >
       {TABS.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -66,14 +96,17 @@ export function KangurParentDashboardTabsWidget({
               handleTabChange(tab.id);
             }}
             aria-pressed={isActive}
-            className='min-w-0 flex-1 justify-center px-3 sm:px-4'
+            className='min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4'
             size='sm'
             type='button'
             variant={isActive ? 'segmentActive' : 'segment'}
             data-doc-id={tab.docId}
           >
             <Icon className='h-4 w-4' />
-            <span className='hidden sm:inline'>{tab.label}</span>
+            <span className='text-[11px] font-semibold leading-tight sm:text-sm'>
+              <span className='sm:hidden'>{tab.mobileLabel}</span>
+              <span className='hidden sm:inline'>{tab.label}</span>
+            </span>
           </KangurButton>
         );
       })}

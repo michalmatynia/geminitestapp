@@ -10,11 +10,11 @@ export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
 };
 
 export const KANGUR_TOP_BAR_CLASSNAME =
-  'sticky inset-x-0 top-0 z-40 w-full px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-5';
+  'sticky inset-x-0 top-0 z-40 w-full px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-3 sm:pt-5';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
-  'flex w-full flex-wrap items-center gap-4 sm:flex-nowrap';
+  'flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:flex-nowrap';
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
-  'w-full max-w-[1440px] px-4 pb-20 pt-10 sm:px-8 xl:px-10';
+  'w-full max-w-[1440px] px-3 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-10 xl:px-10';
 
 export const KANGUR_PANEL_CLASSNAMES = {
   elevated: 'glass-panel rounded-[36px]',
@@ -23,7 +23,7 @@ export const KANGUR_PANEL_CLASSNAMES = {
 } as const;
 
 export const KANGUR_TOP_NAV_GROUP_CLASSNAME =
-  'kangur-nav-group flex w-full min-w-0 max-w-full flex-wrap items-center gap-2 rounded-[30px] border p-2 sm:flex-nowrap';
+  'kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 rounded-[30px] border p-2 max-sm:rounded-[26px] sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
 
 export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
   'kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 rounded-[20px] border font-semibold tracking-[-0.02em] transition-all duration-200';

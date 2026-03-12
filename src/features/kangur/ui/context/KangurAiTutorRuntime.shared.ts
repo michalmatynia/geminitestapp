@@ -761,6 +761,168 @@ const areSessionRegistrationsEqual = (
   );
 };
 
+// ---------------------------------------------------------------------------
+// Internal sub-hooks
+// ---------------------------------------------------------------------------
+
+function useKangurTutorSettingsState({
+  settingsStore,
+  activeLearnerId,
+  activeSessionContext,
+  authUserOwnerEmailVerified,
+}: {
+  settingsStore: ReturnType<typeof useSettingsStore>;
+  activeLearnerId: string | null;
+  activeSessionContext: KangurAiTutorConversationContext | null;
+  authUserOwnerEmailVerified: boolean | undefined;
+}) {
+  const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
+  const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
+  const parsedSettings = useMemo(() => parseKangurAiTutorSettings(rawSettings), [rawSettings]);
+  const appSettings = useMemo(
+    () => resolveKangurAiTutorAppSettings(rawAppSettings, parsedSettings),
+    [parsedSettings, rawAppSettings]
+  );
+  const tutorSettings = useMemo(
+    () =>
+      activeLearnerId
+        ? getKangurAiTutorSettingsForLearner(parsedSettings, activeLearnerId, appSettings)
+        : null,
+    [activeLearnerId, appSettings, parsedSettings]
+  );
+  const availability = useMemo(
+    () =>
+      resolveKangurAiTutorAvailability(tutorSettings, activeSessionContext, {
+        ownerEmailVerified: authUserOwnerEmailVerified,
+      }),
+    [activeSessionContext, authUserOwnerEmailVerified, tutorSettings]
+  );
+  const enabled = availability.allowed;
+  const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
+  const allowLearnerMemory =
+    allowCrossPagePersistence && (tutorSettings?.rememberTutorContext ?? true);
+  const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
+  const showSources = tutorSettings?.showSources ?? true;
+  const activeLearnerMemoryKey = useMemo(
+    () => buildLearnerMemoryKey(activeLearnerId, activeSessionContext),
+    [activeLearnerId, activeSessionContext]
+  );
+
+  return {
+    appSettings,
+    tutorSettings,
+    enabled,
+    allowCrossPagePersistence,
+    allowLearnerMemory,
+    allowSelectedTextSupport,
+    showSources,
+    activeLearnerMemoryKey,
+  };
+}
+
+function useKangurTutorPersonaVisuals({
+  tutorSettings,
+  appSettings,
+  defaultTutorName,
+  isLoading,
+  suggestedMoodId,
+  messages,
+}: {
+  tutorSettings: KangurAiTutorLearnerSettings | null;
+  appSettings: KangurAiTutorAppSettings;
+  defaultTutorName: string;
+  isLoading: boolean;
+  suggestedMoodId: AgentPersonaMoodId | null;
+  messages: ChatMessage[];
+}) {
+  const effectiveTutorPersonaId = tutorSettings?.agentPersonaId ?? appSettings.agentPersonaId;
+  const { data: agentPersonas = [] } = useAgentPersonaVisuals(effectiveTutorPersonaId);
+  const tutorPersona = useMemo<AgentPersona | null>(() => {
+    const personaId = effectiveTutorPersonaId;
+    if (!personaId) {
+      return null;
+    }
+
+    return agentPersonas.find((persona) => persona.id === personaId) ?? null;
+  }, [agentPersonas, effectiveTutorPersonaId]);
+  const tutorName = tutorPersona?.name ?? defaultTutorName;
+  const requestedTutorMoodId = useMemo<AgentPersonaMoodId>(() => {
+    if (isLoading) {
+      return 'thinking';
+    }
+
+    if (suggestedMoodId) {
+      return suggestedMoodId;
+    }
+
+    if (messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+      return 'encouraging';
+    }
+
+    return DEFAULT_AGENT_PERSONA_MOOD_ID;
+  }, [isLoading, messages, suggestedMoodId]);
+  const resolvedTutorMood = useMemo(
+    () => resolveAgentPersonaMood(tutorPersona, requestedTutorMoodId),
+    [requestedTutorMoodId, tutorPersona]
+  );
+  const defaultTutorMood = useMemo(() => resolveAgentPersonaMood(tutorPersona), [tutorPersona]);
+  const resolvedTutorMoodVisuals = useMemo(() => {
+    const resolvedThumbnail =
+      resolvedTutorMood.useEmbeddedThumbnail === true
+        ? resolvedTutorMood.avatarThumbnailDataUrl?.trim() || null
+        : null;
+    if (resolvedThumbnail) {
+      return { tutorAvatarImageUrl: resolvedThumbnail, tutorAvatarSvg: null };
+    }
+
+    const resolvedImage = resolvedTutorMood.avatarImageUrl?.trim() || null;
+    const resolvedSvg = resolvedTutorMood.svgContent.trim() || null;
+
+    if (resolvedImage) {
+      return { tutorAvatarImageUrl: resolvedImage, tutorAvatarSvg: null };
+    }
+
+    if (resolvedSvg) {
+      return { tutorAvatarImageUrl: null, tutorAvatarSvg: resolvedSvg };
+    }
+
+    const fallbackThumbnail =
+      defaultTutorMood.useEmbeddedThumbnail === true
+        ? defaultTutorMood.avatarThumbnailDataUrl?.trim() || null
+        : null;
+    if (fallbackThumbnail) {
+      return { tutorAvatarImageUrl: fallbackThumbnail, tutorAvatarSvg: null };
+    }
+
+    const fallbackImage = defaultTutorMood.avatarImageUrl?.trim() || null;
+    if (fallbackImage) {
+      return { tutorAvatarImageUrl: fallbackImage, tutorAvatarSvg: null };
+    }
+
+    return {
+      tutorAvatarImageUrl: null,
+      tutorAvatarSvg: defaultTutorMood.svgContent.trim() || null,
+    };
+  }, [
+    defaultTutorMood.avatarThumbnailDataUrl,
+    defaultTutorMood.avatarImageUrl,
+    defaultTutorMood.svgContent,
+    defaultTutorMood.useEmbeddedThumbnail,
+    resolvedTutorMood.avatarThumbnailDataUrl,
+    resolvedTutorMood.avatarImageUrl,
+    resolvedTutorMood.svgContent,
+    resolvedTutorMood.useEmbeddedThumbnail,
+  ]);
+
+  return {
+    tutorPersona,
+    tutorName,
+    tutorMoodId: resolvedTutorMood.id,
+    tutorAvatarSvg: resolvedTutorMoodVisuals.tutorAvatarSvg,
+    tutorAvatarImageUrl: resolvedTutorMoodVisuals.tutorAvatarImageUrl,
+  };
+}
+
 export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
@@ -925,37 +1087,21 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     });
   }, [authUser]);
 
-  const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
-  const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
-  const parsedSettings = useMemo(() => parseKangurAiTutorSettings(rawSettings), [rawSettings]);
-  const appSettings = useMemo(
-    () => resolveKangurAiTutorAppSettings(rawAppSettings, parsedSettings),
-    [parsedSettings, rawAppSettings]
-  );
-  const tutorSettings = useMemo(
-    () =>
-      activeLearnerId
-        ? getKangurAiTutorSettingsForLearner(parsedSettings, activeLearnerId, appSettings)
-        : null,
-    [activeLearnerId, appSettings, parsedSettings]
-  );
-  const availability = useMemo(
-    () =>
-      resolveKangurAiTutorAvailability(tutorSettings, activeSessionContext, {
-        ownerEmailVerified: authUser?.ownerEmailVerified,
-      }),
-    [activeSessionContext, authUser?.ownerEmailVerified, tutorSettings]
-  );
-  const enabled = availability.allowed;
-  const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
-  const allowLearnerMemory =
-    allowCrossPagePersistence && (tutorSettings?.rememberTutorContext ?? true);
-  const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
-  const showSources = tutorSettings?.showSources ?? true;
-  const activeLearnerMemoryKey = useMemo(
-    () => buildLearnerMemoryKey(activeLearnerId, activeSessionContext),
-    [activeLearnerId, activeSessionContext]
-  );
+  const {
+    appSettings,
+    tutorSettings,
+    enabled,
+    allowCrossPagePersistence,
+    allowLearnerMemory,
+    allowSelectedTextSupport,
+    showSources,
+    activeLearnerMemoryKey,
+  } = useKangurTutorSettingsState({
+    settingsStore,
+    activeLearnerId,
+    activeSessionContext,
+    authUserOwnerEmailVerified: authUser?.ownerEmailVerified,
+  });
   const activeLearnerMemory =
     activeLearnerMemoryKey && allowLearnerMemory
       ? learnerMemories[activeLearnerMemoryKey] ?? null
@@ -1044,102 +1190,15 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     []
   );
 
-  const effectiveTutorPersonaId = tutorSettings?.agentPersonaId ?? appSettings.agentPersonaId;
-  const { data: agentPersonas = [] } = useAgentPersonaVisuals(effectiveTutorPersonaId);
-  const tutorPersona = useMemo<AgentPersona | null>(() => {
-    const personaId = effectiveTutorPersonaId;
-    if (!personaId) {
-      return null;
-    }
-
-    return agentPersonas.find((persona) => persona.id === personaId) ?? null;
-  }, [agentPersonas, effectiveTutorPersonaId]);
-  const tutorName = tutorPersona?.name ?? tutorContent.common.defaultTutorName;
-  const requestedTutorMoodId = useMemo<AgentPersonaMoodId>(() => {
-    if (isLoading) {
-      return 'thinking';
-    }
-
-    if (suggestedMoodId) {
-      return suggestedMoodId;
-    }
-
-    if (messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
-      return 'encouraging';
-    }
-
-    return DEFAULT_AGENT_PERSONA_MOOD_ID;
-  }, [isLoading, messages, suggestedMoodId]);
-  const resolvedTutorMood = useMemo(
-    () => resolveAgentPersonaMood(tutorPersona, requestedTutorMoodId),
-    [requestedTutorMoodId, tutorPersona]
-  );
-  const defaultTutorMood = useMemo(() => resolveAgentPersonaMood(tutorPersona), [tutorPersona]);
-  const resolvedTutorMoodVisuals = useMemo(() => {
-    const resolvedThumbnail =
-      resolvedTutorMood.useEmbeddedThumbnail === true
-        ? resolvedTutorMood.avatarThumbnailDataUrl?.trim() || null
-        : null;
-    if (resolvedThumbnail) {
-      return {
-        tutorAvatarImageUrl: resolvedThumbnail,
-        tutorAvatarSvg: null,
-      };
-    }
-
-    const resolvedImage = resolvedTutorMood.avatarImageUrl?.trim() || null;
-    const resolvedSvg = resolvedTutorMood.svgContent.trim() || null;
-
-    if (resolvedImage) {
-      return {
-        tutorAvatarImageUrl: resolvedImage,
-        tutorAvatarSvg: null,
-      };
-    }
-
-    if (resolvedSvg) {
-      return {
-        tutorAvatarImageUrl: null,
-        tutorAvatarSvg: resolvedSvg,
-      };
-    }
-
-    const fallbackThumbnail =
-      defaultTutorMood.useEmbeddedThumbnail === true
-        ? defaultTutorMood.avatarThumbnailDataUrl?.trim() || null
-        : null;
-    if (fallbackThumbnail) {
-      return {
-        tutorAvatarImageUrl: fallbackThumbnail,
-        tutorAvatarSvg: null,
-      };
-    }
-
-    const fallbackImage = defaultTutorMood.avatarImageUrl?.trim() || null;
-    if (fallbackImage) {
-      return {
-        tutorAvatarImageUrl: fallbackImage,
-        tutorAvatarSvg: null,
-      };
-    }
-
-    return {
-      tutorAvatarImageUrl: null,
-      tutorAvatarSvg: defaultTutorMood.svgContent.trim() || null,
-    };
-  }, [
-    defaultTutorMood.avatarThumbnailDataUrl,
-    defaultTutorMood.avatarImageUrl,
-    defaultTutorMood.svgContent,
-    defaultTutorMood.useEmbeddedThumbnail,
-    resolvedTutorMood.avatarThumbnailDataUrl,
-    resolvedTutorMood.avatarImageUrl,
-    resolvedTutorMood.svgContent,
-    resolvedTutorMood.useEmbeddedThumbnail,
-  ]);
-  const tutorMoodId = resolvedTutorMood.id;
-  const tutorAvatarSvg = resolvedTutorMoodVisuals.tutorAvatarSvg;
-  const tutorAvatarImageUrl = resolvedTutorMoodVisuals.tutorAvatarImageUrl;
+  const { tutorPersona, tutorName, tutorMoodId, tutorAvatarSvg, tutorAvatarImageUrl } =
+    useKangurTutorPersonaVisuals({
+      tutorSettings,
+      appSettings,
+      defaultTutorName: tutorContent.common.defaultTutorName,
+      isLoading,
+      suggestedMoodId,
+      messages,
+    });
 
   const previousSessionKeyRef = useRef<string | null>(null);
   const pendingHintRecoveryBySessionKeyRef = useRef<

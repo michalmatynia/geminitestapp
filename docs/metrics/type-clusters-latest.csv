@@ -1,5 +1,1 @@
 clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
-exact-0001,exact-shape,19,4,shared|shared:contracts,,9266d1a2c4b6,type-expression
-exact-0002,exact-shape,10,2,feature:integrations,,f7e9eb5a7cd6,type-expression
-exact-0003,exact-shape,8,2,shared:contracts,,4734056d3e47,type-expression
-near-0001,near-shape,8,2,feature:kangur,,001b63c37efa,structural-members

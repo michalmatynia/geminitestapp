@@ -4,7 +4,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonLead,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
   addXp,
@@ -19,18 +24,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Co to jest obwód?',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
-          <p className='[color:var(--kangur-page-text)]'>
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>
             <strong>Obwód</strong> to długosc całej krawędzi figury. Dodajemy wszystkie boki.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='amber'>
             <div className='mx-auto h-20 w-32 rounded border-4 border-amber-500' />
             <p className='mt-2 text-sm text-amber-700'>Idziemy dookoła figury i sumujemy.</p>
           </KangurLessonCallout>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption>
             Obwód mierzymy w centymetrach (cm), metrach (m) itp.
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -38,7 +43,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Obwód kwadratu',
       content: (
-        <div className='space-y-3'>
+        <KangurLessonStack className='gap-3 text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <p className='[color:var(--kangur-page-text)]'>Każdy bok ma 3 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 3 + 3 + 3 + 3 = 12 cm</p>
@@ -54,10 +59,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               gdzie <b>a</b> to długosc boku
             </p>
           </KangurLessonCallout>
-          <p className='text-center text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption>
             Przykład: a = 5 cm → O = 4 × 5 = 20 cm
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -65,7 +70,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Obwód prostokąta',
       content: (
-        <div className='space-y-3'>
+        <KangurLessonStack className='gap-3 text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <p className='[color:var(--kangur-page-text)]'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 6 + 4 + 6 + 4 = 20 cm</p>
@@ -81,10 +86,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               gdzie <b>a</b> i <b>b</b> to długosci boków
             </p>
           </KangurLessonCallout>
-          <p className='text-center text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption>
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],

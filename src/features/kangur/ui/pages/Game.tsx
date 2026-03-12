@@ -442,7 +442,7 @@ function GameContent(): React.JSX.Element {
         <KangurPageContainer
           id={GAME_MAIN_ID}
           aria-labelledby={`${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`}
-          className='flex flex-col items-center gap-10 pt-6 sm:pt-8'
+          className='flex flex-col items-center gap-8 pt-4 sm:gap-10 sm:pt-8'
         >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
@@ -451,9 +451,12 @@ function GameContent(): React.JSX.Element {
             {screen === 'home' ? (
               renderScreen(
                 'home',
-                'flex w-full flex-col items-center gap-10',
+                'flex w-full flex-col items-center gap-8 sm:gap-10',
                 <>
-                  <section className='w-full max-w-[520px] space-y-5' aria-labelledby='kangur-home-start-heading'>
+                  <section
+                    className='w-full max-w-[560px] space-y-4 sm:space-y-5'
+                    aria-labelledby='kangur-home-start-heading'
+                  >
                     <div ref={homeHeroRef}>
                       <h3 id='kangur-home-start-heading' className='sr-only'>
                         Wprowadzenie do gry
@@ -498,7 +501,7 @@ function GameContent(): React.JSX.Element {
                   ) : null}
 
                   <section
-                    className='grid w-full max-w-5xl gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
+                    className='grid w-full max-w-5xl gap-4 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
                     aria-labelledby='kangur-home-progress-heading'
                   >
                     <h3 id='kangur-home-progress-heading' className='sr-only'>

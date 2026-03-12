@@ -1,7 +1,10 @@
 import {
+  KangurCardDescription,
+  KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurMetaText,
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -71,21 +74,21 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
             >
               <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                  <KangurCardTitle as='div'>
                     {item.emoji} {item.title}
-                  </div>
-                  <div className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                  </KangurCardTitle>
+                  <KangurMetaText as='div' className='mt-1' size='xs'>
                     Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
-                  </div>
+                  </KangurMetaText>
                 </div>
                 <KangurStatusChip accent={getMasteryTone(item.masteryPercent)} size='md'>
                   {item.masteryPercent}%
                 </KangurStatusChip>
               </div>
-              <div className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
+              <KangurMetaText as='div' className='mt-2' size='xs'>
                 Najlepszy wynik: {item.bestScorePercent}% · Ostatnia proba:{' '}
                 {formatCompletedAt(item.lastCompletedAt)}
-              </div>
+              </KangurMetaText>
             </KangurInfoCard>
           ))}
         </div>
@@ -106,10 +109,10 @@ export default function LessonMasteryInsights({
           <KangurSectionEyebrow>
             Opanowanie lekcji
           </KangurSectionEyebrow>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurCardDescription as='p'>
             Sledzone: {insights.trackedLessons} · opanowane: {insights.masteredLessons} · do
             powtorki: {insights.lessonsNeedingPractice}
-          </p>
+          </KangurCardDescription>
         </div>
         {insights.trackedLessons > 0 && (
           <KangurStatusChip accent='indigo' size='md'>

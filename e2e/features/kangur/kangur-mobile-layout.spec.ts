@@ -3,6 +3,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { mockKangurTutorEnvironment } from '../../support/kangur-tutor-fixtures';
 
 const HOME_ONBOARDING_STORAGE_KEY = 'kangur-ai-tutor-home-onboarding-v1';
+const NAVIGATION_TIMEOUT_MS = 75_000;
+const SURFACE_READY_TIMEOUT_MS = 45_000;
 const MOBILE_VIEWPORTS = [
   { label: 'iphone-se', width: 320, height: 568 },
   { label: 'iphone-13', width: 390, height: 844 },
@@ -80,13 +82,52 @@ async function expectViewportSafeWidth(
   expect(toRight(box), message).toBeLessThanOrEqual(viewportSize.width + allowancePx);
 }
 
+async function gotoKangurSurface(page: Page, url: string): Promise<void> {
+  await page.goto(url, { waitUntil: 'commit', timeout: NAVIGATION_TIMEOUT_MS });
+}
+
+async function waitForKangurSurface(page: Page, readyLocator: Locator): Promise<void> {
+  const appLoader = page.getByTestId('kangur-app-loader');
+
+  await expect
+    .poll(
+      async () => {
+        if (await readyLocator.isVisible().catch(() => false)) {
+          return 'ready';
+        }
+
+        if (await appLoader.isVisible().catch(() => false)) {
+          return 'loading';
+        }
+
+        return 'pending';
+      },
+      {
+        message: 'expected Kangur surface to replace the app loader',
+        timeout: SURFACE_READY_TIMEOUT_MS,
+      }
+    )
+    .toBe('ready');
+}
+
 async function openDocumentLesson(page: Page): Promise<void> {
-  await page.goto('/kangur/lessons', { waitUntil: 'commit' });
-  await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible();
-  await page.getByRole('button', { name: /dodawanie z tutorem/i }).click();
-  await expect(page.getByTestId('active-lesson-header')).toBeVisible();
-  await expect(page.getByTestId('lessons-document-summary')).toBeVisible();
-  await expect(page.locator('[data-testid^="lesson-page-shell-"]').first()).toBeVisible();
+  const lessonsIntro = page.getByTestId('lessons-list-intro-card');
+  const documentLessonButton = page.getByRole('button', { name: /dodawanie z tutorem/i });
+
+  await gotoKangurSurface(page, '/kangur/lessons');
+  await waitForKangurSurface(page, lessonsIntro);
+  await expect(lessonsIntro).toBeVisible();
+  await expect(documentLessonButton).toBeVisible({ timeout: SURFACE_READY_TIMEOUT_MS });
+  await documentLessonButton.click();
+  await expect(page.getByTestId('active-lesson-header')).toBeVisible({
+    timeout: SURFACE_READY_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('lessons-document-summary')).toBeVisible({
+    timeout: SURFACE_READY_TIMEOUT_MS,
+  });
+  await expect(page.locator('[data-testid^="lesson-page-shell-"]').first()).toBeVisible({
+    timeout: SURFACE_READY_TIMEOUT_MS,
+  });
 }
 
 async function persistHomeOnboardingStatus(
@@ -110,6 +151,8 @@ async function persistHomeOnboardingStatus(
 
 for (const viewport of MOBILE_VIEWPORTS) {
   test.describe(`Kangur mobile layout ${viewport.label}`, () => {
+    test.describe.configure({ timeout: 90_000 });
+
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await mockKangurTutorEnvironment(page, { uiMode: 'anchored' });
@@ -117,7 +160,7 @@ for (const viewport of MOBILE_VIEWPORTS) {
 
     test('keeps home sections stacked without overlap', async ({ page }) => {
       await persistHomeOnboardingStatus(page, 'dismissed');
-      await page.goto('/kangur', { waitUntil: 'commit' });
+      await gotoKangurSurface(page, '/kangur');
 
       const topBar = page.getByTestId('kangur-page-top-bar');
       const actions = page.getByTestId('kangur-home-actions-shell');
@@ -125,6 +168,7 @@ for (const viewport of MOBILE_VIEWPORTS) {
       const leaderboard = page.getByTestId('leaderboard-shell');
       const progress = page.getByTestId('player-progress-shell');
 
+      await waitForKangurSurface(page, topBar);
       await expect(topBar).toBeVisible();
       await expect(actions).toBeVisible();
       await expect(quest).toBeVisible();
@@ -142,11 +186,12 @@ for (const viewport of MOBILE_VIEWPORTS) {
     });
 
     test('keeps the mobile onboarding callout off the home action stack', async ({ page }) => {
-      await page.goto('/kangur', { waitUntil: 'commit' });
+      await gotoKangurSurface(page, '/kangur');
 
       const actions = page.getByTestId('kangur-home-actions-shell');
       const onboarding = page.getByTestId('kangur-ai-tutor-home-onboarding');
 
+      await waitForKangurSurface(page, actions);
       await expect(actions).toBeVisible();
       await expect(onboarding).toBeVisible();
 

@@ -7,7 +7,12 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonLead,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
 import {
   KangurDisplayEmoji,
   KangurEquationDisplay,
@@ -22,13 +27,13 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
     {
       title: 'Co to znaczy mnozyc?',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Mnozenie to skrócone dodawanie tej samej liczby kilka razy.
-          </p>
-          <div className='flex flex-col items-center gap-2'>
+          </KangurLessonLead>
+          <KangurLessonStack gap='sm'>
             <KangurDisplayEmoji size='xs'>🍬🍬🍬 🍬🍬🍬 🍬🍬🍬</KangurDisplayEmoji>
-            <p className='text-sm [color:var(--kangur-page-muted-text)]'>3 grupy po 3 cukierki</p>
+            <KangurLessonCaption>3 grupy po 3 cukierki</KangurLessonCaption>
             <KangurEquationDisplay
               accent='violet'
               data-testid='multiplication-lesson-intro-equation'
@@ -36,9 +41,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
             >
               3 × 3 = 9
             </KangurEquationDisplay>
-            <p className='text-sm [color:var(--kangur-page-muted-text)]'>(to samo co 3+3+3=9)</p>
-          </div>
-        </div>
+            <KangurLessonCaption>(to samo co 3+3+3=9)</KangurLessonCaption>
+          </KangurLessonStack>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -100,7 +105,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
     {
       title: 'Triki do zapamietania',
       content: (
-        <div className='flex flex-col items-center gap-3'>
+        <KangurLessonStack className='gap-3'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -120,7 +125,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
               </li>
             </ul>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],

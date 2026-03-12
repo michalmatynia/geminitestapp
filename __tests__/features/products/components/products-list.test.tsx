@@ -330,7 +330,7 @@ describe('Admin Products List UI', () => {
   });
 
   it('prompts for SKU before opening the create modal and pre-fills SKU', async () => {
-    render(
+    const view = render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <AdminLayoutProvider>
@@ -341,7 +341,7 @@ describe('Admin Products List UI', () => {
     );
 
     const user = userEvent.setup();
-    const createButtons = await screen.findAllByLabelText('Create new product');
+    const createButtons = await within(view.container).findAllByLabelText('Create new product');
     await user.click(createButtons[0]!);
 
     // Interact with PromptModal

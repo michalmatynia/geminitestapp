@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
-import { appProviderValueSchema, type AppProviderValue } from '../system';
+import { appProviderValueSchema } from '../system';
 
-export const productDbProviderSchema = appProviderValueSchema;
-export type ProductDbProvider = AppProviderValue;
-
-export const integrationDbProviderSchema = appProviderValueSchema;
-export type IntegrationDbProvider = AppProviderValue;
+export {
+  appProviderValueSchema as productDbProviderSchema,
+  appProviderValueSchema as integrationDbProviderSchema,
+};
+export type {
+  AppProviderValue as ProductDbProvider,
+  AppProviderValue as IntegrationDbProvider,
+} from '../system';
 
 export const productMigrationDirectionSchema = z.literal('mongo-only');
 export type ProductMigrationDirection = z.infer<typeof productMigrationDirectionSchema>;

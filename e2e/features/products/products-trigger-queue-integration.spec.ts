@@ -1,6 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-test.describe.configure({ timeout: 60_000 });
+import { ensureAdminSession as ensureSharedAdminSession } from '../../support/admin-auth';
+import {
+  openAdminProductsPage as openSharedAdminProductsPage,
+  openAdminQueuePage as openSharedAdminQueuePage,
+} from '../../support/ai-paths-product-workflow-fixtures';
+
+test.describe.configure({ timeout: 120_000 });
 
 type TriggerButtonFixture = {
   id: string;
@@ -56,66 +62,17 @@ type ProductFixture = {
   noteIds: string[];
 };
 
-const E2E_ADMIN_EMAIL =
-  process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ??
-  process.env['E2E_ADMIN_EMAIL'] ??
-  'admin@example.com';
-const E2E_ADMIN_PASSWORD =
-  process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ??
-  process.env['E2E_ADMIN_PASSWORD'] ??
-  'admin123';
-
-const ensureAdminSession = async (page: Page): Promise<boolean> => {
-  await page.goto('/auth/signin?callbackUrl=%2Fadmin', {
-    waitUntil: 'domcontentloaded',
-  });
-  const signInHeading = page.getByRole('heading', { name: /sign in/i });
-  if (!(await signInHeading.isVisible().catch(() => false))) {
+const ensureAdminSession = async (page: Page, destination = '/admin'): Promise<boolean> => {
+  try {
+    await ensureSharedAdminSession(page, destination);
     return true;
+  } catch {
+    return false;
   }
-
-  await page.getByRole('textbox', { name: /email/i }).fill(E2E_ADMIN_EMAIL);
-  await page.getByRole('textbox', { name: /password/i }).fill(E2E_ADMIN_PASSWORD);
-  await page.getByRole('button', { name: /sign in/i }).click();
-  const authSucceeded = await page
-    .waitForURL((url) => url.pathname.startsWith('/admin'), { timeout: 20_000 })
-    .then(() => true)
-    .catch(() => false);
-  return authSucceeded || page.url().includes('/admin');
 };
 
 const openAdminProductsPage = async (page: Page): Promise<void> => {
-  const productsHeading = page.getByRole('heading', { name: 'Products', exact: true });
-  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await page
-      .goto('/admin/products', {
-        waitUntil: 'domcontentloaded',
-      })
-      .catch(() => null);
-
-    if (await productsHeading.isVisible().catch(() => false)) {
-      await expect(productsHeading).toBeVisible();
-      return;
-    }
-
-    const needsAuth =
-      page.url().includes('/auth/signin') || (await signInHeading.isVisible().catch(() => false));
-    if (needsAuth) {
-      const authenticated = await ensureAdminSession(page);
-      if (!authenticated) {
-        throw new Error('Admin authentication failed while opening /admin/products.');
-      }
-      continue;
-    }
-
-    if (attempt < 2) {
-      await page.waitForTimeout(500);
-    }
-  }
-
-  await expect(productsHeading).toBeVisible({ timeout: 15_000 });
+  await openSharedAdminProductsPage(page);
 };
 
 const openProductEditModal = async (
@@ -159,37 +116,12 @@ const openProductEditModalFromName = async (
 };
 
 const openAdminQueuePage = async (page: Page): Promise<boolean> => {
-  const queueHeading = page.getByRole('heading', { name: 'Job Queue', exact: true });
-  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await page
-      .goto('/admin/ai-paths/queue?tab=paths-all', {
-        waitUntil: 'domcontentloaded',
-      })
-      .catch(() => null);
-
-    if (await queueHeading.isVisible().catch(() => false)) {
-      await expect(queueHeading).toBeVisible();
-      return true;
-    }
-
-    const needsAuth =
-      page.url().includes('/auth/signin') || (await signInHeading.isVisible().catch(() => false));
-    if (needsAuth) {
-      const authenticated = await ensureAdminSession(page);
-      if (!authenticated) {
-        return false;
-      }
-      continue;
-    }
-
-    if (attempt < 2) {
-      await page.waitForTimeout(500);
-    }
+  try {
+    await openSharedAdminQueuePage(page);
+    return true;
+  } catch {
+    return false;
   }
-
-  return false;
 };
 
 const createProductFixture = (

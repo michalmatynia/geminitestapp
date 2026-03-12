@@ -58,12 +58,12 @@ export type KangurAiTutorOnboardingValidationIssue = {
   blocking: boolean;
 };
 
-export type KangurAiTutorOnboardingValidationResult = {
+export type KangurAiTutorOnboardingValidationResultDto<TIssue> = {
   listId: string;
   listName: string;
   ruleIds: string[];
-  issues: KangurAiTutorOnboardingValidationIssue[];
-  blockingIssues: KangurAiTutorOnboardingValidationIssue[];
+  issues: TIssue[];
+  blockingIssues: TIssue[];
 };
 
 export type KangurAiTutorOnboardingContentValidationIssue = {
@@ -76,13 +76,11 @@ export type KangurAiTutorOnboardingContentValidationIssue = {
   blocking: boolean;
 };
 
-export type KangurAiTutorOnboardingContentValidationResult = {
-  listId: string;
-  listName: string;
-  ruleIds: string[];
-  issues: KangurAiTutorOnboardingContentValidationIssue[];
-  blockingIssues: KangurAiTutorOnboardingContentValidationIssue[];
-};
+export type KangurAiTutorOnboardingValidationResult =
+  KangurAiTutorOnboardingValidationResultDto<KangurAiTutorOnboardingValidationIssue>;
+
+export type KangurAiTutorOnboardingContentValidationResult =
+  KangurAiTutorOnboardingValidationResultDto<KangurAiTutorOnboardingContentValidationIssue>;
 
 const toPromptValidationIssue = (
   issue: PromptValidationIssue,

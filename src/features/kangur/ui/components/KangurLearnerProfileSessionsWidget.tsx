@@ -85,7 +85,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
               return (
                 <KangurInfoCard
                   accent={sessionAccent}
-                  className='flex items-center gap-3'
+                  className='flex flex-col gap-3 sm:flex-row sm:items-center'
                   data-testid={`learner-profile-session-${session.id}`}
                   key={session.id}
                   padding='sm'
@@ -106,7 +106,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                       {formatKangurProfileDateTime(session.createdAt)}
                     </div>
                   </div>
-                  <div className='flex flex-col items-end gap-1 text-right'>
+                  <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
                     <KangurStatusChip
                       accent={resolveSessionScoreAccent(session.accuracyPercent)}
                       data-testid={`learner-profile-session-score-${session.id}`}

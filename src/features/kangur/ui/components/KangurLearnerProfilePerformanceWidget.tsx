@@ -89,11 +89,11 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           ) : (
             snapshot.operationPerformance.map((item) => (
               <div key={item.operation}>
-                <div className='mb-1 flex items-center justify-between gap-2 text-sm [color:var(--kangur-page-muted-text)]'>
+                <div className='mb-1 flex flex-col gap-2 text-sm [color:var(--kangur-page-muted-text)] sm:flex-row sm:items-center sm:justify-between'>
                   <span className='font-semibold'>
                     {item.emoji} {item.label}
                   </span>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex flex-wrap items-center gap-2'>
                     <span>{item.averageAccuracy}%</span>
                     <KangurButton asChild size='sm' variant='surface'>
                       <Link

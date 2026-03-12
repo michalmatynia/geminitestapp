@@ -6,7 +6,10 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
+  KangurLessonCaption,
   KangurLessonInset,
+  KangurLessonLead,
+  KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
@@ -17,36 +20,36 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Co to jest analogia?',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Analogia to ta sama relacja miedzy roznymi parami. Zamiast myslec o konkretnych
             rzeczach, szukasz <b>wzorca połaczenia</b>.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-sm'>
             <p className='font-semibold text-pink-700 mb-2'>Zapis analogii:</p>
             <p className='text-center text-lg font-bold [color:var(--kangur-page-text)]'>A : B = C : D</p>
-            <p className='mt-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption className='mt-1'>
               „A do B tak jak C do D"
-            </p>
+            </KangurLessonCaption>
             <KangurLessonInset accent='rose' className='mt-2 text-center' padding='sm'>
               <p className='font-bold text-pink-700'>Ptak : latac = ryba : ❓</p>
-              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+              <KangurLessonCaption className='mt-1'>
                 Relacja: stworzenie → sposób poruszania
-              </p>
+              </KangurLessonCaption>
               <p className='text-pink-600 font-bold mt-1'>Odpowiedz: pływac 🐟</p>
             </KangurLessonInset>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Analogie słowne',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Analogie słowne korzystaja z relacji miedzy słowami: kategoria, przeciwienstwo, czesc
             całosci, czynnosc i inne.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
@@ -68,12 +71,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             ].map(({ pair, hint, answer }) => (
               <KangurLessonCallout key={pair} accent='rose' className='text-sm' padding='sm'>
                 <p className='font-bold [color:var(--kangur-page-text)]'>{pair}</p>
-                <p className='mt-0.5 text-xs [color:var(--kangur-page-muted-text)]'>{hint}</p>
+                <KangurLessonCaption className='mt-0.5'>{hint}</KangurLessonCaption>
                 <p className='text-pink-600 font-bold text-sm mt-1'>→ {answer}</p>
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -81,10 +84,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Analogie liczbowe',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             W analogiach liczbowych szukasz tej samej operacji matematycznej w obu parach.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
@@ -114,7 +117,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             ].map(({ pair, hint, answer, workings }) => (
               <KangurLessonCallout key={pair} accent='rose' className='text-sm' padding='sm'>
                 <p className='text-base font-bold [color:var(--kangur-page-text)]'>{pair}</p>
-                <p className='mt-0.5 text-xs [color:var(--kangur-page-muted-text)]'>{hint}</p>
+                <KangurLessonCaption className='mt-0.5'>{hint}</KangurLessonCaption>
                 <p className='text-rose-600 font-bold mt-1'>
                   → {answer}{' '}
                   <span className='font-normal [color:var(--kangur-page-muted-text)]'>
@@ -124,29 +127,29 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Analogie kształtów',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Analogie kształtów zmieniaja rozmiar, orientacje, kolor lub liczbe elementów według tej
             samej reguły.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { rule: 'Reguła: obrót o 90° w prawo', seq: '➡️ : ⬇️ = ⬆️ : ➡️' },
               { rule: 'Reguła: dodaj jeden element', seq: '⭐ : ⭐⭐ = 🔵 : 🔵🔵' },
             ].map(({ rule, seq }) => (
               <KangurLessonCallout key={rule} accent='rose' className='text-center' padding='sm'>
-                <p className='mb-1 text-xs [color:var(--kangur-page-muted-text)]'>{rule}</p>
+                <KangurLessonCaption className='mb-1'>{rule}</KangurLessonCaption>
                 <div className='text-2xl'>{seq}</div>
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -154,10 +157,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Analogie czesc–całosc',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Relacja czesc–całosc to jedna z najczestszych w analogiach.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               { pair: 'Strona : ksiazka = cegła : ❓', answer: 'mur / budynek 🧱' },
@@ -171,16 +174,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Analogie przyczyna–skutek',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Przyczyna powoduje skutek. Analogia przenosi te sama zaleznosc na inna pare.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
@@ -199,7 +202,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -207,7 +210,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Podsumowanie',
       content: (
-        <div className='flex flex-col items-center gap-4'>
+        <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -229,11 +232,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 ⚡ <b>Przyczyna–skutek</b> — co wywołuje co?
               </li>
             </ul>
-          </KangurLessonCallout>
-          <p className='text-pink-600 font-bold text-center'>
-            Analogie pozwalaja przenosic wiedze do zupełnie nowych sytuacji!
-          </p>
-        </div>
+        </KangurLessonCallout>
+        <p className='text-pink-600 font-bold text-center'>
+          Analogie pozwalaja przenosic wiedze do zupełnie nowych sytuacji!
+        </p>
+        </KangurLessonStack>
       ),
     },
   ],

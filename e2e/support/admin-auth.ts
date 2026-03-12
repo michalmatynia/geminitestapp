@@ -12,7 +12,6 @@ const AUTH_SESSION_COOKIE_NAMES = new Set([
   'next-auth.session-token',
   '__Secure-next-auth.session-token',
 ]);
-const SIGN_IN_PATHNAME = '/auth/signin';
 
 const credentialCandidates = [
   {
@@ -50,11 +49,8 @@ export async function ensureAdminSession(
     destinationNavigationTimeoutMs = 60_000,
     transitionTimeoutMs = 30_000,
   } = options;
+  const authRequestTimeoutMs = Math.max(initialNavigationTimeoutMs, transitionTimeoutMs);
   const destinationUrl = new URL(destination, 'http://localhost');
-  const invalidCredentialsAlert = page
-    .getByRole('alert')
-    .filter({ hasText: /invalid (email or password|credentials)\.?/i })
-    .first();
   const matchesDestination = (url: URL): boolean =>
     url.pathname === destinationUrl.pathname &&
     (destinationUrl.search ? url.search === destinationUrl.search : true);
@@ -65,146 +61,99 @@ export async function ensureAdminSession(
       (cookie) => AUTH_SESSION_COOKIE_NAMES.has(cookie.name) && cookie.value.trim().length > 0
     );
   };
-  const waitForNonSignInUrl = async (timeoutMs: number): Promise<URL | null> => {
-    const deadline = Date.now() + timeoutMs;
-
-    while (Date.now() < deadline) {
-      const currentUrl = getCurrentUrl();
-      if (currentUrl.pathname !== SIGN_IN_PATHNAME) {
-        return currentUrl;
-      }
-
-      await page.waitForTimeout(250);
-    }
-
-    return null;
-  };
-  const isNavigationRaceError = (error: unknown): boolean => {
-    if (!(error instanceof Error)) {
-      return false;
-    }
-
-    return (
-      error.message.includes('net::ERR_ABORTED') ||
-      error.message.toLowerCase().includes('frame was detached')
-    );
-  };
-  const ensureDestinationUrl = async (): Promise<void> => {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      if (matchesDestination(getCurrentUrl())) {
-        return;
-      }
-
-      try {
-        await page.goto(destination, {
-          waitUntil: 'domcontentloaded',
-          timeout: destinationNavigationTimeoutMs,
-        });
-      } catch (error) {
-        if (!isNavigationRaceError(error)) {
-          throw error;
-        }
-      }
-
-      if (matchesDestination(getCurrentUrl())) {
-        return;
-      }
-
-      const settledUrl = await waitForNonSignInUrl(Math.min(transitionTimeoutMs, 5_000));
-      if (settledUrl && matchesDestination(settledUrl)) {
-        return;
-      }
-    }
-
-    await page.waitForURL(
-      (url) =>
-        url.pathname === destinationUrl.pathname &&
-        (destinationUrl.search ? url.search === destinationUrl.search : true),
-      { timeout: transitionTimeoutMs }
-    );
-  };
-  const waitForSessionCookieOrNavigation = async (): Promise<{
-    hasSessionCookie: boolean;
-    invalidCredentials: boolean;
-    landingUrl: URL | null;
-  }> => {
+  const waitForSessionCookie = async (): Promise<boolean> => {
     const deadline = Date.now() + transitionTimeoutMs;
 
-    while (Date.now() < deadline) {
-      const currentUrl = getCurrentUrl();
-      if (currentUrl.pathname !== SIGN_IN_PATHNAME) {
-        return {
-          hasSessionCookie: true,
-          invalidCredentials: false,
-          landingUrl: currentUrl,
-        };
-      }
-
+    do {
       if (await hasSessionCookie()) {
-        return {
-          hasSessionCookie: true,
-          invalidCredentials: false,
-          landingUrl: null,
-        };
+        return true;
       }
 
-      if (await invalidCredentialsAlert.isVisible().catch(() => false)) {
-        return {
-          hasSessionCookie: false,
-          invalidCredentials: true,
-          landingUrl: null,
-        };
+      if (Date.now() >= deadline) {
+        return false;
       }
 
       await page.waitForTimeout(250);
+    } while (true);
+  };
+  const navigateToDestination = async (): Promise<void> => {
+    if (!matchesDestination(getCurrentUrl())) {
+      await page.goto(destination, {
+        waitUntil: 'domcontentloaded',
+        timeout: destinationNavigationTimeoutMs,
+      });
     }
 
+    if (!matchesDestination(getCurrentUrl())) {
+      await page.waitForURL(
+        (url) =>
+          url.pathname === destinationUrl.pathname &&
+          (destinationUrl.search ? url.search === destinationUrl.search : true),
+        { timeout: transitionTimeoutMs }
+      );
+    }
+  };
+  const fetchCsrfToken = async (): Promise<{
+    csrfToken: string;
+    origin: string;
+    signInUrl: string;
+  }> => {
+    const response = await page.context().request.get('/api/auth/csrf', {
+      failOnStatusCode: false,
+      timeout: authRequestTimeoutMs,
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Unable to load auth CSRF token for ${destination}: ${response.status()}.`);
+    }
+
+    const body = (await response.json().catch(() => null)) as { csrfToken?: unknown } | null;
+    const csrfToken = typeof body?.csrfToken === 'string' ? body.csrfToken.trim() : '';
+
+    if (!csrfToken) {
+      throw new Error(`Missing auth CSRF token for ${destination}.`);
+    }
+
+    const responseUrl = new URL(response.url());
+    const signInUrl = new URL('/auth/signin', responseUrl.origin);
+    signInUrl.searchParams.set('callbackUrl', destination);
+
     return {
-      hasSessionCookie: false,
-      invalidCredentials: false,
-      landingUrl: null,
+      csrfToken,
+      origin: responseUrl.origin,
+      signInUrl: signInUrl.toString(),
     };
   };
+  const signInWithCandidate = async (candidate: { email: string; password: string }): Promise<boolean> => {
+    const { csrfToken, origin, signInUrl } = await fetchCsrfToken();
+    await page.context().request.post('/api/auth/callback/credentials', {
+      failOnStatusCode: false,
+      form: {
+        email: candidate.email,
+        password: candidate.password,
+        csrfToken,
+        callbackUrl: destination,
+      },
+      headers: {
+        Origin: origin,
+        Referer: signInUrl,
+        'X-Auth-Return-Redirect': '1',
+        'X-CSRF-Token': csrfToken,
+      },
+      timeout: authRequestTimeoutMs,
+    });
 
-  await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {
-    waitUntil: 'domcontentloaded',
-    timeout: initialNavigationTimeoutMs,
-  });
-  const signInHeading = page.getByRole('heading', { name: /sign in/i });
-  if (!(await signInHeading.isVisible().catch(() => false))) {
+    return waitForSessionCookie();
+  };
+
+  if (await hasSessionCookie()) {
+    await navigateToDestination();
     return;
   }
 
   for (const candidate of credentialCandidates) {
-    await page.getByRole('textbox', { name: /email/i }).waitFor({ state: 'visible', timeout: 20_000 });
-    await page.getByRole('textbox', { name: /email/i }).fill(candidate.email);
-    await page.getByRole('textbox', { name: /password/i }).fill(candidate.password);
-    await page.getByRole('button', { name: /sign in/i }).click();
-
-    const {
-      hasSessionCookie: sessionReady,
-      invalidCredentials,
-      landingUrl,
-    } = await waitForSessionCookieOrNavigation();
-
-    if (landingUrl && matchesDestination(landingUrl)) {
-      return;
-    }
-
-    if (invalidCredentials) {
-      continue;
-    }
-
-    if (sessionReady) {
-      const settledUrl = landingUrl ?? (await waitForNonSignInUrl(Math.min(transitionTimeoutMs, 10_000)));
-      if (settledUrl && matchesDestination(settledUrl)) {
-        return;
-      }
-
-      if (settledUrl || (await hasSessionCookie())) {
-        await ensureDestinationUrl();
-      }
-
+    if (await signInWithCandidate(candidate)) {
+      await navigateToDestination();
       return;
     }
   }

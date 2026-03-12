@@ -87,18 +87,24 @@ const clearBrowserSelection = (
 
   try {
     selection.removeAllRanges();
-  } catch {}
+  } catch {
+    // Some browsers can report a stale selection while tearing it down.
+  }
 
   if (typeof selection.empty === 'function') {
     try {
       selection.empty();
-    } catch {}
+    } catch {
+      // Safari may expose Selection.empty but reject it for transient selections.
+    }
   }
 
   if (selection.rangeCount > 0) {
     try {
       selection.removeAllRanges();
-    } catch {}
+    } catch {
+      // Ignore follow-up cleanup failures when the selection is already detached.
+    }
   }
 };
 
@@ -106,7 +112,9 @@ const rangeIntersectsTextNode = (range: Range, node: Text): boolean => {
   if (typeof range.intersectsNode === 'function') {
     try {
       return range.intersectsNode(node);
-    } catch {}
+    } catch {
+      // Fall through to the boundary-point fallback when the browser rejects the node.
+    }
   }
 
   const nodeRange = document.createRange();
@@ -184,7 +192,7 @@ const applySelectionTextEmphasis = (range: Range): HTMLElement[] => {
         : textNode.data.length;
     const emphasizedNode = isolateTextNodeSegment(textNode, startOffset, endOffset);
 
-    if (!emphasizedNode || !emphasizedNode.parentNode) {
+    if (!emphasizedNode?.parentNode) {
       continue;
     }
 

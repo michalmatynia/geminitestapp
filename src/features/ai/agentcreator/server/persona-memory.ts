@@ -2,6 +2,10 @@ import 'server-only';
 
 
 import { addAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
+import {
+  getAgentLongTermMemoryDelegate,
+  getChatbotMessageDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { buildAgentPersonaSettings, fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import {
   AGENT_PERSONA_MOOD_IDS,
@@ -13,8 +17,7 @@ import type {
   PersonaMemorySearchResponse,
   PersonaMemorySourceType,
 } from '@/shared/contracts/persona-memory';
-import prisma from '@/shared/lib/db/prisma';
-import type { Prisma } from '@/shared/lib/db/prisma-client';
+import type { JsonValue } from '@/shared/contracts/json';
 
 const MOOD_ID_SET = new Set<AgentPersonaMoodId>(AGENT_PERSONA_MOOD_IDS);
 const STOP_WORDS = new Set([
@@ -68,7 +71,7 @@ const clamp = (value: number | undefined, min: number, max: number, fallback: nu
 };
 
 const asRecord = (
-  value: Prisma.JsonValue | null | undefined
+  value: JsonValue | null | undefined
 ): Record<string, unknown> | undefined => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
@@ -77,6 +80,45 @@ const asRecord = (
 };
 
 const normalizeText = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+type PersonaMemoryEntryRecord = {
+  id: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  runId: string | null;
+  memoryKey: string | null;
+  sourceType: string | null;
+  sourceId: string | null;
+  sourceLabel: string | null;
+  sourceCreatedAt: Date | string | null;
+  importance: number | null;
+  tags: string[];
+  topicHints: string[];
+  moodHints: string[];
+  content: string;
+  summary: string | null;
+  metadata: JsonValue | null;
+  lastAccessedAt: Date | string | null;
+};
+
+type PersonaConversationMessageRecord = {
+  id: string;
+  createdAt: Date | string;
+  content: string;
+  role: string;
+  sessionId: string;
+  model: string | null;
+  images: unknown[];
+  metadata: JsonValue | null;
+  session: {
+    title: string | null;
+  };
+};
+
+const toIsoString = (value: Date | string | null | undefined): string | null => {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
+};
 
 const truncateText = (value: string, maxLength: number): string => {
   const normalized = normalizeText(value);
@@ -347,14 +389,16 @@ export async function searchAgentPersonaMemory(
   const sourceType = params.sourceType ?? null;
   const searchTerms = buildSearchTerms(searchQuery);
   const { allowMessages, allowMemoryEntries } = resolveSourceTypeFilter(sourceType);
+  const agentLongTermMemory = getAgentLongTermMemoryDelegate();
+  const chatbotMessage = getChatbotMessageDelegate();
   const candidateLimit =
     searchTerms.length > 0 || tag || topic || mood
       ? clamp(limit * 4, limit, 200, limit)
       : limit;
 
   const memoryQuery =
-    allowMemoryEntries && memorySettings.enabled !== false
-      ? prisma.agentLongTermMemory.findMany({
+    allowMemoryEntries && memorySettings.enabled !== false && agentLongTermMemory
+      ? agentLongTermMemory.findMany<PersonaMemoryEntryRecord>({
         where: {
           personaId: params.personaId,
           ...(sourceType ? { sourceType } : {}),
@@ -376,11 +420,11 @@ export async function searchAgentPersonaMemory(
         orderBy: { updatedAt: 'desc' },
         take: candidateLimit,
       })
-      : Promise.resolve([]);
+      : Promise.resolve<PersonaMemoryEntryRecord[]>([]);
 
   const messageQuery =
-    allowMessages && memorySettings.includeChatHistory !== false && !tag
-      ? prisma.chatbotMessage.findMany({
+    allowMessages && memorySettings.includeChatHistory !== false && !tag && chatbotMessage
+      ? chatbotMessage.findMany<PersonaConversationMessageRecord>({
         where: {
           session: {
             personaId: params.personaId,
@@ -411,15 +455,15 @@ export async function searchAgentPersonaMemory(
         orderBy: { createdAt: 'desc' },
         take: candidateLimit,
       })
-      : Promise.resolve([]);
+      : Promise.resolve<PersonaConversationMessageRecord[]>([]);
 
   const [memoryEntries, conversationMessages] = await Promise.all([memoryQuery, messageQuery]);
 
   if (memoryEntries.length > 0) {
-    await prisma.agentLongTermMemory.updateMany({
+    await agentLongTermMemory?.updateMany({
       where: {
         id: {
-          in: memoryEntries.map((item: any) => item.id),
+          in: memoryEntries.map((item: PersonaMemoryEntryRecord) => item.id),
         },
       },
       data: {
@@ -428,7 +472,7 @@ export async function searchAgentPersonaMemory(
     });
   }
 
-  const memoryItems: PersonaMemoryRecord[] = memoryEntries.map((item: any) => {
+  const memoryItems: PersonaMemoryRecord[] = memoryEntries.map((item: PersonaMemoryEntryRecord) => {
     const metadata = asRecord(item.metadata);
     const role =
       typeof metadata?.['role'] === 'string'
@@ -438,13 +482,13 @@ export async function searchAgentPersonaMemory(
           : null;
     const sourceTypeValue = (item.sourceType ?? 'agent_memory') as PersonaMemorySourceType;
     const sourceCreatedAt =
-      item.sourceCreatedAt?.toISOString() ??
+      toIsoString(item.sourceCreatedAt) ??
       (typeof metadata?.['sourceCreatedAt'] === 'string' ? metadata['sourceCreatedAt'] : null);
 
     return {
       id: item.id,
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
+      createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
       personaId: params.personaId,
       recordType: 'memory_entry',
       content: item.content,
@@ -465,12 +509,13 @@ export async function searchAgentPersonaMemory(
       metadata: {
         ...(metadata ?? {}),
         ...(item.runId ? { runId: item.runId } : {}),
-        ...(item.lastAccessedAt ? { lastAccessedAt: item.lastAccessedAt.toISOString() } : {}),
+        ...(item.lastAccessedAt ? { lastAccessedAt: toIsoString(item.lastAccessedAt) } : {}),
       },
     };
   });
 
-  const messageItems: PersonaMemoryRecord[] = conversationMessages.map((message: any) => {
+  const messageItems: PersonaMemoryRecord[] = conversationMessages.map(
+    (message: PersonaConversationMessageRecord) => {
     const metadata = asRecord(message.metadata);
     const moodHints = normalizeMoodHints(
       Array.isArray(metadata?.['moodHints'])
@@ -481,8 +526,8 @@ export async function searchAgentPersonaMemory(
 
     return {
       id: message.id,
-      createdAt: message.createdAt.toISOString(),
-      updatedAt: message.createdAt.toISOString(),
+      createdAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
+      updatedAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
       personaId: params.personaId,
       recordType: 'conversation_message',
       content: message.content,
@@ -494,7 +539,7 @@ export async function searchAgentPersonaMemory(
       sourceType: 'chat_message',
       sourceId: message.id,
       sourceLabel: message.session.title ?? 'Untitled session',
-      sourceCreatedAt: message.createdAt.toISOString(),
+      sourceCreatedAt: toIsoString(message.createdAt),
       importance: null,
       tags: [],
       topicHints: extractTopicHints(message.content),

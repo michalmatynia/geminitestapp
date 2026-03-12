@@ -5,6 +5,9 @@ const kangurParentEmailSchema = z.string().trim().email();
 const kangurParentCallbackUrlSchema = nonEmptyTrimmedStringSchema.optional();
 const retryAfterMsSchema = z.number().finite().int().positive();
 
+export const kangurAuthModeSchema = z.enum(['sign-in', 'create-account']);
+export type KangurAuthMode = z.infer<typeof kangurAuthModeSchema>;
+
 export const kangurParentAccountCreateSchema = z.object({
   email: kangurParentEmailSchema,
   password: z.string().min(1),
@@ -50,6 +53,11 @@ export const kangurParentEmailVerifyResponseSchema = z.object({
   message: nonEmptyTrimmedStringSchema,
 });
 export type KangurParentEmailVerifyResponse = z.infer<typeof kangurParentEmailVerifyResponseSchema>;
+
+export const parseKangurAuthMode = (
+  value: string | null | undefined,
+  fallback: KangurAuthMode = 'sign-in'
+): KangurAuthMode => (value?.trim().toLowerCase() === 'create-account' ? 'create-account' : fallback);
 
 export const parseKangurParentAccountActionResponse = (
   value: unknown

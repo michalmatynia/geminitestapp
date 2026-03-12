@@ -6,9 +6,9 @@ import {
   normalizePlanHierarchy,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
@@ -96,8 +96,9 @@ export async function dedupePlanStepsWithLLM({
       true,
       maxStepAttempts
     ).slice(0, maxSteps);
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',
@@ -178,8 +179,9 @@ export async function guardRepetitionWithLLM({
       0,
       maxSteps
     );
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',
@@ -258,8 +260,9 @@ export async function buildCheckpointBriefWithLLM({
     const risks = Array.isArray(parsed.risks)
       ? parsed.risks.filter((item: unknown) => typeof item === 'string')
       : [];
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',
@@ -435,8 +438,9 @@ export async function enrichPlanHierarchyWithLLM({
     if (!parsed?.goals?.length) return null;
     const enriched = normalizePlanHierarchy({ goals: parsed.goals });
     if (!enriched) return null;
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',
@@ -515,8 +519,9 @@ export async function expandHierarchyFromStepsWithLLM({
     if (!parsed?.goals?.length) return null;
     const expanded = normalizePlanHierarchy({ goals: parsed.goals });
     if (!expanded) return null;
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',

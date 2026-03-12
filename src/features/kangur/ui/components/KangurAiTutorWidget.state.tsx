@@ -19,10 +19,13 @@ import {
   loadPersistedTutorPanelPosition,
   loadPersistedTutorSessionKey,
   loadPersistedTutorVisibilityHidden,
-  type KangurAiTutorGuestIntroRecord,
-  type KangurAiTutorHomeOnboardingRecord,
 } from './KangurAiTutorWidget.storage';
 
+import type {
+  KangurAiTutorGuestIntroStatus,
+  KangurAiTutorHomeOnboardingStatus,
+  KangurAiTutorOnboardingRecord,
+} from '@/shared/contracts/kangur-ai-tutor';
 import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
@@ -39,6 +42,10 @@ import type {
   TutorPanelPositionMode,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
+
+type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
+type KangurAiTutorHomeOnboardingRecord =
+  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
 
 const getInitialTutorHiddenState = (): boolean => loadPersistedTutorVisibilityHidden();
 

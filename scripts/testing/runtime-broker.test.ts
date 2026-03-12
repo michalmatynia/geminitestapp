@@ -62,6 +62,17 @@ describe('resolveRuntimeAgentId', () => {
     ).toBe('codex-agent-12');
   });
 
+  it('prefers CODEX_THREAD_ID before falling back to USER', () => {
+    expect(
+      resolveRuntimeAgentId({
+        env: {
+          CODEX_THREAD_ID: '019cdec9-8a75-7dc2-8ffc-b3e44fc1ffa8',
+          USER: 'michalmatynia',
+        },
+      })
+    ).toBe('019cdec9-8a75-7dc2-8ffc-b3e44fc1ffa8');
+  });
+
   it('falls back to a sanitized default when no agent env is present', () => {
     expect(resolveRuntimeAgentId({ env: {}, fallback: 'Local Dev' })).toBe('local-dev');
   });

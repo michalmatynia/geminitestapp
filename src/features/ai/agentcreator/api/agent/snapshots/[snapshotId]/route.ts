@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams, type ApiHandlerContext } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -12,11 +12,12 @@ async function GET_handler(
   { params }: { params: Promise<{ snapshotId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('agentBrowserSnapshot' in prisma)) {
-    throw internalError('Agent snapshots not initialized. Run prisma generate/db push.');
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  if (!agentBrowserSnapshot) {
+    throw internalError('Agent snapshot storage is unavailable.');
   }
   const { snapshotId } = await params;
-  const snapshot = await prisma.agentBrowserSnapshot.findUnique({
+  const snapshot = await agentBrowserSnapshot.findUnique({
     where: { id: snapshotId },
   });
   if (!snapshot) {

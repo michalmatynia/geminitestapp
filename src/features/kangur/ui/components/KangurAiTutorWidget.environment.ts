@@ -26,6 +26,7 @@ import type {
   KangurAiTutorMotionPresetKind,
 } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
@@ -49,7 +50,6 @@ import {
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type {
-  GuidedTutorAuthMode,
   GuidedTutorSectionKind,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
@@ -104,7 +104,7 @@ const resolveGuestLoginGuidanceIntent = (
     createAccount: string[];
     signIn: string[];
   }
-): GuidedTutorAuthMode | null => {
+): KangurAuthMode | null => {
   const normalized = normalizeTutorIntentText(value);
   if (!normalized) {
     return null;
@@ -273,7 +273,7 @@ export function useKangurAiTutorWidgetEnvironment({
   } = widgetState;
 
   const resolveGuestLoginGuidanceIntentForContent = useCallback(
-    (value: string): GuidedTutorAuthMode | null =>
+    (value: string): KangurAuthMode | null =>
       resolveGuestLoginGuidanceIntent(value, tutorContent.guestIntro.intentPhrases),
     [tutorContent.guestIntro.intentPhrases]
   );

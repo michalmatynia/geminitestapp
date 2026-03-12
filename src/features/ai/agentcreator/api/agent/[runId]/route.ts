@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import {
+  type AgentRuntimeRunRecord,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
+import {
   badRequestError,
   conflictError,
   internalError,
@@ -14,22 +18,34 @@ import {
   apiHandlerWithParams,
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
-import type { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+
+type AgentRunRouteRecord = Pick<
+  AgentRuntimeRunRecord,
+  'id' | 'prompt' | 'status' | 'planState'
+> & {
+  checkpointedAt?: Date | string | null;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+  logLines?: string[];
+};
+
+type AgentRunStatusRecord = Pick<AgentRuntimeRunRecord, 'id' | 'status'>;
 
 async function GET_handler(
   _req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const { runId } = await params;
-  const run = await prisma.chatbotAgentRun.findUnique({
+  const run = await chatbotAgentRun.findUnique<AgentRunRouteRecord>({
     where: { id: runId },
   });
   if (!run) {
@@ -51,8 +67,9 @@ async function POST_handler(
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const { runId } = await params;
   let body: {
@@ -81,7 +98,7 @@ async function POST_handler(
     });
   }
 
-  const run = await prisma.chatbotAgentRun.findUnique({
+  const run = await chatbotAgentRun.findUnique<AgentRunRouteRecord>({
     where: { id: runId },
   });
 
@@ -110,7 +127,7 @@ async function POST_handler(
           ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
           ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
         };
-    const updated = await prisma.chatbotAgentRun.update({
+    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
       where: { id: runId },
       data: {
         status: 'queued',
@@ -185,7 +202,7 @@ async function POST_handler(
       resumeRequestedAt: now,
       updatedAt: now,
     };
-    const updated = await prisma.chatbotAgentRun.update({
+    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
       where: { id: runId },
       data: {
         status: 'queued',
@@ -193,7 +210,7 @@ async function POST_handler(
         errorMessage: null,
         finishedAt: null,
         checkpointedAt: new Date(),
-        planState: nextPlanState as Prisma.InputJsonValue,
+        planState: nextPlanState as InputJsonValue,
         activeStepId: body.stepId,
         logLines: {
           push: `[${new Date().toISOString()}] Step retry requested (${body.stepId}).`,
@@ -255,10 +272,10 @@ async function POST_handler(
       activeStepId: nextActive,
       updatedAt: now,
     };
-    const updated = await prisma.chatbotAgentRun.update({
+    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
       where: { id: runId },
       data: {
-        planState: nextPlanState as Prisma.InputJsonValue,
+        planState: nextPlanState as InputJsonValue,
         activeStepId: nextActive,
         checkpointedAt: new Date(),
         logLines: {
@@ -294,7 +311,7 @@ async function POST_handler(
         ? (run.planState as Record<string, unknown>)
         : null;
     const now = new Date().toISOString();
-    const updated = await prisma.chatbotAgentRun.update({
+    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
       where: { id: runId },
       data: {
         status: 'queued',
@@ -341,7 +358,7 @@ async function POST_handler(
     return NextResponse.json({ status: run.status });
   }
 
-  const updated = await prisma.chatbotAgentRun.update({
+  const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
     where: { id: runId },
     data: {
       status: 'stopped',
@@ -370,11 +387,12 @@ async function DELETE_handler(
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const { runId } = await params;
-  const run = await prisma.chatbotAgentRun.findUnique({
+  const run = await chatbotAgentRun.findUnique<Pick<AgentRuntimeRunRecord, 'status'>>({
     where: { id: runId },
   });
   if (!run) {
@@ -386,12 +404,12 @@ async function DELETE_handler(
     throw conflictError('Run is running. Stop it before deleting.');
   }
   if (run.status === 'running' && force) {
-    await prisma.chatbotAgentRun.update({
+    await chatbotAgentRun.update({
       where: { id: runId },
       data: { status: 'stopped', finishedAt: new Date() },
     });
   }
-  await prisma.chatbotAgentRun.delete({ where: { id: runId } });
+  await chatbotAgentRun.delete({ where: { id: runId } });
   const runDir = path.join(process.cwd(), 'tmp', 'chatbot-agent', runId);
   await fs.rm(runDir, { recursive: true, force: true });
   await logAgentAudit(runId, 'warning', 'Agent run deleted.', {

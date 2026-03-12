@@ -2,18 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   evaluateGeometryDrawing,
-  type GeometryDrawPoint,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
+import type { Point2d } from '@/shared/contracts/geometry';
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 const interpolateSegment = (
-  start: GeometryDrawPoint,
-  end: GeometryDrawPoint,
+  start: Point2d,
+  end: Point2d,
   steps = 14
-): GeometryDrawPoint[] =>
-  Array.from({ length: steps }, (_, index): GeometryDrawPoint => {
+): Point2d[] =>
+  Array.from({ length: steps }, (_, index): Point2d => {
     const t = index / Math.max(1, steps - 1);
     return {
       x: lerp(start.x, end.x, t),
@@ -21,8 +21,8 @@ const interpolateSegment = (
     };
   });
 
-const buildPolygon = (vertices: GeometryDrawPoint[]): GeometryDrawPoint[] => {
-  const points: GeometryDrawPoint[] = [];
+const buildPolygon = (vertices: Point2d[]): Point2d[] => {
+  const points: Point2d[] = [];
   for (let i = 0; i < vertices.length; i += 1) {
     const start = vertices[i];
     const end = vertices[(i + 1) % vertices.length];
@@ -38,11 +38,11 @@ const buildPolygon = (vertices: GeometryDrawPoint[]): GeometryDrawPoint[] => {
 };
 
 const buildCircle = (
-  center: GeometryDrawPoint,
+  center: Point2d,
   radius: number,
   pointsCount = 120
-): GeometryDrawPoint[] =>
-  Array.from({ length: pointsCount }, (_, index): GeometryDrawPoint => {
+): Point2d[] =>
+  Array.from({ length: pointsCount }, (_, index): Point2d => {
     const angle = (Math.PI * 2 * index) / Math.max(1, pointsCount - 1);
     return {
       x: center.x + radius * Math.cos(angle),
@@ -50,7 +50,7 @@ const buildCircle = (
     };
   });
 
-const EXPECT_ACCEPTED: Record<GeometryShapeId, GeometryDrawPoint[]> = {
+const EXPECT_ACCEPTED: Record<GeometryShapeId, Point2d[]> = {
   triangle: buildPolygon([
     { x: 140, y: 28 },
     { x: 34, y: 190 },

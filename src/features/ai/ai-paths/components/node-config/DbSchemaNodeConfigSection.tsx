@@ -211,7 +211,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   if (selectedNode.type !== 'db_schema') return null;
 
   const updateSchemaConfig = (patch: Partial<typeof schemaConfig>): void => {
-    const nextConfig = { ...schemaConfig, ...patch };
+    const nextConfig: SchemaConfig = { ...schemaConfig, ...patch };
     updateSelectedNodeConfig({
       db_schema: nextConfig,
     });

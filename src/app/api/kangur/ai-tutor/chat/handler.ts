@@ -19,7 +19,10 @@ import {
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
 import { resolveKangurAiTutorNativeGuideResolution } from '@/features/kangur/server/ai-tutor-native-guide';
-import { resolveKangurAiTutorSemanticGraphContext } from '@/features/kangur/server/knowledge-graph/retrieval';
+import {
+  resolveKangurAiTutorSemanticGraphContext,
+  type GraphFollowUpAction,
+} from '@/features/kangur/server/knowledge-graph/retrieval';
 import {
   consumeKangurAiTutorDailyUsage,
   ensureKangurAiTutorDailyUsageAvailable,
@@ -332,6 +335,30 @@ const extractTutorDrawingArtifactsFromResponse = (value: string): {
     message: cleanedMessage || 'Sprawdz szkic ponizej.',
     artifacts,
   };
+};
+
+const mergeFollowUpActions = (
+  primary: KangurAiTutorChatResponse['followUpActions'],
+  graphActions?: GraphFollowUpAction[] | null
+): KangurAiTutorChatResponse['followUpActions'] => {
+  const primaryActions = primary ?? [];
+  const graphActionList = graphActions ?? [];
+
+  if (graphActionList.length === 0) {
+    return primaryActions;
+  }
+
+  const existingPages = new Set<string>(primaryActions.map((a) => a.page));
+  const additions = graphActionList
+    .filter((ga) => !existingPages.has(ga.page))
+    .map((ga) => ({
+      id: ga.id,
+      label: ga.label,
+      page: ga.page as 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile',
+      ...(ga.reason ? { reason: ga.reason } : {}),
+    }));
+
+  return [...primaryActions, ...additions];
 };
 
 const buildKnowledgeGraphResponseSummary = (input: {
@@ -1003,6 +1030,8 @@ export async function postKangurAiTutorChatHandler(
       knowledgeGraphWebsiteHelpTarget?.route ?? null;
     const knowledgeGraphWebsiteHelpTargetAnchorId =
       knowledgeGraphWebsiteHelpTarget?.anchorId ?? null;
+    const knowledgeGraphFollowUpActions =
+      knowledgeGraphContext.status === 'hit' ? knowledgeGraphContext.graphFollowUpActions : [];
     if (nativeGuideResolution.status === 'hit') {
       const nativeGuideResponse = extractTutorDrawingArtifactsFromResponse(
         nativeGuideResolution.message
@@ -1153,7 +1182,10 @@ export async function postKangurAiTutorChatHandler(
       return NextResponse.json({
         message: nativeGuideResponse.message,
         sources: responseSources,
-        followUpActions: nativeGuideResolution.followUpActions,
+        followUpActions: mergeFollowUpActions(
+          nativeGuideResolution.followUpActions,
+          knowledgeGraphFollowUpActions
+        ),
         artifacts: nativeGuideResponse.artifacts,
         knowledgeGraph: buildKnowledgeGraphResponseSummary({
           knowledgeGraphApplied,
@@ -1232,6 +1264,16 @@ export async function postKangurAiTutorChatHandler(
     if (contextInstructions) systemParts.push(contextInstructions);
     if (knowledgeGraphContext.status === 'hit') {
       systemParts.push(knowledgeGraphContext.instructions);
+    }
+    if (knowledgeGraphWebsiteHelpTarget) {
+      systemParts.push(
+        [
+          `You have a resolved navigation target for this query: "${knowledgeGraphWebsiteHelpTarget.label}".`,
+          'Reference this specific page or section by name in your answer.',
+          'The learner will see a navigation button below your message to go there directly.',
+          'Guide them on what they will find there, not just that they should go there.',
+        ].join(' ')
+      );
     }
     systemParts.push(
       buildParentPreferenceInstructions({
@@ -1481,7 +1523,10 @@ export async function postKangurAiTutorChatHandler(
     return NextResponse.json({
       message: parsedTutorResponse.message,
       sources: responseSources,
-      followUpActions: adaptiveGuidance.followUpActions,
+      followUpActions: mergeFollowUpActions(
+        adaptiveGuidance.followUpActions,
+        knowledgeGraphFollowUpActions
+      ),
       artifacts: parsedTutorResponse.artifacts,
       knowledgeGraph: buildKnowledgeGraphResponseSummary({
         knowledgeGraphApplied,

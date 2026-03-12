@@ -139,25 +139,25 @@ function KangurHomeActionCard({
 
       <span
         className={cn(
-          'relative z-10 flex min-w-0 items-center justify-center gap-4 text-[18px] font-semibold tracking-[-0.04em] sm:gap-5 sm:text-[22px]'
+          'relative z-10 flex min-w-0 flex-col items-center justify-center gap-0.5 text-[12px] font-semibold leading-tight tracking-[-0.03em] sm:flex-row sm:gap-5 sm:text-[22px] sm:leading-none sm:tracking-[-0.04em]'
         )}
       >
         <span
           className={cn(
             'leading-none',
-            'text-[20px] sm:text-[24px]',
+            'text-[18px] sm:text-[24px]',
             tone.icon
           )}
           aria-hidden='true'
         >
           {actionSymbol}
         </span>
-        <span>{actionLabel}</span>
+        <span className='max-w-full text-balance text-center'>{actionLabel}</span>
         {actionTrailingSymbol ? (
           <span
             className={cn(
               'leading-none',
-              'text-[20px] sm:text-[24px]',
+              'text-[18px] sm:text-[24px]',
               tone.icon
             )}
             aria-hidden='true'
@@ -295,7 +295,10 @@ export function KangurGameHomeActionsWidget({
         <h3 id='kangur-home-actions-heading' className='sr-only'>
           Wybierz aktywnosc
         </h3>
-        <div className='space-y-6 sm:space-y-7' data-testid='kangur-home-actions-list'>
+        <div
+          className='grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-0 sm:space-y-7'
+          data-testid='kangur-home-actions-list'
+        >
           {actions.map((action, index) => (
             <KangurHomeActionCard
               key={action.id}

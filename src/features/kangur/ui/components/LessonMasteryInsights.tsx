@@ -2,6 +2,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -49,9 +50,9 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
 
   return (
     <KangurInfoCard accent='slate' padding='md' tone='muted'>
-      <div className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+      <KangurSectionEyebrow as='div' className='text-xs tracking-wide'>
         {title}
-      </div>
+      </KangurSectionEyebrow>
       {items.length === 0 ? (
         <KangurEmptyState
           accent='slate'
@@ -102,9 +103,9 @@ export default function LessonMasteryInsights({
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
         <div>
-          <div className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+          <KangurSectionEyebrow>
             Opanowanie lekcji
-          </div>
+          </KangurSectionEyebrow>
           <p className='text-sm [color:var(--kangur-page-muted-text)]'>
             Sledzone: {insights.trackedLessons} · opanowane: {insights.masteredLessons} · do
             powtorki: {insights.lessonsNeedingPractice}

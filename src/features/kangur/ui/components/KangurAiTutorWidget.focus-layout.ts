@@ -18,7 +18,7 @@ import {
   type ActiveTutorFocus,
   type TutorConversationFocus,
   type TutorBubblePlacementStrategy,
-  type TutorEntryDirection,
+  type TutorHorizontalSide,
   type TutorMotionPosition,
   type TutorMotionProfile,
   getTutorEntryDirection,
@@ -32,7 +32,7 @@ type SelectionActionLayout = {
 };
 
 type BubblePlacement = {
-  entryDirection: TutorEntryDirection;
+  entryDirection: TutorHorizontalSide;
   launchOrigin: 'dock-bottom-right' | 'sheet';
   mode: 'bubble' | 'sheet';
   strategy: TutorBubblePlacementStrategy;
@@ -701,6 +701,7 @@ export function useKangurAiTutorFocusLayoutState({
       contentId: sessionContext.contentId ?? null,
       id: null,
       kind: null,
+      knowledgeReference: null,
       label: null,
       surface: sessionContext.surface ?? null,
     };
@@ -712,24 +713,26 @@ export function useKangurAiTutorFocusLayoutState({
         getRectOverlapArea(activeSelectionRect, activeSectionRect) > 0;
       const conversationFocus: TutorConversationFocus = selectionWithinHighlightedSection &&
         highlightedSection
-        ? {
-            assignmentId: highlightedSection.assignmentId,
-            contentId: highlightedSection.contentId ?? sessionContext.contentId ?? null,
-            id: highlightedSection.anchorId,
-            kind: highlightedSection.kind,
-            label: highlightedSection.label,
-            surface: highlightedSection.surface,
-          }
-        : selectionConversationAnchor
           ? {
-              assignmentId: selectionConversationAnchor.metadata?.assignmentId ?? null,
-              contentId:
-                selectionConversationAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
-              id: selectionConversationAnchor.id,
-              kind: selectionConversationAnchor.kind,
-              label: selectionConversationAnchor.metadata?.label ?? activeSelectedText,
-              surface: selectionConversationAnchor.surface,
+              assignmentId: highlightedSection.assignmentId,
+              contentId: highlightedSection.contentId ?? sessionContext.contentId ?? null,
+              id: highlightedSection.anchorId,
+              kind: highlightedSection.kind,
+              knowledgeReference: highlightedSection.knowledgeReference,
+              label: highlightedSection.label,
+              surface: highlightedSection.surface,
             }
+          : selectionConversationAnchor
+            ? {
+                assignmentId: selectionConversationAnchor.metadata?.assignmentId ?? null,
+                contentId:
+                  selectionConversationAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+                id: selectionConversationAnchor.id,
+                kind: selectionConversationAnchor.kind,
+                knowledgeReference: null,
+                label: selectionConversationAnchor.metadata?.label ?? activeSelectedText,
+                surface: selectionConversationAnchor.surface,
+              }
           : {
               ...baseConversationFocus,
               id: 'selection',
@@ -753,6 +756,7 @@ export function useKangurAiTutorFocusLayoutState({
         contentId: highlightedSection.contentId ?? sessionContext.contentId ?? null,
         id: highlightedSection.anchorId,
         kind: highlightedSection.kind,
+        knowledgeReference: highlightedSection.knowledgeReference,
         label: highlightedSection.label,
         surface: highlightedSection.surface,
       };
@@ -773,6 +777,7 @@ export function useKangurAiTutorFocusLayoutState({
         contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
         id: registeredAnchor.id,
         kind: registeredAnchor.kind,
+        knowledgeReference: null,
         label: registeredAnchor.metadata?.label ?? null,
         surface: registeredAnchor.surface,
       };

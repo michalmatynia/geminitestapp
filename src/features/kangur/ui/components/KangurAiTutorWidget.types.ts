@@ -1,17 +1,17 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
-import type { KangurAiTutorSurface } from '@/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorKnowledgeReference,
+  KangurAiTutorSurface,
+} from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type { Point2d } from '@/shared/contracts/geometry';
 
 export type TutorSurface = KangurAiTutorSurface;
 export type TutorPanelShellMode = 'default' | 'minimal';
 
-export type TutorPoint = {
-  x: number;
-  y: number;
-};
+export type TutorPoint = Point2d;
 
 export type TutorMessageFeedback = 'helpful' | 'not_helpful';
-
-export type GuidedTutorAuthMode = 'sign-in' | 'create-account';
 export type GuidedTutorAuthKind =
   | 'login_action'
   | 'create_account_action'
@@ -24,6 +24,7 @@ export type SectionExplainContext = {
   assignmentId: string | null;
   contentId: string | null;
   kind: GuidedTutorSectionKind;
+  knowledgeReference: KangurAiTutorKnowledgeReference | null;
   label: string | null;
   surface: TutorSurface;
 };
@@ -31,7 +32,7 @@ export type SectionExplainContext = {
 export type GuidedTutorTarget =
   | {
       mode: 'auth';
-      authMode: GuidedTutorAuthMode;
+      authMode: KangurAuthMode;
       kind: GuidedTutorAuthKind;
     }
   | {

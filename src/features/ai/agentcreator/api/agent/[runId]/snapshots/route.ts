@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type {
   AgentBrowserSnapshotRecord,
   AgentBrowserSnapshotsResponse,
@@ -9,25 +10,42 @@ import {
   apiHandlerWithParams,
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+
+type AgentBrowserSnapshotRouteRecord = {
+  id: string;
+  runId: string;
+  url: string;
+  title: string | null;
+  domHtml: string;
+  domText: string;
+  screenshotData: string | null;
+  screenshotPath: string | null;
+  stepId: string | null;
+  mouseX: number | null;
+  mouseY: number | null;
+  viewportWidth: number | null;
+  viewportHeight: number | null;
+  createdAt: Date | string;
+};
 
 async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('agentBrowserSnapshot' in prisma)) {
-    throw internalError('Agent snapshots not initialized. Run prisma generate/db push.');
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  if (!agentBrowserSnapshot) {
+    throw internalError('Agent snapshot storage is unavailable.');
   }
   const { runId } = await params;
   const url = new URL(req.url);
   const stepId = url.searchParams.get('stepId');
   const limit = Number(url.searchParams.get('limit') ?? '12');
   const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 50) : 12;
-  const snapshots = await prisma.agentBrowserSnapshot.findMany({
+  const snapshots = await agentBrowserSnapshot.findMany<AgentBrowserSnapshotRouteRecord>({
     where: { runId, ...(stepId ? { stepId } : {}) },
     orderBy: { createdAt: 'desc' },
     take,
@@ -42,7 +60,7 @@ async function GET_handler(
   }
   const response: AgentBrowserSnapshotsResponse = {
     snapshots: snapshots.map(
-      (snapshot: any): AgentBrowserSnapshotRecord => ({
+      (snapshot: AgentBrowserSnapshotRouteRecord): AgentBrowserSnapshotRecord => ({
         ...snapshot,
         title: snapshot.title ?? null,
         screenshotData: snapshot.screenshotData ?? null,
@@ -52,7 +70,8 @@ async function GET_handler(
         mouseY: snapshot.mouseY ?? null,
         viewportWidth: snapshot.viewportWidth ?? null,
         viewportHeight: snapshot.viewportHeight ?? null,
-        createdAt: snapshot.createdAt.toISOString(),
+        createdAt:
+          snapshot.createdAt instanceof Date ? snapshot.createdAt.toISOString() : snapshot.createdAt,
       })
     ),
   };

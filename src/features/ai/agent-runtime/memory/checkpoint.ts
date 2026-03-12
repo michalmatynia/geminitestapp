@@ -7,8 +7,8 @@ import type {
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
   if (!payload || typeof payload !== 'object') return null;
@@ -102,14 +102,17 @@ export async function persistCheckpoint(payload: {
   preferences?: AgentPlanPreferences | null;
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<void> {
-  await prisma.chatbotAgentRun.update({
-    where: { id: payload.runId },
-    data: {
-      planState: buildCheckpointState(payload) as Prisma.InputJsonValue,
-      activeStepId: payload.activeStepId,
-      checkpointedAt: new Date(),
-    },
-  });
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (chatbotAgentRun) {
+    await chatbotAgentRun.update({
+      where: { id: payload.runId },
+      data: {
+        planState: buildCheckpointState(payload) as InputJsonValue,
+        activeStepId: payload.activeStepId,
+        checkpointedAt: new Date(),
+      },
+    });
+  }
   await logAgentAudit(payload.runId, 'info', 'Checkpoint saved.', {
     type: 'checkpoint-save',
     activeStepId: payload.activeStepId,

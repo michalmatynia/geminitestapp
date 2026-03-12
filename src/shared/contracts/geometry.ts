@@ -8,6 +8,14 @@ export const point2dSchema = z.object({
 export type Point2dDto = z.infer<typeof point2dSchema>;
 export type Point2d = Point2dDto;
 
+export const size2dSchema = z.object({
+  width: z.number().finite(),
+  height: z.number().finite(),
+});
+
+export type Size2dDto = z.infer<typeof size2dSchema>;
+export type Size2d = Size2dDto;
+
 export const rectBoundsSchema = z.object({
   x: z.number().finite(),
   y: z.number().finite(),

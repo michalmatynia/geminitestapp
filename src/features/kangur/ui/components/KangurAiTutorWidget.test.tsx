@@ -1938,6 +1938,54 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-avatar-image').querySelector('svg')).not.toBeNull();
     expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveTextContent('Pomocnik');
   });
+  it('renders persona image avatars in the tutor surface when an image URL is available', () => {
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: 'persona-1',
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorBehaviorMoodId: 'neutral',
+      tutorBehaviorMoodLabel: 'Neutralny',
+      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
+      tutorAvatarSvg: null,
+      tutorAvatarImageUrl: 'data:image/png;base64,AAA',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+
+    render(<KangurAiTutorWidget />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-avatar-image').querySelector('img')).not.toBeNull();
+    expect(screen.getByAltText('Pomocnik avatar (neutral)')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAA'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-header')).toHaveTextContent('Pomocnik');
+  });
   it('shows the learner-specific tutor mood in the modal header without depending on avatar changes', () => {
     useKangurAiTutorMock.mockReturnValue({
       enabled: true,
@@ -4472,6 +4520,11 @@ describe('KangurAiTutorWidget', () => {
         focusKind: 'leaderboard',
         focusId: 'kangur-game-leaderboard',
         focusLabel: 'Ranking',
+        knowledgeReference: {
+          sourceCollection: 'kangur_ai_tutor_native_guides',
+          sourceRecordId: 'shared-leaderboard',
+          sourcePath: 'entry:shared-leaderboard',
+        },
         interactionIntent: 'explain',
       })
     );

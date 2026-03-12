@@ -8,22 +8,14 @@ import { cn } from '@/shared/utils';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { TutorMotionPosition, TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type {
+  TutorGuidedArrowhead,
+  TutorMotionPosition,
+  TutorMotionProfile,
+} from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
 
-type GuidedArrowhead = {
-  angle: number;
-  anchorAvatarLeft: number;
-  anchorAvatarTop: number;
-  anchorOffsetX: number;
-  anchorOffsetY: number;
-  left: number;
-  quadrant: 'top' | 'right' | 'bottom' | 'left';
-  side: 'left' | 'right';
-  targetX: number;
-  targetY: number;
-  top: number;
-};
+type GuidedArrowhead = TutorGuidedArrowhead;
 
 type ReducedMotionTransitions = {
   instant: {

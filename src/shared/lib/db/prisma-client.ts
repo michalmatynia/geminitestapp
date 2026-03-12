@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-redeclare */
 class RemovedPrismaClientKnownRequestError extends Error {
   code: string;
 

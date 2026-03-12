@@ -40,10 +40,14 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
     children,
     href,
     targetPageKey: _targetPageKey,
+    transitionAcknowledgeMs: _transitionAcknowledgeMs,
+    transitionSourceId: _transitionSourceId,
     ...rest
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     href: string;
     targetPageKey?: string;
+    transitionAcknowledgeMs?: number;
+    transitionSourceId?: string | null;
   }) => (
     <a href={href} {...rest}>
       {children}

@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
  * GET /api/v2/integrations/with-connections
  * Fetches all integrations with their connections.
  * Used for the product listing dropdown selection.
- * Supports both MongoDB and Prisma based on provider settings.
+ * Uses the configured MongoDB-backed integrations repository.
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrations = await getIntegrationsWithConnections();

@@ -93,9 +93,10 @@ const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => 
     responseData['requestedProvider'] === 'mongodb'
       ? responseData['requestedProvider']
       : undefined;
-  const resolvedProvider = responseData['resolvedProvider'] === 'mongodb'
-    ? responseData['resolvedProvider']
-    : undefined;
+  const resolvedProvider =
+    responseData['resolvedProvider'] === 'mongodb'
+      ? responseData['resolvedProvider']
+      : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),

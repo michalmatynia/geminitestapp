@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import type { KangurAuthContextValue } from '@/features/kangur/ui/context/KangurAuthContext';
-import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 
 import { useKangurAiTutorAvatarDrag } from './KangurAiTutorWidget.avatar-drag';
@@ -38,11 +38,11 @@ import type { KangurAiTutorPortalContextValue } from './KangurAiTutorPortal.cont
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 
 type LoginModalState = {
-  authMode: KangurLoginModalAuthMode;
+  authMode: KangurAuthMode;
   isOpen: boolean;
   openLoginModal: (
     callbackUrl?: string | null,
-    options?: { authMode?: KangurLoginModalAuthMode }
+    options?: { authMode?: KangurAuthMode }
   ) => void;
 };
 
@@ -748,6 +748,7 @@ export function useKangurAiTutorWidgetCoordinator({
     activeSelectedText,
     activeSelectionPageRect,
     answerRevealed: sessionContext?.answerRevealed,
+    basePath,
     bridgeQuickActionId: bridgeQuickAction?.id ?? null,
     canSendMessages,
     clearSelection,
@@ -760,6 +761,8 @@ export function useKangurAiTutorWidgetCoordinator({
     inputValue,
     isAnonymousVisitor,
     isLoading,
+    latestWebsiteHelpTarget:
+      [...messages].reverse().find((m) => m.role === 'assistant')?.websiteHelpTarget ?? null,
     messageCount: messages.length,
     normalizeConversationFocusKind,
     persistSelectionGeometry,

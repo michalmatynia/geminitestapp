@@ -8,9 +8,9 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type { LoopSignal, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type PlanStepSpecInput = {
@@ -235,8 +235,9 @@ export async function buildLoopGuardReview({
         steps = fallbackBranch;
       }
     }
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',

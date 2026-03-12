@@ -1,5 +1,5 @@
 import type { UiElement, UiInventory } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 import type { Page } from 'playwright';
 
@@ -13,6 +13,7 @@ export const collectUiInventory = async (
   activeStepId?: string | null
 ): Promise<UiInventory | null> => {
   if (!page) return null;
+  const agentAuditLog = getAgentAuditLogDelegate();
   try {
     const uiInventory = await page.evaluate<UiInventory>(() => {
       const documentRef = document;
@@ -126,7 +127,7 @@ export const collectUiInventory = async (
         uiInventory,
       });
     }
-    await prisma.agentAuditLog.create({
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'info',

@@ -11,12 +11,12 @@ import {
   summarizePlannerMemoryWithLLM,
 } from '@/features/ai/agent-runtime/planning/llm';
 import { shouldEvaluateReplan } from '@/features/ai/agent-runtime/planning/utils';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type {
   AgentExecutionContext,
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
 
 import { persistCheckpoint } from '../memory/checkpoint';
 
@@ -154,11 +154,11 @@ export async function runPostStepAdaptiveReviews(
     taskType === 'extract_info' &&
     completedCount >= 2 &&
     completedCount !== lastExtractionCheckAt &&
-    replanCount < settings.maxReplanCalls &&
-    'agentAuditLog' in prisma
+    replanCount < settings.maxReplanCalls
   ) {
-    lastExtractionCheckAt = completedCount;
-    const extractionAudit = await prisma.agentAuditLog.findFirst({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    const extractionAudit = agentAuditLog
+      ? await agentAuditLog.findFirst<{ id: string }>({
       where: {
         runId: run.id,
         message: {
@@ -166,8 +166,10 @@ export async function runPostStepAdaptiveReviews(
         },
       },
       select: { id: true },
-    });
-    if (!extractionAudit) {
+      })
+      : null;
+    lastExtractionCheckAt = completedCount;
+    if (agentAuditLog && !extractionAudit) {
       const extractionContext = await getBrowserContextSummary(run.id);
       const extractionReview = await buildAdaptivePlanReview({
         prompt: run.prompt,

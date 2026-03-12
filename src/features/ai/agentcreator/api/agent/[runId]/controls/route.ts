@@ -6,7 +6,7 @@ import {
   apiHandlerWithParams,
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -15,8 +15,8 @@ async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
-  if (!('chatbotAgentRun' in prisma)) {
-    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  if (!getChatbotAgentRunDelegate()) {
+    throw internalError('Agent run storage is unavailable.');
   }
   const { runId } = await params;
   let body: {

@@ -4,16 +4,7 @@ import type {
   KangurTestQuestionPresentation,
   KangurTestQuestionReviewStatus,
 } from '@/shared/contracts/kangur-tests';
-
-export type LegacyKangurQuestionLike = {
-  id: string;
-  question: string;
-  choices: string[];
-  answer: string;
-  explanation?: string;
-  image?: string | null;
-  choiceDescriptions?: string[];
-};
+import type { KangurExamQuestion } from '@/shared/contracts/kangur';
 
 export type LegacyKangurQuestionAudit = {
   flags: KangurTestQuestionAuditFlag[];
@@ -61,7 +52,7 @@ const explanationMentionsConflictingChoiceText = (
 };
 
 export const auditLegacyKangurQuestion = (
-  question: LegacyKangurQuestionLike,
+  question: KangurExamQuestion,
   choices: KangurTestChoice[],
   correctChoiceLabel: string
 ): LegacyKangurQuestionAudit => {

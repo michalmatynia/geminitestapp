@@ -9,6 +9,12 @@ import {
 } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
+import type {
+  KangurAiTutorGuestIntroStatus,
+  KangurAiTutorHomeOnboardingStatus,
+  KangurAiTutorOnboardingRecord,
+} from '@/shared/contracts/kangur-ai-tutor';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import {
@@ -16,19 +22,20 @@ import {
   persistGuestIntroRecord,
   persistHomeOnboardingRecord,
   type KangurAiTutorGuestIntroCheckResponse,
-  type KangurAiTutorGuestIntroRecord,
-  type KangurAiTutorHomeOnboardingRecord,
 } from './KangurAiTutorWidget.storage';
 
 import type {
   GuidedTutorAuthKind,
-  GuidedTutorAuthMode,
   GuidedTutorTarget,
   PendingSelectionResponse,
   TutorHomeOnboardingStep,
 } from './KangurAiTutorWidget.types';
 
-export const getGuidedGuestTargetKind = (authMode: GuidedTutorAuthMode): GuidedTutorAuthKind => {
+type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
+type KangurAiTutorHomeOnboardingRecord =
+  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
+
+export const getGuidedGuestTargetKind = (authMode: KangurAuthMode): GuidedTutorAuthKind => {
   return authMode === 'create-account' ? 'create_account_action' : 'login_action';
 };
 
@@ -40,7 +47,7 @@ type AuthState = {
 } | null;
 
 type LoginModalState = {
-  authMode: GuidedTutorAuthMode;
+  authMode: KangurAuthMode;
   isOpen: boolean;
 };
 
@@ -273,7 +280,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
 
   const startGuidedGuestLogin = useCallback(
     (
-      authMode: GuidedTutorAuthMode,
+      authMode: KangurAuthMode,
       source: 'guest_intro' | 'chat_message' = 'guest_intro'
     ): void => {
       trackKangurClientEvent('kangur_ai_tutor_guest_intro_login_clicked', {

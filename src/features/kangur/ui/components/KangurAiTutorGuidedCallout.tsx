@@ -1,15 +1,21 @@
 'use client';
 
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
-import { X } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 
+import {
+  KangurAiTutorChromeBadge,
+  KangurAiTutorChromeCloseButton,
+  KangurAiTutorChromeKicker,
+  KangurAiTutorWarmInsetCard,
+  KangurAiTutorWarmOverlayPanel,
+} from './KangurAiTutorChrome';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { TutorEntryDirection } from './KangurAiTutorWidget.shared';
+import type { TutorHorizontalSide } from './KangurAiTutorWidget.shared';
 import type { GuidedTutorTarget } from './KangurAiTutorWidget.types';
 import type { CSSProperties, JSX } from 'react';
 
@@ -29,7 +35,7 @@ type Props = {
   calloutKey: string;
   calloutTestId: string;
   detail: string | null;
-  entryDirection: TutorEntryDirection;
+  entryDirection: TutorHorizontalSide;
   headerLabel: string;
   mode: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
   onAction: (
@@ -126,6 +132,8 @@ export function KangurAiTutorGuidedCallout({
     showSelectionGuidanceCallout && avatarPlacement === 'bottom' && 'pb-2',
     showSelectionGuidanceCallout && avatarPlacement === 'top' && 'pt-2'
   );
+  const isMobileHomeOnboardingSheet =
+    mode === 'home_onboarding' && style?.bottom !== undefined && style?.top === undefined;
 
   return (
     <AnimatePresence mode='wait'>
@@ -169,110 +177,126 @@ export function KangurAiTutorGuidedCallout({
           style={style}
           className='z-[73]'
         >
-          <KangurGlassPanel
-            surface='warmGlow'
-            variant='soft'
+          <KangurAiTutorWarmOverlayPanel
             padding='md'
-            className='border-amber-200/60 shadow-[0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)] [background:radial-gradient(circle_at_top,color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fef3c7),var(--kangur-soft-card-background)_44%,color-mix(in_srgb,var(--kangur-page-background)_80%,#eef2ff))]'
+            className={cn(
+              isMobileHomeOnboardingSheet && '!p-3 shadow-[0_16px_40px_-28px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)]'
+            )}
           >
             <div className={selectionKeepoutClassName}>
               <div className='flex items-start justify-between gap-3'>
-                <div className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] [color:var(--kangur-chat-kicker-text,#b45309)]'>
-                  <span className='inline-flex h-1.5 w-1.5 rounded-full [background:var(--kangur-chat-kicker-dot,#f59e0b)]' />
+                <KangurAiTutorChromeKicker>
                   {headerLabel}
-                </div>
+                </KangurAiTutorChromeKicker>
                 {!showSelectionGuidanceCallout ? (
-                  <button
+                  <KangurAiTutorChromeCloseButton
                     data-testid='kangur-ai-tutor-guided-callout-close'
-                    type='button'
                     onClick={handleCloseCallout}
-                    className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 transition-[background-color,box-shadow,transform,color] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
                     aria-label={tutorContent.guidedCallout.closeAria}
-                  >
-                    <X className='h-3.5 w-3.5' />
-                  </button>
+                  />
                 ) : null}
               </div>
               {stepLabel ? (
-                <div className='mt-1 text-[10px] font-semibold tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                <div
+                  className={cn(
+                    'mt-1 text-[10px] font-semibold tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+                    isMobileHomeOnboardingSheet && 'mt-0.5'
+                  )}
+                >
                   {stepLabel}
                 </div>
               ) : null}
-              <div className='mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+              <div
+                className={cn(
+                  'mt-1 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+                  isMobileHomeOnboardingSheet && 'text-[13px] leading-6'
+                )}
+              >
                 {title}
               </div>
-              <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+              <div
+                className={cn(
+                  'mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+                  isMobileHomeOnboardingSheet && 'mt-1.5 line-clamp-3 text-[11px] leading-5'
+                )}
+              >
                 {detail}
               </div>
               {selectionPreview ? (
-                <div
+                <KangurAiTutorWarmInsetCard
                   data-testid='kangur-ai-tutor-selection-preview'
                   data-avatar-avoid-edge={avatarPlacement ?? 'none'}
+                  tone='guide'
                   className={cn(
-                    'mt-3 rounded-2xl border border-amber-200/80 px-3 py-2 text-xs italic leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#fff7cf)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+                    'mt-3 px-3 py-2 text-xs italic leading-relaxed',
                     selectionPreviewInsetClassName
                   )}
                 >
                   „{selectionPreview}”
                   {selectionPreviewHasOverflow ? '…' : ''}
-                </div>
+                </KangurAiTutorWarmInsetCard>
               ) : showSectionGuidanceCallout ? (
-                <div className='mt-3 rounded-2xl border border-amber-200/80 px-3 py-2 text-xs leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#fff7cf)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                <KangurAiTutorWarmInsetCard tone='guide' className='mt-3 px-3 py-2 text-xs leading-relaxed'>
                   {tutorContent.guidedCallout.sectionPrefix}: {sectionLabel}
-                </div>
+                </KangurAiTutorWarmInsetCard>
               ) : null}
-              <div className='mt-3 flex flex-wrap justify-end gap-2'>
-              {mode === 'home_onboarding' ? (
-                <>
-                  {homeOnboardingCanGoBack ? (
+              <div
+                className={cn(
+                  'mt-3 flex flex-wrap justify-end gap-2',
+                  isMobileHomeOnboardingSheet && 'mt-2'
+                )}
+              >
+                {mode === 'home_onboarding' ? (
+                  <>
+                    {homeOnboardingCanGoBack ? (
+                      <KangurButton
+                        type='button'
+                        size='sm'
+                        variant='surface'
+                        onClick={handleGoBackHomeOnboarding}
+                      >
+                        {tutorContent.guidedCallout.buttons.back}
+                      </KangurButton>
+                    ) : null}
                     <KangurButton
                       type='button'
                       size='sm'
                       variant='surface'
-                      onClick={handleGoBackHomeOnboarding}
+                      onClick={handleFinishHomeOnboarding}
                     >
-                      {tutorContent.guidedCallout.buttons.back}
+                      {tutorContent.guidedCallout.buttons.finish}
                     </KangurButton>
-                  ) : null}
+                    <KangurButton
+                      type='button'
+                      size='sm'
+                      variant='primary'
+                      onClick={handleAdvanceHomeOnboarding}
+                    >
+                      {tutorContent.guidedCallout.buttons.understand}
+                    </KangurButton>
+                  </>
+                ) : mode === 'selection' ? (
+                  <KangurAiTutorChromeBadge
+                    className={cn(
+                      'px-3 py-1 text-[11px] normal-case tracking-normal text-amber-800 [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))]',
+                      selectionPreparingBadgeInsetClassName
+                    )}
+                  >
+                    {tutorContent.guidedCallout.selectionPreparingBadge}
+                  </KangurAiTutorChromeBadge>
+                ) : (
                   <KangurButton
                     type='button'
                     size='sm'
                     variant='surface'
-                    onClick={handleFinishHomeOnboarding}
-                  >
-                    {tutorContent.guidedCallout.buttons.finish}
-                  </KangurButton>
-                  <KangurButton
-                    type='button'
-                    size='sm'
-                    variant='primary'
-                    onClick={handleAdvanceHomeOnboarding}
+                    onClick={handleCloseCallout}
                   >
                     {tutorContent.guidedCallout.buttons.understand}
                   </KangurButton>
-                </>
-              ) : mode === 'selection' ? (
-                <div
-                  className={cn(
-                    'rounded-full border border-amber-200/80 px-3 py-1 text-[11px] font-semibold text-amber-800 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)]',
-                    selectionPreparingBadgeInsetClassName
-                  )}
-                >
-                  {tutorContent.guidedCallout.selectionPreparingBadge}
-                </div>
-              ) : (
-                <KangurButton
-                  type='button'
-                  size='sm'
-                  variant='surface'
-                  onClick={handleCloseCallout}
-                >
-                  {tutorContent.guidedCallout.buttons.understand}
-                </KangurButton>
-              )}
+                )}
               </div>
             </div>
-          </KangurGlassPanel>
+          </KangurAiTutorWarmOverlayPanel>
         </motion.div>
       ) : null}
     </AnimatePresence>

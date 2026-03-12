@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 
+import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { internalError } from '@/shared/errors/app-error';
 import {
   apiHandlerWithParams,
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,8 @@ async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
-  if (!('agentBrowserSnapshot' in prisma)) {
+  const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
+  if (!agentBrowserSnapshot) {
     throw internalError('Agent snapshots not initialized.');
   }
   const { runId } = await params;
@@ -26,7 +27,7 @@ async function GET_handler(
     async start(controller: ReadableStreamDefaultController) {
       const sendSnapshot = async () => {
         try {
-          const latest = await prisma.agentBrowserSnapshot.findFirst({
+          const latest = await agentBrowserSnapshot.findFirst({
             where: { runId },
             orderBy: { createdAt: 'desc' },
           });

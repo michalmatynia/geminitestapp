@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { listImageStudioRuns } from '@/features/ai/server';
@@ -18,7 +19,6 @@ import {
   brainOperationsRangeSchema,
 } from '@/shared/contracts/ai-brain';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import prisma from '@/shared/lib/db/prisma';
 
 const CHATBOT_SAMPLE_SIZE = 200;
 const AGENT_SAMPLE_SIZE = 200;
@@ -69,14 +69,6 @@ type AgentRuntimeRunRecord = {
   id: string;
   status: AgentRuntimeRunStatus | string;
   updatedAt: Date | string | null;
-};
-
-type ChatbotAgentRunDelegate = {
-  findMany(args: {
-    orderBy: { updatedAt: 'desc' };
-    select: { id: true; status: true; updatedAt: true };
-    take: number;
-  }): Promise<AgentRuntimeRunRecord[]>;
 };
 
 const DOMAIN_CONFIG: Record<BrainOperationsDomainKey, DomainConfig> = {
@@ -216,14 +208,6 @@ const buildUnknownDomain = (
   recentEvents: [],
   links: DOMAIN_CONFIG[key].links,
 });
-
-const getChatbotAgentRunDelegate = (): ChatbotAgentRunDelegate | null => {
-  if (!('chatbotAgentRun' in prisma)) {
-    return null;
-  }
-
-  return (prisma as unknown as { chatbotAgentRun: ChatbotAgentRunDelegate }).chatbotAgentRun;
-};
 
 const mapAiPathsState = (overall: 'ok' | 'warning' | 'critical'): BrainOperationsDomainState => {
   if (overall === 'ok') return 'healthy';

@@ -24,7 +24,7 @@ const dbActionSchema = z.enum(['find', 'findOne', 'countDocuments', 'distinct', 
 
 const databaseActionPayloadSchema = z
   .object({
-    provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
+    provider: z.enum(['auto', 'mongodb']).optional(),
     collection: z.string().trim().min(1),
     action: dbActionSchema.default('find'),
     filter: z.record(z.string(), z.unknown()).optional(),
@@ -39,7 +39,7 @@ const databaseActionPayloadSchema = z
 
 const databaseQueryPayloadSchema = z
   .object({
-    provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
+    provider: z.enum(['auto', 'mongodb']).optional(),
     collection: z.string().trim().min(1),
     filter: z.record(z.string(), z.unknown()).optional(),
     query: z.never().optional(),

@@ -1,7 +1,9 @@
 import type {
+  KangurQuestionChoice,
   KangurLessonMasteryEntry as SharedKangurLessonMasteryEntry,
   KangurProgressState as SharedKangurProgressState,
 } from '@/shared/contracts/kangur';
+export type { KangurExamQuestion, KangurQuestionChoice } from '@/shared/contracts/kangur';
 
 export type KangurGameScreen =
   | 'home'
@@ -36,23 +38,11 @@ export type KangurOperation =
   | 'clock'
   | 'mixed';
 
-export type KangurQuestionChoice = number | string;
-
 export type KangurQuestion = {
   question: string;
   answer: KangurQuestionChoice;
   choices: KangurQuestionChoice[];
   category?: KangurOperation;
-};
-
-export type KangurExamQuestion = {
-  id: string;
-  question: string;
-  choices: KangurQuestionChoice[];
-  answer: KangurQuestionChoice;
-  explanation?: string;
-  image?: string | null;
-  choiceDescriptions?: string[];
 };
 
 export type KangurDifficultyConfigEntry = {

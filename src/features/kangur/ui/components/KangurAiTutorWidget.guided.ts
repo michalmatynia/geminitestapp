@@ -12,6 +12,9 @@ import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import {
+  resolveKangurTutorSectionKnowledgeReference,
+} from '@/features/kangur/ai-tutor-section-knowledge';
+import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
@@ -303,11 +306,17 @@ export function useKangurAiTutorGuidedFlow(input: {
 
       const anchorRect = anchor.getRect();
       const sectionLabel = anchor.metadata?.label ?? null;
+      const knowledgeReference = resolveKangurTutorSectionKnowledgeReference({
+        anchorId: anchor.id,
+        contentId: anchor.metadata?.contentId ?? null,
+        focusKind: anchor.kind,
+      });
       const nextSection: SectionExplainContext = {
         anchorId: anchor.id,
         assignmentId: anchor.metadata?.assignmentId ?? null,
         contentId: anchor.metadata?.contentId ?? null,
         kind: anchor.kind,
+        knowledgeReference,
         label: sectionLabel,
         surface: anchor.surface,
       };
@@ -358,6 +367,7 @@ export function useKangurAiTutorGuidedFlow(input: {
           focusId: anchor.id,
           focusLabel: sectionLabel ?? anchor.id,
           assignmentId: anchor.metadata?.assignmentId ?? null,
+          knowledgeReference,
           interactionIntent: 'explain',
           surface: anchor.surface,
         });

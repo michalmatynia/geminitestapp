@@ -17,12 +17,12 @@ describe('Kangur AI Tutor surface contract', () => {
     const coordinatorSource = readTutorSource('KangurAiTutorWidget.coordinator.ts');
     const portalViewSource = readTutorSource('KangurAiTutorWidget.portal-view.ts');
 
-    expect(coordinatorSource).not.toContain("'regular_panel'");
-    expect(coordinatorSource).not.toContain("'selection_panel'");
-    expect(coordinatorSource).not.toContain("'section_panel'");
-    expect(portalViewSource).not.toContain("'regular_panel'");
-    expect(portalViewSource).not.toContain("'selection_panel'");
-    expect(portalViewSource).not.toContain("'section_panel'");
+    expect(coordinatorSource).not.toContain('\'regular_panel\'');
+    expect(coordinatorSource).not.toContain('\'selection_panel\'');
+    expect(coordinatorSource).not.toContain('\'section_panel\'');
+    expect(portalViewSource).not.toContain('\'regular_panel\'');
+    expect(portalViewSource).not.toContain('\'selection_panel\'');
+    expect(portalViewSource).not.toContain('\'section_panel\'');
     expect(portalViewSource).not.toContain('isRegularMinimalPanelMode');
   });
 
@@ -30,8 +30,8 @@ describe('Kangur AI Tutor surface contract', () => {
     const avatarShellSource = readTutorSource('KangurAiTutorWidget.avatar-shell.ts');
     const portalViewSource = readTutorSource('KangurAiTutorWidget.portal-view.ts');
 
-    expect(avatarShellSource).not.toContain("handleOpenChat('toggle'");
-    expect(portalViewSource).not.toContain("tutorSurfaceMode === 'onboarding' &&\n    input.isAnonymousVisitor");
+    expect(avatarShellSource).not.toContain('handleOpenChat(\'toggle\'');
+    expect(portalViewSource).not.toContain('tutorSurfaceMode === \'onboarding\' &&\n    input.isAnonymousVisitor');
   });
 
   it('does not allow the legacy avatar-to-panel Playwright helper back into the tutor browser contract', () => {

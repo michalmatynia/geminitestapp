@@ -1,11 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
 import { createContext, useContext } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
+
+import {
+  KangurAiTutorChromeCloseButton,
+  KangurAiTutorChromeKicker,
+  KangurAiTutorWarmOverlayPanel,
+} from './KangurAiTutorChrome';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -60,10 +65,9 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   return (
     <div className='flex items-start justify-between gap-3'>
       <div className='min-w-0'>
-        <div className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] [color:var(--kangur-chat-kicker-text,#b45309)]'>
-          <span className='inline-flex h-1.5 w-1.5 rounded-full [background:var(--kangur-chat-kicker-dot,#f59e0b)]' />
+        <KangurAiTutorChromeKicker>
           {guestTutorLabel}
-        </div>
+        </KangurAiTutorChromeKicker>
         <div className='mt-1.5 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
           {guestIntroHeadline}
         </div>
@@ -71,15 +75,11 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
           {guestIntroDescription}
         </div>
       </div>
-      <button
+      <KangurAiTutorChromeCloseButton
         data-testid='kangur-ai-tutor-guest-intro-close'
-        type='button'
         onClick={onClose}
-        className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 transition-[background-color,box-shadow,transform,color] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
         aria-label={closeAria}
-      >
-        <X className='h-3.5 w-3.5' />
-      </button>
+      />
     </div>
   );
 }
@@ -151,15 +151,13 @@ export function KangurAiTutorGuestIntroPanel({
           style={panelStyle}
           className='fixed z-[75]'
         >
-          <KangurGlassPanel
-            surface='warmGlow'
-            variant='soft'
+          <KangurAiTutorWarmOverlayPanel
+            tone='modal'
             padding='lg'
-            className='border-amber-200/60 shadow-[0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5)] [background:radial-gradient(circle_at_top,color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fef3c7),var(--kangur-soft-card-background)_44%,color-mix(in_srgb,var(--kangur-page-background)_80%,#eef2ff))]'
           >
             <KangurAiTutorGuestIntroHeader />
             <KangurAiTutorGuestIntroActions />
-          </KangurGlassPanel>
+          </KangurAiTutorWarmOverlayPanel>
         </motion.div>
       </>
     </KangurAiTutorGuestIntroPanelContext.Provider>

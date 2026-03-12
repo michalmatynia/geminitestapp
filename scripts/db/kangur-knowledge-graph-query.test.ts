@@ -71,7 +71,7 @@ describe('kangur knowledge graph query CLI parser', () => {
       'sync-kangur-knowledge-graph.ts',
     ]) {
       const source = readFileSync(resolve(scriptsDir, filename), 'utf8');
-      expect(source).toContain("import 'dotenv/config';");
+      expect(source).toContain('import \'dotenv/config\';');
     }
   });
 });

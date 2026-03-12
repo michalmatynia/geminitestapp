@@ -1,3 +1,5 @@
+import type { Point2d } from '@/shared/contracts/geometry';
+
 export type GeometryShapeId =
   | 'circle'
   | 'triangle'
@@ -5,11 +7,6 @@ export type GeometryShapeId =
   | 'rectangle'
   | 'pentagon'
   | 'hexagon';
-
-export type GeometryDrawPoint = {
-  x: number;
-  y: number;
-};
 
 export type GeometryDrawingEvaluation = {
   accepted: boolean;
@@ -114,10 +111,10 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
-const distance = (a: GeometryDrawPoint, b: GeometryDrawPoint): number =>
+const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
 
-const computeBoundingBox = (points: GeometryDrawPoint[]): BoundingBox => {
+const computeBoundingBox = (points: Point2d[]): BoundingBox => {
   let minX = Number.POSITIVE_INFINITY;
   let maxX = Number.NEGATIVE_INFINITY;
   let minY = Number.POSITIVE_INFINITY;
@@ -145,9 +142,9 @@ const computeBoundingBox = (points: GeometryDrawPoint[]): BoundingBox => {
   };
 };
 
-const sanitizePoints = (points: GeometryDrawPoint[]): GeometryDrawPoint[] => {
+const sanitizePoints = (points: Point2d[]): Point2d[] => {
   if (points.length === 0) return [];
-  const sanitized: GeometryDrawPoint[] = [points[0]!];
+  const sanitized: Point2d[] = [points[0]!];
   for (let i = 1; i < points.length; i += 1) {
     const current = points[i];
     const previous = sanitized[sanitized.length - 1];
@@ -158,7 +155,7 @@ const sanitizePoints = (points: GeometryDrawPoint[]): GeometryDrawPoint[] => {
   return sanitized;
 };
 
-const samplePath = (points: GeometryDrawPoint[], sampleCount = 120): GeometryDrawPoint[] => {
+const samplePath = (points: Point2d[], sampleCount = 120): Point2d[] => {
   if (points.length <= 2) return points;
 
   const segments: number[] = [];
@@ -173,11 +170,11 @@ const samplePath = (points: GeometryDrawPoint[], sampleCount = 120): GeometryDra
   }
   if (total < 1) return points;
 
-  const sampled: GeometryDrawPoint[] = [points[0]!];
+  const sampled: Point2d[] = [points[0]!];
   for (let step = 1; step < sampleCount - 1; step += 1) {
     const targetDist = (total * step) / (sampleCount - 1);
     let traversed = 0;
-    let found: GeometryDrawPoint | null = null;
+    let found: Point2d | null = null;
 
     for (let i = 1; i < points.length; i += 1) {
       const segLen = segments[i - 1] ?? 0;
@@ -203,7 +200,7 @@ const samplePath = (points: GeometryDrawPoint[], sampleCount = 120): GeometryDra
   return sampled;
 };
 
-const countCorners = (points: GeometryDrawPoint[]): number => {
+const countCorners = (points: Point2d[]): number => {
   if (points.length < 7) return 0;
   const closed = [...points];
   const first = points[0];
@@ -243,7 +240,7 @@ const countCorners = (points: GeometryDrawPoint[]): number => {
   return corners.length;
 };
 
-const evaluateCircleScore = (points: GeometryDrawPoint[], box: BoundingBox): number => {
+const evaluateCircleScore = (points: Point2d[], box: BoundingBox): number => {
   const centerX = (box.minX + box.maxX) / 2;
   const centerY = (box.minY + box.maxY) / 2;
   const radii = points.map((point) => Math.hypot(point.x - centerX, point.y - centerY));
@@ -335,7 +332,7 @@ const resolveFailureMessage = (
 
 export const evaluateGeometryDrawing = (
   target: GeometryShapeId,
-  rawPoints: GeometryDrawPoint[]
+  rawPoints: Point2d[]
 ): GeometryDrawingEvaluation => {
   const rule = SHAPE_RULES[target];
   const sanitized = sanitizePoints(rawPoints);

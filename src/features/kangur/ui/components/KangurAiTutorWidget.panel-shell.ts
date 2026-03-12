@@ -14,12 +14,12 @@ import {
   applyTutorPanelSnapState,
   clampTutorPanelPoint,
   getTutorPanelSnapState,
-  type TutorAvatarAttachmentSide,
+  type TutorAvatarPointer,
   type TutorBubblePlacementStrategy,
+  type TutorHorizontalSide,
   type TutorMotionPosition,
   type TutorMotionProfile,
   type TutorPanelSnapState,
-  type TutorPointerSide,
 } from './KangurAiTutorWidget.shared';
 import { getAttachedAvatarRectForSurface } from './KangurAiTutorAvatarAttachment';
 
@@ -58,21 +58,7 @@ type RectLike = {
   width: number;
 };
 
-type AvatarPointer = {
-  end: {
-    x: number;
-    y: number;
-  };
-  height: number;
-  left: number;
-  side: 'left' | 'right';
-  start: {
-    x: number;
-    y: number;
-  };
-  top: number;
-  width: number;
-};
+type AvatarPointer = TutorAvatarPointer;
 
 type PanelShellState = {
   attachedAvatarStyle: CSSProperties;
@@ -81,7 +67,7 @@ type PanelShellState = {
     y: number;
   };
   avatarAnchorKind: string;
-  avatarAttachmentSide: TutorAvatarAttachmentSide;
+  avatarAttachmentSide: TutorHorizontalSide;
   avatarPointer: AvatarPointer | null;
   avatarStyle: TutorMotionPosition;
   floatingAvatarPlacement: 'ask-modal' | 'guided' | 'floating';
@@ -128,7 +114,7 @@ const getDockAvatarRect = (viewport: { width: number; height: number }): RectLik
 const getDockLaunchOffset = (input: {
   finalLeft: number;
   finalTop: number;
-  side: TutorAvatarAttachmentSide;
+  side: TutorHorizontalSide;
   viewport: { width: number; height: number };
   width: number;
 }): { x: number; y: number } => {
@@ -155,7 +141,7 @@ const getAttachedAvatarSide = (input: {
   panelWidth?: number;
   rect: DOMRect | null;
   strategy: TutorBubblePlacementStrategy;
-}): TutorAvatarAttachmentSide => {
+}): TutorHorizontalSide => {
   if (input.mode === 'sheet' || !input.rect) {
     return 'left';
   }
@@ -185,7 +171,7 @@ const getAttachedAvatarSide = (input: {
   return 'left';
 };
 
-const getAttachedAvatarStyle = (side: TutorAvatarAttachmentSide): CSSProperties => ({
+const getAttachedAvatarStyle = (side: TutorHorizontalSide): CSSProperties => ({
   position: 'absolute',
   top: ATTACHED_AVATAR_EDGE_INSET,
   ...(side === 'left' ? { left: -ATTACHED_AVATAR_OVERLAP } : { right: -ATTACHED_AVATAR_OVERLAP }),
@@ -196,7 +182,7 @@ const getTutorPointerGeometry = (input: {
   panelLeft: number;
   panelTop: number;
   panelWidth: number;
-  side: TutorPointerSide;
+  side: TutorHorizontalSide;
 }): AvatarPointer | null => {
   if (!input.focusRect) {
     return null;

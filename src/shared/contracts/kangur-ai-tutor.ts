@@ -5,6 +5,7 @@ import { agentPersonaMoodIdSchema } from './agents';
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { kangurRouteActionQuerySchema, kangurRoutePageSchema } from './kangur';
 import { kangurAiTutorLearnerMoodSchema } from './kangur-ai-tutor-mood';
+import { KANGUR_KNOWLEDGE_CANONICAL_SOURCE_COLLECTIONS } from './kangur-knowledge-graph';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 const kangurAiTutorDrawingImageDataSchema = z.string().max(500_000);
@@ -89,6 +90,22 @@ export const kangurAiTutorSurfaceSchema = z.enum([
 ]);
 export type KangurAiTutorSurface = z.infer<typeof kangurAiTutorSurfaceSchema>;
 
+export const kangurAiTutorKnowledgeSourceCollectionSchema = z.enum(
+  KANGUR_KNOWLEDGE_CANONICAL_SOURCE_COLLECTIONS
+);
+export type KangurAiTutorKnowledgeSourceCollection = z.infer<
+  typeof kangurAiTutorKnowledgeSourceCollectionSchema
+>;
+
+export const kangurAiTutorKnowledgeReferenceSchema = z.object({
+  sourceCollection: kangurAiTutorKnowledgeSourceCollectionSchema,
+  sourceRecordId: z.string().trim().max(160),
+  sourcePath: z.string().trim().max(240),
+});
+export type KangurAiTutorKnowledgeReference = z.infer<
+  typeof kangurAiTutorKnowledgeReferenceSchema
+>;
+
 export const kangurAiTutorCoachingModeSchema = z.enum([
   'hint_ladder',
   'misconception_check',
@@ -133,6 +150,7 @@ export const kangurAiTutorConversationContextSchema = z.object({
   focusId: z.string().trim().max(120).optional(),
   focusLabel: z.string().trim().max(240).optional(),
   assignmentId: z.string().trim().max(120).optional(),
+  knowledgeReference: kangurAiTutorKnowledgeReferenceSchema.optional(),
   interactionIntent: kangurAiTutorInteractionIntentSchema.optional(),
   repeatedQuestionCount: z.number().int().nonnegative().max(20).optional(),
   recentHintRecoverySignal: kangurAiTutorRecoverySignalSchema.optional(),
@@ -194,6 +212,42 @@ export const kangurAiTutorWebsiteHelpTargetSchema = z.object({
 export type KangurAiTutorWebsiteHelpTarget = z.infer<
   typeof kangurAiTutorWebsiteHelpTargetSchema
 >;
+
+export const kangurAiTutorRuntimeMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().max(8_000),
+  coachingFrame: kangurAiTutorCoachingFrameSchema.nullable().optional(),
+  drawingImageData: kangurAiTutorDrawingImageDataSchema.nullable().optional(),
+  artifacts: z.array(kangurAiTutorMessageArtifactSchema).max(4).optional(),
+  followUpActions: z.array(kangurAiTutorFollowUpActionSchema).optional(),
+  sources: z.array(agentTeachingChatSourceSchema).optional(),
+  websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.optional(),
+});
+export type KangurAiTutorRuntimeMessage = z.infer<typeof kangurAiTutorRuntimeMessageSchema>;
+
+export const kangurAiTutorGuestIntroStatusSchema = z.enum([
+  'shown',
+  'accepted',
+  'dismissed',
+]);
+export type KangurAiTutorGuestIntroStatus = z.infer<
+  typeof kangurAiTutorGuestIntroStatusSchema
+>;
+
+export const kangurAiTutorHomeOnboardingStatusSchema = z.enum([
+  'shown',
+  'completed',
+  'dismissed',
+]);
+export type KangurAiTutorHomeOnboardingStatus = z.infer<
+  typeof kangurAiTutorHomeOnboardingStatusSchema
+>;
+
+export type KangurAiTutorOnboardingRecord<Status extends string> = {
+  status: Status;
+  version: 1;
+  updatedAt: string;
+};
 
 export const kangurAiTutorKnowledgeGraphQueryModeSchema = z.enum([
   'website_help',

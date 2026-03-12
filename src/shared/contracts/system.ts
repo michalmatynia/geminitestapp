@@ -99,7 +99,7 @@ export type ActivityRepository = {
 export const appDbProviderSchema = z.enum(['mongodb']);
 export type AppDbProvider = z.infer<typeof appDbProviderSchema>;
 
-export const migrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
+export const migrationDirectionSchema = z.literal('mongo-only');
 export type MigrationDirection = z.infer<typeof migrationDirectionSchema>;
 
 export const migrationBatchResultSchema = z.object({

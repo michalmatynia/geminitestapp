@@ -24,7 +24,6 @@ import {
 } from './KangurAiTutorWidget.helpers';
 
 import type {
-  GuidedTutorAuthMode,
   GuidedTutorSectionKind,
   GuidedTutorTarget,
   PendingSelectionResponse,
@@ -32,6 +31,7 @@ import type {
   TutorHomeOnboardingStep,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 
 const SECTION_DROP_TARGET_PADDING_X = 12;
 const SECTION_DROP_TARGET_PADDING_Y = 12;
@@ -98,12 +98,13 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   mounted: boolean;
   openLoginModal: (
     callbackUrl?: string | null,
-    options?: { authMode?: GuidedTutorAuthMode }
+    options?: { authMode?: KangurAuthMode }
   ) => void;
   persistedSelectionPageRect: DOMRect | null;
   persistedSelectionPageRects: DOMRect[];
   persistedSelectionRect: DOMRect | null;
   sectionResponsePending: SectionExplainContext | null;
+  sheetBreakpoint: number;
   selectionGuidanceCalloutVisibleText: string | null;
   selectionResponsePending: PendingSelectionResponse | null;
   sessionContentId: string | null | undefined;
@@ -135,6 +136,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     persistedSelectionPageRects,
     persistedSelectionRect,
     sectionResponsePending,
+    sheetBreakpoint,
     selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
     sessionContentId,
@@ -557,9 +559,10 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     }
 
     const frameId = window.requestAnimationFrame(() => {
+      const shouldPreferTopAlignment = window.innerWidth < sheetBreakpoint;
       anchorElement.scrollIntoView({
         behavior: getMotionSafeScrollBehavior('smooth'),
-        block: 'center',
+        block: shouldPreferTopAlignment ? 'start' : 'center',
         inline: 'nearest',
       });
     });
@@ -567,7 +570,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [homeOnboardingAnchor?.id]);
+  }, [homeOnboardingAnchor?.id, sheetBreakpoint]);
 
   const guidedCalloutKey =
     guidedMode === 'home_onboarding'

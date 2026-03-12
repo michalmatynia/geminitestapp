@@ -16,7 +16,7 @@ import type {
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import prisma from '@/shared/lib/db/prisma';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
@@ -134,8 +134,9 @@ export async function evaluatePlanWithLLM({
         maxStepAttempts
       ).slice(0, maxSteps)
       : [];
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',
@@ -216,8 +217,9 @@ export async function verifyPlanWithLLM({
     if (!parsed) return null;
     const verdict =
       parsed.verdict === 'pass' || parsed.verdict === 'partial' ? parsed.verdict : 'fail';
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: verdict === 'pass' ? 'info' : 'warning',
@@ -382,8 +384,9 @@ export async function summarizePlannerMemoryWithLLM({
     ]
       .filter(Boolean)
       .join('\n');
-    if ('agentAuditLog' in prisma && runId) {
-      await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (agentAuditLog && runId) {
+      await agentAuditLog.create({
         data: {
           runId,
           level: 'info',

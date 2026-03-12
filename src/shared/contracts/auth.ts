@@ -104,7 +104,7 @@ export const authSecurityProfileSchema = z.object({
 export type AuthSecurityProfile = z.infer<typeof authSecurityProfileSchema>;
 
 export const authUsersResponseSchema = z.object({
-  provider: z.enum(['mongodb', 'prisma']),
+  provider: z.literal('mongodb'),
   users: z.array(authUserSchema),
 });
 

@@ -33,7 +33,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { cleanupNoteFile } from './file-cleanup';
 
-// Lazy load to avoid initializing Prisma when using MongoDB
+// Lazy load to avoid initializing the repository before the Mongo provider is resolved.
 let _repository: NoteRepository | null = null;
 
 export const invalidateNoteRepositoryCache = (): void => {

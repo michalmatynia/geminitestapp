@@ -1,13 +1,18 @@
 import 'server-only';
 
+import {
+  type AgentLongTermMemoryRecord,
+  type AgentMemoryItemRecord,
+  getAgentLongTermMemoryDelegate,
+  getAgentMemoryItemDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import type { MemoryScope } from '@/shared/contracts/agent-runtime';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import prisma from '@/shared/lib/db/prisma';
-import type { Prisma } from '@/shared/lib/db/prisma-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { MemoryScope };
@@ -31,22 +36,23 @@ export async function addAgentMemory(params: {
   scope: MemoryScope;
   content: string;
   metadata?: Record<string, unknown>;
-}): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>> | null> {
-  if (!('agentMemoryItem' in prisma)) {
+}): Promise<AgentMemoryItemRecord | null> {
+  const agentMemoryItem = getAgentMemoryItemDelegate();
+  if (!agentMemoryItem) {
     void ErrorSystem.logWarning('[chatbot][agent][memory] Memory table not initialized.', {
       service: 'agent-memory',
     });
     return null;
   }
   try {
-    return prisma.agentMemoryItem.create({
+    return await agentMemoryItem.create<AgentMemoryItemRecord>({
       data: {
         runId: params.runId ?? null,
         personaId: params.personaId ?? null,
         scope: params.scope,
         content: params.content,
         ...(params.metadata !== undefined && {
-          metadata: params.metadata as Prisma.InputJsonValue,
+          metadata: params.metadata as InputJsonValue,
         }),
       },
     });
@@ -78,15 +84,16 @@ export async function listAgentMemory(params: {
   runId?: string | null;
   personaId?: string | null;
   scope?: MemoryScope;
-}): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>>[]> {
-  if (!('agentMemoryItem' in prisma)) {
+}): Promise<AgentMemoryItemRecord[]> {
+  const agentMemoryItem = getAgentMemoryItemDelegate();
+  if (!agentMemoryItem) {
     void ErrorSystem.logWarning('[chatbot][agent][memory] Memory table not initialized.', {
       service: 'agent-memory',
     });
     return [];
   }
   try {
-    return prisma.agentMemoryItem.findMany({
+    return await agentMemoryItem.findMany<AgentMemoryItemRecord>({
       where: {
         ...(params.runId ? { runId: params.runId } : {}),
         ...(params.personaId ? { personaId: params.personaId } : {}),
@@ -135,8 +142,9 @@ export async function addAgentLongTermMemory(params: {
   sourceCreatedAt?: Date | string | null;
   metadata?: Record<string, unknown>;
   importance?: number | null;
-}): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null> {
-  if (!('agentLongTermMemory' in prisma)) {
+}): Promise<AgentLongTermMemoryRecord | null> {
+  const agentLongTermMemory = getAgentLongTermMemoryDelegate();
+  if (!agentLongTermMemory) {
     void ErrorSystem.logWarning(
       '[chatbot][agent][memory] Long-term memory table not initialized.',
       {
@@ -146,7 +154,7 @@ export async function addAgentLongTermMemory(params: {
     return null;
   }
   try {
-    return prisma.agentLongTermMemory.create({
+    return await agentLongTermMemory.create<AgentLongTermMemoryRecord>({
       data: {
         memoryKey: params.memoryKey,
         runId: params.runId ?? null,
@@ -166,7 +174,7 @@ export async function addAgentLongTermMemory(params: {
               ? new Date(params.sourceCreatedAt)
               : null,
         ...(params.metadata !== undefined && {
-          metadata: params.metadata as Prisma.InputJsonValue,
+          metadata: params.metadata as InputJsonValue,
         }),
         importance: params.importance ?? null,
         lastAccessedAt: new Date(),
@@ -286,7 +294,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
 }): Promise<{
   skipped: boolean;
   validation: Awaited<ReturnType<typeof validateAgentLongTermMemory>>;
-  record?: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null;
+  record?: AgentLongTermMemoryRecord | null;
 }> {
   const summaryConfig = await resolveBrainExecutionConfigForCapability(
     'agent_runtime.memory_summarization',
@@ -365,8 +373,9 @@ export async function listAgentLongTermMemory(params: {
   personaId?: string | null;
   limit?: number;
   tags?: string[];
-}): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>[]> {
-  if (!('agentLongTermMemory' in prisma)) {
+}): Promise<AgentLongTermMemoryRecord[]> {
+  const agentLongTermMemory = getAgentLongTermMemoryDelegate();
+  if (!agentLongTermMemory) {
     void ErrorSystem.logWarning(
       '[chatbot][agent][memory] Long-term memory table not initialized.',
       {
@@ -380,7 +389,7 @@ export async function listAgentLongTermMemory(params: {
       return [];
     }
     const tagFilter = params.tags && params.tags.length > 0 ? { hasSome: params.tags } : undefined;
-    const items = await prisma.agentLongTermMemory.findMany({
+    const items = await agentLongTermMemory.findMany<AgentLongTermMemoryRecord>({
       where: {
         ...(params.memoryKey ? { memoryKey: params.memoryKey } : {}),
         ...(params.personaId ? { personaId: params.personaId } : {}),
@@ -389,11 +398,9 @@ export async function listAgentLongTermMemory(params: {
       orderBy: { updatedAt: 'desc' },
       take: params.limit ?? 5,
     });
-    const ids = items.map(
-      (item: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>) => item.id
-    );
+    const ids = items.map((item: AgentLongTermMemoryRecord) => item.id);
     if (ids.length > 0) {
-      await prisma.agentLongTermMemory.updateMany({
+      await agentLongTermMemory.updateMany({
         where: { id: { in: ids } },
         data: { lastAccessedAt: new Date() },
       });

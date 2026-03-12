@@ -1,6 +1,6 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 import {
   validateExtractionWithLLM,
@@ -72,6 +72,7 @@ export async function runExtractionRequest({
   resolvedModel: string;
   log: AgentToolLog;
 }): Promise<AgentToolResult | null> {
+  const agentAuditLog = getAgentAuditLogDelegate();
   let domText = initialDomText;
   let finalUrl = initialFinalUrl;
   const extractionRequest = parseExtractionRequest(prompt);
@@ -82,7 +83,7 @@ export async function runExtractionRequest({
         targetHostname,
         stepId: activeStepId ?? null,
       });
-      await prisma.agentAuditLog.create({
+      await agentAuditLog?.create({
         data: {
           runId,
           level: 'warning',
@@ -169,7 +170,7 @@ export async function runExtractionRequest({
         evidence: emailValidation.evidence ?? emailEvidence,
         model: extractionValidationModel ?? resolvedModel,
       };
-      await prisma.agentAuditLog.create({
+      await agentAuditLog?.create({
         data: {
           runId,
           level: emailValidation.missingCount > 0 ? 'warning' : 'info',
@@ -229,7 +230,7 @@ export async function runExtractionRequest({
       const extractedTotal = fallbackNormalizedEmails.length;
       const limitedEmails = fallbackNormalizedEmails.slice(0, Math.max(requiredCount, 10));
 
-      await prisma.agentAuditLog.create({
+      await agentAuditLog?.create({
         data: {
           runId,
           level: extractedTotal ? 'info' : 'warning',
@@ -626,7 +627,7 @@ export async function runExtractionRequest({
       extractionPlan,
       model: extractionValidationModel ?? resolvedModel,
     };
-    await prisma.agentAuditLog.create({
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'warning',
@@ -682,7 +683,7 @@ export async function runExtractionRequest({
     const extractedTotal = fallbackNormalizedNames.length;
     const limitedNames = fallbackNormalizedNames.slice(0, Math.max(requiredCount, 10));
 
-    await prisma.agentAuditLog.create({
+    await agentAuditLog?.create({
       data: {
         runId,
         level: extractedTotal ? 'info' : 'warning',

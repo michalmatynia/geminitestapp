@@ -458,4 +458,45 @@ test.describe('Kangur tutor guest intro', () => {
       page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first()
     ).toHaveAttribute('src', /\/uploads\/agentcreator\/personas\/persona-mila\/neutral\/avatar\.png/);
   });
+
+  test('renders inline tutor persona avatar images on the anonymous guest intro', async ({ page }) => {
+    await mockKangurTutorEnvironment(page, {
+      tutorPersonaImageUrl: 'data:image/png;base64,AAA',
+    });
+
+    await page.route('**/api/kangur/auth/me**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unauthorized' }),
+      });
+    });
+
+    await page.route('**/api/kangur/ai-tutor/guest-intro**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          shouldShow: true,
+          reason: 'first_visit',
+        }),
+      });
+    });
+
+    await gotoGuestTutorRoute(page);
+
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first();
+
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('src', 'data:image/png;base64,AAA');
+
+    await page.getByTestId('kangur-ai-tutor-guest-intro-close').click();
+    await page.getByTestId('kangur-ai-tutor-avatar').click();
+
+    await expect(page.getByTestId('kangur-ai-tutor-guest-intro')).toBeVisible();
+    await expect(
+      page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first()
+    ).toHaveAttribute('src', 'data:image/png;base64,AAA');
+  });
 });

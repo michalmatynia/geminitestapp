@@ -9,6 +9,7 @@ import {
   resolveAgentPlanSettings,
   resolveAgentPreferences,
 } from '@/features/ai/agent-runtime/core/config';
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import {
   buildSelfImprovementPlaybook,
   jsonValueToRecord,
@@ -20,7 +21,6 @@ import {
 } from '@/features/ai/agent-runtime/memory';
 import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import prisma from '@/shared/lib/db/prisma';
 
 type AgentRunContextInput = {
   id: string;
@@ -36,10 +36,11 @@ type AgentRunContextInput = {
 export async function prepareRunContext(run: AgentRunContextInput): Promise<AgentExecutionContext> {
   const contextRegistry = readAgentRuntimeContextRegistry(run.planState);
   const contextRegistryPrompt = buildAgentRuntimeContextRegistryPrompt(contextRegistry?.resolved);
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
   let memoryKey = run.memoryKey;
-  if (!memoryKey) {
+  if (!memoryKey && chatbotAgentRun) {
     memoryKey = run.id;
-    await prisma.chatbotAgentRun.update({
+    await chatbotAgentRun.update({
       where: { id: run.id },
       data: { memoryKey },
     });
@@ -82,7 +83,7 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
     : [];
   const selfImprovementPlaybook = buildSelfImprovementPlaybook(
     longTermImprovementItems.map(
-      (item: { summary: string | null; content: string; metadata: unknown }) => ({
+      (item) => ({
         summary: item.summary,
         content: item.content,
         metadata: jsonValueToRecord(item.metadata),

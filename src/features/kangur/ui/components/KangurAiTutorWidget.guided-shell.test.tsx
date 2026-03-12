@@ -55,6 +55,26 @@ const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
 };
 
 describe('KangurAiTutorWidget.guided-shell', () => {
+  it('uses a bottom-sheet home onboarding callout on narrow mobile viewports', () => {
+    const { result } = renderHook(() =>
+      useKangurAiTutorGuidedShellState(
+        buildInput({
+          guidedMode: 'home_onboarding',
+          guidedSelectionGlowRects: [],
+          guidedSelectionSpotlightRect: null,
+          viewport: { width: 320, height: 568 },
+        })
+      )
+    );
+
+    expect(result.current.guidedCalloutStyle).toMatchObject({
+      position: 'fixed',
+      bottom: 8,
+      width: 288,
+    });
+    expect(result.current.guidedCalloutStyle).not.toHaveProperty('top');
+  });
+
   it('keeps the guided selection avatar cluster stable before and after the preview reveal', () => {
     const { result, rerender } = renderHook(
       (input: Parameters<typeof useKangurAiTutorGuidedShellState>[0]) =>

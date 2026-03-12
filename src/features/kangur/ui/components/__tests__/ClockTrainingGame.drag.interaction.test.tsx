@@ -256,7 +256,7 @@ describe('ClockTrainingGame drag interactions', () => {
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(
-      container.querySelector("circle[fill='var(--kangur-soft-card-background)']")
+      container.querySelector('circle[fill=\'var(--kangur-soft-card-background)\']')
     ).not.toBeNull();
 
     dragHandToAngle(minuteHand, 180);

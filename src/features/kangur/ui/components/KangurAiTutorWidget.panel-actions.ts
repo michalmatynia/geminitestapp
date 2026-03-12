@@ -6,18 +6,21 @@ import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type {
   KangurAiTutorFocusKind,
   KangurAiTutorFollowUpAction,
+  KangurAiTutorKnowledgeReference,
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 
 import { getAssistantMessageFeedbackKey } from './KangurAiTutorWidget.helpers';
-import { persistPendingTutorFollowUp } from './KangurAiTutorWidget.storage';
+import { scrollToAndSpotlightAnchor } from './KangurAiTutorWidget.navigation-spotlight';
+import { persistPendingNavigationTarget, persistPendingTutorFollowUp } from './KangurAiTutorWidget.storage';
 
-import type { TutorRenderedMessage } from './KangurAiTutorPanelBody.context';
+import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
-import type { GuidedTutorAuthMode, SectionExplainContext, TutorMessageFeedback } from './KangurAiTutorWidget.types';
+import type { SectionExplainContext, TutorMessageFeedback } from './KangurAiTutorWidget.types';
 
 type TelemetryContext = {
   contentId: string | null;
@@ -31,6 +34,7 @@ type UseKangurAiTutorPanelActionsInput = {
   activeSelectedText: string | null;
   activeSelectionPageRect: DOMRect | null;
   answerRevealed: boolean | undefined;
+  basePath: string;
   bridgeQuickActionId: string | null;
   canSendMessages: boolean;
   clearSelection: () => void;
@@ -53,12 +57,13 @@ type UseKangurAiTutorPanelActionsInput = {
   inputValue: string;
   isAnonymousVisitor: boolean;
   isLoading: boolean;
+  latestWebsiteHelpTarget: KangurAiTutorWebsiteHelpTarget | null;
   messageCount: number;
   normalizeConversationFocusKind: (
     focusKind: ActiveTutorFocus['kind']
   ) => KangurAiTutorFocusKind | undefined;
   persistSelectionGeometry: () => void;
-  resolveGuestLoginGuidanceIntent: (value: string) => GuidedTutorAuthMode | null;
+  resolveGuestLoginGuidanceIntent: (value: string) => KangurAuthMode | null;
   resolveTutorFollowUpLocation: (href: string) => { pathname: string; search: string } | null;
   setHighlightedText: (value: string | null) => void;
   sendMessage: (
@@ -71,13 +76,14 @@ type UseKangurAiTutorPanelActionsInput = {
       focusId: string | null;
       focusLabel: string | null;
       assignmentId: string | null;
+      knowledgeReference?: KangurAiTutorKnowledgeReference | null;
       interactionIntent?: 'hint' | 'explain' | 'review' | 'next_step';
       drawingImageData?: string | null;
       surface?: KangurAiTutorSurface;
     }
   ) => Promise<void>;
   startGuidedGuestLogin: (
-    intent: GuidedTutorAuthMode,
+    intent: KangurAuthMode,
     source: 'chat_message'
   ) => void;
   telemetryContext: TelemetryContext;
@@ -107,6 +113,7 @@ export function useKangurAiTutorPanelActions({
   activeSelectedText,
   activeSelectionPageRect,
   answerRevealed,
+  basePath,
   bridgeQuickActionId,
   canSendMessages,
   clearSelection,
@@ -119,6 +126,7 @@ export function useKangurAiTutorPanelActions({
   inputValue,
   isAnonymousVisitor,
   isLoading,
+  latestWebsiteHelpTarget,
   messageCount,
   normalizeConversationFocusKind,
   persistSelectionGeometry,
@@ -180,6 +188,7 @@ export function useKangurAiTutorPanelActions({
       focusId: conversationFocus.id,
       focusLabel: conversationFocus.label,
       assignmentId: conversationFocus.assignmentId,
+      knowledgeReference: conversationFocus.knowledgeReference,
       interactionIntent:
         activeSelectedText || highlightedSection || activeFocus.kind === 'review'
           ? activeFocus.kind === 'review'
@@ -228,6 +237,62 @@ export function useKangurAiTutorPanelActions({
     [handleSend]
   );
 
+  const handleWebsiteHelpTargetClick = useCallback(
+    (target: KangurAiTutorWebsiteHelpTarget, messageIndex: number, href: string): void => {
+      trackKangurClientEvent('kangur_ai_tutor_website_help_target_clicked', {
+        ...telemetryContext,
+        messageIndex,
+        href,
+        targetNodeId: target.nodeId,
+        targetLabel: target.label,
+        targetRoute: target.route ?? null,
+        targetAnchorId: target.anchorId ?? null,
+      });
+
+      const currentLocation = getCurrentTutorLocation();
+      if (!currentLocation) {
+        return;
+      }
+
+      let targetPathname: string;
+      let targetHash = '';
+      try {
+        const parsed = new URL(href, window.location.origin);
+        targetPathname = parsed.pathname;
+        targetHash = parsed.hash;
+      } catch {
+        targetPathname = href.split('#')[0] ?? href;
+        targetHash = href.includes('#') ? `#${href.split('#')[1]}` : '';
+      }
+
+      const isSamePage = currentLocation.pathname === targetPathname;
+      const anchorId = target.anchorId?.trim() || targetHash.replace(/^#/, '') || null;
+
+      if (isSamePage && anchorId) {
+        scrollToAndSpotlightAnchor(anchorId);
+        return;
+      }
+
+      if (!isSamePage) {
+        persistPendingNavigationTarget({
+          version: 1,
+          href,
+          pathname: targetPathname,
+          hash: targetHash,
+          nodeId: target.nodeId,
+          label: target.label,
+          route: target.route ?? null,
+          anchorId: anchorId,
+          messageIndex,
+          sourcePathname: currentLocation.pathname,
+          sourceSearch: currentLocation.search,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    },
+    [basePath, getCurrentTutorLocation, telemetryContext]
+  );
+
   const handleQuickAction = useCallback(
     async (
       action: TutorQuickAction,
@@ -238,6 +303,20 @@ export function useKangurAiTutorPanelActions({
       if (isLoading || !canSendMessages) {
         return;
       }
+
+      if (action.id === 'navigate_to_target' && latestWebsiteHelpTarget) {
+        const { toWebsiteHelpTargetHref } = await import('./KangurAiTutorWidget.helpers');
+        const href = toWebsiteHelpTargetHref(basePath, latestWebsiteHelpTarget);
+        handleWebsiteHelpTargetClick(latestWebsiteHelpTarget, -1, href);
+        trackKangurClientEvent('kangur_ai_tutor_navigation_nudge_accepted', {
+          ...telemetryContext,
+          targetNodeId: latestWebsiteHelpTarget.nodeId,
+          targetLabel: latestWebsiteHelpTarget.label,
+          href,
+        });
+        return;
+      }
+
       if (activeSelectedText) {
         persistSelectionGeometry();
       }
@@ -260,6 +339,7 @@ export function useKangurAiTutorPanelActions({
         focusId: conversationFocus.id,
         focusLabel: conversationFocus.label,
         assignmentId: conversationFocus.assignmentId,
+        knowledgeReference: conversationFocus.knowledgeReference,
         interactionIntent:
           action.interactionIntent ??
           getInteractionIntent(action.promptMode, activeFocus.kind, answerRevealed),
@@ -278,12 +358,15 @@ export function useKangurAiTutorPanelActions({
       activeFocus.label,
       activeSelectedText,
       answerRevealed,
+      basePath,
       bridgeQuickActionId,
       canSendMessages,
       clearSelection,
       getInteractionIntent,
+      handleWebsiteHelpTargetClick,
       highlightedSection,
       isLoading,
+      latestWebsiteHelpTarget,
       normalizeConversationFocusKind,
       persistSelectionGeometry,
       sendMessage,
@@ -403,21 +486,6 @@ export function useKangurAiTutorPanelActions({
       });
     },
     [getCurrentTutorLocation, resolveTutorFollowUpLocation, telemetryContext]
-  );
-
-  const handleWebsiteHelpTargetClick = useCallback(
-    (target: KangurAiTutorWebsiteHelpTarget, messageIndex: number, href: string): void => {
-      trackKangurClientEvent('kangur_ai_tutor_website_help_target_clicked', {
-        ...telemetryContext,
-        messageIndex,
-        href,
-        targetNodeId: target.nodeId,
-        targetLabel: target.label,
-        targetRoute: target.route ?? null,
-        targetAnchorId: target.anchorId ?? null,
-      });
-    },
-    [telemetryContext]
   );
 
   const handleMessageFeedback = useCallback(

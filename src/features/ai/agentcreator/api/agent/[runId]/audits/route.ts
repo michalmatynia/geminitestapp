@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type {
   AgentAuditLogRecordDto,
   AgentAuditLogRecordsResponse,
@@ -11,7 +12,6 @@ import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -20,38 +20,48 @@ export const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int().min(10).max(500)),
 });
 
+type AgentAuditRouteRecord = {
+  id: string;
+  runId: string | null;
+  level: string;
+  message: string;
+  metadata?: unknown;
+  createdAt: Date | string;
+};
+
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (_req, _ctx, params) => {
     const requestStart = Date.now();
-    if (!('agentAuditLog' in prisma)) {
-      throw internalError('Agent steps not initialized. Run prisma generate/db push.');
+    const agentAuditLog = getAgentAuditLogDelegate();
+    if (!agentAuditLog) {
+      throw internalError('Agent audit storage is unavailable.');
     }
     const { runId } = params;
     const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
     const stepId = query.stepId ?? null;
     const take = query.limit ?? 200;
-    const audits = await prisma.agentAuditLog.findMany({
+    const audits = await agentAuditLog.findMany<AgentAuditRouteRecord>({
       where: { runId },
       orderBy: { createdAt: 'desc' },
       take,
     });
     const filtered = stepId
-      ? audits.filter((audit: any) => {
+      ? audits.filter((audit: AgentAuditRouteRecord) => {
         const metadata = audit.metadata as {
-            stepId?: string;
-            failedStepId?: string;
-            activeStepId?: string;
-            steps?: Array<{ id?: string }>;
-          } | null;
+          stepId?: string;
+          failedStepId?: string;
+          activeStepId?: string;
+          steps?: Array<{ id?: string }>;
+        } | null;
         if (
           metadata?.stepId === stepId ||
-            metadata?.failedStepId === stepId ||
-            metadata?.activeStepId === stepId
+          metadata?.failedStepId === stepId ||
+          metadata?.activeStepId === stepId
         ) {
           return true;
         }
         if (Array.isArray(metadata?.steps)) {
-          return metadata?.steps.some((step: any) => step?.id === stepId);
+          return metadata.steps.some((step: { id?: string }) => step?.id === stepId);
         }
         return false;
       })
@@ -66,10 +76,12 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
     }
     const response: AgentAuditLogRecordsResponse = {
       audits: filtered.map(
-        (audit: any): AgentAuditLogRecordDto => ({
+        (audit: AgentAuditRouteRecord): AgentAuditLogRecordDto => ({
           ...audit,
           runId: audit.runId ?? null,
-          createdAt: audit.createdAt.toISOString(),
+          metadata: audit.metadata ?? null,
+          createdAt:
+            audit.createdAt instanceof Date ? audit.createdAt.toISOString() : audit.createdAt,
         })
       ),
     };

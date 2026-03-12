@@ -7,19 +7,16 @@ import {
 } from './KangurAiTutorWidget.shared';
 
 import type { CSSProperties } from 'react';
+import type {
+  KangurAiTutorGuestIntroStatus,
+  KangurAiTutorHomeOnboardingStatus,
+  KangurAiTutorOnboardingRecord,
+} from '@/shared/contracts/kangur-ai-tutor';
 import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
 
-export type KangurAiTutorGuestIntroRecord = {
-  status: 'shown' | 'accepted' | 'dismissed';
-  version: 1;
-  updatedAt: string;
-};
-
-export type KangurAiTutorHomeOnboardingRecord = {
-  status: 'shown' | 'completed' | 'dismissed';
-  version: 1;
-  updatedAt: string;
-};
+type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
+type KangurAiTutorHomeOnboardingRecord =
+  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
 
 export type KangurAiTutorGuestIntroCheckResponse = {
   ok?: boolean;
@@ -46,6 +43,21 @@ export type KangurAiTutorPendingFollowUpRecord = {
   createdAt: string;
 };
 
+export type KangurAiTutorPendingNavigationTarget = {
+  version: 1;
+  href: string;
+  pathname: string;
+  hash: string;
+  nodeId: string;
+  label: string;
+  route: string | null;
+  anchorId: string | null;
+  messageIndex: number;
+  sourcePathname: string;
+  sourceSearch: string;
+  createdAt: string;
+};
+
 export type KangurAiTutorAvatarPositionRecord = {
   version: 1;
   left: number;
@@ -65,6 +77,7 @@ export type KangurAiTutorPanelPositionRecord = {
 type KangurAiTutorWidgetStorageState = {
   lastSessionKey?: string | null;
   pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
+  pendingNavigationTarget?: KangurAiTutorPendingNavigationTarget | null;
   avatarPosition?: KangurAiTutorAvatarPositionRecord | null;
   panelPosition?: KangurAiTutorPanelPositionRecord | null;
   hidden?: boolean;
@@ -118,6 +131,9 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
       ? { lastSessionKey: state.lastSessionKey }
       : {}),
     ...(state.pendingFollowUp ? { pendingFollowUp: state.pendingFollowUp } : {}),
+    ...(state.pendingNavigationTarget
+      ? { pendingNavigationTarget: state.pendingNavigationTarget }
+      : {}),
     ...(state.avatarPosition ? { avatarPosition: state.avatarPosition } : {}),
     ...(state.panelPosition ? { panelPosition: state.panelPosition } : {}),
     ...(state.hidden === true ? { hidden: true } : {}),
@@ -127,6 +143,7 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
     if (
       !('lastSessionKey' in nextState) &&
       !('pendingFollowUp' in nextState) &&
+      !('pendingNavigationTarget' in nextState) &&
       !('avatarPosition' in nextState) &&
       !('panelPosition' in nextState) &&
       !('hidden' in nextState)
@@ -166,6 +183,30 @@ const isValidPendingFollowUpRecord = (
     (typeof input.sourceSurface === 'string' || input.sourceSurface === null) &&
     (typeof input.sourceContentId === 'string' || input.sourceContentId === null) &&
     (typeof input.sourceTitle === 'string' || input.sourceTitle === null) &&
+    typeof input.sourcePathname === 'string' &&
+    typeof input.sourceSearch === 'string' &&
+    typeof input.createdAt === 'string'
+  );
+};
+
+const isValidPendingNavigationTargetRecord = (
+  value: unknown
+): value is KangurAiTutorPendingNavigationTarget => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const input = value as Partial<KangurAiTutorPendingNavigationTarget>;
+  return (
+    input.version === 1 &&
+    typeof input.href === 'string' &&
+    typeof input.pathname === 'string' &&
+    typeof input.hash === 'string' &&
+    typeof input.nodeId === 'string' &&
+    typeof input.label === 'string' &&
+    (typeof input.route === 'string' || input.route === null) &&
+    (typeof input.anchorId === 'string' || input.anchorId === null) &&
+    typeof input.messageIndex === 'number' &&
     typeof input.sourcePathname === 'string' &&
     typeof input.sourceSearch === 'string' &&
     typeof input.createdAt === 'string'
@@ -311,6 +352,32 @@ export const clearPersistedPendingTutorFollowUp = (): void => {
   persistTutorWidgetState({
     ...currentState,
     pendingFollowUp: null,
+  });
+};
+
+export const loadPersistedPendingNavigationTarget =
+  (): KangurAiTutorPendingNavigationTarget | null => {
+    const parsed = loadPersistedTutorWidgetState();
+    return isValidPendingNavigationTargetRecord(parsed?.pendingNavigationTarget)
+      ? parsed.pendingNavigationTarget
+      : null;
+  };
+
+export const persistPendingNavigationTarget = (
+  target: KangurAiTutorPendingNavigationTarget
+): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    pendingNavigationTarget: target,
+  });
+};
+
+export const clearPersistedPendingNavigationTarget = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    pendingNavigationTarget: null,
   });
 };
 

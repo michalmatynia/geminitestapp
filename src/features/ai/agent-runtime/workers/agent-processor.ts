@@ -2,29 +2,40 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import {
+  type AgentRuntimeRunRecord,
+  getChatbotAgentRunDelegate,
+} from '@/features/ai/agent-runtime/store-delegates';
 import { logAgentAudit, runAgentControlLoop } from '@/features/ai/agent-runtime/server';
-import prisma from '@/shared/lib/db/prisma';
-import { Prisma } from '@/shared/lib/db/prisma-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
 let hasLoggedMissingAgentRunSchema = false;
 
-const isPrismaMissingAgentRunSchemaError = (
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
+type QueueRunRecord = Pick<AgentRuntimeRunRecord, 'id' | 'status'>;
+type StuckRunRecord = Pick<AgentRuntimeRunRecord, 'id' | 'planState'>;
+type AgentRunStoreError = {
+  code?: string;
+};
 
-const logMissingAgentRunSchemaOnce = (error: Prisma.PrismaClientKnownRequestError): void => {
+const isMissingAgentRunStoreError = (error: unknown): error is AgentRunStoreError => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return code === 'P2021' || code === 'P2022';
+};
+
+const logMissingAgentRunSchemaOnce = (error: AgentRunStoreError): void => {
   if (hasLoggedMissingAgentRunSchema) {
     return;
   }
 
   hasLoggedMissingAgentRunSchema = true;
-  void ErrorSystem.logWarning('Agent run schema not available; queue worker disabled.', {
+  void ErrorSystem.logWarning('Agent run storage not available; queue worker disabled.', {
     service: 'agent-queue',
-    errorCode: error.code,
+    errorCode: error.code ?? 'UNKNOWN',
   });
 };
 
@@ -32,7 +43,7 @@ const withAgentRunSchemaGuard = async <T>(operation: () => Promise<T>, fallback:
   try {
     return await operation();
   } catch (error) {
-    if (isPrismaMissingAgentRunSchemaError(error)) {
+    if (isMissingAgentRunStoreError(error)) {
       logMissingAgentRunSchemaOnce(error);
       return fallback;
     }
@@ -43,8 +54,9 @@ const withAgentRunSchemaGuard = async <T>(operation: () => Promise<T>, fallback:
 
 export async function processAgentRun(runId: string): Promise<void> {
   const debugEnabled = process.env['DEBUG_CHATBOT'] === 'true';
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
 
-  if (!('chatbotAgentRun' in prisma)) {
+  if (!chatbotAgentRun) {
     if (debugEnabled) {
       void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-processor' });
     }
@@ -53,7 +65,7 @@ export async function processAgentRun(runId: string): Promise<void> {
 
   const nextRun = await withAgentRunSchemaGuard(
     async () =>
-      await prisma.chatbotAgentRun.findFirst({
+      await chatbotAgentRun.findFirst<QueueRunRecord>({
         where: { id: runId, status: { in: ['queued', 'running'] } },
       }),
     null
@@ -64,7 +76,7 @@ export async function processAgentRun(runId: string): Promise<void> {
   if (nextRun.status === 'queued') {
     const updatedQueuedRun = await withAgentRunSchemaGuard(
       async () =>
-        await prisma.chatbotAgentRun.update({
+        await chatbotAgentRun.update({
           where: { id: nextRun.id },
           data: {
             status: 'running',
@@ -91,7 +103,8 @@ export async function processAgentRun(runId: string): Promise<void> {
 }
 
 export async function processNextQueuedAgentRun(): Promise<void> {
-  if (!('chatbotAgentRun' in prisma)) return;
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) return;
 
   const recovered = await withAgentRunSchemaGuard(
     async () => {
@@ -104,7 +117,7 @@ export async function processNextQueuedAgentRun(): Promise<void> {
 
   const nextRun = await withAgentRunSchemaGuard(
     async () =>
-      await prisma.chatbotAgentRun.findFirst({
+      await chatbotAgentRun.findFirst<QueueRunRecord>({
         where: { status: 'queued' },
         orderBy: { createdAt: 'asc' },
       }),
@@ -117,11 +130,12 @@ export async function processNextQueuedAgentRun(): Promise<void> {
 }
 
 export async function recoverStuckRuns(): Promise<void> {
-  if (!('chatbotAgentRun' in prisma)) return;
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) return;
   const cutoff = new Date(Date.now() - STUCK_RUN_THRESHOLD_MS);
   const stuckRuns = await withAgentRunSchemaGuard(
     async () =>
-      await prisma.chatbotAgentRun.findMany({
+      await chatbotAgentRun.findMany<StuckRunRecord>({
         where: {
           status: 'running',
           updatedAt: { lt: cutoff },
@@ -141,7 +155,7 @@ export async function recoverStuckRuns(): Promise<void> {
         : { resumeRequestedAt: new Date().toISOString() };
     const updatedRun = await withAgentRunSchemaGuard(
       async () =>
-        await prisma.chatbotAgentRun.update({
+        await chatbotAgentRun.update({
           where: { id: run.id },
           data: {
             status: 'queued',
@@ -167,13 +181,15 @@ export async function recoverStuckRuns(): Promise<void> {
 
 async function logAgentFailure(runId: string, error: unknown): Promise<void> {
   const errorId = randomUUID();
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
   await logAgentAudit(runId, 'error', 'Agent run failed while processing queue.', {
     errorId,
     message: error instanceof Error ? error.message : 'Unknown error',
   });
+  if (!chatbotAgentRun) return;
   await withAgentRunSchemaGuard(
     async () =>
-      await prisma.chatbotAgentRun.update({
+      await chatbotAgentRun.update({
         where: { id: runId },
         data: {
           status: 'failed',

@@ -1,26 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { prismaImageFileRepository } from '@/shared/lib/files/services/image-file-repository/prisma-image-file-repository';
-import prisma from '@/shared/lib/db/prisma';
+import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-repository/mongo-image-file-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    imageFile: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-  },
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn(),
 }));
 
-describe('ImageFileRepository (Prisma)', () => {
+describe('ImageFileRepository (Mongo)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  const createdAt = new Date('2026-03-01T10:00:00.000Z');
+  const updatedAt = new Date('2026-03-02T10:00:00.000Z');
   const mockImageFile = {
+    _id: 'img-1',
     id: 'img-1',
     filename: 'test.jpg',
     filepath: '/uploads/test.jpg',
@@ -29,13 +24,18 @@ describe('ImageFileRepository (Prisma)', () => {
     width: 100,
     height: 100,
     tags: ['tag1'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt,
+    updatedAt,
   };
 
   describe('createImageFile', () => {
     it('creates an image file', async () => {
-      (prisma.imageFile.create as any).mockResolvedValue(mockImageFile);
+      const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+      const collection = vi.fn().mockReturnValue({ insertOne });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
+
       const input = {
         filename: 'test.jpg',
         filepath: '/uploads/test.jpg',
@@ -43,58 +43,89 @@ describe('ImageFileRepository (Prisma)', () => {
         size: 1024,
       };
 
-      const result = await prismaImageFileRepository.createImageFile(input);
+      const result = await mongoImageFileRepository.createImageFile(input);
 
-      expect(prisma.imageFile.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ filename: 'test.jpg' }),
-      });
-      expect(result.id).toBe('img-1');
+      expect(collection).toHaveBeenCalledWith('image_files');
+      expect(insertOne).toHaveBeenCalledWith(
+        expect.objectContaining({ filename: 'test.jpg', id: expect.any(String), _id: expect.any(String) })
+      );
+      expect(result.filename).toBe('test.jpg');
+      expect(result.id).toEqual(expect.any(String));
     });
   });
 
   describe('getImageFileById', () => {
     it('returns image file if found', async () => {
-      (prisma.imageFile.findUnique as any).mockResolvedValue(mockImageFile);
-      const result = await prismaImageFileRepository.getImageFileById('img-1');
+      const findOne = vi.fn().mockResolvedValue(mockImageFile);
+      const collection = vi.fn().mockReturnValue({ findOne });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
+
+      const result = await mongoImageFileRepository.getImageFileById('img-1');
+
+      expect(findOne).toHaveBeenCalledWith({ $or: [{ _id: 'img-1' }, { id: 'img-1' }] });
       expect(result?.id).toBe('img-1');
     });
 
     it('returns null if not found', async () => {
-      (prisma.imageFile.findUnique as any).mockResolvedValue(null);
-      const result = await prismaImageFileRepository.getImageFileById('non-existent');
+      const findOne = vi.fn().mockResolvedValue(null);
+      const collection = vi.fn().mockReturnValue({ findOne });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
+
+      const result = await mongoImageFileRepository.getImageFileById('non-existent');
+
       expect(result).toBeNull();
     });
   });
 
   describe('listImageFiles', () => {
     it('lists all files with optional filters', async () => {
-      (prisma.imageFile.findMany as any).mockResolvedValue([mockImageFile]);
-      const result = await prismaImageFileRepository.listImageFiles({ filename: 'test' });
+      const toArray = vi.fn().mockResolvedValue([mockImageFile]);
+      const find = vi.fn().mockReturnValue({ toArray });
+      const collection = vi.fn().mockReturnValue({ find });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
 
-      expect(prisma.imageFile.findMany).toHaveBeenCalledWith({
-        where: expect.objectContaining({
-          filename: { contains: 'test', mode: 'insensitive' },
-        }),
+      const result = await mongoImageFileRepository.listImageFiles({ filename: 'test' });
+
+      expect(find).toHaveBeenCalledWith({
+        filename: { $regex: 'test', $options: 'i' },
       });
-      expect(result.length).toBe(1);
+      expect(result).toHaveLength(1);
     });
   });
 
   describe('updateImageFilePath', () => {
     it('updates filepath', async () => {
-      (prisma.imageFile.update as any).mockResolvedValue({
+      const findOneAndUpdate = vi.fn().mockResolvedValue({
         ...mockImageFile,
         filepath: '/new/path.jpg',
       });
-      const result = await prismaImageFileRepository.updateImageFilePath('img-1', '/new/path.jpg');
+      const collection = vi.fn().mockReturnValue({ findOneAndUpdate });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
+
+      const result = await mongoImageFileRepository.updateImageFilePath('img-1', '/new/path.jpg');
+
       expect(result?.filepath).toBe('/new/path.jpg');
     });
   });
 
   describe('deleteImageFile', () => {
     it('deletes image file', async () => {
-      (prisma.imageFile.delete as any).mockResolvedValue(mockImageFile);
-      const result = await prismaImageFileRepository.deleteImageFile('img-1');
+      const findOneAndDelete = vi.fn().mockResolvedValue(mockImageFile);
+      const collection = vi.fn().mockReturnValue({ findOneAndDelete });
+      vi.mocked(getMongoDb).mockResolvedValue({
+        collection,
+      } as Awaited<ReturnType<typeof getMongoDb>>);
+
+      const result = await mongoImageFileRepository.deleteImageFile('img-1');
+
       expect(result?.id).toBe('img-1');
     });
   });

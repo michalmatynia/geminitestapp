@@ -15,9 +15,9 @@ import {
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import {
   evaluateGeometryDrawing,
-  type GeometryDrawPoint,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
+import type { Point2d } from '@/shared/contracts/geometry';
 import {
   addXp,
   createTrainingReward,
@@ -165,7 +165,7 @@ const KEYBOARD_CURSOR_START = {
   y: Math.round(CANVAS_HEIGHT / 2),
 } as const;
 
-const flattenPoints = (strokes: GeometryDrawPoint[][]): GeometryDrawPoint[] =>
+const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);
 
 export default function GeometryDrawingGame({
@@ -181,8 +181,8 @@ export default function GeometryDrawingGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
-  const [strokes, setStrokes] = useState<GeometryDrawPoint[][]>([]);
-  const [keyboardCursor, setKeyboardCursor] = useState<GeometryDrawPoint>(KEYBOARD_CURSOR_START);
+  const [strokes, setStrokes] = useState<Point2d[][]>([]);
+  const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
   const [keyboardStatus, setKeyboardStatus] = useState(
     'Plansza gotowa do rysowania klawiaturą.'
@@ -200,7 +200,7 @@ export default function GeometryDrawingGame({
   const totalRounds = rounds.length;
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
 
-  const redrawCanvas = useCallback((nextStrokes: GeometryDrawPoint[][]): void => {
+  const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -245,7 +245,7 @@ export default function GeometryDrawingGame({
   }, []);
 
   const updateStrokes = useCallback(
-    (updater: (current: GeometryDrawPoint[][]) => GeometryDrawPoint[][]): void => {
+    (updater: (current: Point2d[][]) => Point2d[][]): void => {
       setStrokes((current) => {
         const next = updater(current);
         redrawCanvas(next);
@@ -265,7 +265,7 @@ export default function GeometryDrawingGame({
   }, [redrawCanvas]);
 
   const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): GeometryDrawPoint => {
+    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
       const rect = canvas.getBoundingClientRect();
@@ -362,7 +362,7 @@ export default function GeometryDrawingGame({
   };
 
   const appendKeyboardPoint = useCallback(
-    (point: GeometryDrawPoint): void => {
+    (point: Point2d): void => {
       updateStrokes((current) => {
         if (current.length === 0) {
           return [[point]];

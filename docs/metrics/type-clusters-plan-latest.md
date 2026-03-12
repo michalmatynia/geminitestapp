@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,36 +8,36 @@ canonical: true
 ---
 # Type Cluster Consolidation Plan
 
-Generated at: 2026-03-11T14:10:44.537Z
+Generated at: 2026-03-12T06:06:16.193Z
 
 ## Prioritized Worklist
 
-1. [ ] exact-0002 (exact-shape)
-Risk: 16 | Declarations: 2
-Domains: feature:kangur
+1. [ ] exact-0001 (exact-shape)
+Risk: 193 | Declarations: 63
+Domains: shared, shared:contracts
 Suggested DTO: TBD
-Signature: type-expression (0d1fba558df3)
+Signature: type-expression (b9d00c941d92)
 Notes: Validate semantic equivalence before migration.
 
-2. [ ] exact-0001 (exact-shape)
-Risk: 15 | Declarations: 2
-Domains: feature:kangur
+2. [ ] exact-0002 (exact-shape)
+Risk: 65 | Declarations: 21
+Domains: shared
 Suggested DTO: TBD
-Signature: structural-members (27b1b0b04d59)
+Signature: type-expression (3023b666f167)
 Notes: Validate semantic equivalence before migration.
 
-3. [ ] near-0004 (near-shape)
-Risk: 12 | Declarations: 2
-Domains: feature:kangur
+3. [ ] exact-0003 (exact-shape)
+Risk: 44 | Declarations: 14
+Domains: shared
 Suggested DTO: TBD
-Signature: structural-members (5152d5035b29)
+Signature: type-expression (c56f3bc28aed)
 Notes: Validate semantic equivalence before migration.
 
-4. [ ] near-0005 (near-shape)
-Risk: 12 | Declarations: 2
-Domains: feature:kangur
+4. [ ] exact-0005 (exact-shape)
+Risk: 11 | Declarations: 2
+Domains: shared
 Suggested DTO: TBD
-Signature: structural-members (a1045c16efbf)
+Signature: type-expression (e3b5b69b7b2d)
 Notes: Validate semantic equivalence before migration.
 
 5. [ ] near-0001 (near-shape)
@@ -47,21 +47,14 @@ Suggested DTO: TBD
 Signature: structural-members (0c11d1dbbe96)
 Notes: Validate semantic equivalence before migration.
 
-6. [ ] near-0003 (near-shape)
-Risk: 11 | Declarations: 2
-Domains: feature:kangur
-Suggested DTO: TBD
-Signature: structural-members (2082338e0755)
-Notes: Validate semantic equivalence before migration.
-
-7. [ ] exact-0003 (exact-shape)
+6. [ ] exact-0004 (exact-shape)
 Risk: 10 | Declarations: 2
-Domains: feature:products, shared
+Domains: feature:integrations
 Suggested DTO: TBD
-Signature: structural-members (ae5d346534f0)
+Signature: structural-members (c6003eb04395)
 Notes: Validate semantic equivalence before migration.
 
-8. [ ] near-0002 (near-shape)
+7. [ ] near-0002 (near-shape)
 Risk: 8 | Declarations: 2
 Domains: feature:kangur
 Suggested DTO: TBD

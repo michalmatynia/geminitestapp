@@ -5,11 +5,11 @@ import {
   ATTACHED_AVATAR_OVERLAP,
   AVATAR_SIZE,
   GUIDED_AVATAR_SURFACE_GAP,
-  type TutorAvatarAttachmentSide,
+  type TutorHorizontalSide,
   type TutorMotionPosition,
 } from './KangurAiTutorWidget.shared';
 
-export type TutorAvatarAttachmentPlacement = TutorAvatarAttachmentSide | 'top' | 'bottom';
+export type TutorAvatarAttachmentPlacement = TutorHorizontalSide | 'top' | 'bottom';
 
 type SurfaceGeometry = {
   height?: number;

@@ -238,7 +238,7 @@ const createDocument = (data: Asset3DCreateInput): Asset3DDocument => {
 async function createAsset3D(data: Asset3DCreateInput): Promise<Asset3DRecord> {
   const db = await getMongoDb();
   const collection = await getCollection(db);
-  const doc = stripUndefined(createDocument(data)) as Asset3DDocument;
+  const doc = stripUndefined(createDocument(data));
   await collection.insertOne(doc);
   return toRecord(doc);
 }

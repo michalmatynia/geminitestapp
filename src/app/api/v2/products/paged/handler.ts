@@ -62,7 +62,6 @@ const resolvePagedProductsQueryInput = (
  * using the repository's optimized paged fetch path.
  * MongoDB uses a single $facet aggregation for filtered queries and keeps the
  * unfiltered path on the indexed list query + estimatedDocumentCount fast path.
- * Prisma continues to use parallel findMany + count queries.
  */
 export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};

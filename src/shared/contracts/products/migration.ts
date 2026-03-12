@@ -1,11 +1,12 @@
 import { z } from 'zod';
-export const productDbProviderSchema = z.enum(['prisma', 'mongodb']);
+
+export const productDbProviderSchema = z.literal('mongodb');
 export type ProductDbProvider = z.infer<typeof productDbProviderSchema>;
 
-export const integrationDbProviderSchema = z.enum(['prisma', 'mongodb']);
+export const integrationDbProviderSchema = z.literal('mongodb');
 export type IntegrationDbProvider = z.infer<typeof integrationDbProviderSchema>;
 
-export const productMigrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
+export const productMigrationDirectionSchema = z.literal('mongo-only');
 export type ProductMigrationDirection = z.infer<typeof productMigrationDirectionSchema>;
 
 export const syncDirectionSchema = z.enum(['to_base', 'from_base', 'bidirectional']);

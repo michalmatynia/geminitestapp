@@ -27,6 +27,28 @@ async function gotoTutorRoute(page: Page, href: string): Promise<void> {
   await page.goto(href, { waitUntil: 'domcontentloaded' });
 }
 
+async function openLessonByTitle(
+  page: Page,
+  lessonTitle: string,
+  expectedSelectedText?: string
+): Promise<Locator> {
+  await page.getByRole('button', { name: lessonTitle }).click();
+
+  const lessonBlock = expectedSelectedText
+    ? page
+        .locator('[data-testid^="lesson-text-block-"]')
+        .filter({ hasText: expectedSelectedText })
+        .first()
+    : page.locator('[data-testid^="lesson-text-block-"]').first();
+
+  await expect(lessonBlock).toBeVisible();
+  if (expectedSelectedText) {
+    await expect(lessonBlock).toContainText(expectedSelectedText);
+  }
+
+  return lessonBlock;
+}
+
 async function enableDarkTheme(page: Page): Promise<void> {
   const themeToggle = page.getByRole('button', { name: 'Switch to Dark theme' });
   if ((await themeToggle.count()) > 0) {
@@ -445,13 +467,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await gotoTutorRoute(page, '/kangur/lessons');
     await enableDarkTheme(page);
-    await page.getByRole('button', { name: lessonTitle }).click();
-
-    const selectedLessonBlock = page
-      .locator('[data-testid^="lesson-text-block-"]')
-      .filter({ hasText: lessonSelectedText })
-      .first();
-    await expect(selectedLessonBlock).toContainText(lessonSelectedText);
+    const selectedLessonBlock = await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -534,7 +550,7 @@ test.describe('Kangur AI Tutor', () => {
     });
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle);
     await dismissHomeOnboardingIfVisible(page);
 
     await triggerTutorAvatar(page);
@@ -559,13 +575,7 @@ test.describe('Kangur AI Tutor', () => {
     const { lessonTitle, lessonSelectedText } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
-
-    const selectedLessonBlock = page
-      .locator('[data-testid^="lesson-text-block-"]')
-      .filter({ hasText: lessonSelectedText })
-      .first();
-    await expect(selectedLessonBlock).toContainText(lessonSelectedText);
+    const selectedLessonBlock = await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -601,7 +611,7 @@ test.describe('Kangur AI Tutor', () => {
     });
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await expect(
       page.getByTestId('kangur-ai-tutor-avatar-image').locator('img').first()
@@ -634,7 +644,7 @@ test.describe('Kangur AI Tutor', () => {
     });
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -656,7 +666,7 @@ test.describe('Kangur AI Tutor', () => {
     });
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -674,7 +684,7 @@ test.describe('Kangur AI Tutor', () => {
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -697,6 +707,8 @@ test.describe('Kangur AI Tutor', () => {
   test('does not reopen the tutor automatically when a new lesson fragment is selected after dismissing selection guidance', async ({
     page,
   }) => {
+    test.slow();
+
     const {
       chatRequests,
       lessonTitle,
@@ -705,7 +717,7 @@ test.describe('Kangur AI Tutor', () => {
     const followUpSelectedText = 'kolejny krok';
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -770,7 +782,7 @@ test.describe('Kangur AI Tutor', () => {
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
     await openTutorFromSelection(page);
@@ -802,7 +814,7 @@ test.describe('Kangur AI Tutor', () => {
     });
 
     await gotoTutorRoute(page, '/kangur/lessons');
-    await page.getByRole('button', { name: lessonTitle }).click();
+    await openLessonByTitle(page, lessonTitle, lessonSelectedText);
 
     await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
 

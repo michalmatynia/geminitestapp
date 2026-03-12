@@ -2,12 +2,10 @@ import { createContext, useContext, type JSX, type KeyboardEvent, type ReactNode
 
 import type { KangurNarratorSettings } from '@/features/kangur/settings';
 import type { KangurLessonNarrationScript } from '@/features/kangur/tts/contracts';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
-  KangurAiTutorCoachingFrame,
   KangurAiTutorFollowUpAction,
-  KangurAiTutorMessageArtifact,
+  KangurAiTutorRuntimeMessage as TutorRenderedMessage,
   KangurAiTutorUsageSummary,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/shared/contracts/kangur-ai-tutor';
@@ -20,17 +18,6 @@ export type TutorProactiveNudge = {
   title: string;
   description: string;
   action: TutorQuickAction;
-};
-
-export type TutorRenderedMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-  coachingFrame?: KangurAiTutorCoachingFrame | null;
-  drawingImageData?: string | null;
-  artifacts?: KangurAiTutorMessageArtifact[];
-  followUpActions?: KangurAiTutorFollowUpAction[];
-  sources?: AgentTeachingChatSource[];
-  websiteHelpTarget?: KangurAiTutorWebsiteHelpTarget;
 };
 
 export type KangurAiTutorPanelBodyContextValue = {

@@ -34,6 +34,8 @@ import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import type { VerifyCredentialsResponse } from '@/shared/contracts/auth';
 import {
+  type KangurAuthMode,
+  parseKangurAuthMode,
   parseKangurParentAccountActionResponse,
   parseKangurParentEmailVerifyResponse,
 } from '@/shared/contracts/kangur-auth';
@@ -43,7 +45,7 @@ type KangurLoginPageProps = {
   callbackUrl?: string;
   defaultCallbackUrl: string;
   onClose?: () => void;
-  parentAuthMode?: KangurParentAuthMode;
+  parentAuthMode?: KangurAuthMode;
 };
 
 const LOGIN_ROUTE_ACKNOWLEDGE_MS = 110;
@@ -60,7 +62,6 @@ type KangurApiErrorPayload = {
 };
 
 type KangurLoginKind = 'parent' | 'student' | 'unknown';
-type KangurParentAuthMode = 'sign-in' | 'create-account';
 
 const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9]+$/;
 const KANGUR_PARENT_AUTH_MODE_PARAM = 'authMode';
@@ -73,10 +74,6 @@ const useKangurLoginPageProps = (): KangurLoginPageProps => {
   }
   return value;
 };
-
-const resolveKangurParentAuthMode = (
-  value: string | null | undefined
-): KangurParentAuthMode => (value?.trim().toLowerCase() === 'create-account' ? 'create-account' : 'sign-in');
 
 export const resolveKangurLoginCallbackNavigation = (
   callbackUrl: string,
@@ -321,7 +318,7 @@ function KangurLoginPageContent(): JSX.Element {
   const verifyEmailToken = searchParams.get('verifyEmailToken')?.trim() ?? '';
   const requestedParentAuthMode =
     parentAuthModeProp ??
-    resolveKangurParentAuthMode(searchParams.get(KANGUR_PARENT_AUTH_MODE_PARAM));
+    parseKangurAuthMode(searchParams.get(KANGUR_PARENT_AUTH_MODE_PARAM));
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -330,7 +327,7 @@ function KangurLoginPageContent(): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdParentEmail, setCreatedParentEmail] = useState<string | null>(null);
   const [resendAvailableAtMs, setResendAvailableAtMs] = useState<number | null>(null);
-  const [parentAuthMode, setParentAuthMode] = useState<KangurParentAuthMode>(
+  const [parentAuthMode, setParentAuthMode] = useState<KangurAuthMode>(
     requestedParentAuthMode
   );
   const [verificationDebugUrl, setVerificationDebugUrl] = useState<string | null>(null);

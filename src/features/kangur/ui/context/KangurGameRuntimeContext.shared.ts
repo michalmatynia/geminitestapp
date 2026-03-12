@@ -1,5 +1,4 @@
 import type { KangurAssignmentSnapshot, KangurUser } from '@/features/kangur/services/ports';
-import type { KangurLoginModalAuthMode } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -12,6 +11,7 @@ import type {
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
+import type { KangurAuthMode } from '@/shared/contracts/kangur-auth';
 
 export type KangurPracticeAssignment = KangurAssignmentSnapshot & { target: { type: 'practice' } };
 
@@ -42,7 +42,7 @@ export type KangurGameRuntimeStateContextValue = {
 };
 
 export type KangurGameRuntimeActionsContextValue = {
-  navigateToLogin: (options?: { authMode?: KangurLoginModalAuthMode }) => void;
+  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
   logout: (shouldRedirect?: boolean) => void;
   setPlayerName: (value: string) => void;
   setScreen: (screen: KangurGameScreen) => void;

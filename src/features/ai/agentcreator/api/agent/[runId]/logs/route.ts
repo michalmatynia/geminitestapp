@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getAgentBrowserLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type {
   AgentBrowserLogRecord,
   AgentBrowserLogsResponse,
@@ -9,23 +10,33 @@ import {
   apiHandlerWithParams,
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
-import prisma from '@/shared/lib/db/prisma';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+
+type AgentBrowserLogRouteRecord = {
+  id: string;
+  runId: string;
+  stepId: string | null;
+  level: string;
+  message: string;
+  metadata?: unknown;
+  createdAt: Date | string;
+};
 
 async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  if (!('agentBrowserLog' in prisma)) {
-    throw internalError('Agent logs not initialized. Run prisma generate/db push.');
+  const agentBrowserLog = getAgentBrowserLogDelegate();
+  if (!agentBrowserLog) {
+    throw internalError('Agent log storage is unavailable.');
   }
   const { runId } = await params;
   const { searchParams } = new URL(req.url);
   const stepId = searchParams.get('stepId');
-  const logs = await prisma.agentBrowserLog.findMany({
+  const logs = await agentBrowserLog.findMany<AgentBrowserLogRouteRecord>({
     where: stepId ? { runId, stepId } : { runId },
     orderBy: { createdAt: 'desc' },
     take: 50,
@@ -41,11 +52,11 @@ async function GET_handler(
   }
   const response: AgentBrowserLogsResponse = {
     logs: logs.map(
-      (log: any): AgentBrowserLogRecord => ({
+      (log: AgentBrowserLogRouteRecord): AgentBrowserLogRecord => ({
         ...log,
         stepId: log.stepId ?? null,
         metadata: log.metadata ?? null,
-        createdAt: log.createdAt.toISOString(),
+        createdAt: log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
       })
     ),
   };

@@ -4,7 +4,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
-  createPrismaJsonBackup,
+  createDatabaseJsonBackup,
   listJsonBackups,
 } from '@/shared/lib/db/services/database-json-backup';
 
@@ -12,7 +12,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
 
-  const result = (await createPrismaJsonBackup()) as unknown;
+  const result = (await createDatabaseJsonBackup()) as unknown;
   return NextResponse.json(result);
 }
 

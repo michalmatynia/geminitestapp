@@ -6,6 +6,7 @@ import type {
   ProductWithImages,
   ProductFormData,
   ProductParameterValue,
+  ResolvedProductParameterValue,
 } from '@/shared/contracts/products';
 import type { ProductImageSlot } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -51,21 +52,15 @@ export interface UseProductFormSubmitResult {
   ConfirmationModal: React.ComponentType;
 }
 
-export type NormalizedSubmittedParameterValue = {
-  parameterId: string;
-  value: string;
-  valuesByLanguage?: Record<string, string>;
-};
-
 export const normalizeProductParametersForSubmission = (
   parameterValues: ProductParameterValue[]
-): NormalizedSubmittedParameterValue[] =>
+): ResolvedProductParameterValue[] =>
   Array.from(
     parameterValues.reduce(
       (
-        byParameterId: Map<string, NormalizedSubmittedParameterValue>,
+        byParameterId: Map<string, ResolvedProductParameterValue>,
         entry: ProductParameterValue
-      ): Map<string, NormalizedSubmittedParameterValue> => {
+      ): Map<string, ResolvedProductParameterValue> => {
         const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
 
         const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
@@ -94,7 +89,7 @@ export const normalizeProductParametersForSubmission = (
         );
         return byParameterId;
       },
-      new Map<string, NormalizedSubmittedParameterValue>()
+      new Map<string, ResolvedProductParameterValue>()
     ).values()
   );
 

@@ -1,7 +1,7 @@
 import 'server-only';
 
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import prisma from '@/shared/lib/db/prisma';
 
 type LLMContext = {
   model: string;
@@ -216,7 +216,8 @@ export const inferSelectorsFromLLM = async (
         selectors,
       });
     }
-    await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'info',
@@ -299,7 +300,8 @@ export const buildExtractionPlan = async (
         plan,
       });
     }
-    await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'info',
@@ -395,7 +397,8 @@ export const buildFailureRecoveryPlan = async (
         plan,
       });
     }
-    await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'info',
@@ -513,7 +516,8 @@ export const decideSearchFirstWithLLM = async (
     // The calling function should handle long-term memory persistence if needed
     // or we can move the memory logic here if we import validateAndAddAgentLongTermMemory.
 
-    await prisma.agentAuditLog.create({
+    const agentAuditLog = getAgentAuditLogDelegate();
+    await agentAuditLog?.create({
       data: {
         runId,
         level: 'info',

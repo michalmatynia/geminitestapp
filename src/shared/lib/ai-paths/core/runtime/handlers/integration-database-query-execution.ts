@@ -117,7 +117,8 @@ export async function executeDatabaseQuery({
       : queryConfig.provider === 'mongodb'
         ? 'mongodb'
         : 'auto';
-  const hasResolvedProvider = queryResultData['resolvedProvider'] === 'mongodb';
+  const hasResolvedProvider =
+    queryResultData['resolvedProvider'] === 'mongodb';
   const resolvedProvider = hasResolvedProvider
     ? queryResultData['resolvedProvider']
     : requestedProvider === 'auto'

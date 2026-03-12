@@ -1,9 +1,8 @@
 clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
-exact-0002,exact-shape,16,2,feature:kangur,,0d1fba558df3,type-expression
-exact-0001,exact-shape,15,2,feature:kangur,,27b1b0b04d59,structural-members
-near-0004,near-shape,12,2,feature:kangur,,5152d5035b29,structural-members
-near-0005,near-shape,12,2,feature:kangur,,a1045c16efbf,structural-members
+exact-0001,exact-shape,193,63,shared|shared:contracts,,b9d00c941d92,type-expression
+exact-0002,exact-shape,65,21,shared,,3023b666f167,type-expression
+exact-0003,exact-shape,44,14,shared,,c56f3bc28aed,type-expression
+exact-0005,exact-shape,11,2,shared,,e3b5b69b7b2d,type-expression
 near-0001,near-shape,11,2,feature:ai|feature:kangur,,0c11d1dbbe96,structural-members
-near-0003,near-shape,11,2,feature:kangur,,2082338e0755,structural-members
-exact-0003,exact-shape,10,2,feature:products|shared,,ae5d346534f0,structural-members
+exact-0004,exact-shape,10,2,feature:integrations,,c6003eb04395,structural-members
 near-0002,near-shape,8,2,feature:kangur,,001b63c37efa,structural-members

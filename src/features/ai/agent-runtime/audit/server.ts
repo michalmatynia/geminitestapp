@@ -1,21 +1,21 @@
 import 'server-only';
 
 import type { AuditLevel } from '@/shared/contracts/agent-runtime';
-import prisma from '@/shared/lib/db/prisma';
-import type { Prisma } from '@/shared/lib/db/prisma-client';
+import type { InputJsonValue } from '@/shared/contracts/json';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 /**
- * Convert "unknown-ish" objects into something Prisma JSON accepts.
+ * Convert "unknown-ish" objects into plain JSON-compatible values.
  * - Removes functions/undefined/symbols
  * - Converts Date -> ISO string
  * - Drops BigInt (would throw) unless you transform it (we stringify it)
  */
-function toPrismaJson(
+function toInputJsonValue(
   value: Record<string, unknown> | undefined
-): Prisma.InputJsonValue | undefined {
+): InputJsonValue | undefined {
   if (!value) return undefined;
 
   // JSON.stringify will:
@@ -28,7 +28,7 @@ function toPrismaJson(
   });
   if (!jsonString) return undefined;
 
-  return JSON.parse(jsonString) as Prisma.InputJsonValue;
+  return JSON.parse(jsonString) as InputJsonValue;
 }
 
 const isRunIdForeignKeyViolation = (error: unknown): boolean => {
@@ -45,11 +45,12 @@ export async function logAgentAudit(
   message: string,
   metadata?: Record<string, unknown>
 ): Promise<void> {
-  if (!('agentAuditLog' in prisma)) {
+  const agentAuditLog = getAgentAuditLogDelegate();
+  if (!agentAuditLog) {
     void logSystemEvent({
       level: 'info',
       source: 'agent-audit',
-      message: 'agentAuditLog NOT in prisma',
+      message: 'agentAuditLog storage unavailable',
     });
     if (DEBUG_CHATBOT) {
       void logSystemEvent({
@@ -61,26 +62,26 @@ export async function logAgentAudit(
     return;
   }
 
-  const prismaMetadata = toPrismaJson(metadata);
+  const serializedMetadata = toInputJsonValue(metadata);
 
   try {
-    await prisma.agentAuditLog.create({
+    await agentAuditLog.create({
       data: {
         runId,
         level,
         message,
-        ...(prismaMetadata !== undefined && { metadata: prismaMetadata }),
+        ...(serializedMetadata !== undefined && { metadata: serializedMetadata }),
       },
     });
   } catch (error) {
     if (runId && isRunIdForeignKeyViolation(error)) {
       try {
-        const fallbackMetadata = toPrismaJson({
+        const fallbackMetadata = toInputJsonValue({
           ...(metadata ?? {}),
           orphanedRunId: runId,
           runLinkMissing: true,
         });
-        await prisma.agentAuditLog.create({
+        await agentAuditLog.create({
           data: {
             runId: null,
             level,

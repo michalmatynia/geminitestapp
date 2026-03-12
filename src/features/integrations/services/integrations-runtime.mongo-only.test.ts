@@ -15,9 +15,9 @@ const runtimeRoots = [
 ] as const;
 
 const bannedTokens = [
-  "@/shared/lib/db/prisma'",
+  '@/shared/lib/db/prisma\'',
   '@/shared/lib/db/prisma"',
-  "@/shared/lib/db/prisma-client'",
+  '@/shared/lib/db/prisma-client\'',
   '@/shared/lib/db/prisma-client"',
   'getAppDbProvider',
 ] as const;

@@ -332,6 +332,9 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     render(<AdminKangurLessonsManagerPage />);
 
     fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
+    fireEvent.change(screen.getByLabelText('Lesson Type'), {
+      target: { value: 'calendar' },
+    });
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'SVG Playground' } });
     fireEvent.change(screen.getByLabelText('Description'), {
       target: { value: 'Custom SVG lesson' },
@@ -353,7 +356,10 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       id: string;
     }>;
     const createdLesson = createdLessons.find((lesson) => lesson.title === 'SVG Playground');
-    expect(createdLesson?.contentMode).toBe('document');
+    expect(createdLesson).toMatchObject({
+      title: 'SVG Playground',
+      contentMode: 'document',
+    });
 
     expect(await screen.findByTestId('mock-doc-editor-title')).toHaveTextContent('SVG Playground');
     expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');

@@ -25,6 +25,30 @@ import {
   generateKangurKnowledgeGraphQueryEmbedding,
 } from './semantic';
 
+export type GraphFollowUpAction = {
+  id: string;
+  label: string;
+  page: string;
+  reason: string | null;
+};
+
+const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  '/game': 'Game',
+  '/lessons': 'Lessons',
+  '/profile': 'LearnerProfile',
+  '/parent': 'ParentDashboard',
+};
+
+const resolvePageKeyFromRoute = (route: string): string | null => {
+  const normalized = route.toLowerCase().replace(/\/+$/, '');
+  for (const [routePrefix, pageKey] of Object.entries(ROUTE_TO_PAGE_KEY)) {
+    if (normalized === routePrefix || normalized.endsWith(routePrefix)) {
+      return pageKey;
+    }
+  }
+  return null;
+};
+
 type KangurKnowledgeGraphHit = {
   id: string;
   kind: string;
@@ -53,6 +77,7 @@ type KangurKnowledgeGraphHit = {
     targetKind: string | null;
     targetAnchorId: string | null;
     targetRoute: string | null;
+    hop?: number;
   }>;
   tokenHits: number;
 };
@@ -97,6 +122,7 @@ export type KangurKnowledgeGraphRetrievalResult =
       sources: AgentTeachingChatSource[];
       nodeIds: string[];
       websiteHelpTarget: KangurAiTutorWebsiteHelpTarget | null;
+      graphFollowUpActions: GraphFollowUpAction[];
       sourceCollections: string[];
       hydrationSources: HydratedKnowledgeGraphHit['hydrationSource'][];
     };
@@ -144,6 +170,7 @@ export type KangurKnowledgeGraphRetrievalPreviewResult =
       sources: AgentTeachingChatSource[];
       nodeIds: string[];
       websiteHelpTarget: KangurAiTutorWebsiteHelpTarget | null;
+      graphFollowUpActions: GraphFollowUpAction[];
       hits: KangurKnowledgeGraphDebugHit[];
       sourceCollections: string[];
       hydrationSources: HydratedKnowledgeGraphHit['hydrationSource'][];
@@ -462,6 +489,8 @@ const GRAPH_QUERY = `
     graphKey
   WHERE semanticScore > 0 OR tokenHits > 0
   OPTIONAL MATCH (n)-[r:KANGUR_RELATION]->(m:KangurKnowledgeNode {graphKey: graphKey})
+  OPTIONAL MATCH (m)-[r2:KANGUR_RELATION]->(m2:KangurKnowledgeNode {graphKey: graphKey})
+  WHERE m2.id <> n.id
   RETURN
     n.id AS id,
     n.kind AS kind,
@@ -484,14 +513,23 @@ const GRAPH_QUERY = `
     coalesce(n.tags, []) AS tags,
     semanticScore AS semanticScore,
     tokenHits AS tokenHits,
-    collect({
+    (collect({
       kind: r.kind,
       targetId: m.id,
       targetTitle: m.title,
       targetKind: m.kind,
       targetAnchorId: m.anchorId,
-      targetRoute: m.route
-    })[0..4] AS relations
+      targetRoute: m.route,
+      hop: 1
+    })[0..4] + collect({
+      kind: r2.kind,
+      targetId: m2.id,
+      targetTitle: m2.title,
+      targetKind: m2.kind,
+      targetAnchorId: m2.anchorId,
+      targetRoute: m2.route,
+      hop: 2
+    })[0..3]) AS relations
   ORDER BY semanticScore DESC, tokenHits DESC, n.title ASC
   LIMIT $limit
 `;
@@ -501,6 +539,8 @@ const VECTOR_GRAPH_QUERY = `
   YIELD node, score
   WHERE node.graphKey = $graphKey
   OPTIONAL MATCH (node)-[r:KANGUR_RELATION]->(m:KangurKnowledgeNode {graphKey: $graphKey})
+  OPTIONAL MATCH (m)-[r2:KANGUR_RELATION]->(m2:KangurKnowledgeNode {graphKey: $graphKey})
+  WHERE m2.id <> node.id
   RETURN
     node.id AS id,
     node.kind AS kind,
@@ -523,14 +563,23 @@ const VECTOR_GRAPH_QUERY = `
     coalesce(node.tags, []) AS tags,
     toInteger(round(score * 1000.0)) AS semanticScore,
     0 AS tokenHits,
-    collect({
+    (collect({
       kind: r.kind,
       targetId: m.id,
       targetTitle: m.title,
       targetKind: m.kind,
       targetAnchorId: m.anchorId,
-      targetRoute: m.route
-    })[0..4] AS relations
+      targetRoute: m.route,
+      hop: 1
+    })[0..4] + collect({
+      kind: r2.kind,
+      targetId: m2.id,
+      targetTitle: m2.title,
+      targetKind: m2.kind,
+      targetAnchorId: m2.anchorId,
+      targetRoute: m2.route,
+      hop: 2
+    })[0..3]) AS relations
   ORDER BY semanticScore DESC, node.title ASC
 `;
 
@@ -717,11 +766,27 @@ const buildInstructions = (
   });
 
   if (queryMode === 'website_help') {
+    const navigationPaths = hits
+      .filter((hit) => hit.route || hit.anchorId)
+      .map((hit) => {
+        const routeLabel = hit.route ?? '/';
+        const anchorLabel = hit.anchorId ? `#${hit.anchorId}` : '';
+        const relatedTarget = hit.relations.find((r) => r.targetRoute || r.targetAnchorId);
+        const pathParts = [hit.canonicalTitle];
+        if (relatedTarget) {
+          pathParts.push(relatedTarget.targetTitle ?? relatedTarget.targetId ?? 'related');
+        }
+        return `Navigation: ${pathParts.join(' → ')} [${routeLabel}${anchorLabel}]`;
+      });
+
     return [
       'Kangur website-help graph context:',
       ...sections,
+      ...(navigationPaths.length > 0 ? ['', 'Resolved navigation targets:', ...navigationPaths] : []),
+      '',
       'Use Mongo-backed Kangur tutor knowledge as the canonical explanation source when available. Use Neo4j only to resolve the best related page, flow, route, or anchor.',
-      'Use this only for website and navigation guidance. When the learner asks where to click or where to find something, name the page, flow, route, or anchor explicitly.',
+      'When the learner asks where something is or how to find a feature, reference the specific page name and section. The system will generate a clickable navigation card from the resolved target that can physically navigate the learner to the right place.',
+      'Be specific: mention the exact page or section name, do not use vague directions.',
     ].join('\n');
   }
 
@@ -732,6 +797,49 @@ const buildInstructions = (
     'Prioritize hits that match the current surface, focus kind, focus id, content id, or visible section label before falling back to generic overviews.',
     'Keep the answer grounded in what the learner currently sees on the Kangur page. Do not invent UI elements that are not present in the matched graph context.',
   ].join('\n');
+};
+
+const resolveGraphFollowUpActions = (
+  hits: HydratedKnowledgeGraphHit[]
+): GraphFollowUpAction[] => {
+  const actions: GraphFollowUpAction[] = [];
+  const seenPageKeys = new Set<string>();
+
+  for (const hit of hits) {
+    if (hit.route) {
+      const pageKey = resolvePageKeyFromRoute(hit.route);
+      if (pageKey && !seenPageKeys.has(pageKey)) {
+        seenPageKeys.add(pageKey);
+        actions.push({
+          id: `graph:${hit.id}`,
+          label: hit.canonicalTitle,
+          page: pageKey,
+          reason: hit.canonicalSummary,
+        });
+      }
+    }
+
+    for (const relation of hit.relations) {
+      if (relation.targetRoute) {
+        const pageKey = resolvePageKeyFromRoute(relation.targetRoute);
+        if (pageKey && !seenPageKeys.has(pageKey)) {
+          seenPageKeys.add(pageKey);
+          actions.push({
+            id: `graph:${relation.targetId ?? hit.id}`,
+            label: relation.targetTitle ?? hit.canonicalTitle,
+            page: pageKey,
+            reason: hit.canonicalSummary,
+          });
+        }
+      }
+    }
+
+    if (actions.length >= 3) {
+      break;
+    }
+  }
+
+  return actions.slice(0, 3);
 };
 
 const readRuntimeStringFact = (
@@ -1125,6 +1233,7 @@ const finalizeResolvedGraphContext = (
   sources: hydratedHits.map(toChatSource),
   nodeIds: hydratedHits.map((hit) => hit.id),
   websiteHelpTarget: resolveWebsiteHelpTargetFromHits(hydratedHits),
+  graphFollowUpActions: resolveGraphFollowUpActions(hydratedHits),
   hits: hydratedHits.map(toDebugHit),
   sourceCollections: Array.from(
     new Set(hydratedHits.map((hit) => hit.canonicalSourceCollection))
@@ -1272,6 +1381,7 @@ export async function resolveKangurAiTutorSemanticGraphContext(input: {
     sources: result.sources,
     nodeIds: result.nodeIds,
     websiteHelpTarget: result.websiteHelpTarget,
+    graphFollowUpActions: result.graphFollowUpActions,
     sourceCollections: result.sourceCollections,
     hydrationSources: result.hydrationSources,
   };

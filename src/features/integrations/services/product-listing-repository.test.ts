@@ -31,7 +31,6 @@ const createMongoDbMock = () => {
       updatedAt: new Date('2026-03-11T10:00:00.000Z'),
     },
   ];
-  const listingFindToArrayMock = vi.fn().mockResolvedValue(listingDocs);
   const listingFindMock = vi.fn((filter?: Record<string, unknown>) => {
     const result =
       filter && '_id' in filter

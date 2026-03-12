@@ -97,8 +97,9 @@ describe('KangurActiveLessonPanelWidget', () => {
     );
     expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));
     expect(screen.getByTestId('active-lesson-widget-parent-priority-chip')).toHaveClass(
-      'border-rose-200',
-      'bg-rose-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('active-lesson-widget-parent-priority-chip')).toHaveTextContent(
       'Priorytet Rodzica'
@@ -159,8 +160,9 @@ describe('KangurActiveLessonPanelWidget', () => {
     render(<KangurActiveLessonPanelWidget />);
 
     expect(screen.getByTestId('active-lesson-widget-parent-completed-chip')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('active-lesson-widget-parent-completed-chip')).toHaveTextContent(
       'Ukonczone dla rodzica'

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 
 import {
   formatGuidedArrowheadTransition,
@@ -18,7 +18,7 @@ import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfil
 
 type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 type GuidedPlacement = 'top' | 'bottom' | 'left' | 'right';
-const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 8;
+const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 18;
 
 type GuidedShellState = {
   guidedArrowheadTransition: string | undefined;
@@ -33,7 +33,7 @@ type GuidedShellState = {
   isGuidedTutorMode: boolean;
   sectionContextSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   sectionDropHighlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
-  selectionGlowStyles: Array<ReturnType<typeof getSelectionGlowStyle>>;
+  selectionGlowStyles: CSSProperties[];
   selectionContextSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   selectionSpotlightStyle: ReturnType<typeof getSelectionSpotlightStyle> | null;
   shouldRenderGuidedCallout: boolean;
@@ -100,7 +100,6 @@ export function useKangurAiTutorGuidedShellState(input: {
     isAvatarDragging,
     isContextualPanelAnchor,
     isOpen,
-    selectionGlowSupported,
     isTutorHidden,
     motionProfile,
     prefersReducedMotion,
@@ -126,14 +125,12 @@ export function useKangurAiTutorGuidedShellState(input: {
           : null;
       })()
       : null;
-  const guidedSelectionFallbackProtectedPaddingX = Math.max(
-    140,
-    Math.min(Math.round(viewport.width * 0.18), 220)
-  );
-  const guidedSelectionFallbackProtectedPaddingY = Math.max(
-    96,
-    Math.min(Math.round(viewport.height * 0.14), 140)
-  );
+  const guidedSelectionFallbackProtectedPaddingX = guidedFocusRect
+    ? clamp(Math.round(guidedFocusRect.width * 0.12), 10, 24)
+    : 16;
+  const guidedSelectionFallbackProtectedPaddingY = guidedFocusRect
+    ? clamp(Math.round(guidedFocusRect.height * 0.5), 8, 16)
+    : 12;
   const guidedSelectionFallbackProtectedRect =
     shouldUseSelectionGuidanceLayout && guidedFocusRect
       ? getExpandedRect(
@@ -226,10 +223,8 @@ export function useKangurAiTutorGuidedShellState(input: {
     0.34,
     motionProfile.guidedAvatarTransition.duration * 0.78
   );
-  const shouldRenderSelectionGlowOverlay =
-    guidedMode === 'selection' && (guidedSelectionGlowRects.length > 0 || selectionGlowSupported);
-  const selectionGlowStyles =
-    shouldRenderSelectionGlowOverlay
+  const selectionGlowStyles: CSSProperties[] =
+    guidedMode === 'selection'
       ? guidedSelectionGlowRects.map((rect) => getSelectionGlowStyle(rect))
       : [];
   const selectionSpotlightStyle =

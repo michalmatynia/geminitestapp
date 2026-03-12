@@ -1,372 +1,222 @@
-import { Product } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock Prisma client
-vi.mock('@/shared/lib/db/prisma', () => {
-  const mockClient = {
-    product: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
-      count: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  cachedGetProducts: vi.fn(),
+  cachedGetProductById: vi.fn(),
+  cachedGetProductBySku: vi.fn(),
+  cachedInvalidateAll: vi.fn(),
+  cachedInvalidateProduct: vi.fn(),
+  getProducts: vi.fn(),
+  createProduct: vi.fn(),
+  updateProduct: vi.fn(),
+  deleteProduct: vi.fn(),
+  duplicateProduct: vi.fn(),
+  getPublicProductById: vi.fn(),
+  getProductDataProvider: vi.fn(),
+  parseJsonBody: vi.fn(),
+}));
+
+vi.mock('@/features/products/performance', () => ({
+  CachedProductService: {
+    getProducts: mocks.cachedGetProducts,
+    getProductById: mocks.cachedGetProductById,
+    getProductBySku: mocks.cachedGetProductBySku,
+    invalidateAll: mocks.cachedInvalidateAll,
+    invalidateProduct: mocks.cachedInvalidateProduct,
+  },
+  performanceMonitor: {
+    record: vi.fn(),
+  },
+}));
+
+vi.mock('@/shared/lib/products/services/productService', () => ({
+  productService: {
+    getProducts: mocks.getProducts,
+    createProduct: mocks.createProduct,
+    updateProduct: mocks.updateProduct,
+    deleteProduct: mocks.deleteProduct,
+    duplicateProduct: mocks.duplicateProduct,
+    getProductById: mocks.getPublicProductById,
+  },
+}));
+
+vi.mock('@/features/products/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/products/server')>();
+  return {
+    ...actual,
+    CachedProductService: {
+      getProductById: mocks.cachedGetProductById,
+      invalidateAll: mocks.cachedInvalidateAll,
+      invalidateProduct: mocks.cachedInvalidateProduct,
     },
-    activityLog: {
-      create: vi.fn().mockImplementation((args) =>
-        Promise.resolve({
-          id: 'mock-activity-id',
-          createdAt: new Date(),
-          ...args.data,
-        })
-      ),
-      findMany: vi.fn().mockResolvedValue([]),
-      count: vi.fn().mockResolvedValue(0),
+    getProductDataProvider: mocks.getProductDataProvider,
+    parseJsonBody: mocks.parseJsonBody,
+    productService: {
+      getProductById: mocks.getPublicProductById,
     },
-    productImage: {
-      deleteMany: vi.fn(),
-      create: vi.fn(),
-      findMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    imageFile: {
-      deleteMany: vi.fn(),
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    productCatalog: {
-      deleteMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    productCategoryAssignment: {
-      deleteMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    productTagAssignment: {
-      deleteMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    productProducerAssignment: {
-      deleteMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    catalog: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    producer: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    systemLog: {
-      create: vi.fn().mockImplementation((args) =>
-        Promise.resolve({
-          id: 'mock-log-id',
-          createdAt: new Date(),
-          ...args.data,
-        })
-      ),
-    },
-    setting: {
-      findUnique: vi.fn().mockResolvedValue(null),
-    },
-    $disconnect: vi.fn(),
-    $transaction: vi.fn().mockImplementation(async (callback: unknown) => {
-      if (typeof callback === 'function') {
-        return (callback as (tx: unknown) => Promise<unknown>)(mockClient);
-      }
-      return null;
-    }),
   };
-  return { default: mockClient };
 });
+
+vi.mock('@/features/products/validations/middleware', () => ({
+  validateProductCreateMiddleware: vi.fn().mockResolvedValue({ success: true }),
+  validateProductUpdateMiddleware: vi.fn().mockResolvedValue({ success: true }),
+}));
 
 import { POST as POST_DUPLICATE } from '@/app/api/v2/products/[id]/duplicate/route';
-import { PUT, DELETE } from '@/app/api/v2/products/[id]/route';
+import { DELETE, PUT } from '@/app/api/v2/products/[id]/route';
 import { GET as GET_LIST, POST } from '@/app/api/v2/products/route';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
-import { queryCache } from '@/features/products/performance/query-cache';
-import prisma from '@/shared/lib/db/prisma';
-
-// Helper to create mock product data
-const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
-  id: `test-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  sku: overrides['sku'] || `SKU-${Date.now()}`,
-  name_en: overrides['name_en'] || 'Test Product (EN)',
-  name_pl: overrides['name_pl'] || 'Test Product (PL)',
-  name_de: overrides['name_de'] || 'Test Product (DE)',
-  description_en: overrides['description_en'] || 'Description (EN)',
-  description_pl: overrides['description_pl'] || 'Description (PL)',
-  description_de: overrides['description_de'] || 'Description (DE)',
-  price:
-    typeof overrides['price'] === 'number'
-      ? overrides['price']
-      : overrides['price']
-        ? parseInt(overrides['price'] as string, 10)
-        : 100,
-  stock: overrides['stock'] || 10,
-  weight: overrides['weight'] || 100,
-  length: overrides['length'] || 20,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  images: [],
-  catalogs: [],
-  categories: [],
-  tags: [],
-  producers: [],
-  ...overrides,
-});
 
 describe('Products API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    queryCache.clear();
-
-    // Default mock implementations
-    vi.mocked(prisma.product.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
-
-    // Using any-casts to satisfy Prisma client return types which are complex
-    vi.mocked(prisma.product.create).mockImplementation(((args: any) => {
-      const data = args.data;
-      return Promise.resolve({
-        id: `created-${Date.now()}`,
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        images: [],
-        catalogs: [],
-        categories: [],
-        tags: [],
-      });
-    }) as any);
-
-    vi.mocked(prisma.product.update).mockImplementation(((args: any) => {
-      return Promise.resolve({
-        ...(args.data),
-        id: args.where.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        images: [],
-        catalogs: [],
-        categories: [],
-        tags: [],
-      });
-    }) as any);
-
-    vi.mocked(prisma.product.delete).mockResolvedValue({} as unknown as Product);
-    vi.mocked(prisma.product.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.product.updateMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.product.count).mockResolvedValue(0);
-    vi.mocked(prisma.productImage.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productImage.create).mockResolvedValue({} as any);
-    vi.mocked(prisma.productImage.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.productImage.createMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.imageFile.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.imageFile.create).mockImplementation(((args: any) =>
-      Promise.resolve({
-        id: `image-${Date.now()}`,
-        ...(args.data),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })) as any
-    );
-    vi.mocked(prisma.imageFile.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.productCatalog.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productCatalog.createMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productCategoryAssignment.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productCategoryAssignment.createMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productTagAssignment.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productTagAssignment.createMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.catalog.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.catalog.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.producer.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.producer.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.productProducerAssignment.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.productProducerAssignment.createMany).mockResolvedValue({ count: 0 });
-  });
-
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('GET /api/products', () => {
-    it('should return all products when no filters are applied', async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: 'Product 1' }),
-        createMockProductData({ name_en: 'Product 2' }),
-      ] as unknown as Product[];
-      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts);
-
-      const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
-      const products = (await res.json()) as Product[];
-      expect(res.status).toEqual(200);
-      expect(products.length).toEqual(2);
-    });
-
-    it('should return an empty array if no products exist', async () => {
-      vi.mocked(prisma.product.findMany).mockResolvedValue([]);
-
-      const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
-      const products = (await res.json()) as Product[];
-      expect(res.status).toEqual(200);
-      expect(products).toEqual([]);
-    });
-
-    it('should filter products by name_en using the search parameter', async () => {
-      const mockProducts = [createMockProductData({ name_en: 'Laptop' })] as unknown as Product[];
-      vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts);
-
-      const res = await GET_LIST(new NextRequest('http://localhost/api/products?search=lap'));
-      const products = (await res.json()) as Product[];
-      expect(res.status).toEqual(200);
-      expect(products.length).toEqual(1);
-      expect(products[0]!.name_en).toEqual('Laptop');
+    mocks.cachedGetProductBySku.mockResolvedValue(null);
+    mocks.getProductDataProvider.mockResolvedValue('mongodb');
+    mocks.parseJsonBody.mockImplementation(async (req: Request, schema: { safeParse: (value: unknown) => { success: boolean; data?: unknown; error?: unknown } }) => {
+      const body = await req.json();
+      const result = schema.safeParse(body);
+      if (result.success) {
+        return { ok: true, data: result.data };
+      }
+      return {
+        ok: false,
+        response: new Response(JSON.stringify(result.error), { status: 400 }),
+      };
     });
   });
 
-  describe('POST /api/products', () => {
-    it('should reject invalid product data (invalid price)', async () => {
-      const formData = new FormData();
-      formData.append('price', 'not-a-number');
-      formData.append('sku', 'SKU123');
-      const req = new NextRequest('http://localhost/api/products', {
+  it('returns products from the cached list service', async () => {
+    mocks.cachedGetProducts.mockResolvedValue([
+      { id: 'product-1', name_en: 'Product 1' },
+      { id: 'product-2', name_en: 'Product 2' },
+    ]);
+
+    const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
+    const products = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(products).toHaveLength(2);
+    expect(mocks.cachedGetProducts).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+    });
+  });
+
+  it('rejects invalid product data', async () => {
+    const formData = new FormData();
+    formData.append('price', 'not-a-number');
+    formData.append('sku', 'SKU123');
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/products', {
         method: 'POST',
         body: formData,
-      });
-      const res = await POST(req);
-      expect(res.status).toEqual(400);
-    });
+      })
+    );
 
-    it('should successfully create a product with localized name and description fields', async () => {
-      const formData = new FormData();
-      formData.append('name_en', 'New Product (EN)');
-      formData.append('name_pl', 'Nowy Produkt (PL)');
-      formData.append('name_de', 'Neues Produkt (DE)');
-      formData.append('description_en', 'Description in English');
-      formData.append('description_pl', 'Opis po polsku');
-      formData.append('description_de', 'Beschreibung auf Deutsch');
-      formData.append('price', '200');
-      formData.append('sku', 'NEW-SKU-001');
-      formData.append('stock', '50');
-      formData.append('weight', '1000');
-      formData.append('length', '30');
-
-      const req = {
-        headers: new Headers({ 'Content-Type': 'multipart/form-data' }),
-        formData: () => Promise.resolve(formData),
-        url: 'http://localhost/api/products',
-        method: 'POST',
-        clone: function () {
-          return this;
-        },
-      } as unknown as NextRequest;
-
-      const mockCreatedProduct = createMockProductData({
-        name_en: 'New Product (EN)',
-        name_pl: 'Nowy Produkt (PL)',
-        name_de: 'Neues Produkt (DE)',
-        description_en: 'Description in English',
-        description_pl: 'Opis po polsku',
-        description_de: 'Beschreibung auf Deutsch',
-        price: 200,
-        sku: 'NEW-SKU-001',
-        stock: 50,
-        weight: 1000,
-        length: 30,
-      }) as unknown as Product;
-      vi.mocked(prisma.product.create).mockResolvedValue(mockCreatedProduct);
-      vi.mocked(prisma.product.findUnique)
-        .mockResolvedValueOnce(null) // SKU check
-        .mockResolvedValue(mockCreatedProduct); // getProductById
-
-      const res = await POST(req);
-      const json = await res.json();
-      const product = json as Product;
-
-      expect(res.status).toEqual(200);
-      expect(product.name_en).toEqual('New Product (EN)');
-    });
+    expect(res.status).toBe(400);
   });
 
-  describe('PUT /api/products/[id]', () => {
-    it('should return 404 when updating a non-existent product', async () => {
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
+  it('creates a product from form data', async () => {
+    mocks.createProduct.mockResolvedValue({
+      id: 'product-new',
+      name_en: 'New Product (EN)',
+      sku: 'NEW-SKU-001',
+    });
 
-      const formData = new FormData();
-      formData.append('name_en', 'Updated Product');
-      formData.append('price', '150');
-      formData.append('sku', 'SKU123');
+    const formData = new FormData();
+    formData.append('name_en', 'New Product (EN)');
+    formData.append('price', '200');
+    formData.append('sku', 'NEW-SKU-001');
 
-      const req = {
-        headers: new Headers(),
-        formData: () => Promise.resolve(formData),
-        url: 'http://localhost/api/products/non-existent-id',
+    const res = await POST(
+      new NextRequest('http://localhost/api/products', {
+        method: 'POST',
+        body: formData,
+      })
+    );
+    const product = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(product.id).toBe('product-new');
+    expect(mocks.createProduct).toHaveBeenCalledOnce();
+    expect(mocks.cachedInvalidateAll).toHaveBeenCalledOnce();
+  });
+
+  it('returns 404 when updating a non-existent product', async () => {
+    mocks.updateProduct.mockResolvedValue(null);
+
+    const formData = new FormData();
+    formData.append('name_en', 'Updated Name');
+
+    const res = await PUT(
+      new NextRequest('http://localhost/api/products/missing', {
         method: 'PUT',
-      } as unknown as NextRequest;
+        body: formData,
+      }),
+      { params: Promise.resolve({ id: 'missing' }) }
+    );
 
-      const res = await PUT(req, {
-        params: Promise.resolve({ id: 'non-existent-id' }),
-      });
-      expect(res.status).toEqual(404);
-    });
+    expect(res.status).toBe(404);
   });
 
-  describe('DELETE /api/products/[id]', () => {
-    it('should return 404 when deleting a non-existent product', async () => {
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
+  it('returns 404 when deleting a non-existent product', async () => {
+    mocks.deleteProduct.mockResolvedValue(null);
 
-      const req = new NextRequest('http://localhost/api/products/non-existent-id', {
+    const res = await DELETE(
+      new NextRequest('http://localhost/api/products/missing', {
         method: 'DELETE',
-      });
-      const res = await DELETE(req, {
-        params: Promise.resolve({ id: 'non-existent-id' }),
-      });
-      if (res.status === 500) {
-        console.error('DELETE /api/products/[id] 500 error:', await res.json());
-      }
-      expect(res.status).toEqual(404);
-    });
+      }),
+      { params: Promise.resolve({ id: 'missing' }) }
+    );
+
+    expect(res.status).toBe(404);
   });
 
-  describe('GET /api/public/products/[id]', () => {
-    it('should return a single product', async () => {
-      const productId = 'public-product-123';
-      const mockProduct = createMockProductData({
-        id: productId,
-        name_en: 'Product 1 (EN)',
-      }) as unknown as Product;
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(mockProduct);
-
-      const req = new NextRequest(`http://localhost/api/products/${productId}`);
-      const res = await GET_PUBLIC(req, {
-        params: Promise.resolve({ id: productId }),
-      });
-      const fetchedProduct = (await res.json()) as Product;
-      expect(res.status).toEqual(200);
-      expect(fetchedProduct.name_en).toEqual('Product 1 (EN)');
+  it('returns a single public product', async () => {
+    mocks.getPublicProductById.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Product 1 (EN)',
     });
+
+    const res = await GET_PUBLIC(new NextRequest('http://localhost/api/public/products/product-1'), {
+      params: Promise.resolve({ id: 'product-1' }),
+    });
+    const product = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(product.name_en).toBe('Product 1 (EN)');
   });
 
-  describe('POST /api/products/[id]/duplicate', () => {
-    it('should return 404 when product does not exist', async () => {
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
+  it('returns 404 when the public product does not exist', async () => {
+    mocks.getPublicProductById.mockResolvedValue(null);
 
-      const req = new NextRequest('http://localhost/api/products/non-existent-id/duplicate', {
+    const res = await GET_PUBLIC(new NextRequest('http://localhost/api/public/products/missing'), {
+      params: Promise.resolve({ id: 'missing' }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('duplicates a product with a new SKU', async () => {
+    mocks.duplicateProduct.mockResolvedValue({
+      id: 'product-copy',
+      sku: 'COPY-001',
+    });
+
+    const res = await POST_DUPLICATE(
+      new NextRequest('http://localhost/api/products/product-1/duplicate', {
         method: 'POST',
-        body: JSON.stringify({ sku: 'NEW123' }),
-      });
-      const res = await POST_DUPLICATE(req, {
-        params: Promise.resolve({ id: 'non-existent-id' }),
-      });
-      if (res.status === 500) {
-        console.error('POST /api/products/[id]/duplicate 500 error:', await res.json());
-      }
-      expect(res.status).toEqual(404);
-    });
+        body: JSON.stringify({ sku: 'COPY-001' }),
+      }),
+      { params: Promise.resolve({ id: 'product-1' }) }
+    );
+    const product = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(product.sku).toBe('COPY-001');
+    expect(mocks.duplicateProduct).toHaveBeenCalledWith('product-1', 'COPY-001', undefined);
+    expect(mocks.cachedInvalidateAll).toHaveBeenCalledOnce();
   });
 });

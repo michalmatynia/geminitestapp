@@ -6,6 +6,9 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const readRepoFile = (relativePath: string) =>
   fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+const packageJson = JSON.parse(readRepoFile('package.json')) as {
+  scripts?: Record<string, string>;
+};
 
 describe('CodeQL workflow contract', () => {
   it('keeps a dedicated advanced CodeQL workflow for JavaScript and TypeScript scanning', () => {
@@ -42,5 +45,14 @@ describe('CodeQL workflow contract', () => {
     expect(configText).toContain('  - e2e');
     expect(configText).toContain("  - '**/*.test.ts'");
     expect(configText).toContain("  - '**/*.test.tsx'");
+  });
+
+  it('keeps CodeQL discoverable through the build docs and contract bundle', () => {
+    const buildReadmeText = readRepoFile('docs/build/README.md');
+    const toolchainContractScript = packageJson.scripts?.['test:toolchain:contract'];
+
+    expect(buildReadmeText).toContain('[`codeql.md`](./codeql.md)');
+    expect(buildReadmeText).toContain('docs/build/codeql.md');
+    expect(toolchainContractScript).toContain('scripts/quality/codeql-workflow-contract.test.ts');
   });
 });

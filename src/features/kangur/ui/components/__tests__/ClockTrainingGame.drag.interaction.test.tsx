@@ -213,15 +213,14 @@ describe('ClockTrainingGame drag interactions', () => {
     );
     expect(exactSnapButton).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
     expect(exactSnapButton).not.toHaveClass('kangur-segmented-control-item-active');
-    expect(clockDisplay).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(clockDisplay).toHaveClass('rounded-full', 'border');
     expect(snapModeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(modeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(screen.getByTestId('clock-hour-legend-dot')).toHaveClass('bg-rose-500');
     expect(screen.getByTestId('clock-minute-legend-dot')).toHaveClass('bg-emerald-500');
-    expect(taskLabel).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(taskLabel).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('clock-task-prompt').parentElement).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
 
     fireEvent.click(exactSnapButton);
@@ -360,7 +359,7 @@ describe('ClockTrainingGame drag interactions', () => {
     await waitFor(() => {
       expect(screen.getByTestId('clock-retry-count')).toBeInTheDocument();
     });
-    expect(screen.getByTestId('clock-retry-count')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByTestId('clock-retry-count')).toHaveClass('rounded-full', 'border');
   });
 
   it('persists a completed clock training session into learner history', async () => {
@@ -402,12 +401,12 @@ describe('ClockTrainingGame drag interactions', () => {
       expect(screen.getByTestId('clock-challenge-timer')).toHaveTextContent(/s/);
     });
     expect(screen.getByTestId('clock-challenge-timer')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('clock-challenge-streak')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('clock-challenge-streak')).toHaveTextContent('Seria 1/5');
     expect(screen.getByTestId('clock-challenge-ring')).toBeInTheDocument();

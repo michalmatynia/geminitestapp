@@ -117,11 +117,16 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
 
     expect(screen.getByText('Limit dzisiaj: 5/5')).toBeInTheDocument();
-    expect(screen.getByText('Limit wyczerpany')).toHaveClass('text-amber-700');
+    expect(screen.getByText('Limit wyczerpany')).toHaveClass(
+      '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+    );
     expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveStyle({
       background:
         'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
     });
+    expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveClass(
+      '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
       'data-nudge-mode',
       'gentle'
@@ -130,6 +135,15 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
       'Sugerowany pierwszy krok'
     );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent('Ten fragment');
+    expect(screen.getByText('Sugerowany pierwszy krok')).toHaveClass(
+      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+    );
+    expect(screen.getByText('Ten fragment')).toHaveClass(
+      '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+    );
+    expect(
+      screen.getByText('Zacznij od wyjaśnienia zaznaczonego fragmentu.')
+    ).toHaveClass('[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]');
 
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-proactive-nudge-button'));
 
@@ -188,6 +202,14 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent('Narzedzia tutora');
+    expect(screen.getByText('Narzedzia tutora')).toHaveClass(
+      '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+    );
+    expect(
+      screen.getByText(
+        'Skroty do wskazowek, rysowania i kolejnych krokow w biezacej rozmowie.'
+      )
+    ).toHaveClass('[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]');
 
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-drawing-toggle'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-action-hint'));

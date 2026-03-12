@@ -1,44 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getCmsDataProviderMock = vi.fn();
-
 const mongoRepositoryMock = { provider: 'mongodb' };
-const prismaRepositoryMock = { provider: 'prisma' };
-
-vi.mock('@/shared/lib/cms/services/cms-provider', () => ({
-  getCmsDataProvider: getCmsDataProviderMock,
-}));
 
 vi.mock('@/features/cms/services/cms-repository/mongo-cms-repository', () => ({
   mongoCmsRepository: mongoRepositoryMock,
 }));
 
-vi.mock('@/features/cms/services/cms-repository/prisma-cms-repository', () => ({
-  prismaCmsRepository: prismaRepositoryMock,
-}));
-
-describe('cms repository provider cutover', () => {
+describe('cms repository provider', () => {
   beforeEach(async () => {
-    getCmsDataProviderMock.mockReset();
     const { resetCmsRepositoryCache } = await import('@/features/cms/services/cms-repository');
     resetCmsRepositoryCache();
   });
 
-  it('returns prisma repository when provider resolves to prisma', async () => {
-    getCmsDataProviderMock.mockResolvedValue('prisma');
-
-    const { getCmsRepository, getCmsRepositoryProvider } = await import(
-      '@/features/cms/services/cms-repository'
-    );
-    const repository = await getCmsRepository();
-
-    expect(repository).toBe(prismaRepositoryMock);
-    expect(getCmsRepositoryProvider()).toBe('prisma');
-  });
-
-  it('returns mongodb repository when provider resolves to mongodb', async () => {
-    getCmsDataProviderMock.mockResolvedValue('mongodb');
-
+  it('returns the mongodb repository', async () => {
     const { getCmsRepository, getCmsRepositoryProvider } = await import(
       '@/features/cms/services/cms-repository'
     );
@@ -48,15 +22,25 @@ describe('cms repository provider cutover', () => {
     expect(getCmsRepositoryProvider()).toBe('mongodb');
   });
 
-  it('caches repository resolution until reset', async () => {
-    getCmsDataProviderMock.mockResolvedValue('prisma');
-
+  it('caches the mongodb repository until reset', async () => {
     const { getCmsRepository } = await import('@/features/cms/services/cms-repository');
     const first = await getCmsRepository();
     const second = await getCmsRepository();
 
-    expect(first).toBe(prismaRepositoryMock);
-    expect(second).toBe(prismaRepositoryMock);
-    expect(getCmsDataProviderMock).toHaveBeenCalledTimes(1);
+    expect(first).toBe(mongoRepositoryMock);
+    expect(second).toBe(mongoRepositoryMock);
+  });
+
+  it('clears the cached provider when reset', async () => {
+    const { getCmsRepository, getCmsRepositoryProvider, resetCmsRepositoryCache } = await import(
+      '@/features/cms/services/cms-repository'
+    );
+
+    await getCmsRepository();
+    expect(getCmsRepositoryProvider()).toBe('mongodb');
+
+    resetCmsRepositoryCache();
+
+    expect(getCmsRepositoryProvider()).toBeNull();
   });
 });

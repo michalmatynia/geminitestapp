@@ -240,6 +240,25 @@ describe('useTriggerButtons', () => {
     expect(result.current.buttons[0].id).toBe('button-product-row');
   });
 
+  it('stays stable while the trigger-buttons query is loading with no data yet', () => {
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    });
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    expect(result.current.buttons).toEqual([]);
+    expect(result.current.lastRuns).toEqual({});
+    expect(result.current.isLoading).toBe(true);
+  });
+
   it('filters out disabled buttons', () => {
     const disabledButton = {
       ...BUTTON,

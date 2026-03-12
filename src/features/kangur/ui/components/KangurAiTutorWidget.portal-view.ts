@@ -109,6 +109,10 @@ type UseKangurAiTutorPortalViewModelInput = {
   handleFloatingAvatarPointerDown: KangurAiTutorPortalContextValue['avatar']['onPointerDown'];
   handleFloatingAvatarPointerMove: KangurAiTutorPortalContextValue['avatar']['onPointerMove'];
   handleFloatingAvatarPointerUp: KangurAiTutorPortalContextValue['avatar']['onPointerUp'];
+  handleAttachedAvatarPointerCancel: KangurAiTutorPortalContextValue['panel']['onAttachedAvatarPointerCancel'];
+  handleAttachedAvatarPointerDown: KangurAiTutorPortalContextValue['panel']['onAttachedAvatarPointerDown'];
+  handleAttachedAvatarPointerMove: KangurAiTutorPortalContextValue['panel']['onAttachedAvatarPointerMove'];
+  handleAttachedAvatarPointerUp: KangurAiTutorPortalContextValue['panel']['onAttachedAvatarPointerUp'];
   handleAuthenticatedOnboardingAccept: () => void;
   handleAuthenticatedOnboardingDismiss: () => void;
   handleFocusHighlightedSection: KangurAiTutorPanelBodyContextValue['handleFocusHighlightedSection'];
@@ -491,6 +495,10 @@ export function useKangurAiTutorPortalViewModel(
         minimalPanelStyle,
         motionProfile: input.motionProfile,
         onAttachedAvatarClick: input.handleAvatarClick,
+        onAttachedAvatarPointerCancel: input.handleAttachedAvatarPointerCancel,
+        onAttachedAvatarPointerDown: input.handleAttachedAvatarPointerDown,
+        onAttachedAvatarPointerMove: input.handleAttachedAvatarPointerMove,
+        onAttachedAvatarPointerUp: input.handleAttachedAvatarPointerUp,
         onBackdropClose: input.handlePanelBackdropClose,
         onClose: input.handlePanelHeaderClose,
         onDetachPanelFromContext: input.handleDetachPanelFromContext,
@@ -570,6 +578,10 @@ export function useKangurAiTutorPortalViewModel(
       input.guidedSelectionPreview,
       input.guidedTutorTarget,
       input.handleAskAbout,
+      input.handleAttachedAvatarPointerCancel,
+      input.handleAttachedAvatarPointerDown,
+      input.handleAttachedAvatarPointerMove,
+      input.handleAttachedAvatarPointerUp,
       input.handleAvatarClick,
       input.handleAvatarMouseDown,
       input.handleAvatarMouseUp,

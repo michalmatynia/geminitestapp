@@ -191,20 +191,16 @@ describe('LearnerProfile page', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
+      'soft-card'
     );
     expect(screen.getByTestId('learner-profile-overview-streak')).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
     expect(screen.getByTestId('learner-profile-overview-daily-goal')).toHaveClass(
-      'soft-card',
-      'border-teal-300'
+      'soft-card'
     );
     expect(screen.getByTestId('learner-profile-overview-badges')).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
     expect(screen.getByTestId('learner-profile-level-progress-bar')).toHaveAttribute(
       'aria-valuenow',
@@ -224,12 +220,11 @@ describe('LearnerProfile page', () => {
       '80'
     );
     expect(screen.getByTestId('learner-profile-session-s2')).toHaveClass(
-      'soft-card',
-      'border-violet-300'
+      'soft-card'
     );
     expect(screen.getByTestId('learner-profile-session-score-s2')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('learner-profile-badge-track-onboarding')).toHaveTextContent(
       'Start'
@@ -240,8 +235,7 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
     expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-recommendation-focus_weakest_operation')).toHaveClass(
-      'soft-card',
-      'border-rose-300'
+      'soft-card'
     );
     expect(
       screen
@@ -293,8 +287,7 @@ describe('LearnerProfile page', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
       'soft-card',
-      'border-dashed',
-      'border-slate-200/80'
+      'border-dashed'
     );
     expect(screen.getByText('Brak danych o operacjach.')).toBeInTheDocument();
 

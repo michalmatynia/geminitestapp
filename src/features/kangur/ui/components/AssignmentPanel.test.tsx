@@ -109,7 +109,11 @@ describe('AssignmentPanel', () => {
     );
     expect(screen.getByText('Zadania')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 0/3')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 0/3')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText('Ukończono 0/3')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByText('➗ Powtorka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('➕ Powtorka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
@@ -118,8 +122,9 @@ describe('AssignmentPanel', () => {
       'border'
     );
     expect(screen.getAllByText('Cel: 1 powtorka')[0]).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',
@@ -151,8 +156,9 @@ describe('AssignmentPanel', () => {
       'true'
     );
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
-      'border-emerald-300',
-      'bg-emerald-50/80'
+      'soft-card',
+      'border',
+      'transition'
     );
     expect(screen.getByText('Ukończono 1/3')).toBeInTheDocument();
   });

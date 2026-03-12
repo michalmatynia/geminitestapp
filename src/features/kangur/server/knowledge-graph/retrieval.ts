@@ -295,6 +295,7 @@ const buildSemanticQuerySeed = (input: {
 }): string =>
   [
     normalizeText(input.latestUserMessage),
+    normalizeText(input.context?.selectedText),
     normalizeText(input.context?.focusLabel),
     normalizeText(input.context?.title),
     normalizeText(input.context?.description),
@@ -326,12 +327,13 @@ const hasSemanticContext = (context: KangurAiTutorConversationContext | undefine
   Boolean(
     context?.surface ||
       context?.focusKind ||
-      context?.focusId ||
-      context?.contentId ||
-      context?.focusLabel ||
-      context?.title ||
-      context?.interactionIntent ||
-      context?.promptMode
+    context?.focusId ||
+    context?.contentId ||
+    context?.focusLabel ||
+    context?.selectedText ||
+    context?.title ||
+    context?.interactionIntent ||
+    context?.promptMode
   );
 
 const resolveGraphQueryMode = (input: {

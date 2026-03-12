@@ -15,28 +15,40 @@ import type {
 } from './KangurAiTutorWidget.types';
 
 type HarnessProps = {
+  activeSelectionPageRect?: DOMRect | null;
+  activeSelectionPageRects?: DOMRect[];
+  activeSelectionRect?: DOMRect | null;
   guidedTutorTarget?: GuidedTutorTarget | null;
   loginModalIsOpen?: boolean;
   openLoginModal?: (
     callbackUrl?: string | null,
     options?: { authMode?: 'sign-in' | 'create-account' }
   ) => void;
+  persistedSelectionPageRect?: DOMRect | null;
+  persistedSelectionPageRects?: DOMRect[];
+  persistedSelectionRect?: DOMRect | null;
   selectionGuidanceCalloutVisibleText?: string | null;
   selectionResponsePending?: PendingSelectionResponse | null;
 };
 
 function GuidedDisplayHarness({
+  activeSelectionPageRect = new DOMRect(120, 180, 140, 26),
+  activeSelectionPageRects = [new DOMRect(120, 180, 140, 26)],
+  activeSelectionRect = new DOMRect(120, 180, 140, 26),
   guidedTutorTarget = null,
   loginModalIsOpen = false,
   openLoginModal = vi.fn(),
+  persistedSelectionPageRect = null,
+  persistedSelectionPageRects = [],
+  persistedSelectionRect = null,
   selectionGuidanceCalloutVisibleText = null,
   selectionResponsePending = null,
 }: HarnessProps) {
   const guidedState = useKangurAiTutorGuidedDisplayState({
     activeSectionRect: null,
-    activeSelectionPageRect: new DOMRect(120, 180, 140, 26),
-    activeSelectionPageRects: [new DOMRect(120, 180, 140, 26)],
-    activeSelectionRect: new DOMRect(120, 180, 140, 26),
+    activeSelectionPageRect,
+    activeSelectionPageRects,
+    activeSelectionRect,
     askModalVisible: true,
     enabled: true,
     guestTutorAssistantLabel: 'Pomocnik',
@@ -52,9 +64,9 @@ function GuidedDisplayHarness({
     isTutorHidden: false,
     mounted: true,
     openLoginModal,
-    persistedSelectionPageRect: null,
-    persistedSelectionPageRects: [],
-    persistedSelectionRect: null,
+    persistedSelectionPageRect,
+    persistedSelectionPageRects,
+    persistedSelectionRect,
     sectionResponsePending: null,
     selectionGuidanceCalloutVisibleText,
     selectionResponsePending,
@@ -71,6 +83,16 @@ function GuidedDisplayHarness({
       <div data-testid='ask-modal-mode'>{String(guidedState.isAskModalMode)}</div>
       <div data-testid='selection-guidance'>{String(guidedState.showSelectionGuidanceCallout)}</div>
       <div data-testid='guided-mode'>{guidedState.guidedMode ?? 'null'}</div>
+      <div data-testid='guided-selection-rect'>
+        {guidedState.guidedSelectionRect
+          ? JSON.stringify({
+            left: guidedState.guidedSelectionRect.left,
+            top: guidedState.guidedSelectionRect.top,
+            width: guidedState.guidedSelectionRect.width,
+            height: guidedState.guidedSelectionRect.height,
+          })
+          : 'null'}
+      </div>
     </>
   );
 }
@@ -109,6 +131,33 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
     expect(screen.getByTestId('ask-modal-mode')).toHaveTextContent('false');
     expect(screen.getByTestId('selection-guidance')).toHaveTextContent('true');
     expect(screen.getByTestId('guided-mode')).toHaveTextContent('null');
+  });
+
+  it('uses the full selection line cluster as the guided focus rect when multiple line rects exist', () => {
+    render(
+      <GuidedDisplayHarness
+        guidedTutorTarget={{
+          mode: 'selection',
+          kind: 'selection_excerpt',
+          selectedText: 'Pierwsza linia druga linia',
+        }}
+        activeSelectionPageRect={new DOMRect(120, 180, 96, 24)}
+        activeSelectionPageRects={[
+          new DOMRect(120, 180, 96, 24),
+          new DOMRect(120, 212, 182, 24),
+        ]}
+        activeSelectionRect={new DOMRect(120, 180, 96, 24)}
+      />
+    );
+
+    expect(screen.getByTestId('guided-selection-rect')).toHaveTextContent(
+      JSON.stringify({
+        left: 120,
+        top: 180,
+        width: 182,
+        height: 56,
+      })
+    );
   });
 
   it('scrolls the auth anchor into view when guided login help starts', () => {

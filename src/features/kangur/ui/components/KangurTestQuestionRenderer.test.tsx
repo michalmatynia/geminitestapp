@@ -64,7 +64,7 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-amber-300');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('soft-card', 'rounded-[24px]');
 
     rerender(
       <KangurTestQuestionRenderer
@@ -77,20 +77,19 @@ describe('KangurTestQuestionRenderer', () => {
       />
     );
 
-    expect(screen.getByText('3 pts')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText('3 pts')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByText('Question 1 / 1')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
-    expect(screen.getByText('Explanation').parentElement).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
-    );
+    expect(screen.getByText('Explanation').parentElement).toHaveClass('soft-card', 'rounded-[22px]');
     expect(screen.getByText(/Correct! \+3 pts/i).closest('div')).toHaveClass(
       'soft-card',
-      'border-emerald-300'
+      'rounded-[22px]',
+      'text-sm',
+      'font-semibold'
     );
-    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('border-emerald-300');
+    expect(screen.getByRole('button', { name: /A.*4/i })).toHaveClass('soft-card', 'rounded-[24px]');
   });
 
   it('renders rich choice notes and SVG content when configured', () => {

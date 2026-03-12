@@ -16,7 +16,10 @@ import { createContext, type JSX, type ReactNode, useCallback, useContext } from
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { useKangurObservabilitySummary } from '@/features/kangur/observability/hooks';
+import {
+  useKangurKnowledgeGraphStatus,
+  useKangurObservabilitySummary,
+} from '@/features/kangur/observability/hooks';
 import type {
   KangurAnalyticsCount,
   KangurKnowledgeGraphSemanticReadiness,
@@ -28,6 +31,7 @@ import type {
   KangurRouteMetrics,
 } from '@/shared/contracts';
 import { kangurObservabilityRangeSchema } from '@/shared/contracts';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
 import {
   Alert,
   Button,
@@ -678,25 +682,49 @@ function AiTutorBridgeMetrics(): JSX.Element {
   );
 }
 
-function KnowledgeGraphStatusSection(): JSX.Element {
-  const {
-    summary: { knowledgeGraphStatus },
-  } = useObservabilitySummaryContext();
+function KnowledgeGraphStatusSection({
+  knowledgeGraphStatus,
+  isRefreshing,
+  error,
+  onRefresh,
+}: {
+  knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot;
+  isRefreshing: boolean;
+  error: Error | null;
+  onRefresh: () => void;
+}): JSX.Element {
 
   return (
     <div id='knowledge-graph-status'>
       <FormSection title='Knowledge Graph Status' variant='subtle'>
+        {error ? (
+          <Alert variant='warning' className='mb-4'>
+            {error.message}
+          </Alert>
+        ) : null}
         {knowledgeGraphStatus.mode === 'disabled' ? (
           <EmptyState
             title='Neo4j graph status disabled'
             description={knowledgeGraphStatus.message}
             variant='compact'
+            action={
+              <Button variant='outline' size='sm' onClick={onRefresh} disabled={isRefreshing}>
+                Refresh graph status
+              </Button>
+            }
           />
         ) : knowledgeGraphStatus.mode === 'error' ? (
-          <Alert variant='warning'>
-            Failed to load live graph status for `{knowledgeGraphStatus.graphKey}`.{' '}
-            {knowledgeGraphStatus.message}
-          </Alert>
+          <div className='space-y-3'>
+            <Alert variant='warning'>
+              Failed to load live graph status for `{knowledgeGraphStatus.graphKey}`.{' '}
+              {knowledgeGraphStatus.message}
+            </Alert>
+            <div>
+              <Button variant='outline' size='sm' onClick={onRefresh} disabled={isRefreshing}>
+                Refresh graph status
+              </Button>
+            </div>
+          </div>
         ) : (
           <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
@@ -709,11 +737,22 @@ function KnowledgeGraphStatusSection(): JSX.Element {
                   {describeKnowledgeGraphStatus(knowledgeGraphStatus)}
                 </p>
               </div>
-              <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='flex flex-col gap-3'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='self-start'
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                >
+                  {isRefreshing ? 'Refreshing...' : 'Refresh graph status'}
+                </Button>
+                <div className='grid gap-3 sm:grid-cols-2'>
                 <MetadataItem label='Graph Key' value={knowledgeGraphStatus.graphKey} variant='card' mono />
                 <MetadataItem label='Synced' value={formatDateTime(knowledgeGraphStatus.syncedAt)} variant='card' />
                 <MetadataItem label='Locale' value={knowledgeGraphStatus.locale ?? '—'} variant='card' />
                 <MetadataItem label='Readiness' value={formatKnowledgeGraphReadiness(knowledgeGraphStatus.semanticReadiness)} variant='card' />
+                </div>
               </div>
             </div>
 
@@ -837,7 +876,17 @@ function PerformanceBaselineCard(): JSX.Element {
   );
 }
 
-function SummaryContent(): JSX.Element {
+function SummaryContent({
+  knowledgeGraphStatus,
+  knowledgeGraphStatusIsRefreshing,
+  knowledgeGraphStatusError,
+  refreshKnowledgeGraphStatus,
+}: {
+  knowledgeGraphStatus: KangurKnowledgeGraphStatusSnapshot;
+  knowledgeGraphStatusIsRefreshing: boolean;
+  knowledgeGraphStatusError: Error | null;
+  refreshKnowledgeGraphStatus: () => void;
+}): JSX.Element {
   const { range, summary } = useObservabilitySummaryContext();
   const alertById = new Map(summary.alerts.map((alert) => [alert.id, alert]));
   const allKangurLogsHref = buildSystemLogsHref({
@@ -934,7 +983,12 @@ function SummaryContent(): JSX.Element {
       </FormSection>
 
       <AiTutorBridgeMetrics />
-      <KnowledgeGraphStatusSection />
+      <KnowledgeGraphStatusSection
+        knowledgeGraphStatus={knowledgeGraphStatus}
+        isRefreshing={knowledgeGraphStatusIsRefreshing}
+        error={knowledgeGraphStatusError}
+        onRefresh={refreshKnowledgeGraphStatus}
+      />
 
       <FormSection title='Alerts' variant='subtle'>
         <div data-doc-id='admin_observability_alerts'>
@@ -1023,6 +1077,16 @@ function SummaryContent(): JSX.Element {
             </Button>
             <Button asChild variant='outline' className='w-full justify-between'>
               <a
+                href='/api/kangur/knowledge-graph/status'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                Knowledge Graph Status JSON
+                <ArrowUpRightIcon className='size-3.5' />
+              </a>
+            </Button>
+            <Button asChild variant='outline' className='w-full justify-between'>
+              <a
                 href={`/api/kangur/observability/summary?range=${range}`}
                 target='_blank'
                 rel='noopener noreferrer'
@@ -1047,11 +1111,18 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   const range: KangurObservabilityRange = parsedRange.success ? parsedRange.data : '24h';
   const summaryQuery = useKangurObservabilitySummary(range);
   const summary = summaryQuery.data;
+  const knowledgeGraphStatusQuery = useKangurKnowledgeGraphStatus(
+    summary?.knowledgeGraphStatus.graphKey ?? KANGUR_KNOWLEDGE_GRAPH_KEY
+  );
+  const knowledgeGraphStatus = knowledgeGraphStatusQuery.data ?? summary?.knowledgeGraphStatus;
   const headerLogsHref = buildSystemLogsHref({
     query: 'kangur.',
     from: summary?.window.from,
     to: summary?.window.to,
   });
+  const refreshKnowledgeGraphStatus = useCallback((): void => {
+    void knowledgeGraphStatusQuery.refetch();
+  }, [knowledgeGraphStatusQuery]);
   const handleRangeChange = useCallback(
     (nextRange: KangurObservabilityRange): void => {
       const nextParams = new URLSearchParams(searchParams.toString());
@@ -1074,8 +1145,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
       refresh={{
         onRefresh: (): void => {
           void summaryQuery.refetch();
+          void knowledgeGraphStatusQuery.refetch();
         },
-        isRefreshing: summaryQuery.isFetching,
+        isRefreshing: summaryQuery.isFetching || knowledgeGraphStatusQuery.isFetching,
       }}
       headerActions={
         <div className='flex flex-wrap items-center gap-3'>
@@ -1109,7 +1181,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
 
         {summaryQuery.isLoading && !summary ? (
           <LoadingState message='Loading Kangur observability...' className='min-h-[320px]' />
-        ) : !summary ? (
+        ) : !summary || !knowledgeGraphStatus ? (
           <EmptyState
             title='No observability summary available'
             description='The Kangur summary endpoint did not return data for this window.'
@@ -1122,7 +1194,12 @@ export function AdminKangurObservabilityPage(): JSX.Element {
           />
         ) : (
           <ObservabilitySummaryContext.Provider value={{ range, summary }}>
-            <SummaryContent />
+            <SummaryContent
+              knowledgeGraphStatus={knowledgeGraphStatus}
+              knowledgeGraphStatusIsRefreshing={knowledgeGraphStatusQuery.isFetching}
+              knowledgeGraphStatusError={knowledgeGraphStatusQuery.error}
+              refreshKnowledgeGraphStatus={refreshKnowledgeGraphStatus}
+            />
           </ObservabilitySummaryContext.Provider>
         )}
       </div>

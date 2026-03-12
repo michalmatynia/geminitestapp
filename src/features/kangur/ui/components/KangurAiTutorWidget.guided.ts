@@ -22,7 +22,10 @@ import {
   isSectionGuidedTutorTarget,
 } from './KangurAiTutorWidget.helpers';
 
-import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type {
+  TutorConversationFocus,
+  TutorMotionProfile,
+} from './KangurAiTutorWidget.shared';
 import type {
   GuidedTutorSectionKind,
   GuidedTutorTarget,
@@ -133,6 +136,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   motionProfile: Pick<TutorMotionProfile, 'guidedAvatarTransition'>;
   prefersReducedMotion: boolean;
   resetAskModalState: () => void;
+  selectionConversationFocus: TutorConversationFocus;
   selectionExplainTimeoutRef: MutableRefObject<number | null>;
   selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
   sendMessage: KangurAiTutorContextValue['sendMessage'];
@@ -173,6 +177,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     motionProfile,
     prefersReducedMotion,
     resetAskModalState,
+    selectionConversationFocus,
     selectionExplainTimeoutRef,
     selectionGuidanceRevealTimeoutRef,
     sendMessage,
@@ -458,10 +463,10 @@ export function useKangurAiTutorGuidedFlow(input: {
         void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
           promptMode: 'selected_text',
           selectedText: selectionText,
-          focusKind: 'selection',
-          focusId: 'selection',
-          focusLabel: selectionText,
-          assignmentId: null,
+          focusKind: selectionConversationFocus.kind ?? 'selection',
+          focusId: selectionConversationFocus.id ?? 'selection',
+          focusLabel: selectionConversationFocus.label ?? selectionText,
+          assignmentId: selectionConversationFocus.assignmentId,
           interactionIntent: 'explain',
         });
       }, guidanceDelayMs);
@@ -475,6 +480,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
       resetAskModalState,
+      selectionConversationFocus,
       selectionExplainTimeoutRef,
       selectionGuidanceRevealTimeoutRef,
       sendMessage,

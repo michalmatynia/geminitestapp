@@ -129,6 +129,23 @@ export const cloneRect = (rect: DOMRect | null | undefined): DOMRect | null => {
   } as DOMRect;
 };
 
+export const getBoundingRectFromRects = (
+  rects: Array<DOMRect | null | undefined>
+): DOMRect | null => {
+  const validRects = rects.filter((rect): rect is DOMRect => Boolean(rect));
+
+  if (validRects.length === 0) {
+    return null;
+  }
+
+  const left = Math.min(...validRects.map((rect) => rect.left));
+  const top = Math.min(...validRects.map((rect) => rect.top));
+  const right = Math.max(...validRects.map((rect) => rect.right));
+  const bottom = Math.max(...validRects.map((rect) => rect.bottom));
+
+  return createRect(left, top, right - left, bottom - top);
+};
+
 export const getViewportRectFromPageRect = (rect: DOMRect | null | undefined): DOMRect | null => {
   if (!rect) {
     return null;

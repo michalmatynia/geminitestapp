@@ -43,20 +43,22 @@ describe('KangurSetup', () => {
     );
     const editionsHeading = screen.getByTestId('kangur-setup-editions-heading');
     expect(editionsHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
-    expect(within(editionsHeading).getByText('🦘')).toHaveClass(
-      'bg-amber-100',
-      'text-amber-700'
+    expect(within(editionsHeading).getByText('🦘')).toHaveClass('rounded-full');
+    expect(screen.getByText('O konkursie Kangur')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
-    expect(screen.getByText('O konkursie Kangur')).toHaveClass('border-amber-200', 'bg-amber-100');
 
     const editionButton = screen.getByTestId('kangur-setup-edition-2024');
-    expect(editionButton).toHaveClass('soft-card', 'border-amber-300');
+    expect(editionButton).toHaveClass('soft-card', 'border', 'rounded-[28px]');
     expect(editionButton).toHaveAttribute('aria-label', 'Edycja 2024. Dostepna.');
     expect(screen.getByTestId('kangur-setup-edition-icon-2024')).toHaveClass(
-      'bg-amber-100',
-      'text-amber-700'
+      'rounded-full',
+      'h-16',
+      'w-16'
     );
-    expect(screen.getByText('2024')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('2024')).toHaveClass('inline-flex', 'rounded-full', 'border');
 
     fireEvent.click(screen.getByText('Edycja 2024'));
 
@@ -67,18 +69,19 @@ describe('KangurSetup', () => {
       'bg-white/94'
     );
     expect(selectedEditionHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
-    expect(within(selectedEditionHeading).getByText('🦘')).toHaveClass(
-      'bg-amber-100',
-      'text-amber-700'
-    );
+    expect(within(selectedEditionHeading).getByText('🦘')).toHaveClass('rounded-full');
     expect(screen.getByRole('button', { name: /wroc do listy edycji/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByText('Tryb konkursowy')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByText('Tryb konkursowy')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByRole('list', { name: 'Edycja 2024' })).toBeInTheDocument();
     const setButton = screen.getByTestId('kangur-setup-set-full_test_2024');
-    expect(setButton).toHaveClass('soft-card', 'border-amber-300');
+    expect(setButton).toHaveClass('soft-card', 'border', 'rounded-[28px]');
     expect(setButton).toHaveAttribute(
       'aria-label',
       '🏆 Pelny test konkursowy. Tryb konkursowy. Dostepny.'

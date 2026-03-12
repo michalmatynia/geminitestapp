@@ -50,8 +50,8 @@ describe('DifficultySelector', () => {
     const easyOption = screen.getByTestId('difficulty-option-easy');
     const mediumOption = screen.getByTestId('difficulty-option-medium');
 
-    expect(easyOption).toHaveClass('soft-card');
-    expect(mediumOption).toHaveClass('soft-card', 'border-amber-300');
+    expect(easyOption).toHaveClass('soft-card', 'border', 'rounded-[28px]');
+    expect(mediumOption).toHaveClass('soft-card', 'border', 'rounded-[28px]');
     expect(easyOption).toHaveAttribute('aria-pressed', 'false');
     expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
     expect(within(easyOption).getByText('Latwy')).toHaveClass('[color:var(--kangur-page-text)]');
@@ -59,15 +59,21 @@ describe('DifficultySelector', () => {
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(within(easyOption).getByTestId('difficulty-icon-easy')).toHaveClass(
-      'bg-emerald-100',
-      'text-emerald-700'
+      'rounded-full',
+      'h-16',
+      'w-16'
     );
     expect(within(mediumOption).getByTestId('difficulty-icon-medium')).toHaveClass(
-      'bg-amber-100',
-      'text-amber-700'
+      'rounded-full',
+      'h-16',
+      'w-16'
     );
-    expect(within(easyOption).getByText(/s$/)).toHaveClass('border-emerald-200', 'bg-emerald-100');
-    expect(within(mediumOption).getByText(/s$/)).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(within(easyOption).getByText(/s$/)).toHaveClass('inline-flex', 'rounded-full', 'border');
+    expect(within(mediumOption).getByText(/s$/)).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /trudny/i }));
 

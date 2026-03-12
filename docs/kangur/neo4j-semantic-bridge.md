@@ -57,8 +57,8 @@ NEO4J_DATABASE="neo4j"
 
 The standalone Neo4j helper scripts now load the repo `.env` automatically via
 `dotenv/config`, so local commands like `kangur:knowledge-graph:status`,
-`kangur:knowledge-graph:sync`, and `kangur:knowledge-graph:query` do not need a
-manual `set -a && source .env`.
+`kangur:knowledge-graph:sync`, `kangur:knowledge-graph:query`, and
+`kangur:knowledge-graph:smoke` do not need a manual `set -a && source .env`.
 
 Stop the local service with:
 
@@ -131,6 +131,16 @@ The query preview prints:
 - runtime resolution mode and any resolved runtime document ids
 - Neo4j retrieval/hydration output
 - resolved `websiteHelpTarget`
+
+You can also run a live smoke matrix against the synced graph:
+
+```bash
+npm run kangur:knowledge-graph:smoke
+```
+
+That command exercises a fixed set of Kangur website-help prompts and fails if
+their resolved `websiteHelpTarget` route or anchor drifts from the expected
+canonical result.
 
 The sync currently seeds:
 

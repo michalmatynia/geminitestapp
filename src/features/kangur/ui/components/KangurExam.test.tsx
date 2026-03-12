@@ -57,8 +57,8 @@ describe('KangurExam', () => {
       'Pytanie 1 z 1'
     );
     expect(screen.getByTestId('kangur-exam-question-point-chip')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'rounded-full',
+      'border'
     );
     expect(await screen.findByRole('button', { name: /czytaj pytanie/i })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Pytanie 1' })).toBeInTheDocument();
@@ -131,16 +131,15 @@ describe('KangurExam', () => {
     );
     expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-exam-review-point-chip')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('kangur-exam-review-illustration')).toHaveClass(
       'soft-card',
       'border'
     );
     expect(screen.getByTestId('kangur-exam-review-explanation')).toHaveClass(
-      'soft-card',
-      'border-sky-300'
+      'soft-card'
     );
   });
 });

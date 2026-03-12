@@ -21,6 +21,23 @@ canonical: true
 CodeQL currently scans first-party runtime code under `src`, `scripts`, and `server.cjs`.
 It ignores generated output, docs, end-to-end tests, and unit/spec test files so the initial alert set stays focused on real runtime behavior.
 
+## Local CLI
+
+The local CodeQL CLI is installed under:
+
+- Bundle root: `~/.local/share/codeql/current/codeql`
+- User wrapper: `~/.local/bin/codeql`
+
+The wrapper delegates to the currently active bundle symlink, so future upgrades only need to replace the versioned directory and repoint `~/.local/share/codeql/current`.
+
+Common checks:
+
+```bash
+codeql version
+codeql resolve languages
+codeql resolve packs
+```
+
 ## Triage
 
 - Review alerts in GitHub Security > Code scanning.

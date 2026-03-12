@@ -26,6 +26,9 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.documentElement).toHaveClass('kangur-surface-active');
     expect(document.body).toHaveClass('kangur-surface-active');
     expect(appContent).toHaveClass('kangur-surface-active');
+    expect(document.documentElement).toHaveAttribute('data-kangur-appearance-mode', 'default');
+    expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'default');
+    expect(appContent).toHaveAttribute('data-kangur-appearance-mode', 'default');
     expect(document.documentElement).toHaveStyle({ scrollbarGutter: 'stable' });
     expect(document.body).toHaveStyle({ scrollbarGutter: 'stable' });
     expect(appContent).toHaveStyle({ scrollbarGutter: 'stable' });
@@ -35,6 +38,9 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.documentElement).not.toHaveClass('kangur-surface-active');
     expect(document.body).not.toHaveClass('kangur-surface-active');
     expect(appContent).not.toHaveClass('kangur-surface-active');
+    expect(document.documentElement).not.toHaveAttribute('data-kangur-appearance-mode');
+    expect(document.body).not.toHaveAttribute('data-kangur-appearance-mode');
+    expect(appContent).not.toHaveAttribute('data-kangur-appearance-mode');
     expect(document.documentElement.style.getPropertyValue('scrollbar-gutter')).toBe('');
     expect(document.body.style.getPropertyValue('scrollbar-gutter')).toBe('');
     expect(appContent?.style.getPropertyValue('scrollbar-gutter')).toBe('');
@@ -52,6 +58,7 @@ describe('KangurSurfaceClassSync', () => {
     await waitFor(() => {
       expect(document.body.style.getPropertyValue('background')).toContain('rgb(27, 35, 51)');
     });
+    expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'dark');
     expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
       '30,41,59'
     );

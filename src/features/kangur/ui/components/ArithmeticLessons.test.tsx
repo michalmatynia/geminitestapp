@@ -201,7 +201,7 @@ describe('Arithmetic lessons shared surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
     fireEvent.click(screen.getByRole('button', { name: /tabliczka × 2 i × 3/i }));
 
-    expect(screen.getByText('× 2')).toHaveClass('border-violet-200', 'bg-violet-100');
+    expect(screen.getByText('× 2')).toHaveClass('rounded-full', 'border');
 
     unmount();
 

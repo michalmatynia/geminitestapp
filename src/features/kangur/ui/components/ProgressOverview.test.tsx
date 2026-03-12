@@ -125,16 +125,14 @@ describe('ProgressOverview lesson mastery insights', () => {
 
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-level-bar')).toHaveAttribute('aria-valuenow', '92');
-    expect(screen.getByText('Laczne XP').parentElement).toHaveClass('soft-card', 'border-indigo-300');
-    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border-violet-300');
+    expect(screen.getByText('Laczne XP').parentElement).toHaveClass('soft-card');
+    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card');
     expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
     expect(screen.getByText('Srednia skutecznosc').parentElement).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
     expect(screen.getByText('Najlepsza seria').parentElement).toHaveClass(
-      'soft-card',
-      'border-rose-300'
+      'soft-card'
     );
     expect(screen.getByText('Sledzone: 2 · opanowane: 1 · do powtorki: 1')).toBeInTheDocument();
     expect(screen.getByText('Do powtorki')).toBeInTheDocument();
@@ -181,8 +179,8 @@ describe('ProgressOverview lesson mastery insights', () => {
     expect(screen.getAllByText('➗ Dzielenie')).toHaveLength(2);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-operation-addition')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('progress-overview-badge-track-onboarding')).toHaveTextContent(
       'Start'

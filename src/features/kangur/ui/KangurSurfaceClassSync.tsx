@@ -8,12 +8,14 @@ import {
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
+const KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE = 'data-kangur-appearance-mode';
 const KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER = 'scrollbar-gutter';
 const KANGUR_ACTIVE_SURFACE_BACKGROUND = 'background';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY =
   'kangurPrevSurfaceScrollbarGutter';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY = 'kangurPrevSurfaceBackground';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY = 'kangurPrevSurfaceVars';
+const KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY = 'kangurPrevSurfaceAppearanceMode';
 
 const getKangurSurfaceTargets = (): HTMLElement[] => {
   if (typeof document === 'undefined') {
@@ -28,6 +30,7 @@ const getKangurSurfaceTargets = (): HTMLElement[] => {
 
 const applyKangurSurfaceStyle = (
   target: HTMLElement,
+  mode: 'default' | 'dark',
   background: string,
   vars: Record<string, string>
 ): void => {
@@ -45,9 +48,14 @@ const applyKangurSurfaceStyle = (
     );
     target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY] = JSON.stringify(previousVars);
   }
+  if (!(KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY in target.dataset)) {
+    target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY] =
+      target.getAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE) ?? '';
+  }
 
   target.style.setProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER, 'stable');
   target.style.setProperty(KANGUR_ACTIVE_SURFACE_BACKGROUND, background);
+  target.setAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE, mode);
   Object.entries(vars).forEach(([key, value]) => {
     target.style.setProperty(key, value);
   });
@@ -82,9 +90,16 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
       // Ignore malformed restore payloads and fall back to removing injected vars.
     }
   }
+  const previousMode = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
+  if (typeof previousMode === 'string' && previousMode.length > 0) {
+    target.setAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE, previousMode);
+  } else {
+    target.removeAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE);
+  }
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY];
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY];
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY];
+  delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
 };
 
 export function KangurSurfaceClassSync({
@@ -97,12 +112,13 @@ export function KangurSurfaceClassSync({
     () => resolveKangurStorefrontAppearance(appearance?.mode ?? 'default'),
     [appearance?.mode]
   );
+  const appearanceMode = appearance?.mode ?? 'default';
 
   useEffect(() => {
     const targets = getKangurSurfaceTargets();
     targets.forEach((target) => {
       target.classList.add(KANGUR_ACTIVE_SURFACE_CLASSNAME);
-      applyKangurSurfaceStyle(target, kangurAppearance.background, kangurAppearance.vars);
+      applyKangurSurfaceStyle(target, appearanceMode, kangurAppearance.background, kangurAppearance.vars);
     });
 
     return () => {
@@ -111,7 +127,7 @@ export function KangurSurfaceClassSync({
         restoreKangurSurfaceStyle(target);
       });
     };
-  }, [kangurAppearance]);
+  }, [appearanceMode, kangurAppearance]);
 
   return <>{children}</>;
 }

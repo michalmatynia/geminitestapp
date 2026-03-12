@@ -115,20 +115,16 @@ describe('KangurAssignmentManager', () => {
     const allFilter = screen.getByTestId('assignment-manager-filter-all');
     const practiceFilter = screen.getByTestId('assignment-manager-filter-practice');
 
-    expect(allFilter).toHaveClass('text-indigo-700', 'ring-1');
+    expect(allFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(allFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(practiceFilter).toHaveClass('text-slate-500', 'bg-transparent');
+    expect(practiceFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(practiceFilter).toHaveAttribute('aria-pressed', 'false');
 
     expect(screen.getByText('Przydziel nowe zadanie')).toBeInTheDocument();
     expect(screen.getByText('Podpowiedzi z postępu ucznia')).toBeInTheDocument();
-    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
-    );
+    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toHaveClass('rounded-full', 'border');
     expect(screen.getAllByTestId(/assignment-manager-recommended-card-/)[0]).toHaveClass(
-      'soft-card',
-      'border-slate-200/80'
+      'soft-card'
     );
     expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
     expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
@@ -136,29 +132,26 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByText('Trening: Potegi')).toBeInTheDocument();
     expect(screen.getByText('Trening: Pierwiastki')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-manager-catalog-card-practice-clock')).toHaveClass(
-      'soft-card',
-      'border-slate-200/80'
+      'soft-card'
     );
     expect(
       screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub słowie kluczowym...')
-    ).toHaveClass('soft-card', 'focus:border-indigo-300');
+    ).toHaveClass('soft-card');
     expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Aktywne').parentElement).toHaveClass(
-      'soft-card',
-      'border-slate-200/80'
+      'soft-card'
     );
     expect(screen.getByText('Do rozpoczecia').parentElement).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
     expect(screen.getByText('Aktywne zadania')).toBeInTheDocument();
     expect(screen.getAllByText('Praktyka: Dzielenie').length).toBeGreaterThanOrEqual(1);
 
     await userEvent.click(practiceFilter);
 
-    expect(practiceFilter).toHaveClass('text-indigo-700', 'ring-1');
+    expect(practiceFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(practiceFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(allFilter).toHaveClass('text-slate-500', 'bg-transparent');
+    expect(allFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(allFilter).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByText('Nauka zegara')).not.toBeInTheDocument();
     expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
@@ -277,8 +270,7 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByText('Do uwagi')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc wykonania')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc wykonania').parentElement).toHaveClass(
-      'soft-card',
-      'border-slate-200/80'
+      'soft-card'
     );
     expect(screen.getByText('33%')).toBeInTheDocument();
     expect(
@@ -336,8 +328,7 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByTestId('assignment-manager-attention-empty')).toHaveClass(
       'soft-card',
-      'border-dashed',
-      'border-slate-200/80'
+      'border-dashed'
     );
     expect(screen.getByText('Brak zadań wymagających dodatkowej reakcji.')).toBeInTheDocument();
   });

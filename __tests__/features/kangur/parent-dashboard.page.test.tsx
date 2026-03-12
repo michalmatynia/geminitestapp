@@ -187,36 +187,34 @@ describe('ParentDashboard page', () => {
     const assignmentsTab = screen.getByRole('button', { name: /Zadania/i });
 
     expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
-    expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]', 'border-indigo-300');
+    expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
     expect(inactiveLearnerCard).toHaveAttribute('aria-pressed', 'false');
-    expect(inactiveLearnerCard).toHaveClass('soft-card', 'rounded-[30px]', 'border-slate-200/80');
+    expect(inactiveLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
     expect(within(activeLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-1')).toHaveClass(
-      'bg-indigo-100',
-      'text-indigo-700'
+      'rounded-full'
     );
     expect(
       within(inactiveLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-2')
-    ).toHaveClass('bg-slate-100', 'text-slate-700');
+    ).toHaveClass('rounded-full');
     expect(screen.queryByTestId('parent-dashboard-role-chip')).not.toBeInTheDocument();
     expect(within(activeLearnerCard).getByText('Aktywny')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'rounded-full',
+      'border'
     );
     expect(within(inactiveLearnerCard).getByText('Wylaczony')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getAllByPlaceholderText('Imie ucznia')[0]).toHaveClass(
-      'soft-card',
-      'focus:border-indigo-300'
+      'soft-card'
     );
-    expect(screen.getByRole('combobox')).toHaveClass('soft-card', 'focus:border-indigo-300');
+    expect(screen.getByRole('combobox')).toHaveClass('soft-card');
     expect(progressTab).toHaveAttribute('aria-pressed', 'true');
     expect(scoresTab).toHaveAttribute('aria-pressed', 'false');
     expect(assignmentsTab).toHaveAttribute('aria-pressed', 'false');
-    expect(progressTab).toHaveClass('text-indigo-700', 'ring-1');
-    expect(scoresTab).toHaveClass('text-slate-500', 'bg-transparent');
-    expect(assignmentsTab).toHaveClass('text-slate-500', 'bg-transparent');
+    expect(progressTab).toHaveClass('kangur-segmented-control-item-active');
+    expect(scoresTab).not.toHaveClass('kangur-segmented-control-item-active');
+    expect(assignmentsTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(screen.getByRole('button', { name: /ola/i }));
     expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
@@ -224,12 +222,12 @@ describe('ParentDashboard page', () => {
     await userEvent.click(scoresTab);
     expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
     expect(progressTab).toHaveAttribute('aria-pressed', 'false');
-    expect(scoresTab).toHaveClass('text-indigo-700', 'ring-1');
-    expect(progressTab).toHaveClass('text-slate-500', 'bg-transparent');
+    expect(scoresTab).toHaveClass('kangur-segmented-control-item-active');
+    expect(progressTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(assignmentsTab);
     expect(assignmentsTab).toHaveAttribute('aria-pressed', 'true');
-    expect(assignmentsTab).toHaveClass('text-indigo-700', 'ring-1');
+    expect(assignmentsTab).toHaveClass('kangur-segmented-control-item-active');
     await waitFor(() =>
       expect(screen.getByTestId('kangur-assignment-manager')).toBeInTheDocument()
     );

@@ -16,6 +16,7 @@ import {
   EDGE_GAP,
   PROTECTED_CONTENT_GAP,
   type ActiveTutorFocus,
+  type TutorConversationFocus,
   type TutorBubblePlacementStrategy,
   type TutorEntryDirection,
   type TutorMotionPosition,
@@ -23,7 +24,7 @@ import {
   getTutorEntryDirection,
 } from './KangurAiTutorWidget.shared';
 
-import type { TutorSurface } from './KangurAiTutorWidget.types';
+import type { SectionExplainContext, TutorSurface } from './KangurAiTutorWidget.types';
 
 type SelectionActionLayout = {
   placement: 'top' | 'bottom' | 'left' | 'right';
@@ -48,12 +49,7 @@ type UseKangurAiTutorFocusLayoutStateInput = {
   guidedTutorTarget: { kind: string } | null;
   hasAssignmentSummary: boolean;
   hasCurrentQuestion: boolean;
-  highlightedSection: {
-    anchorId: string;
-    assignmentId: string | null;
-    kind: KangurTutorAnchorKind;
-    label: string | null;
-  } | null;
+  highlightedSection: SectionExplainContext | null;
   homeOnboardingStepIndex: number | null;
   isOpen: boolean;
   isSelectionWithinTutorUi: () => boolean;
@@ -147,6 +143,94 @@ const getPanelCenterDistance = (panelRect: DOMRect, dockRect: DOMRect): number =
   const dockCenterX = dockRect.left + dockRect.width / 2;
   const dockCenterY = dockRect.top + dockRect.height / 2;
   return Math.hypot(panelCenterX - dockCenterX, panelCenterY - dockCenterY);
+};
+
+const getRectArea = (rect: DOMRect): number => Math.max(0, rect.width) * Math.max(0, rect.height);
+
+const isPointWithinRect = (
+  point: { x: number; y: number },
+  rect: Pick<DOMRect, 'bottom' | 'left' | 'right' | 'top'>
+): boolean =>
+  point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom;
+
+const selectBestSelectionAnchor = (input: {
+  anchors: KangurTutorAnchorRegistration[];
+  selectionRect: DOMRect;
+  sessionContentId: string | null | undefined;
+  sessionSurface: TutorSurface | null | undefined;
+}): KangurTutorAnchorRegistration | null => {
+  if (!input.sessionSurface) {
+    return null;
+  }
+
+  const selectionArea = Math.max(getRectArea(input.selectionRect), 1);
+  const selectionCenter = {
+    x: input.selectionRect.left + input.selectionRect.width / 2,
+    y: input.selectionRect.top + input.selectionRect.height / 2,
+  };
+
+  const candidates = input.anchors
+    .filter((anchor) => anchor.surface === input.sessionSurface)
+    .map((anchor) => {
+      const rect = anchor.getRect();
+      if (!rect) {
+        return null;
+      }
+
+      const overlapArea = getRectOverlapArea(rect, input.selectionRect);
+      const containsSelectionCenter = isPointWithinRect(selectionCenter, rect);
+      if (overlapArea <= 0 && !containsSelectionCenter) {
+        return null;
+      }
+
+      return {
+        anchor,
+        area: Math.max(getRectArea(rect), 1),
+        containsSelectionCenter,
+        contentMatch:
+          Boolean(input.sessionContentId) &&
+          (anchor.metadata?.contentId ?? null) === input.sessionContentId,
+        overlapArea,
+        overlapRatio: overlapArea / selectionArea,
+      };
+    })
+    .filter(
+      (
+        candidate
+      ): candidate is {
+        anchor: KangurTutorAnchorRegistration;
+        area: number;
+        containsSelectionCenter: boolean;
+        contentMatch: boolean;
+        overlapArea: number;
+        overlapRatio: number;
+      } => candidate !== null
+    )
+    .sort((leftCandidate, rightCandidate) => {
+      if (leftCandidate.contentMatch !== rightCandidate.contentMatch) {
+        return Number(rightCandidate.contentMatch) - Number(leftCandidate.contentMatch);
+      }
+
+      if (leftCandidate.containsSelectionCenter !== rightCandidate.containsSelectionCenter) {
+        return Number(rightCandidate.containsSelectionCenter) - Number(leftCandidate.containsSelectionCenter);
+      }
+
+      if (leftCandidate.overlapRatio !== rightCandidate.overlapRatio) {
+        return rightCandidate.overlapRatio - leftCandidate.overlapRatio;
+      }
+
+      if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
+        return rightCandidate.overlapArea - leftCandidate.overlapArea;
+      }
+
+      if (leftCandidate.area !== rightCandidate.area) {
+        return leftCandidate.area - rightCandidate.area;
+      }
+
+      return rightCandidate.anchor.priority - leftCandidate.anchor.priority;
+    });
+
+  return candidates[0]?.anchor ?? null;
 };
 
 const getSelectionActionLayout = (
@@ -592,10 +676,70 @@ export function useKangurAiTutorFocusLayoutState({
     tutorAnchorContext,
   ]);
 
+  const selectionConversationAnchor = useMemo(() => {
+    if (!activeSelectionRect || !tutorAnchorContext) {
+      return null;
+    }
+
+    return selectBestSelectionAnchor({
+      anchors: tutorAnchorContext.anchors,
+      selectionRect: activeSelectionRect,
+      sessionContentId: sessionContext.contentId,
+      sessionSurface: sessionContext.surface,
+    });
+  }, [
+    activeSelectionRect,
+    sessionContext.contentId,
+    sessionContext.surface,
+    tutorAnchorContext,
+    viewportTick,
+  ]);
+
   const activeFocus = useMemo<ActiveTutorFocus>(() => {
+    const baseConversationFocus: TutorConversationFocus = {
+      assignmentId: null,
+      contentId: sessionContext.contentId ?? null,
+      id: null,
+      kind: null,
+      label: null,
+      surface: sessionContext.surface ?? null,
+    };
+
     if (activeSelectionRect) {
+      const selectionWithinHighlightedSection =
+        activeSectionRect !== null &&
+        highlightedSection !== null &&
+        getRectOverlapArea(activeSelectionRect, activeSectionRect) > 0;
+      const conversationFocus: TutorConversationFocus = selectionWithinHighlightedSection &&
+        highlightedSection
+        ? {
+            assignmentId: highlightedSection.assignmentId,
+            contentId: highlightedSection.contentId ?? sessionContext.contentId ?? null,
+            id: highlightedSection.anchorId,
+            kind: highlightedSection.kind,
+            label: highlightedSection.label,
+            surface: highlightedSection.surface,
+          }
+        : selectionConversationAnchor
+          ? {
+              assignmentId: selectionConversationAnchor.metadata?.assignmentId ?? null,
+              contentId:
+                selectionConversationAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+              id: selectionConversationAnchor.id,
+              kind: selectionConversationAnchor.kind,
+              label: selectionConversationAnchor.metadata?.label ?? activeSelectedText,
+              surface: selectionConversationAnchor.surface,
+            }
+          : {
+              ...baseConversationFocus,
+              id: 'selection',
+              kind: 'selection',
+              label: activeSelectedText,
+            };
+
       return {
         assignmentId: null,
+        conversationFocus,
         id: 'selection',
         kind: 'selection',
         label: activeSelectedText,
@@ -604,8 +748,18 @@ export function useKangurAiTutorFocusLayoutState({
     }
 
     if (activeSectionRect && highlightedSection) {
+      const conversationFocus: TutorConversationFocus = {
+        assignmentId: highlightedSection.assignmentId,
+        contentId: highlightedSection.contentId ?? sessionContext.contentId ?? null,
+        id: highlightedSection.anchorId,
+        kind: highlightedSection.kind,
+        label: highlightedSection.label,
+        surface: highlightedSection.surface,
+      };
+
       return {
         assignmentId: highlightedSection.assignmentId,
+        conversationFocus,
         id: highlightedSection.anchorId,
         kind: highlightedSection.kind,
         label: highlightedSection.label,
@@ -614,8 +768,18 @@ export function useKangurAiTutorFocusLayoutState({
     }
 
     if (registeredAnchor) {
+      const conversationFocus: TutorConversationFocus = {
+        assignmentId: registeredAnchor.metadata?.assignmentId ?? null,
+        contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+        id: registeredAnchor.id,
+        kind: registeredAnchor.kind,
+        label: registeredAnchor.metadata?.label ?? null,
+        surface: registeredAnchor.surface,
+      };
+
       return {
         assignmentId: registeredAnchor.metadata?.assignmentId ?? null,
+        conversationFocus,
         id: registeredAnchor.id,
         kind: registeredAnchor.kind,
         label: registeredAnchor.metadata?.label ?? null,
@@ -625,6 +789,7 @@ export function useKangurAiTutorFocusLayoutState({
 
     return {
       assignmentId: null,
+      conversationFocus: baseConversationFocus,
       id: null,
       kind: null,
       label: null,
@@ -636,6 +801,9 @@ export function useKangurAiTutorFocusLayoutState({
     activeSelectionRect,
     highlightedSection,
     registeredAnchor,
+    selectionConversationAnchor,
+    sessionContext.contentId,
+    sessionContext.surface,
     viewportTick,
   ]);
 

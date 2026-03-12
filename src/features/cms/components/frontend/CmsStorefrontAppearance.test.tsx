@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   CmsStorefrontAppearanceButtons,
@@ -19,7 +19,13 @@ function AppearanceModeProbe(): React.JSX.Element {
   return <div data-testid='appearance-mode' data-mode={appearance?.mode ?? 'missing'} />;
 }
 
+const TEST_STORAGE_KEY = 'cms-storefront-appearance-test-mode';
+
 describe('CmsStorefrontAppearance', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('updates the selected appearance mode', () => {
     render(
       <CmsStorefrontAppearanceProvider>
@@ -38,6 +44,41 @@ describe('CmsStorefrontAppearance', () => {
       'aria-pressed',
       'true'
     );
+  });
+
+  it('restores a persisted light selection over a dark initial mode', async () => {
+    window.localStorage.setItem(TEST_STORAGE_KEY, 'default');
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='dark' storageKey={TEST_STORAGE_KEY}>
+        <AppearanceModeProbe />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('appearance-mode')).toHaveAttribute('data-mode', 'default');
+    });
+  });
+
+  it('persists mode changes when a storage key is configured', async () => {
+    render(
+      <CmsStorefrontAppearanceProvider storageKey={TEST_STORAGE_KEY}>
+        <CmsStorefrontAppearanceButtons />
+        <AppearanceModeProbe />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Dark theme' }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(TEST_STORAGE_KEY)).toBe('dark');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Default theme' }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(TEST_STORAGE_KEY)).toBe('default');
+    });
   });
 
   it('hydrates the selected appearance mode from the provider input', () => {

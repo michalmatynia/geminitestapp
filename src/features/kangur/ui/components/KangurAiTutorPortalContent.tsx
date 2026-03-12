@@ -198,6 +198,10 @@ export function KangurAiTutorPortalContent() {
         suppressPanelSurface={panel.suppressPanelSurface}
         uiMode={panel.uiMode}
         onAttachedAvatarClick={panel.onAttachedAvatarClick}
+        onAttachedAvatarPointerCancel={panel.onAttachedAvatarPointerCancel}
+        onAttachedAvatarPointerDown={panel.onAttachedAvatarPointerDown}
+        onAttachedAvatarPointerMove={panel.onAttachedAvatarPointerMove}
+        onAttachedAvatarPointerUp={panel.onAttachedAvatarPointerUp}
         onBackdropClose={panel.onBackdropClose}
         onClose={panel.onClose}
         onDetachPanelFromContext={panel.onDetachPanelFromContext}

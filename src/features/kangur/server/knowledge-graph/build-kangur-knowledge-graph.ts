@@ -285,7 +285,8 @@ const resolveLocalizedValue = <T>(value: LocalizedValue<T> | undefined, locale: 
   if (Array.isArray(value) || typeof value !== 'object' || value === null) {
     return value as T;
   }
-  return value[locale] ?? value['pl'] ?? Object.values(value)[0];
+  const localizedRecord = value as Partial<Record<string, T>>;
+  return localizedRecord[locale] ?? localizedRecord['pl'] ?? Object.values(localizedRecord)[0];
 };
 
 const inferReferenceTitle = (refId: string, locale: string): string => {

@@ -68,17 +68,19 @@ describe('useKangurTextHighlight', () => {
     });
   });
 
-  it('clears the browser selection and local highlight state when asked', async () => {
+  it('keeps tutor-owned gradient text emphasis after the native selection is cleared and removes it on cleanup', async () => {
     const selectedNode = document.createTextNode('2 + 2');
     document.body.appendChild(selectedNode);
 
     const removeAllRanges = vi.fn();
-    const mockRange = {
-      commonAncestorContainer: selectedNode,
-      getBoundingClientRect: () => new DOMRect(100, 120, 80, 20),
-      getClientRects: () => [new DOMRect(100, 120, 80, 20)],
-      cloneRange: () => mockRange,
-    } as unknown as Range;
+    const mockRange = document.createRange();
+    mockRange.selectNodeContents(selectedNode);
+    Object.defineProperty(mockRange, 'getBoundingClientRect', {
+      value: () => new DOMRect(100, 120, 80, 20),
+    });
+    Object.defineProperty(mockRange, 'getClientRects', {
+      value: () => [new DOMRect(100, 120, 80, 20)] as unknown as DOMRectList,
+    });
     const mockSelection = {
       toString: () => '2 + 2',
       rangeCount: 1,
@@ -101,11 +103,31 @@ describe('useKangurTextHighlight', () => {
     });
 
     act(() => {
+      expect(result.current.activateSelectionGlow()).toBe(true);
+    });
+
+    expect(
+      document.querySelectorAll('[data-kangur-ai-tutor-selection-emphasis="gradient"]')
+    ).toHaveLength(1);
+    expect(document.body.textContent).toContain('2 + 2');
+
+    act(() => {
       result.current.clearSelection();
     });
 
     expect(removeAllRanges).toHaveBeenCalled();
     expect(result.current.selectedText).toBeNull();
     expect(result.current.selectionLineRects).toHaveLength(0);
+    expect(
+      document.querySelectorAll('[data-kangur-ai-tutor-selection-emphasis="gradient"]')
+    ).toHaveLength(1);
+
+    act(() => {
+      result.current.clearSelectionGlow();
+    });
+
+    expect(
+      document.querySelectorAll('[data-kangur-ai-tutor-selection-emphasis="gradient"]')
+    ).toHaveLength(0);
   });
 });

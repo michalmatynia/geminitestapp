@@ -60,10 +60,10 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
               'color-mix(in srgb, var(--kangur-soft-card-border) 76%, rgb(251 191 36))',
           }}
         >
-          <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700'>
+          <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {auxiliaryContent?.toolboxTitle ?? 'Narzędzia tutora'}
           </div>
-          <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             {auxiliaryContent?.toolboxDescription ??
               'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.'}
           </div>
@@ -150,7 +150,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
       ) : null}
       {usageSummary && usageSummary.dailyMessageLimit !== null ? (
         <div
-          className='w-full rounded-2xl border px-3 py-2 text-[11px] text-amber-900'
+          className='w-full rounded-2xl border px-3 py-2 text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           style={{
             background:
               'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
@@ -165,7 +165,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 limit: usageSummary.dailyMessageLimit,
               })}
             </span>
-            <span className='text-amber-700'>
+            <span className='[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
               {isUsageLoading
                 ? tutorContent.auxiliaryControls.usageRefreshing
                 : remainingMessages === 0
@@ -194,14 +194,14 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 : 'color-mix(in srgb, var(--kangur-soft-card-border) 74%, rgb(110 231 183))',
           }}
         >
-          <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'>
+          <div className='flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             <span className='inline-flex h-1.5 w-1.5 rounded-full bg-current opacity-50' />
             {visibleProactiveNudge.title}
           </div>
-          <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+          <div className='mt-1 text-sm font-semibold [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
             {visibleProactiveNudge.action.label}
           </div>
-          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             {visibleProactiveNudge.description}
           </div>
           <KangurButton

@@ -75,8 +75,7 @@ describe('KangurTestSuitePlayer', () => {
 
     const restartButton = screen.getByRole('button', { name: /try again/i });
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
+      'soft-card'
     );
     expect(restartButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });

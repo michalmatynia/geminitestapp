@@ -28,13 +28,13 @@ const FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX = FLOATING_TUTOR_ARROWHEAD_DOT_RADIU
 const FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX = 18;
 const GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S = 0.22;
 export const GUIDED_CALLOUT_HEIGHT = 260;
-const GUIDED_CALLOUT_FOCUS_GAP = 40;
+const GUIDED_CALLOUT_FOCUS_GAP = 28;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX = 255;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN = 219;
 const GUIDED_SELECTION_PREVIEW_HEIGHT = 36;
 const GUIDED_SELECTION_PREVIEW_EDGE_INSET_X = 20;
 const GUIDED_SELECTION_PREVIEW_TOP_OFFSET = 122;
-const GUIDED_SELECTION_PREVIEW_SAFE_DISTANCE = 44;
+const GUIDED_SELECTION_PREVIEW_SAFE_DISTANCE = 32;
 
 type FloatingTutorArrowheadGeometry = {
   angle: number;
@@ -106,6 +106,15 @@ const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
   const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
   const verticalGap = Math.max(0, left.top - right.bottom, right.top - left.bottom);
   return Math.hypot(horizontalGap, verticalGap);
+};
+
+const getRectCenterDistance = (left: DOMRect, right: DOMRect): number => {
+  const leftCenterX = left.left + left.width / 2;
+  const leftCenterY = left.top + left.height / 2;
+  const rightCenterX = right.left + right.width / 2;
+  const rightCenterY = right.top + right.height / 2;
+
+  return Math.hypot(leftCenterX - rightCenterX, leftCenterY - rightCenterY);
 };
 
 const getViewportOverflowArea = (
@@ -540,12 +549,11 @@ export const getGuidedCalloutClusterLayout = (
           (sum, protectedRect) => sum + getRectOverlapArea(panelRect, protectedRect),
           0
         );
-        const avatarOverlapArea =
-          getRectOverlapArea(avatarRect, rect) +
-          protectedRects.reduce(
-            (sum, protectedRect) => sum + getRectOverlapArea(avatarRect, protectedRect),
-            0
-          );
+        const avatarPrimaryOverlapArea = getRectOverlapArea(avatarRect, rect);
+        const avatarProtectedOverlapArea = protectedRects.reduce(
+          (sum, protectedRect) => sum + getRectOverlapArea(avatarRect, protectedRect),
+          0
+        );
         const clusterOverlapArea = getRectOverlapArea(panelRect, avatarRect);
         const selectionPreviewRect = options?.hasSelectionPreview
           ? getGuidedSelectionPreviewRect(panelRect)
@@ -563,6 +571,10 @@ export const getGuidedCalloutClusterLayout = (
         const avatarAnchorDistance = options?.anchorRect
           ? getRectSeparationDistance(avatarRect, options.anchorRect)
           : 0;
+        const calloutFocusDistance = getRectSeparationDistance(panelRect, rect);
+        const avatarFocusDistance = getRectSeparationDistance(avatarRect, rect);
+        const calloutFocusCenterDistance = getRectCenterDistance(panelRect, rect);
+        const avatarFocusCenterDistance = getRectCenterDistance(avatarRect, rect);
         const viewportOverflowArea =
           getViewportOverflowArea(panelRect, viewport) +
           getViewportOverflowArea(avatarRect, viewport);
@@ -573,10 +585,15 @@ export const getGuidedCalloutClusterLayout = (
         const score =
           overlapArea * 20 +
           protectedOverlapArea * 10 +
-          avatarOverlapArea * 14 +
+          avatarPrimaryOverlapArea * 18 +
+          avatarProtectedOverlapArea * 3 +
           clusterOverlapArea * 40 +
           selectionPreviewCrowding * 22 +
           viewportOverflowArea * 24 +
+          calloutFocusDistance * 1.9 +
+          avatarFocusDistance * 3.1 +
+          calloutFocusCenterDistance * 0.22 +
+          avatarFocusCenterDistance * 0.34 +
           anchorDistance * 0.45 +
           avatarAnchorDistance * 0.3 +
           repositionCost * 0.6 +
@@ -586,11 +603,16 @@ export const getGuidedCalloutClusterLayout = (
         return {
           anchorDistance,
           avatarAnchorDistance,
-          avatarOverlapArea,
+          avatarPrimaryOverlapArea,
+          avatarProtectedOverlapArea,
           avatarPlacement,
           avatarPriority,
           avatarRect,
+          avatarFocusCenterDistance,
+          avatarFocusDistance,
           calloutRect: panelRect,
+          calloutFocusCenterDistance,
+          calloutFocusDistance,
           clusterOverlapArea,
           left: clampedPosition.left,
           overlapArea,
@@ -645,14 +667,40 @@ export const getGuidedCalloutClusterLayout = (
         return leftCandidate.protectedOverlapArea - rightCandidate.protectedOverlapArea;
       }
 
-      const leftHasAvatarOverlap = leftCandidate.avatarOverlapArea > 0 ? 1 : 0;
-      const rightHasAvatarOverlap = rightCandidate.avatarOverlapArea > 0 ? 1 : 0;
-      if (leftHasAvatarOverlap !== rightHasAvatarOverlap) {
-        return leftHasAvatarOverlap - rightHasAvatarOverlap;
+      const leftHasPrimaryAvatarOverlap = leftCandidate.avatarPrimaryOverlapArea > 0 ? 1 : 0;
+      const rightHasPrimaryAvatarOverlap = rightCandidate.avatarPrimaryOverlapArea > 0 ? 1 : 0;
+      if (leftHasPrimaryAvatarOverlap !== rightHasPrimaryAvatarOverlap) {
+        return leftHasPrimaryAvatarOverlap - rightHasPrimaryAvatarOverlap;
       }
 
-      if (leftCandidate.avatarOverlapArea !== rightCandidate.avatarOverlapArea) {
-        return leftCandidate.avatarOverlapArea - rightCandidate.avatarOverlapArea;
+      if (leftCandidate.avatarPrimaryOverlapArea !== rightCandidate.avatarPrimaryOverlapArea) {
+        return leftCandidate.avatarPrimaryOverlapArea - rightCandidate.avatarPrimaryOverlapArea;
+      }
+
+      const leftHasProtectedAvatarOverlap = leftCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
+      const rightHasProtectedAvatarOverlap = rightCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
+      if (leftHasProtectedAvatarOverlap !== rightHasProtectedAvatarOverlap) {
+        return leftHasProtectedAvatarOverlap - rightHasProtectedAvatarOverlap;
+      }
+
+      if (leftCandidate.avatarProtectedOverlapArea !== rightCandidate.avatarProtectedOverlapArea) {
+        return leftCandidate.avatarProtectedOverlapArea - rightCandidate.avatarProtectedOverlapArea;
+      }
+
+      if (leftCandidate.avatarFocusDistance !== rightCandidate.avatarFocusDistance) {
+        return leftCandidate.avatarFocusDistance - rightCandidate.avatarFocusDistance;
+      }
+
+      if (leftCandidate.calloutFocusDistance !== rightCandidate.calloutFocusDistance) {
+        return leftCandidate.calloutFocusDistance - rightCandidate.calloutFocusDistance;
+      }
+
+      if (leftCandidate.avatarFocusCenterDistance !== rightCandidate.avatarFocusCenterDistance) {
+        return leftCandidate.avatarFocusCenterDistance - rightCandidate.avatarFocusCenterDistance;
+      }
+
+      if (leftCandidate.calloutFocusCenterDistance !== rightCandidate.calloutFocusCenterDistance) {
+        return leftCandidate.calloutFocusCenterDistance - rightCandidate.calloutFocusCenterDistance;
       }
 
       if (leftCandidate.selectionPreviewCrowding !== rightCandidate.selectionPreviewCrowding) {
@@ -696,14 +744,31 @@ export const getGuidedCalloutClusterLayout = (
     return {
       anchorDistance: 0,
       avatarAnchorDistance: 0,
-      avatarOverlapArea: 0,
+      avatarPrimaryOverlapArea: 0,
+      avatarProtectedOverlapArea: 0,
       avatarPlacement,
       avatarPriority: 0,
       avatarRect: getGuidedAvatarRectForSurface({
         placement: avatarPlacement,
         surface: calloutRect,
       }),
+      avatarFocusCenterDistance: getRectCenterDistance(
+        getGuidedAvatarRectForSurface({
+          placement: avatarPlacement,
+          surface: calloutRect,
+        }),
+        rect
+      ),
+      avatarFocusDistance: getRectSeparationDistance(
+        getGuidedAvatarRectForSurface({
+          placement: avatarPlacement,
+          surface: calloutRect,
+        }),
+        rect
+      ),
       calloutRect,
+      calloutFocusCenterDistance: getRectCenterDistance(calloutRect, rect),
+      calloutFocusDistance: getRectSeparationDistance(calloutRect, rect),
       clusterOverlapArea: 0,
       left: clampedPosition.left,
       overlapArea: 0,

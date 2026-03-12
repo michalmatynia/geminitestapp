@@ -21,6 +21,7 @@ import type {
   KangurRouteMetrics,
   SystemLogMetricsDto as SystemLogMetrics,
 } from '@/shared/contracts';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-logger';
 import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
@@ -1101,7 +1102,7 @@ export const getKangurObservabilitySummary = async (input: {
         error instanceof Error ? error.message : 'Failed to load Kangur analytics snapshot.';
       return emptyAnalyticsSnapshot();
     }),
-    loadKangurKnowledgeGraphStatusSnapshot().catch((error: unknown) => {
+    getKangurKnowledgeGraphStatusSnapshot().catch((error: unknown) => {
       const message =
         error instanceof Error ? error.message : 'Failed to load Kangur knowledge graph status.';
       errors['knowledgeGraphStatus'] = message;

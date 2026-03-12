@@ -305,10 +305,10 @@ describe('Admin Products List UI', () => {
     expect(screen.getAllByLabelText('Open row actions')).toHaveLength(2);
   });
 
-  it('renders accessible headers for utility columns', async () => {
+  it('renders accessible utility-column controls', async () => {
     renderProductTable();
 
-    expect(await screen.findByRole('columnheader', { name: 'Integrations' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Show trigger run pills' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument();
   });
 

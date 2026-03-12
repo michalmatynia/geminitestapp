@@ -36,6 +36,17 @@ describe('KangurAiTutorGuestIntroPanel', () => {
 
     expect(backdrop.className).toContain('bg-transparent');
     expect(backdrop.className).not.toContain('backdrop-blur');
+    const janekLabels = screen.getAllByText('Janek');
+
+    expect(janekLabels.at(-1)).toHaveClass(
+      '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+    );
+    expect(screen.getByText('Minimal tutor modal')).toHaveClass(
+      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-guest-intro-close')).toHaveClass(
+      '[color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+    );
 
     fireEvent.click(backdrop);
 

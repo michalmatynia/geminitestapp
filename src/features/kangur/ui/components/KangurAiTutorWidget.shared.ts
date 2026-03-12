@@ -4,6 +4,7 @@ import type {
   KangurAiTutorMotionPresetKind,
   KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
+import type { TutorSurface } from './KangurAiTutorWidget.types';
 
 export const EDGE_GAP = 16;
 export const AVATAR_SIZE = 56;
@@ -68,7 +69,17 @@ export type TutorBubblePlacementStrategy =
   | 'bottom-right'
   | 'bottom-left';
 
+export type TutorConversationFocus = {
+  assignmentId: string | null;
+  contentId: string | null;
+  id: string | null;
+  kind: KangurTutorAnchorKind | 'selection' | null;
+  label: string | null;
+  surface: TutorSurface | null;
+};
+
 export type ActiveTutorFocus = {
+  conversationFocus: TutorConversationFocus;
   rect: DOMRect | null;
   kind: KangurTutorAnchorKind | 'selection' | null;
   id: string | null;

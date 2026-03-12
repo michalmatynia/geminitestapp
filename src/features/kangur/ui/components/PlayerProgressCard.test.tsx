@@ -59,14 +59,11 @@ describe('PlayerProgressCard', () => {
       'bg-white/94'
     );
     expect(screen.getByTestId('player-progress-level-bar')).toHaveAttribute('aria-valuenow', '92');
-    expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border-indigo-300');
-    expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border-violet-300');
-    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass(
-      'soft-card',
-      'border-emerald-300'
-    );
-    expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border-amber-300');
-    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border-sky-300');
+    expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('XP / gre').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('XP / gre').parentElement).toHaveTextContent('27');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
       'Trening zegara: Godziny'

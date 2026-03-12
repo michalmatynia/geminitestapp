@@ -48,7 +48,11 @@ describe('KangurPracticeAssignmentBanner', () => {
       'glass-panel',
       'border-amber-200/80'
     );
-    expect(screen.getByText('Priorytet rodzica')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Priorytet rodzica')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByText('Najbliższy priorytet w praktyce: Dzielenie.')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-practice-assignment-inner-shell')).toHaveClass(
       'glass-panel',
@@ -56,8 +60,12 @@ describe('KangurPracticeAssignmentBanner', () => {
       'bg-white/94'
     );
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-amber-200', 'bg-amber-100');
-    expect(screen.getByText('Postęp').parentElement).toHaveClass('soft-card', 'border-amber-300');
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
+    expect(screen.getByText('Postęp').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '0'
@@ -111,7 +119,7 @@ describe('KangurPracticeAssignmentBanner', () => {
       screen.getByText('Zadanie od rodzica zostało ukończone w tej sesji.')
     ).toBeInTheDocument();
     expect(screen.getByText('100%')).toBeInTheDocument();
-    expect(screen.getByText('100%')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('100%')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'

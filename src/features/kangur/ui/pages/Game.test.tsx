@@ -9,12 +9,14 @@ import { describe, expect, it, vi } from 'vitest';
 const {
   useKangurGameRuntimeMock,
   homeHeroPropsMock,
+  assignmentSpotlightPropsMock,
   homeActionsPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
+  assignmentSpotlightPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
@@ -78,9 +80,20 @@ vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
-  KangurGameHomeHeroWidget: (props: { hideWhenScreenMismatch?: boolean }) => {
+  KangurGameHomeHeroWidget: (props: {
+    hideWhenScreenMismatch?: boolean;
+    showIntro?: boolean;
+    showAssignmentSpotlight?: boolean;
+  }) => {
     homeHeroPropsMock(props);
     return <div data-testid='kangur-home-hero-widget' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+  KangurAssignmentSpotlight: (props: { basePath: string; enabled?: boolean }) => {
+    assignmentSpotlightPropsMock(props);
+    return <div data-testid='kangur-assignment-spotlight-widget' />;
   },
 }));
 
@@ -177,16 +190,27 @@ describe('Game page', () => {
     },
   });
 
-  it('pins home hero and action widgets during the home-screen exit transition', () => {
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('home'));
+  it('pins home hero, action, and assignment widgets during the home-screen exit transition', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+    });
 
     render(<Game />);
 
     expect(screen.getByTestId('kangur-home-hero-widget')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-actions-widget')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-quest-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-assignment-spotlight-widget')).toBeInTheDocument();
     expect(homeHeroPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ hideWhenScreenMismatch: false })
+      expect.objectContaining({
+        hideWhenScreenMismatch: false,
+        showIntro: false,
+        showAssignmentSpotlight: false,
+      })
+    );
+    expect(assignmentSpotlightPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ basePath: '/kangur', enabled: true })
     );
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
@@ -199,21 +223,21 @@ describe('Game page', () => {
       xpToast: {
         xpGained: 44,
         newBadges: ['first_game'],
-        breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+        breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
         nextBadge: {
           emoji: '⭐',
-          name: 'Pol tysiaca XP',
+          name: 'Pół tysiąca XP',
           summary: '420/500 XP',
         },
         dailyQuest: {
-          title: '📅 Powtorka: Kalendarz',
+          title: '📅 Powtórka: Kalendarz',
           summary: '68% / 75% opanowania',
           xpAwarded: 55,
         },
         recommendation: {
           label: 'Misja dnia',
-          summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
-          title: '📅 Powtorka: Kalendarz',
+          summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
+          title: '📅 Powtórka: Kalendarz',
         },
         visible: true,
       },
@@ -224,21 +248,21 @@ describe('Game page', () => {
     expect(xpToastPropsMock).toHaveBeenCalledWith({
       xpGained: 44,
       newBadges: ['first_game'],
-      breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+      breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
       nextBadge: {
         emoji: '⭐',
-        name: 'Pol tysiaca XP',
+        name: 'Pół tysiąca XP',
         summary: '420/500 XP',
       },
       dailyQuest: {
-        title: '📅 Powtorka: Kalendarz',
+        title: '📅 Powtórka: Kalendarz',
         summary: '68% / 75% opanowania',
         xpAwarded: 55,
       },
       recommendation: {
         label: 'Misja dnia',
-        summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
-        title: '📅 Powtorka: Kalendarz',
+        summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
+        title: '📅 Powtórka: Kalendarz',
       },
       visible: true,
     });

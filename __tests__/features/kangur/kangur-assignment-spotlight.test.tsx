@@ -27,7 +27,7 @@ describe('KangurAssignmentSpotlight', () => {
           id: 'assignment-low',
           learnerKey: 'ada@example.com',
           title: 'Trening mieszany',
-          description: 'Krotki trening mieszany.',
+          description: 'Krótki trening mieszany.',
           priority: 'low',
           archived: false,
           target: {
@@ -53,8 +53,8 @@ describe('KangurAssignmentSpotlight', () => {
         {
           id: 'assignment-high',
           learnerKey: 'ada@example.com',
-          title: 'Powtorka dzielenia',
-          description: 'Wroc do lekcji dzielenia.',
+          title: 'Powtórka dzielenia',
+          description: 'Wróć do lekcji dzielenia.',
           priority: 'high',
           archived: false,
           target: {
@@ -70,7 +70,7 @@ describe('KangurAssignmentSpotlight', () => {
           progress: {
             status: 'not_started',
             percent: 0,
-            summary: 'Powtorki po przydziale: 0/1.',
+            summary: 'Powtórki po przydziale: 0/1.',
             attemptsCompleted: 0,
             attemptsRequired: 1,
             lastActivityAt: null,
@@ -80,8 +80,8 @@ describe('KangurAssignmentSpotlight', () => {
         {
           id: 'assignment-completed',
           learnerKey: 'ada@example.com',
-          title: 'Ukonczone zadanie',
-          description: 'To zadanie zostalo juz wykonane.',
+          title: 'Ukończone zadanie',
+          description: 'To zadanie zostało już wykonane.',
           priority: 'medium',
           archived: false,
           target: {
@@ -115,7 +115,7 @@ describe('KangurAssignmentSpotlight', () => {
     render(<KangurAssignmentSpotlight basePath='/kangur' enabled />);
 
     expect(screen.getByText('Zadanie od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
+    expect(screen.getByText('Powtórka dzielenia')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-assignment-spotlight-shell')).toHaveClass(
       'glass-panel',
       'border-white/78',
@@ -140,8 +140,8 @@ describe('KangurAssignmentSpotlight', () => {
       'w-full',
       'bg-slate-200'
     );
-    expect(screen.queryByText('Ukonczone zadanie')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
+    expect(screen.queryByText('Ukończone zadanie')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
     );

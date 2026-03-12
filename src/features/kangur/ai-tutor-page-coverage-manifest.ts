@@ -61,22 +61,6 @@ const createCoverageEntry = (
 export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageCoverageEntry[] =
   Object.freeze([
     createCoverageEntry({
-      id: 'game-home-hero',
-      pageKey: 'Game',
-      screenKey: 'home',
-      surface: 'game',
-      componentId: 'home-hero',
-      title: 'Hero startowy gry',
-      widget: 'KangurGameHomeHeroWidget',
-      sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
-      status: 'native_guide_ready',
-      anchorIdPrefix: 'kangur-game-home-hero',
-      focusKind: 'hero',
-      contentIdPrefixes: ['game:home'],
-      currentKnowledgeEntryIds: ['game-home-hero'],
-      notes: 'Sekcja ma dedykowany tutor anchor i wpis Mongo native guide.',
-    }),
-    createCoverageEntry({
       id: 'game-home-actions',
       pageKey: 'Game',
       screenKey: 'home',
@@ -483,6 +467,22 @@ export const KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST: readonly KangurAiTutorPageC
       focusKind: 'question',
       currentKnowledgeEntryIds: ['test-question'],
       notes: 'Pytanie testowe ma dedykowany anchor i wpis Mongo native guide.',
+    }),
+    createCoverageEntry({
+      id: 'tests-selection',
+      pageKey: 'Tests',
+      screenKey: 'suite',
+      surface: 'test',
+      componentId: 'selected-choice',
+      title: 'Wybrana odpowiedź testowa',
+      widget: 'KangurTestQuestionRenderer',
+      sourcePath: 'src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx',
+      status: 'native_guide_ready',
+      anchorIdPrefix: 'kangur-test-selection:',
+      focusKind: 'selection',
+      currentKnowledgeEntryIds: ['test-selection'],
+      notes:
+        'Zaznaczona odpowiedź ma własny tutor anchor, żeby Tutor-AI mógł odwoływać się do konkretnej karty wyboru przed pokazaniem wyniku.',
     }),
     createCoverageEntry({
       id: 'tests-review',

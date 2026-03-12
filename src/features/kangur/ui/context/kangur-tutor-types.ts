@@ -1,6 +1,7 @@
 'use client';
 
 export type KangurTutorAnchorKind =
+  | 'selection'
   | 'hero'
   | 'screen'
   | 'library'

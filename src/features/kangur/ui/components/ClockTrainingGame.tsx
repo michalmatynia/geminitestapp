@@ -1364,7 +1364,7 @@ export default function ClockTrainingGame({
           </>
         }
         progressAccent='indigo'
-        progressAriaLabel='Dokladnosc w treningu zegara'
+        progressAriaLabel='Dokładność w treningu zegara'
         progressAriaValueText={`${percent}% poprawnych ustawień`}
         progressDataTestId='clock-training-summary-progress-bar'
         title={<h3 className='text-2xl font-extrabold text-indigo-700'>Wynik: {score}/{tasks.length}</h3>}

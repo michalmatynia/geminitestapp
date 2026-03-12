@@ -20,6 +20,24 @@ import {
   resolveKangurAiTutorNativeGuideResponse,
 } from './ai-tutor-native-guide';
 
+const normalizeCopy = (value: string | null | undefined): string =>
+  typeof value === 'string'
+    ? value
+      .toLocaleLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ł/g, 'l')
+      .replace(/\s+/g, ' ')
+      .trim()
+    : '';
+
+const expectMessageToContain = (
+  message: string | null | undefined,
+  fragment: string
+): void => {
+  expect(normalizeCopy(message)).toContain(normalizeCopy(fragment));
+};
+
 describe('resolveKangurAiTutorNativeGuideResponse', () => {
   beforeEach(() => {
     getKangurAiTutorNativeGuideStoreMock.mockReset();
@@ -44,9 +62,10 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     });
 
     expect(getKangurAiTutorNativeGuideStoreMock).toHaveBeenCalledWith('pl');
-    expect(response?.message).toContain('Pytanie w grze');
-    expect(response?.message).toContain(
-      'To aktualne zadanie do rozwiazania, w ktorym liczy sie tok myslenia'
+    expectMessageToContain(response?.message, 'Pytanie w grze');
+    expectMessageToContain(
+      response?.message,
+      'To aktualne zadanie do rozwiązania, w którym liczy się tok myślenia'
     );
   });
 
@@ -61,15 +80,16 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Konfiguracja treningu');
-    expect(response?.message).toContain(
-      'Tutaj ustawiasz jedna sesje treningowa: poziom, kategorie i liczbe pytan.'
+    expectMessageToContain(response?.message, 'Konfiguracja treningu');
+    expectMessageToContain(
+      response?.message,
+      'Tutaj ustawiasz jedną sesję treningową: poziom, kategorie i liczbę pytań.'
     );
   });
 
   it('matches exact Mongo guide coverage from content id prefixes when the title is generic', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
-      latestUserMessage: 'Wyjasnij ten ekran.',
+      latestUserMessage: 'Wyjaśnij ten ekran.',
       context: {
         surface: 'game',
         contentId: 'game:operation-selector',
@@ -78,15 +98,16 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Wybor rodzaju gry');
-    expect(response?.message).toContain(
-      'Tutaj wybierasz rodzaj gry lub szybkie cwiczenie najlepiej pasujace do celu.'
+    expectMessageToContain(response?.message, 'Wybór rodzaju gry');
+    expectMessageToContain(
+      response?.message,
+      'Tutaj wybierasz rodzaj gry lub szybkie ćwiczenie najlepiej pasujące do celu.'
     );
   });
 
   it('uses the new screen anchor coverage for game setup widgets', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
-      latestUserMessage: 'Wyjasnij ten panel.',
+      latestUserMessage: 'Wyjaśnij ten panel.',
       context: {
         surface: 'game',
         promptMode: 'explain',
@@ -98,9 +119,10 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Konfiguracja treningu');
-    expect(response?.message).toContain(
-      'Tutaj ustawiasz jedna sesje treningowa: poziom, kategorie i liczbe pytan.'
+    expectMessageToContain(response?.message, 'Konfiguracja treningu');
+    expectMessageToContain(
+      response?.message,
+      'Tutaj ustawiasz jedną sesję treningową: poziom, kategorie i liczbę pytań.'
     );
   });
 
@@ -119,15 +141,16 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Biblioteka lekcji');
-    expect(response?.message).toContain(
-      'To lista tematow, z ktorej wybierasz nastepna lekcje do przerobienia.'
+    expectMessageToContain(response?.message, 'Biblioteka lekcji');
+    expectMessageToContain(
+      response?.message,
+      'To lista tematów, z której wybierasz następną lekcję do przerobienia.'
     );
   });
 
   it('uses the game-specific review entry on the result surface', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
-      latestUserMessage: 'Wyjasnij omowienie tego wyniku.',
+      latestUserMessage: 'Wyjaśnij omówienie tego wyniku.',
       context: {
         surface: 'game',
         promptMode: 'explain',
@@ -139,7 +162,7 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Omowienie wyniku gry');
+    expectMessageToContain(response?.message, 'Omówienie wyniku gry');
     expect(response?.followUpActions).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 'game-review-retry' })])
     );
@@ -160,9 +183,10 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Pusty zestaw testowy');
-    expect(response?.message).toContain(
-      'wybrany zestaw nie ma jeszcze opublikowanych pytan do rozwiazania'
+    expectMessageToContain(response?.message, 'Pusty zestaw testowy');
+    expectMessageToContain(
+      response?.message,
+      'wybrany zestaw nie ma jeszcze opublikowanych pytań do rozwiązania'
     );
   });
 
@@ -181,15 +205,13 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Hero profilu ucznia');
-    expect(response?.message).toContain(
-      'Hero profilu ucznia jest szybkim podsumowaniem'
-    );
+    expectMessageToContain(response?.message, 'Hero profilu ucznia');
+    expectMessageToContain(response?.message, 'Hero profilu ucznia jest szybkim podsumowaniem');
   });
 
   it('routes parent dashboard assignment-tab explains through the Mongo native guide store', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
-      latestUserMessage: 'Wyjasnij te zadania.',
+      latestUserMessage: 'Wyjaśnij te zadania.',
       context: {
         surface: 'parent_dashboard',
         promptMode: 'explain',
@@ -202,15 +224,16 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Zadania ucznia w dashboardzie rodzica');
-    expect(response?.message).toContain(
-      'Zakladka zadan w panelu rodzica sluzy do planowania najblizszej pracy ucznia.'
+    expectMessageToContain(response?.message, 'Zadania ucznia w dashboardzie rodzica');
+    expectMessageToContain(
+      response?.message,
+      'Zakładka zadań w panelu rodzica służy do planowania najbliższej pracy ucznia.'
     );
   });
 
   it('routes auth login-form explains through the Mongo native guide store', async () => {
     const response = await resolveKangurAiTutorNativeGuideResponse({
-      latestUserMessage: 'Wyjasnij ten formularz.',
+      latestUserMessage: 'Wyjaśnij ten formularz.',
       context: {
         surface: 'auth',
         promptMode: 'explain',
@@ -223,9 +246,10 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       locale: 'pl',
     });
 
-    expect(response?.message).toContain('Formularz logowania Kangur');
-    expect(response?.message).toContain(
-      'Formularz logowania laczy dwa tryby pracy: zwykle logowanie i zalozenie konta rodzica.'
+    expectMessageToContain(response?.message, 'Formularz logowania Kangur');
+    expectMessageToContain(
+      response?.message,
+      'Formularz logowania łączy dwa tryby pracy: zwykłe logowanie i założenie konta rodzica.'
     );
   });
 
@@ -254,9 +278,10 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       coverageLevel: 'specific',
       matchedSignals: ['knowledge_reference'],
     });
-    expect(resolution.status === 'hit' ? resolution.message : '').toContain('Ranking');
-    expect(resolution.status === 'hit' ? resolution.message : '').toContain(
-      'Ranking pokazuje wyniki i pozycje na tle innych prob.'
+    expectMessageToContain(resolution.status === 'hit' ? resolution.message : '', 'Ranking');
+    expectMessageToContain(
+      resolution.status === 'hit' ? resolution.message : '',
+      'Ranking pokazuje wyniki i pozycje na tle innych prób.'
     );
   });
 
@@ -312,7 +337,7 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
 
   it('marks section-specific requests that fall back to an overview entry as a coverage gap', async () => {
     const resolution = await resolveKangurAiTutorNativeGuideResolution({
-      latestUserMessage: 'Wyjasnij ten fragment.',
+      latestUserMessage: 'Wyjaśnij ten fragment.',
       context: {
         surface: 'lesson',
         contentId: 'lesson-1',

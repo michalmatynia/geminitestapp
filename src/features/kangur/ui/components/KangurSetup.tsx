@@ -234,7 +234,7 @@ export default function KangurSetup({
                       </KangurStatusChip>
                       {!edition.available ? (
                         <KangurStatusChip accent='slate' size='sm'>
-                          <Lock className='h-3 w-3' /> Wkrotce dostepna
+                          <Lock className='h-3 w-3' /> Wkrótce dostępna
                         </KangurStatusChip>
                       ) : null}
                     </span>
@@ -247,7 +247,7 @@ export default function KangurSetup({
             accent='amber'
             align='left'
             className='w-full text-left'
-            description='Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania sprawdzaja logiczne myślenie i umiejetnosci matematyczne.'
+            description='Kangur Matematyczny to ogólnopolski konkurs dla uczniów szkół podstawowych. Zadania sprawdzają logiczne myślenie i umiejętności matematyczne.'
             label='O konkursie Kangur'
             padding='md'
           />

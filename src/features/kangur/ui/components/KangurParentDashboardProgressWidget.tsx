@@ -35,7 +35,7 @@ export function KangurParentDashboardProgressWidget({
           progressContent?.summary ??
           'Sprawdz rytm nauki, poziom, misje dnia i glowny kierunek dalszej pracy.'
         }
-        title={progressContent?.title ?? 'Postep ucznia'}
+        title={progressContent?.title ?? 'Postęp ucznia'}
         titleAs='h2'
         titleClassName='text-lg font-bold tracking-[-0.02em]'
       />

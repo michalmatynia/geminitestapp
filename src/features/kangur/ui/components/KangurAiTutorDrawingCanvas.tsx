@@ -215,7 +215,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               aria-label={color}
               className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform ${
                 selectedColor === color && !isEraser
-                  ? 'scale-110 border-amber-500'
+                  ? 'scale-110 kangur-chat-accent-border'
                   : '[border-color:var(--kangur-soft-card-border)] hover:scale-105'
               }`}
               style={{ backgroundColor: color }}
@@ -294,7 +294,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleClear}
         >

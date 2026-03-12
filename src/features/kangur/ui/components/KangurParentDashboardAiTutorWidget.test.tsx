@@ -175,6 +175,19 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     vi.mocked(queryClientMock.invalidateQueries).mockResolvedValue(undefined);
   });
 
+  it('renders the fallback state when no learner is active', () => {
+    runtimeState.value = {
+      activeLearner: null,
+      activeTab: 'ai-tutor',
+      canAccessDashboard: true,
+    };
+
+    render(<KangurParentDashboardAiTutorWidget />);
+
+    expect(screen.getByText('Wybierz ucznia, aby skonfigurować AI Tutora.')).toBeInTheDocument();
+    expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
+  });
+
   it('saves only learner guardrails from the parent dashboard', async () => {
     render(<KangurParentDashboardAiTutorWidget />);
     const [
@@ -358,7 +371,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveTextContent(
-      'Wspierajacy'
+      repairKangurPolishCopy('Wspierajacy')
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveClass(
       '[color:var(--kangur-page-text)]'
@@ -375,7 +388,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     const { rerender } = render(<KangurParentDashboardAiTutorWidget />);
 
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveTextContent(
-      'Wspierajacy'
+      repairKangurPolishCopy('Wspierajacy')
     );
 
     runtimeState.value = {
@@ -398,14 +411,14 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     expect(screen.getByText('AI Tutor dla Ola')).toBeInTheDocument();
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveTextContent(
-      'Refleksyjny'
+      repairKangurPolishCopy('Refleksyjny')
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-current')).toHaveAttribute(
       'data-mood-id',
       'reflective'
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-baseline')).toHaveTextContent(
-      'Cierpliwy'
+      repairKangurPolishCopy('Cierpliwy')
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-confidence')).toHaveTextContent(
       '58%'

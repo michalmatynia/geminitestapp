@@ -30,11 +30,6 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
     summary:
       'Przejdź do lekcji, szybkiej gry, treningu mieszanego lub Kangura Matematycznego.',
   },
-  'game-home-hero': {
-    title: 'Twój postęp',
-    summary:
-      'Sprawdź najbliższy kamień milowy, polecony kierunek i zadania, które warto domknąć dzisiaj.',
-  },
   'game-home-leaderboard': {
     title: 'Najlepsze wyniki',
     summary:
@@ -135,6 +130,11 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   'tests-question': {
     title: 'Pytanie testowe',
     summary: 'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.',
+  },
+  'tests-selection': {
+    title: 'Twój zaznaczony wybór',
+    summary:
+      'To jest odpowiedź wybrana przed sprawdzeniem wyniku. Tutor może wyjaśnić, co oznacza ten wybór i na co spojrzeć jeszcze raz.',
   },
   'tests-review': {
     title: 'Omówienie odpowiedzi',

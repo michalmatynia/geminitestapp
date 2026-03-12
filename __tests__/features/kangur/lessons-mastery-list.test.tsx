@@ -229,11 +229,12 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
     expect(screen.getByText('To zadanie ma priorytet od rodzica.')).toBeInTheDocument();
-    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
+    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie zamknięte')).toBeInTheDocument();
     expect(
-      screen.getByText('Zadanie od rodzica zostało już wykonane. Powtórki po przydziale: 1/1.')
+      screen.getByText(/Zadanie od rodzica zostało już wykonane\./)
     ).toBeInTheDocument();
+    expect(screen.getByText(/Powtórki po przydziale: 1\/1\./)).toBeInTheDocument();
     expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();

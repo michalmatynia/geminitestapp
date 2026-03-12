@@ -16,6 +16,7 @@ import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/componen
 import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
 import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
 import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
+import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
@@ -57,14 +58,14 @@ const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
 };
 
 const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
-  home: 'Wybierz sposob ćwiczenia i rozpocznij kolejna sesje.',
+  home: 'Wybierz sposób ćwiczenia i rozpocznij kolejną sesję.',
   training: 'Skonfiguruj trening mieszany i dobierz zakres pytań.',
-  kangur_setup: 'Przygotuj sesje Kangura Matematycznego.',
-  kangur: 'Rozwiazuj zadania Kangura Matematycznego krok po kroku.',
-  calendar_quiz: 'Cwicz odczytywanie dat i zależności w kalendarzu.',
-  geometry_quiz: 'Cwicz figury, ksztalty i zależności przestrzenne.',
+  kangur_setup: 'Przygotuj sesję Kangura Matematycznego.',
+  kangur: 'Rozwiązuj zadania Kangura Matematycznego krok po kroku.',
+  calendar_quiz: 'Ćwicz odczytywanie dat i zależności w kalendarzu.',
+  geometry_quiz: 'Ćwicz figury, kształty i zależności przestrzenne.',
   operation: 'Wybierz rodzaj matematycznej gry i poziom trudności.',
-  playing: 'Rozwiaz aktualne pytanie bez podpowiedzi z gotowa odpowiedzia.',
+  playing: 'Rozwiąż aktualne pytanie bez podpowiedzi z gotową odpowiedzią.',
   result: 'Sprawdź wynik gry i zdecyduj, co ćwiczyć dalej.',
 };
 
@@ -90,7 +91,6 @@ function GameContent(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
-  const homeHeroRef = useRef<HTMLDivElement | null>(null);
   const homeActionsRef = useRef<HTMLDivElement | null>(null);
   const homeQuestRef = useRef<HTMLElement | null>(null);
   const homeAssignmentsRef = useRef<HTMLElement | null>(null);
@@ -212,18 +212,6 @@ function GameContent(): React.JSX.Element {
     ready: isGamePageReady,
   });
 
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-hero',
-    kind: 'hero',
-    ref: homeHeroRef,
-    surface: 'game',
-    enabled: screen === 'home',
-    priority: 130,
-    metadata: {
-      contentId: 'game:home',
-      label: 'Wprowadzenie do gry',
-    },
-  });
   useKangurTutorAnchor({
     id: 'kangur-game-home-actions',
     kind: 'home_actions',
@@ -453,19 +441,27 @@ function GameContent(): React.JSX.Element {
                 'home',
                 'flex w-full flex-col items-center gap-8 sm:gap-10',
                 <>
+                  {canAccessParentAssignments ? (
+                    <section
+                      className='w-full max-w-[900px]'
+                      aria-labelledby='kangur-home-parent-assignment-heading'
+                    >
+                      <h3 id='kangur-home-parent-assignment-heading' className='sr-only'>
+                        Zadanie od rodzica
+                      </h3>
+                      <KangurAssignmentSpotlight
+                        basePath={basePath}
+                        enabled={canAccessParentAssignments}
+                      />
+                    </section>
+                  ) : null}
                   <section
                     className='w-full max-w-[560px] space-y-4 sm:space-y-5'
-                    aria-labelledby='kangur-home-start-heading'
+                    aria-labelledby='kangur-home-actions-heading'
                   >
-                    <div ref={homeHeroRef}>
-                      <h3 id='kangur-home-start-heading' className='sr-only'>
-                        Wprowadzenie do gry
-                      </h3>
-                      <KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />
-                    </div>
                     <div ref={homeActionsRef} aria-labelledby='kangur-home-actions-heading'>
                       <h3 id='kangur-home-actions-heading' className='sr-only'>
-                    Rozpocznij gre
+                        Rozpocznij grę
                       </h3>
                       <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                     </div>
@@ -482,6 +478,20 @@ function GameContent(): React.JSX.Element {
                     <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
                   </section>
 
+                  <section
+                    className='w-full max-w-[900px]'
+                    aria-labelledby='kangur-home-hero-heading'
+                  >
+                    <h3 id='kangur-home-hero-heading' className='sr-only'>
+                      Podsumowanie postępu
+                    </h3>
+                    <KangurGameHomeHeroWidget
+                      hideWhenScreenMismatch={false}
+                      showIntro={false}
+                      showAssignmentSpotlight={false}
+                    />
+                  </section>
+
                   {canAccessParentAssignments ? (
                     <section
                       ref={homeAssignmentsRef}
@@ -489,7 +499,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-assignments-heading'
                     >
                       <h3 id='kangur-home-assignments-heading' className='sr-only'>
-                      Priorytetowe zadania
+                        Priorytetowe zadania
                       </h3>
                       <KangurPriorityAssignments
                         basePath={basePath}
@@ -505,7 +515,7 @@ function GameContent(): React.JSX.Element {
                     aria-labelledby='kangur-home-progress-heading'
                   >
                     <h3 id='kangur-home-progress-heading' className='sr-only'>
-                    Ranking i postep
+                      Ranking i postęp
                     </h3>
                     <div ref={homeLeaderboardRef} className='order-2 xl:order-1'>
                       <Leaderboard />

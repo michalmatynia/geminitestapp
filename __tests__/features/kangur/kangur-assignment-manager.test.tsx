@@ -232,8 +232,8 @@ describe('KangurAssignmentManager', () => {
         {
           id: 'assignment-3',
           learnerKey: 'ada@example.com',
-          title: 'Powtorka: Zegar',
-          description: 'Powtorz lekcje zegara.',
+          title: 'Powtórka: Zegar',
+          description: 'Powtórz lekcję zegara.',
           priority: 'low',
           archived: false,
           target: {
@@ -249,7 +249,7 @@ describe('KangurAssignmentManager', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtorki po przydziale: 1/1.',
+            summary: 'Powtórki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T10:10:00.000Z',
@@ -292,8 +292,8 @@ describe('KangurAssignmentManager', () => {
         {
           id: 'assignment-1',
           learnerKey: 'ada@example.com',
-          title: 'Powtorka: Zegar',
-          description: 'Powtorz lekcje zegara.',
+          title: 'Powtórka: Zegar',
+          description: 'Powtórz lekcję zegara.',
           priority: 'low',
           archived: false,
           target: {
@@ -309,7 +309,7 @@ describe('KangurAssignmentManager', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtorki po przydziale: 1/1.',
+            summary: 'Powtórki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T10:10:00.000Z',

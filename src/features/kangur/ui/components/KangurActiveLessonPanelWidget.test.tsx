@@ -51,7 +51,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       },
       activeLessonAssignment: {
         id: 'assignment-1',
-        title: 'Powtorz dodawanie',
+        title: 'Powtórz dodawanie',
         description: 'Skup sie na prostych sumach.',
         priority: 'high',
         archived: false,
@@ -68,7 +68,7 @@ describe('KangurActiveLessonPanelWidget', () => {
         progress: {
           status: 'in_progress',
           percent: 20,
-          summary: 'Powtorki: 0/1',
+          summary: 'Powtórki: 0/1',
           attemptsCompleted: 0,
           attemptsRequired: 1,
           lastActivityAt: null,
@@ -104,7 +104,7 @@ describe('KangurActiveLessonPanelWidget', () => {
     expect(screen.getByTestId('active-lesson-widget-parent-priority-chip')).toHaveTextContent(
       'Priorytet Rodzica'
     );
-    expect(screen.queryByText('Powtorz dodawanie')).toBeNull();
+    expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Skup sie na prostych sumach.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
@@ -126,7 +126,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       activeLessonAssignment: null,
       completedActiveLessonAssignment: {
         id: 'assignment-2',
-        title: 'Powtorz dodawanie',
+        title: 'Powtórz dodawanie',
         description: 'Zakonczone.',
         priority: 'medium',
         archived: false,
@@ -143,7 +143,7 @@ describe('KangurActiveLessonPanelWidget', () => {
         progress: {
           status: 'completed',
           percent: 100,
-          summary: 'Powtorki: 1/1',
+          summary: 'Powtórki: 1/1',
           attemptsCompleted: 1,
           attemptsRequired: 1,
           lastActivityAt: '2026-03-08T10:00:00.000Z',
@@ -165,9 +165,9 @@ describe('KangurActiveLessonPanelWidget', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-widget-parent-completed-chip')).toHaveTextContent(
-      'Ukonczone dla rodzica'
+      'Ukończone dla rodzica'
     );
-    expect(screen.queryByText('Powtorz dodawanie')).toBeNull();
+    expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Zakonczone.')).toBeNull();
   });
 

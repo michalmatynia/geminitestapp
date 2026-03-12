@@ -57,7 +57,7 @@ import { KangurThemeSettingsPanel } from './components/KangurThemeSettingsPanel'
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
   'A bright classroom welcomes curious minds. Here is a short narration sample to verify the chosen voice.';
-const TEST_NARRATOR_PROBE_TEXT = 'To jest krotki test narratora Kangur.';
+const TEST_NARRATOR_PROBE_TEXT = 'To jest krótki test narratora Kangur.';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';

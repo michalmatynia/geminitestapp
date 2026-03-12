@@ -222,9 +222,7 @@ export function KangurAiTutorPanelChrome({
     shouldUseMinimalPanelShell
       ? 'kangur-chat-panel-shell-minimal kangur-chat-panel-shadow-minimal'
       : 'kangur-chat-panel-shadow-default',
-    hasSnapPreview
-      ? 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-transparent [box-shadow:0_0_0_1px_rgba(251,191,36,0.22),0_28px_56px_-28px_rgba(217,119,6,0.45),inset_0_1px_0_rgba(255,255,255,0.6)]'
-      : null,
+    hasSnapPreview ? 'kangur-chat-panel-snap-preview' : null,
     isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
     isCompactDockedTutorPanel ? 'kangur-chat-panel-shell-compact' : null,
     !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? 'kangur-chat-panel-shell-sheet' : null
@@ -318,8 +316,8 @@ export function KangurAiTutorPanelChrome({
                 className={cn(
                   'fixed inset-0 cursor-pointer',
                   isAskModalMode
-                    ? 'z-[76] bg-slate-900/32 backdrop-blur-[2px]'
-                    : 'z-[62] bg-slate-900/18'
+                    ? 'z-[76] kangur-chat-backdrop-strong backdrop-blur-[2px]'
+                    : 'z-[62] kangur-chat-backdrop'
                 )}
                 onClick={onBackdropClose}
               />

@@ -260,7 +260,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
     ? formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
       learnerName: activeLearner.displayName,
     })
-    : null;
+    : undefined;
   const sectionTitle = aiTutorSectionContent?.title ?? 'Tutor-AI dla rodzica';
   const sectionSummary = aiTutorSectionContent?.summary ?? tutorContent.parentDashboard.subtitle;
 

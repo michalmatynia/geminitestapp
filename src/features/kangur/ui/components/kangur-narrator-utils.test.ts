@@ -18,8 +18,8 @@ describe('extractNarrationTextFromElement', () => {
           <button type="button">Wyślij</button>
         </div>
         <div>
-          <span>Powtorz lekcje: Dodawanie</span>
-          <button type="button">Otworz lekcje</button>
+          <span>Powtórz lekcję: Dodawanie</span>
+          <button type="button">Otwórz lekcję</button>
         </div>
         <input value="Ukryte pole" />
         <svg><text>Ikona</text></svg>
@@ -30,10 +30,10 @@ describe('extractNarrationTextFromElement', () => {
 
     expect(result).toContain('Pomocnik');
     expect(result).toContain('To jest tekst, który narrator powinien przeczytać.');
-    expect(result).toContain('Powtorz lekcje: Dodawanie');
+    expect(result).toContain('Powtórz lekcję: Dodawanie');
     expect(result).not.toContain('Czytaj');
     expect(result).not.toContain('Wyślij');
-    expect(result).not.toContain('Otworz lekcje');
+    expect(result).not.toContain('Otwórz lekcję');
     expect(result).not.toContain('Ukryte pole');
     expect(result).not.toContain('Ikona');
   });

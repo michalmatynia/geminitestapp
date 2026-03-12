@@ -119,19 +119,19 @@ describe('KangurAiTutorMessageList', () => {
                 mode: 'hint_ladder',
                 label: 'Jeden trop',
                 description:
-                  'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+                  'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
                 rationale:
-                  'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+                  'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
               },
               followUpActions: [
                 {
                   id: 'recommendation:strengthen_lesson_mastery',
-                  label: 'Otworz lekcje',
+                  label: 'Otwórz lekcję',
                   page: 'Lessons',
                   query: {
                     focus: 'adding',
                   },
-                  reason: 'Powtorz lekcje: Dodawanie',
+                  reason: 'Powtórz lekcję: Dodawanie',
                 },
               ],
               sources: [
@@ -157,15 +157,15 @@ describe('KangurAiTutorMessageList', () => {
     );
     expect(screen.getByText('Jeden trop')).toBeInTheDocument();
     expect(
-      screen.getByText('Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.')
+      screen.getByText('Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.')
     ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
-    expect(screen.getByText('Powtorz lekcje: Dodawanie').parentElement).toHaveClass(
+    expect(screen.getByText('Powtórz lekcję: Dodawanie').parentElement).toHaveClass(
       'kangur-chat-surface-warm',
       'kangur-chat-surface-warm-shadow'
     );
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=adding'
     );
@@ -286,9 +286,7 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByText('Jak mam to policzyc?')).toHaveClass(
       'tutor-user-bubble',
       'kangur-chat-bubble',
-      'kangur-chat-padding-sm',
-      'border-orange-400/60',
-      'text-white'
+      'kangur-chat-padding-sm'
     );
   });
 
@@ -299,7 +297,7 @@ describe('KangurAiTutorMessageList', () => {
           messages: [
             {
               role: 'user',
-              content: 'Wyjasnij to rysunkiem.',
+              content: 'Wyjaśnij to rysunkiem.',
               artifacts: [
                 {
                   type: 'user_drawing',
@@ -310,12 +308,12 @@ describe('KangurAiTutorMessageList', () => {
             },
             {
               role: 'assistant',
-              content: 'Policz najpierw lewa pare, potem prawa.',
+              content: 'Policz najpierw lewą parę, potem prawą.',
               artifacts: [
                 {
                   type: 'assistant_drawing',
                   title: 'Dwie pary',
-                  caption: 'Kazda para ma po dwa elementy.',
+                  caption: 'Każda para ma po dwa elementy.',
                   alt: 'Dwie pary kropek ustawione obok siebie.',
                   svgContent:
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
@@ -342,7 +340,7 @@ describe('KangurAiTutorMessageList', () => {
       'kangur-chat-surface-soft-shadow'
     );
     expect(screen.getByText('Dwie pary')).toBeInTheDocument();
-    expect(screen.getByText('Kazda para ma po dwa elementy.')).toBeInTheDocument();
+    expect(screen.getByText('Każda para ma po dwa elementy.')).toBeInTheDocument();
     expect(
       screen.getByLabelText('Dwie pary kropek ustawione obok siebie.')
     ).toHaveClass('kangur-chat-inset', '[background:var(--kangur-soft-card-background)]');
@@ -351,11 +349,11 @@ describe('KangurAiTutorMessageList', () => {
   it('locks assistant feedback controls after feedback was already submitted', () => {
     const message: TutorRenderedMessage = {
       role: 'assistant',
-      content: 'Sprobuj najpierw policzyc dziesiatke.',
+      content: 'Spróbuj najpierw policzyć dziesiątkę.',
       coachingFrame: {
         mode: 'hint_ladder',
         label: 'Jeden trop',
-        description: 'Daj tylko jeden maly krok.',
+        description: 'Daj tylko jeden mały krok.',
       },
     };
     const feedbackKey = getAssistantMessageFeedbackKey('session-1', 0, message);

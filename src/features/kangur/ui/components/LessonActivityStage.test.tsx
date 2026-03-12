@@ -32,7 +32,7 @@ describe('LessonActivityStage', () => {
 
     expect(screen.getByTestId('lesson-activity-secret-indicator')).toHaveAttribute(
       'aria-label',
-      'Otworz sekretny panel'
+      'Otwórz sekretny panel'
     );
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
@@ -41,13 +41,13 @@ describe('LessonActivityStage', () => {
     render(
       <LessonActivityStage
         accent='indigo'
-        description='Trenuj pelne godziny i krotka wskazowke'
+        description='Trenuj pełne godziny i krótką wskazówkę'
         headerTestId='lesson-activity-header'
         icon='🕐'
         onBack={vi.fn()}
         sectionHeader={{
           title: 'Ćwiczenie: Godziny',
-          description: 'Trenuj pelne godziny i krotka wskazowke',
+          description: 'Trenuj pełne godziny i krótką wskazówkę',
           emoji: '🕐',
           isGame: true,
         }}
@@ -66,7 +66,7 @@ describe('LessonActivityStage', () => {
     render(
       <LessonActivityStage
         accent='indigo'
-        description='Przejdz przez szybkie zadania.'
+        description='Przejdź przez szybkie zadania.'
         headerTestId='lesson-activity-header'
         icon='🕐'
         onBack={vi.fn()}
@@ -79,7 +79,7 @@ describe('LessonActivityStage', () => {
 
     expect(screen.getByTestId('lesson-activity-header')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ćwiczenia' })).toBeInTheDocument();
-    expect(screen.getByText('Przejdz przez szybkie zadania.')).toHaveClass(
+    expect(screen.getByText('Przejdź przez szybkie zadania.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
   });

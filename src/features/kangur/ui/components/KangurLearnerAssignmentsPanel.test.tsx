@@ -102,18 +102,18 @@ describe('KangurLearnerAssignmentsPanel', () => {
     );
     expect(
       screen.getByText(
-        'Sprawdź, co jest nadal aktywne, ile zadań masz już za soba i co było ostatnim sukcesem.'
+        'Sprawdź, co jest nadal aktywne, ile zadań masz już za sobą i co było ostatnim sukcesem.'
       )
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukonczonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Historia ukończonych zadań')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('assignments-list-Aktywne zadania od rodzica')).getByText(
         'Dodawanie'
       )
     ).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('assignments-list-Historia ukonczonych zadań')).getByText('Zegar')
+      within(screen.getByTestId('assignments-list-Historia ukończonych zadań')).getByText('Zegar')
     ).toBeInTheDocument();
   });
 

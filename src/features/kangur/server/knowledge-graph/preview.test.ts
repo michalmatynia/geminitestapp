@@ -20,6 +20,8 @@ describe('buildKangurKnowledgeGraphPreviewResult', () => {
       lexicalHitCount: 1,
       vectorHitCount: 0,
       vectorRecallAttempted: false,
+      querySeed: 'Jak się zalogować?',
+      normalizedQuerySeed: 'jak sie zalogowac',
       tokens: ['zalogowac'],
       instructions: 'Kangur website-help graph context',
       sources: [],
@@ -89,10 +91,14 @@ describe('buildKangurKnowledgeGraphPreviewResult', () => {
           lexicalHitCount: 1,
           vectorHitCount: 0,
           vectorRecallAttempted: false,
+          tokenCount: 1,
+          normalizedQuerySeed: 'jak sie zalogowac',
           websiteHelpTargetNodeId: 'flow:kangur:sign-in',
         }),
         retrieval: expect.objectContaining({
           status: 'hit',
+          querySeed: 'Jak się zalogować?',
+          normalizedQuerySeed: 'jak sie zalogowac',
           websiteHelpTarget: expect.objectContaining({
             nodeId: 'flow:kangur:sign-in',
           }),
@@ -138,6 +144,8 @@ describe('buildKangurKnowledgeGraphPreviewResult', () => {
         lexicalHitCount: 1,
         vectorHitCount: 0,
         vectorRecallAttempted: false,
+        tokenCount: 1,
+        normalizedQuerySeed: 'jak sie zalogowac',
         websiteHelpTargetNodeId: 'flow:kangur:sign-in',
       },
     });

@@ -165,8 +165,8 @@ const buildKangurTestSelectedChoiceFactsFromContext = (
     selectedChoiceLabel,
     ...(selectedChoiceText ? { selectedChoiceText } : {}),
     selectedChoiceSummary: selectedChoiceText
-      ? `Wybrana odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
-      : `Wybrana odpowiedz: ${selectedChoiceLabel}.`,
+      ? `Wybrana odpowiedź: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+      : `Wybrana odpowiedź: ${selectedChoiceLabel}.`,
   };
 };
 const truncate = (value: string, maxLength: number): string =>
@@ -206,7 +206,7 @@ const toAssignmentAction = (
 } => {
   if (assignment.target.type === 'lesson') {
     return {
-      actionLabel: 'Otworz lekcje',
+      actionLabel: 'Otwórz lekcję',
       actionPage: 'Lessons',
       actionQuery: {
         focus: assignment.target.lessonComponentId,
@@ -343,13 +343,13 @@ const buildLessonNavigationSummary = (
   nextLesson: KangurLesson | null
 ): string | null => {
   if (previousLesson && nextLesson) {
-    return `Bez wracania do listy mozesz cofnac sie do ${previousLesson.title} albo przejsc dalej do ${nextLesson.title}.`;
+    return `Bez wracania do listy możesz cofnąć się do ${previousLesson.title} albo przejść dalej do ${nextLesson.title}.`;
   }
   if (previousLesson) {
-    return `Bez wracania do listy mozesz cofnac sie do ${previousLesson.title}.`;
+    return `Bez wracania do listy możesz cofnąć się do ${previousLesson.title}.`;
   }
   if (nextLesson) {
-    return `Bez wracania do listy mozesz przejsc dalej do ${nextLesson.title}.`;
+    return `Bez wracania do listy możesz przejść dalej do ${nextLesson.title}.`;
   }
   return null;
 };
@@ -912,7 +912,7 @@ export const buildKangurTestContextRuntimeDocument = async (input: {
   const questionProgressLabel =
     currentQuestionIndex >= 0
       ? `Pytanie ${currentQuestionIndex + 1}/${questions.length}`
-      : `Ukonczono ${questions.length}/${questions.length}`;
+      : `Ukończono ${questions.length}/${questions.length}`;
   const answerRevealed = input.answerRevealed ?? false;
   return {
     id: `runtime:kangur:test:${input.learnerId}:${suite.id}:${input.questionId?.trim() || 'summary'}:${answerRevealed ? 'revealed' : 'active'}`,

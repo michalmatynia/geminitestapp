@@ -35,7 +35,6 @@ export const KANGUR_WIDGET_IDS = [
   'game-screen',
   'game-navigation',
   'game-xp-toast',
-  'game-home-hero',
   'game-home-actions',
   'game-training-setup',
   'game-kangur-setup',
@@ -77,7 +76,6 @@ export const KANGUR_WIDGET_OPTIONS: ReadonlyArray<{ label: string; value: Kangur
   { label: 'Game Screen', value: 'game-screen' },
   { label: 'Game Navigation', value: 'game-navigation' },
   { label: 'Game XP Toast', value: 'game-xp-toast' },
-  { label: 'Game Home Hero', value: 'game-home-hero' },
   { label: 'Game Home Actions', value: 'game-home-actions' },
   { label: 'Game Training Setup', value: 'game-training-setup' },
   { label: 'Game Kangur Setup', value: 'game-kangur-setup' },
@@ -685,14 +683,14 @@ const makeGamePracticeAssignmentPanel = (input: { id: string }): BlockInstance =
           fallback: '0',
         },
       }),
-      makeTextBlock(`${input.id}-progress-label`, '0% ukonczono', {
+      makeTextBlock(`${input.id}-progress-label`, '0% ukończono', {
         fontSize: 14,
         textColor: '#9a3412',
         connection: {
           enabled: true,
           source: 'kangur',
           path: 'game.activePracticeAssignmentBanner.progressLabel',
-          fallback: '0% ukonczono',
+          fallback: '0% ukończono',
         },
       }),
       makeButtonBlock(`${input.id}-button`, 'Kontynuuj zadanie', {
@@ -927,7 +925,7 @@ const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
           }),
           makeTextBlock(
             `${input.id}-description`,
-            'Ten ekran jest już skladany w CMS builderze. Zmieniaj karty kategorii, kolejki zadań i szybkie akcje bez wracania do komponentu wyboru.',
+            'Ten ekran jest już składany w CMS builderze. Zmieniaj karty kategorii, kolejki zadań i szybkie akcje bez wracania do komponentu wyboru.',
             {
               fontSize: 15,
               textColor: '#7a86b0',
@@ -1568,7 +1566,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                     }),
                     makeTextBlock(
                       'kangur-game-home-assignment-spotlight-progress-label',
-                      '0% ukonczono',
+                      '0% ukończono',
                       {
                         fontSize: 14,
                         textColor: '#7a86b0',
@@ -1576,7 +1574,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.progressLabel',
-                          fallback: '0% ukonczono',
+                          fallback: '0% ukończono',
                         },
                       }
                     ),
@@ -1741,7 +1739,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                             }),
                             makeTextBlock(
                               'kangur-game-home-priority-item-progress-label',
-                              '0% ukonczono',
+                              '0% ukończono',
                               {
                                 fontSize: 13,
                                 textColor: '#7a86b0',
@@ -1749,7 +1747,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                                   enabled: true,
                                   source: 'item',
                                   path: 'progressLabel',
-                                  fallback: '0% ukonczono',
+                                  fallback: '0% ukończono',
                                 },
                               }
                             ),
@@ -2210,7 +2208,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                 }),
                 makeTextBlock(
                   'kangur-game-result-assignment-progress-label',
-                  '0% ukonczono',
+                  '0% ukończono',
                   {
                     fontSize: 14,
                     textColor: '#7a86b0',
@@ -2218,7 +2216,7 @@ const createDefaultGameScreenComponents = (): PageComponentInput[] =>
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.assignmentProgressLabel',
-                      fallback: '0% ukonczono',
+                      fallback: '0% ukończono',
                     },
                   }
                 ),
@@ -2642,6 +2640,50 @@ const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   return typeof block.settings['widgetId'] === 'string' ? block.settings['widgetId'] : null;
 };
 
+const HIDDEN_KANGUR_WIDGET_IDS = new Set(['game-home-hero']);
+
+const sectionContainsHiddenWidget = (blocks: BlockInstance[]): boolean => {
+  for (const block of blocks) {
+    if (block.type === 'KangurWidget') {
+      const widgetId = block.settings?.['widgetId'];
+      if (typeof widgetId === 'string' && HIDDEN_KANGUR_WIDGET_IDS.has(widgetId)) {
+        return true;
+      }
+    }
+    if (block.blocks && sectionContainsHiddenWidget(block.blocks)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const pruneHiddenWidgetSections = (components: PageComponentInput[]): PageComponentInput[] =>
+  components.filter((component) => !sectionContainsHiddenWidget(component.content.blocks));
+
+const pruneHiddenWidgetsFromProject = (project: KangurCmsProject): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    Game: {
+      ...project.screens.Game,
+      components: pruneHiddenWidgetSections(project.screens.Game.components),
+    },
+    Lessons: {
+      ...project.screens.Lessons,
+      components: pruneHiddenWidgetSections(project.screens.Lessons.components),
+    },
+    LearnerProfile: {
+      ...project.screens.LearnerProfile,
+      components: pruneHiddenWidgetSections(project.screens.LearnerProfile.components),
+    },
+    ParentDashboard: {
+      ...project.screens.ParentDashboard,
+      components: pruneHiddenWidgetSections(project.screens.ParentDashboard.components),
+    },
+  },
+});
+
 const upgradeLegacyScreenComponents = (project: KangurCmsProject): KangurCmsProject => {
   const gameWidgetId = resolveSingleWidgetId(project.screens.Game);
   const lessonsWidgetId = resolveSingleWidgetId(project.screens.Lessons);
@@ -2760,7 +2802,7 @@ export function parseKangurCmsProject(
     return fallbackToDefault ? createDefaultKangurCmsProject() : null;
   }
 
-  return upgradeLegacyScreenComponents(result.data);
+  return pruneHiddenWidgetsFromProject(upgradeLegacyScreenComponents(result.data));
 }
 
 export function buildKangurCmsSyntheticPage(screen: KangurCmsScreen): Page {

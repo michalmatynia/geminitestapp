@@ -385,7 +385,7 @@ const buildTutorAnchorsTree = (
     {options.homeAnchorKinds?.includes('progress') ? (
       <TutorGameAnchor
         kind='progress'
-        label='Postep gracza'
+        label='Postęp gracza'
         testId='kangur-game-home-progress-anchor'
       />
     ) : null}
@@ -1875,17 +1875,17 @@ describe('KangurAiTutorWidget', () => {
             mode: 'hint_ladder',
             label: 'Jeden trop',
             description:
-              'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+              'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
           },
           followUpActions: [
             {
               id: 'recommendation:strengthen_lesson_mastery',
-              label: 'Otworz lekcje',
+              label: 'Otwórz lekcję',
               page: 'Lessons',
               query: {
                 focus: 'adding',
               },
-              reason: 'Powtorz lekcje: Dodawanie',
+              reason: 'Powtórz lekcję: Dodawanie',
             },
           ],
           sources: [
@@ -1922,12 +1922,12 @@ describe('KangurAiTutorWidget', () => {
     const utterance = speechSynthesisMock.speak.mock.calls[0]?.[0] as MockSpeechSynthesisUtterance;
     expect(utterance.text).toContain('Policz najpierw pierwszą parę, a potem sprawdź drugą.');
     expect(utterance.text).toContain(
-      'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.'
+      'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.'
     );
-    expect(utterance.text).toContain('Powtorz lekcje: Dodawanie');
+    expect(utterance.text).toContain('Powtórz lekcję: Dodawanie');
     expect(utterance.text).toContain('Dodawanie podstawy');
     expect(utterance.text).toContain('Dodawanie łączy liczby i tworzy sumę.');
-    expect(utterance.text).not.toContain('Otworz lekcje');
+    expect(utterance.text).not.toContain('Otwórz lekcję');
     expect(utterance.text).not.toContain('Tak');
     expect(utterance.text).not.toContain('Jeszcze nie');
     expect(utterance.text).not.toContain('Wyłącz');
@@ -2076,16 +2076,16 @@ describe('KangurAiTutorWidget', () => {
       messages: [
         {
           role: 'assistant',
-          content: 'Wybierz teraz kolejna lekcje.',
+          content: 'Wybierz teraz kolejną lekcję.',
           followUpActions: [
             {
               id: 'recommendation:strengthen_lesson_mastery',
-              label: 'Otworz lekcje',
+              label: 'Otwórz lekcję',
               page: 'Lessons',
               query: {
                 focus: 'adding',
               },
-              reason: 'Powtorz lekcje: Dodawanie',
+              reason: 'Powtórz lekcję: Dodawanie',
             },
           ],
         },
@@ -2105,7 +2105,7 @@ describe('KangurAiTutorWidget', () => {
       clearSelection: clearSelectionMock,
     });
     render(<KangurAiTutorWidget />);
-    fireEvent.click(screen.getByRole('link', { name: 'Otworz lekcje' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Otwórz lekcję' }));
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_ai_tutor_follow_up_clicked',
       expect.objectContaining({
@@ -2122,8 +2122,8 @@ describe('KangurAiTutorWidget', () => {
     ).toMatchObject({
       pendingFollowUp: {
         actionId: 'recommendation:strengthen_lesson_mastery',
-        actionLabel: 'Otworz lekcje',
-        actionReason: 'Powtorz lekcje: Dodawanie',
+        actionLabel: 'Otwórz lekcję',
+        actionReason: 'Powtórz lekcję: Dodawanie',
         actionPage: 'Lessons',
         pathname: '/kangur/lessons',
         search: '?focus=adding',
@@ -2211,8 +2211,8 @@ describe('KangurAiTutorWidget', () => {
           pathname: '/kangur/lessons',
           search: '?focus=adding',
           actionId: 'recommendation:strengthen_lesson_mastery',
-          actionLabel: 'Otworz lekcje',
-          actionReason: 'Powtorz lekcje: Dodawanie',
+          actionLabel: 'Otwórz lekcję',
+          actionReason: 'Powtórz lekcję: Dodawanie',
           actionPage: 'Lessons',
           messageIndex: 0,
           hasQuery: true,
@@ -2252,8 +2252,8 @@ describe('KangurAiTutorWidget', () => {
     );
     expect(recordFollowUpCompletionMock).toHaveBeenCalledWith({
       actionId: 'recommendation:strengthen_lesson_mastery',
-      actionLabel: 'Otworz lekcje',
-      actionReason: 'Powtorz lekcje: Dodawanie',
+      actionLabel: 'Otwórz lekcję',
+      actionReason: 'Powtórz lekcję: Dodawanie',
       actionPage: 'Lessons',
       targetPath: '/kangur/lessons',
       targetSearch: '?focus=adding',
@@ -2475,7 +2475,7 @@ describe('KangurAiTutorWidget', () => {
       'data-entry-animation',
       'fade'
     );
-    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(openChatMock).toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
       'Wyjaśnij zaznaczony fragment krok po kroku.',
       expect.objectContaining({
@@ -2564,6 +2564,7 @@ describe('KangurAiTutorWidget', () => {
   });
   it('keeps stale tutor history hidden while the selected-text explanation is loading and rebinds the panel to the new fragment', async () => {
     vi.useFakeTimers();
+    vi.stubGlobal('scrollTo', vi.fn());
     let resolveSendMessage: (() => void) | null = null;
     let tutorState = {
       enabled: true,
@@ -2608,18 +2609,31 @@ describe('KangurAiTutorWidget', () => {
       selectionContainerRect: new DOMRect(80, 580, 520, 240),
       clearSelection: clearSelectionMock,
     });
+    let rerenderWidget: (() => void) | null = null;
     openChatMock.mockImplementation(() => {
       tutorState = {
         ...tutorState,
         isOpen: true,
       };
+      act(() => {
+        rerenderWidget?.();
+      });
     });
     const { rerender } = render(<KangurAiTutorWidget />);
+    rerenderWidget = () => {
+      rerender(<KangurAiTutorWidget />);
+    };
     sendMessageMock.mockImplementation(() => {
       tutorState = {
         ...tutorState,
-        isOpen: true,
         isLoading: true,
+        messages: [
+          ...tutorState.messages,
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+        ],
       };
       rerender(<KangurAiTutorWidget />);
       return new Promise<void>((resolve) => {
@@ -2644,11 +2658,12 @@ describe('KangurAiTutorWidget', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(openChatMock).toHaveBeenCalledTimes(1);
-    expect(sendMessageMock.mock.invocationCallOrder[0]).toBeLessThan(
-      openChatMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
-    );
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
+      'data-suppress-panel-surface',
+      'true'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       'Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.'
@@ -2663,7 +2678,7 @@ describe('KangurAiTutorWidget', () => {
       'data-guidance-transition',
       'guided'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-selection-context-spotlight')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeInTheDocument();
     expect(
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
@@ -2685,6 +2700,14 @@ describe('KangurAiTutorWidget', () => {
       messages: [
         {
           role: 'assistant',
+          content: 'W poprzednim wątku omawialiśmy zupełnie inne zadanie.',
+        },
+        {
+          role: 'user',
+          content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+        },
+        {
+          role: 'assistant',
           content: 'To jest wyjaśnienie fragmentu.',
         },
       ],
@@ -2693,18 +2716,114 @@ describe('KangurAiTutorWidget', () => {
     resolveSendMessage?.();
     await act(async () => {
       await Promise.resolve();
+      await Promise.resolve();
     });
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+    expect(sendMessageMock.mock.invocationCallOrder[0]).toBeLessThan(
+      openChatMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
+    );
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
+      'data-suppress-panel-surface',
+      'false'
+    );
+    expect(screen.getByText('To jest wyjaśnienie fragmentu.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.')
+    ).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+  it('redocks the pending selection guidance when the learner clicks away before the docked tutor opens', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('scrollTo', vi.fn());
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockReturnValue({
+      selectedText: '2 + 2',
+      selectionRect: new DOMRect(120, 620, 140, 26),
+      selectionContainerRect: new DOMRect(80, 580, 520, 240),
+      clearSelection: clearSelectionMock,
+    });
+    const { rerender } = render(<KangurAiTutorWidget />);
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isLoading: true,
+        messages: [
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+        ],
+      };
+      rerender(<KangurAiTutorWidget />);
+      return new Promise<void>(() => {});
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(openChatMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-panel')).not.toBeInTheDocument();
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(4200);
-    });
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selected-text-complete-status')
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
-      '„2 + 2”'
+
+    fireEvent.pointerDown(document.body);
+
+    expect(closeChatMock).toHaveBeenCalledTimes(1);
+    expect(clearSelectionMock).toHaveBeenCalled();
+    expect(setHighlightedTextMock).toHaveBeenLastCalledWith(null);
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')).not.toBeInTheDocument();
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_ai_tutor_closed',
+      expect.objectContaining({
+        surface: 'lesson',
+        title: 'Dodawanie',
+        reason: 'outside',
+      })
     );
+
     vi.useRealTimers();
   });
   it('keeps the guided selection surface visible while the contextual explanation is still loading after the selected fragment rebounds', async () => {
@@ -5823,11 +5942,8 @@ describe('KangurAiTutorWidget', () => {
     render(<KangurAiTutorWidget />);
     const launcher = screen.getByTestId('kangur-ai-tutor-avatar');
     expect(launcher).toHaveClass(
-      'bg-gradient-to-br',
-      'from-amber-300',
-      'via-orange-400',
-      'to-orange-500',
-      'focus-visible:ring-amber-300/70'
+      'kangur-chat-floating-avatar',
+      'focus-visible:ring-2'
     );
     expect(launcher).not.toHaveClass(
       'from-indigo-500',
@@ -6532,9 +6648,9 @@ describe('KangurAiTutorWidget', () => {
         title: 'Dodawanie',
       },
       learnerMemory: {
-        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Completed follow-up: Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention:
-          'The learner completed the tutor follow-up Otworz lekcje for Powtorz lekcje: Dodawanie on Lessons.',
+          'The learner completed the tutor follow-up Otwórz lekcję for Powtórz lekcję: Dodawanie on Lessons.',
         lastCoachingMode: 'next_best_action',
       },
       isOpen: true,

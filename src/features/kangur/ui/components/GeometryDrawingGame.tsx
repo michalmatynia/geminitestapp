@@ -526,7 +526,7 @@ export default function GeometryDrawingGame({
           onRestart={handleRestart}
           percent={Math.round((score / totalRounds) * 100)}
           progressAccent='emerald'
-          progressAriaLabel='Dokladnosc w treningu figur'
+          progressAriaLabel='Dokładność w treningu figur'
           progressAriaValueText={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
           progressDataTestId='geometry-drawing-summary-progress-bar'
           restartButtonClassName='w-full sm:flex-1'
@@ -595,7 +595,7 @@ export default function GeometryDrawingGame({
           <div className='w-full flex items-center gap-3'>
             <KangurProgressBar
               accent='emerald'
-              aria-label='Postep treningu figur'
+              aria-label='Postęp treningu figur'
               aria-valuetext={`Runda ${roundIndex + 1} z ${totalRounds}`}
               className='flex-1'
               data-testid='geometry-drawing-progress-bar'

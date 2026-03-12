@@ -27,7 +27,7 @@ const createPracticeAssignment = (
   progress: {
     status: 'in_progress',
     percent: 50,
-    summary: '50% ukonczono',
+    summary: '50% ukończono',
     attemptsCompleted: 1,
     attemptsRequired: 2,
     lastActivityAt: null,

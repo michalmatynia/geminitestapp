@@ -57,8 +57,8 @@ describe('KangurPriorityAssignments', () => {
         {
           id: 'assignment-high',
           learnerKey: 'ada@example.com',
-          title: 'Powtorka dzielenia',
-          description: 'Powtorz dzielenie.',
+          title: 'Powtórka dzielenia',
+          description: 'Powtórz dzielenie.',
           priority: 'high',
           archived: false,
           target: {
@@ -74,7 +74,7 @@ describe('KangurPriorityAssignments', () => {
           progress: {
             status: 'not_started',
             percent: 0,
-            summary: 'Powtorki po przydziale: 0/1.',
+            summary: 'Powtórki po przydziale: 0/1.',
             attemptsCompleted: 0,
             attemptsRequired: 1,
             lastActivityAt: null,
@@ -84,8 +84,8 @@ describe('KangurPriorityAssignments', () => {
         {
           id: 'assignment-completed',
           learnerKey: 'ada@example.com',
-          title: 'Ukonczone zadanie',
-          description: 'To zadanie juz jest zakonczone.',
+          title: 'Ukończone zadanie',
+          description: 'To zadanie już jest zakończone.',
           priority: 'low',
           archived: false,
           target: {
@@ -119,8 +119,8 @@ describe('KangurPriorityAssignments', () => {
     render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByText('Priorytetowe zadania')).toBeInTheDocument();
-    expect(screen.getByText('Powtorka dzielenia')).toBeInTheDocument();
-    expect(screen.queryByText('Ukonczone zadanie')).not.toBeInTheDocument();
+    expect(screen.getByText('Powtórka dzielenia')).toBeInTheDocument();
+    expect(screen.queryByText('Ukończone zadanie')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=division'
@@ -144,6 +144,6 @@ describe('KangurPriorityAssignments', () => {
       'border-white/78',
       'bg-white/58'
     );
-    expect(screen.getByText('Brak aktywnych zadan od rodzica.')).toBeInTheDocument();
+    expect(screen.getByText('Brak aktywnych zadań od rodzica.')).toBeInTheDocument();
   });
 });

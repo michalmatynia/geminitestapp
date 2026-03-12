@@ -131,7 +131,7 @@ describe('KangurParentDashboardProgressWidget', () => {
       data: undefined,
       entry: {
         id: 'parent-dashboard-progress',
-        title: 'Postep ucznia',
+        title: 'Postęp ucznia',
         summary: 'Sprawdz rytm nauki i glowny kierunek dalszej pracy.',
       },
       error: null,
@@ -147,7 +147,7 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     render(<KangurParentDashboardProgressWidget />);
 
-    expect(screen.getByText('Postep ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('Postęp ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
       screen.getByText('Sprawdz rytm nauki i glowny kierunek dalszej pracy.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');

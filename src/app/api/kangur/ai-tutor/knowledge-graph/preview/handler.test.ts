@@ -98,6 +98,8 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
       lexicalHitCount: 1,
       vectorHitCount: 0,
       vectorRecallAttempted: false,
+      querySeed: 'Jak sie zalogowac do Kangura?',
+      normalizedQuerySeed: 'jak sie zalogowac do kangura',
       tokens: ['zalogowac', 'kangura'],
       instructions: 'Kangur website-help graph context:\n- Sign in flow [flow]',
       websiteHelpTarget: {
@@ -204,6 +206,8 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           lexicalHitCount: 1,
           vectorHitCount: 0,
           vectorRecallAttempted: false,
+          tokenCount: 2,
+          normalizedQuerySeed: 'jak sie zalogowac do kangura',
           websiteHelpTargetNodeId: 'flow:kangur:sign-in',
         },
         retrieval: expect.objectContaining({
@@ -213,6 +217,8 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
           lexicalHitCount: 1,
           vectorHitCount: 0,
           vectorRecallAttempted: false,
+          querySeed: 'Jak sie zalogowac do Kangura?',
+          normalizedQuerySeed: 'jak sie zalogowac do kangura',
           nodeIds: ['flow:kangur:sign-in'],
           tokens: ['zalogowac', 'kangura'],
           websiteHelpTarget: {

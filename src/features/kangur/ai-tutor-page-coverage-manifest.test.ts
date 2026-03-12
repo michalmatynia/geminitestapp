@@ -27,7 +27,6 @@ describe('Kangur tutor page coverage manifest', () => {
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO).toHaveLength(50);
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => entry.id)).toEqual(
       expect.arrayContaining([
-        'game-home-hero',
         'game-home-actions',
         'game-training-setup',
         'game-operation-selector',
@@ -43,6 +42,7 @@ describe('Kangur tutor page coverage manifest', () => {
         'lessons-active-navigation',
         'tests-empty-state',
         'tests-question',
+        'tests-selection',
         'tests-review',
         'tests-summary',
         'learner-profile-hero',

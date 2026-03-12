@@ -139,7 +139,7 @@ describe('build-system-prompt helpers', () => {
         title: 'Test context',
         facts: {
           title: 'Dodawanie w zakresie 20',
-          description: 'Krotki sprawdzian z dodawania.',
+          description: 'Krótki sprawdzian z dodawania.',
           masterySummary: 'Most mistakes happen near regrouping.',
           currentQuestion: 'Ile to jest 8 + 7?',
           questionProgressLabel: 'Pytanie 2 z 5',

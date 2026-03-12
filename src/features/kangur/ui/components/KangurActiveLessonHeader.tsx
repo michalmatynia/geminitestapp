@@ -123,7 +123,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
       data-testid={completedChipTestId}
       size='sm'
     >
-      Ukonczone dla rodzica
+      Ukończone dla rodzica
     </KangurStatusChip>
   ) : null;
 

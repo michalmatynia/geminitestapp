@@ -115,19 +115,19 @@ test.describe('Kangur Learner Profile', () => {
 
     await expect(page).toHaveURL(/\/kangur\/profile/);
     await expect(
-      page.getByText(/Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami\./i)
+      page.getByText(/Zaloguj się, aby synchronizować postęp ucznia między urządzeniami\./i)
     ).toBeVisible();
 
-    await expect(page.getByText(/Srednia skutecznosc/i)).toBeVisible();
+    await expect(page.getByText(/Średnia skuteczność/i)).toBeVisible();
     await expect(page.getByText(/Seria dni/i)).toBeVisible();
     await expect(page.getByText(/Cel dzienny/i)).toBeVisible();
     await expect(page.getByText(/Odznaki/i).first()).toBeVisible();
-    await expect(page.getByText(/Nastroj AI Tutora/i)).toBeVisible();
+    await expect(page.getByText(/Nastrój AI Tutora/i)).toBeVisible();
 
-    await expect(page.getByText(/Aktywnosc 7 dni/i)).toBeVisible();
+    await expect(page.getByText(/Aktywność 7 dni/i)).toBeVisible();
     await expect(page.getByText(/Wyniki wg operacji/i)).toBeVisible();
     await expect(page.getByText(/Ostatnie sesje/i)).toBeVisible();
-    await expect(page.getByText(/Plan na dzis/i)).toBeVisible();
+    await expect(page.getByText(/Plan na dziś/i)).toBeVisible();
   });
 
   test('exposes learner profile navigation from the game screen', async ({ page }) => {
@@ -136,7 +136,7 @@ test.describe('Kangur Learner Profile', () => {
     await expectGameRouteReady(page);
 
     const profileLink = page
-      .getByRole('navigation', { name: 'Glowna nawigacja Kangur' })
+      .getByRole('navigation', { name: 'Główna nawigacja Kangur' })
       .getByRole('link', { name: /^Profil$/ });
     await expect(profileLink).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
@@ -371,7 +371,7 @@ test.describe('Kangur Learner Profile', () => {
     await gotoKangurPath(page, '/kangur/profile');
     await expectLearnerProfileReady(page);
 
-    const openLessonsLink = page.getByRole('link', { name: 'Otworz lekcje' });
+    const openLessonsLink = page.getByRole('link', { name: 'Otwórz lekcję' });
     await expect(openLessonsLink).toBeVisible();
     await expect(openLessonsLink).toHaveAttribute('href', /focus=division/);
     await openLessonsLink.click();

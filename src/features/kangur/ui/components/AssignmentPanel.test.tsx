@@ -62,24 +62,24 @@ describe('AssignmentPanel', () => {
     buildKangurAssignmentsMock.mockReturnValue([
       {
         id: 'lesson-retry-division',
-        title: '➗ Powtorka: Dzielenie',
-        description: 'Powtorz dzielenie.',
-        target: '1 powtorka',
+        title: '➗ Powtórka: Dzielenie',
+        description: 'Powtórz dzielenie.',
+        target: '1 powtórka',
         priority: 'high',
         action: {
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: { focus: 'division' },
         },
       },
       {
         id: 'lesson-retry-adding',
-        title: '➕ Powtorka: Dodawanie',
-        description: 'Powtorz dodawanie.',
-        target: '1 powtorka',
+        title: '➕ Powtórka: Dodawanie',
+        description: 'Powtórz dodawanie.',
+        target: '1 powtórka',
         priority: 'medium',
         action: {
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: { focus: 'adding' },
         },
@@ -88,7 +88,7 @@ describe('AssignmentPanel', () => {
         id: 'mixed-practice',
         title: 'Trening mieszany',
         description: 'Uruchom trening mieszany.',
-        target: '8 pytan',
+        target: '8 pytań',
         priority: 'low',
         action: {
           label: 'Uruchom trening',
@@ -114,17 +114,17 @@ describe('AssignmentPanel', () => {
       'rounded-full',
       'border'
     );
-    expect(screen.getByText('➗ Powtorka: Dzielenie')).toBeInTheDocument();
-    expect(screen.getByText('➕ Powtorka: Dodawanie')).toBeInTheDocument();
+    expect(screen.getByText('➗ Powtórka: Dzielenie')).toBeInTheDocument();
+    expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet średni')).toBeInTheDocument();
     expect(screen.getByText('Priorytet niski')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
       'soft-card',
       'border'
     );
-    expect(screen.getAllByText('Cel: 1 powtorka')[0]).toHaveClass(
+    expect(screen.getAllByText('Cel: 1 powtórka')[0]).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -135,14 +135,14 @@ describe('AssignmentPanel', () => {
     );
 
     const lessonLinks = screen
-      .getAllByRole('link', { name: 'Otworz lekcje' })
+      .getAllByRole('link', { name: 'Otwórz lekcję' })
       .map((link) => link.getAttribute('href'));
     expect(lessonLinks).toEqual(
       expect.arrayContaining(['/kangur/lessons?focus=division', '/kangur/lessons?focus=adding'])
     );
 
     const completionToggle = screen.getByRole('button', {
-      name: 'Oznacz ➗ Powtorka: Dzielenie jako ukończone',
+      name: 'Oznacz ➗ Powtórka: Dzielenie jako ukończone',
     });
 
     expect(completionToggle).toHaveClass('kangur-cta-pill', 'soft-cta');
@@ -180,7 +180,7 @@ describe('AssignmentPanel', () => {
     );
 
     const lessonLinks = screen
-      .getAllByRole('link', { name: 'Otworz lekcje' })
+      .getAllByRole('link', { name: 'Otwórz lekcję' })
       .map((link) => link.getAttribute('href'));
     expect(lessonLinks).toEqual(
       expect.arrayContaining([

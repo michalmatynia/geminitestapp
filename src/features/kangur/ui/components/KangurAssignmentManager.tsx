@@ -178,7 +178,7 @@ const buildTrackerSummary = (
       if (assignment.progress.status === 'not_started' && assignment.priority === 'high') {
         return {
           assignment,
-          reason: 'Wysoki priorytet, ale uczeń jeszcze nie rozpoczal tego zadania.',
+          reason: 'Wysoki priorytet, ale uczeń jeszcze nie rozpoczął tego zadania.',
         };
       }
       if (assignment.progress.status === 'not_started') {
@@ -367,7 +367,7 @@ export function KangurAssignmentManager({
       await createAssignment(item.createInput);
       setFeedback(`Przypisano: ${item.title}.`);
     } catch (error: unknown) {
-      setFeedback(resolveActionErrorMessage(error, 'Nie udalo się przypisac zadania.'));
+      setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać zadania.'));
     } finally {
       setPendingActionId(null);
     }
@@ -390,7 +390,7 @@ export function KangurAssignmentManager({
       await updateAssignment(assignmentId, { archived: true });
       setFeedback('Zadanie przeniesiono do archiwum.');
     } catch {
-      setFeedback('Nie udalo się zarchiwizowac zadania.');
+      setFeedback('Nie udało się zarchiwizować zadania.');
     } finally {
       setPendingActionId(null);
     }
@@ -675,7 +675,7 @@ export function KangurAssignmentManager({
           <KangurMetricCard
             accent='emerald'
             description='przydziały zrealizowane przez ucznia'
-            label='Ukonczone'
+            label='Ukończone'
             value={trackerSummary.completedCount}
           />
         </div>

@@ -195,7 +195,7 @@ describe('ParentDashboard page', () => {
 
     const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
     const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
-    const progressTab = screen.getByRole('button', { name: /Postep/i });
+    const progressTab = screen.getByRole('button', { name: /Post/i });
     const scoresTab = screen.getByRole('button', { name: /Wyniki/i });
     const assignmentsTab = screen.getByRole('button', { name: /Zadania/i });
 
@@ -214,7 +214,7 @@ describe('ParentDashboard page', () => {
       'rounded-full',
       'border'
     );
-    expect(within(inactiveLearnerCard).getByText('Wyłączony')).toHaveClass(
+    expect(within(inactiveLearnerCard).getByText(/Wyłączony/i)).toHaveClass(
       'rounded-full',
       'border'
     );

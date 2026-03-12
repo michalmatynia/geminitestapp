@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import { agentTeachingChatSourceSchema } from './agent-teaching';
+import {
+  kangurAiTutorConversationContextSchema,
+  kangurAiTutorWebsiteHelpTargetSchema,
+} from './kangur-ai-tutor';
 import { systemLogMetricsSchema, systemLogRecordSchema } from './observability';
 
 export const kangurObservabilityRangeSchema = z.enum(['24h', '7d', '30d']);
@@ -151,6 +156,132 @@ export const kangurKnowledgeGraphSyncResponseSchema = z.object({
 });
 export type KangurKnowledgeGraphSyncResponse = z.infer<
   typeof kangurKnowledgeGraphSyncResponseSchema
+>;
+
+export const kangurKnowledgeGraphPreviewRequestSchema = z.object({
+  latestUserMessage: z.string().trim().min(1).max(1_000),
+  learnerId: z.string().trim().max(120).optional(),
+  locale: z.string().trim().max(16).optional().default('pl'),
+  context: kangurAiTutorConversationContextSchema.optional(),
+});
+export type KangurKnowledgeGraphPreviewRequest = z.infer<
+  typeof kangurKnowledgeGraphPreviewRequestSchema
+>;
+
+const kangurKnowledgeGraphPreviewHydrationSourceSchema = z.enum([
+  'kangur_page_content',
+  'kangur_ai_tutor_content',
+  'kangur_ai_tutor_native_guides',
+  'kangur-runtime-context',
+  'graph_fallback',
+]);
+
+const kangurKnowledgeGraphPreviewRecallStrategySchema = z.enum([
+  'metadata_only',
+  'vector_only',
+  'hybrid_vector',
+]);
+
+const kangurKnowledgeGraphPreviewQueryModeSchema = z.enum(['website_help', 'semantic']);
+
+const kangurKnowledgeGraphPreviewHitSchema = z.object({
+  id: z.string(),
+  kind: z.string(),
+  title: z.string(),
+  summary: z.string().nullable(),
+  surface: z.string().nullable(),
+  focusKind: z.string().nullable(),
+  route: z.string().nullable(),
+  anchorId: z.string().nullable(),
+  sourceCollection: z.string().nullable(),
+  sourceRecordId: z.string().nullable(),
+  sourcePath: z.string().nullable(),
+  semanticScore: z.number(),
+  tokenHits: z.number(),
+  relatedTargetIds: z.array(z.string()),
+  canonicalTitle: z.string(),
+  canonicalSummary: z.string().nullable(),
+  canonicalSourceCollection: z.string(),
+  hydrationSource: kangurKnowledgeGraphPreviewHydrationSourceSchema,
+});
+
+const kangurKnowledgeGraphPreviewFollowUpActionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  page: z.string(),
+  reason: z.string().nullable(),
+});
+
+const kangurKnowledgeGraphPreviewRetrievalMissSchema = z.object({
+  status: z.enum(['disabled', 'skipped', 'miss']),
+  queryMode: z.null(),
+  querySeed: z.string(),
+  normalizedQuerySeed: z.string(),
+  tokens: z.array(z.string()),
+  instructions: z.null(),
+  sources: z.array(agentTeachingChatSourceSchema).max(0),
+  nodeIds: z.array(z.string()).max(0),
+  hits: z.array(kangurKnowledgeGraphPreviewHitSchema).max(0),
+});
+
+const kangurKnowledgeGraphPreviewRetrievalHitSchema = z.object({
+  status: z.literal('hit'),
+  queryMode: kangurKnowledgeGraphPreviewQueryModeSchema,
+  recallStrategy: kangurKnowledgeGraphPreviewRecallStrategySchema,
+  lexicalHitCount: z.number(),
+  vectorHitCount: z.number(),
+  vectorRecallAttempted: z.boolean(),
+  querySeed: z.string(),
+  normalizedQuerySeed: z.string(),
+  tokens: z.array(z.string()),
+  instructions: z.string(),
+  sources: z.array(agentTeachingChatSourceSchema),
+  nodeIds: z.array(z.string()),
+  websiteHelpTarget: kangurAiTutorWebsiteHelpTargetSchema.nullable(),
+  graphFollowUpActions: z.array(kangurKnowledgeGraphPreviewFollowUpActionSchema),
+  hits: z.array(kangurKnowledgeGraphPreviewHitSchema),
+  sourceCollections: z.array(z.string()),
+  hydrationSources: z.array(kangurKnowledgeGraphPreviewHydrationSourceSchema),
+});
+
+export const kangurKnowledgeGraphPreviewRetrievalSchema = z.discriminatedUnion('status', [
+  kangurKnowledgeGraphPreviewRetrievalMissSchema,
+  kangurKnowledgeGraphPreviewRetrievalHitSchema,
+]);
+export type KangurKnowledgeGraphPreviewRetrieval = z.infer<
+  typeof kangurKnowledgeGraphPreviewRetrievalSchema
+>;
+
+export const kangurKnowledgeGraphPreviewSummarySchema = z.object({
+  requestedRefCount: z.number(),
+  runtimeDocumentCount: z.number(),
+  retrievalStatus: z.enum(['disabled', 'skipped', 'miss', 'hit']),
+  queryMode: kangurKnowledgeGraphPreviewQueryModeSchema.nullable(),
+  recallStrategy: kangurKnowledgeGraphPreviewRecallStrategySchema.nullable(),
+  nodeCount: z.number(),
+  sourceCount: z.number(),
+  lexicalHitCount: z.number(),
+  vectorHitCount: z.number(),
+  vectorRecallAttempted: z.boolean(),
+  tokenCount: z.number(),
+  normalizedQuerySeed: z.string(),
+  websiteHelpTargetNodeId: z.string().nullable(),
+});
+export type KangurKnowledgeGraphPreviewSummary = z.infer<
+  typeof kangurKnowledgeGraphPreviewSummarySchema
+>;
+
+export const kangurKnowledgeGraphPreviewResponseSchema = z.object({
+  learnerId: z.string(),
+  locale: z.string(),
+  runtimeResolution: z.enum(['live', 'skipped']),
+  requestedRefIds: z.array(z.string()),
+  runtimeDocumentIds: z.array(z.string()),
+  summary: kangurKnowledgeGraphPreviewSummarySchema,
+  retrieval: kangurKnowledgeGraphPreviewRetrievalSchema,
+});
+export type KangurKnowledgeGraphPreviewResponse = z.infer<
+  typeof kangurKnowledgeGraphPreviewResponseSchema
 >;
 
 export const kangurPerformanceBaselineSchema = z.object({

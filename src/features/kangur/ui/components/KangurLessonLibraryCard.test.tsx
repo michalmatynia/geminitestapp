@@ -26,14 +26,14 @@ const lesson = {
 const masteryPresentation: LessonMasteryPresentation = {
   badgeAccent: 'emerald',
   statusLabel: 'Opanowane 92%',
-  summaryLabel: 'Ukonczono 2× · najlepszy wynik 100%',
+  summaryLabel: 'Ukończono 2× · najlepszy wynik 100%',
 };
 
 const lessonAssignment = {
   id: 'assignment-1',
   learnerKey: 'jan@example.com',
-  title: 'Powtorz zegar',
-  description: 'Skup sie na odczytywaniu pelnych godzin.',
+  title: 'Powtórz zegar',
+  description: 'Skup się na odczytywaniu pełnych godzin.',
   priority: 'high',
   archived: false,
   target: {
@@ -49,7 +49,7 @@ const lessonAssignment = {
   progress: {
     status: 'in_progress',
     percent: 40,
-    summary: 'Powtorki: 0/1',
+    summary: 'Powtórki: 0/1',
     attemptsCompleted: 0,
     attemptsRequired: 1,
     lastActivityAt: null,
@@ -81,7 +81,7 @@ describe('KangurLessonLibraryCard', () => {
     expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
     expect(screen.getByText('Priorytet wysoki')).toHaveTextContent('Priorytet wysoki');
-    expect(screen.getByText('Skup sie na odczytywaniu pelnych godzin.')).toBeInTheDocument();
+    expect(screen.getByText('Skup się na odczytywaniu pełnych godzin.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('lesson-library-item'));
 
@@ -94,7 +94,7 @@ describe('KangurLessonLibraryCard', () => {
       progress: {
         ...lessonAssignment.progress,
         status: 'completed',
-        summary: 'Powtorki: 1/1',
+        summary: 'Powtórki: 1/1',
         completedAt: '2026-03-07T10:00:00.000Z',
       },
     } as KangurAssignmentSnapshot;
@@ -109,10 +109,10 @@ describe('KangurLessonLibraryCard', () => {
       />
     );
 
-    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
+    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie zamknięte')).toBeInTheDocument();
     expect(
-      screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtorki: 1/1')
+      screen.getByText('Zadanie od rodzica zostało już wykonane. Powtórki: 1/1')
     ).toBeInTheDocument();
   });
 });

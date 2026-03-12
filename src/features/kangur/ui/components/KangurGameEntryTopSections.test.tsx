@@ -225,7 +225,7 @@ describe('Kangur game entry top sections', () => {
     expect(screen.getByRole('heading', { name: 'Kangur' })).toHaveClass('text-3xl');
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz edycje konkursu i zestaw zadan do rozwiazania.')
+      screen.getByText('Wybierz edycję konkursu i zestaw zadań do rozwiązania.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-kangur')).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();

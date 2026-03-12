@@ -36,8 +36,8 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 const ASSIGNMENT_SNAPSHOT = {
   id: 'assignment-1',
   learnerKey: 'learner-1',
-  title: 'Powtorz nauke zegara',
-  description: 'Skup sie na odczytywaniu godzin.',
+  title: 'Powtórz naukę zegara',
+  description: 'Skup się na odczytywaniu godzin.',
   priority: 'high' as const,
   archived: false,
   target: {
@@ -53,7 +53,7 @@ const ASSIGNMENT_SNAPSHOT = {
   progress: {
     status: 'in_progress' as const,
     percent: 40,
-    summary: 'Powtorki: 0/1',
+    summary: 'Powtórki: 0/1',
     attemptsCompleted: 0,
     attemptsRequired: 1,
     lastActivityAt: null,

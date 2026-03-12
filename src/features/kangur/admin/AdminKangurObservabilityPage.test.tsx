@@ -437,20 +437,114 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
   },
 });
 
+const createKnowledgeGraphPreviewResponse = () => ({
+  learnerId: 'learner-1',
+  locale: 'pl',
+  runtimeResolution: 'live' as const,
+  requestedRefIds: [
+    'runtime:kangur:learner:learner-1',
+    'runtime:kangur:login-activity:learner-1',
+  ],
+  runtimeDocumentIds: ['runtime:kangur:learner:learner-1'],
+  summary: {
+    requestedRefCount: 2,
+    runtimeDocumentCount: 1,
+    retrievalStatus: 'hit' as const,
+    queryMode: 'semantic' as const,
+    recallStrategy: 'hybrid_vector' as const,
+    nodeCount: 2,
+    sourceCount: 1,
+    lexicalHitCount: 1,
+    vectorHitCount: 1,
+    vectorRecallAttempted: true,
+    tokenCount: 3,
+    normalizedQuerySeed: 'wyjasnij ranking wynikow',
+    websiteHelpTargetNodeId: 'guide:native:game-leaderboard',
+  },
+  retrieval: {
+    status: 'hit' as const,
+    queryMode: 'semantic' as const,
+    recallStrategy: 'hybrid_vector' as const,
+    lexicalHitCount: 1,
+    vectorHitCount: 1,
+    vectorRecallAttempted: true,
+    querySeed: 'Wyjaśnij ranking wyników',
+    normalizedQuerySeed: 'wyjasnij ranking wynikow',
+    tokens: ['wyjasnij', 'ranking', 'wynikow'],
+    instructions: 'Kangur semantic graph context:\n- Ranking wyników',
+    sources: [
+      {
+        documentId: 'guide:native:game-leaderboard',
+        collectionId: 'kangur_ai_tutor_native_guides',
+        text: 'Sekcja rankingu pokazuje wyniki.',
+        score: 0.97,
+        metadata: {
+          source: 'manual-text',
+          sourceId: 'guide:native:game-leaderboard',
+          title: 'Ranking wyników',
+          tags: ['kangur-knowledge-graph', 'guide', 'game'],
+        },
+      },
+    ],
+    nodeIds: ['guide:native:game-leaderboard', 'page:kangur-game'],
+    websiteHelpTarget: {
+      nodeId: 'guide:native:game-leaderboard',
+      label: 'Ranking wyników',
+      route: '/game',
+      anchorId: 'kangur-game-result-leaderboard',
+    },
+    graphFollowUpActions: [],
+    hits: [
+      {
+        id: 'guide:native:game-leaderboard',
+        kind: 'guide',
+        title: 'Ranking wyników',
+        summary: 'Sekcja rankingu pokazuje wyniki.',
+        surface: 'game',
+        focusKind: 'leaderboard',
+        route: '/game',
+        anchorId: 'kangur-game-result-leaderboard',
+        sourceCollection: 'kangur_ai_tutor_native_guides',
+        sourceRecordId: 'game-leaderboard',
+        sourcePath: 'entry:game-leaderboard',
+        semanticScore: 214,
+        tokenHits: 2,
+        relatedTargetIds: ['page:kangur-game'],
+        canonicalTitle: 'Ranking wyników',
+        canonicalSummary: 'Sekcja rankingu pokazuje wyniki.',
+        canonicalSourceCollection: 'kangur_ai_tutor_native_guides',
+        hydrationSource: 'kangur_ai_tutor_native_guides' as const,
+      },
+    ],
+    sourceCollections: ['kangur_ai_tutor_native_guides'],
+    hydrationSources: ['kangur_ai_tutor_native_guides' as const],
+  },
+});
+
 describe('AdminKangurObservabilityPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     navigationState.pathname = '/admin/kangur/observability';
     navigationState.search = '';
-    apiPostMock.mockResolvedValue({
-      sync: {
-        graphKey: 'kangur-website-help-v1',
-        locale: 'pl',
-        nodeCount: 87,
-        edgeCount: 108,
-        withEmbeddings: true,
-      },
-      status: createSummary('24h').knowledgeGraphStatus,
+    apiPostMock.mockImplementation(async (path: string) => {
+      if (path === '/api/kangur/knowledge-graph/sync') {
+        return {
+          sync: {
+            graphKey: 'kangur-website-help-v1',
+            locale: 'pl',
+            nodeCount: 87,
+            edgeCount: 108,
+            withEmbeddings: true,
+          },
+          status: createSummary('24h').knowledgeGraphStatus,
+        };
+      }
+
+      if (path === '/api/kangur/ai-tutor/knowledge-graph/preview') {
+        return createKnowledgeGraphPreviewResponse();
+      }
+
+      throw new Error(`Unexpected POST ${path}`);
     });
     knowledgeGraphStatusRefetchMock.mockResolvedValue(undefined);
     useKangurObservabilitySummaryMock.mockImplementation((range: '24h' | '7d' | '30d') => ({
@@ -632,6 +726,108 @@ describe('AdminKangurObservabilityPage', () => {
     expect(
       await screen.findByText(/^Synced 87 nodes and 108 edges with embeddings preserved\.$/)
     ).toBeInTheDocument();
+  });
+
+  it('runs a knowledge-graph preview query from the Neo4j section', async () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.change(screen.getByLabelText('Preview prompt'), {
+      target: { value: 'Wyjaśnij ranking wyników' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run graph preview' }));
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/knowledge-graph/preview',
+        {
+          latestUserMessage: 'Wyjaśnij ranking wyników',
+          locale: 'pl',
+        },
+        { timeout: 120000 }
+      )
+    );
+    expect(await screen.findByText('Latest preview result')).toBeInTheDocument();
+    expect(screen.getByText('Raw query seed')).toBeInTheDocument();
+    expect(screen.getAllByText('Wyjaśnij ranking wyników').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Normalized query seed')).toBeInTheDocument();
+    expect(screen.getByText('wyjasnij ranking wynikow')).toBeInTheDocument();
+    expect(screen.getByText('wyjasnij, ranking, wynikow')).toBeInTheDocument();
+    expect(screen.getByText('Ranking wyników')).toBeInTheDocument();
+    expect(screen.getByText('guide • kangur_ai_tutor_native_guides • kangur_ai_tutor_native_guides')).toBeInTheDocument();
+  });
+
+  it('applies a coverage-backed section preset to the graph preview form', async () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.change(screen.getByLabelText('Section preset'), {
+      target: { value: 'game-home-leaderboard' },
+    });
+
+    expect(screen.getByLabelText('Preview prompt')).toHaveValue(
+      'Wyjaśnij tę sekcję: Ranking na stronie głównej'
+    );
+    expect(screen.getByLabelText('Surface')).toHaveValue('game');
+    expect(screen.getByLabelText('Prompt mode')).toHaveValue('explain');
+    expect(screen.getByLabelText('Focus kind')).toHaveValue('leaderboard');
+    expect(screen.getByLabelText('Content id')).toHaveValue('game:home');
+    expect(screen.getByLabelText('Focus id')).toHaveValue('kangur-game-home-leaderboard');
+    expect(screen.getByLabelText('Focus label')).toHaveValue('Ranking na stronie głównej');
+    expect(screen.getByLabelText('Title')).toHaveValue('Ranking na stronie głównej');
+    expect(screen.getByText('Ranking na stronie głównej')).toBeInTheDocument();
+    expect(screen.getByText('Leaderboard')).toBeInTheDocument();
+    expect(screen.getByText('kangur-game-home-leaderboard')).toBeInTheDocument();
+    expect(screen.getByText('game:home')).toBeInTheDocument();
+    expect(
+      screen.getByText('Sekcja ma dedykowany tutor anchor i wpis Mongo native guide.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run graph preview' }));
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/knowledge-graph/preview',
+        {
+          latestUserMessage: 'Wyjaśnij tę sekcję: Ranking na stronie głównej',
+          locale: 'pl',
+          context: {
+            surface: 'game',
+            promptMode: 'explain',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-home-leaderboard',
+            focusLabel: 'Ranking na stronie głównej',
+            contentId: 'game:home',
+            title: 'Ranking na stronie głównej',
+          },
+        },
+        { timeout: 120000 }
+      )
+    );
+  });
+
+  it('clears preview context without wiping the draft prompt', () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.change(screen.getByLabelText('Section preset'), {
+      target: { value: 'game-home-leaderboard' },
+    });
+    fireEvent.change(screen.getByLabelText('Selected text'), {
+      target: { value: 'Ranking wyników' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Clear context' }));
+
+    expect(screen.getByLabelText('Preview prompt')).toHaveValue(
+      'Wyjaśnij tę sekcję: Ranking na stronie głównej'
+    );
+    expect(screen.getByLabelText('Section preset')).toHaveValue('');
+    expect(screen.getByLabelText('Surface')).toHaveValue('');
+    expect(screen.getByLabelText('Prompt mode')).toHaveValue('');
+    expect(screen.getByLabelText('Focus kind')).toHaveValue('');
+    expect(screen.getByLabelText('Content id')).toHaveValue('');
+    expect(screen.getByLabelText('Focus id')).toHaveValue('');
+    expect(screen.getByLabelText('Focus label')).toHaveValue('');
+    expect(screen.getByLabelText('Selected text')).toHaveValue('');
+    expect(screen.getByLabelText('Title')).toHaveValue('');
+    expect(screen.queryByText('Sekcja ma dedykowany tutor anchor i wpis Mongo native guide.')).not.toBeInTheDocument();
   });
 
   it('switches the summary range from the segmented control', async () => {

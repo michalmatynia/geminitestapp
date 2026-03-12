@@ -406,7 +406,7 @@ export function useKangurAiTutorPortalViewModel(
         onPointerUp: input.handleFloatingAvatarPointerUp,
         prefersReducedMotion: prefersReducedMotionEnabled,
         reducedMotionTransitions: input.reducedMotionTransitions,
-        rimColor: '#78350f',
+        rimColor: 'var(--kangur-chat-floating-avatar-rim, #78350f)',
         showFloatingAvatar: input.showFloatingAvatar,
         uiMode: input.uiMode,
       },

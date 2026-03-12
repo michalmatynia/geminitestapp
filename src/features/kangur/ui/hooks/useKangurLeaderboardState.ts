@@ -174,7 +174,7 @@ export const useKangurLeaderboardState = (
             action: 'loadScores',
           });
           setScores([]);
-          setError('Nie udalo sie pobrac wynikow.');
+          setError('Nie udało się pobrać wyników.');
         }
       } finally {
         if (isActive) {

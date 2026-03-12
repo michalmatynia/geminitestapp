@@ -224,7 +224,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     );
     expect(guidance.instructions).toContain('Top adaptive recommendation: Skup się na: Dodawanie');
     expect(guidance.instructions).toContain('Relevant active assignment: Powtórka dodawania');
-    expect(guidance.instructions).toContain('Progress: Powtorki po przydziale: 1/2.');
+    expect(guidance.instructions).toContain('Progress: Powtórki po przydziale: 1/2.');
     expect(guidance.instructions).toContain(
       'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
     );
@@ -466,11 +466,11 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     );
     expect(guidance.coachingFrame).toEqual({
       mode: 'misconception_check',
-      label: 'Zmien podejscie',
+      label: 'Zmień podejście',
       description:
-        'Sprawdź, gdzie uczeń blokuje się w rozumowaniu, zamiast dawac kolejny taki sam trop.',
+        'Sprawdź, gdzie uczeń blokuje się w rozumowaniu, zamiast dawać kolejny taki sam trop.',
       rationale:
-        'Uczeń powtorzyl to samo pytanie po wskazówce, wiec trzeba przejść z kolejnego tropu do diagnozy rozumienia.',
+        'Uczeń powtórzył to samo pytanie po wskazówce, więc trzeba przejść z kolejnego tropu do diagnozy rozumienia.',
     });
     expect(guidance.followUpActions).toEqual([]);
   });
@@ -512,8 +512,8 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
       mode: 'review_reflection',
       label: 'Omów po próbie',
       description:
-        'Podsumuj próbę, nazwij jedna poprawke i zakończ sugestia ponownej próby.',
-      rationale: 'To dobry moment na refleksje po próbie i jedna konkretna poprawke.',
+        'Podsumuj próbę, nazwij jedną poprawkę i zakończ sugestią ponownej próby.',
+      rationale: 'To dobry moment na refleksję po próbie i jedną konkretną poprawkę.',
     });
     expect(guidance.followUpActions).toEqual([]);
     expect(getKangurProgressRepositoryMock).not.toHaveBeenCalled();

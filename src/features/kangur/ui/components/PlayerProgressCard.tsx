@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
-import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import {
   KangurCardDescription,
@@ -200,16 +200,12 @@ export default function PlayerProgressCard({
           </div>
         ) : null}
 
-        <div>
-          <KangurSectionEyebrow as='p' className='mb-2 text-xs tracking-wide'>
-            Ścieżki odznak
-          </KangurSectionEyebrow>
-          <KangurBadgeTrackGrid
-            dataTestIdPrefix='player-progress-badge-track'
-            emptyTestId='player-progress-badges-empty'
-            progress={badgeTrackProgress}
-          />
-        </div>
+        <KangurBadgeTrackSection
+          dataTestIdPrefix='player-progress-badge-track'
+          emptyTestId='player-progress-badges-empty'
+          headingClassName='mb-2 text-xs tracking-wide'
+          progress={badgeTrackProgress}
+        />
       </KangurGlassPanel>
     </motion.div>
   );

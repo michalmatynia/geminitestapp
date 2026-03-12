@@ -11,10 +11,10 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
   const { snapshot, xpToNextLevel } = useKangurLearnerProfileRuntime();
   const { entry: levelProgressContent } = useKangurPageContentEntry('learner-profile-level-progress');
-  const sectionTitle = levelProgressContent?.title ?? 'Postep poziomu';
+  const sectionTitle = levelProgressContent?.title ?? 'Postęp poziomu';
   const sectionSummary =
     levelProgressContent?.summary ??
-    'Zobacz aktualny poziom, laczne XP i brakujacy dystans do nastepnego progu.';
+    'Zobacz aktualny poziom, łączne XP i brakujący dystans do następnego progu.';
 
   return (
     <KangurGlassPanel
@@ -29,7 +29,7 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
             <>
               <p>{sectionSummary}</p>
               <p>
-                Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
+                Poziom {snapshot.level.level} · {snapshot.totalXp} XP łącznie
               </p>
             </>
           }
@@ -41,7 +41,7 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
         <div className='text-sm [color:var(--kangur-page-muted-text)]'>
           {snapshot.nextLevel
             ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-            : 'Maksymalny poziom osiagniety'}
+            : 'Maksymalny poziom osiągnięty'}
         </div>
       </div>
 

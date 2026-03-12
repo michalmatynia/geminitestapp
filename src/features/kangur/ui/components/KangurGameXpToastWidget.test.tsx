@@ -30,21 +30,21 @@ describe('KangurGameXpToastWidget', () => {
         visible: true,
         xpGained: 44,
         newBadges: ['first_game'],
-        breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+        breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
         nextBadge: {
           emoji: '⭐',
-          name: 'Pol tysiaca XP',
+          name: 'Pół tysiąca XP',
           summary: '420/500 XP',
         },
         dailyQuest: {
-          title: '📅 Powtorka: Kalendarz',
+          title: '📅 Powtórka: Kalendarz',
           summary: '68% / 75% opanowania',
           xpAwarded: 55,
         },
         recommendation: {
           label: 'Misja dnia',
-          summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
-          title: '📅 Powtorka: Kalendarz',
+          summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
+          title: '📅 Powtórka: Kalendarz',
         },
       },
     });
@@ -56,21 +56,21 @@ describe('KangurGameXpToastWidget', () => {
       visible: true,
       xpGained: 44,
       newBadges: ['first_game'],
-      breakdown: [{ kind: 'base', label: 'Ukonczenie rundy', xp: 18 }],
+      breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
       nextBadge: {
         emoji: '⭐',
-        name: 'Pol tysiaca XP',
+        name: 'Pół tysiąca XP',
         summary: '420/500 XP',
       },
       dailyQuest: {
-        title: '📅 Powtorka: Kalendarz',
+        title: '📅 Powtórka: Kalendarz',
         summary: '68% / 75% opanowania',
         xpAwarded: 55,
       },
       recommendation: {
         label: 'Misja dnia',
-        summary: 'Ten ruch najmocniej przybliza odznake Pol tysiaca XP.',
-        title: '📅 Powtorka: Kalendarz',
+        summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
+        title: '📅 Powtórka: Kalendarz',
       },
     });
   });

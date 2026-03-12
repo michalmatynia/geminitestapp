@@ -58,7 +58,7 @@ function LearnerProfileContent(): React.JSX.Element {
       surface: 'profile',
       contentId: profileContentId,
       title: profileTitle,
-      description: 'Profil ucznia z postepem, rekomendacjami i historia sesji.',
+      description: 'Profil ucznia z postępem, rekomendacjami i historią sesji.',
     },
   });
   useKangurTutorAnchor({
@@ -82,7 +82,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 84,
     metadata: {
       contentId: profileContentId,
-      label: 'Nastroj i wskazowki Tutor-AI',
+      label: 'Nastrój i wskazówki Tutor-AI',
     },
   });
   useKangurTutorAnchor({
@@ -94,7 +94,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 82,
     metadata: {
       contentId: profileContentId,
-      label: 'Postep poziomu ucznia',
+      label: 'Postęp poziomu ucznia',
     },
   });
   useKangurTutorAnchor({
@@ -106,7 +106,7 @@ function LearnerProfileContent(): React.JSX.Element {
     priority: 80,
     metadata: {
       contentId: profileContentId,
-      label: 'Przeglad wynikow ucznia',
+      label: 'Przegląd wyników ucznia',
     },
   });
   useKangurTutorAnchor({

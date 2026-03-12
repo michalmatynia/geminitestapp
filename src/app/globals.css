@@ -707,6 +707,23 @@
     );
   }
 
+  .kangur-chat-panel-snap-preview {
+    box-shadow:
+      0 0 0 2px var(--kangur-chat-panel-snap-ring, rgba(251, 191, 36, 0.8)),
+      0 0 0 4px transparent,
+      var(
+        --kangur-chat-panel-snap-shadow,
+        0 0 0 1px rgba(251, 191, 36, 0.22),
+        0 28px 56px -28px rgba(217, 119, 6, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6)
+      ),
+      var(
+        --kangur-chat-panel-shadow,
+        0 20px 48px -30px rgba(180, 83, 9, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5)
+      );
+  }
+
   .kangur-chat-header-surface {
     border-color: var(
       --kangur-chat-header-border,
@@ -742,6 +759,64 @@
         transparent 100%
       )
     );
+  }
+
+  .kangur-chat-backdrop {
+    background: var(--kangur-chat-backdrop, rgba(15, 23, 42, 0.18));
+  }
+
+  .kangur-chat-backdrop-strong {
+    background: var(--kangur-chat-backdrop-strong, rgba(15, 23, 42, 0.32));
+  }
+
+  .kangur-chat-accent-border {
+    border-color: var(--kangur-chat-accent-border, #f59e0b);
+  }
+
+  .kangur-chat-selection-action-shadow {
+    box-shadow: var(
+      --kangur-chat-selection-action-shadow,
+      0 12px 28px -14px rgba(245, 158, 11, 0.45),
+      0 4px 10px -6px rgba(15, 23, 42, 0.2)
+    );
+  }
+
+  .kangur-chat-send-shadow {
+    box-shadow: var(
+      --kangur-chat-send-shadow,
+      0 8px 20px -10px rgba(245, 158, 11, 0.4)
+    );
+  }
+
+  .kangur-chat-user-drawing-shadow {
+    box-shadow: var(
+      --kangur-chat-user-drawing-shadow,
+      0 8px 20px -12px rgba(249, 115, 22, 0.3)
+    );
+  }
+
+  .kangur-chat-floating-avatar {
+    background: var(
+      --kangur-chat-floating-avatar-background,
+      linear-gradient(135deg, #fcd34d 0%, #fb923c 55%, #f97316 100%)
+    );
+    border-color: var(--kangur-chat-floating-avatar-border, #78350f);
+    box-shadow: var(
+      --kangur-chat-floating-avatar-shadow,
+      0 14px 28px -16px rgba(154, 82, 24, 0.26)
+    );
+  }
+
+  .kangur-chat-feedback-positive {
+    border-color: var(--kangur-chat-feedback-positive-border, #a7f3d0);
+    background: var(--kangur-chat-feedback-positive-background, #ecfdf5);
+    color: var(--kangur-chat-feedback-positive-text, #047857);
+  }
+
+  .kangur-chat-feedback-negative {
+    border-color: var(--kangur-chat-feedback-negative-border, #fecdd3);
+    background: var(--kangur-chat-feedback-negative-background, #fff1f2);
+    color: var(--kangur-chat-feedback-negative-text, #be123c);
   }
 
   .kangur-chat-selection-badge {
@@ -2622,7 +2697,7 @@
     width: 6px;
     height: 6px;
     border-radius: 9999px;
-    background: #b45309;
+    background: var(--kangur-chat-typing-dot, var(--kangur-chat-kicker-dot, #b45309));
     animation: tutor-typing-bounce 1.2s ease-in-out infinite;
   }
 
@@ -2659,10 +2734,18 @@
   }
 
   .tutor-user-bubble {
-    background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
+    background: var(
+      --kangur-chat-user-bubble-background,
+      linear-gradient(135deg, #f97316 0%, #f59e0b 100%)
+    );
     box-shadow:
-      0 14px 28px -18px rgba(249, 115, 22, 0.52),
-      0 1px 0 rgba(255, 255, 255, 0.18) inset;
+      var(
+        --kangur-chat-user-bubble-shadow,
+        0 14px 28px -18px rgba(249, 115, 22, 0.52),
+        0 1px 0 rgba(255, 255, 255, 0.18) inset
+      );
+    border-color: var(--kangur-chat-user-bubble-border, rgba(251, 146, 60, 0.6));
+    color: var(--kangur-chat-user-bubble-text, #ffffff);
   }
 
   .tutor-assistant-bubble {

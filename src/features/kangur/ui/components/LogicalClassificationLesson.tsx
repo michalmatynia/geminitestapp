@@ -22,8 +22,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porzadku w
-            mysleniu i w zyciu!
+            Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porządku w
+            myśleniu i w życiu!
           </KangurLessonLead>
           <KangurLessonCallout
             accent='teal'
@@ -38,7 +38,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 🔷 <b>Kształtu</b> — okrągłe vs. kwadratowe
               </li>
               <li>
-                📏 <b>Rozmiaru</b> — duze vs. małe
+                📏 <b>Rozmiaru</b> — duże vs. małe
               </li>
               <li>
                 📂 <b>Kategorii</b> — owoce vs. warzywa
@@ -60,31 +60,31 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonLead>
           <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
-              <p className='font-bold text-green-700 text-xs mb-1'>Zwierzeta latajace</p>
+              <p className='font-bold text-green-700 text-xs mb-1'>Zwierzęta latające</p>
               <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
               <KangurLessonCaption className='mt-1'>
-                Cecha: maja skrzydła
+                Cecha: mają skrzydła
               </KangurLessonCaption>
             </KangurLessonCallout>
             <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-              <p className='font-bold text-blue-700 text-xs mb-1'>Zwierzeta wodne</p>
+              <p className='font-bold text-blue-700 text-xs mb-1'>Zwierzęta wodne</p>
               <p className='text-2xl'>🐟 🐬 🦈 🐙</p>
               <KangurLessonCaption className='mt-1'>
-                Cecha: zyja w wodzie
+                Cecha: żyją w wodzie
               </KangurLessonCaption>
             </KangurLessonCallout>
             <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
               <p className='font-bold text-orange-700 text-xs mb-1'>Liczby parzyste</p>
               <p className='text-2xl font-extrabold text-orange-600'>2 4 6 8</p>
               <KangurLessonCaption className='mt-1'>
-                Cecha: dziela sie przez 2
+                Cecha: dzielą się przez 2
               </KangurLessonCaption>
             </KangurLessonCallout>
             <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
               <p className='font-bold text-rose-700 text-xs mb-1'>Liczby nieparzyste</p>
               <p className='text-2xl font-extrabold text-rose-600'>1 3 5 7</p>
               <KangurLessonCaption className='mt-1'>
-                Cecha: nie dziela sie przez 2
+                Cecha: nie dzielą się przez 2
               </KangurLessonCaption>
             </KangurLessonCallout>
           </div>
@@ -98,17 +98,17 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Czasem trzeba wziac pod uwage dwie cechy jednoczesnie. To trudniejsze, ale daje
+            Czasem trzeba wziąć pod uwagę dwie cechy jednocześnie. To trudniejsze, ale daje
             precyzyjniejszy podział.
           </KangurLessonLead>
           <KangurLessonCallout accent='teal' className='w-full'>
             <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
-              Figury: duze/małe × czerwone/niebieskie
+              Figury: duże/małe × czerwone/niebieskie
             </p>
             <div className='grid grid-cols-1 gap-2 text-center text-sm min-[360px]:grid-cols-2'>
               {[
-                ['Duze czerwone', '🔴🔴'],
-                ['Duze niebieskie', '🔵🔵'],
+                ['Duże czerwone', '🔴🔴'],
+                ['Duże niebieskie', '🔵🔵'],
                 ['Małe czerwone', '🔴'],
                 ['Małe niebieskie', '🔵'],
               ].map(([label, icon]) => (
@@ -119,7 +119,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </div>
             <KangurLessonCaption className='mt-2'>
-              2 cechy × 2 wartosci = 4 rózne grupy
+              2 cechy × 2 wartości = 4 różne grupy
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -130,12 +130,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Diagram Venna pokazuje, co nalezy do jednej grupy, do drugiej, lub do obu jednoczesnie —
-            to czesc wspólna (przeciecie).
+            Diagram Venna pokazuje, co należy do jednej grupy, do drugiej, lub do obu jednocześnie —
+            to część wspólna (przecięcie).
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='w-full'>
             <KangurLessonCaption className='mb-3'>
-              Kocha sport vs. kocha muzyke
+              Kocha sport vs. kocha muzykę
             </KangurLessonCaption>
             <div className='flex justify-center items-center gap-0'>
               <div className='w-32 h-24 rounded-full bg-sky-200/70 border-2 border-sky-400 flex flex-col items-start justify-center pl-3'>
@@ -158,11 +158,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   intruz: [
     {
-      title: 'Znajdz intruza — poziom 1',
+      title: 'Znajdź intruza — poziom 1',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Jeden element nie pasuje do grupy. Znajdz go i wyjasnij, dlaczego wyłamuje sie z reguły.
+            Jeden element nie pasuje do grupy. Znajdź go i wyjaśnij, dlaczego wyłamuje się z reguły.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
@@ -180,22 +180,22 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Znajdz intruza — poziom 2',
+      title: 'Znajdź intruza — poziom 2',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Trudniejsze zagadki — intruz moze byc ukryty pod nieoczywista cecha.
+            Trudniejsze zagadki — intruz może być ukryty pod nieoczywistą cechą.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
-              { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnoscia 3' },
+              { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnością 3' },
               {
                 items: '🌍 🌙 ☀️ ⭐ 🪐',
-                answer: '🌙 — tylko ksiezyc nie swnieci własnym swiatłem',
+                answer: '🌙 — tylko księżyc nie świeci własnym światłem',
               },
               {
-                items: 'kwadrat, trójkat, koło, romb',
-                answer: 'Koło — jedyna figura bez katów i prostych boków',
+                items: 'kwadrat, trójkąt, koło, romb',
+                answer: 'Koło — jedyna figura bez kątów i prostych boków',
               },
             ].map(({ items, answer }) => (
               <KangurLessonCallout key={items} accent='amber' className='text-center' padding='sm'>
@@ -222,18 +222,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 🔀 <b>Wiele cech</b> — precyzyjny podział wymaga kilku kryteriów
               </li>
               <li>
-                🔵🟡 <b>Diagram Venna</b> — czesc wspólna to przeciecie dwóch zbiorów
+                🔵🟡 <b>Diagram Venna</b> — część wspólna to przecięcie dwóch zbiorów
               </li>
               <li>
                 🔎 <b>Intruz poz. 1</b> — oczywista cecha łamana przez jeden element
               </li>
               <li>
-                🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głebiej
+                🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głębiej
               </li>
             </ul>
         </KangurLessonCallout>
         <p className='text-teal-600 font-bold text-center'>
-          Klasyfikacja to klucz do porzadku w swiecie i w głowie!
+          Klasyfikacja to klucz do porządku w świecie i w głowie!
         </p>
         </KangurLessonStack>
       ),
@@ -245,19 +245,19 @@ export const HUB_SECTIONS = [
   {
     id: 'intro',
     emoji: '📦',
-    title: 'Klasyfikacja — wstep',
+    title: 'Klasyfikacja — wstęp',
     description: 'Co to klasyfikacja? Grupowanie według cech',
   },
   {
     id: 'diagram',
     emoji: '🔵🟡',
     title: 'Wiele cech i diagram Venna',
-    description: 'Wielokryteriowe grupowanie i przeciecia zbiorów',
+    description: 'Wielokryteriowe grupowanie i przecięcia zbiorów',
   },
   {
     id: 'intruz',
     emoji: '🔎',
-    title: 'Znajdz intruza',
+    title: 'Znajdź intruza',
     description: 'Poziom 1 i poziom 2 — co nie pasuje?',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },

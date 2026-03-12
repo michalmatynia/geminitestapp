@@ -37,12 +37,12 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   os: [
     {
-      title: 'Os symetrii',
+      title: 'Oś symetrii',
       content: (
         <div className='flex flex-col gap-4 text-center'>
           <p className='[color:var(--kangur-page-text)]'>
-            <strong>Os symetrii</strong> to linia, po której dzielimy figurę na dwie pasujace
-            czesci.
+            <strong>Oś symetrii</strong> to linia, po której dzielimy figurę na dwie pasujące
+            części.
           </p>
           <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
             <div className='mx-auto flex h-28 w-40 items-center justify-center gap-4'>
@@ -51,11 +51,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               <div className='h-20 w-16 rounded-r-full bg-emerald-300' />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-              Pionowa kreska to os symetrii.
+              Pionowa kreska to oś symetrii.
             </p>
           </KangurLessonCallout>
           <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-            Figura może miec więcej niż jedna os symetrii!
+            Figura może mieć więcej niż jedną oś symetrii!
           </p>
         </div>
       ),
@@ -63,7 +63,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   figury: [
     {
-      title: 'Które figury sa symetryczne?',
+      title: 'Które figury są symetryczne?',
       content: (
         <div className='flex flex-col gap-3'>
           <div className='grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2'>
@@ -73,7 +73,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ['✅', 'Koło', 'emerald'],
               ['✅', 'Trójkąt równoramienny', 'emerald'],
               ['❌', 'Dowolny zygzak', 'rose'],
-              ['❌', 'Nieregularny wielokat', 'rose'],
+              ['❌', 'Nieregularny wielokąt', 'rose'],
             ].map(([icon, name, accent]) => (
               <KangurLessonCallout
                 key={name}
@@ -86,7 +86,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             ))}
           </div>
           <p className='text-center text-xs [color:var(--kangur-page-muted-text)]'>
-            Koło ma nieskonczona liczbe osi symetrii!
+            Koło ma nieskończoną liczbę osi symetrii!
           </p>
         </div>
       ),
@@ -98,10 +98,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <div className='space-y-3'>
           {[
-            'Symetria oznacza, że dwie strony sa takie same.',
-            'Os symetrii to linia dzielaca figurę na dwie pasujace czesci.',
-            'Wiele figur ma więcej niż jedna os symetrii.',
-            'Koło ma nieskonczona liczbe osi symetrii.',
+            'Symetria oznacza, że dwie strony są takie same.',
+            'Oś symetrii to linia dzieląca figurę na dwie pasujące części.',
+            'Wiele figur ma więcej niż jedną oś symetrii.',
+            'Koło ma nieskończoną liczbę osi symetrii.',
           ].map((text) => (
             <KangurLessonCallout
               key={text}
@@ -120,7 +120,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
 
 export const HUB_SECTIONS = [
   { id: 'intro', emoji: '🦋', title: 'Co to symetria?', description: 'Definicja i przykłady' },
-  { id: 'os', emoji: '|', title: 'Os symetrii', description: 'Linia podziału figury' },
+  { id: 'os', emoji: '|', title: 'Oś symetrii', description: 'Linia podziału figury' },
   {
     id: 'figury',
     emoji: '🔵',

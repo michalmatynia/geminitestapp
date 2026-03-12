@@ -68,7 +68,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /postep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /postęp/i }));
     fireEvent.click(screen.getByRole('button', { name: /zadania/i }));
 
     expect(onBeforeTabChange).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget />);
 
-    expect(screen.queryByRole('button', { name: /postep/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /postęp/i })).not.toBeInTheDocument();
   });
 
   it('renders Mongo-backed intro copy when available', () => {
@@ -92,7 +92,7 @@ describe('KangurParentDashboardTabsWidget', () => {
       data: undefined,
       entry: {
         id: 'parent-dashboard-tabs',
-        title: 'Zakladki panelu',
+        title: 'Zakładki panelu',
         summary: 'Wybierz rodzaj danych potrzebnych do kolejnej decyzji.',
       },
       error: null,
@@ -108,7 +108,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget />);
 
-    expect(screen.getByText('Zakladki panelu')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('Zakładki panelu')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
       screen.getByText('Wybierz rodzaj danych potrzebnych do kolejnej decyzji.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');

@@ -37,7 +37,7 @@ describe('KangurLearnerProfileMasteryWidget', () => {
       entry: {
         id: 'learner-profile-mastery',
         title: 'Opanowanie lekcji',
-        summary: 'Mongo opis tematow do powtorki i najmocniejszych obszarow.',
+        summary: 'Mongo opis tematów do powtórki i najmocniejszych obszarów.',
       },
       data: undefined,
       isLoading: false,
@@ -80,7 +80,7 @@ describe('KangurLearnerProfileMasteryWidget', () => {
 
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(
-      screen.getByText('Mongo opis tematow do powtorki i najmocniejszych obszarow.')
+      screen.getByText('Mongo opis tematów do powtórki i najmocniejszych obszarów.')
     ).toBeInTheDocument();
     expect(screen.getByText('Najmocniejsze lekcje')).toBeInTheDocument();
   });

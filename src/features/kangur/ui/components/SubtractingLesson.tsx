@@ -28,7 +28,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Odejmowanie to zabieranie czesci z grupy. Pytamy: ile zostało?
+            Odejmowanie to zabieranie części z grupy. Pytamy: ile zostało?
           </KangurLessonLead>
           <div className='flex items-center gap-4'>
             <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
@@ -92,7 +92,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, potem odejmij reszte.
+            Rozdziel odjemnik na dwie części: najpierw zejdź do 10, potem odejmij resztę.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay accent='rose'>13 − 5 = ?</KangurEquationDisplay>

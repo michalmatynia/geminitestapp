@@ -1,6 +1,7 @@
 'use client';
 
-import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
+import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import {
   formatKangurProfileDateTime,
@@ -11,7 +12,6 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurPanelIntro,
-  KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -56,77 +56,72 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
         eyebrow={sectionTitle}
       />
       <div className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
-      <KangurGlassPanel
-        className='xl:col-span-3'
-        padding='lg'
-        surface='mistStrong'
-        variant='soft'
-      >
-        <KangurSectionEyebrow className='mb-3'>
-          Ostatnie sesje
-        </KangurSectionEyebrow>
-        {isLoadingScores ? (
-          <KangurEmptyState
-            accent='slate'
-            align='center'
-            data-testid='learner-profile-sessions-loading'
-            description='Sprawdzamy ostatnie podejścia ucznia.'
-            title='Ładowanie historii...'
-          />
-        ) : scoresError ? (
-          <KangurEmptyState
-            accent='rose'
-            align='center'
-            data-testid='learner-profile-sessions-error'
-            description='Spróbuj odświeżyć profil za chwilę.'
-            title={scoresError}
-          />
-        ) : snapshot.recentSessions.length === 0 ? (
-          <KangurEmptyState
-            accent='slate'
-            align='center'
-            data-testid='learner-profile-sessions-empty'
-            description='Pierwsze sesje pojawią się tutaj automatycznie.'
-            title='Brak rozegranych sesji.'
-          />
-        ) : (
-          <div className='flex flex-col gap-2'>
-            {snapshot.recentSessions.map((session) => {
-              const sessionAccent = resolveSessionAccent(session.operation);
-              return (
-                <KangurSessionHistoryRow
-                  accent={sessionAccent}
-                  dataTestId={`learner-profile-session-${session.id}`}
-                  durationText={formatKangurProfileDuration(session.timeTakenSeconds)}
-                  icon={session.operationEmoji}
-                  iconTestId={`learner-profile-session-icon-${session.id}`}
-                  key={session.id}
-                  scoreAccent={resolveSessionScoreAccent(session.accuracyPercent)}
-                  scoreTestId={`learner-profile-session-score-${session.id}`}
-                  scoreText={`${session.score}/${session.totalQuestions}`}
-                  subtitle={formatKangurProfileDateTime(session.createdAt)}
-                  title={session.operationLabel}
-                  titleClassName='text-sm font-semibold'
-                  xpTestId={`learner-profile-session-xp-${session.id}`}
-                  xpText={session.xpEarned !== null ? `+${session.xpEarned} XP` : undefined}
-                />
-              );
-            })}
-          </div>
-        )}
-      </KangurGlassPanel>
+        <KangurGlassPanel
+          className='xl:col-span-3'
+          padding='lg'
+          surface='mistStrong'
+          variant='soft'
+        >
+          <KangurPanelSectionHeading>Ostatnie sesje</KangurPanelSectionHeading>
+          {isLoadingScores ? (
+            <KangurEmptyState
+              accent='slate'
+              align='center'
+              data-testid='learner-profile-sessions-loading'
+              description='Sprawdzamy ostatnie podejścia ucznia.'
+              title='Ładowanie historii...'
+            />
+          ) : scoresError ? (
+            <KangurEmptyState
+              accent='rose'
+              align='center'
+              data-testid='learner-profile-sessions-error'
+              description='Spróbuj odświeżyć profil za chwilę.'
+              title={scoresError}
+            />
+          ) : snapshot.recentSessions.length === 0 ? (
+            <KangurEmptyState
+              accent='slate'
+              align='center'
+              data-testid='learner-profile-sessions-empty'
+              description='Pierwsze sesje pojawią się tutaj automatycznie.'
+              title='Brak rozegranych sesji.'
+            />
+          ) : (
+            <div className='flex flex-col gap-2'>
+              {snapshot.recentSessions.map((session) => {
+                const sessionAccent = resolveSessionAccent(session.operation);
+                return (
+                  <KangurSessionHistoryRow
+                    accent={sessionAccent}
+                    dataTestId={`learner-profile-session-${session.id}`}
+                    durationText={formatKangurProfileDuration(session.timeTakenSeconds)}
+                    icon={session.operationEmoji}
+                    iconTestId={`learner-profile-session-icon-${session.id}`}
+                    key={session.id}
+                    scoreAccent={resolveSessionScoreAccent(session.accuracyPercent)}
+                    scoreTestId={`learner-profile-session-score-${session.id}`}
+                    scoreText={`${session.score}/${session.totalQuestions}`}
+                    subtitle={formatKangurProfileDateTime(session.createdAt)}
+                    title={session.operationLabel}
+                    titleClassName='text-sm font-semibold'
+                    xpTestId={`learner-profile-session-xp-${session.id}`}
+                    xpText={session.xpEarned !== null ? `+${session.xpEarned} XP` : undefined}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </KangurGlassPanel>
 
-      <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <KangurSectionEyebrow className='mb-3'>
-          Ścieżki odznak
-        </KangurSectionEyebrow>
-        <KangurBadgeTrackGrid
-          className='grid-cols-1'
-          dataTestIdPrefix='learner-profile-badge-track'
-          emptyTestId='learner-profile-badges-empty'
-          progress={progress}
-        />
-      </KangurGlassPanel>
+        <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
+          <KangurBadgeTrackSection
+            dataTestIdPrefix='learner-profile-badge-track'
+            emptyTestId='learner-profile-badges-empty'
+            gridClassName='grid-cols-1'
+            progress={progress}
+          />
+        </KangurGlassPanel>
       </div>
     </section>
   );

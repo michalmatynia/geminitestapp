@@ -133,8 +133,8 @@ function Harness(): React.JSX.Element {
         onClick={() =>
           recordFollowUpCompletion?.({
             actionId: 'recommendation:strengthen_lesson_mastery',
-            actionLabel: 'Otworz lekcje',
-            actionReason: 'Powtorz lekcje: Dodawanie',
+            actionLabel: 'Otwórz lekcję',
+            actionReason: 'Powtórz lekcję: Dodawanie',
             actionPage: 'Lessons',
             targetPath: '/kangur/lessons',
             targetSearch: '?focus=adding',
@@ -384,20 +384,21 @@ describe('KangurAiTutorContext', () => {
       followUpActions: [
         {
           id: 'recommendation:strengthen_lesson_mastery',
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'adding',
           },
-          reason: 'Powtorz lekcje: Dodawanie',
+          reason: 'Powtórz lekcję: Dodawanie',
         },
       ],
       coachingFrame: {
         mode: 'hint_ladder',
         label: 'Jeden trop',
         description:
-          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
-        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
+        rationale:
+          'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
       },
       usage: {
         dateKey: '2026-03-07',
@@ -498,7 +499,7 @@ describe('KangurAiTutorContext', () => {
       )
     );
     expect(screen.getByTestId('follow-up-actions')).toHaveTextContent(
-      'Powtorz lekcje: Dodawanie:Otworz lekcje'
+      'Powtórz lekcję: Dodawanie:Otwórz lekcję'
     );
     expect(screen.getByTestId('coaching-summary')).toHaveTextContent(
       'hint_ladder:Jeden trop'
@@ -511,7 +512,7 @@ describe('KangurAiTutorContext', () => {
 
   it('includes selected choice metadata from the active test session in outgoing tutor requests', async () => {
     apiPostMock.mockResolvedValue({
-      message: 'Sprawdz jeszcze raz, czy wybrana odpowiedz pasuje do tresci zadania.',
+      message: 'Sprawdź jeszcze raz, czy wybrana odpowiedź pasuje do treści zadania.',
       sources: [],
       followUpActions: [],
       usage: {
@@ -910,14 +911,14 @@ describe('KangurAiTutorContext', () => {
 
   it('tracks same-session recovery after a hint when the learner reaches review mode', async () => {
     apiPostMock.mockResolvedValue({
-      message: 'Zacznij od dodania pierwszych dwoch liczb.',
+      message: 'Zacznij od dodania pierwszych dwóch liczb.',
       sources: [],
       followUpActions: [],
       coachingFrame: {
         mode: 'hint_ladder',
         label: 'Jeden trop',
         description:
-          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
       },
     });
 
@@ -946,7 +947,7 @@ describe('KangurAiTutorContext', () => {
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(screen.getByTestId('messages')).toHaveTextContent(
-        'Pomóż mi z tym zadaniem. | Zacznij od dodania pierwszych dwoch liczb.'
+        'Pomóż mi z tym zadaniem. | Zacznij od dodania pierwszych dwóch liczb.'
       )
     );
 
@@ -965,7 +966,7 @@ describe('KangurAiTutorContext', () => {
           answerRevealed: true,
           focusKind: 'review',
           focusId: 'review-1',
-          focusLabel: 'Omowienie pytania 1',
+          focusLabel: 'Omówienie pytania 1',
         }}
       >
         <Harness />
@@ -1021,7 +1022,7 @@ describe('KangurAiTutorContext', () => {
           answerRevealed: true,
           focusKind: 'review',
           focusId: 'review-1',
-          focusLabel: 'Omowienie pytania 1',
+          focusLabel: 'Omówienie pytania 1',
         }}
       >
         <Harness />
@@ -1486,24 +1487,25 @@ describe('KangurAiTutorContext', () => {
         followUpActions: [
           {
             id: 'recommendation:strengthen_lesson_mastery',
-            label: 'Otworz lekcje',
+            label: 'Otwórz lekcję',
             page: 'Lessons',
             query: {
               focus: 'adding',
             },
-            reason: 'Powtorz lekcje: Dodawanie',
+            reason: 'Powtórz lekcję: Dodawanie',
           },
         ],
         coachingFrame: {
           mode: 'hint_ladder',
           label: 'Jeden trop',
           description:
-            'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
-          rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+            'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
+          rationale:
+            'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
         },
       })
       .mockResolvedValueOnce({
-        message: 'Wroc do dodawania i sprobuj najpierw dojsc do pelnej dziesiatki.',
+        message: 'Wróć do dodawania i spróbuj najpierw dojść do pełnej dziesiątki.',
         sources: [],
       });
 
@@ -1540,7 +1542,7 @@ describe('KangurAiTutorContext', () => {
         lastSurface: 'lesson',
         lastFocusLabel: 'Dodawanie',
         lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
-        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention: 'Skup się na rozbiciu zadania na dwa kroki.',
         lastCoachingMode: 'hint_ladder',
       });
@@ -1553,7 +1555,7 @@ describe('KangurAiTutorContext', () => {
         lastSurface: 'lesson',
         lastFocusLabel: 'Dodawanie',
         lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
-        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention: 'Skup się na rozbiciu zadania na dwa kroki.',
         lastCoachingMode: 'hint_ladder',
       },
@@ -1568,19 +1570,19 @@ describe('KangurAiTutorContext', () => {
         followUpActions: [
           {
             id: 'recommendation:strengthen_lesson_mastery',
-            label: 'Otworz lekcje',
+            label: 'Otwórz lekcję',
             page: 'Lessons',
             query: {
               focus: 'adding',
             },
-            reason: 'Powtorz lekcje: Dodawanie',
+            reason: 'Powtórz lekcję: Dodawanie',
           },
         ],
         coachingFrame: {
           mode: 'hint_ladder',
           label: 'Jeden trop',
           description:
-            'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+            'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
         },
       })
       .mockResolvedValueOnce({
@@ -1588,7 +1590,7 @@ describe('KangurAiTutorContext', () => {
         sources: [],
       })
       .mockResolvedValueOnce({
-        message: 'Wroc do rozbicia dodawania na dwa kroki.',
+        message: 'Wróć do rozbicia dodawania na dwa kroki.',
         sources: [],
       });
 
@@ -1641,7 +1643,7 @@ describe('KangurAiTutorContext', () => {
         lastSurface: 'lesson',
         lastFocusLabel: 'Dodawanie',
         lastUnresolvedBlocker: 'Pomóż mi z tym zadaniem.',
-        lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention: 'Najpierw rozbij dodawanie na dwa kroki.',
         lastCoachingMode: 'hint_ladder',
       },
@@ -1651,27 +1653,27 @@ describe('KangurAiTutorContext', () => {
   it('records completed tutor follow-ups into compact learner memory for the next request', async () => {
     apiPostMock
       .mockResolvedValueOnce({
-        message: 'Wroc do lekcji z dodawania i zrob jedna krotka powtorke.',
+        message: 'Wróć do lekcji z dodawania i zrób jedną krótką powtórkę.',
         sources: [],
         followUpActions: [
           {
             id: 'recommendation:strengthen_lesson_mastery',
-            label: 'Otworz lekcje',
+            label: 'Otwórz lekcję',
             page: 'Lessons',
             query: {
               focus: 'adding',
             },
-            reason: 'Powtorz lekcje: Dodawanie',
+            reason: 'Powtórz lekcję: Dodawanie',
           },
         ],
         coachingFrame: {
           mode: 'next_best_action',
-          label: 'Nastepny krok',
-          description: 'Wskaz jedna konkretna aktywnosc Kangur jako najlepszy dalszy ruch.',
+          label: 'Następny krok',
+          description: 'Wskaż jedną konkretną aktywność Kangur jako najlepszy dalszy ruch.',
         },
       })
       .mockResolvedValueOnce({
-        message: 'Dobrze, po tej powtorce sprawdz jeszcze jedna probe.',
+        message: 'Dobrze, po tej powtórce sprawdź jeszcze jedną próbę.',
         sources: [],
       });
 
@@ -1703,9 +1705,9 @@ describe('KangurAiTutorContext', () => {
       expect(persisted.learnerMemories?.['learner-1::lesson:lesson-1']).toMatchObject({
         lastSurface: 'lesson',
         lastFocusLabel: 'Dodawanie',
-        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Completed follow-up: Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention:
-          'The learner completed the tutor follow-up Otworz lekcje for Powtorz lekcje: Dodawanie on Lessons.',
+          'The learner completed the tutor follow-up Otwórz lekcję for Powtórz lekcję: Dodawanie on Lessons.',
         lastCoachingMode: 'next_best_action',
       });
     });
@@ -1714,9 +1716,9 @@ describe('KangurAiTutorContext', () => {
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
     expect((apiPostMock.mock.calls[1] ?? [])[1]).toMatchObject({
       memory: {
-        lastRecommendedAction: 'Completed follow-up: Otworz lekcje: Powtorz lekcje: Dodawanie',
+        lastRecommendedAction: 'Completed follow-up: Otwórz lekcję: Powtórz lekcję: Dodawanie',
         lastSuccessfulIntervention:
-          'The learner completed the tutor follow-up Otworz lekcje for Powtorz lekcje: Dodawanie on Lessons.',
+          'The learner completed the tutor follow-up Otwórz lekcję for Powtórz lekcję: Dodawanie on Lessons.',
         lastCoachingMode: 'next_best_action',
       },
     });
@@ -1760,7 +1762,7 @@ describe('KangurAiTutorContext', () => {
         mode: 'hint_ladder',
         label: 'Jeden trop',
         description:
-          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
       },
     });
 

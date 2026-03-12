@@ -32,12 +32,12 @@ describe('summarizeKangurAiTutorFollowUpActions', () => {
       summarizeKangurAiTutorFollowUpActions([
         {
           id: 'recommendation:strengthen_lesson_mastery',
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'adding',
           },
-          reason: 'Powtorz lekcje: Dodawanie',
+          reason: 'Powtórz lekcję: Dodawanie',
         },
       ])
     ).toEqual({

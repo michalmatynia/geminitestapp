@@ -78,7 +78,13 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   panelMotionState: 'animating' | 'settled';
   selectionConversationSelectedText: string | null;
   selectionGuidanceHandoffText: string | null;
+  setContextualTutorMode: Dispatch<SetStateAction<'selection_explain' | 'section_explain' | null>>;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
+  setSelectionGuidanceCalloutVisibleText: (value: string | null) => void;
+  setSelectionGuidanceHandoffText: (value: string | null) => void;
+  setSelectionResponseComplete: (value: PendingSelectionResponse | null) => void;
+  setSelectionResponsePending: Dispatch<SetStateAction<PendingSelectionResponse | null>>;
+  telemetryContext: TelemetryContext;
 }): void {
   const {
     activeSelectedText,
@@ -88,7 +94,13 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
+    setContextualTutorMode,
     setGuidedTutorTarget,
+    setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    telemetryContext,
   } = input;
 
   useEffect(() => {
@@ -104,6 +116,19 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       return;
     }
 
+    trackKangurClientEvent('kangur_ai_tutor_selection_guidance_completed', {
+      ...telemetryContext,
+      selectionLength: selectionGuidanceHandoffText.length,
+    });
+    setSelectionResponseComplete({
+      selectedText: selectionGuidanceHandoffText,
+    });
+    setSelectionResponsePending((current) =>
+      current?.selectedText === selectionGuidanceHandoffText ? null : current
+    );
+    setSelectionGuidanceCalloutVisibleText(null);
+    setSelectionGuidanceHandoffText(null);
+    setContextualTutorMode((current) => (current === 'selection_explain' ? null : current));
     setGuidedTutorTarget(releaseSelectionGuidedTarget(selectionGuidanceHandoffText));
   }, [
     activeSelectedText,
@@ -113,7 +138,59 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     panelMotionState,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
+    setContextualTutorMode,
     setGuidedTutorTarget,
+    setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    telemetryContext,
+  ]);
+}
+
+export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
+  activeSelectedText: string | null;
+  handleOpenChat: (
+    reason: 'section_explain' | 'selection_explain',
+    options?: {
+      panelShellMode?: 'default' | 'minimal';
+    }
+  ) => void;
+  hasSelectionPanelReady: boolean;
+  isLoading?: boolean;
+  selectionConversationSelectedText: string | null;
+  selectionGuidanceHandoffText: string | null;
+}): void {
+  const {
+    activeSelectedText,
+    handleOpenChat,
+    hasSelectionPanelReady,
+    isLoading = false,
+    selectionConversationSelectedText,
+    selectionGuidanceHandoffText,
+  } = input;
+
+  useEffect(() => {
+    if (
+      !selectionGuidanceHandoffText ||
+      isLoading ||
+      hasSelectionPanelReady ||
+      selectionConversationSelectedText !== selectionGuidanceHandoffText ||
+      (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
+    ) {
+      return;
+    }
+
+    handleOpenChat('selection_explain', {
+      panelShellMode: 'minimal',
+    });
+  }, [
+    activeSelectedText,
+    handleOpenChat,
+    hasSelectionPanelReady,
+    isLoading,
+    selectionConversationSelectedText,
+    selectionGuidanceHandoffText,
   ]);
 }
 
@@ -476,16 +553,12 @@ export function useKangurAiTutorGuidedFlow(input: {
       selectionExplainTimeoutRef.current = window.setTimeout(() => {
         selectionExplainTimeoutRef.current = null;
         setSelectionGuidanceHandoffText(selectionText);
-        handleOpenChat('selection_explain', {
-          panelShellMode: 'minimal',
-        });
       }, guidanceDelayMs);
     },
     [
       activeSelectionPageRect,
       activateSelectionGlow,
       focusSelectionPageRect,
-      handleOpenChat,
       messageCount,
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,

@@ -21,7 +21,7 @@ export function KangurGameKangurSetupWidget(): React.JSX.Element | null {
     <div className='w-full flex flex-col items-center gap-4'>
       <KangurPageIntroCard
         className='max-w-md'
-        description='Wybierz edycje konkursu i zestaw zadan do rozwiazania.'
+        description='Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-kangur-setup-top-section'

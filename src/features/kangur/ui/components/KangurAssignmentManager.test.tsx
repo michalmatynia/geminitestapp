@@ -32,9 +32,9 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
     priority === 'high'
       ? 'Priorytet wysoki'
       : priority === 'medium'
-        ? 'Priorytet sredni'
+        ? 'Priorytet średni'
         : 'Priorytet niski',
-  getKangurAssignmentActionLabel: () => 'Otworz zadanie',
+  getKangurAssignmentActionLabel: () => 'Otwórz zadanie',
   resolveKangurAssignmentPriorityAccent: (priority: 'high' | 'medium' | 'low') =>
     priority === 'high' ? 'rose' : priority === 'medium' ? 'amber' : 'emerald',
 }));
@@ -98,7 +98,7 @@ const featuredDailyQuest: KangurDailyQuestState = {
     id: 'mixed-practice',
     title: 'Trening mieszany',
     description: 'Podtrzymaj rytm nauki krotszym treningiem mieszanym.',
-    target: '12 pytan',
+    target: '12 pytań',
     priority: 'medium',
     action: {
       label: 'Uruchom trening',

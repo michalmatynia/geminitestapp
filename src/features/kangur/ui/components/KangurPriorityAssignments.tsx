@@ -22,7 +22,7 @@ type KangurPriorityAssignmentsProps = {
 };
 
 const PRIORITY_ASSIGNMENTS_TITLE = 'Priorytetowe zadania';
-const PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION = 'Brak aktywnych zadan od rodzica.';
+const PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION = 'Brak aktywnych zadań od rodzica.';
 const PRIORITY_ASSIGNMENTS_SECTION_ID = 'game-home-priority-assignments';
 
 export function KangurPriorityAssignments({
@@ -104,7 +104,7 @@ export function KangurPriorityAssignments({
           <div className='text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
             {assignmentsTitle}
           </div>
-          <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>0 zadan</div>
+          <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>0 zadań</div>
         </div>
         {assignmentsSummary ? (
           <div className='mb-4 text-sm [color:var(--kangur-page-muted-text)]'>

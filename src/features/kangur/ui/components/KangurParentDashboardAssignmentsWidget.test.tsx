@@ -133,7 +133,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
       entry: {
         id: 'parent-dashboard-assignments',
         title: 'Zadania ucznia',
-        summary: 'Nadaj priorytet pracy i sprawdz, co wymaga przypomnienia.',
+        summary: 'Nadaj priorytet pracy i sprawdź, co wymaga przypomnienia.',
       },
       error: null,
       isError: false,
@@ -150,7 +150,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
 
     expect(screen.getByText('Zadania ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
-      screen.getByText('Nadaj priorytet pracy i sprawdz, co wymaga przypomnienia.')
+      screen.getByText('Nadaj priorytet pracy i sprawdź, co wymaga przypomnienia.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 });

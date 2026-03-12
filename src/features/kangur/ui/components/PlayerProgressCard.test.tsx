@@ -144,8 +144,8 @@ describe('PlayerProgressCard', () => {
     useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: {
         id: 'game-home-progress',
-        title: 'Mongo postep',
-        summary: 'Mongo opis sekcji postepu.',
+        title: 'Mongo postęp',
+        summary: 'Mongo opis sekcji postępu.',
       },
       data: undefined,
       isLoading: false,
@@ -155,9 +155,9 @@ describe('PlayerProgressCard', () => {
 
     render(<PlayerProgressCard progress={progress} />);
 
-    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Mongo postep');
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Mongo postęp');
     expect(screen.getByTestId('player-progress-copy')).toHaveTextContent(
-      'Mongo opis sekcji postepu.'
+      'Mongo opis sekcji postępu.'
     );
   });
 });

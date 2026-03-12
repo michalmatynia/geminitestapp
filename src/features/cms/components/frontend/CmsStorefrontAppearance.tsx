@@ -388,6 +388,43 @@ const DEFAULT_KANGUR_RUNTIME_VARS = {
     'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
   '--kangur-chat-selection-badge-background':
     'color-mix(in srgb, var(--kangur-soft-card-background) 18%, rgba(255,255,255,0.16))',
+  '--kangur-chat-backdrop': 'rgba(15, 23, 42, 0.18)',
+  '--kangur-chat-backdrop-strong': 'rgba(15, 23, 42, 0.32)',
+  '--kangur-chat-panel-snap-ring': 'rgba(251, 191, 36, 0.8)',
+  '--kangur-chat-panel-snap-shadow':
+    '0 0 0 1px rgba(251,191,36,0.22), 0 28px 56px -28px rgba(217,119,6,0.45), inset 0 1px 0 rgba(255,255,255,0.6)',
+  '--kangur-chat-accent-border': '#f59e0b',
+  '--kangur-chat-user-bubble-background': 'linear-gradient(135deg, #f97316 0%, #f59e0b 100%)',
+  '--kangur-chat-user-bubble-shadow':
+    '0 14px 28px -18px rgba(249,115,22,0.52), 0 1px 0 rgba(255,255,255,0.18) inset',
+  '--kangur-chat-user-bubble-border': 'rgba(251, 146, 60, 0.6)',
+  '--kangur-chat-user-bubble-text': '#ffffff',
+  '--kangur-chat-user-drawing-border': 'rgba(253, 186, 116, 0.5)',
+  '--kangur-chat-user-drawing-shadow': '0 8px 20px -12px rgba(249,115,22,0.3)',
+  '--kangur-chat-typing-dot': '#b45309',
+  '--kangur-chat-floating-avatar-background':
+    'linear-gradient(135deg, #fcd34d 0%, #fb923c 55%, #f97316 100%)',
+  '--kangur-chat-floating-avatar-border': '#78350f',
+  '--kangur-chat-floating-avatar-shadow': '0 14px 28px -16px rgba(154,82,24,0.26)',
+  '--kangur-chat-floating-avatar-focus-ring': 'rgba(251,191,36,0.7)',
+  '--kangur-chat-floating-avatar-rim': '#78350f',
+  '--kangur-chat-notice-badge-background': '#ef4444',
+  '--kangur-chat-notice-badge-ring': '#ffffff',
+  '--kangur-chat-notice-badge-dot': '#ffffff',
+  '--kangur-chat-info-text': '#0369a1',
+  '--kangur-chat-info-pill-background': 'rgba(186, 230, 253, 0.7)',
+  '--kangur-chat-info-pill-text': '#0369a1',
+  '--kangur-chat-feedback-positive-background': '#ecfdf5',
+  '--kangur-chat-feedback-positive-border': '#a7f3d0',
+  '--kangur-chat-feedback-positive-text': '#047857',
+  '--kangur-chat-feedback-negative-background': '#fff1f2',
+  '--kangur-chat-feedback-negative-border': '#fecdd3',
+  '--kangur-chat-feedback-negative-text': '#be123c',
+  '--kangur-chat-danger-background': '#fff1f2',
+  '--kangur-chat-danger-text': '#ef4444',
+  '--kangur-chat-selection-action-shadow':
+    '0 12px 28px -14px rgba(245,158,11,0.45), 0 4px 10px -6px rgba(15,23,42,0.2)',
+  '--kangur-chat-send-shadow': '0 8px 20px -10px rgba(245,158,11,0.4)',
   '--kangur-chat-divider':
     'color-mix(in srgb, var(--kangur-soft-card-border) 80%, rgba(245,158,11,0.15))',
   '--kangur-chat-surface-soft-background':
@@ -763,6 +800,7 @@ const resolveThemedKangurStorefrontAppearance = (
   const secondaryButtonBackground = theme.btnSecondaryBg || surfaceBackground;
   const warningBackground = theme.accentColor || accent;
   const successBackground = theme.successColor || '#22c55e';
+  const dangerBackground = theme.errorColor || '#ef4444';
   const chatBackground = theme.containerBg || surfaceBackground;
   const runtimeThemeVars = resolveKangurRuntimeThemeVars(theme);
   const toneText = mode === 'dark' ? '#f8fafc' : theme.textColor;
@@ -888,6 +926,129 @@ const resolveThemedKangurStorefrontAppearance = (
   const selectionBadgeBackground = `color-mix(in srgb, ${surfaceTone.background} ${
     mode === 'dark' ? 28 : 18
   }%, rgba(255,255,255,${mode === 'dark' ? '0.14' : '0.16'}))`;
+  const backdropBase = '#0f172a';
+  const backdrop = `color-mix(in srgb, ${backdropBase} ${mode === 'dark' ? 28 : 18}%, transparent)`;
+  const backdropStrong = `color-mix(in srgb, ${backdropBase} ${mode === 'dark' ? 44 : 32}%, transparent)`;
+  const accentBorder = mode === 'dark'
+    ? mixCssColor(warningBackground, '#ffffff', 68)
+    : darkenCssColor(warningBackground, 6);
+  const userBubbleBackground = `linear-gradient(135deg, ${mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 70 : 82
+  )} 0%, ${mixCssColor(warningBackground, '#000000', mode === 'dark' ? 18 : 10)} 100%)`;
+  const userBubbleShadow = `0 14px 28px -18px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 60 : 36
+  )}, 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 10 : 18)} inset`;
+  const userBubbleBorder = mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 32 : 58
+  );
+  const userBubbleText = theme.btnPrimaryText || '#ffffff';
+  const userDrawingBorder = `color-mix(in srgb, ${warningBackground} ${
+    mode === 'dark' ? 30 : 40
+  }%, transparent)`;
+  const userDrawingShadow = `0 8px 20px -12px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 58 : 32
+  )}`;
+  const typingDot = mode === 'dark'
+    ? mixCssColor(warningBackground, '#000000', 38)
+    : darkenCssColor(warningBackground, 28);
+  const floatingAvatarBackground = `linear-gradient(135deg, ${mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 64 : 72
+  )} 0%, ${mixCssColor(warningBackground, '#ffffff', mode === 'dark' ? 44 : 56)} 55%, ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 22 : 12
+  )} 100%)`;
+  const floatingAvatarBorder = mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 62 : 72
+  );
+  const floatingAvatarShadow = `0 14px 28px -16px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 62 : 32
+  )}`;
+  const floatingAvatarFocusRing = mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 42 : 34
+  );
+  const noticeBadgeBackground =
+    mode === 'dark' ? mixCssColor(dangerBackground, '#000000', 12) : dangerBackground;
+  const noticeBadgeRing = '#ffffff';
+  const noticeBadgeDot = '#ffffff';
+  const infoText = mode === 'dark'
+    ? mixCssColor(infoBackground, '#ffffff', 72)
+    : darkenCssColor(infoBackground, 22);
+  const infoPillBackground = `color-mix(in srgb, ${infoBackground} ${
+    mode === 'dark' ? 24 : 18
+  }%, ${surfaceTone.background})`;
+  const feedbackPositiveBackground = `color-mix(in srgb, ${successBackground} ${
+    mode === 'dark' ? 20 : 12
+  }%, ${surfaceTone.background})`;
+  const feedbackPositiveBorder = mixCssColor(
+    successBackground,
+    '#ffffff',
+    mode === 'dark' ? 32 : 62
+  );
+  const feedbackPositiveText = mode === 'dark'
+    ? mixCssColor(successBackground, '#ffffff', 78)
+    : darkenCssColor(successBackground, 30);
+  const feedbackNegativeBackground = `color-mix(in srgb, ${dangerBackground} ${
+    mode === 'dark' ? 18 : 12
+  }%, ${surfaceTone.background})`;
+  const feedbackNegativeBorder = mixCssColor(
+    dangerBackground,
+    '#ffffff',
+    mode === 'dark' ? 30 : 62
+  );
+  const feedbackNegativeText = mode === 'dark'
+    ? mixCssColor(dangerBackground, '#ffffff', 78)
+    : darkenCssColor(dangerBackground, 18);
+  const dangerHoverBackground = `color-mix(in srgb, ${dangerBackground} ${
+    mode === 'dark' ? 22 : 10
+  }%, ${surfaceTone.background})`;
+  const dangerText = mode === 'dark'
+    ? mixCssColor(dangerBackground, '#ffffff', 82)
+    : darkenCssColor(dangerBackground, 6);
+  const selectionActionShadow = `0 12px 28px -14px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 54 : 32
+  )}, 0 4px 10px -6px ${mixCssColor(
+    theme.backgroundColor,
+    '#000000',
+    mode === 'dark' ? 60 : 24
+  )}`;
+  const sendShadow = `0 8px 20px -10px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 52 : 30
+  )}`;
+  const panelSnapRing = mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 60 : 34
+  );
+  const panelSnapShadow = `0 0 0 1px ${mixCssColor(
+    warningBackground,
+    '#ffffff',
+    mode === 'dark' ? 26 : 22
+  )}, 0 28px 56px -28px ${mixCssColor(
+    warningBackground,
+    '#000000',
+    mode === 'dark' ? 72 : 46
+  )}, inset 0 1px 0 ${mixCssColor('#ffffff', '#ffffff', mode === 'dark' ? 16 : 60)}`;
   const warmOverlayBackground = `radial-gradient(circle at top, ${mixCssColor(
     surfaceTone.background,
     warningBackground,
@@ -1127,6 +1288,39 @@ const resolveThemedKangurStorefrontAppearance = (
           : mixCssColor(accent, '#ffffff', 28),
       '--kangur-chat-composer-background': composerBackground,
       '--kangur-chat-selection-badge-background': selectionBadgeBackground,
+      '--kangur-chat-backdrop': backdrop,
+      '--kangur-chat-backdrop-strong': backdropStrong,
+      '--kangur-chat-panel-snap-ring': panelSnapRing,
+      '--kangur-chat-panel-snap-shadow': panelSnapShadow,
+      '--kangur-chat-accent-border': accentBorder,
+      '--kangur-chat-user-bubble-background': userBubbleBackground,
+      '--kangur-chat-user-bubble-shadow': userBubbleShadow,
+      '--kangur-chat-user-bubble-border': userBubbleBorder,
+      '--kangur-chat-user-bubble-text': userBubbleText,
+      '--kangur-chat-user-drawing-border': userDrawingBorder,
+      '--kangur-chat-user-drawing-shadow': userDrawingShadow,
+      '--kangur-chat-typing-dot': typingDot,
+      '--kangur-chat-floating-avatar-background': floatingAvatarBackground,
+      '--kangur-chat-floating-avatar-border': floatingAvatarBorder,
+      '--kangur-chat-floating-avatar-shadow': floatingAvatarShadow,
+      '--kangur-chat-floating-avatar-focus-ring': floatingAvatarFocusRing,
+      '--kangur-chat-floating-avatar-rim': floatingAvatarBorder,
+      '--kangur-chat-notice-badge-background': noticeBadgeBackground,
+      '--kangur-chat-notice-badge-ring': noticeBadgeRing,
+      '--kangur-chat-notice-badge-dot': noticeBadgeDot,
+      '--kangur-chat-info-text': infoText,
+      '--kangur-chat-info-pill-background': infoPillBackground,
+      '--kangur-chat-info-pill-text': infoText,
+      '--kangur-chat-feedback-positive-background': feedbackPositiveBackground,
+      '--kangur-chat-feedback-positive-border': feedbackPositiveBorder,
+      '--kangur-chat-feedback-positive-text': feedbackPositiveText,
+      '--kangur-chat-feedback-negative-background': feedbackNegativeBackground,
+      '--kangur-chat-feedback-negative-border': feedbackNegativeBorder,
+      '--kangur-chat-feedback-negative-text': feedbackNegativeText,
+      '--kangur-chat-danger-background': dangerHoverBackground,
+      '--kangur-chat-danger-text': dangerText,
+      '--kangur-chat-selection-action-shadow': selectionActionShadow,
+      '--kangur-chat-send-shadow': sendShadow,
       '--kangur-chat-divider': dividerColor,
       '--kangur-chat-surface-soft-background':
         `linear-gradient(135deg, ${softSurfaceStart} 0%, ${softSurfaceEnd} 100%)`,

@@ -13,7 +13,7 @@ export function KangurLearnerProfileMasteryWidget(): React.JSX.Element {
       progress={progress}
       sectionSummary={
         masteryContent?.summary ??
-        'Sprawdz tematy do powtorki i najmocniejsze obszary na podstawie zapisanych lekcji.'
+        'Sprawdź tematy do powtórki i najmocniejsze obszary na podstawie zapisanych lekcji.'
       }
       sectionTitle={masteryContent?.title ?? 'Opanowanie lekcji'}
     />

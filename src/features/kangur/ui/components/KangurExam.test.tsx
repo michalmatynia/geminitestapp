@@ -75,8 +75,8 @@ describe('KangurExam', () => {
       'primary-cta'
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /odpowiedz b\. 4/i }));
-    expect(screen.getByRole('button', { name: /odpowiedz b\. 4/i })).toHaveAttribute(
+    await userEvent.click(screen.getByRole('button', { name: /odpowiedź b\. 4/i }));
+    expect(screen.getByRole('button', { name: /odpowiedź b\. 4/i })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -104,7 +104,7 @@ describe('KangurExam', () => {
       'aria-valuetext',
       '100% poprawnych odpowiedzi'
     );
-    expect(screen.getByRole('list', { name: 'Przeglad pytan testowych' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Przegląd pytań testowych' })).toBeInTheDocument();
 
     const reviewButton = screen
       .getAllByRole('button')
@@ -117,11 +117,11 @@ describe('KangurExam', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('button', { name: /poprzednie pytanie w podgladzie/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /poprzednie pytanie w podglądzie/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('button', { name: /nastepne pytanie w podgladzie/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /następne pytanie w podglądzie/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

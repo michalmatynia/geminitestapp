@@ -25,6 +25,8 @@ export type KangurKnowledgeGraphPreviewSummary = {
   lexicalHitCount: number;
   vectorHitCount: number;
   vectorRecallAttempted: boolean;
+  tokenCount: number;
+  normalizedQuerySeed: string;
   websiteHelpTargetNodeId: string | null;
 };
 
@@ -56,6 +58,8 @@ const buildKangurKnowledgeGraphPreviewSummary = (input: {
     lexicalHitCount: hit?.lexicalHitCount ?? 0,
     vectorHitCount: hit?.vectorHitCount ?? 0,
     vectorRecallAttempted: hit?.vectorRecallAttempted ?? false,
+    tokenCount: input.retrieval.tokens.length,
+    normalizedQuerySeed: input.retrieval.normalizedQuerySeed,
     websiteHelpTargetNodeId: hit?.websiteHelpTarget?.nodeId ?? null,
   };
 };

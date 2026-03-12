@@ -1,5 +1,6 @@
 'use client';
 
+import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   buildKangurOperationPracticeHref,
@@ -12,7 +13,6 @@ import {
   KangurGlassPanel,
   KangurPanelIntro,
   KangurProgressBar,
-  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -41,9 +41,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <KangurSectionEyebrow className='mb-3'>
-          Aktywność 7 dni
-        </KangurSectionEyebrow>
+        <KangurPanelSectionHeading>Aktywność 7 dni</KangurPanelSectionHeading>
         <div className='mb-4 flex flex-wrap gap-2'>
           <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
             Dziś: +{snapshot.todayXpEarned} XP
@@ -86,9 +84,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <KangurSectionEyebrow className='mb-3'>
-          Wyniki wg operacji
-        </KangurSectionEyebrow>
+        <KangurPanelSectionHeading>Wyniki wg operacji</KangurPanelSectionHeading>
         <div className='flex flex-col gap-3'>
           {snapshot.operationPerformance.length === 0 ? (
             <KangurEmptyState

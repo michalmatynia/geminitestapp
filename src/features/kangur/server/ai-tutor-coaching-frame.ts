@@ -44,9 +44,9 @@ export const buildKangurAiTutorCoachingFrame = (input: {
       mode: 'review_reflection',
       label: 'Omów po wskazówce',
       description:
-        'Podsumuj to, co zadziałało po wskazówce, nazwij jedna poprawke i zakończ jednym kolejnym krokiem.',
+        'Podsumuj to, co zadziałało po wskazówce, nazwij jedną poprawkę i zakończ jednym kolejnym krokiem.',
       rationale:
-        'Uczeń przeszedł od wskazówki do omówienia po zobaczeniu odpowiedzi, wiec najlepsze będzie spokojne podsumowanie i jedna poprawka.',
+        'Uczeń przeszedł od wskazówki do omówienia po zobaczeniu odpowiedzi, więc najlepsze będzie spokojne podsumowanie i jedna poprawka.',
     };
   }
 
@@ -55,10 +55,10 @@ export const buildKangurAiTutorCoachingFrame = (input: {
       mode: 'review_reflection',
       label: 'Omów po próbie',
       description:
-        'Podsumuj próbę, nazwij jedna poprawke i zakończ sugestia ponownej próby.',
+        'Podsumuj próbę, nazwij jedną poprawkę i zakończ sugestią ponownej próby.',
       rationale: context?.answerRevealed
-        ? 'Odpowiedz jest już odslonieta, wiec tutor powinien skupic się na spokojnym omowieniu.'
-        : 'To dobry moment na refleksje po próbie i jedna konkretna poprawke.',
+        ? 'Odpowiedź jest już odsłonięta, więc tutor powinien skupić się na spokojnym omówieniu.'
+        : 'To dobry moment na refleksję po próbie i jedną konkretną poprawkę.',
     };
   }
 
@@ -66,8 +66,8 @@ export const buildKangurAiTutorCoachingFrame = (input: {
     return {
       mode: 'next_best_action',
       label: 'Następny krok',
-      description: 'Wskaz jedna konkretna aktywność Kangur jako najlepszy dalszy ruch.',
-      rationale: 'Najwięcej wartosci da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
+      description: 'Wskaż jedną konkretną aktywność Kangur jako najlepszy dalszy ruch.',
+      rationale: 'Najwięcej wartości da teraz jedna jasna aktywność, a nie kilka opcji naraz.',
     };
   }
 
@@ -78,7 +78,7 @@ export const buildKangurAiTutorCoachingFrame = (input: {
       description:
         'Potwierdź postęp po poprzedniej wskazówce i daj jeden konkretny dalszy krok.',
       rationale:
-        'Uczeń ruszyl dalej po poprzedniej wskazówce, wiec zamiast kolejnej podobnej podpowiedzi lepiej utrwalic postęp jednym ruchem.',
+        'Uczeń ruszył dalej po poprzedniej wskazówce, więc zamiast kolejnej podobnej podpowiedzi lepiej utrwalić postęp jednym ruchem.',
     };
   }
 
@@ -92,13 +92,13 @@ export const buildKangurAiTutorCoachingFrame = (input: {
   ) {
     return {
       mode: 'misconception_check',
-      label: 'Zmien podejscie',
+      label: 'Zmień podejście',
       description:
-        'Sprawdź, gdzie uczeń blokuje się w rozumowaniu, zamiast dawac kolejny taki sam trop.',
+        'Sprawdź, gdzie uczeń blokuje się w rozumowaniu, zamiast dawać kolejny taki sam trop.',
       rationale:
         previousCoachingMode === 'hint_ladder'
-          ? 'Uczeń powtorzyl to samo pytanie po wskazówce, wiec trzeba przejść z kolejnego tropu do diagnozy rozumienia.'
-          : 'Powtorzone pytanie sugeruje, ze trzeba zmienic strategie i uchwycic zrodlo blokady.',
+          ? 'Uczeń powtórzył to samo pytanie po wskazówce, więc trzeba przejść z kolejnego tropu do diagnozy rozumienia.'
+          : 'Powtórzone pytanie sugeruje, że trzeba zmienić strategię i uchwycić źródło blokady.',
     };
   }
 
@@ -110,10 +110,10 @@ export const buildKangurAiTutorCoachingFrame = (input: {
     return {
       mode: 'misconception_check',
       label: 'Sprawdź rozumienie',
-      description: 'Najpierw wyjaśnij pojecie i sprawdź, co uczeń rozumie blednie.',
+      description: 'Najpierw wyjaśnij pojęcie i sprawdź, co uczeń rozumie błędnie.',
       rationale: hasSelectedExcerpt
-        ? 'Uczeń wskazal konkretny fragment, wiec trzeba najpierw sprawdzić rozumienie.'
-        : 'Najpierw trzeba uchwycic blad w rozumieniu pojecia, zanim padnie kolejna wskazówka.',
+        ? 'Uczeń wskazał konkretny fragment, więc trzeba najpierw sprawdzić rozumienie.'
+        : 'Najpierw trzeba uchwycić błąd w rozumieniu pojęcia, zanim padnie kolejna wskazówka.',
     };
   }
 
@@ -129,19 +129,19 @@ export const buildKangurAiTutorCoachingFrame = (input: {
     return {
       mode: 'hint_ladder',
       label: 'Jeden trop',
-      description: 'Daj tylko jeden mały krok albo pytanie kontrolne, bez pelnego rozwiązania.',
+      description: 'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
       rationale:
         context?.surface === 'test' || context?.surface === 'game'
-          ? 'Uczeń jest w trakcie próby, wiec tutor powinien prowadzić bardzo malymi krokami.'
-          : 'Nizsza skuteczność sugeruje prace malymi krokami zamiast pelnego wyjaśnienia naraz.',
+          ? 'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.'
+          : 'Niższa skuteczność sugeruje pracę małymi krokami zamiast pełnego wyjaśnienia naraz.',
     };
   }
 
   return {
     mode: 'misconception_check',
     label: 'Sprawdź rozumienie',
-    description: 'Najpierw wyjaśnij pojecie i sprawdź, co uczeń rozumie blednie.',
-    rationale: 'Krótka diagnoza rozumienia daje lepszy kolejny krok niż szybka odpowiedz.',
+    description: 'Najpierw wyjaśnij pojęcie i sprawdź, co uczeń rozumie błędnie.',
+    rationale: 'Krótka diagnoza rozumienia daje lepszy kolejny krok niż szybka odpowiedź.',
   };
 };
 

@@ -8,12 +8,41 @@ import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tu
 
 import {
   useKangurAiTutorGuidedFlow,
+  useKangurAiTutorSelectionGuidanceDockOpenEffect,
   useKangurAiTutorSelectionGuidanceHandoffEffect,
 } from './KangurAiTutorWidget.guided';
 
+describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
+  it('opens the docked selection panel only after the final response is ready', async () => {
+    const handleOpenChatMock = vi.fn();
+
+    renderHook(() =>
+      useKangurAiTutorSelectionGuidanceDockOpenEffect({
+        activeSelectedText: 'Ranking wynikow',
+        handleOpenChat: handleOpenChatMock,
+        hasSelectionPanelReady: false,
+        isLoading: false,
+        selectionConversationSelectedText: 'Ranking wynikow',
+        selectionGuidanceHandoffText: 'Ranking wynikow',
+      })
+    );
+
+    await waitFor(() =>
+      expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
+        panelShellMode: 'minimal',
+      })
+    );
+  });
+});
+
 describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
-  it('clears the guided selection target once the selection panel is ready even for section-aware excerpts', async () => {
+  it('finalizes the selection handoff once the docked panel is ready even for section-aware excerpts', async () => {
+    const setContextualTutorModeMock = vi.fn();
     const setGuidedTutorTargetMock = vi.fn();
+    const setSelectionGuidanceCalloutVisibleTextMock = vi.fn();
+    const setSelectionGuidanceHandoffTextMock = vi.fn();
+    const setSelectionResponseCompleteMock = vi.fn();
+    const setSelectionResponsePendingMock = vi.fn();
 
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceHandoffEffect({
@@ -24,7 +53,17 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
         panelMotionState: 'settled',
         selectionConversationSelectedText: 'Ranking wynikow',
         selectionGuidanceHandoffText: 'Ranking wynikow',
+        setContextualTutorMode: setContextualTutorModeMock,
         setGuidedTutorTarget: setGuidedTutorTargetMock,
+        setSelectionGuidanceCalloutVisibleText: setSelectionGuidanceCalloutVisibleTextMock,
+        setSelectionGuidanceHandoffText: setSelectionGuidanceHandoffTextMock,
+        setSelectionResponseComplete: setSelectionResponseCompleteMock,
+        setSelectionResponsePending: setSelectionResponsePendingMock,
+        telemetryContext: {
+          contentId: 'game:home',
+          surface: 'game',
+          title: 'Ranking',
+        },
       })
     );
 
@@ -50,11 +89,28 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
       mode: 'selection',
       selectedText: 'Inny fragment',
     });
+    expect(setSelectionResponseCompleteMock).toHaveBeenCalledWith({
+      selectedText: 'Ranking wynikow',
+    });
+    expect(setSelectionGuidanceCalloutVisibleTextMock).toHaveBeenCalledWith(null);
+    expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith(null);
+
+    const contextualModeUpdater = setContextualTutorModeMock.mock.calls[0]?.[0];
+    expect(typeof contextualModeUpdater).toBe('function');
+    expect(contextualModeUpdater('selection_explain')).toBeNull();
+    expect(contextualModeUpdater('section_explain')).toBe('section_explain');
+
+    const pendingUpdater = setSelectionResponsePendingMock.mock.calls[0]?.[0];
+    expect(typeof pendingUpdater).toBe('function');
+    expect(pendingUpdater({ selectedText: 'Ranking wynikow' })).toBeNull();
+    expect(pendingUpdater({ selectedText: 'Inny fragment' })).toEqual({
+      selectedText: 'Inny fragment',
+    });
   });
 });
 
 describe('useKangurAiTutorGuidedFlow', () => {
-  it('starts loading the selection explanation before the reveal timer finishes and only opens the shell after the slide delay', async () => {
+  it('starts loading the selection explanation before the reveal timer finishes and delays docking until the response-ready handoff', async () => {
     vi.useFakeTimers();
 
     const activateSelectionGlowMock = vi.fn(() => true);
@@ -180,12 +236,7 @@ describe('useKangurAiTutorGuidedFlow', () => {
 
     expect(setSelectionGuidanceCalloutVisibleTextMock).toHaveBeenCalledWith('2 + 2');
     expect(setSelectionGuidanceHandoffTextMock).toHaveBeenCalledWith('2 + 2');
-    expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
-      panelShellMode: 'minimal',
-    });
-    expect(sendMessageMock.mock.invocationCallOrder[0]).toBeLessThan(
-      handleOpenChatMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
-    );
+    expect(handleOpenChatMock).not.toHaveBeenCalled();
     expect(setGuidedTutorTargetMock).toHaveBeenCalledWith({
       kind: 'selection_excerpt',
       mode: 'selection',

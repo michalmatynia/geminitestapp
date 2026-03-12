@@ -19,6 +19,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import type { KangurLesson } from '@/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/shared/contracts/kangur-tests';
 import { cn, sanitizeSvg } from '@/shared/utils';
@@ -28,6 +29,7 @@ import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { renderKangurQuestionIllustration } from './KangurQuestionIllustrationRenderer';
 
 type Props = {
+  contentId?: string | null;
   question: KangurTestQuestion;
   selectedLabel: string | null;
   onSelect: (label: string) => void;
@@ -38,7 +40,100 @@ type Props = {
   showSectionIntro?: boolean;
 };
 
+type KangurTestChoiceCardProps = {
+  accent: KangurAccent;
+  badgeClassName: string;
+  buttonClassName: string;
+  choice: KangurTestQuestion['choices'][number];
+  choiceGrid: boolean;
+  contentId: string | null;
+  emphasis: 'neutral' | 'accent';
+  index: number;
+  isChoiceCorrect: boolean;
+  isSelected: boolean;
+  onSelect: (label: string) => void;
+  question: KangurTestQuestion;
+  showAnswer: boolean;
+};
+
+function KangurTestChoiceCard({
+  accent,
+  badgeClassName,
+  buttonClassName,
+  choice,
+  choiceGrid,
+  contentId,
+  emphasis,
+  index,
+  isChoiceCorrect,
+  isSelected,
+  onSelect,
+  question,
+  showAnswer,
+}: KangurTestChoiceCardProps): React.JSX.Element {
+  const selectionAnchorRef = React.useRef<HTMLDivElement | null>(null);
+  const selectionLabel = `Odpowiedz ${choice.label}: ${choice.text}`;
+
+  useKangurTutorAnchor({
+    id: `kangur-test-selection:${contentId ?? question.suiteId}:${question.id}:${choice.label}`,
+    kind: 'selection',
+    ref: selectionAnchorRef,
+    surface: 'test',
+    enabled: isSelected && !showAnswer,
+    priority: 86,
+    metadata: {
+      contentId: contentId ?? question.suiteId,
+      label: selectionLabel,
+    },
+  });
+
+  return (
+    <div ref={selectionAnchorRef} className={choiceGrid ? 'h-full' : undefined}>
+      <KangurAnswerChoiceCard
+        accent={accent}
+        buttonClassName={cn(
+          'flex items-start gap-3 px-4 py-3 text-left text-sm font-semibold',
+          buttonClassName,
+          choiceGrid && 'h-full min-h-[112px]'
+        )}
+        data-testid={`kangur-test-question-choice-${index}`}
+        emphasis={emphasis}
+        interactive={!showAnswer}
+        onClick={(): void => onSelect(choice.label)}
+        type='button'
+      >
+        <KangurAnswerChoiceBadge className={badgeClassName} size='xs'>
+          {choice.label}
+        </KangurAnswerChoiceBadge>
+        <span className='flex flex-1 flex-col gap-2 [color:var(--kangur-page-text)]'>
+          {choice.svgContent?.trim() ? (
+            <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
+              <span
+                className='block max-h-24 max-w-full'
+                dangerouslySetInnerHTML={{ __html: sanitizeSvg(choice.svgContent) }}
+              />
+            </span>
+          ) : null}
+          <span>{choice.text}</span>
+          {choice.description?.trim() ? (
+            <span className='text-xs font-medium leading-5 [color:var(--kangur-page-muted-text)]'>
+              {choice.description.trim()}
+            </span>
+          ) : null}
+        </span>
+        {showAnswer && isChoiceCorrect ? (
+          <CheckCircle className='size-4 shrink-0 text-emerald-500' />
+        ) : null}
+        {showAnswer && isSelected && !isChoiceCorrect ? (
+          <XCircle className='size-4 shrink-0 text-rose-500' />
+        ) : null}
+      </KangurAnswerChoiceCard>
+    </div>
+  );
+}
+
 export function KangurTestQuestionRenderer({
+  contentId = null,
   question,
   selectedLabel,
   onSelect,
@@ -151,10 +246,10 @@ export function KangurTestQuestionRenderer({
           description={
             sectionContent?.summary ??
             (showAnswer
-              ? 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj krotkie wyjasnienie.'
-              : 'Wybierz jedna odpowiedz, a potem sprawdz omowienie i poprawny tok myslenia.')
+              ? 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj krótkie wyjaśnienie.'
+              : 'Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia.')
           }
-          title={sectionContent?.title ?? (showAnswer ? 'Omowienie odpowiedzi' : 'Pytanie testowe')}
+          title={sectionContent?.title ?? (showAnswer ? 'Omówienie odpowiedzi' : 'Pytanie testowe')}
           titleAs='h2'
           titleClassName='text-lg font-bold tracking-[-0.02em]'
         />
@@ -213,46 +308,22 @@ export function KangurTestQuestionRenderer({
           }
 
           return (
-            <KangurAnswerChoiceCard
+            <KangurTestChoiceCard
               accent={accent}
-              buttonClassName={cn(
-                'flex items-start gap-3 px-4 py-3 text-left text-sm font-semibold',
-                cardClassName,
-                choiceGrid && 'h-full min-h-[112px]'
-              )}
-              data-testid={`kangur-test-question-choice-${index}`}
+              badgeClassName={badgeClassName}
+              buttonClassName={cardClassName}
+              choice={choice}
+              choiceGrid={choiceGrid}
+              contentId={contentId}
               emphasis={emphasis}
-              interactive={choiceInteractionState !== 'locked'}
+              index={index}
+              isChoiceCorrect={isChoiceCorrect}
               key={choice.label}
-              onClick={(): void => handleChoiceSelect(choice.label)}
-              type='button'
-            >
-              <KangurAnswerChoiceBadge className={badgeClassName} size='xs'>
-                {choice.label}
-              </KangurAnswerChoiceBadge>
-              <span className='flex flex-1 flex-col gap-2 [color:var(--kangur-page-text)]'>
-                {choice.svgContent?.trim() ? (
-                  <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
-                    <span
-                      className='block max-h-24 max-w-full'
-                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(choice.svgContent) }}
-                    />
-                  </span>
-                ) : null}
-                <span>{choice.text}</span>
-                {choice.description?.trim() ? (
-                  <span className='text-xs font-medium leading-5 [color:var(--kangur-page-muted-text)]'>
-                    {choice.description.trim()}
-                  </span>
-                ) : null}
-              </span>
-              {showAnswer && isChoiceCorrect ? (
-                <CheckCircle className='size-4 shrink-0 text-emerald-500' />
-              ) : null}
-              {showAnswer && isSelected && !isChoiceCorrect ? (
-                <XCircle className='size-4 shrink-0 text-rose-500' />
-              ) : null}
-            </KangurAnswerChoiceCard>
+              isSelected={isSelected}
+              onSelect={handleChoiceSelect}
+              question={question}
+              showAnswer={showAnswer}
+            />
           );
         })}
       </div>

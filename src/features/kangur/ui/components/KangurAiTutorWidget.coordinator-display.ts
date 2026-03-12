@@ -10,7 +10,6 @@ import { useKangurAiTutorConversationViewState } from './KangurAiTutorWidget.con
 import {
   CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER,
   CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE,
-  FLOATING_TUTOR_AVATAR_RIM_COLOR,
   HOME_ONBOARDING_ELIGIBLE_CONTENT_ID,
   isSelectionWithinTutorUi,
 } from './KangurAiTutorWidget.coordinator.helpers';
@@ -104,8 +103,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
     setGuidedTutorTarget,
+    setContextualTutorMode,
     setSectionResponseComplete,
     setSectionResponsePending,
+    setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     setTutorNarrationObservedText,
@@ -237,6 +239,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
+    selectionGuidanceHandoffText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -281,6 +284,7 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     sessionContext: {
       answerRevealed: sessionContext?.answerRevealed,
       contentId: sessionContext?.contentId,
+      selectedChoiceLabel: sessionContext?.selectedChoiceLabel,
       surface: sessionContext?.surface,
     },
     tutorAnchorContext,
@@ -292,11 +296,18 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   useKangurAiTutorSelectionGuidanceHandoffEffect({
     activeSelectedText: effectiveSelectedText,
     hasSelectionPanelReady,
+    isLoading,
     isOpen,
     panelMotionState: tutorPanelMotionState,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionGuidanceHandoffText,
+    setContextualTutorMode,
     setGuidedTutorTarget,
+    setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+    telemetryContext,
   });
 
   const conversationMessages = useMemo(() => {
@@ -582,14 +593,11 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   });
 
   const avatarButtonClassName = cn(
-    'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full',
-    'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500',
-    'shadow-[0_14px_28px_-16px_rgba(154,82,24,0.26)] hover:brightness-[1.03]',
-    'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2'
+    'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-2',
+    'kangur-chat-floating-avatar hover:brightness-[1.03]',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:[--tw-ring-color:var(--kangur-chat-floating-avatar-focus-ring,rgba(251,191,36,0.7))]'
   );
-  const avatarButtonStyle: CSSProperties = {
-    borderColor: FLOATING_TUTOR_AVATAR_RIM_COLOR,
-  };
+  const avatarButtonStyle: CSSProperties = {};
 
   return {
     activeFocus,

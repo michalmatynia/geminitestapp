@@ -45,7 +45,7 @@ const createAssignmentSnapshot = (id: string, percent = 0) => ({
   progress: {
     status: percent === 100 ? ('completed' as const) : ('not_started' as const),
     percent,
-    summary: `Powtorki po przydziale: ${percent === 100 ? 1 : 0}/1.`,
+    summary: `Powtórki po przydziale: ${percent === 100 ? 1 : 0}/1.`,
     attemptsCompleted: percent === 100 ? 1 : 0,
     attemptsRequired: 1,
     lastActivityAt: null,

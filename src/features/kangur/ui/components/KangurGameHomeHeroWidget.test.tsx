@@ -25,7 +25,9 @@ vi.mock('@/features/kangur/ui/components/KangurHeroMilestoneSummary', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
-  default: ({ basePath }: { basePath: string }) => <div>spotlight:{basePath}</div>,
+  default: ({ basePath }: { basePath: string }) => (
+    <div data-testid='kangur-assignment-spotlight-shell'>spotlight:{basePath}</div>
+  ),
 }));
 
 import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
@@ -146,6 +148,60 @@ describe('KangurGameHomeHeroWidget', () => {
       'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.'
     );
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
+  });
+
+  it('omits the hero intro when showIntro is false but keeps milestone content', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canAccessParentAssignments: true,
+      handleStartGame: vi.fn(),
+      navigateToLogin: vi.fn(),
+      playerName: '',
+      progress: buildProgress({
+        gamesPlayed: 3,
+        totalXp: 360,
+      }),
+      screen: 'home',
+      setPlayerName: vi.fn(),
+      user: { id: 'user-1' },
+    });
+
+    render(<KangurGameHomeHeroWidget showIntro={false} />);
+
+    expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-home-hero-copy')).toBeNull();
+    const milestone = screen.getByTestId('kangur-home-hero-milestone-shell');
+    const spotlight = screen.getByTestId('kangur-assignment-spotlight-shell');
+    expect(milestone).toBeInTheDocument();
+    expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
+    const container = screen.getByTestId('kangur-home-hero-shell');
+    const children = Array.from(container.children);
+    expect(children.indexOf(spotlight)).toBeGreaterThanOrEqual(0);
+    expect(children.indexOf(milestone)).toBeGreaterThanOrEqual(0);
+    expect(children.indexOf(spotlight)).toBeLessThan(children.indexOf(milestone));
+  });
+
+  it('omits the assignment spotlight when showAssignmentSpotlight is false', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canAccessParentAssignments: true,
+      handleStartGame: vi.fn(),
+      navigateToLogin: vi.fn(),
+      playerName: '',
+      progress: buildProgress({
+        gamesPlayed: 3,
+        totalXp: 360,
+      }),
+      screen: 'home',
+      setPlayerName: vi.fn(),
+      user: { id: 'user-1' },
+    });
+
+    render(<KangurGameHomeHeroWidget showAssignmentSpotlight={false} />);
+
+    expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-assignment-spotlight-shell')).toBeNull();
+    expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toBeInTheDocument();
   });
 
   it('stacks the milestone summary with the assignment spotlight when both are available', () => {

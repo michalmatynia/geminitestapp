@@ -81,7 +81,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
       {visibleMessages.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-6'>
           <div
-            className='mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full text-amber-600 kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
+            className='mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full kangur-chat-surface-warm kangur-chat-surface-warm-shadow [color:var(--kangur-chat-kicker-text,var(--kangur-page-text))]'
           >
             <span className='text-lg'>?</span>
           </div>
@@ -111,19 +111,19 @@ export function KangurAiTutorMessageList(): JSX.Element {
                   {userDrawingArtifacts.map((artifact, artifactIndex) => (
                     <div key={`${index}-${artifactIndex}`} className='flex justify-end'>
                       <div className='space-y-1 text-right'>
-                        <span className='text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500'>
+                        <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
                           {drawingContent?.messageLabel ?? 'Narysowano'}
                         </span>
                         <img
                           src={artifact.imageDataUrl}
                           alt={artifact.alt ?? drawingContent?.previewAlt ?? 'Rysunek'}
                           data-testid={`kangur-ai-tutor-drawing-message-${index}`}
-                          className='max-h-32 w-auto kangur-chat-card border border-orange-300/50 shadow-[0_8px_20px_-12px_rgba(249,115,22,0.3)]'
+                          className='max-h-32 w-auto kangur-chat-card border kangur-chat-user-drawing-shadow [border-color:var(--kangur-chat-user-drawing-border,var(--kangur-chat-user-bubble-border,rgba(253,186,116,0.5)))]'
                         />
                       </div>
                     </div>
                   ))}
-                  <div className='kangur-chat-bubble kangur-chat-padding-sm border border-orange-400/60 tutor-user-bubble text-sm leading-relaxed text-white'>
+                  <div className='kangur-chat-bubble kangur-chat-padding-sm border tutor-user-bubble text-sm leading-relaxed'>
                     {msg.content}
                   </div>
                 </div>
@@ -147,10 +147,10 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     data-coaching-mode={msg.coachingFrame.mode}
                   >
                     <div className='flex items-center gap-1.5'>
-                      <span className='inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-200/70 text-[8px] text-sky-700'>
+                      <span className='inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] [background:var(--kangur-chat-info-pill-background,rgba(186,230,253,0.7))] [color:var(--kangur-chat-info-pill-text,var(--kangur-chat-info-text,var(--kangur-chat-panel-text,var(--kangur-page-text))))]'>
                         {COACHING_MODE_ICON[msg.coachingFrame.mode]}
                       </span>
-                      <span className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
+                      <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-info-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
                         {msg.coachingFrame.label}
                       </span>
                     </div>
@@ -182,7 +182,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                       <div
                         role='img'
                         aria-label={artifact.alt ?? drawingContent?.previewAlt ?? 'Rysunek'}
-                        className='overflow-hidden kangur-chat-inset border border-amber-200/50 [background:var(--kangur-soft-card-background)] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
+                        className='overflow-hidden kangur-chat-inset border [border-color:var(--kangur-chat-surface-soft-border,var(--kangur-soft-card-border))] [background:var(--kangur-soft-card-background)] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full'
                         dangerouslySetInnerHTML={{
                           __html: sanitizeSvg(artifact.svgContent, { viewBox: '0 0 320 200' }),
                         }}
@@ -282,7 +282,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     data-kangur-tts-ignore='true'
                     className='soft-card kangur-chat-card kangur-chat-padding-md border kangur-chat-surface-info kangur-chat-surface-info-shadow'
                   >
-                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
+                    <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-info-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
                       Miejsce na stronie
                     </div>
                     <div className='mt-1 text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
@@ -330,7 +330,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                       className={cn(
                         'h-8 px-3 text-[11px]',
                         submittedFeedback === 'helpful'
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          ? 'kangur-chat-feedback-positive'
                           : ''
                       )}
                       onClick={() => handleMessageFeedback(index, msg, 'helpful')}
@@ -347,7 +347,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                       className={cn(
                         'h-8 px-3 text-[11px]',
                         submittedFeedback === 'not_helpful'
-                          ? 'border-rose-200 bg-rose-50 text-rose-700'
+                          ? 'kangur-chat-feedback-negative'
                           : ''
                       )}
                       onClick={() => handleMessageFeedback(index, msg, 'not_helpful')}

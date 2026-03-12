@@ -48,8 +48,8 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
           widget: 'KangurLessonsCatalogWidget',
           sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
           title: 'Biblioteka lekcji',
-          summary: 'Lista wszystkich tematow i kart do wybrania.',
-          body: 'Tutaj uczen wybiera temat, sprawdza priorytet i otwiera dalsza praktyke.',
+          summary: 'Lista wszystkich tematów i kart do wybrania.',
+          body: 'Tutaj uczeń wybiera temat, sprawdza priorytet i otwiera dalszą praktykę.',
           anchorIdPrefix: 'kangur-lessons-library',
           focusKind: 'library',
           contentIdPrefixes: ['lesson:list'],
@@ -161,7 +161,7 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
     });
 
     const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
-      latestUserMessage: 'Wyjasnij mi te szybkie akcje.',
+      latestUserMessage: 'Wyjaśnij mi te szybkie akcje.',
       context: {
         surface: 'game',
         contentId: 'game:home',

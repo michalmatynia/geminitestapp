@@ -56,8 +56,8 @@ const createRequestContext = (): ApiHandlerContext =>
 const createAssignment = (overrides: Partial<KangurAssignment> = {}): KangurAssignment => ({
   id: 'assignment-1',
   learnerKey: 'ada@example.com',
-  title: 'Powtorka dzielenia',
-  description: 'Przerob jeszcze jedna sesje dzielenia.',
+  title: 'Powtórka dzielenia',
+  description: 'Przerób jeszcze jedną sesję dzielenia.',
   priority: 'high',
   archived: false,
   target: {
@@ -189,8 +189,8 @@ describe('kangur assignments handler', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          title: 'Powtorka dzielenia',
-          description: 'Przerob jeszcze jedna sesje dzielenia.',
+          title: 'Powtórka dzielenia',
+          description: 'Przerób jeszcze jedną sesję dzielenia.',
           priority: 'high',
           target: {
             type: 'lesson',

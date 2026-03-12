@@ -11,7 +11,6 @@ import {
   KangurGameCalendarTrainingWidget,
   KangurGameGeometryTrainingWidget,
   KangurGameHomeActionsWidget,
-  KangurGameHomeHeroWidget,
   KangurGameKangurSessionWidget,
   KangurGameKangurSetupWidget,
   KangurGameNavigationWidget,
@@ -94,7 +93,6 @@ const LESSONS_RUNTIME_WIDGET_IDS = new Set([
 const GAME_RUNTIME_WIDGET_IDS = new Set([
   'game-navigation',
   'game-xp-toast',
-  'game-home-hero',
   'game-home-actions',
   'game-training-setup',
   'game-kangur-setup',
@@ -196,8 +194,6 @@ export function KangurWidgetBlock(): React.ReactNode {
       return <KangurGameNavigationWidget />;
     case 'game-xp-toast':
       return <KangurGameXpToastWidget />;
-    case 'game-home-hero':
-      return <KangurGameHomeHeroWidget />;
     case 'game-home-actions':
       return <KangurGameHomeActionsWidget />;
     case 'game-training-setup':

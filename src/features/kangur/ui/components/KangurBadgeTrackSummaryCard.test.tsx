@@ -18,8 +18,8 @@ const track: KangurBadgeTrackSummary = {
   nextBadge: {
     id: 'challenge-starter',
     emoji: '⭐',
-    name: 'Start wyzwan',
-    desc: 'Ukoncz pierwsze trudniejsze zadania.',
+    name: 'Start wyzwań',
+    desc: 'Ukończ pierwsze trudniejsze zadania.',
     track: 'challenge',
     current: 2,
     target: 4,
@@ -47,7 +47,7 @@ describe('KangurBadgeTrackSummaryCard', () => {
 
     expect(screen.getByTestId('badge-track-card')).toHaveTextContent('⚡ Wyzwania');
     expect(screen.getByTestId('badge-track-card')).toHaveTextContent('2/4 odznak');
-    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('Start wyzwan · 2/4 zadania');
+    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('Start wyzwań · 2/4 zadania');
     expect(screen.getByTestId('badge-track-card')).toHaveClass(
       'soft-card',
       'kangur-card-surface',

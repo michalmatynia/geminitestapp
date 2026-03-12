@@ -60,7 +60,7 @@ describe('drawing helpers', () => {
         context: {
           promptMode: 'hint',
         },
-        latestUserMessage: 'Pomoz mi z nastepnym krokiem',
+        latestUserMessage: 'Pomóż mi z następnym krokiem',
         messages: [],
       })
     ).toBe(false);

@@ -194,7 +194,7 @@ export const useKangurTrainingSetupState = (
     setDifficulty,
     startTraining,
     suggestedSelection,
-    summaryLabel: `Wybrano ${selectedCategories.length} kategorii, ${questionCount} pytan, poziom ${formatDifficultySummary(
+    summaryLabel: `Wybrano ${selectedCategories.length} kategorii, ${questionCount} pytań, poziom ${formatDifficultySummary(
       difficulty
     )}.`,
     toggleAllCategories,

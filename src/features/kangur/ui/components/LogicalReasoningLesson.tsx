@@ -36,7 +36,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                   Dedukcja (od ogółu do szczegółu)
                 </p>
                 <p className='text-xs mt-1'>
-                  Wszystkie psy szczekaja. Burek jest psem. → Burek szczeka.
+                  Wszystkie psy szczekają. Burek jest psem. → Burek szczeka.
                 </p>
               </KangurLessonInset>
               <KangurLessonInset accent='indigo' padding='sm'>
@@ -44,8 +44,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                   Indukcja (od szczegółu do ogółu)
                 </p>
                 <p className='text-xs mt-1'>
-                  Obserwuje 100 łabedzi — wszystkie sa białe. → (Prawdopodobnie) wszystkie łabedzie
-                  sa białe.
+                  Obserwuję 100 łabędzi — wszystkie są białe. → (Prawdopodobnie) wszystkie łabędzie
+                  są białe.
                 </p>
               </KangurLessonInset>
             </div>
@@ -54,21 +54,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Jesli… to…',
+      title: 'Jeśli… to…',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Zdanie <b>„Jesli P, to Q"</b> znaczy: gdy P jest prawdziwe, Q tez musi byc prawdziwe.
+            Zdanie <b>„Jeśli P, to Q"</b> znaczy: gdy P jest prawdziwe, Q też musi być prawdziwe.
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               {
-                rule: 'Jesli pada deszcz → wezme parasol.',
-                note: 'Pada deszcz? → wezme parasol. ✅',
+                rule: 'Jeśli pada deszcz → wezmę parasol.',
+                note: 'Pada deszcz? → wezmę parasol. ✅',
                 type: 'indigo',
               },
               {
-                rule: 'Jesli liczba jest parzysta → dzieli sie przez 2.',
+                rule: 'Jeśli liczba jest parzysta → dzieli się przez 2.',
                 note: '8 jest parzyste → 8 ÷ 2 = 4 ✅',
                 type: 'indigo',
               },
@@ -79,9 +79,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
             <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
-              <p className='font-bold text-amber-700'>Uwaga na odwrotnosc!</p>
+              <p className='font-bold text-amber-700'>Uwaga na odwrotność!</p>
               <KangurLessonCaption className='mt-1'>
-                „Jesli P, to Q" NIE znaczy „Jesli Q, to P"! Biore parasol → nie musi padac. ❌
+                „Jeśli P, to Q" NIE znaczy „Jeśli Q, to P"! Biorę parasol → nie musi padać. ❌
               </KangurLessonCaption>
             </KangurLessonCallout>
           </div>
@@ -91,11 +91,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   kwantyfikatory: [
     {
-      title: 'Wszyscy, niektórzy, zaden',
+      title: 'Wszyscy, niektórzy, żaden',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Kwantyfikatory mówia o <b>zasięgu</b> twierdzenia.
+            Kwantyfikatory mówią o <b>zasięgu</b> twierdzenia.
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
@@ -103,19 +103,19 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 icon: '✅',
                 label: 'Wszyscy',
                 accent: 'emerald' as const,
-                text: 'Wszyscy ludzie oddychaja. → Jesli jestes człowiekiem, oddychasz.',
+                text: 'Wszyscy ludzie oddychają. → Jeśli jesteś człowiekiem, oddychasz.',
               },
               {
                 icon: '⚠️',
-                label: 'Niektorzy',
+                label: 'Niektórzy',
                 accent: 'amber' as const,
-                text: 'Niektóre koty sa rude. → Nie mozesz powiedziec, ze TWÓJ kot jest rudy!',
+                text: 'Niektóre koty są rude. → Nie możesz powiedzieć, że TWÓJ kot jest rudy!',
               },
               {
                 icon: '❌',
-                label: 'Zaden',
+                label: 'Żaden',
                 accent: 'rose' as const,
-                text: 'Zaden ptak nie jest ssakiem. → Orzeł jest ptakiem → Orzeł nie jest ssakiem.',
+                text: 'Żaden ptak nie jest ssakiem. → Orzeł jest ptakiem → Orzeł nie jest ssakiem.',
               },
             ].map(({ icon, label, accent, text }) => (
               <KangurLessonCallout key={label} accent={accent} padding='sm'>
@@ -130,18 +130,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Prawda czy falsz?',
+      title: 'Prawda czy fałsz?',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Zdanie logiczne musi byc albo prawdziwe, albo fałszywe. Sprawdzaj kazde twierdzenie
+            Zdanie logiczne musi być albo prawdziwe, albo fałszywe. Sprawdzaj każde twierdzenie
             osobno!
           </KangurLessonLead>
           <div className='flex flex-col gap-2 w-full'>
             {[
               { stmt: '4 + 3 = 7', answer: true, explain: 'Poprawne obliczenie.' },
-              { stmt: 'Trójkat ma 4 boki.', answer: false, explain: 'Trójkat ma 3 boki.' },
-              { stmt: 'Jesli 5>3 i 3>1, to 5>1.', answer: true, explain: 'Przechodniocs: 5>3>1.' },
+              { stmt: 'Trójkąt ma 4 boki.', answer: false, explain: 'Trójkąt ma 3 boki.' },
+              { stmt: 'Jeśli 5>3 i 3>1, to 5>1.', answer: true, explain: 'Przechodniość: 5>3>1.' },
               {
                 stmt: 'Liczba 9 jest parzysta.',
                 answer: false,
@@ -176,18 +176,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Zagadki logiczne wymagaja łaczenia kilku informacji naraz.
+            Zagadki logiczne wymagają łączenia kilku informacji naraz.
           </KangurLessonLead>
           <KangurLessonCallout accent='indigo' className='w-full text-sm'>
             <p className='font-bold text-indigo-700 mb-2'>Zagadka: Kto mieszka w którym domu?</p>
             <ul className='space-y-1 text-xs [color:var(--kangur-page-muted-text)]'>
-              <li>🏠 Sa trzy domy: czerwony, niebieski, zielony.</li>
+              <li>🏠 Są trzy domy: czerwony, niebieski, zielony.</li>
               <li>👧 Ania nie mieszka w czerwonym.</li>
               <li>👦 Bartek mieszka w niebieskim.</li>
               <li>👩 Celina nie mieszka w zielonym.</li>
             </ul>
             <KangurLessonInset accent='indigo' className='mt-3' padding='sm'>
-              <p className='text-xs font-bold text-indigo-600'>Rozwiazanie:</p>
+              <p className='text-xs font-bold text-indigo-600'>Rozwiązanie:</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>
                 Bartek → niebieski ✅<br />
                 Celina → nie zielony, nie niebieski → czerwony ✅<br />
@@ -199,25 +199,25 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Rozwiazywanie krok po kroku',
+      title: 'Rozwiązywanie krok po kroku',
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='indigo' className='w-full' padding='md'>
             <ol className='list-decimal list-inside space-y-3 text-sm [color:var(--kangur-page-text)]'>
               <li>
-                <b>Przeczytaj wszystkie wskazówki</b> — nie spiesz sie.
+                <b>Przeczytaj wszystkie wskazówki</b> — nie spiesz się.
               </li>
               <li>
-                <b>Wypisz, co jest pewne</b> — zacznij od faktów bezposrednich.
+                <b>Wypisz, co jest pewne</b> — zacznij od faktów bezpośrednich.
               </li>
               <li>
-                <b>Eliminuj niemozliwe opcje</b> — to zweza pole odpowiedzi.
+                <b>Eliminuj niemożliwe opcje</b> — to zwęża pole odpowiedzi.
               </li>
               <li>
-                <b>Wnioskuj ze znanych faktów</b> — zastosuj „Jesli… to…".
+                <b>Wnioskuj ze znanych faktów</b> — zastosuj „Jeśli… to…".
               </li>
               <li>
-                <b>Sprawdz odpowiedz</b> — czy pasuje do wszystkich wskazówek?
+                <b>Sprawdź odpowiedź</b> — czy pasuje do wszystkich wskazówek?
               </li>
             </ol>
           </KangurLessonInset>
@@ -226,7 +226,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             className='w-full text-center text-xs [color:var(--kangur-page-muted-text)]'
             padding='sm'
           >
-            Dobry logik nigdy nie zgaduje — zawsze uzasadnia kazdy krok!
+            Dobry logik nigdy nie zgaduje — zawsze uzasadnia każdy krok!
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -243,24 +243,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 💡 <b>Wnioskowanie</b> — od faktów do nowych wniosków
               </li>
               <li>
-                ➡️ <b>Jesli… to…</b> — warunek i jego konsekwencja
+                ➡️ <b>Jeśli… to…</b> — warunek i jego konsekwencja
               </li>
               <li>
-                🔢 <b>Wszyscy/Niektórzy/Zaden</b> — zasieg twierdzenia
+                🔢 <b>Wszyscy/Niektórzy/Żaden</b> — zasięg twierdzenia
               </li>
               <li>
-                ✅❌ <b>Prawda/falsz</b> — kazde zdanie ma jedna wartosc
+                ✅❌ <b>Prawda/fałsz</b> — każde zdanie ma jedną wartość
               </li>
               <li>
-                🧩 <b>Zagadki</b> — łacz wskazówki, eliminuj błedy
+                🧩 <b>Zagadki</b> — łącz wskazówki, eliminuj błędy
               </li>
               <li>
-                🪜 <b>Krok po kroku</b> — cierpliwosc i plan to klucz
+                🪜 <b>Krok po kroku</b> — cierpliwość i plan to klucz
               </li>
             </ul>
           </KangurLessonCallout>
           <p className='text-indigo-600 font-bold text-center'>
-            Wnioskowanie to supermocy detektywa — uzywaj go kazdy dzien!
+            Wnioskowanie to supermocy detektywa — używaj go każdy dzień!
           </p>
         </KangurLessonStack>
       ),
@@ -272,20 +272,20 @@ export const HUB_SECTIONS = [
   {
     id: 'wnioskowanie',
     emoji: '💡',
-    title: 'Wnioskowanie i Jesli…to…',
+    title: 'Wnioskowanie i Jeśli…to…',
     description: 'Dedukcja, indukcja, warunek logiczny',
   },
   {
     id: 'kwantyfikatory',
     emoji: '🔢',
-    title: 'Wszyscy / Niektorzy / Zaden',
-    description: 'Zasieg twierdzen i prawda/falsz',
+    title: 'Wszyscy / Niektórzy / Żaden',
+    description: 'Zasięg twierdzeń i prawda/fałsz',
   },
   {
     id: 'zagadki',
     emoji: '🧩',
     title: 'Zagadki logiczne',
-    description: 'Rozwiazywanie zagadek krok po kroku',
+    description: 'Rozwiązywanie zagadek krok po kroku',
   },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
 ];

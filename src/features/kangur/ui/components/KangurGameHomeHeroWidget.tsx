@@ -9,6 +9,8 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type KangurGameHomeHeroWidgetProps = {
   hideWhenScreenMismatch?: boolean;
+  showIntro?: boolean;
+  showAssignmentSpotlight?: boolean;
 };
 
 const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
@@ -19,6 +21,8 @@ const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
 
 export function KangurGameHomeHeroWidget({
   hideWhenScreenMismatch = true,
+  showIntro = true,
+  showAssignmentSpotlight = true,
 }: KangurGameHomeHeroWidgetProps = {}): React.JSX.Element | null {
   const runtime = useKangurGameRuntime();
   const { entry: heroContent } = useKangurPageContentEntry('game-home-hero');
@@ -35,38 +39,41 @@ export function KangurGameHomeHeroWidget({
   const heroSummary =
     heroContent?.summary ??
     'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.';
+  const intro = showIntro ? (
+    <KangurPanelIntro
+      className='space-y-2'
+      data-testid='kangur-home-hero-copy'
+      description={heroSummary}
+      eyebrow={heroTitle}
+    />
+  ) : null;
+  const assignmentSpotlight =
+    showAssignmentSpotlight && canAccessParentAssignments ? (
+    <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />
+  ) : null;
+  const milestoneSummary = shouldShowMilestones ? (
+    <KangurHeroMilestoneSummary
+      className='w-full'
+      dataTestIdPrefix='kangur-home-hero-milestone'
+      progress={progress}
+    />
+  ) : null;
 
   if (shouldShowMilestones) {
     return (
       <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
-        <KangurPanelIntro
-          className='space-y-2'
-          data-testid='kangur-home-hero-copy'
-          description={heroSummary}
-          eyebrow={heroTitle}
-        />
-        <KangurHeroMilestoneSummary
-          className='w-full'
-          dataTestIdPrefix='kangur-home-hero-milestone'
-          progress={progress}
-        />
-        {canAccessParentAssignments ? (
-          <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />
-        ) : null}
+        {intro}
+        {assignmentSpotlight}
+        {milestoneSummary}
       </div>
     );
   }
 
-  if (canAccessParentAssignments) {
+  if (assignmentSpotlight) {
     return (
       <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
-        <KangurPanelIntro
-          className='space-y-2'
-          data-testid='kangur-home-hero-copy'
-          description={heroSummary}
-          eyebrow={heroTitle}
-        />
-        <KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />
+        {intro}
+        {assignmentSpotlight}
       </div>
     );
   }

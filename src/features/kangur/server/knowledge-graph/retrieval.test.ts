@@ -51,32 +51,32 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     generateKangurKnowledgeGraphQueryEmbeddingMock.mockResolvedValue(null);
     getKangurAiTutorContentMock.mockResolvedValue({
       common: {
-        signInLabel: 'Zaloguj sie',
+        signInLabel: 'Zaloguj się',
         createAccountLabel: 'Utworz konto',
       },
       guidedCallout: {
         authTitles: {
-          signInNav: 'Zaloguj sie w menu',
+          signInNav: 'Zaloguj się w menu',
           createAccountNav: 'Utworz konto w menu',
         },
         authDetails: {
-          signInNav: 'Kliknij Zaloguj sie w gornej nawigacji.',
+          signInNav: 'Kliknij Zaloguj się w gornej nawigacji.',
           createAccountNav: 'Kliknij Utworz konto w gornej nawigacji.',
         },
       },
       guestIntro: {
         initial: {
           headline: 'Potrzebujesz pomocy?',
-          description: 'Tutor pomoze Ci odnalezc logowanie lub konto.',
+          description: 'Tutor pomoże Ci odnaleźć logowanie lub konto.',
         },
         help: {
           headline: 'Pomoc przy logowaniu',
-          description: 'Tutor pokaze, gdzie znajduje sie logowanie.',
+          description: 'Tutor pokaże, gdzie znajduje się logowanie.',
         },
         acceptLabel: 'Tak',
         dismissLabel: 'Nie',
-        showLoginLabel: 'Pokaz logowanie',
-        showCreateAccountLabel: 'Pokaz tworzenie konta',
+        showLoginLabel: 'Pokaż logowanie',
+        showCreateAccountLabel: 'Pokaż tworzenie konta',
       },
     });
     getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
@@ -86,10 +86,10 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         {
           id: 'lesson-overview',
           title: 'Ekran lekcji',
-          shortDescription: 'To tutaj uczen przechodzi przez temat krok po kroku.',
-          fullDescription: 'Pelny opis ekranu lekcji z Mongo.',
-          hints: ['Najpierw przeczytaj naglowek.'],
-          followUpActions: [{ id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons' }],
+          shortDescription: 'To tutaj uczeń przechodzi przez temat krok po kroku.',
+          fullDescription: 'Pełny opis ekranu lekcji z Mongo.',
+          hints: ['Najpierw przeczytaj nagłówek.'],
+          followUpActions: [{ id: 'open-lessons', label: 'Otwórz lekcje', page: 'Lessons' }],
           surface: 'lesson',
           focusKind: null,
           focusIdPrefixes: [],
@@ -116,8 +116,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           widget: 'KangurGameHomeActionsWidget',
           sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
           title: 'Szybkie akcje',
-          summary: 'Sekcja z szybkimi akcjami na stronie glownej gry.',
-          body: 'Szybkie akcje kieruja do najwazniejszych aktywnosci w Kangurze.',
+          summary: 'Sekcja z szybkimi akcjami na stronie głównej gry.',
+          body: 'Szybkie akcje kierują do najważniejszych aktywności w Kangurze.',
           anchorIdPrefix: 'kangur-game-home-actions',
           focusKind: 'home_actions',
           contentIdPrefixes: ['game:home'],
@@ -273,7 +273,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await resolveKangurWebsiteHelpGraphContext({
-      latestUserMessage: 'Gdzie kliknac, zeby sie zalogowac?',
+      latestUserMessage: 'Gdzie kliknąć, żeby się zalogować?',
       context: undefined,
     });
 
@@ -364,11 +364,11 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       expect.arrayContaining([
         expect.objectContaining({
           collectionId: 'kangur_ai_tutor_native_guides',
-          text: expect.stringContaining('Pelny opis ekranu lekcji z Mongo.'),
+          text: expect.stringContaining('Pełny opis ekranu lekcji z Mongo.'),
         }),
         expect.objectContaining({
           collectionId: 'kangur_ai_tutor_content',
-          text: expect.stringContaining('Kliknij Zaloguj sie w gornej nawigacji.'),
+          text: expect.stringContaining('Kliknij Zaloguj się w gornej nawigacji.'),
         }),
       ])
     );
@@ -410,7 +410,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await resolveKangurAiTutorSemanticGraphContext({
-      latestUserMessage: 'Wyjasnij szybkie akcje na tej stronie',
+      latestUserMessage: 'Wyjaśnij szybkie akcje na tej stronie',
       context: {
         surface: 'game',
         promptMode: 'explain',
@@ -433,7 +433,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       expect.arrayContaining([
         expect.objectContaining({
           collectionId: 'kangur_page_content',
-          text: expect.stringContaining('Szybkie akcje kieruja do najwazniejszych aktywnosci'),
+          text: expect.stringContaining('Szybkie akcje kierują do najważniejszych aktywności'),
         }),
       ])
     );
@@ -494,8 +494,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           tags: ['kangur', 'lesson', 'ai-tutor'],
           relatedNodeIds: ['page:kangur-lessons', 'root:kangur:lessonContext'],
           facts: {
-            description: 'Biezaca lekcja o dodawaniu.',
-            masterySummary: 'Uczen opanowal 74% materialu.',
+            description: 'Bieżąca lekcja o dodawaniu.',
+            masterySummary: 'uczeń opanował 74% materiału.',
           },
           sections: [
             {
@@ -552,8 +552,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         {
           id: 'auth-login-form',
           title: 'Formularz logowania Kangur',
-          shortDescription: 'Ten formularz zbiera dane potrzebne do wejscia ucznia albo rodzica do aplikacji.',
-          fullDescription: 'Pelny opis formularza logowania.',
+          shortDescription: 'Ten formularz zbiera dane potrzebne do wejścia ucznia albo rodzica do aplikacji.',
+          fullDescription: 'Pełny opis formularza logowania.',
           hints: [],
           followUpActions: [],
           surface: 'auth',
@@ -568,9 +568,9 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
         },
         {
           id: 'test-review',
-          title: 'Omowienie po tescie',
-          shortDescription: 'Omowienie pomaga zrozumiec blad i wyciagnac jeden nastepny wniosek.',
-          fullDescription: 'Pelny opis omowienia po tescie.',
+          title: 'Omówienie po teście',
+          shortDescription: 'Omówienie pomaga zrozumieć błąd i wyciągnąć jeden następny wniosek.',
+          fullDescription: 'Pełny opis omówienia po teście.',
           hints: [],
           followUpActions: [],
           surface: 'test',
@@ -593,7 +593,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           id: 'page:kangur-tests',
           kind: 'page',
           title: 'Testy',
-          summary: 'Ekran testow i nawigacji po testach w Kangurze.',
+          summary: 'Ekran testów i nawigacji po testach w Kangurze.',
           surface: null,
           focusKind: null,
           route: '/tests',
@@ -610,7 +610,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           id: 'guide:native:auth-login-form',
           kind: 'guide',
           title: 'Formularz logowania Kangur',
-            summary: 'Ten formularz zbiera dane potrzebne do wejscia ucznia albo rodzica do aplikacji.',
+            summary: 'Ten formularz zbiera dane potrzebne do wejścia ucznia albo rodzica do aplikacji.',
             surface: 'auth',
             focusKind: 'login_form',
             route: '/',
@@ -626,8 +626,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           {
             id: 'guide:native:test-review',
             kind: 'guide',
-            title: 'Omowienie po tescie',
-            summary: 'Omowienie pomaga zrozumiec blad i wyciagnac jeden nastepny wniosek.',
+            title: 'Omówienie po teście',
+            summary: 'Omówienie pomaga zrozumieć błąd i wyciągnąć jeden następny wniosek.',
             surface: 'test',
             focusKind: 'review',
             route: '/tests',
@@ -649,7 +649,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await previewKangurWebsiteHelpGraphContext({
-      latestUserMessage: 'Gdzie sa testy?',
+      latestUserMessage: 'Gdzie są testy?',
       context: undefined,
       locale: 'pl',
     });
@@ -697,7 +697,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
             id: 'page:kangur-tests',
             kind: 'page',
             title: 'Testy',
-            summary: 'Ekran testow i nawigacji po testach w Kangurze.',
+            summary: 'Ekran testów i nawigacji po testach w Kangurze.',
             surface: null,
             focusKind: null,
             route: '/tests',
@@ -713,8 +713,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           {
             id: 'guide:native:test-empty-state',
             kind: 'guide',
-            title: 'Pusty zestaw testowy',
-            summary: 'Ten stan oznacza, ze wybrany zestaw nie ma jeszcze opublikowanych pytan do rozwiazania.',
+            title: 'Pusty zestaw testówy',
+            summary: 'Ten stan oznacza, że wybrany zestaw nie ma jeszcze opublikowanych pytań do rozwiązania.',
             surface: 'test',
             focusKind: 'empty_state',
             route: '/tests',
@@ -730,8 +730,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           {
             id: 'guide:native:test-question',
             kind: 'guide',
-            title: 'Pytanie testowe',
-            summary: 'To miejsce do spokojnego przeczytania tresci i samodzielnej proby.',
+            title: 'Pytanie testówe',
+            summary: 'To miejsce do spokojnego przeczytania treści i samodzielnej próby.',
             surface: 'test',
             focusKind: 'question',
             route: '/tests',
@@ -753,7 +753,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await previewKangurWebsiteHelpGraphContext({
-      latestUserMessage: 'Jak wrocic do testow?',
+      latestUserMessage: 'Jak wrócić do testów?',
       context: undefined,
       locale: 'pl',
     });
@@ -803,7 +803,7 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await previewKangurWebsiteHelpGraphContext({
-      latestUserMessage: 'Jak sie zalogowac do Kangura?',
+      latestUserMessage: 'Jak się zalogować do Kangura?',
       context: undefined,
       locale: 'pl',
     });
@@ -815,13 +815,17 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     expect(result.queryMode).toBe('website_help');
     expect(result.websiteHelpTarget).toEqual({
       nodeId: 'guide:kangur:sign-in-nav',
-      label: 'Zaloguj sie w menu',
+      label: 'Zaloguj się w menu',
       route: '/',
       anchorId: 'kangur-primary-nav-login',
     });
     expect(result.sourceCollections).toEqual(['kangur_ai_tutor_content']);
     expect(result.hydrationSources).toEqual(['kangur_ai_tutor_content']);
-    expect(result.tokens).toEqual(expect.arrayContaining(['jak', 'sie', 'zalogowac', 'kangura'].filter((token) => token.length >= 3)));
+    expect(result.querySeed).toBe('Jak się zalogować do Kangura?');
+    expect(result.normalizedQuerySeed).toBe('jak sie zalogowac do kangura?');
+    expect(result.tokens).toEqual(
+      expect.arrayContaining(['jak', 'sie', 'zalogowac', 'kangura'])
+    );
     expect(result.hits).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -847,18 +851,18 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       entries: [
         {
           id: 'game-leaderboard',
-          title: 'Ranking wynikow',
-          shortDescription: 'Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
-          fullDescription: 'Sekcja rankingu pokazuje wyniki i pomaga ocenic, czy liczy sie bardziej dokladnosc czy tempo.',
-          hints: ['Porownuj wynik z wlasnym ostatnim podejsciem, nie tylko z innymi osobami.'],
-          followUpActions: [{ id: 'open-game', label: 'Wroc do gry', page: 'Game' }],
+          title: 'Ranking wyników',
+          shortDescription: 'Tutaj widać porównanie ostatnich wyników i pozycję ucznia.',
+          fullDescription: 'Sekcja rankingu pokazuje wyniki i pomaga ocenić, czy liczy się bardziej dokładność czy tempo.',
+          hints: ['Porównuj wynik z własnym ostatnim podejściem, nie tylko z innymi osobami.'],
+          followUpActions: [{ id: 'open-game', label: 'Wróć do gry', page: 'Game' }],
           surface: 'game',
           focusKind: 'leaderboard',
           focusIdPrefixes: ['kangur-game-result-leaderboard'],
           contentIdPrefixes: ['game:practice:'],
           relatedGames: [],
           relatedTests: [],
-          triggerPhrases: ['ranking', 'tablica wynikow', 'leaderboard'],
+          triggerPhrases: ['ranking', 'tablica wyników', 'leaderboard'],
           enabled: true,
           sortOrder: 20,
         },
@@ -897,13 +901,13 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await resolveKangurAiTutorSemanticGraphContext({
-      latestUserMessage: 'Wyjasnij ten panel',
+      latestUserMessage: 'Wyjaśnij ten panel',
       context: {
         surface: 'game',
         promptMode: 'explain',
         focusKind: 'leaderboard',
         focusId: 'kangur-game-result-leaderboard',
-        focusLabel: 'Ranking wynikow',
+        focusLabel: 'Ranking wyników',
         contentId: 'game:practice:addition',
         title: 'Podsumowanie gry',
       } as never,
@@ -929,12 +933,12 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     expect(result.queryMode).toBe('semantic');
     expect(result.websiteHelpTarget).toEqual({
       nodeId: 'guide:native:game-leaderboard',
-      label: 'Ranking wynikow',
+      label: 'Ranking wyników',
       route: '/game',
       anchorId: 'kangur-game-result-leaderboard',
     });
     expect(result.instructions).toContain('Kangur semantic graph context:');
-    expect(result.instructions).toContain('Ranking wynikow');
+    expect(result.instructions).toContain('Ranking wyników');
     expect(result.sourceCollections).toEqual(['kangur_ai_tutor_native_guides']);
     expect(result.hydrationSources).toEqual(['kangur_ai_tutor_native_guides']);
     expect(result.sources).toEqual(
@@ -960,19 +964,19 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       entries: [
         {
           id: 'game-leaderboard',
-          title: 'Ranking wynikow',
-          shortDescription: 'Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+          title: 'Ranking wyników',
+          shortDescription: 'Tutaj widać porównanie ostatnich wyników i pozycję ucznia.',
           fullDescription:
-            'Sekcja rankingu pokazuje wyniki i pomaga ocenic, czy liczy sie bardziej dokladnosc czy tempo.',
-          hints: ['Porownuj wynik z wlasnym ostatnim podejsciem, nie tylko z innymi osobami.'],
-          followUpActions: [{ id: 'open-game', label: 'Wroc do gry', page: 'Game' }],
+            'Sekcja rankingu pokazuje wyniki i pomaga ocenić, czy liczy się bardziej dokładność czy tempo.',
+          hints: ['Porównuj wynik z własnym ostatnim podejściem, nie tylko z innymi osobami.'],
+          followUpActions: [{ id: 'open-game', label: 'Wróć do gry', page: 'Game' }],
           surface: 'game',
           focusKind: 'leaderboard',
           focusIdPrefixes: ['kangur-game-result-leaderboard'],
           contentIdPrefixes: ['game:practice:'],
           relatedGames: [],
           relatedTests: [],
-          triggerPhrases: ['ranking', 'tablica wynikow', 'leaderboard'],
+          triggerPhrases: ['ranking', 'tablica wyników', 'leaderboard'],
           enabled: true,
           sortOrder: 20,
         },
@@ -1005,16 +1009,16 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       },
     ]);
 
-    const { resolveKangurAiTutorSemanticGraphContext } = await import(
+    const { previewKangurAiTutorSemanticGraphContext } = await import(
       '@/features/kangur/server/knowledge-graph/retrieval'
     );
 
-    const result = await resolveKangurAiTutorSemanticGraphContext({
-      latestUserMessage: 'Wyjasnij ten fragment',
+    const result = await previewKangurAiTutorSemanticGraphContext({
+      latestUserMessage: 'Wyjaśnij ten fragment',
       context: {
         surface: 'game',
         promptMode: 'selected_text',
-        selectedText: 'Ranking wynikow',
+        selectedText: 'Ranking wyników',
         focusKind: 'leaderboard',
         focusId: 'kangur-game-result-leaderboard',
         contentId: 'game:practice:addition',
@@ -1022,6 +1026,8 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       locale: 'pl',
     });
 
+    expect(result.querySeed).toBe('Wyjaśnij ten fragment Ranking wyników');
+    expect(result.normalizedQuerySeed).toBe('wyjasnij ten fragment ranking wynikow');
     expect(generateKangurKnowledgeGraphQueryEmbeddingMock).toHaveBeenCalledWith(
       expect.stringContaining('ranking wynikow')
     );
@@ -1051,9 +1057,9 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
       entries: [
         {
           id: 'game-progress',
-          title: 'Postep gry',
-          shortDescription: 'Pokazuje aktualny postep ucznia.',
-          fullDescription: 'Ta sekcja pokazuje postep i ostatnie wyniki.',
+          title: 'Postęp gry',
+          shortDescription: 'Pokażuje aktualny postęp ucznia.',
+          fullDescription: 'Ta sekcja pokazuje postęp i ostatnie wyniki.',
           hints: [],
           followUpActions: [],
           surface: 'game',
@@ -1062,15 +1068,15 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
           contentIdPrefixes: ['game:home'],
           relatedGames: [],
           relatedTests: [],
-          triggerPhrases: ['postep'],
+          triggerPhrases: ['postęp'],
           enabled: true,
           sortOrder: 10,
         },
         {
           id: 'game-leaderboard',
-          title: 'Ranking wynikow',
-          shortDescription: 'Pokazuje porownanie wynikow.',
-          fullDescription: 'Ta sekcja pokazuje ranking i pozycje ucznia wzgledem innych wynikow.',
+          title: 'Ranking wyników',
+          shortDescription: 'Pokażuje porównanie wyników.',
+          fullDescription: 'Ta sekcja pokazuje ranking i pozycję ucznia względem innych wyników.',
           hints: [],
           followUpActions: [],
           surface: 'game',
@@ -1143,13 +1149,13 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
 
     const result = await resolveKangurAiTutorSemanticGraphContext({
-      latestUserMessage: 'Wyjasnij ten panel',
+      latestUserMessage: 'Wyjaśnij ten panel',
       context: {
         surface: 'game',
         promptMode: 'explain',
         focusKind: 'leaderboard',
         focusId: 'kangur-game-result-leaderboard',
-        focusLabel: 'Ranking wynikow',
+        focusLabel: 'Ranking wyników',
         contentId: 'game:practice:addition',
       } as never,
       locale: 'pl',

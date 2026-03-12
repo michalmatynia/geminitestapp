@@ -256,11 +256,11 @@ export default function MultiplicationArrayGame({
             </div>
 
             {/* Running total counter */}
-            <div className='flex items-center gap-2'>
+            <div className='flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center'>
               <KangurMetricCard
                 accent='violet'
                 align='center'
-                className='min-w-[110px]'
+                className='min-w-0 min-[420px]:min-w-[110px]'
                 data-testid='multiplication-array-counter-collected'
                 label='Zebrane'
                 padding='sm'
@@ -275,11 +275,13 @@ export default function MultiplicationArrayGame({
                   </motion.span>
                 }
               />
-              <div className='text-2xl font-bold [color:var(--kangur-page-muted-text)]'>/</div>
+              <div className='hidden text-2xl font-bold [color:var(--kangur-page-muted-text)] min-[420px]:block'>
+                /
+              </div>
               <KangurMetricCard
                 accent='slate'
                 align='center'
-                className='min-w-[110px]'
+                className='min-w-0 min-[420px]:min-w-[110px]'
                 data-testid='multiplication-array-counter-target'
                 label='Cel'
                 padding='sm'

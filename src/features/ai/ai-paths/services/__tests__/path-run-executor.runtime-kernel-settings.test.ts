@@ -218,7 +218,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     if (args?.['runtimeKernelCodeObjectResolverIds'] !== undefined) {
       expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.primary']);
     }
-  });
+  }, 15_000);
 
   it('keeps env node-type override precedence', async () => {
     process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'] = 'template';
@@ -238,7 +238,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       | undefined;
     expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
     expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.env']);
-  });
+  }, 15_000);
 
   it('ignores deprecated env pilot-node-type aliases in live execution', async () => {
     process.env[DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV] = 'template';

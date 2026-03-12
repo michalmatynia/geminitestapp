@@ -6,6 +6,7 @@ import {
   KangurCardTitle,
   KangurDisplayEmoji,
   KangurGlassPanel,
+  KangurMetaText,
   KangurMetricCard,
   KangurProgressBar,
   KangurSectionEyebrow,
@@ -59,17 +60,17 @@ export default function PlayerProgressCard({
         <div className='flex items-center gap-3'>
           <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
           <div className='flex-1'>
-            <p className={`font-extrabold text-lg leading-tight ${currentLevel.color}`}>
+            <KangurCardTitle as='p' className={currentLevel.color} size='lg'>
               {currentLevel.title}
-            </p>
-            <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+            </KangurCardTitle>
+            <KangurMetaText as='p' size='xs'>
               Poziom {currentLevel.level} · {totalXp} XP lacznie
-            </p>
+            </KangurMetaText>
           </div>
         </div>
 
         <div>
-          <div className='mb-1 flex justify-between text-xs [color:var(--kangur-page-muted-text)]'>
+          <KangurMetaText as='div' className='mb-1 flex justify-between' size='xs'>
             <span>{xpIntoLevel} XP</span>
             {nextLevel ? (
               <span>
@@ -78,7 +79,7 @@ export default function PlayerProgressCard({
             ) : (
               <span>Maksymalny poziom!</span>
             )}
-          </div>
+          </KangurMetaText>
           <KangurProgressBar
             accent='indigo'
             animated

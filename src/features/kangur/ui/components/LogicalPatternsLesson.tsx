@@ -4,7 +4,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonLead,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie';
@@ -14,11 +19,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Co to jest wzorzec?',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Wzorzec to układ, który powtarza sie według pewnej reguły. Gdy ja znajdziesz — mozesz
             przewidziec, co bedzie dalej!
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout
             accent='violet'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
@@ -31,17 +36,17 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               <li>pon., wt., sr., czw. — dni tygodnia</li>
             </ul>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Wzorce kolorów i kształtów',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Wzorce moga uzywac kolorów, kształtów lub obu naraz. Patrz na powtarzajaca sie grupe —
             to jest jednostka wzorca.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { label: 'Wzorzec AB', seq: '🔴 🔵 🔴 🔵 🔴 ❓', answer: '🔵' },
@@ -54,13 +59,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 className='border-violet-100/90 text-center'
                 padding='sm'
               >
-                <p className='mb-1 text-xs [color:var(--kangur-page-muted-text)]'>{label}</p>
+                <KangurLessonCaption className='mb-1'>{label}</KangurLessonCaption>
                 <p className='text-2xl tracking-widest'>{seq}</p>
                 <p className='text-violet-600 font-bold text-sm mt-1'>Odpowiedz: {answer}</p>
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -68,11 +73,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Ciagi liczbowe — dodawanie',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             W ciagu liczbowym kazda liczba powstaje z poprzedniej według tej samej zasady.
             Najczesciej dodajemy ta sama wartosc.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { hint: '+2 co krok', seq: '2, 4, 6, 8, 10, ❓', answer: '12' },
@@ -84,15 +89,15 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               },
             ].map(({ hint, seq, answer }) => (
               <KangurLessonCallout key={hint} accent='violet' padding='sm'>
-                <p className='mb-1 text-xs [color:var(--kangur-page-muted-text)]'>{hint}</p>
+                <KangurLessonCaption className='mb-1'>{hint}</KangurLessonCaption>
                 <p className='text-lg font-extrabold text-violet-700'>{seq}</p>
-                <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
+                <KangurLessonCaption className='mt-1'>
                   Odpowiedz: <b>{answer}</b>
-                </p>
+                </KangurLessonCaption>
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -100,11 +105,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Ciagi liczbowe — mnozenie i Fibonacci',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Gdy kazda liczba jest wielokrotnoscia poprzedniej, ciag rosnie bardzo szybko! To ciag
             geometryczny.
-          </p>
+          </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { hint: '×2 co krok', seq: '1, 2, 4, 8, 16, ❓', answer: '32' },
@@ -116,15 +121,15 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               },
             ].map(({ hint, seq, answer }) => (
               <KangurLessonCallout key={hint} accent='violet' padding='sm'>
-                <p className='mb-1 text-xs [color:var(--kangur-page-muted-text)]'>{hint}</p>
+                <KangurLessonCaption className='mb-1'>{hint}</KangurLessonCaption>
                 <p className='text-lg font-extrabold text-purple-700'>{seq}</p>
-                <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
+                <KangurLessonCaption className='mt-1'>
                   Odpowiedz: <b>{answer}</b>
-                </p>
+                </KangurLessonCaption>
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -132,7 +137,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Jak szukac reguły?',
       content: (
-        <div className='flex flex-col items-center gap-4'>
+        <KangurLessonStack>
           <KangurLessonCallout accent='slate' className='w-full border-violet-200/85'>
             <ol className='list-decimal list-inside space-y-3 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -153,20 +158,20 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </ol>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption>
               Cwiczenie: <b>3, 6, 12, 24, ❓</b>
-            </p>
+            </KangurLessonCaption>
             <p className='text-violet-600 font-bold text-sm mt-1'>
               Iloraz: 2, 2, 2 — stały! Reguła: ×2 → <b>48</b>
             </p>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Podsumowanie',
       content: (
-        <div className='flex flex-col items-center gap-4'>
+        <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -189,7 +194,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <p className='text-violet-600 font-bold text-center'>
             Wzorce i ciagi to podstawa matematyki i informatyki!
           </p>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],

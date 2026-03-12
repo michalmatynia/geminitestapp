@@ -5,7 +5,11 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
@@ -130,19 +134,19 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       title: 'Czym jest kalendarz?',
       tts: 'Kalendarz to sposob organizowania czasu. Rok ma 12 miesiecy i 365 dni. Tydzien ma 7 dni.',
       content: (
-        <div className='flex flex-col items-center gap-4 text-center'>
+        <KangurLessonStack className='text-center'>
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
             📅
           </KangurDisplayEmoji>
-          <p className='max-w-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption className='max-w-xs leading-relaxed'>
             Kalendarz to sposob organizowania czasu.
             <br />
             <br />
             📆 Rok ma <strong>12 miesiecy</strong> i <strong>365 dni</strong>.
             <br />
             🗓️ Tydzien ma <strong>7 dni</strong>.
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -185,7 +189,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       title: '12 miesiecy roku',
       tts: 'Rok ma 12 miesiecy podzielonych na cztery pory roku.',
       content: (
-        <div className='flex w-full max-w-sm flex-col items-center gap-3 text-center'>
+        <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
           <div className='grid w-full grid-cols-2 gap-3'>
             {[
               {
@@ -222,14 +226,14 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Ile dni ma miesiac?',
       tts: 'Wiekszosc miesiecy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
       content: (
-        <div className='flex flex-col items-center gap-4 text-center'>
+        <KangurLessonStack className='text-center'>
           <div className='grid w-full max-w-sm grid-cols-3 gap-2'>
             {MONTHS.map((month) => (
               <KangurLessonCallout
@@ -243,7 +247,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               </KangurLessonCallout>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -252,19 +256,19 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       title: 'Jak czytac date?',
       tts: 'Date zapisujemy jako dzien, miesiac, rok. Na przykład 15 marca 2025.',
       content: (
-        <div className='flex flex-col items-center gap-4 text-center'>
+        <KangurLessonStack className='text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
           <KangurLessonCallout accent='indigo' className='max-w-xs space-y-2 text-left'>
             <p className='font-semibold [color:var(--kangur-page-text)]'>Jak zapisac date?</p>
-            <p className='[color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption align='left'>
               📅 <strong>15 marca 2025</strong>
-            </p>
-            <p className='[color:var(--kangur-page-muted-text)]'>
+            </KangurLessonCaption>
+            <KangurLessonCaption align='left'>
               📝 Lub: <strong>15/03/2025</strong>
-            </p>
+            </KangurLessonCaption>
             <p className='mt-1 font-bold text-indigo-700'>Dzien / Miesiac / Rok</p>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],

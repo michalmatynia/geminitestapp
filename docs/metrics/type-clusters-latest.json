@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-12T07:23:28.210Z",
+  "generatedAt": "2026-03-12T07:26:24.378Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -17,181 +17,15 @@
   },
   "summary": {
     "filesScanned": 5781,
-    "exportedDeclarationsScanned": 4440,
-    "candidateDeclarationsScanned": 4414,
-    "exactShapeClusters": 3,
-    "nearShapeClusters": 1,
-    "clustersAfterFilters": 4,
-    "declarationsInClusters": 10,
-    "highestRiskScore": 19
+    "exportedDeclarationsScanned": 4434,
+    "candidateDeclarationsScanned": 4408,
+    "exactShapeClusters": 0,
+    "nearShapeClusters": 0,
+    "clustersAfterFilters": 0,
+    "declarationsInClusters": 0,
+    "highestRiskScore": 0
   },
-  "clusters": [
-    {
-      "clusterId": "exact-0001",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 19,
-      "declarationCount": 4,
-      "domains": [
-        "shared",
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "9266d1a2c4b6",
-        "memberCount": 1,
-        "preview": "AppProviderValue"
-      },
-      "declarations": [
-        {
-          "name": "DatabaseEngineBackupType",
-          "kind": "type",
-          "path": "src/shared/lib/db/database-engine-constants.ts",
-          "line": 49,
-          "domain": "shared",
-          "usageCount": 2
-        },
-        {
-          "name": "DbActionProvider",
-          "kind": "type",
-          "path": "src/shared/lib/ai-paths/core/utils/provider-actions.ts",
-          "line": 5,
-          "domain": "shared",
-          "usageCount": 1
-        },
-        {
-          "name": "ProductDbProvider",
-          "kind": "type",
-          "path": "src/shared/contracts/products/migration.ts",
-          "line": 6,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        },
-        {
-          "name": "IntegrationDbProvider",
-          "kind": "type",
-          "path": "src/shared/contracts/products/migration.ts",
-          "line": 9,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0002",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "f7e9eb5a7cd6",
-        "memberCount": 1,
-        "preview": "MongoExternalCatalogEntityDoc"
-      },
-      "declarations": [
-        {
-          "name": "MongoExternalProducerDoc",
-          "kind": "type",
-          "path": "src/features/integrations/services/producer-mapping-repository-mongo-utils.ts",
-          "line": 21,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        },
-        {
-          "name": "MongoExternalTagDoc",
-          "kind": "type",
-          "path": "src/features/integrations/services/tag-mapping-repository-mongo-utils.ts",
-          "line": 20,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0003",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "4734056d3e47",
-        "memberCount": 1,
-        "preview": "string | number | boolean | null"
-      },
-      "declarations": [
-        {
-          "name": "JsonPrimitive",
-          "kind": "type",
-          "path": "src/shared/contracts/json.ts",
-          "line": 1,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurKnowledgeMetadataValue",
-          "kind": "type",
-          "path": "src/shared/contracts/kangur-knowledge-graph.ts",
-          "line": 47,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0001",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "001b63c37efa",
-        "memberCount": 5,
-        "preview": "prop:blockingIssues:KangurAiTutorOnboardingValidationIssue[]; prop:issues:KangurAiTutorOnboardingValidationIssue[]; prop:listId:string; prop:listName:string; prop:ruleIds:string[]"
-      },
-      "declarations": [
-        {
-          "name": "KangurAiTutorOnboardingValidationResult",
-          "kind": "type",
-          "path": "src/features/kangur/ai-tutor-onboarding-validation.ts",
-          "line": 61,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurAiTutorOnboardingContentValidationResult",
-          "kind": "type",
-          "path": "src/features/kangur/ai-tutor-onboarding-validation.ts",
-          "line": 79,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    }
-  ],
+  "clusters": [],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

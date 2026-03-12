@@ -8,28 +8,25 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-12T07:23:28.210Z
+Generated at: 2026-03-12T07:26:24.378Z
 Status: ok
 
 ## Summary
 
 - Files scanned: 5781
-- Exported declarations scanned: 4440
-- Candidate declarations scanned: 4414
-- Exact-shape clusters: 3
-- Near-shape clusters: 1
-- Clusters after filters: 4
-- Declarations in clusters: 10
-- Highest risk score: 19
+- Exported declarations scanned: 4434
+- Candidate declarations scanned: 4408
+- Exact-shape clusters: 0
+- Near-shape clusters: 0
+- Clusters after filters: 0
+- Declarations in clusters: 0
+- Highest risk score: 0
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| `exact-0001` | exact-shape | 19 | 4 | shared, shared:contracts | `TBD` |
-| `exact-0002` | exact-shape | 10 | 2 | feature:integrations | `TBD` |
-| `exact-0003` | exact-shape | 8 | 2 | shared:contracts | `TBD` |
-| `near-0001` | near-shape | 8 | 2 | feature:kangur | `TBD` |
+| _none_ | - | 0 | 0 | - | - |
 
 ## Initial DTO Consolidation Workflow
 

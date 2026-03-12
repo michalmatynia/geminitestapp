@@ -71,10 +71,10 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   {initial}
                 </KangurIconBadge>
                 <div className='min-w-0 flex-1'>
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0'>
-                      <div className='font-bold [color:var(--kangur-page-text)]'>
-                        {learner.displayName}
+                    <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+                      <div className='min-w-0'>
+                        <div className='font-bold [color:var(--kangur-page-text)]'>
+                          {learner.displayName}
                       </div>
                       <div className='text-xs [color:var(--kangur-page-muted-text)]'>
                         Login: {learner.loginName}

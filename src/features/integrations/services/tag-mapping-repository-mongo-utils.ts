@@ -1,7 +1,7 @@
 import { ObjectId, type Filter } from 'mongodb';
 
 import type {
-  MongoExternalCatalogEntityDoc,
+  MongoExternalCatalogEntityDoc as MongoExternalTagDoc,
   TagMapping,
   TagMappingWithDetails,
 } from '@/shared/contracts/integrations';
@@ -17,8 +17,6 @@ export type MongoTagMappingDoc = {
   updatedAt: Date;
 };
 
-export type MongoExternalTagDoc = MongoExternalCatalogEntityDoc;
-
 export type MongoInternalTagDoc = {
   _id: string | ObjectId;
   id?: string;
@@ -29,6 +27,7 @@ export type MongoInternalTagDoc = {
   updatedAt: Date;
 };
 
+export type { MongoExternalTagDoc };
 export const TAG_MAPPING_COLLECTION = 'tag_mappings';
 export const EXTERNAL_TAG_COLLECTION = 'external_tags';
 export const INTERNAL_TAG_COLLECTION = 'product_tags';

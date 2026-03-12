@@ -97,28 +97,11 @@ const getInitialTutorPanelPositionMode = (): TutorPanelPositionMode => {
   return loadPersistedTutorPanelPosition()?.mode ?? 'manual';
 };
 
-export function useKangurAiTutorWidgetState() {
-  const [mounted, setMounted] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [hasNewMessage, setHasNewMessage] = useState(false);
-  const [isTutorHidden, setIsTutorHidden] = useState(getInitialTutorHiddenState);
-  const [launcherPromptVisible, setLauncherPromptVisible] = useState(false);
-  const [canonicalTutorModalVisible, setCanonicalTutorModalVisible] = useState(false);
-  const [guestIntroVisible, setGuestIntroVisible] = useState(false);
-  const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
-  const [contextualTutorMode, setContextualTutorMode] = useState<
-    'selection_explain' | 'section_explain' | null
-  >(null);
-  const [guidedTutorTarget, setGuidedTutorTarget] = useState<GuidedTutorTarget | null>(null);
-  const [homeOnboardingStepIndex, setHomeOnboardingStepIndex] = useState<number | null>(null);
-  const [askModalVisible, setAskModalVisible] = useState(false);
-  const [askEntrySource, setAskEntrySource] = useState<TutorAskEntrySource>('guest_intro');
-  const [askModalDockStyle, setAskModalDockStyle] = useState<{
-    left?: number | string;
-    top?: number | string;
-    right?: number | string;
-    bottom?: number | string;
-  } | null>(null);
+// ---------------------------------------------------------------------------
+// Sub-hooks — internal, grouped by concern
+// ---------------------------------------------------------------------------
+
+function useWidgetPositionState() {
   const [draggedAvatarPoint, setDraggedAvatarPoint] =
     useState<TutorPoint | null>(getInitialDraggedAvatarPoint);
   const [isAvatarDragging, setIsAvatarDragging] = useState(false);
@@ -130,13 +113,33 @@ export function useKangurAiTutorWidgetState() {
     getInitialTutorPanelSnapPreference
   );
   const [isPanelDragging, setIsPanelDragging] = useState(false);
-  const [messageFeedbackByKey, setMessageFeedbackByKey] = useState<
-    Record<string, TutorMessageFeedback>
-  >({});
-  const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
-  const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
-  const [panelAnchorMode, setPanelAnchorMode] = useState<'contextual' | 'dock'>('contextual');
-  const [panelShellMode, setPanelShellMode] = useState<TutorPanelShellMode>('default');
+  const avatarDragStateRef = useRef<TutorAvatarDragState | null>(null);
+  const panelDragStateRef = useRef<TutorPanelDragState | null>(null);
+  const suppressAvatarClickRef = useRef(false);
+
+  return {
+    draggedAvatarPoint,
+    isAvatarDragging,
+    isPanelDragging,
+    panelPosition,
+    panelPositionMode,
+    panelSnapPreference,
+    avatarDragStateRef,
+    panelDragStateRef,
+    suppressAvatarClickRef,
+    setDraggedAvatarPoint,
+    setIsAvatarDragging,
+    setIsPanelDragging,
+    setPanelPosition,
+    setPanelPositionMode,
+    setPanelSnapPreference,
+  };
+}
+
+function useWidgetSelectionState() {
+  const [contextualTutorMode, setContextualTutorMode] = useState<
+    'selection_explain' | 'section_explain' | null
+  >(null);
   const [persistedSelectionRect, setPersistedSelectionRect] = useState<DOMRect | null>(null);
   const [persistedSelectionPageRect, setPersistedSelectionPageRect] = useState<DOMRect | null>(
     null
@@ -163,6 +166,133 @@ export function useKangurAiTutorWidgetState() {
     useState<SectionExplainContext | null>(null);
   const [sectionResponseComplete, setSectionResponseComplete] =
     useState<SectionExplainContext | null>(null);
+  const selectionExplainTimeoutRef = useRef<number | null>(null);
+  const selectionGuidanceRevealTimeoutRef = useRef<number | null>(null);
+  const selectionResponseCompleteTimeoutRef = useRef<number | null>(null);
+  const sectionResponseCompleteTimeoutRef = useRef<number | null>(null);
+
+  return {
+    contextualTutorMode,
+    dismissedSelectedText,
+    highlightedSection,
+    hoveredSectionAnchorId,
+    persistedSelectionContainerRect,
+    persistedSelectionPageRect,
+    persistedSelectionPageRects,
+    persistedSelectionRect,
+    sectionResponseComplete,
+    sectionResponsePending,
+    selectionContextSpotlightTick,
+    selectionConversationContext,
+    selectionGuidanceCalloutVisibleText,
+    selectionGuidanceHandoffText,
+    selectionResponseComplete,
+    selectionResponsePending,
+    sectionResponseCompleteTimeoutRef,
+    selectionExplainTimeoutRef,
+    selectionGuidanceRevealTimeoutRef,
+    selectionResponseCompleteTimeoutRef,
+    setContextualTutorMode,
+    setDismissedSelectedText,
+    setHighlightedSection,
+    setHoveredSectionAnchorId,
+    setPersistedSelectionContainerRect,
+    setPersistedSelectionPageRect,
+    setPersistedSelectionPageRects,
+    setPersistedSelectionRect,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    setSelectionContextSpotlightTick,
+    setSelectionConversationContext,
+    setSelectionGuidanceCalloutVisibleText,
+    setSelectionGuidanceHandoffText,
+    setSelectionResponseComplete,
+    setSelectionResponsePending,
+  };
+}
+
+function useWidgetOnboardingState() {
+  const [guestIntroVisible, setGuestIntroVisible] = useState(false);
+  const [guestIntroHelpVisible, setGuestIntroHelpVisible] = useState(false);
+  const [guidedTutorTarget, setGuidedTutorTarget] = useState<GuidedTutorTarget | null>(null);
+  const [homeOnboardingStepIndex, setHomeOnboardingStepIndex] = useState<number | null>(null);
+  const [guestIntroRecord, setGuestIntroRecord] = useState<KangurAiTutorGuestIntroRecord | null>(
+    () => loadPersistedGuestIntroRecord()
+  );
+  const [homeOnboardingRecord, setHomeOnboardingRecord] =
+    useState<KangurAiTutorHomeOnboardingRecord | null>(() => loadPersistedHomeOnboardingRecord());
+  const guestIntroCheckStartedRef = useRef(false);
+  const guestIntroLocalSuppressionTrackedRef = useRef(false);
+  const guestIntroShownForCurrentEntryRef = useRef(false);
+  const homeOnboardingShownForCurrentEntryRef = useRef(false);
+
+  return {
+    guestIntroCheckStartedRef,
+    guestIntroHelpVisible,
+    guestIntroLocalSuppressionTrackedRef,
+    guestIntroRecord,
+    guestIntroShownForCurrentEntryRef,
+    guestIntroVisible,
+    guidedTutorTarget,
+    homeOnboardingRecord,
+    homeOnboardingShownForCurrentEntryRef,
+    homeOnboardingStepIndex,
+    setGuestIntroHelpVisible,
+    setGuestIntroRecord,
+    setGuestIntroVisible,
+    setGuidedTutorTarget,
+    setHomeOnboardingRecord,
+    setHomeOnboardingStepIndex,
+  };
+}
+
+function useWidgetInputState() {
+  const [inputValue, setInputValue] = useState('');
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  return {
+    drawingImageData,
+    drawingMode,
+    inputRef,
+    inputValue,
+    setDrawingImageData,
+    setDrawingMode,
+    setInputValue,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Main hook — composes sub-hooks + remaining widget-level state
+// ---------------------------------------------------------------------------
+
+export function useKangurAiTutorWidgetState() {
+  const position = useWidgetPositionState();
+  const selection = useWidgetSelectionState();
+  const onboarding = useWidgetOnboardingState();
+  const input = useWidgetInputState();
+
+  const [mounted, setMounted] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [isTutorHidden, setIsTutorHidden] = useState(getInitialTutorHiddenState);
+  const [launcherPromptVisible, setLauncherPromptVisible] = useState(false);
+  const [canonicalTutorModalVisible, setCanonicalTutorModalVisible] = useState(false);
+  const [askModalVisible, setAskModalVisible] = useState(false);
+  const [askEntrySource, setAskEntrySource] = useState<TutorAskEntrySource>('guest_intro');
+  const [askModalDockStyle, setAskModalDockStyle] = useState<{
+    left?: number | string;
+    top?: number | string;
+    right?: number | string;
+    bottom?: number | string;
+  } | null>(null);
+  const [messageFeedbackByKey, setMessageFeedbackByKey] = useState<
+    Record<string, TutorMessageFeedback>
+  >({});
+  const [panelMotionState, setPanelMotionState] = useState<'animating' | 'settled'>('settled');
+  const [panelMeasuredHeight, setPanelMeasuredHeight] = useState<number | null>(null);
+  const [panelAnchorMode, setPanelAnchorMode] = useState<'contextual' | 'dock'>('contextual');
+  const [panelShellMode, setPanelShellMode] = useState<TutorPanelShellMode>('default');
   const [contextSwitchNotice, setContextSwitchNotice] = useState<{
     title: string;
     target: string;
@@ -170,34 +300,15 @@ export function useKangurAiTutorWidgetState() {
   } | null>(null);
   const [viewportTick, setViewportTick] = useState(0);
   const [tutorNarrationObservedText, setTutorNarrationObservedText] = useState('');
-  const [drawingMode, setDrawingMode] = useState(false);
-  const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const tutorNarrationRootRef = useRef<HTMLDivElement | null>(null);
   const persistedSessionKey = useMemo(() => loadPersistedTutorSessionKey(), []);
-  const [guestIntroRecord, setGuestIntroRecord] = useState<KangurAiTutorGuestIntroRecord | null>(
-    () => loadPersistedGuestIntroRecord()
-  );
-  const [homeOnboardingRecord, setHomeOnboardingRecord] =
-    useState<KangurAiTutorHomeOnboardingRecord | null>(() => loadPersistedHomeOnboardingRecord());
   const previousSessionKeyRef = useRef<string | null>(persistedSessionKey);
   const lastTrackedFocusKeyRef = useRef<string | null>(null);
   const lastTrackedProactiveNudgeKeyRef = useRef<string | null>(null);
   const lastTrackedQuotaKeyRef = useRef<string | null>(null);
-  const guestIntroCheckStartedRef = useRef(false);
-  const guestIntroLocalSuppressionTrackedRef = useRef(false);
   const motionTimeoutRef = useRef<number | null>(null);
-  const selectionExplainTimeoutRef = useRef<number | null>(null);
-  const selectionGuidanceRevealTimeoutRef = useRef<number | null>(null);
-  const selectionResponseCompleteTimeoutRef = useRef<number | null>(null);
-  const sectionResponseCompleteTimeoutRef = useRef<number | null>(null);
-  const guestIntroShownForCurrentEntryRef = useRef(false);
-  const homeOnboardingShownForCurrentEntryRef = useRef(false);
-  const avatarDragStateRef = useRef<TutorAvatarDragState | null>(null);
-  const panelDragStateRef = useRef<TutorPanelDragState | null>(null);
-  const suppressAvatarClickRef = useRef(false);
   const askModalReturnStateRef = useRef<{
     wasOpen: boolean;
     launcherPromptVisible: boolean;
@@ -207,35 +318,17 @@ export function useKangurAiTutorWidgetState() {
   } | null>(null);
 
   return {
+    ...position,
+    ...selection,
+    ...onboarding,
+    ...input,
     askEntrySource,
     askModalDockStyle,
     askModalReturnStateRef,
     askModalVisible,
-    avatarDragStateRef,
     canonicalTutorModalVisible,
-    contextualTutorMode,
     contextSwitchNotice,
-    dismissedSelectedText,
-    draggedAvatarPoint,
-    drawingImageData,
-    drawingMode,
-    guestIntroCheckStartedRef,
-    guestIntroHelpVisible,
-    guestIntroLocalSuppressionTrackedRef,
-    guestIntroRecord,
-    guestIntroShownForCurrentEntryRef,
-    guestIntroVisible,
-    guidedTutorTarget,
     hasNewMessage,
-    highlightedSection,
-    homeOnboardingRecord,
-    homeOnboardingShownForCurrentEntryRef,
-    homeOnboardingStepIndex,
-    hoveredSectionAnchorId,
-    inputRef,
-    inputValue,
-    isAvatarDragging,
-    isPanelDragging,
     isTutorHidden,
     lastTrackedFocusKeyRef,
     lastTrackedProactiveNudgeKeyRef,
@@ -245,84 +338,32 @@ export function useKangurAiTutorWidgetState() {
     messagesEndRef,
     mounted,
     motionTimeoutRef,
+    panelAnchorMode,
     panelMeasuredHeight,
     panelMotionState,
-    panelAnchorMode,
-    panelDragStateRef,
-    panelPosition,
-    panelPositionMode,
-    panelSnapPreference,
-    panelShellMode,
     panelRef,
-    persistedSelectionContainerRect,
-    persistedSelectionPageRect,
-    persistedSelectionPageRects,
-    persistedSelectionRect,
+    panelShellMode,
     persistedSessionKey,
     previousSessionKeyRef,
-    sectionResponseComplete,
-    sectionResponseCompleteTimeoutRef,
-    sectionResponsePending,
-    selectionConversationContext,
-    selectionGuidanceCalloutVisibleText,
-    selectionGuidanceRevealTimeoutRef,
-    selectionContextSpotlightTick,
-    selectionExplainTimeoutRef,
-    selectionGuidanceHandoffText,
-    selectionResponseComplete,
-    selectionResponseCompleteTimeoutRef,
-    selectionResponsePending,
+    tutorNarrationObservedText,
+    tutorNarrationRootRef,
+    viewportTick,
     setAskEntrySource,
     setAskModalDockStyle,
     setAskModalVisible,
     setCanonicalTutorModalVisible,
-    setContextualTutorMode,
     setContextSwitchNotice,
-    setDismissedSelectedText,
-    setDraggedAvatarPoint,
-    setDrawingImageData,
-    setDrawingMode,
-    setGuestIntroHelpVisible,
-    setGuestIntroRecord,
-    setGuestIntroVisible,
-    setGuidedTutorTarget,
     setHasNewMessage,
-    setHighlightedSection,
-    setHomeOnboardingRecord,
-    setHomeOnboardingStepIndex,
-    setHoveredSectionAnchorId,
-    setInputValue,
-    setIsAvatarDragging,
-    setIsPanelDragging,
     setIsTutorHidden,
     setLauncherPromptVisible,
     setMessageFeedbackByKey,
     setMounted,
+    setPanelAnchorMode,
     setPanelMeasuredHeight,
     setPanelMotionState,
-    setPanelAnchorMode,
-    setPanelPosition,
-    setPanelPositionMode,
-    setPanelSnapPreference,
     setPanelShellMode,
-    setPersistedSelectionContainerRect,
-    setPersistedSelectionPageRect,
-    setPersistedSelectionPageRects,
-    setPersistedSelectionRect,
-    setSectionResponseComplete,
-    setSectionResponsePending,
-    setSelectionConversationContext,
-    setSelectionGuidanceCalloutVisibleText,
-    setSelectionContextSpotlightTick,
-    setSelectionGuidanceHandoffText,
-    setSelectionResponseComplete,
-    setSelectionResponsePending,
     setTutorNarrationObservedText,
     setViewportTick,
-    suppressAvatarClickRef,
-    tutorNarrationObservedText,
-    tutorNarrationRootRef,
-    viewportTick,
   };
 }
 

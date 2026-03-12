@@ -6,7 +6,10 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
+  KangurLessonCaption,
   KangurLessonChip,
+  KangurLessonLead,
+  KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useLessonHubProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import {
@@ -22,11 +25,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Punkt i odcinek',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
-          <p className='[color:var(--kangur-page-text)]'>
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>
             <strong>Punkt</strong> to jedno miejsce na kartce. <strong>Odcinek</strong> łączy dwa
             punkty.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
             <div className='mx-auto flex max-w-xs items-center justify-between'>
               <span className='text-xl'>● A</span>
@@ -35,10 +38,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </div>
             <p className='mt-2 text-sm text-cyan-700'>Odcinek AB</p>
           </KangurLessonCallout>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption>
             Odcinek ma poczatek i koniec — to dwa punkty.
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -46,21 +49,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Bok i wierzchołek',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
-          <p className='[color:var(--kangur-page-text)]'>
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>
             W figurach wielokatnych mamy <strong>boki</strong> i <strong>wierzchołki</strong>{' '}
             (rogi).
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
             <div className='mx-auto h-28 w-28 rotate-45 rounded-sm border-[6px] border-cyan-500' />
-            <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption className='mt-2'>
               Kwadrat ma 4 boki i 4 wierzchołki.
-            </p>
+            </KangurLessonCaption>
           </KangurLessonCallout>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+          <KangurLessonCaption>
             Boki to odcinki. Wierzchołki to punkty, w których boki sie spotykaja.
-          </p>
-        </div>
+          </KangurLessonCaption>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -68,10 +71,10 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
     {
       title: 'Co to jest kat?',
       content: (
-        <div className='flex flex-col gap-4 text-center'>
-          <p className='[color:var(--kangur-page-text)]'>
+        <KangurLessonStack className='text-center'>
+          <KangurLessonLead>
             <strong>Kat</strong> powstaje tam, gdzie spotykaja sie dwa odcinki.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
             <div className='relative mx-auto h-28 w-28'>
               <div className='absolute left-1/2 top-1/2 h-1 w-20 -translate-y-1/2 rounded bg-cyan-600' />
@@ -87,7 +90,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <KangurLessonChip accent='sky'>Prosty = 90°</KangurLessonChip>
             <KangurLessonChip accent='sky'>Rozwarty &gt; 90°</KangurLessonChip>
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],

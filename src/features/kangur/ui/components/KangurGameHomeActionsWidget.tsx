@@ -295,10 +295,7 @@ export function KangurGameHomeActionsWidget({
         <h3 id='kangur-home-actions-heading' className='sr-only'>
           Wybierz aktywnosc
         </h3>
-        <div
-          className='grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-0 sm:space-y-7'
-          data-testid='kangur-home-actions-list'
-        >
+        <div className='grid grid-cols-1 gap-3 sm:gap-4' data-testid='kangur-home-actions-list'>
           {actions.map((action, index) => (
             <KangurHomeActionCard
               key={action.id}

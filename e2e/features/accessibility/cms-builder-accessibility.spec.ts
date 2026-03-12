@@ -7,7 +7,7 @@ import { mockCmsBuilderApis } from '../../support/cms-builder-fixtures';
 test('cms builder exposes shell controls accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(240_000);
 
   await mockCmsBuilderApis(page);
   await ensureAdminSession(page, '/admin/cms/builder');

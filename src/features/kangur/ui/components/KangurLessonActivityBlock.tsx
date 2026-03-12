@@ -5,6 +5,8 @@ import React from 'react';
 import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
 import {
   KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
   KangurEmptyState,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -46,6 +48,43 @@ const ACTIVITY_COMPONENTS: Record<
   'clock-training': ClockTrainingGame,
 };
 
+const ACTIVITY_CHIP_CLASSNAME = 'text-[10px] uppercase tracking-wide';
+
+type KangurLessonActivityHeaderProps = {
+  badgeRowClassName: string;
+  label: string;
+  title: string;
+  description: string;
+  wrapperClassName?: string;
+};
+
+function KangurLessonActivityHeader({
+  badgeRowClassName,
+  description,
+  label,
+  title,
+  wrapperClassName,
+}: KangurLessonActivityHeaderProps): React.JSX.Element {
+  return (
+    <div className={wrapperClassName}>
+      <div className={badgeRowClassName}>
+        <KangurStatusChip accent='emerald' className={ACTIVITY_CHIP_CLASSNAME} size='sm'>
+          Activity
+        </KangurStatusChip>
+        <KangurStatusChip accent='slate' className={ACTIVITY_CHIP_CLASSNAME} size='sm'>
+          {label}
+        </KangurStatusChip>
+      </div>
+      <KangurCardTitle as='h3' size='xl'>
+        {title}
+      </KangurCardTitle>
+      <KangurCardDescription as='p' className='mt-2' relaxed>
+        {description}
+      </KangurCardDescription>
+    </div>
+  );
+}
+
 export function KangurLessonActivityBlock(
   props: KangurLessonActivityBlockProps
 ): React.JSX.Element {
@@ -65,16 +104,12 @@ export function KangurLessonActivityBlock(
         data-testid='lesson-activity-block-editor-shell'
         padding='lg'
       >
-        <div className='mb-3 flex flex-wrap items-center gap-2'>
-          <KangurStatusChip accent='emerald' className='text-[10px] uppercase tracking-wide' size='sm'>
-            Activity
-          </KangurStatusChip>
-          <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-wide' size='sm'>
-            {definition.label}
-          </KangurStatusChip>
-        </div>
-        <h3 className='text-xl font-extrabold text-slate-900'>{title}</h3>
-        <p className='mt-2 text-sm leading-6 text-slate-600'>{description}</p>
+        <KangurLessonActivityHeader
+          badgeRowClassName='mb-3 flex flex-wrap items-center gap-2'
+          description={description}
+          label={definition.label}
+          title={title}
+        />
         <KangurEmptyState
           accent='emerald'
           align='left'
@@ -92,19 +127,13 @@ export function KangurLessonActivityBlock(
       data-testid='lesson-activity-block-shell'
       padding='lg'
     >
-      <div className='mb-4 flex flex-wrap items-center gap-2'>
-        <KangurStatusChip accent='emerald' className='text-[10px] uppercase tracking-wide' size='sm'>
-          Activity
-        </KangurStatusChip>
-        <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-wide' size='sm'>
-          {definition.label}
-        </KangurStatusChip>
-      </div>
-
-      <div className='mb-4'>
-        <h3 className='text-xl font-extrabold text-slate-900'>{title}</h3>
-        <p className='mt-2 text-sm leading-6 text-slate-600'>{description}</p>
-      </div>
+      <KangurLessonActivityHeader
+        badgeRowClassName='mb-4 flex flex-wrap items-center gap-2'
+        description={description}
+        label={definition.label}
+        title={title}
+        wrapperClassName='mb-4'
+      />
 
       {isCompleted ? (
         <KangurSummaryPanel

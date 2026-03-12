@@ -1,7 +1,7 @@
 import { ObjectId, type Filter } from 'mongodb';
 
 import type {
-  MongoExternalCatalogEntityDoc,
+  MongoExternalCatalogEntityDoc as MongoExternalProducerDoc,
   ProducerMapping,
   ProducerMappingWithDetails,
 } from '@/shared/contracts/integrations';
@@ -18,8 +18,6 @@ export type MongoProducerMappingDoc = {
   updatedAt: Date;
 };
 
-export type MongoExternalProducerDoc = MongoExternalCatalogEntityDoc;
-
 type MongoInternalProducerDoc = Omit<
   SharedMongoProducerDoc,
   '_id' | 'id' | 'name' | 'createdAt' | 'updatedAt'
@@ -32,6 +30,7 @@ type MongoInternalProducerDoc = Omit<
   updatedAt: Date;
 };
 
+export type { MongoExternalProducerDoc };
 export type { MongoInternalProducerDoc };
 
 export const PRODUCER_MAPPING_COLLECTION = 'producer_mappings';

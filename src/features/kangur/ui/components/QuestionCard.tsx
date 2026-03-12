@@ -220,7 +220,7 @@ export default function QuestionCard({
           <>
             <h3
               id={questionHeadingId}
-              className='mb-2 text-5xl font-extrabold [color:var(--kangur-page-text)]'
+              className='mb-2 text-3xl font-extrabold [color:var(--kangur-page-text)] sm:text-5xl'
             >
               {question.question}
             </h3>
@@ -234,7 +234,7 @@ export default function QuestionCard({
       <div
         aria-describedby={questionDescriptionId}
         aria-labelledby={questionHeadingId}
-        className='grid grid-cols-2 gap-4 w-full'
+        className='grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4'
         id={choicesGroupId}
         role='group'
       >
@@ -269,7 +269,7 @@ export default function QuestionCard({
                 aria-disabled={showResult}
                 aria-label={`Odpowiedz ${String(choice)}`}
                 className={cn(
-                  'w-full flex items-center justify-center rounded-[24px] px-4 py-4 text-center text-2xl font-bold shadow transition-all',
+                  'flex w-full items-center justify-center rounded-[24px] px-4 py-4 text-center text-xl font-bold shadow transition-all sm:text-2xl',
                   cardClass,
                   showResult ? 'cursor-default' : 'cursor-pointer'
                 )}

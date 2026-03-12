@@ -666,7 +666,7 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'click_weekday_name' && (
-        <div className='grid grid-cols-4 gap-2 w-full'>
+        <div className='grid w-full grid-cols-2 gap-2 sm:grid-cols-4'>
           {DAY_LABELS.map((dayLabel, idx) => {
             const isCorrectTarget = feedback !== null && idx === task.targetIdx;
             const isWrongSelection =
@@ -728,7 +728,7 @@ export default function CalendarInteractiveGame({
             Przeciągnij powyżej na właściwą porę roku ⬇️
           </p>
 
-          <div className='grid grid-cols-2 gap-2 w-full'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {SEASONS.map((season, index) => {
               const accent = SEASON_ACCENTS[season];
               const isCorrectSeason = feedback !== null && season === task.correctSeason;

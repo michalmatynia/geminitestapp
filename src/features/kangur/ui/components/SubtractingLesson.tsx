@@ -6,7 +6,12 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonLead,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
 import {
   KangurDisplayEmoji,
   KangurEquationDisplay,
@@ -21,10 +26,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Co to znaczy odejmowac?',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Odejmowanie to zabieranie czesci z grupy. Pytamy: ile zostało?
-          </p>
+          </KangurLessonLead>
           <div className='flex items-center gap-4'>
             <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
             <KangurEquationDisplay
@@ -49,16 +54,16 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <KangurEquationDisplay accent='rose' size='sm'>
             5 − 2 = 3
           </KangurEquationDisplay>
-        </div>
+        </KangurLessonStack>
       ),
     },
     {
       title: 'Odejmowanie jednocyfrowe',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Cofaj sie na osi liczbowej lub licz, ile brakuje do wyniku.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay
               accent='rose'
@@ -66,9 +71,9 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             >
               9 − 4 = ?
             </KangurEquationDisplay>
-            <p className='mt-2 [color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption className='mt-2'>
               Zacznij od <b>9</b>, cofnij sie 4: 8, 7, 6, <b>5</b> ✓
-            </p>
+            </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='flex gap-1 flex-wrap justify-center'>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
@@ -77,7 +82,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </KangurIconBadge>
             ))}
           </div>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -85,15 +90,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Odejmowanie z przekroczeniem 10',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, potem odejmij reszte.
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay accent='rose'>13 − 5 = ?</KangurEquationDisplay>
-            <p className='mt-2 [color:var(--kangur-page-muted-text)]'>
+            <KangurLessonCaption className='mt-2'>
               13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓
-            </p>
+            </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonCallout
             accent='slate'
@@ -106,7 +111,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               🔹 Odejmij 2: 10 − 2 = <b>8</b>
             </p>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -114,10 +119,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Odejmowanie dwucyfrowe',
       content: (
-        <div className='flex flex-col items-center gap-4'>
-          <p className='text-center [color:var(--kangur-page-text)]'>
+        <KangurLessonStack>
+          <KangurLessonLead>
             Odejmuj osobno dziesiatki i jednosci!
-          </p>
+          </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
             <div className='mt-2 text-left [color:var(--kangur-page-muted-text)]'>
@@ -132,7 +137,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </KangurEquationDisplay>
             </div>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],
@@ -140,7 +145,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
     {
       title: 'Zapamietaj!',
       content: (
-        <div className='flex flex-col items-center gap-4'>
+        <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
@@ -155,7 +160,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </li>
             </ul>
           </KangurLessonCallout>
-        </div>
+        </KangurLessonStack>
       ),
     },
   ],

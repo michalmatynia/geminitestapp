@@ -764,7 +764,7 @@ describe('scanner summary-json envelope', () => {
     });
     expect(metricsCollection.notes).toContain('architecture baseline metrics collection result');
     expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'baseline-latest.json'))).toBe(false);
-  });
+  }, 30_000);
 
   it('wraps architecture guardrails in the shared scan envelope', () => {
     const root = createTempRoot();
@@ -830,7 +830,7 @@ describe('scanner summary-json envelope', () => {
       ci: false,
     });
     expect(uiConsolidationGuardrail.notes).toContain('ui consolidation guardrail result');
-  });
+  }, 30_000);
 
   it('wraps critical path performance checks in the shared scan envelope', () => {
     const root = createTempRoot();

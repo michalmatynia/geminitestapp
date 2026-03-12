@@ -35,6 +35,27 @@ const kangurLessonCalloutVariants = cva(
 type KangurLessonCalloutProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurLessonCalloutVariants>;
 
+const kangurLessonStackVariants = cva('flex flex-col', {
+  variants: {
+    align: {
+      center: 'items-center',
+      start: 'items-start',
+    },
+    gap: {
+      sm: 'gap-2',
+      md: 'gap-4',
+      lg: 'gap-5',
+    },
+  },
+  defaultVariants: {
+    align: 'center',
+    gap: 'md',
+  },
+});
+
+type KangurLessonStackProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof kangurLessonStackVariants>;
+
 const kangurLessonChipVariants = cva(
   'soft-card inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold tracking-tight shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)]',
   {
@@ -58,6 +79,36 @@ const kangurLessonChipVariants = cva(
 
 type KangurLessonChipProps = React.HTMLAttributes<HTMLSpanElement> &
   VariantProps<typeof kangurLessonChipVariants>;
+
+const kangurLessonLeadVariants = cva('[color:var(--kangur-page-text)]', {
+  variants: {
+    align: {
+      center: 'text-center',
+      left: 'text-left',
+    },
+  },
+  defaultVariants: {
+    align: 'center',
+  },
+});
+
+type KangurLessonLeadProps = React.HTMLAttributes<HTMLParagraphElement> &
+  VariantProps<typeof kangurLessonLeadVariants>;
+
+const kangurLessonCaptionVariants = cva('text-sm [color:var(--kangur-page-muted-text)]', {
+  variants: {
+    align: {
+      center: 'text-center',
+      left: 'text-left',
+    },
+  },
+  defaultVariants: {
+    align: 'center',
+  },
+});
+
+type KangurLessonCaptionProps = React.HTMLAttributes<HTMLParagraphElement> &
+  VariantProps<typeof kangurLessonCaptionVariants>;
 
 const kangurLessonInsetVariants = cva(
   'soft-card w-full rounded-[18px] border shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)] [color:var(--kangur-page-text)]',
@@ -99,12 +150,37 @@ export function KangurLessonCallout({
   );
 }
 
+export function KangurLessonStack({
+  align,
+  className,
+  gap,
+  ...props
+}: KangurLessonStackProps): React.JSX.Element {
+  return <div className={cn(kangurLessonStackVariants({ align, gap }), className)} {...props} />;
+}
+
 export function KangurLessonChip({
   accent,
   className,
   ...props
 }: KangurLessonChipProps): React.JSX.Element {
   return <span className={cn(kangurLessonChipVariants({ accent, className }))} {...props} />;
+}
+
+export function KangurLessonLead({
+  align,
+  className,
+  ...props
+}: KangurLessonLeadProps): React.JSX.Element {
+  return <p className={cn(kangurLessonLeadVariants({ align }), className)} {...props} />;
+}
+
+export function KangurLessonCaption({
+  align,
+  className,
+  ...props
+}: KangurLessonCaptionProps): React.JSX.Element {
+  return <p className={cn(kangurLessonCaptionVariants({ align }), className)} {...props} />;
 }
 
 export function KangurLessonInset({

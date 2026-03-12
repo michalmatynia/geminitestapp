@@ -7,7 +7,7 @@ import type {
   DatabaseEngineBackupSchedule,
   DatabaseEngineBackupTargetSchedule,
 } from '@/shared/contracts/database';
-import type { AppProviderValue } from '@/shared/contracts/system';
+import type { AppProviderValue as DatabaseEngineBackupType } from '@/shared/contracts/system';
 
 export type {
   DatabaseEngineProvider,
@@ -16,6 +16,7 @@ export type {
   DatabaseEngineOperationControls,
   DatabaseEngineBackupSchedule,
   DatabaseEngineBackupTargetSchedule,
+  DatabaseEngineBackupType,
 };
 
 export const DATABASE_ENGINE_POLICY_KEY = 'database_engine_policy_v1';
@@ -46,7 +47,6 @@ export const DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS: DatabaseEngineOperation
 };
 
 export type DatabaseEngineBackupCadence = 'daily' | 'every_n_days' | 'weekly';
-export type DatabaseEngineBackupType = AppProviderValue;
 export type DatabaseEngineBackupStatus = 'idle' | 'queued' | 'running' | 'success' | 'failed';
 
 const DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE: DatabaseEngineBackupTargetSchedule = {

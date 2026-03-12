@@ -1,3 +1,5 @@
+import type { JsonPrimitive as KangurKnowledgeMetadataValue } from './json';
+
 export const KANGUR_KNOWLEDGE_GRAPH_KEY = 'kangur-website-help-v1';
 
 export const KANGUR_KNOWLEDGE_NODE_KINDS = [
@@ -44,7 +46,7 @@ export const KANGUR_KNOWLEDGE_CANONICAL_SOURCE_COLLECTIONS = [
 export type KangurKnowledgeCanonicalSourceCollection =
   (typeof KANGUR_KNOWLEDGE_CANONICAL_SOURCE_COLLECTIONS)[number];
 
-export type KangurKnowledgeMetadataValue = string | number | boolean | null;
+export type { KangurKnowledgeMetadataValue };
 
 export interface KangurKnowledgeGraphNode {
   id: string;

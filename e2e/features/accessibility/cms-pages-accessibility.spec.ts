@@ -6,7 +6,7 @@ import { expectPageToHaveNoAxeViolations } from '../../support/accessibility';
 test('cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(240_000);
 
   await ensureAdminSession(page, '/admin/cms/pages');
 

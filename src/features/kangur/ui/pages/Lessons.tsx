@@ -586,7 +586,7 @@ export default function Lessons() {
               <motion.div
                 key='list-shell'
                 {...lessonPageMotionProps}
-                className='flex w-full max-w-md flex-col items-center gap-4'
+                className='flex w-full max-w-lg flex-col items-center gap-4'
                 data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
                 <div ref={lessonListIntroRef} className='w-full'>
@@ -648,7 +648,7 @@ export default function Lessons() {
                           >
                             <KangurOptionCardButton
                               accent='indigo'
-                              className='flex w-full items-start gap-4 rounded-[30px] p-5 text-left'
+                              className='flex w-full flex-col items-start gap-4 rounded-[28px] p-4 text-left sm:rounded-[30px] sm:p-5'
                               data-doc-id='lessons_library_entry'
                               emphasis='neutral'
                               onClick={() => handleSelectLesson(lesson.id)}
@@ -661,10 +661,10 @@ export default function Lessons() {
                               >
                                 {lesson.emoji}
                               </KangurGradientIconTile>
-                              <div className='flex-1'>
-                                <div className='flex items-start justify-between gap-3'>
-                                  <div>
-                                    <div className='text-xl font-extrabold text-slate-800'>
+                              <div className='min-w-0 flex-1'>
+                                <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                                  <div className='min-w-0'>
+                                    <div className='text-lg font-extrabold text-slate-800 sm:text-xl'>
                                       {lesson.title}
                                     </div>
                                     <div className='mt-0.5 text-sm text-slate-500'>
@@ -698,10 +698,10 @@ export default function Lessons() {
                                       </KangurStatusChip>
                                     ) : null}
                                   </div>
-                                  <div className='flex flex-col items-end gap-2'>
+                                  <div className='flex flex-wrap items-center gap-2 sm:flex-col sm:items-end'>
                                     <KangurStatusChip
                                       accent={masteryPresentation.badgeAccent}
-                                      className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                      className='uppercase tracking-[0.14em]'
                                       size='sm'
                                     >
                                       {masteryPresentation.statusLabel}
@@ -709,7 +709,7 @@ export default function Lessons() {
                                     {lessonAssignment ? (
                                       <KangurStatusChip
                                         accent='rose'
-                                        className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                        className='uppercase tracking-[0.14em]'
                                         size='sm'
                                       >
                                         {lessonAssignment.priority === 'high'
@@ -721,7 +721,7 @@ export default function Lessons() {
                                     ) : completedLessonAssignment ? (
                                       <KangurStatusChip
                                         accent='emerald'
-                                        className='whitespace-nowrap uppercase tracking-[0.14em]'
+                                        className='uppercase tracking-[0.14em]'
                                         size='sm'
                                       >
                                         Zadanie zamkniete

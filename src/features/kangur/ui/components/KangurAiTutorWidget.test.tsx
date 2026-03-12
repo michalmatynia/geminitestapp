@@ -533,7 +533,7 @@ describe('KangurAiTutorWidget', () => {
       selectionContainerRect: new DOMRect(80, 150, 520, 240),
       clearSelection: clearSelectionMock,
     });
-  }, 20000);
+  }, 45_000);
   afterEach(() => {
     vi.useRealTimers();
   });

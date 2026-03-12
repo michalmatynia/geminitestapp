@@ -201,7 +201,8 @@ export function KangurPrimaryNavigation({
     ? Boolean(auth.user.canManageLearners)
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
-  const mobileAuthActionClassName = 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center';
+  const mobileAuthActionClassName =
+    'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3';
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
@@ -420,6 +421,7 @@ export function KangurPrimaryNavigation({
   };
   const lessonsAction: KangurNavActionConfig = {
     active: currentPage === 'Lessons',
+    className: 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center',
     content: (
       <>
         <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
@@ -450,6 +452,7 @@ export function KangurPrimaryNavigation({
       docId: 'top_nav_parent_dashboard',
       href: parentDashboardHref,
       targetPageKey: 'ParentDashboard',
+      className: 'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3',
       testId: 'kangur-primary-nav-parent-dashboard',
       transitionActive: isTransitionSourceActive({
         activeTransitionSourceId,
@@ -467,20 +470,11 @@ export function KangurPrimaryNavigation({
       testId='kangur-primary-nav-appearance-controls'
     />
   ) : null;
-  const utilityActions =
-    appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
-      <div
-        className='ml-auto flex flex-wrap items-center justify-end gap-2'
-        data-testid='kangur-primary-nav-utility-actions'
-      >
-        {appearanceControls}
-        {rightAccessory}
-        {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
-        {authAction}
-      </div>
-    ) : null;
-  const leftContent = (
-    <KangurTopNavGroup label={navigationLabel}>
+  const primaryActions = (
+    <div
+      className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'
+      data-testid='kangur-primary-nav-primary-actions'
+    >
       {renderNavAction(homeAction)}
       {renderNavAction(lessonsAction)}
       {tutorRestoreAction}
@@ -494,8 +488,26 @@ export function KangurPrimaryNavigation({
           profile={{ href: profileHref, isActive: learnerProfileIsActive }}
           transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
           transitionSourceId={profileTransitionSourceId}
+          triggerClassName='max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center'
         />
       ) : null}
+    </div>
+  );
+  const utilityActions =
+    appearanceControls || rightAccessory || parentDashboardAction || authAction ? (
+      <div
+        className='ml-auto flex w-full flex-wrap items-center justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto'
+        data-testid='kangur-primary-nav-utility-actions'
+      >
+        {appearanceControls}
+        {rightAccessory}
+        {parentDashboardAction ? renderNavAction(parentDashboardAction) : null}
+        {authAction}
+      </div>
+    ) : null;
+  const leftContent = (
+    <KangurTopNavGroup label={navigationLabel}>
+      {primaryActions}
       {utilityActions}
     </KangurTopNavGroup>
   );

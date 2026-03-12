@@ -62,19 +62,29 @@ describe('LessonHub', () => {
     const gameCard = screen.getByTestId('lesson-hub-section-game');
 
     expect(lessonCard).toHaveClass('soft-card');
-    expect(gameCard).toHaveClass('soft-card', 'border-indigo-300');
+    expect(gameCard).toHaveClass(
+      'soft-card',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(224_231_255))]'
+    );
     expect(within(lessonCard).getByTestId('lesson-hub-icon-days')).toHaveClass(
-      'bg-slate-100',
-      'text-slate-700'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(226_232_240))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(71_85_105))]'
     );
     expect(within(gameCard).getByTestId('lesson-hub-icon-game')).toHaveClass(
-      'bg-indigo-100',
-      'text-indigo-700'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(224_231_255))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(79_70_229))]'
     );
     expect(screen.queryByText('Nauka kalendarza')).not.toBeInTheDocument();
     expect(screen.queryByText('Wybierz temat')).not.toBeInTheDocument();
-    expect(within(lessonCard).getByText('Lekcja')).toHaveClass('border-slate-200', 'bg-slate-100');
-    expect(within(gameCard).getByText('Gra')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(within(lessonCard).getByText('Lekcja')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
+    );
+    expect(within(gameCard).getByText('Gra')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+    );
     expect(within(gameCard).getByTestId('lesson-hub-progress-game')).toBeInTheDocument();
     expect(within(gameCard).getByTestId('lesson-hub-progress-dot-game-0')).toHaveClass(
       'kangur-step-pill-pending'

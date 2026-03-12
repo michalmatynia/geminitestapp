@@ -1,19 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import prisma from '@/shared/lib/db/prisma';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    setting: {
-      findUnique: vi.fn(),
-    },
-  },
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn(),
 }));
 
 vi.mock('@/shared/utils/transient-recovery', () => ({
@@ -23,19 +14,24 @@ vi.mock('@/shared/utils/transient-recovery', () => ({
 describe('critical-error-notifier', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getAppDbProvider as any).mockResolvedValue('prisma');
+    delete (globalThis as typeof globalThis & { __criticalErrorNotificationCache?: Map<string, number> })
+      .__criticalErrorNotificationCache;
+    process.env['MONGODB_URI'] = 'mongodb://localhost';
     (global as any).fetch = vi.fn().mockResolvedValue({ ok: true });
 
-    // Default: enabled with a webhook
-    (prisma.setting.findUnique as any).mockImplementation(
-      ({ where }: { where: { key: string } }) => {
-        if (where.key === 'critical_notifications_enabled') return { value: 'true' };
-        if (where.key === 'critical_notifications_webhook_url')
-          return { value: 'http://webhook.test' };
-        if (where.key === 'critical_notifications_min_level') return { value: 'error' };
+    const mockCollection = {
+      findOne: vi.fn().mockImplementation(({ $or }: { $or: Array<{ _id?: string; key?: string }> }) => {
+        const key = $or[0]?._id ?? $or[1]?.key;
+        if (key === 'critical_notifications_enabled') return { value: 'true' };
+        if (key === 'critical_notifications_webhook_url') return { value: 'http://webhook.test' };
+        if (key === 'critical_notifications_min_level') return { value: 'error' };
         return null;
-      }
-    );
+      }),
+    };
+    const mockDb = {
+      collection: vi.fn().mockReturnValue(mockCollection),
+    };
+    (getMongoDb as any).mockResolvedValue(mockDb);
   });
 
   it('should send a notification for a critical error', async () => {
@@ -71,15 +67,18 @@ describe('critical-error-notifier', () => {
   });
 
   it('should not send if level is below threshold', async () => {
-    (prisma.setting.findUnique as any).mockImplementation(
-      ({ where }: { where: { key: string } }) => {
-        if (where.key === 'critical_notifications_min_level') return { value: 'error' };
-        if (where.key === 'critical_notifications_enabled') return { value: 'true' };
-        if (where.key === 'critical_notifications_webhook_url')
-          return { value: 'http://webhook.test' };
-        return null;
-      }
-    );
+    (getMongoDb as any).mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        findOne: vi.fn().mockImplementation(({ $or }: { $or: Array<{ _id?: string; key?: string }> }) => {
+          const key = $or[0]?._id ?? $or[1]?.key;
+          if (key === 'critical_notifications_min_level') return { value: 'error' };
+          if (key === 'critical_notifications_enabled') return { value: 'true' };
+          if (key === 'critical_notifications_webhook_url') return { value: 'http://webhook.test' };
+          return null;
+        }),
+      }),
+    });
+
 
     const log = {
       level: 'warn' as const,

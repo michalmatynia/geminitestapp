@@ -1,31 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_TRANSIENT_RECOVERY_SETTINGS } from '@/shared/lib/observability/transient-recovery/constants';
 import { getTransientRecoverySettings } from '@/shared/lib/observability/transient-recovery/settings';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import prisma from '@/shared/lib/db/prisma';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    setting: {
-      findUnique: vi.fn(),
-    },
-  },
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn(),
 }));
 
 describe('Transient Recovery Settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env['DATABASE_URL'] = 'postgresql://...';
+    process.env['MONGODB_URI'] = 'mongodb://example';
   });
 
   it('returns default settings if no setting found in DB', async () => {
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
-    vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
+    const findOne = vi.fn().mockResolvedValue(null);
+    const collection = vi.fn().mockReturnValue({ findOne });
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
 
     const settings = await getTransientRecoverySettings({ force: true });
 
@@ -33,11 +27,14 @@ describe('Transient Recovery Settings', () => {
   });
 
   it('normalizes invalid values from DB', async () => {
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
     const invalidData = JSON.stringify({
       retry: { maxAttempts: -5, initialDelayMs: 'invalid' },
     });
-    vi.mocked(prisma.setting.findUnique).mockResolvedValue({ value: invalidData } as any);
+    const findOne = vi.fn().mockResolvedValue({ value: invalidData });
+    const collection = vi.fn().mockReturnValue({ findOne });
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
 
     const settings = await getTransientRecoverySettings({ force: true });
 
@@ -48,12 +45,15 @@ describe('Transient Recovery Settings', () => {
   });
 
   it('respects valid settings from DB', async () => {
-    vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
     const validData = JSON.stringify({
       enabled: false,
       retry: { maxAttempts: 10, initialDelayMs: 5000 },
     });
-    vi.mocked(prisma.setting.findUnique).mockResolvedValue({ value: validData } as any);
+    const findOne = vi.fn().mockResolvedValue({ value: validData });
+    const collection = vi.fn().mockReturnValue({ findOne });
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
 
     const settings = await getTransientRecoverySettings({ force: true });
 

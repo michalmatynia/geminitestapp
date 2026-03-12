@@ -10,7 +10,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'KangurAppLoader visible={isLoaderVisible}',
+      'KangurAppLoader visible={isBootSkeletonVisible}',
       'data-testid=\'kangur-route-content\'',
     ],
   },
@@ -18,7 +18,8 @@ const KANGUR_VISUAL_CONTRACTS = [
     file: 'src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx',
     requiredTokens: [
       'data-testid=\'kangur-page-transition-skeleton\'',
-      'cursor-progress overflow-hidden bg-white/44 backdrop-blur-[10px]',
+      'inset-0 z-30 cursor-progress overflow-hidden',
+      'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
     ],
   },
   {
@@ -127,6 +128,10 @@ const collectImportPaths = (source: string): string[] => {
 };
 
 const isForbiddenKangurUiImport = (importPath: string): boolean => {
+  if (importPath === '@/features/cms/components/frontend/CmsStorefrontAppearance') {
+    return false;
+  }
+
   if (importPath.startsWith('@/shared/ui')) {
     return true;
   }

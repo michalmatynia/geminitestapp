@@ -52,8 +52,8 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(container.innerHTML).not.toContain('image.png');
     expect(container.querySelector('rect')).not.toBeNull();
     expect(screen.getByTestId('kangur-illustration-panel-label-panel-1')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
     );
     expect(screen.getByTestId('kangur-illustration-panel-frame-panel-1')).toHaveClass(
       'soft-card',
@@ -85,8 +85,8 @@ describe('KangurQuestionIllustrationRenderer', () => {
       'border-slate-200/85'
     );
     expect(screen.getByTestId('kangur-illustration-panel-label-panel-empty')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
     );
   });
 });

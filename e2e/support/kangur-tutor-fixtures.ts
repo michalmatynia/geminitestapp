@@ -530,77 +530,19 @@ export async function selectTextInElement(
   selector: string,
   textToSelect: string
 ): Promise<void> {
-  await page.locator(selector).first().waitFor();
+  const root = page.locator(selector).first();
+  await root.waitFor();
+  await root.scrollIntoViewIfNeeded();
 
-  const coordinates = await page.evaluate(
-    ({ selector: nextSelector, textToSelect: nextTextToSelect }) => {
-      const root = document.querySelector(nextSelector);
-      if (!root) {
-        throw new Error(`Missing selection root for selector: ${nextSelector}`);
-      }
-
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      let matchedNode: Text | null = null;
-      let matchedIndex = -1;
-
-      while (walker.nextNode()) {
-        const currentNode = walker.currentNode as Text;
-        const nodeText = currentNode.textContent ?? '';
-        const index = nodeText.indexOf(nextTextToSelect);
-        if (index >= 0) {
-          matchedNode = currentNode;
-          matchedIndex = index;
-          break;
-        }
-      }
-
-      if (!matchedNode || matchedIndex < 0) {
-        throw new Error(`Could not find text to select: ${nextTextToSelect}`);
-      }
-
-      const range = document.createRange();
-      range.setStart(matchedNode, matchedIndex);
-      range.setEnd(matchedNode, matchedIndex + nextTextToSelect.length);
-      const rects = Array.from(range.getClientRects());
-      const firstRect = rects[0] ?? range.getBoundingClientRect();
-      const lastRect = rects[rects.length - 1] ?? firstRect;
-
-      return {
-        startX: firstRect.left + Math.max(2, Math.min(8, firstRect.width / 3)),
-        startY: firstRect.top + firstRect.height / 2,
-        endX: lastRect.right - Math.max(2, Math.min(8, lastRect.width / 3)),
-        endY: lastRect.top + lastRect.height / 2,
-      };
-    },
-    { selector, textToSelect }
-  );
-
-  await page.mouse.move(coordinates.startX, coordinates.startY);
-  await page.mouse.down();
-  await page.mouse.move(coordinates.endX, coordinates.endY, { steps: 12 });
-  await page.mouse.up();
-
-  try {
-    await page.waitForFunction(
-      (text) => (window.getSelection()?.toString().trim() ?? '').includes(text),
-      textToSelect,
-      { timeout: 1_500 }
-    );
-    await page.evaluate(() => {
-      document.dispatchEvent(new Event('selectionchange'));
-      window.dispatchEvent(new Event('resize'));
-      window.dispatchEvent(new Event('scroll'));
-    });
-    return;
-  } catch {
+  const programmaticallySelectText = async (): Promise<void> => {
     await page.evaluate(
       ({ selector: nextSelector, textToSelect: nextTextToSelect }) => {
-        const root = document.querySelector(nextSelector);
-        if (!root) {
+        const rootElement = document.querySelector(nextSelector);
+        if (!rootElement) {
           throw new Error(`Missing selection root for selector: ${nextSelector}`);
         }
 
-        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const walker = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT);
         let matchedNode: Text | null = null;
         let matchedIndex = -1;
 
@@ -636,5 +578,83 @@ export async function selectTextInElement(
       },
       { selector, textToSelect }
     );
+  };
+
+  const getSelectionCoordinates = async (): Promise<{
+    endX: number;
+    endY: number;
+    startX: number;
+    startY: number;
+  }> =>
+    page.evaluate(
+      ({ selector: nextSelector, textToSelect: nextTextToSelect }) => {
+        const rootElement = document.querySelector(nextSelector);
+        if (!rootElement) {
+          throw new Error(`Missing selection root for selector: ${nextSelector}`);
+        }
+
+        const walker = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT);
+        let matchedNode: Text | null = null;
+        let matchedIndex = -1;
+
+        while (walker.nextNode()) {
+          const currentNode = walker.currentNode as Text;
+          const nodeText = currentNode.textContent ?? '';
+          const index = nodeText.indexOf(nextTextToSelect);
+          if (index >= 0) {
+            matchedNode = currentNode;
+            matchedIndex = index;
+            break;
+          }
+        }
+
+        if (!matchedNode || matchedIndex < 0) {
+          throw new Error(`Could not find text to select: ${nextTextToSelect}`);
+        }
+
+        const range = document.createRange();
+        range.setStart(matchedNode, matchedIndex);
+        range.setEnd(matchedNode, matchedIndex + nextTextToSelect.length);
+        const rects = Array.from(range.getClientRects());
+        const firstRect = rects[0] ?? range.getBoundingClientRect();
+        const lastRect = rects[rects.length - 1] ?? firstRect;
+
+        return {
+          startX: firstRect.left + Math.max(2, Math.min(8, firstRect.width / 3)),
+          startY: firstRect.top + firstRect.height / 2,
+          endX: lastRect.right - Math.max(2, Math.min(8, lastRect.width / 3)),
+          endY: lastRect.top + lastRect.height / 2,
+        };
+      },
+      { selector, textToSelect }
+    );
+
+  await programmaticallySelectText();
+
+  try {
+    await page.waitForFunction(
+      (text) => (window.getSelection()?.toString().trim() ?? '').includes(text),
+      textToSelect,
+      { timeout: 1_500 }
+    );
+    return;
+  } catch {
+    const coordinates = await getSelectionCoordinates();
+
+    await page.mouse.move(coordinates.startX, coordinates.startY);
+    await page.mouse.down();
+    await page.mouse.move(coordinates.endX, coordinates.endY, { steps: 12 });
+    await page.mouse.up();
+
+    await page.waitForFunction(
+      (text) => (window.getSelection()?.toString().trim() ?? '').includes(text),
+      textToSelect,
+      { timeout: 1_500 }
+    );
+    await page.evaluate(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event('scroll'));
+    });
   }
 }

@@ -1,31 +1,29 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
-import type { ChatbotSettings } from '@prisma/client';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { GET_handler as GET, POST_handler as POST } from '@/app/api/chatbot/settings/handler';
-import prisma from '@/shared/lib/db/prisma';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const {
-  chatbotSettingsFindUniqueMock,
-  chatbotSettingsUpsertMock,
-  prismaDisconnectMock,
+  collectionFindOneMock,
+  collectionUpdateOneMock,
+  collectionMock,
+  mongoCollectionAccessorMock,
   parseJsonBodyMock,
 } = vi.hoisted(() => ({
-  chatbotSettingsFindUniqueMock: vi.fn(),
-  chatbotSettingsUpsertMock: vi.fn(),
-  prismaDisconnectMock: vi.fn(),
+  collectionFindOneMock: vi.fn(),
+  collectionUpdateOneMock: vi.fn(),
+  collectionMock: {
+    findOne: vi.fn(),
+    updateOne: vi.fn(),
+  },
+  mongoCollectionAccessorMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    chatbotSettings: {
-      findUnique: chatbotSettingsFindUniqueMock,
-      upsert: chatbotSettingsUpsertMock,
-    },
-    $disconnect: prismaDisconnectMock,
-  },
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn(),
 }));
 
 vi.mock('@/features/products/server', () => ({
@@ -38,9 +36,18 @@ const mockContext = {
   getElapsedMs: () => 0,
 } as ApiHandlerContext;
 
+const originalMongoUri = process.env['MONGODB_URI'];
+
 describe('Chatbot Settings API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    collectionMock.findOne.mockImplementation((...args: unknown[]) => collectionFindOneMock(...args));
+    collectionMock.updateOne.mockImplementation((...args: unknown[]) => collectionUpdateOneMock(...args));
+    mongoCollectionAccessorMock.mockReturnValue(collectionMock);
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection: mongoCollectionAccessorMock,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
     parseJsonBodyMock.mockImplementation(async (req: NextRequest, schema: { safeParse: (input: unknown) => { success: boolean; data?: unknown; error?: { format: () => unknown } } }) => {
       try {
         const body = (await req.json()) as unknown;
@@ -65,7 +72,11 @@ describe('Chatbot Settings API', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    if (originalMongoUri === undefined) {
+      delete process.env['MONGODB_URI'];
+      return;
+    }
+    process.env['MONGODB_URI'] = originalMongoUri;
   });
 
   it('GET: returns settings by key', async () => {
@@ -78,9 +89,7 @@ describe('Chatbot Settings API', () => {
       createdAt,
       updatedAt,
     };
-    vi.mocked(prisma.chatbotSettings.findUnique).mockResolvedValue(
-      mockSettings as unknown as ChatbotSettings
-    );
+    collectionFindOneMock.mockResolvedValue(mockSettings);
 
     const req = new NextRequest('http://localhost/api/chatbot/settings?key=default');
     const res = await GET(req, { ...mockContext, query: { key: 'default' } });
@@ -94,9 +103,8 @@ describe('Chatbot Settings API', () => {
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
     });
-    expect(prisma.chatbotSettings.findUnique).toHaveBeenCalledWith({
-      where: { key: 'default' },
-    });
+    expect(mongoCollectionAccessorMock).toHaveBeenCalledWith('chatbot_settings');
+    expect(collectionFindOneMock).toHaveBeenCalledWith({ key: 'default' });
   });
 
   it('POST: saves settings using upsert', async () => {
@@ -109,9 +117,14 @@ describe('Chatbot Settings API', () => {
       createdAt,
       updatedAt,
     };
-    vi.mocked(prisma.chatbotSettings.upsert).mockResolvedValue(
-      mockSaved as unknown as ChatbotSettings
-    );
+    collectionUpdateOneMock.mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 0,
+      modifiedCount: 0,
+      upsertedCount: 1,
+      upsertedId: 'default',
+    });
+    collectionFindOneMock.mockResolvedValue(mockSaved);
 
     const req = new NextRequest('http://localhost/api/chatbot/settings', {
       method: 'POST',
@@ -129,13 +142,22 @@ describe('Chatbot Settings API', () => {
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
     });
-    expect(prisma.chatbotSettings.upsert).toHaveBeenCalledWith(
+    expect(mongoCollectionAccessorMock).toHaveBeenCalledWith('chatbot_settings');
+    expect(collectionUpdateOneMock).toHaveBeenCalledWith(
+      { key: 'default' },
       expect.objectContaining({
-        where: { key: 'default' },
-        update: { settings: { model: 'gpt-4' } },
-        create: { key: 'default', settings: { model: 'gpt-4' } },
-      })
+        $set: expect.objectContaining({
+          id: 'default',
+          key: 'default',
+          settings: { model: 'gpt-4' },
+        }),
+        $setOnInsert: expect.objectContaining({
+          _id: 'default',
+        }),
+      }),
+      { upsert: true }
     );
+    expect(collectionFindOneMock).toHaveBeenCalledWith({ key: 'default' });
   });
 
   it('POST: returns 400 if settings missing', async () => {

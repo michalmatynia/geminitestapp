@@ -62,6 +62,41 @@ describe('kangur lesson settings', () => {
     expect(parsed[0]?.title).toBe('Figury');
   });
 
+  it('deduplicates lessons that point at the same component and keeps the enabled lesson', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'clock-disabled',
+        componentId: 'clock',
+        title: 'Nauka zegara (archiwum)',
+        enabled: false,
+        sortOrder: 2000,
+      },
+      {
+        id: 'clock-active',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        enabled: true,
+        sortOrder: 1000,
+      },
+      {
+        id: 'calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        enabled: true,
+        sortOrder: 3000,
+      },
+    ]);
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed.map((lesson) => lesson.componentId)).toEqual(['clock', 'calendar']);
+    expect(parsed[0]).toMatchObject({
+      id: 'clock-active',
+      componentId: 'clock',
+      enabled: true,
+      title: 'Nauka zegara',
+    });
+  });
+
   it('preserves explicit document render mode when provided', () => {
     const parsed = normalizeKangurLessons([
       {

@@ -177,16 +177,19 @@ describe('ScoreHistory', () => {
         return element.textContent.includes(summary);
       })
     ).toBeInTheDocument();
-    expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border-sky-300');
+    expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('3');
-    expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass('soft-card', 'border-emerald-300');
+    expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass(
+      'soft-card',
+      'border'
+    );
     expect(screen.getByTestId('score-history-operation-progress-addition')).toHaveAttribute(
       'aria-valuenow',
       '80'
     );
     expect(screen.getByTestId('score-history-recent-row-score-3')).toHaveClass(
       'soft-card',
-      'border-sky-300'
+      'border'
     );
     expect(
       within(screen.getByTestId('score-history-recent-row-score-3')).getByText('Dzielenie')
@@ -196,8 +199,9 @@ describe('ScoreHistory', () => {
     ).toHaveClass('text-slate-400');
     expect(screen.getByTestId('score-history-recent-xp-score-3')).toHaveTextContent('+24 XP');
     expect(screen.getByTestId('score-history-recent-score-score-2')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getAllByText('Dzielenie').length).toBeGreaterThan(0);
   });

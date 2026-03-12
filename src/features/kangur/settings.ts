@@ -339,6 +339,23 @@ const ensureUniqueLessonId = (requestedId: string, usedIds: Set<string>): string
   return nextId;
 };
 
+const shouldPreferNormalizedKangurLesson = (
+  candidate: KangurLesson,
+  candidateIndex: number,
+  current: KangurLesson,
+  currentIndex: number
+): boolean => {
+  if (candidate.enabled !== current.enabled) {
+    return candidate.enabled;
+  }
+
+  if (candidate.sortOrder !== current.sortOrder) {
+    return candidate.sortOrder < current.sortOrder;
+  }
+
+  return candidateIndex < currentIndex;
+};
+
 export const createKangurLessonId = (seed?: string): string => {
   const normalizedSeed =
     (seed ?? 'lesson')
@@ -469,7 +486,26 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
     return createDefaultKangurLessons();
   }
 
-  return normalized
+  const dedupedByComponent = new Map<
+    KangurLessonComponentId,
+    { index: number; lesson: KangurLesson }
+  >();
+
+  normalized.forEach((lesson, index) => {
+    const existing = dedupedByComponent.get(lesson.componentId);
+    if (!existing) {
+      dedupedByComponent.set(lesson.componentId, { index, lesson });
+      return;
+    }
+
+    if (shouldPreferNormalizedKangurLesson(lesson, index, existing.lesson, existing.index)) {
+      dedupedByComponent.set(lesson.componentId, { index, lesson });
+    }
+  });
+
+  const dedupedLessons = Array.from(dedupedByComponent.values()).map((entry) => entry.lesson);
+
+  return dedupedLessons
     .sort((left, right) => {
       const orderDelta = left.sortOrder - right.sortOrder;
       if (orderDelta !== 0) return orderDelta;

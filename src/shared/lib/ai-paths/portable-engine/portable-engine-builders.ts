@@ -51,7 +51,12 @@ export const serializePortablePathPackage = (
 ): string => JSON.stringify(buildPortablePathPackage(pathConfig, options), null, 2);
 
 const toJsonSchemaRecord = (schema: z.ZodTypeAny): Record<string, unknown> =>
-  z.toJSONSchema(schema) as Record<string, unknown>;
+  z.toJSONSchema(schema, {
+    // Portable contracts should describe the accepted payload shape, even when
+    // some internal branches normalize values with transforms.
+    io: 'input',
+    unrepresentable: 'any',
+  }) as Record<string, unknown>;
 
 export const buildPortablePathJsonSchemaCatalog = (): PortablePathJsonSchemaCatalog => ({
   portable_envelope: toJsonSchemaRecord(aiPathPortablePackageEnvelopeSchema),

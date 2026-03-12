@@ -19,14 +19,34 @@ export const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int().positive().max(100)).default(50),
 });
 
+type AgentLongTermMemoryRecord = Record<string, unknown>;
+
+type AgentLongTermMemoryDelegate = {
+  findMany(args: {
+    orderBy: { updatedAt: 'desc' };
+    take: number;
+    where: Record<string, unknown>;
+  }): Promise<AgentLongTermMemoryRecord[]>;
+};
+
+const getAgentLongTermMemoryDelegate = (): AgentLongTermMemoryDelegate | null => {
+  if (!('agentLongTermMemory' in prisma)) {
+    return null;
+  }
+
+  return (prisma as unknown as { agentLongTermMemory: AgentLongTermMemoryDelegate })
+    .agentLongTermMemory;
+};
+
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  if (!('agentLongTermMemory' in prisma)) {
+  const agentLongTermMemory = getAgentLongTermMemoryDelegate();
+  if (!agentLongTermMemory) {
     throw internalError('Long-term memory table not initialized. Run prisma generate/db push.');
   }
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
-  const where = {
+  const where: Record<string, unknown> = {
     ...(query.memoryKey ? { memoryKey: query.memoryKey } : {}),
     ...(query.tag ? { tags: { has: query.tag } } : {}),
     ...(query.q
@@ -40,7 +60,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       : {}),
   };
 
-  const items = await prisma.agentLongTermMemory.findMany({
+  const items = await agentLongTermMemory.findMany({
     where,
     orderBy: { updatedAt: 'desc' },
     take: query.limit,

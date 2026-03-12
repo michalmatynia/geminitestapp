@@ -1,7 +1,6 @@
 import { BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
 
-
 import { cn, sanitizeSvg } from '@/shared/utils';
 
 import type { TutorMoodAvatarProps } from './KangurAiTutorWidget.shared';
@@ -17,7 +16,9 @@ export function KangurAiTutorMoodAvatar({
   fallbackIconClassName,
   'data-testid': dataTestId,
 }: TutorMoodAvatarProps): JSX.Element {
-  const hasImage = typeof avatarImageUrl === 'string' && avatarImageUrl.trim().length > 0;
+  const normalizedImageUrl = typeof avatarImageUrl === 'string' ? avatarImageUrl.trim() : '';
+  const hasImage = normalizedImageUrl.length > 0;
+  const isInlineImageDataUrl = normalizedImageUrl.startsWith('data:image/');
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;
 
   return (
@@ -30,9 +31,16 @@ export function KangurAiTutorMoodAvatar({
       data-testid={dataTestId}
       role='img'
     >
-      {hasImage ? (
+      {hasImage && isInlineImageDataUrl ? (
+        <img
+          src={normalizedImageUrl}
+          alt={label}
+          className={cn('h-full w-full object-cover', imgClassName)}
+          loading='eager'
+        />
+      ) : hasImage ? (
         <NextImage
-          src={avatarImageUrl}
+          src={normalizedImageUrl}
           alt={label}
           fill
           sizes='100%'

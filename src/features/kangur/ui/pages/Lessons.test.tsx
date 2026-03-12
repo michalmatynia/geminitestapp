@@ -299,6 +299,38 @@ describe('Lessons', () => {
     );
   });
 
+  it('renders each lesson component only once when persisted settings contain duplicates', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson({
+          id: 'kangur-lesson-clock-primary',
+          sortOrder: 1000,
+        }),
+        createLesson({
+          id: 'kangur-lesson-clock-duplicate',
+          title: 'Nauka zegara duplicate',
+          sortOrder: 2000,
+        }),
+        createLesson({
+          id: 'kangur-lesson-calendar',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 3000,
+        }),
+      ],
+    });
+
+    renderLessonsPage();
+
+    expect(screen.getAllByRole('button', { name: /nauka zegara/i })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /nauka zegara duplicate/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /nauka kalendarza/i })).toBeInTheDocument();
+  });
+
   it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {
     setSettingsStore({
       lessons: [

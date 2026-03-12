@@ -43,11 +43,17 @@ describe('LessonMasteryInsights', () => {
     render(<LessonMasteryInsights progress={progress} />);
 
     expect(screen.getByText('2 lekcji z zapisem')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
     );
-    expect(screen.getAllByText('45%')[0]).toHaveClass('border-rose-200', 'bg-rose-100');
-    expect(screen.getByText('92%')).toHaveClass('border-emerald-200', 'bg-emerald-100');
+    expect(screen.getAllByText('45%')[0]).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(255_228_230))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(255_228_230))]'
+    );
+    expect(screen.getByText('92%')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(209_250_229))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(209_250_229))]'
+    );
   });
 
   it('uses the shared empty-state surface when there is no lesson mastery yet', () => {

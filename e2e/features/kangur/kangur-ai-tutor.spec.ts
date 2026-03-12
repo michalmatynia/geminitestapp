@@ -39,13 +39,21 @@ async function enableDarkTheme(page: Page): Promise<void> {
   await page.evaluate(() => {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark');
+    document.documentElement.setAttribute('data-kangur-appearance-mode', 'dark');
+    document.body.setAttribute('data-kangur-appearance-mode', 'dark');
+    document.querySelectorAll('[data-kangur-appearance]').forEach((element) => {
+      element.setAttribute('data-kangur-appearance', 'dark');
+    });
   });
   await expect
     .poll(() =>
       page.evaluate(
         () =>
-          document.documentElement.classList.contains('dark') &&
-          document.body.classList.contains('dark')
+          document.documentElement.getAttribute('data-kangur-appearance-mode') === 'dark' &&
+          document.body.getAttribute('data-kangur-appearance-mode') === 'dark' &&
+          Array.from(document.querySelectorAll('[data-kangur-appearance]')).every(
+            (element) => element.getAttribute('data-kangur-appearance') === 'dark'
+          )
       )
     )
     .toBe(true);
@@ -67,18 +75,18 @@ async function triggerTutorAvatar(page: Page): Promise<void> {
   await page.getByTestId('kangur-ai-tutor-avatar').click();
 }
 
-async function dragTutorHeaderToAnchor(page: Page, anchor: Locator): Promise<void> {
-  const header = page.getByTestId('kangur-ai-tutor-header');
-  const [headerBox, anchorBox] = await Promise.all([header.boundingBox(), anchor.boundingBox()]);
+async function dragTutorAvatarToAnchor(page: Page, anchor: Locator): Promise<void> {
+  const avatar = page.getByTestId('kangur-ai-tutor-avatar');
+  const [avatarBox, anchorBox] = await Promise.all([avatar.boundingBox(), anchor.boundingBox()]);
 
-  expect(headerBox).not.toBeNull();
+  expect(avatarBox).not.toBeNull();
   expect(anchorBox).not.toBeNull();
 
-  if (!headerBox || !anchorBox) {
+  if (!avatarBox || !anchorBox) {
     return;
   }
 
-  await page.mouse.move(headerBox.x + headerBox.width / 2, headerBox.y + headerBox.height / 2);
+  await page.mouse.move(avatarBox.x + avatarBox.width / 2, avatarBox.y + avatarBox.height / 2);
   await page.mouse.down();
   await page.mouse.move(anchorBox.x + anchorBox.width / 2, anchorBox.y + anchorBox.height / 2, {
     steps: 12,
@@ -433,7 +441,6 @@ test.describe('Kangur AI Tutor', () => {
       chatRequests,
       lessonTitle,
       lessonSelectedText,
-      lessonResponse,
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
@@ -478,7 +485,7 @@ test.describe('Kangur AI Tutor', () => {
       tutorAvatar,
       page.getByTestId('kangur-ai-tutor-selection-guided-callout')
     );
-    await expectLocatorToStayNearFocus(tutorAvatar, selectedLessonTextLocator, 112);
+    await expectLocatorToStayNearFocus(tutorAvatar, selectedLessonTextLocator, 114);
     await expectGuidedArrowheadToStayAnchoredToAvatar(tutorArrowhead);
     await expectLocatorsNotToOverlap(
       page.getByTestId('kangur-ai-tutor-selection-guided-callout'),
@@ -497,7 +504,7 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
-    expect(chatRequests[0]?.context?.focusKind).toBe('selection');
+    expect(chatRequests[0]?.context?.focusKind).toBe('document');
     expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
     expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
 
@@ -588,7 +595,6 @@ test.describe('Kangur AI Tutor', () => {
       chatRequests,
       lessonTitle,
       lessonSelectedText,
-      lessonResponse,
     } = await mockKangurTutorEnvironment(page, {
       tutorPersonaImageUrl,
       chatResponseDelayMs: 1_000,
@@ -665,7 +671,6 @@ test.describe('Kangur AI Tutor', () => {
       chatRequests,
       lessonTitle,
       lessonSelectedText,
-      lessonResponse,
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
@@ -689,32 +694,70 @@ test.describe('Kangur AI Tutor', () => {
     await expect(page.getByTestId('kangur-ai-tutor-selection-action')).toHaveCount(0);
   });
 
-  test('lets the learner drag the open tutor header onto a page section and starts section guidance', async ({
+  test('does not reopen the tutor automatically when a new lesson fragment is selected after dismissing selection guidance', async ({
+    page,
+  }) => {
+    const {
+      chatRequests,
+      lessonTitle,
+      lessonSelectedText,
+    } = await mockKangurTutorEnvironment(page);
+    const followUpSelectedText = 'kolejny krok';
+
+    await gotoTutorRoute(page, '/kangur/lessons');
+    await page.getByRole('button', { name: lessonTitle }).click();
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', lessonSelectedText);
+    await openTutorFromSelection(page);
+
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+    await expect.poll(() => chatRequests.length).toBe(1);
+
+    await page.mouse.click(24, 24);
+
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-anchor-kind',
+      'dock'
+    );
+
+    await selectTextInElement(page, '[data-testid^="lesson-text-block-"]', followUpSelectedText);
+
+    const selectionAction = page.getByTestId('kangur-ai-tutor-selection-action');
+    await expect(selectionAction).toBeVisible();
+    await expect(selectionAction.getByRole('button', { name: 'Zapytaj o to' })).toBeVisible();
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-anchor-kind',
+      'dock'
+    );
+    await expect.poll(() => chatRequests.length).toBe(1);
+  });
+
+  test('lets the learner drag the docked tutor avatar onto a page section and starts section guidance', async ({
     page,
   }) => {
     await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur');
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await dismissHomeOnboardingIfVisible(page);
 
-    const leaderboardAnchor = page.locator(
-      '[data-kangur-tutor-anchor-id="kangur-game-home-leaderboard"]'
-    );
+    const leaderboardAnchor = page.getByTestId('leaderboard-shell');
     await expect(leaderboardAnchor).toBeVisible();
 
-    await triggerTutorAvatar(page);
+    const tutorAvatar = page.getByTestId('kangur-ai-tutor-avatar');
+    await expect(tutorAvatar).toBeVisible();
+    await expect(tutorAvatar).toHaveAttribute('data-anchor-kind', 'dock');
 
-    const tutorPanel = page.getByTestId('kangur-ai-tutor-panel');
-    const tutorHeader = page.getByTestId('kangur-ai-tutor-header');
-    await expect(tutorHeader).toBeVisible();
-    await expect(tutorHeader).toHaveAttribute('data-panel-section-draggable', 'true');
-
-    await dragTutorHeaderToAnchor(page, leaderboardAnchor);
+    await dragTutorAvatarToAnchor(page, leaderboardAnchor);
 
     await expect(page.getByTestId('kangur-ai-tutor-section-guided-callout')).toContainText(
       'Wyjaśniam sekcję:'
     );
-    await expect(tutorPanel).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
   });
 
   test('keeps the guided lesson surface active when the learner clicks the guided avatar again', async ({
@@ -724,7 +767,6 @@ test.describe('Kangur AI Tutor', () => {
       chatRequests,
       lessonTitle,
       lessonSelectedText,
-      lessonResponse,
     } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur/lessons');
@@ -755,7 +797,6 @@ test.describe('Kangur AI Tutor', () => {
       chatRequests,
       lessonTitle,
       lessonSelectedText,
-      lessonResponse,
     } = await mockKangurTutorEnvironment(page, {
       uiMode: 'static',
     });
@@ -775,17 +816,14 @@ test.describe('Kangur AI Tutor', () => {
 
     await expect.poll(() => chatRequests.length).toBe(1);
     expect(chatRequests[0]?.context?.selectedText).toBe(lessonSelectedText);
-    expect(chatRequests[0]?.context?.focusKind).toBe('selection');
+    expect(chatRequests[0]?.context?.focusKind).toBe('document');
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
   });
 
   test('keeps the selection guidance arrow attached on highlighted game-question text', async ({
     page,
   }) => {
-    const {
-      chatRequests,
-      hintResponse,
-    } = await mockKangurTutorEnvironment(page);
+    const { chatRequests } = await mockKangurTutorEnvironment(page);
 
     await gotoTutorRoute(page, '/kangur');
     await expect(page.getByTestId('kangur-route-shell')).toBeVisible();

@@ -9,6 +9,36 @@ const MOBILE_VIEWPORTS = [
   { label: 'iphone-se', width: 320, height: 568 },
   { label: 'iphone-13', width: 390, height: 844 },
 ] as const;
+const BADGE_TRACK_PROGRESS = {
+  totalXp: 480,
+  gamesPlayed: 18,
+  perfectGames: 5,
+  lessonsCompleted: 11,
+  recommendedSessionsCompleted: 2,
+  clockPerfect: 2,
+  calendarPerfect: 1,
+  geometryPerfect: 1,
+  badges: ['first_game', 'lesson_hero'],
+  operationsPlayed: ['addition', 'division'],
+  lessonMastery: {},
+  totalCorrectAnswers: 78,
+  totalQuestionsAnswered: 90,
+  bestWinStreak: 4,
+  activityStats: {
+    'training:clock:hours': {
+      sessionsPlayed: 4,
+      perfectSessions: 1,
+      totalCorrectAnswers: 18,
+      totalQuestionsAnswered: 20,
+      totalXpEarned: 112,
+      bestScorePercent: 100,
+      lastScorePercent: 80,
+      currentStreak: 2,
+      bestStreak: 2,
+      lastPlayedAt: '2026-03-08T10:00:00.000Z',
+    },
+  },
+} as const;
 
 type Box = {
   x: number;
@@ -183,6 +213,60 @@ for (const viewport of MOBILE_VIEWPORTS) {
       await expectViewportSafeWidth(page, actions, 'mobile action panel should stay inside the viewport');
       await expectViewportSafeWidth(page, leaderboard, 'mobile leaderboard should stay inside the viewport');
       await expectViewportSafeWidth(page, progress, 'mobile progress card should stay inside the viewport');
+    });
+
+    test('keeps badge-track card content separated on the mobile home progress panel', async ({
+      page,
+    }) => {
+      await persistHomeOnboardingStatus(page, 'dismissed');
+      await gotoKangurSurface(page, '/kangur');
+
+      await page.evaluate(async (nextProgress) => {
+        await fetch('/api/kangur/progress', {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(nextProgress),
+        });
+      }, BADGE_TRACK_PROGRESS);
+      await gotoKangurSurface(page, '/kangur');
+
+      const progress = page.getByTestId('player-progress-shell');
+      const onboardingTrack = page.getByTestId('player-progress-badge-track-onboarding');
+      const trackLabel = onboardingTrack.getByText(/🚀\s*Start/);
+      const progressChip = onboardingTrack.getByText('100%');
+      const badgeCount = onboardingTrack.getByText('2/2 odznak');
+      const trackSummary = onboardingTrack.getByText('Wszystkie odznaki odblokowane');
+
+      await waitForKangurSurface(page, progress);
+      await expect(progress).toBeVisible();
+      await expect(onboardingTrack).toBeVisible();
+      await expect(trackLabel).toBeVisible();
+      await expect(progressChip).toBeVisible();
+      await expect(badgeCount).toBeVisible();
+      await expect(trackSummary).toBeVisible();
+
+      await expectLocatorsNotToOverlap(
+        trackLabel,
+        progressChip,
+        'mobile badge-track chip should not overlap the track label'
+      );
+      await expectVerticalOrder(
+        trackLabel,
+        badgeCount,
+        'mobile badge-track count should stay below the track header'
+      );
+      await expectVerticalOrder(
+        badgeCount,
+        trackSummary,
+        'mobile badge-track summary should stay below the badge count'
+      );
+      await expectViewportSafeWidth(
+        page,
+        onboardingTrack,
+        'mobile badge-track card should stay inside the viewport'
+      );
     });
 
     test('keeps the mobile onboarding callout off the home action stack', async ({ page }) => {

@@ -224,6 +224,14 @@ export function useKangurAiTutorPortalViewModel(
   const hasContextualTutorLock =
     input.tutorSurfaceMode === 'selection_guided' ||
     input.tutorSurfaceMode === 'section_guided';
+  const hasGuidedContextualTransition =
+    input.contextualTutorMode !== null ||
+    input.guidedMode === 'selection' ||
+    input.guidedMode === 'section' ||
+    input.isSelectionExplainPendingMode ||
+    input.isSectionExplainPendingMode ||
+    input.showSelectionGuidanceCallout ||
+    input.showSectionGuidanceCallout;
   const showAuthenticatedHomeOnboardingEntry =
     !input.isAnonymousVisitor && input.canStartHomeOnboardingManually;
   const guestIntroHeadline = showAuthenticatedHomeOnboardingEntry
@@ -241,6 +249,7 @@ export function useKangurAiTutorPortalViewModel(
   const shouldRenderGuestIntro =
     input.tutorSurfaceMode === 'onboarding' &&
     !hasContextualTutorLock &&
+    !hasGuidedContextualTransition &&
     (input.canonicalTutorModalVisible || (!input.isAskModalMode && !isGuidedAvatarMode));
   const isContextualMinimalPanelMode = false;
   const isMinimalPanelMode =
@@ -655,6 +664,7 @@ export function useKangurAiTutorPortalViewModel(
       input.uiMode,
       input.viewport,
       hasContextualTutorLock,
+      hasGuidedContextualTransition,
       handleCanonicalOnboardingAccept,
       handleCanonicalOnboardingDismiss,
       isGuidedAvatarMode,

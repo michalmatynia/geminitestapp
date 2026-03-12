@@ -1,13 +1,20 @@
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
-import { getNextLockedBadge } from '@/features/kangur/ui/services/progress';
+import {
+  getNextLockedBadge,
+  type KangurBadgeTrackKey,
+} from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
 type KangurHeroMilestoneSummaryProps = {
   className?: string;
   dataTestIdPrefix: string;
+  pinnedTrackKeys?: KangurBadgeTrackKey[];
+  showPlaceholderForMissingPinnedTracks?: boolean;
+  trackLimit?: number;
   trackDataTestIdPrefix?: string;
+  trackMinimumItems?: number;
   progress: KangurProgressState;
 };
 
@@ -20,7 +27,11 @@ const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
 export default function KangurHeroMilestoneSummary({
   className,
   dataTestIdPrefix,
+  pinnedTrackKeys,
   trackDataTestIdPrefix,
+  showPlaceholderForMissingPinnedTracks = false,
+  trackLimit = 2,
+  trackMinimumItems,
   progress,
 }: KangurHeroMilestoneSummaryProps): React.JSX.Element | null {
   if (!hasMeaningfulProgress(progress)) {
@@ -76,8 +87,11 @@ export default function KangurHeroMilestoneSummary({
         <KangurBadgeTrackHighlights
           className='min-[360px]:grid-cols-2'
           dataTestIdPrefix={badgeTrackTestIdPrefix}
-          limit={2}
+          limit={trackLimit}
+          minimumItems={trackMinimumItems}
+          pinnedTrackKeys={pinnedTrackKeys}
           progress={badgeTrackProgress}
+          showPlaceholderForMissingPinnedTracks={showPlaceholderForMissingPinnedTracks}
         />
       </div>
     </div>

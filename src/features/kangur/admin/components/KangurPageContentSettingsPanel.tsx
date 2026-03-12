@@ -12,6 +12,7 @@ import {
   kangurPageContentPageKeySchema,
   parseKangurPageContentStore,
   type KangurPageContentEntry,
+  type KangurPageContentFragment,
   type KangurPageContentPageKey,
   type KangurPageContentStore,
 } from '@/shared/contracts/kangur-page-content';
@@ -128,8 +129,19 @@ const normalizeEntries = (entries: KangurPageContentEntry[]): KangurPageContentE
     sortOrder: (index + 1) * 10,
   }));
 
+const normalizeFragments = (
+  fragments: KangurPageContentFragment[]
+): KangurPageContentFragment[] =>
+  fragments.map((fragment, index) => ({
+    ...fragment,
+    sortOrder: (index + 1) * 10,
+  }));
+
 const createEntryId = (): string =>
   `page-content-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const createFragmentId = (): string =>
+  `fragment-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const createEmptyEntry = (sortOrder: number): KangurPageContentEntry => ({
   id: createEntryId(),
@@ -148,8 +160,20 @@ const createEmptyEntry = (sortOrder: number): KangurPageContentEntry => ({
   contentIdPrefixes: [],
   nativeGuideIds: [],
   triggerPhrases: [],
+  fragments: [],
   tags: ['page-content'],
   notes: undefined,
+  enabled: true,
+  sortOrder,
+});
+
+const createEmptyFragment = (sortOrder: number): KangurPageContentFragment => ({
+  id: createFragmentId(),
+  text: 'Nowy fragment',
+  aliases: [],
+  explanation: 'Wyjasnienie wybranego fragmentu dla AI Tutora.',
+  nativeGuideIds: [],
+  triggerPhrases: [],
   enabled: true,
   sortOrder,
 });
@@ -196,6 +220,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(
     DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries[0]?.id ?? null
   );
+  const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
 
   const isDirty = editorValue !== persistedEditorValue;
 
@@ -234,6 +259,29 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
     () => parsedState.store?.entries.find((entry) => entry.id === selectedEntryId) ?? null,
     [parsedState.store, selectedEntryId]
   );
+  const selectedFragment = useMemo(
+    () => selectedEntry?.fragments.find((fragment) => fragment.id === selectedFragmentId) ?? null,
+    [selectedEntry, selectedFragmentId]
+  );
+
+  useEffect(() => {
+    if (!selectedEntry || selectedEntry.fragments.length === 0) {
+      setSelectedFragmentId(null);
+      return;
+    }
+
+    if (!selectedFragmentId) {
+      setSelectedFragmentId(selectedEntry.fragments[0]?.id ?? null);
+      return;
+    }
+
+    const fragmentStillExists = selectedEntry.fragments.some(
+      (fragment) => fragment.id === selectedFragmentId
+    );
+    if (!fragmentStillExists) {
+      setSelectedFragmentId(selectedEntry.fragments[0]?.id ?? null);
+    }
+  }, [selectedEntry, selectedFragmentId]);
 
   const manifestCoverage = useMemo(() => {
     if (!parsedState.store) {
@@ -402,6 +450,107 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
     const serialized = stringifyPageContentStore(DEFAULT_KANGUR_PAGE_CONTENT_STORE);
     setEditorValue(serialized);
     setSelectedEntryId(DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries[0]?.id ?? null);
+    setSelectedFragmentId(DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries[0]?.fragments[0]?.id ?? null);
+  };
+
+  const updateSelectedFragment = (
+    updater: (fragment: KangurPageContentFragment) => KangurPageContentFragment
+  ): void => {
+    if (!selectedEntry || !selectedFragment) {
+      return;
+    }
+
+    const nextFragment = updater(selectedFragment);
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      fragments: entry.fragments.map((fragment) =>
+        fragment.id === selectedFragment.id ? nextFragment : fragment
+      ),
+    }));
+    setSelectedFragmentId(nextFragment.id);
+  };
+
+  const handleAddFragment = (): void => {
+    if (!selectedEntry) {
+      return;
+    }
+
+    const nextFragments = normalizeFragments([
+      ...selectedEntry.fragments,
+      createEmptyFragment((selectedEntry.fragments.length + 1) * 10),
+    ]);
+    const nextFragment = nextFragments[nextFragments.length - 1] ?? null;
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      fragments: nextFragments,
+    }));
+    setSelectedFragmentId(nextFragment?.id ?? null);
+  };
+
+  const handleDuplicateSelectedFragment = (): void => {
+    if (!selectedEntry || !selectedFragment) {
+      return;
+    }
+
+    const duplicate: KangurPageContentFragment = {
+      ...selectedFragment,
+      id: createFragmentId(),
+      text: `${selectedFragment.text} kopia`,
+      sortOrder: selectedFragment.sortOrder + 1,
+    };
+    const currentIndex = selectedEntry.fragments.findIndex(
+      (fragment) => fragment.id === selectedFragment.id
+    );
+    const nextFragments = [...selectedEntry.fragments];
+    nextFragments.splice(currentIndex + 1, 0, duplicate);
+    const normalizedFragments = normalizeFragments(nextFragments);
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      fragments: normalizedFragments,
+    }));
+    setSelectedFragmentId(duplicate.id);
+  };
+
+  const handleDeleteSelectedFragment = (): void => {
+    if (!selectedEntry || !selectedFragment) {
+      return;
+    }
+
+    const nextFragments = normalizeFragments(
+      selectedEntry.fragments.filter((fragment) => fragment.id !== selectedFragment.id)
+    );
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      fragments: nextFragments,
+    }));
+    setSelectedFragmentId(nextFragments[0]?.id ?? null);
+  };
+
+  const handleMoveSelectedFragment = (direction: -1 | 1): void => {
+    if (!selectedEntry || !selectedFragment) {
+      return;
+    }
+
+    const currentIndex = selectedEntry.fragments.findIndex(
+      (fragment) => fragment.id === selectedFragment.id
+    );
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= selectedEntry.fragments.length) {
+      return;
+    }
+
+    const nextFragments = [...selectedEntry.fragments];
+    const [removed] = nextFragments.splice(currentIndex, 1);
+    if (!removed) {
+      return;
+    }
+
+    nextFragments.splice(nextIndex, 0, removed);
+    const normalizedFragments = normalizeFragments(nextFragments);
+    updateSelectedEntry((entry) => ({
+      ...entry,
+      fragments: normalizedFragments,
+    }));
   };
 
   const handleSave = async (): Promise<void> => {
@@ -899,6 +1048,212 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                       />
                     </FormField>
                   </div>
+
+                  <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+                    <div className='flex flex-wrap items-start justify-between gap-3'>
+                      <div>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <div className='text-sm font-semibold text-foreground'>
+                            Highlighted text fragments
+                          </div>
+                          <Badge variant='outline'>{selectedEntry.fragments.length} fragments</Badge>
+                        </div>
+                        <p className='mt-1 text-sm text-muted-foreground'>
+                          Use fragments for exact highlighted text that should resolve to a
+                          canned Mongo explanation before the tutor falls back to the model.
+                        </p>
+                      </div>
+                      <div className='flex flex-wrap gap-2'>
+                        <Button variant='outline' size='sm' onClick={() => handleMoveSelectedFragment(-1)} disabled={isSaving || !selectedFragment}>
+                          Move up
+                        </Button>
+                        <Button variant='outline' size='sm' onClick={() => handleMoveSelectedFragment(1)} disabled={isSaving || !selectedFragment}>
+                          Move down
+                        </Button>
+                        <Button variant='outline' size='sm' onClick={handleAddFragment} disabled={isSaving}>
+                          Add fragment
+                        </Button>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={handleDuplicateSelectedFragment}
+                          disabled={isSaving || !selectedFragment}
+                        >
+                          Duplicate
+                        </Button>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={handleDeleteSelectedFragment}
+                          disabled={isSaving || !selectedFragment}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+
+                    {selectedEntry.fragments.length > 0 ? (
+                      <div className='mt-4 grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
+                        <div className='space-y-2'>
+                          {selectedEntry.fragments.map((fragment) => {
+                            const isSelected = fragment.id === selectedFragmentId;
+                            return (
+                              <button
+                                key={fragment.id}
+                                type='button'
+                                onClick={() => setSelectedFragmentId(fragment.id)}
+                                className={cn(
+                                  'w-full rounded-2xl border px-3 py-3 text-left transition-colors',
+                                  isSelected
+                                    ? 'border-primary/40 bg-primary/10'
+                                    : 'border-border/60 bg-card/30 hover:bg-card/55'
+                                )}
+                              >
+                                <div className='flex items-start justify-between gap-2'>
+                                  <div className='min-w-0'>
+                                    <div className='truncate text-sm font-medium text-foreground'>
+                                      {fragment.text}
+                                    </div>
+                                    <div className='mt-1 truncate font-mono text-[11px] text-muted-foreground'>
+                                      {fragment.id}
+                                    </div>
+                                  </div>
+                                  {!fragment.enabled ? <Badge variant='warning'>Disabled</Badge> : null}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {selectedFragment ? (
+                          <div className='space-y-4'>
+                            <div className='grid gap-4 lg:grid-cols-2'>
+                              <FormField
+                                label='Fragment id'
+                                description='Stable fragment key used inside the page-content source path.'
+                              >
+                                <Input
+                                  aria-label='Page content fragment id'
+                                  value={selectedFragment.id}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      id: sanitizeRequiredInput(event.target.value, fragment.id),
+                                    }))
+                                  }
+                                />
+                              </FormField>
+
+                              <FormField
+                                label='Highlighted text'
+                                description='Canonical text expected to be selected on the page.'
+                              >
+                                <Input
+                                  aria-label='Page content fragment text'
+                                  value={selectedFragment.text}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      text: sanitizeRequiredInput(event.target.value, fragment.text),
+                                    }))
+                                  }
+                                />
+                              </FormField>
+
+                              <FormField label='Aliases'>
+                                <Textarea
+                                  aria-label='Page content fragment aliases'
+                                  value={stringifyList(selectedFragment.aliases)}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      aliases: parseList(event.target.value),
+                                    }))
+                                  }
+                                  rows={4}
+                                />
+                              </FormField>
+
+                              <FormField label='Linked native guide ids'>
+                                <Textarea
+                                  aria-label='Page content fragment native guide ids'
+                                  value={stringifyList(selectedFragment.nativeGuideIds)}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      nativeGuideIds: parseList(event.target.value),
+                                    }))
+                                  }
+                                  rows={4}
+                                />
+                              </FormField>
+
+                              <FormField label='Trigger phrases'>
+                                <Textarea
+                                  aria-label='Page content fragment trigger phrases'
+                                  value={stringifyList(selectedFragment.triggerPhrases)}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      triggerPhrases: parseList(event.target.value),
+                                    }))
+                                  }
+                                  rows={4}
+                                />
+                              </FormField>
+
+                              <FormField label='Explanation' className='lg:col-span-2'>
+                                <Textarea
+                                  aria-label='Page content fragment explanation'
+                                  value={selectedFragment.explanation}
+                                  onChange={(event) =>
+                                    updateSelectedFragment((fragment) => ({
+                                      ...fragment,
+                                      explanation: sanitizeRequiredInput(
+                                        event.target.value,
+                                        fragment.explanation
+                                      ),
+                                    }))
+                                  }
+                                  rows={6}
+                                />
+                              </FormField>
+                            </div>
+
+                            <div className='flex items-center justify-between rounded-2xl border border-border/60 bg-card/30 px-4 py-3'>
+                              <div>
+                                <div className='text-sm font-medium text-foreground'>
+                                  Fragment enabled
+                                </div>
+                                <div className='text-xs text-muted-foreground'>
+                                  Disabled fragments stay in Mongo but do not participate in
+                                  highlighted-text matching.
+                                </div>
+                              </div>
+                              <Switch
+                                checked={selectedFragment.enabled}
+                                onCheckedChange={(checked: boolean) =>
+                                  updateSelectedFragment((fragment) => ({
+                                    ...fragment,
+                                    enabled: checked,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className='rounded-2xl border border-dashed border-border/60 px-4 py-8 text-sm text-muted-foreground'>
+                            Select a fragment to edit it.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className='mt-4 rounded-2xl border border-dashed border-border/60 px-4 py-8 text-sm text-muted-foreground'>
+                        Add a fragment when a specific highlighted text on the page needs its own
+                        explanation, aliases, or linked guide ids.
+                      </div>
+                    )}
+                  </Card>
 
                   <div className='flex items-center justify-between rounded-2xl border border-border/60 bg-card/30 px-4 py-3'>
                     <div>

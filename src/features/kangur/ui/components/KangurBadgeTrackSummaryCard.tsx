@@ -52,30 +52,36 @@ export function KangurBadgeTrackSummaryCard({
     >
       <div
         className={cn(
-          'flex flex-col items-start gap-4 md:flex-row md:items-start md:justify-between',
+          'flex flex-col gap-3',
           headerClassName
         )}
       >
-        <div className='min-w-0 md:flex-1'>
-          <KangurSectionEyebrow as='p' className={cn('tracking-[0.18em]', trackLabelClassName)}>
+        <div className='flex w-full items-start justify-between gap-3'>
+          <KangurSectionEyebrow
+            as='p'
+            className={cn('min-w-0 flex-1 pt-1 tracking-[0.18em]', trackLabelClassName)}
+          >
             {track.emoji} {track.label}
           </KangurSectionEyebrow>
-          <KangurCardTitle as='p' className='mt-1'>
-            {track.unlockedCount}/{track.totalCount} odznak
-          </KangurCardTitle>
-          <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-            {track.nextBadge
-              ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
-              : 'Wszystkie odznaki odblokowane'}
-          </KangurCardDescription>
+          <KangurStatusChip
+            accent={accent}
+            className={cn(
+              'shrink-0 self-start whitespace-nowrap px-2 py-0.5 text-[10px] leading-none sm:px-2.5 sm:py-1 sm:text-[11px]',
+              statusChipClassName
+            )}
+            size='sm'
+          >
+            {track.progressPercent}%
+          </KangurStatusChip>
         </div>
-        <KangurStatusChip
-          accent={accent}
-          className={cn('self-start whitespace-nowrap md:shrink-0', statusChipClassName)}
-          size='sm'
-        >
-          {track.progressPercent}%
-        </KangurStatusChip>
+        <KangurCardTitle as='p' className='w-full'>
+          {track.unlockedCount}/{track.totalCount} odznak
+        </KangurCardTitle>
+        <KangurCardDescription as='p' className='w-full leading-5' size='xs'>
+          {track.nextBadge
+            ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
+            : 'Wszystkie odznaki odblokowane'}
+        </KangurCardDescription>
       </div>
       <KangurProgressBar
         accent={accent}

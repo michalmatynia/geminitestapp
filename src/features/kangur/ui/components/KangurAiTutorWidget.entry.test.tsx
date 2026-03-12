@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useKangurAiTutorGuestIntroFlow } from './KangurAiTutorWidget.entry';
@@ -9,6 +9,20 @@ import { useKangurAiTutorGuestIntroFlow } from './KangurAiTutorWidget.entry';
 import type { MutableRefObject } from 'react';
 
 type GuestIntroFlowInput = Parameters<typeof useKangurAiTutorGuestIntroFlow>[0];
+
+const createDeferred = <T,>() => {
+  let resolve: ((value: T | PromiseLike<T>) => void) | null = null;
+  const promise = new Promise<T>((innerResolve) => {
+    resolve = innerResolve;
+  });
+
+  return {
+    promise,
+    resolve: (value: T) => {
+      resolve?.(value);
+    },
+  };
+};
 
 const createGuestIntroFlowInput = (
   overrides: Partial<GuestIntroFlowInput> = {}
@@ -84,5 +98,61 @@ describe('useKangurAiTutorGuestIntroFlow', () => {
     expect(input.setCanonicalTutorModalVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
     expect(input.setGuestIntroHelpVisible).toHaveBeenCalledWith(false);
+  });
+
+  it('ignores a late guest-intro response once selection guidance has taken over', async () => {
+    const deferredPayload = createDeferred<{
+      reason: string;
+      shouldShow: boolean;
+    }>();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockReturnValue(deferredPayload.promise),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const input = createGuestIntroFlowInput();
+    const { rerender } = renderHook(
+      ({ currentInput }: { currentInput: GuestIntroFlowInput }) =>
+        useKangurAiTutorGuestIntroFlow(currentInput),
+      {
+        initialProps: { currentInput: input },
+      }
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/guest-intro', {
+        cache: 'no-store',
+        credentials: 'same-origin',
+      })
+    );
+
+    rerender({
+      currentInput: {
+        ...input,
+        contextualTutorMode: 'selection_explain',
+        guidedTutorTarget: {
+          mode: 'selection',
+          kind: 'selection_excerpt',
+          selectedText: '2 + 2',
+        },
+        selectionResponsePending: {
+          selectedText: '2 + 2',
+        },
+      },
+    });
+
+    await act(async () => {
+      deferredPayload.resolve({
+        reason: 'first_visit',
+        shouldShow: true,
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(input.setGuestIntroVisible).toHaveBeenCalledWith(false);
+    expect(input.setGuestIntroVisible).not.toHaveBeenCalledWith(true);
+    expect(input.setGuestIntroRecord).not.toHaveBeenCalled();
   });
 });

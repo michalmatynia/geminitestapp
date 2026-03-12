@@ -6,6 +6,7 @@ import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurAiTutorUsageSummary } from '@/shared/contracts/kangur-ai-tutor';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
+import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 
 import type { ActiveTutorFocus, TutorMotionProfile, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
@@ -80,7 +81,10 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     const isSelectionContextStillOwningMinimalPanel =
       contextualTutorMode === 'selection_explain' &&
       panelShellMode === 'minimal' &&
-      selectionConversationSelectedText === selectionResponsePending?.selectedText;
+      areTutorSelectionTextsEquivalent(
+        selectionConversationSelectedText,
+        selectionResponsePending?.selectedText ?? null
+      );
 
     if (
       !selectionResponsePending ||

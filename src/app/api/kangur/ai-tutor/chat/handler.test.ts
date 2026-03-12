@@ -1036,6 +1036,137 @@ describe('kangur ai tutor chat handler', () => {
     );
   });
 
+  it('answers selected-text explain requests directly from a matched page-content fragment', async () => {
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      fragment: {
+        id: 'leaderboard-points',
+        text: 'Liczba punktów',
+        aliases: ['punkty'],
+        explanation:
+          'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+        nativeGuideIds: ['shared-leaderboard-points'],
+        triggerPhrases: ['punkty'],
+        enabled: true,
+        sortOrder: 10,
+      },
+      section: {
+        id: 'game-home-leaderboard',
+        pageKey: 'Game',
+        screenKey: 'home',
+        surface: 'game',
+        route: '/game',
+        componentId: 'leaderboard',
+        widget: 'Leaderboard',
+        sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+        title: 'Ranking',
+        summary: 'Porównaj wynik z innymi graczami.',
+        body: 'Sekcja pokazuje najlepsze wyniki na tej planszy.',
+        anchorIdPrefix: 'kangur-game-leaderboard',
+        focusKind: 'leaderboard',
+        contentIdPrefixes: ['game:home'],
+        nativeGuideIds: ['shared-leaderboard'],
+        triggerPhrases: ['ranking'],
+        tags: ['page-content', 'game'],
+        fragments: [],
+        notes: 'Ranking głównej planszy.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [
+        {
+          id: 'shared-leaderboard-points',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-leaderboard'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Punkty w rankingu',
+          shortDescription: 'Wyjaśnia, jak czytać liczbę punktów na liście wyników.',
+          fullDescription: 'Liczba punktów wpływa na pozycję ucznia w rankingu.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['punkty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'game-home-leaderboard#fragment:leaderboard-points',
+          collectionId: 'kangur_page_content',
+          text: 'Ranking\nLiczba punktów\nTen tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'game-home-leaderboard#fragment:leaderboard-points',
+            title: 'Ranking -> Liczba punktów',
+            description:
+              'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+            tags: ['kangur', 'page-content', 'page-content-fragment', 'game'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjaśnij ten fragment.' }],
+          context: {
+            surface: 'game',
+            contentId: 'game:home',
+            promptMode: 'selected_text',
+            selectedText: 'Liczba punktów',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-leaderboard',
+            focusLabel: 'Ranking',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'game-home-leaderboard',
+              sourcePath: 'entry:game-home-leaderboard',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(resolveKangurAiTutorSectionKnowledgeBundleMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latestUserMessage: 'Wyjaśnij ten fragment.',
+        context: expect.objectContaining({
+          promptMode: 'selected_text',
+          selectedText: 'Liczba punktów',
+        }),
+      })
+    );
+    expect(resolveKangurAiTutorNativeGuideResolutionMock).not.toHaveBeenCalled();
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+
+    const body = await response.json();
+    expect(body.message).toContain('Ranking.');
+    expect(body.message).toContain('Zaznaczony fragment: "Liczba punktów".');
+    expect(body.message).toContain(
+      'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.'
+    );
+    expect(body.message).not.toContain('Sekcja pokazuje najlepsze wyniki na tej planszy.');
+    expect(body.answerResolutionMode).toBe('page_content');
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.ai-tutor.chat.page-content.completed',
+        context: expect.objectContaining({
+          pageContentEntryId: 'game-home-leaderboard',
+          pageContentFragmentId: 'leaderboard-points',
+        }),
+      })
+    );
+  });
+
   it('adds live runtime overlays to direct page-content section answers for dynamic widgets', async () => {
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
@@ -1690,6 +1821,113 @@ describe('kangur ai tutor chat handler', () => {
         source.documentId === 'runtime:kangur:lesson:learner-1:lesson-1'
     );
     expect(lessonSource?.text).toContain('Dodawanie to łączenie dwóch liczb.');
+  });
+
+  it('answers selected-text lesson document explains from runtime lesson snippet cards when no page-content fragment exists', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        lessonFacts: {
+          title: 'Zegar',
+          description: 'Nauka odczytywania godzin.',
+          masterySummary: 'Zegar mastery 68% after 3 attempts.',
+          documentSummary:
+            'Co pokazuje krótka wskazówka? Krótka wskazówka pokazuje godzinę na tarczy.',
+          documentSnippetCards: [
+            {
+              id: 'page-1:title',
+              text: 'Co pokazuje krótka wskazówka?',
+              explanation: 'Krótka wskazówka pokazuje godzinę.',
+            },
+            {
+              id: 'block-1:text',
+              text: 'Krótka wskazówka pokazuje godzinę na tarczy.',
+              explanation:
+                'Najpierw patrz na krótką wskazówkę, bo ona pokazuje godzinę.',
+            },
+          ],
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'lessons-active-document',
+        pageKey: 'Lessons',
+        screenKey: 'active',
+        surface: 'lesson',
+        route: '/lessons',
+        componentId: 'active-document',
+        widget: 'KangurLessonDocumentRenderer',
+        sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
+        title: 'Materiał lekcji',
+        summary: 'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+        body: 'Ta sekcja trzyma główną treść aktywnej lekcji i jej przykłady.',
+        anchorIdPrefix: 'kangur-lesson-document',
+        focusKind: 'document',
+        contentIdPrefixes: ['clock'],
+        nativeGuideIds: ['lesson-document'],
+        triggerPhrases: ['materiał lekcji'],
+        tags: ['page-content', 'lesson'],
+        fragments: [],
+        notes: 'Główny dokument lekcji.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'lessons-active-document',
+          collectionId: 'kangur_page_content',
+          text: 'Materiał lekcji\nCzytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'lessons-active-document',
+            title: 'Materiał lekcji',
+            description:
+              'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+            tags: ['kangur', 'page-content', 'lesson'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Wyjaśnij mi ten fragment.' }],
+          context: {
+            surface: 'lesson',
+            contentId: 'clock',
+            promptMode: 'selected_text',
+            selectedText: 'Co pokazuje krótka wskazówka?',
+            focusKind: 'document',
+            focusId: 'kangur-lesson-document:clock',
+            focusLabel: 'Zegar',
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'lessons-active-document',
+              sourcePath: 'entry:lessons-active-document',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
+
+    const body = await response.json();
+    expect(body.message).toContain('Materiał lekcji: Zegar.');
+    expect(body.message).toContain('Zaznaczony fragment: "Co pokazuje krótka wskazówka?".');
+    expect(body.message).toContain('Krótka wskazówka pokazuje godzinę.');
+    expect(body.message).toContain(
+      'Z treści tej lekcji teraz: Co pokazuje krótka wskazówka? Krótka wskazówka pokazuje godzinę na tarczy.'
+    );
+    expect(body.answerResolutionMode).toBe('page_content');
   });
 
   it('adds active assignment overlays to lesson header answers', async () => {

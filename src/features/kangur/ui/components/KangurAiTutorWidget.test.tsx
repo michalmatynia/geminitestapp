@@ -2499,6 +2499,122 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
     vi.useRealTimers();
   });
+
+  it('keeps anonymous Zapytaj o to on the same guided-selection path even if the guest-intro check resolves mid-transition', async () => {
+    vi.useFakeTimers();
+    const scrollToMock = vi.fn();
+    vi.stubGlobal('scrollTo', scrollToMock);
+    useOptionalKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      navigateToLogin: navigateToLoginMock,
+    });
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'lesson',
+        contentId: 'lesson-1',
+        title: 'Dodawanie',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      activateSelectionGlow: activateSelectionGlowMock,
+      selectedText: '2 + 2',
+      selectionLineRects: [new DOMRect(120, 620, 140, 26)],
+      selectionRect: new DOMRect(120, 620, 140, 26),
+      selectionContainerRect: new DOMRect(80, 580, 520, 240),
+      clearSelection: clearSelectionMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
+    });
+    let resolveGuestIntroPayload: ((value: { ok: true; reason: string; shouldShow: true }) => void) | null =
+      null;
+    const guestIntroPayloadPromise = new Promise<{ ok: true; reason: string; shouldShow: true }>(
+      (resolve) => {
+        resolveGuestIntroPayload = resolve;
+      }
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockReturnValue(guestIntroPayloadPromise),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<KangurAiTutorWidget />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/guest-intro', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      resolveGuestIntroPayload?.({
+        ok: true,
+        reason: 'first_visit',
+        shouldShow: true,
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro-backdrop')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
+      'data-avatar-placement',
+      'guided'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-surface-diagnostics')).toHaveAttribute(
+      'data-guest-intro-rendered',
+      'false'
+    );
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '„2 + 2”'
+    );
+    expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
+    expect(scrollToMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        top: expect.any(Number),
+        behavior: 'smooth',
+      })
+    );
+    vi.useRealTimers();
+  });
   it('renders one aggregate spotlight and no per-line glow boxes for a multi-line excerpt outside tutor sections', async () => {
     vi.useFakeTimers();
     const scrollToMock = vi.fn();
@@ -2744,6 +2860,151 @@ describe('KangurAiTutorWidget', () => {
       screen.queryByText('W poprzednim wątku omawialiśmy zupełnie inne zadanie.')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('„Stary fragment”')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.')
+    ).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+  it('keeps the original home-progress excerpt bound while the live selection reflows before the reply arrives', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('scrollTo', vi.fn());
+    let resolveSendMessage: (() => void) | null = null;
+    let liveSelectedText =
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje';
+    let tutorState = {
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        allowGames: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      sessionContext: {
+        surface: 'game',
+        contentId: 'game:practice:addition',
+        title: 'Podsumowanie gry',
+      },
+      isOpen: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'To jest stary wątek, który nie powinien wrócić.',
+        },
+      ],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    };
+    useKangurAiTutorMock.mockImplementation(() => tutorState);
+    useKangurTextHighlightMock.mockImplementation(() => ({
+      activateSelectionGlow: activateSelectionGlowMock,
+      selectedText: liveSelectedText,
+      selectionLineRects: [new DOMRect(180, 1040, 260, 52)],
+      selectionRect: new DOMRect(180, 1040, 260, 52),
+      selectionContainerRect: new DOMRect(120, 980, 420, 220),
+      clearSelection: clearSelectionMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
+    }));
+    let rerenderWidget: (() => void) | null = null;
+    openChatMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isOpen: true,
+      };
+      act(() => {
+        rerenderWidget?.();
+      });
+    });
+    const { rerender } = renderWithTutorAnchors({ homeAnchorKinds: ['progress'] });
+    rerenderWidget = () => {
+      rerender(buildTutorAnchorsTree({ homeAnchorKinds: ['progress'] }));
+    };
+    sendMessageMock.mockImplementation(() => {
+      tutorState = {
+        ...tutorState,
+        isLoading: true,
+        messages: [
+          ...tutorState.messages,
+          {
+            role: 'user',
+            content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+          },
+        ],
+      };
+      liveSelectedText = '🏗️ MISTRZOSTWO\n67%\n2/4 odznak\nBudowniczy mistrzostwa · 2/3 lekcje';
+      rerenderWidget?.();
+      return new Promise<void>((resolve) => {
+        resolveSendMessage = resolve;
+      });
+    });
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(openChatMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
+      '🏗️ MISTRZOSTWO 67% 2/4 odznak Budowniczy mistrzostwa · 2/3 lekcje'
+    );
+
+    tutorState = {
+      ...tutorState,
+      isLoading: false,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'To jest stary wątek, który nie powinien wrócić.',
+        },
+        {
+          role: 'user',
+          content: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+        },
+        {
+          role: 'assistant',
+          content: 'To jest wyjaśnienie postępu z zapisanej treści strony.',
+          answerResolutionMode: 'page_content',
+        },
+      ],
+    };
+    rerenderWidget?.();
+    resolveSendMessage?.();
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(openChatMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-panel')).toBeInTheDocument();
+    expect(
+      screen.getByText('To jest wyjaśnienie postępu z zapisanej treści strony.')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-page-content-answer-badge')).toBeInTheDocument();
+    expect(
+      screen.queryByText('To jest stary wątek, który nie powinien wrócić.')
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText('Już przygotowuję wyjaśnienie dokładnie dla zaznaczonego tekstu.')
     ).not.toBeInTheDocument();

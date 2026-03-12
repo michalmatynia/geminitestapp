@@ -10,9 +10,13 @@ import type {
   KangurAiTutorKnowledgeReference,
 } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
-import type { KangurPageContentEntry } from '@/shared/contracts/kangur-page-content';
+import type {
+  KangurPageContentEntry,
+  KangurPageContentFragment,
+} from '@/shared/contracts/kangur-page-content';
 
 export type KangurAiTutorSectionKnowledgeBundle = {
+  fragment?: KangurPageContentFragment | null;
   section: KangurPageContentEntry;
   linkedNativeGuides: KangurAiTutorNativeGuideEntry[];
   instructions: string;
@@ -43,6 +47,120 @@ const normalizeText = (value: string | null | undefined): string =>
         .replace(/\s+/g, ' ')
         .trim()
     : '';
+
+const normalizeFragmentText = (value: string | null | undefined): string =>
+  typeof value === 'string'
+    ? value
+        .toLocaleLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : '';
+
+const FRAGMENT_SOURCE_PATH_PATTERN = /#fragment:([^#]+)$/u;
+
+const resolveExplicitFragmentFromReference = (
+  section: KangurPageContentEntry,
+  reference: KangurAiTutorKnowledgeReference | undefined
+): KangurPageContentFragment | null => {
+  if (reference?.sourceCollection !== 'kangur_page_content') {
+    return null;
+  }
+
+  const fragmentMatch = reference.sourcePath.match(FRAGMENT_SOURCE_PATH_PATTERN);
+  const fragmentId = fragmentMatch?.[1]?.trim();
+  if (!fragmentId) {
+    return null;
+  }
+
+  return (
+    section.fragments.find((fragment) => fragment.enabled && fragment.id === fragmentId) ?? null
+  );
+};
+
+const scoreFragmentCandidateText = (
+  normalizedSelection: string,
+  normalizedCandidate: string
+): number => {
+  if (!normalizedSelection || !normalizedCandidate) {
+    return 0;
+  }
+
+  if (normalizedSelection === normalizedCandidate) {
+    return 1_000 + normalizedCandidate.length;
+  }
+
+  const allowContains =
+    normalizedSelection.length >= 8 && normalizedCandidate.length >= 8;
+  if (!allowContains) {
+    return 0;
+  }
+
+  if (normalizedSelection.includes(normalizedCandidate)) {
+    return 720 + normalizedCandidate.length;
+  }
+
+  if (normalizedCandidate.includes(normalizedSelection)) {
+    return 680 + normalizedSelection.length;
+  }
+
+  return 0;
+};
+
+const resolveSelectedTextFragment = (input: {
+  context: KangurAiTutorConversationContext;
+  section: KangurPageContentEntry;
+}): KangurPageContentFragment | null => {
+  const explicitFragment = resolveExplicitFragmentFromReference(
+    input.section,
+    input.context.knowledgeReference
+  );
+  if (explicitFragment) {
+    return explicitFragment;
+  }
+
+  const normalizedSelection = normalizeFragmentText(input.context.selectedText);
+  if (!normalizedSelection) {
+    return null;
+  }
+
+  const rankedFragments = input.section.fragments
+    .filter((fragment) => fragment.enabled)
+    .map((fragment) => {
+      const scores = [
+        scoreFragmentCandidateText(normalizedSelection, normalizeFragmentText(fragment.text)),
+        ...fragment.aliases.map((alias) =>
+          scoreFragmentCandidateText(normalizedSelection, normalizeFragmentText(alias))
+        ),
+      ];
+      const score = Math.max(0, ...scores);
+      return { fragment, score };
+    })
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => {
+      if (left.score !== right.score) {
+        return right.score - left.score;
+      }
+      if (left.fragment.sortOrder !== right.fragment.sortOrder) {
+        return left.fragment.sortOrder - right.fragment.sortOrder;
+      }
+      return left.fragment.id.localeCompare(right.fragment.id);
+    });
+
+  const bestMatch = rankedFragments[0] ?? null;
+  const secondBestMatch = rankedFragments[1] ?? null;
+  if (!bestMatch) {
+    return null;
+  }
+
+  if (secondBestMatch?.score === bestMatch.score) {
+    return null;
+  }
+
+  return bestMatch.fragment;
+};
 
 const isLocationLookup = (value: string | null | undefined): boolean => {
   const normalized = normalizeText(value);
@@ -78,12 +196,16 @@ const dedupeFollowUpActions = (
   });
 };
 
-const buildPageContentSourceText = (entry: KangurPageContentEntry): string =>
+const buildPageContentSourceText = (
+  entry: KangurPageContentEntry,
+  fragment: KangurPageContentFragment | null
+): string =>
   [
     `Section: ${entry.title}`,
     `Page: ${entry.pageKey}`,
     entry.summary,
-    entry.body,
+    fragment ? `Highlighted fragment: ${fragment.text}` : entry.body,
+    fragment ? `Fragment explanation: ${fragment.explanation}` : null,
     entry.route ? `Route: ${entry.route}` : null,
     entry.anchorIdPrefix ? `Anchor prefix: ${entry.anchorIdPrefix}` : null,
   ]
@@ -104,6 +226,7 @@ const buildNativeGuideSourceText = (entry: KangurAiTutorNativeGuideEntry): strin
     .join('\n');
 
 const buildSectionKnowledgeInstructions = (input: {
+  fragment: KangurPageContentFragment | null;
   section: KangurPageContentEntry;
   linkedNativeGuides: KangurAiTutorNativeGuideEntry[];
   followUpActions: KangurAiTutorFollowUpAction[];
@@ -121,6 +244,13 @@ const buildSectionKnowledgeInstructions = (input: {
         ]
       : []),
   ];
+
+  if (input.fragment) {
+    lines.push('');
+    lines.push('Highlighted website fragment resolved from canonical page-content:');
+    lines.push(`- ${input.fragment.text}`);
+    lines.push(`  Explanation: ${input.fragment.explanation}`);
+  }
 
   if (input.linkedNativeGuides.length > 0) {
     lines.push('');
@@ -283,11 +413,20 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
     return null;
   }
 
+  const resolvedFragment =
+    input.context.selectedText && input.context.interactionIntent === 'explain'
+      ? resolveSelectedTextFragment({
+        context: input.context,
+        section,
+      })
+      : null;
+
   const nativeGuideEntriesById = new Map(
     (nativeGuideStore?.entries ?? []).map((entry) => [entry.id, entry] as const)
   );
   const linkedGuideIds = [
     ...section.nativeGuideIds,
+    ...(resolvedFragment?.nativeGuideIds ?? []),
     ...(input.context.knowledgeReference?.sourceCollection === 'kangur_ai_tutor_native_guides'
       ? [input.context.knowledgeReference.sourceRecordId]
       : []),
@@ -308,16 +447,21 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
     : [];
   const sources = dedupeSources([
     {
-      documentId: section.id,
+      documentId: resolvedFragment ? `${section.id}#fragment:${resolvedFragment.id}` : section.id,
       collectionId: 'kangur_page_content',
-      text: buildPageContentSourceText(section),
+      text: buildPageContentSourceText(section, resolvedFragment),
       score: 0.99,
       metadata: {
         source: 'manual-text',
-        sourceId: section.id,
-        title: section.title,
-        description: section.summary,
-        tags: ['kangur', 'page-content', ...(section.tags ?? [])],
+        sourceId: resolvedFragment ? `${section.id}#fragment:${resolvedFragment.id}` : section.id,
+        title: resolvedFragment ? `${section.title} -> ${resolvedFragment.text}` : section.title,
+        description: resolvedFragment?.explanation ?? section.summary,
+        tags: [
+          'kangur',
+          'page-content',
+          ...(resolvedFragment ? ['page-content-fragment'] : []),
+          ...(section.tags ?? []),
+        ],
       },
     },
     ...resolvedGuides.map((guide, index) => ({
@@ -336,9 +480,11 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
   ]);
 
   return {
+    fragment: resolvedFragment,
     section,
     linkedNativeGuides: resolvedGuides,
     instructions: buildSectionKnowledgeInstructions({
+      fragment: resolvedFragment,
       section,
       linkedNativeGuides: resolvedGuides,
       followUpActions,

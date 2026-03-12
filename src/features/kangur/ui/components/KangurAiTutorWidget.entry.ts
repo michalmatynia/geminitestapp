@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
@@ -108,14 +109,49 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     shouldRepeatGuestIntroOnEntry,
     suppressAvatarClickRef,
   } = input;
+  const guestIntroRequestVersionRef = useRef(0);
+  const canApplyGuestIntroFetchResultRef = useRef(false);
+  const hasContextualTakeover =
+    contextualTutorMode !== null ||
+    guidedTutorTarget !== null ||
+    selectionGuidanceHandoffText !== null ||
+    selectionResponsePending !== null;
+
+  canApplyGuestIntroFetchResultRef.current = Boolean(
+    mounted &&
+      authState &&
+      !authState.isLoadingAuth &&
+      !authState.isAuthenticated &&
+      !isTutorHidden &&
+      !canonicalTutorModalVisible &&
+      !hasContextualTakeover &&
+      !guestIntroVisible &&
+      !guestIntroHelpVisible &&
+      !isOpen &&
+      !guestIntroRecord
+  );
 
   useEffect(() => {
-    const hasContextualTakeover =
-      contextualTutorMode !== null ||
-      guidedTutorTarget !== null ||
-      selectionGuidanceHandoffText !== null ||
-      selectionResponsePending !== null;
+    if (
+      !mounted ||
+      isTutorHidden ||
+      authState?.isAuthenticated ||
+      canonicalTutorModalVisible ||
+      hasContextualTakeover ||
+      isOpen
+    ) {
+      guestIntroRequestVersionRef.current += 1;
+    }
+  }, [
+    authState?.isAuthenticated,
+    canonicalTutorModalVisible,
+    hasContextualTakeover,
+    isOpen,
+    isTutorHidden,
+    mounted,
+  ]);
 
+  useEffect(() => {
     if (isTutorHidden) {
       setCanonicalTutorModalVisible(false);
       setGuestIntroVisible(false);
@@ -189,6 +225,8 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     }
 
     guestIntroCheckStartedRef.current = true;
+    const requestVersion = guestIntroRequestVersionRef.current + 1;
+    guestIntroRequestVersionRef.current = requestVersion;
     let cancelled = false;
 
     void fetch('/api/kangur/ai-tutor/guest-intro', {
@@ -205,7 +243,11 @@ export function useKangurAiTutorGuestIntroFlow(input: {
           .catch(() => null)) as KangurAiTutorGuestIntroCheckResponse | null;
       })
       .then((payload) => {
-        if (cancelled || !payload) {
+        if (
+          cancelled ||
+          !payload ||
+          requestVersion !== guestIntroRequestVersionRef.current
+        ) {
           return;
         }
 
@@ -220,6 +262,10 @@ export function useKangurAiTutorGuestIntroFlow(input: {
           trackKangurClientEvent('kangur_ai_tutor_guest_intro_suppressed_server_seen', {
             reason: payload.reason ?? null,
           });
+          return;
+        }
+
+        if (!canApplyGuestIntroFetchResultRef.current) {
           return;
         }
 

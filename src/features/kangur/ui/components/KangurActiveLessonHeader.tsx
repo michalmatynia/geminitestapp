@@ -66,6 +66,11 @@ const useKangurActiveLessonHeaderContext = () => {
   return value;
 };
 
+const resolveHeaderCopy = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? normalized : null;
+};
+
 function KangurActiveLessonHeaderActions(): React.JSX.Element {
   const { onBack, backButtonLabel, lesson, lessonDocument, lessonContentRef, headerActionsTestId } =
     useKangurActiveLessonHeaderContext();
@@ -217,8 +222,16 @@ export function KangurActiveLessonHeader({
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
   const subsectionSummary = useKangurLessonSubsectionSummary();
   const lessonHeaderTestId = headerTestId;
-  const displayTitle = subsectionSummary?.title ?? titleOverride ?? lesson.title;
-  const displayDescription = subsectionSummary?.description ?? descriptionOverride ?? lesson.description;
+  const displayTitle =
+    resolveHeaderCopy(subsectionSummary?.title) ??
+    resolveHeaderCopy(lesson.title) ??
+    resolveHeaderCopy(titleOverride) ??
+    'Lekcja';
+  const displayDescription =
+    resolveHeaderCopy(subsectionSummary?.description) ??
+    resolveHeaderCopy(lesson.description) ??
+    resolveHeaderCopy(descriptionOverride) ??
+    '';
   const subsectionTypeLabel = subsectionSummary?.isGame ? 'Gra' : 'Lekcja';
   const headerAnchorRef = useRef<HTMLDivElement | null>(null);
   const subsectionAnchorKey = subsectionSummary

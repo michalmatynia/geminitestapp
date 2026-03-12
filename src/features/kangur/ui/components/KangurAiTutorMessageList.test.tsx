@@ -115,6 +115,7 @@ describe('KangurAiTutorMessageList', () => {
             {
               role: 'assistant',
               content: 'Policz najpierw pierwszą parę.',
+              answerResolutionMode: 'page_content',
               coachingFrame: {
                 mode: 'hint_ladder',
                 label: 'Jeden trop',
@@ -160,6 +161,9 @@ describe('KangurAiTutorMessageList', () => {
       screen.getByText('Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.')
     ).toBeInTheDocument();
     expect(screen.getByText('Policz najpierw pierwszą parę.')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-page-content-answer-badge')).toHaveTextContent(
+      'Zapisana tresc strony'
+    );
     expect(screen.getByText('Kolejny krok')).toBeInTheDocument();
     expect(screen.getByText('Powtórz lekcję: Dodawanie').parentElement).toHaveClass(
       'kangur-chat-surface-warm',

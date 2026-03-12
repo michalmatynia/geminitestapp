@@ -20,6 +20,18 @@ export const kangurPageContentPageKeySchema = z.enum([
 ]);
 export type KangurPageContentPageKey = z.infer<typeof kangurPageContentPageKeySchema>;
 
+export const kangurPageContentFragmentSchema = z.object({
+  id: nonEmptyTrimmedString.max(160),
+  text: z.string().trim().min(1).max(600),
+  aliases: z.array(nonEmptyTrimmedString.max(600)).max(16).default([]),
+  explanation: z.string().trim().min(1).max(5_000),
+  nativeGuideIds: z.array(nonEmptyTrimmedString.max(160)).max(16).default([]),
+  triggerPhrases: z.array(nonEmptyTrimmedString.max(160)).max(24).default([]),
+  enabled: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+});
+export type KangurPageContentFragment = z.infer<typeof kangurPageContentFragmentSchema>;
+
 export const kangurPageContentEntrySchema = z.object({
   id: nonEmptyTrimmedString.max(160),
   pageKey: kangurPageContentPageKeySchema,
@@ -38,6 +50,7 @@ export const kangurPageContentEntrySchema = z.object({
   nativeGuideIds: z.array(nonEmptyTrimmedString.max(160)).max(16).default([]),
   triggerPhrases: z.array(nonEmptyTrimmedString.max(160)).max(24).default([]),
   tags: z.array(nonEmptyTrimmedString.max(120)).max(24).default([]),
+  fragments: z.array(kangurPageContentFragmentSchema).max(200).default([]),
   notes: z.string().trim().max(2_000).optional(),
   enabled: z.boolean().default(true),
   sortOrder: z.number().int().default(0),

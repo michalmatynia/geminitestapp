@@ -551,8 +551,37 @@ const TRAINING_PANEL_TASKS: Record<
 
 export default function ClockLesson(): React.JSX.Element {
   const [view, setView] = useState<ClockLessonView>({ kind: 'hub' });
+  const handleReturnToHub = useCallback(() => {
+    setView({ kind: 'hub' });
+  }, []);
+  const runtimeSlides = useRef<Record<SectionId, LessonSlide[]> | null>(null);
+  if (runtimeSlides.current === null) {
+    runtimeSlides.current = {
+      hours: [
+        ...HOURS_SLIDES,
+        {
+          title: 'Ćwiczenie: Godziny',
+          tts: 'Teraz przechodzisz do praktyki pełnych godzin. Ustawiaj krótką wskazówkę tak jak w pierwszym panelu ćwiczenia godzin.',
+          content: (
+            <ClockTrainingGame
+              completionPrimaryActionLabel='Wróć do tematów'
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={handleReturnToHub}
+              practiceTasks={TRAINING_PANEL_TASKS.hours.learn}
+              section='hours'
+              showTaskTitle
+              showTimeDisplay
+            />
+          ),
+        },
+      ],
+      minutes: MINUTES_SLIDES,
+      combined: COMBINED_SLIDES,
+    };
+  }
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
-    useLessonHubProgress(SLIDES);
+    useLessonHubProgress(runtimeSlides.current);
   const lessonCompletionAwardedRef = useRef(false);
   const isHoursComplete =
     (sectionProgress.hours?.totalCount ?? 0) > 0 &&
@@ -960,9 +989,9 @@ export default function ClockLesson(): React.JSX.Element {
   if (view.kind === 'lesson') {
     return (
       <LessonSlideSection
-        slides={SLIDES[view.sectionId]}
+        slides={runtimeSlides.current[view.sectionId]}
         sectionHeader={HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null}
-        onBack={() => setView({ kind: 'hub' })}
+        onBack={handleReturnToHub}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         dotActiveClass='bg-indigo-500'
         dotDoneClass='bg-indigo-200'

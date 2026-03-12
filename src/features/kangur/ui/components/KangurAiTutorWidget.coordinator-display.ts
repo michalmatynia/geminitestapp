@@ -27,7 +27,10 @@ import {
 import { useKangurAiTutorSelectionGuidanceHandoffEffect } from './KangurAiTutorWidget.guided';
 import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
-import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
+import {
+  areTutorSelectionTextsEquivalent,
+  isAuthGuidedTutorTarget,
+} from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelDerivedState } from './KangurAiTutorWidget.panel-derived';
 import { useKangurAiTutorPanelShellState } from './KangurAiTutorWidget.panel-shell';
 
@@ -211,11 +214,15 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     viewportTick,
   });
 
+  const selectionThreadText =
+    selectionGuidanceHandoffText ??
+    selectionResponsePending?.selectedText ??
+    selectionConversationContext?.selectedText ??
+    null;
   const effectiveSelectedText =
-    activeSelectedText ??
-    (contextualTutorMode === 'selection_explain'
-      ? selectionResponsePending?.selectedText ?? selectionGuidanceHandoffText
-      : null);
+    contextualTutorMode === 'selection_explain' || selectionThreadText !== null
+      ? selectionThreadText ?? activeSelectedText
+      : activeSelectedText;
   const effectiveSelectionRect = effectiveSelectedText
     ? activeSelectionRect ?? guidedSelectionRect
     : activeSelectionRect;
@@ -224,7 +231,10 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     panelShellMode === 'minimal' &&
     contextualTutorMode === 'selection_explain' &&
     selectionConversationContext !== null &&
-    selectionConversationContext.selectedText === effectiveSelectedText;
+    areTutorSelectionTextsEquivalent(
+      selectionConversationContext.selectedText,
+      effectiveSelectedText
+    );
 
   useKangurAiTutorGuidanceCompletionEffects({
     activeSelectedText: effectiveSelectedText,
@@ -314,7 +324,10 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     if (
       !selectionConversationContext ||
       !effectiveSelectedText ||
-      selectionConversationContext.selectedText !== effectiveSelectedText
+      !areTutorSelectionTextsEquivalent(
+        selectionConversationContext.selectedText,
+        effectiveSelectedText
+      )
     ) {
       return messages;
     }

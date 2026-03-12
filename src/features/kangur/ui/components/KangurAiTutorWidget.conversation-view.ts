@@ -10,6 +10,7 @@ import {
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/shared/contracts/kangur-ai-tutor';
 import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
+import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
@@ -659,7 +660,10 @@ export function useKangurAiTutorConversationViewState(
   );
   const showSelectionExplainCompleteState = Boolean(
     input.activeSelectedText &&
-      input.selectionResponseComplete?.selectedText === input.activeSelectedText &&
+      areTutorSelectionTextsEquivalent(
+        input.selectionResponseComplete?.selectedText ?? null,
+        input.activeSelectedText
+      ) &&
       !isSelectionExplainPendingMode
   );
   const showSectionExplainCompleteState = Boolean(

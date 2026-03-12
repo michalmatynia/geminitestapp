@@ -80,6 +80,11 @@ type KangurAssignmentSectionItem = {
   actionPage: string;
   actionQuery?: Record<string, string>;
 };
+type LessonDocumentSnippetCard = {
+  id: string;
+  text: string;
+  explanation: string | null;
+};
 type KangurRegistryBaseData = {
   learnerId: string;
   learnerDisplayName: string | null;
@@ -391,6 +396,85 @@ const buildLearnerSummary = (
     `${activeAssignments.length} active assignments.`,
     `${masteryInsights.lessonsNeedingPractice} lessons need practice.`,
   ].join(' ');
+
+const createLessonDocumentSnippetCard = (
+  id: string,
+  text: string | null | undefined,
+  explanation: string | null | undefined
+): LessonDocumentSnippetCard | null => {
+  const trimmedText = readTrimmedString(text);
+  if (!trimmedText) {
+    return null;
+  }
+
+  const trimmedExplanation = readTrimmedString(explanation);
+  return {
+    id,
+    text: trimmedText,
+    explanation:
+      trimmedExplanation && trimmedExplanation !== trimmedText ? trimmedExplanation : null,
+  };
+};
+
+const extractLessonDocumentSnippetCards = (
+  block: KangurLessonDocument['blocks'][number]
+): LessonDocumentSnippetCard[] => {
+  switch (block.type) {
+    case 'text':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:text`,
+          stripHtmlToText(block.html),
+          block.ttsText
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'svg':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:svg`,
+          block.title,
+          block.ttsDescription
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'image':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:image`,
+          block.title || block.caption,
+          block.ttsDescription || block.caption
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'activity':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:activity`,
+          block.title || block.description,
+          block.ttsDescription || block.description
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'callout':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:callout`,
+          block.title || stripHtmlToText(block.html),
+          block.ttsText || stripHtmlToText(block.html)
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'quiz':
+      return [
+        createLessonDocumentSnippetCard(
+          `${block.id}:quiz`,
+          stripHtmlToText(block.question),
+          block.explanation || block.ttsText
+        ),
+      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+    case 'grid':
+      return block.items.flatMap((item) => extractLessonDocumentSnippetCards(item.block));
+    default:
+      return [];
+  }
+};
+
 const extractBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {
   switch (block.type) {
     case 'text':
@@ -444,6 +528,40 @@ const buildLessonDocumentSnippets = (document: KangurLessonDocument | null | und
       return true;
     })
     .slice(0, 8);
+};
+
+const buildLessonDocumentSnippetCards = (
+  document: KangurLessonDocument | null | undefined
+): LessonDocumentSnippetCard[] => {
+  if (!document) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  return resolveKangurLessonDocumentPages(document)
+    .flatMap((page) => [
+      createLessonDocumentSnippetCard(
+        `${page.id}:section-title`,
+        page.sectionTitle ?? '',
+        page.sectionDescription || page.description || page.title
+      ),
+      createLessonDocumentSnippetCard(
+        `${page.id}:page-title`,
+        page.title ?? '',
+        page.description || page.sectionDescription
+      ),
+      ...page.blocks.flatMap((block) => extractLessonDocumentSnippetCards(block)),
+    ])
+    .filter((card): card is LessonDocumentSnippetCard => Boolean(card))
+    .filter((card) => {
+      const key = card.text.toLocaleLowerCase();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 24);
 };
 const findRelevantLessonAssignment = (
   lesson: KangurLesson,
@@ -747,6 +865,7 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
   const relevantAssignment = findRelevantLessonAssignment(lesson, data.evaluatedAssignments, input.context);
   const document = data.lessonDocuments[lesson.id] ?? null;
   const documentSnippets = buildLessonDocumentSnippets(document);
+  const documentSnippetCards = buildLessonDocumentSnippetCards(document);
   const orderedLessons = buildOrderedLessonsForNavigation(data.lessons, data.evaluatedAssignments);
   const lessonIndex = orderedLessons.findIndex((candidate) => candidate.id === lesson.id);
   const previousLesson = lessonIndex > 0 ? orderedLessons[lessonIndex - 1] ?? null : null;
@@ -801,6 +920,9 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
         : {}),
       ...(documentSnippets.length > 0
         ? { documentSummary: documentSnippets.join(' ') }
+        : {}),
+      ...(documentSnippetCards.length > 0
+        ? { documentSnippetCards }
         : {}),
       ...(previousLesson
         ? {

@@ -84,4 +84,6 @@ export type PendingSelectionResponse = {
 export type SelectionConversationContext = {
   messageStartIndex: number;
   selectedText: string;
+  knowledgeReference?: KangurAiTutorKnowledgeReference | null;
+  focusLabel?: string | null;
 };

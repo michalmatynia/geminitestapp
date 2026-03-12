@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { KANGUR_THEME_SETTINGS_KEY } from '@/shared/contracts/kangur';
 import type {
   BlockInstance,
   Page,
@@ -12,7 +13,7 @@ import { cmsPageComponentInputSchema } from '@/shared/contracts/cms';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const KANGUR_CMS_PROJECT_SETTING_KEY = 'kangur_cms_project_v1';
-export const KANGUR_CMS_THEME_SETTINGS_KEY = 'kangur_cms_theme_v1';
+export const KANGUR_CMS_THEME_SETTINGS_KEY = KANGUR_THEME_SETTINGS_KEY;
 
 export const KANGUR_CMS_SCREEN_KEYS = [
   'Game',

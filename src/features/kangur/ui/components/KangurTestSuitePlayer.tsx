@@ -11,9 +11,11 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurInfoCard,
+  KangurPanelIntro,
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
@@ -43,6 +45,8 @@ export function KangurTestSuitePlayer({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showAnswer, setShowAnswer] = useState(false);
   const [finished, setFinished] = useState(false);
+  const { entry: emptyStateContent } = useKangurPageContentEntry('tests-empty-state');
+  const { entry: summaryContent } = useKangurPageContentEntry('tests-summary');
   const emptyStateAnchorRef = useRef<HTMLDivElement | null>(null);
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const summaryAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -170,8 +174,12 @@ export function KangurTestSuitePlayer({
         <KangurEmptyState
           accent='slate'
           data-testid='kangur-test-suite-empty'
+          description={
+            emptyStateContent?.summary ??
+            'Ten zestaw nie ma jeszcze aktywnych pytan testowych. Wroc pozniej albo wybierz inny zestaw.'
+          }
           padding='xl'
-          title='This test suite has no published questions yet.'
+          title={emptyStateContent?.title ?? 'Brak opublikowanych pytan'}
         />
       </div>
     );
@@ -183,6 +191,16 @@ export function KangurTestSuitePlayer({
         <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
           <div ref={summaryAnchorRef}>
             <div className='space-y-6'>
+              <KangurPanelIntro
+                data-testid='kangur-test-suite-summary-copy'
+                description={
+                  summaryContent?.summary ??
+                  'Sprawdz wynik koncowy i wroc do pytan, aby przeanalizowac odpowiedzi.'
+                }
+                title={summaryContent?.title ?? 'Podsumowanie testu'}
+                titleAs='h2'
+                titleClassName='text-lg font-bold tracking-[-0.02em]'
+              />
               <KangurSummaryPanel
                 accent='indigo'
                 align='center'
@@ -213,6 +231,7 @@ export function KangurTestSuitePlayer({
                         showAnswer={true}
                         questionIndex={index}
                         showReadControl={false}
+                        showSectionIntro={false}
                       />
                     </KangurInfoCard>
                   );
@@ -270,6 +289,7 @@ export function KangurTestSuitePlayer({
                   onSelect={handleSelect}
                   showAnswer={showAnswer}
                   questionIndex={currentIndex}
+                  showSectionIntro
                 />
               ) : null}
             </motion.div>

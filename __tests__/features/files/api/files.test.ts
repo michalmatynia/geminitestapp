@@ -1,172 +1,204 @@
-import fs from 'fs/promises';
-import path from 'path';
-
 import { NextRequest } from 'next/server';
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => ({
+  listImageFiles: vi.fn(),
+  getProductRepository: vi.fn(),
+  getProducts: vi.fn(),
+  getImageFileRepository: vi.fn(),
+  getImageFileById: vi.fn(),
+  deleteImageFile: vi.fn(),
+  deleteFileFromStorage: vi.fn(),
+}));
 
-vi.mock('@/shared/lib/observability/system-logger', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/shared/lib/observability/system-logger')>();
-  return {
-    ...actual,
-    logSystemEvent: vi.fn().mockResolvedValue(undefined),
-  };
-});
+vi.mock('@/features/files/server', () => ({
+  imageFileService: {
+    listImageFiles: mocks.listImageFiles,
+  },
+  getImageFileRepository: mocks.getImageFileRepository,
+  deleteFileFromStorage: mocks.deleteFileFromStorage,
+}));
 
-import { DELETE } from '@/app/api/files/[id]/route';
-import { GET } from '@/app/api/files/route';
-import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+vi.mock('@/features/products/server', () => ({
+  getProductRepository: mocks.getProductRepository,
+}));
 
-type Product = { id: string };
-type ImageFile = { id: string; filename: string };
-
-let canRunFilesApiIntegration = true;
+import { GET_handler } from '@/app/api/files/handler';
+import { DELETE_handler } from '@/app/api/files/[id]/handler';
 
 describe('Files API', () => {
-  const shouldSkipFilesApiIntegration = (): boolean =>
-    !process.env['DATABASE_URL'] || !canRunFilesApiIntegration;
-
-  let product1: Product;
-  let imageFile1: ImageFile;
-  let imageFile2: ImageFile;
-
-  beforeAll(async () => {
-    if (shouldSkipFilesApiIntegration()) return;
-
-    try {
-      await legacySqlClient.productImage.deleteMany({});
-      await legacySqlClient.imageFile.deleteMany({});
-      await legacySqlClient.product.deleteMany({});
-
-      product1 = (await createMockProduct({ name_en: 'Product A' })) as unknown as Product;
-      await createMockProduct({ name_en: 'Product B' });
-
-      const imagePath1 = path.join(process.cwd(), 'public', 'test-image1.jpg');
-      const imagePath2 = path.join(process.cwd(), 'public', 'test-image2.jpg');
-      await fs.writeFile(imagePath1, 'test1');
-      await fs.writeFile(imagePath2, 'test2');
-
-      imageFile1 = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'test-image1.jpg',
-          filepath: '/test-image1.jpg',
-          mimetype: 'image/jpeg',
-          size: 123,
-        },
-      });
-
-      imageFile2 = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'another-image.png',
-          filepath: '/another-image.png',
-          mimetype: 'image/png',
-          size: 456,
-        },
-      });
-
-      await legacySqlClient.productImage.create({
-        data: {
-          productId: product1.id,
-          imageFileId: imageFile1.id,
-        },
-      });
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canRunFilesApiIntegration = false;
-        return;
-      }
-      throw error;
-    }
-  });
-
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
-    const imagePath1 = path.join(process.cwd(), 'public', 'test-image1.jpg');
-    const imagePath2 = path.join(process.cwd(), 'public', 'test-image2.jpg');
-    try {
-      await fs.unlink(imagePath1);
-    } catch (error) {
-      const fileError = error as NodeJS.ErrnoException;
-      if (fileError.code !== 'ENOENT') {
-        console.error('Failed to unlink imagePath1:', error);
-      }
-    }
-    try {
-      await fs.unlink(imagePath2);
-    } catch (error) {
-      const fileError = error as NodeJS.ErrnoException;
-      if (fileError.code !== 'ENOENT') {
-        console.error('Failed to unlink imagePath2:', error);
-      }
-    }
-  });
-
-  describe('GET /api/files', () => {
-    it('should return all files', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const res = await GET(new NextRequest('http://localhost/api/files'));
-      const files = (await res.json()) as ImageFile[];
-      expect(res.status).toBe(200);
-      expect(files.length).toBe(2);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getProductRepository.mockResolvedValue({
+      getProducts: mocks.getProducts,
     });
-
-    it('should filter files by filename', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const res = await GET(new NextRequest('http://localhost/api/files?filename=test-image'));
-      const files = (await res.json()) as ImageFile[];
-      expect(res.status).toBe(200);
-      expect(files.length).toBe(1);
-      expect(files[0]!.filename).toBe('test-image1.jpg');
-    });
-
-    it('should filter files by product ID', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const res = await GET(new NextRequest(`http://localhost/api/files?productId=${product1.id}`));
-      const files = (await res.json()) as ImageFile[];
-      expect(res.status).toBe(200);
-      expect(files.length).toBe(1);
-      expect(files[0]!.filename).toBe('test-image1.jpg');
-    });
-
-    it('should filter files by product name', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const res = await GET(new NextRequest('http://localhost/api/files?productName=Product A'));
-      const files = (await res.json()) as ImageFile[];
-      expect(res.status).toBe(200);
-      expect(files.length).toBe(1);
-      expect(files[0]!.filename).toBe('test-image1.jpg');
+    mocks.getImageFileRepository.mockResolvedValue({
+      getImageFileById: mocks.getImageFileById,
+      deleteImageFile: mocks.deleteImageFile,
     });
   });
 
-  describe('DELETE /api/files/[id]', () => {
-    it('should delete a file', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const res = await DELETE(new NextRequest('http://localhost'), {
-        params: Promise.resolve({ id: imageFile2.id }),
-      } as unknown as { params: Promise<{ id: string }> });
-      expect(res.status).toBe(204);
+  it('returns all files with attached product metadata', async () => {
+    mocks.listImageFiles.mockResolvedValue([
+      {
+        id: 'file-1',
+        filename: 'test-image1.jpg',
+        filepath: '/test-image1.jpg',
+        mimetype: 'image/jpeg',
+        size: 123,
+      },
+      {
+        id: 'file-2',
+        filename: 'another-image.png',
+        filepath: '/another-image.png',
+        mimetype: 'image/png',
+        size: 456,
+      },
+    ]);
+    mocks.getProducts.mockResolvedValue([
+      {
+        id: 'product-1',
+        name_en: 'Product A',
+        images: [{ imageFileId: 'file-1' }],
+      },
+      {
+        id: 'product-2',
+        name_en: 'Product B',
+        images: [],
+      },
+    ]);
 
-      const deletedFile = await legacySqlClient.imageFile.findUnique({
-        where: { id: imageFile2.id },
-      });
-      expect(deletedFile).toBeNull();
+    const res = await GET_handler(new NextRequest('http://localhost/api/files'), {
+      query: {},
+    } as any);
+    const files = (await res.json()) as Array<{
+      id: string;
+      filename: string;
+      products: Array<{ product: { id: string; name: string } }>;
+    }>;
+
+    expect(res.status).toBe(200);
+    expect(files).toHaveLength(2);
+    expect(files[0]).toEqual(
+      expect.objectContaining({
+        id: 'file-1',
+        filename: 'test-image1.jpg',
+        products: [{ product: { id: 'product-1', name: 'Product A' } }],
+      })
+    );
+  });
+
+  it('filters files by filename', async () => {
+    mocks.listImageFiles.mockResolvedValue([]);
+    mocks.getProducts.mockResolvedValue([]);
+
+    await GET_handler(new NextRequest('http://localhost/api/files?filename=test-image'), {
+      query: { filename: 'test-image' },
+    } as any);
+
+    expect(mocks.listImageFiles).toHaveBeenCalledWith({
+      filename: 'test-image',
+      tags: [],
+    });
+  });
+
+  it('filters files by productId', async () => {
+    mocks.listImageFiles.mockResolvedValue([
+      {
+        id: 'file-1',
+        filename: 'test-image1.jpg',
+        filepath: '/test-image1.jpg',
+        mimetype: 'image/jpeg',
+        size: 123,
+      },
+      {
+        id: 'file-2',
+        filename: 'another-image.png',
+        filepath: '/another-image.png',
+        mimetype: 'image/png',
+        size: 456,
+      },
+    ]);
+    mocks.getProducts.mockResolvedValue([
+      {
+        id: 'product-1',
+        name_en: 'Product A',
+        images: [{ imageFileId: 'file-1' }],
+      },
+      {
+        id: 'product-2',
+        name_en: 'Product B',
+        images: [{ imageFileId: 'file-2' }],
+      },
+    ]);
+
+    const res = await GET_handler(new NextRequest('http://localhost/api/files?productId=product-1'), {
+      query: { productId: 'product-1' },
+    } as any);
+    const files = (await res.json()) as Array<{ id: string }>;
+
+    expect(files).toEqual([{ id: 'file-1', filename: 'test-image1.jpg', filepath: '/test-image1.jpg', mimetype: 'image/jpeg', size: 123, products: [{ product: { id: 'product-1', name: 'Product A' } }] }]);
+  });
+
+  it('filters files by productName via product repository search', async () => {
+    mocks.listImageFiles.mockResolvedValue([
+      {
+        id: 'file-1',
+        filename: 'test-image1.jpg',
+        filepath: '/test-image1.jpg',
+        mimetype: 'image/jpeg',
+        size: 123,
+      },
+    ]);
+    mocks.getProducts.mockResolvedValue([
+      {
+        id: 'product-1',
+        name_en: 'Product A',
+        images: [{ imageFileId: 'file-1' }],
+      },
+    ]);
+
+    const res = await GET_handler(
+      new NextRequest('http://localhost/api/files?productName=Product%20A'),
+      {
+        query: { productName: 'Product A' },
+      } as any
+    );
+    const files = (await res.json()) as Array<{ id: string }>;
+
+    expect(mocks.getProducts).toHaveBeenCalledWith({ search: 'Product A' });
+    expect(files).toHaveLength(1);
+    expect(files[0]?.id).toBe('file-1');
+  });
+
+  it('deletes a file through the image repository and storage service', async () => {
+    mocks.getImageFileById.mockResolvedValue({
+      id: 'file-2',
+      filename: 'another-image.png',
+      filepath: '/another-image.png',
+      mimetype: 'image/png',
+      size: 456,
+    });
+    mocks.deleteImageFile.mockResolvedValue({
+      id: 'file-2',
     });
 
-    it('should return 404 for non-existent file', async () => {
-      if (shouldSkipFilesApiIntegration()) return;
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      try {
-        const res = await DELETE(new NextRequest('http://localhost'), {
-          params: Promise.resolve({ id: 'non-existent-id' }),
-        } as unknown as { params: Promise<{ id: string }> });
-        expect(res.status).toBe(404);
-      } finally {
-        consoleErrorSpy.mockRestore();
-      }
+    const res = await DELETE_handler(new NextRequest('http://localhost/api/files/file-2'), {} as any, {
+      id: 'file-2',
     });
+
+    expect(res.status).toBe(204);
+    expect(mocks.deleteFileFromStorage).toHaveBeenCalledWith('/another-image.png');
+    expect(mocks.deleteImageFile).toHaveBeenCalledWith('file-2');
+  });
+
+  it('throws not found for an unknown file', async () => {
+    mocks.getImageFileById.mockResolvedValue(null);
+
+    await expect(
+      DELETE_handler(new NextRequest('http://localhost/api/files/missing'), {} as any, {
+        id: 'missing',
+      })
+    ).rejects.toThrow('File not found');
   });
 });

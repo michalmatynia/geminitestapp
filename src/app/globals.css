@@ -509,6 +509,173 @@
     color: var(--kangur-page-text, #334155);
   }
 
+  .kangur-page-container {
+    max-width: var(--kangur-page-max-width, 1440px);
+    padding-top: clamp(
+      24px,
+      calc(var(--kangur-page-padding-top, 40px) * 0.6),
+      var(--kangur-page-padding-top, 40px)
+    );
+    padding-right: clamp(
+      12px,
+      calc(var(--kangur-page-padding-right, 32px) * 0.375),
+      var(--kangur-page-padding-right, 32px)
+    );
+    padding-bottom: clamp(
+      48px,
+      calc(var(--kangur-page-padding-bottom, 80px) * 0.8),
+      var(--kangur-page-padding-bottom, 80px)
+    );
+    padding-left: clamp(
+      12px,
+      calc(var(--kangur-page-padding-left, 32px) * 0.375),
+      var(--kangur-page-padding-left, 32px)
+    );
+  }
+
+  @media (min-width: 640px) {
+    .kangur-page-container {
+      padding-top: var(--kangur-page-padding-top, 40px);
+      padding-right: var(--kangur-page-padding-right, 32px);
+      padding-bottom: var(--kangur-page-padding-bottom, 80px);
+      padding-left: var(--kangur-page-padding-left, 32px);
+    }
+  }
+
+  .kangur-top-bar {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-right: clamp(
+      12px,
+      calc(var(--kangur-page-padding-right, 32px) * 0.375),
+      calc(var(--kangur-page-padding-right, 32px) * 0.75)
+    );
+    padding-bottom: 8px;
+    padding-left: clamp(
+      12px,
+      calc(var(--kangur-page-padding-left, 32px) * 0.375),
+      calc(var(--kangur-page-padding-left, 32px) * 0.75)
+    );
+  }
+
+  @media (min-width: 640px) {
+    .kangur-top-bar {
+      padding-top: max(
+        calc(var(--kangur-page-padding-top, 40px) * 0.5),
+        env(safe-area-inset-top)
+      );
+      padding-right: calc(var(--kangur-page-padding-right, 32px) * 0.75);
+      padding-bottom: 12px;
+      padding-left: calc(var(--kangur-page-padding-left, 32px) * 0.75);
+    }
+  }
+
+  .kangur-panel-elevated {
+    border-radius: var(--kangur-panel-radius-elevated, 36px);
+  }
+
+  .kangur-panel-soft {
+    border-radius: var(--kangur-panel-radius-soft, 34px);
+  }
+
+  .kangur-panel-subtle {
+    border-radius: var(--kangur-panel-radius-subtle, 26px);
+  }
+
+  .kangur-card-surface {
+    border-radius: var(--kangur-card-radius, 26px);
+  }
+
+  .kangur-lesson-callout {
+    border-radius: var(--kangur-lesson-callout-radius, 24px);
+  }
+
+  .kangur-lesson-inset {
+    border-radius: var(--kangur-lesson-inset-radius, 18px);
+  }
+
+  .kangur-gradient-icon-tile-md {
+    border-radius: var(--kangur-gradient-icon-tile-radius-md, 16px);
+  }
+
+  .kangur-gradient-icon-tile-lg {
+    border-radius: var(--kangur-gradient-icon-tile-radius-lg, 24px);
+  }
+
+  .kangur-chat-bubble {
+    border-radius: var(--kangur-chat-bubble-radius, 22px);
+  }
+
+  .kangur-chat-card {
+    border-radius: var(--kangur-chat-card-radius, 22px);
+  }
+
+  .kangur-chat-inset {
+    border-radius: var(--kangur-chat-inset-radius, 20px);
+  }
+
+  .kangur-chat-padding-sm {
+    padding-inline: var(--kangur-chat-padding-x-sm, 12px);
+    padding-block: var(--kangur-chat-padding-y-sm, 8px);
+  }
+
+  .kangur-chat-padding-md {
+    padding-inline: var(--kangur-chat-padding-x-md, 12px);
+    padding-block: var(--kangur-chat-padding-y-md, 12px);
+  }
+
+  .kangur-chat-padding-lg {
+    padding-inline: var(--kangur-chat-padding-x-lg, 16px);
+    padding-block: var(--kangur-chat-padding-y-lg, 12px);
+  }
+
+  .kangur-panel-padding-md {
+    padding: var(--kangur-panel-padding-md, 20px);
+  }
+
+  .kangur-panel-padding-lg {
+    padding: var(--kangur-panel-padding-lg, 24px);
+  }
+
+  .kangur-panel-padding-xl {
+    padding: var(--kangur-panel-padding-xl, 32px);
+  }
+
+  .kangur-card-padding-sm {
+    padding: var(--kangur-card-padding-sm, 12px);
+  }
+
+  .kangur-card-padding-md {
+    padding: var(--kangur-card-padding-md, 16px);
+  }
+
+  .kangur-card-padding-lg {
+    padding: var(--kangur-card-padding-lg, 20px);
+  }
+
+  .kangur-card-padding-xl {
+    padding: var(--kangur-card-padding-xl, 24px);
+  }
+
+  .kangur-media-padding-sm {
+    padding: var(--kangur-media-padding-sm, 12px);
+  }
+
+  .kangur-media-padding-md {
+    padding: var(--kangur-media-padding-md, 16px);
+  }
+
+  .kangur-stack-gap-sm {
+    gap: var(--kangur-stack-gap-sm, 8px);
+  }
+
+  .kangur-stack-gap-md {
+    gap: var(--kangur-stack-gap-md, 16px);
+  }
+
+  .kangur-stack-gap-lg {
+    gap: var(--kangur-stack-gap-lg, 20px);
+  }
+
   @supports selector(body:has(*)) {
     html:has(#app-content .kangur-premium-bg),
     body:has(#app-content .kangur-premium-bg) {
@@ -562,7 +729,12 @@
     box-shadow: 0 20px 40px -30px rgba(94, 110, 160, 0.38);
   }
 
+  .kangur-nav-group {
+    border-radius: var(--kangur-nav-group-radius, 30px);
+  }
+
   .kangur-segmented-control {
+    border-radius: var(--kangur-segmented-control-radius, 28px);
     box-shadow: 0 18px 36px -28px rgba(94, 110, 160, 0.34);
   }
 
@@ -571,6 +743,48 @@
     background: transparent;
     border-color: transparent;
     color: var(--kangur-nav-item-text, #64748b);
+    font-size: var(--kangur-pill-font-size, 14px);
+    padding-block: var(--kangur-pill-padding-y, 10px);
+    padding-inline: var(--kangur-pill-padding-x, 16px);
+  }
+
+  .kangur-nav-item {
+    border-radius: var(--kangur-nav-item-radius, 20px);
+  }
+
+  .kangur-segmented-control-item {
+    border-radius: var(--kangur-segmented-item-radius, 18px);
+  }
+
+  .kangur-menu-item {
+    border-radius: var(--kangur-menu-item-radius, 16px);
+    font-size: var(--kangur-pill-font-size, 14px);
+    padding-block: var(--kangur-pill-padding-y, 10px);
+    padding-inline: var(--kangur-pill-padding-x, 16px);
+  }
+
+  .kangur-button-shell {
+    --kangur-button-scale: var(--kangur-button-scale, 1);
+    font-size: calc(var(--kangur-button-font-size, 14px) * var(--kangur-button-scale));
+    min-height: calc(var(--kangur-button-height, 50px) * var(--kangur-button-scale));
+    padding-block: calc(var(--kangur-button-padding-y, 10px) * var(--kangur-button-scale));
+    padding-inline: calc(var(--kangur-button-padding-x, 20px) * var(--kangur-button-scale));
+  }
+
+  .kangur-button-size-sm {
+    --kangur-button-scale: 0.88;
+  }
+
+  .kangur-button-size-md {
+    --kangur-button-scale: 1;
+  }
+
+  .kangur-button-size-lg {
+    --kangur-button-scale: 1.12;
+  }
+
+  .kangur-button-size-xl {
+    --kangur-button-scale: 1.24;
   }
 
   .kangur-nav-item:hover,
@@ -601,9 +815,12 @@
 
   .kangur-text-field {
     background: var(--kangur-text-field-background, rgba(255, 255, 255, 0.92));
+    border-radius: var(--kangur-input-radius, 22px);
     border-color: var(--kangur-text-field-border, rgba(226, 232, 240, 0.92));
     box-shadow: 0 18px 44px -38px rgba(15, 23, 42, 0.18);
     color: var(--kangur-text-field-text, #334155);
+    font-size: var(--kangur-input-font-size, 14px);
+    min-height: var(--kangur-input-height, 50px);
   }
 
   .kangur-text-field::placeholder {
@@ -618,6 +835,18 @@
 
   [data-kangur-appearance] {
     color: var(--kangur-page-text, #334155);
+    font-family: var(--kangur-font-body, var(--app-font-body));
+    font-size: var(--kangur-font-base-size, 1rem);
+    line-height: var(--kangur-font-line-height, 1.6);
+  }
+
+  [data-kangur-appearance] h1,
+  [data-kangur-appearance] h2,
+  [data-kangur-appearance] h3,
+  [data-kangur-appearance] h4,
+  [data-kangur-appearance] h5,
+  [data-kangur-appearance] h6 {
+    font-family: var(--kangur-font-heading, var(--app-font-heading));
   }
 
   [data-kangur-appearance] :is(.text-slate-900, .text-slate-800, .text-slate-700) {
@@ -1403,7 +1632,68 @@
     }
   }
 
+  @property --kangur-gradient-live-start {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: transparent;
+  }
+
+  @property --kangur-gradient-live-mid {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: transparent;
+  }
+
+  @property --kangur-gradient-live-end {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: transparent;
+  }
+
+  @keyframes kangur-button-gradient-color-shift {
+    0% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+      --kangur-gradient-live-end: var(--kangur-gradient-end);
+    }
+    50% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start-shifted);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid-shifted);
+      --kangur-gradient-live-end: var(--kangur-gradient-end-shifted);
+    }
+    100% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+      --kangur-gradient-live-end: var(--kangur-gradient-end);
+    }
+  }
+
+  @keyframes kangur-progress-gradient-color-shift {
+    0% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+      --kangur-gradient-live-end: var(--kangur-gradient-end);
+    }
+    50% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start-shifted);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid-shifted);
+      --kangur-gradient-live-end: var(--kangur-gradient-end-shifted);
+    }
+    100% {
+      --kangur-gradient-live-start: var(--kangur-gradient-start);
+      --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+      --kangur-gradient-live-end: var(--kangur-gradient-end);
+    }
+  }
+
   .primary-cta {
+    --kangur-gradient-angle: 90deg;
+    --kangur-gradient-start: #ffb347;
+    --kangur-gradient-mid: color-mix(in srgb, #ffb347 46%, #ff7a45 54%);
+    --kangur-gradient-end: #ff7a45;
+    --kangur-gradient-start-shifted: color-mix(in srgb, #ffb347 68%, #ff7a45 32%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, #ffb347 30%, #ff7a45 70%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, #ff7a45 82%, #ffb347 18%);
     background: var(
       --kangur-button-primary-background,
       linear-gradient(90deg, #ffb347 0%, #ff7a45 100%)
@@ -1415,7 +1705,6 @@
     );
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background 220ms ease,
       box-shadow 220ms ease,
       filter 220ms ease;
     will-change: transform;
@@ -1423,6 +1712,12 @@
 
   .primary-cta:hover,
   .primary-cta:focus-visible {
+    --kangur-gradient-start: #ffc670;
+    --kangur-gradient-mid: #ff985f;
+    --kangur-gradient-end: #ff7a45;
+    --kangur-gradient-start-shifted: color-mix(in srgb, #ffc670 72%, #ff985f 28%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, #ffc670 28%, #ff7a45 72%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, #ff7a45 84%, #ff985f 16%);
     background: var(
       --kangur-button-primary-hover-background,
       linear-gradient(90deg, #ffc670 0%, #ff985f 56%, #ff7a45 100%)
@@ -1440,7 +1735,7 @@
   .kangur-cta-pill {
     position: relative;
     overflow: hidden;
-    border-radius: 9999px;
+    border-radius: var(--kangur-button-radius, 9999px);
     box-shadow:
       0 18px 34px -24px rgba(49, 63, 129, 0.28),
       0 10px 18px -18px rgba(49, 63, 129, 0.22);
@@ -1462,6 +1757,13 @@
   }
 
   .soft-cta {
+    --kangur-gradient-angle: 180deg;
+    --kangur-gradient-start: rgba(255, 255, 255, 0.98);
+    --kangur-gradient-mid: color-mix(in srgb, rgba(255, 255, 255, 0.98) 54%, rgba(240, 245, 255, 0.95) 46%);
+    --kangur-gradient-end: rgba(240, 245, 255, 0.95);
+    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(255, 255, 255, 0.98) 66%, rgba(240, 245, 255, 0.95) 34%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(255, 255, 255, 0.98) 38%, rgba(240, 245, 255, 0.95) 62%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(240, 245, 255, 0.95) 78%, rgba(255, 255, 255, 0.98) 22%);
     background: var(
       --kangur-button-secondary-background,
       linear-gradient(
@@ -1501,6 +1803,13 @@
   }
 
   .surface-cta {
+    --kangur-gradient-angle: 180deg;
+    --kangur-gradient-start: rgba(246, 248, 255, 0.98);
+    --kangur-gradient-mid: color-mix(in srgb, rgba(246, 248, 255, 0.98) 48%, rgba(232, 239, 255, 0.98) 52%);
+    --kangur-gradient-end: rgba(232, 239, 255, 0.98);
+    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(246, 248, 255, 0.98) 68%, rgba(232, 239, 255, 0.98) 32%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(246, 248, 255, 0.98) 34%, rgba(232, 239, 255, 0.98) 66%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(232, 239, 255, 0.98) 80%, rgba(246, 248, 255, 0.98) 20%);
     background: var(
       --kangur-button-surface-background,
       linear-gradient(
@@ -1517,6 +1826,13 @@
   }
 
   .warning-cta {
+    --kangur-gradient-angle: 180deg;
+    --kangur-gradient-start: rgba(255, 246, 226, 0.98);
+    --kangur-gradient-mid: color-mix(in srgb, rgba(255, 246, 226, 0.98) 42%, rgba(253, 235, 202, 0.98) 58%);
+    --kangur-gradient-end: rgba(253, 235, 202, 0.98);
+    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(255, 246, 226, 0.98) 68%, rgba(253, 235, 202, 0.98) 32%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(255, 246, 226, 0.98) 26%, rgba(253, 235, 202, 0.98) 74%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(253, 235, 202, 0.98) 82%, rgba(255, 246, 226, 0.98) 18%);
     background: var(
       --kangur-button-warning-background,
       linear-gradient(
@@ -1532,7 +1848,6 @@
     );
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background 220ms ease,
       box-shadow 220ms ease,
       filter 220ms ease;
     will-change: transform;
@@ -1540,6 +1855,12 @@
 
   .warning-cta:hover,
   .warning-cta:focus-visible {
+    --kangur-gradient-start: rgba(255, 247, 230, 0.99);
+    --kangur-gradient-mid: color-mix(in srgb, rgba(255, 247, 230, 0.99) 38%, rgba(255, 232, 195, 0.96) 62%);
+    --kangur-gradient-end: rgba(255, 232, 195, 0.96);
+    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(255, 247, 230, 0.99) 70%, rgba(255, 232, 195, 0.96) 30%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(255, 247, 230, 0.99) 24%, rgba(255, 232, 195, 0.96) 76%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(255, 232, 195, 0.96) 84%, rgba(255, 247, 230, 0.99) 16%);
     background: var(
       --kangur-button-warning-hover-background,
       linear-gradient(
@@ -1559,6 +1880,13 @@
   }
 
   .success-cta {
+    --kangur-gradient-angle: 180deg;
+    --kangur-gradient-start: rgba(236, 253, 245, 0.98);
+    --kangur-gradient-mid: color-mix(in srgb, rgba(236, 253, 245, 0.98) 44%, rgba(210, 250, 229, 0.98) 56%);
+    --kangur-gradient-end: rgba(210, 250, 229, 0.98);
+    --kangur-gradient-start-shifted: color-mix(in srgb, rgba(236, 253, 245, 0.98) 70%, rgba(210, 250, 229, 0.98) 30%);
+    --kangur-gradient-mid-shifted: color-mix(in srgb, rgba(236, 253, 245, 0.98) 32%, rgba(210, 250, 229, 0.98) 68%);
+    --kangur-gradient-end-shifted: color-mix(in srgb, rgba(210, 250, 229, 0.98) 82%, rgba(236, 253, 245, 0.98) 18%);
     background: var(
       --kangur-button-success-background,
       linear-gradient(
@@ -1572,6 +1900,184 @@
       0 16px 28px -24px rgba(16, 185, 129, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.88)
     );
+  }
+
+  button[class*='bg-gradient-to-'],
+  button[class*='bg-[linear-gradient'],
+  a[class*='bg-gradient-to-'],
+  a[class*='bg-[linear-gradient'],
+  [role='button'][class*='bg-gradient-to-'],
+  [role='button'][class*='bg-[linear-gradient'],
+  .kangur-cta-pill[class*='bg-gradient-to-'],
+  .kangur-cta-pill[class*='bg-[linear-gradient'] {
+    --kangur-gradient-start: color-mix(in srgb, var(--tw-gradient-from, transparent) 88%, var(--tw-gradient-to, transparent) 12%);
+    --kangur-gradient-mid: var(
+      --tw-gradient-via,
+      color-mix(in srgb, var(--tw-gradient-from, transparent) 52%, var(--tw-gradient-to, transparent) 48%)
+    );
+    --kangur-gradient-end: color-mix(in srgb, var(--tw-gradient-to, transparent) 88%, var(--tw-gradient-from, transparent) 12%);
+    --kangur-gradient-start-shifted: color-mix(in srgb, var(--tw-gradient-from, transparent) 64%, var(--tw-gradient-to, transparent) 36%);
+    --kangur-gradient-mid-shifted: var(
+      --tw-gradient-via,
+      color-mix(in srgb, var(--tw-gradient-from, transparent) 30%, var(--tw-gradient-to, transparent) 70%)
+    );
+    --kangur-gradient-end-shifted: color-mix(in srgb, var(--tw-gradient-to, transparent) 74%, var(--tw-gradient-from, transparent) 26%);
+  }
+
+  .primary-cta,
+  .soft-cta,
+  .surface-cta,
+  .warning-cta,
+  .success-cta,
+  button[class*='bg-gradient-to-'],
+  button[class*='bg-[linear-gradient'],
+  a[class*='bg-gradient-to-'],
+  a[class*='bg-[linear-gradient'],
+  [role='button'][class*='bg-gradient-to-'],
+  [role='button'][class*='bg-[linear-gradient'],
+  .kangur-cta-pill[class*='bg-gradient-to-'],
+  .kangur-cta-pill[class*='bg-[linear-gradient'] {
+    --kangur-gradient-live-start: var(--kangur-gradient-start);
+    --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+    --kangur-gradient-live-end: var(--kangur-gradient-end);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 50% 50%;
+    background-image: linear-gradient(
+      var(--kangur-gradient-angle, 90deg),
+      var(--kangur-gradient-live-start) 0%,
+      var(--kangur-gradient-live-mid) 54%,
+      var(--kangur-gradient-live-end) 100%
+    ) !important;
+    animation-name: kangur-button-gradient-color-shift;
+    animation-duration: 18s !important;
+    animation-timing-function: cubic-bezier(0.37, 0, 0.23, 1) !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .kangur-progress-fill {
+    --kangur-progress-primary: var(--tw-gradient-from, transparent);
+    --kangur-progress-secondary: var(--tw-gradient-to, transparent);
+    --kangur-gradient-angle: 90deg;
+    --kangur-gradient-start: var(--kangur-progress-primary);
+    --kangur-gradient-mid: color-mix(
+      in srgb,
+      var(--kangur-progress-primary) 58%,
+      var(--kangur-progress-secondary) 42%
+    );
+    --kangur-gradient-end: color-mix(
+      in srgb,
+      var(--kangur-progress-secondary) 94%,
+      var(--kangur-progress-primary) 6%
+    );
+    --kangur-gradient-start-shifted: color-mix(
+      in srgb,
+      var(--kangur-progress-primary) 32%,
+      var(--kangur-progress-secondary) 68%
+    );
+    --kangur-gradient-mid-shifted: color-mix(
+      in srgb,
+      var(--kangur-progress-primary) 8%,
+      var(--kangur-progress-secondary) 92%
+    );
+    --kangur-gradient-end-shifted: var(--kangur-progress-secondary);
+    --kangur-gradient-live-start: var(--kangur-gradient-start);
+    --kangur-gradient-live-mid: var(--kangur-gradient-mid);
+    --kangur-gradient-live-end: var(--kangur-gradient-end);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 50% 50%;
+    background-image: linear-gradient(
+      var(--kangur-gradient-angle, 90deg),
+      var(--kangur-gradient-live-start) 0%,
+      var(--kangur-gradient-live-mid) 56%,
+      var(--kangur-gradient-live-end) 100%
+    ) !important;
+    animation-name: kangur-progress-gradient-color-shift;
+    animation-duration: 10s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='indigo'] {
+    --kangur-progress-primary: #a855f7;
+    --kangur-progress-secondary: #6366f1;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='violet'] {
+    --kangur-progress-primary: #8b5cf6;
+    --kangur-progress-secondary: #d946ef;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='emerald'] {
+    --kangur-progress-primary: #10b981;
+    --kangur-progress-secondary: #06b6d4;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='sky'] {
+    --kangur-progress-primary: #38bdf8;
+    --kangur-progress-secondary: #818cf8;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='amber'] {
+    --kangur-progress-primary: #fb923c;
+    --kangur-progress-secondary: #facc15;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='rose'] {
+    --kangur-progress-primary: #f87171;
+    --kangur-progress-secondary: #f472b6;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='teal'] {
+    --kangur-progress-primary: #3b82f6;
+    --kangur-progress-secondary: #2dd4bf;
+  }
+
+  .kangur-progress-fill[data-kangur-accent='slate'] {
+    --kangur-progress-primary: #94a3b8;
+    --kangur-progress-secondary: #475569;
+  }
+
+  button[class*='bg-gradient-to-r'],
+  a[class*='bg-gradient-to-r'],
+  [role='button'][class*='bg-gradient-to-r'],
+  .kangur-cta-pill[class*='bg-gradient-to-r'] {
+    --kangur-gradient-angle: 90deg;
+  }
+
+  button[class*='bg-gradient-to-br'],
+  a[class*='bg-gradient-to-br'],
+  [role='button'][class*='bg-gradient-to-br'],
+  .kangur-cta-pill[class*='bg-gradient-to-br'] {
+    --kangur-gradient-angle: 135deg;
+  }
+
+  button[class*='bg-gradient-to-t'],
+  a[class*='bg-gradient-to-t'],
+  [role='button'][class*='bg-gradient-to-t'],
+  .kangur-cta-pill[class*='bg-gradient-to-t'] {
+    --kangur-gradient-angle: 0deg;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .primary-cta,
+    .soft-cta,
+    .surface-cta,
+    .warning-cta,
+    .success-cta,
+    .kangur-progress-fill,
+    button[class*='bg-gradient-to-'],
+    button[class*='bg-[linear-gradient'],
+    a[class*='bg-gradient-to-'],
+    a[class*='bg-[linear-gradient'],
+    [role='button'][class*='bg-gradient-to-'],
+    [role='button'][class*='bg-[linear-gradient'],
+    .kangur-cta-pill[class*='bg-gradient-to-'],
+    .kangur-cta-pill[class*='bg-[linear-gradient'] {
+      animation: none !important;
+      background-position: 50% 50%;
+    }
   }
 }
 

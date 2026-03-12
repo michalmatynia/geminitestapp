@@ -23,19 +23,25 @@ vi.mock('@/features/ai/agent-runtime/memory', () => ({
   addAgentLongTermMemory: addAgentLongTermMemoryMock,
 }));
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    agentLongTermMemory: {
-      findMany: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    chatbotMessage: {
-      findMany: vi.fn(),
-    },
-  },
+const {
+  agentLongTermMemoryFindManyMock,
+  agentLongTermMemoryUpdateManyMock,
+  chatbotMessageFindManyMock,
+} = vi.hoisted(() => ({
+  agentLongTermMemoryFindManyMock: vi.fn(),
+  agentLongTermMemoryUpdateManyMock: vi.fn(),
+  chatbotMessageFindManyMock: vi.fn(),
 }));
 
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentLongTermMemoryDelegate: vi.fn(() => ({
+    findMany: agentLongTermMemoryFindManyMock,
+    updateMany: agentLongTermMemoryUpdateManyMock,
+  })),
+  getChatbotMessageDelegate: vi.fn(() => ({
+    findMany: chatbotMessageFindManyMock,
+  })),
+}));
 
 import {
   buildAgentPersonaMemoryKey,
@@ -65,7 +71,7 @@ describe('persona memory service', () => {
         updatedAt: '2026-03-07T10:00:00.000Z',
       },
     ]);
-    vi.mocked(legacySqlClient.agentLongTermMemory.findMany).mockResolvedValue([
+    agentLongTermMemoryFindManyMock.mockResolvedValue([
       {
         id: 'mem-1',
         memoryKey: 'persona-1-bank',
@@ -87,9 +93,9 @@ describe('persona memory service', () => {
         updatedAt: new Date('2026-03-06T09:45:00.000Z'),
       },
     ] as never);
-    vi.mocked(legacySqlClient.agentLongTermMemory.updateMany).mockResolvedValue({ count: 1 } as never);
+    agentLongTermMemoryUpdateManyMock.mockResolvedValue({ count: 1 } as never);
     addAgentLongTermMemoryMock.mockResolvedValue(null);
-    vi.mocked(legacySqlClient.chatbotMessage.findMany).mockResolvedValue([
+    chatbotMessageFindManyMock.mockResolvedValue([
       {
         id: 'msg-1',
         sessionId: 'session-1',
@@ -116,8 +122,8 @@ describe('persona memory service', () => {
       limit: 5,
     });
 
-    expect(legacySqlClient.agentLongTermMemory.findMany).toHaveBeenCalled();
-    expect(legacySqlClient.chatbotMessage.findMany).toHaveBeenCalled();
+    expect(agentLongTermMemoryFindManyMock).toHaveBeenCalled();
+    expect(chatbotMessageFindManyMock).toHaveBeenCalled();
     expect(result.summary).toMatchObject({
       personaId: 'persona-1',
       totalRecords: 2,

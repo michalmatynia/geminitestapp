@@ -25,7 +25,8 @@ describe('KangurRecommendationCard', () => {
     expect(screen.getByTestId('recommendation-card')).toHaveClass(
       'soft-card',
       'border',
-      'rounded-[24px]'
+      'kangur-card-surface',
+      'kangur-card-padding-md'
     );
     expect(screen.getByTestId('recommendation-label')).toHaveTextContent('Mocna passa');
     expect(screen.getByTestId('recommendation-title')).toHaveTextContent(
@@ -33,6 +34,60 @@ describe('KangurRecommendationCard', () => {
     );
     expect(screen.getByTestId('recommendation-description')).toHaveTextContent(
       'To najmocniej podbije dzisiejszy postep.'
+    );
+  });
+
+  it('supports header extras and trailing actions for richer recommendation cards', () => {
+    render(
+      <KangurRecommendationCard
+        accent='amber'
+        action={<button type='button'>Uruchom trening</button>}
+        dataTestId='rich-recommendation-card'
+        description='Ta sesja przybliza kolejna odznake.'
+        descriptionClassName='mt-1'
+        descriptionSize='sm'
+        descriptionTestId='rich-recommendation-description'
+        headerExtras={<span>Tempo: 36 XP / gre</span>}
+        label='Polecony kierunek'
+        labelSize='sm'
+        labelStyle='caps'
+        labelTestId='rich-recommendation-label'
+        title='Dopnij polecany kierunek'
+        titleClassName='mt-3'
+        titleSize='md'
+        titleTestId='rich-recommendation-title'
+      />
+    );
+
+    expect(screen.getByTestId('rich-recommendation-label')).toHaveTextContent(
+      'Polecony kierunek'
+    );
+    expect(screen.getByText('Tempo: 36 XP / gre')).toBeInTheDocument();
+    expect(screen.getByTestId('rich-recommendation-title')).toHaveTextContent(
+      'Dopnij polecany kierunek'
+    );
+    expect(screen.getByRole('button', { name: 'Uruchom trening' })).toBeInTheDocument();
+  });
+
+  it('renders a custom label slot when provided', () => {
+    render(
+      <KangurRecommendationCard
+        accent='rose'
+        dataTestId='custom-label-recommendation-card'
+        description='Najkrotszy krok do odzyskania tempa.'
+        descriptionTestId='custom-label-recommendation-description'
+        labelContent={<span data-testid='custom-label-slot'>Priorytet wysoki</span>}
+        title='Wroc do zegara'
+        titleTestId='custom-label-recommendation-title'
+      />
+    );
+
+    expect(screen.getByTestId('custom-label-slot')).toHaveTextContent('Priorytet wysoki');
+    expect(screen.getByTestId('custom-label-recommendation-title')).toHaveTextContent(
+      'Wroc do zegara'
+    );
+    expect(screen.getByTestId('custom-label-recommendation-description')).toHaveTextContent(
+      'Najkrotszy krok do odzyskania tempa.'
     );
   });
 });

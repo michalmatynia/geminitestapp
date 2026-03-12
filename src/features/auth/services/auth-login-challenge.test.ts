@@ -12,16 +12,6 @@ const loadChallengeModule = async () => {
   vi.doMock('@/shared/lib/db/mongo-client', () => ({
     getMongoDb: vi.fn(),
   }));
-  vi.doMock('@/shared/lib/db/legacy-sql-client', () => ({
-    default: {
-      authLoginChallenge: {
-        findUnique: vi.fn(),
-        upsert: vi.fn(),
-        deleteMany: vi.fn(),
-        findMany: vi.fn(),
-      },
-    },
-  }));
 
   return import('./auth-login-challenge');
 };

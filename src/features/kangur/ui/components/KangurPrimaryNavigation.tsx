@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   CmsStorefrontAppearanceButtons,
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
@@ -30,7 +29,9 @@ import {
   KangurTextField,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 type KangurPrimaryNavigationPage =
   | 'Game'
@@ -203,6 +204,10 @@ export function KangurPrimaryNavigation({
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
   const mobileAuthActionClassName =
     'max-sm:min-w-0 max-sm:flex-1 max-sm:justify-center max-sm:px-3';
+  const { entry: createAccountActionContent } = useKangurPageContentEntry(
+    'shared-nav-create-account-action'
+  );
+  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
   const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
@@ -225,7 +230,7 @@ export function KangurPrimaryNavigation({
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
-  const kangurAppearance = resolveKangurStorefrontAppearance(storefrontAppearance?.mode ?? 'default');
+  const kangurAppearance = useKangurStorefrontAppearance();
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -341,13 +346,14 @@ export function KangurPrimaryNavigation({
           content: (
             <>
               <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>Utwórz konto</span>
+              <span>{createAccountActionContent?.title ?? 'Utwórz konto'}</span>
             </>
           ),
           docId: 'profile_create_account',
           elementRef: createAccountActionRef,
           onClick: onCreateAccount,
           testId: 'kangur-primary-nav-create-account',
+          title: createAccountActionContent?.summary ?? undefined,
         })
       ) : null}
       {onLogin ? (
@@ -356,13 +362,14 @@ export function KangurPrimaryNavigation({
           content: (
             <>
               <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
-              <span>Zaloguj się</span>
+              <span>{loginActionContent?.title ?? 'Zaloguj się'}</span>
             </>
           ),
           docId: 'profile_login',
           elementRef: loginActionRef,
           onClick: onLogin,
           testId: 'kangur-primary-nav-login',
+          title: loginActionContent?.summary ?? undefined,
         })
       ) : null}
     </>

@@ -6,6 +6,8 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export function KangurParentDashboardScoresWidget({
   displayMode = 'always',
@@ -20,6 +22,7 @@ export function KangurParentDashboardScoresWidget({
     scoreViewerEmail,
     scoreViewerName,
   } = useKangurParentDashboardRuntime();
+  const { entry: scoresContent } = useKangurPageContentEntry('parent-dashboard-scores');
 
   if (!canAccessDashboard) {
     return null;
@@ -30,11 +33,22 @@ export function KangurParentDashboardScoresWidget({
   }
 
   return (
-    <ScoreHistory
-      learnerId={activeLearner?.id ?? null}
-      playerName={scoreViewerName}
-      createdBy={scoreViewerEmail}
-      basePath={basePath}
-    />
+    <div className='flex flex-col gap-5'>
+      <KangurPanelIntro
+        description={
+          scoresContent?.summary ??
+          'Przejrzyj ostatnie gry, skutecznosc i obszary, ktore warto teraz powtorzyc.'
+        }
+        title={scoresContent?.title ?? 'Wyniki ucznia'}
+        titleAs='h2'
+        titleClassName='text-lg font-bold tracking-[-0.02em]'
+      />
+      <ScoreHistory
+        learnerId={activeLearner?.id ?? null}
+        playerName={scoreViewerName}
+        createdBy={scoreViewerEmail}
+        basePath={basePath}
+      />
+    </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
 const HERO_BACK_TRANSITION_ACKNOWLEDGE_MS = 110;
@@ -17,7 +18,14 @@ const HERO_BACK_TRANSITION_ACKNOWLEDGE_MS = 110;
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath, user, navigateToLogin, progress } = useKangurLearnerProfileRuntime();
+  const { entry: heroContent } = useKangurPageContentEntry('learner-profile-hero');
   const displayName = getKangurLearnerProfileDisplayName(user);
+  const heroTitle = heroContent?.title ?? 'Profil ucznia';
+  const heroUserSummary =
+    heroContent?.summary ?? 'Statystyki ucznia:';
+  const heroGuestSummary =
+    heroContent?.summary ??
+    'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.';
 
   return (
     <KangurPageIntroCard
@@ -26,11 +34,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
       description={
         user ? (
           <>
-            Statystyki ucznia:{' '}
+            {heroUserSummary}{' '}
             <span className='font-semibold [color:var(--kangur-page-text)]'>{displayName}</span>.
           </>
         ) : (
-          'Zaloguj sie, aby synchronizowac postep ucznia miedzy urzadzeniami. Jesli nie masz jeszcze konta rodzica, zaloz je tutaj.'
+          heroGuestSummary
         )
       }
       headingAs='h1'
@@ -42,7 +50,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element {
         })
       }
       testId='kangur-learner-profile-hero'
-      title='Profil ucznia'
+      title={heroTitle}
     >
       <KangurHeroMilestoneSummary
         className='mb-3 w-full'

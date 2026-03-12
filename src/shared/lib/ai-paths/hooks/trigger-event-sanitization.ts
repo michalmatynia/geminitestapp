@@ -69,7 +69,11 @@ export const shouldEmbedTriggerEntitySnapshot = (args: {
   const normalizedSourceLocation =
     typeof args.sourceLocation === 'string' ? args.sourceLocation.trim().toLowerCase() : null;
   if (args.entityType === 'custom') return true;
-  if (normalizedSourceLocation === 'product_modal' || normalizedSourceLocation === 'note_modal') {
+  if (
+    normalizedSourceLocation === 'product_modal' ||
+    normalizedSourceLocation === 'product_row' ||
+    normalizedSourceLocation === 'note_modal'
+  ) {
     return true;
   }
   return typeof args.entityId !== 'string' || args.entityId.trim().length === 0;

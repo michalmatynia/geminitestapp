@@ -5,7 +5,34 @@ import * as llmTools from '@/features/ai/agent-runtime/tools/llm';
 import * as playwrightBrowser from '@/features/ai/agent-runtime/tools/playwright/browser';
 import * as playwrightExtraction from '@/features/ai/agent-runtime/tools/playwright/extraction';
 import * as searchTools from '@/features/ai/agent-runtime/tools/search';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+
+const {
+  chatbotAgentRunDelegate,
+  agentBrowserLogDelegate,
+  agentBrowserSnapshotDelegate,
+  agentAuditLogDelegate,
+} = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  agentBrowserLogDelegate: {
+    create: vi.fn(),
+    count: vi.fn(),
+    findMany: vi.fn(),
+  },
+  agentBrowserSnapshotDelegate: {
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+  },
+  agentAuditLogDelegate: {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+  },
+}));
 
 // Mock internal modules
 vi.mock('fs', () => ({
@@ -31,13 +58,11 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   })),
 }));
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: { findUnique: vi.fn(), update: vi.fn() },
-    agentBrowserLog: { create: vi.fn(), count: vi.fn() },
-    agentBrowserSnapshot: { findFirst: vi.fn(), create: vi.fn() },
-    agentAuditLog: { create: vi.fn() },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
+  getAgentBrowserLogDelegate: vi.fn(() => agentBrowserLogDelegate),
+  getAgentBrowserSnapshotDelegate: vi.fn(() => agentBrowserSnapshotDelegate),
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
 }));
 
 vi.mock('@/features/ai/agent-runtime/tools/playwright/browser', () => ({
@@ -131,7 +156,7 @@ describe('Agent Runtime - Tools', () => {
       url: 'http://example.com',
     });
     (playwrightBrowser.captureSessionContext as any).mockResolvedValue({});
-    (legacySqlClient.chatbotAgentRun.findUnique as any).mockResolvedValue({
+    chatbotAgentRunDelegate.findUnique.mockResolvedValue({
       model: 'llama3',
       searchProvider: 'google',
     });

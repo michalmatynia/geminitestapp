@@ -138,7 +138,7 @@ Store this in one of these ways:
 
 code-first JSON/TS files for small/medium apps
 
-Postgres tables if you want admin editing and version history
+DB-backed collections if you want admin editing and version history
 
 hybrid: source-controlled definitions + runtime overlays from DB
 

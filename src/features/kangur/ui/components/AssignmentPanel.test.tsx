@@ -117,6 +117,9 @@ describe('AssignmentPanel', () => {
     expect(screen.getByText('➗ Powtorka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('➕ Powtorka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet niski')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
       'soft-card',
       'border'

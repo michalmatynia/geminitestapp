@@ -3,14 +3,9 @@ import {
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import {
-  KangurButton,
-  KangurCardDescription,
-  KangurCardTitle,
-  KangurInfoCard,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -275,37 +270,14 @@ export default function KangurGameHomeMomentumWidget({
   const recommendationTargetPageKey = recommendationAction.page;
 
   return (
-    <KangurInfoCard
-      accent={recommendation.accent}
-      className='rounded-[28px]'
-      data-testid='kangur-home-momentum-widget'
-      padding='md'
-      tone='accent'
-    >
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0'>
-          <KangurStatusChip
-            accent={recommendation.accent}
-            data-testid='kangur-home-momentum-label'
-            labelStyle='caps'
-            size='sm'
-          >
-            {recommendation.priorityLabel}
-          </KangurStatusChip>
-          <KangurCardTitle as='p' className='mt-3' data-testid='kangur-home-momentum-title'>
-            {recommendation.title}
-          </KangurCardTitle>
-          <KangurCardDescription
-            as='p'
-            className='mt-1 opacity-85'
-            data-testid='kangur-home-momentum-description'
-            relaxed
-            size='xs'
-          >
-            {recommendation.description}
-          </KangurCardDescription>
-        </div>
-        <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='primary'>
+    <KangurRecommendationCard
+      action={
+        <KangurButton
+          asChild
+          className='w-full sm:w-auto sm:shrink-0'
+          size='sm'
+          variant='primary'
+        >
           <Link
             href={recommendationHref}
             targetPageKey={recommendationTargetPageKey}
@@ -315,7 +287,24 @@ export default function KangurGameHomeMomentumWidget({
             {recommendationAction.label}
           </Link>
         </KangurButton>
-      </div>
-    </KangurInfoCard>
+      }
+      accent={recommendation.accent}
+      bodyClassName='min-w-0'
+      className='rounded-[28px]'
+      contentClassName='gap-3 sm:flex-row sm:items-start sm:justify-between'
+      dataTestId='kangur-home-momentum-widget'
+      description={recommendation.description}
+      descriptionClassName='mt-1 opacity-85'
+      descriptionRelaxed
+      descriptionSize='xs'
+      descriptionTestId='kangur-home-momentum-description'
+      label={recommendation.priorityLabel}
+      labelSize='sm'
+      labelStyle='caps'
+      labelTestId='kangur-home-momentum-label'
+      title={recommendation.title}
+      titleClassName='mt-3'
+      titleTestId='kangur-home-momentum-title'
+    />
   );
 }

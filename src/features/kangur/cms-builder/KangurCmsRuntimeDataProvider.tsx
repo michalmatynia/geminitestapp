@@ -338,7 +338,9 @@ export function KangurCmsRuntimeDataProvider({
             hasPriorityAssignment: item.hasPriorityAssignment,
             id: item.id,
             label: item.label,
-            priorityLabel: item.priorityLabel,
+            priorityLabel: item.priority
+              ? resolveAssignmentPriorityLabel(item.priority)
+              : 'Priorytet wlasny',
             select: item.select,
             statusLabel: item.statusLabel,
           })),

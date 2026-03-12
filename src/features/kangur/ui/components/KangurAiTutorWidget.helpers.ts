@@ -171,6 +171,107 @@ export const getExpandedRect = (
   );
 };
 
+const getRectArea = (rect: DOMRect): number => Math.max(0, rect.width) * Math.max(0, rect.height);
+
+const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
+  const overlapWidth = Math.max(
+    0,
+    Math.min(left.right, right.right) - Math.max(left.left, right.left)
+  );
+  const overlapHeight = Math.max(
+    0,
+    Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top)
+  );
+
+  return overlapWidth * overlapHeight;
+};
+
+const isPointWithinRect = (
+  point: { x: number; y: number },
+  rect: Pick<DOMRect, 'bottom' | 'left' | 'right' | 'top'>
+): boolean =>
+  point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom;
+
+export const selectBestSelectionAnchor = (input: {
+  anchors: KangurTutorAnchorRegistration[];
+  selectionRect: DOMRect;
+  sessionContentId: string | null | undefined;
+  sessionSurface: TutorSurface | null | undefined;
+}): KangurTutorAnchorRegistration | null => {
+  if (!input.sessionSurface) {
+    return null;
+  }
+
+  const selectionArea = Math.max(getRectArea(input.selectionRect), 1);
+  const selectionCenter = {
+    x: input.selectionRect.left + input.selectionRect.width / 2,
+    y: input.selectionRect.top + input.selectionRect.height / 2,
+  };
+
+  const candidates = input.anchors
+    .filter((anchor) => anchor.surface === input.sessionSurface)
+    .map((anchor) => {
+      const rect = anchor.getRect();
+      if (!rect) {
+        return null;
+      }
+
+      const overlapArea = getRectOverlapArea(rect, input.selectionRect);
+      const containsSelectionCenter = isPointWithinRect(selectionCenter, rect);
+      if (overlapArea <= 0 && !containsSelectionCenter) {
+        return null;
+      }
+
+      return {
+        anchor,
+        area: Math.max(getRectArea(rect), 1),
+        containsSelectionCenter,
+        contentMatch:
+          Boolean(input.sessionContentId) &&
+          (anchor.metadata?.contentId ?? null) === input.sessionContentId,
+        overlapArea,
+        overlapRatio: overlapArea / selectionArea,
+      };
+    })
+    .filter(
+      (
+        candidate
+      ): candidate is {
+        anchor: KangurTutorAnchorRegistration;
+        area: number;
+        containsSelectionCenter: boolean;
+        contentMatch: boolean;
+        overlapArea: number;
+        overlapRatio: number;
+      } => candidate !== null
+    )
+    .sort((leftCandidate, rightCandidate) => {
+      if (leftCandidate.contentMatch !== rightCandidate.contentMatch) {
+        return Number(rightCandidate.contentMatch) - Number(leftCandidate.contentMatch);
+      }
+
+      if (leftCandidate.containsSelectionCenter !== rightCandidate.containsSelectionCenter) {
+        return Number(rightCandidate.containsSelectionCenter) - Number(leftCandidate.containsSelectionCenter);
+      }
+
+      if (leftCandidate.overlapRatio !== rightCandidate.overlapRatio) {
+        return rightCandidate.overlapRatio - leftCandidate.overlapRatio;
+      }
+
+      if (leftCandidate.overlapArea !== rightCandidate.overlapArea) {
+        return rightCandidate.overlapArea - leftCandidate.overlapArea;
+      }
+
+      if (leftCandidate.area !== rightCandidate.area) {
+        return leftCandidate.area - rightCandidate.area;
+      }
+
+      return rightCandidate.anchor.priority - leftCandidate.anchor.priority;
+    });
+
+  return candidates[0]?.anchor ?? null;
+};
+
 export const getSelectionProtectedRect = (
   selectionRect: DOMRect | null | undefined,
   selectionContainerRect: DOMRect | null | undefined

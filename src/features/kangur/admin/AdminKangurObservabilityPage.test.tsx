@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useKangurObservabilitySummaryMock,
   useKangurKnowledgeGraphStatusMock,
+  apiPostMock,
   refetchMock,
   knowledgeGraphStatusRefetchMock,
   replaceMock,
@@ -16,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
   useKangurObservabilitySummaryMock: vi.fn(),
   useKangurKnowledgeGraphStatusMock: vi.fn(),
+  apiPostMock: vi.fn(),
   refetchMock: vi.fn(),
   knowledgeGraphStatusRefetchMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -48,6 +50,12 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/features/kangur/observability/hooks', () => ({
   useKangurObservabilitySummary: useKangurObservabilitySummaryMock,
   useKangurKnowledgeGraphStatus: useKangurKnowledgeGraphStatusMock,
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    post: apiPostMock,
+  },
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -136,6 +144,21 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       },
     },
     {
+      id: 'kangur-knowledge-graph-freshness',
+      title: 'Knowledge Graph Freshness',
+      status: 'warning' as const,
+      value: 2,
+      unit: 'hours',
+      warningThreshold: 0,
+      criticalThreshold: 24,
+      summary:
+        'Page content was updated after the latest Neo4j sync by about 2 hours. Last graph sync: 2026-03-07T12:00:00.000Z. Latest canonical update: 2026-03-07T14:00:00.000Z.',
+      investigation: {
+        label: 'Open graph status',
+        href: `/admin/kangur/observability?range=${range}#knowledge-graph-status`,
+      },
+    },
+    {
       id: 'kangur-server-error-rate',
       title: 'Server error rate',
       status: 'ok' as const,
@@ -217,6 +240,20 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       investigation: {
         label: 'Review tutor bridge analytics',
         href: `/admin/kangur/observability?range=${range}#recent-analytics-events`,
+      },
+    },
+    {
+      id: 'kangur-ai-tutor-direct-answer-rate',
+      title: 'AI Tutor Direct Answer Rate',
+      status: 'warning' as const,
+      value: 50,
+      unit: '%',
+      warningThreshold: 60,
+      criticalThreshold: 30,
+      summary: 'Deterministic Tutor answers are below the preferred rollout target.',
+      investigation: {
+        label: 'Open AI Tutor graph metrics',
+        href: `/admin/kangur/observability?range=${range}#ai-tutor-bridge`,
       },
     },
     {
@@ -324,6 +361,9 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     importantEvents: [{ name: 'kangur_progress_sync_failed', count: 4 }],
     aiTutor: {
       messageSucceededCount: 6,
+      pageContentAnswerCount: 2,
+      nativeGuideAnswerCount: 1,
+      brainAnswerCount: 3,
       knowledgeGraphAppliedCount: 4,
       knowledgeGraphSemanticCount: 3,
       knowledgeGraphWebsiteHelpCount: 1,
@@ -337,6 +377,8 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       bridgeQuickActionClickCount: 2,
       bridgeFollowUpClickCount: 2,
       bridgeFollowUpCompletionCount: 1,
+      directAnswerRatePercent: 50,
+      brainFallbackRatePercent: 50,
       bridgeCompletionRatePercent: 33.3,
       knowledgeGraphCoverageRatePercent: 66.7,
       knowledgeGraphVectorAssistRatePercent: 100,
@@ -400,6 +442,16 @@ describe('AdminKangurObservabilityPage', () => {
     vi.clearAllMocks();
     navigationState.pathname = '/admin/kangur/observability';
     navigationState.search = '';
+    apiPostMock.mockResolvedValue({
+      sync: {
+        graphKey: 'kangur-website-help-v1',
+        locale: 'pl',
+        nodeCount: 87,
+        edgeCount: 108,
+        withEmbeddings: true,
+      },
+      status: createSummary('24h').knowledgeGraphStatus,
+    });
     knowledgeGraphStatusRefetchMock.mockResolvedValue(undefined);
     useKangurObservabilitySummaryMock.mockImplementation((range: '24h' | '7d' | '30d') => ({
       data: createSummary(range),
@@ -430,11 +482,23 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Kangur TTS fallback used.')).toBeInTheDocument();
     expect(screen.getByText('TTS Generation Failures')).toBeInTheDocument();
     expect(screen.getByText('AI Tutor Graph Coverage Rate')).toBeInTheDocument();
+    expect(screen.getByText('AI Tutor Direct Answer Rate')).toBeInTheDocument();
+    expect(screen.getByText('Knowledge Graph Freshness')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Graph Readiness')).toBeInTheDocument();
+    expect(screen.getByText('Freshness against canonical tutor content')).toBeInTheDocument();
+    expect(screen.getAllByText('2.0 h lag').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
         'Neo4j graph kangur-website-help-v1 is vector-ready with 87 nodes, 108 edges, and an online vector index.'
       )
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Page content was updated after the latest Neo4j sync by about 2 hours. Last graph sync: 2026-03-07T12:00:00.000Z. Latest canonical update: 2026-03-07T14:00:00.000Z.'
+      ).length
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getByText('Deterministic Tutor answers are below the preferred rollout target.')
     ).toBeInTheDocument();
     expect(
       screen.getByText('Neo4j graph coverage is below the preferred Tutor reply share.')
@@ -450,6 +514,11 @@ describe('AdminKangurObservabilityPage', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText('AI Tutor Bridge Snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Page-Content Answers')).toBeInTheDocument();
+    expect(screen.getByText('Native Guide Answers')).toBeInTheDocument();
+    expect(screen.getByText('Brain Fallback Replies')).toBeInTheDocument();
+    expect(screen.getByText('Direct Answer Rate')).toBeInTheDocument();
+    expect(screen.getByText('Brain Fallback Rate')).toBeInTheDocument();
     expect(screen.getByText('Bridge Suggestions')).toBeInTheDocument();
     expect(screen.getByText('Lekcja -> Grajmy')).toBeInTheDocument();
     expect(screen.getByText('Grajmy -> Lekcja')).toBeInTheDocument();
@@ -461,6 +530,23 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Semantic Graph Replies')).toBeInTheDocument();
     expect(screen.getByText('Recall Mix')).toBeInTheDocument();
     expect(screen.getByText('Vector Assist Rate')).toBeInTheDocument();
+    expect(
+      screen.getByText('Replies resolved directly from Mongo-backed section page content.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Replies resolved from linked native guides without Brain fallback.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Replies that still required Brain generation after deterministic sources were checked.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Page-content and native-guide replies as a share of 6 Tutor replies.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Brain fallbacks as a share of 6 Tutor replies. Direct answers: 3.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Metadata 1 / Hybrid 2 / Vector-only 1')).toBeInTheDocument();
     expect(screen.getByText('Website-help graph replies: 1.')).toBeInTheDocument();
     expect(screen.getByText('Vector recall attempts: 3.')).toBeInTheDocument();
@@ -525,6 +611,26 @@ describe('AdminKangurObservabilityPage', () => {
             '/admin/system/logs?source=kangur.tts.POST&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z'
         )
     ).toBe(true);
+  });
+
+  it('syncs the knowledge graph from the status section and refreshes observability data', async () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync graph now' }));
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/knowledge-graph/sync',
+        {
+          locale: 'pl',
+          withEmbeddings: true,
+        },
+        { timeout: 120000 }
+      )
+    );
+    expect(
+      await screen.findByText('Synced 87 nodes and 108 edges with embeddings preserved.')
+    ).toBeInTheDocument();
   });
 
   it('switches the summary range from the segmented control', async () => {

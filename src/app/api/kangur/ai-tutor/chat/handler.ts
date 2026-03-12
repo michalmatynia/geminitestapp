@@ -2,10 +2,6 @@ import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  buildPersonaChatMemoryContext,
-  persistAgentPersonaExchangeMemory,
-} from '@/features/ai/agentcreator/server/persona-memory';
 import { mergeContextRegistryRefs } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
@@ -19,10 +15,7 @@ import {
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
 import { resolveKangurAiTutorNativeGuideResolution } from '@/features/kangur/server/ai-tutor-native-guide';
-import {
-  resolveKangurAiTutorSemanticGraphContext,
-  type GraphFollowUpAction,
-} from '@/features/kangur/server/knowledge-graph/retrieval';
+import { resolveKangurAiTutorSemanticGraphContext } from '@/features/kangur/server/knowledge-graph/retrieval';
 import {
   consumeKangurAiTutorDailyUsage,
   ensureKangurAiTutorDailyUsageAvailable,
@@ -36,83 +29,56 @@ import {
   resolveKangurAiTutorAvailability,
   resolveKangurAiTutorAppSettings,
   type KangurAiTutorAvailabilityReason,
-  type KangurAiTutorHintDepth,
-  type KangurAiTutorProactiveNudges,
 } from '@/features/kangur/settings-ai-tutor';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import {
-  AGENT_PERSONA_SETTINGS_KEY,
-  type AgentPersona,
-  type AgentPersonaMoodId,
-} from '@/shared/contracts/agents';
-import type { ContextRegistryResolutionBundle, ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
+import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
+import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   kangurAiTutorChatRequestSchema,
   type KangurAiTutorChatResponse,
   type KangurAiTutorCoachingMode,
   type KangurAiTutorConversationContext,
-  type KangurAiTutorInteractionIntent,
-  type KangurAiTutorLearnerMemory,
-  type KangurAiTutorMessageArtifact,
-  type KangurAiTutorPromptMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
-import { isAppError } from '@/shared/errors/app-error';
+import { badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   resolveBrainExecutionConfigForCapability,
+  readStoredSettingValue,
 } from '@/shared/lib/ai-brain/server';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
   type BrainChatMessage,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { sanitizeSvg } from '@/shared/utils';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-const SOCRATIC_CONSTRAINT = [
-  'You are a friendly AI tutor helping a child (age 6–12) learn.',
-  'IMPORTANT RULES:',
-  '- NEVER give direct answers to exercises or problems.',
-  '- Instead, ask guiding questions or provide process hints.',
-  '- Acknowledge what the child says correctly.',
-  '- Keep responses short and encouraging.',
-  '- If the child is stuck, hint at the next thinking step, not the answer.',
-].join('\n');
-
-const PROMPT_MODE_INSTRUCTIONS: Record<KangurAiTutorPromptMode, string> = {
-  chat: 'Answer as a concise tutor conversation.',
-  hint: 'The learner asked for a hint. Give only the next helpful step or one guiding question.',
-  explain:
-    'The learner asked for an explanation. Explain the concept simply with a tiny example, but do not solve the exact task for them.',
-  selected_text:
-    'The learner selected a specific excerpt. Focus on that excerpt first and relate your response back to it.',
-};
-
-const INTERACTION_INTENT_INSTRUCTIONS: Record<KangurAiTutorInteractionIntent, string> = {
-  hint: 'Prioritize a single hint, checkpoint, or guiding question.',
-  explain: 'Prioritize a short, clear explanation before suggesting the next step.',
-  review: 'Prioritize reviewing what happened, why, and what to try next time.',
-  next_step: 'Prioritize the learner’s next best practice step.',
-};
-
-const HINT_DEPTH_INSTRUCTIONS: Record<KangurAiTutorHintDepth, string> = {
-  brief: 'Parent preference: keep hints very short and stop after one small nudge.',
-  guided: 'Parent preference: give one hint plus one quick checkpoint question when helpful.',
-  step_by_step:
-    'Parent preference: guide the learner step by step without giving the final answer.',
-};
-
-const PROACTIVE_NUDGE_INSTRUCTIONS: Record<KangurAiTutorProactiveNudges, string> = {
-  off: 'Parent preference: do not proactively push extra practice unless the learner asks.',
-  gentle:
-    'Parent preference: it is okay to gently suggest one next step or one small review activity.',
-  coach:
-    'Parent preference: be comfortable proactively recommending the next practice move when the learner seems stuck.',
-};
+import {
+  SOCRATIC_CONSTRAINT,
+  buildContextInstructions,
+  buildLearnerMemoryInstructions,
+  buildParentPreferenceInstructions,
+} from './build-system-prompt';
+import {
+  analyzeLearnerDrawingWithBrain,
+  buildTutorDrawingInstructions,
+  extractTutorDrawingArtifactsFromResponse,
+  shouldEnableTutorDrawingSupport,
+} from './drawing';
+import {
+  buildPersonaChatMemoryContext,
+  persistAgentPersonaExchangeMemory,
+  resolveKangurPersonaSessionId,
+  resolvePersonaInstructions,
+} from './persona';
+import {
+  resolveKangurAiTutorSectionKnowledgeBundle,
+  type KangurAiTutorSectionKnowledgeBundle,
+} from './section-knowledge';
+import {
+  buildKangurTutorResponseSources,
+  buildKnowledgeGraphResponseSummary,
+  mergeFollowUpActions,
+} from './sources';
 
 const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
   disabled: 'AI tutor is not enabled for this learner.',
@@ -125,320 +91,11 @@ const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, strin
     'AI tutor is available in tests only after the answer has been revealed.',
 };
 const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
-const KANGUR_AI_TUTOR_DRAWING_ANALYSIS_BRAIN_CAPABILITY =
-  'kangur_ai_tutor.drawing_analysis';
-const KANGUR_TUTOR_DRAWING_BLOCK_PATTERN =
-  /<kangur_tutor_drawing>([\s\S]*?)<\/kangur_tutor_drawing>/i;
-const KANGUR_TUTOR_DRAWING_TITLE_PATTERN = /<title>([\s\S]*?)<\/title>/i;
-const KANGUR_TUTOR_DRAWING_CAPTION_PATTERN = /<caption>([\s\S]*?)<\/caption>/i;
-const KANGUR_TUTOR_DRAWING_ALT_PATTERN = /<alt>([\s\S]*?)<\/alt>/i;
-const KANGUR_TUTOR_DRAWING_REQUEST_PATTERN =
-  /\b(narysuj|rysuj|rysunek|szkic|schemat|diagram|pokaz .*rysun|pokaz .*schemat)\b/i;
 
-const normalizeDrawingText = (
-  value: string | null | undefined,
-  maxLength: number
-): string | undefined => {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
+const readContextString = (value: string | null | undefined): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
-  const normalized = value.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return undefined;
-  }
-
-  return normalized.length > maxLength ? normalized.slice(0, maxLength).trimEnd() : normalized;
-};
-
-const extractTaggedTutorDrawingText = (
-  value: string,
-  pattern: RegExp,
-  maxLength: number
-): string | undefined => normalizeDrawingText(value.match(pattern)?.[1] ?? null, maxLength);
-
-const shouldEnableTutorDrawingSupport = (input: {
-  context: KangurAiTutorConversationContext | undefined;
-  latestUserMessage: string | null;
-  messages: Array<{
-    role: string;
-    artifacts?: KangurAiTutorMessageArtifact[];
-  }>;
-}): boolean => {
-  const latestUserDrawingArtifact = [...input.messages]
-    .reverse()
-    .find(
-      (message) =>
-        message.role === 'user' &&
-        message.artifacts?.some((artifact) => artifact.type === 'user_drawing')
-    );
-
-  return (
-    Boolean(latestUserDrawingArtifact) ||
-    input.context?.promptMode === 'explain' ||
-    input.context?.promptMode === 'selected_text' ||
-    input.context?.interactionIntent === 'explain' ||
-    Boolean(input.latestUserMessage && KANGUR_TUTOR_DRAWING_REQUEST_PATTERN.test(input.latestUserMessage))
-  );
-};
-
-const buildTutorDrawingInstructions = (): string =>
-  [
-    'Drawing support: when a tiny visual sketch would clearly help, append exactly one optional drawing block after the normal text reply.',
-    'Always keep the normal tutor text outside the drawing block.',
-    'Do not pretend to inspect learner-uploaded pixels. If the learner attached a drawing, use it only as a signal that a visual explanation may help.',
-    'Use this exact format when you draw:',
-    '<kangur_tutor_drawing>',
-    '<title>Krotki tytul po polsku</title>',
-    '<caption>Jedno krotkie objasnienie rysunku.</caption>',
-    '<alt>Krotki opis dostepnosci.</alt>',
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">...</svg>',
-    '</kangur_tutor_drawing>',
-    'Use only simple SVG elements and inline attributes.',
-    'Never use script, style, foreignObject, iframe, object, embed, external hrefs, or image tags.',
-    'Keep the sketch child-friendly, large, and easy to read.',
-  ].join('\n');
-
-const buildLearnerDrawingAnalysisPrompt = (input: {
-  context: KangurAiTutorConversationContext | undefined;
-  latestUserMessage: string | null;
-}): string =>
-  [
-    'Analyze the attached learner drawing for a math tutor.',
-    'Describe only visible math-relevant structure or spatial cues.',
-    'Keep the analysis short, concrete, and in Polish.',
-    'If the drawing is ambiguous, say what is uncertain.',
-    'Do not solve the task.',
-    ...(input.latestUserMessage
-      ? [`Learner message: ${input.latestUserMessage}`]
-      : []),
-    ...(input.context?.selectedText
-      ? [`Selected text: ${input.context.selectedText}`]
-      : []),
-    ...(input.context?.currentQuestion
-      ? [`Current question: ${input.context.currentQuestion}`]
-      : []),
-    ...(input.context?.title ? [`Current title: ${input.context.title}`] : []),
-  ].join('\n');
-
-const analyzeLearnerDrawingWithBrain = async (input: {
-  drawingImageData: string;
-  context: KangurAiTutorConversationContext | undefined;
-  latestUserMessage: string | null;
-}): Promise<string | null> => {
-  const brainConfig = await resolveBrainExecutionConfigForCapability(
-    KANGUR_AI_TUTOR_DRAWING_ANALYSIS_BRAIN_CAPABILITY,
-    {
-      defaultTemperature: 0.1,
-      defaultMaxTokens: 220,
-      defaultSystemPrompt:
-        'You analyze learner sketches for the Kangur AI tutor. Return only a short Polish summary of what is visually present and mathematically relevant.',
-      runtimeKind: 'vision',
-    }
-  );
-
-  const response = await runBrainChatCompletion({
-    modelId: brainConfig.modelId,
-    temperature: brainConfig.temperature,
-    maxTokens: brainConfig.maxTokens,
-    messages: [
-      {
-        role: 'system',
-        content: brainConfig.systemPrompt,
-      },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: buildLearnerDrawingAnalysisPrompt({
-              context: input.context,
-              latestUserMessage: input.latestUserMessage,
-            }),
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: input.drawingImageData,
-            },
-          },
-        ],
-      },
-    ],
-  });
-
-  return normalizeDrawingText(response.text, 320) ?? null;
-};
-
-const extractTutorDrawingArtifactsFromResponse = (value: string): {
-  message: string;
-  artifacts: KangurAiTutorMessageArtifact[];
-} => {
-  const trimmed = value.trim();
-  const match = trimmed.match(KANGUR_TUTOR_DRAWING_BLOCK_PATTERN);
-  if (!match) {
-    return {
-      message: trimmed,
-      artifacts: [],
-    };
-  }
-
-  const drawingBlock = match[1] ?? '';
-  const svgMatch = drawingBlock.match(/<svg[\s\S]*<\/svg>/i);
-  if (!svgMatch) {
-    return {
-      message: trimmed.replace(match[0], '').replace(/\n{3,}/g, '\n\n').trim(),
-      artifacts: [],
-    };
-  }
-
-  const metadataBlock = drawingBlock.replace(svgMatch[0], '');
-  const sanitizedSvg = sanitizeSvg(svgMatch[0], { viewBox: '0 0 320 200' }).trim();
-  const cleanedMessage = trimmed.replace(match[0], '').replace(/\n{3,}/g, '\n\n').trim();
-  const artifacts: KangurAiTutorMessageArtifact[] = sanitizedSvg
-    ? [
-      {
-        type: 'assistant_drawing',
-        svgContent: sanitizedSvg,
-        ...(extractTaggedTutorDrawingText(metadataBlock, KANGUR_TUTOR_DRAWING_TITLE_PATTERN, 120)
-          ? {
-            title: extractTaggedTutorDrawingText(
-              metadataBlock,
-              KANGUR_TUTOR_DRAWING_TITLE_PATTERN,
-              120
-            ),
-          }
-          : {}),
-        ...(extractTaggedTutorDrawingText(metadataBlock, KANGUR_TUTOR_DRAWING_CAPTION_PATTERN, 240)
-          ? {
-            caption: extractTaggedTutorDrawingText(
-              metadataBlock,
-              KANGUR_TUTOR_DRAWING_CAPTION_PATTERN,
-              240
-            ),
-          }
-          : {}),
-        ...(extractTaggedTutorDrawingText(metadataBlock, KANGUR_TUTOR_DRAWING_ALT_PATTERN, 160)
-          ? {
-            alt: extractTaggedTutorDrawingText(
-              metadataBlock,
-              KANGUR_TUTOR_DRAWING_ALT_PATTERN,
-              160
-            ),
-          }
-          : {}),
-      },
-    ]
-    : [];
-
-  return {
-    message: cleanedMessage || 'Sprawdz szkic ponizej.',
-    artifacts,
-  };
-};
-
-const mergeFollowUpActions = (
-  primary: KangurAiTutorChatResponse['followUpActions'],
-  graphActions?: GraphFollowUpAction[] | null
-): KangurAiTutorChatResponse['followUpActions'] => {
-  const primaryActions = primary ?? [];
-  const graphActionList = graphActions ?? [];
-
-  if (graphActionList.length === 0) {
-    return primaryActions;
-  }
-
-  const existingPages = new Set<string>(primaryActions.map((a) => a.page));
-  const additions = graphActionList
-    .filter((ga) => !existingPages.has(ga.page))
-    .map((ga) => ({
-      id: ga.id,
-      label: ga.label,
-      page: ga.page as 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile',
-      ...(ga.reason ? { reason: ga.reason } : {}),
-    }));
-
-  return [...primaryActions, ...additions];
-};
-
-const buildKnowledgeGraphResponseSummary = (input: {
-  knowledgeGraphApplied: boolean;
-  knowledgeGraphQueryStatus: 'hit' | 'miss' | 'skipped' | 'disabled';
-  knowledgeGraphQueryMode: 'website_help' | 'semantic' | null;
-  knowledgeGraphRecallStrategy: 'metadata_only' | 'vector_only' | 'hybrid_vector' | null;
-  knowledgeGraphLexicalHitCount: number;
-  knowledgeGraphVectorHitCount: number;
-  knowledgeGraphVectorRecallAttempted: boolean;
-  websiteHelpGraphApplied: boolean;
-  websiteHelpGraphTargetNodeId: string | null;
-}) => ({
-  applied: input.knowledgeGraphApplied,
-  queryStatus: input.knowledgeGraphQueryStatus,
-  queryMode: input.knowledgeGraphQueryMode,
-  recallStrategy: input.knowledgeGraphRecallStrategy,
-  lexicalHitCount: input.knowledgeGraphLexicalHitCount,
-  vectorHitCount: input.knowledgeGraphVectorHitCount,
-  vectorRecallAttempted: input.knowledgeGraphVectorRecallAttempted,
-  websiteHelpApplied: input.websiteHelpGraphApplied,
-  websiteHelpTargetNodeId: input.websiteHelpGraphTargetNodeId,
-});
-
-const resolvePersonaInstructions = async (agentPersonaId: string | null): Promise<string> => {
-  if (!agentPersonaId) return '';
-  try {
-    const raw = await readStoredSettingValue(AGENT_PERSONA_SETTINGS_KEY);
-    const personas = parseJsonSetting<AgentPersona[]>(raw, []);
-    const persona = personas.find((p) => p.id === agentPersonaId);
-    if (!persona) return '';
-    const parts: string[] = [];
-    if (persona.name) parts.push(`You are ${persona.name}.`);
-    if (persona.role) parts.push(`Role: ${persona.role}.`);
-    if (persona.instructions) parts.push(persona.instructions.trim());
-    return parts.join('\n');
-  } catch {
-    return '';
-  }
-};
-
-const buildKangurPersonaSessionTitle = (learnerId: string, personaName: string | null): string => {
-  const label = personaName?.trim() || 'Tutor persona';
-  return `Kangur AI Tutor · ${label} · learner:${learnerId}`;
-};
-
-const resolveKangurPersonaSessionId = async (input: {
-  learnerId: string;
-  personaId: string | null;
-  personaName: string | null;
-}): Promise<string | null> => {
-  if (!input.personaId) {
-    return null;
-  }
-
-  const title = buildKangurPersonaSessionTitle(input.learnerId, input.personaName);
-  const existingSessionId = await chatbotSessionRepository.findSessionIdByPersonaAndTitle(
-    title,
-    input.personaId
-  );
-
-  if (existingSessionId) {
-    return existingSessionId;
-  }
-
-  const created = await chatbotSessionRepository.create({
-    title,
-    userId: null,
-    personaId: input.personaId,
-    messages: [],
-    messageCount: 0,
-    settings: {
-      personaId: input.personaId,
-    },
-  });
-
-  return created.id;
-};
-
-const readStringFact = (
+const readRuntimeStringFact = (
   document: ContextRuntimeDocument | null | undefined,
   key: string
 ): string | null => {
@@ -446,63 +103,123 @@ const readStringFact = (
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 };
 
-const readContextString = (value: string | null | undefined): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+const normalizeSectionExplainLabel = (value: string | null | undefined): string =>
+  typeof value === 'string'
+    ? value
+        .toLocaleLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : '';
 
-const buildRegistryPolicyInstructions = (
-  bundle: ContextRegistryResolutionBundle | null | undefined
-): string[] =>
-  (bundle?.nodes ?? [])
-    .filter((node) => node.kind === 'policy' && node.id.startsWith('policy:kangur-ai-tutor'))
-    .map((node) => node.description.trim())
-    .filter(Boolean);
+const buildSectionRuntimeOverlay = (input: {
+  sectionKnowledgeBundle: KangurAiTutorSectionKnowledgeBundle;
+  context: KangurAiTutorConversationContext | undefined;
+  runtimeDocuments: ReturnType<typeof resolveKangurAiTutorRuntimeDocuments>;
+}): string | null => {
+  const section = input.sectionKnowledgeBundle.section;
+  const focusKind = input.context?.focusKind ?? section.focusKind ?? null;
+  const learnerSummary = readRuntimeStringFact(
+    input.runtimeDocuments.learnerSnapshot,
+    'learnerSummary'
+  );
+  const loginActivitySummary = readRuntimeStringFact(
+    input.runtimeDocuments.loginActivity,
+    'recentLoginActivitySummary'
+  );
+  const masterySummary =
+    readRuntimeStringFact(input.runtimeDocuments.surfaceContext, 'masterySummary') ??
+    readContextString(input.context?.masterySummary);
+  const assignmentSummary =
+    readRuntimeStringFact(input.runtimeDocuments.assignmentContext, 'assignmentSummary') ??
+    readRuntimeStringFact(input.runtimeDocuments.surfaceContext, 'assignmentSummary') ??
+    readContextString(input.context?.assignmentSummary);
+  const currentQuestion =
+    readRuntimeStringFact(input.runtimeDocuments.surfaceContext, 'currentQuestion') ??
+    readContextString(input.context?.currentQuestion);
+  const questionProgressLabel =
+    readRuntimeStringFact(input.runtimeDocuments.surfaceContext, 'questionProgressLabel') ??
+    readContextString(input.context?.questionProgressLabel);
+  const revealedExplanation = readRuntimeStringFact(
+    input.runtimeDocuments.surfaceContext,
+    'revealedExplanation'
+  );
 
-const buildParentPreferenceInstructions = (input: {
-  hintDepth: KangurAiTutorHintDepth;
-  proactiveNudges: KangurAiTutorProactiveNudges;
-  rememberTutorContext: boolean;
-}): string =>
-  [
-    HINT_DEPTH_INSTRUCTIONS[input.hintDepth],
-    PROACTIVE_NUDGE_INSTRUCTIONS[input.proactiveNudges],
-    input.rememberTutorContext
-      ? 'Parent preference: you may use compact learner memory from recent tutor sessions when it is provided.'
-      : 'Parent preference: do not rely on memory from previous tutor sessions.',
-  ].join('\n');
+  const lines: string[] = [];
+  const shouldIncludeLearnerSummary =
+    section.pageKey === 'LearnerProfile' ||
+    section.pageKey === 'ParentDashboard' ||
+    focusKind === 'progress' ||
+    section.id.includes('progress');
+  const shouldIncludeAssignmentSummary =
+    focusKind === 'assignment' ||
+    focusKind === 'priority_assignments' ||
+    section.id.includes('assignment');
+  const shouldIncludeMasterySummary =
+    focusKind === 'progress' ||
+    section.id.includes('progress') ||
+    section.pageKey === 'LearnerProfile' ||
+    section.pageKey === 'Lessons';
+  const shouldIncludeQuestionContext =
+    focusKind === 'question' || focusKind === 'review' || focusKind === 'summary';
+  const shouldIncludeLoginActivity =
+    input.context?.surface === 'auth' ||
+    section.pageKey === 'Login' ||
+    focusKind === 'login_form' ||
+    focusKind === 'login_identifier_field';
 
-const buildLearnerMemoryInstructions = (
-  memory: KangurAiTutorLearnerMemory | null | undefined
-): string => {
-  if (!memory) {
-    return '';
+  if (shouldIncludeLearnerSummary && learnerSummary) {
+    lines.push(`Na zywo dla tego ucznia: ${learnerSummary}`);
   }
-
-  const lines = ['Compact learner memory from recent Kangur tutor sessions:'];
-  if (memory.lastSurface) {
-    lines.push(`Recent surface: ${memory.lastSurface}.`);
+  if (shouldIncludeMasterySummary && masterySummary) {
+    lines.push(`Aktualny obraz opanowania: ${masterySummary}`);
   }
-  if (memory.lastFocusLabel) {
-    lines.push(`Recent focus: ${memory.lastFocusLabel}`);
+  if (shouldIncludeAssignmentSummary && assignmentSummary) {
+    lines.push(`Aktywny priorytet: ${assignmentSummary}`);
   }
-  if (memory.lastUnresolvedBlocker) {
-    lines.push(`Last unresolved blocker: ${memory.lastUnresolvedBlocker}`);
-  }
-  if (memory.lastRecommendedAction) {
-    lines.push(`Last recommended action: ${memory.lastRecommendedAction}`);
-  }
-  if (memory.lastSuccessfulIntervention) {
-    lines.push(`Last successful intervention: ${memory.lastSuccessfulIntervention}`);
-  }
-  if (memory.lastCoachingMode) {
-    lines.push(`Previous coaching mode: ${memory.lastCoachingMode}.`);
-  }
-  if (memory.lastGivenHints?.length) {
+  if (shouldIncludeQuestionContext && currentQuestion) {
     lines.push(
-      `Recent hints given (vary your approach, do not repeat these verbatim): ${memory.lastGivenHints.join(' | ')}`
+      questionProgressLabel
+        ? `${questionProgressLabel}: ${currentQuestion}`
+        : `Biezace pytanie: ${currentQuestion}`
     );
   }
+  if (focusKind === 'review' && revealedExplanation) {
+    lines.push(`Po pokazaniu odpowiedzi: ${revealedExplanation}`);
+  }
+  if (shouldIncludeLoginActivity && loginActivitySummary) {
+    lines.push(`Ostatnia aktywnosc logowania: ${loginActivitySummary}`);
+  }
 
-  return lines.length > 1 ? lines.join('\n') : '';
+  const uniqueLines = [...new Set(lines.filter(Boolean))];
+  return uniqueLines.length > 0 ? uniqueLines.join('\n\n') : null;
+};
+
+const buildSectionExplainMessage = (input: {
+  sectionKnowledgeBundle: KangurAiTutorSectionKnowledgeBundle;
+  context: KangurAiTutorConversationContext | undefined;
+  runtimeDocuments: ReturnType<typeof resolveKangurAiTutorRuntimeDocuments>;
+}): string => {
+  const section = input.sectionKnowledgeBundle.section;
+  const scopedLabel =
+    readContextString(input.context?.focusLabel) ?? readContextString(input.context?.title);
+  const titleLine =
+    scopedLabel &&
+    normalizeSectionExplainLabel(scopedLabel) !== normalizeSectionExplainLabel(section.title)
+      ? `${section.title}: ${scopedLabel}.`
+      : `${section.title}.`;
+  const followUpLine =
+    input.sectionKnowledgeBundle.followUpActions.length > 0
+      ? `Jesli chcesz przejsc dalej, wybierz: ${input.sectionKnowledgeBundle.followUpActions
+        .map((action) => action.label)
+        .join(', ')}.`
+      : null;
+  const runtimeOverlay = buildSectionRuntimeOverlay(input);
+
+  return [...new Set([titleLine, section.summary, section.body, runtimeOverlay, followUpLine].filter(Boolean))]
+    .join('\n\n')
+    .trim();
 };
 
 const persistTutorMoodState = async (input: {
@@ -534,242 +251,8 @@ const persistTutorMoodState = async (input: {
         surface: input.context?.surface ?? null,
         contentId: input.context?.contentId ?? null,
       },
-    });
+      });
   }
-};
-
-const buildContextInstructions = (input: {
-  context: KangurAiTutorConversationContext | undefined;
-  registryBundle: ContextRegistryResolutionBundle | null;
-  options?: {
-    testAccessMode?: 'disabled' | 'guided' | 'review_after_answer';
-  };
-}): string => {
-  const { context, registryBundle, options } = input;
-  if (!context) {
-    return '';
-  }
-
-  const { learnerSnapshot, loginActivity, surfaceContext, assignmentContext } =
-    resolveKangurAiTutorRuntimeDocuments(registryBundle, context);
-  const policyInstructions = buildRegistryPolicyInstructions(registryBundle);
-  const surfaceLabel =
-    context.surface === 'test'
-      ? 'test practice'
-      : context.surface === 'game'
-        ? 'game practice'
-        : 'lesson learning';
-  const lines: string[] = [
-    `Current Kangur surface: ${surfaceLabel}.`,
-  ];
-
-  const title = readStringFact(surfaceContext, 'title') ?? readContextString(context.title);
-  if (title) {
-    lines.push(`Current title: ${title}`);
-  }
-
-  const description =
-    readStringFact(surfaceContext, 'description') ?? readContextString(context.description);
-  if (description) {
-    lines.push(`Current description: ${description}`);
-  }
-
-  const learnerSummary = readStringFact(learnerSnapshot, 'learnerSummary');
-  if (learnerSummary) {
-    lines.push(`Learner snapshot: ${learnerSummary}`);
-  }
-
-  const loginActivitySummary = readStringFact(loginActivity, 'recentLoginActivitySummary');
-  if (loginActivitySummary) {
-    lines.push(`Recent Kangur login activity: ${loginActivitySummary}`);
-  }
-
-  const masterySummary =
-    readStringFact(surfaceContext, 'masterySummary') ?? readContextString(context.masterySummary);
-  if (masterySummary) {
-    lines.push(`Learner mastery snapshot: ${masterySummary}`);
-  }
-
-  const assignmentSummary =
-    readStringFact(assignmentContext, 'assignmentSummary') ??
-    readStringFact(surfaceContext, 'assignmentSummary') ??
-    readContextString(context.assignmentSummary);
-  if (assignmentSummary) {
-    lines.push(`Active assignment or focus: ${assignmentSummary}`);
-  }
-  if (context.focusKind) {
-    lines.push(`Tutor visual focus: ${context.focusKind}.`);
-  }
-  if (context.focusLabel) {
-    lines.push(`Tutor focus label: ${context.focusLabel}`);
-  }
-  if (context.assignmentId) {
-    lines.push(`Assignment id in focus: ${context.assignmentId}`);
-  }
-
-  const currentQuestion =
-    readStringFact(surfaceContext, 'currentQuestion') ?? readContextString(context.currentQuestion);
-  if (currentQuestion) {
-    lines.push(`Current question: ${currentQuestion}`);
-  }
-
-  const questionProgressLabel =
-    readStringFact(surfaceContext, 'questionProgressLabel') ??
-    readContextString(context.questionProgressLabel);
-  if (questionProgressLabel) {
-    lines.push(`Question progress: ${questionProgressLabel}`);
-  }
-
-  const revealedExplanation = readStringFact(surfaceContext, 'revealedExplanation');
-  if (context.answerRevealed && revealedExplanation) {
-    lines.push(`Review context: ${revealedExplanation}`);
-  }
-  if (context.selectedText) {
-    lines.push(`Learner selected this text: """${context.selectedText}"""`);
-  }
-  if (context.drawingImageData) {
-    lines.push(
-      'The learner attached a drawing to this tutor turn. You cannot inspect the image pixels directly here, so never pretend that you can see the uploaded sketch.'
-    );
-  }
-  if ((context.repeatedQuestionCount ?? 0) > 0) {
-    lines.push(
-      `Repeat signal: the learner has asked essentially the same question ${(context.repeatedQuestionCount ?? 0) + 1} times in this session. Do not repeat the same hint unchanged; change strategy and diagnose the sticking point.`
-    );
-  }
-  if (context.previousCoachingMode) {
-    lines.push(`Previous coaching mode in this tutor thread: ${context.previousCoachingMode}.`);
-  }
-  if (context.recentHintRecoverySignal === 'answer_revealed') {
-    lines.push(
-      'Recent hint recovery: the learner moved from a hint into review after seeing the answer. Focus on reflection, reasoning, and one improvement for the next attempt.'
-    );
-  } else if (context.recentHintRecoverySignal === 'focus_advanced') {
-    lines.push(
-      'Recent hint recovery: the learner progressed after the previous hint. Acknowledge that progress and give one clear next step instead of repeating the same hint.'
-    );
-  }
-  if (context.promptMode) {
-    lines.push(PROMPT_MODE_INSTRUCTIONS[context.promptMode]);
-  }
-  if (context.interactionIntent) {
-    lines.push(INTERACTION_INTENT_INSTRUCTIONS[context.interactionIntent]);
-  }
-  policyInstructions.forEach((instruction) => {
-    lines.push(`Registry policy: ${instruction}`);
-  });
-  if (context.surface === 'test') {
-    if (options?.testAccessMode === 'review_after_answer' && context.answerRevealed) {
-      lines.push(
-        'The parent only allows post-answer review in tests. Keep the focus on reasoning, mistakes, and what to watch next time.'
-      );
-    }
-    lines.push(
-      context.answerRevealed
-        ? 'The learner has already answered or revealed this question. You may explain the reasoning, but still avoid doing the whole test for them.'
-        : 'The learner is in an active test question. Do not reveal the final answer, the correct option label, or solve the problem outright.'
-    );
-  }
-
-  if (context.surface === 'game' && currentQuestion) {
-    lines.push(
-      context.answerRevealed
-        ? 'The learner has already seen the practice outcome. You may review the reasoning and next step, but avoid doing future problems for them.'
-        : 'The learner is in an active practice question. Do not reveal the final answer or solve the problem outright.'
-    );
-  }
-
-  return lines.join('\n');
-};
-
-const buildRuntimeDocumentSourceText = (
-  document: ContextRuntimeDocument | null | undefined
-): string | null => {
-  if (!document) {
-    return null;
-  }
-
-  const sectionText =
-    document.sections
-      ?.map((section) => (typeof section.text === 'string' ? section.text.trim() : ''))
-      .find(Boolean) ?? null;
-  const summary = document.summary.trim();
-  const currentQuestion = readStringFact(document, 'currentQuestion');
-  const assignmentSummary = readStringFact(document, 'assignmentSummary');
-  const masterySummary = readStringFact(document, 'masterySummary');
-  const text = [summary, sectionText, currentQuestion, assignmentSummary, masterySummary]
-    .filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index)
-    .join('\n')
-    .trim();
-
-  if (!text) {
-    return null;
-  }
-
-  return text.length > 320 ? `${text.slice(0, 317).trimEnd()}...` : text;
-};
-
-const toKangurTutorChatSource = (
-  document: ContextRuntimeDocument,
-  score: number
-): AgentTeachingChatSource | null => {
-  const text = buildRuntimeDocumentSourceText(document);
-  if (!text) {
-    return null;
-  }
-
-  return {
-    documentId: document.id,
-    collectionId: 'kangur-runtime-context',
-    text,
-    score,
-    metadata: {
-      source: 'manual-text',
-      sourceId: document.id,
-      title: document.title,
-      description: document.summary,
-      tags: document.tags,
-    },
-  };
-};
-
-const buildKangurTutorResponseSources = (input: {
-  learnerSnapshot: ContextRuntimeDocument | null;
-  surfaceContext: ContextRuntimeDocument | null;
-  assignmentContext: ContextRuntimeDocument | null;
-  extraSources?: AgentTeachingChatSource[];
-}): AgentTeachingChatSource[] => {
-  const candidates = [input.surfaceContext, input.assignmentContext];
-  if (!candidates.some(Boolean) && input.learnerSnapshot) {
-    candidates.push(input.learnerSnapshot);
-  }
-
-  const seen = new Set<string>();
-
-  const runtimeSources = candidates.reduce<AgentTeachingChatSource[]>((acc, document, index) => {
-    if (!document || seen.has(document.id)) {
-      return acc;
-    }
-
-    const source = toKangurTutorChatSource(document, Math.max(0.5, 0.98 - index * 0.06));
-    if (!source) {
-      return acc;
-    }
-
-    seen.add(document.id);
-    acc.push(source);
-    return acc;
-  }, []);
-
-  const mergedSeen = new Set<string>();
-  return [...(input.extraSources ?? []), ...runtimeSources].filter((source) => {
-    const key = `${source.collectionId}:${source.documentId}`;
-    if (mergedSeen.has(key)) {
-      return false;
-    }
-    mergedSeen.add(key);
-    return true;
-  });
 };
 
 export async function postKangurAiTutorChatHandler(
@@ -982,6 +465,112 @@ export async function postKangurAiTutorChatHandler(
     if (drawingSupportEnabled) {
       systemParts.push(buildTutorDrawingInstructions());
     }
+    const sectionKnowledgeBundle =
+      !learnerDrawingImageData &&
+      context?.interactionIntent === 'explain' &&
+      context?.knowledgeReference?.sourceCollection === 'kangur_page_content'
+        ? await resolveKangurAiTutorSectionKnowledgeBundle({
+          latestUserMessage,
+          context,
+          locale: 'pl',
+        })
+        : null;
+
+    if (sectionKnowledgeBundle) {
+      const sectionExplainResponse = extractTutorDrawingArtifactsFromResponse(
+        buildSectionExplainMessage({
+          sectionKnowledgeBundle,
+          context,
+          runtimeDocuments: resolvedRuntimeDocuments,
+        })
+      );
+      const usage = await consumeKangurAiTutorDailyUsage({
+        learnerId,
+        dailyMessageLimit: tutorSettings.dailyMessageLimit,
+      });
+      const resolvedSources = buildKangurTutorResponseSources({
+        ...resolvedRuntimeDocuments,
+        extraSources: sectionKnowledgeBundle.sources,
+      });
+      const responseSources = tutorSettings.showSources ? resolvedSources : [];
+
+      await persistTutorMoodState({
+        learnerId,
+        tutorMood,
+        actor,
+        context,
+        req,
+        ctx,
+      });
+
+      await logKangurServerEvent({
+        source: 'kangur.ai-tutor.chat.page-content.completed',
+        service: 'kangur.ai-tutor',
+        message: 'Kangur AI tutor answered from canonical page-content knowledge.',
+        request: req,
+        requestContext: ctx,
+        actor,
+        statusCode: 200,
+        context: {
+          surface: context?.surface ?? null,
+          contentId: context?.contentId ?? null,
+          promptMode: resolvedPromptMode,
+          focusKind: context?.focusKind ?? null,
+          interactionIntent: context?.interactionIntent ?? null,
+          pageContentEntryId: sectionKnowledgeBundle.section.id,
+          linkedNativeGuideIds: sectionKnowledgeBundle.linkedNativeGuides.map((entry) => entry.id),
+          retrievedSourceCount: resolvedSources.length,
+          returnedSourceCount: responseSources.length,
+          followUpActionCount: sectionKnowledgeBundle.followUpActions.length,
+          showSources: tutorSettings.showSources,
+          allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
+          allowLessons: tutorSettings.allowLessons,
+          allowGames: tutorSettings.allowGames,
+          testAccessMode: tutorSettings.testAccessMode,
+          hintDepth: tutorSettings.hintDepth,
+          proactiveNudges: tutorSettings.proactiveNudges,
+          rememberTutorContext: tutorSettings.rememberTutorContext,
+          tutorMoodId: tutorMood.currentMoodId,
+          tutorBaselineMoodId: tutorMood.baselineMoodId,
+          tutorMoodReasonCode: tutorMood.lastReasonCode,
+          tutorMoodConfidence: tutorMood.confidence,
+          knowledgeGraphApplied,
+          knowledgeGraphQueryMode,
+          knowledgeGraphRecallStrategy,
+          knowledgeGraphLexicalHitCount,
+          knowledgeGraphVectorHitCount,
+          knowledgeGraphVectorRecallAttempted,
+          contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
+          contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
+          dailyMessageLimit: usage.dailyMessageLimit,
+          dailyUsageCount: usage.messageCount,
+          dailyUsageRemaining: usage.remainingMessages,
+          usageDateKey: usage.dateKey,
+          messageCount: messages.length,
+        },
+      });
+
+      return NextResponse.json({
+        message: sectionExplainResponse.message,
+        sources: responseSources,
+        followUpActions: sectionKnowledgeBundle.followUpActions,
+        artifacts: sectionExplainResponse.artifacts,
+        answerResolutionMode: 'page_content',
+        knowledgeGraph: buildKnowledgeGraphResponseSummary({
+          knowledgeGraphApplied,
+          knowledgeGraphQueryStatus,
+          knowledgeGraphQueryMode,
+          knowledgeGraphRecallStrategy,
+          knowledgeGraphLexicalHitCount,
+          knowledgeGraphVectorHitCount,
+          knowledgeGraphVectorRecallAttempted,
+          websiteHelpGraphApplied,
+          websiteHelpGraphTargetNodeId: null,
+        }),
+        tutorMood,
+        usage,
+      } satisfies KangurAiTutorChatResponse);
+    }
     const nativeGuideResolution = learnerDrawingImageData
       ? {
         status: 'skipped' as const,
@@ -1174,6 +763,7 @@ export async function postKangurAiTutorChatHandler(
           knowledgeGraphFollowUpActions
         ),
         artifacts: nativeGuideResponse.artifacts,
+        answerResolutionMode: 'native_guide',
         knowledgeGraph: buildKnowledgeGraphResponseSummary({
           knowledgeGraphApplied,
           knowledgeGraphQueryStatus,
@@ -1456,6 +1046,7 @@ export async function postKangurAiTutorChatHandler(
         knowledgeGraphFollowUpActions
       ),
       artifacts: parsedTutorResponse.artifacts,
+      answerResolutionMode: 'brain',
       knowledgeGraph: buildKnowledgeGraphResponseSummary({
         knowledgeGraphApplied,
         knowledgeGraphQueryStatus,

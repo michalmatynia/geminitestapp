@@ -4,18 +4,19 @@ import { buildPlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
 import { evaluatePlanWithLLM } from '@/features/ai/agent-runtime/planning/llm-evaluation';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
+const { agentAuditLogDelegate } = vi.hoisted(() => ({
+  agentAuditLogDelegate: {
+    create: vi.fn(),
+  },
+}));
+
 // Mock the AI Brain client
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: vi.fn(),
 }));
 
-// Mock the legacy SQL client used in logging
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    agentAuditLog: {
-      create: vi.fn(),
-    },
-  },
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
 }));
 
 describe('Agent Runtime - Planning', () => {

@@ -15,9 +15,13 @@ export type LeftPanelMode = 'sections' | 'theme' | 'menu' | 'app-embeds' | 'stru
 
 export interface CmsBuilderLeftPanelProps {
   variant?: 'standard' | 'kangur';
+  themePanel?: React.ReactNode;
 }
 
-export function CmsBuilderLeftPanel({ variant = 'standard' }: CmsBuilderLeftPanelProps): React.JSX.Element {
+export function CmsBuilderLeftPanel({
+  variant = 'standard',
+  themePanel,
+}: CmsBuilderLeftPanelProps): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const [leftPanelMode, setLeftPanelMode] = React.useState<LeftPanelMode>(
     variant === 'kangur' ? 'structure' : 'sections'
@@ -160,7 +164,8 @@ export function CmsBuilderLeftPanel({ variant = 'standard' }: CmsBuilderLeftPane
           actions={headerActions}
         />
         {(leftPanelMode === 'sections' || leftPanelMode === 'structure') && <ComponentTreePanel />}
-        {leftPanelMode === 'theme' && <ThemeSettingsPanel showHeader={false} />}
+        {leftPanelMode === 'theme' &&
+          (themePanel ?? <ThemeSettingsPanel showHeader={false} />)}
         {leftPanelMode === 'menu' && <MenuSettingsPanel showHeader={false} />}
         {leftPanelMode === 'app-embeds' && <AppEmbedsPanel showHeader={false} />}
       </div>

@@ -121,6 +121,9 @@ const createSummaryResponse = () => ({
       importantEvents: [],
       aiTutor: {
         messageSucceededCount: 4,
+        pageContentAnswerCount: 1,
+        nativeGuideAnswerCount: 1,
+        brainAnswerCount: 2,
         knowledgeGraphAppliedCount: 3,
         knowledgeGraphSemanticCount: 2,
         knowledgeGraphWebsiteHelpCount: 1,
@@ -134,6 +137,8 @@ const createSummaryResponse = () => ({
         bridgeQuickActionClickCount: 1,
         bridgeFollowUpClickCount: 1,
         bridgeFollowUpCompletionCount: 1,
+        directAnswerRatePercent: 50,
+        brainFallbackRatePercent: 50,
         bridgeCompletionRatePercent: 50,
         knowledgeGraphCoverageRatePercent: 75,
         knowledgeGraphVectorAssistRatePercent: 100,

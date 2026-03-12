@@ -77,7 +77,7 @@ export default function DifficultySelector({
               animate={{ opacity: 1, y: 0 }}
               aria-label={`${config.label}. Limit ${config.timeLimit} sekund. Zakres od 1 do ${config.range}.`}
               aria-pressed={isSelected}
-              buttonClassName='flex w-full flex-col items-center gap-3 rounded-[28px] px-4 py-4 text-center sm:py-5'
+              buttonClassName='flex w-full flex-col items-center gap-3 kangur-card-padding-lg text-center'
               data-testid={`difficulty-option-${difficulty.id}`}
               emphasis={isSelected ? 'accent' : 'neutral'}
               initial={{ opacity: 0, y: 10 }}

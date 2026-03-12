@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 
+import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import {
   KangurCardDescription,
   KangurCardTitle,
@@ -10,7 +12,6 @@ import {
   KangurMetricCard,
   KangurProgressBar,
   KangurSectionEyebrow,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   getCurrentLevel,
@@ -137,25 +138,12 @@ export default function PlayerProgressCard({
         </div>
 
         {topActivity && (
-          <div
-            className='soft-card flex flex-col items-start gap-3 rounded-3xl border [border-color:var(--kangur-soft-card-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
-            data-testid='player-progress-top-activity'
-          >
-            <div className='min-w-0'>
-              <KangurSectionEyebrow as='p' className='tracking-[0.18em]'>
-                Najczesciej cwiczysz
-              </KangurSectionEyebrow>
-              <KangurCardTitle as='p'>
-                {topActivity.label}
-              </KangurCardTitle>
-              <KangurCardDescription as='p' size='xs'>
-                {topActivity.sessionsPlayed} sesji · {topActivity.averageXpPerSession} XP / gre
-              </KangurCardDescription>
-            </div>
-            <KangurStatusChip accent='indigo' className='self-start sm:self-auto'>
-              {topActivity.totalXpEarned} XP
-            </KangurStatusChip>
-          </div>
+          <KangurActivitySummaryCard
+            activity={topActivity}
+            dataTestId='player-progress-top-activity'
+            description={`${topActivity.sessionsPlayed} sesji · ${topActivity.averageXpPerSession} XP / gre`}
+            eyebrow='Najczesciej cwiczysz'
+          />
         )}
 
         {nextBadge ? (
@@ -167,31 +155,20 @@ export default function PlayerProgressCard({
                 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
             }}
           >
-            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
-              <div className='min-w-0'>
-                <KangurSectionEyebrow
-                  as='p'
-                  className='tracking-[0.18em] text-amber-700/80'
-                >
-                  Nastepna odznaka
-                </KangurSectionEyebrow>
-                <KangurCardTitle as='p' className='mt-1'>
+            <KangurProgressHighlightCardContent
+              chipAccent='amber'
+              chipLabel={nextBadge.summary}
+              description={nextBadge.desc}
+              eyebrow='Nastepna odznaka'
+              eyebrowClassName='text-amber-700/80'
+              progressAccent='amber'
+              progressBarTestId='player-progress-next-badge-bar'
+              progressValue={nextBadge.progressPercent}
+              title={
+                <>
                   {nextBadge.emoji} {nextBadge.name}
-                </KangurCardTitle>
-                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-                  {nextBadge.desc}
-                </KangurCardDescription>
-              </div>
-              <KangurStatusChip accent='amber' className='self-start sm:shrink-0'>
-                {nextBadge.summary}
-              </KangurStatusChip>
-            </div>
-            <KangurProgressBar
-              accent='amber'
-              className='mt-3'
-              data-testid='player-progress-next-badge-bar'
-              size='sm'
-              value={nextBadge.progressPercent}
+                </>
+              }
             />
           </div>
         ) : null}
@@ -205,33 +182,20 @@ export default function PlayerProgressCard({
                 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #dbeafe)',
             }}
           >
-            <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
-              <div className='min-w-0'>
-                <KangurSectionEyebrow
-                  as='p'
-                  className='tracking-[0.18em] text-sky-700/80'
-                >
-                  Polecony kierunek
-                </KangurSectionEyebrow>
-                <KangurCardTitle as='p' className='mt-1'>
-                  {guidedMomentum.completedSessions} polecone rundy
-                </KangurCardTitle>
-                <KangurCardDescription as='p' className='mt-1 leading-5' size='xs'>
-                  {guidedMomentum.nextBadgeName
-                    ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                    : 'Wszystkie odznaki polecanego kierunku odblokowane.'}
-                </KangurCardDescription>
-              </div>
-              <KangurStatusChip accent='sky' className='self-start sm:shrink-0'>
-                {guidedMomentum.summary}
-              </KangurStatusChip>
-            </div>
-            <KangurProgressBar
-              accent='sky'
-              className='mt-3'
-              data-testid='player-progress-guided-momentum-bar'
-              size='sm'
-              value={guidedMomentum.progressPercent}
+            <KangurProgressHighlightCardContent
+              chipAccent='sky'
+              chipLabel={guidedMomentum.summary}
+              description={
+                guidedMomentum.nextBadgeName
+                  ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
+                  : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+              }
+              eyebrow='Polecony kierunek'
+              eyebrowClassName='text-sky-700/80'
+              progressAccent='sky'
+              progressBarTestId='player-progress-guided-momentum-bar'
+              progressValue={guidedMomentum.progressPercent}
+              title={`${guidedMomentum.completedSessions} polecone rundy`}
             />
           </div>
         ) : null}

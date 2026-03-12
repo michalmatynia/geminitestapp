@@ -2380,18 +2380,16 @@ describe('KangurAiTutorWidget', () => {
     expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
     expect(clearSelectionMock).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('kangur-ai-tutor-selection-action')).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveAttribute(
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveAttribute(
       'data-selection-emphasis',
       'glow'
     );
-    expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveStyle({
-      width: '152px',
-      height: '34px',
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveStyle({
+      width: '160px',
+      height: '46px',
     });
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-spotlight')
-    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('kangur-ai-tutor-selection-guided-callout')
     ).not.toBeInTheDocument();
@@ -5107,6 +5105,9 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveTextContent(
       'Wyjaśniany fragment'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-preview')).toHaveClass(
+      'kangur-chat-padding-md'
+    );
     expect(screen.getByText('Wyjaśniany fragment')).toHaveClass(
       '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
     );
@@ -5585,6 +5586,10 @@ describe('KangurAiTutorWidget', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveClass(
+      'kangur-chat-card',
+      'kangur-chat-padding-md'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-toolbox-action-selected-text')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-move-to-context')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-detach-from-context')).not.toBeInTheDocument();
@@ -5969,6 +5974,10 @@ describe('KangurAiTutorWidget', () => {
     expect(screen.getByTestId('kangur-ai-tutor-context-switch')).toHaveTextContent(
       'Nowe miejsce pomocy'
     );
+    expect(screen.getByTestId('kangur-ai-tutor-context-switch')).toHaveClass(
+      'kangur-chat-inset',
+      'kangur-chat-padding-sm'
+    );
     expect(screen.getByText('Nowe miejsce pomocy')).toHaveClass(
       '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
     );
@@ -6129,6 +6138,12 @@ describe('KangurAiTutorWidget', () => {
     renderWithTutorAnchors({ homeAnchorKinds: ['leaderboard'] });
 
     fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+
+    expect(screen.queryByTestId('kangur-ai-tutor-selection-glow')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveStyle({
+      width: '440px',
+      height: '240px',
+    });
 
     await act(async () => {
       await vi.runAllTimersAsync();

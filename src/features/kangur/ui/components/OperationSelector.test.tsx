@@ -56,7 +56,7 @@ describe('OperationSelector', () => {
           id: 'division',
           isRecommended: true,
           label: 'Dzielenie',
-          priorityLabel: '',
+          priority: null,
           recommendedLabel: 'Misja dnia',
           select: vi.fn(),
           statusLabel: 'Trening swobodny',

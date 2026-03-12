@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurDivider,
   KangurGlassPanel,
   KangurResultBadge,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
@@ -40,12 +40,6 @@ export function KangurAssignmentSpotlight({
     return null;
   }
 
-  const priorityLabel =
-    assignment.priority === 'high'
-      ? 'Priorytet wysoki'
-      : assignment.priority === 'medium'
-        ? 'Priorytet średni'
-        : 'Priorytet niski';
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
   const transitionSourceId = `assignment-spotlight:${assignment.id}`;
 
@@ -79,13 +73,12 @@ export function KangurAssignmentSpotlight({
         </KangurResultBadge>
 
         <div className='pr-24'>
-          <KangurStatusChip
+          <KangurAssignmentPriorityChip
             accent='amber'
             className='text-[11px] uppercase tracking-[0.18em]'
+            priority={assignment.priority}
             size='sm'
-          >
-            {priorityLabel}
-          </KangurStatusChip>
+          />
           <div className='mt-4 flex items-start gap-3'>
             <span className='mt-1 text-xl' aria-hidden='true'>
               {assignment.target.type === 'lesson' ? '📚' : '🎯'}

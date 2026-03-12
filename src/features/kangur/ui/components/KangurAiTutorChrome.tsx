@@ -32,13 +32,13 @@ const warmOverlayShadowClassNameByTone = {
 } as const;
 const warmInsetCardClassNameByTone = {
   complete:
-    'rounded-2xl border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#d1fae5)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#10b981)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   guide:
-    'rounded-2xl border border-amber-200/80 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#fff7cf)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border border-amber-200/80 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#fff7cf)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   panel:
-    'rounded-2xl border shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border shadow-[0_10px_24px_-18px_rgba(180,83,9,0.24)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
   pending:
-    'rounded-2xl border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_70%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    'kangur-chat-inset border [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_70%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
 } as const;
 
 type ChromeKickerProps = HTMLAttributes<HTMLSpanElement> & {

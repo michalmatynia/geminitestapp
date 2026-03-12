@@ -17,6 +17,7 @@ import {
   type KangurAiTutorUiMode,
 } from '@/features/kangur/settings-ai-tutor';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { KangurLabeledValueSummary } from '@/features/kangur/ui/components/KangurLabeledValueSummary';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
@@ -32,6 +33,7 @@ import {
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import {
@@ -147,6 +149,7 @@ function TutorToggleField({
 function AiTutorConfigPanel(): React.JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
+  const { entry: aiTutorSectionContent } = useKangurPageContentEntry('parent-dashboard-ai-tutor');
   const settingsStore = useSettingsStore();
   const queryClient = useQueryClient();
   const activeLearnerId = activeLearner?.id ?? null;
@@ -252,6 +255,13 @@ function AiTutorConfigPanel(): React.JSX.Element {
       tutorContent.parentDashboard.settingsManagedNotice.split('{highlight}');
     return [before, after] as const;
   }, [tutorContent.parentDashboard.settingsManagedNotice]);
+  const learnerHeaderTitle = activeLearner
+    ? formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
+      learnerName: activeLearner.displayName,
+    })
+    : null;
+  const sectionTitle = aiTutorSectionContent?.title ?? 'Tutor-AI dla rodzica';
+  const sectionSummary = aiTutorSectionContent?.summary ?? tutorContent.parentDashboard.subtitle;
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!activeLearner || !canAccessDashboard) return;
@@ -319,9 +329,17 @@ function AiTutorConfigPanel(): React.JSX.Element {
   if (!activeLearner) {
     return (
       <KangurGlassPanel padding='lg' surface='solid' variant='soft' className='w-full text-center'>
-        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-          {tutorContent.parentDashboard.noActiveLearner}
-        </p>
+        <div className='flex flex-col gap-2'>
+          {aiTutorSectionContent ? (
+            <>
+              <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>{sectionTitle}</p>
+              <p className='text-sm [color:var(--kangur-page-muted-text)]'>{sectionSummary}</p>
+            </>
+          ) : null}
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            {tutorContent.parentDashboard.noActiveLearner}
+          </p>
+        </div>
       </KangurGlassPanel>
     );
   }
@@ -335,13 +353,14 @@ function AiTutorConfigPanel(): React.JSX.Element {
       <div className='flex items-center gap-3'>
         <BrainCircuit className='h-5 w-5 text-orange-500' />
         <div>
-          <div className='text-sm font-bold [color:var(--kangur-page-text)]'>
-            {formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
-              learnerName: activeLearner.displayName,
-            })}
+          <KangurSectionEyebrow className='tracking-[0.18em]'>
+            {sectionTitle}
+          </KangurSectionEyebrow>
+          <div className='mt-1 text-sm font-bold [color:var(--kangur-page-text)]'>
+            {learnerHeaderTitle}
           </div>
           <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-            {tutorContent.parentDashboard.subtitle}
+            {sectionSummary}
           </div>
         </div>
       </div>
@@ -375,39 +394,27 @@ function AiTutorConfigPanel(): React.JSX.Element {
         </div>
 
         <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
-          <div>
-            <KangurSectionEyebrow className='text-xs tracking-wide'>
-              {tutorContent.parentDashboard.baselineLabel}
-            </KangurSectionEyebrow>
-            <KangurCardTitle
-              className='mt-1'
-              data-testid='parent-dashboard-ai-tutor-mood-baseline'
-            >
-              {baselineMoodPreset.label}
-            </KangurCardTitle>
-          </div>
-          <div>
-            <KangurSectionEyebrow className='text-xs tracking-wide'>
-              {tutorContent.parentDashboard.confidenceLabel}
-            </KangurSectionEyebrow>
-            <KangurCardTitle
-              className='mt-1'
-              data-testid='parent-dashboard-ai-tutor-mood-confidence'
-            >
-              {moodConfidence}
-            </KangurCardTitle>
-          </div>
-          <div>
-            <KangurSectionEyebrow className='text-xs tracking-wide'>
-              {tutorContent.parentDashboard.updatedLabel}
-            </KangurSectionEyebrow>
-            <KangurCardTitle
-              className='mt-1'
-              data-testid='parent-dashboard-ai-tutor-mood-updated'
-            >
-              {moodUpdatedAt}
-            </KangurCardTitle>
-          </div>
+          <KangurLabeledValueSummary
+            label={tutorContent.parentDashboard.baselineLabel}
+            labelClassName='text-xs tracking-wide'
+            value={baselineMoodPreset.label}
+            valueClassName='mt-1'
+            valueTestId='parent-dashboard-ai-tutor-mood-baseline'
+          />
+          <KangurLabeledValueSummary
+            label={tutorContent.parentDashboard.confidenceLabel}
+            labelClassName='text-xs tracking-wide'
+            value={moodConfidence}
+            valueClassName='mt-1'
+            valueTestId='parent-dashboard-ai-tutor-mood-confidence'
+          />
+          <KangurLabeledValueSummary
+            label={tutorContent.parentDashboard.updatedLabel}
+            labelClassName='text-xs tracking-wide'
+            value={moodUpdatedAt}
+            valueClassName='mt-1'
+            valueTestId='parent-dashboard-ai-tutor-mood-updated'
+          />
         </div>
       </div>
 

@@ -660,9 +660,7 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
     expect(
-      screen.getByText(
-        'This lesson is set to use custom document content, but no document blocks have been saved yet.'
-      )
+      screen.getByText('Ta lekcja ma wlaczony tryb dokumentu, ale nie zapisano jeszcze blokow tresci.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('lessons-empty-document-summary')).toHaveClass(
       'soft-card'
@@ -760,7 +758,7 @@ describe('Lessons', () => {
     expect(screen.getByTestId('lesson-library-icon-clock-doc')).toHaveClass(
       'h-16',
       'w-16',
-      'rounded-[24px]'
+      'kangur-gradient-icon-tile-lg'
     );
     expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
@@ -952,6 +950,273 @@ describe('Lessons', () => {
     expect(screen.getByText('Mongo intro do lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Brak gotowych lekcji')).toBeInTheDocument();
     expect(screen.getByText('Mongo pusty stan listy lekcji.')).toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed page-content copy for the active lesson header, assignment, document, and navigation when available', () => {
+    authState.value = {
+      user: {
+        id: 'parent-1',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+      canAccessParentAssignments: true,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    };
+    assignmentsState.value = [
+      {
+        id: 'assignment-priority',
+        learnerKey: 'jan@example.com',
+        title: 'Powtorz nauke zegara',
+        description: 'Skup sie na odczytywaniu godzin.',
+        priority: 'high',
+        archived: false,
+        target: {
+          type: 'lesson',
+          lessonComponentId: 'clock',
+          requiredCompletions: 1,
+          baselineCompletions: 0,
+        },
+        assignedByName: 'Rodzic',
+        assignedByEmail: 'rodzic@example.com',
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-06T10:00:00.000Z',
+        progress: {
+          status: 'in_progress',
+          percent: 40,
+          summary: 'Powtorki: 0/1',
+          attemptsCompleted: 0,
+          attemptsRequired: 1,
+          lastActivityAt: null,
+          completedAt: null,
+        },
+      },
+    ];
+    setSettingsStore({
+      lessons: [
+        createLesson({
+          id: 'clock-doc',
+          componentId: 'clock',
+          contentMode: 'document',
+          title: 'Nauka zegara',
+        }),
+        createLesson({
+          id: 'calendar-next',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 2000,
+        }),
+      ],
+      documents: {
+        'clock-doc': {
+          version: 1,
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Clock lesson</p>',
+              align: 'left',
+            },
+          ],
+        },
+      },
+    });
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
+      if (entryId === 'lessons-active-header') {
+        return {
+          entry: {
+            id: 'lessons-active-header',
+            title: 'Mongo aktywna lekcja',
+            summary: 'Mongo naglowek aktywnej lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      if (entryId === 'lessons-active-assignment') {
+        return {
+          entry: {
+            id: 'lessons-active-assignment',
+            title: 'Mongo zadanie rodzica',
+            summary: 'Mongo opis sekcji zadania dla aktywnej lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      if (entryId === 'lessons-active-document') {
+        return {
+          entry: {
+            id: 'lessons-active-document',
+            title: 'Mongo material lekcji',
+            summary: 'Mongo opis dokumentu aktywnej lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      if (entryId === 'lessons-active-navigation') {
+        return {
+          entry: {
+            id: 'lessons-active-navigation',
+            title: 'Mongo nawigacja lekcji',
+            summary: 'Mongo opis przechodzenia miedzy lekcjami.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      return {
+        entry: null,
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    });
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.getByText('Mongo aktywna lekcja')).toBeInTheDocument();
+    expect(screen.getByText('Mongo naglowek aktywnej lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Mongo zadanie rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis sekcji zadania dla aktywnej lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Mongo material lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis dokumentu aktywnej lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Mongo nawigacja lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis przechodzenia miedzy lekcjami.')).toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson({
+          id: 'doc-empty',
+          componentId: 'logical_patterns',
+          contentMode: 'document',
+          title: 'Patterns Draft',
+        }),
+      ],
+      documents: {
+        'doc-empty': {
+          version: 1,
+          blocks: [
+            {
+              id: 'text-empty',
+              type: 'text',
+              html: '<p> </p>',
+              align: 'left',
+            },
+          ],
+        },
+      },
+    });
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
+      if (entryId === 'lessons-active-empty-document') {
+        return {
+          entry: {
+            id: 'lessons-active-empty-document',
+            title: 'Mongo brak tresci lekcji',
+            summary: 'Mongo pusty stan aktywnej lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      return {
+        entry: null,
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    });
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
+
+    expect(screen.getByText('Mongo brak tresci lekcji')).toBeInTheDocument();
+    expect(screen.getByText('Mongo pusty stan aktywnej lekcji.')).toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed page-content copy for the secret lesson panel when available', async () => {
+    setSettingsStore({
+      lessons: [
+        createLesson(),
+        createLesson({
+          id: 'kangur-lesson-calendar',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 2000,
+        }),
+      ],
+    });
+    progressState.value = createProgressState({
+      lessonMastery: {
+        clock: { completions: 1 },
+        calendar: { completions: 1 },
+      },
+    });
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
+      if (entryId === 'lessons-active-secret-panel') {
+        return {
+          entry: {
+            id: 'lessons-active-secret-panel',
+            title: 'Mongo ukryty final',
+            summary: 'Mongo opis ukrytego zakonczenia lekcji.',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      return {
+        entry: null,
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    });
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open secret lesson' }));
+
+    await waitFor(() => expect(screen.getByTestId('lessons-secret-panel')).toBeInTheDocument());
+
+    expect(screen.getByText('Mongo ukryty final')).toBeInTheDocument();
+    expect(screen.getByText('Mongo opis ukrytego zakonczenia lekcji.')).toBeInTheDocument();
   });
 });
 it('renders the lessons wordmark without a duplicate visible text heading', () => {

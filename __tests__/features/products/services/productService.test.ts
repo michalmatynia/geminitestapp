@@ -1,402 +1,370 @@
-import fs from 'fs/promises';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => {
+  const repository = {
+    getProducts: vi.fn(),
+    countProducts: vi.fn(),
+    getProductsWithCount: vi.fn(),
+    getProductIds: vi.fn(),
+    getProductById: vi.fn(),
+    getProductBySku: vi.fn(),
+    getProductsBySkus: vi.fn(),
+    findProductsByBaseIds: vi.fn(),
+    findProductByBaseId: vi.fn(),
+    createProduct: vi.fn(),
+    bulkCreateProducts: vi.fn(),
+    updateProduct: vi.fn(),
+    deleteProduct: vi.fn(),
+    duplicateProduct: vi.fn(),
+    getProductImages: vi.fn(),
+    addProductImages: vi.fn(),
+    replaceProductImages: vi.fn(),
+    removeProductImage: vi.fn(),
+    countProductsByImageFileId: vi.fn(),
+    replaceProductCatalogs: vi.fn(),
+    replaceProductCategory: vi.fn(),
+    replaceProductTags: vi.fn(),
+    replaceProductProducers: vi.fn(),
+    replaceProductNotes: vi.fn(),
+    bulkReplaceProductCatalogs: vi.fn(),
+    bulkAddProductCatalogs: vi.fn(),
+    bulkRemoveProductCatalogs: vi.fn(),
+    createProductInTransaction: vi.fn(),
+  };
 
-import { productService } from '@/shared/lib/products/services/productService';
-import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+  const imageRepository = {
+    createImageFile: vi.fn(),
+    getImageFileById: vi.fn(),
+    listImageFiles: vi.fn(),
+    findImageFilesByIds: vi.fn(),
+    updateImageFilePath: vi.fn(),
+    updateImageFileTags: vi.fn(),
+    deleteImageFile: vi.fn(),
+  };
 
-vi.mock('fs/promises', () => ({
-  default: {
-    access: vi.fn().mockResolvedValue(undefined),
-    unlink: vi.fn().mockResolvedValue(undefined),
-    mkdir: vi.fn().mockResolvedValue(undefined),
-    rmdir: vi.fn().mockResolvedValue(undefined),
-    readdir: vi.fn().mockResolvedValue([]),
-    rename: vi.fn().mockResolvedValue(undefined),
-    writeFile: vi.fn().mockResolvedValue(undefined),
+  return {
+    repository,
+    imageRepository,
+    getProductRepository: vi.fn(),
+    getProductDataProvider: vi.fn(),
+    validateProductCreate: vi.fn(),
+    validateProductUpdate: vi.fn(),
+    uploadFile: vi.fn(),
+    getImageFileRepository: vi.fn(),
+    deleteFileFromStorage: vi.fn(),
+    logActivity: vi.fn(),
+    logWarning: vi.fn(),
+    logInfo: vi.fn(),
+    captureException: vi.fn(),
+  };
+});
+
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
+  getProductRepository: mocks.getProductRepository,
+}));
+
+vi.mock('@/shared/lib/products/services/product-provider', () => ({
+  getProductDataProvider: mocks.getProductDataProvider,
+}));
+
+vi.mock('@/shared/lib/products/validations', () => ({
+  validateProductCreate: mocks.validateProductCreate,
+  validateProductUpdate: mocks.validateProductUpdate,
+}));
+
+vi.mock('@/shared/lib/files/services/image-file-service', () => ({
+  uploadFile: mocks.uploadFile,
+  getImageFileRepository: mocks.getImageFileRepository,
+  deleteFileFromStorage: mocks.deleteFileFromStorage,
+}));
+
+vi.mock('@/shared/utils/observability/activity-service', () => ({
+  logActivity: mocks.logActivity,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    logWarning: mocks.logWarning,
+    logInfo: mocks.logInfo,
+    captureException: mocks.captureException,
   },
 }));
 
-let canMutateProductTables = true;
+import { productService } from '@/shared/lib/products/services/productService';
+
+const createProductRecord = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
+  ({
+    id: 'product-1',
+    sku: 'SKU-1',
+    baseProductId: null,
+    defaultPriceGroupId: null,
+    ean: null,
+    gtin: null,
+    asin: null,
+    name: { en: 'Product 1', pl: null, de: null },
+    description: { en: '', pl: null, de: null },
+    name_en: 'Product 1',
+    name_pl: null,
+    name_de: null,
+    description_en: null,
+    description_pl: null,
+    description_de: null,
+    supplierName: null,
+    supplierLink: null,
+    priceComment: null,
+    stock: 1,
+    price: 10,
+    sizeLength: null,
+    sizeWidth: null,
+    weight: null,
+    length: null,
+    published: false,
+    categoryId: null,
+    catalogId: '',
+    tags: [],
+    producers: [],
+    images: [],
+    catalogs: [],
+    parameters: [],
+    imageLinks: [],
+    imageBase64s: [],
+    noteIds: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }) as ProductWithImages;
 
 describe('productService', () => {
-  const shouldSkipProductServiceIntegration = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutateProductTables;
-
-  beforeEach(async () => {
-    if (shouldSkipProductServiceIntegration()) return;
-
-    // Clear the database before each test.
-    // In environments with restricted legacy SQL privileges, disable this suite gracefully.
-    try {
-      await legacySqlClient.productCategoryAssignment.deleteMany({});
-      await legacySqlClient.productTagAssignment.deleteMany({});
-      await legacySqlClient.productProducerAssignment.deleteMany({});
-      await legacySqlClient.productCatalog.deleteMany({});
-      await legacySqlClient.productImage.deleteMany({});
-      await legacySqlClient.imageFile.deleteMany({});
-      await legacySqlClient.product.deleteMany({});
-      await legacySqlClient.catalog.deleteMany({});
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutateProductTables = false;
-        return;
-      }
-      throw error;
-    }
-
+  beforeEach(() => {
     vi.clearAllMocks();
+
+    mocks.getProductDataProvider.mockResolvedValue('mongodb');
+    mocks.getProductRepository.mockResolvedValue(mocks.repository);
+    mocks.getImageFileRepository.mockResolvedValue(mocks.imageRepository);
+
+    mocks.validateProductCreate.mockResolvedValue({
+      success: true,
+      data: { sku: 'SKU-1' },
+    });
+    mocks.validateProductUpdate.mockResolvedValue({
+      success: true,
+      data: {},
+    });
+
+    mocks.repository.getProducts.mockResolvedValue([]);
+    mocks.repository.getProductById.mockResolvedValue(createProductRecord());
+    mocks.repository.createProduct.mockResolvedValue(createProductRecord());
+    mocks.repository.updateProduct.mockResolvedValue(createProductRecord());
+    mocks.repository.duplicateProduct.mockResolvedValue(createProductRecord({ id: 'product-copy' }));
+    mocks.repository.replaceProductImages.mockResolvedValue(undefined);
+    mocks.repository.replaceProductCatalogs.mockResolvedValue(undefined);
+    mocks.repository.replaceProductCategory.mockResolvedValue(undefined);
+    mocks.repository.replaceProductTags.mockResolvedValue(undefined);
+    mocks.repository.replaceProductProducers.mockResolvedValue(undefined);
+    mocks.repository.replaceProductNotes.mockResolvedValue(undefined);
+    mocks.repository.removeProductImage.mockResolvedValue(undefined);
+    mocks.repository.countProductsByImageFileId.mockResolvedValue(1);
+
+    mocks.uploadFile.mockResolvedValue({ id: 'uploaded-image-1' });
+    mocks.imageRepository.getImageFileById.mockResolvedValue(null);
+    mocks.imageRepository.deleteImageFile.mockResolvedValue(null);
+    mocks.deleteFileFromStorage.mockResolvedValue(undefined);
+    mocks.logActivity.mockResolvedValue(undefined);
+    mocks.logWarning.mockResolvedValue(undefined);
+    mocks.logInfo.mockResolvedValue(undefined);
+    mocks.captureException.mockResolvedValue(undefined);
   });
 
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
+  it('loads products through the provider-selected repository', async () => {
+    const products = [createProductRecord({ id: 'product-1' }), createProductRecord({ id: 'product-2' })];
+    mocks.repository.getProducts.mockResolvedValue(products);
+
+    const result = await productService.getProducts({ search: 'desk', page: 2, pageSize: 12 });
+
+    expect(mocks.getProductRepository).toHaveBeenCalledWith('mongodb');
+    expect(mocks.repository.getProducts).toHaveBeenCalledWith({
+      search: 'desk',
+      page: 2,
+      pageSize: 12,
+    });
+    expect(result).toEqual(products);
   });
 
-  describe('getProductById', () => {
-    it('should return a product by ID', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const product = await createMockProduct({ name_en: 'Test Product', sku: 'TEST-1' });
-      const found = await productService.getProductById(product.id);
-      expect(found).toBeDefined();
-      expect(found?.id).toBe(product.id);
-      expect(found?.name_en).toBe('Test Product');
+  it('creates a product from FormData, uploads files, and applies parsed relations', async () => {
+    const file = new File(['image-bytes'], 'create-upload.jpg', {
+      type: 'image/jpeg',
     });
-
-    it('should return null if product not found', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const found = await productService.getProductById('non-existent-id');
-      expect(found).toBeNull();
-    });
-  });
-
-  describe('getProducts', () => {
-    it('should return all products when no filters are provided', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      await createMockProduct({ name_en: 'Product 1', sku: 'P1' });
-      await createMockProduct({ name_en: 'Product 2', sku: 'P2' });
-
-      const products = await productService.getProducts({});
-      expect(products.length).toBe(2);
-    });
-
-    it('should filter products by search term', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      await createMockProduct({ name_en: 'Apple', sku: 'A1' });
-      await createMockProduct({ name_en: 'Banana', sku: 'B1' });
-
-      const products = await productService.getProducts({ search: 'Apple' });
-      expect(products.length).toBe(1);
-      expect(products[0]!.name_en).toBe('Apple');
-    });
-  });
-
-  describe('createProduct', () => {
-    it('should successfully create a product from FormData', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const formData = new FormData();
-      formData.append('name_en', 'New Product');
-      formData.append('sku', 'NEW-SKU-123');
-      formData.append('price', '500');
-
-      const product = await productService.createProduct(formData);
-
-      expect(product).toBeDefined();
-      expect(product?.name_en).toBe('New Product');
-      expect(product?.sku).toBe('NEW-SKU-123');
-      expect(product?.price).toBe(500);
-
-      const dbProduct = await legacySqlClient.product.findUnique({ where: { id: product.id } });
-      expect(dbProduct).toBeDefined();
-      expect(dbProduct?.name_en).toBe('New Product');
-    });
-
-    it('should link catalogs if provided', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const catalog = await legacySqlClient.catalog.create({
-        data: { name: 'Test Catalog' },
-      });
-
-      const formData = new FormData();
-      formData.append('name_en', 'Catalog Product');
-      formData.append('sku', 'CAT-123');
-      formData.append('catalogIds', catalog.id);
-
-      const product = await productService.createProduct(formData);
-
-      const productInCatalog = await legacySqlClient.productCatalog.findFirst({
-        where: { productId: product.id, catalogId: catalog.id },
-      });
-      expect(productInCatalog).toBeDefined();
-    });
-
-    it('should persist uploaded image and multiple catalogs on create', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const catalogA = await legacySqlClient.catalog.create({ data: { name: 'Create Catalog A' } });
-      const catalogB = await legacySqlClient.catalog.create({ data: { name: 'Create Catalog B' } });
-
-      const formData = new FormData();
-      formData.append('name_en', 'Create Guard Product');
-      formData.append('sku', 'CRT-GUARD-1');
-      formData.append('catalogIds', catalogA.id);
-      formData.append('catalogIds', catalogB.id);
-      const file = new File([new Uint8Array([9, 8, 7, 6])], 'create-upload.jpg', {
-        type: 'image/jpeg',
-      });
-      if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
-        Object.defineProperty(file, 'arrayBuffer', {
-          value: async (): Promise<ArrayBuffer> => new Uint8Array([9, 8, 7, 6]).buffer,
-        });
-      }
-      formData.append('images', file);
-
-      const created = await productService.createProduct(formData);
-
-      expect(created.catalogs.map((entry) => entry.catalogId).sort()).toEqual(
-        [catalogA.id, catalogB.id].sort()
-      );
-      expect(created.images.length).toBe(1);
-
-      const dbCatalogs = await legacySqlClient.productCatalog.findMany({
-        where: { productId: created.id },
-        select: { catalogId: true },
-      });
-      expect(dbCatalogs.map((entry) => entry.catalogId).sort()).toEqual(
-        [catalogA.id, catalogB.id].sort()
-      );
-
-      const dbImages = await legacySqlClient.productImage.findMany({
-        where: { productId: created.id },
-      });
-      expect(dbImages.length).toBe(1);
-    });
-  });
-
-  describe('updateProduct', () => {
-    it('should update product fields', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const original = await createMockProduct({ name_en: 'Old Name', sku: 'OLD-SKU' });
-
-      const formData = new FormData();
-      formData.append('name_en', 'Updated Name');
-
-      const updated = await productService.updateProduct(original.id, formData);
-
-      expect(updated?.name_en).toBe('Updated Name');
-      expect(updated?.sku).toBe('OLD-SKU');
-    });
-
-    it('should update SKU', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const original = await createMockProduct({ name_en: 'Product', sku: 'OLD-SKU' });
-
-      const formData = new FormData();
-      formData.append('sku', 'NEW-SKU');
-
-      const updated = await productService.updateProduct(original.id, formData);
-
-      expect(updated?.sku).toBe('NEW-SKU');
-    });
-
-    it('should persist multiple catalogIds on update', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const original = await createMockProduct({ name_en: 'Catalog Update', sku: 'CAT-UPD-1' });
-      const catalogA = await legacySqlClient.catalog.create({ data: { name: 'Catalog A' } });
-      const catalogB = await legacySqlClient.catalog.create({ data: { name: 'Catalog B' } });
-
-      const formData = new FormData();
-      formData.append('catalogIds', catalogA.id);
-      formData.append('catalogIds', catalogB.id);
-
-      await productService.updateProduct(original.id, formData);
-
-      const links = await legacySqlClient.productCatalog.findMany({
-        where: { productId: original.id },
-        select: { catalogId: true },
-      });
-      expect(links.map((link: { catalogId: string }) => link.catalogId).sort()).toEqual(
-        [catalogA.id, catalogB.id].sort()
-      );
-    });
-
-    it('should persist uploaded image files on update', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const original = await createMockProduct({ name_en: 'Image Upload', sku: 'IMG-UPD-1' });
-      const file = new File([new Uint8Array([1, 2, 3, 4])], 'upload.jpg', {
-        type: 'image/jpeg',
-      });
-      if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
-        Object.defineProperty(file, 'arrayBuffer', {
-          value: async (): Promise<ArrayBuffer> => new Uint8Array([1, 2, 3, 4]).buffer,
-        });
-      }
-
-      const formData = new FormData();
-      formData.append('images', file);
-
-      const updated = await productService.updateProduct(original.id, formData);
-
-      expect(updated.images.length).toBe(1);
-      expect(updated.images[0]?.imageFileId).toBeTruthy();
-
-      const links = await legacySqlClient.productImage.findMany({
-        where: { productId: original.id },
-      });
-      expect(links.length).toBe(1);
-    });
-
-    it('should persist reordered imageFileIds on update', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const original = await createMockProduct({ name_en: 'With Images', sku: 'IMG-ORDER' });
-      const imageA = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'a.jpg',
-          filepath: '/uploads/products/a.jpg',
-          mimetype: 'image/jpeg',
-          size: 100,
+    const createdProduct = createProductRecord({ id: 'product-created', sku: 'NEW-SKU-123' });
+    const refreshedProduct = createProductRecord({
+      id: 'product-created',
+      sku: 'NEW-SKU-123',
+      images: [
+        {
+          id: 'product-image-1',
+          productId: 'product-created',
+          imageFileId: 'uploaded-image-1',
+          order: 0,
+          imageFile: { id: 'uploaded-image-1' },
         },
-      });
-      const imageB = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'b.jpg',
-          filepath: '/uploads/products/b.jpg',
-          mimetype: 'image/jpeg',
-          size: 100,
-        },
-      });
-
-      const firstUpdate = new FormData();
-      firstUpdate.append('imageFileIds', imageA.id);
-      firstUpdate.append('imageFileIds', imageB.id);
-      await productService.updateProduct(original.id, firstUpdate);
-
-      const reorderUpdate = new FormData();
-      reorderUpdate.append('imageFileIds', imageB.id);
-      reorderUpdate.append('imageFileIds', imageA.id);
-      await productService.updateProduct(original.id, reorderUpdate);
-
-      // The current implementation of updateProduct for images unlinks all and re-links in order.
-      // So checking the order of IDs returned by findMany (default order) might depend on implementation.
-      const productWithImages = await productService.getProductById(original.id);
-      expect(productWithImages?.images.map((img) => img.imageFile.id)).toEqual([
-        imageB.id,
-        imageA.id,
-      ]);
+      ],
+      catalogs: [{ catalogId: 'catalog-a' }, { catalogId: 'catalog-b' }],
     });
+
+    mocks.validateProductCreate.mockResolvedValue({
+      success: true,
+      data: {
+        name_en: 'New Product',
+        sku: 'NEW-SKU-123',
+      },
+    });
+    mocks.repository.createProduct.mockResolvedValue(createdProduct);
+    mocks.repository.getProductById.mockResolvedValue(refreshedProduct);
+
+    const formData = new FormData();
+    formData.append('name_en', 'New Product');
+    formData.append('sku', 'NEW-SKU-123');
+    formData.append('catalogIds', 'catalog-a');
+    formData.append('catalogIds', 'catalog-b');
+    formData.append('images', file);
+
+    const result = await productService.createProduct(formData);
+
+    expect(mocks.repository.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name_en: 'New Product',
+        sku: 'NEW-SKU-123',
+        parameters: [],
+      })
+    );
+    expect(mocks.uploadFile).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({
+        category: 'products',
+        provider: 'mongodb',
+        sku: 'NEW-SKU-123',
+        filenameOverride: 'create-upload.jpg',
+      })
+    );
+    expect(mocks.repository.replaceProductCatalogs).toHaveBeenCalledWith('product-created', [
+      'catalog-a',
+      'catalog-b',
+    ]);
+    expect(mocks.repository.replaceProductImages).toHaveBeenCalledWith('product-created', [
+      'uploaded-image-1',
+    ]);
+    expect(result).toEqual(refreshedProduct);
   });
 
-  describe('unlinkImageFromProduct', () => {
-    it('should unlink an image and NOT delete file if other products use it', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
-
-      const imageFile = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'shared.jpg',
-          filepath: '/uploads/products/shared.jpg',
-          mimetype: 'image/jpeg',
-          size: 100,
+  it('updates a product from FormData and preserves the provided image order', async () => {
+    const existingProduct = createProductRecord({
+      id: 'product-1',
+      sku: 'IMG-ORDER',
+      parameters: [{ parameterId: 'param-1', value: 'value-1' }],
+    });
+    const refreshedProduct = createProductRecord({
+      id: 'product-1',
+      sku: 'IMG-ORDER',
+      images: [
+        {
+          id: 'product-image-b',
+          productId: 'product-1',
+          imageFileId: 'image-b',
+          order: 0,
+          imageFile: { id: 'image-b' },
         },
-      });
-
-      const p1 = await createMockProduct({ sku: 'P1' });
-      const p2 = await createMockProduct({ sku: 'P2' });
-
-      await legacySqlClient.productImage.createMany({
-        data: [
-          { productId: p1.id, imageFileId: imageFile.id },
-          { productId: p2.id, imageFileId: imageFile.id },
-        ],
-      });
-
-      await productService.unlinkImageFromProduct(p1.id, imageFile.id);
-
-      const p1Images = await legacySqlClient.productImage.findMany({ where: { productId: p1.id } });
-      expect(p1Images.length).toBe(0);
-
-      const p2Images = await legacySqlClient.productImage.findMany({ where: { productId: p2.id } });
-      expect(p2Images.length).toBe(1);
-
-      const dbImageFile = await legacySqlClient.imageFile.findUnique({ where: { id: imageFile.id } });
-      expect(dbImageFile).toBeDefined();
-      expect(fs.unlink).not.toHaveBeenCalled();
+        {
+          id: 'product-image-a',
+          productId: 'product-1',
+          imageFileId: 'image-a',
+          order: 1,
+          imageFile: { id: 'image-a' },
+        },
+      ],
+      parameters: [{ parameterId: 'param-1', value: 'value-1' }],
     });
 
-    it('should unlink an image and delete file if it was the last link', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
+    mocks.repository.getProductById
+      .mockResolvedValueOnce(existingProduct)
+      .mockResolvedValueOnce(refreshedProduct);
+    mocks.repository.updateProduct.mockResolvedValue(existingProduct);
 
-      const imageFile = await legacySqlClient.imageFile.create({
-        data: {
-          filename: 'last.jpg',
-          filepath: '/uploads/products/last.jpg',
-          mimetype: 'image/jpeg',
-          size: 100,
-        },
-      });
+    const formData = new FormData();
+    formData.append('imageFileIds', 'image-b');
+    formData.append('imageFileIds', 'image-a');
 
-      const p1 = await createMockProduct({ sku: 'P1' });
-      await legacySqlClient.productImage.create({
-        data: { productId: p1.id, imageFileId: imageFile.id },
-      });
+    const result = await productService.updateProduct('product-1', formData);
 
-      await productService.unlinkImageFromProduct(p1.id, imageFile.id);
-
-      const p1Images = await legacySqlClient.productImage.findMany({ where: { productId: p1.id } });
-      expect(p1Images.length).toBe(0);
-
-      const dbImageFile = await legacySqlClient.imageFile.findUnique({ where: { id: imageFile.id } });
-      expect(dbImageFile).toBeNull();
-      expect(fs.unlink).toHaveBeenCalled();
-    });
+    expect(mocks.repository.updateProduct).toHaveBeenCalledWith('product-1', {});
+    expect(mocks.repository.replaceProductImages).toHaveBeenCalledWith('product-1', [
+      'image-b',
+      'image-a',
+    ]);
+    expect(result.images.map((image) => image.imageFile.id)).toEqual(['image-b', 'image-a']);
   });
 
-  describe('duplicateProduct', () => {
-    it('should successfully duplicate a product with a new SKU', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
+  it('keeps shared image files in storage when another product still references them', async () => {
+    const imageFile: ImageFileRecord = {
+      id: 'image-shared',
+      filename: 'shared.jpg',
+      filepath: '/uploads/products/shared.jpg',
+      mimetype: 'image/jpeg',
+      size: 100,
+    };
 
-      const original = await createMockProduct({
-        name_en: 'Original Product',
-        price: '100',
-        sku: 'ORIG123',
-      });
+    mocks.imageRepository.getImageFileById.mockResolvedValue(imageFile);
+    mocks.repository.countProductsByImageFileId.mockResolvedValue(1);
 
-      const duplicated = await productService.duplicateProduct(original.id, 'NEW123');
+    await productService.unlinkImageFromProduct('product-1', 'image-shared');
 
-      expect(duplicated).toBeDefined();
-      expect(duplicated?.id).not.toBe(original.id);
-      expect(duplicated?.sku).toBe('NEW123');
-      expect(duplicated?.name_en).toBe('Original Product');
-      expect(duplicated?.price).toBe(100);
+    expect(mocks.repository.removeProductImage).toHaveBeenCalledWith('product-1', 'image-shared');
+    expect(mocks.deleteFileFromStorage).not.toHaveBeenCalled();
+    expect(mocks.imageRepository.deleteImageFile).not.toHaveBeenCalled();
+  });
+
+  it('deletes orphaned image files when the removed link was the last reference', async () => {
+    const imageFile: ImageFileRecord = {
+      id: 'image-last',
+      filename: 'last.jpg',
+      filepath: '/uploads/products/last.jpg',
+      mimetype: 'image/jpeg',
+      size: 100,
+    };
+
+    mocks.imageRepository.getImageFileById.mockResolvedValue(imageFile);
+    mocks.repository.countProductsByImageFileId.mockResolvedValue(0);
+
+    await productService.unlinkImageFromProduct('product-1', 'image-last');
+
+    expect(mocks.deleteFileFromStorage).toHaveBeenCalledWith('/uploads/products/last.jpg');
+    expect(mocks.imageRepository.deleteImageFile).toHaveBeenCalledWith('image-last');
+  });
+
+  it('duplicates a product by SKU and reloads the duplicated record', async () => {
+    const duplicatedRecord = createProductRecord({ id: 'product-copy', sku: 'NEW123' });
+    const refreshedCopy = createProductRecord({
+      id: 'product-copy',
+      sku: 'NEW123',
+      name_en: 'Original Product',
     });
 
-    it('should throw error if SKU is missing', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
+    mocks.repository.duplicateProduct.mockResolvedValue(duplicatedRecord);
+    mocks.repository.getProductById.mockResolvedValue(refreshedCopy);
 
-      const original = await createMockProduct({ sku: 'ORIG456' });
-      await expect(productService.duplicateProduct(original.id, '')).rejects.toThrow(
-        'SKU is required'
-      );
-    });
+    const result = await productService.duplicateProduct('product-1', 'NEW123');
 
-    it('should return null if original product does not exist', async () => {
-      if (shouldSkipProductServiceIntegration()) return;
+    expect(mocks.repository.duplicateProduct).toHaveBeenCalledWith('product-1', 'NEW123');
+    expect(mocks.repository.getProductById).toHaveBeenCalledWith('product-copy');
+    expect(result).toEqual(refreshedCopy);
+  });
 
-      const result = await productService.duplicateProduct('non-existent-id', 'NEW999');
-      expect(result).toBeNull();
-    });
+  it('rejects duplication when SKU is blank', async () => {
+    await expect(productService.duplicateProduct('product-1', '')).rejects.toThrow(
+      'SKU is required'
+    );
+
+    expect(mocks.repository.duplicateProduct).not.toHaveBeenCalled();
   });
 });

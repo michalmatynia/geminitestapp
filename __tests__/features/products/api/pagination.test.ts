@@ -1,106 +1,108 @@
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => ({
+  getProductCount: vi.fn(),
+  getProducts: vi.fn(),
+  getFreshProducts: vi.fn(),
+  getProductDataProvider: vi.fn(),
+}));
+
+vi.mock('@/features/products/performance', () => ({
+  CachedProductService: {
+    getProductCount: mocks.getProductCount,
+    getProducts: mocks.getProducts,
+  },
+  performanceMonitor: {
+    record: vi.fn(),
+  },
+}));
+
+vi.mock('@/shared/lib/products/services/productService', () => ({
+  productService: {
+    getProducts: mocks.getFreshProducts,
+  },
+}));
+
+vi.mock('@/features/products/server', () => ({
+  getProductDataProvider: mocks.getProductDataProvider,
+}));
 
 import { GET as GET_COUNT } from '@/app/api/v2/products/count/route';
 import { GET as GET_LIST } from '@/app/api/v2/products/route';
-import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-type Product = { id: string };
-
-let canMutateProductPaginationTables = true;
-
-describe('Products API - Pagination and Count', () => {
-  const shouldSkipProductPaginationTests = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutateProductPaginationTables;
-
-  beforeEach(async () => {
-    if (shouldSkipProductPaginationTests()) return;
-
-    try {
-      await legacySqlClient.productImage.deleteMany({});
-      await legacySqlClient.imageFile.deleteMany({});
-      await legacySqlClient.product.deleteMany({});
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutateProductPaginationTables = false;
-        return;
-      }
-      throw error;
-    }
+describe('Products API pagination and count routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getProductCount.mockResolvedValue(0);
+    mocks.getProducts.mockResolvedValue([]);
+    mocks.getFreshProducts.mockResolvedValue([]);
+    mocks.getProductDataProvider.mockResolvedValue('mongodb');
   });
 
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
+  it('passes parsed filters to the count route and clamps oversized pageSize', async () => {
+    mocks.getProductCount.mockResolvedValue(3);
+
+    const response = await GET_COUNT(
+      new NextRequest('http://localhost/api/v2/products/count?search=lap&page=2&pageSize=96')
+    );
+    const data = (await response.json()) as { count: number };
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ count: 3 });
+    expect(mocks.getProductCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search: 'lap',
+        page: 2,
+        pageSize: 48,
+      })
+    );
   });
 
-  describe('GET /api/v2/products/count', () => {
-    it('should return the total count of products', async () => {
-      if (shouldSkipProductPaginationTests()) return;
-      await createMockProduct({ name_en: 'P1', sku: 'SKU1' });
-      await createMockProduct({ name_en: 'P2', sku: 'SKU2' });
-      await createMockProduct({ name_en: 'P3', sku: 'SKU3' });
+  it('uses the cached list service for paginated product reads', async () => {
+    mocks.getProducts.mockResolvedValue([
+      { id: 'product-3' },
+      { id: 'product-4' },
+    ]);
 
-      const res = await GET_COUNT(new NextRequest('http://localhost/api/v2/products/count'));
-      const data = (await res.json()) as { count: number };
+    const response = await GET_LIST(
+      new NextRequest('http://localhost/api/v2/products?page=2&pageSize=2&search=desk')
+    );
+    const data = (await response.json()) as Array<{ id: string }>;
 
-      expect(res.status).toEqual(200);
-      expect(data.count).toEqual(3);
-    });
-
-    it('should return the filtered count of products', async () => {
-      if (shouldSkipProductPaginationTests()) return;
-      await createMockProduct({ name_en: 'Laptop', sku: 'SKU1' });
-      await createMockProduct({ name_en: 'Mouse', sku: 'SKU2' });
-
-      const res = await GET_COUNT(
-        new NextRequest('http://localhost/api/v2/products/count?search=lap')
-      );
-      const data = (await res.json()) as { count: number };
-
-      expect(res.status).toEqual(200);
-      expect(data.count).toEqual(1);
-    });
+    expect(response.status).toBe(200);
+    expect(data.map((product) => product.id)).toEqual(['product-3', 'product-4']);
+    expect(mocks.getProducts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search: 'desk',
+        page: 2,
+        pageSize: 2,
+      })
+    );
+    expect(mocks.getFreshProducts).not.toHaveBeenCalled();
   });
 
-  describe('GET /api/v2/products - Server-side Pagination', () => {
-    it('should return a limited number of products based on pageSize', async () => {
-      if (shouldSkipProductPaginationTests()) return;
-      for (let i = 1; i <= 5; i++) {
-        await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
-      }
+  it('uses the fresh repository-backed path when fresh=1 is requested', async () => {
+    mocks.getFreshProducts.mockResolvedValue([{ id: 'fresh-1' }]);
 
-      const res = await GET_LIST(new NextRequest('http://localhost/api/v2/products?pageSize=2'));
-      const products = (await res.json()) as Product[];
+    const response = await GET_LIST(
+      new NextRequest('http://localhost/api/v2/products?fresh=1&page=3&pageSize=5')
+    );
+    const data = (await response.json()) as Array<{ id: string }>;
 
-      expect(res.status).toEqual(200);
-      expect(products.length).toEqual(2);
-    });
-
-    it('should return the correct page of products', async () => {
-      if (shouldSkipProductPaginationTests()) return;
-      // Products are ordered by createdAt desc in repository.
-      for (let i = 1; i <= 5; i++) {
-        await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
-      }
-
-      const res1 = await GET_LIST(
-        new NextRequest('http://localhost/api/v2/products?page=1&pageSize=2')
-      );
-      const page1 = (await res1.json()) as Product[];
-
-      const res2 = await GET_LIST(
-        new NextRequest('http://localhost/api/v2/products?page=2&pageSize=2')
-      );
-      const page2 = (await res2.json()) as Product[];
-
-      expect(page1.length).toEqual(2);
-      expect(page2.length).toEqual(2);
-      expect(page1[0]!.id).not.toEqual(page2[0]!.id);
-      expect(page1[1]!.id).not.toEqual(page2[1]!.id);
-    });
+    expect(response.status).toBe(200);
+    expect(data).toEqual([{ id: 'fresh-1' }]);
+    expect(mocks.getProductDataProvider).toHaveBeenCalledTimes(1);
+    expect(mocks.getFreshProducts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        page: 3,
+        pageSize: 5,
+      }),
+      expect.objectContaining({
+        provider: 'mongodb',
+        timings: expect.any(Object),
+      })
+    );
+    expect(mocks.getProducts).not.toHaveBeenCalled();
   });
 });

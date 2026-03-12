@@ -86,6 +86,7 @@ describe('KangurAssignmentsList', () => {
       'soft-card',
       'border'
     );
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('kangur-assignments-list-progress-assignment-regular')).toHaveAttribute(
       'aria-valuenow',
       '40'
@@ -119,6 +120,7 @@ describe('KangurAssignmentsList', () => {
       'soft-card',
       'border'
     );
+    expect(screen.getByText('Priorytet sredni')).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('kangur-assignments-list-divider-assignment-compact')).toHaveClass(
       'h-px',
       'w-full',

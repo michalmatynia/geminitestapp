@@ -1,19 +1,19 @@
 AI Prompts for a Modular Next.js 16+ Codebase
 
-Below is a comprehensive set of AI prompt templates to assist a developer in a Next.js 16+ App Router project with a feature-based modular architecture. The stack includes MongoDB (primary database), Prisma (optional ORM), TanStack Query/Table for data fetching and UI tables, Tailwind CSS + shadcn/UI for styling, and NextAuth 5.0 (Auth.js) for authentication. Each prompt is grouped by category and can be adapted to various features or modules by replacing placeholder names (e.g., <FeatureName>).
+Below is a comprehensive set of AI prompt templates to assist a developer in a Next.js 16+ App Router project with a feature-based modular architecture. The stack includes MongoDB, TanStack Query/Table for data fetching and UI tables, Tailwind CSS + shadcn/UI for styling, and NextAuth 5.0 (Auth.js) for authentication. Each prompt is grouped by category and can be adapted to various features or modules by replacing placeholder names (e.g., <FeatureName>).
 
 How to use: For each item, first read the What needs to be done instruction to understand the goal. Then copy and paste the Prompt into your AI code generation tool (GPT or Ollama), adjusting feature names or details as needed. These prompts encourage consistent architecture by keeping features self-contained (UI, logic, API together), enforcing unidirectional dependencies, and using the shared tech stack properly.
 
 Feature Generation Prompts
 
-What needs to be done: Generate a new full-stack feature module (end-to-end) following the project’s architecture. This includes creating a MongoDB/Prisma data model, API route or server action, TanStack Query hooks, and UI components (Tailwind + shadcn) for <FeatureName>. The prompt ensures the code adheres to feature-sliced structure (cohesive UI, model, and API) and uses best practices for data fetching and caching.
+What needs to be done: Generate a new full-stack feature module (end-to-end) following the project’s architecture. This includes creating a MongoDB-backed data model, API route or server action, TanStack Query hooks, and UI components (Tailwind + shadcn) for <FeatureName>. The prompt ensures the code adheres to feature-sliced structure (cohesive UI, model, and API) and uses best practices for data fetching and caching.
 
 Prompt:
 
 We are implementing a new feature **<FeatureName>** in our Next.js 16+ App Router project. This feature is described as: <brief description of feature and its purpose>.
 
 **Tech stack & context:** 
-- **Database:** MongoDB (with Mongoose) and Prisma (for schema, optional).
+- **Database:** MongoDB with shared DTO/Zod contracts and repository-backed persistence.
 - **API Layer:** Next.js App Router with route handlers (`app/api/**`) and server actions as needed.
 - **Data Fetching:** TanStack Query (React Query) for client-side queries and mutations.
 - **UI:** Tailwind CSS for styling and shadcn/UI components for consistent design.
@@ -29,7 +29,7 @@ We are implementing a new feature **<FeatureName>** in our Next.js 16+ App Route
 - If this feature requires auth, integrate NextAuth checks. For example, on the server side call our `auth()` function to get the session and redirect if unauthenticated:contentReference[oaicite:8]{index=8}.
 
 **Tasks:** 
-1. **Database Model:** Define the database schema for `<FeatureName>` (e.g., a new Prisma model and/or Mongoose schema). Include fields, relationships, and validation as needed.
+1. **Database Model:** Define the MongoDB document shape and shared schema/contracts for `<FeatureName>`. Include fields, relationships, and validation as needed.
 2. **API / Server Actions:** Create Next.js API route handler (`app/api/<feature>/route.ts`) or a server action function for `<FeatureName>` to handle data creation/retrieval. Ensure it interacts with the DB model and includes proper error handling and auth checks if required.
 3. **Client Data Hooks:** Develop TanStack Query hooks (e.g., `use<FeatureName>Query`, `use<FeatureName>Mutation`) in the feature module. These hooks should call the above API or server actions (using `fetch` or similar) and manage caching. Use appropriate query keys and implement invalidation or refetch on mutations so data stays consistent.
 4. **UI Components:** Implement React components for the feature’s UI:
@@ -320,19 +320,18 @@ We want to enforce our architecture and coding conventions via **ESLint rules** 
 
 Full-Stack Integration Prompts
 
-What needs to be done: Add a new database field to an existing model and propagate this change through the stack. This prompt covers updating the Prisma schema or Mongoose model, creating a migration if needed, updating API routes or server actions to handle the new field, and updating front-end components to use the field. It ensures no layer is forgotten when making schema changes.
+What needs to be done: Add a new database field to an existing model and propagate this change through the stack. This prompt covers updating the shared schema/contracts and MongoDB repository mapping, creating a migration or backfill if needed, updating API routes or server actions to handle the new field, and updating front-end components to use the field. It ensures no layer is forgotten when making schema changes.
 
 Prompt:
 
-We need to add a new field to our **database model** and ensure the entire application is updated to support it. Specifically, we are adding `<newFieldName>: <Type>` to the **<ModelName>** model (which is stored in MongoDB, via ${PrismaOrMongoose}).
+We need to add a new field to our **database model** and ensure the entire application is updated to support it. Specifically, we are adding `<newFieldName>: <Type>` to the **<ModelName>** model, which is stored in MongoDB.
 
 **Steps to implement (full-stack):**
 1. **Database schema update:** Modify the data model:
-   - If using **Prisma**, update the Prisma schema (`schema.prisma`) by adding the new field to the `model <ModelName>` definition (e.g., `newFieldName Type? @default(...)` or appropriate attributes). Run `prisma generate` (and `prisma migrate`) to apply the change to the database.
-   - If using **Mongoose** or a similar ODM, update the schema definition for <ModelName> (e.g., in `models/<ModelName>.ts`) to include the new field and its type/validators.
-   - Ensure that any required indexes or relationships for this field are accounted for in the schema.
+   - Update the shared schema/contracts and MongoDB repository mapping for <ModelName> to include the new field and its type/validators.
+   - Ensure that any required indexes, defaults, relationships, or backfill steps for this field are accounted for in the schema and migration plan.
 2. **Server-side logic:** Adjust any Next.js **API route handlers or server actions** involving <ModelName>:
-   - For **GET/read operations**, ensure the new field is selected or populated in queries (so it’s returned to clients). For example, update a Mongo query projection or Prisma find query to include `newFieldName`.
+   - For **GET/read operations**, ensure the new field is selected or populated in queries (so it’s returned to clients). For example, update a Mongo query projection or repository mapping to include `newFieldName`.
    - For **CREATE/UPDATE** operations, accept this new field from the request (e.g., parse it from `req.body` or `formData`) and include it when writing to the database. Add validation logic if necessary (for example, if the field is optional vs required, enforce business rules).
    - If the new field impacts any business logic (e.g., a “status” field that changes workflow), update that logic accordingly in the server code.
    - Update any **DTOs or TypeScript types** that represent <ModelName> in the backend (for instance, if we have a `T<ModelName>` type or Zod schema for requests, include the new field).
@@ -345,10 +344,10 @@ We need to add a new field to our **database model** and ensure the entire appli
    - Check **NextAuth (Auth.js)** if <ModelName> is related to user accounts or roles. For instance, if newFieldName is something like "role" or "profile info" linked to user, ensure it’s included in session if needed.
    - If <ModelName> appears in multiple features (say user info appears in profile and admin panels), update all those places.
    - Update **tests** (if any) to cover the new field – e.g., unit tests for model validation, integration tests for API routes, etc.
-   - Regenerate or update any documentation or types (like if we auto-generate TypeScript types from Prisma, ensure they’re updated).
+   - Regenerate or update any documentation or generated types if the shared schemas/contracts changed.
 
 **Provide the following in your response:**
-- The updated schema definition (Prisma model or Mongoose schema) with the new field and a brief note on any default or migration strategy.
+- The updated schema definition (shared schema/contract plus MongoDB repository mapping) with the new field and a brief note on any default or migration strategy.
 - The modified server code (API route or action) snippet showing how the new field is handled (both in reading and writing).
 - The updated client-side usage: maybe a snippet of a component or hook showing the new field (e.g., a piece of JSX where the field is displayed or a form input for it, and the adjusted query hook with the new field in the data type).
 - Ensure that the solution maintains consistency with our architecture (e.g., keep the changes within the respective feature module, maintain separation of concerns).
@@ -356,26 +355,25 @@ We need to add a new field to our **database model** and ensure the entire appli
 Let's proceed with the changes step by step, ensuring we don’t break existing functionality.
 
 
-What needs to be done: Implement a new relationship or cross-feature integration (full-stack). For example, linking two models (such as adding a reference from one collection to another) and updating API and UI to utilize this relationship. This prompt guides how to handle relational data in Mongo/Prisma, how to fetch and display related data, and how to maintain module boundaries (possibly this touches multiple features).
+What needs to be done: Implement a new relationship or cross-feature integration (full-stack). For example, linking two models (such as adding a reference from one collection to another) and updating API and UI to utilize this relationship. This prompt guides how to handle relational data in MongoDB, how to fetch and display related data, and how to maintain module boundaries (possibly this touches multiple features).
 
 Prompt:
 
 We are introducing a new **relationship** between two parts of our system: **<ModelA>** and **<ModelB>**. Specifically, we want to link <ModelA> to <ModelB> (e.g., `<ModelA>` documents will store a reference to a `<ModelB>`). We need to implement this end-to-end: database, API, and UI.
 
 **Details:**
-- In the database, `<ModelA>` should have a field (say, `modelBId` or an array of IDs if one-to-many) that references `<ModelB>`’s primary key. We are using MongoDB, so this could be a MongoDB ObjectId reference, or if using Prisma (with Mongo connector), it could be a relation field.
+- In the database, `<ModelA>` should have a field (say, `modelBId` or an array of IDs if one-to-many) that references `<ModelB>`’s primary key. We are using MongoDB, so this could be a MongoDB ObjectId reference or another stable identifier stored in the document.
 - We want to be able to, for example, fetch a <ModelA> and easily get the related <ModelB> data (maybe via a populated query or an additional query).
 - The UI might need to display the related data (e.g., show the name of the <ModelB> associated with each <ModelA>), and possibly allow linking/unlinking via forms.
 
 **Implementation plan:**
 1. **Database schema changes:** 
    - Update `<ModelA>`'s schema to include the reference to `<ModelB>`. 
-     - For Mongo/Mongoose: add a field `modelBId: { type: ObjectId, ref: '<ModelBCollectionName>' }` (or an array if multiple).
-     - For Prisma: in schema.prisma, add a field like `modelBId String? @db.ObjectId` (if using ObjectId as a string) and possibly a relation like `modelB <ModelB>? @relation(fields: [modelBId], references: [id])`.
-   - Ensure that `<ModelB>` has an index if needed for lookups (or in Prisma, consider adding a back-relation field for convenience).
+     - Add a field such as `modelBId: ObjectId | string | null` (or an array if multiple) to the shared schema and MongoDB repository mapping for `<ModelA>`.
+   - Ensure that `<ModelB>` has an index if needed for lookups and that the repository can resolve the relation efficiently.
 2. **Backend logic:**
    - In API route handlers for `<ModelA>`:
-     - When fetching <ModelA> (GET), allow including the related <ModelB> data. For example, if using Mongoose, use `.populate('modelBId')` to get the actual <ModelB> document. With Prisma, use the `include: { modelB: true }` in the find query to fetch related data.
+     - When fetching <ModelA> (GET), allow including the related <ModelB> data. For example, resolve `modelBId` through the repository layer and return the needed `<ModelB>` fields in the response.
      - When creating or updating <ModelA>, accept a reference to <ModelB> (e.g., an ID) and save it in `modelBId`. Validate that the provided ID corresponds to an existing <ModelB> (to avoid saving broken references).
    - Potentially create a new API endpoint or extend existing ones in <ModelB>’s feature if needed (for example, to query possible <ModelB> options for linking, or to get all <ModelA> associated with a given <ModelB>).
    - Make sure to handle cascading deletes or updates if that’s a concern (e.g., if a <ModelB> is deleted, decide what happens to <ModelA> references).

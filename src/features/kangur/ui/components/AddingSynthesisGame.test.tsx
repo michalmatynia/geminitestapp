@@ -155,7 +155,8 @@ describe('AddingSynthesisGame', () => {
     expect(screen.getByTestId('adding-synthesis-lane-0')).toHaveClass(
       'soft-card',
       'border',
-      'rounded-[24px]'
+      'kangur-card-surface',
+      'kangur-card-padding-md'
     );
     expect(screen.getByTestId('adding-synthesis-session-progress-bar')).toHaveAttribute(
       'aria-valuenow',

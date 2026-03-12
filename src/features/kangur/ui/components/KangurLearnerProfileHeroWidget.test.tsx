@@ -5,9 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { routeNavigatorPushMock, useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
+const { routeNavigatorPushMock, useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   routeNavigatorPushMock: vi.fn(),
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
@@ -24,11 +25,22 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
 
 describe('KangurLearnerProfileHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('renders the shared intro-card shell and routes back home', () => {
@@ -137,7 +149,9 @@ describe('KangurLearnerProfileHeroWidget', () => {
       '⭐ Pol tysiaca XP'
     );
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-track-quest')).toHaveClass(
-      '[border-color:var(--kangur-soft-card-border)]'
+      'soft-card',
+      'border',
+      'rounded-[24px]'
     );
     expect(screen.getByTestId('kangur-learner-profile-hero-milestone-track-quest')).toHaveTextContent(
       'Misje'
@@ -148,5 +162,53 @@ describe('KangurLearnerProfileHeroWidget', () => {
     expect(
       screen.queryByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
     ).not.toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed hero copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-hero',
+        title: 'Profil ucznia',
+        summary: 'Mongo opis profilu ucznia i jego kamieni milowych.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 480,
+        gamesPlayed: 4,
+        perfectGames: 1,
+        lessonsCompleted: 2,
+        clockPerfect: 1,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: ['addition', 'clock'],
+        lessonMastery: {},
+        totalCorrectAnswers: 20,
+        totalQuestionsAnswered: 25,
+        dailyQuestsCompleted: 1,
+        bestWinStreak: 2,
+        activityStats: {},
+      },
+      user: {
+        activeLearner: {
+          displayName: 'Ala',
+        },
+      },
+    });
+
+    render(<KangurLearnerProfileHeroWidget />);
+
+    expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent(
+      'Mongo opis profilu ucznia i jego kamieni milowych. Ala.'
+    );
+    expect(screen.getByText('Ala')).toBeInTheDocument();
   });
 });

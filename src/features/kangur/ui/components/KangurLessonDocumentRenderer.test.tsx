@@ -215,6 +215,8 @@ describe('KangurLessonDocumentRenderer', () => {
     );
     expect(screen.getByTestId('lesson-image-frame-image-1')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
+      'kangur-media-padding-md',
       'border-amber-100',
       'from-amber-50'
     );
@@ -309,6 +311,8 @@ describe('KangurLessonDocumentRenderer', () => {
     );
     expect(screen.getByTestId('lesson-image-frame-image-empty')).toHaveClass(
       'soft-card',
+      'kangur-card-surface',
+      'kangur-media-padding-md',
       'border-amber-100',
       'from-amber-50'
     );

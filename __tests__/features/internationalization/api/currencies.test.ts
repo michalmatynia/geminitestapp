@@ -1,109 +1,85 @@
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+const mocks = vi.hoisted(() => ({
+  getCurrencyRepository: vi.fn(),
+  getInternationalizationProvider: vi.fn(),
+  listCurrencies: vi.fn(),
+  createCurrency: vi.fn(),
+}));
 
-import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
+vi.mock('@/features/internationalization/server', () => ({
+  getCurrencyRepository: mocks.getCurrencyRepository,
+  getInternationalizationProvider: mocks.getInternationalizationProvider,
+}));
 
-type CurrencyResponse = {
-  id: string;
-  code: string;
-  name: string;
-  symbol: string | null;
-};
-
-let canMutateCurrenciesApiTables = true;
+import { GET_intl_handler, POST_intl_handler } from '@/app/api/v2/metadata/handler';
 
 describe('Currencies API', () => {
-  const currenciesRouteContext = { params: Promise.resolve({ type: 'currencies' }) };
-  const shouldSkipCurrenciesApiTests = (): boolean =>
-    !process.env['DATABASE_URL'] || !canMutateCurrenciesApiTables;
-
-  beforeEach(async () => {
-    if (shouldSkipCurrenciesApiTests()) return;
-
-    try {
-      await legacySqlClient.product.deleteMany({});
-      await legacySqlClient.priceGroup.deleteMany({});
-      await legacySqlClient.countryCurrency.deleteMany({});
-      await legacySqlClient.currency.deleteMany({});
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'EPERM') {
-        canMutateCurrenciesApiTables = false;
-        return;
-      }
-      throw error;
-    }
-  });
-
-  afterAll(async () => {
-    await legacySqlClient.$disconnect();
-  });
-
-  describe('GET /api/v2/metadata/currencies', () => {
-    it('should seed default currencies on first call', async () => {
-      if (shouldSkipCurrenciesApiTests()) return;
-
-      const res = await GET(
-        new NextRequest('http://localhost/api/v2/metadata/currencies'),
-        currenciesRouteContext
-      );
-      const currencies = (await res.json()) as CurrencyResponse[];
-
-      expect(res.status).toEqual(200);
-      expect(currencies.length).toBeGreaterThan(0);
-
-      const dbCurrencies = await legacySqlClient.currency.findMany();
-      expect(dbCurrencies.length).toBeGreaterThan(0);
-
-      const usd = currencies.find((c: CurrencyResponse) => c.code === 'USD');
-      if (!usd) {
-        throw new Error('Expected seeded currency USD.');
-      }
-      expect(usd.name).toBe('US Dollar');
-      expect(usd.symbol).toBe('$');
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getInternationalizationProvider.mockResolvedValue('mongodb');
+    mocks.getCurrencyRepository.mockResolvedValue({
+      listCurrencies: mocks.listCurrencies,
+      createCurrency: mocks.createCurrency,
     });
   });
 
-  describe('POST /api/v2/metadata/currencies', () => {
-    it('should create a new currency', async () => {
-      if (shouldSkipCurrenciesApiTests()) return;
+  it('lists currencies from the currency repository', async () => {
+    mocks.listCurrencies.mockResolvedValue([
+      { id: 'USD', code: 'USD', name: 'US Dollar', symbol: '$' },
+    ]);
 
-      const newCurrency = {
+    const res = await GET_intl_handler(new NextRequest('http://localhost/api/v2/metadata/currencies'), {} as any, {
+      type: 'currencies',
+    });
+    const currencies = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(currencies).toEqual([{ id: 'USD', code: 'USD', name: 'US Dollar', symbol: '$' }]);
+  });
+
+  it('creates a currency from the canonical payload', async () => {
+    mocks.createCurrency.mockResolvedValue({
+      id: 'USD',
+      code: 'USD',
+      name: 'US Dollar Custom',
+      symbol: '$',
+    });
+
+    const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        code: 'usd',
+        name: 'US Dollar Custom',
+        symbol: '$',
+      }),
+    });
+
+    const res = await POST_intl_handler(req, {} as any, { type: 'currencies' });
+    const currency = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mocks.createCurrency).toHaveBeenCalledWith(
+      expect.objectContaining({
         code: 'USD',
         name: 'US Dollar Custom',
         symbol: '$',
-      };
+      })
+    );
+    expect(currency.code).toBe('USD');
+  });
 
-      const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
-        method: 'POST',
-        body: JSON.stringify(newCurrency),
-      });
-
-      const res = await POST(req, currenciesRouteContext);
-      const currency = (await res.json()) as CurrencyResponse;
-
-      expect(res.status).toEqual(200);
-      expect(currency.code).toBe('USD');
-      expect(currency.name).toBe('US Dollar Custom');
+  it('rejects missing code/name payloads', async () => {
+    const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: 'USD' }),
     });
 
-    it('should reject invalid payload', async () => {
-      if (shouldSkipCurrenciesApiTests()) return;
-      const invalidCurrency = {
-        code: 'XYZ', // Not in ENUM
-        name: 'Invalid',
-      };
-
-      const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
-        method: 'POST',
-        body: JSON.stringify(invalidCurrency),
-      });
-
-      const res = await POST(req, currenciesRouteContext);
-      expect(res.status).toEqual(400);
-    });
+    await expect(POST_intl_handler(req, {} as any, { type: 'currencies' })).rejects.toThrow(
+      'Code and name are required'
+    );
   });
 });

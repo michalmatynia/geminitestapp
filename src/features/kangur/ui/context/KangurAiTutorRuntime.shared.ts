@@ -18,46 +18,29 @@ import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
-import {
-  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-  KANGUR_AI_TUTOR_SETTINGS_KEY,
-  getKangurAiTutorSettingsForLearner,
-  parseKangurAiTutorSettings,
-  resolveKangurAiTutorAppSettings,
-  resolveKangurAiTutorAvailability,
-  type KangurAiTutorAppSettings,
-  type KangurAiTutorLearnerSettings,
+import type {
+  KangurAiTutorAppSettings,
+  KangurAiTutorLearnerSettings,
 } from '@/features/kangur/settings-ai-tutor';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import {
-  DEFAULT_AGENT_PERSONA_MOOD_ID,
-  agentPersonaMoodIdSchema,
-  type AgentPersona,
-  type AgentPersonaMoodId,
-} from '@/shared/contracts/agents';
-import {
+  kangurAiTutorAnswerResolutionModeSchema,
   kangurAiTutorCoachingFrameSchema,
-  kangurAiTutorLearnerMemorySchema,
   kangurAiTutorKnowledgeGraphSummarySchema,
-  kangurAiTutorMessageArtifactSchema,
   kangurAiTutorUsageSummarySchema,
   kangurAiTutorWebsiteHelpTargetSchema,
   type KangurAiTutorChatResponse,
-  type KangurAiTutorCoachingFrame,
   type KangurAiTutorConversationContext,
   type KangurAiTutorFocusKind,
-  type KangurAiTutorFollowUpAction,
   type KangurAiTutorInteractionIntent,
   type KangurAiTutorKnowledgeReference,
   type KangurAiTutorLearnerMemory,
-  type KangurAiTutorMessageArtifact,
   type KangurAiTutorPromptMode,
-  type KangurAiTutorRecoverySignal,
   type KangurAiTutorRuntimeMessage as ChatMessage,
   type KangurAiTutorSurface,
-  type KangurAiTutorUsageSummary,
   type KangurAiTutorUsageResponse,
+  type KangurAiTutorUsageSummary,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { getKangurAiTutorMoodCopy } from '@/shared/contracts/kangur-ai-tutor-content';
 import {
@@ -65,8 +48,6 @@ import {
   type KangurAiTutorLearnerMood,
   type KangurTutorMoodId,
 } from '@/shared/contracts/kangur-ai-tutor-mood';
-import { useAgentPersonaVisuals } from '@/shared/hooks/useAgentPersonaVisuals';
-import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
@@ -75,29 +56,49 @@ import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
+import {
+  areSessionRegistrationsEqual,
+  buildHintRecoveryCandidate,
+  buildLearnerMemoryFromCompletedFollowUp,
+  buildNextLearnerMemory,
+  buildSessionKey,
+  buildUserDrawingArtifacts,
+  countRepeatedUserMessages,
+  getLastAssistantCoachingMode,
+  isLearnerMemoryKeyForLearner,
+  mergeLearnerTutorMood,
+  normalizeMessageArtifacts,
+  omitUndefinedFields,
+  resolveHintRecoverySignal,
+  type KangurAiTutorHintRecoveryCandidate,
+  type KangurAiTutorSessionRegistration,
+  type KangurAiTutorSessionRegistrationSetter,
+} from './kangur-ai-tutor-runtime.helpers';
+import {
+  clearPersistedRuntimeState,
+  createEmptySessionState,
+  loadPersistedRuntimeState,
+  persistRuntimeState,
+  type KangurAiTutorSessionState,
+} from './kangur-ai-tutor-runtime.storage';
+import {
+  useKangurTutorPersonaVisuals,
+  useKangurTutorSettingsState,
+} from './kangur-ai-tutor-runtime.sub-hooks';
 
-export type KangurAiTutorSessionState = {
-  messages: ChatMessage[];
-  isLoading: boolean;
-  isUsageLoading: boolean;
-  highlightedText: string | null;
-  suggestedMoodId: AgentPersonaMoodId | null;
-  usageSummary: KangurAiTutorUsageSummary | null;
+// ---------------------------------------------------------------------------
+// Re-export moved types (preserve public API of this module)
+// ---------------------------------------------------------------------------
+
+export type {
+  KangurAiTutorSessionRegistration,
+  KangurAiTutorSessionRegistrationSetter,
+  KangurAiTutorSessionState,
 };
 
-export type KangurAiTutorSessionRegistration = {
-  token: symbol;
-  learnerId: string | null;
-  sessionContext: KangurAiTutorConversationContext | null;
-  sessionKey: string;
-};
-
-export type KangurAiTutorSessionRegistrationSetter =
-  | KangurAiTutorSessionRegistration
-  | null
-  | ((
-      current: KangurAiTutorSessionRegistration | null
-    ) => KangurAiTutorSessionRegistration | null);
+// ---------------------------------------------------------------------------
+// Types remaining in this file
+// ---------------------------------------------------------------------------
 
 export type KangurAiTutorContextValue = {
   enabled: boolean;
@@ -153,23 +154,6 @@ export type KangurAiTutorSessionSyncProps = {
   sessionContext?: KangurAiTutorConversationContext | null;
 };
 
-type PersistedKangurAiTutorRuntimeState = {
-  isOpen: boolean;
-  sessionStates: Record<string, KangurAiTutorSessionState>;
-  learnerMemories: Record<string, KangurAiTutorLearnerMemory>;
-};
-
-type KangurAiTutorHintRecoveryCandidate = {
-  surface: KangurAiTutorConversationContext['surface'];
-  contentId: string | null;
-  questionId: string | null;
-  focusKind: KangurAiTutorFocusKind | null;
-  focusKey: string | null;
-  coachingMode: KangurAiTutorCoachingFrame['mode'] | null;
-  interactionIntent: KangurAiTutorInteractionIntent | null;
-  answerRevealedAtHint: boolean;
-};
-
 export type KangurAiTutorSessionRegistryContextValue = {
   setRegistration: (registration: KangurAiTutorSessionRegistrationSetter) => void;
 };
@@ -179,749 +163,16 @@ type KangurAiTutorRuntimeResult = {
   sessionRegistryValue: KangurAiTutorSessionRegistryContextValue;
 };
 
+// ---------------------------------------------------------------------------
+// Session registry context
+// ---------------------------------------------------------------------------
+
 export const KangurAiTutorSessionRegistryContext =
   createContext<KangurAiTutorSessionRegistryContextValue | null>(null);
 
-const KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY = 'kangur-ai-tutor-runtime-v1';
-const KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR = '::';
-
-const createEmptySessionState = (): KangurAiTutorSessionState => ({
-  messages: [],
-  isLoading: false,
-  isUsageLoading: false,
-  highlightedText: null,
-  suggestedMoodId: null,
-  usageSummary: null,
-});
-
-const createEmptyPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => ({
-  isOpen: false,
-  sessionStates: {},
-  learnerMemories: {},
-});
-
-const normalizeTutorMessageForComparison = (value: string): string =>
-  value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
-
-const normalizeTutorScopePart = (
-  value: string | null | undefined,
-  maxLength: number
-): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/[^a-z0-9:_-]+/gi, '-')
-    .replace(/-{2,}/g, '-')
-    .replace(/^[-:]+|[-:]+$/g, '');
-
-  if (!normalized) {
-    return null;
-  }
-
-  return normalized.length > maxLength
-    ? normalized.slice(0, maxLength).replace(/[-:]+$/g, '')
-    : normalized;
-};
-
-const buildTutorSessionScope = (
-  sessionContext: KangurAiTutorConversationContext | null | undefined
-): string | null => {
-  if (!sessionContext) {
-    return null;
-  }
-
-  const contentIdPart = normalizeTutorScopePart(sessionContext.contentId, 120);
-  const assignmentPart = normalizeTutorScopePart(sessionContext.assignmentId, 60);
-
-  // When both contentId and assignmentId are present, include both so that
-  // different assignments using the same lesson content get isolated sessions.
-  const bucket =
-    contentIdPart !== null
-      ? assignmentPart !== null
-        ? `${contentIdPart}:assignment:${assignmentPart}`
-        : contentIdPart
-      : assignmentPart !== null
-        ? `assignment:${assignmentPart}`
-        : normalizeTutorScopePart(sessionContext.focusId, 120)?.replace(
-            /^/,
-            `focus:${sessionContext.focusKind ?? 'unknown'}:`
-          ) ??
-          normalizeTutorScopePart(sessionContext.title, 120)?.replace(/^/, 'title:') ??
-          'none';
-
-  return `${sessionContext.surface}:${bucket}`;
-};
-
-const buildLearnerMemoryKey = (
-  learnerId: string | null | undefined,
-  sessionContext: KangurAiTutorConversationContext | null | undefined
-): string | null => {
-  if (!learnerId) {
-    return null;
-  }
-
-  const scope = buildTutorSessionScope(sessionContext);
-  return scope ? `${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}${scope}` : null;
-};
-
-const isLearnerMemoryKeyForLearner = (key: string, learnerId: string): boolean =>
-  key === learnerId || key.startsWith(`${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}`);
-
-const normalizeTutorContextIdentifier = (
-  value: string | null | undefined,
-  maxLength: number
-): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return null;
-  }
-
-  return normalized.length > maxLength ? normalized.slice(0, maxLength).trimEnd() : normalized;
-};
-
-const countRepeatedUserMessages = (
-  messages: ChatMessage[],
-  nextText: string
-): number => {
-  const normalizedNextText = normalizeTutorMessageForComparison(nextText);
-  if (!normalizedNextText) {
-    return 0;
-  }
-
-  return messages.reduce((count, message) => {
-    if (message.role !== 'user') {
-      return count;
-    }
-
-    return normalizeTutorMessageForComparison(message.content) === normalizedNextText
-      ? count + 1
-      : count;
-  }, 0);
-};
-
-const getLastAssistantCoachingMode = (
-  messages: ChatMessage[],
-  fallback: KangurAiTutorLearnerMemory | null
-): KangurAiTutorCoachingFrame['mode'] | null => {
-  const latestAssistantMessage = [...messages]
-    .reverse()
-    .find((message) => message.role === 'assistant');
-
-  return latestAssistantMessage?.coachingFrame?.mode ?? fallback?.lastCoachingMode ?? null;
-};
-
-const buildTutorRecoveryFocusKey = (
-  context: KangurAiTutorConversationContext | null | undefined
-): string | null => {
-  if (!context) {
-    return null;
-  }
-
-  const questionId = normalizeTutorContextIdentifier(context.questionId, 120);
-  if (questionId) {
-    return `question:${questionId}`;
-  }
-
-  const assignmentId = normalizeTutorContextIdentifier(context.assignmentId, 120);
-  if (assignmentId) {
-    return `assignment:${assignmentId}`;
-  }
-
-  const focusId = normalizeTutorContextIdentifier(context.focusId, 120);
-  if (focusId) {
-    return `focus:${context.focusKind ?? 'unknown'}:${focusId}`;
-  }
-
-  const currentQuestion = normalizeTutorContextIdentifier(context.currentQuestion, 160);
-  if (currentQuestion) {
-    return `question_text:${normalizeTutorMessageForComparison(currentQuestion)}`;
-  }
-
-  const focusLabel = normalizeTutorContextIdentifier(context.focusLabel, 160);
-  if (focusLabel) {
-    return `focus_label:${normalizeTutorMessageForComparison(focusLabel)}`;
-  }
-
-  return null;
-};
-
-const buildHintRecoveryCandidate = (input: {
-  context: KangurAiTutorConversationContext;
-  coachingFrame: KangurAiTutorCoachingFrame | null;
-}): KangurAiTutorHintRecoveryCandidate => ({
-  surface: input.context.surface,
-  contentId: input.context.contentId ?? null,
-  questionId: input.context.questionId ?? null,
-  focusKind: input.context.focusKind ?? null,
-  focusKey: buildTutorRecoveryFocusKey(input.context),
-  coachingMode: input.coachingFrame?.mode ?? null,
-  interactionIntent: input.context.interactionIntent ?? null,
-  answerRevealedAtHint: input.context.answerRevealed === true,
-});
-
-const resolveHintRecoverySignal = (input: {
-  candidate: KangurAiTutorHintRecoveryCandidate;
-  nextContext: KangurAiTutorConversationContext | null;
-}): KangurAiTutorRecoverySignal | null => {
-  const { candidate, nextContext } = input;
-  if (!nextContext) {
-    return null;
-  }
-
-  if (!candidate.answerRevealedAtHint && nextContext.answerRevealed === true) {
-    return 'answer_revealed';
-  }
-
-  const nextFocusKey = buildTutorRecoveryFocusKey(nextContext);
-  if (candidate.focusKey && nextFocusKey && candidate.focusKey !== nextFocusKey) {
-    return 'focus_advanced';
-  }
-
-  return null;
-};
-
-const buildUserDrawingArtifacts = (
-  drawingImageData: string | null | undefined
-): KangurAiTutorMessageArtifact[] | undefined => {
-  const normalized = typeof drawingImageData === 'string' ? drawingImageData.trim() : '';
-  if (!normalized) {
-    return undefined;
-  }
-
-  return [
-    {
-      type: 'user_drawing',
-      imageDataUrl: normalized,
-    },
-  ];
-};
-
-const normalizeMessageArtifacts = (
-  value: unknown,
-  fallbackDrawingImageData?: unknown
-): KangurAiTutorMessageArtifact[] | undefined => {
-  const normalizedArtifacts = Array.isArray(value)
-    ? value
-      .map((artifact) => kangurAiTutorMessageArtifactSchema.safeParse(artifact).data ?? null)
-      .filter((artifact): artifact is KangurAiTutorMessageArtifact => artifact !== null)
-    : [];
-
-  if (normalizedArtifacts.length > 0) {
-    return normalizedArtifacts;
-  }
-
-  return buildUserDrawingArtifacts(
-    typeof fallbackDrawingImageData === 'string' ? fallbackDrawingImageData : null
-  );
-};
-
-const normalizePersistedMessage = (value: unknown): ChatMessage | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-
-  const input = value as Record<string, unknown>;
-  const role = input['role'];
-  const content = input['content'];
-  if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') {
-    return null;
-  }
-
-  const coachingFrame = kangurAiTutorCoachingFrameSchema.safeParse(input['coachingFrame']).data;
-  const websiteHelpTarget = kangurAiTutorWebsiteHelpTargetSchema.safeParse(
-    input['websiteHelpTarget']
-  ).data;
-  const drawingImageData =
-    typeof input['drawingImageData'] === 'string' ? input['drawingImageData'] : null;
-  const artifacts = normalizeMessageArtifacts(input['artifacts'], drawingImageData);
-
-  return {
-    role,
-    content,
-    ...(artifacts ? { artifacts } : {}),
-    ...(drawingImageData ? { drawingImageData } : {}),
-    ...(Array.isArray(input['sources']) ? { sources: input['sources'] as AgentTeachingChatSource[] } : {}),
-    ...(Array.isArray(input['followUpActions'])
-      ? { followUpActions: input['followUpActions'] as KangurAiTutorFollowUpAction[] }
-      : {}),
-    ...(coachingFrame ? { coachingFrame } : {}),
-    ...(websiteHelpTarget ? { websiteHelpTarget } : {}),
-  };
-};
-
-const normalizePersistedSessionState = (value: unknown): KangurAiTutorSessionState | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-
-  const input = value as Record<string, unknown>;
-  const messages = Array.isArray(input['messages'])
-    ? input['messages']
-      .map(normalizePersistedMessage)
-      .filter((message): message is ChatMessage => message !== null)
-    : [];
-  const suggestedMoodId = agentPersonaMoodIdSchema.safeParse(input['suggestedMoodId']).data ?? null;
-  const usageSummary = kangurAiTutorUsageSummarySchema.safeParse(input['usageSummary']).data ?? null;
-
-  return {
-    messages,
-    isLoading: false,
-    isUsageLoading: false,
-    highlightedText: typeof input['highlightedText'] === 'string' ? input['highlightedText'] : null,
-    suggestedMoodId,
-    usageSummary,
-  };
-};
-
-const normalizePersistedLearnerMemory = (value: unknown): KangurAiTutorLearnerMemory | null =>
-  kangurAiTutorLearnerMemorySchema.safeParse(value).data ?? null;
-
-const loadPersistedRuntimeState = (): PersistedKangurAiTutorRuntimeState => {
-  if (typeof window === 'undefined') {
-    return createEmptyPersistedRuntimeState();
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
-    if (!raw) {
-      return createEmptyPersistedRuntimeState();
-    }
-
-    const parsed = JSON.parse(raw) as Partial<PersistedKangurAiTutorRuntimeState> | null;
-    if (!parsed || typeof parsed !== 'object') {
-      return createEmptyPersistedRuntimeState();
-    }
-
-    return {
-      isOpen: parsed.isOpen === true,
-      sessionStates:
-        parsed.sessionStates && typeof parsed.sessionStates === 'object'
-          ? Object.entries(parsed.sessionStates).reduce<Record<string, KangurAiTutorSessionState>>(
-            (acc, [sessionKey, sessionState]) => {
-              const normalized = normalizePersistedSessionState(sessionState);
-              if (!normalized) {
-                return acc;
-              }
-
-              acc[sessionKey] = normalized;
-              return acc;
-            },
-            {}
-          )
-          : {},
-      learnerMemories:
-        parsed.learnerMemories && typeof parsed.learnerMemories === 'object'
-          ? Object.entries(parsed.learnerMemories).reduce<Record<string, KangurAiTutorLearnerMemory>>(
-            (acc, [memoryKey, learnerMemory]) => {
-              const normalized = normalizePersistedLearnerMemory(learnerMemory);
-              if (!normalized || !memoryKey.trim()) {
-                return acc;
-              }
-
-              acc[memoryKey] = normalized;
-              return acc;
-            },
-            {}
-          )
-          : {},
-    };
-  } catch {
-    return createEmptyPersistedRuntimeState();
-  }
-};
-
-const persistRuntimeState = (state: PersistedKangurAiTutorRuntimeState): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Ignore storage write failures so the tutor still works when storage is unavailable.
-  }
-};
-
-const clearPersistedRuntimeState = (): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.removeItem(KANGUR_AI_TUTOR_RUNTIME_STORAGE_KEY);
-  } catch {
-    // Ignore storage cleanup failures so the tutor remains functional.
-  }
-};
-
-const toMoodTimestamp = (mood: KangurAiTutorLearnerMood | null | undefined): number => {
-  if (!mood?.lastComputedAt) {
-    return 0;
-  }
-
-  const timestamp = Date.parse(mood.lastComputedAt);
-  return Number.isNaN(timestamp) ? 0 : timestamp;
-};
-
-const mergeLearnerTutorMood = (
-  current: KangurAiTutorLearnerMood | null | undefined,
-  next: KangurAiTutorLearnerMood | null | undefined
-): KangurAiTutorLearnerMood => {
-  if (!current) {
-    return next ?? createDefaultKangurAiTutorLearnerMood();
-  }
-  if (!next) {
-    return current;
-  }
-
-  return toMoodTimestamp(next) >= toMoodTimestamp(current) ? next : current;
-};
-
-const omitUndefinedFields = <T extends Record<string, unknown>>(value: T): T =>
-  Object.fromEntries(
-    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
-  ) as T;
-
-const normalizeTutorMemoryText = (
-  value: string | null | undefined,
-  maxLength: number
-): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return null;
-  }
-
-  return normalized.length > maxLength ? normalized.slice(0, maxLength).trimEnd() : normalized;
-};
-
-const buildTutorMemoryFocusLabel = (
-  context: KangurAiTutorConversationContext
-): string | undefined => {
-  const candidate =
-    normalizeTutorMemoryText(context.focusLabel, 160) ??
-    normalizeTutorMemoryText(context.title, 160) ??
-    normalizeTutorMemoryText(context.selectedText, 160) ??
-    normalizeTutorMemoryText(context.currentQuestion, 160) ??
-    normalizeTutorMemoryText(context.contentId, 160);
-
-  return candidate ?? undefined;
-};
-
-const buildTutorMemoryRecommendedAction = (input: {
-  followUpActions: KangurAiTutorFollowUpAction[];
-  coachingFrame: KangurAiTutorCoachingFrame | null;
-}): string | undefined => {
-  const primaryAction = input.followUpActions[0] ?? null;
-  const candidate = primaryAction
-    ? normalizeTutorMemoryText(
-      primaryAction.reason
-        ? `${primaryAction.label}: ${primaryAction.reason}`
-        : primaryAction.label,
-      160
-    )
-    : normalizeTutorMemoryText(input.coachingFrame?.label, 160);
-
-  return candidate ?? undefined;
-};
-
-const buildNextLearnerMemory = (input: {
-  current: KangurAiTutorLearnerMemory | null;
-  context: KangurAiTutorConversationContext;
-  userMessage: string;
-  assistantMessage: string;
-  followUpActions: KangurAiTutorFollowUpAction[];
-  coachingFrame: KangurAiTutorCoachingFrame | null;
-}): KangurAiTutorLearnerMemory => {
-  const latestHint = normalizeTutorMemoryText(input.assistantMessage, 160);
-  const previousHints = input.current?.lastGivenHints ?? [];
-  const nextHints = latestHint
-    ? [latestHint, ...previousHints].slice(0, 3)
-    : previousHints.length > 0
-      ? previousHints
-      : undefined;
-
-  return omitUndefinedFields({
-    lastSurface: input.context.surface,
-    lastFocusLabel: buildTutorMemoryFocusLabel(input.context) ?? input.current?.lastFocusLabel,
-    lastUnresolvedBlocker:
-      normalizeTutorMemoryText(input.userMessage, 200) ?? input.current?.lastUnresolvedBlocker,
-    lastRecommendedAction:
-      buildTutorMemoryRecommendedAction({
-        followUpActions: input.followUpActions,
-        coachingFrame: input.coachingFrame,
-      }) ?? input.current?.lastRecommendedAction,
-    lastSuccessfulIntervention:
-      normalizeTutorMemoryText(input.assistantMessage, 200) ??
-      input.current?.lastSuccessfulIntervention,
-    lastCoachingMode: input.coachingFrame?.mode ?? input.current?.lastCoachingMode,
-    lastGivenHints: nextHints,
-  });
-};
-
-const buildLearnerMemoryFromCompletedFollowUp = (input: {
-  current: KangurAiTutorLearnerMemory | null;
-  context: KangurAiTutorConversationContext;
-  actionLabel: string;
-  actionReason?: string | null;
-  actionPage: string;
-}): KangurAiTutorLearnerMemory =>
-  omitUndefinedFields({
-    lastSurface: input.context.surface,
-    lastFocusLabel: buildTutorMemoryFocusLabel(input.context) ?? input.current?.lastFocusLabel,
-    lastUnresolvedBlocker: input.current?.lastUnresolvedBlocker,
-    lastRecommendedAction:
-      normalizeTutorMemoryText(
-        input.actionReason
-          ? `Completed follow-up: ${input.actionLabel}: ${input.actionReason}`
-          : `Completed follow-up: ${input.actionLabel}`,
-        160
-      ) ?? input.current?.lastRecommendedAction,
-    lastSuccessfulIntervention:
-      normalizeTutorMemoryText(
-        input.actionReason
-          ? `The learner completed the tutor follow-up ${input.actionLabel} for ${input.actionReason} on ${input.actionPage}.`
-          : `The learner completed the tutor follow-up ${input.actionLabel} on ${input.actionPage}.`,
-        200
-      ) ?? input.current?.lastSuccessfulIntervention,
-    lastCoachingMode: 'next_best_action',
-  });
-
-const buildSessionKey = (
-  learnerId: string | null,
-  sessionContext: KangurAiTutorConversationContext | null | undefined
-): string | null => {
-  const scope = buildTutorSessionScope(sessionContext);
-  if (!scope) {
-    return null;
-  }
-
-  return `${learnerId ?? 'guest'}:${scope}`;
-};
-
-const areConversationContextsEqual = (
-  left: KangurAiTutorConversationContext | null,
-  right: KangurAiTutorConversationContext | null
-): boolean => {
-  if (left === right) {
-    return true;
-  }
-
-  if (!left || !right) {
-    return left === right;
-  }
-
-  return (
-    left.surface === right.surface &&
-    left.contentId === right.contentId &&
-    left.questionId === right.questionId &&
-    left.selectedText === right.selectedText &&
-    left.answerRevealed === right.answerRevealed &&
-    left.promptMode === right.promptMode &&
-    left.focusKind === right.focusKind &&
-    left.focusId === right.focusId &&
-    left.focusLabel === right.focusLabel &&
-    left.assignmentId === right.assignmentId &&
-    left.knowledgeReference?.sourceCollection === right.knowledgeReference?.sourceCollection &&
-    left.knowledgeReference?.sourceRecordId === right.knowledgeReference?.sourceRecordId &&
-    left.knowledgeReference?.sourcePath === right.knowledgeReference?.sourcePath &&
-    left.interactionIntent === right.interactionIntent
-  );
-};
-
-const areSessionRegistrationsEqual = (
-  left: KangurAiTutorSessionRegistration | null,
-  right: KangurAiTutorSessionRegistration | null
-): boolean => {
-  if (left === right) {
-    return true;
-  }
-
-  if (!left || !right) {
-    return left === right;
-  }
-
-  return (
-    left.token === right.token &&
-    left.learnerId === right.learnerId &&
-    left.sessionKey === right.sessionKey &&
-    areConversationContextsEqual(left.sessionContext, right.sessionContext)
-  );
-};
-
 // ---------------------------------------------------------------------------
-// Internal sub-hooks
+// Session sync hook + component
 // ---------------------------------------------------------------------------
-
-function useKangurTutorSettingsState({
-  settingsStore,
-  activeLearnerId,
-  activeSessionContext,
-  authUserOwnerEmailVerified,
-}: {
-  settingsStore: ReturnType<typeof useSettingsStore>;
-  activeLearnerId: string | null;
-  activeSessionContext: KangurAiTutorConversationContext | null;
-  authUserOwnerEmailVerified: boolean | undefined;
-}) {
-  const rawSettings = settingsStore.get(KANGUR_AI_TUTOR_SETTINGS_KEY);
-  const rawAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
-  const parsedSettings = useMemo(() => parseKangurAiTutorSettings(rawSettings), [rawSettings]);
-  const appSettings = useMemo(
-    () => resolveKangurAiTutorAppSettings(rawAppSettings, parsedSettings),
-    [parsedSettings, rawAppSettings]
-  );
-  const tutorSettings = useMemo(
-    () =>
-      activeLearnerId
-        ? getKangurAiTutorSettingsForLearner(parsedSettings, activeLearnerId, appSettings)
-        : null,
-    [activeLearnerId, appSettings, parsedSettings]
-  );
-  const availability = useMemo(
-    () =>
-      resolveKangurAiTutorAvailability(tutorSettings, activeSessionContext, {
-        ownerEmailVerified: authUserOwnerEmailVerified,
-      }),
-    [activeSessionContext, authUserOwnerEmailVerified, tutorSettings]
-  );
-  const enabled = availability.allowed;
-  const allowCrossPagePersistence = tutorSettings?.allowCrossPagePersistence ?? true;
-  const allowLearnerMemory =
-    allowCrossPagePersistence && (tutorSettings?.rememberTutorContext ?? true);
-  const allowSelectedTextSupport = tutorSettings?.allowSelectedTextSupport ?? true;
-  const showSources = tutorSettings?.showSources ?? true;
-  const activeLearnerMemoryKey = useMemo(
-    () => buildLearnerMemoryKey(activeLearnerId, activeSessionContext),
-    [activeLearnerId, activeSessionContext]
-  );
-
-  return {
-    appSettings,
-    tutorSettings,
-    enabled,
-    allowCrossPagePersistence,
-    allowLearnerMemory,
-    allowSelectedTextSupport,
-    showSources,
-    activeLearnerMemoryKey,
-  };
-}
-
-function useKangurTutorPersonaVisuals({
-  tutorSettings,
-  appSettings,
-  defaultTutorName,
-  isLoading,
-  suggestedMoodId,
-  lastMessageRole,
-}: {
-  tutorSettings: KangurAiTutorLearnerSettings | null;
-  appSettings: KangurAiTutorAppSettings;
-  defaultTutorName: string;
-  isLoading: boolean;
-  suggestedMoodId: AgentPersonaMoodId | null;
-  lastMessageRole: 'user' | 'assistant' | null;
-}) {
-  const effectiveTutorPersonaId = tutorSettings?.agentPersonaId ?? appSettings.agentPersonaId;
-  const { data: agentPersonas = [] } = useAgentPersonaVisuals(effectiveTutorPersonaId);
-  const tutorPersona = useMemo<AgentPersona | null>(() => {
-    const personaId = effectiveTutorPersonaId;
-    if (!personaId) {
-      return null;
-    }
-
-    return agentPersonas.find((persona) => persona.id === personaId) ?? null;
-  }, [agentPersonas, effectiveTutorPersonaId]);
-  const tutorName = tutorPersona?.name ?? defaultTutorName;
-  const requestedTutorMoodId = useMemo<AgentPersonaMoodId>(() => {
-    if (isLoading) {
-      return 'thinking';
-    }
-
-    if (suggestedMoodId) {
-      return suggestedMoodId;
-    }
-
-    if (lastMessageRole === 'assistant') {
-      return 'encouraging';
-    }
-
-    return DEFAULT_AGENT_PERSONA_MOOD_ID;
-  }, [isLoading, lastMessageRole, suggestedMoodId]);
-  const resolvedTutorMood = useMemo(
-    () => resolveAgentPersonaMood(tutorPersona, requestedTutorMoodId),
-    [requestedTutorMoodId, tutorPersona]
-  );
-  const defaultTutorMood = useMemo(() => resolveAgentPersonaMood(tutorPersona), [tutorPersona]);
-  const resolvedTutorMoodVisuals = useMemo(() => {
-    const resolvedThumbnail =
-      resolvedTutorMood.useEmbeddedThumbnail === true
-        ? resolvedTutorMood.avatarThumbnailDataUrl?.trim() || null
-        : null;
-    if (resolvedThumbnail) {
-      return { tutorAvatarImageUrl: resolvedThumbnail, tutorAvatarSvg: null };
-    }
-
-    const resolvedImage = resolvedTutorMood.avatarImageUrl?.trim() || null;
-    const resolvedSvg = resolvedTutorMood.svgContent.trim() || null;
-
-    if (resolvedImage) {
-      return { tutorAvatarImageUrl: resolvedImage, tutorAvatarSvg: null };
-    }
-
-    if (resolvedSvg) {
-      return { tutorAvatarImageUrl: null, tutorAvatarSvg: resolvedSvg };
-    }
-
-    const fallbackThumbnail =
-      defaultTutorMood.useEmbeddedThumbnail === true
-        ? defaultTutorMood.avatarThumbnailDataUrl?.trim() || null
-        : null;
-    if (fallbackThumbnail) {
-      return { tutorAvatarImageUrl: fallbackThumbnail, tutorAvatarSvg: null };
-    }
-
-    const fallbackImage = defaultTutorMood.avatarImageUrl?.trim() || null;
-    if (fallbackImage) {
-      return { tutorAvatarImageUrl: fallbackImage, tutorAvatarSvg: null };
-    }
-
-    return {
-      tutorAvatarImageUrl: null,
-      tutorAvatarSvg: defaultTutorMood.svgContent.trim() || null,
-    };
-  }, [
-    defaultTutorMood.avatarThumbnailDataUrl,
-    defaultTutorMood.avatarImageUrl,
-    defaultTutorMood.svgContent,
-    defaultTutorMood.useEmbeddedThumbnail,
-    resolvedTutorMood.avatarThumbnailDataUrl,
-    resolvedTutorMood.avatarImageUrl,
-    resolvedTutorMood.svgContent,
-    resolvedTutorMood.useEmbeddedThumbnail,
-  ]);
-
-  return {
-    tutorPersona,
-    tutorName,
-    tutorMoodId: resolvedTutorMood.id,
-    tutorAvatarSvg: resolvedTutorMoodVisuals.tutorAvatarSvg,
-    tutorAvatarImageUrl: resolvedTutorMoodVisuals.tutorAvatarImageUrl,
-  };
-}
 
 export const useKangurAiTutorSessionSync = ({
   learnerId,
@@ -1033,10 +284,14 @@ export function KangurAiTutorSessionSyncInner({
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Main runtime hook
+// ---------------------------------------------------------------------------
+
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const tutorContent = useKangurAiTutorContent();
   const settingsStore = useSettingsStore();
-  const initialRuntimeStateRef = useRef<PersistedKangurAiTutorRuntimeState | null>(null);
+  const initialRuntimeStateRef = useRef<ReturnType<typeof loadPersistedRuntimeState> | null>(null);
   if (initialRuntimeStateRef.current === null) {
     initialRuntimeStateRef.current = loadPersistedRuntimeState();
   }
@@ -1047,9 +302,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const [sessionStates, setSessionStates] = useState<Record<string, KangurAiTutorSessionState>>(
     initialRuntimeStateRef.current.sessionStates
   );
-  const [learnerMemories, setLearnerMemories] = useState<Record<string, KangurAiTutorLearnerMemory>>(
-    initialRuntimeStateRef.current.learnerMemories
-  );
+  const [learnerMemories, setLearnerMemories] = useState<
+    Record<string, KangurAiTutorLearnerMemory>
+  >(initialRuntimeStateRef.current.learnerMemories);
   const [learnerMoodById, setLearnerMoodById] = useState<Record<string, KangurAiTutorLearnerMood>>(
     {}
   );
@@ -1205,7 +460,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     Record<string, KangurAiTutorHintRecoveryCandidate>
   >({});
   const recentHintRecoverySignalBySessionKeyRef = useRef<
-    Record<string, KangurAiTutorRecoverySignal>
+    Record<string, ReturnType<typeof resolveHintRecoverySignal>>
   >({});
 
   useEffect(() => {
@@ -1569,6 +824,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           kangurAiTutorKnowledgeGraphSummarySchema.safeParse(result.knowledgeGraph).data ?? null;
         const websiteHelpTarget =
           kangurAiTutorWebsiteHelpTargetSchema.safeParse(result.websiteHelpTarget).data ?? null;
+        const answerResolutionMode =
+          kangurAiTutorAnswerResolutionModeSchema.safeParse(result.answerResolutionMode).data ??
+          null;
         const artifacts = normalizeMessageArtifacts(result.artifacts);
         trackKangurClientEvent('kangur_ai_tutor_message_succeeded', {
           ...telemetryContext,
@@ -1589,6 +847,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           knowledgeGraphVectorRecallAttempted: knowledgeGraph?.vectorRecallAttempted ?? false,
           websiteHelpGraphApplied: knowledgeGraph?.websiteHelpApplied ?? false,
           websiteHelpGraphTargetNodeId: knowledgeGraph?.websiteHelpTargetNodeId ?? null,
+          answerResolutionMode,
           hasDrawingArtifact: Boolean(artifacts?.length),
         });
         if (resolvedPromptMode === 'hint') {
@@ -1630,6 +889,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
               followUpActions,
               ...(coachingFrame ? { coachingFrame } : {}),
               ...(websiteHelpTarget ? { websiteHelpTarget } : {}),
+              ...(answerResolutionMode ? { answerResolutionMode } : {}),
             },
           ],
           suggestedMoodId: result.suggestedMoodId ?? null,

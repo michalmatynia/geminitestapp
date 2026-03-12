@@ -7,17 +7,15 @@ import {
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
-  KangurIconBadge,
-  KangurInfoCard,
   KangurMetricCard,
   KangurProgressBar,
   KangurSectionEyebrow,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
@@ -391,49 +389,28 @@ export default function ScoreHistory({
             );
             const rowAccent = resolveOperationAccent(score.operation);
             return (
-              <KangurInfoCard
+              <KangurSessionHistoryRow
                 accent={rowAccent}
-                className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'
-                data-testid={`score-history-recent-row-${score.id}`}
+                dataTestId={`score-history-recent-row-${score.id}`}
+                durationClassName='text-slate-400'
+                durationText={score.time_taken > 0 ? `${score.time_taken}s` : undefined}
+                icon={info.emoji}
+                iconTestId={`score-history-recent-icon-${score.id}`}
                 key={score.id}
-                padding='sm'
-                tone='accent'
-              >
-                <KangurIconBadge
-                  accent={rowAccent}
-                  data-testid={`score-history-recent-icon-${score.id}`}
-                  size='sm'
-                >
-                  <span aria-hidden='true'>{info.emoji}</span>
-                </KangurIconBadge>
-                <div className='flex-1'>
-                  <p className='text-sm font-semibold text-slate-700'>{info.label}</p>
-                  <p className='text-xs text-slate-400'>
-                    {new Date(score.created_date).toLocaleDateString('pl-PL')}
-                  </p>
-                </div>
-                <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
-                  <KangurStatusChip
-                    accent={resolveAccuracyAccent(percent)}
-                    data-testid={`score-history-recent-score-${score.id}`}
-                    size='sm'
-                  >
-                    {score.correct_answers}/{score.total_questions || 10}
-                  </KangurStatusChip>
-                  {typeof score.xp_earned === 'number' && Number.isFinite(score.xp_earned) ? (
-                    <KangurStatusChip
-                      accent='indigo'
-                      data-testid={`score-history-recent-xp-${score.id}`}
-                      size='sm'
-                    >
-                      +{Math.max(0, Math.round(score.xp_earned))} XP
-                    </KangurStatusChip>
-                  ) : null}
-                  {score.time_taken > 0 && (
-                    <p className='text-xs text-slate-400'>{score.time_taken}s</p>
-                  )}
-                </div>
-              </KangurInfoCard>
+                scoreAccent={resolveAccuracyAccent(percent)}
+                scoreTestId={`score-history-recent-score-${score.id}`}
+                scoreText={`${score.correct_answers}/${score.total_questions || 10}`}
+                subtitle={new Date(score.created_date).toLocaleDateString('pl-PL')}
+                subtitleClassName='text-slate-400'
+                title={info.label}
+                titleClassName='text-sm font-semibold text-slate-700'
+                xpTestId={`score-history-recent-xp-${score.id}`}
+                xpText={
+                  typeof score.xp_earned === 'number' && Number.isFinite(score.xp_earned)
+                    ? `+${Math.max(0, Math.round(score.xp_earned))} XP`
+                    : undefined
+                }
+              />
             );
           })}
         </div>

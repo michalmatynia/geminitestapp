@@ -6,6 +6,7 @@ import {
   KangurGlassPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentListItems,
@@ -22,6 +23,7 @@ type KangurPriorityAssignmentsProps = {
 
 const PRIORITY_ASSIGNMENTS_TITLE = 'Priorytetowe zadania';
 const PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION = 'Brak aktywnych zadan od rodzica.';
+const PRIORITY_ASSIGNMENTS_SECTION_ID = 'game-home-priority-assignments';
 
 export function KangurPriorityAssignments({
   basePath,
@@ -30,7 +32,9 @@ export function KangurPriorityAssignments({
   title,
   emptyLabel,
 }: KangurPriorityAssignmentsProps): React.JSX.Element | null {
-  const assignmentsTitle = title ?? PRIORITY_ASSIGNMENTS_TITLE;
+  const { entry: assignmentsContent } = useKangurPageContentEntry(PRIORITY_ASSIGNMENTS_SECTION_ID);
+  const assignmentsTitle = title ?? assignmentsContent?.title ?? PRIORITY_ASSIGNMENTS_TITLE;
+  const assignmentsSummary = assignmentsContent?.summary ?? undefined;
   const emptyDescription = emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION;
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
@@ -102,6 +106,11 @@ export function KangurPriorityAssignments({
           </div>
           <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>0 zadan</div>
         </div>
+        {assignmentsSummary ? (
+          <div className='mb-4 text-sm [color:var(--kangur-page-muted-text)]'>
+            {assignmentsSummary}
+          </div>
+        ) : null}
         <KangurEmptyState
           accent='slate'
           className='text-sm'
@@ -116,6 +125,7 @@ export function KangurPriorityAssignments({
     <KangurAssignmentsList
       items={visibleItems}
       title={assignmentsTitle}
+      summary={assignmentsSummary}
       compact
     />
   );

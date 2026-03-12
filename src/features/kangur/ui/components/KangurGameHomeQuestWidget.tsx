@@ -6,6 +6,7 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
@@ -35,18 +36,6 @@ const buildAssignmentHref = (
   const href = createPageUrl(action.page, basePath);
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
-
-const PRIORITY_LABELS = {
-  high: 'Priorytet wysoki',
-  medium: 'Priorytet sredni',
-  low: 'Priorytet niski',
-} as const;
-
-const PRIORITY_ACCENTS = {
-  high: 'rose',
-  medium: 'amber',
-  low: 'emerald',
-} as const;
 
 const QUEST_STATUS_LABELS = {
   completed: 'Misja ukonczona',
@@ -109,13 +98,11 @@ export function KangurGameHomeQuestWidget({
             >
               {assignment.questLabel ?? 'Misja dnia'}
             </KangurStatusChip>
-            <KangurStatusChip
-              accent={PRIORITY_ACCENTS[assignment.priority]}
+            <KangurAssignmentPriorityChip
               data-testid='kangur-home-quest-priority'
               labelStyle='caps'
-            >
-              {PRIORITY_LABELS[assignment.priority]}
-            </KangurStatusChip>
+              priority={assignment.priority}
+            />
             <KangurStatusChip
               accent={QUEST_STATUS_ACCENTS[quest.progress.status]}
               data-testid='kangur-home-quest-status'

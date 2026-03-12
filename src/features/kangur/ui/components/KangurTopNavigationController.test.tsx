@@ -3,12 +3,18 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   KangurTopNavigationHost,
   KangurTopNavigationProvider,
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
+
+const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
 
 import { KangurTopNavigationController } from './KangurTopNavigationController';
 
@@ -29,6 +35,22 @@ const GAME_NAVIGATION = {
 };
 
 describe('KangurTopNavigationController', () => {
+  beforeEach(() => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
+  });
+
   it('renders the navigation locally when no shared host is present', () => {
     render(<KangurTopNavigationController navigation={LESSONS_NAVIGATION} />);
 

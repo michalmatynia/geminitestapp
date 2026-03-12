@@ -7,14 +7,17 @@ import {
   getMediaInlineStyles,
   getMediaStyleVars,
 } from '@/features/cms/public';
+import {
+  KANGUR_DEFAULT_THEME,
+  parseKangurThemeSettings,
+} from '@/features/kangur/theme-settings';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { buildColorSchemeMap, normalizeThemeSettings } from '@/shared/contracts/cms-theme';
+import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
@@ -105,8 +108,7 @@ export function KangurCmsRuntimeScreen({
     [rawProject]
   );
   const theme = useMemo(() => {
-    const stored = parseJsonSetting<Partial<ThemeSettings> | null>(rawTheme, null);
-    return normalizeThemeSettings(stored);
+    return parseKangurThemeSettings(rawTheme) ?? KANGUR_DEFAULT_THEME;
   }, [rawTheme]);
 
   const screen = screenKey ? project?.screens[screenKey] ?? null : null;

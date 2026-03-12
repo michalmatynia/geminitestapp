@@ -1,13 +1,12 @@
-import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurInlineFallback,
-  KangurOptionCardButton,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -326,29 +325,27 @@ export default function CalendarTrainingGame({
             }
           }
           return (
-            <motion.div
+            <KangurAnswerChoiceCard
+              accent={accent}
+              aria-disabled={selected !== null}
+              aria-label={`Odpowiedz ${choice}`}
+              buttonClassName={cn(
+                'px-4 py-3 text-sm font-bold min-[420px]:text-base',
+                choiceClassName,
+                selected === null ? 'cursor-pointer' : 'cursor-default'
+              )}
+              data-testid={`calendar-training-choice-${index}`}
+              emphasis={emphasis}
+              hoverScale={1.04}
+              interactive={selected === null}
               key={choice}
-              whileHover={selected === null ? { scale: 1.04 } : {}}
-              whileTap={selected === null ? { scale: 0.97 } : {}}
+              onClick={() => handleSelect(choice)}
+              state={state}
+              tapScale={0.97}
+              type='button'
             >
-              <KangurOptionCardButton
-                accent={accent}
-                aria-disabled={selected !== null}
-                aria-label={`Odpowiedz ${choice}`}
-                className={cn(
-                  'w-full rounded-[24px] px-4 py-3 text-sm font-bold transition-all min-[420px]:text-base',
-                  choiceClassName,
-                  selected === null ? 'cursor-pointer' : 'cursor-default'
-                )}
-                data-testid={`calendar-training-choice-${index}`}
-                emphasis={emphasis}
-                onClick={() => handleSelect(choice)}
-                state={state}
-                type='button'
-              >
-                {choice}
-              </KangurOptionCardButton>
-            </motion.div>
+              {choice}
+            </KangurAnswerChoiceCard>
           );
         })}
       </div>

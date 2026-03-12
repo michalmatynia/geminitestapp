@@ -24,10 +24,6 @@ vi.mock('@/features/kangur/ui/components/KangurHeroMilestoneSummary', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeMomentumWidget', () => ({
-  default: () => <div data-testid='kangur-home-momentum-widget'>momentum-widget</div>,
-}));
-
 vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
   default: ({ basePath }: { basePath: string }) => <div>spotlight:{basePath}</div>,
 }));
@@ -146,8 +142,8 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toHaveTextContent(
       'milestone-summary'
     );
-    expect(screen.getByTestId('kangur-home-momentum-widget')).toHaveTextContent(
-      'momentum-widget'
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent(
+      'Sprawdz najblizszy kamien milowy i zadania, ktore warto domknac dzisiaj.'
     );
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
   });
@@ -172,7 +168,6 @@ describe('KangurGameHomeHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-momentum-widget')).toBeInTheDocument();
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
   });
 

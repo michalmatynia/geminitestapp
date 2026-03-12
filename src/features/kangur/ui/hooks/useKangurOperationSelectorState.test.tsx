@@ -59,6 +59,8 @@ describe('useKangurOperationSelectorState', () => {
 
     expect(result.current.operations[0]?.id).toBe('division');
     expect(result.current.operations[1]?.id).toBe('addition');
+    expect(result.current.operations[0]?.priority).toBe('high');
+    expect(result.current.operations[1]?.priority).toBe('medium');
 
     act(() => {
       result.current.setDifficulty('hard');

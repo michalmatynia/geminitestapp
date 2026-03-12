@@ -6,13 +6,19 @@ import {
   captureSessionContext,
   captureSnapshot,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    agentAuditLog: { create: vi.fn().mockResolvedValue({ id: 'mock-log-id' }) },
-    agentBrowserSnapshot: { create: vi.fn().mockResolvedValue({ id: 'mock-snapshot-id' }) },
+const { agentAuditLogDelegate, agentBrowserSnapshotDelegate } = vi.hoisted(() => ({
+  agentAuditLogDelegate: {
+    create: vi.fn().mockResolvedValue({ id: 'mock-log-id' }),
   },
+  agentBrowserSnapshotDelegate: {
+    create: vi.fn().mockResolvedValue({ id: 'mock-snapshot-id' }),
+  },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
+  getAgentBrowserSnapshotDelegate: vi.fn(() => agentBrowserSnapshotDelegate),
 }));
 
 vi.mock('fs', async () => {
@@ -56,7 +62,7 @@ describe('Agent Runtime - Browser Tools', () => {
       await captureSessionContext(mockPage as any, mockContext as any, 'run-1', 'init');
 
       expect(mockContext.cookies).toHaveBeenCalled();
-      expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalledWith(
+      expect(agentAuditLogDelegate.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             message: 'Captured session context.',
@@ -79,7 +85,7 @@ describe('Agent Runtime - Browser Tools', () => {
 
       expect(mockPage.screenshot).toHaveBeenCalled();
       expect(fs.writeFile).toHaveBeenCalled();
-      expect(legacySqlClient.agentBrowserSnapshot.create).toHaveBeenCalledWith(
+      expect(agentBrowserSnapshotDelegate.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             domText: 'DOM Text',

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
@@ -10,7 +11,6 @@ import {
 import {
   KangurButton,
   KangurInfoCard,
-  KangurOptionCardButton,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -605,21 +605,24 @@ export default function CalendarInteractiveGame({
               }
 
               return isNumberDay ? (
-                <KangurOptionCardButton
+                <KangurAnswerChoiceCard
                   accent={dayAccent}
+                  buttonClassName={dayClassName}
+                  emphasis={dayEmphasis}
+                  hoverScale={1}
+                  interactive={isClickable}
                   key={`${idx}-${day}`}
-                  type='button'
                   onClick={() => {
                     if (isClickable) {
                       handleDateClick(day);
                     }
                   }}
-                  className={dayClassName}
                   data-testid={`calendar-day-${day}`}
-                  emphasis={dayEmphasis}
+                  tapScale={1}
+                  type='button'
                 >
                   {day}
-                </KangurOptionCardButton>
+                </KangurAnswerChoiceCard>
               ) : (
                 <div key={`${idx}-empty`} aria-hidden='true' className='h-10 rounded-[16px]' />
               );
@@ -658,22 +661,20 @@ export default function CalendarInteractiveGame({
             );
 
             return (
-              <motion.div
+              <KangurAnswerChoiceCard
+                accent={buttonAccent}
+                buttonClassName={className}
+                data-testid={`calendar-weekday-${idx}`}
+                emphasis={buttonEmphasis}
+                hoverScale={1.05}
+                interactive={feedback === null}
                 key={dayLabel}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                onClick={() => handleWeekdayNameClick(idx)}
+                tapScale={0.95}
+                type='button'
               >
-                <KangurOptionCardButton
-                  accent={buttonAccent}
-                  className={className}
-                  data-testid={`calendar-weekday-${idx}`}
-                  emphasis={buttonEmphasis}
-                  onClick={() => handleWeekdayNameClick(idx)}
-                  type='button'
-                >
-                  {dayLabel}
-                </KangurOptionCardButton>
-              </motion.div>
+                {dayLabel}
+              </KangurAnswerChoiceCard>
             );
           })}
         </div>
@@ -705,22 +706,12 @@ export default function CalendarInteractiveGame({
                 season !== selectedSeason;
 
               return (
-                <KangurOptionCardButton
+                <KangurAnswerChoiceCard
                   accent={
                     isCorrectSeason ? 'emerald' : isWrongSelectedSeason ? 'rose' : accent
                   }
-                  key={season}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragOver(season);
-                  }}
-                  onDragLeave={() => setDragOver(null)}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    handleDrop(season);
-                  }}
-                  className={cn(
-                    'flex min-h-[108px] flex-col items-center justify-center gap-1 rounded-[24px] text-center',
+                  buttonClassName={cn(
+                    'flex min-h-[108px] flex-col items-center justify-center gap-1 text-center',
                     isCorrectSeason
                       ? KANGUR_ACCENT_STYLES.emerald.activeText
                       : isWrongSelectedSeason
@@ -738,11 +729,22 @@ export default function CalendarInteractiveGame({
                       ? 'accent'
                       : 'neutral'
                   }
+                  interactive={false}
+                  key={season}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragOver(season);
+                  }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    handleDrop(season);
+                  }}
                   type='button'
                 >
                   <span className='text-2xl'>{season.split(' ')[0]}</span>
                   <span className='text-xs font-bold'>{season.split(' ').slice(1).join(' ')}</span>
-                </KangurOptionCardButton>
+                </KangurAnswerChoiceCard>
               );
             })}
           </div>

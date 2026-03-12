@@ -13,9 +13,14 @@ const runtimeState = vi.hoisted(() => ({
     setActiveTab: vi.fn<(tabId: string) => void>(),
   },
 }));
+const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   useKangurParentDashboardRuntime: () => runtimeState.value,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurParentDashboardTabsWidget } from './KangurParentDashboardTabsWidget';
@@ -27,6 +32,19 @@ describe('KangurParentDashboardTabsWidget', () => {
       canAccessDashboard: true,
       setActiveTab: vi.fn<(tabId: string) => void>(),
     };
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
   });
 
   it('prevents pointer focus on tab buttons while still switching tabs', () => {
@@ -67,5 +85,32 @@ describe('KangurParentDashboardTabsWidget', () => {
     render(<KangurParentDashboardTabsWidget />);
 
     expect(screen.queryByRole('button', { name: /postep/i })).not.toBeInTheDocument();
+  });
+
+  it('renders Mongo-backed intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: {
+        id: 'parent-dashboard-tabs',
+        title: 'Zakladki panelu',
+        summary: 'Wybierz rodzaj danych potrzebnych do kolejnej decyzji.',
+      },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
+
+    render(<KangurParentDashboardTabsWidget />);
+
+    expect(screen.getByText('Zakladki panelu')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(
+      screen.getByText('Wybierz rodzaj danych potrzebnych do kolejnej decyzji.')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 });

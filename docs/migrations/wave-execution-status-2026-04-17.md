@@ -58,8 +58,7 @@ Executed verification sequence:
 
 Evidence artifacts:
 
-1. `docs/migrations/reports/wave1-dry-run-local.json`
-2. `docs/migrations/reports/wave1-write-local.json`
+1. Historical wave1 provider report artifacts were removed during the Mongo-only cleanup.
 
 Final check target:
 

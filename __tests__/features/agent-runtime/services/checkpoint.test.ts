@@ -6,12 +6,15 @@ import {
   buildCheckpointState,
   persistCheckpoint,
 } from '@/features/ai/agent-runtime/memory/checkpoint';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: { update: vi.fn() },
+const { chatbotAgentRunDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    update: vi.fn(),
   },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
 }));
 
 vi.mock('@/features/ai/agent-runtime/audit', () => ({
@@ -56,7 +59,7 @@ describe('Agent Runtime - Checkpoint', () => {
   });
 
   describe('persistCheckpoint', () => {
-    it('should update the legacy SQL store and log audit', async () => {
+    it('should update the run delegate and log audit', async () => {
       const payload = {
         runId: 'run-1',
         steps: [],
@@ -65,7 +68,7 @@ describe('Agent Runtime - Checkpoint', () => {
 
       await persistCheckpoint(payload);
 
-      expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'run-1' },
           data: expect.objectContaining({

@@ -15,27 +15,22 @@ vi.mock('crypto', async (importOriginal) => {
 import { runAgentControlLoop, logAgentAudit } from '@/features/ai/agent-runtime/server';
 import { processNextQueuedAgentRun } from '@/features/ai/agent-runtime/workers/agent-processor';
 import { stopAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => {
-  const mockChatbotAgentRun = {
+const { chatbotAgentRunDelegate, agentAuditLogDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
-  };
-  return {
-    default: new Proxy(
-      {},
-      {
-        get: (_target, prop) => {
-          if (prop === 'chatbotAgentRun') return mockChatbotAgentRun;
-          return undefined;
-        },
-        has: (_target, prop) => prop === 'chatbotAgentRun',
-      }
-    ),
-  };
-});
+  },
+  agentAuditLogDelegate: {
+    create: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
+}));
 
 vi.mock('@/features/ai/agent-runtime/server', () => ({
   runAgentControlLoop: vi.fn(),
@@ -46,9 +41,9 @@ describe('Agent Queue Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     stopAgentQueue();
-    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValue([]);
-    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(null);
-    vi.mocked(legacySqlClient.chatbotAgentRun.update).mockResolvedValue({} as any);
+    chatbotAgentRunDelegate.findMany.mockResolvedValue([]);
+    chatbotAgentRunDelegate.findFirst.mockResolvedValue(null);
+    chatbotAgentRunDelegate.update.mockResolvedValue({} as any);
   });
 
   afterEach(() => {
@@ -57,13 +52,13 @@ describe('Agent Queue Worker', () => {
 
   it('processes a queued agent run', async () => {
     const mockRun = { id: 'run-1', status: 'queued', createdAt: new Date() };
-    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
+    chatbotAgentRunDelegate.findFirst.mockResolvedValue(mockRun as any);
     vi.mocked(runAgentControlLoop).mockResolvedValue(undefined);
 
     await processNextQueuedAgentRun();
 
-    expect(legacySqlClient.chatbotAgentRun.findFirst).toHaveBeenCalled();
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.findFirst).toHaveBeenCalled();
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-1' },
         data: expect.objectContaining({ status: 'running' }),
@@ -78,11 +73,11 @@ describe('Agent Queue Worker', () => {
       status: 'running',
       updatedAt: new Date(Date.now() - 20 * 60 * 1000),
     };
-    vi.mocked(legacySqlClient.chatbotAgentRun.findMany).mockResolvedValue([stuckRun] as any);
+    chatbotAgentRunDelegate.findMany.mockResolvedValue([stuckRun] as any);
 
     await processNextQueuedAgentRun();
 
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-stuck' },
         data: expect.objectContaining({ status: 'queued' }),
@@ -98,7 +93,7 @@ describe('Agent Queue Worker', () => {
 
   it('handles run failure', async () => {
     const mockRun = { id: 'run-fail', status: 'queued' };
-    vi.mocked(legacySqlClient.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
+    chatbotAgentRunDelegate.findFirst.mockResolvedValue(mockRun as any);
     vi.mocked(runAgentControlLoop).mockRejectedValue(new Error('Agent Crash'));
 
     await processNextQueuedAgentRun();
@@ -109,7 +104,7 @@ describe('Agent Queue Worker', () => {
       expect.any(String),
       expect.any(Object)
     );
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-fail' },
         data: expect.objectContaining({ status: 'failed', errorMessage: 'Agent Crash' }),

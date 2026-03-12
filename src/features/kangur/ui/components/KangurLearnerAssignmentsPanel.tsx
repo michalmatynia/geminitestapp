@@ -5,9 +5,10 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
   KangurMetricCard,
-  KangurSectionEyebrow,
+  KangurPanelIntro,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentListItems,
@@ -33,6 +34,7 @@ export function KangurLearnerAssignmentsPanel({
   basePath,
   enabled = false,
 }: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
+  const { entry: assignmentsContent } = useKangurPageContentEntry('learner-profile-assignments');
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
     query: {
@@ -76,6 +78,10 @@ export function KangurLearnerAssignmentsPanel({
     (assignment) => assignment.priority === 'high'
   ).length;
   const latestCompletedTitle = completedAssignments[0]?.title ?? 'Brak ukonczonych zadan';
+  const sectionTitle = assignmentsContent?.title ?? 'Przebieg przydzielonych zadan';
+  const sectionSummary =
+    assignmentsContent?.summary ??
+    'Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.';
 
   if (!enabled) {
     return (
@@ -120,12 +126,7 @@ export function KangurLearnerAssignmentsPanel({
   return (
     <div className='flex flex-col gap-4'>
       <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
-        <KangurSectionEyebrow>
-          Przebieg przydzielonych zadan
-        </KangurSectionEyebrow>
-        <div className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-          Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.
-        </div>
+        <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
 
         <div className='mt-4 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard

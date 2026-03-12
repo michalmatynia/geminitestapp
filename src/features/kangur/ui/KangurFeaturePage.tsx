@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 
 import {
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
@@ -19,6 +18,7 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/shared/utils';
 
 import type { CSSProperties, JSX } from 'react';
@@ -33,7 +33,7 @@ export function KangurFeaturePageShell(): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
-  const kangurAppearance = resolveKangurStorefrontAppearance(appearanceMode);
+  const kangurAppearance = useKangurStorefrontAppearance();
   const shellStyle: CSSProperties = {
     background: kangurAppearance.background,
     color: kangurAppearance.tone.text,

@@ -37,6 +37,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-drawing-canvas')).toHaveClass(
+      'kangur-chat-card',
       '[background:var(--kangur-soft-card-background)]'
     );
     expect(screen.getByText('Rysowanie')).toHaveClass(

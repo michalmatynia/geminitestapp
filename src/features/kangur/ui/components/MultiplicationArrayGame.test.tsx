@@ -32,7 +32,13 @@ describe('MultiplicationArrayGame', () => {
     );
     const firstGroup = screen.getByTestId('multiplication-array-group-0');
 
-    expect(firstGroup).toHaveClass('soft-card', 'border', 'rounded-[24px]', 'cursor-pointer');
+    expect(firstGroup).toHaveClass(
+      'soft-card',
+      'border',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
+      'cursor-pointer'
+    );
     expect(firstGroup).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(firstGroup);

@@ -13,6 +13,7 @@ import {
   useProductListRowActionsContext,
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
+import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
@@ -431,7 +432,11 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         location='product_row'
         entityType='product'
         entityId={product.id}
-        getEntityJson={(): Record<string, unknown> => product as Record<string, unknown>}
+        getEntityJson={(): Record<string, unknown> =>
+          buildTriggeredProductEntityJson({
+            product,
+            values: {},
+          })}
         showRunFeedback={showTriggerRunFeedback}
         className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
       />

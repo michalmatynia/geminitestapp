@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-vi.unmock('@/shared/lib/db/legacy-sql-client');
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
   GET as GET_page,

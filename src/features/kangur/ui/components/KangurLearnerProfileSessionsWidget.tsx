@@ -1,6 +1,7 @@
 'use client';
 
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import {
   formatKangurProfileDateTime,
   formatKangurProfileDuration,
@@ -9,11 +10,10 @@ import {
 import {
   KangurEmptyState,
   KangurGlassPanel,
-  KangurIconBadge,
-  KangurInfoCard,
+  KangurPanelIntro,
   KangurSectionEyebrow,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
@@ -42,9 +42,20 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
   const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
+  const { entry: sessionsContent } = useKangurPageContentEntry('learner-profile-sessions');
+  const sectionTitle = sessionsContent?.title ?? 'Historia sesji';
+  const sectionSummary =
+    sessionsContent?.summary ??
+    'Sprawdz ostatnie podejscia oraz sciezki odznak budowane przez regularna gre.';
 
   return (
-    <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
+    <section className='flex flex-col gap-4'>
+      <KangurPanelIntro
+        data-testid='learner-profile-sessions-intro'
+        description={sectionSummary}
+        eyebrow={sectionTitle}
+      />
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
       <KangurGlassPanel
         className='xl:col-span-3'
         padding='lg'
@@ -83,51 +94,22 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             {snapshot.recentSessions.map((session) => {
               const sessionAccent = resolveSessionAccent(session.operation);
               return (
-                <KangurInfoCard
+                <KangurSessionHistoryRow
                   accent={sessionAccent}
-                  className='flex flex-col gap-3 sm:flex-row sm:items-center'
-                  data-testid={`learner-profile-session-${session.id}`}
+                  dataTestId={`learner-profile-session-${session.id}`}
+                  durationText={formatKangurProfileDuration(session.timeTakenSeconds)}
+                  icon={session.operationEmoji}
+                  iconTestId={`learner-profile-session-icon-${session.id}`}
                   key={session.id}
-                  padding='sm'
-                  tone='accent'
-                >
-                  <KangurIconBadge
-                    accent={sessionAccent}
-                    data-testid={`learner-profile-session-icon-${session.id}`}
-                    size='sm'
-                  >
-                    <span aria-hidden='true'>{session.operationEmoji}</span>
-                  </KangurIconBadge>
-                  <div className='flex-1'>
-                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {session.operationLabel}
-                    </div>
-                    <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-                      {formatKangurProfileDateTime(session.createdAt)}
-                    </div>
-                  </div>
-                  <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
-                    <KangurStatusChip
-                      accent={resolveSessionScoreAccent(session.accuracyPercent)}
-                      data-testid={`learner-profile-session-score-${session.id}`}
-                      size='sm'
-                    >
-                      {session.score}/{session.totalQuestions}
-                    </KangurStatusChip>
-                    {session.xpEarned !== null ? (
-                      <KangurStatusChip
-                        accent='indigo'
-                        data-testid={`learner-profile-session-xp-${session.id}`}
-                        size='sm'
-                      >
-                        +{session.xpEarned} XP
-                      </KangurStatusChip>
-                    ) : null}
-                    <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-                      {formatKangurProfileDuration(session.timeTakenSeconds)}
-                    </div>
-                  </div>
-                </KangurInfoCard>
+                  scoreAccent={resolveSessionScoreAccent(session.accuracyPercent)}
+                  scoreTestId={`learner-profile-session-score-${session.id}`}
+                  scoreText={`${session.score}/${session.totalQuestions}`}
+                  subtitle={formatKangurProfileDateTime(session.createdAt)}
+                  title={session.operationLabel}
+                  titleClassName='text-sm font-semibold'
+                  xpTestId={`learner-profile-session-xp-${session.id}`}
+                  xpText={session.xpEarned !== null ? `+${session.xpEarned} XP` : undefined}
+                />
               );
             })}
           </div>
@@ -145,6 +127,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           progress={progress}
         />
       </KangurGlassPanel>
+      </div>
     </section>
   );
 }

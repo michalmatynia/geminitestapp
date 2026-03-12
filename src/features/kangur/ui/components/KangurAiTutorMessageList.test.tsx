@@ -284,6 +284,8 @@ describe('KangurAiTutorMessageList', () => {
 
     expect(screen.getByText('Jak mam to policzyc?')).toHaveClass(
       'tutor-user-bubble',
+      'kangur-chat-bubble',
+      'kangur-chat-padding-sm',
       'border-orange-400/60',
       'text-white'
     );
@@ -333,12 +335,15 @@ describe('KangurAiTutorMessageList', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('kangur-ai-tutor-assistant-drawing-message-1-0')
-    ).toHaveClass('[border-color:var(--kangur-soft-card-border)]');
+    ).toHaveClass(
+      'kangur-chat-card',
+      '[border-color:var(--kangur-soft-card-border)]'
+    );
     expect(screen.getByText('Dwie pary')).toBeInTheDocument();
     expect(screen.getByText('Kazda para ma po dwa elementy.')).toBeInTheDocument();
     expect(
       screen.getByLabelText('Dwie pary kropek ustawione obok siebie.')
-    ).toHaveClass('[background:var(--kangur-soft-card-background)]');
+    ).toHaveClass('kangur-chat-inset', '[background:var(--kangur-soft-card-background)]');
   });
 
   it('locks assistant feedback controls after feedback was already submitted', () => {
@@ -369,6 +374,8 @@ describe('KangurAiTutorMessageList', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-0')).toHaveClass(
+      'kangur-chat-card',
+      'kangur-chat-padding-sm',
       '[border-color:var(--kangur-soft-card-border)]'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toBeDisabled();

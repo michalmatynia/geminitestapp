@@ -4,7 +4,6 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
 import {
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -63,7 +63,7 @@ export function KangurFeatureRouteShell({
   const searchParams = useSearchParams();
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
-  const kangurAppearance = resolveKangurStorefrontAppearance(appearanceMode);
+  const kangurAppearance = useKangurStorefrontAppearance();
   const slug = useMemo(
     () => getSlugFromPathname(pathname, normalizedBasePath),
     [normalizedBasePath, pathname]

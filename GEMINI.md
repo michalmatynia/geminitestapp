@@ -595,7 +595,7 @@ SCRAPER_GUARD_API_MAX=
 - Do not write transient diagnostics/log artifacts to the repository root.
   Store files such as `tsc_errors.txt`, `test_results_final.txt`, and similar
   one-off outputs under `tmp/gemini/` (create it if needed) for easy cleanup.
-- Expect mixed persistence behavior; do not assume Prisma-only or Mongo-only.
+- Expect MongoDB-backed persistence behavior; do not assume removed legacy-provider paths still exist.
 - Expect Redis absence in local/dev and queue inline fallback behavior.
 - Check docs generation and architecture scripts when touching AI Paths,
   validator docs, or architecture boundaries.

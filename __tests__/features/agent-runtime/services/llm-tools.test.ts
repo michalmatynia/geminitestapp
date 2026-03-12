@@ -7,13 +7,16 @@ import {
   buildExtractionPlan,
   decideSearchFirstWithLLM,
 } from '@/features/ai/agent-runtime/tools/llm/index';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    agentAuditLog: { create: vi.fn() },
+const { agentAuditLogDelegate } = vi.hoisted(() => ({
+  agentAuditLogDelegate: {
+    create: vi.fn(),
   },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
@@ -133,7 +136,7 @@ describe('Agent Runtime - LLM Tools', () => {
       );
 
       expect(result).toEqual(['.prod']);
-      expect(legacySqlClient.agentAuditLog.create).toHaveBeenCalled();
+      expect(agentAuditLogDelegate.create).toHaveBeenCalled();
     });
   });
 

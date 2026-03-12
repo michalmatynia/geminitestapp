@@ -10,6 +10,9 @@ import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tu
 import { useKangurAiTutorGuidedDisplayState } from './KangurAiTutorWidget.display';
 
 import type {
+  KangurTutorAnchorRegistration,
+} from '@/features/kangur/ui/context/kangur-tutor-types';
+import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
 } from './KangurAiTutorWidget.types';
@@ -29,6 +32,7 @@ type HarnessProps = {
   persistedSelectionRect?: DOMRect | null;
   selectionGuidanceCalloutVisibleText?: string | null;
   selectionResponsePending?: PendingSelectionResponse | null;
+  tutorAnchorContext?: { anchors: KangurTutorAnchorRegistration[] } | null;
 };
 
 function GuidedDisplayHarness({
@@ -43,6 +47,7 @@ function GuidedDisplayHarness({
   persistedSelectionRect = null,
   selectionGuidanceCalloutVisibleText = null,
   selectionResponsePending = null,
+  tutorAnchorContext = null,
 }: HarnessProps) {
   const guidedState = useKangurAiTutorGuidedDisplayState({
     activeSectionRect: null,
@@ -72,7 +77,7 @@ function GuidedDisplayHarness({
     selectionResponsePending,
     sessionContentId: 'lesson-1',
     sessionSurface: 'lesson',
-    tutorAnchorContext: null,
+    tutorAnchorContext,
     tutorContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
     tutorName: 'Pomocnik',
     viewportTick: 0,
@@ -90,6 +95,16 @@ function GuidedDisplayHarness({
             top: guidedState.guidedSelectionRect.top,
             width: guidedState.guidedSelectionRect.width,
             height: guidedState.guidedSelectionRect.height,
+          })
+          : 'null'}
+      </div>
+      <div data-testid='guided-selection-spotlight-rect'>
+        {guidedState.guidedSelectionSpotlightRect
+          ? JSON.stringify({
+            left: guidedState.guidedSelectionSpotlightRect.left,
+            top: guidedState.guidedSelectionSpotlightRect.top,
+            width: guidedState.guidedSelectionSpotlightRect.width,
+            height: guidedState.guidedSelectionSpotlightRect.height,
           })
           : 'null'}
       </div>
@@ -156,6 +171,58 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
         top: 180,
         width: 182,
         height: 56,
+      })
+    );
+  });
+
+  it('uses the owning section rect as the guided spotlight when the excerpt resolves to a tutor anchor', () => {
+    const sectionRect = new DOMRect(80, 140, 520, 240);
+
+    render(
+      <GuidedDisplayHarness
+        guidedTutorTarget={{
+          mode: 'selection',
+          kind: 'selection_excerpt',
+          selectedText: 'Pierwsza linia druga linia',
+        }}
+        activeSelectionPageRect={new DOMRect(120, 180, 96, 24)}
+        activeSelectionPageRects={[
+          new DOMRect(120, 180, 96, 24),
+          new DOMRect(120, 212, 182, 24),
+        ]}
+        activeSelectionRect={new DOMRect(120, 180, 96, 24)}
+        tutorAnchorContext={{
+          anchors: [
+            {
+              getRect: () => sectionRect,
+              id: 'lesson-section-document',
+              kind: 'document',
+              metadata: {
+                contentId: 'lesson-1',
+                label: 'Sekcja dokumentu',
+              },
+              priority: 100,
+              surface: 'lesson',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('guided-selection-rect')).toHaveTextContent(
+      JSON.stringify({
+        left: 120,
+        top: 180,
+        width: 182,
+        height: 56,
+      })
+    );
+    expect(screen.getByTestId('guided-selection-spotlight-rect')).toHaveTextContent(
+      JSON.stringify({
+        left: 80,
+        top: 140,
+        width: 520,
+        height: 240,
       })
     );
   });

@@ -2,6 +2,7 @@ import { useId } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
 import {
   KangurIconBadge,
@@ -63,9 +64,7 @@ export default function OperationSelector({
           const accent = KANGUR_ACCENT_STYLES[operation.accent];
           const descriptionElementId = `operation-card-description-${operation.id}`;
           const statusElementId = `operation-card-status-${operation.id}`;
-          const priorityElementId = operation.hasPriorityAssignment
-            ? `operation-card-priority-${operation.id}`
-            : null;
+          const priorityElementId = operation.priority ? `operation-card-priority-${operation.id}` : null;
           const recommendedElementId = operation.isRecommended
             ? `operation-card-recommendation-${operation.id}`
             : null;
@@ -95,15 +94,14 @@ export default function OperationSelector({
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.95 }}
             >
-              {operation.hasPriorityAssignment ? (
-                <KangurStatusChip
+              {operation.priority ? (
+                <KangurAssignmentPriorityChip
                   accent='rose'
                   className='self-start text-[10px] uppercase tracking-[0.16em] sm:absolute sm:right-3 sm:top-3'
                   id={priorityElementId ?? undefined}
+                  priority={operation.priority}
                   size='sm'
-                >
-                  {operation.priorityLabel}
-                </KangurStatusChip>
+                />
               ) : null}
               <div className='flex flex-col gap-3 min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between'>
                 <KangurIconBadge

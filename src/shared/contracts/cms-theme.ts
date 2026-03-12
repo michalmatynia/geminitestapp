@@ -550,22 +550,25 @@ export const DEFAULT_THEME: ThemeSettings = {
   darkMode: false,
 };
 
-export function normalizeThemeSettings(input?: Partial<ThemeSettings> | null): ThemeSettings {
+export function normalizeThemeSettings(
+  input?: Partial<ThemeSettings> | null,
+  baseTheme: ThemeSettings = DEFAULT_THEME
+): ThemeSettings {
   const exact = themeSettingsSchema.safeParse(input);
   if (exact.success) {
     return exact.data;
   }
 
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return DEFAULT_THEME;
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return baseTheme;
 
   const merged = {
-    ...DEFAULT_THEME,
+    ...baseTheme,
     ...input,
   };
   const mergedResult = themeSettingsSchema.safeParse(merged);
   if (mergedResult.success) return mergedResult.data;
 
-  return DEFAULT_THEME;
+  return baseTheme;
 }
 
 export function buildColorSchemeMap(

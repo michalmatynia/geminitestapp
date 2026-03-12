@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
+import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
@@ -12,7 +13,6 @@ import {
   KangurButton,
   KangurInfoCard,
   KangurIconBadge,
-  KangurOptionCardButton,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -509,46 +509,44 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             const isRecommended = recommendation?.recommendedScreen === option.onSelectScreen;
 
             return (
-              <KangurOptionCardButton
+              <KangurIconSummaryOptionCard
                 key={option.onSelectScreen}
                 accent={option.accent}
-                className='flex w-full items-center gap-4 rounded-[28px] p-4 text-left'
-                data-doc-id='home_quick_practice_action'
-                data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
-                emphasis='accent'
-                onClick={() => setScreen(option.onSelectScreen)}
-              >
-                <KangurIconBadge accent={option.accent} className='shrink-0' size='xl'>
-                  {option.emoji}
-                </KangurIconBadge>
-                <div className='min-w-0'>
-                  <p className='text-base font-extrabold leading-tight [color:var(--kangur-page-text)]'>
-                    {option.label}
-                  </p>
-                  <p className='mt-0.5 text-sm [color:var(--kangur-page-muted-text)]'>
-                    {option.description}
-                  </p>
-                </div>
-                <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
-                  <KangurStatusChip
-                    accent={option.accent}
-                    className='uppercase tracking-[0.14em]'
-                    size='sm'
-                  >
-                    Gra
-                  </KangurStatusChip>
-                  {isRecommended ? (
+                aside={
+                  <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
                     <KangurStatusChip
                       accent={option.accent}
-                      className='text-[11px] font-semibold'
-                      data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
+                      className='uppercase tracking-[0.14em]'
                       size='sm'
                     >
-                      {recommendation.label}
+                      Gra
                     </KangurStatusChip>
-                  ) : null}
-                </div>
-              </KangurOptionCardButton>
+                    {isRecommended ? (
+                      <KangurStatusChip
+                        accent={option.accent}
+                        className='text-[11px] font-semibold'
+                        data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
+                        size='sm'
+                      >
+                        {recommendation.label}
+                      </KangurStatusChip>
+                    ) : null}
+                  </div>
+                }
+                buttonClassName='w-full rounded-[28px] p-4 text-left'
+                data-doc-id='home_quick_practice_action'
+                data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
+                description={option.description}
+                emphasis='accent'
+                icon={
+                  <KangurIconBadge accent={option.accent} className='shrink-0' size='xl'>
+                    {option.emoji}
+                  </KangurIconBadge>
+                }
+                layoutClassName='w-full items-center'
+                onClick={() => setScreen(option.onSelectScreen)}
+                title={option.label}
+              />
             );
           })}
         </div>

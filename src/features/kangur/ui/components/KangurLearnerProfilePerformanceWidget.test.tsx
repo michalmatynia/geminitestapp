@@ -5,14 +5,19 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurLearnerProfileRuntimeMock } = vi.hoisted(() => ({
+const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   buildKangurOperationPracticeHref: (basePath: string, operation: string) =>
     `${basePath}/game?quickStart=operation&operation=${operation}`,
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 let KangurLearnerProfilePerformanceWidget: typeof import('./KangurLearnerProfilePerformanceWidget').KangurLearnerProfilePerformanceWidget;
@@ -104,6 +109,13 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
       './KangurLearnerProfilePerformanceWidget'
     ));
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
   });
 
   it('shows xp rhythm and operation training actions alongside weekly activity', () => {
@@ -154,6 +166,30 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
 
     expect(screen.getByTestId('learner-profile-xp-summary-guided')).toHaveTextContent(
       'Polecone: 2 · Trzymam kierunek 2/3 rundy'
+    );
+  });
+
+  it('uses Mongo-backed performance intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: {
+        id: 'learner-profile-performance',
+        title: 'Skutecznosc ucznia',
+        summary: 'Mongo opis rytmu aktywnosci i wynikow operacji.',
+      },
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(buildRuntimeValue());
+
+    render(<KangurLearnerProfilePerformanceWidget />);
+
+    expect(screen.getByTestId('learner-profile-performance-intro')).toHaveTextContent(
+      'Skutecznosc ucznia'
+    );
+    expect(screen.getByTestId('learner-profile-performance-intro')).toHaveTextContent(
+      'Mongo opis rytmu aktywnosci i wynikow operacji.'
     );
   });
 });

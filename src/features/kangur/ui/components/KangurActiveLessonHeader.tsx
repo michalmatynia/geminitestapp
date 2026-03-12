@@ -21,7 +21,10 @@ type KangurActiveLessonHeaderProps = {
   lessonContentRef: RefObject<HTMLElement | null>;
   activeLessonAssignment?: KangurAssignmentSnapshot | null;
   completedActiveLessonAssignment?: KangurAssignmentSnapshot | null;
+  assignmentSectionSummary?: string;
+  assignmentSectionTitle?: string;
   assignmentRef?: RefObject<HTMLDivElement | null>;
+  descriptionOverride?: string;
   headerTestId: string;
   headerActionsTestId: string;
   iconTestId: string;
@@ -29,6 +32,7 @@ type KangurActiveLessonHeaderProps = {
   completedChipTestId: string;
   onBack?: () => void;
   backButtonLabel?: string;
+  titleOverride?: string;
 };
 
 type KangurActiveLessonHeaderContextValue = {
@@ -37,6 +41,8 @@ type KangurActiveLessonHeaderContextValue = {
   lessonContentRef: RefObject<HTMLElement | null>;
   activeLessonAssignment?: KangurAssignmentSnapshot | null;
   completedActiveLessonAssignment?: KangurAssignmentSnapshot | null;
+  assignmentSectionSummary?: string;
+  assignmentSectionTitle?: string;
   assignmentRef?: RefObject<HTMLDivElement | null>;
   headerActionsTestId: string;
   iconTestId: string;
@@ -95,10 +101,31 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
     subsectionTypeLabel,
     activeLessonAssignment,
     completedActiveLessonAssignment,
+    assignmentSectionSummary,
+    assignmentSectionTitle,
     assignmentRef,
     priorityChipTestId,
     completedChipTestId,
   } = useKangurActiveLessonHeaderContext();
+  const assignmentStateChip = activeLessonAssignment ? (
+    <KangurStatusChip
+      accent='rose'
+      className='uppercase tracking-[0.14em]'
+      data-testid={priorityChipTestId}
+      size='sm'
+    >
+      Priorytet Rodzica
+    </KangurStatusChip>
+  ) : completedActiveLessonAssignment ? (
+    <KangurStatusChip
+      accent='emerald'
+      className='uppercase tracking-[0.14em]'
+      data-testid={completedChipTestId}
+      size='sm'
+    >
+      Ukonczone dla rodzica
+    </KangurStatusChip>
+  ) : null;
 
   return (
     <div className='min-w-0 flex-1'>
@@ -138,26 +165,20 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
           </p>
         </>
       )}
-      {activeLessonAssignment ? (
-        <div ref={assignmentRef} className='mt-3 inline-flex'>
-          <KangurStatusChip
-            accent='rose'
-            className='uppercase tracking-[0.14em]'
-            data-testid={priorityChipTestId}
-            size='sm'
-          >
-            Priorytet Rodzica
-          </KangurStatusChip>
+      {assignmentStateChip ? (
+        <div ref={assignmentRef} className='mt-3 flex max-w-xl flex-col items-start gap-1.5'>
+          {assignmentSectionTitle ? (
+            <div className='text-[11px] font-bold uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
+              {assignmentSectionTitle}
+            </div>
+          ) : null}
+          {assignmentStateChip}
+          {assignmentSectionSummary ? (
+            <p className='text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+              {assignmentSectionSummary}
+            </p>
+          ) : null}
         </div>
-      ) : completedActiveLessonAssignment ? (
-        <KangurStatusChip
-          accent='emerald'
-          className='mt-3 uppercase tracking-[0.14em]'
-          data-testid={completedChipTestId}
-          size='sm'
-        >
-          Ukonczone dla rodzica
-        </KangurStatusChip>
       ) : null}
     </div>
   );
@@ -181,7 +202,10 @@ export function KangurActiveLessonHeader({
   lessonContentRef,
   activeLessonAssignment = null,
   completedActiveLessonAssignment = null,
+  assignmentSectionSummary,
+  assignmentSectionTitle,
   assignmentRef,
+  descriptionOverride,
   headerTestId,
   headerActionsTestId,
   iconTestId,
@@ -189,11 +213,12 @@ export function KangurActiveLessonHeader({
   completedChipTestId,
   onBack,
   backButtonLabel = 'Wróć do listy lekcji',
+  titleOverride,
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
   const subsectionSummary = useKangurLessonSubsectionSummary();
   const lessonHeaderTestId = headerTestId;
-  const displayTitle = subsectionSummary?.title ?? lesson.title;
-  const displayDescription = subsectionSummary?.description ?? lesson.description;
+  const displayTitle = subsectionSummary?.title ?? titleOverride ?? lesson.title;
+  const displayDescription = subsectionSummary?.description ?? descriptionOverride ?? lesson.description;
   const subsectionTypeLabel = subsectionSummary?.isGame ? 'Gra' : 'Lekcja';
   const headerAnchorRef = useRef<HTMLDivElement | null>(null);
   const subsectionAnchorKey = subsectionSummary
@@ -205,6 +230,8 @@ export function KangurActiveLessonHeader({
     lessonContentRef,
     activeLessonAssignment,
     completedActiveLessonAssignment,
+    assignmentSectionSummary,
+    assignmentSectionTitle,
     assignmentRef,
     headerActionsTestId,
     iconTestId,

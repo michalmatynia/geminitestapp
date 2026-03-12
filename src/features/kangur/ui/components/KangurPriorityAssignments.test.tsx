@@ -1,0 +1,92 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { useKangurAssignmentsMock } = vi.hoisted(() => ({
+  useKangurAssignmentsMock: vi.fn(),
+}));
+
+const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  useKangurPageContentEntryMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+
+import { KangurPriorityAssignments } from './KangurPriorityAssignments';
+
+const assignment: KangurAssignmentSnapshot = {
+  id: 'assignment-priority',
+  learnerKey: 'jan@example.com',
+  title: 'Powtorka: Dzielenie',
+  description: 'Wroc do dzielenia i zakoncz jedna pelna sesje.',
+  priority: 'high',
+  archived: false,
+  target: {
+    type: 'lesson',
+    lessonComponentId: 'division',
+    requiredCompletions: 1,
+    baselineCompletions: 0,
+  },
+  assignedByName: 'Rodzic',
+  assignedByEmail: 'rodzic@example.com',
+  createdAt: '2026-03-06T09:00:00.000Z',
+  updatedAt: '2026-03-06T09:00:00.000Z',
+  progress: {
+    status: 'not_started',
+    percent: 0,
+    summary: 'Powtorki po przydziale: 0/1.',
+    attemptsCompleted: 0,
+    attemptsRequired: 1,
+    lastActivityAt: null,
+    completedAt: null,
+  },
+};
+
+describe('KangurPriorityAssignments', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+    });
+  });
+
+  it('renders the default compact title and count when priority assignments are available', () => {
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [assignment],
+      isLoading: false,
+      error: null,
+    });
+
+    render(<KangurPriorityAssignments basePath='/kangur' enabled />);
+
+    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveTextContent(
+      'Priorytetowe zadania'
+    );
+    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveTextContent('1 zadanie');
+  });
+
+  it('renders the default empty-state copy', () => {
+    render(<KangurPriorityAssignments basePath='/kangur' enabled />);
+
+    expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
+      'Priorytetowe zadania'
+    );
+    expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
+      'Brak aktywnych zadan od rodzica.'
+    );
+  });
+});

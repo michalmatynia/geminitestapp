@@ -2206,7 +2206,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_database_database_action",
     "title": "Database Query: database.action",
-    "summary": "Provider action command (MongoDB or Prisma-mapped command labels).",
+    "summary": "Provider action command aligned to MongoDB action labels.",
     "section": "Node Config - Database Query",
     "aliases": [
       "database",

@@ -3,6 +3,7 @@
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
@@ -10,7 +11,6 @@ import {
   KangurIconBadge,
   KangurInfoCard,
   KangurMetricCard,
-  KangurOptionCardButton,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -709,16 +709,17 @@ export default function AddingSynthesisGame({
                       : null;
 
                   return (
-                    <KangurOptionCardButton
+                    <KangurAnswerChoiceCard
                       accent={laneAccent}
                       aria-disabled={feedback ? 'true' : 'false'}
                       aria-label={`Tor ${laneIndex + 1}: ${choice}`}
-                      className={cn(
+                      buttonClassName={cn(
                         'min-h-[96px] flex-col justify-center rounded-[24px] px-2 py-3 text-center',
                         laneTextClassName
                       )}
                       data-testid={`adding-synthesis-lane-${laneIndex}`}
                       emphasis='accent'
+                      interactive={!feedback}
                       key={`${currentNote.id}-${choice}`}
                       onClick={() => {
                         if (!feedback) {
@@ -736,7 +737,7 @@ export default function AddingSynthesisGame({
                       <span className='mt-1 text-[11px] font-medium [color:var(--kangur-page-muted-text)]'>
                         Wybierz tor
                       </span>
-                    </KangurOptionCardButton>
+                    </KangurAnswerChoiceCard>
                   );
                 })}
               </div>

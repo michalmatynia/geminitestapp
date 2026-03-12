@@ -6,7 +6,6 @@ import KangurRecommendationCard from '@/features/kangur/ui/components/KangurReco
 import {
   KangurButton,
   KangurGlassPanel,
-  KangurInfoCard,
   KangurIconBadge,
   KangurSectionHeading,
   KangurStatusChip,
@@ -289,7 +288,7 @@ export default function KangurSetup({
         {recommendedTitle ? (
           <KangurRecommendationCard
             accent='amber'
-            data-testid='kangur-setup-recommendation-card'
+            dataTestId='kangur-setup-recommendation-card'
             description={recommendedDescription}
             descriptionTestId='kangur-setup-recommendation-description'
             label={recommendedLabel ?? 'Polecamy teraz'}

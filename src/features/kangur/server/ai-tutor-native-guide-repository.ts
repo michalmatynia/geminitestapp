@@ -7,6 +7,7 @@ import {
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 type KangurAiTutorNativeGuideDoc = {
   locale: string;
@@ -81,7 +82,10 @@ export async function getKangurAiTutorNativeGuideStore(
   }
 
   try {
-    const merged = mergeKangurAiTutorNativeGuideStore(defaults, existing.store);
+    const merged = mergeKangurAiTutorNativeGuideStore(
+      defaults,
+      repairKangurPolishCopy(existing.store)
+    );
     if (JSON.stringify(merged) !== JSON.stringify(existing.store)) {
       await collection.updateOne(
         { locale },
@@ -111,7 +115,7 @@ export async function getKangurAiTutorNativeGuideStore(
 export async function upsertKangurAiTutorNativeGuideStore(
   store: KangurAiTutorNativeGuideStore
 ): Promise<KangurAiTutorNativeGuideStore> {
-  const parsed = parseKangurAiTutorNativeGuideStore(store);
+  const parsed = parseKangurAiTutorNativeGuideStore(repairKangurPolishCopy(store));
 
   if (!process.env['MONGODB_URI']) {
     return parsed;
@@ -136,4 +140,24 @@ export async function upsertKangurAiTutorNativeGuideStore(
   );
 
   return parsed;
+}
+
+export async function getLatestKangurAiTutorNativeGuideUpdateAt(
+  locale = 'pl'
+): Promise<Date | null> {
+  if (!process.env['MONGODB_URI']) {
+    return null;
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const existing = await collection.findOne(
+    { locale },
+    {
+      projection: {
+        updatedAt: 1,
+      },
+    }
+  );
+  return existing?.updatedAt instanceof Date ? existing.updatedAt : null;
 }

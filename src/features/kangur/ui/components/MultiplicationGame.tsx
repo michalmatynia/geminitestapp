@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 
+import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
@@ -11,7 +11,6 @@ import {
   KangurEquationDisplay,
   KangurGlassPanel,
   KangurHeadline,
-  KangurOptionCardButton,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -290,27 +289,25 @@ export default function MultiplicationGame({
               }
 
               return (
-                <motion.div
+                <KangurAnswerChoiceCard
+                  accent={accent}
+                  buttonClassName={cn(
+                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold sm:text-xl',
+                    className,
+                    confirmed ? 'cursor-default' : 'cursor-pointer'
+                  )}
+                  data-testid={`multiplication-game-choice-${index}`}
+                  emphasis={emphasis}
+                  hoverScale={1.04}
+                  interactive={!confirmed}
                   key={index}
-                  whileHover={!confirmed ? { scale: 1.04 } : {}}
-                  whileTap={!confirmed ? { scale: 0.96 } : {}}
+                  onClick={() => handleSelect(choice)}
+                  state={state}
+                  tapScale={0.96}
+                  type='button'
                 >
-                  <KangurOptionCardButton
-                    accent={accent}
-                    className={cn(
-                      'flex w-full items-center justify-center rounded-[24px] px-4 py-3 text-center text-lg font-extrabold transition-all sm:text-xl',
-                      className,
-                      confirmed ? 'cursor-default' : 'cursor-pointer'
-                    )}
-                    data-testid={`multiplication-game-choice-${index}`}
-                    emphasis={emphasis}
-                    onClick={() => handleSelect(choice)}
-                    state={state}
-                    type='button'
-                  >
-                    {choice}
-                  </KangurOptionCardButton>
-                </motion.div>
+                  {choice}
+                </KangurAnswerChoiceCard>
               );
             })}
           </div>

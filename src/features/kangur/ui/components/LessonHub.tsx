@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 
+import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
 import {
   KangurIconBadge,
-  KangurOptionCardButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
@@ -61,50 +61,56 @@ export default function LessonHub({
               whileTap={{ scale: 0.98 }}
               className='w-full'
             >
-              <KangurOptionCardButton
+              <KangurIconSummaryOptionCard
                 accent={accent}
-                className='flex w-full items-center gap-4 rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
+                aside={
+                  <>
+                    <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
+                      {section.locked
+                        ? (section.lockedLabel ?? 'Zablokowane')
+                        : section.isGame
+                          ? 'Gra'
+                          : 'Lekcja'}
+                    </KangurStatusChip>
+                    {resolvedProgress && resolvedProgress.totalCount > 0 ? (
+                      <KangurLessonProgressDots
+                        activeDotClassName={activeProgressDotClassName}
+                        className='self-end'
+                        dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
+                        srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
+                        testId={`lesson-hub-progress-${section.id}`}
+                        totalCount={resolvedProgress.totalCount}
+                        viewedCount={resolvedProgress.viewedCount}
+                      />
+                    ) : null}
+                  </>
+                }
+                asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
+                buttonClassName='w-full rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
                 data-testid={`lesson-hub-section-${section.id}`}
+                description={section.description}
+                descriptionClassName='text-slate-500'
                 disabled={section.locked}
                 emphasis={section.isGame ? 'accent' : 'neutral'}
+                icon={
+                  <KangurIconBadge
+                    accent={accent}
+                    className='shrink-0'
+                    data-testid={`lesson-hub-icon-${section.id}`}
+                    size='xl'
+                  >
+                    {section.emoji}
+                  </KangurIconBadge>
+                }
+                layoutClassName='w-full items-center'
                 onClick={() => {
                   if (!section.locked) {
                     handleSectionSelect(section.id);
                   }
                 }}
-                type='button'
-              >
-                <KangurIconBadge
-                  accent={accent}
-                  className='shrink-0'
-                  data-testid={`lesson-hub-icon-${section.id}`}
-                  size='xl'
-                >
-                  {section.emoji}
-                </KangurIconBadge>
-                <div className='min-w-0'>
-                  <p className='text-base font-extrabold leading-tight text-slate-800'>
-                    {section.title}
-                  </p>
-                  <p className='mt-0.5 text-sm text-slate-500'>{section.description}</p>
-                </div>
-                <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
-                  <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
-                    {section.locked ? (section.lockedLabel ?? 'Zablokowane') : section.isGame ? 'Gra' : 'Lekcja'}
-                  </KangurStatusChip>
-                  {resolvedProgress && resolvedProgress.totalCount > 0 ? (
-                    <KangurLessonProgressDots
-                      activeDotClassName={activeProgressDotClassName}
-                      className='self-end'
-                      dotTestIdPrefix={`lesson-hub-progress-dot-${section.id}`}
-                      srLabel={`Obejrzano ${resolvedProgress.viewedCount} z ${resolvedProgress.totalCount} ekranow sekcji.`}
-                      testId={`lesson-hub-progress-${section.id}`}
-                      totalCount={resolvedProgress.totalCount}
-                      viewedCount={resolvedProgress.viewedCount}
-                    />
-                  ) : null}
-                </div>
-              </KangurOptionCardButton>
+                title={section.title}
+                titleClassName='text-slate-800'
+              />
             </motion.div>
           );
         })}

@@ -12,16 +12,19 @@ import {
 } from '@/features/ai/agent-runtime/execution/loop-guard';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-// Mock external modules
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: { update: vi.fn() },
-    agentAuditLog: { create: vi.fn() },
-    agentMemoryItem: { create: vi.fn(), findMany: vi.fn() },
-    agentLongTermMemory: { findMany: vi.fn() },
+const { chatbotAgentRunDelegate, agentAuditLogDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    update: vi.fn(),
   },
+  agentAuditLogDelegate: {
+    create: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
+  getAgentAuditLogDelegate: vi.fn(() => agentAuditLogDelegate),
 }));
 
 vi.mock('@/features/ai/agent-runtime/audit', () => ({
@@ -103,7 +106,7 @@ describe('Agent Runtime - Execution', () => {
         planState: {},
       });
 
-      expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith({
+      expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith({
         where: { id: 'run-1' },
         data: { memoryKey: 'run-1' }, // Should generate key if missing
       });

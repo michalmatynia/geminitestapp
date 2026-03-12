@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 import {
   KangurAiTutorPanelBodyProvider,
@@ -125,11 +126,17 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
         'color-mix(in srgb, var(--kangur-soft-card-background) 82%, rgba(254,243,199,0.92))',
     });
     expect(screen.getByText('Limit dzisiaj: 5/5').parentElement?.parentElement).toHaveClass(
+      'kangur-chat-inset',
+      'kangur-chat-padding-sm',
       '[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveAttribute(
       'data-nudge-mode',
       'gentle'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveClass(
+      'kangur-chat-inset',
+      'kangur-chat-padding-md'
     );
     expect(screen.getByTestId('kangur-ai-tutor-proactive-nudge')).toHaveTextContent(
       'Sugerowany pierwszy krok'
@@ -201,15 +208,18 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
       </KangurAiTutorPanelBodyProvider>
     );
 
-    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent('Narzedzia tutora');
-    expect(screen.getByText('Narzedzia tutora')).toHaveClass(
-      '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
+      repairKangurPolishCopy('Narzedzia tutora')
     );
-    expect(
-      screen.getByText(
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveClass(
+      'kangur-chat-card',
+      'kangur-chat-padding-md'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
+      repairKangurPolishCopy(
         'Skroty do wskazowek, rysowania i kolejnych krokow w biezacej rozmowie.'
       )
-    ).toHaveClass('[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]');
+    );
 
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-drawing-toggle'));
     fireEvent.click(screen.getByTestId('kangur-ai-tutor-toolbox-action-hint'));

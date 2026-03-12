@@ -40,7 +40,7 @@ export function KangurAiTutorComposer(): JSX.Element {
   if (drawingMode) {
     return (
       <div
-        className='border-t px-3 py-3'
+        className='border-t kangur-chat-padding-md'
         style={{
           background:
             'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
@@ -59,7 +59,7 @@ export function KangurAiTutorComposer(): JSX.Element {
 
   return (
     <div
-      className='border-t px-3 py-3'
+      className='border-t kangur-chat-padding-md'
       style={{
         background:
           'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 88%, transparent) 0%, transparent 100%)',
@@ -77,7 +77,7 @@ export function KangurAiTutorComposer(): JSX.Element {
             <img
               src={drawingImageData}
               alt={drawingContent?.previewAlt ?? 'Rysunek'}
-              className='h-16 w-auto rounded-lg border shadow-[0_4px_10px_-6px_rgba(15,23,42,0.1)]'
+              className='h-16 w-auto kangur-chat-inset border shadow-[0_4px_10px_-6px_rgba(15,23,42,0.1)]'
               style={{
                 borderColor:
                   'color-mix(in srgb, var(--kangur-soft-card-border) 76%, rgb(251 191 36))',

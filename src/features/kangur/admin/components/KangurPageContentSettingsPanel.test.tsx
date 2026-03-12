@@ -66,7 +66,7 @@ describe('KangurPageContentSettingsPanel', () => {
 
     await screen.findByText('50 / 50 tracked sections covered');
 
-    fireEvent.click(screen.getByRole('button', { name: /Ranking na stronie glownej/i }));
+    fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
     fireEvent.change(screen.getByLabelText('Page content title'), {
       target: { value: 'Ranking glownej planszy' },
     });

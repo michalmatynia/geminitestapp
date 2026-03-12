@@ -3,6 +3,7 @@
 import { BrainCircuit } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { KangurLabeledValueSummary } from '@/features/kangur/ui/components/KangurLabeledValueSummary';
 import {
   formatKangurProfileDateTime,
   useKangurLearnerProfileRuntime,
@@ -10,11 +11,11 @@ import {
 import {
   KangurCardDescription,
   KangurGlassPanel,
-  KangurSectionEyebrow,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
@@ -49,41 +50,25 @@ const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
 
 const formatMoodConfidence = (value: number): string => `${Math.round(value * 100)}%`;
 
-function LearnerMoodStat({
-  label,
-  value,
-  description,
-  testId,
-}: {
-  label: string;
-  value: string;
-  description: string;
-  testId: string;
-}): React.JSX.Element {
-  return (
-    <div className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'>
-      <KangurSectionEyebrow className='tracking-[0.2em]'>
-        {label}
-      </KangurSectionEyebrow>
-      <div className='mt-2 text-base font-bold [color:var(--kangur-page-text)]' data-testid={testId}>
-        {value}
-      </div>
-      <KangurCardDescription as='p' className='mt-1' size='xs'>
-        {description}
-      </KangurCardDescription>
-    </div>
-  );
-}
-
 export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const { user } = useKangurLearnerProfileRuntime();
+  const { entry: moodContent } = useKangurPageContentEntry('learner-profile-ai-tutor-mood');
   const learner = user?.activeLearner ?? null;
   const learnerMood = learner?.aiTutor ?? createDefaultKangurAiTutorLearnerMood();
   const currentPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.currentMoodId);
   const baselinePreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.baselineMoodId);
   const currentAccent = KANGUR_TUTOR_MOOD_ACCENTS[learnerMood.currentMoodId];
   const learnerName = learner?.displayName?.trim() ?? 'Tryb lokalny';
+  const sectionTitle = moodContent?.title ?? tutorContent.profileMoodWidget.title;
+  const sectionDescription =
+    moodContent?.summary ??
+    (learner
+      ? formatKangurAiTutorTemplate(
+          tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
+          { learnerName }
+        )
+      : tutorContent.profileMoodWidget.descriptionFallback);
   const updatedLabel = learnerMood.lastComputedAt
     ? formatKangurProfileDateTime(learnerMood.lastComputedAt)
     : tutorContent.profileMoodWidget.updatedFallback;
@@ -101,18 +86,11 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
           <KangurSectionHeading
             accent='teal'
             align='left'
-            description={
-              learner
-                ? formatKangurAiTutorTemplate(
-                  tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
-                  { learnerName }
-                )
-                : tutorContent.profileMoodWidget.descriptionFallback
-            }
+            description={sectionDescription}
             icon={<BrainCircuit className='h-5 w-5' />}
             iconAccent='teal'
             layout='inline'
-            title={tutorContent.profileMoodWidget.title}
+            title={sectionTitle}
           />
 
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
@@ -136,22 +114,25 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
         </div>
 
         <div className='grid w-full gap-3 min-[360px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
-          <LearnerMoodStat
+          <KangurLabeledValueSummary
+            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
             description={tutorContent.profileMoodWidget.baselineDescription}
             label={tutorContent.profileMoodWidget.baselineLabel}
-            testId='learner-profile-ai-tutor-mood-baseline'
+            valueTestId='learner-profile-ai-tutor-mood-baseline'
             value={baselinePreset.label}
           />
-          <LearnerMoodStat
+          <KangurLabeledValueSummary
+            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
             description={tutorContent.profileMoodWidget.confidenceDescription}
             label={tutorContent.profileMoodWidget.confidenceLabel}
-            testId='learner-profile-ai-tutor-mood-confidence'
+            valueTestId='learner-profile-ai-tutor-mood-confidence'
             value={formatMoodConfidence(learnerMood.confidence)}
           />
-          <LearnerMoodStat
+          <KangurLabeledValueSummary
+            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
             description={tutorContent.profileMoodWidget.updatedDescription}
             label={tutorContent.profileMoodWidget.updatedLabel}
-            testId='learner-profile-ai-tutor-mood-updated'
+            valueTestId='learner-profile-ai-tutor-mood-updated'
             value={updatedLabel}
           />
         </div>

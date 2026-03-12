@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from 'react';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -149,16 +150,17 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
       ) : null}
 
       {activeSessionRecommendation ? (
-        <KangurResultSectionCard accent='violet' testId='kangur-result-recommendation-card'>
-          <KangurResultSectionChips>
-            <KangurStatusChip
-              accent='violet'
-              data-testid='kangur-result-recommendation-chip'
-              labelStyle='caps'
-              size='sm'
-            >
-              Zagrano zgodnie z rekomendacja
-            </KangurStatusChip>
+        <KangurRecommendationCard
+          accent='violet'
+          bodyClassName='gap-3'
+          className='w-full max-w-2xl rounded-[28px]'
+          contentClassName='gap-3'
+          dataTestId='kangur-result-recommendation-card'
+          description={activeSessionRecommendation.description}
+          descriptionRelaxed
+          descriptionSize='xs'
+          descriptionTestId='kangur-result-recommendation-description'
+          headerExtras={
             <KangurStatusChip
               accent='indigo'
               data-testid='kangur-result-recommendation-label'
@@ -167,20 +169,14 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
             >
               {activeSessionRecommendation.label}
             </KangurStatusChip>
-          </KangurResultSectionChips>
-          <KangurCardTitle data-testid='kangur-result-recommendation-title'>
-            {activeSessionRecommendation.title}
-          </KangurCardTitle>
-          {activeSessionRecommendation.description ? (
-            <KangurCardDescription
-              data-testid='kangur-result-recommendation-description'
-              relaxed
-              size='xs'
-            >
-              {activeSessionRecommendation.description}
-            </KangurCardDescription>
-          ) : null}
-        </KangurResultSectionCard>
+          }
+          label='Zagrano zgodnie z rekomendacja'
+          labelSize='sm'
+          labelStyle='caps'
+          labelTestId='kangur-result-recommendation-chip'
+          title={activeSessionRecommendation.title}
+          titleTestId='kangur-result-recommendation-title'
+        />
       ) : null}
 
       {unlockedBadgeDetails.length > 0 ? (

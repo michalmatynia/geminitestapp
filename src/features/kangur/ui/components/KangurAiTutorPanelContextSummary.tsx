@@ -62,7 +62,11 @@ function KangurAiTutorPanelContextCard({
   title,
 }: ContextSummaryCardProps): JSX.Element {
   return (
-    <KangurAiTutorWarmInsetCard data-testid={testId} tone='panel' className='mt-2 px-3 py-3'>
+    <KangurAiTutorWarmInsetCard
+      data-testid={testId}
+      tone='panel'
+      className='mt-2 kangur-chat-padding-md'
+    >
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
@@ -102,7 +106,7 @@ function KangurAiTutorPanelContextCard({
         <KangurAiTutorWarmInsetCard
           data-testid={status.testId}
           tone={status.tone}
-          className='mt-2 px-3 py-2 text-[11px] font-semibold'
+          className='mt-2 kangur-chat-padding-sm text-[11px] font-semibold'
         >
           {status.label}
         </KangurAiTutorWarmInsetCard>
@@ -148,17 +152,17 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
       {isAskModalMode ? (
         <div
           data-testid='kangur-ai-tutor-ask-modal-helper'
-          className='border-b px-3 py-2 text-xs leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          className='border-b kangur-chat-padding-sm text-xs leading-relaxed [background:color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
           {askModalHelperText}
         </div>
       ) : null}
 
-      <div className='border-b px-3 py-3 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)]'>
+      <div className='border-b kangur-chat-padding-md [background:color-mix(in_srgb,var(--kangur-soft-card-background)_74%,#fff7cf)] [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,#f59e0b)]'>
         {contextSwitchNotice ? (
           <div
             data-testid='kangur-ai-tutor-context-switch'
-            className='mb-3 rounded-[20px] border-2 px-3 py-2 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)] [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)]'
+            className='mb-3 kangur-chat-inset border-2 kangur-chat-padding-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.1)] [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)]'
           >
             <div className='text-[10px] font-black uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
               {contextSwitchNotice.title}

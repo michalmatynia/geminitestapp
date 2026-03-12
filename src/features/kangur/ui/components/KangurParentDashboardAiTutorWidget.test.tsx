@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -11,6 +12,7 @@ import {
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
   settingsStoreMock,
@@ -20,6 +22,7 @@ const {
   runtimeState,
   queryClientMock,
   usageQueryState,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -61,6 +64,7 @@ const {
       isError: false,
     },
   },
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -91,11 +95,28 @@ vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () =
   useKangurParentDashboardRuntime: () => runtimeState.value,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 import { KangurParentDashboardAiTutorWidget } from './KangurParentDashboardAiTutorWidget';
 
 describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: null,
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
     runtimeState.value = {
       activeLearner: {
         id: 'learner-1',
@@ -156,6 +177,12 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
   it('saves only learner guardrails from the parent dashboard', async () => {
     render(<KangurParentDashboardAiTutorWidget />);
+    const [
+      testAccessModeSelect,
+      hintDepthSelect,
+      proactiveNudgesSelect,
+      uiModeSelect,
+    ] = screen.getAllByRole('combobox');
 
     const lessonsToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w lekcjach/i });
     const gamesToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w grach/i });
@@ -173,42 +200,40 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       'to-orange-400'
     );
 
-    expect(screen.getByLabelText(/tryb interfejsu tutora/i)).toHaveClass(
+    expect(uiModeSelect).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'
     );
-    expect(screen.getByLabelText(/tryb pomocy w testach/i)).toHaveClass(
+    expect(testAccessModeSelect).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'
     );
-    expect(screen.getByLabelText(/glebokosc wskazowek/i)).toHaveClass(
+    expect(hintDepthSelect).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'
     );
-    expect(screen.getByLabelText(/aktywnosc tutora/i)).toHaveClass(
+    expect(proactiveNudgesSelect).toHaveClass(
       'focus:border-amber-300',
       'focus:ring-amber-200/70'
     );
 
-    fireEvent.click(lessonsToggle);
-    fireEvent.click(gamesToggle);
-    fireEvent.change(screen.getByLabelText(/tryb interfejsu tutora/i), {
-      target: { value: 'static' },
-    });
-    fireEvent.change(screen.getByLabelText(/tryb pomocy w testach/i), {
-      target: { value: 'review_after_answer' },
-    });
-    fireEvent.change(screen.getByLabelText(/glebokosc wskazowek/i), {
-      target: { value: 'step_by_step' },
-    });
-    fireEvent.change(screen.getByLabelText(/aktywnosc tutora/i), {
-      target: { value: 'coach' },
-    });
-    fireEvent.click(screen.getByRole('checkbox', { name: /pokazuj źródła odpowiedzi/i }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /pozwól pytać o zaznaczony fragment/i }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /zachowuj rozmowę po zmianie miejsca/i }));
+    await userEvent.click(lessonsToggle);
+    await userEvent.click(gamesToggle);
+    await userEvent.selectOptions(uiModeSelect, 'static');
+    await userEvent.selectOptions(testAccessModeSelect, 'review_after_answer');
+    await userEvent.selectOptions(hintDepthSelect, 'step_by_step');
+    await userEvent.selectOptions(proactiveNudgesSelect, 'coach');
+    await userEvent.click(screen.getByRole('checkbox', { name: /pokazuj źródła odpowiedzi/i }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: /pozwól pytać o zaznaczony fragment/i })
+    );
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: /zachowuj rozmowę po zmianie miejsca/i })
+    );
     expect(
-      screen.getByRole('checkbox', { name: /zapamietuj ostatnie wskazowki/i })
+      screen.getByRole('checkbox', {
+        name: repairKangurPolishCopy('Zapamietuj ostatnie wskazowki'),
+      })
     ).toBeDisabled();
     const saveButton = screen.getByRole('button', { name: /zapisz ustawienia ai tutora/i });
     expect(saveButton).toHaveClass(
@@ -289,6 +314,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     render(<KangurParentDashboardAiTutorWidget />);
 
     expect(screen.getByText(/wykorzystanie dzisiaj/i)).toHaveClass('text-amber-700');
+    expect(screen.getByText('Tutor-AI dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('AI Tutor dla Ada')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
       screen.getByText('Ustaw dostępność i guardrails pomocy AI dla tego ucznia')
@@ -326,7 +352,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       'proud'
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-description')).toHaveTextContent(
-      'Tutor podkresla postep'
+      /Tutor podkreśla postęp/i
     );
     expect(screen.getByTestId('parent-dashboard-ai-tutor-mood-description')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
@@ -409,5 +435,32 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.getByText(/zarządzane w/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
+  });
+
+  it('renders Mongo-backed section intro copy when available', () => {
+    useKangurPageContentEntryMock.mockReturnValue({
+      data: undefined,
+      entry: {
+        id: 'parent-dashboard-ai-tutor',
+        title: 'Tutor-AI dla rodzica',
+        summary: 'Interpretuj dane ucznia i ustawiaj wsparcie AI z jednego miejsca.',
+      },
+      error: null,
+      isError: false,
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isSuccess: true,
+      refetch: vi.fn(),
+      status: 'success',
+    });
+
+    render(<KangurParentDashboardAiTutorWidget />);
+
+    expect(screen.getByText('Tutor-AI dla rodzica')).toBeInTheDocument();
+    expect(
+      screen.getByText('Interpretuj dane ucznia i ustawiaj wsparcie AI z jednego miejsca.')
+    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 });

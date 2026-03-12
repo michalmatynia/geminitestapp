@@ -10,8 +10,10 @@ import {
   createDefaultKangurLessons,
   parseKangurLessons,
 } from '@/features/kangur/settings';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
+import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -153,16 +155,6 @@ const PRIORITY_WEIGHT = {
   medium: 1,
   low: 2,
 } as const;
-
-const getPriorityAccentFromLabel = (label: string): 'rose' | 'amber' | 'emerald' => {
-  if (label.toLowerCase().includes('wysoki')) {
-    return 'rose';
-  }
-  if (label.toLowerCase().includes('niski')) {
-    return 'emerald';
-  }
-  return 'amber';
-};
 
 const buildTrackerSummary = (
   assignments: KangurAssignmentSnapshot[]
@@ -447,12 +439,10 @@ export function KangurAssignmentManager({
                         {item.description}
                       </KangurCardDescription>
                     </div>
-                    <KangurStatusChip
-                      accent={getPriorityAccentFromLabel(item.priorityLabel)}
+                    <KangurAssignmentPriorityChip
                       labelStyle='compact'
-                    >
-                      {item.priorityLabel}
-                    </KangurStatusChip>
+                      priority={item.createInput.priority}
+                    />
                   </KangurAssignmentManagerCardHeader>
                   <KangurAssignmentManagerCardFooter>
                     <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
@@ -482,54 +472,41 @@ export function KangurAssignmentManager({
             dataTestId='assignment-manager-daily-quest'
             description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
             label='Misja dnia ucznia'
-          >
+        >
             <div className='mt-3 flex flex-col gap-3 rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
-              <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-                <div className='min-w-0'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <KangurStatusChip
-                      accent='violet'
-                      labelStyle='compact'
-                    >
-                      {featuredDailyQuest.assignment.questLabel ?? 'Misja dnia'}
-                    </KangurStatusChip>
-                    <KangurStatusChip
-                      accent={featuredQuestAccent}
-                      labelStyle='compact'
-                    >
-                      {featuredDailyQuest.progress.percent}%
-                    </KangurStatusChip>
-                    <KangurStatusChip
-                      accent={featuredQuestRewardAccent}
-                      labelStyle='compact'
-                    >
-                      {featuredDailyQuest.reward.label}
-                    </KangurStatusChip>
-                  </div>
-                  <KangurCardTitle className='mt-3 text-slate-900'>
-                    {featuredDailyQuest.assignment.title}
-                  </KangurCardTitle>
-                  <KangurCardDescription className='mt-1 text-slate-600' relaxed size='sm'>
-                    {featuredDailyQuest.assignment.description}
-                  </KangurCardDescription>
+              <KangurDailyQuestHighlightCardContent
+                action={
+                  featuredQuestHref ? (
+                    <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
+                      <Link
+                        href={featuredQuestHref}
+                        targetPageKey={featuredQuestTargetPage ?? undefined}
+                        transitionAcknowledgeMs={110}
+                        transitionSourceId='assignment-manager:featured-daily-quest'
+                      >
+                        {featuredDailyQuest.assignment.action.label}
+                      </Link>
+                    </KangurButton>
+                  ) : null
+                }
+                chipLabelStyle='compact'
+                description={featuredDailyQuest.assignment.description}
+                descriptionClassName='mt-1 text-slate-600'
+                descriptionRelaxed
+                descriptionSize='sm'
+                footer={
                   <KangurMetaText caps className='mt-2' tone='slate'>
                     {featuredDailyQuest.progress.summary}
                   </KangurMetaText>
-                </div>
-
-                {featuredQuestHref ? (
-                  <KangurButton asChild className='shrink-0' size='sm' variant='surface'>
-                    <Link
-                      href={featuredQuestHref}
-                      targetPageKey={featuredQuestTargetPage ?? undefined}
-                      transitionAcknowledgeMs={110}
-                      transitionSourceId='assignment-manager:featured-daily-quest'
-                    >
-                      {featuredDailyQuest.assignment.action.label}
-                    </Link>
-                  </KangurButton>
-                ) : null}
-              </div>
+                }
+                progressAccent={featuredQuestAccent}
+                progressLabel={`${featuredDailyQuest.progress.percent}%`}
+                questLabel={featuredDailyQuest.assignment.questLabel ?? 'Misja dnia'}
+                rewardAccent={featuredQuestRewardAccent}
+                rewardLabel={featuredDailyQuest.reward.label}
+                title={featuredDailyQuest.assignment.title}
+                titleClassName='text-slate-900'
+              />
             </div>
           </KangurAssignmentManagerPanel>
         ) : null}
@@ -627,13 +604,11 @@ export function KangurAssignmentManager({
               </KangurAssignmentManagerCardHeader>
 
               <KangurAssignmentManagerCardFooter>
-                <KangurStatusChip
-                  accent={getPriorityAccentFromLabel(item.priorityLabel)}
+                <KangurAssignmentPriorityChip
                   className='self-start'
                   labelStyle='compact'
-                >
-                  {item.priorityLabel}
-                </KangurStatusChip>
+                  priority={item.createInput.priority}
+                />
                 <KangurButton
                   type='button'
                   onClick={() => void handleAssign(item.id)}

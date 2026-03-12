@@ -1,0 +1,67 @@
+import type { ReactNode } from 'react';
+
+import { cn } from '@/shared/utils';
+
+type KangurIconSummaryCardContentProps = {
+  aside?: ReactNode;
+  asideClassName?: string;
+  className?: string;
+  contentClassName?: string;
+  description?: ReactNode;
+  descriptionClassName?: string;
+  footer?: ReactNode;
+  footerClassName?: string;
+  headerClassName?: string;
+  icon: ReactNode;
+  title: ReactNode;
+  titleClassName?: string;
+  titleWrapperClassName?: string;
+};
+
+export function KangurIconSummaryCardContent({
+  aside,
+  asideClassName,
+  className,
+  contentClassName,
+  description,
+  descriptionClassName,
+  footer,
+  footerClassName,
+  headerClassName,
+  icon,
+  title,
+  titleClassName,
+  titleWrapperClassName,
+}: KangurIconSummaryCardContentProps): React.JSX.Element {
+  return (
+    <div className={cn('flex items-start gap-4', className)}>
+      {icon}
+      <div className={cn('min-w-0 flex-1', contentClassName)}>
+        <div className={cn('flex items-start justify-between gap-3', headerClassName)}>
+          <div className={cn('min-w-0 flex-1', titleWrapperClassName)}>
+            <div
+              className={cn(
+                'text-base font-extrabold leading-tight [color:var(--kangur-page-text)]',
+                titleClassName
+              )}
+            >
+              {title}
+            </div>
+            {description ? (
+              <div
+                className={cn(
+                  'mt-0.5 text-sm [color:var(--kangur-page-muted-text)]',
+                  descriptionClassName
+                )}
+              >
+                {description}
+              </div>
+            ) : null}
+          </div>
+          {aside ? <div className={cn('shrink-0', asideClassName)}>{aside}</div> : null}
+        </div>
+        {footer ? <div className={cn('mt-2', footerClassName)}>{footer}</div> : null}
+      </div>
+    </div>
+  );
+}

@@ -3,12 +3,15 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import * as browserContextModule from '@/features/ai/agent-runtime/browsing/context';
 import { finalizeAgentRun } from '@/features/ai/agent-runtime/execution/finalize';
 import * as llmPlanning from '@/features/ai/agent-runtime/planning/llm';
-import legacySqlClient from '@/shared/lib/db/legacy-sql-client';
 
-vi.mock('@/shared/lib/db/legacy-sql-client', () => ({
-  default: {
-    chatbotAgentRun: { update: vi.fn() },
+const { chatbotAgentRunDelegate } = vi.hoisted(() => ({
+  chatbotAgentRunDelegate: {
+    update: vi.fn(),
   },
+}));
+
+vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
+  getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunDelegate),
 }));
 
 vi.mock('@/features/ai/agent-runtime/audit', () => ({
@@ -77,7 +80,7 @@ describe('Agent Runtime - Finalize', () => {
 
     const result = await finalizeAgentRun(input);
 
-    expect(legacySqlClient.chatbotAgentRun.update).toHaveBeenCalledWith(
+    expect(chatbotAgentRunDelegate.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'run-1' },
         data: expect.objectContaining({ status: 'completed' }),

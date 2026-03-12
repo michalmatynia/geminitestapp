@@ -60,7 +60,7 @@ export default function KangurBadgeTrackHighlights({
   }
 
   return (
-    <div className={cn('grid gap-3 sm:grid-cols-3', className)}>
+    <div className={cn('grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3', className)}>
       {tracks.map((track) => {
         const accent = TRACK_ACCENTS[track.key] ?? 'indigo';
         return (
@@ -69,7 +69,7 @@ export default function KangurBadgeTrackHighlights({
             data-testid={`${trackTestIdPrefix}-${track.key}`}
             key={track.key}
           >
-            <div className='flex items-start justify-between gap-2'>
+            <div className='flex flex-col items-start gap-2 sm:flex-row sm:justify-between'>
               <div className='min-w-0'>
                 <KangurSectionEyebrow as='p' className='tracking-[0.16em]'>
                   {track.emoji} {track.label}
@@ -83,7 +83,7 @@ export default function KangurBadgeTrackHighlights({
                     : 'Wszystkie odznaki odblokowane'}
                 </KangurCardDescription>
               </div>
-              <KangurStatusChip accent={accent} className='shrink-0 text-[11px]'>
+              <KangurStatusChip accent={accent} className='self-start text-[11px] sm:shrink-0'>
                 {track.progressPercent}%
               </KangurStatusChip>
             </div>

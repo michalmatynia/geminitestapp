@@ -1,6 +1,8 @@
 import 'server-only';
 
-import { auth, findAuthUserById } from '@/server/auth';
+import { z } from 'zod';
+
+import { auth, findAuthUserById, normalizeAuthEmail } from '@/server/auth';
 import type { KangurAuthUser, KangurLearnerProfile } from '@/shared/contracts/kangur';
 import { authError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
@@ -71,10 +73,21 @@ const pickActiveLearner = (
 
 const mapRole = (role: unknown): 'admin' | 'user' => (role === 'admin' ? 'admin' : 'user');
 
+const kangurAuthEmailSchema = z.string().trim().email();
+
+const normalizeKangurOwnerEmail = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = normalizeAuthEmail(value);
+  return kangurAuthEmailSchema.safeParse(normalized).success ? normalized : null;
+};
+
 const mapActorToAuthUser = (actor: KangurActor): KangurAuthUser => ({
   id: actor.actorId,
   full_name: actor.activeLearner.displayName,
-  email: actor.actorType === 'parent' ? actor.ownerEmail : null,
+  email: actor.actorType === 'parent' ? normalizeKangurOwnerEmail(actor.ownerEmail) : null,
   role: actor.role,
   actorType: actor.actorType,
   canManageLearners: actor.canManageLearners,
@@ -93,9 +106,9 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
   if (session?.user?.id) {
     const ownerUserId = session.user.id;
     const ownerRecord = await findAuthUserById(ownerUserId);
-    const ownerEmail =
-      ownerRecord?.email ??
-      (typeof session.user.email === 'string' ? session.user.email.trim().toLowerCase() : null);
+    const ownerEmail = normalizeKangurOwnerEmail(
+      ownerRecord?.email ?? (typeof session.user.email === 'string' ? session.user.email : null)
+    );
     const ownerName = typeof session.user.name === 'string' ? session.user.name.trim() : null;
     let learners = await listKangurLearnersByOwner(ownerUserId);
 
@@ -146,7 +159,7 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
     actorType: 'learner',
     canManageLearners: false,
     ownerUserId: activeLearner.ownerUserId,
-    ownerEmail: owner?.email ?? null,
+    ownerEmail: normalizeKangurOwnerEmail(owner?.email ?? null),
     ownerName: owner?.name ?? null,
     ownerEmailVerified: Boolean(owner?.emailVerified),
     role: 'user',

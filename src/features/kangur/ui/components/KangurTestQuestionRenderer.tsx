@@ -140,11 +140,11 @@ export function KangurTestQuestionRenderer({
       </div>
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
-        <div className='flex items-start justify-between gap-3'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <KangurSectionEyebrow as='span' className='pt-2 text-xs tracking-wide'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </KangurSectionEyebrow>
-          <div className='flex items-center gap-2'>
+          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end'>
             {showReadControl ? (
               <KangurLessonNarrator
                 lesson={narratorLesson}

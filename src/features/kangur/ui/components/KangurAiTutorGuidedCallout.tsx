@@ -184,7 +184,7 @@ export function KangurAiTutorGuidedCallout({
             )}
           >
             <div className={selectionKeepoutClassName}>
-              <div className='flex items-start justify-between gap-3'>
+              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
                 <KangurAiTutorChromeKicker>
                   {headerLabel}
                 </KangurAiTutorChromeKicker>
@@ -193,6 +193,7 @@ export function KangurAiTutorGuidedCallout({
                     data-testid='kangur-ai-tutor-guided-callout-close'
                     onClick={handleCloseCallout}
                     aria-label={tutorContent.guidedCallout.closeAria}
+                    className='self-start sm:self-auto'
                   />
                 ) : null}
               </div>
@@ -242,7 +243,7 @@ export function KangurAiTutorGuidedCallout({
               ) : null}
               <div
                 className={cn(
-                  'mt-3 flex flex-wrap justify-end gap-2',
+                  'mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end',
                   isMobileHomeOnboardingSheet && 'mt-2'
                 )}
               >
@@ -253,6 +254,7 @@ export function KangurAiTutorGuidedCallout({
                         type='button'
                         size='sm'
                         variant='surface'
+                        className='w-full sm:w-auto'
                         onClick={handleGoBackHomeOnboarding}
                       >
                         {tutorContent.guidedCallout.buttons.back}
@@ -262,6 +264,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='surface'
+                      className='w-full sm:w-auto'
                       onClick={handleFinishHomeOnboarding}
                     >
                       {tutorContent.guidedCallout.buttons.finish}
@@ -270,6 +273,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='primary'
+                      className='w-full sm:w-auto'
                       onClick={handleAdvanceHomeOnboarding}
                     >
                       {tutorContent.guidedCallout.buttons.understand}
@@ -278,7 +282,7 @@ export function KangurAiTutorGuidedCallout({
                 ) : mode === 'selection' ? (
                   <KangurAiTutorChromeBadge
                     className={cn(
-                      'px-3 py-1 text-[11px] normal-case tracking-normal text-amber-800 [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))]',
+                      'w-fit max-w-full self-start px-3 py-1 text-[11px] normal-case tracking-normal text-amber-800 [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] sm:self-auto',
                       selectionPreparingBadgeInsetClassName
                     )}
                   >
@@ -289,6 +293,7 @@ export function KangurAiTutorGuidedCallout({
                     type='button'
                     size='sm'
                     variant='surface'
+                    className='w-full sm:w-auto'
                     onClick={handleCloseCallout}
                   >
                     {tutorContent.guidedCallout.buttons.understand}

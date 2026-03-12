@@ -240,7 +240,7 @@ export default function ScoreHistory({
 
   return (
     <div className='flex flex-col gap-5'>
-      <div className='grid grid-cols-3 gap-3'>
+      <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3'>
         <KangurMetricCard
           accent='sky'
           align='center'
@@ -268,7 +268,7 @@ export default function ScoreHistory({
         <KangurSectionEyebrow as='p' className='mb-3' tone='slate'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
         </KangurSectionEyebrow>
-        <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3'>
+        <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
             <p className='text-xs text-sky-800/80'>
               Srednia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
@@ -297,7 +297,7 @@ export default function ScoreHistory({
                 ? `${insights.strongestOperation.emoji} ${insights.strongestOperation.label}`
                 : 'Brak danych'
             }
-            valueClassName='text-lg leading-tight'
+            valueClassName='text-base leading-tight sm:text-lg'
           >
             {insights.strongestOperation ? (
               <p className='text-xs text-emerald-800/80'>
@@ -317,7 +317,7 @@ export default function ScoreHistory({
                 ? `${insights.weakestOperation.emoji} ${insights.weakestOperation.label}`
                 : 'Brak danych'
             }
-            valueClassName='text-lg leading-tight'
+            valueClassName='text-base leading-tight sm:text-lg'
           >
             {insights.weakestOperation ? (
               <>
@@ -326,7 +326,7 @@ export default function ScoreHistory({
                   {insights.weakestOperation.attempts} · +{insights.weakestOperation.averageXpEarned} XP / sesje
                 </p>
                 {weakestLessonHref && (
-                  <KangurButton asChild className='mt-3' size='sm' variant='surface'>
+                  <KangurButton asChild className='mt-3 w-full sm:w-auto' size='sm' variant='surface'>
                     <Link
                       href={weakestLessonHref}
                       targetPageKey='Lessons'
@@ -357,10 +357,10 @@ export default function ScoreHistory({
             const info = OP_LABELS[operation] ?? { label: operation, emoji: '❓' };
             const progressAccent = percent >= 80 ? 'emerald' : percent >= 50 ? 'amber' : 'rose';
             return (
-              <div key={operation} className='flex items-center gap-3'>
+              <div key={operation} className='flex items-start gap-3 sm:items-center'>
                 <span className='text-lg w-6 text-center'>{info.emoji}</span>
                 <div className='flex-1'>
-                  <div className='mb-0.5 flex justify-between text-xs text-slate-600'>
+                  <div className='mb-0.5 flex flex-col gap-1 text-xs text-slate-600 min-[420px]:flex-row min-[420px]:justify-between'>
                     <span className='font-semibold'>{info.label}</span>
                     <span>
                       {data.correct}/{data.total} ({percent}%)
@@ -393,7 +393,7 @@ export default function ScoreHistory({
             return (
               <KangurInfoCard
                 accent={rowAccent}
-                className='flex items-center gap-3'
+                className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'
                 data-testid={`score-history-recent-row-${score.id}`}
                 key={score.id}
                 padding='sm'
@@ -412,7 +412,7 @@ export default function ScoreHistory({
                     {new Date(score.created_date).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
-                <div className='flex flex-col items-end gap-1 text-right'>
+                <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
                   <KangurStatusChip
                     accent={resolveAccuracyAccent(percent)}
                     data-testid={`score-history-recent-score-${score.id}`}

@@ -7,6 +7,7 @@ import {
   useKangurLessonsRuntimeState,
 } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
   KangurEmptyState,
   KangurGradientIconTile,
@@ -17,6 +18,7 @@ import {
 import type { JSX } from 'react';
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
+  const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
   const {
     orderedLessons,
     lessonDocuments,
@@ -34,9 +36,11 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
       <KangurEmptyState
         accent='indigo'
         className='w-full'
-        description='Wlacz lekcje w panelu admina, aby pojawily sie tutaj.'
+        description={
+          emptyStateContent?.summary ?? 'Wlacz lekcje w panelu admina, aby pojawily sie tutaj.'
+        }
         padding='xl'
-        title='Brak aktywnych lekcji'
+        title={emptyStateContent?.title ?? 'Brak aktywnych lekcji'}
       />
     );
   }
@@ -55,7 +59,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           <KangurOptionCardButton
             accent='indigo'
             key={lesson.id}
-            className='flex w-full items-start gap-4 rounded-[30px] p-5 text-left'
+            className='flex w-full flex-col items-start gap-4 rounded-[30px] p-5 text-left sm:flex-row'
             data-testid={`lessons-catalog-item-${lesson.id}`}
             emphasis={isActive ? 'accent' : 'neutral'}
             onClick={() => selectLesson(lesson.id)}
@@ -68,10 +72,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
             >
               {lesson.emoji}
             </KangurGradientIconTile>
-            <div className='flex-1'>
-              <div className='flex items-start justify-between gap-3'>
-                <div>
-                  <div className='text-xl font-extrabold [color:var(--kangur-page-text)]'>
+            <div className='w-full flex-1'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                <div className='min-w-0'>
+                  <div className='text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
                     {lesson.title}
                   </div>
                   <div className='mt-0.5 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -105,7 +109,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                     </KangurStatusChip>
                   ) : null}
                 </div>
-                <div className='flex flex-col items-end gap-2'>
+                <div className='flex w-full flex-row flex-wrap items-start gap-2 sm:w-auto sm:flex-col sm:items-end'>
                   <KangurStatusChip
                     accent={masteryPresentation.badgeAccent}
                     className='whitespace-nowrap uppercase tracking-[0.14em]'

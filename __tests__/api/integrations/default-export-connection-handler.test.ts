@@ -9,10 +9,12 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const getExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
 const setExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
+const setExportDefaultInventoryIdMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/server', () => ({
   getExportDefaultConnectionId: getExportDefaultConnectionIdMock,
   setExportDefaultConnectionId: setExportDefaultConnectionIdMock,
+  setExportDefaultInventoryId: setExportDefaultInventoryIdMock,
 }));
 
 const mockContext: ApiHandlerContext = {
@@ -30,6 +32,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
     vi.clearAllMocks();
     getExportDefaultConnectionIdMock.mockResolvedValue(null);
     setExportDefaultConnectionIdMock.mockResolvedValue(undefined);
+    setExportDefaultInventoryIdMock.mockResolvedValue(undefined);
   });
 
   it('returns null when no default connection is stored', async () => {
@@ -105,6 +108,45 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: 'conn-new' });
+    expect(setExportDefaultInventoryIdMock).toHaveBeenCalledWith(null);
+    expect(setExportDefaultConnectionIdMock).toHaveBeenCalledWith('conn-new');
+  });
+
+  it('does not clear default inventory when saving the same connection id again', async () => {
+    getExportDefaultConnectionIdMock.mockResolvedValue('conn-existing');
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
+        method: 'POST',
+        body: JSON.stringify({ connectionId: 'conn-existing' }),
+        headers: { 'content-type': 'application/json' },
+      }),
+      mockContext
+    );
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ connectionId: 'conn-existing' });
+    expect(setExportDefaultInventoryIdMock).not.toHaveBeenCalled();
+    expect(setExportDefaultConnectionIdMock).toHaveBeenCalledWith('conn-existing');
+  });
+
+  it('still stores the new connection when reading the previous value fails', async () => {
+    getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
+        method: 'POST',
+        body: JSON.stringify({ connectionId: 'conn-new' }),
+        headers: { 'content-type': 'application/json' },
+      }),
+      mockContext
+    );
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ connectionId: 'conn-new' });
+    expect(setExportDefaultInventoryIdMock).toHaveBeenCalledWith(null);
     expect(setExportDefaultConnectionIdMock).toHaveBeenCalledWith('conn-new');
   });
 });

@@ -1,16 +1,16 @@
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import {
+  KangurPracticeGameProgress,
+  KangurPracticeGameStage,
+  KangurPracticeGameSummary,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
-  KangurDisplayEmoji,
   KangurGlassPanel,
   KangurInfoCard,
-  KangurProgressBar,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -814,72 +814,38 @@ export default function AddingBallGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className='w-full max-w-sm'
-      >
-        <KangurGlassPanel
-          className='flex flex-col items-center gap-4 text-center'
-          data-testid='adding-ball-summary-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <KangurDisplayEmoji data-testid='adding-ball-summary-emoji' size='lg'>
-            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-          </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-            Wynik: {score}/{TOTAL_ROUNDS}
-          </h2>
-          {xpEarned > 0 && (
-            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-              +{xpEarned} XP ✨
-            </KangurStatusChip>
-          )}
-          <KangurRewardBreakdownChips
-            accent='slate'
-            breakdown={xpBreakdown}
-            className='justify-center'
-            dataTestId='adding-ball-summary-breakdown'
-            itemDataTestIdPrefix='adding-ball-summary-breakdown'
-          />
-          <KangurProgressBar accent='amber' animated size='md' value={percent} />
-          <p className='[color:var(--kangur-page-muted-text)]'>
-            {percent === 100
-              ? 'Idealnie! Jesteś mistrzem dodawania!'
-              : percent >= 60
-                ? 'Świetna robota!'
-                : 'Nie poddawaj się!'}
-          </p>
-          <div className='flex gap-3 w-full'>
-            <KangurButton
-              className='flex-1'
-              onClick={() => {
-                setRoundIdx(0);
-                setScore(0);
-                setDone(false);
-                setXpEarned(0);
-                setXpBreakdown([]);
-                setRound(generateRound(MODES[0] ?? 'complete_equation'));
-                sessionStartedAtRef.current = Date.now();
-              }}
-              size='lg'
-              variant='surface'
-            >
-              <RefreshCw className='w-4 h-4' /> Jeszcze raz
-            </KangurButton>
-            <KangurButton
-              className='flex-1'
-              onClick={handleFinishGame}
-              size='lg'
-              variant='primary'
-            >
-              {finishLabel}
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </motion.div>
+      <KangurPracticeGameSummary
+        accent='indigo'
+        breakdown={xpBreakdown}
+        breakdownDataTestId='adding-ball-summary-breakdown'
+        breakdownItemDataTestIdPrefix='adding-ball-summary-breakdown'
+        dataTestId='adding-ball-summary-shell'
+        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        emojiDataTestId='adding-ball-summary-emoji'
+        finishLabel={finishLabel}
+        message={
+          percent === 100
+            ? 'Idealnie! Jesteś mistrzem dodawania!'
+            : percent >= 60
+              ? 'Świetna robota!'
+              : 'Nie poddawaj się!'
+        }
+        onFinish={handleFinishGame}
+        onRestart={() => {
+          setRoundIdx(0);
+          setScore(0);
+          setDone(false);
+          setXpEarned(0);
+          setXpBreakdown([]);
+          setRound(generateRound(MODES[0] ?? 'complete_equation'));
+          sessionStartedAtRef.current = Date.now();
+        }}
+        percent={percent}
+        progressAccent='amber'
+        title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+        xpAccent='indigo'
+        xpEarned={xpEarned}
+      />
     );
   }
 
@@ -891,19 +857,13 @@ export default function AddingBallGame({
   const modeLabel = modeLabelByMode[round.mode];
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-      <div className='flex items-center gap-2 w-full'>
-        <KangurProgressBar
-          accent='amber'
-          className='flex-1'
-          data-testid='adding-ball-progress-bar'
-          size='sm'
-          value={(roundIdx / TOTAL_ROUNDS) * 100}
-        />
-        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-          {roundIdx + 1}/{TOTAL_ROUNDS}
-        </span>
-      </div>
+    <KangurPracticeGameStage>
+      <KangurPracticeGameProgress
+        accent='amber'
+        currentRound={roundIdx}
+        dataTestId='adding-ball-progress-bar'
+        totalRounds={TOTAL_ROUNDS}
+      />
 
       <KangurGlassPanel
         className='w-full'
@@ -928,6 +888,6 @@ export default function AddingBallGame({
           </motion.div>
         </AnimatePresence>
       </KangurGlassPanel>
-    </div>
+    </KangurPracticeGameStage>
   );
 }

@@ -323,6 +323,120 @@ describe('BaseQuickExportButton', () => {
     });
   });
 
+  it('repairs a missing saved inventory when the connection has a default inventory', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v2/integrations/exports/base/default-connection')) {
+        return Promise.resolve({ connectionId: 'conn-base-1' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
+        return Promise.resolve({ inventoryId: null });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
+        return Promise.resolve({ templateId: null });
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`));
+    });
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/exports/base/default-inventory') {
+        return Promise.resolve({ inventoryId: 'inv-main' });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/exports/base/default-inventory',
+        {
+          inventoryId: 'inv-main',
+        }
+      );
+    });
+  });
+
+  it('repairs a stale saved inventory when the connection has a default inventory', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v2/integrations/exports/base/default-connection')) {
+        return Promise.resolve({ connectionId: 'conn-base-1' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
+        return Promise.resolve({ inventoryId: 'inv-stale' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
+        return Promise.resolve({ templateId: null });
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`));
+    });
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/exports/base/default-inventory') {
+        return Promise.resolve({ inventoryId: 'inv-main' });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/exports/base/default-inventory',
+        {
+          inventoryId: 'inv-main',
+        }
+      );
+    });
+  });
+
   it('opens Base export settings instead of re-exporting when the product is already exported', () => {
     const onOpenExportSettings = vi.fn();
 

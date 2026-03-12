@@ -66,7 +66,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Które figury sa symetryczne?',
       content: (
         <div className='flex flex-col gap-3'>
-          <div className='grid grid-cols-2 gap-2 text-sm'>
+          <div className='grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2'>
             {[
               ['✅', 'Kwadrat', 'emerald'],
               ['✅', 'Prostokąt', 'emerald'],

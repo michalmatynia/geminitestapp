@@ -18,12 +18,11 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { useOptionalKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
   KangurButton,
-  KangurDisplayEmoji,
   KangurGlassPanel,
   KangurInfoCard,
   KangurOptionCardButton,
@@ -277,61 +276,39 @@ function ResultView({
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='w-full'>
-      <KangurGlassPanel
-        className='flex flex-col items-center gap-4 text-center'
-        data-testid='kangur-game-summary-shell'
-        padding='xl'
-        surface='solid'
-        variant='soft'
-      >
-        <KangurDisplayEmoji data-testid='kangur-game-summary-emoji' size='lg'>
-          {emoji}
-        </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-          Wynik: {score}/{total}
-        </h2>
-        <p className='[color:var(--kangur-page-muted-text)]'>
-          {pct === 100
-            ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
-            : pct >= 70
-              ? 'Świetnie! Gotowy/a na konkurs!'
-              : pct >= 40
-                ? 'Dobra robota! Ćwicz dalej!'
-                : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
-        </p>
-        {xpEarned > 0 ? (
-          <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-            +{xpEarned} XP ✨
-          </KangurStatusChip>
-        ) : null}
-        <KangurRewardBreakdownChips
-          accent='slate'
-          breakdown={summaryBreakdown}
-          className='justify-center'
-          dataTestId='kangur-game-summary-breakdown'
-          itemDataTestIdPrefix='kangur-game-summary-breakdown'
-        />
-        <KangurProgressBar
-          accent='amber'
-          animated
-          data-testid='kangur-game-summary-progress-bar'
-          size='lg'
-          value={pct}
-        />
+    <KangurPracticeGameSummary
+      accent='amber'
+      breakdown={summaryBreakdown}
+      breakdownDataTestId='kangur-game-summary-breakdown'
+      breakdownItemDataTestIdPrefix='kangur-game-summary-breakdown'
+      dataTestId='kangur-game-summary-shell'
+      emoji={emoji}
+      emojiDataTestId='kangur-game-summary-emoji'
+      finishLabel='Spróbuj ponownie 🔁'
+      message={
+        pct === 100
+          ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
+          : pct >= 70
+            ? 'Świetnie! Gotowy/a na konkurs!'
+            : pct >= 40
+              ? 'Dobra robota! Ćwicz dalej!'
+              : 'Nie poddawaj się! Spróbuj jeszcze raz!'
+      }
+      onFinish={handleRestart}
+      onRestart={onBack}
+      percent={pct}
+      postProgressContent={
         <p className='text-sm [color:var(--kangur-page-muted-text)]'>
           {pct}% poprawnych odpowiedzi
         </p>
-        <div className='flex w-full gap-3'>
-          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='surface'>
-            Menu
-          </KangurButton>
-          <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='primary'>
-            Spróbuj ponownie 🔁
-          </KangurButton>
-        </div>
-      </KangurGlassPanel>
-    </motion.div>
+      }
+      progressAccent='amber'
+      progressDataTestId='kangur-game-summary-progress-bar'
+      restartLabel='Menu'
+      title={`Wynik: ${score}/${total}`}
+      xpAccent='indigo'
+      xpEarned={xpEarned}
+    />
   );
 }
 

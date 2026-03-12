@@ -8,10 +8,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 
-const { authMeMock, scoreListMock, logKangurClientErrorMock } = vi.hoisted(() => ({
+const {
+  authMeMock,
+  scoreListMock,
+  logKangurClientErrorMock,
+  useKangurPageContentEntryMock,
+} = vi.hoisted(() => ({
   authMeMock: vi.fn<() => Promise<KangurUser>>(),
   scoreListMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
   logKangurClientErrorMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -27,6 +33,10 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 let Leaderboard: typeof import('@/features/kangur/ui/components/Leaderboard').default;
@@ -50,6 +60,13 @@ describe('Leaderboard', () => {
     vi.resetModules();
     Leaderboard = (await import('@/features/kangur/ui/components/Leaderboard')).default;
     vi.clearAllMocks();
+    useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
     authMeMock.mockResolvedValue({
       email: 'ada@example.com',
       role: 'student',
@@ -162,5 +179,26 @@ describe('Leaderboard', () => {
       'border'
     );
     expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
+  });
+
+  it('uses Mongo-backed page-content titles when available', async () => {
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
+      entry:
+        entryId === 'game-home-leaderboard'
+          ? {
+            id: 'game-home-leaderboard',
+            title: 'Ranking mistrzow',
+            summary: 'Mongo tytul sekcji rankingu.',
+          }
+          : null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    }));
+
+    render(<Leaderboard />);
+
+    expect(await screen.findByRole('heading', { name: 'Ranking mistrzow' })).toBeInTheDocument();
   });
 });

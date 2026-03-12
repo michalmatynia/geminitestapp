@@ -18,11 +18,10 @@ import {
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
+import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
-  KangurDisplayEmoji,
-  KangurGlassPanel,
   KangurInfoCard,
   KangurInlineFallback,
   KangurOptionCardButton,
@@ -159,11 +158,11 @@ function ExamQuestion({
         padding='lg'
         tone='neutral'
       >
-        <div className='mb-1 flex items-start justify-between gap-3'>
+        <div className='mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <p id={headingId} className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
             Pytanie {questionNumber}
           </p>
-          <div className='flex items-center gap-2'>
+          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end'>
             <KangurLessonNarrator
               lesson={narratorLesson}
               lessonDocument={null}
@@ -448,47 +447,50 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       animate={{ opacity: 1, y: 0 }}
       className='w-full flex flex-col gap-4'
     >
-      <KangurGlassPanel
-        className='flex flex-col items-center gap-4 text-center'
-        data-testid='kangur-exam-summary-shell'
-        padding='xl'
-        surface='solid'
-        variant='soft'
-      >
-        <KangurDisplayEmoji data-testid='kangur-exam-summary-emoji' size='lg'>
-          {emoji}
-        </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-          Wynik: {score}/{questions.length}
-        </h2>
-        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-          {pct === 100
+      <KangurPracticeGameSummary
+        accent='amber'
+        actionsHidden
+        breakdown={[]}
+        breakdownDataTestId='kangur-exam-summary-breakdown'
+        breakdownItemDataTestIdPrefix='kangur-exam-summary-breakdown'
+        dataTestId='kangur-exam-summary-shell'
+        emoji={emoji}
+        emojiDataTestId='kangur-exam-summary-emoji'
+        finishLabel='Wróć'
+        message={
+          pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
               ? 'Świetnie! Gotowy/a na konkurs!'
               : pct >= 40
                 ? 'Dobra robota! Ćwicz dalej!'
-                : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
-        </p>
-        <KangurProgressBar
-          accent='amber'
-          animated
-          aria-label='Dokladnosc odpowiedzi w tescie Kangur'
-          aria-valuetext={`${pct}% poprawnych odpowiedzi`}
-          data-testid='kangur-exam-summary-progress-bar'
-          size='md'
-          value={pct}
-        />
-        <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-          {pct}% poprawnych odpowiedzi
-        </p>
-      </KangurGlassPanel>
+                : 'Nie poddawaj się! Spróbuj jeszcze raz!'
+        }
+        messageClassName='text-sm'
+        onFinish={() => undefined}
+        onRestart={() => undefined}
+        percent={pct}
+        postProgressContent={
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            {pct}% poprawnych odpowiedzi
+          </p>
+        }
+        progressAccent='amber'
+        progressAriaLabel='Dokladnosc odpowiedzi w tescie Kangur'
+        progressAriaValueText={`${pct}% poprawnych odpowiedzi`}
+        progressDataTestId='kangur-exam-summary-progress-bar'
+        title={`Wynik: ${score}/${questions.length}`}
+      />
 
       <p className='text-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
         Kliknij pytanie, aby zobaczyć rozwiązanie:
       </p>
 
-      <div aria-label='Przeglad pytan testowych' className='grid grid-cols-4 gap-2' role='list'>
+      <div
+        aria-label='Przeglad pytan testowych'
+        className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4'
+        role='list'
+      >
         {questions.map((question, index) => {
           const userAnswer = answers[question.id];
           const correct = userAnswer === question.answer;
@@ -505,7 +507,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 accent={accent}
                 aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominiete.' : correct ? 'Poprawna odpowiedz.' : `Niepoprawna odpowiedz ${String(userAnswer)}.`} Kliknij, aby zobaczyc rozwiazanie.`}
                 className={cn(
-                  'min-h-[92px] w-full rounded-[22px] p-2 flex flex-col items-center gap-1 transition text-center',
+                  'flex min-h-[84px] w-full flex-col items-center gap-1 rounded-[22px] p-2 text-center transition sm:min-h-[92px]',
                   skipped
                     ? KANGUR_ACCENT_STYLES.slate.activeText
                     : correct

@@ -71,7 +71,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       className='relative'
       padding='lg'
     >
-      <div className='absolute right-5 top-5 flex flex-wrap items-center justify-end gap-2'>
+      <div className='mb-4 flex flex-wrap items-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end'>
         <KangurStatusChip
           accent={item.priorityAccent}
           labelStyle='compact'
@@ -90,8 +90,8 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
         </KangurMetaText>
       </div>
 
-      <div className='pr-0 pt-12 sm:pr-52 sm:pt-0'>
-        <KangurCardTitle as='div' className='flex items-center gap-2 text-[1.1rem]'>
+      <div className='pr-0 pt-0 sm:pr-52'>
+        <KangurCardTitle as='div' className='flex items-center gap-2 text-base sm:text-[1.1rem]'>
           <span aria-hidden='true'>{item.icon}</span>
           <span>{item.title}</span>
         </KangurCardTitle>
@@ -141,7 +141,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
       className='h-full'
       padding='lg'
     >
-      <div className='flex flex-wrap items-start justify-between gap-3'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
           <KangurCardTitle className='text-lg' size='lg'>
             {item.title}
@@ -190,8 +190,8 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         ) : null}
       </KangurSummaryPanel>
 
-      <div className='mt-5 flex flex-wrap items-center gap-2'>
-        <KangurButton asChild size='sm' variant='surface'>
+      <div className='mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
+        <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
           <Link
             href={item.actionHref}
             transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
@@ -202,6 +202,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         </KangurButton>
         {onArchive ? (
           <KangurButton
+            className='w-full sm:w-auto'
             type='button'
             onClick={() => onArchive(item.id)}
             size='sm'
@@ -237,7 +238,7 @@ export function KangurAssignmentsList({
             eyebrow='Szybki podglad'
             title={title}
             titleAs='div'
-            titleClassName='text-xl font-extrabold tracking-tight'
+            titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
           />
           <KangurSectionEyebrow className='tracking-[0.18em]'>
             {formatAssignmentCountLabel(items.length)}
@@ -276,7 +277,7 @@ export function KangurAssignmentsList({
             eyebrow='Przydzielone zadania'
             title={title}
             titleAs='div'
-            titleClassName='text-xl font-extrabold tracking-tight'
+            titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
           />
           <KangurStatusChip accent='slate' labelStyle='caps'>
             {items.length} zadań

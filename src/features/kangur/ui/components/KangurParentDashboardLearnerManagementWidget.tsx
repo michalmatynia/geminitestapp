@@ -46,7 +46,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           descriptionClassName='max-w-2xl'
         />
 
-        <div className='grid gap-3 sm:grid-cols-2'>
+        <div className='grid gap-3 min-[420px]:grid-cols-2'>
           {learners.map((learner) => {
             const isActiveLearner = learner.id === activeLearner?.id;
             const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
@@ -112,7 +112,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             description='Dodaj dziecko i od razu ustaw jego login oraz haslo do gry.'
           />
 
-          <div className='grid gap-3 md:grid-cols-3'>
+          <div className='grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'>
             <KangurTextField
               accent='indigo'
               value={createForm.displayName}
@@ -134,8 +134,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             />
           </div>
 
-          <div className='flex flex-wrap items-center gap-3'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
             <KangurButton
+              className='w-full sm:w-auto'
               disabled={isSubmitting}
               onClick={() => void handleCreateLearner()}
               size='sm'
@@ -163,7 +164,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               </>
             }
           />
-          <div className='grid gap-3 md:grid-cols-2'>
+          <div className='grid gap-3 min-[420px]:grid-cols-2'>
             <KangurTextField
               accent='indigo'
               value={editForm.displayName}
@@ -197,8 +198,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               <option value='disabled'>Wylaczony</option>
             </KangurSelectField>
           </div>
-          <div className='flex flex-wrap items-center gap-3'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
             <KangurButton
+              className='w-full sm:w-auto'
               disabled={isSubmitting}
               onClick={() => void handleSaveLearner()}
               size='sm'

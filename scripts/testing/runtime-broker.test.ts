@@ -22,6 +22,7 @@ const cleanupTargets: string[] = [];
 
 beforeEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 afterEach(async () => {
@@ -728,5 +729,69 @@ describe('cleanupBrokerRuntimeLeases', () => {
     await expect(fs.stat(path.join(rootDir, distDir))).resolves.toBeTruthy();
     await expect(fs.stat(firstLeaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(fs.stat(secondLeaseFilePath)).resolves.toBeTruthy();
+  });
+
+  it('ignores EPERM from process-group signaling when stopping a managed lease', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-stop-eperm-'));
+    cleanupTargets.push(rootDir);
+
+    const leaseFilePath = path.join(rootDir, 'tmp', 'playwright-runtime-broker', 'leases', 'lease.json');
+    await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
+    await fs.writeFile(leaseFilePath, '{}\n', 'utf8');
+
+    const pid = 43212;
+    let terminated = false;
+    const originalKill = process.kill;
+    const killSpy = vi.spyOn(process, 'kill').mockImplementation((candidatePid, signal) => {
+      if (candidatePid === pid && signal === 0) {
+        if (terminated) {
+          const error = new Error('process not found');
+          error.code = 'ESRCH';
+          throw error;
+        }
+        return true;
+      }
+      if (candidatePid === pid && signal === 'SIGTERM') {
+        terminated = true;
+        return true;
+      }
+      if (candidatePid === -pid && signal === 'SIGTERM') {
+        const error = new Error('operation not permitted');
+        error.code = 'EPERM';
+        throw error;
+      }
+      return originalKill(candidatePid, signal);
+    });
+
+    try {
+      await expect(
+        stopBrokerRuntimeLease({
+          lease: {
+            source: 'broker',
+            managed: true,
+            reused: false,
+            rootDir,
+            appId: 'web',
+            mode: 'dev',
+            agentId: 'agent-stop-eperm',
+            host: '127.0.0.1',
+            port: 43212,
+            baseUrl: 'http://127.0.0.1:43212',
+            pid,
+            distDir: null,
+            managedDistDir: false,
+            runtimeTmpDir: null,
+            managedRuntimeTmpDir: false,
+            leaseKey: 'lease-stop-eperm',
+            startedAt: new Date().toISOString(),
+          },
+          leaseFilePath,
+        })
+      ).resolves.toBeUndefined();
+    } finally {
+      killSpy.mockRestore();
+    }
+
+    await expect(fs.stat(leaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

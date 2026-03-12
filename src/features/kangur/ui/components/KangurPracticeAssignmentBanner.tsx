@@ -95,7 +95,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
         surface='solid'
         variant='soft'
       >
-        <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
             <KangurStatusChip accent='amber' labelStyle='caps'>
               {banner.priorityLabel}
@@ -107,7 +107,10 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
               {banner.description}
             </KangurCardDescription>
           </div>
-          <KangurStatusChip accent='amber' className='text-sm font-bold text-amber-800'>
+          <KangurStatusChip
+            accent='amber'
+            className='self-start text-sm font-bold text-amber-800 sm:self-auto'
+          >
             {banner.progressPercent}%
           </KangurStatusChip>
         </div>

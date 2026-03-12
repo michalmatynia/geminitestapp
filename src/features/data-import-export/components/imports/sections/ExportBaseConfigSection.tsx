@@ -19,6 +19,8 @@ export function ExportBaseConfigSection(): React.JSX.Element {
     setSelectedBaseConnectionId,
     exportInventoryId,
     setExportInventoryId,
+    exportWarehouseId,
+    setExportWarehouseId,
     exportActiveTemplateId,
     setExportActiveTemplateId,
   } = useImportExportState();
@@ -34,9 +36,15 @@ export function ExportBaseConfigSection(): React.JSX.Element {
           <SelectSimple
             size='sm'
             value={selectedBaseConnectionId || '__none__'}
-            onValueChange={(v: string): void =>
-              setSelectedBaseConnectionId(v === '__none__' ? '' : v)
-            }
+            onValueChange={(v: string): void => {
+              const nextConnectionId = v === '__none__' ? '' : v;
+              if (nextConnectionId !== selectedBaseConnectionId) {
+                if (exportInventoryId) setExportInventoryId('');
+                if (exportWarehouseId) setExportWarehouseId('');
+                if (exportActiveTemplateId) setExportActiveTemplateId('');
+              }
+              setSelectedBaseConnectionId(nextConnectionId);
+            }}
             disabled={baseConnections.length === 0}
             options={[
               { value: '__none__', label: 'Select a connection...' },

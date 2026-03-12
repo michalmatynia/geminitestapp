@@ -34,6 +34,26 @@ const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
 const oneClickExportInFlight = new Set<string>();
 
+const normalizeInventoryId = (value: string | null | undefined): string => value?.trim() || '';
+
+const resolveFallbackInventoryId = (
+  inventories: BaseImportInventoriesResponse['inventories'] | null | undefined
+): string => {
+  const normalizedInventories = (Array.isArray(inventories) ? inventories : [])
+    .map((entry) => ({
+      id: normalizeInventoryId(entry.id),
+      isDefault: Boolean(entry.is_default),
+    }))
+    .filter((entry) => entry.id.length > 0);
+
+  const defaultInventory = normalizedInventories.find((entry) => entry.isDefault);
+  if (defaultInventory?.id) return defaultInventory.id;
+  if (normalizedInventories.length === 1) {
+    return normalizedInventories[0]?.id ?? '';
+  }
+  return '';
+};
+
 type QuickExportContext = {
   connectionId: string;
   inventoryId: string;
@@ -107,18 +127,9 @@ export function BaseQuickExportButton(props: {
       ]);
 
       const connectionId = preferredConnection?.connectionId?.trim() || '';
-      const inventoryId = defaultInventory?.inventoryId?.trim() || '';
 
       if (!connectionId) {
         toast('Set a default Base.com connection first.', { variant: 'error' });
-        return null;
-      }
-
-      if (!inventoryId) {
-        toast(
-          'Specific Base.com inventory is not configured. Open Export Settings and set inventory.',
-          { variant: 'error' }
-        );
         return null;
       }
 
@@ -129,19 +140,36 @@ export function BaseQuickExportButton(props: {
           connectionId,
         } satisfies BaseImportInventoriesPayload
       );
-
+      const configuredInventoryId = normalizeInventoryId(defaultInventory?.inventoryId);
+      const fallbackInventoryId = resolveFallbackInventoryId(inventoriesResponse.inventories);
       const availableInventoryIds = new Set(
         (Array.isArray(inventoriesResponse.inventories) ? inventoriesResponse.inventories : [])
-          .map((entry) => entry.id.trim())
+          .map((entry) => normalizeInventoryId(entry.id))
           .filter((value) => value.length > 0)
       );
+      let inventoryId = configuredInventoryId;
 
-      if (availableInventoryIds.size > 0 && !availableInventoryIds.has(inventoryId)) {
-        toast(
-          'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.',
-          { variant: 'error' }
-        );
+      if (!inventoryId) {
+        inventoryId = fallbackInventoryId;
+      } else if (availableInventoryIds.size > 0 && !availableInventoryIds.has(inventoryId)) {
+        inventoryId = fallbackInventoryId;
+      }
+
+      if (!inventoryId) {
+        const message = configuredInventoryId
+          ? 'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.'
+          : 'Specific Base.com inventory is not configured. Open Export Settings and set inventory.';
+        toast(message, { variant: 'error' });
         return null;
+      }
+
+      if (inventoryId !== configuredInventoryId) {
+        void api
+          .post<BaseDefaultInventoryPreferenceResponse>(
+            '/api/v2/integrations/exports/base/default-inventory',
+            { inventoryId }
+          )
+          .catch(() => undefined);
       }
 
       const scopedTemplate = await api.get<BaseActiveTemplatePreferenceResponse>(

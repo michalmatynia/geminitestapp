@@ -194,17 +194,7 @@ const openClockTraining = async (page: Page): Promise<void> => {
   await expect(page.getByTestId('active-lesson-header')).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
-
-  await page.getByTestId('clock-lesson-section-slide-hours-2').click();
-  await page.getByTestId('clock-lesson-section-toggle-minutes').click();
-  await expect(page.getByTestId('clock-lesson-section-status-minutes')).toHaveText(/trakcie/i);
-
-  await page.getByTestId('clock-lesson-section-slide-minutes-2').click();
-  await page.getByTestId('clock-lesson-section-toggle-combined').click();
-  await expect(page.getByTestId('clock-lesson-section-status-combined')).toHaveText(/trakcie/i);
-
-  await page.getByTestId('clock-lesson-section-slide-combined-2').click();
-  await page.getByRole('button', { name: /zegarem/i }).click();
+  await page.getByTestId('lesson-hub-section-game_minutes').click();
   await expect(page.getByTestId('clock-lesson-training-shell')).toBeVisible();
   await expect(page.getByTestId('clock-time-display')).toHaveText('12:00');
 };

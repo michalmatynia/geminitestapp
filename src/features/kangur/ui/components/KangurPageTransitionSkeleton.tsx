@@ -120,7 +120,7 @@ const GameHomeSkeleton = (): React.JSX.Element => (
         <div className='space-y-4'>
           <SkeletonChip className='h-7 w-28' />
           <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/80' />
-          <div className='grid grid-cols-2 gap-3'>
+          <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
             <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
             <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
           </div>
@@ -145,7 +145,7 @@ const GameSessionSkeleton = (): React.JSX.Element => (
     <SkeletonPanel className='min-h-[340px]'>
       <div className='space-y-5'>
         <SkeletonBlock className='h-40 rounded-[30px] bg-slate-200/78' />
-        <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
@@ -180,7 +180,7 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
         </div>
       </SkeletonPanel>
       <SkeletonPanel className='min-h-[220px]'>
-        <div className='grid gap-3 sm:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
@@ -194,7 +194,7 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
 const LessonsFocusSkeleton = (): React.JSX.Element => (
   <div className='flex w-full flex-col gap-6'>
     <SkeletonPanel className='min-h-[160px]'>
-      <div className='flex items-center justify-between gap-4'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='space-y-3'>
           <SkeletonChip className='h-8 w-36' />
           <SkeletonLine className='h-10 w-64 max-w-full' />
@@ -212,7 +212,7 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
         <SkeletonLine className='w-4/6' />
       </div>
     </SkeletonPanel>
-    <div className='grid gap-4 sm:grid-cols-2'>
+    <div className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2'>
       <SkeletonPanel className='min-h-[120px]' />
       <SkeletonPanel className='min-h-[120px]' />
     </div>
@@ -225,7 +225,7 @@ const LearnerProfileSkeleton = (): React.JSX.Element => (
       <div className='space-y-4'>
         <SkeletonChip className='h-8 w-36' />
         <SkeletonLine className='h-10 w-2/3 max-w-[460px]' />
-        <div className='grid gap-3 sm:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3'>
           <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
           <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />

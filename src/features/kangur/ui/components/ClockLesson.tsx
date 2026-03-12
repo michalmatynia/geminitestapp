@@ -806,7 +806,7 @@ export default function ClockLesson(): React.JSX.Element {
     );
 
     const trainingFooterNavigation = (
-      <div className='flex w-full items-center justify-between gap-3'>
+      <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         {currentTrainingPanelIndex > 0 ? (
           <KangurButton
             onClick={() =>
@@ -816,7 +816,7 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Poprzedni panel'
-            className='min-w-[72px] justify-center px-5 shadow-sm'
+            className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
             style={{
               background: 'var(--kangur-soft-card-background)',
               borderColor: 'var(--kangur-soft-card-border)',
@@ -830,7 +830,7 @@ export default function ClockLesson(): React.JSX.Element {
             <ChevronLeft className='h-4 w-4 flex-shrink-0' />
           </KangurButton>
         ) : (
-          <div className='min-w-[72px]' />
+          <div className='hidden sm:block sm:min-w-[72px]' />
         )}
 
         {currentTrainingPanelIndex >= 0 && currentTrainingPanelIndex < trainingPanels.length - 1 ? (
@@ -842,7 +842,7 @@ export default function ClockLesson(): React.JSX.Element {
               })
             }
             aria-label='Nastepny panel'
-            className='min-w-[72px] justify-center px-5 shadow-sm'
+            className='w-full justify-center px-5 shadow-sm sm:min-w-[72px] sm:w-auto'
             style={{
               background: 'var(--kangur-soft-card-background)',
               borderColor: 'var(--kangur-soft-card-border)',
@@ -856,7 +856,7 @@ export default function ClockLesson(): React.JSX.Element {
             <ChevronRight className='h-4 w-4 flex-shrink-0' />
           </KangurButton>
         ) : (
-          <div className='min-w-[72px]' />
+          <div className='hidden sm:block sm:min-w-[72px]' />
         )}
       </div>
     );

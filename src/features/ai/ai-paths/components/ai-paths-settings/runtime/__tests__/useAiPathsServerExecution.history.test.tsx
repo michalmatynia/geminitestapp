@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   AiNode,
@@ -22,6 +22,7 @@ const streamAiPathRunMock = vi.hoisted(() => vi.fn());
 const createAiPathTriggerRequestIdMock = vi.hoisted(() => vi.fn());
 const isRecoverableTriggerEnqueueErrorMock = vi.hoisted(() => vi.fn());
 const recoverEnqueuedRunByRequestIdMock = vi.hoisted(() => vi.fn());
+const logClientErrorMock = vi.hoisted(() => vi.fn());
 
 const invalidateAiPathQueueMock = vi.hoisted(() => vi.fn());
 const invalidateAiPathRunsMock = vi.hoisted(() => vi.fn());
@@ -60,6 +61,10 @@ vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-utils', () => ({
 
 vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-recovery', () => ({
   recoverEnqueuedRunByRequestId: recoverEnqueuedRunByRequestIdMock,
+}));
+
+vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+  logClientError: logClientErrorMock,
 }));
 
 import { useAiPathsServerExecution } from '../useAiPathsServerExecution';
@@ -114,6 +119,10 @@ const normalizeNodeStatus = normalizeAiPathRuntimeNodeStatus;
 describe('useAiPathsServerExecution history streaming', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('appends node history entries when SSE node updates arrive', async () => {
@@ -502,6 +511,129 @@ describe('useAiPathsServerExecution history streaming', () => {
       'failed',
       {},
       { settleQueued: true }
+    );
+  });
+
+  it('logs reconnecting server stream failures as warn-level client reports', async () => {
+    vi.stubGlobal('EventSource', { CONNECTING: 0 });
+
+    let runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      currentRun: null,
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const runtimeStateRef = { current: runtimeState };
+    const currentRunIdRef = { current: null as string | null };
+    const currentRunStartedAtRef = { current: null as string | null };
+    const setRuntimeState = vi.fn(
+      (next: RuntimeState | ((prev: RuntimeState) => RuntimeState)): void => {
+        runtimeState = typeof next === 'function' ? next(runtimeState) : next;
+        runtimeStateRef.current = runtimeState;
+      }
+    );
+    const appendRuntimeEvent = vi.fn();
+    const listeners = new Map<string, Array<(event: Event) => void>>();
+    const eventSource = {
+      addEventListener: (type: string, listener: (event: Event) => void): void => {
+        const existing = listeners.get(type) ?? [];
+        existing.push(listener);
+        listeners.set(type, existing);
+      },
+      close: vi.fn(),
+      readyState: 0,
+      onerror: null,
+    } as unknown as EventSource;
+
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run_server_warn',
+          status: 'queued',
+          createdAt: '2026-03-05T07:10:00.000Z',
+          updatedAt: '2026-03-05T07:10:00.000Z',
+          pathId: 'path-main',
+        },
+      },
+    });
+    streamAiPathRunMock.mockReturnValue(eventSource);
+
+    const triggerNode = buildTriggerNode();
+
+    const { result } = renderHook(
+      () =>
+        useAiPathsServerExecution({
+          activePathId: 'path-main',
+          pathName: 'Main Path',
+          pathDescription: '',
+          runtimeKernelConfig: null,
+          activeTrigger: 'manual',
+          executionMode: 'server',
+          runMode: 'manual',
+          strictFlowMode: true,
+          blockedRunPolicy: 'fail_run',
+          aiPathsValidation: { enabled: false },
+          historyRetentionPasses: 5,
+          normalizedNodes: [triggerNode],
+          sanitizedEdges: [],
+          parserSamples: {},
+          updaterSamples: {},
+          runtimeStateRef,
+          resetRuntimeNodeStatuses: vi.fn(),
+          setRuntimeState,
+          setRuntimeEvents: vi.fn(),
+          appendRuntimeEvent,
+          setNodeStatus: vi.fn(),
+          normalizeNodeStatus,
+          formatStatusLabel: (status: AiPathRuntimeNodeStatus) => status,
+          settleTransientNodeStatuses: vi.fn(),
+          setRunStatus: vi.fn(),
+          setLastRunAt: vi.fn(),
+          toast: vi.fn(),
+          currentRunIdRef,
+          currentRunStartedAtRef,
+          setCurrentRunId: vi.fn(),
+          openRunDetail: vi.fn(),
+        }),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {
+      await result.current.runServerStream(triggerNode, 'manual', {});
+    });
+
+    act(() => {
+      eventSource.onerror?.(new Event('error'));
+    });
+
+    expect(logClientErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Server run stream disconnected — reconnecting',
+      }),
+      expect.objectContaining({
+        context: expect.objectContaining({
+          source: 'useAiPathsServerExecution',
+          action: 'eventSourceOnError',
+          level: 'warn',
+          runId: 'run_server_warn',
+          readyState: 0,
+        }),
+      })
+    );
+    expect(appendRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'run_warning',
+        level: 'warn',
+        message: 'Stream disconnected — attempting to reconnect...',
+      })
     );
   });
 });

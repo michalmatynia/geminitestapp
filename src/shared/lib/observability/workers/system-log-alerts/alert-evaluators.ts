@@ -58,6 +58,7 @@ export const evaluateErrorSpike = async (): Promise<void> => {
   const mongo = await getMongoDb();
   const recentErrorCount = await mongo.collection('system_logs').countDocuments({
     level: 'error',
+    'context.alertType': { $exists: false },
     createdAt: { $gte: windowStart },
   });
 
@@ -74,6 +75,7 @@ export const evaluateErrorSpike = async (): Promise<void> => {
   const alertEvidence = await buildAlertEvidenceContext({
     query: {
       level: 'error',
+      excludeAlertEvents: true,
       from: windowStart,
       to: now,
     },
@@ -110,6 +112,7 @@ export const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
       {
         $match: {
           level: 'error',
+          'context.alertType': { $exists: false },
           createdAt: { $gte: windowStart },
           source: { $nin: [null, ''] },
         },
@@ -129,6 +132,7 @@ export const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
       query: {
         level: 'error',
         sourceContains: source,
+        excludeAlertEvents: true,
         from: windowStart,
         to: now,
       },
@@ -163,6 +167,7 @@ export const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
   const logs = await listAlertEvidenceLogs(
     {
       level: 'error',
+      excludeAlertEvents: true,
       from: windowStart,
       to: now,
       limit: ALERT_GROUP_SCAN_LIMIT,
@@ -194,6 +199,7 @@ export const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
       query: {
         level: 'error',
         service,
+        excludeAlertEvents: true,
         from: windowStart,
         to: now,
       },

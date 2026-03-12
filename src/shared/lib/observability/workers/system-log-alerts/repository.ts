@@ -48,6 +48,9 @@ export const toMongoWhere = (query: AlertEvidenceQuery): Record<string, unknown>
   const where: Record<string, unknown> = {};
 
   if (query.level) where['level'] = query.level;
+  if (query.excludeAlertEvents) {
+    where['context.alertType'] = { $exists: false };
+  }
   if (query.sourceContains) {
     where['source'] = { $regex: escapeRegex(query.sourceContains), $options: 'i' };
   }

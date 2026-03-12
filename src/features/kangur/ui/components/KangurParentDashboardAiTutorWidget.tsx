@@ -374,7 +374,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
           </KangurStatusChip>
         </div>
 
-        <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] sm:grid-cols-3'>
+        <div className='mt-3 grid gap-3 text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
           <div>
             <KangurSectionEyebrow className='text-xs tracking-wide'>
               {tutorContent.parentDashboard.baselineLabel}
@@ -413,7 +413,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
 
       {currentSettings?.enabled ? (
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
-          <div className='flex items-start justify-between gap-3'>
+          <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
             <div className='min-w-0'>
               <KangurSectionEyebrow className='text-xs tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
@@ -438,7 +438,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
               </KangurCardTitle>
             </div>
             {!isUsageLoading && !hasUsageError && usageSummary ? (
-              <div className='shrink-0 rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700'>
+              <div className='rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700 sm:shrink-0'>
                 {usageSummary.dailyMessageLimit === null
                   ? tutorContent.parentDashboard.usageUnlimitedBadge
                   : usageSummary.remainingMessages === 0
@@ -534,7 +534,7 @@ function AiTutorConfigPanel(): React.JSX.Element {
             {tutorContent.parentDashboard.selects.testAccessModeDescription}
           </p>
         </div>
-        <div className='grid gap-3 md:grid-cols-2'>
+        <div className='grid gap-3 min-[420px]:grid-cols-2'>
           <div className='flex flex-col gap-1'>
             <label
               htmlFor={hintDepthFieldId}

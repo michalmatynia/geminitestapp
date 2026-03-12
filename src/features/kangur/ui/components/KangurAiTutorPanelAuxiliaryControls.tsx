@@ -158,7 +158,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
               'color-mix(in srgb, var(--kangur-soft-card-border) 72%, rgb(251 191 36))',
           }}
         >
-          <div className='flex items-center justify-between gap-3'>
+          <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
             <span className='font-semibold'>
               {formatKangurAiTutorTemplate(tutorContent.auxiliaryControls.dailyLimitTemplate, {
                 count: usageSummary.messageCount,
@@ -209,7 +209,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
             type='button'
             size='sm'
             variant='surface'
-            className='mt-3 h-9 px-3 text-xs'
+            className='mt-3 h-9 w-full px-3 text-xs sm:w-auto'
             disabled={isLoading || !canSendMessages}
             onClick={() =>
               void handleQuickAction(visibleProactiveNudge.action, {

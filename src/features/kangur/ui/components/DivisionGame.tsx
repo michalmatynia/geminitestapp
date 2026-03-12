@@ -1,18 +1,18 @@
 import { motion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import {
+  KangurPracticeGameProgress,
+  KangurPracticeGameStage,
+  KangurPracticeGameSummary,
+} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
-  KangurDisplayEmoji,
   KangurEquationDisplay,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurOptionCardButton,
-  KangurProgressBar,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -125,18 +125,21 @@ function ShareVisual({
   );
 
   return (
-    <div className='flex flex-wrap gap-2 justify-center max-w-xs' data-testid='division-share-visual'>
+    <div
+      className='flex max-w-full flex-wrap justify-center gap-2 sm:max-w-xs'
+      data-testid='division-share-visual'
+    >
       {groups.map((group, groupIndex) => (
         <KangurInfoCard
           accent='sky'
-          className='flex min-w-[72px] flex-col items-center gap-0.5 rounded-[22px]'
+          className='flex min-w-[56px] flex-col items-center gap-0.5 rounded-[22px] sm:min-w-[72px]'
           data-testid={`division-share-group-${groupIndex}`}
           key={groupIndex}
           padding='sm'
           tone='accent'
         >
           <p className='text-xs font-bold text-sky-500'>{groupIndex + 1}</p>
-          <div className='flex flex-wrap gap-0.5 justify-center max-w-[60px]'>
+          <div className='flex max-w-[52px] flex-wrap justify-center gap-0.5 sm:max-w-[60px]'>
             {group.map((_, itemIndex) => (
               <span key={itemIndex} className='text-lg'>
                 {emoji}
@@ -212,93 +215,51 @@ export default function DivisionGame({
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className='w-full max-w-sm'
-      >
-        <KangurGlassPanel
-          className='flex flex-col items-center gap-4 text-center'
-          data-testid='division-game-summary-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <KangurDisplayEmoji data-testid='division-game-summary-emoji' size='lg'>
-            {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-          </KangurDisplayEmoji>
-          <KangurHeadline data-testid='division-game-summary-title'>
-            Wynik: {score}/{TOTAL}
-          </KangurHeadline>
-          {xpEarned > 0 && (
-            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-              +{xpEarned} XP ✨
-            </KangurStatusChip>
-          )}
-          <KangurRewardBreakdownChips
-            accent='slate'
-            breakdown={xpBreakdown}
-            className='justify-center'
-            dataTestId='division-game-summary-breakdown'
-            itemDataTestIdPrefix='division-game-summary-breakdown'
-          />
-          <KangurProgressBar accent='teal' animated size='md' value={percent} />
-          <p className='[color:var(--kangur-page-muted-text)]'>
-            {percent === 100
-              ? 'Idealnie! Mistrz dzielenia!'
-              : percent >= 60
-                ? 'Świetna robota!'
-                : 'Ćwicz dalej!'}
-          </p>
-          <div className='flex gap-3 w-full'>
-            <KangurButton
-              onClick={() => {
-                setRoundIndex(0);
-                setScore(0);
-                setDone(false);
-                setXpEarned(0);
-                setXpBreakdown([]);
-                setQuestion(generateQuestion(0));
-                setSelected(null);
-                setConfirmed(false);
-                sessionStartedAtRef.current = Date.now();
-              }}
-              className='flex-1'
-              size='lg'
-              type='button'
-              variant='surface'
-            >
-              <RefreshCw className='w-4 h-4' /> Jeszcze raz
-            </KangurButton>
-            <KangurButton
-              onClick={handleFinishGame}
-              className='flex-1'
-              size='lg'
-              type='button'
-              variant='primary'
-            >
-              {finishLabel}
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </motion.div>
+      <KangurPracticeGameSummary
+        accent='indigo'
+        breakdown={xpBreakdown}
+        breakdownDataTestId='division-game-summary-breakdown'
+        breakdownItemDataTestIdPrefix='division-game-summary-breakdown'
+        dataTestId='division-game-summary-shell'
+        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+        emojiDataTestId='division-game-summary-emoji'
+        finishLabel={finishLabel}
+        message={
+          percent === 100
+            ? 'Idealnie! Mistrz dzielenia!'
+            : percent >= 60
+              ? 'Świetna robota!'
+              : 'Ćwicz dalej!'
+        }
+        onFinish={handleFinishGame}
+        onRestart={() => {
+          setRoundIndex(0);
+          setScore(0);
+          setDone(false);
+          setXpEarned(0);
+          setXpBreakdown([]);
+          setQuestion(generateQuestion(0));
+          setSelected(null);
+          setConfirmed(false);
+          sessionStartedAtRef.current = Date.now();
+        }}
+        percent={percent}
+        progressAccent='teal'
+        title={<KangurHeadline data-testid='division-game-summary-title'>Wynik: {score}/{TOTAL}</KangurHeadline>}
+        xpAccent='indigo'
+        xpEarned={xpEarned}
+      />
     );
   }
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-      <div className='flex items-center gap-2 w-full'>
-        <KangurProgressBar
-          accent='teal'
-          className='flex-1'
-          data-testid='division-game-progress-bar'
-          size='sm'
-          value={(roundIndex / TOTAL) * 100}
-        />
-        <span className='text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-          {roundIndex + 1}/{TOTAL}
-        </span>
-      </div>
+    <KangurPracticeGameStage>
+      <KangurPracticeGameProgress
+        accent='teal'
+        currentRound={roundIndex}
+        dataTestId='division-game-progress-bar'
+        totalRounds={TOTAL}
+      />
 
       <div className='w-full'>
         <KangurGlassPanel
@@ -336,7 +297,7 @@ export default function DivisionGame({
             </KangurInfoCard>
           )}
 
-          <div className='grid grid-cols-2 gap-2 w-full'>
+          <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
             {question.choices.map((choice, index) => {
               let accent: KangurAccent = 'sky';
               let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -371,7 +332,7 @@ export default function DivisionGame({
                   <KangurOptionCardButton
                     accent={accent}
                     className={cn(
-                      'w-full flex items-center justify-center rounded-[24px] px-4 py-3 text-center text-xl font-extrabold transition-all',
+                      'flex w-full items-center justify-center rounded-[24px] px-4 py-3 text-center text-lg font-extrabold transition-all sm:text-xl',
                       className,
                       confirmed ? 'cursor-default' : 'cursor-pointer'
                     )}
@@ -407,6 +368,6 @@ export default function DivisionGame({
           </KangurButton>
         </KangurGlassPanel>
       </div>
-    </div>
+    </KangurPracticeGameStage>
   );
 }

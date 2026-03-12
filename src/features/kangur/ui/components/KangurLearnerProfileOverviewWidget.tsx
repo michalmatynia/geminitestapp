@@ -33,7 +33,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           : 'slate';
 
   return (
-    <section className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
+    <section className='grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'

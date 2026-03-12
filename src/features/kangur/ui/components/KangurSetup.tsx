@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion';
 import { ArrowLeft, Lock } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 
+import KangurAnimatedOptionCard from '@/features/kangur/ui/components/KangurAnimatedOptionCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurInfoCard,
   KangurIconBadge,
-  KangurOptionCardButton,
   KangurSectionHeading,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -38,6 +38,81 @@ type KangurSetupProps = {
   recommendedMode?: KangurMode | null;
   recommendedTitle?: string;
 };
+
+type KangurSetupSectionProps = {
+  children: ReactNode;
+  headingId: string;
+};
+
+function KangurSetupSection({
+  children,
+  headingId,
+}: KangurSetupSectionProps): React.JSX.Element {
+  return (
+    <section aria-labelledby={headingId} className='flex w-full max-w-md flex-col gap-4'>
+      {children}
+    </section>
+  );
+}
+
+type KangurSetupShellProps = {
+  children: ReactNode;
+  testId: string;
+};
+
+function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JSX.Element {
+  return (
+    <KangurGlassPanel
+      className='flex flex-col items-center gap-5 text-center'
+      data-testid={testId}
+      padding='xl'
+      surface='solid'
+      variant='soft'
+    >
+      {children}
+    </KangurGlassPanel>
+  );
+}
+
+type KangurSetupChoiceCardProps = {
+  ariaDescribedBy: string;
+  ariaLabel: string;
+  children: ReactNode;
+  className: string;
+  dataTestId: string;
+  disabled: boolean;
+  emphasis: 'accent' | 'neutral';
+  onClick: () => void;
+};
+
+function KangurSetupChoiceCard({
+  ariaDescribedBy,
+  ariaLabel,
+  children,
+  className,
+  dataTestId,
+  disabled,
+  emphasis,
+  onClick,
+}: KangurSetupChoiceCardProps): React.JSX.Element {
+  return (
+    <KangurAnimatedOptionCard
+      accent='amber'
+      aria-describedby={ariaDescribedBy}
+      aria-label={ariaLabel}
+      buttonClassName={className}
+      data-testid={dataTestId}
+      disabled={disabled}
+      emphasis={emphasis}
+      onClick={onClick}
+      whileHover={!disabled ? { scale: 1.03 } : {}}
+      whileTap={!disabled ? { scale: 0.97 } : {}}
+      wrapperRole='listitem'
+    >
+      {children}
+    </KangurAnimatedOptionCard>
+  );
+}
 
 const EDITIONS: KangurEdition[] = [
   {
@@ -101,14 +176,8 @@ export default function KangurSetup({
 
   if (!selectedEdition) {
     return (
-      <section aria-labelledby={editionsHeadingId} className='flex w-full max-w-md flex-col gap-4'>
-        <KangurGlassPanel
-          className='flex flex-col items-center gap-5 text-center'
-          data-testid='kangur-setup-editions-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
+      <KangurSetupSection headingId={editionsHeadingId}>
+        <KangurSetupShell testId='kangur-setup-editions-shell'>
           <KangurSectionHeading
             accent='amber'
             data-testid='kangur-setup-editions-heading'
@@ -123,26 +192,20 @@ export default function KangurSetup({
 
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
-              <motion.div
+              <KangurSetupChoiceCard
+                ariaDescribedBy={`kangur-setup-edition-status-${edition.year}`}
+                ariaLabel={`${edition.label}. ${edition.available ? 'Dostepna.' : 'Niedostepna, wkrotce dostepna.'}`}
+                className='flex w-full flex-col items-start gap-3 rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center sm:gap-4'
+                dataTestId={`kangur-setup-edition-${edition.year}`}
+                disabled={!edition.available}
+                emphasis={edition.available ? 'accent' : 'neutral'}
                 key={edition.year}
-                whileHover={edition.available ? { scale: 1.03 } : {}}
-                whileTap={edition.available ? { scale: 0.97 } : {}}
-                role='listitem'
+                onClick={() => {
+                  if (edition.available) {
+                    setSelectedEdition(edition);
+                  }
+                }}
               >
-                <KangurOptionCardButton
-                  accent='amber'
-                  aria-describedby={`kangur-setup-edition-status-${edition.year}`}
-                  aria-label={`${edition.label}. ${edition.available ? 'Dostepna.' : 'Niedostepna, wkrotce dostepna.'}`}
-                  className='flex w-full items-center gap-4 rounded-[28px] px-5 py-4'
-                  data-testid={`kangur-setup-edition-${edition.year}`}
-                  disabled={!edition.available}
-                  emphasis={edition.available ? 'accent' : 'neutral'}
-                  onClick={() => {
-                    if (edition.available) {
-                      setSelectedEdition(edition);
-                    }
-                  }}
-                >
                   <KangurIconBadge
                     accent={edition.available ? 'amber' : 'slate'}
                     className={edition.available ? undefined : '[color:var(--kangur-page-muted-text)]'}
@@ -159,7 +222,7 @@ export default function KangurSetup({
                   >
                     {edition.emoji}
                   </KangurIconBadge>
-                  <div className='flex flex-1 flex-col'>
+                  <div className='flex min-w-0 flex-1 flex-col'>
                     <span className='text-lg font-extrabold [color:var(--kangur-page-text)]'>
                       {edition.label}
                     </span>
@@ -177,8 +240,7 @@ export default function KangurSetup({
                       ) : null}
                     </span>
                   </div>
-                </KangurOptionCardButton>
-              </motion.div>
+              </KangurSetupChoiceCard>
             ))}
           </div>
 
@@ -190,17 +252,17 @@ export default function KangurSetup({
             label='O konkursie Kangur'
             padding='md'
           />
-        </KangurGlassPanel>
-      </section>
+        </KangurSetupShell>
+      </KangurSetupSection>
     );
   }
 
   return (
-    <section aria-labelledby={setsHeadingId} className='flex w-full max-w-md flex-col gap-4'>
+    <KangurSetupSection headingId={setsHeadingId}>
       <KangurButton
         aria-label='Wroc do listy edycji'
         onClick={() => setSelectedEdition(null)}
-        className='self-start'
+        className='w-full self-stretch sm:w-auto sm:self-start'
         size='sm'
         type='button'
         variant='surface'
@@ -208,13 +270,7 @@ export default function KangurSetup({
         <ArrowLeft className='w-4 h-4' /> Edycje
       </KangurButton>
 
-      <KangurGlassPanel
-        className='flex flex-col items-center gap-5 text-center'
-        data-testid='kangur-setup-selected-edition-shell'
-        padding='xl'
-        surface='solid'
-        variant='soft'
-      >
+      <KangurSetupShell testId='kangur-setup-selected-edition-shell'>
         <KangurSectionHeading
           accent='amber'
           data-testid='kangur-setup-selected-edition-heading'
@@ -231,38 +287,16 @@ export default function KangurSetup({
         </KangurStatusChip>
 
         {recommendedTitle ? (
-          <KangurInfoCard
+          <KangurRecommendationCard
             accent='amber'
-            className='w-full rounded-[24px] text-left'
             data-testid='kangur-setup-recommendation-card'
-            padding='md'
-            tone='accent'
-          >
-            <div className='flex flex-col gap-2'>
-              <KangurStatusChip
-                accent='amber'
-                className='w-fit text-[11px] uppercase tracking-[0.16em]'
-                data-testid='kangur-setup-recommendation-label'
-                size='sm'
-              >
-                {recommendedLabel ?? 'Polecamy teraz'}
-              </KangurStatusChip>
-              <p
-                className='text-sm font-extrabold [color:var(--kangur-page-text)]'
-                data-testid='kangur-setup-recommendation-title'
-              >
-                {recommendedTitle}
-              </p>
-              {recommendedDescription ? (
-                <p
-                  className='text-xs [color:var(--kangur-page-muted-text)]'
-                  data-testid='kangur-setup-recommendation-description'
-                >
-                  {recommendedDescription}
-                </p>
-              ) : null}
-            </div>
-          </KangurInfoCard>
+            description={recommendedDescription}
+            descriptionTestId='kangur-setup-recommendation-description'
+            label={recommendedLabel ?? 'Polecamy teraz'}
+            labelTestId='kangur-setup-recommendation-label'
+            title={recommendedTitle}
+            titleTestId='kangur-setup-recommendation-title'
+          />
         ) : null}
 
         <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
@@ -276,22 +310,16 @@ export default function KangurSetup({
             };
 
             return (
-              <motion.div
+              <KangurSetupChoiceCard
+                ariaDescribedBy={`kangur-setup-set-description-${setItem.id}`}
+                ariaLabel={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
+                className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
+                dataTestId={`kangur-setup-set-${setItem.id}`}
+                disabled={!setItem.available}
+                emphasis={setCardEmphasis}
                 key={setItem.id}
-                whileHover={setItem.available ? { scale: 1.03 } : {}}
-                whileTap={setItem.available ? { scale: 0.97 } : {}}
-                role='listitem'
+                onClick={handleSelectSet}
               >
-                <KangurOptionCardButton
-                  accent='amber'
-                  aria-describedby={`kangur-setup-set-description-${setItem.id}`}
-                  aria-label={`${setItem.label}. ${setItem.isExam ? 'Tryb konkursowy.' : 'Tryb treningowy.'} ${setItem.available ? 'Dostepny.' : 'Niedostepny, wkrotce dostepny.'}`}
-                  className='flex w-full flex-col items-start gap-2 rounded-[28px] px-5 py-4'
-                  data-testid={`kangur-setup-set-${setItem.id}`}
-                  disabled={!setItem.available}
-                  emphasis={setCardEmphasis}
-                  onClick={handleSelectSet}
-                >
                   <span className='flex flex-wrap items-center gap-2'>
                     <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
                       {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
@@ -324,14 +352,13 @@ export default function KangurSetup({
                         : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_82%,white)]'
                     )}
                   >
-                    {setItem.desc}
-                  </span>
-                </KangurOptionCardButton>
-              </motion.div>
+                      {setItem.desc}
+                    </span>
+              </KangurSetupChoiceCard>
             );
           })}
         </div>
-      </KangurGlassPanel>
-    </section>
+      </KangurSetupShell>
+    </KangurSetupSection>
   );
 }

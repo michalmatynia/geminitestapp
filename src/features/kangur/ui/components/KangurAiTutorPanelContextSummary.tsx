@@ -7,7 +7,7 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { HTMLAttributes, JSX, ReactNode } from 'react';
 
-const contextSummaryCardActionClassName = 'h-8 shrink-0 px-3 text-[11px]';
+const contextSummaryCardActionClassName = 'h-8 w-full px-3 text-[11px] sm:w-auto sm:shrink-0';
 const contextSummaryChipClassName =
   'rounded-full border px-3 py-1 [background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]';
 
@@ -63,35 +63,37 @@ function KangurAiTutorPanelContextCard({
 }: ContextSummaryCardProps): JSX.Element {
   return (
     <KangurAiTutorWarmInsetCard data-testid={testId} tone='panel' className='mt-2 px-3 py-3'>
-      <div className='flex items-start justify-between gap-3'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {title}
           </div>
           <div className='mt-2'>{content}</div>
         </div>
-        {primaryAction ? (
+        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end'>
+          {primaryAction ? (
+            <KangurButton
+              data-testid={primaryAction.testId}
+              type='button'
+              size='sm'
+              variant='surface'
+              className={contextSummaryCardActionClassName}
+              onClick={primaryAction.onClick}
+            >
+              {primaryAction.label}
+            </KangurButton>
+          ) : null}
           <KangurButton
-            data-testid={primaryAction.testId}
+            data-testid={secondaryAction.testId}
             type='button'
             size='sm'
             variant='surface'
             className={contextSummaryCardActionClassName}
-            onClick={primaryAction.onClick}
+            onClick={secondaryAction.onClick}
           >
-            {primaryAction.label}
+            {secondaryAction.label}
           </KangurButton>
-        ) : null}
-        <KangurButton
-          data-testid={secondaryAction.testId}
-          type='button'
-          size='sm'
-          variant='surface'
-          className={contextSummaryCardActionClassName}
-          onClick={secondaryAction.onClick}
-        >
-          {secondaryAction.label}
-        </KangurButton>
+        </div>
       </div>
       <div className='mt-2 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
         {detail}

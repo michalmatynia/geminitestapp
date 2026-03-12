@@ -73,6 +73,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 
 import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   KANGUR_HELP_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
@@ -82,6 +83,7 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
   await waitFor(() =>
@@ -101,7 +103,18 @@ describe('AdminKangurSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mutateAsyncMock.mockResolvedValue({});
-    apiGetMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+    apiGetMock.mockImplementation(async (path: string) => {
+      if (path === '/api/kangur/ai-tutor/content') {
+        return DEFAULT_KANGUR_AI_TUTOR_CONTENT;
+      }
+      if (path === '/api/kangur/ai-tutor/page-content?locale=pl') {
+        return DEFAULT_KANGUR_PAGE_CONTENT_STORE;
+      }
+      if (path === '/api/kangur/ai-tutor/native-guide?locale=pl') {
+        return DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
+      }
+      throw new Error(`Unexpected GET ${path}`);
+    });
     apiPostMock.mockResolvedValue({
       ok: true,
       stage: 'ready',

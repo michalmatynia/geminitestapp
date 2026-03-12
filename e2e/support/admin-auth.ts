@@ -13,6 +13,12 @@ const AUTH_SESSION_COOKIE_NAMES = new Set([
   '__Secure-next-auth.session-token',
 ]);
 
+const isRecoverableNavigationAbort = (error: unknown): boolean => {
+  const message =
+    error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  return message.includes('net::ERR_ABORTED') || message.includes('frame was detached');
+};
+
 const credentialCandidates = [
   {
     email: process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'],
@@ -78,10 +84,16 @@ export async function ensureAdminSession(
   };
   const navigateToDestination = async (): Promise<void> => {
     if (!matchesDestination(getCurrentUrl())) {
-      await page.goto(destination, {
-        waitUntil: 'domcontentloaded',
-        timeout: destinationNavigationTimeoutMs,
-      });
+      try {
+        await page.goto(destination, {
+          waitUntil: 'domcontentloaded',
+          timeout: destinationNavigationTimeoutMs,
+        });
+      } catch (error) {
+        if (!isRecoverableNavigationAbort(error)) {
+          throw error;
+        }
+      }
     }
 
     if (!matchesDestination(getCurrentUrl())) {

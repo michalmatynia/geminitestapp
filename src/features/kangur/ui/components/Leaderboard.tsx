@@ -15,6 +15,7 @@ import {
   useKangurLeaderboardState,
   type KangurLeaderboardUserFilterIcon,
 } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.ReactNode => {
   if (icon === 'user') {
@@ -29,6 +30,7 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
 };
 
 export default function Leaderboard(): React.JSX.Element {
+  const { entry: leaderboardContent } = useKangurPageContentEntry('game-home-leaderboard');
   const { emptyStateLabel, items, loading, operationFilters, userFilters } =
     useKangurLeaderboardState();
 
@@ -40,9 +42,11 @@ export default function Leaderboard(): React.JSX.Element {
       surface='solid'
       variant='soft'
     >
-      <div className='flex items-center gap-2 mb-4'>
+      <div className='mb-4 flex items-center gap-2'>
         <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' />
-        <h3 className='text-xl font-extrabold [color:var(--kangur-page-text)]'>Najlepsze wyniki</h3>
+        <h3 className='text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
+          {leaderboardContent?.title ?? 'Najlepsze wyniki'}
+        </h3>
       </div>
 
       <div className='mb-4 flex flex-col gap-2'>
@@ -56,7 +60,7 @@ export default function Leaderboard(): React.JSX.Element {
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
-              className='h-10 px-3 text-xs sm:flex-none'
+              className='h-10 flex-1 justify-center px-3 text-xs sm:flex-none'
               data-testid={`leaderboard-operation-filter-${filter.id}`}
               size='sm'
               variant={filter.selected ? 'segmentActive' : 'segment'}
@@ -76,7 +80,7 @@ export default function Leaderboard(): React.JSX.Element {
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
-              className='h-10 px-3 text-xs sm:flex-none'
+              className='h-10 flex-1 justify-center px-3 text-xs sm:flex-none'
               data-testid={`leaderboard-user-filter-${filter.id}`}
               size='sm'
               variant={filter.selected ? 'segmentActive' : 'segment'}
@@ -110,7 +114,7 @@ export default function Leaderboard(): React.JSX.Element {
             return (
               <KangurInfoCard
                 accent={item.isCurrentUser ? 'indigo' : 'slate'}
-                className='flex items-center gap-2 p-2 sm:gap-3'
+                className='flex flex-col items-start gap-3 p-3 sm:flex-row sm:items-center sm:gap-3'
                 data-testid={`leaderboard-row-${item.id}`}
                 key={item.id}
                 padding='sm'
@@ -165,7 +169,7 @@ export default function Leaderboard(): React.JSX.Element {
                   </div>
                 </div>
 
-                <div className='text-right flex-shrink-0'>
+                <div className='w-full flex-shrink-0 text-left sm:w-auto sm:text-right'>
                   <div className='text-sm font-extrabold text-indigo-700 sm:text-base'>
                     {item.scoreLabel}
                   </div>

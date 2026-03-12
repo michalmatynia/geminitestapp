@@ -66,11 +66,11 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
       surface='neutral'
       variant='soft'
     >
-      <header className='flex items-center justify-between gap-3'>
+      <header className='flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <KangurSectionEyebrow className='text-sm tracking-[0.18em]'>
           Zadania
         </KangurSectionEyebrow>
-        <KangurStatusChip accent='slate' labelStyle='compact'>
+        <KangurStatusChip accent='slate' className='self-start sm:self-auto' labelStyle='compact'>
           {completionLabel}
         </KangurStatusChip>
       </header>
@@ -155,7 +155,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     </KangurStatusChip>
                     <KangurButton
                       asChild
-                      className='mt-3'
+                      className='mt-3 w-full sm:w-auto'
                       size='sm'
                       variant={completed ? 'success' : 'surface'}
                     >

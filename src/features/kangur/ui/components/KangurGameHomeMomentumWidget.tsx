@@ -305,7 +305,7 @@ export default function KangurGameHomeMomentumWidget({
             {recommendation.description}
           </KangurCardDescription>
         </div>
-        <KangurButton asChild className='shrink-0' size='sm' variant='primary'>
+        <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='primary'>
           <Link
             href={recommendationHref}
             targetPageKey={recommendationTargetPageKey}

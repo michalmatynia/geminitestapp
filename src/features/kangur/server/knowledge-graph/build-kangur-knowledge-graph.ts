@@ -14,6 +14,7 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
 import {
   KANGUR_KNOWLEDGE_GRAPH_KEY,
   type KangurKnowledgeEdgeKind,
@@ -104,6 +105,14 @@ const SURFACE_ROUTES: Partial<Record<string, string>> = {
   profile: toRelativeKangurPageRoute('LearnerProfile'),
   parent_dashboard: toRelativeKangurPageRoute('ParentDashboard'),
   auth: KANGUR_HOME_ROUTE,
+};
+
+const PAGE_CONTENT_PARENT_NODE_IDS: Partial<Record<string, string>> = {
+  Game: 'page:kangur-game',
+  Lessons: 'page:kangur-lessons',
+  Tests: 'page:kangur-tests',
+  LearnerProfile: 'page:kangur-learner-profile',
+  ParentDashboard: 'page:kangur-parent-dashboard',
 };
 
 const REFERENCE_DETAILS: Partial<Record<string, ReferenceDetail>> = {
@@ -424,6 +433,7 @@ export const buildKangurKnowledgeGraph = (
   const tutorContent = options.tutorContent ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
   const nativeGuideStore =
     options.nativeGuideStore ?? DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
+  const pageContentStore = buildDefaultKangurPageContentStore(locale);
   const nodes = new Map<string, KangurKnowledgeGraphNode>();
   const edges = new Map<string, KangurKnowledgeGraphEdge>();
 
@@ -717,6 +727,66 @@ export const buildKangurKnowledgeGraph = (
         from: guideNodeId,
         to: actionNodeId,
         description: `${entry.title} suggests the ${action.label} follow-up action.`,
+      });
+    }
+  }
+
+  for (const entry of pageContentStore.entries) {
+    if (!entry.enabled) {
+      continue;
+    }
+
+    const sectionNodeId = `guide:page-content:${entry.id}`;
+    createNode(nodes, {
+      id: sectionNodeId,
+      kind: 'guide',
+      title: entry.title,
+      summary: entry.summary,
+      source: 'kangur_page_content',
+      locale,
+      surface: entry.surface ?? undefined,
+      focusKind: entry.focusKind ?? undefined,
+      route: entry.route ?? undefined,
+      anchorId: entry.anchorIdPrefix ?? undefined,
+      sourceCollection: 'kangur_page_content',
+      sourceRecordId: entry.id,
+      sourcePath: `entry:${entry.id}`,
+      contentIdPrefixes: entry.contentIdPrefixes,
+      triggerPhrases: entry.triggerPhrases,
+      semanticText: [entry.title, entry.summary, entry.body, entry.notes ?? null]
+        .filter((value): value is string => Boolean(value))
+        .join('\n'),
+      tags: entry.tags,
+      metadata: {
+        pageKey: entry.pageKey,
+        screenKey: entry.screenKey,
+        widget: entry.widget,
+      },
+    });
+
+    const parentNodeId = PAGE_CONTENT_PARENT_NODE_IDS[entry.pageKey];
+    if (parentNodeId) {
+      createEdge(edges, {
+        kind: 'HAS_REFERENCE',
+        from: parentNodeId,
+        to: sectionNodeId,
+        description: `${entry.title} is a tracked Kangur page-content section on ${entry.pageKey}.`,
+      });
+    } else {
+      createEdge(edges, {
+        kind: 'RELATED_TO',
+        from: 'app:kangur',
+        to: sectionNodeId,
+        description: `${entry.title} is a tracked Kangur auth or shared-chrome content section.`,
+      });
+    }
+
+    for (const nativeGuideId of entry.nativeGuideIds) {
+      createEdge(edges, {
+        kind: 'EXPLAINS',
+        from: sectionNodeId,
+        to: `guide:native:${nativeGuideId}`,
+        description: `${entry.title} resolves to the ${nativeGuideId} native guide explanation.`,
       });
     }
   }

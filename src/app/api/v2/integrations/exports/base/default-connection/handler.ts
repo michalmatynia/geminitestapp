@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
   getExportDefaultConnectionId,
+  setExportDefaultInventoryId,
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -55,6 +56,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const data = parsed.data;
   const connectionId = normalizeOptionalId(data.connectionId);
+  let previousConnectionId: string | null = null;
+  try {
+    previousConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
+  } catch {
+    previousConnectionId = null;
+  }
+  if (previousConnectionId !== connectionId) {
+    await setExportDefaultInventoryId(null);
+  }
   await setExportDefaultConnectionId(connectionId);
   const response: BaseDefaultConnectionPreferenceResponse = { connectionId };
   return NextResponse.json(response);

@@ -1,8 +1,7 @@
-import { motion } from 'framer-motion';
-import { Eraser, PencilRuler, RefreshCw } from 'lucide-react';
+import { Eraser, PencilRuler } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import { KangurPracticeGameSummary } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -504,25 +503,34 @@ export default function GeometryDrawingGame({
       className='flex flex-col items-center gap-4 w-full max-w-sm'
     >
       {done ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className='w-full'
-        >
-          <KangurGlassPanel
-            className='flex flex-col items-center gap-4 text-center'
-            data-testid='geometry-drawing-summary-shell'
-            padding='xl'
-            surface='solid'
-            variant='soft'
-          >
-            <KangurDisplayEmoji
-              aria-hidden='true'
-              data-testid='geometry-drawing-summary-emoji'
-              size='lg'
-            >
-              {score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
-            </KangurDisplayEmoji>
+        <KangurPracticeGameSummary
+          accent='violet'
+          actionsClassName='flex-col sm:flex-row'
+          breakdown={xpBreakdown}
+          breakdownDataTestId='geometry-drawing-summary-breakdown'
+          breakdownItemDataTestIdPrefix='geometry-drawing-summary-breakdown'
+          dataTestId='geometry-drawing-summary-shell'
+          emoji={score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
+          emojiAriaHidden
+          emojiDataTestId='geometry-drawing-summary-emoji'
+          finishButtonClassName='w-full sm:flex-1'
+          finishLabel='Wróć'
+          message={
+            score === totalRounds
+              ? 'Perfekcyjnie! Twoje figury są wzorowe.'
+              : score >= Math.ceil(totalRounds / 2)
+                ? 'Świetna robota! Rysujesz coraz dokładniej.'
+                : 'Ćwicz dalej. Każda kolejna figura będzie lepsza.'
+          }
+          onFinish={handleFinishSession}
+          onRestart={handleRestart}
+          percent={Math.round((score / totalRounds) * 100)}
+          progressAccent='emerald'
+          progressAriaLabel='Dokladnosc w treningu figur'
+          progressAriaValueText={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
+          progressDataTestId='geometry-drawing-summary-progress-bar'
+          restartButtonClassName='w-full sm:flex-1'
+          title={
             <KangurHeadline
               accent='violet'
               as='h3'
@@ -531,48 +539,11 @@ export default function GeometryDrawingGame({
             >
               Wynik: {score}/{totalRounds}
             </KangurHeadline>
-            {xpEarned > 0 ? (
-              <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-                +{xpEarned} XP ✨
-              </KangurStatusChip>
-            ) : null}
-            <KangurRewardBreakdownChips
-              accent='slate'
-              breakdown={xpBreakdown}
-              className='justify-center'
-              dataTestId='geometry-drawing-summary-breakdown'
-              itemDataTestIdPrefix='geometry-drawing-summary-breakdown'
-            />
-            <KangurProgressBar
-              accent='emerald'
-              animated
-              aria-label='Dokladnosc w treningu figur'
-              aria-valuetext={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
-              data-testid='geometry-drawing-summary-progress-bar'
-              size='md'
-              value={Math.round((score / totalRounds) * 100)}
-            />
-            <div className='flex gap-3 w-full'>
-              <KangurButton
-                className='flex-1'
-                onClick={handleRestart}
-                size='lg'
-                variant='surface'
-              >
-                <RefreshCw className='w-4 h-4' />
-                Jeszcze raz
-              </KangurButton>
-              <KangurButton
-                className='flex-1'
-                onClick={handleFinishSession}
-                size='lg'
-                variant='primary'
-              >
-                Wróć
-              </KangurButton>
-            </div>
-          </KangurGlassPanel>
-        </motion.div>
+          }
+          titleUnwrapped
+          xpAccent='indigo'
+          xpEarned={xpEarned}
+        />
       ) : (
         <>
           <div aria-live='polite' aria-atomic='true' className='sr-only'>
@@ -598,7 +569,11 @@ export default function GeometryDrawingGame({
                 Poziom figur
               </KangurStatusChip>
             </div>
-            <div aria-label='Poziom trudnosci figur' className='grid grid-cols-2 gap-2' role='group'>
+            <div
+              aria-label='Poziom trudnosci figur'
+              className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'
+              role='group'
+            >
               {(['starter', 'pro'] as const).map((mode) => (
                 <KangurButton
                   key={mode}
@@ -607,7 +582,7 @@ export default function GeometryDrawingGame({
                   type='button'
                   onClick={() => handleDifficultyChange(mode)}
                   disabled={feedback !== null}
-                  className='h-10 px-4 text-xs'
+                  className='min-h-10 px-4 text-xs'
                   size='sm'
                   variant={difficulty === mode ? 'surface' : 'secondary'}
                 >
@@ -719,9 +694,9 @@ export default function GeometryDrawingGame({
                 konczy kreske, strzalki przesuwaja kursor, Escape czysci plansze.
               </p>
 
-              <div className='flex gap-3 w-full'>
+              <div className='flex w-full flex-col gap-3 sm:flex-row'>
                 <KangurButton
-                  className='flex-1'
+                  className='w-full sm:flex-1'
                   disabled={feedback !== null || points.length === 0}
                   onClick={clearDrawing}
                   type='button'
@@ -733,7 +708,7 @@ export default function GeometryDrawingGame({
                 </KangurButton>
                 <KangurButton
                   className={cn(
-                    'flex-1',
+                    'w-full sm:flex-1',
                     feedback
                       ? feedback.kind === 'success'
                         ? 'bg-emerald-500 border-emerald-500 text-white'

@@ -18,6 +18,9 @@ const NETWORK_FETCH_FAILURE_MESSAGES = new Set([
   'failed to fetch',
   'networkerror when attempting to fetch resource.',
 ]);
+const CLIENT_REPORT_LEVELS = new Set(['error', 'warn', 'info'] as const);
+
+type ClientReportLevel = 'error' | 'warn' | 'info';
 
 const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> => {
   if (!isObjectRecord(rawBody)) return {};
@@ -90,6 +93,35 @@ const isNoisyDevNetworkFetchFailure = (
   return true;
 };
 
+const resolveClientReportLevel = (context: Record<string, unknown> | null): ClientReportLevel => {
+  const reportedLevel = typeof context?.['level'] === 'string' ? context['level'].trim() : '';
+  if (CLIENT_REPORT_LEVELS.has(reportedLevel as ClientReportLevel)) {
+    return reportedLevel as ClientReportLevel;
+  }
+  return 'error';
+};
+
+const hasMeaningfulClientPayload = (args: {
+  fallbackMessage: string | null;
+  fallbackStack: string | null;
+  componentStack: unknown;
+  context: Record<string, unknown> | null;
+}): boolean => {
+  if (typeof args.fallbackMessage === 'string' && args.fallbackMessage.trim().length > 0) {
+    return true;
+  }
+  if (typeof args.fallbackStack === 'string' && args.fallbackStack.trim().length > 0) {
+    return true;
+  }
+  if (typeof args.componentStack === 'string' && args.componentStack.trim().length > 0) {
+    return true;
+  }
+  if (args.context && Object.keys(args.context).length > 0) {
+    return true;
+  }
+  return false;
+};
+
 export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -113,6 +145,20 @@ export async function POST_handler(
   const fallbackName = typeof normalizedBody['name'] === 'string' ? normalizedBody['name'] : null;
   const fallbackStack =
     typeof normalizedBody['stack'] === 'string' ? normalizedBody['stack'] : null;
+  if (
+    !hasMeaningfulClientPayload({
+      fallbackMessage,
+      fallbackStack,
+      componentStack: normalizedBody['componentStack'],
+      context: sanitizeClientContext(normalizedBody['context']),
+    })
+  ) {
+    return NextResponse.json(
+      { ok: true, success: true, dropped: true, reason: 'invalid_payload' },
+      { status: 200 }
+    );
+  }
+
   const resolveStringField = (
     primary: unknown,
     fallback: unknown,
@@ -169,9 +215,14 @@ export async function POST_handler(
     service: 'client-error-reporter',
   };
 
-  await ErrorSystem.captureException(normalizedError, {
-    ...context,
-  });
+  const reportLevel = resolveClientReportLevel(sanitizedContext);
+  if (reportLevel === 'info') {
+    await ErrorSystem.logInfo(message, context);
+  } else if (reportLevel === 'warn') {
+    await ErrorSystem.logWarning(message, context);
+  } else {
+    await ErrorSystem.captureException(normalizedError, context);
+  }
 
   return NextResponse.json({ ok: true, success: true }, { status: 200 });
 }

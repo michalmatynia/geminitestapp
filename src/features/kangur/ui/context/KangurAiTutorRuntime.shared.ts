@@ -826,14 +826,14 @@ function useKangurTutorPersonaVisuals({
   defaultTutorName,
   isLoading,
   suggestedMoodId,
-  messages,
+  lastMessageRole,
 }: {
   tutorSettings: KangurAiTutorLearnerSettings | null;
   appSettings: KangurAiTutorAppSettings;
   defaultTutorName: string;
   isLoading: boolean;
   suggestedMoodId: AgentPersonaMoodId | null;
-  messages: ChatMessage[];
+  lastMessageRole: 'user' | 'assistant' | null;
 }) {
   const effectiveTutorPersonaId = tutorSettings?.agentPersonaId ?? appSettings.agentPersonaId;
   const { data: agentPersonas = [] } = useAgentPersonaVisuals(effectiveTutorPersonaId);
@@ -855,12 +855,12 @@ function useKangurTutorPersonaVisuals({
       return suggestedMoodId;
     }
 
-    if (messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+    if (lastMessageRole === 'assistant') {
       return 'encouraging';
     }
 
     return DEFAULT_AGENT_PERSONA_MOOD_ID;
-  }, [isLoading, messages, suggestedMoodId]);
+  }, [isLoading, lastMessageRole, suggestedMoodId]);
   const resolvedTutorMood = useMemo(
     () => resolveAgentPersonaMood(tutorPersona, requestedTutorMoodId),
     [requestedTutorMoodId, tutorPersona]
@@ -1197,7 +1197,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       defaultTutorName: tutorContent.common.defaultTutorName,
       isLoading,
       suggestedMoodId,
-      messages,
+      lastMessageRole: messages.length > 0 ? (messages[messages.length - 1]?.role ?? null) : null,
     });
 
   const previousSessionKeyRef = useRef<string | null>(null);

@@ -449,7 +449,7 @@ export default function AddingSynthesisGame({
               label='Jak grac'
               padding='lg'
             >
-              <div className='grid gap-3 sm:grid-cols-3'>
+              <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3'>
                 <div className='flex items-center gap-3'>
                   <Target className='h-5 w-5 text-amber-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
@@ -531,7 +531,7 @@ export default function AddingSynthesisGame({
               </p>
             </div>
 
-            <div className='grid gap-3 sm:grid-cols-4'>
+            <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4'>
               <KangurMetricCard accent='emerald' label='Skutecznosc' value={`${summary.accuracy}%`} />
               <KangurMetricCard
                 accent='violet'
@@ -578,7 +578,7 @@ export default function AddingSynthesisGame({
             </KangurStatusChip>
           </div>
 
-          <div className='grid grid-cols-3 gap-2 sm:min-w-[320px]'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-3 lg:w-auto lg:min-w-[320px]'>
             <KangurMetricCard accent='amber' align='center' label='Seria' padding='sm' value={streak} valueClassName='text-xl' />
             <KangurMetricCard accent='violet' align='center' label='Idealne' padding='sm' value={perfectHits} valueClassName='text-xl' />
             <KangurMetricCard accent='sky' align='center' label='Trafione' padding='sm' value={score} valueClassName='text-xl' />
@@ -658,7 +658,7 @@ export default function AddingSynthesisGame({
                     surface='solid'
                     variant='soft'
                   >
-                    <div className='flex items-center justify-between gap-3'>
+                    <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
                       <KangurStatusChip
                         accent='violet'
                         className='text-[11px] uppercase tracking-[0.18em]'

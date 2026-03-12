@@ -447,6 +447,7 @@ export function useAiPathTriggerEvent(): {
           context: {
             source: 'useAiPathTriggerEvent',
             action: 'fireSuccess',
+            level: 'info',
             pathId: selectedConfig.id,
             runId,
             requestId,

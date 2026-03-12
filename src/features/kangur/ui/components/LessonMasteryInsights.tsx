@@ -72,8 +72,8 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
               className='rounded-[22px]'
               padding='md'
             >
-              <div className='flex items-start justify-between gap-3'>
-                <div>
+              <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
+                <div className='min-w-0'>
                   <KangurCardTitle as='div'>
                     {item.emoji} {item.title}
                   </KangurCardTitle>
@@ -81,7 +81,11 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                     Proby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
                   </KangurMetaText>
                 </div>
-                <KangurStatusChip accent={getMasteryTone(item.masteryPercent)} size='md'>
+                <KangurStatusChip
+                  accent={getMasteryTone(item.masteryPercent)}
+                  className='self-start sm:self-auto'
+                  size='md'
+                >
                   {item.masteryPercent}%
                 </KangurStatusChip>
               </div>

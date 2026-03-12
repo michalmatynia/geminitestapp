@@ -366,6 +366,7 @@ export function useServerRunStream(
           context: {
             source: 'useAiPathsServerExecution',
             action: 'eventSourceOnError',
+            level: 'warn',
             runId,
             readyState: eventSource.readyState,
             error: String(err),

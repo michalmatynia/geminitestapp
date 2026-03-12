@@ -95,7 +95,7 @@ function KangurPageIntroBackButton(): React.JSX.Element {
 
   return (
     <KangurButton
-      className='mt-4'
+      className='mt-4 w-full sm:w-auto'
       data-testid={backButtonTestId}
       onClick={onBack}
       size='sm'
@@ -151,7 +151,7 @@ export function KangurPageIntroCard({
         <KangurPageIntroHeading />
         <KangurPageIntroDescription />
         <KangurPageIntroBackButton />
-        {children ? <div className='mt-3'>{children}</div> : null}
+        {children ? <div className='mt-3 w-full'>{children}</div> : null}
       </KangurGlassPanel>
     </KangurPageIntroCardContext.Provider>
   );

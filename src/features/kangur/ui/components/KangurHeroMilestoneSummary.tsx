@@ -51,7 +51,7 @@ export default function KangurHeroMilestoneSummary({
             background: 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
           }}
         >
-          <div className='flex items-start justify-between gap-3'>
+          <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
             <div className='min-w-0'>
               <KangurSectionEyebrow
                 as='p'
@@ -66,7 +66,7 @@ export default function KangurHeroMilestoneSummary({
                 {nextBadge.desc}
               </KangurCardDescription>
             </div>
-            <KangurStatusChip accent='amber' className='shrink-0 text-[11px]'>
+            <KangurStatusChip accent='amber' className='self-start text-[11px] sm:shrink-0'>
               {nextBadge.summary}
             </KangurStatusChip>
           </div>
@@ -82,7 +82,7 @@ export default function KangurHeroMilestoneSummary({
 
       <div data-testid={`${summaryTestIdPrefix}-tracks`}>
         <KangurBadgeTrackHighlights
-          className='sm:grid-cols-2'
+          className='min-[360px]:grid-cols-2'
           dataTestIdPrefix={badgeTrackTestIdPrefix}
           limit={2}
           progress={badgeTrackProgress}

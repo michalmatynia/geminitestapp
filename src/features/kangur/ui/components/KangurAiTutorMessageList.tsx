@@ -111,7 +111,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
 
             return (
               <div key={index} className='flex justify-end'>
-                <div className='max-w-[80%] space-y-2'>
+                <div className='max-w-[92%] space-y-2 sm:max-w-[80%]'>
                   {userDrawingArtifacts.map((artifact, artifactIndex) => (
                     <div key={`${index}-${artifactIndex}`} className='flex justify-end'>
                       <div className='space-y-1 text-right'>
@@ -143,7 +143,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
 
           return (
             <div key={index} className='flex justify-start'>
-              <div className='w-full max-w-[90%] space-y-2'>
+              <div className='w-full max-w-full space-y-2 sm:max-w-[90%]'>
                 {msg.coachingFrame ? (
                   <div
                     className='tutor-coaching-frame rounded-2xl px-3 py-2.5 text-left'
@@ -211,7 +211,7 @@ export function KangurAiTutorMessageList(): JSX.Element {
                     <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                       {tutorContent.messageList.followUpTitle}
                     </div>
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
                       {msg.followUpActions.map((action) => {
                         const followUpHref = toFollowUpHref(basePath, action);
 

@@ -566,7 +566,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
             id: 'kangur-lesson-calendar',
             componentId: 'calendar',
             title: 'Kalendarz',
-            description: 'Dni i miesiace',
+            description: 'Dni i miesiące',
             emoji: '📅',
             sortOrder: 2000,
             enabled: false,

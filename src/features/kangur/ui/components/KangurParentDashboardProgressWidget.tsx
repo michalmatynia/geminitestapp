@@ -33,7 +33,7 @@ export function KangurParentDashboardProgressWidget({
       <KangurPanelIntro
         description={
           progressContent?.summary ??
-          'Sprawdz rytm nauki, poziom, misje dnia i glowny kierunek dalszej pracy.'
+          'Sprawdź rytm nauki, poziom, misje dnia i główny kierunek dalszej pracy.'
         }
         title={progressContent?.title ?? 'Postęp ucznia'}
         titleAs='h2'

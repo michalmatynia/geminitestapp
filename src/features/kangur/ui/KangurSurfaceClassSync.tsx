@@ -4,7 +4,8 @@ import { useEffect, type ReactNode } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/features/cms/public';
+import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
@@ -16,16 +17,32 @@ const KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY =
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY = 'kangurPrevSurfaceBackground';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY = 'kangurPrevSurfaceVars';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY = 'kangurPrevSurfaceAppearanceMode';
+const KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY = 'kangurPrevSurfaceClassOverrides';
 
-const getKangurSurfaceTargets = (): HTMLElement[] => {
+type KangurSurfaceTarget = {
+  element: HTMLElement;
+  slot: 'html' | 'body' | 'app';
+};
+
+const getKangurSurfaceTargets = (): KangurSurfaceTarget[] => {
   if (typeof document === 'undefined') {
     return [];
   }
 
   const appContent = document.getElementById('app-content');
-  return [document.documentElement, document.body, appContent].filter(
-    (element): element is HTMLElement => element instanceof HTMLElement
-  );
+  const targets: KangurSurfaceTarget[] = [];
+
+  if (document.documentElement instanceof HTMLElement) {
+    targets.push({ element: document.documentElement, slot: 'html' });
+  }
+  if (document.body instanceof HTMLElement) {
+    targets.push({ element: document.body, slot: 'body' });
+  }
+  if (appContent instanceof HTMLElement) {
+    targets.push({ element: appContent, slot: 'app' });
+  }
+
+  return targets;
 };
 
 const applyKangurSurfaceStyle = (
@@ -102,6 +119,46 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
 };
 
+const splitClassList = (value: string | undefined): string[] =>
+  typeof value === 'string'
+    ? value
+        .split(/\s+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    : [];
+
+const applyKangurSurfaceClassOverrides = (
+  target: HTMLElement,
+  className: string | undefined
+): void => {
+  const classes = splitClassList(className);
+  if (classes.length === 0) {
+    return;
+  }
+
+  const added = classes.filter((name) => !target.classList.contains(name));
+  if (added.length > 0) {
+    target.classList.add(...added);
+    target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY] =
+      JSON.stringify(added);
+  }
+};
+
+const restoreKangurSurfaceClassOverrides = (target: HTMLElement): void => {
+  const stored = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];
+  if (typeof stored === 'string' && stored.length > 0) {
+    try {
+      const parsed = JSON.parse(stored) as string[];
+      parsed.forEach((entry) => {
+        target.classList.remove(entry);
+      });
+    } catch {
+      // Ignore malformed restore payloads.
+    }
+  }
+  delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];
+};
+
 export function KangurSurfaceClassSync({
   children,
 }: {
@@ -109,22 +166,30 @@ export function KangurSurfaceClassSync({
 }): React.JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
+  const classOverrides = useKangurClassOverrides();
   const appearanceMode = appearance?.mode ?? 'default';
 
   useEffect(() => {
     const targets = getKangurSurfaceTargets();
-    targets.forEach((target) => {
-      target.classList.add(KANGUR_ACTIVE_SURFACE_CLASSNAME);
-      applyKangurSurfaceStyle(target, appearanceMode, kangurAppearance.background, kangurAppearance.vars);
+    targets.forEach(({ element, slot }) => {
+      element.classList.add(KANGUR_ACTIVE_SURFACE_CLASSNAME);
+      applyKangurSurfaceStyle(
+        element,
+        appearanceMode,
+        kangurAppearance.background,
+        kangurAppearance.vars
+      );
+      applyKangurSurfaceClassOverrides(element, classOverrides.globals[slot]);
     });
 
     return () => {
-      targets.forEach((target) => {
-        target.classList.remove(KANGUR_ACTIVE_SURFACE_CLASSNAME);
-        restoreKangurSurfaceStyle(target);
+      targets.forEach(({ element }) => {
+        element.classList.remove(KANGUR_ACTIVE_SURFACE_CLASSNAME);
+        restoreKangurSurfaceClassOverrides(element);
+        restoreKangurSurfaceStyle(element);
       });
     };
-  }, [appearanceMode, kangurAppearance]);
+  }, [appearanceMode, classOverrides, kangurAppearance]);
 
   return <>{children}</>;
 }

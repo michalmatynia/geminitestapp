@@ -460,7 +460,10 @@ describe('KangurAiTutorContext', () => {
       expect.objectContaining({
         surface: 'test',
         contentId: 'suite-1',
+        title: 'Kangur Mini',
         promptMode: 'hint',
+        selectedText: '2 + 2',
+        latestUserMessage: 'Pomóż mi z tym zadaniem.',
         hasSelectedText: true,
         messageCount: 1,
       })
@@ -612,6 +615,10 @@ describe('KangurAiTutorContext', () => {
         surface: 'auth',
         promptMode: 'explain',
         focusKind: 'login_action',
+        focusId: 'kangur-auth-login-action',
+        focusLabel: 'Zaloguj się',
+        interactionIntent: 'explain',
+        latestUserMessage: 'Wyjaśnij logowanie.',
       })
     );
   });

@@ -209,7 +209,7 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
-      repairKangurPolishCopy('Narzedzia tutora')
+      repairKangurPolishCopy('Narzędzia tutora')
     );
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveClass(
       'kangur-chat-card',
@@ -217,7 +217,7 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
       repairKangurPolishCopy(
-        'Skroty do wskazowek, rysowania i kolejnych krokow w biezacej rozmowie.'
+        'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.'
       )
     );
 

@@ -158,7 +158,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Ladowanie przydzielonych zadań...')).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie przydzielonych zadań...')).toBeInTheDocument();
   });
 
   it('uses the shared summary panel for assignment errors', () => {

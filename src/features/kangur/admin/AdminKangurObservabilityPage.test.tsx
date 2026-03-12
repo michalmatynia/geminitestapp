@@ -394,6 +394,31 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
         sessionId: 'session-1',
         meta: null,
       },
+      {
+        id: 'event-tutor-1',
+        ts: '2026-03-07T11:42:00.000Z',
+        type: 'event' as const,
+        name: 'kangur_ai_tutor_message_sent',
+        path: '/kangur',
+        visitorId: 'visitor-1',
+        sessionId: 'session-1',
+        meta: {
+          latestUserMessage: 'Wyjaśnij ranking wyników',
+          surface: 'game',
+          promptMode: 'explain',
+          interactionIntent: 'explain',
+          focusKind: 'leaderboard',
+          focusId: 'kangur-game-home-leaderboard',
+          focusLabel: 'Ranking na stronie głównej',
+          contentId: 'game:home',
+          questionId: 'question-7',
+          assignmentId: 'assignment-42',
+          answerRevealed: false,
+          selectedText: 'Ranking wyników',
+          title: 'Ranking na stronie głównej',
+          description: 'Aktualna tabela wyników.',
+        },
+      },
     ],
   },
   knowledgeGraphStatus: {
@@ -792,11 +817,102 @@ describe('AdminKangurObservabilityPage', () => {
           context: {
             surface: 'game',
             promptMode: 'explain',
+            interactionIntent: 'explain',
             focusKind: 'leaderboard',
             focusId: 'kangur-game-home-leaderboard',
             focusLabel: 'Ranking na stronie głównej',
             contentId: 'game:home',
             title: 'Ranking na stronie głównej',
+          },
+        },
+        { timeout: 120000 }
+      )
+    );
+  });
+
+  it('replays a recent AI Tutor event into the graph preview form and runs it immediately', async () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.change(screen.getByLabelText('Recent tutor event'), {
+      target: { value: 'event-tutor-1' },
+    });
+
+    expect(screen.getByLabelText('Preview prompt')).toHaveValue('Wyjaśnij ranking wyników');
+    expect(screen.getByLabelText('Section preset')).toHaveValue('game-home-leaderboard');
+    expect(screen.getByLabelText('Surface')).toHaveValue('game');
+    expect(screen.getByLabelText('Prompt mode')).toHaveValue('explain');
+    expect(screen.getByLabelText('Interaction intent')).toHaveValue('explain');
+    expect(screen.getByLabelText('Focus kind')).toHaveValue('leaderboard');
+    expect(screen.getByLabelText('Content id')).toHaveValue('game:home');
+    expect(screen.getByLabelText('Focus id')).toHaveValue('kangur-game-home-leaderboard');
+    expect(screen.getByLabelText('Focus label')).toHaveValue('Ranking na stronie głównej');
+    expect(screen.getByLabelText('Question id')).toHaveValue('question-7');
+    expect(screen.getByLabelText('Assignment id')).toHaveValue('assignment-42');
+    expect(screen.getByLabelText('Answer state')).toHaveValue('false');
+    expect(screen.getByLabelText('Selected text')).toHaveValue('Ranking wyników');
+    expect(screen.getByLabelText('Title')).toHaveValue('Ranking na stronie głównej');
+    expect(screen.getByLabelText('Description')).toHaveValue('Aktualna tabela wyników.');
+    expect(screen.getByText('Replay source')).toBeInTheDocument();
+    expect(screen.getAllByText('/kangur').length).toBeGreaterThanOrEqual(1);
+
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/knowledge-graph/preview',
+        {
+          latestUserMessage: 'Wyjaśnij ranking wyników',
+          locale: 'pl',
+          context: {
+            surface: 'game',
+            promptMode: 'explain',
+            interactionIntent: 'explain',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-home-leaderboard',
+            focusLabel: 'Ranking na stronie głównej',
+            contentId: 'game:home',
+            questionId: 'question-7',
+            assignmentId: 'assignment-42',
+            answerRevealed: false,
+            selectedText: 'Ranking wyników',
+            title: 'Ranking na stronie głównej',
+            description: 'Aktualna tabela wyników.',
+          },
+        },
+        { timeout: 120000 }
+      )
+    );
+    expect(await screen.findByText('Latest preview result')).toBeInTheDocument();
+  });
+
+  it('replays a recent AI Tutor analytics card directly into the graph preview and runs it', async () => {
+    render(<AdminKangurObservabilityPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replay in graph preview' }));
+
+    expect(screen.getByRole('button', { name: 'Loaded in graph preview' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Recent tutor event')).toHaveValue('event-tutor-1');
+    expect(screen.getByLabelText('Preview prompt')).toHaveValue('Wyjaśnij ranking wyników');
+    expect(screen.getByLabelText('Section preset')).toHaveValue('game-home-leaderboard');
+    expect(screen.getByLabelText('Interaction intent')).toHaveValue('explain');
+    await waitFor(() =>
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/kangur/ai-tutor/knowledge-graph/preview',
+        {
+          latestUserMessage: 'Wyjaśnij ranking wyników',
+          locale: 'pl',
+          context: {
+            surface: 'game',
+            promptMode: 'explain',
+            interactionIntent: 'explain',
+            focusKind: 'leaderboard',
+            focusId: 'kangur-game-home-leaderboard',
+            focusLabel: 'Ranking na stronie głównej',
+            contentId: 'game:home',
+            questionId: 'question-7',
+            assignmentId: 'assignment-42',
+            answerRevealed: false,
+            selectedText: 'Ranking wyników',
+            title: 'Ranking na stronie głównej',
+            description: 'Aktualna tabela wyników.',
           },
         },
         { timeout: 120000 }

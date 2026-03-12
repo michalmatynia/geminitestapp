@@ -42,15 +42,15 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       <KangurGlassPanel className='flex flex-col gap-5' padding='lg' surface='mistStrong' variant='soft'>
         <KangurPanelIntro
           className='gap-1.5'
-          eyebrow='Profile uczniow'
+          eyebrow='Profile uczniów'
           title={
-            learnerManagementContent?.title ?? 'Zarzadzaj profilami bez opuszczania panelu'
+            learnerManagementContent?.title ?? 'Zarządzaj profilami bez opuszczania panelu'
           }
           titleAs='h2'
           titleClassName='text-lg font-bold tracking-[-0.02em]'
           description={
             learnerManagementContent?.summary ??
-            'Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.'
+            'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
           }
           descriptionClassName='max-w-2xl'
         />

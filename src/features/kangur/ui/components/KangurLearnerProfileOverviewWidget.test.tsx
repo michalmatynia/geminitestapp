@@ -273,8 +273,8 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-overview',
-        title: 'Przeglad wynikow',
-        summary: 'Mongo opis najwazniejszych wskaznikow profilu ucznia.',
+        title: 'Przegląd wyników',
+        summary: 'Mongo opis najważniejszych wskaźników profilu ucznia.',
       },
       data: undefined,
       isLoading: false,
@@ -286,10 +286,10 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     render(<KangurLearnerProfileOverviewWidget />);
 
     expect(screen.getByTestId('learner-profile-overview-intro')).toHaveTextContent(
-      'Przeglad wynikow'
+      'Przegląd wyników'
     );
     expect(screen.getByTestId('learner-profile-overview-intro')).toHaveTextContent(
-      'Mongo opis najwazniejszych wskaznikow profilu ucznia.'
+      'Mongo opis najważniejszych wskaźników profilu ucznia.'
     );
   });
 });

@@ -163,6 +163,22 @@ type KangurAiTutorRuntimeResult = {
   sessionRegistryValue: KangurAiTutorSessionRegistryContextValue;
 };
 
+const trimReplayableTelemetryText = (
+  value: string | null | undefined,
+  maxLength: number
+): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.slice(0, maxLength);
+};
+
 // ---------------------------------------------------------------------------
 // Session registry context
 // ---------------------------------------------------------------------------
@@ -755,15 +771,52 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       const previousCoachingMode = getLastAssistantCoachingMode(messages, activeLearnerMemory);
       const recentHintRecoverySignal =
         recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey] ?? null;
-      const telemetryContext = {
-        surface: options?.surface ?? activeSessionContext?.surface ?? null,
-        contentId: options?.contentId ?? activeSessionContext?.contentId ?? null,
+      const nextContext = omitUndefinedFields({
+        ...activeSessionContext,
+        ...(options?.surface ? { surface: options.surface } : {}),
+        ...(options?.contentId ? { contentId: options.contentId } : {}),
         promptMode: resolvedPromptMode,
-        hasSelectedText: Boolean(resolvedSelectedText),
+        ...(resolvedSelectedText ? { selectedText: resolvedSelectedText } : {}),
+        ...(options?.focusKind ? { focusKind: options.focusKind } : {}),
+        ...(options?.focusId ? { focusId: options.focusId } : {}),
+        ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
+        ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
+        ...(options?.knowledgeReference
+          ? { knowledgeReference: options.knowledgeReference }
+          : {}),
+        ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
+        ...(options?.drawingImageData
+          ? { drawingImageData: options.drawingImageData.trim() }
+          : {}),
+        ...(repeatCount > 0 ? { repeatedQuestionCount: repeatCount } : {}),
+        ...(recentHintRecoverySignal
+          ? { recentHintRecoverySignal }
+          : {}),
+        ...(previousCoachingMode
+          ? { previousCoachingMode }
+          : {}),
+      });
+      const telemetryContext = {
+        surface: nextContext.surface ?? null,
+        contentId: nextContext.contentId ?? null,
+        title: trimReplayableTelemetryText(nextContext.title, 200),
+        description: trimReplayableTelemetryText(nextContext.description, 600),
+        promptMode: nextContext.promptMode ?? resolvedPromptMode,
+        selectedText: trimReplayableTelemetryText(nextContext.selectedText, 1_000),
+        hasSelectedText: Boolean(nextContext.selectedText),
         hasLearnerMemory: Boolean(activeLearnerMemory),
         contextRegistryRefCount: pageContextRegistry?.refs.length ?? 0,
-        focusKind: options?.focusKind ?? null,
-        interactionIntent: options?.interactionIntent ?? null,
+        focusKind: nextContext.focusKind ?? null,
+        focusId: trimReplayableTelemetryText(nextContext.focusId, 120),
+        focusLabel: trimReplayableTelemetryText(nextContext.focusLabel, 240),
+        assignmentId: trimReplayableTelemetryText(nextContext.assignmentId, 120),
+        questionId: trimReplayableTelemetryText(nextContext.questionId, 120),
+        interactionIntent: nextContext.interactionIntent ?? null,
+        answerRevealed:
+          typeof nextContext.answerRevealed === 'boolean' ? nextContext.answerRevealed : null,
+        selectedChoiceLabel: trimReplayableTelemetryText(nextContext.selectedChoiceLabel, 16),
+        selectedChoiceText: trimReplayableTelemetryText(nextContext.selectedChoiceText, 240),
+        latestUserMessage: trimReplayableTelemetryText(userMessage.content, 1_000),
         hasDrawingAttachment: Boolean(userDrawingArtifacts?.length),
         messageCount: outgoingMessages.length,
         isRepeatedQuestion: repeatCount > 0,
@@ -782,31 +835,6 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       trackKangurClientEvent('kangur_ai_tutor_message_sent', telemetryContext);
 
       try {
-        const nextContext = omitUndefinedFields({
-          ...activeSessionContext,
-          ...(options?.surface ? { surface: options.surface } : {}),
-          ...(options?.contentId ? { contentId: options.contentId } : {}),
-          promptMode: resolvedPromptMode,
-          ...(resolvedSelectedText ? { selectedText: resolvedSelectedText } : {}),
-          ...(options?.focusKind ? { focusKind: options.focusKind } : {}),
-          ...(options?.focusId ? { focusId: options.focusId } : {}),
-          ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
-          ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
-          ...(options?.knowledgeReference
-            ? { knowledgeReference: options.knowledgeReference }
-            : {}),
-          ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
-          ...(options?.drawingImageData
-            ? { drawingImageData: options.drawingImageData.trim() }
-            : {}),
-          ...(repeatCount > 0 ? { repeatedQuestionCount: repeatCount } : {}),
-          ...(recentHintRecoverySignal
-            ? { recentHintRecoverySignal }
-            : {}),
-          ...(previousCoachingMode
-            ? { previousCoachingMode }
-            : {}),
-        });
         const result = await api.post<KangurAiTutorChatResponse>('/api/kangur/ai-tutor/chat', {
           messages: outgoingMessages.map((message) => ({
             role: message.role,

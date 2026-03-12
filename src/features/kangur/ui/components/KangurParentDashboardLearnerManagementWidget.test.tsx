@@ -122,16 +122,16 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
   it('uses storefront text tokens across learner management cards and actions', () => {
     render(<KangurParentDashboardLearnerManagementWidget />);
 
-    expect(screen.getByText('Zarzadzaj profilami bez opuszczania panelu')).toHaveClass(
+    expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
       '[color:var(--kangur-page-text)]'
     );
     expect(
       screen.getByText(
-        'Rodzic loguje sie emailem, a uczniowie dostaja osobne nazwy logowania i hasla.'
+        'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
       )
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Login: olek02')).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Kliknij, aby przelaczyc profil')).toHaveClass(
+    expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(

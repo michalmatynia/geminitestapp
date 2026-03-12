@@ -274,7 +274,7 @@ describe('KangurAssignmentManager', () => {
     );
     expect(screen.getByText('33%')).toBeInTheDocument();
     expect(
-      screen.getByText('Wysoki priorytet, ale uczeń jeszcze nie rozpoczal tego zadania.')
+      screen.getByText('Wysoki priorytet, ale uczeń jeszcze nie rozpoczął tego zadania.')
     ).toBeInTheDocument();
     expect(
       screen.getByText('Postęp jest poniżej polowy celu, warto przypomniec o kontynuacji.')

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
   resolveKangurFeaturePageRoute,
@@ -18,6 +18,7 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/shared/utils';
 
@@ -34,6 +35,12 @@ export function KangurFeaturePageShell(): JSX.Element {
   const { embedded, pageKey, requestedPath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
+  const classOverrides = useKangurClassOverrides();
+  const shellClassOverride = cn(
+    classOverrides.globals.shell,
+    classOverrides.components['kangur-feature-page-shell']?.['root']
+  );
+  const customCss = kangurAppearance.theme?.customCss?.trim();
   const shellStyle: CSSProperties = {
     background: kangurAppearance.background,
     color: kangurAppearance.tone.text,
@@ -54,13 +61,15 @@ export function KangurFeaturePageShell(): JSX.Element {
     <div
       className={cn(
         'relative w-full kangur-premium-bg text-slate-800',
-        embedded ? 'min-h-full' : 'min-h-screen'
+        embedded ? 'min-h-full' : 'min-h-screen',
+        shellClassOverride
       )}
       data-appearance-mode={appearanceMode}
       data-kangur-appearance={appearanceMode}
       data-testid='kangur-feature-page-shell'
       style={shellStyle}
     >
+      {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}
       <KangurFeatureApp />
     </div>
   );

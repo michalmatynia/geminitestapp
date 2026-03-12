@@ -245,7 +245,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
     expect(
       screen.getByRole('checkbox', {
-        name: repairKangurPolishCopy('Zapamietuj ostatnie wskazowki'),
+        name: repairKangurPolishCopy('Zapamiętuj ostatnie wskazówki'),
       })
     ).toBeDisabled();
     const saveButton = screen.getByRole('button', { name: /zapisz ustawienia ai tutora/i });

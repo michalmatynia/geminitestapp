@@ -135,7 +135,7 @@ const expectInitialNarratorProbe = async (): Promise<void> => {
       {
         voice: 'coral',
         locale: 'pl-PL',
-        text: 'To jest krotki test narratora Kangur.',
+        text: 'To jest krótki test narratora Kangur.',
       },
       { logError: false }
     )
@@ -287,6 +287,8 @@ describe('AdminKangurSettingsPage', () => {
     await expectInitialNarratorProbe();
 
     expect(screen.getByText('Storefront Theme')).toBeInTheDocument();
+    expect(screen.getByText('Class Overrides')).toBeInTheDocument();
+    expect(screen.getByLabelText(/class overrides json/i)).toBeInTheDocument();
     expect(screen.getByText(/changes in this editor save to mongo automatically/i)).toBeInTheDocument();
     expect(screen.getByText('Core Palette')).toBeInTheDocument();
     expect(screen.getByText('Backgrounds and Surfaces')).toBeInTheDocument();
@@ -555,7 +557,7 @@ describe('AdminKangurSettingsPage', () => {
         {
           voice: 'echo',
           locale: 'pl-PL',
-          text: 'To jest krotki test narratora Kangur.',
+        text: 'To jest krótki test narratora Kangur.',
         },
         { logError: false }
       )
@@ -586,7 +588,7 @@ describe('AdminKangurSettingsPage', () => {
         {
           voice: 'coral',
           locale: 'pl-PL',
-          text: 'To jest krotki test narratora Kangur.',
+        text: 'To jest krótki test narratora Kangur.',
         },
         { logError: false }
       )

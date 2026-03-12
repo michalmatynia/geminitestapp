@@ -132,19 +132,19 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Czym jest kalendarz?',
-      tts: 'Kalendarz to sposob organizowania czasu. Rok ma 12 miesiecy i 365 dni. Tydzień ma 7 dni.',
+      tts: 'Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.',
       content: (
         <KangurLessonStack className='text-center'>
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
             📅
           </KangurDisplayEmoji>
           <KangurLessonCaption className='max-w-xs leading-relaxed'>
-            Kalendarz to sposob organizowania czasu.
+            Kalendarz to sposób organizowania czasu.
             <br />
             <br />
-            📆 Rok ma <strong>12 miesiecy</strong> i <strong>365 dni</strong>.
+            📆 Rok ma <strong>12 miesięcy</strong> i <strong>365 dni</strong>.
             <br />
-            🗓️ Tydzien ma <strong>7 dni</strong>.
+            🗓️ Tydzień ma <strong>7 dni</strong>.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -153,10 +153,10 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   dni: [
     {
       title: 'Dni tygodnia',
-      tts: 'Tydzień ma 7 dni: Poniedzialek, Wtorek, Sroda, Czwartek, Piatek, Sobota, Niedziela.',
+      tts: 'Tydzień ma 7 dni: Poniedziałek, Wtorek, Środa, Czwartek, Piątek, Sobota, Niedziela.',
       content: (
         <div className='flex w-full max-w-xs flex-col gap-2 text-center'>
-          {['Poniedzialek', 'Wtorek', 'Sroda', 'Czwartek', 'Piatek'].map((dayLabel, index) => (
+          {['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'].map((dayLabel, index) => (
             <KangurLessonCallout
               key={dayLabel}
               accent='indigo'
@@ -186,8 +186,8 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   miesiace: [
     {
-      title: '12 miesiecy roku',
-      tts: 'Rok ma 12 miesiecy podzielonych na cztery pory roku.',
+      title: '12 miesięcy roku',
+      tts: 'Rok ma 12 miesięcy podzielonych na cztery pory roku.',
       content: (
         <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
           <div className='grid w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2'>
@@ -203,7 +203,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
                 accent: 'amber' as const,
               },
               {
-                season: '🍂 Jesien',
+                season: '🍂 Jesień',
                 months: [MONTHS[8], MONTHS[9], MONTHS[10]],
                 accent: 'rose' as const,
               },
@@ -230,8 +230,8 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Ile dni ma miesiac?',
-      tts: 'Wiekszosc miesiecy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
+      title: 'Ile dni ma miesiąc?',
+      tts: 'Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
       content: (
         <KangurLessonStack className='text-center'>
           <div className='grid w-full max-w-sm grid-cols-2 gap-2 min-[420px]:grid-cols-3'>
@@ -253,20 +253,20 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   data: [
     {
-      title: 'Jak czytać date?',
-      tts: 'Date zapisujemy jako dzień, miesiac, rok. Na przykład 15 marca 2025.',
+      title: 'Jak czytać datę?',
+      tts: 'Datę zapisujemy jako dzień, miesiąc, rok. Na przykład 15 marca 2025.',
       content: (
         <KangurLessonStack className='text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
           <KangurLessonCallout accent='indigo' className='max-w-xs space-y-2 text-left'>
-            <p className='font-semibold [color:var(--kangur-page-text)]'>Jak zapisac date?</p>
+            <p className='font-semibold [color:var(--kangur-page-text)]'>Jak zapisać datę?</p>
             <KangurLessonCaption align='left'>
               📅 <strong>15 marca 2025</strong>
             </KangurLessonCaption>
             <KangurLessonCaption align='left'>
               📝 Lub: <strong>15/03/2025</strong>
             </KangurLessonCaption>
-            <p className='mt-1 font-bold text-indigo-700'>Dzien / Miesiac / Rok</p>
+            <p className='mt-1 font-bold text-indigo-700'>Dzień / Miesiąc / Rok</p>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -281,9 +281,9 @@ export const HUB_SECTIONS: LegacyCalendarHubSection[] = [
     id: 'miesiace',
     emoji: '🌸',
     title: 'Miesiące i pory roku',
-    description: '12 miesiecy i ich pory roku',
+    description: '12 miesięcy i ich pory roku',
   },
-  { id: 'data', emoji: '📝', title: 'Jak czytać date?', description: 'Dzień / miesiac / rok' },
+  { id: 'data', emoji: '📝', title: 'Jak czytać datę?', description: 'Dzień / miesiąc / rok' },
   {
     id: 'game',
     emoji: '🎮',
@@ -300,9 +300,9 @@ const LIVE_HUB_SECTIONS: CalendarLiveHubSection[] = [
     id: 'miesiace',
     emoji: '🌸',
     title: 'Miesiące i pory roku',
-    description: '12 miesiecy i ich pory roku',
+    description: '12 miesięcy i ich pory roku',
   },
-  { id: 'data', emoji: '📝', title: 'Jak czytać date?', description: 'Dzień / miesiac / rok' },
+  { id: 'data', emoji: '📝', title: 'Jak czytać datę?', description: 'Dzień / miesiąc / rok' },
   {
     id: 'game_days',
     emoji: '🗓️',

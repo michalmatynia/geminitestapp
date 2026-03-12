@@ -2,6 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/features/kangur/class-overrides';
 import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
@@ -79,6 +80,44 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-soft-card-background')).toContain(
       '30,41,59'
     );
+  });
+
+  it('applies stored class overrides to the Kangur surface targets', () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key !== KANGUR_CLASS_OVERRIDES_SETTING_KEY) {
+        return undefined;
+      }
+
+      return serializeSetting({
+        version: 1,
+        globals: {
+          html: 'kangur-html-override',
+          body: 'kangur-body-override',
+          app: 'kangur-app-override',
+          shell: '',
+        },
+        components: {},
+      });
+    });
+
+    const appContent = document.getElementById('app-content');
+    expect(appContent).not.toBeNull();
+
+    const { unmount } = render(
+      <KangurSurfaceClassSync>
+        <div>Surface</div>
+      </KangurSurfaceClassSync>
+    );
+
+    expect(document.documentElement).toHaveClass('kangur-html-override');
+    expect(document.body).toHaveClass('kangur-body-override');
+    expect(appContent).toHaveClass('kangur-app-override');
+
+    unmount();
+
+    expect(document.documentElement).not.toHaveClass('kangur-html-override');
+    expect(document.body).not.toHaveClass('kangur-body-override');
+    expect(appContent).not.toHaveClass('kangur-app-override');
   });
 
   it('applies a stored Kangur theme document to the page chrome', async () => {

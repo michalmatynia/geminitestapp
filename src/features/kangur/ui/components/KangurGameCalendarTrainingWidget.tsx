@@ -15,7 +15,7 @@ export function KangurGameCalendarTrainingWidget(): React.JSX.Element | null {
     <LessonActivityStage
       accent='emerald'
       backButtonLabel='Wróć do poprzedniej strony'
-      description='Sprawdz, jak dobrze orientujesz sie w datach, dniach tygodnia i miesiacach.'
+      description='Sprawdź, jak dobrze orientujesz się w datach, dniach tygodnia i miesiącach.'
       icon='📅'
       onBack={() => setScreen('operation')}
       shellClassName='items-center'

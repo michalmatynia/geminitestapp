@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import {
   resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/features/cms/public';
 import {
   KANGUR_THEME_SETTINGS_KEY,
   parseKangurThemeSettings,
@@ -19,5 +19,11 @@ export const useKangurStorefrontAppearance = () => {
   const rawTheme = settingsStore.get(KANGUR_THEME_SETTINGS_KEY);
   const theme = useMemo(() => parseKangurThemeSettings(rawTheme), [rawTheme]);
 
-  return useMemo(() => resolveKangurStorefrontAppearance(mode, theme), [mode, theme]);
+  return useMemo(
+    () => ({
+      ...resolveKangurStorefrontAppearance(mode, theme),
+      theme,
+    }),
+    [mode, theme]
+  );
 };

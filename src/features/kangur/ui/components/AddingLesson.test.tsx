@@ -85,4 +85,25 @@ describe('AddingLesson', () => {
       within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
     ).toBeNull();
   });
+
+  it('gives the synthesis activity a wide shell so the four-lane board stays playable', () => {
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <AddingLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /synteza dodawania/i }));
+
+    expect(screen.getByRole('button', { name: 'Mock Adding Synthesis Game' })).toBeInTheDocument();
+    expect(screen.getByTestId('adding-lesson-synthesis-shell')).toHaveClass('!p-4');
+    expect(screen.getByTestId('adding-lesson-synthesis-shell').parentElement).toHaveClass(
+      'max-w-[1120px]'
+    );
+    expect(
+      within(screen.getByTestId('adding-lesson-synthesis-shell')).queryByText(
+        'Synteza dodawania'
+      )
+    ).toBeNull();
+  });
 });

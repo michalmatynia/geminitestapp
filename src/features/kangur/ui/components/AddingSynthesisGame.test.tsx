@@ -125,6 +125,9 @@ describe('AddingSynthesisGame', () => {
       'glass-panel',
       'border-indigo-200/70'
     );
+    expect(screen.getByTestId('adding-synthesis-board-shell').parentElement).toHaveClass(
+      'lg:grid-cols-[minmax(0,1fr)_280px]'
+    );
     expect(screen.getByTestId('adding-synthesis-stage-shell')).toHaveClass(
       'glass-panel',
       'border-white/80'
@@ -156,7 +159,8 @@ describe('AddingSynthesisGame', () => {
       'soft-card',
       'border',
       'kangur-card-surface',
-      'kangur-card-padding-md'
+      'kangur-card-padding-md',
+      'min-h-[80px]'
     );
     expect(screen.getByTestId('adding-synthesis-session-progress-bar')).toHaveAttribute(
       'aria-valuenow',

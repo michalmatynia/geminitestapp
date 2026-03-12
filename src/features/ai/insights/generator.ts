@@ -9,7 +9,7 @@ import {
   buildAnalyticsInsightContextRegistrySystemPrompt,
   buildRuntimeAnalyticsInsightContextRegistrySystemPrompt,
 } from '@/features/ai/insights/context-registry/system-prompt';
-import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/context-registry/system-prompt';
+import { buildSystemLogsContextRegistrySystemPrompt } from '@/features/observability/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiInsightRecord,

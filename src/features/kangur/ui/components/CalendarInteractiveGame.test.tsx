@@ -18,8 +18,8 @@ describe('CalendarInteractiveGame', () => {
 
     render(<CalendarInteractiveGame onFinish={() => undefined} />);
 
-    const previousMonthButton = screen.getByRole('button', { name: 'Poprzedni miesiac' });
-    const nextMonthButton = screen.getByRole('button', { name: 'Nastepny miesiac' });
+    const previousMonthButton = screen.getByRole('button', { name: 'Poprzedni miesiąc' });
+    const nextMonthButton = screen.getByRole('button', { name: 'Następny miesiąc' });
 
     expect(previousMonthButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(nextMonthButton).toHaveClass('kangur-cta-pill', 'surface-cta');

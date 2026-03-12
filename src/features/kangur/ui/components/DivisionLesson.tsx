@@ -105,7 +105,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   zapamietaj: [
     {
-      title: 'Zapamietaj!',
+      title: 'Zapamiętaj!',
       content: (
         <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
@@ -120,7 +120,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 ✅ 0 podzielone przez cokolwiek = 0: <b>0÷4=0</b>
               </li>
               <li>✅ Reszta jest zawsze mniejsza od dzielnika</li>
-              <li>✅ Sprawdz: wynik × dzielnik + reszta = liczba</li>
+              <li>✅ Sprawdź: wynik × dzielnik + reszta = liczba</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -138,7 +138,7 @@ export const HUB_SECTIONS = [
     description: 'Odwrotne działania',
   },
   { id: 'reszta', emoji: '🍫', title: 'Reszta z dzielenia', description: 'Gdy nie wychodzi równo' },
-  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamietaj!', description: 'Ważne zasady dzielenia' },
+  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Ważne zasady dzielenia' },
   {
     id: 'game',
     emoji: '🎮',

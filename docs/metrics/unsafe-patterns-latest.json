@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-11T04:30:37.106Z",
+  "generatedAt": "2026-03-12T15:09:11.486Z",
   "status": "passed",
   "summary": {
-    "total": 4,
+    "total": 5,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 4,
+    "infoCount": 5,
     "status": "passed",
-    "fileCount": 4612
+    "fileCount": 4675
   },
   "scope": {
     "root": "src",
@@ -16,14 +16,15 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 0,
+    "anyCount": 1,
     "eslintDisableCount": 1,
     "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "import/order": 1
+    "@typescript-eslint/no-explicit-any": 1,
+    "@typescript-eslint/no-unsafe-assignment": 1
   },
   "issues": [
     {
@@ -31,7 +32,7 @@
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
-      "line": 186,
+      "line": 168,
       "column": null,
       "snippet": null,
       "context": null
@@ -48,9 +49,19 @@
     },
     {
       "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/shared/lib/ai-paths/core/normalization/stored-trigger-path-config.ts",
+      "line": 356,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
       "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: import/order",
-      "file": "src/shared/contracts/integrations/index.ts",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/lib/db/legacy-sql-client.ts",
       "line": 1,
       "column": null,
       "snippet": null,
@@ -58,10 +69,10 @@
     },
     {
       "severity": "info",
-      "ruleId": "non-null-assertion",
-      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
-      "file": "src/shared/lib/ai-paths/hooks/trigger-event-settings.ts",
-      "line": 268,
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/legacy-sql-client.ts",
+      "line": 17,
       "column": null,
       "snippet": null,
       "context": null
@@ -75,11 +86,17 @@
       "infoCount": 1
     },
     {
+      "ruleId": "explicit-any",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 1
+    },
+    {
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 3
     }
   ],
-  "durationMs": 948
+  "durationMs": 1596
 }

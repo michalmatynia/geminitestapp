@@ -28,6 +28,7 @@ import type {
   KangurAnalyticsCount,
   KangurKnowledgeGraphPreviewRequest,
   KangurKnowledgeGraphPreviewResponse,
+  KangurRecentAnalyticsEvent,
   KangurKnowledgeGraphSemanticReadiness,
   KangurObservabilityAlert,
   KangurKnowledgeGraphStatusSnapshot,
@@ -45,6 +46,7 @@ import {
 } from '@/shared/contracts';
 import type {
   KangurAiTutorFocusKind,
+  KangurAiTutorInteractionIntent,
   KangurAiTutorPromptMode,
   KangurAiTutorSurface,
 } from '@/shared/contracts/kangur-ai-tutor';
@@ -94,6 +96,16 @@ const KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_LABELS: Record<KangurAiTutorPromptMode
   selected_text: 'Selected text',
 };
 
+const KNOWLEDGE_GRAPH_PREVIEW_INTERACTION_INTENT_LABELS: Record<
+  KangurAiTutorInteractionIntent,
+  string
+> = {
+  hint: 'Hint',
+  explain: 'Explain',
+  review: 'Review',
+  next_step: 'Next step',
+};
+
 const KNOWLEDGE_GRAPH_PREVIEW_FOCUS_KIND_LABELS: Record<KangurAiTutorFocusKind, string> = {
   selection: 'Selection',
   hero: 'Hero',
@@ -136,6 +148,17 @@ const KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_OPTIONS: readonly KnowledgeGraphPrevie
     })),
   ]);
 
+const KNOWLEDGE_GRAPH_PREVIEW_INTERACTION_INTENT_OPTIONS: readonly KnowledgeGraphPreviewSelectOption[] =
+  Object.freeze([
+    { value: '', label: 'No interaction intent' },
+    ...Object.entries(KNOWLEDGE_GRAPH_PREVIEW_INTERACTION_INTENT_LABELS).map(
+      ([value, label]) => ({
+        value,
+        label,
+      })
+    ),
+  ]);
+
 const KNOWLEDGE_GRAPH_PREVIEW_FOCUS_KIND_OPTIONS: readonly KnowledgeGraphPreviewSelectOption[] =
   Object.freeze([
     { value: '', label: 'No focus kind' },
@@ -157,6 +180,13 @@ const KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_PRESET_OPTIONS: readonly KnowledgeGraphPr
 const KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_ENTRY_BY_ID = new Map(
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => [entry.id, entry] as const)
 );
+
+const KNOWLEDGE_GRAPH_PREVIEW_ANSWER_REVEALED_OPTIONS: readonly KnowledgeGraphPreviewSelectOption[] =
+  Object.freeze([
+    { value: '', label: 'Unknown answer state' },
+    { value: 'false', label: 'Answer still hidden' },
+    { value: 'true', label: 'Answer revealed' },
+  ]);
 
 const KNOWLEDGE_GRAPH_PREVIEW_FOCUS_KIND_BY_SURFACE = new Map<
   KangurAiTutorSurface,
@@ -250,13 +280,18 @@ const readKnowledgeGraphPreviewField = (value: string): string | undefined => {
 
 type KnowledgeGraphPreviewDraft = {
   latestUserMessage: string;
+  replayEventId: string;
   sectionPresetId: string;
   surface: string;
   promptMode: string;
+  interactionIntent: string;
   focusKind: string;
   focusId: string;
   focusLabel: string;
   contentId: string;
+  questionId: string;
+  assignmentId: string;
+  answerRevealed: string;
   selectedText: string;
   title: string;
   description: string;
@@ -264,13 +299,18 @@ type KnowledgeGraphPreviewDraft = {
 
 const createKnowledgeGraphPreviewDraft = (): KnowledgeGraphPreviewDraft => ({
   latestUserMessage: DEFAULT_KNOWLEDGE_GRAPH_PREVIEW_MESSAGE,
+  replayEventId: '',
   sectionPresetId: '',
   surface: '',
   promptMode: '',
+  interactionIntent: '',
   focusKind: '',
   focusId: '',
   focusLabel: '',
   contentId: '',
+  questionId: '',
+  assignmentId: '',
+  answerRevealed: '',
   selectedText: '',
   title: '',
   description: '',
@@ -317,13 +357,18 @@ const createKnowledgeGraphPreviewDraftFromCoverageEntry = (
   entry: KangurAiTutorPageCoverageEntry
 ): KnowledgeGraphPreviewDraft => ({
   latestUserMessage: buildKnowledgeGraphPreviewPresetMessage(entry),
+  replayEventId: '',
   sectionPresetId: entry.id,
   surface: entry.surface ?? '',
   promptMode: resolveKnowledgeGraphPreviewPromptMode(entry.focusKind),
+  interactionIntent: 'explain',
   focusKind: entry.focusKind ?? '',
   focusId: entry.anchorIdPrefix ?? '',
   focusLabel: entry.title,
   contentId: resolveKnowledgeGraphPreviewContentId(entry),
+  questionId: '',
+  assignmentId: '',
+  answerRevealed: entry.focusKind === 'review' ? 'true' : '',
   selectedText: '',
   title: entry.title,
   description: '',
@@ -335,6 +380,185 @@ const clearKnowledgeGraphPreviewDraftContext = (
   ...createKnowledgeGraphPreviewDraft(),
   latestUserMessage: current.latestUserMessage,
 });
+
+type KnowledgeGraphPreviewReplayCandidate = {
+  id: string;
+  eventName: string;
+  ts: string;
+  path: string;
+  surface: string;
+  promptMode: string;
+  focusKind: string;
+  focusLabel: string;
+  latestUserMessage: string;
+  draft: KnowledgeGraphPreviewDraft;
+  option: KnowledgeGraphPreviewSelectOption;
+};
+
+const readKnowledgeGraphPreviewReplayString = (
+  meta: Record<string, unknown> | null,
+  key: string
+): string => {
+  if (!meta) {
+    return '';
+  }
+
+  const value = meta[key];
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+const readKnowledgeGraphPreviewReplayBoolean = (
+  meta: Record<string, unknown> | null,
+  key: string
+): boolean | null => {
+  if (!meta) {
+    return null;
+  }
+
+  const value = meta[key];
+  return typeof value === 'boolean' ? value : null;
+};
+
+const resolveKnowledgeGraphPreviewCoveragePresetId = (input: {
+  surface: string;
+  focusKind: string;
+  focusId: string;
+}): string => {
+  if (!input.surface || !input.focusKind || !input.focusId) {
+    return '';
+  }
+
+  const match = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.find(
+    (entry) =>
+      entry.surface === input.surface &&
+      entry.focusKind === input.focusKind &&
+      entry.anchorIdPrefix !== null &&
+      input.focusId.startsWith(entry.anchorIdPrefix)
+  );
+
+  return match?.id ?? '';
+};
+
+const createKnowledgeGraphPreviewDraftFromReplayCandidate = (input: {
+  eventId: string;
+  latestUserMessage: string;
+  surface: string;
+  contentId: string;
+  title: string;
+  description: string;
+  promptMode: string;
+  interactionIntent: string;
+  focusKind: string;
+  focusId: string;
+  focusLabel: string;
+  questionId: string;
+  assignmentId: string;
+  answerRevealed: string;
+  selectedText: string;
+}): KnowledgeGraphPreviewDraft => ({
+  latestUserMessage: input.latestUserMessage,
+  sectionPresetId: resolveKnowledgeGraphPreviewCoveragePresetId({
+    surface: input.surface,
+    focusKind: input.focusKind,
+    focusId: input.focusId,
+  }),
+  replayEventId: input.eventId,
+  surface: input.surface,
+  promptMode: input.promptMode,
+  interactionIntent: input.interactionIntent,
+  focusKind: input.focusKind,
+  focusId: input.focusId,
+  focusLabel: input.focusLabel,
+  contentId: input.contentId,
+  questionId: input.questionId,
+  assignmentId: input.assignmentId,
+  answerRevealed: input.answerRevealed,
+  selectedText: input.selectedText,
+  title: input.title,
+  description: input.description,
+});
+
+const buildKnowledgeGraphPreviewReplayCandidates = (
+  events: readonly KangurRecentAnalyticsEvent[]
+): KnowledgeGraphPreviewReplayCandidate[] =>
+  events
+    .filter((event) =>
+      event.name === 'kangur_ai_tutor_message_sent' ||
+      event.name === 'kangur_ai_tutor_message_succeeded' ||
+      event.name === 'kangur_ai_tutor_message_failed'
+    )
+    .map((event) => {
+      const meta =
+        event.meta && typeof event.meta === 'object' && !Array.isArray(event.meta)
+          ? event.meta
+          : null;
+      const latestUserMessage = readKnowledgeGraphPreviewReplayString(meta, 'latestUserMessage');
+      const surface = readKnowledgeGraphPreviewReplayString(meta, 'surface');
+      const contentId = readKnowledgeGraphPreviewReplayString(meta, 'contentId');
+      const title = readKnowledgeGraphPreviewReplayString(meta, 'title');
+      const description = readKnowledgeGraphPreviewReplayString(meta, 'description');
+      const promptMode = readKnowledgeGraphPreviewReplayString(meta, 'promptMode');
+      const interactionIntent = readKnowledgeGraphPreviewReplayString(meta, 'interactionIntent');
+      const focusKind = readKnowledgeGraphPreviewReplayString(meta, 'focusKind');
+      const focusId = readKnowledgeGraphPreviewReplayString(meta, 'focusId');
+      const focusLabel = readKnowledgeGraphPreviewReplayString(meta, 'focusLabel');
+      const questionId = readKnowledgeGraphPreviewReplayString(meta, 'questionId');
+      const assignmentId = readKnowledgeGraphPreviewReplayString(meta, 'assignmentId');
+      const selectedText = readKnowledgeGraphPreviewReplayString(meta, 'selectedText');
+      const answerRevealed = readKnowledgeGraphPreviewReplayBoolean(meta, 'answerRevealed');
+      const displaySurface =
+        surface && surface in KNOWLEDGE_GRAPH_PREVIEW_SURFACE_LABELS
+          ? KNOWLEDGE_GRAPH_PREVIEW_SURFACE_LABELS[surface as KangurAiTutorSurface]
+          : 'General';
+      const displayPromptMode =
+        promptMode && promptMode in KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_LABELS
+          ? KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_LABELS[promptMode as KangurAiTutorPromptMode]
+          : 'Chat';
+      const displayTarget =
+        focusLabel || title || selectedText || latestUserMessage.slice(0, 48) || event.path || event.id;
+      const eventLabel =
+        event.name === 'kangur_ai_tutor_message_sent'
+          ? 'Sent'
+          : event.name === 'kangur_ai_tutor_message_succeeded'
+            ? 'Succeeded'
+            : 'Failed';
+
+      return {
+        id: event.id,
+        eventName: event.name ?? 'kangur_ai_tutor_message_sent',
+        ts: event.ts,
+        path: event.path,
+        surface,
+        promptMode,
+        focusKind,
+        focusLabel,
+        latestUserMessage,
+        draft: createKnowledgeGraphPreviewDraftFromReplayCandidate({
+          eventId: event.id,
+          latestUserMessage,
+          surface,
+          contentId,
+          title,
+          description,
+          promptMode,
+          interactionIntent,
+          focusKind,
+          focusId,
+          focusLabel,
+          questionId,
+          assignmentId,
+          answerRevealed:
+            answerRevealed === null ? '' : answerRevealed ? 'true' : 'false',
+          selectedText,
+        }),
+        option: {
+          value: event.id,
+          label: `${eventLabel} • ${displaySurface} • ${displayPromptMode} • ${displayTarget}`,
+          group: 'Recent AI Tutor messages',
+        },
+      };
+    })
+    .filter((candidate) => candidate.latestUserMessage.length > 0);
 
 const getKnowledgeGraphPreviewFocusKindOptions = (
   surface: string
@@ -379,19 +603,32 @@ const buildKnowledgeGraphPreviewRequest = (input: {
   const latestUserMessage = input.draft.latestUserMessage.trim();
   const surface = readKnowledgeGraphPreviewField(input.draft.surface);
   const promptMode = readKnowledgeGraphPreviewField(input.draft.promptMode);
+  const interactionIntent = readKnowledgeGraphPreviewField(input.draft.interactionIntent);
   const focusKind = readKnowledgeGraphPreviewField(input.draft.focusKind);
   const focusId = readKnowledgeGraphPreviewField(input.draft.focusId);
   const focusLabel = readKnowledgeGraphPreviewField(input.draft.focusLabel);
   const contentId = readKnowledgeGraphPreviewField(input.draft.contentId);
+  const questionId = readKnowledgeGraphPreviewField(input.draft.questionId);
+  const assignmentId = readKnowledgeGraphPreviewField(input.draft.assignmentId);
+  const answerRevealed =
+    input.draft.answerRevealed === 'true'
+      ? true
+      : input.draft.answerRevealed === 'false'
+        ? false
+        : undefined;
   const selectedText = readKnowledgeGraphPreviewField(input.draft.selectedText);
   const title = readKnowledgeGraphPreviewField(input.draft.title);
   const description = readKnowledgeGraphPreviewField(input.draft.description);
   const hasContextDetails = Boolean(
     promptMode ||
+      interactionIntent ||
       focusKind ||
       focusId ||
       focusLabel ||
       contentId ||
+      questionId ||
+      assignmentId ||
+      answerRevealed !== undefined ||
       selectedText ||
       title ||
       description
@@ -409,10 +646,14 @@ const buildKnowledgeGraphPreviewRequest = (input: {
           context: {
             surface,
             ...(promptMode ? { promptMode } : {}),
+            ...(interactionIntent ? { interactionIntent } : {}),
             ...(focusKind ? { focusKind } : {}),
             ...(focusId ? { focusId } : {}),
             ...(focusLabel ? { focusLabel } : {}),
             ...(contentId ? { contentId } : {}),
+            ...(questionId ? { questionId } : {}),
+            ...(assignmentId ? { assignmentId } : {}),
+            ...(answerRevealed !== undefined ? { answerRevealed } : {}),
             ...(selectedText ? { selectedText } : {}),
             ...(title ? { title } : {}),
             ...(description ? { description } : {}),
@@ -591,7 +832,9 @@ function KnowledgeGraphQueryPreviewSection({
   result,
   error,
   isRunning,
+  replayCandidates,
   onDraftChange,
+  onApplyReplayEvent,
   onApplySectionPreset,
   onClearContext,
   onRun,
@@ -600,7 +843,9 @@ function KnowledgeGraphQueryPreviewSection({
   result: KangurKnowledgeGraphPreviewResponse | null;
   error: string | null;
   isRunning: boolean;
+  replayCandidates: readonly KnowledgeGraphPreviewReplayCandidate[];
   onDraftChange: (field: keyof KnowledgeGraphPreviewDraft, value: string) => void;
+  onApplyReplayEvent: (eventId: string) => void;
   onApplySectionPreset: (entryId: string) => void;
   onClearContext: () => void;
   onRun: () => void;
@@ -608,158 +853,256 @@ function KnowledgeGraphQueryPreviewSection({
   const previewStatus = result ? resolveKnowledgeGraphPreviewBadgeStatus(result.retrieval.status) : null;
   const topHits =
     result?.retrieval.status === 'hit' ? result.retrieval.hits.slice(0, 4) : [];
+  const replayOptions = replayCandidates.map((candidate) => candidate.option);
+  const selectedReplayCandidate = draft.replayEventId
+    ? (replayCandidates.find((candidate) => candidate.id === draft.replayEventId) ?? null)
+    : null;
   const selectedCoverageEntry = draft.sectionPresetId
     ? (KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_ENTRY_BY_ID.get(draft.sectionPresetId) ?? null)
     : null;
   const focusKindOptions = getKnowledgeGraphPreviewFocusKindOptions(draft.surface);
 
   return (
-    <FormSection title='Knowledge Graph Query Preview' variant='subtle'>
-      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-        <div className='grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <div className='text-sm font-semibold text-white'>Run an admin graph preview</div>
-              <p className='text-xs leading-relaxed text-gray-400'>
-                Leave context blank for a pure message lookup, or pick a coverage-backed section
-                preset to preview the exact tutor surface metadata the app already ships.
-              </p>
-            </div>
+    <div id='knowledge-graph-query-preview'>
+      <FormSection title='Knowledge Graph Query Preview' variant='subtle'>
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+          <div className='grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <div className='text-sm font-semibold text-white'>Run an admin graph preview</div>
+                <p className='text-xs leading-relaxed text-gray-400'>
+                  Leave context blank for a pure message lookup, or pick a coverage-backed section
+                  preset to preview the exact tutor surface metadata the app already ships.
+                </p>
+              </div>
 
-            <div className='space-y-2'>
-              <label
-                htmlFor='knowledge-graph-preview-message'
-                className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-400'
-              >
-                Preview prompt
-              </label>
-              <Textarea
-                id='knowledge-graph-preview-message'
-                value={draft.latestUserMessage}
-                onChange={(event) => onDraftChange('latestUserMessage', event.target.value)}
-                rows={3}
-                placeholder='Jak się zalogować do Kangura?'
-              />
-            </div>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='knowledge-graph-preview-message'
+                  className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-400'
+                >
+                  Preview prompt
+                </label>
+                <Textarea
+                  id='knowledge-graph-preview-message'
+                  value={draft.latestUserMessage}
+                  onChange={(event) => onDraftChange('latestUserMessage', event.target.value)}
+                  rows={3}
+                  placeholder='Jak się zalogować do Kangura?'
+                />
+              </div>
 
-            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-              <div className='space-y-2 xl:col-span-3'>
-                <label
-                  htmlFor='knowledge-graph-preview-section-preset'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Section preset
-                </label>
-                <KnowledgeGraphPreviewSelect
-                  id='knowledge-graph-preview-section-preset'
-                  value={draft.sectionPresetId}
-                  options={KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_PRESET_OPTIONS}
-                  placeholder='Pick a coverage-backed UI section'
-                  onChange={onApplySectionPreset}
-                />
+              <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+                <div className='space-y-2 xl:col-span-3'>
+                  <label
+                    htmlFor='knowledge-graph-preview-replay-event'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Recent tutor event
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-replay-event'
+                    value={draft.replayEventId}
+                    options={replayOptions}
+                    placeholder='Pick a recent AI Tutor message event'
+                    onChange={onApplyReplayEvent}
+                  />
+                  <p className='text-[11px] leading-relaxed text-gray-500'>
+                    Replays the prompt and context recorded by recent learner-facing Tutor
+                    telemetry.
+                  </p>
+                </div>
+                <div className='space-y-2 xl:col-span-3'>
+                  <label
+                    htmlFor='knowledge-graph-preview-section-preset'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Section preset
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-section-preset'
+                    value={draft.sectionPresetId}
+                    options={KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_PRESET_OPTIONS}
+                    placeholder='Pick a coverage-backed UI section'
+                    onChange={onApplySectionPreset}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-surface'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Surface
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-surface'
+                    value={draft.surface}
+                    options={KNOWLEDGE_GRAPH_PREVIEW_SURFACE_OPTIONS}
+                    placeholder='No surface context'
+                    onChange={(value) => onDraftChange('surface', value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-prompt-mode'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Prompt mode
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-prompt-mode'
+                    value={draft.promptMode}
+                    options={KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_OPTIONS}
+                    placeholder='No prompt mode'
+                    onChange={(value) => onDraftChange('promptMode', value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-interaction-intent'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Interaction intent
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-interaction-intent'
+                    value={draft.interactionIntent}
+                    options={KNOWLEDGE_GRAPH_PREVIEW_INTERACTION_INTENT_OPTIONS}
+                    placeholder='No interaction intent'
+                    onChange={(value) => onDraftChange('interactionIntent', value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-focus-kind'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Focus kind
+                  </label>
+                  <KnowledgeGraphPreviewSelect
+                    id='knowledge-graph-preview-focus-kind'
+                    value={draft.focusKind}
+                    options={focusKindOptions}
+                    placeholder='No focus kind'
+                    onChange={(value) => onDraftChange('focusKind', value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-content-id'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Content id
+                  </label>
+                  <Input
+                    id='knowledge-graph-preview-content-id'
+                    value={draft.contentId}
+                    onChange={(event) => onDraftChange('contentId', event.target.value)}
+                    placeholder='game:home or lesson-1'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-focus-id'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Focus id
+                  </label>
+                  <Input
+                    id='knowledge-graph-preview-focus-id'
+                    value={draft.focusId}
+                    onChange={(event) => onDraftChange('focusId', event.target.value)}
+                    placeholder='kangur-game-result-leaderboard'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-focus-label'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Focus label
+                  </label>
+                  <Input
+                    id='knowledge-graph-preview-focus-label'
+                    value={draft.focusLabel}
+                    onChange={(event) => onDraftChange('focusLabel', event.target.value)}
+                    placeholder='Ranking wyników'
+                  />
+                </div>
+                <div className='space-y-2 xl:col-span-2'>
+                  <label
+                    htmlFor='knowledge-graph-preview-title'
+                    className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                  >
+                    Title
+                  </label>
+                  <Input
+                    id='knowledge-graph-preview-title'
+                    value={draft.title}
+                    onChange={(event) => onDraftChange('title', event.target.value)}
+                    placeholder='Podsumowanie gry'
+                  />
+                </div>
               </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-surface'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Surface
-                </label>
-                <KnowledgeGraphPreviewSelect
-                  id='knowledge-graph-preview-surface'
-                  value={draft.surface}
-                  options={KNOWLEDGE_GRAPH_PREVIEW_SURFACE_OPTIONS}
-                  placeholder='No surface context'
-                  onChange={(value) => onDraftChange('surface', value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-prompt-mode'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Prompt mode
-                </label>
-                <KnowledgeGraphPreviewSelect
-                  id='knowledge-graph-preview-prompt-mode'
-                  value={draft.promptMode}
-                  options={KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_OPTIONS}
-                  placeholder='No prompt mode'
-                  onChange={(value) => onDraftChange('promptMode', value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-focus-kind'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Focus kind
-                </label>
-                <KnowledgeGraphPreviewSelect
-                  id='knowledge-graph-preview-focus-kind'
-                  value={draft.focusKind}
-                  options={focusKindOptions}
-                  placeholder='No focus kind'
-                  onChange={(value) => onDraftChange('focusKind', value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-content-id'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Content id
-                </label>
-                <Input
-                  id='knowledge-graph-preview-content-id'
-                  value={draft.contentId}
-                  onChange={(event) => onDraftChange('contentId', event.target.value)}
-                  placeholder='game:home or lesson-1'
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-focus-id'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Focus id
-                </label>
-                <Input
-                  id='knowledge-graph-preview-focus-id'
-                  value={draft.focusId}
-                  onChange={(event) => onDraftChange('focusId', event.target.value)}
-                  placeholder='kangur-game-result-leaderboard'
-                />
-              </div>
-              <div className='space-y-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-focus-label'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Focus label
-                </label>
-                <Input
-                  id='knowledge-graph-preview-focus-label'
-                  value={draft.focusLabel}
-                  onChange={(event) => onDraftChange('focusLabel', event.target.value)}
-                  placeholder='Ranking wyników'
-                />
-              </div>
-              <div className='space-y-2 xl:col-span-2'>
-                <label
-                  htmlFor='knowledge-graph-preview-title'
-                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
-                >
-                  Title
-                </label>
-                <Input
-                  id='knowledge-graph-preview-title'
-                  value={draft.title}
-                  onChange={(event) => onDraftChange('title', event.target.value)}
-                  placeholder='Podsumowanie gry'
-                />
-              </div>
-            </div>
+
+            {selectedReplayCandidate ? (
+              <Card variant='subtle' padding='sm' className='border-border/60 bg-card/30'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='space-y-1'>
+                    <div className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-500'>
+                      Replay source
+                    </div>
+                    <div className='text-sm font-semibold text-white'>
+                      {selectedReplayCandidate.latestUserMessage}
+                    </div>
+                    <p className='text-xs leading-relaxed text-gray-400'>
+                      {selectedReplayCandidate.path || 'Kangur AI Tutor event'}
+                    </p>
+                  </div>
+                  <StatusBadge status='info' label={formatDateTime(selectedReplayCandidate.ts)} />
+                </div>
+
+                <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                  <MetadataItem
+                    label='Event'
+                    value={selectedReplayCandidate.eventName}
+                    variant='minimal'
+                  />
+                  <MetadataItem
+                    label='Surface'
+                    value={
+                      selectedReplayCandidate.surface
+                        ? KNOWLEDGE_GRAPH_PREVIEW_SURFACE_LABELS[
+                            selectedReplayCandidate.surface as KangurAiTutorSurface
+                          ] ?? selectedReplayCandidate.surface
+                        : '—'
+                    }
+                    variant='minimal'
+                  />
+                  <MetadataItem
+                    label='Prompt mode'
+                    value={
+                      selectedReplayCandidate.promptMode
+                        ? KNOWLEDGE_GRAPH_PREVIEW_PROMPT_MODE_LABELS[
+                            selectedReplayCandidate.promptMode as KangurAiTutorPromptMode
+                          ] ?? selectedReplayCandidate.promptMode
+                        : '—'
+                    }
+                    variant='minimal'
+                  />
+                  <MetadataItem
+                    label='Focus'
+                    value={selectedReplayCandidate.focusLabel || selectedReplayCandidate.focusKind || '—'}
+                    variant='minimal'
+                  />
+                </div>
+              </Card>
+            ) : replayCandidates.length === 0 ? (
+              <Alert variant='info'>
+                No recent `kangur_ai_tutor_message_*` events with replayable prompt data were found
+                in the selected observability window.
+              </Alert>
+            ) : null}
 
             {selectedCoverageEntry ? (
               <Card variant='subtle' padding='sm' className='border-border/60 bg-card/30'>
@@ -811,6 +1154,55 @@ function KnowledgeGraphQueryPreviewSection({
                 </div>
               </Card>
             ) : null}
+
+            <div className='grid gap-3 lg:grid-cols-2'>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='knowledge-graph-preview-question-id'
+                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                >
+                  Question id
+                </label>
+                <Input
+                  id='knowledge-graph-preview-question-id'
+                  value={draft.questionId}
+                  onChange={(event) => onDraftChange('questionId', event.target.value)}
+                  placeholder='question-1'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='knowledge-graph-preview-assignment-id'
+                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                >
+                  Assignment id
+                </label>
+                <Input
+                  id='knowledge-graph-preview-assignment-id'
+                  value={draft.assignmentId}
+                  onChange={(event) => onDraftChange('assignmentId', event.target.value)}
+                  placeholder='assignment-42'
+                />
+              </div>
+            </div>
+
+            <div className='grid gap-3 lg:grid-cols-2'>
+              <div className='space-y-2'>
+                <label
+                  htmlFor='knowledge-graph-preview-answer-revealed'
+                  className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'
+                >
+                  Answer state
+                </label>
+                <KnowledgeGraphPreviewSelect
+                  id='knowledge-graph-preview-answer-revealed'
+                  value={draft.answerRevealed}
+                  options={KNOWLEDGE_GRAPH_PREVIEW_ANSWER_REVEALED_OPTIONS}
+                  placeholder='Unknown answer state'
+                  onChange={(value) => onDraftChange('answerRevealed', value)}
+                />
+              </div>
+            </div>
 
             <div className='grid gap-3 lg:grid-cols-2'>
               <div className='space-y-2'>
@@ -946,10 +1338,11 @@ function KnowledgeGraphQueryPreviewSection({
                 ) : null}
               </div>
             )}
+            </div>
           </div>
-        </div>
-      </Card>
-    </FormSection>
+        </Card>
+      </FormSection>
+    </div>
   );
 }
 
@@ -1294,12 +1687,23 @@ function TopPathsSection(): JSX.Element {
   );
 }
 
-function RecentAnalyticsEvents(): JSX.Element {
+function RecentAnalyticsEvents({
+  replayCandidates,
+  activeReplayEventId,
+  onReplayEvent,
+}: {
+  replayCandidates: readonly KnowledgeGraphPreviewReplayCandidate[];
+  activeReplayEventId: string;
+  onReplayEvent: (eventId: string) => void;
+}): JSX.Element {
   const {
     summary: {
       analytics: { recent: events },
     },
   } = useObservabilitySummaryContext();
+  const replayCandidateById = new Map(
+    replayCandidates.map((candidate) => [candidate.id, candidate] as const)
+  );
 
   return (
     <div id='recent-analytics-events'>
@@ -1312,29 +1716,63 @@ function RecentAnalyticsEvents(): JSX.Element {
           />
         ) : (
           <div className='space-y-2'>
-            {events.map((event) => (
-              <Card
-                key={event.id}
-                variant='subtle'
-                padding='sm'
-                className='border-border/60 bg-card/40'
-              >
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='min-w-0'>
-                    <div className='truncate text-sm font-semibold text-white'>
-                      {event.name ?? event.type}
+            {events.map((event) => {
+              const replayCandidate = replayCandidateById.get(event.id) ?? null;
+              const isLoadedInPreview = replayCandidate?.id === activeReplayEventId;
+
+              return (
+                <Card
+                  key={event.id}
+                  variant='subtle'
+                  padding='sm'
+                  className='border-border/60 bg-card/40'
+                >
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='min-w-0'>
+                      <div className='truncate text-sm font-semibold text-white'>
+                        {event.name ?? event.type}
+                      </div>
+                      <div className='mt-1 truncate text-xs text-gray-400'>{event.path || '—'}</div>
                     </div>
-                    <div className='mt-1 truncate text-xs text-gray-400'>{event.path || '—'}</div>
+                    <StatusBadge status={event.type === 'pageview' ? 'info' : 'active'} />
                   </div>
-                  <StatusBadge status={event.type === 'pageview' ? 'info' : 'active'} />
-                </div>
-                <div className='mt-3 grid gap-2 sm:grid-cols-3'>
-                  <MetadataItem label='At' value={formatDateTime(event.ts)} variant='minimal' />
-                  <MetadataItem label='Visitor' value={event.visitorId || '—'} variant='minimal' mono />
-                  <MetadataItem label='Session' value={event.sessionId || '—'} variant='minimal' mono />
-                </div>
-              </Card>
-            ))}
+                  <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                    <MetadataItem label='At' value={formatDateTime(event.ts)} variant='minimal' />
+                    <MetadataItem
+                      label='Visitor'
+                      value={event.visitorId || '—'}
+                      variant='minimal'
+                      mono
+                    />
+                    <MetadataItem
+                      label='Session'
+                      value={event.sessionId || '—'}
+                      variant='minimal'
+                      mono
+                    />
+                  </div>
+                  {replayCandidate ? (
+                    <div className='mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-3'>
+                      <div className='min-w-0 flex-1 space-y-1'>
+                        <div className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500'>
+                          Replayable tutor prompt
+                        </div>
+                        <p className='truncate text-xs text-gray-300'>
+                          {replayCandidate.latestUserMessage}
+                        </p>
+                      </div>
+                      <Button
+                        variant={isLoadedInPreview ? 'outline' : 'ghost'}
+                        size='sm'
+                        onClick={() => onReplayEvent(replayCandidate.id)}
+                      >
+                        {isLoadedInPreview ? 'Loaded in graph preview' : 'Replay in graph preview'}
+                      </Button>
+                    </div>
+                  ) : null}
+                </Card>
+              );
+            })}
           </div>
         )}
       </FormSection>
@@ -1785,7 +2223,10 @@ function SummaryContent({
   knowledgeGraphPreviewResult,
   knowledgeGraphPreviewError,
   knowledgeGraphPreviewIsRunning,
+  knowledgeGraphPreviewReplayCandidates,
   updateKnowledgeGraphPreviewDraft,
+  applyKnowledgeGraphPreviewReplayEvent,
+  replayAnalyticsEventInKnowledgeGraphPreview,
   applyKnowledgeGraphPreviewPreset,
   clearKnowledgeGraphPreviewContext,
   runKnowledgeGraphPreview,
@@ -1806,7 +2247,10 @@ function SummaryContent({
   knowledgeGraphPreviewResult: KangurKnowledgeGraphPreviewResponse | null;
   knowledgeGraphPreviewError: string | null;
   knowledgeGraphPreviewIsRunning: boolean;
+  knowledgeGraphPreviewReplayCandidates: readonly KnowledgeGraphPreviewReplayCandidate[];
   updateKnowledgeGraphPreviewDraft: (field: keyof KnowledgeGraphPreviewDraft, value: string) => void;
+  applyKnowledgeGraphPreviewReplayEvent: (eventId: string) => void;
+  replayAnalyticsEventInKnowledgeGraphPreview: (eventId: string) => void;
   applyKnowledgeGraphPreviewPreset: (entryId: string) => void;
   clearKnowledgeGraphPreviewContext: () => void;
   runKnowledgeGraphPreview: () => void;
@@ -1924,7 +2368,9 @@ function SummaryContent({
         result={knowledgeGraphPreviewResult}
         error={knowledgeGraphPreviewError}
         isRunning={knowledgeGraphPreviewIsRunning}
+        replayCandidates={knowledgeGraphPreviewReplayCandidates}
         onDraftChange={updateKnowledgeGraphPreviewDraft}
+        onApplyReplayEvent={applyKnowledgeGraphPreviewReplayEvent}
         onApplySectionPreset={applyKnowledgeGraphPreviewPreset}
         onClearContext={clearKnowledgeGraphPreviewContext}
         onRun={runKnowledgeGraphPreview}
@@ -1960,7 +2406,11 @@ function SummaryContent({
       </div>
 
       <div className='grid gap-6 xl:grid-cols-2'>
-        <RecentAnalyticsEvents />
+        <RecentAnalyticsEvents
+          replayCandidates={knowledgeGraphPreviewReplayCandidates}
+          activeReplayEventId={knowledgeGraphPreviewDraft.replayEventId}
+          onReplayEvent={replayAnalyticsEventInKnowledgeGraphPreview}
+        />
         <RecentServerLogs />
       </div>
 
@@ -2075,6 +2525,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   const summaryKnowledgeGraphStatus = summary?.knowledgeGraphStatus;
   const summaryKnowledgeGraphLocale =
     summaryKnowledgeGraphStatus?.mode === 'status' ? summaryKnowledgeGraphStatus.locale : null;
+  const knowledgeGraphPreviewReplayCandidates = buildKnowledgeGraphPreviewReplayCandidates(
+    summary?.analytics.recent ?? []
+  );
   const updateKnowledgeGraphPreviewDraft = useCallback(
     (field: keyof KnowledgeGraphPreviewDraft, value: string): void => {
       setKnowledgeGraphPreviewDraft((current) => {
@@ -2082,6 +2535,10 @@ export function AdminKangurObservabilityPage(): JSX.Element {
           ...current,
           [field]: value,
         };
+
+        if (field !== 'replayEventId' && current.replayEventId) {
+          nextDraft.replayEventId = '';
+        }
 
         if (
           field === 'surface' &&
@@ -2094,6 +2551,77 @@ export function AdminKangurObservabilityPage(): JSX.Element {
       });
     },
     []
+  );
+  const runKnowledgeGraphPreviewForDraft = useCallback(
+    async (draft: KnowledgeGraphPreviewDraft): Promise<void> => {
+      setIsKnowledgeGraphPreviewRunning(true);
+      setKnowledgeGraphPreviewError(null);
+
+      try {
+        const payload = buildKnowledgeGraphPreviewRequest({
+          draft,
+          locale:
+            (knowledgeGraphStatus?.mode === 'status' ? knowledgeGraphStatus.locale : null) ??
+            summaryKnowledgeGraphLocale ??
+            'pl',
+        });
+        const response = await api.post(
+          '/api/kangur/ai-tutor/knowledge-graph/preview',
+          payload,
+          { timeout: 120000 }
+        );
+        const parsed = kangurKnowledgeGraphPreviewResponseSchema.safeParse(response);
+
+        if (!parsed.success) {
+          throw new Error('Invalid knowledge graph preview response');
+        }
+
+        setKnowledgeGraphPreviewResult(parsed.data);
+      } catch (error) {
+        setKnowledgeGraphPreviewResult(null);
+        setKnowledgeGraphPreviewError(
+          error instanceof Error ? error.message : 'Failed to run the knowledge graph preview.'
+        );
+      } finally {
+        setIsKnowledgeGraphPreviewRunning(false);
+      }
+    },
+    [knowledgeGraphStatus, summaryKnowledgeGraphLocale]
+  );
+  const applyKnowledgeGraphPreviewReplayEvent = useCallback(
+    (eventId: string): void => {
+      if (!eventId) {
+        setKnowledgeGraphPreviewDraft((current) => ({
+          ...current,
+          replayEventId: '',
+        }));
+        return;
+      }
+
+      const candidate = knowledgeGraphPreviewReplayCandidates.find(
+        (replayCandidate) => replayCandidate.id === eventId
+      );
+      if (!candidate) {
+        setKnowledgeGraphPreviewDraft((current) => ({
+          ...current,
+          replayEventId: '',
+        }));
+        return;
+      }
+
+      setKnowledgeGraphPreviewDraft(candidate.draft);
+      void runKnowledgeGraphPreviewForDraft(candidate.draft);
+    },
+    [knowledgeGraphPreviewReplayCandidates, runKnowledgeGraphPreviewForDraft]
+  );
+  const replayAnalyticsEventInKnowledgeGraphPreview = useCallback(
+    (eventId: string): void => {
+      document
+        .getElementById('knowledge-graph-query-preview')
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      applyKnowledgeGraphPreviewReplayEvent(eventId);
+    },
+    [applyKnowledgeGraphPreviewReplayEvent]
   );
   const applyKnowledgeGraphPreviewPreset = useCallback((entryId: string): void => {
     const entry = KNOWLEDGE_GRAPH_PREVIEW_COVERAGE_ENTRY_BY_ID.get(entryId);
@@ -2153,38 +2681,8 @@ export function AdminKangurObservabilityPage(): JSX.Element {
     }
   }, [knowledgeGraphStatus, knowledgeGraphStatusQuery, summaryKnowledgeGraphLocale, summaryQuery]);
   const runKnowledgeGraphPreview = useCallback(async (): Promise<void> => {
-    setIsKnowledgeGraphPreviewRunning(true);
-    setKnowledgeGraphPreviewError(null);
-
-    try {
-      const payload = buildKnowledgeGraphPreviewRequest({
-        draft: knowledgeGraphPreviewDraft,
-        locale:
-          (knowledgeGraphStatus?.mode === 'status' ? knowledgeGraphStatus.locale : null) ??
-          summaryKnowledgeGraphLocale ??
-          'pl',
-      });
-      const response = await api.post(
-        '/api/kangur/ai-tutor/knowledge-graph/preview',
-        payload,
-        { timeout: 120000 }
-      );
-      const parsed = kangurKnowledgeGraphPreviewResponseSchema.safeParse(response);
-
-      if (!parsed.success) {
-        throw new Error('Invalid knowledge graph preview response');
-      }
-
-      setKnowledgeGraphPreviewResult(parsed.data);
-    } catch (error) {
-      setKnowledgeGraphPreviewResult(null);
-      setKnowledgeGraphPreviewError(
-        error instanceof Error ? error.message : 'Failed to run the knowledge graph preview.'
-      );
-    } finally {
-      setIsKnowledgeGraphPreviewRunning(false);
-    }
-  }, [knowledgeGraphPreviewDraft, knowledgeGraphStatus, summaryKnowledgeGraphLocale]);
+    await runKnowledgeGraphPreviewForDraft(knowledgeGraphPreviewDraft);
+  }, [knowledgeGraphPreviewDraft, runKnowledgeGraphPreviewForDraft]);
   const handleRangeChange = useCallback(
     (nextRange: KangurObservabilityRange): void => {
       const nextParams = new URLSearchParams(searchParams.toString());
@@ -2266,7 +2764,12 @@ export function AdminKangurObservabilityPage(): JSX.Element {
               knowledgeGraphPreviewResult={knowledgeGraphPreviewResult}
               knowledgeGraphPreviewError={knowledgeGraphPreviewError}
               knowledgeGraphPreviewIsRunning={isKnowledgeGraphPreviewRunning}
+              knowledgeGraphPreviewReplayCandidates={knowledgeGraphPreviewReplayCandidates}
               updateKnowledgeGraphPreviewDraft={updateKnowledgeGraphPreviewDraft}
+              applyKnowledgeGraphPreviewReplayEvent={applyKnowledgeGraphPreviewReplayEvent}
+              replayAnalyticsEventInKnowledgeGraphPreview={
+                replayAnalyticsEventInKnowledgeGraphPreview
+              }
               applyKnowledgeGraphPreviewPreset={applyKnowledgeGraphPreviewPreset}
               clearKnowledgeGraphPreviewContext={clearKnowledgeGraphPreviewContext}
               runKnowledgeGraphPreview={(): void => {

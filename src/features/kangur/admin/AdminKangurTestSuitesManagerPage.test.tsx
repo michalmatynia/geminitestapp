@@ -124,7 +124,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
           {
             id: 'suite-2',
             title: 'Gotowy zestaw live',
-            description: 'W pelni opublikowany zestaw',
+            description: 'W pełni opublikowany zestaw',
             durationMinutes: 10,
             publicationStatus: 'draft',
             sortOrder: 2000,
@@ -133,7 +133,7 @@ describe('AdminKangurTestSuitesManagerPage', () => {
           {
             id: 'suite-3',
             title: 'Aktualnie live',
-            description: 'Zestaw widoczny dla uczniow',
+            description: 'Zestaw widoczny dla uczniów',
             durationMinutes: 12,
             publicationStatus: 'live',
             publishedAt: '2026-03-09T09:00:00.000Z',
@@ -170,12 +170,12 @@ describe('AdminKangurTestSuitesManagerPage', () => {
             sortOrder: 2000,
             prompt: 'Pytanie do review',
             choices: [
-              { label: 'A', text: 'A', description: 'Wizualna wskazowka' },
+              { label: 'A', text: 'A', description: 'Wizualna wskazówka' },
               { label: 'B', text: 'B' },
             ],
             correctChoiceLabel: 'A',
             pointValue: 4,
-            explanation: 'Sprawdz wizual',
+            explanation: 'Sprawdź wizual',
             illustration: { type: 'none' },
             editorial: {
               source: 'legacy-import',

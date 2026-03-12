@@ -1,5 +1,9 @@
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
-import { KANGUR_LESSONS_SETTING_KEY, KANGUR_THEME_SETTINGS_KEY } from '@/shared/contracts/kangur';
+import {
+  KANGUR_CLASS_OVERRIDES_SETTING_KEY,
+  KANGUR_LESSONS_SETTING_KEY,
+  KANGUR_THEME_SETTINGS_KEY,
+} from '@/shared/contracts/kangur';
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
@@ -30,6 +34,7 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'case_resolver_settings_v1',
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_THEME_SETTINGS_KEY,
+  KANGUR_CLASS_OVERRIDES_SETTING_KEY,
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,

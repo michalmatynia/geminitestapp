@@ -76,7 +76,7 @@ describe('Logical lessons shared surfaces', () => {
   it('uses the lighter copy palette in the logical classification lesson', async () => {
     renderLesson(<LogicalClassificationLesson />);
 
-    fireEvent.click(screen.getByRole('button', { name: /klasyfikacja.*wstep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /klasyfikacja.*wstęp/i }));
 
     expect(screen.getByText(/Klasyfikacja to układanie rzeczy/i)).toHaveClass(
       '[color:var(--kangur-page-text)]'
@@ -85,7 +85,7 @@ describe('Logical lessons shared surfaces', () => {
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
     await screen.findByText(/Grupowanie według cech/i);
 
-    expect(screen.getByText(/Cecha: maja skrzydła/i)).toHaveClass(
+    expect(screen.getByText(/Cecha: mają skrzydła/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
   });
@@ -93,7 +93,7 @@ describe('Logical lessons shared surfaces', () => {
   it('uses the lighter copy palette in the logical analogies lesson', () => {
     renderLesson(<LogicalAnalogiesLesson />);
 
-    fireEvent.click(screen.getByRole('button', { name: /analogia.*wstep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /analogia.*wstęp/i }));
 
     expect(screen.getByText('A : B = C : D')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByText(/„A do B tak jak C do D"/i)).toHaveClass(

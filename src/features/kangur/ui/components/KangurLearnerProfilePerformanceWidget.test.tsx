@@ -173,8 +173,8 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-performance',
-        title: 'Skutecznosc ucznia',
-        summary: 'Mongo opis rytmu aktywnosci i wynikow operacji.',
+        title: 'Skuteczność ucznia',
+        summary: 'Mongo opis rytmu aktywności i wyników operacji.',
       },
       data: undefined,
       isLoading: false,
@@ -186,10 +186,10 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-performance-intro')).toHaveTextContent(
-      'Skutecznosc ucznia'
+      'Skuteczność ucznia'
     );
     expect(screen.getByTestId('learner-profile-performance-intro')).toHaveTextContent(
-      'Mongo opis rytmu aktywnosci i wynikow operacji.'
+      'Mongo opis rytmu aktywności i wyników operacji.'
     );
   });
 });

@@ -370,7 +370,7 @@ export default function AddingSynthesisGame({
 
   if (phase === 'intro') {
     return (
-      <div className='flex w-full max-w-[1040px] flex-col gap-4'>
+      <div className='flex w-full flex-col gap-4'>
         <KangurGlassPanel
           className='overflow-hidden'
           data-testid='adding-synthesis-intro-shell'
@@ -420,7 +420,7 @@ export default function AddingSynthesisGame({
               </KangurInfoCard>
             </div>
 
-            <div className='grid gap-3 lg:grid-cols-3'>
+            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
               {ADDING_SYNTHESIS_STAGES.map((stage) => (
                 <KangurInfoCard
                   key={stage.id}
@@ -499,7 +499,7 @@ export default function AddingSynthesisGame({
 
   if (phase === 'summary' && summary) {
     return (
-      <div className='flex w-full max-w-[1040px] flex-col gap-4'>
+      <div className='flex w-full flex-col gap-4'>
         <KangurGlassPanel
           data-testid='adding-synthesis-summary'
           padding='xl'
@@ -531,7 +531,7 @@ export default function AddingSynthesisGame({
               </p>
             </div>
 
-            <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4'>
+            <div className='grid gap-3 min-[360px]:grid-cols-2 xl:grid-cols-4'>
               <KangurMetricCard accent='emerald' label='Skuteczność' value={`${summary.accuracy}%`} />
               <KangurMetricCard
                 accent='violet'
@@ -563,7 +563,7 @@ export default function AddingSynthesisGame({
   }
 
   return (
-    <div className='flex w-full max-w-[1040px] flex-col gap-4'>
+    <div className='flex w-full flex-col gap-4'>
       <KangurGlassPanel
         data-testid='adding-synthesis-hud'
         padding='lg'
@@ -586,7 +586,7 @@ export default function AddingSynthesisGame({
         </div>
       </KangurGlassPanel>
 
-      <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]'>
+      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]'>
         <KangurGlassPanel
           data-testid='adding-synthesis-board-shell'
           padding='lg'
@@ -594,19 +594,23 @@ export default function AddingSynthesisGame({
           variant='elevated'
         >
           <KangurGlassPanel
-            className='relative overflow-hidden rounded-[30px] !p-3 sm:!p-4'
+            className='relative overflow-hidden rounded-[26px] !p-2.5 min-[360px]:!p-3 sm:rounded-[30px] sm:!p-4'
             data-testid='adding-synthesis-stage-shell'
             surface='playField'
             variant='soft'
           >
             <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,191,36,0.18),transparent_30%),radial-gradient(circle_at_100%_20%,rgba(129,140,248,0.18),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(45,212,191,0.16),transparent_36%)]' />
 
-            <div className='pointer-events-none absolute left-4 right-4 top-4 flex justify-center gap-2'>
+            <div className='pointer-events-none absolute left-2 right-2 top-3 flex justify-center gap-1.5 sm:left-4 sm:right-4 sm:top-4 sm:gap-2'>
               {upcomingNotes.map((note, index) => (
                 <KangurStatusChip
                   accent='slate'
                   key={note.id}
-                  className='shadow-sm'
+                  className={cn(
+                    'shadow-sm text-[10px] min-[360px]:text-[11px] sm:text-xs',
+                    index === 1 ? 'hidden min-[360px]:inline-flex' : null,
+                    index === 2 ? 'hidden sm:inline-flex' : null
+                  )}
                   data-testid={`adding-synthesis-upcoming-note-${index}`}
                   size='sm'
                   style={{ transform: `translateY(${index * 10}px) scale(${1 - index * 0.04})` }}
@@ -617,19 +621,19 @@ export default function AddingSynthesisGame({
             </div>
 
             <div className='relative h-[420px]'>
-              <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 gap-3'>
+              <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 gap-1.5 sm:gap-3'>
                 {LANE_STYLES.map((laneStyle, laneIndex) => (
                   <div
                     key={`lane-rail-${laneIndex}`}
                     className={cn(
-                      'relative rounded-[26px] border px-2 pt-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]',
+                      'relative rounded-[20px] border px-1.5 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] min-[360px]:px-2 sm:rounded-[26px] sm:pt-4',
                       laneStyle.rail
                     )}
                   >
-                    <div className='absolute left-0 right-0 top-3 text-center'>
+                    <div className='absolute left-0 right-0 top-2.5 text-center sm:top-3'>
                       <span
                         className={cn(
-                          'text-[11px] font-semibold uppercase tracking-[0.24em]',
+                          'text-[9px] font-semibold uppercase tracking-[0.16em] min-[360px]:text-[10px] sm:text-[11px] sm:tracking-[0.24em]',
                           laneStyle.label
                         )}
                       >
@@ -644,7 +648,7 @@ export default function AddingSynthesisGame({
 
               {currentNote ? (
                 <div
-                  className='pointer-events-none absolute left-1/2 z-20 w-[calc(100%-2rem)] max-w-[460px] -translate-x-1/2 transition-transform duration-75 ease-linear'
+                  className='pointer-events-none absolute left-1/2 z-20 w-[calc(100%-0.75rem)] max-w-[460px] -translate-x-1/2 transition-transform duration-75 ease-linear min-[360px]:w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)]'
                   style={{
                     top: `${noteTop}px`,
                     transform: `translateX(-50%) scale(${noteScale})`,
@@ -652,7 +656,7 @@ export default function AddingSynthesisGame({
                   data-testid='adding-synthesis-note'
                 >
                   <KangurGlassPanel
-                    className='rounded-[28px] shadow-[0_22px_60px_-34px_rgba(79,70,229,0.32)] backdrop-blur'
+                    className='rounded-[24px] !p-3 shadow-[0_22px_60px_-34px_rgba(79,70,229,0.32)] backdrop-blur min-[360px]:!p-4 sm:rounded-[28px]'
                     data-testid='adding-synthesis-note-shell'
                     padding='md'
                     surface='solid'
@@ -676,10 +680,10 @@ export default function AddingSynthesisGame({
                       </KangurStatusChip>
                     </div>
                     <div className='mt-3 text-center'>
-                      <p className='text-sm font-semibold uppercase tracking-[0.22em] text-amber-500'>
+                      <p className='text-xs font-semibold uppercase tracking-[0.18em] text-amber-500 min-[360px]:text-sm min-[360px]:tracking-[0.22em]'>
                         Uderz we właściwy tor
                       </p>
-                      <p className='mt-2 text-4xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] sm:text-5xl'>
+                      <p className='mt-2 text-3xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] min-[360px]:text-4xl sm:text-5xl'>
                         {currentNote.left} + {currentNote.right}
                       </p>
                     </div>
@@ -687,7 +691,7 @@ export default function AddingSynthesisGame({
                 </div>
               ) : null}
 
-              <div className='absolute inset-x-0 bottom-0 grid grid-cols-4 gap-3'>
+              <div className='absolute inset-x-0 bottom-0 grid grid-cols-4 gap-1.5 sm:gap-3'>
                 {currentNote?.choices.map((choice, laneIndex) => {
                   const laneStyle = LANE_STYLES[laneIndex] ?? LANE_STYLES[0];
                   const isCorrectLane = feedback?.correctLaneIndex === laneIndex;
@@ -714,7 +718,7 @@ export default function AddingSynthesisGame({
                       aria-disabled={feedback ? 'true' : 'false'}
                       aria-label={`Tor ${laneIndex + 1}: ${choice}`}
                       buttonClassName={cn(
-                        'min-h-[96px] flex-col justify-center rounded-[24px] px-2 py-3 text-center',
+                        'min-h-[80px] flex-col justify-center rounded-[18px] px-1.5 py-2.5 text-center min-[360px]:min-h-[88px] min-[360px]:px-2 sm:min-h-[96px] sm:rounded-[24px] sm:py-3',
                         laneTextClassName
                       )}
                       data-testid={`adding-synthesis-lane-${laneIndex}`}
@@ -728,13 +732,13 @@ export default function AddingSynthesisGame({
                       }}
                       type='button'
                     >
-                      <span className='text-[11px] font-semibold uppercase tracking-[0.24em] [color:var(--kangur-page-muted-text)]'>
+                      <span className='text-[9px] font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)] min-[360px]:text-[10px] sm:text-[11px] sm:tracking-[0.24em]'>
                         {laneIndex + 1}
                       </span>
-                      <span className='mt-1 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl'>
+                      <span className='mt-1 text-xl font-extrabold tracking-[-0.03em] min-[360px]:text-2xl sm:text-3xl'>
                         {choice}
                       </span>
-                      <span className='mt-1 text-[11px] font-medium [color:var(--kangur-page-muted-text)]'>
+                      <span className='mt-1 hidden text-[11px] font-medium [color:var(--kangur-page-muted-text)] min-[360px]:inline'>
                         Wybierz tor
                       </span>
                     </KangurAnswerChoiceCard>

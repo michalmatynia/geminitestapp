@@ -663,13 +663,13 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Poprosze wskazowke.' }],
+          messages: [{ role: 'user', content: 'Poproszę wskazówkę.' }],
           context: {
             surface: 'game',
             contentId: 'game',
             title: 'Trening dodawania',
-            description: 'Krotki trening z dodawania do 20.',
-            masterySummary: 'Dodawanie mastery 68% po 3 probach.',
+            description: 'Krótki trening z dodawania do 20.',
+            masterySummary: 'Dodawanie mastery 68% po 3 próbach.',
             assignmentId: 'assignment-1',
             assignmentSummary: 'Trening: dodawanie do 20.',
             currentQuestion: 'Ile to 7 + 5?',
@@ -686,13 +686,13 @@ describe('kangur ai tutor chat handler', () => {
     expect(brainInput.messages[0].content).toContain('Current Kangur surface: game practice.');
     expect(brainInput.messages[0].content).toContain('Current title: Trening dodawania');
     expect(brainInput.messages[0].content).toContain(
-      'Current description: Krotki trening z dodawania do 20.'
+      'Current description: Krótki trening z dodawania do 20.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Learner snapshot: Average accuracy 81%. 1 active assignment.'
     );
     expect(brainInput.messages[0].content).toContain(
-      'Learner mastery snapshot: Dodawanie mastery 68% po 3 probach.'
+      'Learner mastery snapshot: Dodawanie mastery 68% po 3 próbach.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Active assignment or focus: Trening: dodawanie do 20.'
@@ -901,7 +901,7 @@ describe('kangur ai tutor chat handler', () => {
         widget: 'KangurGameHomeActionsWidget',
         sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
         title: 'Szybkie akcje',
-        summary: 'Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+        summary: 'Tutaj wybierasz, do której aktywności chcesz przejść dalej.',
         body: 'Sekcja prowadzi bezposrednio do lekcji, szybkiej gry, treningu mieszanego i Kangura Matematycznego.',
         anchorIdPrefix: 'kangur-game-home-actions',
         focusKind: 'home_actions',
@@ -922,7 +922,7 @@ describe('kangur ai tutor chat handler', () => {
           contentIdPrefixes: ['game:home'],
           title: 'Szybkie akcje',
           shortDescription: 'Pomagaja wejsc od razu do wlasciwego trybu pracy.',
-          fullDescription: 'Ta karta zbiera najkrotsze przejscia do glownych aktywnosci Kangura.',
+          fullDescription: 'Ta karta zbiera najkrótsze przejścia do głównych aktywności Kangura.',
           hints: [],
           relatedGames: [],
           relatedTests: [],
@@ -939,13 +939,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'game-home-actions',
           collectionId: 'kangur_page_content',
-          text: 'Szybkie akcje\nTutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+          text: 'Szybkie akcje\nTutaj wybierasz, do której aktywności chcesz przejść dalej.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'game-home-actions',
             title: 'Szybkie akcje',
-            description: 'Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.',
+            description: 'Tutaj wybierasz, do której aktywności chcesz przejść dalej.',
             tags: ['kangur', 'page-content', 'game'],
           },
         },
@@ -997,7 +997,7 @@ describe('kangur ai tutor chat handler', () => {
 
     const body = await response.json();
     expect(body.message).toContain('Szybkie akcje.');
-    expect(body.message).toContain('Tutaj wybierasz, do ktorej aktywnosci chcesz przejsc dalej.');
+    expect(body.message).toContain('Tutaj wybierasz, do której aktywności chcesz przejść dalej.');
     expect(body.message).toContain(
       'Sekcja prowadzi bezposrednio do lekcji, szybkiej gry, treningu mieszanego i Kangura Matematycznego.'
     );
@@ -1260,8 +1260,8 @@ describe('kangur ai tutor chat handler', () => {
         widget: 'KangurGameResultWidget',
         sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
         title: 'Podsumowanie wyniku gry',
-        summary: 'Ta sekcja zbiera wynik rundy i najwazniejsze nagrody.',
-        body: 'Pomaga zrozumiec rezultat i zdecydowac, czy wracac do treningu, czy przejsc dalej.',
+        summary: 'Ta sekcja zbiera wynik rundy i najważniejsze nagrody.',
+        body: 'Pomaga zrozumieć rezultat i zdecydować, czy wracać do treningu, czy przejść dalej.',
         anchorIdPrefix: 'kangur-game-result-summary',
         focusKind: 'review',
         contentIdPrefixes: ['game:result'],
@@ -1278,13 +1278,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'game-review',
           collectionId: 'kangur_page_content',
-          text: 'Podsumowanie wyniku gry\nTa sekcja zbiera wynik rundy i najwazniejsze nagrody.',
+          text: 'Podsumowanie wyniku gry\nTa sekcja zbiera wynik rundy i najważniejsze nagrody.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'game-review',
             title: 'Podsumowanie wyniku gry',
-            description: 'Ta sekcja zbiera wynik rundy i najwazniejsze nagrody.',
+            description: 'Ta sekcja zbiera wynik rundy i najważniejsze nagrody.',
             tags: ['kangur', 'page-content', 'game'],
           },
         },

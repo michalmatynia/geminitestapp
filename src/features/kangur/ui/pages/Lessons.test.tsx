@@ -350,6 +350,38 @@ describe('Lessons', () => {
     expect(screen.getByRole('button', { name: /nauka kalendarza/i })).toBeInTheDocument();
   });
 
+  it('keeps only the lesson navigation button at the bottom and constrains its width', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson(),
+        createLesson({
+          id: 'kangur-lesson-calendar',
+          componentId: 'calendar',
+          title: 'Nauka kalendarza',
+          description: 'Ćwicz dni i miesiące',
+          emoji: '📅',
+          color: 'from-emerald-400 to-cyan-400',
+          activeBg: 'bg-emerald-500',
+          sortOrder: 2000,
+        }),
+      ],
+    });
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    const bottomNavigationButton = screen.getByRole('button', { name: 'Nauka kalendarza' });
+
+    expect(screen.queryByText('Nawigacja lekcji')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy.'
+      )
+    ).not.toBeInTheDocument();
+    expect(bottomNavigationButton).toHaveClass('surface-cta', 'sm:max-w-[21rem]');
+  });
+
   it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {
     setSettingsStore({
       lessons: [
@@ -1102,8 +1134,11 @@ describe('Lessons', () => {
     expect(screen.getByText('Mongo opis sekcji zadania dla aktywnej lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Mongo materiał lekcji')).toBeInTheDocument();
     expect(screen.getByText('Mongo opis dokumentu aktywnej lekcji.')).toBeInTheDocument();
-    expect(screen.getByText('Mongo nawigacja lekcji')).toBeInTheDocument();
-    expect(screen.getByText('Mongo opis przechodzenia między lekcjami.')).toBeInTheDocument();
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('lessons-active-navigation');
+    expect(screen.queryByText('Mongo nawigacja lekcji')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Mongo opis przechodzenia między lekcjami.')
+    ).not.toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {

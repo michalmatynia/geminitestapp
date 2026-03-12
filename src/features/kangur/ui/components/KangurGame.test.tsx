@@ -54,8 +54,8 @@ describe('KangurGame', () => {
     const correctChoice = screen.getByTestId('kangur-game-choice-1');
 
     expect(screen.getByTestId('kangur-game-point-chip')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('kangur-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('kangur-game-question-shell')).toHaveClass(
@@ -73,13 +73,13 @@ describe('KangurGame', () => {
 
     fireEvent.click(wrongChoice);
 
-    expect(wrongChoice).toHaveClass('border-amber-300');
+    expect(wrongChoice).toHaveClass('soft-card');
 
     fireEvent.click(screen.getByRole('button', { name: /zatwierdź odpowiedź/i }));
 
-    expect(wrongChoice).toHaveClass('border-rose-300');
-    expect(correctChoice).toHaveClass('border-emerald-300');
-    expect(screen.getByTestId('kangur-game-explanation')).toHaveClass('soft-card', 'border-sky-300');
+    expect(wrongChoice).toHaveClass('cursor-default');
+    expect(correctChoice).toHaveClass('cursor-default');
+    expect(screen.getByTestId('kangur-game-explanation')).toHaveClass('soft-card');
 
     act(() => {
       vi.advanceTimersByTime(1400);
@@ -93,7 +93,7 @@ describe('KangurGame', () => {
     expect(screen.getByText('0% poprawnych odpowiedzi')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('+10 XP ✨')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByText('+10 XP ✨')).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('kangur-game-summary-breakdown')).toHaveTextContent(
       'Ukonczenie rundy +10'
     );

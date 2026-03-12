@@ -102,13 +102,18 @@ describe('AddingSynthesisGame', () => {
     expect(
       screen.getByText(/Licz w glowie, patrz jak dzialanie spada do linii/i)
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Nowa gra')).toHaveClass('border-amber-200', 'bg-amber-100');
-    expect(screen.getByText('Synthesia-style')).toHaveClass('border-violet-200', 'bg-violet-100');
-    expect(screen.getByTestId('adding-synthesis-intro-badge')).toHaveClass(
-      'bg-violet-100',
-      'text-violet-700'
+    expect(screen.getByText('Nowa gra')).toHaveClass('inline-flex', 'rounded-full', 'border');
+    expect(screen.getByText('Synthesia-style')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
-    expect(screen.getByText('Rytm gry')).toHaveClass('border-violet-200', 'bg-violet-100');
+    expect(screen.getByTestId('adding-synthesis-intro-badge')).toHaveClass(
+      'rounded-full',
+      'h-12',
+      'w-12'
+    );
+    expect(screen.getByText('Rytm gry')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
@@ -130,24 +135,27 @@ describe('AddingSynthesisGame', () => {
       'bg-white/88'
     );
     expect(screen.getByText('2 + 3')).toBeInTheDocument();
-    expect(screen.getByText('Nuta 1/1')).toHaveClass('border-slate-200', 'bg-slate-100');
+    expect(screen.getByText('Nuta 1/1')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByTestId('adding-synthesis-note-shell')).toHaveClass(
       'glass-panel',
       'border-white/88',
       'bg-white/94'
     );
     expect(screen.getByTestId('adding-synthesis-note-stage')).toHaveClass(
-      'border-violet-200',
-      'bg-violet-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getByText('2 + 3')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('adding-synthesis-note-hit-line')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('adding-synthesis-lane-0')).toHaveClass(
       'soft-card',
-      'border-amber-300'
+      'border',
+      'rounded-[24px]'
     );
     expect(screen.getByTestId('adding-synthesis-session-progress-bar')).toHaveAttribute(
       'aria-valuenow',
@@ -166,16 +174,20 @@ describe('AddingSynthesisGame', () => {
       'border-emerald-200/70'
     );
     expect(screen.getByText('Wynik 1/1')).toBeInTheDocument();
-    expect(screen.getByText('Sesja zakonczona')).toHaveClass('border-emerald-200', 'bg-emerald-100');
-    expect(screen.getByText('+25 XP')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Sesja zakonczona')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
+    expect(screen.getByText('+25 XP')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByTestId('adding-synthesis-summary-breakdown')).toHaveTextContent(
       'Ukonczenie rundy +12'
     );
     expect(screen.getByTestId('adding-synthesis-summary-breakdown-perfect')).toHaveTextContent(
       'Pelny wynik +13'
     );
-    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border-emerald-300');
-    expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border-violet-300');
+    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

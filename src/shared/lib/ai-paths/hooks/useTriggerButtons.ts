@@ -24,6 +24,7 @@ import { useAiPathTriggerEvent } from './useAiPathTriggerEvent';
 
 const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
 const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';
+const EMPTY_TRIGGER_BUTTONS: AiTriggerButtonRecord[] = [];
 
 type TriggerRunState = {
   status: 'idle' | 'running' | 'success' | 'error';
@@ -31,6 +32,32 @@ type TriggerRunState = {
 };
 
 export type TriggerButtonLastRun = TriggerButtonRunFeedbackSnapshot;
+
+const areTriggerButtonLastRunsEqual = (
+  left: TriggerButtonLastRun | undefined,
+  right: TriggerButtonLastRun | undefined
+): boolean => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.runId === right.runId &&
+    left.status === right.status &&
+    left.updatedAt === right.updatedAt &&
+    left.finishedAt === right.finishedAt &&
+    left.errorMessage === right.errorMessage
+  );
+};
+
+const areTriggerButtonLastRunMapsEqual = (
+  left: Record<string, TriggerButtonLastRun>,
+  right: Record<string, TriggerButtonLastRun>
+): boolean => {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+
+  return leftKeys.every((key) => areTriggerButtonLastRunsEqual(left[key], right[key]));
+};
 
 const toTrackedRunInitialSnapshot = (
   lastRun: TriggerButtonLastRun,
@@ -159,7 +186,7 @@ export function useTriggerButtons({
   const previousFeedbackScopeKeyRef = useRef<string | null>(null);
 
   const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
-  const allButtons = triggerButtonsQuery.data ?? [];
+  const allButtons = triggerButtonsQuery.data ?? EMPTY_TRIGGER_BUTTONS;
 
   const buttons = useMemo(() => {
     const seen = new Set<string>();
@@ -309,7 +336,7 @@ export function useTriggerButtons({
           next[buttonId] = restored;
         }
       });
-      return next;
+      return areTriggerButtonLastRunMapsEqual(prev, next) ? prev : next;
     });
   }, [
     buttons,

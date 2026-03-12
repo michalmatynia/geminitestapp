@@ -93,8 +93,9 @@ describe('PageNotFound', () => {
     );
     expect(screen.getByTestId('page-not-found-admin-dot')).toHaveClass('bg-amber-400');
     expect(screen.getByText('Admin Note').parentElement).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
   });
 });

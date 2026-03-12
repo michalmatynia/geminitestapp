@@ -51,13 +51,13 @@ describe('QuestionCard', () => {
       'bg-white/94'
     );
     expect(screen.getByRole('group', { name: '6 + 1' })).toBeInTheDocument();
-    expect(correctChoice).toHaveClass('soft-card', 'border-slate-200/80');
-    expect(wrongChoice).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(correctChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
+    expect(wrongChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
 
     fireEvent.click(wrongChoice);
 
-    expect(correctChoice).toHaveClass('border-emerald-300');
-    expect(wrongChoice).toHaveClass('border-rose-300');
+    expect(correctChoice).toHaveAttribute('aria-disabled', 'true');
+    expect(wrongChoice).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('status')).toHaveTextContent('❌ Odpowiedz to 7');
 
     await act(async () => {

@@ -137,6 +137,7 @@ export type KangurAiTutorContextValue = {
       promptMode?: KangurAiTutorPromptMode;
       selectedText?: string | null;
       drawingImageData?: string | null;
+      contentId?: string | null;
       focusKind?: KangurAiTutorFocusKind;
       focusId?: string | null;
       focusLabel?: string | null;
@@ -1385,6 +1386,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         promptMode?: KangurAiTutorPromptMode;
         selectedText?: string | null;
         drawingImageData?: string | null;
+        contentId?: string | null;
         focusKind?: KangurAiTutorFocusKind;
         focusId?: string | null;
         focusLabel?: string | null;
@@ -1419,7 +1421,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         recentHintRecoverySignalBySessionKeyRef.current[activeSessionKey] ?? null;
       const telemetryContext = {
         surface: options?.surface ?? activeSessionContext?.surface ?? null,
-        contentId: activeSessionContext?.contentId ?? null,
+        contentId: options?.contentId ?? activeSessionContext?.contentId ?? null,
         promptMode: resolvedPromptMode,
         hasSelectedText: Boolean(resolvedSelectedText),
         hasLearnerMemory: Boolean(activeLearnerMemory),
@@ -1447,6 +1449,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const nextContext = omitUndefinedFields({
           ...activeSessionContext,
           ...(options?.surface ? { surface: options.surface } : {}),
+          ...(options?.contentId ? { contentId: options.contentId } : {}),
           promptMode: resolvedPromptMode,
           ...(resolvedSelectedText ? { selectedText: resolvedSelectedText } : {}),
           ...(options?.focusKind ? { focusKind: options.focusKind } : {}),

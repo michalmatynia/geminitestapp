@@ -90,14 +90,14 @@ export function KangurAiTutorComposer(): JSX.Element {
               style={{
                 background: 'var(--kangur-soft-card-background)',
                 borderColor: 'var(--kangur-soft-card-border)',
-                color: 'var(--kangur-page-muted-text)',
+                color: 'var(--kangur-chat-muted-text, var(--kangur-page-muted-text))',
               }}
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
             >
               <X className='h-2.5 w-2.5' />
             </button>
           </div>
-          <span className='mt-1 text-[10px] [color:var(--kangur-page-muted-text)]'>
+          <span className='mt-1 text-[10px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             {drawingContent?.attachedLabel ?? 'Rysunek załączony'}
           </span>
         </div>

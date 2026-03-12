@@ -179,13 +179,13 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
       className='flex flex-col rounded-2xl border border-amber-200/60 [background:var(--kangur-soft-card-background)] shadow-[0_16px_40px_-20px_rgba(15,23,42,0.18)]'
     >
       <div className='flex items-center justify-between border-b border-amber-100/60 px-3 py-2'>
-        <span className='text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
+        <span className='text-xs font-semibold [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
           {drawingContent?.title ?? 'Rysowanie'}
         </span>
         <button
           type='button'
           onClick={onCancel}
-          className='cursor-pointer rounded-full p-1 [color:var(--kangur-page-muted-text)] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)]'
+          className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           aria-label={tutorContent.common.closeAria}
         >
           <X className='h-3.5 w-3.5' />
@@ -237,8 +237,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               aria-label={`${w}px`}
               className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
                 selectedWidth === w && !isEraser
-                  ? 'bg-amber-100 text-amber-700'
-                  : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
+                  ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+                  : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
               }`}
               onClick={() => {
                 setSelectedWidth(w);
@@ -260,8 +260,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           aria-label={drawingContent?.penLabel ?? 'Pióro'}
           className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
             !isEraser
-              ? 'bg-amber-100 text-amber-700'
-              : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
+              ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+              : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(false)}
         >
@@ -272,8 +272,8 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           aria-label={drawingContent?.eraserLabel ?? 'Gumka'}
           className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors ${
             isEraser
-              ? 'bg-amber-100 text-amber-700'
-              : '[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
+              ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
+              : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
           }`}
           onClick={() => setIsEraser(true)}
         >
@@ -285,7 +285,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.undoLabel ?? 'Cofnij'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-page-muted-text)] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-page-text)] disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleUndo}
         >
@@ -294,7 +294,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-page-muted-text)] transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-30'
+          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-30'
           disabled={strokes.length === 0}
           onClick={handleClear}
         >

@@ -16,6 +16,7 @@ import type {
   TutorEntryDirection,
   TutorMotionPosition,
   TutorMotionProfile,
+  TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
 import type { Transition } from 'framer-motion';
 
@@ -183,7 +184,7 @@ export type KangurAiTutorPortalContextValue = {
     panelBodyContextValue: KangurAiTutorPanelBodyContextValue;
     panelEmptyStateMessage: string;
     panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
-    panelSnapState: string;
+    panelSnapState: TutorPanelSnapState | 'none';
     panelTransition: Transition;
     pointerMarkerId: string;
     prefersReducedMotion: boolean;
@@ -193,6 +194,10 @@ export type KangurAiTutorPortalContextValue = {
     suppressPanelSurface: boolean;
     uiMode: string;
     onAttachedAvatarClick: () => void;
+    onAttachedAvatarPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
+    onAttachedAvatarPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
+    onAttachedAvatarPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
+    onAttachedAvatarPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
     onBackdropClose: () => void;
     onClose: () => void;
     onDetachPanelFromContext: () => void;

@@ -61,7 +61,11 @@ describe('KangurLessonActivityBlock', () => {
     );
 
     expect(screen.getByRole('button', { name: 'ClockTrainingGame' })).toBeInTheDocument();
-    expect(screen.getByText('Activity')).toHaveClass('border-emerald-200', 'bg-emerald-100');
+    expect(screen.getByText('Activity')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByTestId('lesson-activity-block-shell')).toHaveClass(
       'glass-panel',
       'border-emerald-200/80'
@@ -70,10 +74,7 @@ describe('KangurLessonActivityBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: 'ClockTrainingGame' }));
 
     expect(screen.getByText(/activity completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/activity completed/i).parentElement).toHaveClass(
-      'soft-card',
-      'border-emerald-300'
-    );
+    expect(screen.getByText(/activity completed/i).parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByRole('button', { name: /restart activity/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

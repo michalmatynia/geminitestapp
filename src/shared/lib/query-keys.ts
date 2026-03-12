@@ -399,6 +399,8 @@ export const QUERY_KEYS = {
       all: ['kangur', 'observability'] as const,
       summary: (range: '24h' | '7d' | '30d') =>
         [...QUERY_KEYS.kangur.observability.all, 'summary', { range }] as const,
+      knowledgeGraphStatus: (graphKey: string) =>
+        [...QUERY_KEYS.kangur.observability.all, 'knowledge-graph-status', { graphKey }] as const,
     },
     aiTutor: {
       all: ['kangur', 'ai-tutor'] as const,

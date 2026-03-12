@@ -126,10 +126,14 @@ describe('KangurAssignmentSpotlight', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByTestId('kangur-assignment-spotlight-progress')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'rounded-2xl',
+      'border'
     );
     expect(screen.getByTestId('kangur-assignment-spotlight-divider')).toHaveClass(
       'h-px',

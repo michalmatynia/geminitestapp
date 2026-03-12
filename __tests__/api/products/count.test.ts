@@ -1,38 +1,34 @@
 import { NextRequest } from 'next/server';
-import { vi, beforeEach, afterAll } from 'vitest';
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET } from '@/app/api/v2/products/count/route';
-import prisma from '@/shared/lib/db/prisma';
+const mocks = vi.hoisted(() => ({
+  getProductCount: vi.fn(),
+}));
 
-// Mock Prisma client
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    product: {
-      count: vi.fn(),
-    },
-    $disconnect: vi.fn(),
+vi.mock('@/features/products/performance', () => ({
+  CachedProductService: {
+    getProductCount: mocks.getProductCount,
   },
 }));
+
+import { GET } from '@/app/api/v2/products/count/route';
 
 describe('Products Count API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.product.count).mockResolvedValue(0);
   });
 
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
+  it('returns the total count from CachedProductService', async () => {
+    mocks.getProductCount.mockResolvedValue(10);
 
-  describe('GET /api/products/count', () => {
-    it('should return the total count of products', async () => {
-      vi.mocked(prisma.product.count).mockResolvedValue(10);
+    const res = await GET(new NextRequest('http://localhost/api/products/count'));
+    const data = (await res.json()) as { count: number };
 
-      const res = await GET(new NextRequest('http://localhost/api/products/count'));
-      const data = (await res.json()) as { count: number };
-      expect(res.status).toEqual(200);
-      expect(data.count).toEqual(10);
+    expect(res.status).toBe(200);
+    expect(data.count).toBe(10);
+    expect(mocks.getProductCount).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
     });
   });
 });

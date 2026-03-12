@@ -1,21 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  getAppDbProvider: vi.fn(),
-  prismaFindUnique: vi.fn(),
   mongoFindOne: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  getAppDbProvider: mocks.getAppDbProvider,
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    setting: {
-      findUnique: mocks.prismaFindUnique,
-    },
-  },
+  logWarning: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -26,77 +13,54 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   }),
 }));
 
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    logWarning: mocks.logWarning,
+  },
+}));
+
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 
 describe('getSettingValue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env['DATABASE_URL'] = 'postgres://test-db';
     process.env['MONGODB_URI'] = 'mongodb://test-db';
   });
 
-  it('uses Mongo first when provider is mongodb', async () => {
-    mocks.getAppDbProvider.mockResolvedValue('mongodb');
-    mocks.mongoFindOne.mockResolvedValue({ value: 'false' });
-    mocks.prismaFindUnique.mockResolvedValue({ value: 'true' });
-
-    const value = await getSettingValue('ai_analytics_schedule_enabled');
-
-    expect(value).toBe('false');
-    expect(mocks.mongoFindOne).toHaveBeenCalledWith({
-      $or: [{ _id: 'ai_analytics_schedule_enabled' }, { key: 'ai_analytics_schedule_enabled' }],
-    });
-    expect(mocks.prismaFindUnique).not.toHaveBeenCalled();
-  });
-
-  it('uses Prisma first for non-AI keys when provider is prisma', async () => {
-    mocks.getAppDbProvider.mockResolvedValue('prisma');
-    mocks.prismaFindUnique.mockResolvedValue({ value: 'prisma-value' });
+  it('reads settings from Mongo by key or _id', async () => {
     mocks.mongoFindOne.mockResolvedValue({ value: 'mongo-value' });
 
     const value = await getSettingValue('site_name');
 
-    expect(value).toBe('prisma-value');
-    expect(mocks.prismaFindUnique).toHaveBeenCalledWith({
-      where: { key: 'site_name' },
-      select: { value: true },
+    expect(value).toBe('mongo-value');
+    expect(mocks.mongoFindOne).toHaveBeenCalledWith({
+      $or: [{ _id: 'site_name' }, { key: 'site_name' }],
     });
+  });
+
+  it('returns null when Mongo has no stored value', async () => {
+    mocks.mongoFindOne.mockResolvedValue(null);
+
+    await expect(getSettingValue('missing_key')).resolves.toBeNull();
+    expect(mocks.mongoFindOne).toHaveBeenCalledOnce();
+  });
+
+  it('returns null without querying Mongo when MONGODB_URI is missing', async () => {
+    delete process.env['MONGODB_URI'];
+
+    await expect(getSettingValue('site_name')).resolves.toBeNull();
     expect(mocks.mongoFindOne).not.toHaveBeenCalled();
   });
 
-  it('uses Mongo first for AI keys even when provider is prisma', async () => {
-    mocks.getAppDbProvider.mockResolvedValue('prisma');
-    mocks.mongoFindOne.mockResolvedValue({ value: 'mongo-openai-key' });
-    mocks.prismaFindUnique.mockResolvedValue({ value: 'prisma-openai-key' });
+  it('logs a warning and returns null when Mongo lookup fails', async () => {
+    const error = new Error('mongo unavailable');
+    mocks.mongoFindOne.mockRejectedValue(error);
 
-    const value = await getSettingValue('openai_api_key');
-
-    expect(value).toBe('mongo-openai-key');
-    expect(mocks.mongoFindOne).toHaveBeenCalledOnce();
-    expect(mocks.prismaFindUnique).not.toHaveBeenCalled();
-  });
-
-  it('falls back to Mongo when Prisma has no value', async () => {
-    mocks.getAppDbProvider.mockResolvedValue('prisma');
-    mocks.prismaFindUnique.mockResolvedValue(null);
-    mocks.mongoFindOne.mockResolvedValue({ value: 'mongo-fallback' });
-
-    const value = await getSettingValue('runtime_analytics_feature_flag');
-
-    expect(value).toBe('mongo-fallback');
-    expect(mocks.prismaFindUnique).toHaveBeenCalledOnce();
-    expect(mocks.mongoFindOne).toHaveBeenCalledOnce();
-  });
-
-  it('falls back to Prisma when Mongo has no value in mongodb mode', async () => {
-    mocks.getAppDbProvider.mockResolvedValue('mongodb');
-    mocks.mongoFindOne.mockResolvedValue(null);
-    mocks.prismaFindUnique.mockResolvedValue({ value: 'prisma-fallback' });
-
-    const value = await getSettingValue('ai_brain_settings');
-
-    expect(value).toBe('prisma-fallback');
-    expect(mocks.mongoFindOne).toHaveBeenCalledOnce();
-    expect(mocks.prismaFindUnique).toHaveBeenCalledOnce();
+    await expect(getSettingValue('site_name')).resolves.toBeNull();
+    expect(mocks.logWarning).toHaveBeenCalledWith('Mongo setting fetch failed for site_name', {
+      service: 'ai-server-settings',
+      key: 'site_name',
+      error,
+    });
   });
 });

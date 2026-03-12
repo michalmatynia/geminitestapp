@@ -13,6 +13,7 @@ import {
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import {
+  getBoundingRectFromRects,
   cloneRect,
   getExpandedRect,
   getViewportRectFromPageRect,
@@ -289,15 +290,25 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       return null;
     }
 
+    const selectionPageRects =
+      activeSelectionPageRects.length > 0 ? activeSelectionPageRects : persistedSelectionPageRects;
+    const selectionViewportRects = selectionPageRects
+      .map((rect) => getViewportRectFromPageRect(rect))
+      .filter((rect): rect is DOMRect => rect !== null);
+    const selectionViewportBounds = getBoundingRectFromRects(selectionViewportRects);
+
     return cloneRect(
-      getViewportRectFromPageRect(activeSelectionPageRect ?? persistedSelectionPageRect) ??
+      selectionViewportBounds ??
+        getViewportRectFromPageRect(activeSelectionPageRect ?? persistedSelectionPageRect) ??
         persistedSelectionRect ??
         activeSelectionRect
     );
   }, [
+    activeSelectionPageRects,
     activeSelectionPageRect,
     activeSelectionRect,
     guidedTutorTarget,
+    persistedSelectionPageRects,
     persistedSelectionPageRect,
     persistedSelectionRect,
     selectionResponsePending,

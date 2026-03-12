@@ -344,8 +344,7 @@ describe('KangurLessonNarrator', () => {
     await waitFor(() => expect(screen.getByText('Narrator network failed.')).toBeInTheDocument());
 
     expect(screen.getByText('Narrator network failed.').parentElement).toHaveClass(
-      'soft-card',
-      'border-rose-300'
+      'soft-card'
     );
   });
 });

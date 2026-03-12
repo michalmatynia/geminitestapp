@@ -38,50 +38,10 @@ export function KangurAiTutorSpotlightOverlays({
 }: Props): JSX.Element {
   const { highlightedSection, hoveredSectionAnchorId, selectionContextSpotlightTick, viewportTick } =
     useKangurAiTutorWidgetStateContext();
-
-  return (
-    <>
-      <style>{`
-        :root {
-          --kangur-ai-tutor-selection-highlight-fill: rgba(251, 191, 36, 0.18);
-          --kangur-ai-tutor-selection-highlight-text: #92400e;
-          --kangur-ai-tutor-selection-highlight-shadow-near: rgba(251, 191, 36, 0.42);
-          --kangur-ai-tutor-selection-highlight-shadow-far: rgba(245, 158, 11, 0.24);
-          --kangur-ai-tutor-selection-glow-fill-start: rgba(254, 243, 199, 0.38);
-          --kangur-ai-tutor-selection-glow-fill-end: rgba(253, 224, 71, 0.18);
-          --kangur-ai-tutor-selection-glow-border: rgba(251, 191, 36, 0.22);
-          --kangur-ai-tutor-selection-glow-shadow-inner: rgba(251, 191, 36, 0.2);
-          --kangur-ai-tutor-selection-glow-shadow-outer: rgba(245, 158, 11, 0.12);
-          --kangur-ai-tutor-selection-glow-shadow-far: rgba(245, 158, 11, 0.08);
-          --kangur-ai-tutor-selection-spotlight-fill: rgba(254, 243, 199, 0.08);
-        }
-
-        [data-kangur-appearance='dark'],
-        .dark {
-          --kangur-ai-tutor-selection-highlight-fill: rgba(250, 204, 21, 0.26);
-          --kangur-ai-tutor-selection-highlight-text: #fef3c7;
-          --kangur-ai-tutor-selection-highlight-shadow-near: rgba(250, 204, 21, 0.6);
-          --kangur-ai-tutor-selection-highlight-shadow-far: rgba(251, 146, 60, 0.34);
-          --kangur-ai-tutor-selection-glow-fill-start: rgba(250, 204, 21, 0.28);
-          --kangur-ai-tutor-selection-glow-fill-end: rgba(251, 191, 36, 0.12);
-          --kangur-ai-tutor-selection-glow-border: rgba(252, 211, 77, 0.34);
-          --kangur-ai-tutor-selection-glow-shadow-inner: rgba(250, 204, 21, 0.34);
-          --kangur-ai-tutor-selection-glow-shadow-outer: rgba(250, 204, 21, 0.24);
-          --kangur-ai-tutor-selection-glow-shadow-far: rgba(251, 146, 60, 0.18);
-          --kangur-ai-tutor-selection-spotlight-fill: rgba(250, 204, 21, 0.12);
-        }
-
-        ::highlight(kangur-ai-tutor-selection-glow) {
-          background: var(--kangur-ai-tutor-selection-highlight-fill);
-          color: var(--kangur-ai-tutor-selection-highlight-text);
-          text-shadow:
-            0 0 6px var(--kangur-ai-tutor-selection-highlight-shadow-near),
-            0 0 14px var(--kangur-ai-tutor-selection-highlight-shadow-far);
-        }
-      `}</style>
-
+  const guidedSelectionOverlay =
+    guidedMode === 'selection' ? (
       <AnimatePresence>
-        {guidedMode === 'selection' && selectionGlowStyles.length > 0
+        {selectionGlowStyles.length > 0
           ? selectionGlowStyles.map((style, index) => (
             <motion.div
               key={`guided-selection-glow:${index}`}
@@ -103,7 +63,7 @@ export function KangurAiTutorSpotlightOverlays({
               className='pointer-events-none fixed z-[72] rounded-[18px]'
             />
           ))
-          : guidedMode === 'selection' && selectionSpotlightStyle
+          : selectionSpotlightStyle
             ? (
               <motion.div
                 key='guided-selection-spotlight'
@@ -133,6 +93,79 @@ export function KangurAiTutorSpotlightOverlays({
             )
             : null}
       </AnimatePresence>
+    ) : null;
+
+  return (
+    <>
+      <style>{`
+        :root {
+          --kangur-ai-tutor-selection-gradient-fallback: #92400e;
+          --kangur-ai-tutor-selection-gradient-start: #78350f;
+          --kangur-ai-tutor-selection-gradient-mid: #a16207;
+          --kangur-ai-tutor-selection-gradient-end: #d97706;
+          --kangur-ai-tutor-selection-glow-fill-start: rgba(245, 158, 11, 0.18);
+          --kangur-ai-tutor-selection-glow-fill-end: rgba(180, 83, 9, 0.08);
+          --kangur-ai-tutor-selection-glow-border: rgba(217, 119, 6, 0.28);
+          --kangur-ai-tutor-selection-glow-shadow-inner: rgba(217, 119, 6, 0.18);
+          --kangur-ai-tutor-selection-glow-shadow-outer: rgba(217, 119, 6, 0.12);
+          --kangur-ai-tutor-selection-glow-shadow-far: rgba(180, 83, 9, 0.08);
+          --kangur-ai-tutor-selection-spotlight-fill: rgba(245, 158, 11, 0.08);
+        }
+
+        [data-kangur-appearance='dark'],
+        .dark {
+          --kangur-ai-tutor-selection-gradient-fallback: #fde68a;
+          --kangur-ai-tutor-selection-gradient-start: #fef3c7;
+          --kangur-ai-tutor-selection-gradient-mid: #fcd34d;
+          --kangur-ai-tutor-selection-gradient-end: #f59e0b;
+          --kangur-ai-tutor-selection-glow-fill-start: rgba(250, 204, 21, 0.28);
+          --kangur-ai-tutor-selection-glow-fill-end: rgba(251, 191, 36, 0.12);
+          --kangur-ai-tutor-selection-glow-border: rgba(252, 211, 77, 0.34);
+          --kangur-ai-tutor-selection-glow-shadow-inner: rgba(250, 204, 21, 0.34);
+          --kangur-ai-tutor-selection-glow-shadow-outer: rgba(250, 204, 21, 0.24);
+          --kangur-ai-tutor-selection-glow-shadow-far: rgba(251, 146, 60, 0.18);
+          --kangur-ai-tutor-selection-spotlight-fill: rgba(250, 204, 21, 0.12);
+        }
+
+        @keyframes kangur-ai-tutor-selection-gradient-drift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+          color: var(--kangur-ai-tutor-selection-gradient-fallback);
+          transition: color 220ms ease;
+        }
+
+        @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+          [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+            background-image: linear-gradient(
+              110deg,
+              var(--kangur-ai-tutor-selection-gradient-start) 0%,
+              var(--kangur-ai-tutor-selection-gradient-mid) 35%,
+              var(--kangur-ai-tutor-selection-gradient-end) 65%,
+              var(--kangur-ai-tutor-selection-gradient-mid) 100%
+            );
+            background-size: 190% 100%;
+            background-position: 0% 50%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+            animation: kangur-ai-tutor-selection-gradient-drift 6.8s linear infinite;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          [data-kangur-ai-tutor-selection-emphasis='gradient'] {
+            animation: none;
+            background-position: 50% 50%;
+          }
+        }
+      `}</style>
+
+      {guidedSelectionOverlay}
 
       <AnimatePresence>
         {selectionContextSpotlightStyle ? (

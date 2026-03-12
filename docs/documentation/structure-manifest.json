@@ -236,6 +236,7 @@
     "docs/platform/README.md",
     "docs/platform/bun-support.md",
     "docs/build/README.md",
+    "docs/build/codeql.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",

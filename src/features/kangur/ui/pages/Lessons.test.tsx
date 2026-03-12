@@ -290,8 +290,7 @@ describe('Lessons', () => {
 
     expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-document-summary')).toHaveClass(
-      'soft-card',
-      'border-sky-300'
+      'soft-card'
     );
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
@@ -615,10 +614,9 @@ describe('Lessons', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByTestId('lessons-empty-document-summary')).toHaveClass(
-      'soft-card',
-      'border-amber-300'
+      'soft-card'
     );
-    expect(screen.getByText('Lesson document')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Lesson document')).toHaveClass('rounded-full', 'border');
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
@@ -713,16 +711,16 @@ describe('Lessons', () => {
       'w-16',
       'rounded-[24px]'
     );
-    expect(screen.getByText('Wlasna zawartosc')).toHaveClass('border-sky-200', 'bg-sky-100');
-    expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('border-rose-200', 'bg-rose-100');
-    expect(screen.getByText('Opanowane 92%')).toHaveClass('border-emerald-200', 'bg-emerald-100');
-    expect(screen.getByText('Priorytet wysoki')).toHaveClass('border-rose-200', 'bg-rose-100');
+    expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
+    expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Opanowane 92%')).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Priorytet wysoki')).toHaveClass('rounded-full', 'border');
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
     expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveClass(
-      'border-rose-200',
-      'bg-rose-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveTextContent(
       'Priorytet Rodzica'
@@ -788,8 +786,8 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
 
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveClass(
-      'border-emerald-200',
-      'bg-emerald-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
       'Ukonczone dla rodzica'

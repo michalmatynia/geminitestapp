@@ -1,6 +1,12 @@
 'use client';
 
-import { AnimatePresence, motion, type TargetAndTransition, type Transition } from 'framer-motion';
+import {
+  AnimatePresence,
+  motion,
+  type MotionStyle,
+  type TargetAndTransition,
+  type Transition,
+} from 'framer-motion';
 import { X } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
@@ -11,7 +17,11 @@ import { cn } from '@/shared/utils';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { TutorEntryDirection, TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type {
+  TutorEntryDirection,
+  TutorMotionProfile,
+  TutorPanelSnapState,
+} from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
 type ReducedMotionTransitions = {
@@ -80,7 +90,7 @@ type Props = {
   panelAvatarPlacement: string;
   panelEmptyStateMessage: string;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
-  panelSnapState: string;
+  panelSnapState: TutorPanelSnapState | 'none';
   panelTransition: Transition;
   pointerMarkerId: string;
   prefersReducedMotion: boolean;
@@ -90,6 +100,10 @@ type Props = {
   suppressPanelSurface: boolean;
   uiMode: string;
   onAttachedAvatarClick: () => void;
+  onAttachedAvatarPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
   onBackdropClose: () => void;
   onClose: () => void;
   onDetachPanelFromContext: () => void;
@@ -104,6 +118,19 @@ type Props = {
 };
 
 const CONTEXTUAL_PANEL_ENTRY_OFFSET_PX = 84;
+const SNAP_TARGET_CONTENT_KEYS: Record<
+  Exclude<TutorPanelSnapState, 'free'>,
+  keyof ReturnType<typeof useKangurAiTutorContent>['panelChrome']['snapTargets']
+> = {
+  bottom: 'bottom',
+  'bottom-left': 'bottomLeft',
+  'bottom-right': 'bottomRight',
+  left: 'left',
+  right: 'right',
+  top: 'top',
+  'top-left': 'topLeft',
+  'top-right': 'topRight',
+};
 
 function toMotionTarget(
   style: Record<string, number | string | undefined>
@@ -111,6 +138,14 @@ function toMotionTarget(
   return Object.fromEntries(
     Object.entries(style).filter((entry): entry is [string, number | string] => entry[1] !== undefined)
   ) as TargetAndTransition;
+}
+
+function toMotionStyle(
+  style: Record<string, number | string | undefined>
+): MotionStyle {
+  return Object.fromEntries(
+    Object.entries(style).filter((entry): entry is [string, number | string] => entry[1] !== undefined)
+  ) as MotionStyle;
 }
 
 export function KangurAiTutorPanelChrome({
@@ -155,6 +190,10 @@ export function KangurAiTutorPanelChrome({
   suppressPanelSurface,
   uiMode,
   onAttachedAvatarClick,
+  onAttachedAvatarPointerCancel,
+  onAttachedAvatarPointerDown,
+  onAttachedAvatarPointerMove,
+  onAttachedAvatarPointerUp,
   onBackdropClose,
   onClose,
   onDetachPanelFromContext,
@@ -171,12 +210,27 @@ export function KangurAiTutorPanelChrome({
   const { panelMotionState, panelRef, tutorNarrationRootRef } =
     useKangurAiTutorWidgetStateContext();
   const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
+  const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
+  const tutorMoodId = tutor?.tutorMoodId ?? 'default';
+  const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
+  const tutorBehaviorMoodLabel = tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId;
+  const panelMoodDescription = isCompactDockedTutorPanel
+    ? panelEmptyStateMessage
+    : (tutor?.tutorBehaviorMoodDescription ?? panelEmptyStateMessage);
+  const snapPreviewTargetLabel =
+    isPanelDragging && panelSnapState !== 'free' && panelSnapState !== 'none'
+      ? tutorContent.panelChrome.snapTargets[SNAP_TARGET_CONTENT_KEYS[panelSnapState]]
+      : null;
+  const hasSnapPreview = snapPreviewTargetLabel !== null;
   const panelSurfaceTestId = isAskModalMode ? 'kangur-ai-tutor-ask-modal-surface' : undefined;
   const panelSurfaceClassName = cn(
     'relative flex flex-col overflow-hidden border [border-color:var(--kangur-chat-panel-border,rgba(253,186,116,0.52))] [background:var(--kangur-chat-panel-background,linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(255,253,250,0.94)_100%))] backdrop-blur-[8px]',
     shouldUseMinimalPanelShell
       ? '[box-shadow:var(--kangur-chat-panel-shadow,0_26px_60px_-34px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5))] rounded-[28px]'
       : '[box-shadow:var(--kangur-chat-panel-shadow,0_20px_48px_-30px_rgba(180,83,9,0.34),inset_0_1px_0_rgba(255,255,255,0.5))]',
+    hasSnapPreview
+      ? 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-transparent [box-shadow:0_0_0_1px_rgba(251,191,36,0.22),0_28px_56px_-28px_rgba(217,119,6,0.45),inset_0_1px_0_rgba(255,255,255,0.6)]'
+      : null,
     isAskModalMode ? 'pointer-events-auto w-full max-w-[min(92vw,560px)]' : null,
     isCompactDockedTutorPanel ? 'rounded-[24px]' : null,
     !shouldUseMinimalPanelShell && bubbleMode === 'sheet' ? 'rounded-[28px] rounded-b-[24px]' : null
@@ -191,7 +245,8 @@ export function KangurAiTutorPanelChrome({
         : bubbleMode === 'sheet'
           ? 'min(76vh, 680px)'
           : '70vh',
-  } satisfies CSSProperties;
+  } satisfies MotionStyle;
+  const isHeaderSectionDragEnabled = !isAskModalMode && !isPanelDraggable;
   const panelHeaderClassName = cn(
     'relative flex items-start justify-between gap-3 border-b [border-color:var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52)))] [background:var(--kangur-chat-header-background,linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%))]',
     shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
@@ -199,16 +254,12 @@ export function KangurAiTutorPanelChrome({
     isCompactDockedTutorPanel ? 'px-3 py-2.5' : null,
     showAttachedAvatarShell && avatarAttachmentSide === 'left' ? 'pl-16' : null,
     showAttachedAvatarShell && avatarAttachmentSide === 'right' ? 'pr-16' : null,
-    isPanelDraggable ? 'touch-none select-none cursor-grab' : null,
-    isPanelDraggable && isPanelDragging ? 'cursor-grabbing' : null
+    isPanelDraggable || isHeaderSectionDragEnabled ? 'touch-none select-none cursor-grab' : null,
+    isPanelDraggable && isPanelDragging ? 'cursor-grabbing' : null,
+    hasSnapPreview
+      ? '[background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_64%,#fff2c6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_78%,#ffe8b4)_100%)]'
+      : null
   );
-  const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
-  const tutorMoodId = tutor?.tutorMoodId ?? 'default';
-  const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
-  const tutorBehaviorMoodLabel = tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId;
-  const panelMoodDescription = isCompactDockedTutorPanel
-    ? panelEmptyStateMessage
-    : (tutor?.tutorBehaviorMoodDescription ?? panelEmptyStateMessage);
   const resolvedPanelAvatarPlacement = shouldUseMinimalPanelShell ? 'independent' : panelAvatarPlacement;
   const shouldRenderPanelMoodDescription =
     !shouldUseMinimalPanelShell &&
@@ -220,18 +271,18 @@ export function KangurAiTutorPanelChrome({
     y: 0,
     ...(bubbleMode === 'sheet' ? {} : { scale: 1 }),
   } satisfies TargetAndTransition;
-  const panelContainerStyle = isAskModalMode
+  const panelContainerStyle: MotionStyle | undefined = isAskModalMode
     ? undefined
     : shouldUseMinimalPanelShell
       ? minimalPanelStyle
-      : ({
-          ...toMotionTarget(bubbleStyle),
+      : toMotionStyle({
+          ...bubbleStyle,
           ...(bubbleWidth
             ? {
                 width: isCompactDockedTutorPanel ? compactDockedTutorPanelWidth : bubbleWidth,
               }
             : {}),
-        } satisfies CSSProperties);
+        });
   const directionalPanelInitialState =
     prefersReducedMotion
       ? { opacity: 1 }
@@ -296,6 +347,7 @@ export function KangurAiTutorPanelChrome({
               data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
               data-panel-dragging={isPanelDragging ? 'true' : 'false'}
               data-panel-snap={panelSnapState}
+              data-panel-snap-preview={hasSnapPreview ? 'true' : 'false'}
               data-placement-strategy={bubbleStrategy}
               data-launch-origin={bubbleLaunchOrigin}
               data-panel-style={shouldUseMinimalPanelShell ? 'minimal-card' : 'guided-card'}
@@ -404,6 +456,10 @@ export function KangurAiTutorPanelChrome({
                   data-ui-mode={uiMode}
                   type='button'
                   onClick={onAttachedAvatarClick}
+                  onPointerCancel={onAttachedAvatarPointerCancel}
+                  onPointerDown={onAttachedAvatarPointerDown}
+                  onPointerMove={onAttachedAvatarPointerMove}
+                  onPointerUp={onAttachedAvatarPointerUp}
                   whileHover={prefersReducedMotion ? undefined : { scale: motionProfile.hoverScale }}
                   whileTap={prefersReducedMotion ? undefined : { scale: motionProfile.tapScale }}
                   className={cn('absolute z-10', avatarButtonClassName)}
@@ -455,8 +511,10 @@ export function KangurAiTutorPanelChrome({
                 <div
                   data-testid='kangur-ai-tutor-header'
                   data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
+                  data-panel-section-draggable={isHeaderSectionDragEnabled ? 'true' : 'false'}
                   data-panel-dragging={isPanelDragging ? 'true' : 'false'}
                   data-panel-snap={panelSnapState}
+                  data-panel-snap-preview={hasSnapPreview ? 'true' : 'false'}
                   className={panelHeaderClassName}
                   onPointerCancel={onHeaderPointerCancel}
                   onPointerDown={onHeaderPointerDown}
@@ -505,6 +563,14 @@ export function KangurAiTutorPanelChrome({
                     {sessionSurfaceLabel ? (
                       <span className='mt-2 text-[11px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                         {sessionSurfaceLabel}
+                      </span>
+                    ) : null}
+                    {snapPreviewTargetLabel ? (
+                      <span
+                        data-testid='kangur-ai-tutor-snap-preview'
+                        className='mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))]'
+                      >
+                        {`${tutorContent.panelChrome.snapPreviewPrefix}: ${snapPreviewTargetLabel}`}
                       </span>
                     ) : null}
                   </div>

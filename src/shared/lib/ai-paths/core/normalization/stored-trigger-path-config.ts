@@ -117,6 +117,10 @@ const resolveStoredUiState = (args: {
   baseUiState: PathConfig['uiState'];
 }): PathConfig['uiState'] => {
   const { parsedConfig, resolvedUiState, baseUiState } = args;
+  const fallbackUiState = baseUiState ?? {
+    selectedNodeId: null,
+    configOpen: false,
+  };
   const rawUiState =
     parsedConfig?.['uiState'] && typeof parsedConfig['uiState'] === 'object' && !Array.isArray(parsedConfig['uiState'])
       ? (parsedConfig['uiState'] as Record<string, unknown>)
@@ -131,8 +135,8 @@ const resolveStoredUiState = (args: {
 
   return {
     ...(resolvedUiState && typeof resolvedUiState === 'object' ? resolvedUiState : {}),
-    selectedNodeId: rawSelectedNodeId ?? baseUiState.selectedNodeId ?? null,
-    configOpen: rawConfigOpen ?? resolvedUiState?.configOpen ?? baseUiState.configOpen ?? false,
+    selectedNodeId: rawSelectedNodeId ?? fallbackUiState.selectedNodeId ?? null,
+    configOpen: rawConfigOpen ?? resolvedUiState?.configOpen ?? fallbackUiState.configOpen ?? false,
   };
 };
 

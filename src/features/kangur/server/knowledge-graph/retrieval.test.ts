@@ -850,6 +850,97 @@ describe('resolveKangurWebsiteHelpGraphContext', () => {
     );
   });
 
+  it('includes selected excerpts in semantic graph lookup seeds for selected-text tutoring', async () => {
+    process.env['NEO4J_ENABLED'] = 'true';
+    process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';
+    process.env['NEO4J_USERNAME'] = 'neo4j';
+    process.env['NEO4J_PASSWORD'] = 'secret';
+
+    generateKangurKnowledgeGraphQueryEmbeddingMock.mockResolvedValue([1, 0]);
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'game-leaderboard',
+          title: 'Ranking wynikow',
+          shortDescription: 'Tutaj widac porownanie ostatnich wynikow i pozycje ucznia.',
+          fullDescription:
+            'Sekcja rankingu pokazuje wyniki i pomaga ocenic, czy liczy sie bardziej dokladnosc czy tempo.',
+          hints: ['Porownuj wynik z wlasnym ostatnim podejsciem, nie tylko z innymi osobami.'],
+          followUpActions: [{ id: 'open-game', label: 'Wroc do gry', page: 'Game' }],
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-result-leaderboard'],
+          contentIdPrefixes: ['game:practice:'],
+          relatedGames: [],
+          relatedTests: [],
+          triggerPhrases: ['ranking', 'tablica wynikow', 'leaderboard'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+    runNeo4jStatementsMock.mockResolvedValue([
+      {
+        records: [
+          {
+            id: 'guide:native:game-leaderboard',
+            kind: 'guide',
+            title: 'Fallback leaderboard',
+            summary: 'Fallback leaderboard summary',
+            surface: 'game',
+            focusKind: 'leaderboard',
+            route: '/game',
+            anchorId: 'kangur-game-result-leaderboard',
+            focusIdPrefixes: ['kangur-game-result-leaderboard'],
+            contentIdPrefixes: ['game:practice:'],
+            triggerPhrases: ['ranking'],
+            sourceCollection: 'kangur_ai_tutor_native_guides',
+            sourceRecordId: 'game-leaderboard',
+            sourcePath: 'entry:game-leaderboard',
+            tags: ['game', 'leaderboard', 'native-guide'],
+            semanticScore: 196,
+            tokenHits: 1,
+            relations: [],
+          },
+        ],
+      },
+    ]);
+
+    const { resolveKangurAiTutorSemanticGraphContext } = await import(
+      '@/features/kangur/server/knowledge-graph/retrieval'
+    );
+
+    const result = await resolveKangurAiTutorSemanticGraphContext({
+      latestUserMessage: 'Wyjasnij ten fragment',
+      context: {
+        surface: 'game',
+        promptMode: 'selected_text',
+        selectedText: 'Ranking wynikow',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-result-leaderboard',
+        contentId: 'game:practice:addition',
+      } as never,
+      locale: 'pl',
+    });
+
+    expect(generateKangurKnowledgeGraphQueryEmbeddingMock).toHaveBeenCalledWith(
+      expect.stringContaining('ranking wynikow')
+    );
+    expect(runNeo4jStatementsMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        parameters: expect.objectContaining({
+          tokens: expect.arrayContaining(['ranking', 'wynikow']),
+          focusKind: 'leaderboard',
+          focusId: 'kangur-game-result-leaderboard',
+          contentId: 'game:practice:addition',
+        }),
+      }),
+    ]);
+    expect(result.status).toBe('hit');
+  });
+
   it('reranks semantic hits with stored Neo4j node embeddings when available', async () => {
     process.env['NEO4J_ENABLED'] = 'true';
     process.env['NEO4J_HTTP_URL'] = 'http://localhost:7474';

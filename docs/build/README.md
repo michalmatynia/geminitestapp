@@ -26,6 +26,7 @@ shared toolchain surfaces.
 - [`bazel.md`](./bazel.md)
 - [`bazel-buildbuddy.md`](./bazel-buildbuddy.md)
 - [`bun.md`](./bun.md)
+- [`codeql.md`](./codeql.md)
 - [`general-improvements.md`](./general-improvements.md)
 
 ## Canonical Repo Lanes
@@ -61,6 +62,8 @@ shared toolchain surfaces.
   `npm run check:toolchain:contract:node`
 - Shared npm-first toolchain contract test bundle:
   `npm run test:toolchain:contract`
+- CodeQL scanning workflow and triage guide:
+  [`docs/build/codeql.md`](./codeql.md)
 - Shared high-risk coverage gate:
   `npm run check:coverage:high-risk`
 - Shared high-risk coverage baseline runner:

@@ -139,16 +139,6 @@ const normalizeIsoDate = (value: string | Date | null | undefined): string | nul
   return value instanceof Date ? value.toISOString() : value;
 };
 
-const toExportHistoryRecords = (
-  value: unknown
-): ProductListingExportEventRecord[] => {
-  if (!Array.isArray(value)) return [];
-  return value.filter(
-    (event: unknown): event is ProductListingExportEventRecord =>
-      typeof event === 'object' && event !== null
-  );
-};
-
 const toListingRecord = (doc: ProductListingDocument): ProductListing => ({
   id: normalizeLookupIdOrFallback(doc._id),
   productId: normalizeLookupIdOrFallback(doc.productId),

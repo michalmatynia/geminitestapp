@@ -1,5 +1,11 @@
 const removedPrismaHandler: ProxyHandler<Record<string, never>> = {
-  get(): never {
+  get(_target, prop): unknown {
+    if (
+      process.env['NODE_ENV'] === 'test'
+      && (prop === '$disconnect' || prop === '$connect' || prop === '$resetAll')
+    ) {
+      return async (): Promise<void> => undefined;
+    }
     throw new Error('Prisma has been removed. The application is MongoDB-only.');
   },
   has(): boolean {

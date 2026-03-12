@@ -60,14 +60,14 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
   return (
     <div className='flex items-start justify-between gap-3'>
       <div className='min-w-0'>
-        <div className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-amber-700'>
-          <span className='inline-flex h-1.5 w-1.5 rounded-full bg-amber-500' />
+        <div className='flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] [color:var(--kangur-chat-kicker-text,#b45309)]'>
+          <span className='inline-flex h-1.5 w-1.5 rounded-full [background:var(--kangur-chat-kicker-dot,#f59e0b)]' />
           {guestTutorLabel}
         </div>
-        <div className='mt-1.5 text-sm font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+        <div className='mt-1.5 text-sm font-semibold leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
           {guestIntroHeadline}
         </div>
-        <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-page-muted-text)]'>
+        <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
           {guestIntroDescription}
         </div>
       </div>
@@ -75,7 +75,7 @@ function KangurAiTutorGuestIntroHeader(): JSX.Element {
         data-testid='kangur-ai-tutor-guest-intro-close'
         type='button'
         onClick={onClose}
-        className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 text-amber-900 transition-[background-color,box-shadow,transform] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7)] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-soft-card-background)] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
+        className='shrink-0 cursor-pointer rounded-full border border-amber-200/80 p-1 transition-[background-color,box-shadow,transform,color] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] hover:-translate-y-[1px] hover:scale-[1.03] hover:[background:var(--kangur-chat-control-hover-background,var(--kangur-soft-card-background))] hover:shadow-[0_10px_20px_-14px_rgba(180,83,9,0.42)]'
         aria-label={closeAria}
       >
         <X className='h-3.5 w-3.5' />

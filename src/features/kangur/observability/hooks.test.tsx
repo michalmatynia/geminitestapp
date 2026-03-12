@@ -8,6 +8,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { kangurKeys } from '@/shared/lib/query-key-exports';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
 
 const { apiGetMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
@@ -19,7 +20,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { useKangurObservabilitySummary } from './hooks';
+import { useKangurKnowledgeGraphStatus, useKangurObservabilitySummary } from './hooks';
 
 const createTestClient = (): QueryClient =>
   new QueryClient({
@@ -169,6 +170,34 @@ const createSummaryResponse = () => ({
   },
 });
 
+const createKnowledgeGraphStatusResponse = () => ({
+  status: {
+    mode: 'status' as const,
+    graphKey: 'kangur-website-help-v1',
+    present: true,
+    locale: 'pl',
+    syncedAt: '2026-03-07T12:00:00.000Z',
+    syncedNodeCount: 87,
+    syncedEdgeCount: 108,
+    liveNodeCount: 87,
+    liveEdgeCount: 108,
+    canonicalNodeCount: 80,
+    validCanonicalNodeCount: 80,
+    invalidCanonicalNodeCount: 0,
+    semanticNodeCount: 87,
+    embeddingNodeCount: 87,
+    embeddingDimensions: 1536,
+    embeddingModels: ['text-embedding-3-small'],
+    vectorIndexPresent: true,
+    vectorIndexState: 'ONLINE',
+    vectorIndexType: 'VECTOR',
+    vectorIndexDimensions: 1536,
+    semanticCoverageRatePercent: 100,
+    embeddingCoverageRatePercent: 100,
+    semanticReadiness: 'vector_ready' as const,
+  },
+});
+
 describe('useKangurObservabilitySummary', () => {
   let queryClient: QueryClient;
 
@@ -213,5 +242,52 @@ describe('useKangurObservabilitySummary', () => {
 
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.error?.message).toBe('Invalid Kangur observability summary response');
+  });
+});
+
+describe('useKangurKnowledgeGraphStatus', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    queryClient = createTestClient();
+  });
+
+  const wrapper = ({ children }: { children: ReactNode }): ReactElement => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  it('loads the Kangur knowledge graph status through the shared API client', async () => {
+    apiGetMock.mockResolvedValue(createKnowledgeGraphStatusResponse());
+
+    const { result } = renderHook(() => useKangurKnowledgeGraphStatus(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/knowledge-graph/status', {
+      params: { graphKey: KANGUR_KNOWLEDGE_GRAPH_KEY },
+    });
+    expect(result.current.data).toEqual(createKnowledgeGraphStatusResponse().status);
+    expect(
+      queryClient.getQueryCache().find({
+        queryKey: kangurKeys.observability.knowledgeGraphStatus(KANGUR_KNOWLEDGE_GRAPH_KEY),
+      })
+    ).toBeDefined();
+  });
+
+  it('fails when the graph status API payload does not match the shared contract', async () => {
+    apiGetMock.mockResolvedValue({
+      status: {
+        mode: 'status',
+        graphKey: 'kangur-website-help-v1',
+      },
+    });
+
+    const { result } = renderHook(() => useKangurKnowledgeGraphStatus(), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.error?.message).toBe('Invalid Kangur knowledge graph status response');
   });
 });

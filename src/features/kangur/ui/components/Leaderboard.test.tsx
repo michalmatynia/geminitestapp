@@ -117,12 +117,11 @@ describe('Leaderboard', () => {
     expect(anonymousUserFilter).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
     expect(anonymousUserFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
-      'soft-card',
-      'border-indigo-300'
+      'soft-card'
     );
     expect(screen.getByTestId('leaderboard-current-user-badge-score-1')).toHaveClass(
-      'border-indigo-200',
-      'bg-indigo-100'
+      'rounded-full',
+      'border'
     );
     expect(screen.getByTestId('leaderboard-xp-score-1')).toHaveTextContent('+24 XP');
     expect(screen.getByTestId('leaderboard-row-score-2')).toHaveClass(

@@ -100,6 +100,21 @@ const rectContainsPoint = (rect: DOMRect | null | undefined, point: TutorPoint):
   );
 };
 
+const isInteractiveSectionDragTarget = (
+  eventTarget: EventTarget | null,
+  currentTarget: HTMLElement
+): boolean => {
+  if (!(eventTarget instanceof Element)) {
+    return false;
+  }
+
+  const interactiveTarget = eventTarget.closest<HTMLElement>(
+    'button, a, input, textarea, select, summary, [role="button"], [contenteditable="true"]'
+  );
+
+  return Boolean(interactiveTarget && interactiveTarget !== currentTarget);
+};
+
 const getAvatarRect = (point: TutorPoint): DOMRect => createRect(point.x, point.y, AVATAR_SIZE, AVATAR_SIZE);
 
 const getDraggedAvatarPoint = (input: {
@@ -263,41 +278,70 @@ export function useKangurAiTutorAvatarDrag(input: {
     viewport,
   } = input;
 
-  const handleFloatingAvatarPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>): void => {
-      if (event.button !== 0 || isOpen) {
-        return;
-      }
-
-      const avatarRect = event.currentTarget.getBoundingClientRect();
-      const origin = clampAvatarPoint(
-        {
-          x: avatarRect.left,
-          y: avatarRect.top,
-        },
-        viewport
-      );
-
+  const beginSectionDrag = useCallback(
+    (input: {
+      origin: TutorPoint;
+      pointerId: number;
+      startX: number;
+      startY: number;
+      target: HTMLElement;
+    }): void => {
       avatarDragStateRef.current = {
         moved: false,
-        origin,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
+        origin: clampAvatarPoint(input.origin, viewport),
+        pointerId: input.pointerId,
+        startX: input.startX,
+        startY: input.startY,
       };
       setHoveredSectionAnchorId(null);
       setIsAvatarDragging(true);
       suppressAvatarClickRef.current = false;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
+      input.target.setPointerCapture?.(input.pointerId);
+    },
+    [avatarDragStateRef, setHoveredSectionAnchorId, setIsAvatarDragging, suppressAvatarClickRef, viewport]
+  );
+
+  const handleFloatingAvatarPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>): void => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      const avatarRect = event.currentTarget.getBoundingClientRect();
+      beginSectionDrag({
+        origin: {
+          x: avatarRect.left,
+          y: avatarRect.top,
+        },
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        target: event.currentTarget,
+      });
     },
     [
-      avatarDragStateRef,
-      isOpen,
-      setHoveredSectionAnchorId,
-      setIsAvatarDragging,
-      suppressAvatarClickRef,
-      viewport,
+      beginSectionDrag,
     ]
+  );
+
+  const handlePanelSectionPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>): void => {
+      if (event.button !== 0 || isInteractiveSectionDragTarget(event.target, event.currentTarget)) {
+        return;
+      }
+
+      beginSectionDrag({
+        origin: {
+          x: event.clientX - AVATAR_SIZE / 2,
+          y: event.clientY - AVATAR_SIZE / 2,
+        },
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        target: event.currentTarget,
+      });
+    },
+    [beginSectionDrag]
   );
 
   const updateFloatingAvatarDrag = useCallback(
@@ -474,6 +518,30 @@ export function useKangurAiTutorAvatarDrag(input: {
     [finishFloatingAvatarDrag, setHoveredSectionAnchorId]
   );
 
+  const handlePanelSectionPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>): void => {
+      updateFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+    },
+    [updateFloatingAvatarDrag]
+  );
+
+  const handlePanelSectionPointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>): void => {
+      completeFloatingAvatarDrag(event.pointerId, event.clientX, event.clientY);
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    },
+    [completeFloatingAvatarDrag]
+  );
+
+  const handlePanelSectionPointerCancel = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>): void => {
+      finishFloatingAvatarDrag(event.pointerId);
+      setHoveredSectionAnchorId(null);
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    },
+    [finishFloatingAvatarDrag, setHoveredSectionAnchorId]
+  );
+
   useEffect(() => {
     if (!isAvatarDragging || typeof window === 'undefined') {
       return;
@@ -515,5 +583,9 @@ export function useKangurAiTutorAvatarDrag(input: {
     handleFloatingAvatarPointerMove,
     handleFloatingAvatarMouseUp,
     handleFloatingAvatarPointerUp,
+    handlePanelSectionPointerCancel,
+    handlePanelSectionPointerDown,
+    handlePanelSectionPointerMove,
+    handlePanelSectionPointerUp,
   };
 }

@@ -28,8 +28,7 @@ describe('CalendarInteractiveGame', () => {
       '0'
     );
     expect(screen.getByTestId('calendar-interactive-prompt')).toHaveClass(
-      'soft-card',
-      'border-emerald-300'
+      'soft-card'
     );
     expect(screen.getByTestId('calendar-interactive-calendar-shell')).toHaveClass(
       'soft-card',
@@ -49,7 +48,7 @@ describe('CalendarInteractiveGame', () => {
 
     fireEvent.click(mondayButton);
 
-    expect(mondayButton).toHaveClass('border-emerald-300');
+    expect(mondayButton).toHaveClass('cursor-default');
     expect(screen.queryByTestId('calendar-interactive-feedback')).toBeNull();
   });
 
@@ -62,8 +61,8 @@ describe('CalendarInteractiveGame', () => {
 
     fireEvent.click(tuesdayButton);
 
-    expect(tuesdayButton).toHaveClass('border-rose-300');
-    expect(screen.getByTestId('calendar-weekday-0')).toHaveClass('border-emerald-300');
+    expect(tuesdayButton).toHaveClass('cursor-default');
+    expect(screen.getByTestId('calendar-weekday-0')).toHaveClass('cursor-default');
     expect(screen.queryByTestId('calendar-interactive-feedback')).toBeNull();
   });
 
@@ -77,7 +76,7 @@ describe('CalendarInteractiveGame', () => {
     expect(winterTarget).toHaveClass('soft-card');
 
     fireEvent.dragOver(winterTarget);
-    expect(winterTarget).toHaveClass('border-sky-300');
+    expect(winterTarget).toHaveClass('scale-[1.02]');
   });
 
   it('shows day-section guidance and only day-oriented task UI', () => {

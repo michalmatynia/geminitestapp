@@ -244,7 +244,12 @@ describe('Kangur shared primitives', () => {
       'text-center'
     );
     expect(screen.getByText('Gra z piłkami!')).toHaveClass('text-2xl', 'text-amber-700');
-    expect(screen.getByText('🎮')).toHaveClass('h-16', 'w-16', 'bg-amber-100', 'text-amber-700');
+    expect(screen.getByText('🎮')).toHaveClass(
+      'h-16',
+      'w-16',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(254_243_199))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(180_83_9))]'
+    );
     expect(screen.getByTestId('kangur-section-heading')).toHaveClass(
       'flex',
       'flex-row',
@@ -252,7 +257,12 @@ describe('Kangur shared primitives', () => {
       'text-left'
     );
     expect(screen.getByText('Shared section')).toHaveClass('text-2xl', 'text-indigo-700');
-    expect(screen.getByText('🧭')).toHaveClass('h-16', 'w-16', 'bg-indigo-100', 'text-indigo-700');
+    expect(screen.getByText('🧭')).toHaveClass(
+      'h-16',
+      'w-16',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(224_231_255))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(79_70_229))]'
+    );
     expect(screen.getByTestId('kangur-equation-display')).toHaveClass(
       'text-3xl',
       'text-blue-600'
@@ -265,10 +275,23 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-activity-column')).toHaveAttribute('data-active', 'true');
     expect(screen.getByTestId('kangur-activity-column')).toHaveStyle({ height: '72%' });
-    expect(screen.getByTestId('kangur-summary')).toHaveClass('soft-card', 'border-indigo-300');
-    expect(screen.getByText('Sekcja')).toHaveClass('border-indigo-200', 'bg-indigo-100');
-    expect(screen.getByTestId('kangur-metric')).toHaveClass('soft-card', 'border-emerald-300');
-    expect(screen.getByText('92%')).toHaveClass('text-emerald-700');
+    expect(screen.getByTestId('kangur-summary')).toHaveClass(
+      'soft-card',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(224_231_255))]'
+    );
+    expect(screen.getByText('Sekcja')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+    );
+    expect(screen.getByTestId('kangur-metric')).toHaveClass(
+      'soft-card',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(209_250_229))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(209_250_229))]'
+    );
+    expect(screen.getByText('92%')).toHaveClass(
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(4_120_87))]'
+    );
     expect(screen.getByTestId('kangur-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
@@ -283,7 +306,8 @@ describe('Kangur shared primitives', () => {
     );
     expect(screen.getByTestId('kangur-option')).toHaveClass(
       'soft-card',
-      'border-amber-300',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(254_243_199))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(254_243_199))]',
       'cursor-pointer'
     );
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(

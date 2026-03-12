@@ -6,9 +6,18 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurObservabilitySummaryMock, refetchMock, replaceMock, navigationState } = vi.hoisted(() => ({
+const {
+  useKangurObservabilitySummaryMock,
+  useKangurKnowledgeGraphStatusMock,
+  refetchMock,
+  knowledgeGraphStatusRefetchMock,
+  replaceMock,
+  navigationState,
+} = vi.hoisted(() => ({
   useKangurObservabilitySummaryMock: vi.fn(),
+  useKangurKnowledgeGraphStatusMock: vi.fn(),
   refetchMock: vi.fn(),
+  knowledgeGraphStatusRefetchMock: vi.fn(),
   replaceMock: vi.fn(),
   navigationState: {
     pathname: '/admin/kangur/observability',
@@ -38,6 +47,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/kangur/observability/hooks', () => ({
   useKangurObservabilitySummary: useKangurObservabilitySummaryMock,
+  useKangurKnowledgeGraphStatus: useKangurKnowledgeGraphStatusMock,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -390,12 +400,20 @@ describe('AdminKangurObservabilityPage', () => {
     vi.clearAllMocks();
     navigationState.pathname = '/admin/kangur/observability';
     navigationState.search = '';
+    knowledgeGraphStatusRefetchMock.mockResolvedValue(undefined);
     useKangurObservabilitySummaryMock.mockImplementation((range: '24h' | '7d' | '30d') => ({
       data: createSummary(range),
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: refetchMock,
+    }));
+    useKangurKnowledgeGraphStatusMock.mockImplementation(() => ({
+      data: createSummary('24h').knowledgeGraphStatus,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: knowledgeGraphStatusRefetchMock,
     }));
   });
 
@@ -454,6 +472,7 @@ describe('AdminKangurObservabilityPage', () => {
     expect(
       screen.getByText('Hybrid and vector-only recall as a share of 3 semantic graph replies.')
     ).toBeInTheDocument();
+    expect(useKangurKnowledgeGraphStatusMock).toHaveBeenCalledWith('kangur-website-help-v1');
     expect(screen.getByText('Knowledge Graph Status')).toBeInTheDocument();
     expect(screen.getByText('Neo4j semantic retrieval graph')).toBeInTheDocument();
     expect(screen.getByText('Vector ready')).toBeInTheDocument();
@@ -478,6 +497,10 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByRole('link', { name: /tts generation failure logs/i })).toHaveAttribute(
       'href',
       '/admin/system/logs?source=kangur.tts.generationFailed&from=2026-03-06T12%3A00%3A00.000Z&to=2026-03-07T12%3A00%3A00.000Z'
+    );
+    expect(screen.getByRole('link', { name: /knowledge graph status json/i })).toHaveAttribute(
+      'href',
+      '/api/kangur/knowledge-graph/status'
     );
     expect(screen.getByRole('link', { name: /open baseline details/i })).toHaveAttribute(
       'href',
@@ -530,6 +553,17 @@ describe('AdminKangurObservabilityPage', () => {
       isFetching: false,
       error: null,
       refetch: refetchMock,
+    });
+    useKangurKnowledgeGraphStatusMock.mockReturnValue({
+      data: {
+        mode: 'disabled' as const,
+        graphKey: 'kangur-website-help-v1',
+        message: 'Neo4j is not enabled. Set NEO4J_* env vars before checking live graph status.',
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: knowledgeGraphStatusRefetchMock,
     });
 
     render(<AdminKangurObservabilityPage />);

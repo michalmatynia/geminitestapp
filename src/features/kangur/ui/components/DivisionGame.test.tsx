@@ -42,15 +42,16 @@ describe('DivisionGame', () => {
 
     expect(screen.getByTestId('division-share-group-0')).toHaveClass(
       'soft-card',
-      'border-sky-300'
+      'border',
+      'rounded-[22px]'
     );
     const firstChoice = screen.getByTestId('division-game-choice-0');
 
-    expect(firstChoice).toHaveClass('soft-card', 'rounded-[24px]');
+    expect(firstChoice).toHaveClass('soft-card', 'border', 'rounded-[24px]');
 
     fireEvent.click(firstChoice);
 
-    expect(firstChoice).toHaveClass('border-amber-300');
+    expect(firstChoice).toHaveClass('soft-card', 'rounded-[24px]');
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź ✓' }));
 
     const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });

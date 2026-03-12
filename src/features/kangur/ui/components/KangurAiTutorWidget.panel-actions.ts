@@ -66,6 +66,7 @@ type UseKangurAiTutorPanelActionsInput = {
     options: {
       promptMode: KangurAiTutorPromptMode;
       selectedText: string | null;
+      contentId?: string | null;
       focusKind?: KangurAiTutorFocusKind;
       focusId: string | null;
       focusLabel: string | null;
@@ -170,13 +171,15 @@ export function useKangurAiTutorPanelActions({
     if (activeSelectedText) {
       persistSelectionGeometry();
     }
+    const conversationFocus = activeFocus.conversationFocus;
     await sendMessage(text || (currentDrawingData ? '[rysunek]' : ''), {
       promptMode: activeSelectedText ? 'selected_text' : 'chat',
       selectedText: activeSelectedText,
-      focusKind: normalizeConversationFocusKind(activeFocus.kind),
-      focusId: activeFocus.id,
-      focusLabel: activeFocus.label,
-      assignmentId: activeFocus.assignmentId,
+      contentId: conversationFocus.contentId,
+      focusKind: normalizeConversationFocusKind(conversationFocus.kind),
+      focusId: conversationFocus.id,
+      focusLabel: conversationFocus.label,
+      assignmentId: conversationFocus.assignmentId,
       interactionIntent:
         activeSelectedText || highlightedSection || activeFocus.kind === 'review'
           ? activeFocus.kind === 'review'
@@ -184,7 +187,7 @@ export function useKangurAiTutorPanelActions({
             : 'explain'
           : undefined,
       drawingImageData: currentDrawingData,
-      surface: highlightedSection?.surface,
+      surface: highlightedSection?.surface ?? conversationFocus.surface ?? undefined,
     });
     if (activeSelectedText) {
       clearSelection();
@@ -192,6 +195,7 @@ export function useKangurAiTutorPanelActions({
     }
   }, [
     activeFocus.assignmentId,
+    activeFocus.conversationFocus,
     activeFocus.id,
     activeFocus.kind,
     activeFocus.label,
@@ -247,17 +251,19 @@ export function useKangurAiTutorPanelActions({
         hasSelectedText: Boolean(activeSelectedText),
         focusKind: activeFocus.kind ?? null,
       });
+      const conversationFocus = activeFocus.conversationFocus;
       await sendMessage(action.prompt, {
         promptMode: action.promptMode,
         selectedText: activeSelectedText,
-        focusKind: normalizeConversationFocusKind(activeFocus.kind),
-        focusId: activeFocus.id,
-        focusLabel: activeFocus.label,
-        assignmentId: activeFocus.assignmentId,
+        contentId: conversationFocus.contentId,
+        focusKind: normalizeConversationFocusKind(conversationFocus.kind),
+        focusId: conversationFocus.id,
+        focusLabel: conversationFocus.label,
+        assignmentId: conversationFocus.assignmentId,
         interactionIntent:
           action.interactionIntent ??
           getInteractionIntent(action.promptMode, activeFocus.kind, answerRevealed),
-        surface: highlightedSection?.surface,
+        surface: highlightedSection?.surface ?? conversationFocus.surface ?? undefined,
       });
       if (activeSelectedText) {
         clearSelection();
@@ -266,6 +272,7 @@ export function useKangurAiTutorPanelActions({
     },
     [
       activeFocus.assignmentId,
+      activeFocus.conversationFocus,
       activeFocus.id,
       activeFocus.kind,
       activeFocus.label,

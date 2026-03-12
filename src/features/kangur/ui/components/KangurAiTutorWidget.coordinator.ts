@@ -328,6 +328,7 @@ export function useKangurAiTutorWidgetCoordinator({
     authIsAuthenticated: authState?.isAuthenticated,
     clearSelection,
     closeChat,
+    hasContextualFreeformFocus: activeFocus.kind !== null,
     contextualFreeformPanelPoint,
     getContextSwitchNotice,
     getCurrentLocation: getCurrentTutorLocation,
@@ -534,6 +535,7 @@ export function useKangurAiTutorWidgetCoordinator({
     motionProfile,
     prefersReducedMotion: Boolean(prefersReducedMotion),
     resetAskModalState,
+    selectionConversationFocus: activeFocus.conversationFocus,
     selectionExplainTimeoutRef,
     selectionGuidanceRevealTimeoutRef,
     sendMessage,
@@ -667,6 +669,10 @@ export function useKangurAiTutorWidgetCoordinator({
     handleFloatingAvatarPointerMove,
     handleFloatingAvatarMouseUp,
     handleFloatingAvatarPointerUp,
+    handlePanelSectionPointerCancel,
+    handlePanelSectionPointerDown,
+    handlePanelSectionPointerMove,
+    handlePanelSectionPointerUp,
   } = useKangurAiTutorAvatarDrag({
     avatarDragStateRef,
     draggedAvatarPoint,
@@ -706,6 +712,19 @@ export function useKangurAiTutorWidgetCoordinator({
     setPanelSnapPreference,
     viewport,
   });
+
+  const handleTutorHeaderPointerCancel = isPanelDraggable
+    ? handlePanelHeaderPointerCancel
+    : handlePanelSectionPointerCancel;
+  const handleTutorHeaderPointerDown = isPanelDraggable
+    ? handlePanelHeaderPointerDown
+    : handlePanelSectionPointerDown;
+  const handleTutorHeaderPointerMove = isPanelDraggable
+    ? handlePanelHeaderPointerMove
+    : handlePanelSectionPointerMove;
+  const handleTutorHeaderPointerUp = isPanelDraggable
+    ? handlePanelHeaderPointerUp
+    : handlePanelSectionPointerUp;
 
   const {
     handleClearDrawing,
@@ -822,6 +841,10 @@ export function useKangurAiTutorWidgetCoordinator({
     handleAvatarClick,
     handleAvatarMouseDown,
     handleAvatarMouseUp: handleFloatingAvatarMouseUp,
+    handleAttachedAvatarPointerCancel: handleFloatingAvatarPointerCancel,
+    handleAttachedAvatarPointerDown: handleFloatingAvatarPointerDown,
+    handleAttachedAvatarPointerMove: handleFloatingAvatarPointerMove,
+    handleAttachedAvatarPointerUp: handleFloatingAvatarPointerUp,
     handleClearDrawing,
     handleCloseChat,
     handleCloseGuidedCallout,
@@ -854,10 +877,10 @@ export function useKangurAiTutorWidgetCoordinator({
     handlePanelBackdropClose,
     handlePanelHeaderClose,
     handleResetPanelPosition,
-    handlePanelHeaderPointerCancel,
-    handlePanelHeaderPointerDown,
-    handlePanelHeaderPointerMove,
-    handlePanelHeaderPointerUp,
+    handlePanelHeaderPointerCancel: handleTutorHeaderPointerCancel,
+    handlePanelHeaderPointerDown: handleTutorHeaderPointerDown,
+    handlePanelHeaderPointerMove: handleTutorHeaderPointerMove,
+    handlePanelHeaderPointerUp: handleTutorHeaderPointerUp,
     handleQuickAction,
     handleSelectionActionMouseDown,
     handleSend,

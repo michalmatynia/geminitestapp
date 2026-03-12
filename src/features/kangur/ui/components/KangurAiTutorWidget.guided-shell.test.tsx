@@ -5,6 +5,7 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
+import { AVATAR_SIZE } from './KangurAiTutorWidget.shared';
 
 import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
 
@@ -47,6 +48,12 @@ const buildInput = (
   ...overrides,
 });
 
+const getRectSeparationDistance = (left: DOMRect, right: DOMRect): number => {
+  const horizontalGap = Math.max(0, left.left - right.right, right.left - left.right);
+  const verticalGap = Math.max(0, left.top - right.bottom, right.top - left.bottom);
+  return Math.hypot(horizontalGap, verticalGap);
+};
+
 describe('KangurAiTutorWidget.guided-shell', () => {
   it('keeps the guided selection avatar cluster stable before and after the preview reveal', () => {
     const { result, rerender } = renderHook(
@@ -67,12 +74,46 @@ describe('KangurAiTutorWidget.guided-shell', () => {
     expect(result.current.guidedAvatarLayout?.placement).toBe(initialAvatarPlacement);
   });
 
-  it('keeps the tutor-owned glow overlay active even when CSS highlight support is available', () => {
+  it('keeps the guided selection glow overlay active even when text emphasis is DOM-owned', () => {
     const { result } = renderHook(() =>
       useKangurAiTutorGuidedShellState(buildInput({ selectionGlowSupported: true }))
     );
 
     expect(result.current.selectionGlowStyles).toHaveLength(1);
     expect(result.current.selectionSpotlightStyle).toBeNull();
+  });
+
+  it('keeps the guided selection avatar cluster visually close to a mid-page highlight', () => {
+    const guidedFocusRect = new DOMRect(420, 360, 180, 28);
+    const { result } = renderHook(() =>
+      useKangurAiTutorGuidedShellState(
+        buildInput({
+          activeSelectionProtectedRect: new DOMRect(360, 320, 300, 120),
+          guidedFocusRect,
+          guidedSelectionGlowRects: [
+            new DOMRect(420, 360, 110, 28),
+            new DOMRect(420, 392, 180, 28),
+          ],
+          guidedSelectionSpotlightRect: guidedFocusRect,
+          showSelectionGuidanceCallout: true,
+          viewport: { width: 1440, height: 900 },
+        })
+      )
+    );
+
+    expect(result.current.guidedAvatarStyle).not.toBeNull();
+    expect(result.current.guidedCalloutStyle).not.toBeNull();
+
+    const avatarStyle = result.current.guidedAvatarStyle as { left: number; top: number };
+    const avatarRect = new DOMRect(avatarStyle.left, avatarStyle.top, AVATAR_SIZE, AVATAR_SIZE);
+    const calloutStyle = result.current.guidedCalloutStyle as {
+      left: number;
+      top: number;
+      width: number;
+    };
+    const calloutRect = new DOMRect(calloutStyle.left, calloutStyle.top, calloutStyle.width, 260);
+
+    expect(getRectSeparationDistance(avatarRect, guidedFocusRect)).toBeLessThanOrEqual(96);
+    expect(getRectSeparationDistance(calloutRect, guidedFocusRect)).toBeLessThanOrEqual(48);
   });
 });

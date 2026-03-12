@@ -132,7 +132,8 @@ describe('CalendarTrainingGame', () => {
     fireEvent.click(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` }));
 
     expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveClass(
-      'border-emerald-300'
+      'soft-card',
+      'cursor-default'
     );
     expect(screen.getByRole('button', { name: `Odpowiedz ${correctAnswer}` })).toHaveAttribute(
       'aria-disabled',

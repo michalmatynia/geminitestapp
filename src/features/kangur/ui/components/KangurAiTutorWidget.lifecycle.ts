@@ -70,6 +70,7 @@ type UseKangurAiTutorLifecycleEffectsInput = {
   authIsAuthenticated: boolean | undefined;
   clearSelection: () => void;
   closeChat: () => void;
+  hasContextualFreeformFocus: boolean;
   contextualFreeformPanelPoint: TutorPoint | null;
   getContextSwitchNotice: (input: {
     assignmentId: string | null | undefined;
@@ -108,6 +109,7 @@ export function useKangurAiTutorLifecycleEffects({
   authIsAuthenticated,
   clearSelection,
   closeChat,
+  hasContextualFreeformFocus,
   contextualFreeformPanelPoint,
   getContextSwitchNotice,
   getCurrentLocation,
@@ -217,6 +219,42 @@ export function useKangurAiTutorLifecycleEffects({
       top: clampedPoint.y,
     });
   }, [draggedAvatarPoint, setDraggedAvatarPoint, viewport]);
+
+  useEffect(() => {
+    if (
+      contextualFreeformPanelPoint !== null ||
+      !isOpen ||
+      askModalVisible ||
+      uiMode !== 'freeform' ||
+      panelPositionMode !== 'contextual' ||
+      hasContextualFreeformFocus
+    ) {
+      return;
+    }
+
+    setPanelPositionMode('manual');
+    if (!panelPosition) {
+      clearPersistedTutorPanelPosition();
+      return;
+    }
+
+    persistTutorPanelPosition({
+      left: panelPosition.x,
+      mode: 'manual',
+      snap: panelSnapPreference,
+      top: panelPosition.y,
+    });
+  }, [
+    askModalVisible,
+    contextualFreeformPanelPoint,
+    hasContextualFreeformFocus,
+    isOpen,
+    panelPosition,
+    panelPositionMode,
+    panelSnapPreference,
+    setPanelPositionMode,
+    uiMode,
+  ]);
 
   useEffect(() => {
     if (

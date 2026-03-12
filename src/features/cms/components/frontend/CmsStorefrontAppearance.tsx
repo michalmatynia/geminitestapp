@@ -1,5 +1,6 @@
 'use client';
 
+import { Moon, Sun } from 'lucide-react';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { darkenCssColor } from '@/shared/utils/color-utils';
@@ -21,6 +22,7 @@ type CmsStorefrontAppearanceContextValue = {
 type CmsStorefrontAppearanceProviderProps = {
   children: React.ReactNode;
   initialMode?: CmsStorefrontAppearanceMode;
+  storageKey?: string;
 };
 
 type CmsStorefrontAppearanceButtonsProps = {
@@ -47,6 +49,32 @@ const normalizeMode = (value: string | null | undefined): CmsStorefrontAppearanc
   return VALID_MODES.has(value as CmsStorefrontAppearanceMode)
     ? (value as CmsStorefrontAppearanceMode)
     : 'default';
+};
+
+const canUseLocalStorage = (): boolean =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const readPersistedMode = (storageKey: string): CmsStorefrontAppearanceMode | null => {
+  if (!canUseLocalStorage()) return null;
+
+  try {
+    const value = window.localStorage.getItem(storageKey);
+    return VALID_MODES.has(value as CmsStorefrontAppearanceMode)
+      ? (value as CmsStorefrontAppearanceMode)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const writePersistedMode = (storageKey: string, mode: CmsStorefrontAppearanceMode): void => {
+  if (!canUseLocalStorage()) return;
+
+  try {
+    window.localStorage.setItem(storageKey, mode);
+  } catch {
+    // Ignore localStorage persistence failures and keep the in-memory selection.
+  }
 };
 
 const withFallbackTone = (tone?: CmsAppearanceTone): Required<CmsAppearanceTone> => ({
@@ -383,12 +411,31 @@ export const resolveKangurStorefrontAppearance = (
 export function CmsStorefrontAppearanceProvider({
   children,
   initialMode = 'default',
+  storageKey,
 }: CmsStorefrontAppearanceProviderProps): React.JSX.Element {
   const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(normalizeMode(initialMode));
+  const skipNextPersistenceWriteRef = React.useRef(false);
 
   useEffect(() => {
-    setMode(normalizeMode(initialMode));
-  }, [initialMode]);
+    if (!storageKey) {
+      setMode(normalizeMode(initialMode));
+      return;
+    }
+
+    skipNextPersistenceWriteRef.current = true;
+    setMode(readPersistedMode(storageKey) ?? normalizeMode(initialMode));
+  }, [initialMode, storageKey]);
+
+  useEffect(() => {
+    if (!storageKey) return;
+
+    if (skipNextPersistenceWriteRef.current) {
+      skipNextPersistenceWriteRef.current = false;
+      return;
+    }
+
+    writePersistedMode(storageKey, mode);
+  }, [mode, storageKey]);
 
   const value = useMemo(
     () => ({
@@ -439,7 +486,7 @@ export function CmsStorefrontAppearanceButtons({
         aria-pressed={isDarkMode}
         onClick={() => setMode(nextMode)}
         title={buttonAriaLabel}
-        className='inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
+        className='relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
         style={{
           border: `1px solid ${resolvedTone.border}`,
           backgroundColor: `color-mix(in srgb, ${resolvedTone.accent} ${buttonAccentWeight}, ${resolvedTone.background})`,
@@ -447,7 +494,21 @@ export function CmsStorefrontAppearanceButtons({
           boxShadow: `0 14px 24px -20px ${isDarkMode ? 'rgba(15,23,42,0.45)' : resolvedTone.accent}`,
         }}
       >
-        {buttonLabel}
+        <Sun
+          aria-hidden='true'
+          className={[
+            'absolute h-4 w-4 transition-all duration-300 ease-out',
+            isDarkMode ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0',
+          ].join(' ')}
+        />
+        <Moon
+          aria-hidden='true'
+          className={[
+            'absolute h-4 w-4 transition-all duration-300 ease-out',
+            isDarkMode ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100',
+          ].join(' ')}
+        />
+        <span className='sr-only'>{buttonLabel}</span>
       </button>
     </div>
   );

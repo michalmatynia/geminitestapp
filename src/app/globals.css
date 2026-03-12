@@ -775,6 +775,25 @@
     --home-action-accent-shadow-rgb: 126, 100, 255;
     --home-action-underlay-shadow-rgb: 117, 96, 255;
     --home-action-surface-shadow-rgb: 116, 104, 203;
+    --home-action-face-border: rgba(228, 234, 255, 0.74);
+    --home-action-face-hover-border: rgba(220, 227, 255, 0.78);
+    --home-action-face-base-gradient: linear-gradient(
+      180deg,
+      rgba(251, 252, 255, 0.72) 0%,
+      rgba(243, 246, 255, 0.54) 38%,
+      rgba(233, 238, 255, 0.4) 100%
+    );
+    --home-action-face-shadow:
+      0 18px 34px rgba(var(--home-action-accent-shadow-rgb), 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.88),
+      inset 0 12px 22px rgba(255, 255, 255, 0.24),
+      inset 0 -12px 20px rgba(174, 171, 220, 0.14),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+    --home-action-face-hover-shadow:
+      0 24px 52px rgba(var(--home-action-accent-shadow-rgb), 0.16),
+      inset 0 7px 16px rgba(255, 255, 255, 0.78),
+      inset 0 -12px 20px rgba(176, 186, 240, 0.26),
+      0 0 0 1px rgba(255, 255, 255, 0.34);
     --home-action-accent-gradient: linear-gradient(90deg, #6e79ff 0%, #8c7cff 44%, #d48bff 100%);
     --home-action-underlay-fill-gradient: linear-gradient(
       180deg,
@@ -968,21 +987,9 @@
     inset: 0;
     z-index: 0;
     border-radius: inherit;
-    border: 1px solid rgba(228, 234, 255, 0.74);
-    background:
-      linear-gradient(
-        180deg,
-        rgba(251, 252, 255, 0.72) 0%,
-        rgba(243, 246, 255, 0.54) 38%,
-        rgba(233, 238, 255, 0.4) 100%
-      ),
-      var(--home-action-underlay-fill-gradient);
-    box-shadow:
-      0 18px 34px rgba(var(--home-action-accent-shadow-rgb), 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.88),
-      inset 0 12px 22px rgba(255, 255, 255, 0.24),
-      inset 0 -12px 20px rgba(174, 171, 220, 0.14),
-      0 0 0 1px rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--home-action-face-border);
+    background: var(--home-action-face-base-gradient), var(--home-action-underlay-fill-gradient);
+    box-shadow: var(--home-action-face-shadow);
     -webkit-backdrop-filter: blur(18px) saturate(1.22);
     backdrop-filter: blur(18px) saturate(1.22);
     backface-visibility: hidden;
@@ -1036,13 +1043,155 @@
   .home-action-featured-shell[data-nav-state='transitioning'] .home-action-featured-face,
   .home-action-featured-shell[data-nav-state='idle']:is(:hover, :focus-within) .home-action-featured-face,
   .home-action-featured-shell:not([data-nav-state]):is(:hover, :focus-within) .home-action-featured-face {
-    border-color: rgba(220, 227, 255, 0.78);
-    box-shadow:
-      0 24px 52px rgba(var(--home-action-accent-shadow-rgb), 0.16),
-      inset 0 7px 16px rgba(255, 255, 255, 0.78),
-      inset 0 -12px 20px rgba(176, 186, 240, 0.26),
-      0 0 0 1px rgba(255, 255, 255, 0.34);
+    border-color: var(--home-action-face-hover-border);
+    box-shadow: var(--home-action-face-hover-shadow);
     filter: saturate(1.03);
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-soft {
+    border-color: rgba(148, 163, 184, 0.26);
+    background: linear-gradient(
+      180deg,
+      rgba(51, 65, 85, 0.96) 0%,
+      rgba(15, 23, 42, 0.94) 100%
+    );
+    box-shadow:
+      0 28px 58px rgba(2, 6, 23, 0.34),
+      inset 0 6px 14px rgba(255, 255, 255, 0.08),
+      inset 0 -10px 18px rgba(2, 6, 23, 0.34),
+      0 0 0 1px rgba(148, 163, 184, 0.12);
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-soft:hover,
+  [data-kangur-appearance-mode='dark'] .home-action-soft:focus-visible {
+    box-shadow:
+      0 32px 64px rgba(2, 6, 23, 0.42),
+      inset 0 6px 14px rgba(255, 255, 255, 0.1),
+      inset 0 -10px 18px rgba(2, 6, 23, 0.42),
+      0 0 0 1px rgba(191, 219, 254, 0.16);
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-featured-shell {
+    --home-action-active-text-color: #f8fafc;
+    --home-action-face-border: rgba(148, 163, 184, 0.22);
+    --home-action-face-hover-border: rgba(191, 219, 254, 0.3);
+    --home-action-face-base-gradient: linear-gradient(
+      180deg,
+      rgba(51, 65, 85, 0.9) 0%,
+      rgba(30, 41, 59, 0.82) 38%,
+      rgba(15, 23, 42, 0.76) 100%
+    );
+    --home-action-face-shadow:
+      0 18px 34px rgba(var(--home-action-accent-shadow-rgb), 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 10px 18px rgba(255, 255, 255, 0.03),
+      inset 0 -12px 20px rgba(2, 6, 23, 0.28),
+      0 0 0 1px rgba(148, 163, 184, 0.1);
+    --home-action-face-hover-shadow:
+      0 24px 52px rgba(var(--home-action-accent-shadow-rgb), 0.22),
+      inset 0 6px 14px rgba(255, 255, 255, 0.14),
+      inset 0 -12px 20px rgba(2, 6, 23, 0.34),
+      0 0 0 1px rgba(191, 219, 254, 0.16);
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-theme-neutral {
+    --home-action-rest-text-color: #dbe7ff;
+    --home-action-accent-shadow-rgb: 90, 110, 224;
+    --home-action-underlay-shadow-rgb: 56, 74, 168;
+    --home-action-surface-shadow-rgb: 36, 50, 116;
+    --home-action-accent-gradient: linear-gradient(90deg, #4f62db 0%, #5d67d3 44%, #7f5ad5 100%);
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      rgba(70, 84, 150, 0.44) 0%,
+      rgba(52, 64, 122, 0.4) 46%,
+      rgba(75, 57, 133, 0.48) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      rgba(47, 67, 163, 0.26) 0%,
+      rgba(61, 79, 188, 0.48) 52%,
+      rgba(104, 73, 186, 0.62) 100%
+    );
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-theme-violet {
+    --home-action-rest-text-color: #efe9ff;
+    --home-action-accent-shadow-rgb: 120, 92, 228;
+    --home-action-underlay-shadow-rgb: 88, 66, 176;
+    --home-action-surface-shadow-rgb: 60, 42, 128;
+    --home-action-accent-gradient: linear-gradient(90deg, #5f54d8 0%, #735add 44%, #9a5be2 100%);
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      rgba(86, 72, 152, 0.44) 0%,
+      rgba(68, 56, 124, 0.4) 46%,
+      rgba(92, 63, 150, 0.5) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      rgba(83, 63, 172, 0.28) 0%,
+      rgba(103, 71, 196, 0.5) 52%,
+      rgba(146, 84, 214, 0.64) 100%
+    );
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-theme-sky {
+    --home-action-rest-text-color: #d8f2ff;
+    --home-action-accent-shadow-rgb: 74, 146, 214;
+    --home-action-underlay-shadow-rgb: 45, 104, 166;
+    --home-action-surface-shadow-rgb: 27, 69, 120;
+    --home-action-accent-gradient: linear-gradient(90deg, #2f88d8 0%, #3ea1da 48%, #58b8df 100%);
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      rgba(50, 101, 145, 0.42) 0%,
+      rgba(39, 82, 128, 0.4) 46%,
+      rgba(46, 91, 144, 0.48) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      rgba(39, 104, 178, 0.26) 0%,
+      rgba(42, 126, 188, 0.48) 50%,
+      rgba(61, 164, 209, 0.58) 100%
+    );
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-theme-mist {
+    --home-action-rest-text-color: #e0e7ff;
+    --home-action-accent-shadow-rgb: 101, 118, 212;
+    --home-action-underlay-shadow-rgb: 70, 86, 160;
+    --home-action-surface-shadow-rgb: 46, 58, 118;
+    --home-action-accent-gradient: linear-gradient(90deg, #5169d2 0%, #6b81dc 48%, #8d73dc 100%);
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      rgba(76, 88, 146, 0.42) 0%,
+      rgba(62, 73, 126, 0.4) 46%,
+      rgba(79, 71, 138, 0.48) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      rgba(67, 86, 172, 0.24) 0%,
+      rgba(84, 102, 186, 0.46) 50%,
+      rgba(124, 102, 194, 0.6) 100%
+    );
+  }
+
+  [data-kangur-appearance-mode='dark'] .home-action-theme-sand {
+    --home-action-rest-text-color: #ffedd5;
+    --home-action-accent-shadow-rgb: 196, 106, 48;
+    --home-action-underlay-shadow-rgb: 144, 78, 34;
+    --home-action-surface-shadow-rgb: 96, 54, 28;
+    --home-action-accent-gradient: linear-gradient(90deg, #c96f36 0%, #d17b49 48%, #a865c5 100%);
+    --home-action-underlay-fill-gradient: linear-gradient(
+      180deg,
+      rgba(122, 74, 46, 0.44) 0%,
+      rgba(99, 60, 37, 0.4) 46%,
+      rgba(92, 56, 94, 0.46) 100%
+    );
+    --home-action-underlay-tint-gradient: linear-gradient(
+      180deg,
+      rgba(155, 86, 42, 0.24) 0%,
+      rgba(176, 92, 48, 0.44) 52%,
+      rgba(131, 79, 178, 0.56) 100%
+    );
   }
 
   .home-action-featured-accent {

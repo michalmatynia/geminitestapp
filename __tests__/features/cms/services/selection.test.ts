@@ -1,15 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getCmsRepository, resetCmsRepositoryCache } from '@/features/cms/services/cms-repository';
-
-vi.mock('@/shared/lib/cms/services/cms-provider', () => ({
-  getCmsDataProvider: vi.fn(),
-}));
-
-vi.mock('@/features/cms/services/cms-repository/prisma-cms-repository', () => ({
-  prismaCmsRepository: { type: 'prisma' },
-}));
 
 vi.mock('@/features/cms/services/cms-repository/mongo-cms-repository', () => ({
   mongoCmsRepository: { type: 'mongo' },
@@ -21,15 +12,16 @@ describe('CMS Repository Selection', () => {
     resetCmsRepositoryCache();
   });
 
-  it('should return mongo repository when provider is mongodb', async () => {
-    (getCmsDataProvider as any).mockResolvedValue('mongodb');
+  it('should return the mongo repository', async () => {
     const repo = await getCmsRepository();
     expect(repo).toEqual({ type: 'mongo' });
   });
 
-  it('should return prisma repository when provider is prisma', async () => {
-    (getCmsDataProvider as any).mockResolvedValue('prisma');
-    const repo = await getCmsRepository();
-    expect(repo).toEqual({ type: 'prisma' });
+  it('should keep returning the cached mongo repository until reset', async () => {
+    const first = await getCmsRepository();
+    const second = await getCmsRepository();
+
+    expect(first).toEqual({ type: 'mongo' });
+    expect(second).toEqual({ type: 'mongo' });
   });
 });

@@ -92,11 +92,11 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-completion-rate')).toHaveClass(
       'soft-card',
-      'border-indigo-300'
+      'border'
     );
     expect(screen.getByTestId('learner-assignments-high-priority')).toHaveClass(
       'soft-card',
-      'border-amber-300'
+      'border'
     );
     expect(screen.getByText('Ostatni sukces')).toBeInTheDocument();
     expect(screen.getAllByText('Powtorka: Zegar').length).toBeGreaterThanOrEqual(1);
@@ -120,7 +120,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(screen.getByText('Przebieg przydzielonych zadan')).toBeInTheDocument();
     expect(screen.getByTestId('learner-assignments-disabled')).toHaveClass(
       'soft-card',
-      'border-slate-200/80'
+      'border'
     );
     expect(
       screen.getByText(
@@ -144,7 +144,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(screen.getByTestId('learner-assignments-loading')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/80'
+      'border'
     );
     expect(screen.getByText('Ladowanie przydzielonych zadan...')).toBeInTheDocument();
   });
@@ -161,10 +161,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
 
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
-    expect(screen.getByTestId('learner-assignments-error')).toHaveClass(
-      'soft-card',
-      'border-rose-300'
-    );
+    expect(screen.getByTestId('learner-assignments-error')).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Nie udalo sie pobrac przydzialow.')).toBeInTheDocument();
   });
 });

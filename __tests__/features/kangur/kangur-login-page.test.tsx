@@ -10,12 +10,14 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useRouterMock,
   useSearchParamsMock,
+  usePathnameMock,
   routerPushMock,
   trackKangurClientEventMock,
   setStoredActiveLearnerIdMock,
 } = vi.hoisted(() => ({
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
+  usePathnameMock: vi.fn(),
   routerPushMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   setStoredActiveLearnerIdMock: vi.fn(),
@@ -36,6 +38,7 @@ vi.mock('next/link', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: useRouterMock,
   useSearchParams: useSearchParamsMock,
+  usePathname: usePathnameMock,
 }));
 
 vi.mock('next-auth/react', () => ({
@@ -83,6 +86,7 @@ describe('KangurLoginPage', () => {
       push: routerPushMock,
     });
     useSearchParamsMock.mockReturnValue(new URLSearchParams('callbackUrl=/kangur/profile'));
+    usePathnameMock.mockReturnValue('/kangur/login');
   });
 
   afterAll(() => {

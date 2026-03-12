@@ -59,25 +59,29 @@ describe('OperationSelector', () => {
     const divisionCard = screen.getByTestId('operation-card-division');
     const additionCard = screen.getByTestId('operation-card-addition');
 
-    expect(divisionCard).toHaveClass('soft-card', 'border-amber-300');
-    expect(additionCard).toHaveClass('soft-card', 'border-slate-200/80');
+    expect(divisionCard).toHaveClass('soft-card', 'border', 'rounded-[30px]');
+    expect(additionCard).toHaveClass('soft-card', 'border', 'rounded-[30px]');
     expect(within(divisionCard).getByTestId('operation-icon-division')).toHaveClass(
-      'bg-amber-100',
-      'text-amber-700'
+      'rounded-full',
+      'h-16',
+      'w-16'
     );
     expect(within(additionCard).getByTestId('operation-icon-addition')).toHaveClass(
-      'bg-emerald-100',
-      'text-emerald-700'
+      'rounded-full',
+      'h-16',
+      'w-16'
     );
     expect(within(divisionCard).getByText('Zadanie od rodzica')).toBeInTheDocument();
     expect(within(divisionCard).getByText('Zadanie od rodzica')).toHaveClass(
-      'border-amber-200',
-      'bg-amber-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(within(divisionCard).getByText('Priorytet wysoki')).toBeInTheDocument();
     expect(within(divisionCard).getByText('Priorytet wysoki')).toHaveClass(
-      'border-rose-200',
-      'bg-rose-100'
+      'inline-flex',
+      'rounded-full',
+      'border'
     );
     expect(within(divisionCard).getByText('40% · Praktyka: Dzielenie')).toBeInTheDocument();
     expect(divisionCard).toHaveAttribute(

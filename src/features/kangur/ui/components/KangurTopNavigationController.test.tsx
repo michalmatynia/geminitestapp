@@ -55,7 +55,7 @@ describe('KangurTopNavigationController', () => {
     render(<KangurTopNavigationController navigation={LESSONS_NAVIGATION} />);
 
     expect(
-      screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })
+      screen.getByRole('navigation', { name: /główna nawigacja kangur/i })
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute('aria-current', 'page');
   });
@@ -69,9 +69,9 @@ describe('KangurTopNavigationController', () => {
     );
 
     expect(
-      screen.getByRole('navigation', { name: /glowna nawigacja kangur/i })
+      screen.getByRole('navigation', { name: /główna nawigacja kangur/i })
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveLength(1);
+    expect(screen.getAllByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveLength(1);
     expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('kangur-primary-nav-parent-dashboard')).toBeInTheDocument();
 
@@ -82,7 +82,7 @@ describe('KangurTopNavigationController', () => {
         </KangurTopNavigationProvider>
       );
 
-    expect(screen.getAllByRole('navigation', { name: /glowna nawigacja kangur/i })).toHaveLength(1);
+    expect(screen.getAllByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveLength(1);
     expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
   });

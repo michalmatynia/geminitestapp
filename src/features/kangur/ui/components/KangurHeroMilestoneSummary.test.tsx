@@ -38,10 +38,10 @@ describe('KangurHeroMilestoneSummary', () => {
     expect(nextBadgeCard).toHaveTextContent('Celny umysł');
     expect(nextBadgeCard).toHaveTextContent('76% / 85%');
     expect(nextBadgeCardStyle).toContain(
-      'background: color-mix(in srgb, var(--kangur-soft-card-background) 92%, #fef3c7 8%)'
+      'background: color-mix(in srgb, var(--kangur-soft-card-background) 96%, #fef3c7 4%)'
     );
     expect(nextBadgeCardStyle).toContain(
-      'border-color: color-mix(in srgb, var(--kangur-soft-card-border) 88%, #d97706 12%)'
+      'border-color: color-mix(in srgb, var(--kangur-soft-card-border) 94%, #d97706 6%)'
     );
     expect(screen.getByText('Nastepny kamien milowy').getAttribute('style')).toContain(
       'color: color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)'

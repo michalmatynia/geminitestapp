@@ -95,12 +95,16 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('keeps the ai tutor launcher on the warm orange chrome instead of the old purple tint', () => {
-    const source = readFileSync(kangurAiTutorWidgetDisplayPath, 'utf8');
+    const source = readSources([kangurAiTutorWidgetDisplayPath, globalStylesheetPath]);
 
+    expect(source).toContain('kangur-chat-floating-avatar');
     expect(source).toContain(
-      'border-2 border-amber-900 bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500'
+      'linear-gradient(135deg, #fcd34d 0%, #fb923c 55%, #f97316 100%)'
     );
-    expect(source).toContain('focus-visible:ring-amber-300/70');
+    expect(source).toContain('border-color: var(--kangur-chat-floating-avatar-border, #78350f)');
+    expect(source).toContain(
+      'focus-visible:[--tw-ring-color:var(--kangur-chat-floating-avatar-focus-ring,rgba(251,191,36,0.7))]'
+    );
     expect(source).not.toContain('from-indigo-500 via-fuchsia-500 to-amber-400');
     expect(source).not.toContain('focus-visible:ring-indigo-400');
   });
@@ -113,12 +117,8 @@ describe('Kangur CTA contract cleanup', () => {
       kangurAiTutorComposerPath,
     ]);
 
-    expect(source).toContain(
-      'relative flex flex-col overflow-hidden border [border-color:var(--kangur-chat-panel-border'
-    );
-    expect(source).toContain(
-      '[background:var(--kangur-chat-header-background'
-    );
+    expect(source).toContain('relative flex flex-col overflow-hidden border kangur-chat-panel-surface');
+    expect(source).toContain('kangur-chat-header-surface');
     expect(source).toContain('--kangur-chat-chip-background');
     expect(source).toContain('--kangur-chat-control-background');
     expect(source).toContain('accent=\'amber\'');

@@ -25,7 +25,10 @@ import {
   useKangurAiTutorHomeOnboardingFlow,
 } from './KangurAiTutorWidget.entry';
 import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
-import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
+import {
+  useKangurAiTutorGuidedFlow,
+  useKangurAiTutorSelectionGuidanceDockOpenEffect,
+} from './KangurAiTutorWidget.guided';
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
@@ -352,10 +355,9 @@ export function useKangurAiTutorWidgetCoordinator({
   const hasSelectionMinimalPanelSurface =
     tutorRuntime.isOpen &&
     panelShellMode === 'minimal' &&
-    selectionConversationContext !== null &&
     (selectionTakeoverText !== null ||
       contextualTutorMode === 'selection_explain' ||
-      selectionConversationContext.selectedText.length > 0);
+      selectionResponsePending !== null);
   const hasSectionMinimalPanelSurface =
     tutorRuntime.isOpen &&
     panelShellMode === 'minimal' &&
@@ -487,6 +489,22 @@ export function useKangurAiTutorWidgetCoordinator({
       setSelectionResponsePending,
       suppressAvatarClickRef,
     },
+  });
+
+  const hasSelectionPanelReady =
+    tutorRuntime.isOpen &&
+    panelShellMode === 'minimal' &&
+    contextualTutorMode === 'selection_explain' &&
+    selectionConversationContext !== null &&
+    selectionConversationContext.selectedText === activeSelectedText;
+
+  useKangurAiTutorSelectionGuidanceDockOpenEffect({
+    activeSelectedText,
+    handleOpenChat,
+    hasSelectionPanelReady,
+    isLoading,
+    selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
+    selectionGuidanceHandoffText,
   });
 
   const {
@@ -664,6 +682,26 @@ export function useKangurAiTutorWidgetCoordinator({
     startGuidedSelectionExplanation,
     suppressAvatarClickRef,
   });
+
+  useEffect(() => {
+    if (tutorRuntime.isOpen || !showSelectionGuidanceCallout) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent): void => {
+      if (isTargetWithinTutorUi(event.target)) {
+        return;
+      }
+
+      handleCloseChat('outside');
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, [handleCloseChat, showSelectionGuidanceCallout, tutorRuntime.isOpen]);
 
   const {
     handleFloatingAvatarPointerCancel,

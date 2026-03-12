@@ -55,8 +55,8 @@ describe('kangur assignments domain', () => {
     const assignment: KangurAssignment = {
       id: 'assignment-1',
       learnerKey: 'ada@example.com',
-      title: 'Powtorka dzielenia',
-      description: 'Przerob jeszcze jedna sesje dzielenia.',
+      title: 'Powtórka dzielenia',
+      description: 'Przerób jeszcze jedną sesję dzielenia.',
       priority: 'high',
       archived: false,
       target: {
@@ -88,7 +88,7 @@ describe('kangur assignments domain', () => {
       id: 'assignment-2',
       learnerKey: 'ada@example.com',
       title: 'Praktyka: Dzielenie',
-      description: 'Zrob jedna sesje dzielenia i celuj w 80%.',
+      description: 'Zrób jedną sesję dzielenia i celuj w 80%.',
       priority: 'high',
       archived: false,
       target: {
@@ -135,7 +135,7 @@ describe('kangur assignments domain', () => {
 
     expect(snapshot.progress.status).toBe('completed');
     expect(snapshot.progress.attemptsCompleted).toBe(1);
-    expect(snapshot.progress.summary).toContain('najlepsza skutecznosc 90%');
+    expect(snapshot.progress.summary).toContain('najlepsza skuteczność 90%');
     expect(buildKangurAssignmentDedupeKey(assignment.target)).toBe('practice:division:1:80');
   });
 });

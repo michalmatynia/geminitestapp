@@ -144,11 +144,11 @@ export async function mockKangurTutorEnvironment(
   };
   const lessonTitle = 'Dodawanie z tutorem';
   const lessonSelectedText = '10 + 4 = 14';
-  const lessonResponse = `Wyjasniam fragment: ${lessonSelectedText}. Najpierw zatrzymaj sie na dziesiatce, a potem dodaj pozostale jednosci.`;
+  const lessonResponse = `Wyjaśniam fragment: ${lessonSelectedText}. Najpierw zatrzymaj się na dziesiątce, a potem dodaj pozostałe jedności.`;
   const suiteTitle = 'Mini test dodawania';
   const questionPrompt = 'Ile to 8 + 5?';
   const hintResponse =
-    'Podpowiedz do pytania: dopelnij 8 do 10, a potem dodaj pozostale 3.';
+    'Podpowiedź do pytania: dopełnij 8 do 10, a potem dodaj pozostałe 3.';
   let progress = createDefaultProgress();
   const tutorPersonaId = 'persona-mila';
   const tutorPersona = tutorPersonaImageUrl

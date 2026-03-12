@@ -228,9 +228,9 @@ export function KangurAiTutorFloatingAvatar({
       ) : null}
       {hasNewMessage && !isOpen ? (
         <span
-          className='absolute -top-0.5 -right-0.5 z-[4] flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-2 ring-white tutor-badge-enter'
+          className='absolute -top-0.5 -right-0.5 z-[4] flex h-4 w-4 items-center justify-center rounded-full ring-2 tutor-badge-enter [background:var(--kangur-chat-notice-badge-background,#ef4444)] [--tw-ring-color:var(--kangur-chat-notice-badge-ring,#ffffff)]'
         >
-          <span className='h-1.5 w-1.5 rounded-full bg-white' />
+          <span className='h-1.5 w-1.5 rounded-full [background:var(--kangur-chat-notice-badge-dot,#ffffff)]' />
         </span>
       ) : null}
     </motion.button>

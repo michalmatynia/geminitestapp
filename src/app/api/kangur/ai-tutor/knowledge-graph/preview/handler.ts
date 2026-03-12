@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import { buildKangurKnowledgeGraphPreviewResult } from '@/features/kangur/server/knowledge-graph/preview';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
-import { kangurAiTutorConversationContextSchema } from '@/shared/contracts/kangur-ai-tutor';
+import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-
-export const kangurAiTutorKnowledgeGraphPreviewRequestSchema = z.object({
-  latestUserMessage: z.string().trim().min(1).max(1_000),
-  learnerId: z.string().trim().max(120).optional(),
-  locale: z.string().trim().max(16).optional().default('pl'),
-  context: kangurAiTutorConversationContextSchema.optional(),
-});
 
 export async function postKangurAiTutorKnowledgeGraphPreviewHandler(
   req: NextRequest,
@@ -26,7 +18,7 @@ export async function postKangurAiTutorKnowledgeGraphPreviewHandler(
     throw forbiddenError('Only admins can preview Kangur AI Tutor knowledge graph retrieval.');
   }
 
-  const payload = kangurAiTutorKnowledgeGraphPreviewRequestSchema.parse(ctx.body);
+  const payload = kangurKnowledgeGraphPreviewRequestSchema.parse(ctx.body);
   const learnerId = payload.learnerId ?? actor.activeLearner.id;
   const requestedRefs = buildKangurAiTutorContextRegistryRefs({
     learnerId,

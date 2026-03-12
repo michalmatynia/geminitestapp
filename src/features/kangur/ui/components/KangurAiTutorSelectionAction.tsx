@@ -55,7 +55,7 @@ export function KangurAiTutorSelectionAction({
         type='button'
         size='sm'
         variant='primary'
-        className='min-w-[124px] shadow-[0_12px_28px_-14px_rgba(245,158,11,0.45),0_4px_10px_-6px_rgba(15,23,42,0.2)]'
+        className='min-w-[124px] kangur-chat-selection-action-shadow'
         onMouseDown={handleSelectionActionMouseDown}
         onClick={handleAskAbout}
       >

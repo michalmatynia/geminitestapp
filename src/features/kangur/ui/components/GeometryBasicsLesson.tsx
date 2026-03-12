@@ -39,7 +39,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='mt-2 text-sm text-cyan-700'>Odcinek AB</p>
           </KangurLessonCallout>
           <KangurLessonCaption>
-            Odcinek ma poczatek i koniec — to dwa punkty.
+            Odcinek ma początek i koniec — to dwa punkty.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -51,7 +51,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonLead>
-            W figurach wielokatnych mamy <strong>boki</strong> i <strong>wierzchołki</strong>{' '}
+            W figurach wielokątnych mamy <strong>boki</strong> i <strong>wierzchołki</strong>{' '}
             (rogi).
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
@@ -61,7 +61,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonCaption>
-            Boki to odcinki. Wierzchołki to punkty, w których boki sie spotykaja.
+            Boki to odcinki. Wierzchołki to punkty, w których boki się spotykają.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -69,11 +69,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   kat: [
     {
-      title: 'Co to jest kat?',
+      title: 'Co to jest kąt?',
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonLead>
-            <strong>Kat</strong> powstaje tam, gdzie spotykaja sie dwa odcinki.
+            <strong>Kąt</strong> powstaje tam, gdzie spotykają się dwa odcinki.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
             <div className='relative mx-auto h-28 w-28'>
@@ -83,7 +83,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 ∟
               </div>
             </div>
-            <p className='mt-2 text-sm text-cyan-700'>To kat prosty (90°).</p>
+            <p className='mt-2 text-sm text-cyan-700'>To kąt prosty (90°).</p>
           </KangurLessonCallout>
           <div className='flex flex-wrap justify-center gap-2 text-xs [color:var(--kangur-page-muted-text)]'>
             <KangurLessonChip accent='sky'>Ostry &lt; 90°</KangurLessonChip>
@@ -102,8 +102,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           {[
             ['●', 'Punkt', 'pojedyncze miejsce'],
             ['—', 'Odcinek', 'łączy dwa punkty'],
-            ['🔷', 'Bok i wierzchołek', 'czesci figury'],
-            ['∟', 'Kat', 'miejsce spotkania dwóch odcinków'],
+            ['🔷', 'Bok i wierzchołek', 'części figury'],
+            ['∟', 'Kąt', 'miejsce spotkania dwóch odcinków'],
           ].map(([icon, term, def]) => (
             <KangurLessonCallout
               key={term}
@@ -130,8 +130,8 @@ export const HUB_SECTIONS = [
     title: 'Punkt i odcinek',
     description: 'Podstawowe elementy geometrii',
   },
-  { id: 'bok', emoji: '🔷', title: 'Bok i wierzchołek', description: 'Czesci figur wielokatnych' },
-  { id: 'kat', emoji: '∟', title: 'Kat', description: 'Ostry, prosty i rozwarty' },
+  { id: 'bok', emoji: '🔷', title: 'Bok i wierzchołek', description: 'Części figur wielokątnych' },
+  { id: 'kat', emoji: '∟', title: 'Kąt', description: 'Ostry, prosty i rozwarty' },
   { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystko razem' },
 ];
 

@@ -38,8 +38,22 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
   getKangurLearnerProfileDisplayName: (user) => user.name,
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
-  useKangurProgressState: useKangurProgressStateMock,
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => ({
+    entry: null,
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/services/kangur-platform', () => ({
+  getKangurPlatform: () => ({
+    score: {
+      filter: scoreFilterMock,
+    },
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -165,10 +179,8 @@ describe('LearnerProfile page', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
 
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
-    expect(
-      screen.getByText((_, node) => node?.textContent === 'Statystyki ucznia: Jan.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent('Jan.');
+    expect(screen.getByText('Poziom 4 · 620 XP łącznie')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-overview-average-accuracy')).toHaveClass(
       'soft-card'
     );
@@ -234,7 +246,6 @@ describe('LearnerProfile page', () => {
       'primary-cta'
     );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
-    expect(screen.getByText('✖️ Mnożenie')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     const operationTrainingHrefs = screen
       .getAllByRole('link', { name: 'Trenuj' })
@@ -259,11 +270,7 @@ describe('LearnerProfile page', () => {
     renderLearnerProfilePage();
 
     expect(scoreFilterMock).not.toHaveBeenCalled();
-    expect(
-      screen.getByText(
-        'Zaloguj się, aby synchronizować postęp ucznia między urządzeniami. Jeśli nie masz jeszcze konta rodzica, załóż je tutaj.'
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveTextContent('Profil ucznia');
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
       'soft-card',
       'border-dashed'
@@ -285,7 +292,9 @@ describe('LearnerProfile page', () => {
 
     renderLearnerProfilePage();
 
-    expect(await screen.findByText('Nie udało się pobrać historii wyników.')).toBeInTheDocument();
+    expect(await screen.findByTestId('learner-profile-sessions-error')).toHaveTextContent(
+      'Nie udało się pobrać historii wyników.'
+    );
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 

@@ -224,7 +224,7 @@ export function KangurCmsRuntimeDataProvider({
         priorityLabel: homeSpotlightAssignment
           ? resolveAssignmentPriorityLabel(homeSpotlightAssignment.priority)
           : 'Sesja praktyki',
-        progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukonczono',
+        progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukończono',
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
         title: homeSpotlightAssignment?.title ?? 'Kontynuuj praktykę',
       },
@@ -252,7 +252,7 @@ export function KangurCmsRuntimeDataProvider({
         priorityLabel: game.activePracticeAssignment
           ? resolveAssignmentPriorityLabel(game.activePracticeAssignment.priority)
           : 'Sesja praktyki',
-        progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukonczono',
+        progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukończono',
         progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
         title: game.activePracticeAssignment?.title ?? 'Kontynuuj praktykę',
       },

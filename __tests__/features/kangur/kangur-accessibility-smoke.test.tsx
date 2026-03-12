@@ -66,6 +66,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => ({
+    entry: null,
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
     score: {
@@ -296,7 +306,7 @@ describe('Kangur accessibility smoke', () => {
     );
     expect(screen.getByRole('navigation', { name: 'Główna nawigacja Kangur' })).toBeInTheDocument();
     expect(screen.getByRole('main', { name: /Sprycio/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Strona główna' })).toHaveAttribute(
       'aria-current',
       'page'
     );

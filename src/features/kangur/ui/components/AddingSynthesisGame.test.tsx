@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
   breakdown: [
-    { kind: 'base', label: 'Ukonczenie rundy', xp: 12 },
-    { kind: 'perfect', label: 'Pelny wynik', xp: 13 },
+    { kind: 'base', label: 'Ukończenie rundy', xp: 12 },
+    { kind: 'perfect', label: 'Pełny wynik', xp: 13 },
   ],
   xp: 25,
   scorePercent: 100,
@@ -44,7 +44,7 @@ vi.mock('@/features/kangur/ui/services/adding-synthesis', async (importOriginal)
         answer: 5,
         choices: [4, 5, 6, 7] as [number, number, number, number],
         hint: 'Zacznij od 3 i dolicz 2.',
-        focus: 'Liczymy od wiekszej liczby.',
+        focus: 'Liczymy od większej liczby.',
       },
     ],
   };
@@ -100,7 +100,7 @@ describe('AddingSynthesisGame', () => {
     );
     expect(screen.getByText('Synteza dodawania')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
-      screen.getByText(/Licz w glowie, patrz jak dzialanie spada do linii/i)
+      screen.getByText(/Licz w głowie, patrz jak działanie spada do linii/i)
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Nowa gra')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByText('Synthesia-style')).toHaveClass(
@@ -114,12 +114,12 @@ describe('AddingSynthesisGame', () => {
       'w-12'
     );
     expect(screen.getByText('Rytm gry')).toHaveClass('inline-flex', 'rounded-full', 'border');
-    expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /wróć do dodawania/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /start synteze/i }));
+    fireEvent.click(screen.getByRole('button', { name: /start syntezę/i }));
 
     expect(screen.getByTestId('adding-synthesis-board-shell')).toHaveClass(
       'glass-panel',
@@ -175,21 +175,21 @@ describe('AddingSynthesisGame', () => {
       'border-emerald-200/70'
     );
     expect(screen.getByText('Wynik 1/1')).toBeInTheDocument();
-    expect(screen.getByText('Sesja zakonczona')).toHaveClass(
+    expect(screen.getByText('Sesja zakończona')).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
     );
     expect(screen.getByText('+25 XP')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByTestId('adding-synthesis-summary-breakdown')).toHaveTextContent(
-      'Ukonczenie rundy +12'
+      'Ukończenie rundy +12'
     );
     expect(screen.getByTestId('adding-synthesis-summary-breakdown-perfect')).toHaveTextContent(
-      'Pelny wynik +13'
+      'Pełny wynik +13'
     );
-    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Skuteczność').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /wróć do dodawania/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -220,7 +220,7 @@ describe('AddingSynthesisGame', () => {
     );
     expect(onFinish).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: /wroc do dodawania/i }));
+    fireEvent.click(screen.getByRole('button', { name: /wróć do dodawania/i }));
 
     expect(onFinish).toHaveBeenCalledTimes(1);
   });

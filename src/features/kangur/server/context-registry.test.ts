@@ -232,7 +232,7 @@ describe('resolveKangurAiTutorRuntimeDocuments', () => {
       expect.objectContaining({
         selectedChoiceLabel: 'A',
         selectedChoiceText: '3',
-        selectedChoiceSummary: 'Wybrana odpowiedz: A - 3.',
+        selectedChoiceSummary: 'Wybrana odpowiedź: A - 3.',
       })
     );
   });
@@ -409,7 +409,7 @@ describe('buildKangurLessonContextRuntimeDocument', () => {
       })
     );
     expect(result?.facts['navigationSummary']).toBe(
-      'Bez wracania do listy mozesz cofnac sie do Dodawanie albo przejsc dalej do Odejmowanie.'
+      'Bez wracania do listy możesz cofnąć się do Dodawanie albo przejść dalej do Odejmowanie.'
     );
     expect(result?.sections.find((section) => section.id === 'lesson_navigation')).toMatchObject({
       items: [

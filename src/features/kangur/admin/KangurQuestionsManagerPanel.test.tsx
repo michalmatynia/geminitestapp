@@ -61,7 +61,7 @@ import {
 const suite = {
   id: 'suite-1',
   title: 'Kangur 2024',
-  description: 'Zestaw probny',
+  description: 'Zestaw próbny',
   year: 2024,
   gradeLevel: 'III-IV',
   category: 'matematyczny',

@@ -202,7 +202,7 @@ describe('LessonSlideSection', () => {
 
     expect(screen.getByTestId('lesson-slide-secret-indicator')).toHaveAttribute(
       'aria-label',
-      'Otworz sekretny panel'
+      'Otwórz sekretny panel'
     );
     expect(onOpen).toHaveBeenCalledTimes(1);
   });

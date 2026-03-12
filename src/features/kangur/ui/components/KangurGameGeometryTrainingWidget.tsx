@@ -15,7 +15,7 @@ export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
     <LessonActivityStage
       accent='violet'
       backButtonLabel='Wróć do poprzedniej strony'
-      description='Przejdz przez szybkie zadania z rozpoznawania i rysowania figur.'
+      description='Przejdź przez szybkie zadania z rozpoznawania i rysowania figur.'
       icon='🔷'
       onBack={() => setScreen('operation')}
       shellClassName='items-center'

@@ -23,7 +23,7 @@ type EvaluateAssignmentInput = {
 const clampPercent = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
 
 const formatAccuracyTarget = (value: number | null): string =>
-  value === null ? 'bez progu skutecznosci' : `cel ${value}%`;
+  value === null ? 'bez progu skuteczności' : `cel ${value}%`;
 
 export const buildStoredKangurAssignmentTarget = ({
   target,
@@ -79,8 +79,8 @@ const evaluateLessonAssignment = (
     completedAt: status === 'completed' ? (mastery?.lastCompletedAt ?? assignment.updatedAt) : null,
     summary:
       status === 'completed'
-        ? `Ukonczono ${attemptsRequired}/${attemptsRequired} powtorek tej lekcji.`
-        : `Powtorki po przydziale: ${completionsAfterAssignment}/${attemptsRequired}.`,
+        ? `Ukończono ${attemptsRequired}/${attemptsRequired} powtórek tej lekcji.`
+        : `Powtórki po przydziale: ${completionsAfterAssignment}/${attemptsRequired}.`,
   };
 };
 
@@ -133,7 +133,7 @@ const evaluatePracticeAssignment = (
     summary:
       target.minAccuracyPercent === null
         ? `Sesje po przydziale: ${attemptsCompleted}/${attemptsRequired}.`
-        : `Sesje: ${attemptsCompleted}/${attemptsRequired} · najlepsza skutecznosc ${bestAccuracy}% · ${formatAccuracyTarget(
+        : `Sesje: ${attemptsCompleted}/${attemptsRequired} · najlepsza skuteczność ${bestAccuracy}% · ${formatAccuracyTarget(
           target.minAccuracyPercent
         )}.`,
   };

@@ -60,7 +60,7 @@ export function KangurLessonLibraryCard({
         className='uppercase tracking-[0.14em]'
         size='sm'
       >
-        Ukonczone dla rodzica
+        Ukończone dla rodzica
       </KangurStatusChip>
     ) : null,
   ].filter(Boolean);
@@ -90,7 +90,7 @@ export function KangurLessonLibraryCard({
               className='uppercase tracking-[0.14em]'
               size='sm'
             >
-              Zadanie zamkniete
+              Zadanie zamknięte
             </KangurStatusChip>
           ) : null}
         </>
@@ -120,7 +120,7 @@ export function KangurLessonLibraryCard({
             </div>
           ) : completedLessonAssignment ? (
             <div className='mt-2 text-xs font-semibold text-emerald-600'>
-              Zadanie od rodzica zostalo juz wykonane. {completedLessonAssignment.progress.summary}
+              Zadanie od rodzica zostało już wykonane. {completedLessonAssignment.progress.summary}
             </div>
           ) : null}
         </>

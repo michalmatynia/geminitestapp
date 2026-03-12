@@ -13,7 +13,7 @@ describe('KangurRecommendationCard', () => {
       <KangurRecommendationCard
         accent='indigo'
         dataTestId='recommendation-card'
-        description='To najmocniej podbije dzisiejszy postep.'
+        description='To najmocniej podbije dzisiejszy postęp.'
         descriptionTestId='recommendation-description'
         label='Mocna passa'
         labelTestId='recommendation-label'
@@ -33,7 +33,7 @@ describe('KangurRecommendationCard', () => {
       'Polecany trening: Dzielenie'
     );
     expect(screen.getByTestId('recommendation-description')).toHaveTextContent(
-      'To najmocniej podbije dzisiejszy postep.'
+      'To najmocniej podbije dzisiejszy postęp.'
     );
   });
 
@@ -43,11 +43,11 @@ describe('KangurRecommendationCard', () => {
         accent='amber'
         action={<button type='button'>Uruchom trening</button>}
         dataTestId='rich-recommendation-card'
-        description='Ta sesja przybliza kolejna odznake.'
+        description='Ta sesja przybliża kolejną odznakę.'
         descriptionClassName='mt-1'
         descriptionSize='sm'
         descriptionTestId='rich-recommendation-description'
-        headerExtras={<span>Tempo: 36 XP / gre</span>}
+        headerExtras={<span>Tempo: 36 XP / grę</span>}
         label='Polecony kierunek'
         labelSize='sm'
         labelStyle='caps'
@@ -62,7 +62,7 @@ describe('KangurRecommendationCard', () => {
     expect(screen.getByTestId('rich-recommendation-label')).toHaveTextContent(
       'Polecony kierunek'
     );
-    expect(screen.getByText('Tempo: 36 XP / gre')).toBeInTheDocument();
+    expect(screen.getByText('Tempo: 36 XP / grę')).toBeInTheDocument();
     expect(screen.getByTestId('rich-recommendation-title')).toHaveTextContent(
       'Dopnij polecany kierunek'
     );
@@ -74,20 +74,20 @@ describe('KangurRecommendationCard', () => {
       <KangurRecommendationCard
         accent='rose'
         dataTestId='custom-label-recommendation-card'
-        description='Najkrotszy krok do odzyskania tempa.'
+        description='Najkrótszy krok do odzyskania tempa.'
         descriptionTestId='custom-label-recommendation-description'
         labelContent={<span data-testid='custom-label-slot'>Priorytet wysoki</span>}
-        title='Wroc do zegara'
+        title='Wróć do zegara'
         titleTestId='custom-label-recommendation-title'
       />
     );
 
     expect(screen.getByTestId('custom-label-slot')).toHaveTextContent('Priorytet wysoki');
     expect(screen.getByTestId('custom-label-recommendation-title')).toHaveTextContent(
-      'Wroc do zegara'
+      'Wróć do zegara'
     );
     expect(screen.getByTestId('custom-label-recommendation-description')).toHaveTextContent(
-      'Najkrotszy krok do odzyskania tempa.'
+      'Najkrótszy krok do odzyskania tempa.'
     );
   });
 });

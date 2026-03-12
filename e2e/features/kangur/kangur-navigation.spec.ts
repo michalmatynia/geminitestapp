@@ -1673,17 +1673,17 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await scoresTab.click();
 
     await expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText('Brak zapisanych wynikow.')).toBeVisible();
+    await expect(page.getByText('Brak zapisanych wyników.')).toBeVisible();
 
     const afterScoresScrollY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(afterScoresScrollY - beforeScrollY)).toBeLessThan(48);
 
-    const progressTab = page.getByRole('button', { name: /postep/i });
+    const progressTab = page.getByRole('button', { name: /postęp/i });
     const beforeProgressScrollY = await page.evaluate(() => window.scrollY);
     await progressTab.click();
 
     await expect(progressTab).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText(/Poziom i doswiadczenie/i)).toBeVisible();
+    await expect(page.getByText(/Poziom i doświadczenie/i)).toBeVisible();
 
     const afterProgressScrollY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(afterProgressScrollY - beforeProgressScrollY)).toBeLessThan(48);

@@ -219,7 +219,7 @@ export function KangurLearnerProfileRuntimeProvider({
             action: 'loadScores',
             hasUser,
           });
-          setScoresError('Nie udalo sie pobrac historii wynikow.');
+          setScoresError('Nie udało się pobrać historii wyników.');
         }
       } finally {
         if (isActive) {

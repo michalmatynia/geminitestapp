@@ -5,7 +5,11 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
-import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-tutor-usage';
+import {
+  __resetUsageCacheForTests,
+  KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY,
+} from '@/features/kangur/server/ai-tutor-usage';
+import { __resetContextRegistryBundleCacheForTests } from '@/features/kangur/server/ai-tutor-context-registry-cache';
 import {
   createContextRegistryBundle,
   createPostRequest,
@@ -121,6 +125,8 @@ const expectTutorSource = (input: {
 describe('kangur ai tutor chat handler', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    __resetUsageCacheForTests();
+    __resetContextRegistryBundleCacheForTests();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T10:00:00.000Z'));
     resolveKangurActorMock.mockResolvedValue({
@@ -257,14 +263,15 @@ describe('kangur ai tutor chat handler', () => {
   it('routes tutor chat through Brain with persona instructions and structured Kangur context', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
       instructions:
-        'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.',
+        'Adaptive learner guidance:\nTop recommendation: Powtórz lekcję: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.',
       followUpActions: [],
       coachingFrame: {
         mode: 'hint_ladder',
         label: 'Jeden trop',
         description:
-          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
-        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
+        rationale:
+          'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
       },
     });
     contextRegistryResolveRefsMock.mockResolvedValue(
@@ -300,9 +307,9 @@ describe('kangur ai tutor chat handler', () => {
           memory: {
             lastSurface: 'lesson',
             lastFocusLabel: 'Dodawanie do 20',
-            lastUnresolvedBlocker: 'Myli kolejnosc dodawania przy wiekszych liczbach.',
-            lastRecommendedAction: 'Otworz lekcje: Powtorz lekcje: Dodawanie',
-            lastSuccessfulIntervention: 'Pomoglo rozbicie zadania na dwa mniejsze kroki.',
+            lastUnresolvedBlocker: 'Myli kolejność dodawania przy większych liczbach.',
+            lastRecommendedAction: 'Otwórz lekcję: Powtórz lekcję: Dodawanie',
+            lastSuccessfulIntervention: 'Pomogło rozbicie zadania na dwa mniejsze kroki.',
             lastCoachingMode: 'hint_ladder',
           },
         })
@@ -389,7 +396,7 @@ describe('kangur ai tutor chat handler', () => {
       'Do not reveal the final answer, the correct option label, or solve the problem outright.'
     );
     expect(brainInput.messages[0].content).toContain(
-      'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.'
+      'Adaptive learner guidance:\nTop recommendation: Powtórz lekcję: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Parent preference: guide the learner step by step without giving the final answer.'
@@ -402,7 +409,7 @@ describe('kangur ai tutor chat handler', () => {
     );
     expect(brainInput.messages[0].content).toContain('Recent focus: Dodawanie do 20');
     expect(brainInput.messages[0].content).toContain(
-      'Last unresolved blocker: Myli kolejnosc dodawania przy wiekszych liczbach.'
+      'Last unresolved blocker: Myli kolejność dodawania przy większych liczbach.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Learner-specific tutor mood: supportive.'
@@ -514,8 +521,8 @@ describe('kangur ai tutor chat handler', () => {
         mode: 'hint_ladder',
         label: 'Jeden trop',
         description:
-          'Daj tylko jeden maly krok albo pytanie kontrolne, bez pelnego rozwiazania.',
-        rationale: 'Uczen jest w trakcie proby, wiec tutor powinien prowadzic bardzo malymi krokami.',
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
+        rationale: 'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
       },
       suggestedMoodId: 'encouraging',
       tutorMood: {
@@ -552,10 +559,10 @@ describe('kangur ai tutor chat handler', () => {
       })
       .mockResolvedValueOnce({
         text: [
-          'Policz najpierw lewa pare, potem prawa.',
+          'Policz najpierw lewą parę, potem prawą.',
           '<kangur_tutor_drawing>',
           '<title>Dwie pary</title>',
-          '<caption>Kazda para ma po dwa elementy.</caption>',
+          '<caption>Każda para ma po dwa elementy.</caption>',
           '<alt>Dwie pary kropek ustawione obok siebie.</alt>',
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
           '</kangur_tutor_drawing>',
@@ -568,7 +575,7 @@ describe('kangur ai tutor chat handler', () => {
           messages: [
             {
               role: 'user',
-              content: 'Wyjasnij to rysunkiem.',
+              content: 'Wyjaśnij to rysunkiem.',
               artifacts: [
                 {
                   type: 'user_drawing',
@@ -626,12 +633,12 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({
-      message: 'Policz najpierw lewa pare, potem prawa.',
+      message: 'Policz najpierw lewą parę, potem prawą.',
       artifacts: [
         {
           type: 'assistant_drawing',
           title: 'Dwie pary',
-          caption: 'Kazda para ma po dwa elementy.',
+          caption: 'Każda para ma po dwa elementy.',
           alt: 'Dwie pary kropek ustawione obok siebie.',
         },
       ],
@@ -639,7 +646,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.artifacts[0]?.svgContent).toContain('<svg');
     expect(persistAgentPersonaExchangeMemoryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        assistantMessage: 'Policz najpierw lewa pare, potem prawa.',
+        assistantMessage: 'Policz najpierw lewą parę, potem prawą.',
       })
     );
   });
@@ -747,7 +754,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij ten fragment.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij ten fragment.' }],
           context: {
             surface: 'lesson',
             contentId: 'lesson-1',
@@ -920,7 +927,7 @@ describe('kangur ai tutor chat handler', () => {
           relatedGames: [],
           relatedTests: [],
           followUpActions: [
-            { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+            { id: 'open-lessons', label: 'Otwórz lekcję', page: 'Lessons', reason: 'Aby zacząć od teorii.' },
           ],
           triggerPhrases: ['szybkie akcje'],
           enabled: true,
@@ -944,7 +951,7 @@ describe('kangur ai tutor chat handler', () => {
         },
       ],
       followUpActions: [
-        { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+        { id: 'open-lessons', label: 'Otwórz lekcję', page: 'Lessons', reason: 'Aby zacząć od teorii.' },
       ],
     });
 
@@ -1003,7 +1010,7 @@ describe('kangur ai tutor chat handler', () => {
       ])
     );
     expect(body.followUpActions).toEqual([
-      { id: 'open-lessons', label: 'Otworz lekcje', page: 'Lessons', reason: 'Aby zaczac od teorii.' },
+      { id: 'open-lessons', label: 'Otwórz lekcję', page: 'Lessons', reason: 'Aby zacząć od teorii.' },
     ]);
     expect(body.answerResolutionMode).toBe('page_content');
     expect(body.knowledgeGraph).toEqual({
@@ -1035,7 +1042,7 @@ describe('kangur ai tutor chat handler', () => {
         learnerSummary: 'Average accuracy 81%. 1 active assignment.',
         assignmentFacts: {
           title: 'Priorytet tygodnia',
-          assignmentSummary: 'Powtorz lekcje: Dodawanie przed piatkiem.',
+          assignmentSummary: 'Powtórz lekcję: Dodawanie przed piątkiem.',
         },
       })
     );
@@ -1049,16 +1056,16 @@ describe('kangur ai tutor chat handler', () => {
         componentId: 'assignments',
         widget: 'LearnerAssignmentsWidget',
         sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
-        title: 'Przebieg przydzielonych zadan',
-        summary: 'Sprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
-        body: 'Ta sekcja pokazuje aktualne zadania ucznia i pomaga wybrac najblizszy krok.',
+        title: 'Przebieg przydzielonych zadań',
+        summary: 'Sprawdź, co jest nadal aktywne i co było ostatnim sukcesem.',
+        body: 'Ta sekcja pokazuje aktualne zadania ucznia i pomaga wybrać najbliższy krok.',
         anchorIdPrefix: 'kangur-learner-profile-assignments',
         focusKind: 'assignment',
         contentIdPrefixes: ['profile:learner'],
         nativeGuideIds: ['learner-profile-assignments'],
         triggerPhrases: ['zadania ucznia'],
         tags: ['page-content', 'profile'],
-        notes: 'Dynamiczna sekcja zadan ucznia.',
+        notes: 'Dynamiczna sekcja zadań ucznia.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1068,13 +1075,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'learner-profile-assignments',
           collectionId: 'kangur_page_content',
-          text: 'Przebieg przydzielonych zadan\nSprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
+          text: 'Przebieg przydzielonych zadań\nSprawdź, co jest nadal aktywne i co było ostatnim sukcesem.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'learner-profile-assignments',
-            title: 'Przebieg przydzielonych zadan',
-            description: 'Sprawdz, co jest nadal aktywne i co bylo ostatnim sukcesem.',
+            title: 'Przebieg przydzielonych zadań',
+            description: 'Sprawdź, co jest nadal aktywne i co było ostatnim sukcesem.',
             tags: ['kangur', 'page-content', 'profile'],
           },
         },
@@ -1085,7 +1092,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi te zadania.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi te zadania.' }],
           context: {
             surface: 'profile',
             contentId: 'profile:learner',
@@ -1109,12 +1116,12 @@ describe('kangur ai tutor chat handler', () => {
     expect(runBrainChatCompletionMock).not.toHaveBeenCalled();
 
     const body = await response.json();
-    expect(body.message).toContain('Przebieg przydzielonych zadan');
+    expect(body.message).toContain('Przebieg przydzielonych zadań');
     expect(body.message).toContain(
-      'Na zywo dla tego ucznia: Average accuracy 81%. 1 active assignment.'
+      'Na żywo dla tego ucznia: Average accuracy 81%. 1 active assignment.'
     );
     expect(body.message).toContain(
-      'Aktywny priorytet: Powtorz lekcje: Dodawanie przed piatkiem.'
+      'Aktywny priorytet: Powtórz lekcję: Dodawanie przed piątkiem.'
     );
     expect(body.answerResolutionMode).toBe('page_content');
     expect(body.sources).toEqual(
@@ -1136,10 +1143,10 @@ describe('kangur ai tutor chat handler', () => {
       createContextRegistryBundle({
         learnerSummary: 'Average accuracy 88%. 0 active assignments.',
         learnerFacts: {
-          topRecommendationTitle: 'Powtorz lekcje: Dodawanie',
+          topRecommendationTitle: 'Powtórz lekcję: Dodawanie',
           topRecommendationDescription:
-            'Jedna krotka powtorka domknie kolejny prog mistrzostwa.',
-          topRecommendationActionLabel: 'Otworz lekcje',
+            'Jedna krótka powtórka domknie kolejny próg mistrzostwa.',
+          topRecommendationActionLabel: 'Otwórz lekcję',
           topRecommendationActionPage: 'Lessons',
         },
       })
@@ -1155,15 +1162,15 @@ describe('kangur ai tutor chat handler', () => {
         widget: 'KangurLearnerProfileHeroWidget',
         sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
         title: 'Hero profilu ucznia',
-        summary: 'To glowna sekcja profilu z szybkim obrazem postepu.',
-        body: 'Pomaga szybko ocenic rytm nauki ucznia i najwazniejsze dalsze kroki.',
+        summary: 'To główna sekcja profilu z szybkim obrazem postępu.',
+        body: 'Pomaga szybko ocenić rytm nauki ucznia i najważniejsze dalsze kroki.',
         anchorIdPrefix: 'kangur-profile-hero',
         focusKind: 'hero',
         contentIdPrefixes: ['profile:learner'],
         nativeGuideIds: ['profile-hero'],
         triggerPhrases: ['profil ucznia'],
         tags: ['page-content', 'profile'],
-        notes: 'Glowny hero profilu ucznia.',
+        notes: 'Główny hero profilu ucznia.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1173,13 +1180,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'profile-hero',
           collectionId: 'kangur_page_content',
-          text: 'Hero profilu ucznia\nTo glowna sekcja profilu z szybkim obrazem postepu.',
+          text: 'Hero profilu ucznia\nTo główna sekcja profilu z szybkim obrazem postępu.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'profile-hero',
             title: 'Hero profilu ucznia',
-            description: 'To glowna sekcja profilu z szybkim obrazem postepu.',
+            description: 'To główna sekcja profilu z szybkim obrazem postępu.',
             tags: ['kangur', 'page-content', 'profile'],
           },
         },
@@ -1190,7 +1197,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi ten hero.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi ten hero.' }],
           context: {
             surface: 'profile',
             contentId: 'profile:learner',
@@ -1215,10 +1222,10 @@ describe('kangur ai tutor chat handler', () => {
 
     expect(body.message).toContain('Hero profilu ucznia');
     expect(body.message).toContain(
-      'Najlepszy nastepny krok: Powtorz lekcje: Dodawanie.'
+      'Najlepszy następny krok: Powtórz lekcję: Dodawanie.'
     );
     expect(body.message).toContain(
-      'Najprostsza akcja teraz: Otworz lekcje w widoku Lessons.'
+      'Najprostsza akcja teraz: Otwórz lekcję w widoku Lessons.'
     );
     expect(body.sources).toEqual(
       expect.arrayContaining([
@@ -1237,7 +1244,7 @@ describe('kangur ai tutor chat handler', () => {
         source.collectionId === 'kangur-runtime-context' &&
         source.documentId === 'runtime:kangur:learner:learner-1'
     );
-    expect(learnerSnapshotSource?.text).toContain('Powtorz lekcje: Dodawanie');
+    expect(learnerSnapshotSource?.text).toContain('Powtórz lekcję: Dodawanie');
   });
 
   it('adds live completion overlays to direct page-content answers for finished review sections', async () => {
@@ -1288,7 +1295,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi ten wynik.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi ten wynik.' }],
           context: {
             surface: 'game',
             contentId: 'game:result',
@@ -1391,16 +1398,16 @@ describe('kangur ai tutor chat handler', () => {
         componentId: 'performance',
         widget: 'KangurLearnerProfilePerformanceWidget',
         sourcePath: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
-        title: 'Skutecznosc ucznia',
-        summary: 'Ta sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
-        body: 'Pomaga sprawdzic rytm gry oraz to, ktore operacje ida najlepiej, a ktore wymagaja powtorki.',
+        title: 'Skuteczność ucznia',
+        summary: 'Ta sekcja pokazuje aktywność siedmiu dni i wyniki dla operacji.',
+        body: 'Pomaga sprawdzić rytm gry oraz to, które operacje idą najlepiej, a które wymagają powtórki.',
         anchorIdPrefix: 'kangur-profile-performance',
         focusKind: 'summary',
         contentIdPrefixes: ['profile:learner'],
         nativeGuideIds: ['profile-performance'],
-        triggerPhrases: ['skutecznosc ucznia'],
+        triggerPhrases: ['skuteczność ucznia'],
         tags: ['page-content', 'profile'],
-        notes: 'Sekcja skutecznosci ucznia.',
+        notes: 'Sekcja skuteczności ucznia.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1410,13 +1417,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'profile-performance',
           collectionId: 'kangur_page_content',
-          text: 'Skutecznosc ucznia\nTa sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
+          text: 'Skuteczność ucznia\nTa sekcja pokazuje aktywność siedmiu dni i wyniki dla operacji.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'profile-performance',
-            title: 'Skutecznosc ucznia',
-            description: 'Ta sekcja pokazuje aktywnosc siedmiu dni i wyniki dla operacji.',
+            title: 'Skuteczność ucznia',
+            description: 'Ta sekcja pokazuje aktywność siedmiu dni i wyniki dla operacji.',
             tags: ['kangur', 'page-content', 'profile'],
           },
         },
@@ -1427,14 +1434,14 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi te statystyki.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi te statystyki.' }],
           context: {
             surface: 'profile',
             contentId: 'profile:learner',
             promptMode: 'explain',
             focusKind: 'summary',
             focusId: 'kangur-profile-performance',
-            focusLabel: 'Skutecznosc ucznia',
+            focusLabel: 'Skuteczność ucznia',
             interactionIntent: 'explain',
             knowledgeReference: {
               sourceCollection: 'kangur_page_content',
@@ -1596,7 +1603,7 @@ describe('kangur ai tutor chat handler', () => {
           description: 'Licz dwa zbiory razem.',
           masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
           documentSummary:
-            'Dodawanie to laczenie dwoch liczb. Policz elementy po kolei i porownaj wynik z ilustracja.',
+            'Dodawanie to łączenie dwóch liczb. Policz elementy po kolei i porównaj wynik z ilustracją.',
         },
       })
     );
@@ -1610,16 +1617,16 @@ describe('kangur ai tutor chat handler', () => {
         componentId: 'active-document',
         widget: 'KangurLessonDocumentRenderer',
         sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
-        title: 'Material lekcji',
+        title: 'Materiał lekcji',
         summary: 'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
-        body: 'Ta sekcja trzyma glowna tresc aktywnej lekcji i jej przyklady.',
+        body: 'Ta sekcja trzyma główną treść aktywnej lekcji i jej przykłady.',
         anchorIdPrefix: 'kangur-lesson-document',
         focusKind: 'document',
         contentIdPrefixes: ['adding'],
         nativeGuideIds: ['lesson-document'],
-        triggerPhrases: ['material lekcji'],
+        triggerPhrases: ['materiał lekcji'],
         tags: ['page-content', 'lesson'],
-        notes: 'Glowny dokument lekcji.',
+        notes: 'Główny dokument lekcji.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1629,12 +1636,12 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'lesson-document',
           collectionId: 'kangur_page_content',
-          text: 'Material lekcji\nCzytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
+          text: 'Materiał lekcji\nCzytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'lesson-document',
-            title: 'Material lekcji',
+            title: 'Materiał lekcji',
             description:
               'Czytaj zapisany dokument krok po kroku i wracaj do niego podczas praktyki.',
             tags: ['kangur', 'page-content', 'lesson'],
@@ -1647,7 +1654,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi ten material.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi ten materiał.' }],
           context: {
             surface: 'lesson',
             contentId: 'adding',
@@ -1670,9 +1677,9 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.message).toContain('Material lekcji: Dodawanie.');
+    expect(body.message).toContain('Materiał lekcji: Dodawanie.');
     expect(body.message).toContain(
-      'Z tresci tej lekcji teraz: Dodawanie to laczenie dwoch liczb. Policz elementy po kolei i porownaj wynik z ilustracja.'
+      'Z treści tej lekcji teraz: Dodawanie to łączenie dwóch liczb. Policz elementy po kolei i porównaj wynik z ilustracją.'
     );
     expect(body.message).toContain(
       'Aktualny obraz opanowania: Dodawanie mastery 68% after 3 attempts.'
@@ -1682,7 +1689,7 @@ describe('kangur ai tutor chat handler', () => {
         source.collectionId === 'kangur-runtime-context' &&
         source.documentId === 'runtime:kangur:lesson:learner-1:lesson-1'
     );
-    expect(lessonSource?.text).toContain('Dodawanie to laczenie dwoch liczb.');
+    expect(lessonSource?.text).toContain('Dodawanie to łączenie dwóch liczb.');
   });
 
   it('adds active assignment overlays to lesson header answers', async () => {
@@ -1693,9 +1700,9 @@ describe('kangur ai tutor chat handler', () => {
           description: 'Licz dwa zbiory razem.',
           masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
           assignmentSummary:
-            'Powtorz lekcje Dodawanie. Progress: 1 z 2 krokow. Suggested action: Otworz lekcje on Lessons.',
+            'Powtórz lekcję Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.',
           documentSummary:
-            'Dodawanie to laczenie dwoch liczb. Zacznij od malych grup i sprawdz wynik glosno.',
+            'Dodawanie to łączenie dwóch liczb. Zacznij od małych grup i sprawdź wynik głośno.',
         },
       })
     );
@@ -1711,15 +1718,15 @@ describe('kangur ai tutor chat handler', () => {
         sourcePath: 'src/features/kangur/ui/pages/Lessons.tsx',
         title: 'Aktywna lekcja',
         summary:
-          'Przejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
-        body: 'To naglowek aktywnej lekcji z najwazniejszym stanem i szybkim wejsciem do tresci.',
+          'Przejdź przez temat krok po kroku, odsłuchaj materiał i sprawdź, czy czeka tu zadanie od rodzica.',
+        body: 'To nagłówek aktywnej lekcji z najważniejszym stanem i szybkim wejściem do treści.',
         anchorIdPrefix: 'kangur-lesson-header',
         focusKind: 'lesson_header',
         contentIdPrefixes: ['adding'],
         nativeGuideIds: ['lesson-header'],
         triggerPhrases: ['aktywna lekcja'],
         tags: ['page-content', 'lesson'],
-        notes: 'Naglowek aktywnej lekcji.',
+        notes: 'Nagłówek aktywnej lekcji.',
         enabled: true,
         sortOrder: 10,
       },
@@ -1729,14 +1736,14 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'lesson-header',
           collectionId: 'kangur_page_content',
-          text: 'Aktywna lekcja\nPrzejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
+          text: 'Aktywna lekcja\nPrzejdź przez temat krok po kroku, odsłuchaj materiał i sprawdź, czy czeka tu zadanie od rodzica.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'lesson-header',
             title: 'Aktywna lekcja',
             description:
-              'Przejdz przez temat krok po kroku, odsluchaj material i sprawdz, czy czeka tu zadanie od rodzica.',
+              'Przejdź przez temat krok po kroku, odsłuchaj materiał i sprawdź, czy czeka tu zadanie od rodzica.',
             tags: ['kangur', 'page-content', 'lesson'],
           },
         },
@@ -1772,10 +1779,10 @@ describe('kangur ai tutor chat handler', () => {
 
     expect(body.message).toContain('Aktywna lekcja: Dodawanie.');
     expect(body.message).toContain(
-      'Aktywny priorytet: Powtorz lekcje Dodawanie. Progress: 1 z 2 krokow. Suggested action: Otworz lekcje on Lessons.'
+      'Aktywny priorytet: Powtórz lekcję Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.'
     );
     expect(body.message).toContain(
-      'Z tresci tej lekcji teraz: Dodawanie to laczenie dwoch liczb. Zacznij od malych grup i sprawdz wynik glosno.'
+      'Z treści tej lekcji teraz: Dodawanie to łączenie dwóch liczb. Zacznij od małych grup i sprawdź wynik głośno.'
     );
   });
 
@@ -1787,7 +1794,7 @@ describe('kangur ai tutor chat handler', () => {
           description: 'Licz dwa zbiory razem.',
           masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
           navigationSummary:
-            'Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.',
+            'Bez wracania do listy możesz cofnąć się do Kalendarz albo przejść dalej do Odejmowanie.',
         },
       })
     );
@@ -1804,7 +1811,7 @@ describe('kangur ai tutor chat handler', () => {
         title: 'Nawigacja lekcji',
         summary:
           'Przechodz do poprzedniej lub kolejnej lekcji bez wracania do calej listy tematow.',
-        body: 'Ta sekcja daje szybkie przejscie miedzy sasiednimi lekcjami.',
+        body: 'Ta sekcja daje szybkie przejście między sąsiednimi lekcjami.',
         anchorIdPrefix: 'kangur-lesson-navigation',
         focusKind: 'navigation',
         contentIdPrefixes: ['adding'],
@@ -1864,7 +1871,7 @@ describe('kangur ai tutor chat handler', () => {
 
     expect(body.message).toContain('Nawigacja lekcji: Dodawanie.');
     expect(body.message).toContain(
-      'Nawigacja tej lekcji: Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.'
+      'Nawigacja tej lekcji: Bez wracania do listy możesz cofnąć się do Kalendarz albo przejść dalej do Odejmowanie.'
     );
     expect(body.message).toContain(
       'Aktualny obraz opanowania: Dodawanie mastery 68% after 3 attempts.'
@@ -1875,7 +1882,7 @@ describe('kangur ai tutor chat handler', () => {
         source.documentId === 'runtime:kangur:lesson:learner-1:lesson-1'
     );
     expect(lessonSource?.text).toContain(
-      'Bez wracania do listy mozesz cofnac sie do Kalendarz albo przejsc dalej do Odejmowanie.'
+      'Bez wracania do listy możesz cofnąć się do Kalendarz albo przejść dalej do Odejmowanie.'
     );
   });
 
@@ -1884,7 +1891,7 @@ describe('kangur ai tutor chat handler', () => {
       createContextRegistryBundle({
         testFacts: {
           title: 'Kangur Mini',
-          description: 'Zestaw probny.',
+          description: 'Zestaw próbny.',
           currentQuestion: 'Ile to jest 2 + 2?',
           questionProgressLabel: 'Pytanie 1/10',
           questionPointValue: 3,
@@ -1906,8 +1913,8 @@ describe('kangur ai tutor chat handler', () => {
         widget: 'KangurTestQuestionRenderer',
         sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
         title: 'Pytanie testowe',
-        summary: 'Przeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
-        body: 'Ta sekcja pokazuje aktywne pytanie wraz z mozliwymi odpowiedziami.',
+        summary: 'Przeczytaj treść zadania i wybierz jedną odpowiedź przed sprawdzeniem wyniku.',
+        body: 'Ta sekcja pokazuje aktywne pytanie wraz z możliwymi odpowiedziami.',
         anchorIdPrefix: 'kangur-test-question',
         focusKind: 'question',
         contentIdPrefixes: ['suite-1'],
@@ -1924,14 +1931,14 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'test-question',
           collectionId: 'kangur_page_content',
-          text: 'Pytanie testowe\nPrzeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
+          text: 'Pytanie testowe\nPrzeczytaj treść zadania i wybierz jedną odpowiedź przed sprawdzeniem wyniku.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'test-question',
             title: 'Pytanie testowe',
             description:
-              'Przeczytaj tresc zadania i wybierz jedna odpowiedz przed sprawdzeniem wyniku.',
+              'Przeczytaj treść zadania i wybierz jedną odpowiedź przed sprawdzeniem wyniku.',
             tags: ['kangur', 'page-content', 'test'],
           },
         },
@@ -1975,7 +1982,7 @@ describe('kangur ai tutor chat handler', () => {
     expect(body.message).toContain('Pytanie 1/10: Ile to jest 2 + 2?');
     expect(body.message).toContain('To pytanie jest warte 3 pkt.');
     expect(body.message).toContain('Opcje odpowiedzi: A - 3; B - 4.');
-    expect(body.message).toContain('Aktualnie zaznaczona odpowiedz: B - 4.');
+    expect(body.message).toContain('Aktualnie zaznaczona odpowiedź: B - 4.');
     const testSource = body.sources.find(
       (source: { documentId: string; collectionId: string; text: string }) =>
         source.collectionId === 'kangur-runtime-context' &&
@@ -1986,14 +1993,118 @@ describe('kangur ai tutor chat handler', () => {
     expect(testSource?.text).toContain('Selected choice: B - 4.');
   });
 
+  it('adds selected-answer overlays to direct page-content selection answers', async () => {
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        testFacts: {
+          title: 'Kangur Mini',
+        description: 'Zestaw próbny.',
+          currentQuestion: 'Ile to jest 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+          selectedChoiceLabel: 'B',
+          selectedChoiceText: '4',
+          answerRevealed: false,
+        },
+      })
+    );
+    resolveKangurAiTutorSectionKnowledgeBundleMock.mockResolvedValue({
+      section: {
+        id: 'tests-selection',
+        pageKey: 'Tests',
+        screenKey: 'suite',
+        surface: 'test',
+        route: '/tests',
+        componentId: 'selected-choice',
+        widget: 'KangurTestQuestionRenderer',
+        sourcePath: 'src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx',
+        title: 'Twój zaznaczony wybór',
+        summary:
+          'To jest odpowiedź wybrana przed sprawdzeniem wyniku. Tutor może wyjaśnić, co oznacza ten wybór i na co spojrzeć jeszcze raz.',
+        body: 'Ta sekcja odnosi się do jednej, aktualnie zaznaczonej odpowiedzi w teście.',
+        anchorIdPrefix: 'kangur-test-selection:',
+        focusKind: 'selection',
+        contentIdPrefixes: ['suite-1'],
+        nativeGuideIds: ['test-selection'],
+        triggerPhrases: ['wybrana odpowiedź'],
+        tags: ['page-content', 'test'],
+        notes: 'Wybrana odpowiedź testowa.',
+        enabled: true,
+        sortOrder: 10,
+      },
+      linkedNativeGuides: [],
+      instructions: 'unused in direct-answer path',
+      sources: [
+        {
+          documentId: 'tests-selection',
+          collectionId: 'kangur_page_content',
+          text: 'Twój zaznaczony wybór\nTo jest odpowiedź wybrana przed sprawdzeniem wyniku.',
+          score: 0.99,
+          metadata: {
+            source: 'manual-text',
+            sourceId: 'tests-selection',
+            title: 'Twój zaznaczony wybór',
+            description:
+              'To jest odpowiedź wybrana przed sprawdzeniem wyniku. Tutor może wyjaśnić, co oznacza ten wybór i na co spojrzeć jeszcze raz.',
+            tags: ['kangur', 'page-content', 'test'],
+          },
+        },
+      ],
+      followUpActions: [],
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Co pokazuje mój zaznaczony wybór?' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-1',
+            title: 'Kangur Mini',
+            description: 'Ile to jest 2 + 2?',
+            promptMode: 'explain',
+            focusKind: 'selection',
+            focusId: 'kangur-test-selection:suite-1:question-1:B',
+            focusLabel: 'Odpowiedź B: 4',
+            questionId: 'question-1',
+            currentQuestion: 'Ile to jest 2 + 2?',
+            questionProgressLabel: 'Pytanie 1/10',
+            selectedChoiceLabel: 'B',
+            selectedChoiceText: '4',
+            answerRevealed: false,
+            interactionIntent: 'explain',
+            knowledgeReference: {
+              sourceCollection: 'kangur_page_content',
+              sourceRecordId: 'tests-selection',
+              sourcePath: 'entry:tests-selection',
+            },
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+
+    expect(body.message).toContain('Twój zaznaczony wybór: Odpowiedź B: 4.');
+    expect(body.message).toContain('Pytanie 1/10: Ile to jest 2 + 2?');
+    expect(body.message).toContain('Aktualnie zaznaczona odpowiedź: B - 4.');
+    const testSource = body.sources.find(
+      (source: { documentId: string; collectionId: string; text: string }) =>
+        source.collectionId === 'kangur-runtime-context' &&
+        source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
+    );
+    expect(testSource?.text).toContain('Selected choice: B - 4.');
+  });
+
   it('adds finished test result overlays to direct page-content summary answers', async () => {
     contextRegistryResolveRefsMock.mockResolvedValue(
       createContextRegistryBundle({
         testFacts: {
           title: 'Kangur Mini',
-          description: 'Zestaw probny.',
-          questionProgressLabel: 'Ukonczono 10/10',
-          resultSummary: 'Wynik koncowy: 24/30 pkt (80%).',
+          description: 'Zestaw próbny.',
+          questionProgressLabel: 'Ukończono 10/10',
+          resultSummary: 'Wynik końcowy: 24/30 pkt (80%).',
           answerRevealed: true,
         },
       })
@@ -2009,8 +2120,8 @@ describe('kangur ai tutor chat handler', () => {
         widget: 'KangurSummaryPanel',
         sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
         title: 'Podsumowanie testu',
-        summary: 'Sprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
-        body: 'Ta sekcja zamyka caly test i pokazuje wynik po ukonczeniu zestawu.',
+        summary: 'Sprawdź wynik końcowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+        body: 'Ta sekcja zamyka cały test i pokazuje wynik po ukończeniu zestawu.',
         anchorIdPrefix: 'kangur-test-summary',
         focusKind: 'summary',
         contentIdPrefixes: ['suite-1'],
@@ -2027,13 +2138,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'test-summary',
           collectionId: 'kangur_page_content',
-          text: 'Podsumowanie testu\nSprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+          text: 'Podsumowanie testu\nSprawdź wynik końcowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'test-summary',
             title: 'Podsumowanie testu',
-            description: 'Sprawdz wynik koncowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
+            description: 'Sprawdź wynik końcowy i przejrzyj wszystkie odpowiedzi jeszcze raz.',
             tags: ['kangur', 'page-content', 'test'],
           },
         },
@@ -2049,12 +2160,12 @@ describe('kangur ai tutor chat handler', () => {
             surface: 'test',
             contentId: 'suite-1',
             title: 'Kangur Mini',
-            description: 'Wynik koncowy: 24/30 pkt (80%).',
+            description: 'Wynik końcowy: 24/30 pkt (80%).',
             promptMode: 'explain',
             focusKind: 'summary',
             focusId: 'kangur-test-summary:suite-1',
             focusLabel: 'Kangur Mini',
-            questionProgressLabel: 'Ukonczono 10/10',
+            questionProgressLabel: 'Ukończono 10/10',
             answerRevealed: true,
             interactionIntent: 'explain',
             knowledgeReference: {
@@ -2072,14 +2183,14 @@ describe('kangur ai tutor chat handler', () => {
     const body = await response.json();
 
     expect(body.message).toContain('Podsumowanie testu: Kangur Mini.');
-    expect(body.message).toContain('Wynik koncowy: 24/30 pkt (80%).');
-    expect(body.message).toContain('Aktualny stan tej sekcji: Ukonczono 10/10.');
+    expect(body.message).toContain('Wynik końcowy: 24/30 pkt (80%).');
+    expect(body.message).toContain('Aktualny stan tej sekcji: Ukończono 10/10.');
     const testSource = body.sources.find(
       (source: { documentId: string; collectionId: string; text: string }) =>
         source.collectionId === 'kangur-runtime-context' &&
         source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
     );
-    expect(testSource?.text).toContain('Wynik koncowy: 24/30 pkt (80%).');
+    expect(testSource?.text).toContain('Wynik końcowy: 24/30 pkt (80%).');
   });
 
   it('adds revealed answer overlays to direct page-content review answers', async () => {
@@ -2087,11 +2198,11 @@ describe('kangur ai tutor chat handler', () => {
       createContextRegistryBundle({
         testFacts: {
           title: 'Kangur Mini',
-          description: 'Zestaw probny.',
+          description: 'Zestaw próbny.',
           currentQuestion: 'Ile to jest 2 + 2?',
           questionProgressLabel: 'Pytanie 1/10',
-          reviewSummary: 'Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.',
-          revealedExplanation: '2 + 2 daje 4, bo laczymy dwie pary.',
+          reviewSummary: 'Wybrana odpowiedź: B - 5. Poprawna odpowiedź: A - 4.',
+          revealedExplanation: '2 + 2 daje 4, bo łączymy dwie pary.',
           answerRevealed: true,
           correctChoiceLabel: 'A',
         },
@@ -2107,14 +2218,14 @@ describe('kangur ai tutor chat handler', () => {
         componentId: 'review',
         widget: 'KangurTestQuestionRenderer',
         sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
-        title: 'Omowienie odpowiedzi',
-        summary: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
-        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odslonieciu rozwiazania.',
+        title: 'Omówienie odpowiedzi',
+        summary: 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
+        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odsłonięciu rozwiązania.',
         anchorIdPrefix: 'kangur-test-question',
         focusKind: 'review',
         contentIdPrefixes: ['suite-1'],
         nativeGuideIds: ['test-review'],
-        triggerPhrases: ['omowienie odpowiedzi'],
+        triggerPhrases: ['omówienie odpowiedzi'],
         tags: ['page-content', 'test'],
         notes: 'Review pytania testowego.',
         enabled: true,
@@ -2126,13 +2237,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'test-review',
           collectionId: 'kangur_page_content',
-          text: 'Omowienie odpowiedzi\nPorownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+          text: 'Omówienie odpowiedzi\nPorównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'test-review',
-            title: 'Omowienie odpowiedzi',
-            description: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+            title: 'Omówienie odpowiedzi',
+            description: 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
             tags: ['kangur', 'page-content', 'test'],
           },
         },
@@ -2143,12 +2254,12 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Wyjasnij mi to omowienie odpowiedzi.' }],
+          messages: [{ role: 'user', content: 'Wyjaśnij mi to omówienie odpowiedzi.' }],
           context: {
             surface: 'test',
             contentId: 'suite-1',
             title: 'Kangur Mini',
-            description: 'Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.',
+            description: 'Wybrana odpowiedź: B - 5. Poprawna odpowiedź: A - 4.',
             promptMode: 'explain',
             focusKind: 'review',
             focusId: 'kangur-test-question:suite-1:question-1',
@@ -2172,16 +2283,16 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.message).toContain('Omowienie odpowiedzi: Pytanie 1.');
-    expect(body.message).toContain('Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.');
+    expect(body.message).toContain('Omówienie odpowiedzi: Pytanie 1.');
+    expect(body.message).toContain('Wybrana odpowiedź: B - 5. Poprawna odpowiedź: A - 4.');
     expect(body.message).toContain('Pytanie 1/10: Ile to jest 2 + 2?');
-    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo laczymy dwie pary.');
+    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo łączymy dwie pary.');
     const testSource = body.sources.find(
       (source: { documentId: string; collectionId: string; text: string }) =>
         source.collectionId === 'kangur-runtime-context' &&
         source.documentId.startsWith('runtime:kangur:test:learner-1:suite-1:')
     );
-    expect(testSource?.text).toContain('Wybrana odpowiedz: B - 5. Poprawna odpowiedz: A - 4.');
+    expect(testSource?.text).toContain('Wybrana odpowiedź: B - 5. Poprawna odpowiedź: A - 4.');
   });
 
   it('falls back to canonical correct-answer facts for review answers when no review summary is present', async () => {
@@ -2189,10 +2300,10 @@ describe('kangur ai tutor chat handler', () => {
       createContextRegistryBundle({
         testFacts: {
           title: 'Kangur Mini',
-          description: 'Zestaw probny.',
+          description: 'Zestaw próbny.',
           currentQuestion: 'Ile to jest 2 + 2?',
           questionProgressLabel: 'Pytanie 1/10',
-          revealedExplanation: '2 + 2 daje 4, bo laczymy dwie pary.',
+          revealedExplanation: '2 + 2 daje 4, bo łączymy dwie pary.',
           answerRevealed: true,
           selectedChoiceLabel: 'B',
           selectedChoiceText: '5',
@@ -2211,14 +2322,14 @@ describe('kangur ai tutor chat handler', () => {
         componentId: 'review',
         widget: 'KangurTestQuestionRenderer',
         sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
-        title: 'Omowienie odpowiedzi',
-        summary: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
-        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odslonieciu rozwiazania.',
+        title: 'Omówienie odpowiedzi',
+        summary: 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
+        body: 'Ta sekcja pokazuje wynik Twojej odpowiedzi po odsłonięciu rozwiązania.',
         anchorIdPrefix: 'kangur-test-question',
         focusKind: 'review',
         contentIdPrefixes: ['suite-1'],
         nativeGuideIds: ['test-review'],
-        triggerPhrases: ['omowienie odpowiedzi'],
+        triggerPhrases: ['omówienie odpowiedzi'],
         tags: ['page-content', 'test'],
         notes: 'Review pytania testowego.',
         enabled: true,
@@ -2230,13 +2341,13 @@ describe('kangur ai tutor chat handler', () => {
         {
           documentId: 'test-review',
           collectionId: 'kangur_page_content',
-          text: 'Omowienie odpowiedzi\nPorownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+          text: 'Omówienie odpowiedzi\nPorównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
           score: 0.99,
           metadata: {
             source: 'manual-text',
             sourceId: 'test-review',
-            title: 'Omowienie odpowiedzi',
-            description: 'Porownaj swoj wybor z poprawna odpowiedzia i przeczytaj wyjasnienie.',
+            title: 'Omówienie odpowiedzi',
+            description: 'Porównaj swój wybór z poprawną odpowiedzią i przeczytaj wyjaśnienie.',
             tags: ['kangur', 'page-content', 'test'],
           },
         },
@@ -2247,7 +2358,7 @@ describe('kangur ai tutor chat handler', () => {
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Co oznacza to omowienie odpowiedzi?' }],
+          messages: [{ role: 'user', content: 'Co oznacza to omówienie odpowiedzi?' }],
           context: {
             surface: 'test',
             contentId: 'suite-1',
@@ -2275,9 +2386,9 @@ describe('kangur ai tutor chat handler', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.message).toContain('Poprawna odpowiedz: A - 4.');
-    expect(body.message).toContain('Wybrana odpowiedz: B - 5.');
-    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo laczymy dwie pary.');
+    expect(body.message).toContain('Poprawna odpowiedź: A - 4.');
+    expect(body.message).toContain('Wybrana odpowiedź: B - 5.');
+    expect(body.message).toContain('Po pokazaniu odpowiedzi: 2 + 2 daje 4, bo łączymy dwie pary.');
     const testSource = body.sources.find(
       (source: { documentId: string; collectionId: string; text: string }) =>
         source.collectionId === 'kangur-runtime-context' &&
@@ -2342,12 +2453,12 @@ describe('kangur ai tutor chat handler', () => {
       followUpActions: [
         {
           id: 'recommendation:strengthen_lesson_mastery',
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'adding',
           },
-          reason: 'Powtorz lekcje: Dodawanie',
+          reason: 'Powtórz lekcję: Dodawanie',
         },
       ],
       coachingFrame: {
@@ -2363,18 +2474,18 @@ describe('kangur ai tutor chat handler', () => {
         lessonFacts: {
           title: 'Dodawanie',
           description: 'Ćwiczenia z podstaw dodawania.',
-          assignmentSummary: 'Powtorz lekcje: Dodawanie.',
+          assignmentSummary: 'Powtórz lekcję: Dodawanie.',
           masterySummary: 'Dodawanie mastery 65% after 2 attempts.',
         },
       })
     );
     runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Wroc teraz do lekcji z dodawania i zrob jedna krotka powtorke.',
+      text: 'Wróć teraz do lekcji z dodawania i zrób jedną krótką powtórkę.',
     });
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
         JSON.stringify({
-          messages: [{ role: 'user', content: 'Co dalej powinienem zrobic?' }],
+          messages: [{ role: 'user', content: 'Co dalej powinienem zrobić?' }],
           context: {
             surface: 'lesson',
             contentId: 'adding',
@@ -2402,16 +2513,16 @@ describe('kangur ai tutor chat handler', () => {
     );
     const body = await response.json();
     expect(body).toMatchObject({
-      message: 'Wroc teraz do lekcji z dodawania i zrob jedna krotka powtorke.',
+      message: 'Wróć teraz do lekcji z dodawania i zrób jedną krótką powtórkę.',
       followUpActions: [
         {
           id: 'recommendation:strengthen_lesson_mastery',
-          label: 'Otworz lekcje',
+          label: 'Otwórz lekcję',
           page: 'Lessons',
           query: {
             focus: 'adding',
           },
-          reason: 'Powtorz lekcje: Dodawanie',
+          reason: 'Powtórz lekcję: Dodawanie',
         },
       ],
       coachingFrame: {
@@ -2445,7 +2556,7 @@ describe('kangur ai tutor chat handler', () => {
       })
     );
     expect(body.sources[0].text).toContain('Ćwiczenia z podstaw dodawania.');
-    expect(body.sources[0].text).toContain('Powtorz lekcje: Dodawanie.');
+    expect(body.sources[0].text).toContain('Powtórz lekcję: Dodawanie.');
   });
   it('ignores legacy teaching-agent ids and still uses the direct Brain runtime', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
@@ -2629,7 +2740,7 @@ describe('kangur ai tutor chat handler', () => {
       postKangurAiTutorChatHandler(
         createPostRequest(
           JSON.stringify({
-            messages: [{ role: 'user', content: 'Podpowiedz mi.' }],
+            messages: [{ role: 'user', content: 'Podpowiedź mi.' }],
             context: {
               surface: 'test',
               contentId: 'suite-2026',
@@ -2696,7 +2807,7 @@ describe('kangur ai tutor chat handler', () => {
       postKangurAiTutorChatHandler(
         createPostRequest(
           JSON.stringify({
-            messages: [{ role: 'user', content: 'Podpowiedz mi kolejny ruch.' }],
+            messages: [{ role: 'user', content: 'Podpowiedź mi kolejny ruch.' }],
             context: {
               surface: 'game',
               contentId: 'calendar-quiz',

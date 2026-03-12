@@ -34,7 +34,7 @@ export function KangurParentDashboardAssignmentsWidget({
       <KangurPanelIntro
         description={
           assignmentsContent?.summary ??
-          'Nadaj priorytet pracy i sprawdz, co jest aktywne albo wymaga przypomnienia.'
+          'Nadaj priorytet pracy i sprawdź, co jest aktywne albo wymaga przypomnienia.'
         }
         title={assignmentsContent?.title ?? 'Zadania ucznia'}
         titleAs='h2'

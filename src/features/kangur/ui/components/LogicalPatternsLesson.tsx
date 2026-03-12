@@ -21,19 +21,19 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wzorzec to układ, który powtarza sie według pewnej reguły. Gdy ja znajdziesz — mozesz
-            przewidziec, co bedzie dalej!
+            Wzorzec to układ, który powtarza się według pewnej reguły. Gdy ją znajdziesz — możesz
+            przewidzieć, co będzie dalej!
           </KangurLessonLead>
           <KangurLessonCallout
             accent='violet'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
           >
-            <p className='font-semibold text-violet-700 mb-2'>Wzorce sa wszedzie:</p>
+            <p className='font-semibold text-violet-700 mb-2'>Wzorce są wszędzie:</p>
             <ul className='space-y-1'>
               <li>🔴🔵🔴🔵 — naprzemienne kolory</li>
-              <li>1, 2, 3, 4, 5 — kazda liczba o 1 wieksza</li>
-              <li>♦️🔷♦️🔷 — powtarzajacy sie kształt</li>
-              <li>pon., wt., sr., czw. — dni tygodnia</li>
+              <li>1, 2, 3, 4, 5 — każda liczba o 1 większa</li>
+              <li>♦️🔷♦️🔷 — powtarzający się kształt</li>
+              <li>pon., wt., śr., czw. — dni tygodnia</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -44,7 +44,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wzorce moga uzywac kolorów, kształtów lub obu naraz. Patrz na powtarzajaca sie grupe —
+            Wzorce mogą używać kolorów, kształtów lub obu naraz. Patrz na powtarzającą się grupę —
             to jest jednostka wzorca.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
@@ -61,7 +61,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               >
                 <KangurLessonCaption className='mb-1'>{label}</KangurLessonCaption>
                 <p className='text-2xl tracking-widest'>{seq}</p>
-                <p className='text-violet-600 font-bold text-sm mt-1'>Odpowiedz: {answer}</p>
+                <p className='text-violet-600 font-bold text-sm mt-1'>Odpowiedź: {answer}</p>
               </KangurLessonCallout>
             ))}
           </div>
@@ -71,19 +71,19 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   ciagi_arytm: [
     {
-      title: 'Ciagi liczbowe — dodawanie',
+      title: 'Ciągi liczbowe — dodawanie',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            W ciagu liczbowym kazda liczba powstaje z poprzedniej według tej samej zasady.
-            Najczesciej dodajemy ta sama wartosc.
+            W ciągu liczbowym każda liczba powstaje z poprzedniej według tej samej zasady.
+            Najczęściej dodajemy tę samą wartość.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
             {[
               { hint: '+2 co krok', seq: '2, 4, 6, 8, 10, ❓', answer: '12' },
               { hint: '+5 co krok', seq: '5, 10, 15, 20, ❓', answer: '25' },
               {
-                hint: '+10, +9, +8... (malejacy krok)',
+                hint: '+10, +9, +8... (malejący krok)',
                 seq: '1, 11, 20, 28, ❓',
                 answer: '35 (krok maleje o 1)',
               },
@@ -92,7 +92,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 <KangurLessonCaption className='mb-1'>{hint}</KangurLessonCaption>
                 <p className='text-lg font-extrabold text-violet-700'>{seq}</p>
                 <KangurLessonCaption className='mt-1'>
-                  Odpowiedz: <b>{answer}</b>
+                  Odpowiedź: <b>{answer}</b>
                 </KangurLessonCaption>
               </KangurLessonCallout>
             ))}
@@ -103,11 +103,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   ciagi_geom: [
     {
-      title: 'Ciagi liczbowe — mnozenie i Fibonacci',
+      title: 'Ciągi liczbowe — mnożenie i Fibonacci',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Gdy kazda liczba jest wielokrotnoscia poprzedniej, ciag rosnie bardzo szybko! To ciag
+            Gdy każda liczba jest wielokrotnością poprzedniej, ciąg rośnie bardzo szybko! To ciąg
             geometryczny.
           </KangurLessonLead>
           <div className='flex flex-col gap-3 w-full'>
@@ -115,7 +115,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               { hint: '×2 co krok', seq: '1, 2, 4, 8, 16, ❓', answer: '32' },
               { hint: '×3 co krok', seq: '2, 6, 18, 54, ❓', answer: '162' },
               {
-                hint: 'Ciag Fibonacciego (a+b=c)',
+                hint: 'Ciąg Fibonacciego (a+b=c)',
                 seq: '1, 1, 2, 3, 5, 8, ❓',
                 answer: '13 (5+8=13)',
               },
@@ -124,7 +124,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 <KangurLessonCaption className='mb-1'>{hint}</KangurLessonCaption>
                 <p className='text-lg font-extrabold text-purple-700'>{seq}</p>
                 <KangurLessonCaption className='mt-1'>
-                  Odpowiedz: <b>{answer}</b>
+                  Odpowiedź: <b>{answer}</b>
                 </KangurLessonCaption>
               </KangurLessonCallout>
             ))}
@@ -135,7 +135,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   strategie: [
     {
-      title: 'Jak szukac reguły?',
+      title: 'Jak szukać reguły?',
       content: (
         <KangurLessonStack>
           <KangurLessonCallout accent='slate' className='w-full border-violet-200/85'>
@@ -144,22 +144,22 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 <b>Policz elementy jednostki</b> — jak wiele przed powtórzeniem?
               </li>
               <li>
-                <b>Sprawdz róznicę</b> — odejmij sasiednie liczby. Czy jest stała?
+                <b>Sprawdź różnicę</b> — odejmij sąsiednie liczby. Czy jest stała?
               </li>
               <li>
-                <b>Sprawdz iloraz</b> — podziel sasiednie liczby. Czy jest stały?
+                <b>Sprawdź iloraz</b> — podziel sąsiednie liczby. Czy jest stały?
               </li>
               <li>
                 <b>Szukaj relacji dwóch poprzednich</b> — jak Fibonacci.
               </li>
               <li>
-                <b>Zweryfikuj regułe</b> — sprawdz ja na wszystkich znanych elementach!
+                <b>Zweryfikuj regułę</b> — sprawdź ją na wszystkich znanych elementach!
               </li>
             </ol>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
             <KangurLessonCaption>
-              Cwiczenie: <b>3, 6, 12, 24, ❓</b>
+              Ćwiczenie: <b>3, 6, 12, 24, ❓</b>
             </KangurLessonCaption>
             <p className='text-violet-600 font-bold text-sm mt-1'>
               Iloraz: 2, 2, 2 — stały! Reguła: ×2 → <b>48</b>
@@ -175,24 +175,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
               <li>
-                🔁 <b>Wzorzec AB/AAB</b> — powtarzajaca sie jednostka
+                🔁 <b>Wzorzec AB/AAB</b> — powtarzająca się jednostka
               </li>
               <li>
-                ➕ <b>Ciag arytmetyczny</b> — stała róznica miedzy elementami
+                ➕ <b>Ciąg arytmetyczny</b> — stała różnica między elementami
               </li>
               <li>
-                ✖️ <b>Ciag geometryczny</b> — stały iloraz miedzy elementami
+                ✖️ <b>Ciąg geometryczny</b> — stały iloraz między elementami
               </li>
               <li>
                 🌀 <b>Fibonacci</b> — suma dwóch poprzednich
               </li>
               <li>
-                🔍 <b>Strategia</b> — szukaj roznicy, ilorazu lub relacji
+                🔍 <b>Strategia</b> — szukaj różnicy, ilorazu lub relacji
               </li>
             </ul>
           </KangurLessonCallout>
           <p className='text-violet-600 font-bold text-center'>
-            Wzorce i ciagi to podstawa matematyki i informatyki!
+            Wzorce i ciągi to podstawa matematyki i informatyki!
           </p>
         </KangurLessonStack>
       ),
@@ -210,19 +210,19 @@ export const HUB_SECTIONS = [
   {
     id: 'ciagi_arytm',
     emoji: '➕',
-    title: 'Ciagi arytmetyczne',
-    description: 'Stała róznica co krok',
+    title: 'Ciągi arytmetyczne',
+    description: 'Stała różnica co krok',
   },
   {
     id: 'ciagi_geom',
     emoji: '✖️',
-    title: 'Ciagi geometryczne i Fibonacci',
-    description: 'Mnozenie i specjalne ciagi',
+    title: 'Ciągi geometryczne i Fibonacci',
+    description: 'Mnożenie i specjalne ciągi',
   },
   {
     id: 'strategie',
     emoji: '🔍',
-    title: 'Jak szukac reguły?',
+    title: 'Jak szukać reguły?',
     description: 'Strategia + podsumowanie',
   },
 ];
@@ -249,7 +249,7 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
   return (
     <LessonHub
       lessonEmoji='🔢'
-      lessonTitle='Wzorce i ciagi'
+      lessonTitle='Wzorce i ciągi'
       gradientClass='from-violet-500 to-purple-600'
       progressDotClassName='bg-violet-300'
       sections={HUB_SECTIONS.map((section) => ({

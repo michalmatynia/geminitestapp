@@ -134,8 +134,13 @@ describe('ProgressOverview lesson mastery insights', () => {
     expect(screen.getByText('Najlepsza seria').parentElement).toHaveClass(
       'soft-card'
     );
-    expect(screen.getByText('Sledzone: 2 · opanowane: 1 · do powtorki: 1')).toBeInTheDocument();
-    expect(screen.getByText('Do powtorki')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.textContent === 'Śledzone: 2 · opanowane: 1 · do powtórki: 1'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Do powtórki')).toBeInTheDocument();
     expect(screen.getByText('Najmocniejsze lekcje')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       'Trening zegara: Godziny'

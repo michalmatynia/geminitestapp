@@ -130,7 +130,7 @@ export default function LessonSlideSection({
               <button
                 type='button'
                 onClick={secretLessonPill.onOpen}
-                aria-label='Otworz sekretny panel'
+                aria-label='Otwórz sekretny panel'
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
                   'h-[14px] min-w-[40px] cursor-pointer justify-center text-[10px] font-black shadow-sm'

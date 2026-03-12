@@ -42,9 +42,9 @@ export default function KangurHeroMilestoneSummary({
           className='rounded-[28px] border px-4 py-4'
           data-testid={`${summaryTestIdPrefix}-next-badge`}
           style={{
-            background: 'color-mix(in srgb, var(--kangur-soft-card-background) 92%, #fef3c7 8%)',
+            background: 'color-mix(in srgb, var(--kangur-soft-card-background) 96%, #fef3c7 4%)',
             borderColor:
-              'color-mix(in srgb, var(--kangur-soft-card-border) 88%, #d97706 12%)',
+              'color-mix(in srgb, var(--kangur-soft-card-border) 94%, #d97706 6%)',
           }}
         >
           <KangurProgressHighlightCardContent

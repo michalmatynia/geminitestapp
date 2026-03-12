@@ -28,8 +28,8 @@ import { KangurPriorityAssignments } from './KangurPriorityAssignments';
 const assignment: KangurAssignmentSnapshot = {
   id: 'assignment-priority',
   learnerKey: 'jan@example.com',
-  title: 'Powtorka: Dzielenie',
-  description: 'Wroc do dzielenia i zakoncz jedna pelna sesje.',
+  title: 'Powtórka: Dzielenie',
+  description: 'Wróć do dzielenia i zakończ jedną pełną sesję.',
   priority: 'high',
   archived: false,
   target: {
@@ -45,7 +45,7 @@ const assignment: KangurAssignmentSnapshot = {
   progress: {
     status: 'not_started',
     percent: 0,
-    summary: 'Powtorki po przydziale: 0/1.',
+    summary: 'Powtórki po przydziale: 0/1.',
     attemptsCompleted: 0,
     attemptsRequired: 1,
     lastActivityAt: null,
@@ -86,7 +86,7 @@ describe('KangurPriorityAssignments', () => {
       'Priorytetowe zadania'
     );
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
-      'Brak aktywnych zadan od rodzica.'
+      'Brak aktywnych zadań od rodzica.'
     );
   });
 });

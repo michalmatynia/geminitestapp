@@ -39,7 +39,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
           id: 'assignment-active',
           learnerKey: 'jan@example.com',
           title: 'Praktyka: Dzielenie',
-          description: 'Zrob jedna sesje dzielenia.',
+          description: 'Zrób jedną sesję dzielenia.',
           priority: 'high',
           archived: false,
           target: {
@@ -65,8 +65,8 @@ describe('KangurLearnerAssignmentsPanel', () => {
         {
           id: 'assignment-completed',
           learnerKey: 'jan@example.com',
-          title: 'Powtorka: Zegar',
-          description: 'Ukoncz dodatkowa powtorke zegara.',
+          title: 'Powtórka: Zegar',
+          description: 'Ukończ dodatkową powtórkę zegara.',
           priority: 'medium',
           archived: false,
           target: {
@@ -82,7 +82,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtorki po przydziale: 1/1.',
+            summary: 'Powtórki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T09:20:00.000Z',
@@ -111,9 +111,9 @@ describe('KangurLearnerAssignmentsPanel', () => {
       'border'
     );
     expect(screen.getByText('Ostatni sukces')).toBeInTheDocument();
-    expect(screen.getAllByText('Powtorka: Zegar').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Powtórka: Zegar').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Aktywne zadania od rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Historia ukonczonych zadań')).toBeInTheDocument();
+    expect(screen.getByText('Historia ukończonych zadań')).toBeInTheDocument();
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
   });
 
@@ -136,7 +136,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
     );
     expect(
       screen.getByText(
-        'Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.'
+        'Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historię ich wykonania.'
       )
     ).toBeInTheDocument();
   });
@@ -165,7 +165,7 @@ describe('KangurLearnerAssignmentsPanel', () => {
     useKangurAssignmentsMock.mockReturnValue({
       assignments: [],
       isLoading: false,
-      error: 'Nie udalo sie pobrac przydzialow.',
+      error: 'Nie udało się pobrać przydziałów.',
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
@@ -174,6 +174,6 @@ describe('KangurLearnerAssignmentsPanel', () => {
     render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('learner-assignments-error')).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('Nie udalo sie pobrac przydzialow.')).toBeInTheDocument();
+    expect(screen.getByText('Nie udało się pobrać przydziałów.')).toBeInTheDocument();
   });
 });

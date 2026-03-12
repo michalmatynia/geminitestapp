@@ -4,8 +4,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
-import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import {
+  useKangurAiTutorSessionSync,
+  useOptionalKangurAiTutor,
+} from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
   KangurButton,
@@ -37,6 +42,8 @@ export function KangurTestSuitePlayer({
 }: Props): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const tutor = useOptionalKangurAiTutor();
+  const tutorContent = useKangurAiTutorContent();
   const publishedQuestions = useMemo(
     () => questions.filter((question) => isPublishedKangurTestQuestion(question)),
     [questions]
@@ -59,6 +66,21 @@ export function KangurTestSuitePlayer({
     currentQuestion && selectedLabel
       ? currentQuestion.choices.find((choice) => choice.label === selectedLabel)?.text ?? null
       : null;
+  const selectedChoiceSelectionText =
+    currentQuestion && selectedLabel && selectedChoiceText
+      ? `Odpowiedz ${selectedLabel}: ${selectedChoiceText}`
+      : null;
+  const selectedChoiceFocusId =
+    currentQuestion && selectedLabel
+      ? `kangur-test-selection:${suite.id}:${currentQuestion.id}:${selectedLabel}`
+      : null;
+  const selectedChoiceKnowledgeReference = selectedChoiceFocusId
+    ? resolveKangurTutorSectionKnowledgeReference({
+      anchorId: selectedChoiceFocusId,
+      contentId: suite.id,
+      focusKind: 'selection',
+    })
+    : null;
   const correctChoiceText = currentQuestion
     ? currentQuestion.choices.find((choice) => choice.label === currentQuestion.correctChoiceLabel)?.text ??
       null
@@ -67,11 +89,11 @@ export function KangurTestSuitePlayer({
     showAnswer && currentQuestion && selectedLabel
       ? [
         selectedChoiceText
-          ? `Wybrana odpowiedz: ${selectedLabel} - ${selectedChoiceText}.`
-          : `Wybrana odpowiedz: ${selectedLabel}.`,
+          ? `Wybrana odpowiedź: ${selectedLabel} - ${selectedChoiceText}.`
+          : `Wybrana odpowiedź: ${selectedLabel}.`,
         correctChoiceText
-          ? `Poprawna odpowiedz: ${currentQuestion.correctChoiceLabel} - ${correctChoiceText}.`
-          : `Poprawna odpowiedz: ${currentQuestion.correctChoiceLabel}.`,
+          ? `Poprawna odpowiedź: ${currentQuestion.correctChoiceLabel} - ${correctChoiceText}.`
+          : `Poprawna odpowiedź: ${currentQuestion.correctChoiceLabel}.`,
       ]
         .filter(Boolean)
         .join(' ')
@@ -118,9 +140,9 @@ export function KangurTestSuitePlayer({
       surface: 'test' as const,
       contentId: suite.id,
       title: suite.title,
-      description: `Wynik koncowy: ${score}/${maxScore} pkt (${scorePercent}%).`,
+      description: `Wynik końcowy: ${score}/${maxScore} pkt (${scorePercent}%).`,
       questionProgressLabel:
-        totalQuestions > 0 ? `Ukonczono ${totalQuestions}/${totalQuestions}` : undefined,
+        totalQuestions > 0 ? `Ukończono ${totalQuestions}/${totalQuestions}` : undefined,
       answerRevealed: true,
     }),
     [maxScore, score, scorePercent, suite.id, suite.title, totalQuestions]
@@ -169,9 +191,37 @@ export function KangurTestSuitePlayer({
     },
   });
 
+  const canAskAboutSelectedChoice =
+    Boolean(tutor?.enabled) &&
+    Boolean(currentQuestion) &&
+    Boolean(selectedLabel) &&
+    Boolean(selectedChoiceSelectionText) &&
+    !showAnswer &&
+    !finished;
+
   const handleSelect = (label: string): void => {
     if (!currentQuestion || showAnswer) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: label }));
+  };
+
+  const handleAskAboutSelectedChoice = async (): Promise<void> => {
+    if (!tutor || !currentQuestion || !selectedLabel || !selectedChoiceSelectionText) {
+      return;
+    }
+
+    tutor.setHighlightedText(selectedChoiceSelectionText);
+    tutor.openChat();
+    await tutor.sendMessage(tutorContent.guidedCallout.selectionRequestPrompt, {
+      promptMode: 'selected_text',
+      selectedText: selectedChoiceSelectionText,
+      contentId: suite.id,
+      focusKind: 'selection',
+      focusId: selectedChoiceFocusId,
+      focusLabel: selectedChoiceSelectionText,
+      knowledgeReference: selectedChoiceKnowledgeReference,
+      interactionIntent: 'explain',
+      surface: 'test',
+    });
   };
 
   const handleRevealAnswer = (): void => {
@@ -212,10 +262,10 @@ export function KangurTestSuitePlayer({
           data-testid='kangur-test-suite-empty'
           description={
             emptyStateContent?.summary ??
-            'Ten zestaw nie ma jeszcze aktywnych pytan testowych. Wroc pozniej albo wybierz inny zestaw.'
+            'Ten zestaw nie ma jeszcze aktywnych pytań testowych. Wróć później albo wybierz inny zestaw.'
           }
           padding='xl'
-          title={emptyStateContent?.title ?? 'Brak opublikowanych pytan'}
+          title={emptyStateContent?.title ?? 'Brak opublikowanych pytań'}
         />
       </div>
     );
@@ -231,7 +281,7 @@ export function KangurTestSuitePlayer({
                 data-testid='kangur-test-suite-summary-copy'
                 description={
                   summaryContent?.summary ??
-                  'Sprawdz wynik koncowy i wroc do pytan, aby przeanalizowac odpowiedzi.'
+                  'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
                 }
                 title={summaryContent?.title ?? 'Podsumowanie testu'}
                 titleAs='h2'
@@ -261,6 +311,7 @@ export function KangurTestSuitePlayer({
                       padding='md'
                     >
                       <KangurTestQuestionRenderer
+                        contentId={suite.id}
                         question={question}
                         selectedLabel={selected}
                         onSelect={(): void => {}}
@@ -320,6 +371,7 @@ export function KangurTestSuitePlayer({
             >
               {currentQuestion ? (
                 <KangurTestQuestionRenderer
+                  contentId={suite.id}
                   question={currentQuestion}
                   selectedLabel={selectedLabel}
                   onSelect={handleSelect}
@@ -332,7 +384,7 @@ export function KangurTestSuitePlayer({
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className='flex items-center justify-between pt-2'>
+          <div className='flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between'>
             <KangurButton
               type='button'
               onClick={handlePrev}
@@ -345,24 +397,42 @@ export function KangurTestSuitePlayer({
               Previous
             </KangurButton>
 
-            {isAnswered ? (
-              <KangurButton
-                type='button'
-                onClick={showAnswer ? handleNext : handleRevealAnswer}
-                size='sm'
-                variant='primary'
-                data-doc-id='tests_suite_player'
-              >
-                {showAnswer
-                  ? currentIndex < totalQuestions - 1
-                    ? 'Next'
-                    : 'Finish'
-                  : 'Check answer'}
-                <ChevronRight className='size-4' />
-              </KangurButton>
-            ) : (
-              <div className='text-xs text-slate-400'>Select an answer to continue</div>
-            )}
+            <div className='flex flex-wrap items-center justify-end gap-2'>
+              {canAskAboutSelectedChoice ? (
+                <KangurButton
+                  type='button'
+                  onClick={(): void => {
+                    void handleAskAboutSelectedChoice();
+                  }}
+                  disabled={tutor?.isLoading}
+                  size='sm'
+                  variant='surface'
+                  data-doc-id='tests_suite_player'
+                  data-testid='kangur-test-suite-selected-choice-tutor-cta'
+                >
+                  {tutorContent.common.askAboutSelectionLabel}
+                </KangurButton>
+              ) : null}
+
+              {isAnswered ? (
+                <KangurButton
+                  type='button'
+                  onClick={showAnswer ? handleNext : handleRevealAnswer}
+                  size='sm'
+                  variant='primary'
+                  data-doc-id='tests_suite_player'
+                >
+                  {showAnswer
+                    ? currentIndex < totalQuestions - 1
+                      ? 'Next'
+                      : 'Finish'
+                    : 'Check answer'}
+                  <ChevronRight className='size-4' />
+                </KangurButton>
+              ) : (
+                <div className='text-xs text-slate-400'>Select an answer to continue</div>
+              )}
+            </div>
           </div>
         </div>
       </KangurTestSuiteRuntimeProvider>

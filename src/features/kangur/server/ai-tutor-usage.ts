@@ -7,6 +7,40 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 
 export const KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY = 'kangur_ai_tutor_usage_v1';
 
+// ---------------------------------------------------------------------------
+// In-process TTL cache — avoids redundant DB reads across concurrent or
+// back-to-back requests on the same warm server instance.
+// TTL is intentionally short (30 s) so limit enforcement stays timely.
+// ---------------------------------------------------------------------------
+
+const USAGE_CACHE_TTL_MS = 30_000;
+
+type UsageCacheEntry = {
+  store: KangurAiTutorUsageStore;
+  cachedAt: number;
+};
+
+let usageCache: UsageCacheEntry | null = null;
+
+const readUsageStore = async (): Promise<KangurAiTutorUsageStore> => {
+  const now = Date.now();
+  if (usageCache && now - usageCache.cachedAt < USAGE_CACHE_TTL_MS) {
+    return usageCache.store;
+  }
+
+  const raw = await readStoredSettingValue(KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY);
+  const store = parseKangurAiTutorUsageStore(raw);
+  usageCache = { store, cachedAt: now };
+  return store;
+};
+
+const invalidateUsageCache = (): void => {
+  usageCache = null;
+};
+
+/** Exposed only for test isolation — do not call in production code. */
+export const __resetUsageCacheForTests = invalidateUsageCache;
+
 type KangurAiTutorUsageEntry = {
   dateKey: string;
   messageCount: number;
@@ -83,8 +117,7 @@ export const readKangurAiTutorDailyUsage = async ({
   now?: Date;
 }): Promise<KangurAiTutorUsageSummary> => {
   const dateKey = buildKangurAiTutorUsageDateKey(now);
-  const rawStore = await readStoredSettingValue(KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY);
-  const store = parseKangurAiTutorUsageStore(rawStore);
+  const store = await readUsageStore();
   const currentEntry = store[learnerId];
   const currentCount = currentEntry?.dateKey === dateKey ? currentEntry.messageCount : 0;
 
@@ -149,8 +182,7 @@ export const consumeKangurAiTutorDailyUsage = async ({
   }
 
   const nextCount = currentCount + 1;
-  const rawStore = await readStoredSettingValue(KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY);
-  const store = parseKangurAiTutorUsageStore(rawStore);
+  const store = await readUsageStore();
   const nextStore: KangurAiTutorUsageStore = {
     ...store,
     [learnerId]: {
@@ -167,6 +199,7 @@ export const consumeKangurAiTutorDailyUsage = async ({
   if (!persisted) {
     throw new Error('Failed to persist Kangur AI tutor usage.');
   }
+  invalidateUsageCache();
 
   return {
     dateKey,

@@ -3,11 +3,19 @@
  */
 
 import { fireEvent, render, screen } from '@/__tests__/test-utils';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+
+const { useKangurTutorAnchorMock } = vi.hoisted(() => ({
+  useKangurTutorAnchorMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: useKangurTutorAnchorMock,
 }));
 
 import { KangurTestQuestionRenderer } from '@/features/kangur/ui/components/KangurTestQuestionRenderer';
@@ -31,10 +39,15 @@ const question: KangurTestQuestion = {
 };
 
 describe('KangurTestQuestionRenderer', () => {
+  beforeEach(() => {
+    useKangurTutorAnchorMock.mockClear();
+  });
+
   it('uses Kangur option-card styling for answer choices and shared feedback surfaces', async () => {
     const onSelect = vi.fn();
     const { rerender } = render(
       <KangurTestQuestionRenderer
+        contentId='suite-1'
         question={question}
         selectedLabel={null}
         onSelect={onSelect}
@@ -70,6 +83,7 @@ describe('KangurTestQuestionRenderer', () => {
 
     rerender(
       <KangurTestQuestionRenderer
+        contentId='suite-1'
         question={question}
         selectedLabel='A'
         onSelect={onSelect}
@@ -87,6 +101,7 @@ describe('KangurTestQuestionRenderer', () => {
 
     rerender(
       <KangurTestQuestionRenderer
+        contentId='suite-1'
         question={question}
         selectedLabel='A'
         onSelect={onSelect}
@@ -118,6 +133,19 @@ describe('KangurTestQuestionRenderer', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md'
+    );
+    expect(useKangurTutorAnchorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'kangur-test-selection:suite-1:question-1:A',
+        kind: 'selection',
+        enabled: true,
+        surface: 'test',
+        priority: 86,
+        metadata: expect.objectContaining({
+          contentId: 'suite-1',
+          label: 'Odpowiedz A: 4',
+        }),
+      })
     );
   });
 

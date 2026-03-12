@@ -42,6 +42,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   sectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   sectionResponsePending: SectionExplainContext | null;
   selectionConversationSelectedText: string | null;
+  selectionGuidanceHandoffText: string | null;
   selectionResponseComplete: PendingSelectionResponse | null;
   selectionResponseCompleteTimeoutRef: MutableRefObject<number | null>;
   selectionResponsePending: PendingSelectionResponse | null;
@@ -64,6 +65,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     sectionResponseCompleteTimeoutRef,
     sectionResponsePending,
     selectionConversationSelectedText,
+    selectionGuidanceHandoffText,
     selectionResponseComplete,
     selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
@@ -85,6 +87,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
       isLoading ||
       isSelectionGuidedMode ||
       !isOpen ||
+      selectionGuidanceHandoffText !== null ||
       isSelectionContextStillOwningMinimalPanel
     ) {
       return;
@@ -105,6 +108,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     contextualTutorMode,
     isSelectionGuidedMode,
     selectionConversationSelectedText,
+    selectionGuidanceHandoffText,
     selectionResponsePending,
     setSelectionResponseComplete,
     setSelectionResponsePending,

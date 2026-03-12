@@ -105,21 +105,21 @@ const getFeedbackCopy = (
   if (kind === 'perfect') {
     return {
       title: 'Idealne trafienie',
-      description: `${note.left} + ${note.right} = ${note.answer}. Uderzyles dokladnie przy linii.`,
+      description: `${note.left} + ${note.right} = ${note.answer}. Uderzyłeś dokładnie przy linii.`,
     };
   }
 
   if (kind === 'great') {
     return {
       title: 'Super timing',
-      description: `${note.left} + ${note.right} = ${note.answer}. Dobra odpowiedz i dobry rytm.`,
+      description: `${note.left} + ${note.right} = ${note.answer}. Dobra odpowiedź i dobry rytm.`,
     };
   }
 
   if (kind === 'good') {
     return {
-      title: 'Dobra odpowiedz',
-      description: `${note.left} + ${note.right} = ${note.answer}. Nastepnym razem sprobuj trafic blizej linii.`,
+      title: 'Dobra odpowiedź',
+      description: `${note.left} + ${note.right} = ${note.answer}. Następnym razem spróbuj trafić bliżej linii.`,
     };
   }
 
@@ -131,8 +131,8 @@ const getFeedbackCopy = (
   }
 
   return {
-    title: 'Nuta minela linie',
-    description: `Poprawny wynik to ${note.answer}. Zlap kolejna note szybciej.`,
+    title: 'Nuta minęła linię',
+    description: `Poprawny wynik to ${note.answer}. Złap kolejną nutę szybciej.`,
   };
 };
 
@@ -390,9 +390,9 @@ export default function AddingSynthesisGame({
                   Synteza dodawania
                 </h2>
                 <p className='mt-3 text-base leading-7 [color:var(--kangur-page-muted-text)]'>
-                  Licz w glowie, patrz jak dzialanie spada do linii i uderz w tor z poprawnym
-                  wynikiem. Zaczynasz od prostych sum, potem przechodzisz przez 10 i konczysz na
-                  dwoch cyfrach.
+                  Licz w głowie, patrz jak działanie spada do linii i uderz w tor z poprawnym
+                  wynikiem. Zaczynasz od prostych sum, potem przechodzisz przez 10 i kończysz na
+                  dwóch cyfrach.
                 </p>
               </div>
               <KangurInfoCard accent='violet' className='rounded-[28px]' padding='md' tone='accent'>
@@ -446,7 +446,7 @@ export default function AddingSynthesisGame({
 
             <KangurSummaryPanel
               accent='slate'
-              label='Jak grac'
+              label='Jak grać'
               padding='lg'
             >
               <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3'>
@@ -459,13 +459,13 @@ export default function AddingSynthesisGame({
                 <div className='flex items-center gap-3'>
                   <Gauge className='h-5 w-5 text-sky-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-                    Im blizej linii trafisz, tym lepszy rytm.
+                    Im bliżej linii trafisz, tym lepszy rytm.
                   </p>
                 </div>
                 <div className='flex items-center gap-3'>
                   <Zap className='h-5 w-5 text-violet-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-                    Po kazdym bledzie dostajesz szybka podpowiedz.
+                    Po każdym błędzie dostajesz szybką podpowiedź.
                   </p>
                 </div>
               </div>
@@ -480,7 +480,7 @@ export default function AddingSynthesisGame({
                 data-testid='adding-synthesis-start'
               >
                 <Sparkles className='h-4 w-4' />
-                Start synteze
+                Start syntezę
               </KangurButton>
               <KangurButton
                 type='button'
@@ -488,7 +488,7 @@ export default function AddingSynthesisGame({
                 variant='surface'
                 onClick={handleFinishSession}
               >
-                Wroc do Dodawania
+                Wróć do Dodawania
               </KangurButton>
             </div>
           </div>
@@ -508,7 +508,7 @@ export default function AddingSynthesisGame({
         >
           <div className='flex flex-col gap-5'>
             <div className='flex flex-wrap items-center gap-2'>
-              <KangurStatusChip accent='emerald'>Sesja zakonczona</KangurStatusChip>
+              <KangurStatusChip accent='emerald'>Sesja zakończona</KangurStatusChip>
               <KangurStatusChip accent='amber'>+{summary.xpEarned} XP</KangurStatusChip>
             </div>
             <KangurRewardBreakdownChips
@@ -526,13 +526,13 @@ export default function AddingSynthesisGame({
                 {summary.accuracy >= 85
                   ? 'Bardzo mocna sesja. Dodawanie trzyma rytm i tempo.'
                   : summary.accuracy >= 60
-                    ? 'Dobry wynik. Jeszcze kilka rund i te sumy beda wchodzily automatycznie.'
-                    : 'Masz juz baze. Powtorz sesje i skup sie na podpowiedziach przy trudniejszych nutach.'}
+                    ? 'Dobry wynik. Jeszcze kilka rund i te sumy będą wchodziły automatycznie.'
+                    : 'Masz już bazę. Powtórz sesję i skup się na podpowiedziach przy trudniejszych nutach.'}
               </p>
             </div>
 
             <div className='grid gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4'>
-              <KangurMetricCard accent='emerald' label='Skutecznosc' value={`${summary.accuracy}%`} />
+              <KangurMetricCard accent='emerald' label='Skuteczność' value={`${summary.accuracy}%`} />
               <KangurMetricCard
                 accent='violet'
                 label='Idealne trafienia'
@@ -553,7 +553,7 @@ export default function AddingSynthesisGame({
                 variant='surface'
                 onClick={handleFinishSession}
               >
-                Wroc do Dodawania
+                Wróć do Dodawania
               </KangurButton>
             </div>
           </div>
@@ -677,7 +677,7 @@ export default function AddingSynthesisGame({
                     </div>
                     <div className='mt-3 text-center'>
                       <p className='text-sm font-semibold uppercase tracking-[0.22em] text-amber-500'>
-                        Uderz we wlasciwy tor
+                        Uderz we właściwy tor
                       </p>
                       <p className='mt-2 text-4xl font-extrabold tracking-[-0.04em] [color:var(--kangur-page-text)] sm:text-5xl'>
                         {currentNote.left} + {currentNote.right}
@@ -748,7 +748,7 @@ export default function AddingSynthesisGame({
         <div className='flex flex-col gap-4'>
           <KangurSummaryPanel accent={currentStage.accent} padding='lg' title={currentStage.title}>
             <div className='flex flex-wrap items-center gap-2'>
-              <KangurStatusChip accent='slate'>Dokladnosc {accuracy}%</KangurStatusChip>
+              <KangurStatusChip accent='slate'>Dokładność {accuracy}%</KangurStatusChip>
             </div>
             <p className='mt-3 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
               {currentStage.description}
@@ -762,7 +762,7 @@ export default function AddingSynthesisGame({
             accent={feedback ? getFeedbackAccent(feedback.kind) : currentStage.accent}
             padding='lg'
             role='status'
-            title={feedback ? feedback.title : currentNote ? 'Podpowiedz do tej nuty' : undefined}
+            title={feedback ? feedback.title : currentNote ? 'Podpowiedź do tej nuty' : undefined}
             description={feedback ? feedback.description : currentNote ? currentNote.focus : undefined}
             tone={feedback ? 'accent' : 'neutral'}
           >
@@ -772,12 +772,12 @@ export default function AddingSynthesisGame({
               </p>
             ) : currentNote ? (
               <p className='mt-2 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
-                Jesli wolisz klawiature, nacisnij 1, 2, 3 lub 4.
+                Jeśli wolisz klawiaturę, naciśnij 1, 2, 3 lub 4.
               </p>
             ) : null}
           </KangurSummaryPanel>
 
-          <KangurSummaryPanel accent='slate' label='Postep sesji' padding='lg'>
+          <KangurSummaryPanel accent='slate' label='Postęp sesji' padding='lg'>
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
@@ -799,7 +799,7 @@ export default function AddingSynthesisGame({
               className='mt-4'
               onClick={handleFinishSession}
             >
-              Zakoncz probe
+              Zakończ próbę
             </KangurButton>
           </KangurSummaryPanel>
         </div>

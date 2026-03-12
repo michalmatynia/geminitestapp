@@ -179,7 +179,7 @@ export const getLessonMasteryPresentation = (
   if (mastery.masteryPercent >= 85) {
     return {
       statusLabel: `Opanowane ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukonczono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
       badgeAccent: 'emerald',
     };
   }
@@ -187,14 +187,14 @@ export const getLessonMasteryPresentation = (
   if (mastery.masteryPercent >= 60) {
     return {
       statusLabel: `W trakcie ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukonczono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
       badgeAccent: 'amber',
     };
   }
 
   return {
-    statusLabel: `Powtorz ${mastery.masteryPercent}%`,
-    summaryLabel: `Ukonczono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
+    summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
     badgeAccent: 'rose',
   };
 };

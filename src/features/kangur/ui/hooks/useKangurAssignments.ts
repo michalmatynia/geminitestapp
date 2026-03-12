@@ -65,7 +65,7 @@ export const useKangurAssignments = (
           action: 'refresh',
           includeArchived: query?.includeArchived ?? false,
         });
-        setError('Nie udalo sie pobrac zadan.');
+        setError('Nie udało się pobrać zadań.');
       }
     } finally {
       setIsLoading(false);

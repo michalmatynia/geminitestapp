@@ -213,7 +213,7 @@ export function KangurParentDashboardRuntimeProvider({
           setFeedback(`Dodano profil ucznia: ${created.displayName}.`);
         } catch (error: unknown) {
           setFeedback(
-            error instanceof Error ? error.message : 'Nie udalo sie dodac ucznia.'
+            error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
           );
         } finally {
           setIsSubmitting(false);
@@ -239,7 +239,7 @@ export function KangurParentDashboardRuntimeProvider({
           setFeedback('Zapisano dane ucznia.');
         } catch (error: unknown) {
           setFeedback(
-            error instanceof Error ? error.message : 'Nie udalo sie zapisac zmian.'
+            error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
           );
         } finally {
           setIsSubmitting(false);

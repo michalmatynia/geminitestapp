@@ -36,7 +36,7 @@ describe('KangurLearnerProfileLevelProgressWidget', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: {
         id: 'learner-profile-level-progress',
-        title: 'Postep poziomu',
+        title: 'Postęp poziomu',
         summary: 'Mongo opis poziomu, XP i dystansu do kolejnego progu.',
       },
       data: undefined,
@@ -56,7 +56,7 @@ describe('KangurLearnerProfileLevelProgressWidget', () => {
 
     render(<KangurLearnerProfileLevelProgressWidget />);
 
-    expect(screen.getByText('Postep poziomu')).toBeInTheDocument();
+    expect(screen.getByText('Postęp poziomu')).toBeInTheDocument();
     expect(screen.getByText('Mongo opis poziomu, XP i dystansu do kolejnego progu.')).toBeInTheDocument();
     expect(screen.getByText('Liczmistrz')).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-level-progress-bar')).toHaveAttribute(

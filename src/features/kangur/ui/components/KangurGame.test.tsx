@@ -95,10 +95,10 @@ describe('KangurGame', () => {
     );
     expect(screen.getByText('+10 XP ✨')).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('kangur-game-summary-breakdown')).toHaveTextContent(
-      'Ukonczenie rundy +10'
+      'Ukończenie rundy +10'
     );
     expect(screen.getByTestId('kangur-game-summary-breakdown-base')).toHaveTextContent(
-      'Ukonczenie rundy +10'
+      'Ukończenie rundy +10'
     );
     expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass(
       'kangur-cta-pill',
@@ -109,10 +109,10 @@ describe('KangurGame', () => {
   it('adds a guided-focus reward chip when the Kangur session follows the recommended path', () => {
     vi.mocked(useOptionalKangurGameRuntime).mockReturnValue({
       activeSessionRecommendation: {
-        description: 'Ten zestaw najlepiej pcha biezace odznaki.',
-        label: 'Gotowosc konkursowa',
+        description: 'Ten zestaw najlepiej pcha bieżące odznaki.',
+        label: 'Gotowość konkursowa',
         source: 'kangur_setup',
-        title: 'Polecamy pelny test konkursowy',
+        title: 'Polecamy pełny test konkursowy',
       },
     } as ReturnType<typeof useOptionalKangurGameRuntime>);
 

@@ -128,10 +128,10 @@ export const useKangurOperationSelectorState = (
           const isRecommended = recommendedOperation === operation.id;
           return {
             accent: operation.accent,
-            actionLabel: 'Zacznij lekcje',
+            actionLabel: 'Zacznij lekcję',
             description: priorityAssignment
               ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
-              : 'Wejdz do serii pytan i cwicz we wlasnym tempie.',
+              : 'Wejdź do serii pytań i ćwicz we własnym tempie.',
             displayLabel: `${operation.emoji} ${operation.label}`,
             emoji: operation.emoji,
             hasPriorityAssignment: Boolean(priorityAssignment),

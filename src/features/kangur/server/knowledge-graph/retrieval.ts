@@ -154,6 +154,8 @@ export type KangurKnowledgeGraphRetrievalPreviewResult =
   | {
       status: 'disabled' | 'skipped' | 'miss';
       queryMode: null;
+      querySeed: string;
+      normalizedQuerySeed: string;
       tokens: string[];
       instructions: null;
       sources: [];
@@ -167,6 +169,8 @@ export type KangurKnowledgeGraphRetrievalPreviewResult =
       lexicalHitCount: number;
       vectorHitCount: number;
       vectorRecallAttempted: boolean;
+      querySeed: string;
+      normalizedQuerySeed: string;
       tokens: string[];
       instructions: string;
       sources: AgentTeachingChatSource[];
@@ -318,7 +322,24 @@ const buildKnowledgeGraphQueryIntent = (value: string): KangurKnowledgeGraphQuer
   };
 };
 
-const buildSemanticQuerySeed = (input: {
+const readQuerySeedPart = (value: string | null | undefined): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const buildRawSemanticQuerySeed = (input: {
+  latestUserMessage: string | null;
+  context: KangurAiTutorConversationContext | undefined;
+}): string =>
+  [
+    readQuerySeedPart(input.latestUserMessage),
+    readQuerySeedPart(input.context?.selectedText),
+    readQuerySeedPart(input.context?.focusLabel),
+    readQuerySeedPart(input.context?.title),
+    readQuerySeedPart(input.context?.description),
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+const buildNormalizedSemanticQuerySeed = (input: {
   latestUserMessage: string | null;
   context: KangurAiTutorConversationContext | undefined;
 }): string =>
@@ -386,7 +407,7 @@ const resolveGraphQueryMode = (input: {
     return 'semantic';
   }
 
-  return tokenizeQuery(buildSemanticQuerySeed(input)).length > 0 ? 'semantic' : null;
+  return tokenizeQuery(buildNormalizedSemanticQuerySeed(input)).length > 0 ? 'semantic' : null;
 };
 
 const GRAPH_QUERY = `
@@ -1251,6 +1272,8 @@ const resolveRecallStrategy = (input: {
 
 const finalizeResolvedGraphContext = (
   hydratedHits: HydratedKnowledgeGraphHit[],
+  querySeed: string,
+  normalizedQuerySeed: string,
   tokens: string[],
   queryMode: KangurKnowledgeGraphQueryMode,
   diagnostics: {
@@ -1265,6 +1288,8 @@ const finalizeResolvedGraphContext = (
   lexicalHitCount: diagnostics.lexicalHitCount,
   vectorHitCount: diagnostics.vectorHitCount,
   vectorRecallAttempted: diagnostics.vectorRecallAttempted,
+  querySeed,
+  normalizedQuerySeed,
   tokens,
   instructions: buildInstructions(hydratedHits, queryMode),
   sources: hydratedHits.map(toChatSource),
@@ -1284,10 +1309,15 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
 }): Promise<KangurKnowledgeGraphRetrievalPreviewResult> {
+  const querySeed = buildRawSemanticQuerySeed(input);
+  const normalizedQuerySeed = buildNormalizedSemanticQuerySeed(input);
+
   if (!isNeo4jEnabled()) {
     return {
       status: 'disabled',
       queryMode: null,
+      querySeed,
+      normalizedQuerySeed,
       tokens: [],
       instructions: null,
       sources: [],
@@ -1301,6 +1331,8 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     return {
       status: 'skipped',
       queryMode: null,
+      querySeed,
+      normalizedQuerySeed,
       tokens: [],
       instructions: null,
       sources: [],
@@ -1309,12 +1341,14 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     };
   }
 
-  const tokens = tokenizeQuery(buildSemanticQuerySeed(input));
-  const queryIntent = buildKnowledgeGraphQueryIntent(buildSemanticQuerySeed(input));
+  const tokens = tokenizeQuery(normalizedQuerySeed);
+  const queryIntent = buildKnowledgeGraphQueryIntent(normalizedQuerySeed);
   if (tokens.length === 0 && !hasSemanticContext(input.context)) {
     return {
       status: 'skipped',
       queryMode: null,
+      querySeed,
+      normalizedQuerySeed,
       tokens,
       instructions: null,
       sources: [],
@@ -1325,7 +1359,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
 
   const queryEmbedding =
     queryMode === 'semantic'
-      ? await generateKangurKnowledgeGraphQueryEmbedding(buildSemanticQuerySeed(input)).catch(() => null)
+      ? await generateKangurKnowledgeGraphQueryEmbedding(normalizedQuerySeed).catch(() => null)
       : null;
 
   const lexicalLimit = queryMode === 'website_help' ? 8 : 8;
@@ -1363,6 +1397,8 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     return {
       status: 'miss',
       queryMode: null,
+      querySeed,
+      normalizedQuerySeed,
       tokens,
       instructions: null,
       sources: [],
@@ -1383,11 +1419,18 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     intent: queryIntent,
   }).slice(0, queryMode === 'website_help' ? 3 : 4);
 
-  return finalizeResolvedGraphContext(rerankedHits, tokens, queryMode, {
-    lexicalHitCount: lexicalHits.length,
-    vectorHitCount: vectorHits.length,
-    vectorRecallAttempted: queryMode === 'semantic' && Boolean(queryEmbedding),
-  });
+  return finalizeResolvedGraphContext(
+    rerankedHits,
+    querySeed,
+    normalizedQuerySeed,
+    tokens,
+    queryMode,
+    {
+      lexicalHitCount: lexicalHits.length,
+      vectorHitCount: vectorHits.length,
+      vectorRecallAttempted: queryMode === 'semantic' && Boolean(queryEmbedding),
+    }
+  );
 }
 
 export async function resolveKangurAiTutorSemanticGraphContext(input: {

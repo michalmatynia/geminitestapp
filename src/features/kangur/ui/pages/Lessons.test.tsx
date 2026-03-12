@@ -839,7 +839,7 @@ describe('Lessons', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukonczone dla rodzica'
+      'Ukończone dla rodzica'
     );
     expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
@@ -883,7 +883,7 @@ describe('Lessons', () => {
     renderLessonsPage();
 
     expect(screen.queryByText('Priorytet rodzica')).toBeNull();
-    expect(screen.queryByText('Ukonczone dla rodzica')).toBeNull();
+    expect(screen.queryByText('Ukończone dla rodzica')).toBeNull();
     expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
   });
 

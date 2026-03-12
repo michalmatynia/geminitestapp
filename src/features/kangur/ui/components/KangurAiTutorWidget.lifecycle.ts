@@ -134,9 +134,11 @@ export function useKangurAiTutorLifecycleEffects({
     askModalDockStyle,
     askModalReturnStateRef,
     askModalVisible,
+    contextualTutorMode,
     contextSwitchNotice,
     dismissedSelectedText,
     draggedAvatarPoint,
+    guidedTutorTarget,
     inputRef,
     isTutorHidden,
     messagesEndRef,
@@ -174,6 +176,10 @@ export function useKangurAiTutorLifecycleEffects({
     setPersistedSelectionRect,
     setSectionResponseComplete,
     setSectionResponsePending,
+    selectionConversationContext,
+    selectionGuidanceCalloutVisibleText,
+    selectionGuidanceHandoffText,
+    selectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
@@ -643,20 +649,38 @@ export function useKangurAiTutorLifecycleEffects({
   }, [dismissedSelectedText, rawSelectedText, selectedText, setDismissedSelectedText]);
 
   useEffect(() => {
+    const shouldPreserveSelectionGuidanceState =
+      contextualTutorMode === 'selection_explain' &&
+      (
+        guidedTutorTarget?.mode === 'selection' ||
+        selectionConversationContext !== null ||
+        selectionGuidanceCalloutVisibleText !== null ||
+        selectionGuidanceHandoffText !== null ||
+        selectionResponsePending !== null
+      );
+
     if (!isOpen) {
       setPanelAnchorMode('dock');
       setDismissedSelectedText(null);
-      setSelectionGuidanceCalloutVisibleText(null);
-      setSelectionConversationContext(null);
-      setSelectionGuidanceHandoffText(null);
-      setPersistedSelectionRect(null);
-      setPersistedSelectionPageRect(null);
-      setPersistedSelectionPageRects([]);
-      setPersistedSelectionContainerRect(null);
+      if (!shouldPreserveSelectionGuidanceState) {
+        setSelectionGuidanceCalloutVisibleText(null);
+        setSelectionConversationContext(null);
+        setSelectionGuidanceHandoffText(null);
+        setPersistedSelectionRect(null);
+        setPersistedSelectionPageRect(null);
+        setPersistedSelectionPageRects([]);
+        setPersistedSelectionContainerRect(null);
+      }
       setContextSwitchNotice(null);
     }
   }, [
+    contextualTutorMode,
+    guidedTutorTarget,
     isOpen,
+    selectionConversationContext,
+    selectionGuidanceCalloutVisibleText,
+    selectionGuidanceHandoffText,
+    selectionResponsePending,
     setContextSwitchNotice,
     setDismissedSelectedText,
     setPanelAnchorMode,

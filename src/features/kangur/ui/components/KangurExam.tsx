@@ -141,7 +141,7 @@ function ExamQuestion({
       <div aria-live='polite' aria-atomic='true' className='flex items-center gap-2'>
         <KangurProgressBar
           accent='amber'
-          aria-label='Postep w tescie Kangur'
+          aria-label='Postęp w teście Kangur'
           aria-valuetext={progressValueText}
           className='flex-1'
           data-testid='kangur-exam-progress-bar'
@@ -291,7 +291,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           </KangurButton>
           <div className='flex gap-2'>
             <KangurButton
-              aria-label='Poprzednie pytanie w podgladzie'
+              aria-label='Poprzednie pytanie w podglądzie'
               onClick={handleReviewPreviousQuestion}
               disabled={reviewing === 0}
               className='h-9 w-9 min-w-0 px-0'
@@ -305,7 +305,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               {reviewing + 1}/{reviewQuestionCount}
             </span>
             <KangurButton
-              aria-label='Nastepne pytanie w podgladzie'
+              aria-label='Następne pytanie w podglądzie'
               onClick={handleReviewNextQuestion}
               disabled={reviewing === reviewQuestionCount - 1}
               className='h-9 w-9 min-w-0 px-0'
@@ -467,7 +467,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           </p>
         }
         progressAccent='amber'
-        progressAriaLabel='Dokladnosc odpowiedzi w tescie Kangur'
+        progressAriaLabel='Dokładność odpowiedzi w teście Kangur'
         progressAriaValueText={`${pct}% poprawnych odpowiedzi`}
         progressDataTestId='kangur-exam-summary-progress-bar'
         title={`Wynik: ${score}/${questions.length}`}
@@ -478,7 +478,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       </p>
 
       <div
-        aria-label='Przeglad pytan testowych'
+        aria-label='Przegląd pytań testowych'
         className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4'
         role='list'
       >
@@ -490,7 +490,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           return (
             <KangurAnswerChoiceCard
               accent={accent}
-              aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominiete.' : correct ? 'Poprawna odpowiedz.' : `Niepoprawna odpowiedz ${String(userAnswer)}.`} Kliknij, aby zobaczyc rozwiazanie.`}
+              aria-label={`Pytanie ${index + 1}. ${skipped ? 'Pominięte.' : correct ? 'Poprawna odpowiedź.' : `Niepoprawna odpowiedź ${String(userAnswer)}.`} Kliknij, aby zobaczyć rozwiązanie.`}
               buttonClassName={cn(
                 'flex min-h-[84px] flex-col items-center gap-1 p-2 text-center sm:min-h-[92px]',
                 skipped

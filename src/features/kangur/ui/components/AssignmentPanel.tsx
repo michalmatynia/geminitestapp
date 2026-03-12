@@ -46,7 +46,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
 
   const completionLabel = useMemo(() => {
     if (assignments.length === 0) {
-      return 'Brak zadan';
+      return 'Brak zadań';
     }
     if (completedIds.length === assignments.length) {
       return 'Wszystkie zadania ukończone';

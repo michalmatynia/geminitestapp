@@ -1,5 +1,6 @@
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
-import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
+import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
+import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurProgressHighlightCardContent } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import {
@@ -8,7 +9,6 @@ import {
   KangurMetricCard,
   KangurPanelIntro,
   KangurProgressBar,
-  KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -173,9 +173,7 @@ export default function ProgressOverview({
 
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <KangurSectionEyebrow as='p' className='mb-3'>
-            Ćwiczone operacje
-          </KangurSectionEyebrow>
+          <KangurPanelSectionHeading>Ćwiczone operacje</KangurPanelSectionHeading>
           <div className='flex flex-wrap gap-2'>
             {operationsPlayed.map((operation) => (
               <KangurStatusChip
@@ -193,9 +191,7 @@ export default function ProgressOverview({
 
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <KangurSectionEyebrow as='p' className='mb-3'>
-            Najczęściej ćwiczone aktywności
-          </KangurSectionEyebrow>
+          <KangurPanelSectionHeading>Najczęściej ćwiczone aktywności</KangurPanelSectionHeading>
           <div className='flex flex-col gap-3'>
             {topActivities.map((activity) => (
               <KangurActivitySummaryCard
@@ -215,10 +211,7 @@ export default function ProgressOverview({
       )}
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <KangurSectionEyebrow as='p' className='mb-3'>
-          Ścieżki odznak
-        </KangurSectionEyebrow>
-        <KangurBadgeTrackGrid
+        <KangurBadgeTrackSection
           dataTestIdPrefix='progress-overview-badge-track'
           emptyTestId='progress-overview-badges-empty'
           progress={overviewProgress}

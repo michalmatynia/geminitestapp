@@ -6,8 +6,18 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
-const { useKangurAiTutorSessionSyncMock } = vi.hoisted(() => ({
+const {
+  tutorOpenChatMock,
+  tutorSendMessageMock,
+  tutorSetHighlightedTextMock,
+  useKangurAiTutorSessionSyncMock,
+  useOptionalKangurAiTutorMock,
+} = vi.hoisted(() => ({
+  tutorOpenChatMock: vi.fn(),
+  tutorSendMessageMock: vi.fn(),
+  tutorSetHighlightedTextMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
+  useOptionalKangurAiTutorMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
@@ -16,6 +26,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
+  useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
 }));
 
 import { render, screen } from '@/__tests__/test-utils';
@@ -61,6 +72,18 @@ const questions: KangurTestQuestion[] = [
 describe('KangurTestSuitePlayer', () => {
   beforeEach(() => {
     useKangurAiTutorSessionSyncMock.mockClear();
+    useOptionalKangurAiTutorMock.mockReset();
+    tutorOpenChatMock.mockReset();
+    tutorSendMessageMock.mockReset();
+    tutorSetHighlightedTextMock.mockReset();
+    tutorSendMessageMock.mockResolvedValue(undefined);
+    useOptionalKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      isLoading: false,
+      openChat: tutorOpenChatMock,
+      sendMessage: tutorSendMessageMock,
+      setHighlightedText: tutorSetHighlightedTextMock,
+    });
   });
 
   it('uses the shared pill CTA styles for suite navigation and restart actions', async () => {
@@ -128,7 +151,7 @@ describe('KangurTestSuitePlayer', () => {
         contentId: 'suite-2024',
         title: 'Kangur 2024',
         description: 'Wynik koncowy: 3/3 pkt (100%).',
-        questionProgressLabel: 'Ukonczono 1/1',
+        questionProgressLabel: 'Ukończono 1/1',
         answerRevealed: true,
       }),
     });
@@ -155,6 +178,42 @@ describe('KangurTestSuitePlayer', () => {
     });
   });
 
+  it('opens the tutor with a selected-choice explain request before answer reveal', async () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
+
+    expect(
+      screen.queryByTestId('kangur-test-suite-selected-choice-tutor-cta')
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+
+    const askAboutChoiceButton = screen.getByTestId('kangur-test-suite-selected-choice-tutor-cta');
+    expect(askAboutChoiceButton).toHaveClass('kangur-cta-pill', 'surface-cta');
+
+    await userEvent.click(askAboutChoiceButton);
+
+    expect(tutorSetHighlightedTextMock).toHaveBeenCalledWith('Odpowiedz A: 4');
+    expect(tutorOpenChatMock).toHaveBeenCalledTimes(1);
+    expect(tutorSendMessageMock).toHaveBeenCalledWith(
+      'Wyjaśnij zaznaczony fragment krok po kroku.',
+      expect.objectContaining({
+        promptMode: 'selected_text',
+        selectedText: 'Odpowiedz A: 4',
+        contentId: 'suite-2024',
+        focusKind: 'selection',
+        focusId: 'kangur-test-selection:suite-2024:question-1:A',
+        focusLabel: 'Odpowiedz A: 4',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-selection',
+          sourcePath: 'entry:tests-selection',
+        },
+        interactionIntent: 'explain',
+        surface: 'test',
+      })
+    );
+  });
+
   it('syncs revealed review details into the tutor session context after checking the answer', async () => {
     render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
 
@@ -175,6 +234,19 @@ describe('KangurTestSuitePlayer', () => {
         answerRevealed: true,
       }),
     });
+  });
+
+  it('hides the selected-choice tutor CTA after the answer is revealed', async () => {
+    render(<KangurTestSuitePlayer suite={suite} questions={questions} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
+    expect(screen.getByTestId('kangur-test-suite-selected-choice-tutor-cta')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
+
+    expect(
+      screen.queryByTestId('kangur-test-suite-selected-choice-tutor-cta')
+    ).not.toBeInTheDocument();
   });
 
   it('uses the shared empty-state surface when a suite has no questions', () => {

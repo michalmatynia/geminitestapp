@@ -2,6 +2,7 @@
 
 import { useMemo, type CSSProperties } from 'react';
 
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorRegistration,
@@ -62,6 +63,7 @@ type UseKangurAiTutorFocusLayoutStateInput = {
   sessionContext: {
     answerRevealed: boolean | undefined;
     contentId: string | null | undefined;
+    selectedChoiceLabel: string | null | undefined;
     surface: TutorSurface | null | undefined;
   };
   tutorAnchorContext: {
@@ -442,6 +444,7 @@ const getAnchorKindsForSurface = (
   surface: TutorSurface | null | undefined,
   contentId: string | null | undefined,
   answerRevealed: boolean | undefined,
+  selectedChoiceLabel: string | null | undefined,
   hasCurrentQuestion: boolean,
   hasAssignmentSummary: boolean
 ): KangurTutorAnchorKind[] => {
@@ -456,6 +459,10 @@ const getAnchorKindsForSurface = (
   if (surface === 'test') {
     if (!hasCurrentQuestion && !answerRevealed) {
       return ['empty_state', 'question', 'review', 'summary'];
+    }
+
+    if (selectedChoiceLabel && !answerRevealed) {
+      return ['selection', 'question', 'review', 'summary', 'empty_state'];
     }
 
     return answerRevealed
@@ -556,6 +563,7 @@ export function useKangurAiTutorFocusLayoutState({
         sessionContext.surface,
         sessionContext.contentId,
         sessionContext.answerRevealed,
+        sessionContext.selectedChoiceLabel,
         hasCurrentQuestion,
         hasAssignmentSummary
       ),
@@ -564,6 +572,7 @@ export function useKangurAiTutorFocusLayoutState({
       hasCurrentQuestion,
       sessionContext.answerRevealed,
       sessionContext.contentId,
+      sessionContext.selectedChoiceLabel,
       sessionContext.surface,
     ]
   );
@@ -685,12 +694,20 @@ export function useKangurAiTutorFocusLayoutState({
     }
 
     if (registeredAnchor) {
+      const registeredAnchorKnowledgeReference =
+        registeredAnchor.kind === 'selection'
+          ? resolveKangurTutorSectionKnowledgeReference({
+            anchorId: registeredAnchor.id,
+            contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+            focusKind: 'selection',
+          })
+          : null;
       const conversationFocus: TutorConversationFocus = {
         assignmentId: registeredAnchor.metadata?.assignmentId ?? null,
         contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
         id: registeredAnchor.id,
         kind: registeredAnchor.kind,
-        knowledgeReference: null,
+        knowledgeReference: registeredAnchorKnowledgeReference,
         label: registeredAnchor.metadata?.label ?? null,
         surface: registeredAnchor.surface,
       };

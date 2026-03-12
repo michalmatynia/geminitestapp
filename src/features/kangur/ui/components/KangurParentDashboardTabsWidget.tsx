@@ -21,8 +21,8 @@ const TABS: Array<{
 }> = [
   {
     id: 'progress',
-    label: 'Postep',
-    mobileLabel: 'Postep',
+    label: 'Postęp',
+    mobileLabel: 'Postęp',
     icon: BarChart2,
     docId: 'parent_progress_tab',
   },
@@ -82,9 +82,9 @@ export function KangurParentDashboardTabsWidget({
       <KangurPanelIntro
         description={
           tabsContent?.summary ??
-          'Przelaczaj miedzy postepem, wynikami, zadaniami i ustawieniami Tutor-AI.'
+          'Przełączaj między postępem, wynikami, zadaniami i ustawieniami Tutor-AI.'
         }
-        title={tabsContent?.title ?? 'Zakladki panelu'}
+        title={tabsContent?.title ?? 'Zakładki panelu'}
         titleAs='h2'
         titleClassName='text-lg font-bold tracking-[-0.02em]'
       />

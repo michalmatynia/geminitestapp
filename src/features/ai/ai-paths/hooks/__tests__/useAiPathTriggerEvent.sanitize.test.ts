@@ -256,21 +256,20 @@ describe('sanitizeTriggerPathConfig', () => {
 });
 
 describe('buildTriggerContext', () => {
-  it('omits persisted product snapshots from trigger payloads', () => {
-    const context = buildTriggerContext({
-      triggerNode: buildTriggerNode(),
-      triggerEventId: 'trigger-product-row',
-      triggerLabel: 'Run Product Path',
-      entityType: 'product',
-      entityId: 'product-123',
-      entityJson: {
-        id: 'product-123',
-        name_en: 'Milk Bar Stool',
-        imageBase64s: ['data:image/png;base64,AAAA'],
-      },
-      source: { location: 'product_row' },
-    });
-
+      it('omits persisted product snapshots from trigger payloads', () => {
+        const context = buildTriggerContext({
+          triggerNode: buildTriggerNode(),
+          triggerEventId: 'trigger-product-list',
+          triggerLabel: 'Run Product Path',
+          entityType: 'product',
+          entityId: 'product-123',
+          entityJson: {
+            id: 'product-123',
+            name_en: 'Milk Bar Stool',
+            imageBase64s: ['data:image/png;base64,AAAA'],
+          },
+          source: { location: 'product_list' },
+        });
     expect(context).toMatchObject({
       entityId: 'product-123',
       entityType: 'product',

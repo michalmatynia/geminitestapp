@@ -18,7 +18,7 @@ describe('KangurAssignmentPriorityChip', () => {
       />
     );
 
-    expect(screen.getByTestId('assignment-priority-chip')).toHaveTextContent('Priorytet sredni');
+    expect(screen.getByTestId('assignment-priority-chip')).toHaveTextContent('Priorytet średni');
     expect(screen.getByTestId('assignment-priority-chip')).toHaveClass(
       ...KANGUR_ACCENT_STYLES.amber.badge.split(' ')
     );

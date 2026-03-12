@@ -117,7 +117,7 @@ describe('KangurLearnerProfileAiTutorMoodWidget', () => {
       /Tutor podkreśla postęp/i
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-baseline')).toHaveTextContent(
-      'Wspierajacy'
+      'Wspierający'
     );
     expect(screen.getByTestId('learner-profile-ai-tutor-mood-confidence')).toHaveTextContent(
       '82%'

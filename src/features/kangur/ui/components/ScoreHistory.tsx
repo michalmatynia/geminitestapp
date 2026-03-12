@@ -7,6 +7,7 @@ import {
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -15,7 +16,6 @@ import {
   KangurGlassPanel,
   KangurMetricCard,
   KangurProgressBar,
-  KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
@@ -263,9 +263,9 @@ export default function ScoreHistory({
       </div>
 
       <KangurGlassPanel padding='md' surface='mistStrong' variant='soft'>
-        <KangurSectionEyebrow as='p' className='mb-3' tone='slate'>
+        <KangurPanelSectionHeading tone='slate'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
-        </KangurSectionEyebrow>
+        </KangurPanelSectionHeading>
         <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
             <p className='text-xs text-sky-800/80'>
@@ -346,9 +346,7 @@ export default function ScoreHistory({
       </KangurGlassPanel>
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <KangurSectionEyebrow as='p' className='mb-3' tone='slate'>
-          Wyniki wg operacji
-        </KangurSectionEyebrow>
+        <KangurPanelSectionHeading tone='slate'>Wyniki wg operacji</KangurPanelSectionHeading>
         <div className='flex flex-col gap-2'>
           {Object.entries(opBreakdown).map(([operation, data]) => {
             const percent = Math.round((data.correct / data.total) * 100);

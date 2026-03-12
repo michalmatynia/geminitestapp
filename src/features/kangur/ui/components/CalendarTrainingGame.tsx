@@ -223,7 +223,7 @@ export default function CalendarTrainingGame({
         panelClassName='gap-5'
         percent={percent}
         progressAccent='emerald'
-        progressAriaLabel='Postep w ćwiczeniach z kalendarzem'
+        progressAriaLabel='Postęp w ćwiczeniach z kalendarzem'
         progressAriaValueText={`${percent}% poprawnych odpowiedzi`}
         progressClassName='w-full'
         progressDataTestId='calendar-training-summary-progress-bar'
@@ -252,7 +252,7 @@ export default function CalendarTrainingGame({
         <div className='flex w-full items-center gap-3'>
           <KangurProgressBar
             accent='emerald'
-            aria-label='Postep ćwiczeń z kalendarzem'
+            aria-label='Postęp ćwiczeń z kalendarzem'
             aria-valuetext={`Pytanie ${current + 1} z ${TOTAL}`}
             className='flex-1'
             data-testid='calendar-training-progress-bar'

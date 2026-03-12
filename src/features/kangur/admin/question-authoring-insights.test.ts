@@ -95,7 +95,7 @@ describe('getQuestionAuthoringSummary', () => {
   it('warns when a visual prompt has no supporting visual or when choice svg lacks note', () => {
     const summary = getQuestionAuthoringSummary(
       makeQuestion({
-        prompt: 'Patrz na rysunek i wybierz poprawna odpowiedz.',
+        prompt: 'Patrz na rysunek i wybierz poprawną odpowiedź.',
         choices: [
           { label: 'A', text: '3', svgContent: '<svg viewBox="0 0 10 10"></svg>' },
           { label: 'B', text: '4', svgContent: '' },

@@ -69,7 +69,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     className='uppercase tracking-wide'
                     size='sm'
                   >
-                    {learner.status === 'active' ? 'Aktywny' : 'Wylaczony'}
+                    {learner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
                   </KangurStatusChip>
                 }
                 buttonClassName='rounded-[30px] px-5 py-4 text-left'
@@ -118,7 +118,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         <KangurGlassPanel className='flex flex-col gap-4' padding='md' surface='solid' variant='subtle'>
           <KangurPanelIntro
             eyebrow='Nowy profil'
-            description='Dodaj dziecko i od razu ustaw jego login oraz haslo do gry.'
+            description='Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.'
           />
 
           <div className='grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3'>
@@ -191,7 +191,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               type='password'
               value={editForm.password}
               onChange={(event) => updateEditField('password', event.target.value)}
-              placeholder='Nowe haslo (opcjonalnie)'
+              placeholder='Nowe hasło (opcjonalnie)'
             />
             <KangurSelectField
               accent='indigo'
@@ -204,7 +204,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               }
             >
               <option value='active'>Aktywny</option>
-              <option value='disabled'>Wylaczony</option>
+              <option value='disabled'>Wyłączony</option>
             </KangurSelectField>
           </div>
           <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
@@ -219,7 +219,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
               Zapisz ucznia
             </KangurButton>
             <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-              Login i haslo naleza do ucznia, ale konto pozostaje wlasnoscia rodzica.
+              Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
             </div>
           </div>
         </KangurGlassPanel>

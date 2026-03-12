@@ -70,7 +70,7 @@ export function KangurAiTutorComposer(): JSX.Element {
             <button
               type='button'
               onClick={handleClearDrawing}
-              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors hover:bg-red-50 hover:text-red-500 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
             >
               <X className='h-2.5 w-2.5' />
@@ -112,7 +112,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           type='button'
           size='sm'
           variant='primary'
-          className='shadow-[0_8px_20px_-10px_rgba(245,158,11,0.4)]'
+          className='kangur-chat-send-shadow'
           onClick={() => void handleSend()}
           disabled={(!inputValue.trim() && !drawingImageData) || isLoading || !canSendMessages}
           aria-label={tutorContent.common.sendAria}

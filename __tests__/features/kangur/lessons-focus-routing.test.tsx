@@ -114,7 +114,7 @@ describe('Lessons page focus query support', () => {
           id: 'assignment-division-completed',
           learnerKey: 'ada@example.com',
           title: '➗ Dzielenie',
-          description: 'Powtorz dzielenie po przydziale rodzica.',
+          description: 'Powtórz dzielenie po przydziale rodzica.',
           priority: 'high',
           archived: false,
           target: {
@@ -130,7 +130,7 @@ describe('Lessons page focus query support', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtorki po przydziale: 1/1.',
+            summary: 'Powtórki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T10:30:00.000Z',
@@ -155,7 +155,7 @@ describe('Lessons page focus query support', () => {
     expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Aktywna lekcja');
     expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukonczone dla rodzica'
+      'Ukończone dla rodzica'
     );
     expect(window.location.search).toBe('');
   });

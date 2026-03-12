@@ -11,12 +11,11 @@ import { KANGUR_AI_TUTOR_UI_ROOT_SELECTOR } from './KangurAiTutorUiBoundary.shar
 import type { ActiveTutorFocus } from './KangurAiTutorWidget.shared';
 import type { TutorSurface } from './KangurAiTutorWidget.types';
 
-export const FLOATING_TUTOR_AVATAR_RIM_COLOR = '#78350f';
 export const HOME_ONBOARDING_ELIGIBLE_CONTENT_ID = 'game:home';
 export const CONTEXTLESS_TUTOR_EMPTY_STATE_MESSAGE =
-  'Otworz lekcje, gre albo test, a pomoge Ci w konkretnym zadaniu.';
+  'Otwórz lekcję, grę albo test, a pomogę Ci w konkretnym zadaniu.';
 export const CONTEXTLESS_TUTOR_DISABLED_PLACEHOLDER =
-  'Przejdz do lekcji, gry albo testu, aby zadac pytanie.';
+  'Przejdź do lekcji, gry albo testu, aby zadać pytanie.';
 const getTutorUiElement = (value: EventTarget | Node | null): Element | null => {
   if (value instanceof Element) {
     return value;

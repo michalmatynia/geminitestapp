@@ -282,7 +282,7 @@ export function KangurAiTutorGuidedCallout({
                 ) : mode === 'selection' ? (
                   <KangurAiTutorChromeBadge
                     className={cn(
-                      'w-fit max-w-full self-start px-3 py-1 text-[11px] normal-case tracking-normal text-amber-800 [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] sm:self-auto',
+                      'w-fit max-w-full self-start px-3 py-1 text-[11px] normal-case tracking-normal [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] sm:self-auto',
                       selectionPreparingBadgeInsetClassName
                     )}
                   >

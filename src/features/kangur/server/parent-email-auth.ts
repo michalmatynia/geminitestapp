@@ -283,7 +283,7 @@ export const createKangurParentAccount = async (input: {
       await assertValidParentPassword(input.password);
       const updatedUser = await setAuthUserPassword(user.id, input.password);
       if (!updatedUser?.email) {
-        throw internalError('Nie udalo sie zapisac hasla rodzica.');
+        throw internalError('Nie udało się zapisać hasła rodzica.');
       }
       user = updatedUser;
     }
@@ -468,7 +468,7 @@ export const setKangurParentPassword = async (input: {
 
   const updatedUser = await setAuthUserPassword(user.id, input.password);
   if (!updatedUser?.email) {
-    throw internalError('Nie udalo sie zapisac hasla rodzica.');
+    throw internalError('Nie udało się zapisać hasła rodzica.');
   }
 
   return {

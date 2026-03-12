@@ -13,7 +13,7 @@ const POST_handler = async (): Promise<Response> => {
       ok: false,
       error: {
         message:
-          'Logowanie linkiem z emaila nie jest juz dostepne. Utworz konto albo zaloguj sie emailem i haslem.',
+          'Logowanie linkiem z e-maila nie jest już dostępne. Utwórz konto albo zaloguj się e-mailem i hasłem.',
       },
     },
     { status: 410 }

@@ -101,9 +101,9 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           {[
             'Obwód to suma wszystkich boków.',
             'Dla kwadratu: O = 4 × a',
-            'Dla prostokata: O = 2 × (a + b)',
+            'Dla prostokąta: O = 2 × (a + b)',
             'Jednostka obwodu to np. cm lub m.',
-            'Zawsze sprawdz, czy dodałes każdy bok tylko raz.',
+            'Zawsze sprawdź, czy dodałeś każdy bok tylko raz.',
           ].map((text) => (
             <KangurLessonCallout
               key={text}

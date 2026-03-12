@@ -101,8 +101,10 @@ describe('KangurLoginPage', () => {
     render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByTestId('kangur-login-shell')).toHaveClass(
+      'glass-panel',
+      'kangur-panel-soft',
+      'kangur-panel-padding-xl',
       'overflow-hidden',
-      'rounded-[34px]'
     );
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
     expect(screen.getByRole('button', { name: 'Mam konto' })).toHaveAttribute('aria-pressed', 'true');

@@ -14,7 +14,7 @@ const regularAssignment: KangurAssignmentSnapshot = {
   id: 'assignment-regular',
   learnerKey: 'jan@example.com',
   title: 'Praktyka: Dzielenie',
-  description: 'Zrob jedna sesje dzielenia.',
+  description: 'Zrób jedną sesję dzielenia.',
   priority: 'high',
   archived: false,
   target: {
@@ -41,8 +41,8 @@ const regularAssignment: KangurAssignmentSnapshot = {
 const compactAssignment: KangurAssignmentSnapshot = {
   id: 'assignment-compact',
   learnerKey: 'jan@example.com',
-  title: 'Powtorka: Zegar',
-  description: 'Ukoncz dodatkowa powtorke zegara.',
+  title: 'Powtórka: Zegar',
+  description: 'Ukończ dodatkową powtórkę zegara.',
   priority: 'medium',
   archived: false,
   target: {
@@ -58,7 +58,7 @@ const compactAssignment: KangurAssignmentSnapshot = {
   progress: {
     status: 'not_started',
     percent: 0,
-    summary: 'Powtorki po przydziale: 0/1.',
+    summary: 'Powtórki po przydziale: 0/1.',
     attemptsCompleted: 0,
     attemptsRequired: 1,
     lastActivityAt: null,
@@ -120,13 +120,13 @@ describe('KangurAssignmentsList', () => {
       'soft-card',
       'border'
     );
-    expect(screen.getByText('Priorytet sredni')).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Priorytet średni')).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('kangur-assignments-list-divider-assignment-compact')).toHaveClass(
       'h-px',
       'w-full',
       'bg-slate-200'
     );
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveClass(
       'kangur-cta-pill',
       'primary-cta'
     );

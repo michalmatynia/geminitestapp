@@ -3,7 +3,7 @@ import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { mergeContextRegistryRefs } from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import { resolveKangurAiTutorContextRegistryBundle } from '@/features/kangur/server/ai-tutor-context-registry-cache';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { summarizeKangurAiTutorFollowUpActions } from '@/features/kangur/ai-tutor/follow-up-reporting';
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
@@ -124,7 +124,7 @@ const buildTopRecommendationOverlay = (
   const actionPage = readRuntimeStringFact(learnerSnapshot, 'topRecommendationActionPage');
 
   return [
-    `Najlepszy nastepny krok: ${title}.`,
+    `Najlepszy następny krok: ${title}.`,
     description,
     actionLabel && actionPage
       ? `Najprostsza akcja teraz: ${actionLabel} w widoku ${actionPage}.`
@@ -250,7 +250,7 @@ const buildLessonDocumentOverlay = (
     return null;
   }
 
-  return `Z tresci tej lekcji teraz: ${truncateOverlayText(documentSummary, 280)}`;
+  return `Z treści tej lekcji teraz: ${truncateOverlayText(documentSummary, 280)}`;
 };
 
 const buildLessonNavigationOverlay = (
@@ -287,8 +287,8 @@ const buildTestReviewOverlay = (
   const selectedChoiceText = readRuntimeStringFact(testContext, 'selectedChoiceText');
   const selectedChoiceLine = selectedChoiceLabel
     ? selectedChoiceText
-      ? `Wybrana odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
-      : `Wybrana odpowiedz: ${selectedChoiceLabel}.`
+      ? `Wybrana odpowiedź: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+      : `Wybrana odpowiedź: ${selectedChoiceLabel}.`
     : null;
   const correctChoiceLabel = readRuntimeStringFact(testContext, 'correctChoiceLabel');
   if (!correctChoiceLabel && !selectedChoiceLine) {
@@ -298,8 +298,8 @@ const buildTestReviewOverlay = (
   const correctChoiceLine = !correctChoiceLabel
     ? null
     : correctChoiceText
-      ? `Poprawna odpowiedz: ${correctChoiceLabel} - ${correctChoiceText}.`
-      : `Poprawna odpowiedz: ${correctChoiceLabel}.`;
+      ? `Poprawna odpowiedź: ${correctChoiceLabel} - ${correctChoiceText}.`
+      : `Poprawna odpowiedź: ${correctChoiceLabel}.`;
 
   return [selectedChoiceLine, correctChoiceLine].filter(Boolean).join(' ') || null;
 };
@@ -316,12 +316,26 @@ const buildTestQuestionOverlay = (
     questionChoicesSummary,
     selectedChoiceLabel
       ? selectedChoiceText
-        ? `Aktualnie zaznaczona odpowiedz: ${selectedChoiceLabel} - ${selectedChoiceText}.`
-        : `Aktualnie zaznaczona odpowiedz: ${selectedChoiceLabel}.`
+        ? `Aktualnie zaznaczona odpowiedź: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+        : `Aktualnie zaznaczona odpowiedź: ${selectedChoiceLabel}.`
       : null,
   ].filter(Boolean);
 
   return lines.length > 0 ? lines.join('\n\n') : null;
+};
+
+const buildTestSelectionOverlay = (
+  testContext: ContextRuntimeDocument | null | undefined
+): string | null => {
+  const selectedChoiceLabel = readRuntimeStringFact(testContext, 'selectedChoiceLabel');
+  const selectedChoiceText = readRuntimeStringFact(testContext, 'selectedChoiceText');
+  if (!selectedChoiceLabel) {
+    return null;
+  }
+
+  return selectedChoiceText
+    ? `Aktualnie zaznaczona odpowiedź: ${selectedChoiceLabel} - ${selectedChoiceText}.`
+    : `Aktualnie zaznaczona odpowiedź: ${selectedChoiceLabel}.`;
 };
 
 const normalizeSectionExplainLabel = (value: string | null | undefined): string =>
@@ -380,6 +394,7 @@ const buildSectionRuntimeOverlay = (input: {
   const testResultOverlay = buildTestResultOverlay(input.runtimeDocuments.surfaceContext);
   const testReviewOverlay = buildTestReviewOverlay(input.runtimeDocuments.surfaceContext);
   const testQuestionOverlay = buildTestQuestionOverlay(input.runtimeDocuments.surfaceContext);
+  const testSelectionOverlay = buildTestSelectionOverlay(input.runtimeDocuments.surfaceContext);
 
   const lines: string[] = [];
   const shouldIncludeLearnerSummary =
@@ -398,7 +413,10 @@ const buildSectionRuntimeOverlay = (input: {
     section.pageKey === 'LearnerProfile' ||
     section.pageKey === 'Lessons';
   const shouldIncludeQuestionContext =
-    focusKind === 'question' || focusKind === 'review' || focusKind === 'summary';
+    focusKind === 'question' ||
+    focusKind === 'review' ||
+    focusKind === 'summary' ||
+    focusKind === 'selection';
   const shouldIncludeLoginActivity =
     input.context?.surface === 'auth' ||
     section.pageKey === 'Login' ||
@@ -432,9 +450,10 @@ const buildSectionRuntimeOverlay = (input: {
     section.pageKey === 'Tests' && (focusKind === 'summary' || section.id.includes('summary'));
   const shouldIncludeTestReview = section.pageKey === 'Tests' && focusKind === 'review';
   const shouldIncludeTestQuestion = section.pageKey === 'Tests' && focusKind === 'question';
+  const shouldIncludeTestSelection = section.pageKey === 'Tests' && focusKind === 'selection';
 
   if (shouldIncludeLearnerSummary && learnerSummary) {
-    lines.push(`Na zywo dla tego ucznia: ${learnerSummary}`);
+    lines.push(`Na żywo dla tego ucznia: ${learnerSummary}`);
   }
   if (shouldIncludeTopRecommendation && topRecommendationOverlay) {
     lines.push(topRecommendationOverlay);
@@ -475,6 +494,9 @@ const buildSectionRuntimeOverlay = (input: {
   if (shouldIncludeTestQuestion && testQuestionOverlay) {
     lines.push(testQuestionOverlay);
   }
+  if (shouldIncludeTestSelection && testSelectionOverlay) {
+    lines.push(testSelectionOverlay);
+  }
   if (focusKind === 'review' && revealedExplanation) {
     lines.push(`Po pokazaniu odpowiedzi: ${revealedExplanation}`);
   }
@@ -501,7 +523,7 @@ const buildSectionExplainMessage = (input: {
       : `${section.title}.`;
   const followUpLine =
     input.sectionKnowledgeBundle.followUpActions.length > 0
-      ? `Jesli chcesz przejsc dalej, wybierz: ${input.sectionKnowledgeBundle.followUpActions
+      ? `Jeśli chcesz przejść dalej, wybierz: ${input.sectionKnowledgeBundle.followUpActions
         .map((action) => action.label)
         .join(', ')}.`
       : null;
@@ -631,7 +653,7 @@ export async function postKangurAiTutorChatHandler(
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
     });
     const contextRegistryBundle = requestedContextRegistryRefs.length > 0
-      ? await contextRegistryEngine.resolveRefs({
+      ? await resolveKangurAiTutorContextRegistryBundle({
         refs: requestedContextRegistryRefs,
         maxNodes: 24,
         depth: 1,
@@ -861,31 +883,39 @@ export async function postKangurAiTutorChatHandler(
         usage,
       } satisfies KangurAiTutorChatResponse);
     }
-    const nativeGuideResolution = learnerDrawingImageData
-      ? {
-        status: 'skipped' as const,
-        message: null,
-        followUpActions: [],
-        entryId: null,
-        matchedSignals: [],
-        coverageLevel: null,
-      }
-      : await resolveKangurAiTutorNativeGuideResolution({
+    const [nativeGuideResolution, knowledgeGraphContext, adaptiveGuidance] = await Promise.all([
+      learnerDrawingImageData
+        ? Promise.resolve({
+          status: 'skipped' as const,
+          message: null,
+          followUpActions: [],
+          entryId: null,
+          matchedSignals: [],
+          coverageLevel: null,
+        })
+        : resolveKangurAiTutorNativeGuideResolution({
+          latestUserMessage,
+          context,
+          locale: 'pl',
+        }),
+      resolveKangurAiTutorSemanticGraphContext({
         latestUserMessage,
         context,
         locale: 'pl',
-      });
-    const knowledgeGraphContext = await resolveKangurAiTutorSemanticGraphContext({
-      latestUserMessage,
-      context,
-      locale: 'pl',
-      runtimeDocuments: [
-        resolvedRuntimeDocuments.learnerSnapshot,
-        resolvedRuntimeDocuments.loginActivity,
-        resolvedRuntimeDocuments.surfaceContext,
-        resolvedRuntimeDocuments.assignmentContext,
-      ].filter((document): document is ContextRuntimeDocument => Boolean(document)),
-    });
+        runtimeDocuments: [
+          resolvedRuntimeDocuments.learnerSnapshot,
+          resolvedRuntimeDocuments.loginActivity,
+          resolvedRuntimeDocuments.surfaceContext,
+          resolvedRuntimeDocuments.assignmentContext,
+        ].filter((document): document is ContextRuntimeDocument => Boolean(document)),
+      }),
+      buildKangurAiTutorAdaptiveGuidance({
+        learnerId,
+        context,
+        registryBundle: contextRegistryBundle,
+        memory,
+      }),
+    ]);
     knowledgeGraphApplied = knowledgeGraphContext.status === 'hit';
     knowledgeGraphQueryStatus = knowledgeGraphContext.status;
     knowledgeGraphQueryMode = knowledgeGraphContext.status === 'hit'
@@ -1129,12 +1159,6 @@ export async function postKangurAiTutorChatHandler(
     if (learnerMemoryInstructions) {
       systemParts.push(learnerMemoryInstructions);
     }
-    const adaptiveGuidance = await buildKangurAiTutorAdaptiveGuidance({
-      learnerId,
-      context,
-      registryBundle: contextRegistryBundle,
-      memory,
-    });
     const followUpReporting = summarizeKangurAiTutorFollowUpActions(
       adaptiveGuidance.followUpActions
     );

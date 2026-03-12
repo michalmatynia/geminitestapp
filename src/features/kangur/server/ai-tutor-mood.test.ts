@@ -130,10 +130,10 @@ describe('resolveKangurAiTutorMoodFromSignals', () => {
       messages: [
         {
           role: 'user',
-          content: 'Chce zrobic jeszcze jedno zadanie.',
+          content: 'Chcę zrobić jeszcze jedno zadanie.',
         },
       ],
-      latestUserMessage: 'Chce zrobic jeszcze jedno zadanie.',
+      latestUserMessage: 'Chcę zrobić jeszcze jedno zadanie.',
       personaSuggestedMoodId: 'neutral',
       previousMood: null,
       computedAt: '2026-03-08T12:00:00.000Z',

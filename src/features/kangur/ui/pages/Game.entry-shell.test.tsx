@@ -54,6 +54,10 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
   KangurGameHomeHeroWidget: () => <div data-testid='kangur-home-hero-widget' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+  KangurAssignmentSpotlight: () => <div data-testid='kangur-assignment-spotlight-widget' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
   KangurGameHomeActionsWidget: () => <div data-testid='kangur-home-actions-widget' />,
 }));

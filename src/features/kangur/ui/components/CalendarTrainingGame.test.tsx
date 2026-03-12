@@ -43,8 +43,8 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     addXp: vi.fn(),
     createTrainingReward: vi.fn(() => ({
       breakdown: [
-        { kind: 'base', label: 'Ukonczenie rundy', xp: 14 },
-        { kind: 'accuracy', label: 'Skutecznosc', xp: 18 },
+        { kind: 'base', label: 'Ukończenie rundy', xp: 14 },
+        { kind: 'accuracy', label: 'Skuteczność', xp: 18 },
       ],
       xp: 32,
       scorePercent: 100,
@@ -180,10 +180,10 @@ describe('CalendarTrainingGame', () => {
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-training-summary-breakdown')).toHaveTextContent(
-      'Ukonczenie rundy +14'
+      'Ukończenie rundy +14'
     );
     expect(screen.getByTestId('calendar-training-summary-breakdown-accuracy')).toHaveTextContent(
-      'Skutecznosc +18'
+      'Skuteczność +18'
     );
     expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
       'kangur-cta-pill',

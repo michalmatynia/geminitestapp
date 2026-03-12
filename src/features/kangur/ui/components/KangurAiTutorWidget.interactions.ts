@@ -21,7 +21,6 @@ type TelemetryContext = {
 };
 
 type UseKangurAiTutorPanelInteractionsInput = {
-  activeFocusKind: string | null;
   activeSelectedText: string | null;
   allowSelectedTextSupport: boolean;
   bubblePlacementMode: string;
@@ -55,6 +54,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setGuestIntroVisible'
     | 'setGuidedTutorTarget'
     | 'setHasNewMessage'
+    | 'setHighlightedSection'
     | 'setHomeOnboardingStepIndex'
     | 'setHoveredSectionAnchorId'
     | 'setIsAvatarDragging'
@@ -73,6 +73,8 @@ type UseKangurAiTutorPanelInteractionsInput = {
     | 'setSelectionGuidanceCalloutVisibleText'
     | 'setSelectionConversationContext'
     | 'setSelectionGuidanceHandoffText'
+    | 'setSectionResponseComplete'
+    | 'setSectionResponsePending'
     | 'setSelectionResponseComplete'
     | 'setSelectionResponsePending'
     | 'suppressAvatarClickRef'
@@ -80,7 +82,6 @@ type UseKangurAiTutorPanelInteractionsInput = {
 };
 
 export function useKangurAiTutorPanelInteractions({
-  activeFocusKind,
   activeSelectedText,
   allowSelectedTextSupport,
   bubblePlacementMode,
@@ -115,6 +116,7 @@ export function useKangurAiTutorPanelInteractions({
     setGuestIntroVisible,
     setGuidedTutorTarget,
     setHasNewMessage,
+    setHighlightedSection,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
     setIsAvatarDragging,
@@ -133,6 +135,8 @@ export function useKangurAiTutorPanelInteractions({
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
+    setSectionResponseComplete,
+    setSectionResponsePending,
     setSelectionResponseComplete,
     setSelectionResponsePending,
     suppressAvatarClickRef,
@@ -254,10 +258,15 @@ export function useKangurAiTutorPanelInteractions({
       }
       setSelectionGuidanceCalloutVisibleText(null);
       setSelectionGuidanceHandoffText(null);
+      setSelectionConversationContext(null);
       setSelectionResponsePending(null);
       setSelectionResponseComplete(null);
+      setSectionResponsePending(null);
+      setSectionResponseComplete(null);
+      setGuidedTutorTarget(null);
+      setHighlightedSection(null);
       setHoveredSectionAnchorId(null);
-      if (reason === 'outside' && activeFocusKind === 'selection') {
+      if (activeSelectedText) {
         clearSelection();
         setHighlightedText(null);
         setPersistedSelectionRect(null);
@@ -270,13 +279,15 @@ export function useKangurAiTutorPanelInteractions({
       closeChat();
     },
     [
-      activeFocusKind,
+      activeSelectedText,
       clearSelection,
       closeChat,
       messageCount,
       setCanonicalTutorModalVisible,
       setGuestIntroHelpVisible,
       setGuestIntroVisible,
+      setGuidedTutorTarget,
+      setHighlightedSection,
       setHighlightedText,
       setContextualTutorMode,
       setHoveredSectionAnchorId,
@@ -285,9 +296,12 @@ export function useKangurAiTutorPanelInteractions({
       setPersistedSelectionPageRect,
       setPersistedSelectionPageRects,
       setPersistedSelectionRect,
+      setSectionResponseComplete,
+      setSectionResponsePending,
       selectionExplainTimeoutRef,
       selectionGuidanceRevealTimeoutRef,
       setSelectionGuidanceCalloutVisibleText,
+      setSelectionConversationContext,
       setSelectionGuidanceHandoffText,
       setSelectionResponseComplete,
       setSelectionResponsePending,

@@ -1074,6 +1074,52 @@ describe('KangurAiTutorContext', () => {
     );
   });
 
+  it('prefers embedded persona avatar thumbnails when the resolved mood opts into them', async () => {
+    useAgentPersonasMock.mockReturnValue({
+      data: [
+        {
+          id: 'persona-1',
+          name: 'Mila',
+          defaultMoodId: 'neutral',
+          moods: [
+            {
+              id: 'neutral',
+              label: 'Neutral',
+              svgContent: '',
+              avatarImageUrl: '/uploads/agentcreator/personas/persona-1/neutral/avatar.png',
+              avatarImageFileId: 'file-1',
+              avatarThumbnailDataUrl: 'data:image/png;base64,AAA',
+              avatarThumbnailMimeType: 'image/png',
+              avatarThumbnailBytes: 3,
+              avatarThumbnailWidth: 64,
+              avatarThumbnailHeight: 64,
+              useEmbeddedThumbnail: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    render(
+      <KangurAiTutorProvider
+        learnerId='learner-1'
+        sessionContext={{
+          surface: 'lesson',
+          contentId: 'lesson-1',
+          title: 'Dodawanie',
+        }}
+      >
+        <Harness />
+      </KangurAiTutorProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('tutor-name')).toHaveTextContent('Mila'));
+    expect(screen.getByTestId('tutor-avatar')).toHaveTextContent('missing');
+    expect(screen.getByTestId('tutor-avatar-image-url')).toHaveTextContent(
+      'data:image/png;base64,AAA'
+    );
+  });
+
   it('falls back to the default mood avatar image when the active tutor mood has no visual asset', async () => {
     apiPostMock.mockReturnValue(new Promise<never>(() => {}));
 

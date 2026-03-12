@@ -17,6 +17,8 @@ export const dbSpecificUnitTestFiles = [
   '__tests__/features/database/utils/mongo.test.ts',
   '__tests__/features/drafter/services/draft-repository-mongo.test.ts',
   '__tests__/features/integrations/services/category-mapping-repository-mongo.test.ts',
+  'src/features/integrations/services/integrations-runtime.mongo-only.test.ts',
+  'src/features/integrations/services/product-listing-repository.mongo-only.test.ts',
   'src/features/kangur/services/kangur-score-repository/mongo-kangur-score-repository.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.legacy.test.ts',
   'src/shared/lib/db/mongo-write-retry.test.ts',

@@ -40,6 +40,20 @@ describe('KangurAiTutorMoodAvatar', () => {
     );
   });
 
+  it('renders embedded thumbnail data URLs through a native image element', () => {
+    render(
+      <KangurAiTutorMoodAvatar
+        avatarImageUrl=' data:image/png;base64,AAA '
+        label='Pomocnik avatar (neutral)'
+      />
+    );
+
+    expect(screen.getByAltText('Pomocnik avatar (neutral)')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAA'
+    );
+  });
+
   it('renders sanitized persona svg markup when no image is available', () => {
     render(
       <KangurAiTutorMoodAvatar

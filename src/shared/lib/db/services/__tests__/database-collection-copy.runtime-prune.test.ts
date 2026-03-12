@@ -9,11 +9,20 @@ const runtimeFile = path.join(
   'src/shared/lib/db/services/database-collection-copy.ts'
 );
 
-const requiredTokens = ['AI_PATHS_DEPRECATED_STORE_PREFIX', 'AI_PATHS_DEPRECATED_STORE_KEY_PREFIX'];
-const forbiddenTokens = ['AI_PATHS_LEGACY_PREFIX', 'AI_PATHS_LEGACY_KEY_PREFIX'];
+const requiredTokens = [
+  'DATABASE_COLLECTION_COPY_REMOVED_MESSAGE',
+  'MongoDB-only',
+  'return [];',
+];
+const forbiddenTokens = [
+  'AI_PATHS_DEPRECATED_STORE_PREFIX',
+  'AI_PATHS_DEPRECATED_STORE_KEY_PREFIX',
+  'AI_PATHS_LEGACY_PREFIX',
+  'AI_PATHS_LEGACY_KEY_PREFIX',
+];
 
 describe('database-collection-copy runtime naming-channel prune guard', () => {
-  it('keeps canonical deprecated-store prefix naming and blocks legacy prefix naming', () => {
+  it('keeps the collection copy runtime hard-disabled and free of removed prefix naming', () => {
     const source = readFileSync(runtimeFile, 'utf8');
 
     requiredTokens.forEach((token: string): void => {

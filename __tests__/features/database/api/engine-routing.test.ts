@@ -7,13 +7,8 @@ import { vi } from 'vitest';
 
 import { POST as POST_CRUD } from '@/app/api/databases/crud/route';
 import { POST as POST_EXECUTE } from '@/app/api/databases/execute/route';
-import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-
-vi.mock('@/shared/lib/db/collection-provider-map', () => ({
-  resolveCollectionProviderForRequest: vi.fn(),
-}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoClient: vi.fn(),
@@ -29,9 +24,7 @@ describe('Database Engine routing in database operations APIs', () => {
     vi.mocked(assertDatabaseEngineManageAccess).mockResolvedValue(undefined);
   });
 
-  it('routes CRUD auto mode through collection provider map', async () => {
-    vi.mocked(resolveCollectionProviderForRequest).mockResolvedValue('mongodb');
-
+  it('accepts CRUD auto mode and executes against the Mongo collection directly', async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: true,
       insertedId: 'mongo-id-1',
@@ -48,21 +41,22 @@ describe('Database Engine routing in database operations APIs', () => {
         body: JSON.stringify({
           table: 'products',
           operation: 'insert',
+          type: 'auto',
           data: { sku: 'SKU-1' },
         }),
       })
     );
 
     const payload = await res.json();
+    const expectedDbName = process.env['MONGODB_DB'] ?? 'stardb';
     expect(res.status).toBe(200);
     expect(payload).toMatchObject({ success: true, rowCount: 1 });
-    expect(resolveCollectionProviderForRequest).toHaveBeenCalledWith('products', 'auto');
+    expect(db).toHaveBeenCalledWith(expectedDbName);
+    expect(collection).toHaveBeenCalledWith('products');
     expect(insertOne).toHaveBeenCalledWith({ sku: 'SKU-1' });
   });
 
-  it('routes Execute auto mode through collection provider map for Mongo operations', async () => {
-    vi.mocked(resolveCollectionProviderForRequest).mockResolvedValue('mongodb');
-
+  it('accepts Execute auto mode and performs the Mongo operation directly', async () => {
     const toArray = vi.fn().mockResolvedValue([{ _id: 'id-1', sku: 'SKU-1' }]);
     const limit = vi.fn().mockReturnValue({ toArray });
     const find = vi.fn().mockReturnValue({ limit });
@@ -85,13 +79,15 @@ describe('Database Engine routing in database operations APIs', () => {
     );
 
     const payload = await res.json();
+    const expectedDbName = process.env['MONGODB_DB'] ?? 'stardb';
     expect(res.status).toBe(200);
     expect(payload).toMatchObject({
       command: 'find',
       rowCount: 1,
       rows: [{ _id: 'id-1', sku: 'SKU-1' }],
     });
-    expect(resolveCollectionProviderForRequest).toHaveBeenCalledWith('products', 'auto');
+    expect(db).toHaveBeenCalledWith(expectedDbName);
+    expect(collection).toHaveBeenCalledWith('products');
     expect(find).toHaveBeenCalledWith({ sku: 'SKU-1' });
     expect(limit.mock.calls[0]?.[0]).toBe(200);
   });

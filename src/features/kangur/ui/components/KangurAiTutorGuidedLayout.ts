@@ -1,10 +1,9 @@
 
 import {
   getGuidedAvatarAttachmentPlacement,
-  getGuidedAvatarRectForSurface,
-  getGuidedAvatarStyleForSurface,
 } from './KangurAiTutorAvatarAttachment';
 import {
+  ATTACHED_AVATAR_EDGE_INSET,
   AVATAR_SIZE,
   BUBBLE_MAX_HEIGHT,
   BUBBLE_MIN_HEIGHT,
@@ -35,6 +34,7 @@ const GUIDED_SELECTION_PREVIEW_HEIGHT = 36;
 const GUIDED_SELECTION_PREVIEW_EDGE_INSET_X = 20;
 const GUIDED_SELECTION_PREVIEW_TOP_OFFSET = 122;
 const GUIDED_SELECTION_PREVIEW_SAFE_DISTANCE = 32;
+const GUIDED_SELECTION_AVATAR_SURFACE_GAP = 4;
 
 type FloatingTutorArrowheadGeometry = {
   angle: number;
@@ -52,6 +52,60 @@ type FloatingTutorArrowheadGeometry = {
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
+
+const getGuidedAvatarRectForCallout = (input: {
+  focusRect?: DOMRect | null;
+  placement: ReturnType<typeof getGuidedAvatarAttachmentPlacement>;
+  surface: DOMRect;
+  surfaceGap?: number;
+}): DOMRect => {
+  const { focusRect, placement, surface, surfaceGap = GUIDED_AVATAR_SURFACE_GAP } = input;
+  const minLeft = surface.left + ATTACHED_AVATAR_EDGE_INSET;
+  const maxLeft = surface.right - ATTACHED_AVATAR_EDGE_INSET - AVATAR_SIZE;
+  const minTop = surface.top + ATTACHED_AVATAR_EDGE_INSET;
+  const maxTop = surface.bottom - ATTACHED_AVATAR_EDGE_INSET - AVATAR_SIZE;
+  const alignedLeft = clamp(
+    (focusRect?.left ?? surface.left) + (focusRect?.width ?? AVATAR_SIZE) / 2 - AVATAR_SIZE / 2,
+    minLeft,
+    Math.max(minLeft, maxLeft)
+  );
+  const alignedTop = clamp(
+    (focusRect?.top ?? surface.top) + (focusRect?.height ?? AVATAR_SIZE) / 2 - AVATAR_SIZE / 2,
+    minTop,
+    Math.max(minTop, maxTop)
+  );
+
+  switch (placement) {
+    case 'left':
+      return createRect(
+        surface.left - surfaceGap - AVATAR_SIZE,
+        alignedTop,
+        AVATAR_SIZE,
+        AVATAR_SIZE
+      );
+    case 'right':
+      return createRect(
+        surface.right + surfaceGap,
+        alignedTop,
+        AVATAR_SIZE,
+        AVATAR_SIZE
+      );
+    case 'top':
+      return createRect(
+        alignedLeft,
+        surface.top - surfaceGap - AVATAR_SIZE,
+        AVATAR_SIZE,
+        AVATAR_SIZE
+      );
+    case 'bottom':
+      return createRect(
+        alignedLeft,
+        surface.bottom + surfaceGap,
+        AVATAR_SIZE,
+        AVATAR_SIZE
+      );
+  }
+};
 
 const normalizeRotationDegrees = (value: number): number => {
   const normalized = value % 360;
@@ -531,6 +585,9 @@ export const getGuidedCalloutClusterLayout = (
   const bestCandidate = candidates
     .flatMap((candidate) =>
       getGuidedAvatarPlacementOrder(candidate.placement).map((avatarPlacement, avatarPriority) => {
+        const avatarSurfaceGap = options?.hasSelectionPreview
+          ? GUIDED_SELECTION_AVATAR_SURFACE_GAP
+          : GUIDED_AVATAR_SURFACE_GAP;
         const clampedPosition = clampGuidedCalloutPosition({
           avatarPlacement,
           candidateLeft: candidate.left,
@@ -540,9 +597,11 @@ export const getGuidedCalloutClusterLayout = (
           width,
         });
         const panelRect = createRect(clampedPosition.left, clampedPosition.top, width, height);
-        const avatarRect = getGuidedAvatarRectForSurface({
+        const avatarRect = getGuidedAvatarRectForCallout({
+          focusRect: rect,
           placement: avatarPlacement,
           surface: panelRect,
+          surfaceGap: avatarSurfaceGap,
         });
         const overlapArea = getRectOverlapArea(panelRect, rect);
         const protectedOverlapArea = protectedRects.reduce(
@@ -586,7 +645,7 @@ export const getGuidedCalloutClusterLayout = (
           overlapArea * 20 +
           protectedOverlapArea * 10 +
           avatarPrimaryOverlapArea * 18 +
-          avatarProtectedOverlapArea * 3 +
+          avatarProtectedOverlapArea * 1.25 +
           clusterOverlapArea * 40 +
           selectionPreviewCrowding * 22 +
           viewportOverflowArea * 24 +
@@ -677,16 +736,6 @@ export const getGuidedCalloutClusterLayout = (
         return leftCandidate.avatarPrimaryOverlapArea - rightCandidate.avatarPrimaryOverlapArea;
       }
 
-      const leftHasProtectedAvatarOverlap = leftCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
-      const rightHasProtectedAvatarOverlap = rightCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
-      if (leftHasProtectedAvatarOverlap !== rightHasProtectedAvatarOverlap) {
-        return leftHasProtectedAvatarOverlap - rightHasProtectedAvatarOverlap;
-      }
-
-      if (leftCandidate.avatarProtectedOverlapArea !== rightCandidate.avatarProtectedOverlapArea) {
-        return leftCandidate.avatarProtectedOverlapArea - rightCandidate.avatarProtectedOverlapArea;
-      }
-
       if (leftCandidate.avatarFocusDistance !== rightCandidate.avatarFocusDistance) {
         return leftCandidate.avatarFocusDistance - rightCandidate.avatarFocusDistance;
       }
@@ -717,6 +766,16 @@ export const getGuidedCalloutClusterLayout = (
         );
       }
 
+      const leftHasProtectedAvatarOverlap = leftCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
+      const rightHasProtectedAvatarOverlap = rightCandidate.avatarProtectedOverlapArea > 0 ? 1 : 0;
+      if (leftHasProtectedAvatarOverlap !== rightHasProtectedAvatarOverlap) {
+        return leftHasProtectedAvatarOverlap - rightHasProtectedAvatarOverlap;
+      }
+
+      if (leftCandidate.avatarProtectedOverlapArea !== rightCandidate.avatarProtectedOverlapArea) {
+        return leftCandidate.avatarProtectedOverlapArea - rightCandidate.avatarProtectedOverlapArea;
+      }
+
       if (leftCandidate.avatarPriority !== rightCandidate.avatarPriority) {
         return leftCandidate.avatarPriority - rightCandidate.avatarPriority;
       }
@@ -741,6 +800,11 @@ export const getGuidedCalloutClusterLayout = (
       width,
     });
     const calloutRect = createRect(clampedPosition.left, clampedPosition.top, width, height);
+    const avatarRect = getGuidedAvatarRectForCallout({
+      focusRect: rect,
+      placement: avatarPlacement,
+      surface: calloutRect,
+    });
     return {
       anchorDistance: 0,
       avatarAnchorDistance: 0,
@@ -748,22 +812,13 @@ export const getGuidedCalloutClusterLayout = (
       avatarProtectedOverlapArea: 0,
       avatarPlacement,
       avatarPriority: 0,
-      avatarRect: getGuidedAvatarRectForSurface({
-        placement: avatarPlacement,
-        surface: calloutRect,
-      }),
+      avatarRect,
       avatarFocusCenterDistance: getRectCenterDistance(
-        getGuidedAvatarRectForSurface({
-          placement: avatarPlacement,
-          surface: calloutRect,
-        }),
+        avatarRect,
         rect
       ),
       avatarFocusDistance: getRectSeparationDistance(
-        getGuidedAvatarRectForSurface({
-          placement: avatarPlacement,
-          surface: calloutRect,
-        }),
+        avatarRect,
         rect
       ),
       calloutRect,
@@ -785,10 +840,10 @@ export const getGuidedCalloutClusterLayout = (
   return {
     avatarPlacement: bestCandidate.avatarPlacement,
     avatarRect: bestCandidate.avatarRect,
-    avatarStyle: getGuidedAvatarStyleForSurface({
-      placement: bestCandidate.avatarPlacement,
-      surface: bestCandidate.calloutRect,
-    }),
+    avatarStyle: {
+      left: bestCandidate.avatarRect.left,
+      top: bestCandidate.avatarRect.top,
+    },
     calloutRect: bestCandidate.calloutRect,
     entryDirection,
     placement: bestCandidate.placement,

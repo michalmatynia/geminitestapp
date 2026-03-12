@@ -65,7 +65,10 @@ describe('XpToast', () => {
       'border-amber-200/80',
       'rounded-[34px]'
     );
-    expect(screen.getByText('+25 XP')).toHaveClass('border-indigo-200', 'bg-indigo-100');
+    expect(screen.getByText('+25 XP')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+    );
     expect(screen.getByText('Swietnie, trzymasz polecany kierunek')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown-base')).toHaveTextContent(
@@ -74,7 +77,10 @@ describe('XpToast', () => {
     expect(screen.getByTestId('xp-toast-breakdown-accuracy')).toHaveTextContent(
       'Skutecznosc +15'
     );
-    expect(screen.getByText(/Nowa odznaka/)).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText(/Nowa odznaka/)).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+    );
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(
       'Ukoncz pierwsza gre'

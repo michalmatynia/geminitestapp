@@ -4,6 +4,15 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { CSSProperties, JSX } from 'react';
 
+const LIGHT_MODE_SELECTION_GRADIENT_FALLBACK =
+  'color-mix(in srgb, var(--kangur-page-text) 78%, rgb(146 64 14))';
+const LIGHT_MODE_SELECTION_GRADIENT_START =
+  'color-mix(in srgb, var(--kangur-page-text) 90%, rgb(120 53 15))';
+const LIGHT_MODE_SELECTION_GRADIENT_MID =
+  'color-mix(in srgb, var(--kangur-page-text) 82%, rgb(146 64 14))';
+const LIGHT_MODE_SELECTION_GRADIENT_END =
+  'color-mix(in srgb, var(--kangur-page-text) 72%, rgb(180 83 9))';
+
 type ReducedMotionTransitions = {
   instant: {
     duration: number;
@@ -99,10 +108,10 @@ export function KangurAiTutorSpotlightOverlays({
     <>
       <style>{`
         :root {
-          --kangur-ai-tutor-selection-gradient-fallback: #92400e;
-          --kangur-ai-tutor-selection-gradient-start: #78350f;
-          --kangur-ai-tutor-selection-gradient-mid: #a16207;
-          --kangur-ai-tutor-selection-gradient-end: #d97706;
+          --kangur-ai-tutor-selection-gradient-fallback: ${LIGHT_MODE_SELECTION_GRADIENT_FALLBACK};
+          --kangur-ai-tutor-selection-gradient-start: ${LIGHT_MODE_SELECTION_GRADIENT_START};
+          --kangur-ai-tutor-selection-gradient-mid: ${LIGHT_MODE_SELECTION_GRADIENT_MID};
+          --kangur-ai-tutor-selection-gradient-end: ${LIGHT_MODE_SELECTION_GRADIENT_END};
           --kangur-ai-tutor-selection-glow-fill-start: rgba(245, 158, 11, 0.18);
           --kangur-ai-tutor-selection-glow-fill-end: rgba(180, 83, 9, 0.08);
           --kangur-ai-tutor-selection-glow-border: rgba(217, 119, 6, 0.28);
@@ -113,7 +122,7 @@ export function KangurAiTutorSpotlightOverlays({
         }
 
         [data-kangur-appearance='dark'],
-        .dark {
+        [data-kangur-appearance-mode='dark'] {
           --kangur-ai-tutor-selection-gradient-fallback: #fde68a;
           --kangur-ai-tutor-selection-gradient-start: #fef3c7;
           --kangur-ai-tutor-selection-gradient-mid: #fcd34d;

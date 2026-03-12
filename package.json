@@ -233,6 +233,8 @@
     "test:integration:mongo": "vitest run --project integration-mongo",
     "test:integration:mongo:baseline": "node scripts/testing/run-integration-mongo-baseline.mjs",
     "test:integration:mongo:baseline:strict": "node scripts/testing/run-integration-mongo-baseline.mjs --strict",
+    "test:integration:prisma:baseline": "node scripts/testing/run-integration-prisma-baseline.mjs",
+    "test:integration:prisma:baseline:strict": "node scripts/testing/run-integration-prisma-baseline.mjs --strict",
     "test:integration:mongo:canonical-shape-guard": "cross-env RUN_MONGO_PRODUCT_CANONICAL_SHAPE_GUARD=1 vitest run --project integration-mongo __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts",
     "test:ci": "npm run docs:structure:check && npm run lint:scanner-scripts && npm run test:scanner-envelopes && npm run canonical:check:sitewide && npm run ai-paths:check:canonical && npm run observability:check && npm run test:unit && npm run test:ai-paths:signal-flow-regression && npm run test:ai-paths:runtime-kernel:integration && npm run test:integration:mongo",
     "test:ui": "vitest --ui --project unit",

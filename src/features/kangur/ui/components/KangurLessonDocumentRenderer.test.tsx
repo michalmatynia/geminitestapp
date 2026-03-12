@@ -205,7 +205,10 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByText('Intro')).toBeInTheDocument();
     expect(screen.getByText('Lesson heading')).toBeInTheDocument();
     expect(screen.getByText('Image caption')).toBeInTheDocument();
-    expect(screen.getByText('Photo reference')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Photo reference')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+    );
     expect(screen.getByTestId('lesson-text-block-text-1')).toHaveClass(
       'glass-panel',
       'border-indigo-200/70'
@@ -216,7 +219,10 @@ describe('KangurLessonDocumentRenderer', () => {
       'from-amber-50'
     );
     expect(screen.getByText('Triangle')).toBeInTheDocument();
-    expect(screen.getByText('Triangle')).toHaveClass('border-sky-200', 'bg-sky-100');
+    expect(screen.getByText('Triangle')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_242_254))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_242_254))]'
+    );
     expect(screen.getByTestId('lesson-svg-frame-svg-1')).toHaveClass(
       'soft-card',
       'border-sky-100',
@@ -297,7 +303,10 @@ describe('KangurLessonDocumentRenderer', () => {
       'soft-card',
       'border'
     );
-    expect(screen.getByText('Missing image')).toHaveClass('border-amber-200', 'bg-amber-100');
+    expect(screen.getByText('Missing image')).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+    );
     expect(screen.getByTestId('lesson-image-frame-image-empty')).toHaveClass(
       'soft-card',
       'border-amber-100',

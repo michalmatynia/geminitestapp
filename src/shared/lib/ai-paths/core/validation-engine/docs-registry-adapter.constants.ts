@@ -161,7 +161,7 @@ export const DOCS_SNIPPET_REGISTRY: Record<string, string> = {
 };
 
 export const ENUM_FALLBACK_LISTS_BY_SUFFIX: Array<{ suffix: RegExp; values: string[] }> = [
-  { suffix: /\.provider$/i, values: ['mongodb'] },
+  { suffix: /\.provider$/i, values: ['auto', 'mongodb'] },
   { suffix: /\.idType$/i, values: ['string', 'objectId'] },
   { suffix: /\.scopeMode$/i, values: ['full', 'include', 'exclude'] },
   { suffix: /\.scopeTarget$/i, values: ['entity', 'context'] },

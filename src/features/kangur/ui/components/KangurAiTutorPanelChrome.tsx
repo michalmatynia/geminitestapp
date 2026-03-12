@@ -247,6 +247,7 @@ export function KangurAiTutorPanelChrome({
           : '70vh',
   } satisfies MotionStyle;
   const isHeaderSectionDragEnabled = !isAskModalMode && !isPanelDraggable;
+  const isPanelBodySectionDragEnabled = isHeaderSectionDragEnabled;
   const panelHeaderClassName = cn(
     'relative flex items-start justify-between gap-3 border-b [border-color:var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52)))] [background:var(--kangur-chat-header-background,linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_72%,#fff8d6)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fff7cf)_100%))]',
     shouldUseMinimalPanelShell ? 'px-5 py-4' : 'px-4 py-3',
@@ -635,7 +636,19 @@ export function KangurAiTutorPanelChrome({
                   </div>
                 </div>
 
-                <div ref={tutorNarrationRootRef} className='flex min-h-0 flex-1 flex-col'>
+                <div
+                  ref={tutorNarrationRootRef}
+                  data-testid='kangur-ai-tutor-drag-surface'
+                  data-panel-section-draggable={isPanelBodySectionDragEnabled ? 'true' : 'false'}
+                  className={cn(
+                    'flex min-h-0 flex-1 flex-col',
+                    isPanelBodySectionDragEnabled ? 'touch-none select-none cursor-grab' : null
+                  )}
+                  onPointerCancel={isPanelBodySectionDragEnabled ? onHeaderPointerCancel : undefined}
+                  onPointerDown={isPanelBodySectionDragEnabled ? onHeaderPointerDown : undefined}
+                  onPointerMove={isPanelBodySectionDragEnabled ? onHeaderPointerMove : undefined}
+                  onPointerUp={isPanelBodySectionDragEnabled ? onHeaderPointerUp : undefined}
+                >
                   {children}
                 </div>
               </KangurGlassPanel>

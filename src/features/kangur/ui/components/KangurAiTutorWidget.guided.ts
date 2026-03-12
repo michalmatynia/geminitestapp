@@ -68,7 +68,6 @@ const buildSectionExplainPrompt = (
 };
 
 export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
-  activeFocusKind: string | null;
   activeSelectedText: string | null;
   hasSelectionPanelReady: boolean;
   isLoading?: boolean;
@@ -79,7 +78,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
 }): void {
   const {
-    activeFocusKind,
     activeSelectedText,
     hasSelectionPanelReady,
     isLoading = false,
@@ -96,7 +94,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       isLoading ||
       !isOpen ||
       !hasSelectionPanelReady ||
-      activeFocusKind !== 'selection' ||
       panelMotionState !== 'settled' ||
       selectionConversationSelectedText !== selectionGuidanceHandoffText ||
       (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
@@ -110,7 +107,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
         : current
     );
   }, [
-    activeFocusKind,
     activeSelectedText,
     hasSelectionPanelReady,
     isLoading,

@@ -289,7 +289,6 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
   });
 
   useKangurAiTutorSelectionGuidanceHandoffEffect({
-    activeFocusKind: activeFocus.kind,
     activeSelectedText: effectiveSelectedText,
     hasSelectionPanelReady,
     isOpen,

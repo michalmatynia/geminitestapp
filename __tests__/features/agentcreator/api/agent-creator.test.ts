@@ -65,7 +65,33 @@ describe('Agent Creator API', () => {
 
   describe('GET', () => {
     it('returns list of agent runs', async () => {
-      const mockRuns = [{ id: 'run-1', prompt: 'test' }];
+      const createdAt = new Date('2026-03-10T10:00:00.000Z');
+      const updatedAt = new Date('2026-03-10T10:05:00.000Z');
+      const checkpointedAt = new Date('2026-03-10T10:03:00.000Z');
+      const mockRuns = [
+        {
+          id: 'run-1',
+          prompt: 'test',
+          model: 'gpt-4',
+          tools: ['browser'],
+          searchProvider: 'default',
+          agentBrowser: 'playwright',
+          runHeadless: true,
+          status: 'queued',
+          requiresHumanIntervention: false,
+          errorMessage: null,
+          logLines: ['[2026-03-10T10:00:00.000Z] Run queued.'],
+          recordingPath: null,
+          activeStepId: null,
+          checkpointedAt,
+          createdAt,
+          updatedAt,
+          _count: {
+            browserSnapshots: 0,
+            browserLogs: 0,
+          },
+        },
+      ];
       vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue(mockRuns as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent');
@@ -73,7 +99,14 @@ describe('Agent Creator API', () => {
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data.runs).toEqual(mockRuns);
+      expect(data.runs).toEqual([
+        {
+          ...mockRuns[0],
+          checkpointedAt: checkpointedAt.toISOString(),
+          createdAt: createdAt.toISOString(),
+          updatedAt: updatedAt.toISOString(),
+        },
+      ]);
       expect(startAgentQueue).toHaveBeenCalled();
     });
 

@@ -57,6 +57,28 @@ type TimedStatusRecord = {
   timestampMs: number;
 };
 
+type AgentRuntimeRunStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'stopped'
+  | 'waiting_human';
+
+type AgentRuntimeRunRecord = {
+  id: string;
+  status: AgentRuntimeRunStatus | string;
+  updatedAt: Date | string | null;
+};
+
+type ChatbotAgentRunDelegate = {
+  findMany(args: {
+    orderBy: { updatedAt: 'desc' };
+    select: { id: true; status: true; updatedAt: true };
+    take: number;
+  }): Promise<AgentRuntimeRunRecord[]>;
+};
+
 const DOMAIN_CONFIG: Record<BrainOperationsDomainKey, DomainConfig> = {
   ai_paths: {
     label: 'AI Paths',
@@ -194,6 +216,14 @@ const buildUnknownDomain = (
   recentEvents: [],
   links: DOMAIN_CONFIG[key].links,
 });
+
+const getChatbotAgentRunDelegate = (): ChatbotAgentRunDelegate | null => {
+  if (!('chatbotAgentRun' in prisma)) {
+    return null;
+  }
+
+  return (prisma as unknown as { chatbotAgentRun: ChatbotAgentRunDelegate }).chatbotAgentRun;
+};
 
 const mapAiPathsState = (overall: 'ok' | 'warning' | 'critical'): BrainOperationsDomainState => {
   if (overall === 'ok') return 'healthy';
@@ -540,7 +570,8 @@ const collectAgentRuntimeDomain = async (
   window: WindowBounds,
   range: BrainOperationsRange
 ): Promise<BrainOperationsDomainOverview> => {
-  if (!('chatbotAgentRun' in prisma)) {
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) {
     return buildUnknownDomain(
       'agent_runtime',
       'Agent Runtime run store is not available for the current database provider.',
@@ -548,7 +579,7 @@ const collectAgentRuntimeDomain = async (
     );
   }
 
-  const runs = await prisma.chatbotAgentRun.findMany({
+  const runs = await chatbotAgentRun.findMany({
     orderBy: { updatedAt: 'desc' },
     take: AGENT_SAMPLE_SIZE,
     select: {
@@ -567,19 +598,19 @@ const collectAgentRuntimeDomain = async (
     waiting_human: 0,
   };
 
-  runs.forEach((run: any) => {
+  runs.forEach((run) => {
     if (run.status in counts) {
       counts[run.status as keyof typeof counts] += 1;
     }
   });
 
-  const timedRecords: TimedStatusRecord[] = runs.flatMap((run: any) => {
+  const timedRecords: TimedStatusRecord[] = runs.flatMap((run) => {
     const timestampMs = parseTimestampMs(run.updatedAt);
     if (timestampMs === null) return [];
     return [
       {
         id: run.id,
-        status: run.status as TimedStatusRecord['status'],
+        status: run.status,
         timestampMs,
       },
     ];

@@ -22,20 +22,26 @@ describe('MultiplicationArrayGame', () => {
     );
     expect(screen.getByTestId('multiplication-array-counter-collected')).toHaveClass(
       'soft-card',
-      'border-violet-300'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(237_233_254))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(237_233_254))]'
     );
     expect(screen.getByTestId('multiplication-array-counter-target')).toHaveClass(
       'soft-card',
-      'border'
+      'border',
+      '[color:var(--kangur-soft-card-text)]'
     );
     const firstGroup = screen.getByTestId('multiplication-array-group-0');
 
-    expect(firstGroup).toHaveClass('soft-card', 'rounded-[24px]');
+    expect(firstGroup).toHaveClass('soft-card', 'border', 'rounded-[24px]', 'cursor-pointer');
     expect(firstGroup).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(firstGroup);
 
-    expect(firstGroup).toHaveClass('border-violet-300');
+    expect(firstGroup).toHaveClass(
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(237_233_254))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(237_233_254))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(124_58_237))]'
+    );
     expect(firstGroup).toHaveAttribute('aria-pressed', 'true');
   });
 });

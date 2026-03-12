@@ -511,18 +511,18 @@ function GameContent(): React.JSX.Element {
                   ) : null}
 
                   <section
-                    className='grid w-full max-w-5xl gap-4 sm:gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
+                    className='mx-auto grid w-full max-w-[900px] items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
                     aria-labelledby='kangur-home-progress-heading'
                   >
                     <h3 id='kangur-home-progress-heading' className='sr-only'>
                       Ranking i postęp
                     </h3>
-                    <div ref={homeLeaderboardRef} className='order-2 xl:order-1'>
+                    <div ref={homeLeaderboardRef} className='order-2 flex w-full justify-center xl:order-1'>
                       <Leaderboard />
                     </div>
                     <div
                       ref={homeProgressRef}
-                      className='order-1 flex justify-center xl:order-2 xl:justify-stretch'
+                      className='order-1 flex w-full justify-center xl:order-2'
                     >
                       <PlayerProgressCard progress={progress} />
                     </div>

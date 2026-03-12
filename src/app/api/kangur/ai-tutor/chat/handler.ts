@@ -169,6 +169,106 @@ const readRecordNumber = (record: Record<string, unknown>, key: string): number 
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 };
 
+const readRuntimeFactRecords = (
+  document: ContextRuntimeDocument | null | undefined,
+  key: string
+): Record<string, unknown>[] => {
+  const value = document?.facts?.[key];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => asRuntimeRecord(entry))
+    .filter((entry): entry is Record<string, unknown> => Boolean(entry));
+};
+
+const normalizeSelectedTextMatch = (value: string | null | undefined): string =>
+  typeof value === 'string'
+    ? value
+        .toLocaleLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : '';
+
+const scoreSelectedTextCandidate = (
+  normalizedSelection: string,
+  normalizedCandidate: string
+): number => {
+  if (!normalizedSelection || !normalizedCandidate) {
+    return 0;
+  }
+
+  if (normalizedSelection === normalizedCandidate) {
+    return 1_000 + normalizedCandidate.length;
+  }
+
+  const allowContains =
+    normalizedSelection.length >= 8 && normalizedCandidate.length >= 8;
+  if (!allowContains) {
+    return 0;
+  }
+
+  if (normalizedSelection.includes(normalizedCandidate)) {
+    return 720 + normalizedCandidate.length;
+  }
+
+  if (normalizedCandidate.includes(normalizedSelection)) {
+    return 680 + normalizedSelection.length;
+  }
+
+  return 0;
+};
+
+const resolveLessonDocumentSelectedTextSnippet = (input: {
+  lessonContext: ContextRuntimeDocument | null | undefined;
+  selectedText: string | null | undefined;
+}): { text: string; explanation: string | null } | null => {
+  const normalizedSelection = normalizeSelectedTextMatch(input.selectedText);
+  if (!normalizedSelection) {
+    return null;
+  }
+
+  const rankedCards = readRuntimeFactRecords(input.lessonContext, 'documentSnippetCards')
+    .map((card) => {
+      const text = readRecordString(card, 'text');
+      const explanation = readRecordString(card, 'explanation');
+      if (!text) {
+        return null;
+      }
+
+      return {
+        text,
+        explanation,
+        score: scoreSelectedTextCandidate(
+          normalizedSelection,
+          normalizeSelectedTextMatch(text)
+        ),
+      };
+    })
+    .filter(
+      (
+        candidate
+      ): candidate is { text: string; explanation: string | null; score: number } =>
+        candidate !== null && candidate.score > 0
+    )
+    .sort((left, right) => right.score - left.score);
+
+  const bestMatch = rankedCards[0] ?? null;
+  const secondBestMatch = rankedCards[1] ?? null;
+  if (!bestMatch || secondBestMatch?.score === bestMatch.score) {
+    return null;
+  }
+
+  return {
+    text: bestMatch.text,
+    explanation: bestMatch.explanation,
+  };
+};
+
 const buildRecentSessionOverlay = (
   learnerSnapshot: ContextRuntimeDocument | null | undefined
 ): string | null => {
@@ -514,6 +614,7 @@ const buildSectionExplainMessage = (input: {
   runtimeDocuments: ReturnType<typeof resolveKangurAiTutorRuntimeDocuments>;
 }): string => {
   const section = input.sectionKnowledgeBundle.section;
+  const fragment = input.sectionKnowledgeBundle.fragment ?? null;
   const scopedLabel =
     readContextString(input.context?.focusLabel) ?? readContextString(input.context?.title);
   const titleLine =
@@ -528,6 +629,38 @@ const buildSectionExplainMessage = (input: {
         .join(', ')}.`
       : null;
   const runtimeOverlay = buildSectionRuntimeOverlay(input);
+  const selectedFragmentLabel =
+    readContextString(input.context?.selectedText) ?? fragment?.text ?? null;
+  const lessonDocumentSelectedSnippet =
+    !fragment && selectedFragmentLabel
+      ? resolveLessonDocumentSelectedTextSnippet({
+        lessonContext: input.runtimeDocuments.surfaceContext,
+        selectedText: selectedFragmentLabel,
+      })
+      : null;
+
+  if (fragment) {
+    const fragmentLine = selectedFragmentLabel
+      ? `Zaznaczony fragment: "${selectedFragmentLabel}".`
+      : null;
+
+    return [...new Set([titleLine, fragmentLine, fragment.explanation, runtimeOverlay, followUpLine].filter(Boolean))]
+      .join('\n\n')
+      .trim();
+  }
+
+  if (lessonDocumentSelectedSnippet) {
+    const fragmentLine = selectedFragmentLabel
+      ? `Zaznaczony fragment: "${selectedFragmentLabel}".`
+      : null;
+    const snippetExplanation =
+      lessonDocumentSelectedSnippet.explanation ??
+      `W aktualnej treści lekcji ten fragment dotyczy: ${lessonDocumentSelectedSnippet.text}.`;
+
+    return [...new Set([titleLine, fragmentLine, snippetExplanation, runtimeOverlay, followUpLine].filter(Boolean))]
+      .join('\n\n')
+      .trim();
+  }
 
   return [...new Set([titleLine, section.summary, section.body, runtimeOverlay, followUpLine].filter(Boolean))]
     .join('\n\n')
@@ -777,16 +910,20 @@ export async function postKangurAiTutorChatHandler(
     if (drawingSupportEnabled) {
       systemParts.push(buildTutorDrawingInstructions());
     }
-    const sectionKnowledgeBundle =
+    const shouldAttemptPageContentAnswer =
       !learnerDrawingImageData &&
       context?.interactionIntent === 'explain' &&
-      context?.knowledgeReference?.sourceCollection === 'kangur_page_content'
-        ? await resolveKangurAiTutorSectionKnowledgeBundle({
-          latestUserMessage,
-          context,
-          locale: 'pl',
-        })
-        : null;
+      (
+        context?.knowledgeReference?.sourceCollection === 'kangur_page_content' ||
+        context?.promptMode === 'selected_text'
+      );
+    const sectionKnowledgeBundle = shouldAttemptPageContentAnswer
+      ? await resolveKangurAiTutorSectionKnowledgeBundle({
+        latestUserMessage,
+        context,
+        locale: 'pl',
+      })
+      : null;
 
     if (sectionKnowledgeBundle) {
       const sectionExplainResponse = extractTutorDrawingArtifactsFromResponse(
@@ -830,6 +967,7 @@ export async function postKangurAiTutorChatHandler(
           focusKind: context?.focusKind ?? null,
           interactionIntent: context?.interactionIntent ?? null,
           pageContentEntryId: sectionKnowledgeBundle.section.id,
+          pageContentFragmentId: sectionKnowledgeBundle.fragment?.id ?? null,
           linkedNativeGuideIds: sectionKnowledgeBundle.linkedNativeGuides.map((entry) => entry.id),
           retrievedSourceCount: resolvedSources.length,
           returnedSourceCount: responseSources.length,

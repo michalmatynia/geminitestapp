@@ -55,7 +55,12 @@ export function KangurGameHomeHeroWidget({
     <KangurHeroMilestoneSummary
       className='w-full'
       dataTestIdPrefix='kangur-home-hero-milestone'
+      pinnedTrackKeys={['quest', 'mastery']}
       progress={progress}
+      showPlaceholderForMissingPinnedTracks
+      trackDataTestIdPrefix='kangur-home-hero-milestone-track'
+      trackLimit={3}
+      trackMinimumItems={3}
     />
   ) : null;
 

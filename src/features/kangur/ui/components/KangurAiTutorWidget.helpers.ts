@@ -10,6 +10,30 @@ import type { GuidedTutorSectionKind, GuidedTutorTarget, TutorSurface } from './
 const SELECTION_PROTECTED_ZONE_PADDING_X = 36;
 const SELECTION_PROTECTED_ZONE_PADDING_Y = 20;
 
+export const normalizeTutorSelectionText = (
+  value: string | null | undefined
+): string => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.normalize('NFKC').replace(/\s+/g, ' ').trim();
+};
+
+export const areTutorSelectionTextsEquivalent = (
+  left: string | null | undefined,
+  right: string | null | undefined
+): boolean => {
+  const normalizedLeft = normalizeTutorSelectionText(left);
+  const normalizedRight = normalizeTutorSelectionText(right);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+
+  return normalizedLeft === normalizedRight;
+};
+
 export const getAssistantMessageFeedbackKey = (
   sessionKey: string | null,
   index: number,

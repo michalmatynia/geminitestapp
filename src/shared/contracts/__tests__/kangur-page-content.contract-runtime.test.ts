@@ -56,6 +56,18 @@ describe('kangur page content contract', () => {
           contentIdPrefixes: ['lesson:list:custom'],
           nativeGuideIds: ['lesson-library-custom'],
           triggerPhrases: ['wlasna biblioteka'],
+          fragments: [
+            {
+              id: 'lesson-library-priority',
+              text: 'Najwyzszy priorytet',
+              aliases: ['Priorytet'],
+              explanation: 'To etykieta wskazujaca lekcje, od ktorej najlepiej zaczac.',
+              nativeGuideIds: ['lesson-library-custom'],
+              triggerPhrases: ['priorytet'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
           tags: ['custom-tag'],
           enabled: true,
           sortOrder: 10,
@@ -91,6 +103,18 @@ describe('kangur page content contract', () => {
     expect(lessonLibrary?.body).toBe('Wlasna tresc zapisna w Mongo.');
     expect(lessonLibrary?.contentIdPrefixes).toEqual(['lesson:list', 'lesson:list:custom']);
     expect(lessonLibrary?.nativeGuideIds).toEqual(['lesson-library', 'lesson-library-custom']);
+    expect(lessonLibrary?.fragments).toEqual([
+      {
+        id: 'lesson-library-priority',
+        text: 'Najwyzszy priorytet',
+        aliases: ['Priorytet'],
+        explanation: 'To etykieta wskazujaca lekcje, od ktorej najlepiej zaczac.',
+        nativeGuideIds: ['lesson-library-custom'],
+        triggerPhrases: ['priorytet'],
+        enabled: true,
+        sortOrder: 10,
+      },
+    ]);
     expect(lessonLibrary?.tags).toEqual(['page-content', 'lessons', 'custom-tag']);
     expect(merged.entries.some((entry) => entry.id === 'custom-extra')).toBe(true);
   });

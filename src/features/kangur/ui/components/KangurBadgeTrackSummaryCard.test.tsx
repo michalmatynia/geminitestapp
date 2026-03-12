@@ -54,23 +54,27 @@ describe('KangurBadgeTrackSummaryCard', () => {
       'kangur-card-padding-md'
     );
     expect(screen.getByTestId('badge-track-card-bar')).toHaveAttribute('aria-valuenow', '50');
-    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('min-w-0', 'md:flex-1');
+    expect(screen.getByText('2/4 odznak')).toHaveClass('w-full');
+    expect(screen.getByText('Start wyzwań · 2/4 zadania')).toHaveClass('w-full', 'leading-5');
     expect(screen.getByText('50%')).toHaveClass(
+      'shrink-0',
       'self-start',
       'whitespace-nowrap',
-      'md:shrink-0',
-      'px-2.5',
-      'py-1',
-      'text-[11px]'
+      'px-2',
+      'py-0.5',
+      'text-[10px]'
     );
     expect(screen.getByText('50%').parentElement).toHaveClass(
       'flex',
-      'flex-col',
+      'w-full',
       'items-start',
-      'gap-4',
-      'md:flex-row',
-      'md:items-start',
-      'md:justify-between',
+      'justify-between',
+      'gap-3',
+    );
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass(
+      'flex',
+      'flex-col',
+      'gap-3',
     );
   });
 
@@ -90,6 +94,6 @@ describe('KangurBadgeTrackSummaryCard', () => {
     expect(screen.getByTestId('badge-track-card')).toHaveClass('rounded-[24px]', 'text-left');
     expect(screen.getByText('50%')).toHaveClass('text-[11px]');
     expect(screen.getByText('⚡ Wyzwania')).toHaveClass('tracking-[0.16em]');
-    expect(screen.getByText('50%').parentElement).toHaveClass('gap-2');
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('gap-2');
   });
 });

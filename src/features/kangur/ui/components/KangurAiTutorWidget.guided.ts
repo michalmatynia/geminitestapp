@@ -22,6 +22,7 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import {
   getPageRect,
+  areTutorSelectionTextsEquivalent,
   isSectionGuidedTutorTarget,
 } from './KangurAiTutorWidget.helpers';
 
@@ -87,7 +88,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
   telemetryContext: TelemetryContext;
 }): void {
   const {
-    activeSelectedText,
     hasSelectionPanelReady,
     isLoading = false,
     isOpen,
@@ -110,8 +110,10 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
       !isOpen ||
       !hasSelectionPanelReady ||
       panelMotionState !== 'settled' ||
-      selectionConversationSelectedText !== selectionGuidanceHandoffText ||
-      (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
+      !areTutorSelectionTextsEquivalent(
+        selectionConversationSelectedText,
+        selectionGuidanceHandoffText
+      )
     ) {
       return;
     }
@@ -131,7 +133,6 @@ export function useKangurAiTutorSelectionGuidanceHandoffEffect(input: {
     setContextualTutorMode((current) => (current === 'selection_explain' ? null : current));
     setGuidedTutorTarget(releaseSelectionGuidedTarget(selectionGuidanceHandoffText));
   }, [
-    activeSelectedText,
     hasSelectionPanelReady,
     isLoading,
     isOpen,
@@ -158,16 +159,13 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
   ) => void;
   hasSelectionPanelReady: boolean;
   isLoading?: boolean;
-  isOpen: boolean;
   selectionConversationSelectedText: string | null;
   selectionGuidanceHandoffText: string | null;
 }): void {
   const {
-    activeSelectedText,
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading = false,
-    isOpen,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
   } = input;
@@ -176,10 +174,11 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
     if (
       !selectionGuidanceHandoffText ||
       isLoading ||
-      isOpen ||
       hasSelectionPanelReady ||
-      selectionConversationSelectedText !== selectionGuidanceHandoffText ||
-      (activeSelectedText !== null && activeSelectedText !== selectionGuidanceHandoffText)
+      !areTutorSelectionTextsEquivalent(
+        selectionConversationSelectedText,
+        selectionGuidanceHandoffText
+      )
     ) {
       return;
     }
@@ -188,11 +187,9 @@ export function useKangurAiTutorSelectionGuidanceDockOpenEffect(input: {
       panelShellMode: 'minimal',
     });
   }, [
-    activeSelectedText,
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading,
-    isOpen,
     selectionConversationSelectedText,
     selectionGuidanceHandoffText,
   ]);
@@ -523,6 +520,8 @@ export function useKangurAiTutorGuidedFlow(input: {
       focusSelectionPageRect(activeSelectionPageRect);
       setHasNewMessage(false);
       setSelectionConversationContext({
+        focusLabel: selectionConversationFocus.label ?? null,
+        knowledgeReference: selectionConversationFocus.knowledgeReference,
         messageStartIndex: messageCount,
         selectedText: selectionText,
       });
@@ -540,11 +539,14 @@ export function useKangurAiTutorGuidedFlow(input: {
       void sendMessage('Wyjaśnij zaznaczony fragment krok po kroku.', {
         promptMode: 'selected_text',
         selectedText: selectionText,
+        contentId: selectionConversationFocus.contentId,
         focusKind: selectionConversationFocus.kind ?? 'selection',
         focusId: selectionConversationFocus.id ?? 'selection',
         focusLabel: selectionConversationFocus.label ?? selectionText,
         assignmentId: selectionConversationFocus.assignmentId,
+        knowledgeReference: selectionConversationFocus.knowledgeReference,
         interactionIntent: 'explain',
+        surface: selectionConversationFocus.surface ?? undefined,
       });
 
       const guidanceDelayMs = prefersReducedMotion

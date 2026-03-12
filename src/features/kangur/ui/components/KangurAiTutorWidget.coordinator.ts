@@ -29,7 +29,10 @@ import {
   useKangurAiTutorGuidedFlow,
   useKangurAiTutorSelectionGuidanceDockOpenEffect,
 } from './KangurAiTutorWidget.guided';
-import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
+import {
+  areTutorSelectionTextsEquivalent,
+  isAuthGuidedTutorTarget,
+} from './KangurAiTutorWidget.helpers';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';
 import { useKangurAiTutorPanelActions } from './KangurAiTutorWidget.panel-actions';
@@ -352,6 +355,12 @@ export function useKangurAiTutorWidgetCoordinator({
 
   const selectionTakeoverText =
     selectionGuidanceHandoffText ?? selectionResponsePending?.selectedText ?? null;
+  const stableSelectionGuidanceText =
+    selectionTakeoverText ?? selectionConversationContext?.selectedText ?? null;
+  const effectiveSelectionGuidanceText =
+    contextualTutorMode === 'selection_explain' || selectionTakeoverText !== null
+      ? stableSelectionGuidanceText ?? activeSelectedText
+      : activeSelectedText;
   const hasSelectionMinimalPanelSurface =
     tutorRuntime.isOpen &&
     panelShellMode === 'minimal' &&
@@ -497,14 +506,16 @@ export function useKangurAiTutorWidgetCoordinator({
     panelShellMode === 'minimal' &&
     contextualTutorMode === 'selection_explain' &&
     selectionConversationContext !== null &&
-    selectionConversationContext.selectedText === activeSelectedText;
+    areTutorSelectionTextsEquivalent(
+      selectionConversationContext.selectedText,
+      effectiveSelectionGuidanceText
+    );
 
   useKangurAiTutorSelectionGuidanceDockOpenEffect({
-    activeSelectedText,
+    activeSelectedText: effectiveSelectionGuidanceText,
     handleOpenChat,
     hasSelectionPanelReady,
     isLoading,
-    isOpen: tutorRuntime.isOpen,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionGuidanceHandoffText,
   });

@@ -61,10 +61,7 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
   withCsrfHeaders: (headers?: HeadersInit) => new Headers(headers),
 }));
 
-import {
-  KangurLoginPage,
-  resolveKangurLoginCallbackNavigation,
-} from '@/features/kangur/ui/KangurLoginPage';
+import { resolveKangurLoginCallbackNavigation } from '@/features/kangur/ui/KangurLoginPage';
 
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;
@@ -104,10 +101,13 @@ describe('KangurLoginPage', () => {
       'glass-panel',
       'kangur-panel-soft',
       'kangur-panel-padding-xl',
-      'overflow-hidden',
+      'overflow-hidden'
     );
     expect(screen.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'unknown');
-    expect(screen.getByRole('button', { name: 'Mam konto' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Mam konto' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
     expect(screen.getByRole('button', { name: 'Tworzę konto rodzica' })).toHaveAttribute(
       'aria-pressed',
       'false'

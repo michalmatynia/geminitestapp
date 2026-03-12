@@ -101,7 +101,10 @@ const GameHomeSkeleton = (): React.JSX.Element => (
         </div>
       </div>
     </SkeletonPanel>
-    <div className='grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]'>
+    <div
+      className='mx-auto grid w-full max-w-[900px] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
+      data-testid='kangur-page-transition-skeleton-game-home-progress-grid'
+    >
       <SkeletonPanel className='min-h-[320px]'>
         <div className='space-y-4'>
           <SkeletonChip className='h-7 w-32' />

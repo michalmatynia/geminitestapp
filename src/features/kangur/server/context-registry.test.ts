@@ -424,4 +424,82 @@ describe('buildKangurLessonContextRuntimeDocument', () => {
       ],
     });
   });
+
+  it('exposes structured lesson-document snippet cards for selected-text tutor explains', async () => {
+    const lesson = makeLesson({
+      id: 'lesson-clock',
+      componentId: 'clock',
+      title: 'Zegar',
+      description: 'Nauka odczytywania godzin.',
+    });
+
+    const result = await buildKangurLessonContextRuntimeDocument({
+      learnerId: 'learner-1',
+      lessonId: lesson.id,
+      data: {
+        lessons: [lesson],
+        lessonsById: new Map([[lesson.id, lesson]]),
+        progress: {
+          lessonMastery: {},
+        },
+        evaluatedAssignments: [],
+        lessonDocuments: {
+          [lesson.id]: {
+            version: 1,
+            updatedAt: '2026-03-12T10:00:00.000Z',
+            narration: {
+              locale: 'pl-PL',
+              voice: 'alloy',
+            },
+            pages: [
+              {
+                id: 'page-1',
+                sectionKey: 'hours',
+                sectionTitle: '',
+                sectionDescription: '',
+                title: 'Co pokazuje krótka wskazówka?',
+                description: 'Krótka wskazówka pokazuje godzinę.',
+                blocks: [
+                  {
+                    id: 'block-1',
+                    type: 'text',
+                    html: '<p>Krótka wskazówka pokazuje godzinę na tarczy.</p>',
+                    ttsText: 'Najpierw patrz na krótką wskazówkę, bo ona pokazuje godzinę.',
+                    align: 'left',
+                  },
+                ],
+              },
+            ],
+            blocks: [
+              {
+                id: 'block-1',
+                type: 'text',
+                html: '<p>Krótka wskazówka pokazuje godzinę na tarczy.</p>',
+                ttsText: 'Najpierw patrz na krótką wskazówkę, bo ona pokazuje godzinę.',
+                align: 'left',
+              },
+            ],
+          },
+        },
+        snapshot: {
+          averageAccuracy: 78,
+        },
+      } as any,
+    });
+
+    expect(result?.facts).toEqual(
+      expect.objectContaining({
+        documentSnippetCards: expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Co pokazuje krótka wskazówka?',
+            explanation: 'Krótka wskazówka pokazuje godzinę.',
+          }),
+          expect.objectContaining({
+            text: 'Krótka wskazówka pokazuje godzinę na tarczy.',
+            explanation: 'Najpierw patrz na krótką wskazówkę, bo ona pokazuje godzinę.',
+          }),
+        ]),
+      })
+    );
+  });
 });

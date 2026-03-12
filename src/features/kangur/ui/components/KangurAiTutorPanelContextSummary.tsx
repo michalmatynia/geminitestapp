@@ -1,5 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/shared/contracts/kangur-page-content';
 
 import { KangurAiTutorWarmInsetCard } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
@@ -140,12 +141,26 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
   const {
     contextSwitchNotice,
     highlightedSection,
+    selectionConversationContext,
     selectionGuidanceHandoffText,
     selectionResponsePending,
   } = useKangurAiTutorWidgetStateContext();
   const resolvedSelectedText =
-    activeSelectedText ?? selectionResponsePending?.selectedText ?? selectionGuidanceHandoffText ?? null;
+    selectionConversationContext?.selectedText ??
+    selectionResponsePending?.selectedText ??
+    selectionGuidanceHandoffText ??
+    activeSelectedText ??
+    null;
   const resolvedSelectedTextPreview = selectedTextPreview ?? resolvedSelectedText;
+  const resolvedSelectedKnowledgeReference =
+    selectionConversationContext?.knowledgeReference ??
+    activeFocus.conversationFocus.knowledgeReference ??
+    null;
+  const resolvedSelectedKnowledgeLabel =
+    selectionConversationContext?.focusLabel ?? activeFocus.conversationFocus.label ?? null;
+  const shouldShowSelectedKnowledgeReference =
+    resolvedSelectedText !== null &&
+    resolvedSelectedKnowledgeReference?.sourceCollection === KANGUR_PAGE_CONTENT_COLLECTION;
 
   return (
     <>
@@ -202,52 +217,81 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
           ) : null}
         </div>
         {resolvedSelectedText ? (
-          <KangurAiTutorPanelContextCard
-            testId='kangur-ai-tutor-selected-text-preview'
-            title={tutorContent.panelContext.selectedTitle}
-            content={
-              <div className='text-xs italic leading-relaxed'>
-                „{resolvedSelectedTextPreview}”
-                {resolvedSelectedText.length > (resolvedSelectedTextPreview?.length ?? 0) ? '…' : ''}
-              </div>
-            }
-            primaryAction={
-              activeSelectionPageRect
-                ? {
-                  testId: 'kangur-ai-tutor-selected-text-refocus',
-                  label: tutorContent.panelContext.refocusSelectionLabel,
-                  onClick: handleFocusSelectedFragment,
-                }
-                : undefined
-            }
-            secondaryAction={{
-              testId: 'kangur-ai-tutor-selected-text-detach',
-              label: tutorContent.panelContext.detachSelectionLabel,
-              onClick: handleDetachSelectedFragment,
-            }}
-            detail={
-              isSelectionExplainPendingMode
-                ? tutorContent.panelContext.selectedPendingDetail
-                : showSelectionExplainCompleteState
-                  ? tutorContent.panelContext.selectedCompleteDetail
-                  : tutorContent.panelContext.selectedDefaultDetail
-            }
-            status={
-              isSelectionExplainPendingMode
-                ? {
-                  testId: 'kangur-ai-tutor-selected-text-pending-status',
-                  label: tutorContent.panelContext.selectedPendingStatus,
-                  tone: 'pending',
-                }
-                : showSelectionExplainCompleteState
+          <>
+            <KangurAiTutorPanelContextCard
+              testId='kangur-ai-tutor-selected-text-preview'
+              title={tutorContent.panelContext.selectedTitle}
+              content={
+                <div className='text-xs italic leading-relaxed'>
+                  „{resolvedSelectedTextPreview}”
+                  {resolvedSelectedText.length > (resolvedSelectedTextPreview?.length ?? 0) ? '…' : ''}
+                </div>
+              }
+              primaryAction={
+                activeSelectionPageRect
                   ? {
-                    testId: 'kangur-ai-tutor-selected-text-complete-status',
-                    label: tutorContent.panelContext.selectedCompleteStatus,
-                    tone: 'complete',
+                    testId: 'kangur-ai-tutor-selected-text-refocus',
+                    label: tutorContent.panelContext.refocusSelectionLabel,
+                    onClick: handleFocusSelectedFragment,
                   }
                   : undefined
-            }
-          />
+              }
+              secondaryAction={{
+                testId: 'kangur-ai-tutor-selected-text-detach',
+                label: tutorContent.panelContext.detachSelectionLabel,
+                onClick: handleDetachSelectedFragment,
+              }}
+              detail={
+                isSelectionExplainPendingMode
+                  ? tutorContent.panelContext.selectedPendingDetail
+                  : showSelectionExplainCompleteState
+                    ? tutorContent.panelContext.selectedCompleteDetail
+                    : tutorContent.panelContext.selectedDefaultDetail
+              }
+              status={
+                isSelectionExplainPendingMode
+                  ? {
+                    testId: 'kangur-ai-tutor-selected-text-pending-status',
+                    label: tutorContent.panelContext.selectedPendingStatus,
+                    tone: 'pending',
+                  }
+                  : showSelectionExplainCompleteState
+                    ? {
+                      testId: 'kangur-ai-tutor-selected-text-complete-status',
+                      label: tutorContent.panelContext.selectedCompleteStatus,
+                      tone: 'complete',
+                    }
+                    : undefined
+              }
+            />
+            {shouldShowSelectedKnowledgeReference && resolvedSelectedKnowledgeReference ? (
+              <KangurAiTutorWarmInsetCard
+                data-testid='kangur-ai-tutor-selected-text-source'
+                tone='panel'
+                className='mt-2 kangur-chat-padding-md'
+              >
+                <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
+                  Zapisane zrodlo
+                </div>
+                <div className='mt-2 flex flex-wrap items-center gap-2'>
+                  {resolvedSelectedKnowledgeLabel ? (
+                    <KangurAiTutorPanelContextChip className='text-xs font-semibold normal-case tracking-normal'>
+                      {resolvedSelectedKnowledgeLabel}
+                    </KangurAiTutorPanelContextChip>
+                  ) : null}
+                  <KangurAiTutorPanelContextChip className='text-[10px] font-bold uppercase tracking-[0.14em]'>
+                    Tresc strony
+                  </KangurAiTutorPanelContextChip>
+                </div>
+                <div className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
+                  Tutor korzysta tu z zapisanego wpisu strony zamiast zgadywac kontekst samego zaznaczenia.
+                </div>
+                <div className='mt-2 rounded-2xl border kangur-chat-padding-sm font-mono text-[11px] [border-color:var(--kangur-chat-divider,var(--kangur-soft-card-border))] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
+                  {resolvedSelectedKnowledgeReference.sourcePath}
+                </div>
+              </KangurAiTutorWarmInsetCard>
+            ) : null}
+          </>
         ) : highlightedSection ? (
           <KangurAiTutorPanelContextCard
             testId='kangur-ai-tutor-section-preview'

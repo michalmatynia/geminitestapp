@@ -181,4 +181,135 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
       documentId: 'game-home-actions',
     });
   });
+
+  it('resolves highlighted selected text to a fragment explanation inside the matched page-content section', async () => {
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'game-home-leaderboard',
+          pageKey: 'Game',
+          screenKey: 'home',
+          surface: 'game',
+          route: '/game',
+          componentId: 'leaderboard',
+          widget: 'Leaderboard',
+          sourcePath: 'src/features/kangur/ui/components/Leaderboard.tsx',
+          title: 'Ranking',
+          summary: 'Porównaj wynik z innymi graczami.',
+          body: 'To sekcja z najlepszymi wynikami i miejscem ucznia.',
+          anchorIdPrefix: 'kangur-game-leaderboard',
+          focusKind: 'leaderboard',
+          contentIdPrefixes: ['game:home'],
+          nativeGuideIds: ['shared-leaderboard'],
+          triggerPhrases: ['ranking'],
+          fragments: [
+            {
+              id: 'leaderboard-points',
+              text: 'Liczba punktów',
+              aliases: ['punkty w rankingu', 'punkty'],
+              explanation:
+                'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+              nativeGuideIds: ['shared-leaderboard-points'],
+              triggerPhrases: ['liczba punktów', 'punkty'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'leaderboard'],
+          notes: 'Ranking głównej planszy.',
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+    });
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'shared-leaderboard',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-leaderboard'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Ranking',
+          shortDescription: 'Ranking porównuje ostatnie wyniki graczy.',
+          fullDescription: 'Sekcja pokazuje miejsce ucznia i najlepsze rezultaty na tej planszy.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['ranking'],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'shared-leaderboard-points',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-leaderboard'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Punkty w rankingu',
+          shortDescription: 'Wyjaśnia, jak czytać liczbę punktów na liście wyników.',
+          fullDescription: 'Liczba punktów pokazuje siłę wyniku, która wpływa na pozycję ucznia.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['punkty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
+      latestUserMessage: 'Wyjaśnij ten fragment.',
+      context: {
+        surface: 'game',
+        contentId: 'game:home',
+        promptMode: 'selected_text',
+        selectedText: 'Liczba punktów',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-leaderboard',
+        focusLabel: 'Ranking',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
+        },
+      },
+    });
+
+    expect(bundle).not.toBeNull();
+    expect(bundle?.section.id).toBe('game-home-leaderboard');
+    expect(bundle?.fragment).toEqual({
+      id: 'leaderboard-points',
+      text: 'Liczba punktów',
+      aliases: ['punkty w rankingu', 'punkty'],
+      explanation:
+        'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+      nativeGuideIds: ['shared-leaderboard-points'],
+      triggerPhrases: ['liczba punktów', 'punkty'],
+      enabled: true,
+      sortOrder: 10,
+    });
+    expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual([
+      'shared-leaderboard',
+      'shared-leaderboard-points',
+    ]);
+    expect(bundle?.sources[0]).toMatchObject({
+      collectionId: 'kangur_page_content',
+      documentId: 'game-home-leaderboard#fragment:leaderboard-points',
+      metadata: expect.objectContaining({
+        title: 'Ranking -> Liczba punktów',
+      }),
+    });
+    expect(bundle?.instructions).toContain(
+      'Highlighted website fragment resolved from canonical page-content'
+    );
+  });
 });

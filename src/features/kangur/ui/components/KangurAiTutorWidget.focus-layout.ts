@@ -651,7 +651,14 @@ export function useKangurAiTutorFocusLayoutState({
                   selectionConversationAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
                 id: selectionConversationAnchor.id,
                 kind: selectionConversationAnchor.kind,
-                knowledgeReference: null,
+                knowledgeReference: resolveKangurTutorSectionKnowledgeReference({
+                  anchorId: selectionConversationAnchor.id,
+                  contentId:
+                    selectionConversationAnchor.metadata?.contentId ??
+                    sessionContext.contentId ??
+                    null,
+                  focusKind: selectionConversationAnchor.kind,
+                }),
                 label: selectionConversationAnchor.metadata?.label ?? activeSelectedText,
                 surface: selectionConversationAnchor.surface,
               }

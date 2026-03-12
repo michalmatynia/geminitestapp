@@ -29,7 +29,10 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
-import type { KangurPageContentStore } from '@/shared/contracts/kangur-page-content';
+import {
+  parseKangurPageContentStore,
+  type KangurPageContentStore,
+} from '@/shared/contracts/kangur-page-content';
 
 import { KangurPageContentSettingsPanel } from './KangurPageContentSettingsPanel';
 
@@ -84,5 +87,65 @@ describe('KangurPageContentSettingsPanel', () => {
 
     expect(updatedEntry?.title).toBe('Ranking głównej planszy');
     expect(updatedEntry?.nativeGuideIds).toEqual(['shared-leaderboard', 'shared-progress']);
+  });
+
+  it('keeps fragment edits in sync with the raw JSON editor', async () => {
+    apiGetMock.mockResolvedValueOnce(
+      parseKangurPageContentStore({
+        ...DEFAULT_KANGUR_PAGE_CONTENT_STORE,
+        entries: DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries.map((entry) =>
+          entry.id === 'game-home-leaderboard'
+            ? {
+                ...entry,
+                fragments: [
+                  {
+                    id: 'leaderboard-points',
+                    text: 'Liczba punktow',
+                    aliases: ['punkty'],
+                    explanation: 'Poczatkowe wyjasnienie fragmentu.',
+                    nativeGuideIds: ['shared-leaderboard-points'],
+                    triggerPhrases: ['punkty'],
+                    enabled: true,
+                    sortOrder: 10,
+                  },
+                ],
+              }
+            : entry
+        ),
+      })
+    );
+
+    render(<KangurPageContentSettingsPanel />);
+
+    await screen.findByText('50 / 50 tracked sections covered');
+
+    fireEvent.click(screen.getByRole('button', { name: /game-home-leaderboard/i }));
+    fireEvent.click(screen.getByRole('button', { name: /liczba punktow/i }));
+    fireEvent.change(screen.getByLabelText('Page content fragment text'), {
+      target: { value: 'Liczba punktow w rankingu' },
+    });
+    fireEvent.change(screen.getByLabelText('Page content fragment explanation'), {
+      target: { value: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.' },
+    });
+    fireEvent.change(screen.getByLabelText('Page content fragment aliases'), {
+      target: { value: 'punkty\nwynik rankingowy' },
+    });
+
+    const jsonEditor = screen.getByLabelText('Page content JSON');
+    if (!(jsonEditor instanceof HTMLTextAreaElement)) {
+      throw new Error('Expected the page content JSON editor to be a textarea.');
+    }
+
+    const parsedStore = JSON.parse(jsonEditor.value) as KangurPageContentStore;
+    const updatedEntry = parsedStore.entries.find((entry) => entry.id === 'game-home-leaderboard');
+
+    expect(updatedEntry?.fragments).toEqual([
+      expect.objectContaining({
+        id: 'leaderboard-points',
+        text: 'Liczba punktow w rankingu',
+        aliases: ['punkty', 'wynik rankingowy'],
+        explanation: 'Aktualny wynik ucznia uzywany do wyliczenia miejsca w rankingu.',
+      }),
+    ]);
   });
 });

@@ -83,4 +83,23 @@ describe('KangurPageTransitionSkeleton', () => {
       screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
     ).toHaveClass('max-w-lg');
   });
+
+  it('matches the centered home progress grid width for the Game transition skeleton', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    render(<KangurPageTransitionSkeleton pageKey='Game' />);
+
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-progress-grid')
+    ).toHaveClass(
+      'mx-auto',
+      'w-full',
+      'max-w-[900px]',
+      'items-start',
+      'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
+    );
+  });
 });

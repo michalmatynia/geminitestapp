@@ -22,7 +22,6 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
         handleOpenChat: handleOpenChatMock,
         hasSelectionPanelReady: false,
         isLoading: false,
-        isOpen: false,
         selectionConversationSelectedText: 'Ranking wynikow',
         selectionGuidanceHandoffText: 'Ranking wynikow',
       })
@@ -35,16 +34,57 @@ describe('useKangurAiTutorSelectionGuidanceDockOpenEffect', () => {
     );
   });
 
-  it('does not reopen the tutor while the guided selection handoff is already open', async () => {
+  it('moves an already-open tutor into the docked selection handoff when the panel is not ready', async () => {
+    const handleOpenChatMock = vi.fn();
+
+    renderHook(() =>
+      useKangurAiTutorSelectionGuidanceDockOpenEffect({
+        activeSelectedText: null,
+        handleOpenChat: handleOpenChatMock,
+        hasSelectionPanelReady: false,
+        isLoading: false,
+        selectionConversationSelectedText: 'Ranking wynikow',
+        selectionGuidanceHandoffText: 'Ranking wynikow',
+      })
+    );
+
+    await waitFor(() =>
+      expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
+        panelShellMode: 'minimal',
+      })
+    );
+  });
+
+  it('still redocks the tutor when the live selected text reflows after capture', async () => {
+    const handleOpenChatMock = vi.fn();
+
+    renderHook(() =>
+      useKangurAiTutorSelectionGuidanceDockOpenEffect({
+        activeSelectedText: '🏗️ MISTRZOSTWO\n67%\n2/4 odznak',
+        handleOpenChat: handleOpenChatMock,
+        hasSelectionPanelReady: false,
+        isLoading: false,
+        selectionConversationSelectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
+        selectionGuidanceHandoffText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
+      })
+    );
+
+    await waitFor(() =>
+      expect(handleOpenChatMock).toHaveBeenCalledWith('selection_explain', {
+        panelShellMode: 'minimal',
+      })
+    );
+  });
+
+  it('does not reopen the tutor after the docked selection panel is already ready', async () => {
     const handleOpenChatMock = vi.fn();
 
     renderHook(() =>
       useKangurAiTutorSelectionGuidanceDockOpenEffect({
         activeSelectedText: 'Ranking wynikow',
         handleOpenChat: handleOpenChatMock,
-        hasSelectionPanelReady: false,
+        hasSelectionPanelReady: true,
         isLoading: false,
-        isOpen: true,
         selectionConversationSelectedText: 'Ranking wynikow',
         selectionGuidanceHandoffText: 'Ranking wynikow',
       })
@@ -127,6 +167,45 @@ describe('useKangurAiTutorSelectionGuidanceHandoffEffect', () => {
     expect(pendingUpdater({ selectedText: 'Inny fragment' })).toEqual({
       selectedText: 'Inny fragment',
     });
+  });
+
+  it('finalizes the selection handoff when the live excerpt reflows but the stored selection is unchanged', async () => {
+    const setContextualTutorModeMock = vi.fn();
+    const setGuidedTutorTargetMock = vi.fn();
+    const setSelectionGuidanceCalloutVisibleTextMock = vi.fn();
+    const setSelectionGuidanceHandoffTextMock = vi.fn();
+    const setSelectionResponseCompleteMock = vi.fn();
+    const setSelectionResponsePendingMock = vi.fn();
+
+    renderHook(() =>
+      useKangurAiTutorSelectionGuidanceHandoffEffect({
+        activeSelectedText: '🏗️ MISTRZOSTWO\n67%\n2/4 odznak',
+        hasSelectionPanelReady: true,
+        isLoading: false,
+        isOpen: true,
+        panelMotionState: 'settled',
+        selectionConversationSelectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
+        selectionGuidanceHandoffText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
+        setContextualTutorMode: setContextualTutorModeMock,
+        setGuidedTutorTarget: setGuidedTutorTargetMock,
+        setSelectionGuidanceCalloutVisibleText: setSelectionGuidanceCalloutVisibleTextMock,
+        setSelectionGuidanceHandoffText: setSelectionGuidanceHandoffTextMock,
+        setSelectionResponseComplete: setSelectionResponseCompleteMock,
+        setSelectionResponsePending: setSelectionResponsePendingMock,
+        telemetryContext: {
+          contentId: 'game:home',
+          surface: 'game',
+          title: 'Postęp gracza',
+        },
+      })
+    );
+
+    await waitFor(() =>
+      expect(setSelectionResponseCompleteMock).toHaveBeenCalledWith({
+        selectedText: '🏗️ MISTRZOSTWO 67% 2/4 odznak',
+      })
+    );
+    expect(setGuidedTutorTargetMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -242,6 +321,12 @@ describe('useKangurAiTutorGuidedFlow', () => {
         interactionIntent: 'explain',
       })
     );
+    expect(setSelectionConversationContextMock).toHaveBeenCalledWith({
+      focusLabel: '2 + 2',
+      knowledgeReference: null,
+      messageStartIndex: 4,
+      selectedText: '2 + 2',
+    });
     expect(handleOpenChatMock).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -262,6 +347,112 @@ describe('useKangurAiTutorGuidedFlow', () => {
       kind: 'selection_excerpt',
       mode: 'selection',
       selectedText: '2 + 2',
+    });
+
+    vi.useRealTimers();
+  });
+
+  it('passes the owning section knowledge reference when the selected excerpt belongs to a tutor anchor', () => {
+    vi.useFakeTimers();
+
+    const sendMessageMock = vi.fn(() => Promise.resolve());
+    const setSelectionConversationContextMock = vi.fn();
+
+    const { result } = renderHook(() =>
+      useKangurAiTutorGuidedFlow({
+        activeSelectionPageRect: null,
+        activateSelectionGlow: vi.fn(() => true),
+        clearSelection: vi.fn(),
+        handleOpenChat: vi.fn(),
+        messageCount: 2,
+        motionProfile: {
+          guidedAvatarTransition: {
+            duration: 0.2,
+          },
+        },
+        prefersReducedMotion: true,
+        resetAskModalState: vi.fn(),
+        selectionConversationFocus: {
+          assignmentId: null,
+          contentId: 'game:home',
+          id: 'kangur-game-leaderboard',
+          kind: 'leaderboard',
+          knowledgeReference: {
+            sourceCollection: 'kangur_page_content',
+            sourceRecordId: 'game-home-leaderboard',
+            sourcePath: 'entry:game-home-leaderboard',
+          },
+          label: 'Ranking',
+          surface: 'game',
+        },
+        selectionExplainTimeoutRef: { current: null },
+        selectionGuidanceRevealTimeoutRef: { current: null },
+        sendMessage: sendMessageMock,
+        setCanonicalTutorModalVisible: vi.fn(),
+        setContextualTutorMode: vi.fn(),
+        setDismissedSelectedText: vi.fn(),
+        setGuestIntroHelpVisible: vi.fn(),
+        setGuestIntroVisible: vi.fn(),
+        setGuidedTutorTarget: vi.fn(),
+        setHasNewMessage: vi.fn(),
+        setHighlightedSection: vi.fn(),
+        setHighlightedText: vi.fn(),
+        setHoveredSectionAnchorId: vi.fn(),
+        setPersistedSelectionContainerRect: vi.fn(),
+        setPersistedSelectionPageRect: vi.fn(),
+        setPersistedSelectionPageRects: vi.fn(),
+        setPersistedSelectionRect: vi.fn(),
+        setSelectionGuidanceCalloutVisibleText: vi.fn(),
+        setSelectionConversationContext: setSelectionConversationContextMock,
+        setSelectionGuidanceHandoffText: vi.fn(),
+        setSectionResponseComplete: vi.fn(),
+        setSectionResponsePending: vi.fn(),
+        setSelectionContextSpotlightTick: vi.fn(),
+        setSelectionResponseComplete: vi.fn(),
+        setSelectionResponsePending: vi.fn(),
+        setViewportTick: vi.fn(),
+        suppressAvatarClickRef: { current: false },
+        telemetryContext: {
+          contentId: 'game:home',
+          surface: 'game',
+          title: 'Ranking',
+        },
+        tutorContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+        viewportHeight: 900,
+      })
+    );
+
+    act(() => {
+      result.current.startGuidedSelectionExplanation('Ranking wynikow');
+    });
+
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      'Wyjaśnij zaznaczony fragment krok po kroku.',
+      expect.objectContaining({
+        promptMode: 'selected_text',
+        selectedText: 'Ranking wynikow',
+        contentId: 'game:home',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-leaderboard',
+        focusLabel: 'Ranking',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
+        },
+        interactionIntent: 'explain',
+        surface: 'game',
+      })
+    );
+    expect(setSelectionConversationContextMock).toHaveBeenCalledWith({
+      focusLabel: 'Ranking',
+      knowledgeReference: {
+        sourceCollection: 'kangur_page_content',
+        sourceRecordId: 'game-home-leaderboard',
+        sourcePath: 'entry:game-home-leaderboard',
+      },
+      messageStartIndex: 2,
+      selectedText: 'Ranking wynikow',
     });
 
     vi.useRealTimers();

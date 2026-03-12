@@ -987,7 +987,7 @@ describe('Lessons', () => {
     expect(screen.getByText('Mongo pusty stan listy lekcji.')).toBeInTheDocument();
   });
 
-  it('uses Mongo-backed page-content copy for the active lesson header, assignment, document, and navigation when available', () => {
+  it('keeps the selected lesson title in the active header while still using Mongo-backed copy for assignment and document sections', () => {
     authState.value = {
       user: {
         id: 'parent-1',
@@ -1131,8 +1131,10 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
-    expect(screen.getByText('Mongo aktywna lekcja')).toBeInTheDocument();
-    expect(screen.getByText('Mongo nagłówek aktywnej lekcji.')).toBeInTheDocument();
+    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
+    expect(screen.getByText('Odczytuj godziny')).toBeInTheDocument();
+    expect(screen.queryByText('Mongo aktywna lekcja')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mongo nagłówek aktywnej lekcji.')).not.toBeInTheDocument();
     expect(screen.getByText('Mongo zadanie rodzica')).toBeInTheDocument();
     expect(screen.getByText('Mongo opis sekcji zadania dla aktywnej lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Mongo materiał lekcji')).toBeInTheDocument();
@@ -1142,6 +1144,50 @@ describe('Lessons', () => {
     expect(
       screen.queryByText('Mongo opis przechodzenia między lekcjami.')
     ).not.toBeInTheDocument();
+  });
+
+  it('falls back to the selected lesson title and description when the active header copy is blank', () => {
+    setSettingsStore({
+      lessons: [
+        createLesson({
+          id: 'clock-component',
+          componentId: 'clock',
+          contentMode: 'component',
+          title: 'Nauka zegara',
+          description: 'Odczytuj godziny',
+        }),
+      ],
+    });
+    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
+      if (entryId === 'lessons-active-header') {
+        return {
+          entry: {
+            id: 'lessons-active-header',
+            title: '   ',
+            summary: '   ',
+          },
+          data: undefined,
+          isLoading: false,
+          isError: false,
+          error: null,
+        };
+      }
+
+      return {
+        entry: null,
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    });
+
+    renderLessonsPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
+
+    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
+    expect(screen.getByText('Odczytuj godziny')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {

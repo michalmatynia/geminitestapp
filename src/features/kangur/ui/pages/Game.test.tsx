@@ -217,6 +217,36 @@ describe('Game page', () => {
     );
   });
 
+  it('keeps the home leaderboard and progress columns centered within the same 900px section', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+    });
+
+    render(<Game />);
+
+    const progressHeading = screen.getByRole('heading', { level: 3, name: 'Ranking i postęp' });
+    const progressSection = progressHeading.closest('section');
+
+    expect(progressSection).not.toBeNull();
+    expect(progressSection).toHaveClass(
+      'mx-auto',
+      'max-w-[900px]',
+      'items-start',
+      'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
+    );
+    expect(screen.getByTestId('leaderboard-widget').parentElement).toHaveClass(
+      'flex',
+      'w-full',
+      'justify-center'
+    );
+    expect(screen.getByTestId('player-progress-widget').parentElement).toHaveClass(
+      'flex',
+      'w-full',
+      'justify-center'
+    );
+  });
+
   it('forwards the full xp toast state on the live game page path', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),

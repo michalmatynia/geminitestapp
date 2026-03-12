@@ -198,6 +198,14 @@ export function KangurAiTutorMessageList(): JSX.Element {
                 <div className='tutor-assistant-bubble kangur-chat-bubble kangur-chat-padding-sm border [border-color:var(--kangur-soft-card-border)] text-sm leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
                   {msg.content}
                 </div>
+                {msg.answerResolutionMode === 'page_content' ? (
+                  <div
+                    data-testid='kangur-ai-tutor-page-content-answer-badge'
+                    className='inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] kangur-chat-surface-soft [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+                  >
+                    Zapisana tresc strony
+                  </div>
+                ) : null}
                 {msg.followUpActions?.length ? (
                   <div className='space-y-2'>
                     <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>

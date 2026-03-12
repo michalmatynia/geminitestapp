@@ -265,6 +265,10 @@ const BADGE_TRACK_META: Record<KangurBadgeTrackKey, { label: string; emoji: stri
   quest: { label: 'Misje', emoji: '🧭', order: 7 },
 };
 
+export const getBadgeTrackMeta = (
+  key: KangurBadgeTrackKey
+): { label: string; emoji: string; order: number } => BADGE_TRACK_META[key];
+
 const GUIDED_BADGE_IDS = new Set(['guided_step', 'guided_keeper']);
 
 export const BADGES: KangurBadge[] = [
